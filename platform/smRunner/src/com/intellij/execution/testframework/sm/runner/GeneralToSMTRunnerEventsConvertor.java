@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * This class fires events to SMTRunnerEventsListener in event dispatch thread.
  *
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 

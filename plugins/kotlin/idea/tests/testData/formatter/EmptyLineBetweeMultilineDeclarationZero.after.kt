@@ -25,7 +25,7 @@ interface Some2 {
     @Ann
     fun f5()
     @Ann(
-            42
+        42
     )
     fun f6()
     fun f7()
@@ -308,7 +308,7 @@ class Some(b: Boolean) {
     @Ann
     constructor(b: Int) : this(b == 0)
     @Ann(
-            42
+        42
     )
     constructor(b: String) : this(b.isEmpty())
     constructor(b: Long) : this(b == 0L)

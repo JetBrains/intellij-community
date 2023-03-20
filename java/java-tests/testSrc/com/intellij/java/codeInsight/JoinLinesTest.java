@@ -154,6 +154,8 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testLocalVarImplicit() { doTest(); }
 
   public void testSlashComment() { doTest(); }
+  public void testSlashCommentFollowedByBlockComment() { doTest(); }
+  public void testSlashCommentFollowedByBlockCommentAndCode() { doTest(); }
   public void testDocComment() { doTest(); }
 
   public void testOnEmptyLine() { doTest(); }
@@ -277,6 +279,24 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
     settings.CATCH_ON_NEW_LINE = true;
     doTest();
   }
+
+  public void testJoinLocals1() {doTest();}
+  public void testJoinLocals2() {doTest();}
+  public void testJoinLocals3() {doTest();}
+  public void testJoinLocals4() {doTest();}
+  public void testJoinLocals5() {doTest();}
+  public void testJoinLocals6() {doTest();}
+  public void testJoinFields1() {doTest();}
+  public void testJoinFields2() {doTest(3);}
+  public void testJoinFields3() {doTest();}
+
+  public void testCaseLabels() {doTest();}
+  public void testCaseLabels2() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.SPACE_AFTER_COMMA = false;
+    doTest();
+  }
+  public void testCaseLabels3() {doTest();}
 
   private void doTest() {
     doTest(".java");

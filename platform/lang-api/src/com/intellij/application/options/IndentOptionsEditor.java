@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.components.fields.IntegerField;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +20,14 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
+/**
+ * A specialized option group for editing indent options.
+ * <p>
+ *   <em>Implementation note:</em> make sure all the necessary Swing components are only created
+ *   in the {@link #createPanel()} and/or {@link #addComponents()} methods and not in the
+ *   constructor or field/property initializers. See {@link OptionGroup} for details.
+ * </p>
+ */
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
 
   private JTextField myIndentField;
@@ -68,15 +75,6 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     myTabSizeField = createIndentTextField(getTabSizeLabel(), MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
     myTabSizeLabel = new JLabel(getTabSizeLabel());
     add(myTabSizeLabel, myTabSizeField);
-  }
-
-  /**
-   * @deprecated Use {@link #createIndentTextField(String, int, int, int)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected JTextField createIndentTextField() {
-    return createIndentTextField(null, Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
   }
 
   protected IntegerField createIndentTextField(@Nullable String valueName, int minSize, int maxSize, int defaultValue) {
@@ -168,7 +166,7 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   /**
    * @deprecated Create {@link IntegerField} and use {@link IntegerField#getValue()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected int getFieldValue(JTextField field, int minValue, int defValue) {
     if (field instanceof IntegerField) {
       return ((IntegerField)field).getValue();

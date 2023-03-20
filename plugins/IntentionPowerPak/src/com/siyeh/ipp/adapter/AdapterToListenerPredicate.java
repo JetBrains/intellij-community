@@ -27,10 +27,9 @@ class AdapterToListenerPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceList)) {
+    if (!(parent instanceof PsiReferenceList referenceList)) {
       return false;
     }
-    final PsiReferenceList referenceList = (PsiReferenceList)parent;
     if (PsiReferenceList.Role.EXTENDS_LIST != referenceList.getRole()) {
       return false;
     }
@@ -46,10 +45,9 @@ class AdapterToListenerPredicate implements PsiElementPredicate {
     final PsiJavaCodeReferenceElement referenceElement =
       referenceElements[0];
     final PsiElement target = referenceElement.resolve();
-    if (!(target instanceof PsiClass)) {
+    if (!(target instanceof PsiClass aClass)) {
       return false;
     }
-    final PsiClass aClass = (PsiClass)target;
     @NonNls final String className = aClass.getName();
     if (!className.endsWith("Adapter")) {
       return false;
@@ -68,10 +66,9 @@ class AdapterToListenerPredicate implements PsiElementPredicate {
         continue;
       }
       final PsiElement implementsTarget = implementsReference.resolve();
-      if (!(implementsTarget instanceof PsiClass)) {
+      if (!(implementsTarget instanceof PsiClass implementsClass)) {
         continue;
       }
-      final PsiClass implementsClass = (PsiClass)implementsTarget;
       if (!implementsClass.isInterface()) {
         continue;
       }

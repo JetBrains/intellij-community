@@ -7,6 +7,7 @@ fun foo(i: Int, j: Int): String {
             }
             "1, x"
         }
+
         1 -> "1, x"
         else -> "x, x"
     }

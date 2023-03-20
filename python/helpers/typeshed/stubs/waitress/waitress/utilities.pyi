@@ -1,7 +1,8 @@
+from _typeshed.wsgi import StartResponse
+from collections.abc import Iterator, Mapping, Sequence
 from logging import Logger
-from typing import Any, Callable, Mapping, Match, Pattern, Sequence
-
-from .rfc7230 import OBS_TEXT as OBS_TEXT, VCHAR as VCHAR
+from re import Match, Pattern
+from typing import Any
 
 logger: Logger
 queue_logger: Logger
@@ -35,15 +36,6 @@ monthname: Sequence[str]
 
 def build_http_date(when: int) -> str: ...
 def parse_http_date(d: str) -> int: ...
-
-vchar_re: str
-obs_text_re: str
-qdtext_re: str
-quoted_pair_re: str
-quoted_string_re: str
-quoted_string: Pattern[Any]
-quoted_pair: Pattern[Any]
-
 def undquote(value: str) -> str: ...
 def cleanup_unix_socket(path: str) -> None: ...
 
@@ -53,7 +45,7 @@ class Error:
     body: str = ...
     def __init__(self, body: str) -> None: ...
     def to_response(self) -> tuple[str, Sequence[tuple[str, str]], str]: ...
-    def wsgi_response(self, environ: Any, start_response: Callable[[str, Sequence[tuple[str, str]]], None]) -> str: ...
+    def wsgi_response(self, environ: Any, start_response: StartResponse) -> Iterator[str]: ...
 
 class BadRequest(Error):
     code: int = ...

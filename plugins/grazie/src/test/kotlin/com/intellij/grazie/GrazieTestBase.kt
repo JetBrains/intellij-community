@@ -11,18 +11,20 @@ import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.filterFor
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.coroutines.runBlocking
 
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
     val inspectionTools by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
     val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN)
-    val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH")
+    val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START")
   }
 
   protected open val additionalEnabledRules: Set<String> = emptySet()
@@ -55,8 +57,15 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
   }
 
   override fun tearDown() {
-    GrazieConfig.update { GrazieConfig.State() }
-    super.tearDown()
+    try {
+      GrazieConfig.update { GrazieConfig.State() }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected open fun runHighlightTestForFile(file: String) {
@@ -72,7 +81,13 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   fun check(tokens: Collection<PsiElement>): List<TextProblem> {
     return tokens.flatMap {
-      TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text -> LanguageToolChecker().check(text) }
+      TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
+        runBlocking {
+          blockingContext {
+            LanguageToolChecker().check(text)
+          }
+        }
+      }
     }
   }
 }

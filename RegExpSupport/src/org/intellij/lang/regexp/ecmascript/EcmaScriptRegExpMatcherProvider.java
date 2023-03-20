@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.ecmascript;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,7 +12,7 @@ import org.intellij.lang.regexp.RegExpMatch;
 import org.intellij.lang.regexp.RegExpMatchResult;
 import org.intellij.lang.regexp.RegExpMatcherProvider;
 import org.intellij.lang.regexp.intention.CheckRegExpForm;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -22,8 +23,9 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
+  private static final Logger LOG = Logger.getInstance(EcmaScriptRegExpMatcherProvider.class);
 
-  @NotNull
+  @Nullable
   @Override
   public RegExpMatchResult matches(String regExp, PsiFile regExpFile, PsiElement elementInHost, String sampleText, long timeoutMillis) {
     String modifiers = "";
@@ -43,6 +45,10 @@ public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
       }
     }
     final ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+    if (engine == null) {
+      LOG.warn("Nashorn JS scripting engine not found, falling back to Java regex evaluation");
+      return null;
+    }
     try {
       @Language("Nashorn JS")
       final String script =

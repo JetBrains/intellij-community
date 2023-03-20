@@ -17,21 +17,21 @@ public interface TouchbarDataKeys {
   Key<DlgButtonDesc> DIALOG_BUTTON_DESCRIPTOR_KEY = Key.create("TouchBar.Dialog.SouthPanel.Button.Descriptor");
 
   /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   static ActionDesc putActionDescriptor(@NotNull AnAction action) {
     return action.getTemplatePresentation().getClientProperty(ACTIONS_DESCRIPTOR_KEY);
   }
 
   /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex) {
     return putDialogButtonDescriptor(button, orderIndex, false);
   }
 
   /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   static DlgButtonDesc putDialogButtonDescriptor(@NotNull JButton button, int orderIndex, boolean isMainGroup) {
     DlgButtonDesc result = ComponentUtil.getClientProperty(button, DIALOG_BUTTON_DESCRIPTOR_KEY);

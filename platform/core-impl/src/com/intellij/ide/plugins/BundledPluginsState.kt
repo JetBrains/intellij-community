@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -6,88 +6,97 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readLines
-import kotlin.io.path.writeText
 
 @ApiStatus.Internal
 class BundledPluginsState {
-  init {
-    if (shouldSave()) {
-      ProcessIOExecutorService.INSTANCE.execute {
-        val bundledIds = PluginManagerCore.getLoadedPlugins().filter { it.isBundled }
-        saveBundledPluginsOrLog(bundledIds)
-      }
-    }
-  }
-
   companion object {
-    const val BUNDLED_PLUGINS_FILENAME: @NonNls String = "bundled_plugins.txt"
-    private const val SAVED_VERSION_KEY: @NonNls String = "bundled.plugins.list.saved.version"
-    private val logger = Logger.getInstance(this::class.java)
+    private const val SAVED_VERSION_KEY = "bundled.plugins.list.saved.version"
 
-    fun shouldSave(): Boolean {
-      val savedVersion = PropertiesComponent.getInstance().getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) } ?: return true
-      return (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources()) || savedVersion < ApplicationInfo.getInstance().build
-    }
+    var PropertiesComponent.savedBuildNumber: BuildNumber?
+      @VisibleForTesting get() = getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) }
+      private set(value) = setValue(SAVED_VERSION_KEY, value?.asString())
 
-    fun saveBundledPluginsOrLog(plugins: List<IdeaPluginDescriptor>) {
-      val file = PathManager.getConfigDir().resolve(BUNDLED_PLUGINS_FILENAME)
-      try {
-        saveBundledPlugins(file, plugins)
-        PropertiesComponent.getInstance().setValue(SAVED_VERSION_KEY, ApplicationInfo.getInstance().build.asString())
-      }
-      catch (e: IOException) {
-        logger.warn("Unable to save bundled plugins list", e)
-      }
+    @ApiStatus.Internal
+    const val BUNDLED_PLUGINS_FILENAME = "bundled_plugins.txt"
+
+    private val LOG = logger<BundledPluginsState>()
+
+    val loadedPlugins: Set<IdeaPluginDescriptor>
+      @VisibleForTesting get() = PluginManagerCore.getLoadedPlugins()
+        .asSequence()
+        .filter { it.isBundled }
+        .toSet()
+
+    @VisibleForTesting
+    fun writePluginIdsToFile(
+      pluginIds: Set<IdeaPluginDescriptor>,
+      configDir: Path = PathManager.getConfigDir(),
+    ) {
+      PluginManagerCore.writePluginIdsToFile(
+        configDir.resolve(BUNDLED_PLUGINS_FILENAME),
+        pluginIds.map { "${it.pluginId.idString}|${it.category}\n" },
+      )
     }
 
     @JvmStatic
-    fun getBundledPlugins(configDir: Path): List<Pair<PluginId, Category>>? {
-      val file = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
+    fun readPluginIdsFromFile(path: Path = PathManager.getConfigDir()): Set<Pair<PluginId, Category>> {
+      val file = path.resolve(BUNDLED_PLUGINS_FILENAME)
       if (!file.exists()) {
-        return null
+        return emptySet()
       }
       else if (!Files.isRegularFile(file)) {
-        return null
+        return emptySet()
       }
-      val bundledPlugins = mutableListOf<Pair<PluginId, Category>>()
+      val bundledPlugins = mutableSetOf<Pair<PluginId, Category>>()
       try {
-        file.readLines().map {
-          val splitResult = it.trim().split("|")
-          if (splitResult.size != 2) {
-            logger.warn("Incompatible format for bundled plugins list: $file")
-            return null
+        file.readLines().map(String::trim)
+          .filter { !it.isEmpty() }.map {
+            val splitResult = it.split("|")
+            val id = splitResult.first()
+            val category = splitResult.getOrNull(1)
+            bundledPlugins.add(Pair(PluginId.getId(id), if (category == "null") null else category))
           }
-          val (id, category) = splitResult
-          bundledPlugins.add(Pair(PluginId.getId(id), if (category == "null") null else category))
-        }
       }
       catch (e: IOException) {
-        logger.warn("Unable to load bundled plugins list from $file", e)
-      }
-      if (bundledPlugins.isEmpty()) {
-        return null
+        LOG.warn("Unable to load bundled plugins list from $file", e)
       }
       return bundledPlugins
     }
-
-    private fun saveBundledPlugins(file: Path,
-                                   plugins: List<IdeaPluginDescriptor>) {
-      NioFiles.createDirectories(file.parent)
-      file.writeText(plugins.joinToString("") { "${it.pluginId.idString}|${it.category}\n" })
-    }
   }
 
+  init {
+    val savedBuildNumber = PropertiesComponent.getInstance().savedBuildNumber
+    val currentBuildNumber = ApplicationInfo.getInstance().build
+
+    val shouldSave = savedBuildNumber == null
+                     || savedBuildNumber < currentBuildNumber
+                     || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
+
+    if (shouldSave) {
+      val bundledPluginIds = loadedPlugins
+
+      ProcessIOExecutorService.INSTANCE.execute {
+        try {
+          writePluginIdsToFile(bundledPluginIds)
+
+          PropertiesComponent.getInstance().savedBuildNumber = currentBuildNumber
+        }
+        catch (e: IOException) {
+          LOG.warn("Unable to save bundled plugins list", e)
+        }
+      }
+    }
+  }
 }
 
 typealias Category = String?

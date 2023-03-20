@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
@@ -7,10 +7,7 @@ import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -35,9 +32,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 
 public class CreateSetupPyAction extends CreateFromTemplateAction {
@@ -52,6 +47,11 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       () -> FileTemplateManager.getDefaultInstance().getInternalTemplate(SETUP_SCRIPT_TEMPLATE_NAME)
     );
     getTemplatePresentation().setText(PyBundle.message("python.packaging.create.setup.py"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return super.getActionUpdateThread();
   }
 
   @Override
@@ -73,7 +73,20 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       defaults.addPredefined("PackageList", getPackageList(dataContext));
       defaults.addPredefined("PackageDirs", getPackageDirs(dataContext));
     }
+    defaults.setAttributeVisibleNames(getVisibleNames());
     return defaults;
+  }
+
+  private static Map<String, String> getVisibleNames() {
+    HashMap<String, String> attributeToName = new HashMap<>();
+    attributeToName.put("Package_name", PyBundle.message("python.packaging.create.setup.package.name"));
+    attributeToName.put("Version", PyBundle.message("python.packaging.create.setup.version"));
+    attributeToName.put("URL", PyBundle.message("python.packaging.create.setup.url"));
+    attributeToName.put("License", PyBundle.message("python.packaging.create.setup.license"));
+    attributeToName.put("Author", PyBundle.message("python.packaging.create.setup.author"));
+    attributeToName.put("Author_Email", PyBundle.message("python.packaging.create.setup.author.email"));
+    attributeToName.put("Description", PyBundle.message("python.packaging.create.setup.description"));
+    return attributeToName;
   }
 
   @NotNull
@@ -102,14 +115,12 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
     final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module != null) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
-      if (sourceRoots.length > 0) {
-        for (VirtualFile sourceRoot : sourceRoots) {
-          // TODO notify if we have multiple source roots and can't build mapping automatically
-          final VirtualFile contentRoot = ProjectFileIndex.SERVICE.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
-          if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
-            final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
-            return "\n    package_dir={'': '" + relativePath + "'},";
-          }
+      for (VirtualFile sourceRoot : sourceRoots) {
+        // TODO notify if we have multiple source roots and can't build mapping automatically
+        final VirtualFile contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
+        if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
+          final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
+          return "\n    package_dir={'': '" + relativePath + "'},";
         }
       }
     }

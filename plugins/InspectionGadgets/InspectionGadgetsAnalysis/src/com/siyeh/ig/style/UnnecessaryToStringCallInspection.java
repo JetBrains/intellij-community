@@ -19,8 +19,8 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -41,14 +41,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean notNullQualifierOnly = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.redundant.tostring.option.notnull.qualifier"), this,
-                                          "notNullQualifierOnly");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("notNullQualifierOnly", JavaAnalysisBundle.message("inspection.redundant.tostring.option.notnull.qualifier")));
   }
 
   @Override
@@ -87,7 +89,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call =
         ObjectUtils.tryCast(descriptor.getPsiElement().getParent().getParent(), PsiMethodCallExpression.class);
       if (!isRedundantToString(call)) return;
@@ -110,7 +112,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
   private class UnnecessaryToStringCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (!isRedundantToString(call)) return;
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
@@ -121,7 +123,7 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
           NullabilityUtil.getExpressionNullability(qualifier, true) != Nullability.NOT_NULL) {
         return;
       }
-      registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, qualifier.isPhysical() ? null : qualifier.getText());
+      registerError(referenceNameElement, qualifier.isPhysical() ? null : qualifier.getText());
     }
   }
 

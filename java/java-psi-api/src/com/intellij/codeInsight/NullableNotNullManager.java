@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -60,7 +57,7 @@ public abstract class NullableNotNullManager {
    * Returns an annotation which marks given element as Nullable, if any.
    * @deprecated use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public @Nullable PsiAnnotation getNullableAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     NullabilityAnnotationInfo info = findEffectiveNullabilityInfo(owner);
@@ -77,7 +74,7 @@ public abstract class NullableNotNullManager {
    * Returns an annotation which marks given element as NotNull, if any.
    * @deprecated use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public @Nullable PsiAnnotation getNotNullAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     NullabilityAnnotationInfo info = findEffectiveNullabilityInfo(owner);
@@ -163,7 +160,7 @@ public abstract class NullableNotNullManager {
    * @return effective nullability annotation info, or null if not found.
    */
   public @Nullable NullabilityAnnotationInfo findEffectiveNullabilityInfo(@NotNull PsiModifierListOwner owner) {
-    PsiType type = getOwnerType(owner);
+    PsiType type = PsiUtil.getTypeByPsiElement(owner);
     if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
     return CachedValuesManager.getCachedValue(owner, () -> CachedValueProvider.Result
@@ -250,7 +247,7 @@ public abstract class NullableNotNullManager {
       PsiAnnotation annotation = findAnnotation(owner, annotations.qualifiedNames(), skipExternal);
       memberAnno = annotation == null ? null : new AnnotationAndOwner(owner, annotation);
     }
-    PsiType type = getOwnerType(owner);
+    PsiType type = PsiUtil.getTypeByPsiElement(owner);
     if (memberAnno != null && type instanceof PsiArrayType && !isInferredAnnotation(memberAnno.annotation) &&
         !isExternalAnnotation(memberAnno.annotation) && AnnotationTargetUtil.isTypeAnnotation(memberAnno.annotation)) {
       // Ambiguous TYPE_USE annotation on array type: we consider that it annotates an array component instead.
@@ -304,12 +301,6 @@ public abstract class NullableNotNullManager {
 
   protected boolean hasHardcodedContracts(@NotNull PsiElement element) {
     return false;
-  }
-
-  private static @Nullable PsiType getOwnerType(@NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiVariable) return ((PsiVariable)owner).getType();
-    if (owner instanceof PsiMethod) return ((PsiMethod)owner).getReturnType();
-    return null;
   }
 
   public boolean isNullable(@NotNull PsiModifierListOwner owner, boolean checkBases) {
@@ -412,6 +403,7 @@ public abstract class NullableNotNullManager {
     return info == null ? Nullability.UNKNOWN : info.getNullability();
   }
 
+  @Unmodifiable
   public abstract @NotNull List<String> getInstrumentedNotNulls();
 
   public abstract void setInstrumentedNotNulls(@NotNull List<String> names);

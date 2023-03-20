@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
-import org.jetbrains.annotations.ApiStatus;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +36,6 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
-/**
- * @author dcheryasov
- */
 public final class ResolveImportUtil {
 
   private ResolveImportUtil() {
@@ -47,8 +44,7 @@ public final class ResolveImportUtil {
   public static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
     if (foothold != null) {
       PsiFile file = foothold.getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
+      if (file instanceof PyFile pyFile) {
         if (pyFile.getLanguageLevel().isPy3K()) {
           PsiElement originalFoothold = CompletionUtilCoreImpl.getOriginalOrSelf(foothold);
           if (foothold.getManager().isInProject(originalFoothold) && Registry.is("python.explicit.namespace.packages")) {
@@ -230,8 +226,7 @@ public final class ResolveImportUtil {
   /**
    * @deprecated Use {@link #resolveChildren(PsiElement, String, PsiFile, boolean, boolean, boolean, boolean)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent,
                                         @NotNull final String referencedName,
@@ -252,7 +247,6 @@ public final class ResolveImportUtil {
    * @param containingFile  where we're in.
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
-   * @param withoutStubs
    * @param withoutForeign  if {@code true} do not use {@link PyReferenceResolveProvider} instances for resolving
    * @return the element the referencedName resolves to
    */
@@ -392,7 +386,9 @@ public final class ResolveImportUtil {
 
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
-    if (subdir != null && subdir.getName().equals(referencedName) && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
+    if (subdir != null && subdir.getName().equals(referencedName) &&
+        (!checkForPackage || PyUtil.isPackage(subdir, containingFile)) &&
+        (!withoutStubs || !PyiUtil.isPyiFileOfPackage(subdir))) {
       result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, subdir)));
     }
 

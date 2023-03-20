@@ -160,7 +160,7 @@ public final class PyTypeUtil {
    * @see #toUnionFromRef()
    */
   @NotNull
-  public static Collector<PyType, ?, PyType> toUnion() {
+  public static Collector<@Nullable PyType, ?, @Nullable PyType> toUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnionType::union);
   }
 

@@ -6,21 +6,31 @@ import java.util.Set;
 
 public class IfStatementWithIdenticalBranches {
 
-    void one() {
-        <warning descr="'if' statement with identical branches">if</warning> (true) {
+    void simpleCases(boolean isValid) {
+        if (isValid) {
 
         } else {
 
         }
-        <warning descr="'if' statement with identical branches">if</warning> (false) {
+        <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (isValid) {
             System.out.println();
             return;
         }
         System.out.println();
     }
 
-    int two() {
-        <warning descr="'if' statement with identical branches">if</warning> (true) {
+  void implicitElseInAForLoop() {
+    for (int i = 0; i < 100; i++) {
+      <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (i == 10) {
+        System.out.println("Next iteration");
+        continue;
+      }
+      System.out.println("Next iteration");
+    }
+  }
+
+    int sameCodeWithDifferentIdentifierNames(boolean isValid) {
+        <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (isValid) {
             int i = 2;
             return i;
         } else {
@@ -29,8 +39,8 @@ public class IfStatementWithIdenticalBranches {
         }
     }
 
-    int three() {
-        if (true) {
+    int differentCode(boolean isValid) {
+        if (isValid) {
             int i = 3;
             return i;
         } else {
@@ -39,9 +49,9 @@ public class IfStatementWithIdenticalBranches {
         }
     }
 
-    void four() {
-        if (true) {
-            <warning descr="'if' statement with identical branches">if</warning> (false) {
+    void impliciteJumpStatement(boolean isValid, boolean isActive) {
+        if (isValid) {
+            <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (isActive) {
                 System.out.println();
                 return;
             }
@@ -49,19 +59,19 @@ public class IfStatementWithIdenticalBranches {
         System.out.println();
     }
 
-    void five() {
+    void nonLinearControlflow(boolean isValid) {
         boolean b = true;
         while (b) {
-            if (true) {
+            if (isValid) {
                 System.out.println();
             }
         }
         System.out.println();
     }
 
-    void six() {
-        if (true) {
-            <warning descr="'if' statement with identical branches">if</warning> (false) {
+    void identicalCodeInSeveralBlocks(boolean isValid, boolean isActive) {
+        if (isActive) {
+            if (isValid) {
                 System.out.println();
                 System.out.println();
                 return;
@@ -71,41 +81,41 @@ public class IfStatementWithIdenticalBranches {
         System.out.println();
     }
 
-    void seven() {
-        if (true) {
+    void notIdenticalJumpedCode(boolean isValid, boolean isActive) {
+        if (isValid) {
             System.out.println();
             return;
-        } else if (true) {
+        } else if (isActive) {
             System.out.println("different");
             return;
         }
         System.out.println();
     }
 
-    void eight() {
-        if (true) {
+    void notIdenticalCode(boolean isValid, boolean isActive) {
+        if (isValid) {
             System.out.println();
-        } else if (true) {
+        } else if (isActive) {
             System.out.println("different");
         } else {
             System.out.println();
         }
     }
 
-    void nine() {
-        <warning descr="'if' statement with identical branches">if</warning> (true) {
+    void longIdenticalCode(boolean isValid, boolean isActive) {
+        if (isValid) {
 
-        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
+        } else if (isActive) {
 
-        } else <warning descr="'if' statement with identical branches">if</warning> (true) {
+        } else if (true) {
 
         } else {
 
         }
     }
 
-  void blocks() {
-    <warning descr="'if' statement with identical branches">if</warning> (true) {
+  void blocks(boolean isValid) {
+    <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (isValid) {
       System.out.println();
       return;
     }
@@ -165,7 +175,7 @@ class NotADup {
 
   void m() {
     int j;
-    <warning descr="'if' statement with identical branches">if</warning> (true) {
+    <weak_warning descr="'if' statement can be collapsed">if</weak_warning> (true) {
       j = 2;
     }
     else {
@@ -175,7 +185,7 @@ class NotADup {
   }
 
   void n(int i) {
-    <warning descr="'if' statement with identical branches">if</warning> (i == 0) {
+    if (i == 0) {
       System.out.println(((i)));
       ;
       ;

@@ -43,8 +43,6 @@ import static java.awt.event.MouseEvent.*;
 /**
  * Current implementation of the dispatcher is intended to filter mouse event addressed to
  * the editor. Also it allows to map middle mouse's button to some action.
- *
- * @author Vladimir Kondratyev
  * @author Konstantin Bulenkov
  */
 public final class IdeMouseEventDispatcher {
@@ -76,7 +74,7 @@ public final class IdeMouseEventDispatcher {
   public IdeMouseEventDispatcher() {
   }
 
-  private static void fillActionsList(@NotNull List<AnAction> actions,
+  private static void fillActionsList(@NotNull List<? super AnAction> actions,
                                       @NotNull Component component,
                                       @NotNull MouseShortcut mouseShortcut,
                                       boolean recursive) {
@@ -321,8 +319,7 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static boolean doVerticalDiagramScrolling(@Nullable Component component, @NotNull MouseEvent event) {
-    if (component != null && event instanceof MouseWheelEvent && isDiagramViewComponent(component.getParent())) {
-      MouseWheelEvent mwe = (MouseWheelEvent)event;
+    if (component != null && event instanceof MouseWheelEvent mwe && isDiagramViewComponent(component.getParent())) {
       if (!mwe.isShiftDown() && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && JBScrollPane.isScrollEvent(mwe)) {
         JScrollBar scrollBar = findVerticalScrollBar(component);
         if (scrollBar != null) {
@@ -346,8 +343,7 @@ public final class IdeMouseEventDispatcher {
     if (isDiagramViewComponent(component)) {
       JComponent view = (JComponent)component;
       for (int i = 0; i < view.getComponentCount(); i++) {
-        if (view.getComponent(i) instanceof JScrollBar) {
-          JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+        if (view.getComponent(i) instanceof JScrollBar scrollBar) {
           if (scrollBar.getOrientation() == Adjustable.VERTICAL) {
             return scrollBar.isVisible() ? scrollBar : null;
           }
@@ -367,9 +363,8 @@ public final class IdeMouseEventDispatcher {
 
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
     if ( c != null
-         && e instanceof MouseWheelEvent
+         && e instanceof MouseWheelEvent mwe
          && isDiagramViewComponent(c.getParent())) {
-      final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
              && JBScrollPane.isScrollEvent(mwe)
@@ -389,8 +384,7 @@ public final class IdeMouseEventDispatcher {
     if (isDiagramViewComponent(c)) {
       final JComponent view = (JComponent)c;
       for (int i = 0; i < view.getComponentCount(); i++) {
-         if (view.getComponent(i) instanceof JScrollBar) {
-           final JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+         if (view.getComponent(i) instanceof JScrollBar scrollBar) {
            if (scrollBar.getOrientation() == Adjustable.HORIZONTAL) {
              return scrollBar.isVisible() ? scrollBar : null;
            }

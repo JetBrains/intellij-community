@@ -38,9 +38,7 @@ public final class LibraryGroupElement {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof LibraryGroupElement)) return false;
-
-    final LibraryGroupElement libraryGroupElement = (LibraryGroupElement)o;
+    if (!(o instanceof LibraryGroupElement libraryGroupElement)) return false;
 
     if (!myModule.equals(libraryGroupElement.myModule)) return false;
 

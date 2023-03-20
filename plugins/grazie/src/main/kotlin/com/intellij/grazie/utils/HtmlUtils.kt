@@ -70,3 +70,21 @@ fun removeHtml(_content: TextContent?): TextContent? {
   }
   return content.excludeRanges(exclusions)
 }
+
+private val nbsp = Pattern.compile("&nbsp;")
+
+fun nbspToSpace(content: TextContent?): TextContent? {
+  if (content == null) return null
+
+  val spaces = Text.allOccurrences(nbsp, content)
+  if (spaces.isEmpty()) return content.trimWhitespace()
+
+  val components = arrayListOf<TextContent?>()
+  for (i in spaces.indices) {
+    val prevEnd = if (i == 0) 0 else spaces[i - 1].endOffset
+    components.add(content.subText(TextRange(prevEnd, spaces[i].startOffset))?.trimWhitespace())
+  }
+  components.add(content.subText(TextRange(spaces.last().endOffset, content.length))?.trimWhitespace())
+  return TextContent.joinWithWhitespace(' ', components.filterNotNull())
+}
+

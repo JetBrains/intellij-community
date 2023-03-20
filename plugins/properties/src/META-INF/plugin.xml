@@ -26,6 +26,7 @@
   <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <properties.files.provider implementation="com.intellij.lang.properties.provider.PropertiesProviderImpl"/>
     <typeIcon className="com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile" icon="AllIcons.Nodes.ResourceBundle"/>
     <applicationService serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
     <applicationService serviceInterface="com.intellij.lang.properties.PropertiesQuickFixFactory"
@@ -79,6 +80,7 @@
     <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle"
                      key="unused.property.inspection.display.name"
                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection"/>
     <globalInspection language="Properties" shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle"
                       key="duplicate.property.display.name"
@@ -132,13 +134,20 @@
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.lang.properties.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.lang.properties.ide.actions.PropertiesQualifiedNameProvider"/>
 
+    <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesWebReferenceContributor"/>
+
+    <liveTemplateContext contextId="Properties" implementation="com.intellij.lang.properties.template.PropertiesContextType"/>
+    <structuralsearch.profile implementation="com.intellij.lang.properties.structuralsearch.PropertiesStructuralSearchProfile"/>
+
     <intentionAction>
+      <language>Properties</language>
       <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>
       <bundleName>messages.PropertiesBundle</bundleName>
       <categoryKey>intention.category.properties</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>Properties</language>
       <className>com.intellij.lang.properties.actions.CopyPropertyKeyToClipboardIntention</className>
       <bundleName>messages.PropertiesBundle</bundleName>
       <categoryKey>intention.category.properties</categoryKey>

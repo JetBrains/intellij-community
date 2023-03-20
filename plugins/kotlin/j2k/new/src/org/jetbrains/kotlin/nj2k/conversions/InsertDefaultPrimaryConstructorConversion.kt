@@ -1,15 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.declarationList
-import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
-import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
-
-import org.jetbrains.kotlin.nj2k.types.JKClassType
-import org.jetbrains.kotlin.nj2k.types.JKNoType
 
 
 class InsertDefaultPrimaryConstructorConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {

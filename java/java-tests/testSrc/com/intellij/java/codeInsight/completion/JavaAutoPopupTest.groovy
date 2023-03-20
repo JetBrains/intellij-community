@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.DataManager
@@ -46,16 +45,13 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.testFramework.common.ThreadUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
-/**
- * @author peter
- */
 @NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
 class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   void testNewItemsOnLongerPrefix() {
@@ -476,7 +472,7 @@ class Foo {
     assert !lookup
   }
 
-  void testArrows(String toType, LookupFocusDegree focusDegree, int indexDown, int indexUp) {
+  void doTestArrows(String toType, LookupFocusDegree focusDegree, int indexDown, int indexUp) {
     Closure checkArrow = { String action, int expectedIndex ->
       myFixture.configureByText("a.java", """
       class A {
@@ -509,10 +505,10 @@ class Foo {
 
   void "test vertical arrows in non-focused lookup"() {
     String toType = "ArrayIndexOutOfBoundsException ind"
-    testArrows toType, LookupFocusDegree.UNFOCUSED, 0, 2
+    doTestArrows toType, LookupFocusDegree.UNFOCUSED, 0, 2
 
     ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting("ide.cycle.scrolling", false, getTestRootDisposable())
-    testArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
+    doTestArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
   }
 
   void "test vertical arrows in semi-focused lookup"() {
@@ -520,10 +516,10 @@ class Foo {
     UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
-    testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
+    doTestArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
 
     ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting("ide.cycle.scrolling", false, getTestRootDisposable())
-    testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
+    doTestArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
   }
 
   void testHideOnOnePrefixVariant() {
@@ -611,7 +607,7 @@ public interface Test {
 
     @Override
     void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-      assert !ApplicationManager.application.dispatchThread
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       result.runRemainingContributors(parameters, true)
       Thread.sleep 500
     }
@@ -636,8 +632,8 @@ public interface Test {
   }
 
   static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    def extension = new CompletionContributorEP(language: 'any', implementationClass: contributor.name)
-    extension.setPluginDescriptor(new DefaultPluginDescriptor("registerCompletionContributor"))
+    def pluginDescriptor = new DefaultPluginDescriptor("registerCompletionContributor")
+    def extension = new CompletionContributorEP('any', contributor.name, pluginDescriptor)
     CompletionContributor.EP.getPoint().registerExtension(extension, order, parentDisposable)
   }
 
@@ -781,7 +777,7 @@ public interface Test {
       joinCompletion()
       LookupImpl l1 = LookupManager.getActiveLookup(another)
       if (l1) {
-        printThreadDump()
+        ThreadUtil.printThreadDump()
         println l1.items
         println l1.calculating
         println myFixture.editor
@@ -1213,7 +1209,7 @@ public class Test {
   void testMoreRecentExactMatchesTemplateFirst() {
     TemplateManager manager = TemplateManager.getInstance(getProject())
     Template template = manager.createTemplate("itar", "myGroup", null)
-    JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
+    JavaCodeContextType contextType = TemplateContextTypes.getByClass(JavaCodeContextType.Statement)
     ((TemplateImpl)template).templateContext.setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
@@ -1727,8 +1723,7 @@ class Cls {
   void "test live template without description"() {
     final TemplateManager manager = TemplateManager.getInstance(getProject())
     final Template template = manager.createTemplate("tpl", "user", null)
-    final JavaCodeContextType contextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
+    JavaCodeContextType contextType = TemplateContextTypes.getByClass(JavaCodeContextType.Statement)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 

@@ -8,8 +8,8 @@ import javax.swing.text.JTextComponent
 /**
  * @author Alexander Lobas
  */
-class SingleTextSelectionHandler : CaretListener {
-  private val myComponents = ArrayList<JTextComponent>()
+open class SingleTextSelectionHandler : CaretListener {
+  protected val myComponents = ArrayList<JTextComponent>()
   private var myIgnoreEvents = false
 
   fun add(component: JTextComponent, start: Boolean) {

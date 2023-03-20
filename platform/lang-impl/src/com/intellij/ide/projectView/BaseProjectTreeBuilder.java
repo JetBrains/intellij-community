@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -39,8 +38,7 @@ import java.util.List;
 /**
  * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   protected final Project myProject;
 
@@ -57,12 +55,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   @Override
   public Promise<Object> revalidateElement(@NotNull Object element) {
-    if (!(element instanceof AbstractTreeNode)) {
+    if (!(element instanceof AbstractTreeNode node)) {
       return Promises.rejectedPromise();
     }
 
     final AsyncPromise<Object> result = new AsyncPromise<>();
-    AbstractTreeNode node = (AbstractTreeNode)element;
     final Object value = node.getValue();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
     batch(indicator -> {
@@ -131,8 +128,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   /**
    * @deprecated Use {@link #selectAsync}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
     return Promises.toActionCallback(_select(element, file, requestFocus, Conditions.alwaysTrue()));
@@ -218,7 +214,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   private AbstractTreeNode alreadySelectedNode(final Object element) {
     final TreePath[] selectionPaths = getTree().getSelectionPaths();
-    if (selectionPaths == null || selectionPaths.length == 0) {
+    if (selectionPaths == null) {
       return null;
     }
     for (TreePath selectionPath : selectionPaths) {
@@ -251,7 +247,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private Promise<AbstractTreeNode<?>> expandPathTo(final VirtualFile file,
                                                  @NotNull final AbstractTreeNode root,
                                                  final Object element,
-                                                 @NotNull final Condition<AbstractTreeNode<?>> nonStopCondition,
+                                                 @NotNull final Condition<? super AbstractTreeNode<?>> nonStopCondition,
                                                  @NotNull final ProgressIndicator indicator,
                                                  @Nullable final Ref<Object> target) {
     final AsyncPromise<AbstractTreeNode<?>> async = new AsyncPromise<>();
@@ -319,14 +315,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   private void expandChild(@NotNull final List<? extends AbstractTreeNode<?>> kids,
                            int i,
-                           @NotNull final Condition<AbstractTreeNode<?>> nonStopCondition,
+                           final @NotNull Condition<? super AbstractTreeNode<?>> nonStopCondition,
                            final VirtualFile file,
                            final Object element,
                            @NotNull final AsyncPromise<? super AbstractTreeNode<?>> async,
                            @NotNull final ProgressIndicator indicator,
                            final Ref<Object> virtualSelectTarget) {
     while (i < kids.size()) {
-      final AbstractTreeNode eachKid = kids.get(i);
+      final AbstractTreeNode<?> eachKid = kids.get(i);
       final boolean[] nodeWasCollapsed = {true};
       final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
       if (nodeForElement != null) {
@@ -375,8 +371,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean validateNode(@NotNull final Object child) {
-    if (child instanceof ProjectViewNode) {
-      final ProjectViewNode projectViewNode = (ProjectViewNode)child;
+    if (child instanceof ProjectViewNode<?> projectViewNode) {
       return projectViewNode.validate();
     }
     return true;

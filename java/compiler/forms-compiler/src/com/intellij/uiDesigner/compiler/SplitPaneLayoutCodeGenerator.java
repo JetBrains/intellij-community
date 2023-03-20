@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -9,7 +9,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 
-public class SplitPaneLayoutCodeGenerator extends LayoutCodeGenerator {
+public final class SplitPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Type mySplitPaneType = Type.getType(JSplitPane.class);
   private final Method mySetLeftMethod = Method.getMethod("void setLeftComponent(java.awt.Component)");
   private final Method mySetRightMethod = Method.getMethod("void setRightComponent(java.awt.Component)");

@@ -1,18 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.component
 
+import com.intellij.collaboration.ui.util.getName
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.ui.util.getName
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
@@ -36,7 +36,7 @@ object GHHtmlErrorPanel {
   fun create(model: GHErrorPanelModel, horizontalAlignment: Int = SwingConstants.CENTER): JComponent {
 
     val pane = HtmlEditorPane().apply {
-      foreground = UIUtil.getErrorForeground()
+      foreground = NamedColorUtil.getErrorForeground()
       isFocusable = true
 
       removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)

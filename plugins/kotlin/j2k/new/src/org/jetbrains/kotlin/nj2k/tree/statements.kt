@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
 
@@ -48,7 +48,7 @@ class JKBreakStatement(label: JKLabel) : JKStatement() {
 
 class JKJavaYieldStatement(expression: JKExpression) : JKStatement() {
     val expression: JKExpression by child(expression)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaYildStatement(this)
+    override fun accept(visitor: JKVisitor) = visitor.visitJavaYieldStatement(this)
 }
 
 class JKContinueStatement(label: JKLabel) : JKStatement() {
@@ -121,11 +121,6 @@ class JKJavaSwitchStatement(
     override var expression: JKExpression by child(expression)
     override var cases: List<JKJavaSwitchCase> by children(cases)
     override fun accept(visitor: JKVisitor) = visitor.visitJavaSwitchStatement(this)
-}
-
-class JKJavaThrowStatement(exception: JKExpression) : JKStatement() {
-    var exception: JKExpression by child(exception)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaThrowStatement(this)
 }
 
 class JKJavaTryStatement(

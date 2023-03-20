@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
@@ -32,7 +32,7 @@ public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder
             return null;
         }
 
-        KtTryExpression tryExpression = (KtTryExpression) KtPsiFactoryKt.KtPsiFactory(project).createExpression(getCodeTemplate());
+        KtTryExpression tryExpression = (KtTryExpression) new KtPsiFactory(project).createExpression(getCodeTemplate());
         tryExpression = (KtTryExpression) container.addAfter(tryExpression, statements[statements.length - 1]);
 
         // TODO move a comment for first statement

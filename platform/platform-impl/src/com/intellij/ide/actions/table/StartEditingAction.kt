@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.table
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -17,6 +18,7 @@ internal class StartEditingAction : DumbAwareAction() {
                                                 ?: table.getClientProperty(EditableTable.KEY) as? EditableTable
 
   override fun update(event: AnActionEvent) {
+    event.presentation.isEnabledAndVisible = false
     val table = event.contextTable ?: return
     event.presentation.isVisible = true
     // enable editing if the selected cell is editable
@@ -28,6 +30,10 @@ internal class StartEditingAction : DumbAwareAction() {
     getEditableTable(table)?.updateAction(event.presentation, row, column)
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     // javax.swing.plaf.basic.BasicTableUI.Actions.START_EDITING
     SwingActionDelegate.performAction("startEditing", event.contextTable)
@@ -35,6 +41,5 @@ internal class StartEditingAction : DumbAwareAction() {
 
   init {
     isEnabledInModalContext = true
-    templatePresentation.isEnabledAndVisible = false
   }
 }

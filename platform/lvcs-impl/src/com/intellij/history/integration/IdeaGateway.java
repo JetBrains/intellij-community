@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
-import com.intellij.history.VersionedFileSystem;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.StoredContent;
@@ -52,8 +51,11 @@ public class IdeaGateway {
   }
 
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
+    if (VersionManagingFileSystem.isDisabled(f)) {
+      return false;
+    }
     if (!f.isInLocalFileSystem()) {
-      return isNonLocalVersioned(f);
+      return VersionManagingFileSystem.isFsSupported(f);
     }
 
     if (!f.isDirectory()) {
@@ -91,10 +93,6 @@ public class IdeaGateway {
     if (shouldBeInContent && !isInContent) return false;
 
     return true;
-  }
-
-  public static boolean isNonLocalVersioned(@NotNull VirtualFile f) {
-    return f.getFileSystem() instanceof VersionedFileSystem;
   }
 
   public String getPathOrUrl(@NotNull VirtualFile file) {
@@ -244,15 +242,13 @@ public class IdeaGateway {
 
   @NotNull
   public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
   }
 
   @NotNull
   public static Iterable<VirtualFile> loadAndIterateChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return Arrays.asList(nf.getChildren());
   }
 
@@ -276,7 +272,7 @@ public class IdeaGateway {
     List<VirtualFile> roots = new SmartList<>();
 
     for (VirtualFile root : ManagingFS.getInstance().getRoots()) {
-      if ((root.isInLocalFileSystem() || isNonLocalVersioned(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
+      if ((root.isInLocalFileSystem() || VersionManagingFileSystem.isFsSupported(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
         roots.add(root);
       }
     }

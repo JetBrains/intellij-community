@@ -11,31 +11,36 @@ import com.siyeh.ig.performance.ArraysAsListWithZeroOrOneArgumentInspection;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings({"ClassInitializerMayBeStatic", "ArraysAsListWithZeroOrOneArgument"})
 public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesTestCase {
 
   public void testZeroArguments() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Arrays.asList/**/();\n" +
-           "}}",
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    List.of();\n" +
-           "}}");
+           """
+             import java.util.*;
+             class X {{
+                 Object o = Arrays.asList/**/();
+             }}""",
+           """
+             import java.util.*;
+             class X {{
+                 Object o = List.of();
+             }}""");
   }
 
   @SuppressWarnings("RedundantOperationOnEmptyContainer")
   public void testZeroArgumentsWithType() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Spliterator<String> it = Arrays.<String>/**/asList().spliterator();\n" +
-           "}}",
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Spliterator<String> it = List.<String>of().spliterator();\n" +
-           "}}");
+           """
+             import java.util.*;
+             class X {{
+                 Spliterator<String> it = Arrays.<String>/**/asList().spliterator();
+             }}""",
+           """
+             import java.util.*;
+             class X {{
+                 Spliterator<String> it = List.<String>of().spliterator();
+             }}""");
   }
 
   public void testOneArgument() {
@@ -47,6 +52,18 @@ public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesT
            "import java.util.*;" +
            "class X {{\n" +
            "  List<Map<String, String>> list = List.of(new HashMap<>());" +
+           "}}");
+  }
+
+  public void testOneArgumentNullable() {
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.singletonList()"),
+           "import java.util.*;" +
+           "class X {{\n" +
+           "  List<?> list = Arrays./**/asList((String)null);" +
+           "}}",
+           "import java.util.*;" +
+           "class X {{\n" +
+           "  List<?> list = Collections.singletonList((String) null);" +
            "}}");
   }
 

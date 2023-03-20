@@ -91,29 +91,21 @@ public enum DfaNullability {
 
   @NotNull
   public static DfaNullability fromNullability(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return NOT_NULL;
-      case NULLABLE:
-        return NULLABLE;
-      case UNKNOWN:
-        return UNKNOWN;
-    }
-    throw new IllegalStateException("Unknown nullability: "+nullability);
+    return switch (nullability) {
+      case NOT_NULL -> NOT_NULL;
+      case NULLABLE -> NULLABLE;
+      case UNKNOWN -> UNKNOWN;
+    };
   }
 
   @NotNull
   public DfReferenceType asDfType() {
-    switch (this) {
-      case NULL:
-        return DfTypes.NULL;
-      case NOT_NULL:
-        return DfTypes.NOT_NULL_OBJECT;
-      case UNKNOWN:
-        return DfTypes.OBJECT_OR_NULL;
-      default:
-        return DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfType.BOTTOM);
-    }
+    return switch (this) {
+      case NULL -> DfTypes.NULL;
+      case NOT_NULL -> DfTypes.NOT_NULL_OBJECT;
+      case UNKNOWN -> DfTypes.OBJECT_OR_NULL;
+      default -> DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfType.BOTTOM);
+    };
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ProjectTopics;
@@ -107,7 +107,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     if (myProject != null) {
       Project project = myProject;
       actions.add(() -> {
-        TestApplicationManagerKt.tearDownProjectAndApp(myProject);
+        TestApplicationManager.tearDownProjectAndApp(myProject);
         myProject = null;
       });
 
@@ -176,7 +176,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void setUpProject() throws Exception {
-    OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true).withBeforeOpenCallback(project -> {
+    OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true, project -> {
       project.getMessageBus().simpleConnect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project __, @NotNull Module module) {
@@ -185,13 +185,14 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           }
         }
       });
-      return true;
     });
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     myProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(generateProjectPath(), options));
-
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
     EdtTestUtil.runInEdtAndWait(() -> {
       for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();

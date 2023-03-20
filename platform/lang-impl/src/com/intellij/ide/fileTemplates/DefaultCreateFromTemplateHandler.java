@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -47,11 +48,14 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
   }
 
   protected String checkAppendExtension(String fileName, @NotNull FileTemplate template) {
-    final String suggestedFileNameEnd = "." + template.getExtension();
+    if (!StringUtil.isEmpty(template.getExtension())) { // can be empty, e.g. Dockerfile
+      String suggestedFileNameEnd = "." + template.getExtension();
 
-    if (!fileName.endsWith(suggestedFileNameEnd)) {
-      fileName += suggestedFileNameEnd;
+      if (!fileName.endsWith(suggestedFileNameEnd)) {
+        fileName += suggestedFileNameEnd;
+      }
     }
+
     return fileName;
   }
 

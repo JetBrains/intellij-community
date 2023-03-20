@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -34,7 +35,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
 
             val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(property).bindingContext
             val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, property) as? PropertyDescriptor ?: return false
-            if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) == false) return false
+            if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) != true) return false
 
             val containingClass = property.getStrictParentOfType<KtClassOrObject>() ?: return false
             if (containingClass.isExpectDeclaration()) return false
@@ -72,13 +73,13 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
 
         private fun createGetter(element: KtProperty) {
             val body = "get() = ${backingName(element)}"
-            val newGetter = KtPsiFactory(element).createProperty("val x $body").getter!!
+            val newGetter = KtPsiFactory(element.project).createProperty("val x $body").getter!!
             element.addAccessor(newGetter)
         }
 
         private fun createSetter(element: KtProperty) {
             val body = "set(value) { ${backingName(element)} = value }"
-            val newSetter = KtPsiFactory(element).createProperty("val x $body").setter!!
+            val newSetter = KtPsiFactory(element.project).createProperty("val x $body").setter!!
             element.addAccessor(newSetter)
         }
 
@@ -88,7 +89,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
         }
 
         private fun createBackingProperty(property: KtProperty) {
-            val backingProperty = KtPsiFactory(property).buildDeclaration {
+            val backingProperty = KtPsiFactory(property.project).buildDeclaration {
                 appendFixedText("private ")
                 appendFixedText(property.valOrVarKeyword.text)
                 appendFixedText(" ")
@@ -119,7 +120,7 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     val target = expression.resolveToCall()?.resultingDescriptor
                     if (target is SyntheticFieldDescriptor) {
-                        expression.replace(KtPsiFactory(element).createSimpleName("_$propertyName"))
+                        expression.replace(KtPsiFactory(element.project).createSimpleName("_$propertyName"))
                     }
                 }
 

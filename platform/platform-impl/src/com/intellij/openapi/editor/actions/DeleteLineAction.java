@@ -16,10 +16,10 @@
 
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -35,15 +35,28 @@ public class DeleteLineAction extends TextComponentEditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  public static class CheckHandler extends EditorWriteActionHandler {
+    private final EditorWriteActionHandler myOriginal;
+
+    public CheckHandler(EditorActionHandler original) {
+      myOriginal = (EditorWriteActionHandler)original;
+    }
+
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (CtrlYActionChooser.isCurrentShortcutOk(dataContext)) super.doExecute(editor, caret, dataContext);
     }
 
     @Override
+    public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      myOriginal.executeWriteAction(editor, caret, dataContext);
+    }
+  }
+
+  private static class Handler extends EditorWriteActionHandler {
+
+    @Override
     public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editor.delete.line");
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();

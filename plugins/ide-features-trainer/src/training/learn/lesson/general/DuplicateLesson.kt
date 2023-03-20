@@ -11,15 +11,16 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import kotlin.math.abs
 
-class DuplicateLesson(private val sample: LessonSample) :
-  KLesson("Duplicate", LessonsBundle.message("duplicate.and.delete.lines.lesson.name")) {
+class DuplicateLesson(private val sample: LessonSample,
+                      private val helpUrl: String = "working-with-source-code.html#editor_lines_code_blocks")
+  : KLesson("Duplicate", LessonsBundle.message("duplicate.and.delete.lines.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
 
     task("EditorDuplicate") {
       text(LessonsBundle.message("duplicate.and.delete.lines.duplicate.line", action(it)))
       trigger(it)
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       test { actions(it) }
     }
 
@@ -62,10 +63,8 @@ class DuplicateLesson(private val sample: LessonSample) :
     return start.column == end.column && abs(start.line - end.line) >= 2
   }
 
-  override val suitableTips = listOf("CtrlD", "DeleteLine")
-
   override val helpLinks: Map<String, String> get() = mapOf(
-    Pair(LessonsBundle.message("help.lines.of.code"),
-         LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
+    Pair(LessonsBundle.message("help.code.duplicate"),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

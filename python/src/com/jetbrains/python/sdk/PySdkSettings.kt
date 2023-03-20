@@ -13,9 +13,6 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-/**
- * @author vlan
- */
 @State(name = "PySdkSettings", storages = [Storage(value = "pySdk.xml", roamingType = RoamingType.DISABLED)])
 class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   companion object {
@@ -51,7 +48,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
     preferredVirtualEnvBaseSdk = baseSdk.homePath
   }
 
-  fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
+  private fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
     val pathMap = ReplacePathToMacroMap().apply {
       projectPath?.let {
         addMacroReplacement(it, PathMacroUtil.PROJECT_DIR_MACRO_NAME)

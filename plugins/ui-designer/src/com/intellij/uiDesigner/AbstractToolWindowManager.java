@@ -23,8 +23,7 @@ public abstract class AbstractToolWindowManager extends LightToolWindowManager {
   @Nullable
   @Override
   protected DesignerEditorPanelFacade getDesigner(FileEditor editor) {
-    if (editor instanceof UIFormEditor) {
-      UIFormEditor formEditor = (UIFormEditor)editor;
+    if (editor instanceof UIFormEditor formEditor) {
       return formEditor.getEditor();
     }
     return null;

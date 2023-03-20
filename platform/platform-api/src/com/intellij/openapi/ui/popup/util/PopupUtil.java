@@ -14,13 +14,19 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
@@ -207,5 +213,66 @@ public final class PopupUtil {
         popup.showInCenterOf(component);
       }
     }
+  }
+
+  public static Border createComplexPopupTextFieldBorder() {
+    return JBUI.Borders.compound(new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets()),
+                                 JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0,
+                                                         JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT, 0),
+                                 new EmptyBorder(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets()));
+  }
+
+  public static void applyNewUIBackground(@Nullable Component component) {
+    if (component != null && ExperimentalUI.isNewUI()) {
+      component.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
+  }
+
+  public static Border getComplexPopupHorizontalHeaderBorder() {
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
+    //noinspection UseDPIAwareBorders
+    return new EmptyBorder(0, headerInsets.left, 0, headerInsets.right);
+  }
+
+  public static Border getComplexPopupVerticalHeaderBorder() {
+    Insets headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets();
+    //noinspection UseDPIAwareBorders
+    return new EmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0);
+  }
+
+  public static void configListRendererFixedHeight(SelectablePanel selectablePanel) {
+    configListRendererFlexibleHeight(selectablePanel);
+    selectablePanel.setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
+  }
+
+  public static void configListRendererFlexibleHeight(SelectablePanel selectablePanel) {
+    int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
+    Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+    //noinspection UseDPIAwareBorders
+    selectablePanel.setBorder(new EmptyBorder(innerInsets.top, innerInsets.left + leftRightInset, innerInsets.bottom,
+                              innerInsets.right + leftRightInset));
+    selectablePanel.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+    //noinspection UseDPIAwareInsets
+    selectablePanel.setSelectionInsets(new Insets(0, leftRightInset, 0, leftRightInset));
+  }
+
+  public static void applyPreviewTitleInsets(JComponent title) {
+    if (ExperimentalUI.isNewUI()) {
+      title.setBorder(JBUI.Borders.empty(10, 20, 6, 0));
+    }
+    else {
+      title.setBorder(JBUI.Borders.empty(3, 8, 4, 8));
+    }
+  }
+
+  public static @NotNull Insets getListInsets(boolean titleVisible, boolean adVisible) {
+    if (!ExperimentalUI.isNewUI()) {
+      return UIUtil.getListViewportPadding(adVisible);
+    }
+
+    int topInset = titleVisible ? 0 : JBUI.CurrentTheme.Popup.bodyTopInsetNoHeader();
+    int bottomInset = adVisible ? JBUI.CurrentTheme.Popup.bodyBottomInsetBeforeAd() : JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd();
+    return new JBInsets(topInset, 0, bottomInset, 0);
+
   }
 }

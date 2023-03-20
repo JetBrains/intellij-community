@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.Alarm;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +26,28 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
-final class MacScrollBarUI extends DefaultScrollBarUI {
+class MacScrollBarUI extends DefaultScrollBarUI {
   private static final List<Reference<MacScrollBarUI>> UI = new ArrayList<>();
-  private final Alarm myAlarm = new Alarm();
-  private boolean myTrackHovered;
+
+  MacScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
+    super(thickness, thicknessMax, thicknessMin);
+  }
 
   MacScrollBarUI() {
     super(14, 14, 11);
+  }
+
+  @Override
+  protected ScrollBarAnimationBehavior createBaseAnimationBehavior() {
+    return new MacScrollBarAnimationBehavior(
+      new Computable<>() {
+        @Override
+        public JScrollBar compute() {
+          return myScrollBar;
+        }
+      },
+      myTrack.animator,
+      myThumb.animator);
   }
 
   @Override
@@ -43,7 +57,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   boolean isTrackClickable() {
-    return isOpaque(myScrollBar) || (myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0);
+    return isOpaque(myScrollBar) || (myAnimationBehavior.getTrackFrame() > 0 && myAnimationBehavior.getThumbFrame() > 0);
   }
 
   @Override
@@ -52,27 +66,8 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
-  void onTrackHover(boolean hover) {
-    myTrackHovered = hover;
-    if (myScrollBar != null && isOpaque(myScrollBar)) {
-      myTrack.animator.start(hover);
-      myThumb.animator.start(hover);
-    }
-    else if (hover) {
-      myTrack.animator.start(true);
-    }
-    else {
-      myThumb.animator.start(false);
-    }
-  }
-
-  @Override
-  void onThumbHover(boolean hover) {
-  }
-
-  @Override
   void paintTrack(Graphics2D g, JComponent c) {
-    if (myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0 || isOpaque(c)) super.paintTrack(g, c);
+    if (myAnimationBehavior.getTrackFrame() > 0 && myAnimationBehavior.getThumbFrame() > 0 || isOpaque(c)) super.paintTrack(g, c);
   }
 
   @Override
@@ -80,20 +75,8 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     if (isOpaque(c)) {
       paint(myThumb, g, c, true);
     }
-    else if (myThumb.animator.myValue > 0) {
+    else if (myAnimationBehavior.getThumbFrame() > 0) {
       paint(myThumb, g, c, false);
-    }
-  }
-
-  @Override
-  void onThumbMove() {
-    if (myScrollBar != null && myScrollBar.isShowing() && !isOpaque(myScrollBar)) {
-      if (!myTrackHovered && myThumb.animator.myValue == 0) myTrack.animator.rewind(false);
-      myThumb.animator.rewind(true);
-      myAlarm.cancelAllRequests();
-      if (!myTrackHovered) {
-        myAlarm.addRequest(() -> myThumb.animator.start(false), 700);
-      }
     }
   }
 
@@ -109,7 +92,6 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   public void uninstallUI(JComponent c) {
     processReferences(null, this, null);
-    myAlarm.cancelAllRequests();
     super.uninstallUI(c);
   }
 
@@ -136,11 +118,10 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
      *
      * @param bar the scroll bar with custom UI
      */
-    private void pauseThumbAnimation(JScrollBar bar) {
+    private static void pauseThumbAnimation(JScrollBar bar) {
       Object object = bar == null ? null : bar.getUI();
-      if (object instanceof MacScrollBarUI) {
-        MacScrollBarUI ui = (MacScrollBarUI)object;
-        if (0 < ui.myThumb.animator.myValue) ui.onThumbMove();
+      if (object instanceof MacScrollBarUI ui) {
+        if (0 < ui.myAnimationBehavior.getThumbFrame()) ui.myAnimationBehavior.onThumbMove();
       }
     }
   });
@@ -175,12 +156,12 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     }
   }
 
-  private void updateStyle(Style style) {
+  protected void updateStyle(Style style) {
     if (myScrollBar != null) {
       myScrollBar.setOpaque(style != Style.Overlay);
       myScrollBar.revalidate();
       myScrollBar.repaint();
-      onThumbMove();
+      myAnimationBehavior.onThumbMove();
     }
   }
 
@@ -196,7 +177,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   private static <T> T callMac(NotNullProducer<? extends T> producer) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       NSAutoreleasePool pool = new NSAutoreleasePool();
       try {
         return producer.produce();
@@ -245,7 +226,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     };
   }
 
-  private enum Style {
+  protected enum Style {
     Legacy, Overlay;
 
     private static final Native<Style> CURRENT = new Native<>() {
@@ -298,7 +279,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     Native() {
       Logger.getInstance(MacScrollBarUI.class).debug("initialize ", this);
       callMac(() -> initialize());
-      UIUtil.invokeLaterIfNeeded(this);
+      EdtInvocationManager.invokeLaterIfNeeded(this);
     }
 
     abstract ID initialize();
@@ -310,7 +291,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
       Logger.getInstance(MacScrollBarUI.class).debug("update ", this);
-      UIUtil.invokeLaterIfNeeded(this);
+      EdtInvocationManager.invokeLaterIfNeeded(this);
     }
 
     @Override

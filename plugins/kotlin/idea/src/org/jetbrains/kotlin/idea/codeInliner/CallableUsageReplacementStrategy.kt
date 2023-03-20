@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -42,24 +43,25 @@ class CallableUsageReplacementStrategy(
 
         if (!CodeInliner.canBeReplaced(callElement)) return null
 
+        val languageVersionSettings = usage.getResolutionFacade().languageVersionSettings
         //TODO: precheck pattern correctness for annotation entry
 
         return when {
             usage is KtArrayAccessExpression || usage is KtCallExpression -> {
                 {
-                    val nameExpression = OperatorToFunctionIntention.convert(usage).second
+                    val nameExpression = OperatorToFunctionConverter.convert(usage).second
                     createReplacer(nameExpression)?.invoke()
                 }
             }
             usage is KtOperationReferenceExpression && usage.getReferencedNameElementType() != KtTokens.IDENTIFIER -> {
                 {
-                    val nameExpression = OperatorToFunctionIntention.convert(usage.parent as KtExpression).second
+                    val nameExpression = OperatorToFunctionConverter.convert(usage.parent as KtExpression).second
                     createReplacer(nameExpression)?.invoke()
                 }
             }
             usage is KtSimpleNameExpression -> {
                 {
-                    CodeInliner(usage, bindingContext, resolvedCall, callElement, inlineSetter, replacement).doInline()
+                    CodeInliner(languageVersionSettings, usage, bindingContext, resolvedCall, callElement, inlineSetter, replacement).doInline()
                 }
             }
             else -> {

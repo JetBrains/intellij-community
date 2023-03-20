@@ -17,9 +17,6 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
 
-/**
- * @author Irina.Chernushina on 4/20/2017.
- */
 public final class JsonSchemaVariantsTreeBuilder {
 
   public static JsonSchemaTreeNode buildTree(@NotNull Project project,

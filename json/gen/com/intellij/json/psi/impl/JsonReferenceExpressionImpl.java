@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.json.JsonElementTypes.*;
 import com.intellij.json.psi.*;
 
-public class JsonReferenceExpressionImpl extends JsonValueImpl implements JsonReferenceExpression {
+public class JsonReferenceExpressionImpl extends JsonReferenceLiteralMixin implements JsonReferenceExpression {
 
   public JsonReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);

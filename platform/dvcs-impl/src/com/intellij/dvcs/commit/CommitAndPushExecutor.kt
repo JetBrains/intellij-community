@@ -4,12 +4,17 @@ package com.intellij.dvcs.commit
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.commit.CommitWorkflowHandler
-import com.intellij.vcs.commit.NonModalCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitWorkflowHandlerState
 
 @NlsActions.ActionText
 fun CommitWorkflowHandler.getCommitAndPushActionName(): String {
-  val isAmend = amendCommitHandler.isAmendCommitMode
-  val isSkipCommitChecks = (this as? NonModalCommitWorkflowHandler<*, *>)?.isSkipCommitChecks() == true
+  return getCommitAndPushActionName(getState())
+}
+
+@NlsActions.ActionText
+fun getCommitAndPushActionName(state: CommitWorkflowHandlerState): String {
+  val isAmend = state.isAmend
+  val isSkipCommitChecks = state.isSkipCommitChecks
 
   return when {
     isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.and.push.text")

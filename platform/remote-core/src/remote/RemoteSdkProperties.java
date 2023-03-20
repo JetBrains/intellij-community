@@ -2,7 +2,6 @@
 package com.intellij.remote;
 
 import com.intellij.util.PathMappingSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,19 +25,6 @@ public interface RemoteSdkProperties extends RemoteSdkPropertiesPaths {
   void setSdkId(String sdkId);
 
   String getSdkId();
-
-  /**
-   * isValid() is used now
-   * To be removed in IDEA 15
-   *
-   * @deprecated
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
-  boolean isInitialized();
-
-  @Deprecated
-  void setInitialized(boolean initialized);
 
   boolean isValid();
 

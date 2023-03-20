@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -113,6 +115,7 @@ public final class VcsRootErrorsFinder {
     if (vcs == null) return false;
 
     VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
-    return rootChecker.isRoot(mapping.getDirectory());
+    VirtualFile directory = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
+    return directory != null && rootChecker.validateRoot(directory);
   }
 }

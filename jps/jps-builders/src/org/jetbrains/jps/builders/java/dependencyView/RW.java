@@ -10,9 +10,6 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import java.io.*;
 import java.util.Collection;
 
-/**
- * @author: db
- */
 public final class RW {
   private RW() {
 

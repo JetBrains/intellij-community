@@ -1,20 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.core
 
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginProperty
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PluginPropertyReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyContext
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.PropertyEntityReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
 import org.jetbrains.kotlin.tools.projectWizard.core.service.SettingSavingWizardService
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardService
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.allIRModules
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleReference
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.path
 import kotlin.reflect.KClass
 
 
@@ -116,12 +116,10 @@ class Context private constructor(
             get() = this@Context.isUnitTestMode
 
         inline fun <reified S : WizardService> service(noinline filter: (S) -> Boolean = { true }): S =
-            serviceByClass(S::class, filter)
+            serviceOrNull(filter) ?: error("Service ${S::class.simpleName} was not found")
 
-
-        fun <S : WizardService> serviceByClass(klass: KClass<S>, filter: (S) -> Boolean = { true }): S =
-            servicesManager.serviceByClass(klass, filter) ?: error("Service ${klass.simpleName} was not found")
-
+        inline fun <reified S : WizardService> serviceOrNull(noinline filter: (S) -> Boolean = { true }): S? =
+            servicesManager.serviceByClass(S::class, filter)
 
         val <T : Any> PluginProperty<T>.reference: PluginPropertyReference<T>
             get() = PluginPropertyReference(this)
@@ -129,7 +127,7 @@ class Context private constructor(
         val <T : Any> PluginProperty<T>.propertyValue: T
             get() = propertyContext[this] ?: error("No value is present for property `$this`")
 
-        val <T : Any> PropertyReference<T>.propertyValue: T
+        val <T : Any> PropertyEntityReference<T>.propertyValue: T
             get() = propertyContext[this] ?: error("No value is present for property `$this`")
 
         val <V : Any, T : SettingType<V>> SettingReference<V, T>.settingValue: V
@@ -192,15 +190,14 @@ class Context private constructor(
             get() = settingContext.eventManager
 
         fun <A, B : Any> Task1<A, B>.execute(value: A): TaskResult<B> {
-            @Suppress("UNCHECKED_CAST")
-            return action(this@Writer, value)
+          return action(this@Writer, value)
         }
 
         fun <T : Any> PluginProperty<T>.update(
             updater: suspend ComputeContext<*>.(T) -> TaskResult<T>
         ): TaskResult<Unit> = reference.update(updater)
 
-        fun <T : Any> PropertyReference<T>.update(
+        fun <T : Any> PropertyEntityReference<T>.update(
             updater: suspend ComputeContext<*>.(T) -> TaskResult<T>
         ): TaskResult<Unit> = compute {
             val (newValue) = updater(propertyValue)
@@ -215,7 +212,7 @@ class Context private constructor(
             values: List<T>
         ): TaskResult<Unit> = reference.addValues(values)
 
-        fun <T : Any> PropertyReference<List<T>>.addValues(
+        fun <T : Any> PropertyEntityReference<List<T>>.addValues(
             values: List<T>
         ): TaskResult<Unit> = update { oldValues -> success(oldValues + values) }
 
@@ -228,7 +225,7 @@ class Context private constructor(
             settingContext[this] = newValue
         }
 
-        fun <V : Any> PropertyReference<V>.initDefaultValue(newValue: V) {
+        fun <V : Any> PropertyEntityReference<V>.initDefaultValue(newValue: V) {
             propertyContext[this] = property.defaultValue
         }
 

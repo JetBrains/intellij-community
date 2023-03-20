@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -103,6 +103,11 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
         runTest("testData/navigation/implementations/ImplementsInInlineClass.kt");
     }
 
+    @TestMetadata("InterfaceImplementorsWithDeclaration.kt")
+    public void testInterfaceImplementorsWithDeclaration() throws Exception {
+        runTest("testData/navigation/implementations/InterfaceImplementorsWithDeclaration.kt");
+    }
+
     @TestMetadata("ObjectImported.kt")
     public void testObjectImported() throws Exception {
         runTest("testData/navigation/implementations/ObjectImported.kt");
@@ -121,10 +126,5 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
     @TestMetadata("PropertyOverriddenNavigation.kt")
     public void testPropertyOverriddenNavigation() throws Exception {
         runTest("testData/navigation/implementations/PropertyOverriddenNavigation.kt");
-    }
-
-    @TestMetadata("TraitImplementorsWithDeclaration.kt")
-    public void testTraitImplementorsWithDeclaration() throws Exception {
-        runTest("testData/navigation/implementations/TraitImplementorsWithDeclaration.kt");
     }
 }

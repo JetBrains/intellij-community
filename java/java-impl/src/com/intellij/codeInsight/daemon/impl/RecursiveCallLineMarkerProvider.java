@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -22,9 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Danila Ponomarenko
- */
 public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
@@ -39,8 +36,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
 
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
-      if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression methodCall) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement.class, true, PsiMethod.class);
         if (!statements.contains(statement) && isRecursiveMethodCall(methodCall)) {
           statements.add(statement);

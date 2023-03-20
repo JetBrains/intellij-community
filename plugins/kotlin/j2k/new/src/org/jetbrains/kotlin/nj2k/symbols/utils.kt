@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.symbols
 
@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.findDeepestSuperMethodsNoWrapping
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.isObjectOrCompanionObject
 import org.jetbrains.kotlin.nj2k.psi
@@ -29,11 +29,11 @@ fun JKSymbol.getDisplayFqName(): String {
     }.fold(name) { acc, symbol -> "${symbol.name}.$acc" }
 }
 
-fun JKSymbol.deepestFqName(): String? {
+fun JKSymbol.deepestFqName(): String {
     fun Any.deepestFqNameForTarget(): String? =
         when (this) {
-            is PsiMethod -> (findDeepestSuperMethods().firstOrNull() ?: this).getKotlinFqName()?.asString()
-            is KtNamedFunction -> findDeepestSuperMethodsNoWrapping(this).firstOrNull()?.getKotlinFqName()?.asString()
+            is PsiMethod -> (findDeepestSuperMethods().firstOrNull() ?: this).kotlinFqName?.asString()
+            is KtNamedFunction -> findDeepestSuperMethodsNoWrapping(this).firstOrNull()?.kotlinFqName?.asString()
             is JKMethod -> psi<PsiElement>()?.deepestFqNameForTarget()
             else -> null
         }
@@ -49,9 +49,11 @@ val JKSymbol.isStaticMember
         is KtElement -> target.getStrictParentOfType<KtClassOrObject>()
             ?.safeAs<KtObjectDeclaration>()
             ?.isCompanion() == true
+
         is JKTreeElement ->
             target.safeAs<JKOtherModifiersOwner>()?.hasOtherModifier(OtherModifier.STATIC) == true
-                    || target.parentOfType<JKClass>()?.isObjectOrCompanionObject == true
+                    || target.parent.safeAs<JKClassBody>()?.parent.safeAs<JKClass>()?.isObjectOrCompanionObject == true
+
         else -> false
     }
 

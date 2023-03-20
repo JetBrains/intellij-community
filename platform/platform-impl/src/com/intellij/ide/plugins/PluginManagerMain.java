@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -7,7 +7,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -54,7 +54,7 @@ public final class PluginManagerMain {
 
   /**
    * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, com.intellij.ide.plugins.PluginEnabler, ModalityState, Runnable)}
-   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, Consumer)}.
+   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, ModalityState, Consumer)}.
    */
   @Deprecated(since = "2020.2", forRemoval = true)
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
@@ -62,7 +62,8 @@ public final class PluginManagerMain {
                                         @Nullable Runnable onSuccess,
                                         @NotNull PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
-    return downloadPluginsAndCleanup(plugins, ContainerUtil.filterIsInstance(customPlugins, PluginNode.class), onSuccess, pluginEnabler, ModalityState.any(), cleanup);
+    var filteredCustomPlugins = ContainerUtil.filterIsInstance(customPlugins, PluginNode.class);
+    return downloadPluginsAndCleanup(plugins, filteredCustomPlugins, onSuccess, pluginEnabler, ModalityState.any(), cleanup);
   }
 
   public static boolean downloadPluginsAndCleanup(@NotNull List<PluginNode> plugins,
@@ -74,60 +75,67 @@ public final class PluginManagerMain {
     return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, modalityState, cleanup != null ? __ -> cleanup.run() : null);
   }
 
-  /**
-   * @deprecated Please use the overload with explicitly passed modality state
-   */
-  @Deprecated
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
                                         @NotNull Collection<PluginNode> customPlugins,
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
                                         @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-                                        @Nullable Consumer<? super Boolean> function) throws IOException {
-    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, ModalityState.any(), function);
+                                        @NotNull final ModalityState modalityState,
+                                        @Nullable Consumer<Boolean> function) throws IOException {
+    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, true);
   }
 
-  public static boolean downloadPlugins(
-    @NotNull List<PluginNode> plugins,
-    @NotNull Collection<PluginNode> customPlugins,
-    boolean allowInstallWithoutRestart,
-    @Nullable Runnable onSuccess,
-    @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-    @NotNull final ModalityState modalityState,
-    @Nullable Consumer<? super Boolean> function) throws IOException {
+  public static boolean downloadPluginsModal(@NotNull List<PluginNode> plugins,
+                                             @NotNull Collection<PluginNode> customPlugins,
+                                             boolean allowInstallWithoutRestart,
+                                             @Nullable Runnable onSuccess,
+                                             @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                             @NotNull ModalityState modalityState,
+                                             @Nullable Consumer<Boolean> function) throws IOException {
+    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, false);
+  }
+
+  private static boolean downloadPluginsImpl(List<PluginNode> plugins,
+                                             Collection<PluginNode> customPlugins,
+                                             boolean allowInstallWithoutRestart,
+                                             @Nullable Runnable onSuccess,
+                                             com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                             @Nullable Consumer<Boolean> function,
+                                             ModalityState modalityState,
+                                             boolean inBackground) throws IOException {
     try {
       boolean[] result = new boolean[1];
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
-            PluginInstallOperation operation = new PluginInstallOperation(plugins, customPlugins, pluginEnabler, indicator);
-            operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
-            operation.run();
 
-            boolean success = operation.isSuccess();
-            result[0] = success;
-            if (success) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                if (allowInstallWithoutRestart) {
-                  for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-                    PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
-                  }
+      Consumer<ProgressIndicator> downloading = (ProgressIndicator indicator) -> {
+        try {
+          //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
+          PluginInstallOperation operation = new PluginInstallOperation(plugins, customPlugins, pluginEnabler, indicator);
+          operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
+          operation.run();
+
+          boolean success = operation.isSuccess();
+          result[0] = success;
+          if (success) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (allowInstallWithoutRestart) {
+                for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+                  result[0] &= PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
                 }
-                if (onSuccess != null) {
-                  onSuccess.run();
-                }
-              }, modalityState);
-            }
-          }
-          finally {
-            if (function != null) {
-              ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]), ModalityState.any());
-            }
+              }
+              if (onSuccess != null) {
+                onSuccess.run();
+              }
+            }, modalityState);
           }
         }
-      });
+        finally {
+          if (function != null) {
+            ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]), ModalityState.any());
+          }
+        }
+      };
+
+      ProgressManager.getInstance().run(createTask(downloading, inBackground));
       return result[0];
     }
     catch (RuntimeException e) {
@@ -141,9 +149,28 @@ public final class PluginManagerMain {
     }
   }
 
+  private static Task createTask(Consumer<ProgressIndicator> f, boolean inBackground) {
+    if (inBackground) {
+      //noinspection DialogTitleCapitalization
+      return new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          f.accept(indicator);
+        }
+      };
+    } else {
+      return new Task.Modal(null, IdeBundle.message("progress.download.plugins"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          f.accept(indicator);
+        }
+      };
+    }
+  }
+
   public static class MyHyperlinkListener extends HyperlinkAdapter {
     @Override
-    protected void hyperlinkActivated(HyperlinkEvent e) {
+    protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
       JEditorPane pane = (JEditorPane)e.getSource();
       if (e instanceof HTMLFrameHyperlinkEvent) {
         HTMLDocument doc = (HTMLDocument)pane.getDocument();
@@ -250,7 +277,7 @@ public final class PluginManagerMain {
   }
 
   /** @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
     @Override
     default boolean isDisabled(@NotNull PluginId pluginId) {
@@ -283,18 +310,16 @@ public final class PluginManagerMain {
   @ApiStatus.Internal
   public static void onEvent(String description) {
     switch (description) {
-      case PluginManagerCore.DISABLE:
-        PluginManagerCore.onEnable(false);
-        break;
-      case PluginManagerCore.ENABLE:
+      case PluginManagerCore.DISABLE -> PluginManagerCore.onEnable(false);
+      case PluginManagerCore.ENABLE -> {
         if (PluginManagerCore.onEnable(true)) {
           notifyPluginsUpdated(null);
         }
-        break;
-      case PluginManagerCore.EDIT:
+      }
+      case PluginManagerCore.EDIT -> {
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(null);
         PluginManagerConfigurable.showPluginConfigurable(frame != null ? frame.getComponent() : null, null, List.of());
-        break;
+      }
     }
   }
 
@@ -302,7 +327,7 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    UpdateChecker.getNotificationGroup()
+    UpdateChecker.getNotificationGroupForPluginUpdateResults()
       .createNotification(title, NotificationType.INFORMATION)
       .setDisplayId("plugins.updated.suggest.restart")
       .addAction(new NotificationAction(action) {
@@ -318,29 +343,30 @@ public final class PluginManagerMain {
   }
 
   public static boolean checkThirdPartyPluginsAllowed(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    @SuppressWarnings("SSBasedInspection") Collection<? extends IdeaPluginDescriptor> aliens = descriptors.stream()
+    @SuppressWarnings("SSBasedInspection") var aliens = descriptors.stream()
       .filter(descriptor -> !(descriptor.isBundled() || PluginManagerCore.isDevelopedByJetBrains(descriptor)))
       .collect(Collectors.toList());
     if (aliens.isEmpty()) return true;
 
-    UpdateSettings updateSettings = UpdateSettings.getInstance();
+    var updateSettings = UpdateSettings.getInstance();
     if (updateSettings.isThirdPartyPluginsAllowed()) {
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
       return true;
     }
 
-    if (Main.isHeadless()) {
+    if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
       PluginManagerCore.write3rdPartyPlugins(aliens);
       return true;
     }
 
-    String title = CoreBundle.message("third.party.plugins.privacy.note.title");
-    String pluginList = aliens.stream()
-      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
+    var title = CoreBundle.message("third.party.plugins.privacy.note.title");
+    var pluginList = aliens.stream()
+      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + PluginManagerCore.getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
-    String message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
-    String yesText = CoreBundle.message("third.party.plugins.privacy.note.accept"), noText = CommonBundle.getCancelButtonText();
+    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
+    var yesText = CoreBundle.message("third.party.plugins.privacy.note.accept");
+    var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
       updateSettings.setThirdPartyPluginsAllowed(true);
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);

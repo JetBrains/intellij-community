@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Supports renaming for magic literals.
  * <strong>Install it</strong> as {@link RenamePsiElementProcessor#EP_NAME}
+ *
  * @author Ilya.Kazakevich
  */
 class PyMagicLiteralRenameProcessor extends RenamePsiElementProcessor {

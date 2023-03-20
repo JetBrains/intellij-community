@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -6,9 +6,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.codeInsight.hints.settings.Diff
-import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
+import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
@@ -18,10 +18,10 @@ import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
@@ -35,20 +35,22 @@ import com.intellij.psi.util.PsiTreeUtil
 import java.util.function.Predicate
 
 
-class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
+class ShowSettingsWithAddedPattern : AnAction() {
   init {
     templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
     templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-    
+
     val offset = editor.caretModel.offset
     val info = getHintInfoFromProvider(offset, file, editor)
     if (info is MethodInfo) {
-      e.presentation.setText(CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()), false)
+      e.presentation.setText(info.getDisableHintText(), false)
     }
     else {
       e.presentation.isVisible = false
@@ -64,7 +66,10 @@ class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
   }
 }
 
-class ShowParameterHintsSettings : AnAction(), UpdateInBackground {
+class ShowParameterHintsSettings : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     showParameterHintsDialog(e) {null}
   }
@@ -83,8 +88,7 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String
   val selectedLanguage = (info as? MethodInfo)?.language ?: fileLanguage
 
   when (val pattern = getPattern(info)) {
-    null -> InlayHintsConfigurable.showSettingsDialogForLanguage(file.project, fileLanguage,
-                                                                 Predicate { it is ParameterInlayProviderSettingsModel })
+    null -> showInlaySettings(file.project, fileLanguage, Predicate { it is ParameterInlayProviderSettingsModel })
     else -> ExcludeListDialog(selectedLanguage, pattern).show()
   }
 }
@@ -97,9 +101,9 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val language = file.language
     val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return false
-    return hintsProvider.isBlackListSupported 
-           && hasEditorParameterHintAtOffset(editor, file) 
-           && isMethodHintAtOffset(editor, file) 
+    return hintsProvider.isBlackListSupported
+           && hasEditorParameterHintAtOffset(editor, file)
+           && isMethodHintAtOffset(editor, file)
   }
 
   private fun isMethodHintAtOffset(editor: Editor, file: PsiFile): Boolean {
@@ -117,7 +121,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
     refreshAllOpenEditors()
     showHint(project, language, info)
   }
-  
+
   private fun showHint(project: Project, language: Language, info: MethodInfo) {
     val methodName = info.getMethodName()
 
@@ -137,11 +141,11 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
       .setListener(listener)
       .notify(project)
   }
-  
+
   private fun showSettings(language: Language) {
     ExcludeListDialog(language).show()
   }
-  
+
   private fun undo(language: Language, info: MethodInfo) {
     val settings = ParameterNameHintsSettings.getInstance()
     val languageForSettings = getLanguageForSettingKey(language)
@@ -150,7 +154,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
     val updated = diff.added.toMutableSet().apply {
       remove(info.toPattern())
     }
-    
+
     settings.setExcludeListDiff(languageForSettings, Diff(updated, diff.removed))
     refreshAllOpenEditors()
   }
@@ -163,7 +167,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
 class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   @IntentionName
   private var lastOptionName = ""
-  
+
   override fun getText(): String = getIntentionText()
 
   @IntentionName
@@ -175,17 +179,17 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
     }
     return CodeInsightBundle.message("inlay.hints.disable.option", lastOptionName)
   }
-  
+
   override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     InlayParameterHintsExtension.forLanguage(file.language) ?: return false
     if (!hasEditorParameterHintAtOffset(editor, file)) return false
-    
+
     val option = getOptionHintAtOffset(editor, file) ?: return false
     lastOptionName = option.optionName
-    
-    return true 
+
+    return true
   }
 
   private fun getOptionHintAtOffset(editor: Editor, file: PsiFile): HintInfo.OptionInfo? {
@@ -206,7 +210,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   @IntentionName
   private var lastOptionName = ""
-  
+
   override fun getText(): String {
     val optionPrefix = CodeInsightBundle.message("inlay.hints.enable.option.shortening_rule").replace('|', ' ')
     if (optionPrefix.isNotBlank() && lastOptionName.startsWith(optionPrefix)) {
@@ -214,14 +218,14 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
     }
     return CodeInsightBundle.message("inlay.hints.enable.option", lastOptionName)
   }
-  
+
   override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val language = file.language
     if(!isParameterHintsEnabledForLanguage(language)) return false
     if (editor !is EditorImpl) return false
-    
+
     InlayParameterHintsExtension.forLanguage(file.language) ?: return false
 
     val option = getDisabledOptionInfoAtCaretOffset(editor, file) ?: return false
@@ -259,7 +263,9 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 }
 
 
-class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
+class ToggleInlineHintsAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     if (!InlayParameterHintsExtension.hasAnyExtensions()) {
@@ -289,7 +295,7 @@ class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
 
 private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
   if (editor is EditorWindow || editor is ImaginaryEditor) return false
-  
+
   val offset = editor.caretModel.offset
   val elementToRight = file.findElementAt(offset)
   if (hasHints(elementToRight, offset, editor)) return true
@@ -301,7 +307,7 @@ private fun hasHints(element: PsiElement?,
                      editor: Editor): Boolean {
   val startOffset = element?.textRange?.startOffset ?: offset
   val endOffset = element?.textRange?.endOffset ?: offset
-  
+
   return ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(editor, startOffset, endOffset).isNotEmpty()
 }
 

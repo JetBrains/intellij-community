@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 public class BreakpointsDialogFactory {
 
@@ -42,20 +44,11 @@ public class BreakpointsDialogFactory {
     if (myBalloonToHide != null && !myBalloonToHide.isDisposed()) {
       return true;
     }
-    if (myDialogShowing != null) {
-      myDialogShowing.selectBreakpoint(breakpoint, true);
-      myDialogShowing.toFront();
-      return true;
-    }
-    return false;
+    return selectInDialogShowing(breakpoint);
   }
 
   public void showDialog(@Nullable Object initialBreakpoint) {
-    if (myDialogShowing != null && myDialogShowing.getWindow().isDisplayable()) { // workaround for IDEA-197804
-      myDialogShowing.selectBreakpoint(initialBreakpoint, true);
-      myDialogShowing.toFront();
-      return;
-    }
+    if (selectInDialogShowing(initialBreakpoint)) return;
 
     final BreakpointsDialog dialog = new BreakpointsDialog(myProject, initialBreakpoint != null ? initialBreakpoint : myBreakpoint, XBreakpointUtil.collectPanelProviders()) {
       @Override
@@ -79,5 +72,17 @@ public class BreakpointsDialogFactory {
     myDialogShowing = dialog;
 
     dialog.show();
+  }
+
+  private boolean selectInDialogShowing(@Nullable Object initialBreakpoint) {
+    if (myDialogShowing != null) {
+      Window window = myDialogShowing.getWindow();
+      if (window != null && window.isDisplayable()) { // workaround for IDEA-197804
+        myDialogShowing.selectBreakpoint(initialBreakpoint, true);
+        myDialogShowing.toFront();
+        return true;
+      }
+    }
+    return false;
   }
 }

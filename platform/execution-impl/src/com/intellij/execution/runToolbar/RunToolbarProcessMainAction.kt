@@ -25,7 +25,6 @@ class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor
         getSelectedConfiguration(e)?.let {
           val slotManager = RunToolbarSlotManager.getInstance(project)
           val mainSlotData = slotManager.mainSlotData
-          mainSlotData.startWaitingForAProcess(project, it, executor.id)
 
           mainSlotData.environment?.let { environment ->
             MacroManager.getInstance().cacheMacrosPreview(e.getDataContext())

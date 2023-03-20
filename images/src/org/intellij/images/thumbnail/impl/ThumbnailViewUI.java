@@ -197,7 +197,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         float splitterProportion = previewSplitter.getProportion();
         if (enabled) {
             if (splitterProportion == 1) {
-                previewSplitter.setProportion(Float.valueOf(PropertiesComponent.getInstance(project).getValue(ToggleTagsPanelAction.TAGS_PANEL_PROPORTION, "0.5f")));
+                previewSplitter.setProportion(Float.parseFloat(PropertiesComponent.getInstance(project).getValue(ToggleTagsPanelAction.TAGS_PANEL_PROPORTION, "0.5f")));
             }
             if (tagsPanel == null) {
                 tagsPanel = createTagPreviewPanel();
@@ -339,9 +339,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         public Component getListCellRendererComponent(
                 JList list, Object value, int index, boolean isSelected, boolean cellHasFocus
         ) {
-            if (value instanceof VirtualFile) {
-                VirtualFile file = (VirtualFile) value;
-                setFileName(file.getName());
+            if (value instanceof VirtualFile file) {
+              setFileName(file.getName());
                 String toolTipText = IfsUtil.getReferencePath(thumbnailView.getProject(), file);
                 if (!isFileSizeVisible()) {
                     String description = getImageComponent().getDescription();
@@ -730,6 +729,11 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             @Override
             public void update(@NotNull AnActionEvent e) {
               e.getPresentation().setEnabledAndVisible(!ContainerUtil.exists(thumbnailView.getSelection(), file -> tagManager.hasTag(tag, file)));
+            }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
             }
           };
         }

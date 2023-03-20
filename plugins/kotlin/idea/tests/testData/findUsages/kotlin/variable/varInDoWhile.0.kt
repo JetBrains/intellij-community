@@ -1,6 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages
-// FIR_COMPARISON
+// PSI_ELEMENT_AS_TITLE: "val message"
+
 
 fun test() {
     do {

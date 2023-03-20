@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
   private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<>();
@@ -43,14 +40,14 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   static {
-    ourPrimitiveTypes.put(PsiType.BYTE, 'B');
-    ourPrimitiveTypes.put(PsiType.CHAR, 'C');
-    ourPrimitiveTypes.put(PsiType.DOUBLE, 'D');
-    ourPrimitiveTypes.put(PsiType.FLOAT, 'F');
-    ourPrimitiveTypes.put(PsiType.INT, 'I');
-    ourPrimitiveTypes.put(PsiType.LONG, 'L');
-    ourPrimitiveTypes.put(PsiType.SHORT, 'S');
-    ourPrimitiveTypes.put(PsiType.BOOLEAN, 'Z');
+    ourPrimitiveTypes.put(PsiTypes.byteType(), 'B');
+    ourPrimitiveTypes.put(PsiTypes.charType(), 'C');
+    ourPrimitiveTypes.put(PsiTypes.doubleType(), 'D');
+    ourPrimitiveTypes.put(PsiTypes.floatType(), 'F');
+    ourPrimitiveTypes.put(PsiTypes.intType(), 'I');
+    ourPrimitiveTypes.put(PsiTypes.longType(), 'L');
+    ourPrimitiveTypes.put(PsiTypes.shortType(), 'S');
+    ourPrimitiveTypes.put(PsiTypes.booleanType(), 'Z');
   }
 
   @Override

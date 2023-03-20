@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -49,21 +50,19 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    final PsiClass containingClass = findClassToFix(element);
     if (containingClass == null) {
       return;
     }
     final PsiModifierList modifierList = containingClass.getModifierList();
-    if (modifierList == null) {
-      return;
-    }
+    assert modifierList != null;
     if (!isOnTheFly()) {
       if (ClassInheritorsSearch.search(containingClass).findFirst() != null) {
         return;
       }
-      doMakeFinal(modifierList);
+      WriteAction.run(() -> doMakeFinal(modifierList));
       return;
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -76,22 +75,41 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
     });
     final boolean conflictsDialogOK;
     if (!conflicts.isEmpty()) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(element.getProject(), conflicts, () -> doMakeFinal(modifierList));
+      ConflictsDialog conflictsDialog =
+        new ConflictsDialog(element.getProject(), conflicts, () -> WriteAction.run(() -> doMakeFinal(modifierList)));
       conflictsDialogOK = conflictsDialog.showAndGet();
     }
     else {
       conflictsDialogOK = true;
     }
     if (conflictsDialogOK) {
-      doMakeFinal(modifierList);
+      WriteAction.run(() -> doMakeFinal(modifierList));
     }
   }
 
   private static void doMakeFinal(PsiModifierList modifierList) {
-    WriteAction.run(() -> {
-      modifierList.setModifierProperty(FINAL, true);
-      modifierList.setModifierProperty(ABSTRACT, false);
-    });
+    modifierList.setModifierProperty(FINAL, true);
+    modifierList.setModifierProperty(ABSTRACT, false);
+  }
+
+  private static @Nullable PsiClass findClassToFix(PsiElement element) {
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (containingClass == null) {
+      return null;
+    }
+    return containingClass.getModifierList() == null ? null : containingClass;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final PsiClass aClass = findClassToFix(previewDescriptor.getPsiElement());
+    if (aClass == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    final PsiModifierList modifierList = aClass.getModifierList();
+    assert modifierList != null;
+    doMakeFinal(modifierList);
+    return IntentionPreviewInfo.DIFF;
   }
 
   @Nullable

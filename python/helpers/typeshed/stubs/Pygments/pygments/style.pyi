@@ -1,9 +1,9 @@
-from collections.abc import Iterator, Mapping, Set
+from collections.abc import Iterator, Mapping, Set as AbstractSet
 from typing_extensions import TypedDict
 
 from pygments.token import _TokenType
 
-ansicolors: Set[str]  # not intended to be mutable
+ansicolors: AbstractSet[str]  # not intended to be mutable
 
 class _StyleDict(TypedDict):
     color: str | None

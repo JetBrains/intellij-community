@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -26,6 +27,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
@@ -209,6 +211,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     PsiElement psiCopy = obtainPsiCopy(original.getElement());
     TextRange range = original.getRangeInElement();
     PsiReference[] refs = psiCopy.getReferences();
+
     T found = findSimilarReference(original, range, refs);
     if (found == null) {
       throw new AssertionError("Cannot find " + original +
@@ -219,10 +222,25 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     return found;
   }
 
+  private int findIndex(@NotNull PsiReference original) {
+    PsiElement element = original.getElement();
+    PsiReference[] references = element.getReferences();
+    return ArrayUtil.indexOf(references, original);
+  }
+
+  @SuppressWarnings("unchecked")
   @Nullable
-  private static <T> T findSimilarReference(@NotNull T original, TextRange range, PsiReference[] references) {
-    //noinspection unchecked
-    return (T)ContainerUtil.find(references, r -> r.getClass() == original.getClass() && range.equals(r.getRangeInElement()));
+  private <T extends PsiReference> T findSimilarReference(@NotNull T original, TextRange range, PsiReference[] references) {
+    Condition<PsiReference> isSimilar = r -> r.getClass() == original.getClass() && range.equals(r.getRangeInElement());
+
+    //try to get ref of the same index
+    int index = findIndex(original);
+    if (index >= 0 && index < references.length && isSimilar.value(references[index])) {
+      return (T)references[index];
+    }
+
+    //ok, try any similar reference
+    return (T)ContainerUtil.find(references, isSimilar);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.ui;
 
 import com.intellij.codeHighlighting.Pass;
@@ -31,7 +31,7 @@ import java.awt.*;
  *
  * @see com.jetbrains.python.psi.PyUtil for Python code insight utilities.
  */
-public class PyUiUtil {
+public final class PyUiUtil {
   /**
    * Shows an information balloon in a reasonable place at the top right of the window.
    *
@@ -62,7 +62,7 @@ public class PyUiUtil {
 
       for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
         if (editor instanceof EditorEx && editor.getProject() == project) {
-          final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+          final VirtualFile vFile = editor.getVirtualFile();
           if (vFile != null) {
             final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
             ((EditorEx)editor).setHighlighter(highlighter);

@@ -1,26 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockSourcePosition
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
 abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase() {
     private val fixture: JavaCodeInsightTestFixture
         get() = myFixture
 
-    protected fun doTest(path: String) {
+    protected open fun doTest(path: String) {
         fixture.configureByFile(fileName())
 
         val offset = fixture.caretOffset
         val line = fixture.getDocument(fixture.file!!)!!.getLineNumber(offset)
 
-        val lineStart = CodeInsightUtils.getStartLineOffset(file, line)!!
+        val lineStart = getStartLineOffset(file, line)!!
         val elementAtOffset = file.findElementAt(lineStart)
 
         val position = MockSourcePosition(
@@ -67,5 +67,5 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
         return sb.toString()
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

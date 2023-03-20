@@ -16,7 +16,6 @@ import java.util.Set;
  * Please decorate only when necessary, e.g. when intercepting other contributors
  * ({@link com.intellij.codeInsight.completion.CompletionResultSet#runRemainingContributors}).
  * There's usually no point in doing so when you create them yourself in the same place of code.
- * @author peter
  *
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
@@ -94,7 +93,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     myDelegate.renderElement(presentation);
   }
 
@@ -150,13 +149,13 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
-  public <T> T as(ClassConditionKey<T> conditionKey) {
+  public <T> T as(@NotNull ClassConditionKey<T> conditionKey) {
     final T t = super.as(conditionKey);
     return t == null ? myDelegate.as(conditionKey) : t;
   }
 
   @Override
-  public <T> T as(Class<T> clazz) {
+  public <T> T as(@NotNull Class<T> clazz) {
     final T t = super.as(clazz);
     return t == null ? myDelegate.as(clazz) : t;
   }
@@ -254,7 +253,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     }
 
     @Override
-    public void renderElement(final LookupElementPresentation presentation) {
+    public void renderElement(final @NotNull LookupElementPresentation presentation) {
       myVisagiste.renderElement(this, presentation);
     }
 

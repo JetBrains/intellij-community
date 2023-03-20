@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k.ast
 
@@ -7,17 +7,17 @@ import org.jetbrains.kotlin.j2k.CodeBuilder
 import org.jetbrains.kotlin.j2k.getDefaultInitializer
 
 class Property(
-    val identifier: Identifier,
-    annotations: Annotations,
-    modifiers: Modifiers,
-    val isVar: Boolean,
-    val type: Type,
-    val explicitType: Boolean,
-    private val initializer: DeferredElement<Expression>,
-    private val needInitializer: Boolean,
-    private val getter: PropertyAccessor?,
-    private val setter: PropertyAccessor?,
-    private val isInInterface: Boolean
+  val identifier: Identifier,
+  annotations: Annotations,
+  modifiers: Modifiers,
+  val isVar: Boolean,
+  val type: Type,
+  private val explicitType: Boolean,
+  private val initializer: DeferredElement<Expression>,
+  private val needInitializer: Boolean,
+  private val getter: PropertyAccessor?,
+  private val setter: PropertyAccessor?,
+  private val isInInterface: Boolean
 ) : Member(annotations, modifiers) {
 
     private fun presentationModifiers(): Modifiers {

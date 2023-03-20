@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -18,28 +18,27 @@ import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinModuleKind
-import org.jetbrains.kotlin.config.SourceKotlinRootType
-import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinAndroidSourceSets
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
-import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
+import org.jetbrains.kotlin.idea.gradleJava.pathAsUrl
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule
+import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
-import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
-import org.jetbrains.kotlin.idea.roots.pathAsUrl
 import org.jetbrains.kotlin.platform.IdePlatformKind
+import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.platform.js.JsPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -87,11 +86,11 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             val rootModel = modelsProvider.getModifiableRootModel(ideModule)
 
             if (platform.platforms.any { it != KotlinPlatform.JVM && it != KotlinPlatform.ANDROID }) {
-                migrateNonJvmSourceFolders(rootModel)
+                migrateNonJvmSourceFolders(rootModel, ExternalSystemApiUtil.toExternalSource(nodeToImport.data.owner))
                 populateNonJvmSourceRootTypes(nodeToImport, ideModule)
             }
 
-            configureFacet(sourceSetData, kotlinSourceSet, mainModuleData, ideModule, modelsProvider, projectPlatforms)?.let { facet ->
+            configureFacet(sourceSetData, kotlinSourceSet, mainModuleData, ideModule, modelsProvider, projectPlatforms).let { facet ->
                 GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(facet, nodeToImport) }
             }
 
@@ -111,7 +110,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
     }
 
     companion object {
-        private val KotlinModule.kind
+        private val KotlinComponent.kind
             get() = when (this) {
                 is KotlinCompilation -> KotlinModuleKind.COMPILATION_AND_SOURCE_SET_HOLDER
                 is KotlinSourceSet -> KotlinModuleKind.SOURCE_SET_HOLDER
@@ -120,9 +119,10 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
 
         private fun SimplePlatform.isRelevantFor(projectPlatforms: List<KotlinPlatform>): Boolean {
             val jvmPlatforms = listOf(KotlinPlatform.ANDROID, KotlinPlatform.JVM, KotlinPlatform.COMMON)
+            val jsPlatforms = listOf(KotlinPlatform.JS, KotlinPlatform.WASM)
             return when (this) {
                 is JvmPlatform -> projectPlatforms.intersect(jvmPlatforms).isNotEmpty()
-                is JsPlatform -> KotlinPlatform.JS in projectPlatforms
+                is JsPlatform -> projectPlatforms.intersect(jsPlatforms).isNotEmpty()
                 is NativePlatform -> KotlinPlatform.NATIVE in projectPlatforms
                 else -> true
             }
@@ -155,29 +155,41 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider
-        ) = configureFacet(
-            moduleData,
-            kotlinSourceSet,
-            mainModuleNode,
-            ideModule,
-            modelsProvider,
-            enumValues<KotlinPlatform>().toList()
-        )
+        ) {
+            // TODO Review this code after AS Chipmunk released and merged to master
+            // In https://android.googlesource.com/platform/tools/adt/idea/+/ab31cd294775b7914ddefbe417a828b5c18acc81%5E%21/#F1
+            // creation of KotlinAndroidSourceSetData node was dropped, all tasks must be stored in corresponding KotlinSourceSetData nodes
+            val additionalRunTasks = mainModuleNode.kotlinAndroidSourceSets
+                ?.filter { it.isTestModule }
+                ?.flatMap { it.externalSystemRunTasks }
+                ?.toSet()
+            configureFacet(
+                moduleData,
+                kotlinSourceSet,
+                mainModuleNode,
+                ideModule,
+                modelsProvider,
+                enumValues<KotlinPlatform>().toList(),
+                additionalRunTasks
+            )
+        }
 
+        @OptIn(ExperimentalStdlibApi::class)
         fun configureFacet(
             moduleData: ModuleData,
             kotlinSourceSet: KotlinSourceSetInfo,
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider,
-            projectPlatforms: List<KotlinPlatform>
-        ): KotlinFacet? {
+            projectPlatforms: List<KotlinPlatform>,
+            additionalRunTasks: Collection<ExternalSystemRunTask>? = null
+        ): KotlinFacet {
 
-            val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(mainModuleNode)
-                // ?: return null TODO: Fix in CLion or our plugin KT-27623
+            val compilerVersion = KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(mainModuleNode)
+            // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
-                .map { IdePlatformKindTooling.getTooling(it).kind }
+                .map { it.tooling.kind }
                 .flatMap { it.toSimplePlatforms(moduleData, mainModuleNode.kotlinGradleProjectDataOrFail.isHmpp, projectPlatforms) }
                 .distinct()
                 .toSet()
@@ -196,7 +208,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 modelsProvider = modelsProvider,
                 hmppEnabled = kotlinGradleProjectData.isHmpp,
                 pureKotlinSourceFolders = if (platform.isJvm()) kotlinGradleProjectData.pureKotlinSourceFolders.toList() else emptyList(),
-                dependsOnList = kotlinSourceSet.dependsOn,
+                dependsOnList = kotlinSourceSet.dependsOn.toList(),
                 additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 
@@ -215,10 +227,14 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             kotlinFacet.noVersionAutoAdvance()
 
             with(kotlinFacet.configuration.settings) {
-                kind = kotlinSourceSet.kotlinModule.kind
+                kind = kotlinSourceSet.kotlinComponent.kind
 
                 isTestModule = kotlinSourceSet.isTestModule
-                externalSystemRunTasks = ArrayList(kotlinSourceSet.externalSystemRunTasks)
+
+                externalSystemRunTasks = buildList {
+                    addAll(kotlinSourceSet.externalSystemRunTasks)
+                    additionalRunTasks?.let(::addAll)
+                }
 
                 externalProjectId = kotlinSourceSet.gradleModuleId
 

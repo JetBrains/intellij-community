@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.Nullability;
@@ -257,6 +257,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder splice(int count, int... replacement) {
+    if (count == 0 && replacement.length == 0) return this;
     return add(new SpliceInstruction(count, replacement));
   }
 
@@ -694,8 +695,7 @@ public class CFGBuilder {
     if (stripped == null || stripped instanceof PsiLambdaExpression) {
       return this;
     }
-    if (stripped instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)stripped;
+    if (stripped instanceof PsiMethodReferenceExpression methodRef) {
       PsiExpression qualifier = methodRef.getQualifierExpression();
       if (qualifier != null && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef)) {
         DfaVariableValue qualifierBinding = createTempVariable(qualifier.getType());
@@ -740,8 +740,7 @@ public class CFGBuilder {
   public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression, Nullability resultNullability) {
     PsiExpression stripped = PsiUtil.deparenthesizeExpression(functionalExpression);
     if (tryInlineLambda(argCount, functionalExpression, resultNullability, () -> {})) return this;
-    if (stripped instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)stripped;
+    if (stripped instanceof PsiMethodReferenceExpression methodRef) {
       JavaResolveResult resolveResult = methodRef.advancedResolve(false);
       PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
       if (method != null && !method.isVarArgs()) {
@@ -810,8 +809,7 @@ public class CFGBuilder {
                                  Nullability resultNullability,
                                  Runnable pushArgs) {
     PsiExpression stripped = PsiUtil.deparenthesizeExpression(functionalExpression);
-    if (stripped instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)stripped;
+    if (stripped instanceof PsiLambdaExpression lambda) {
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length == argCount && lambda.getBody() != null) {
         pushArgs.run();

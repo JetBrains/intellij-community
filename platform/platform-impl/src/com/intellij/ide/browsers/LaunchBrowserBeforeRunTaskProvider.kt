@@ -17,13 +17,16 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
+import javax.swing.JCheckBox
 
 internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>(), DumbAware {
   companion object {
@@ -57,15 +60,23 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
     StartBrowserPanel.setupUrlField(url, runConfiguration.project)
 
-    val startJavaScriptDebuggerCheckBox = if (JavaScriptDebuggerStarter.Util.hasStarters()) CheckBox(IdeBundle.message("start.browser.with.js.debugger"), state.withDebugger) else null
+    var startJavaScriptDebuggerCheckBox: JCheckBox? = null
 
     val panel = panel {
       row(IdeBundle.message("task.browser.label")) {
-        browserComboBox()
-        startJavaScriptDebuggerCheckBox?.invoke()
+        cell(browserComboBox)
+          .resizableColumn()
+          .align(AlignX.FILL)
+        if (JavaScriptDebuggerStarter.Util.hasStarters()) {
+          startJavaScriptDebuggerCheckBox = checkBox(IdeBundle.message("start.browser.with.js.debugger"))
+            .applyToComponent { isSelected = state.withDebugger }
+            .component
+        }
       }
       row(IdeBundle.message("task.browser.url")) {
-        url(growPolicy = GrowPolicy.MEDIUM_TEXT)
+        cell(url)
+          .align(AlignX.FILL)
+          .columns(COLUMNS_MEDIUM)
       }
     }
     dialog(IdeBundle.message("task.browser.launch"), panel = panel, resizable = true, focusedComponent = url)
@@ -73,8 +84,8 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
     state.browser = browserSelector.selected
     state.url = url.text
-    if (startJavaScriptDebuggerCheckBox != null) {
-      state.withDebugger = startJavaScriptDebuggerCheckBox.isSelected
+    startJavaScriptDebuggerCheckBox?.let {
+      state.withDebugger = it.isSelected
     }
     return resolvedPromise(modificationCount != state.modificationCount)
   }

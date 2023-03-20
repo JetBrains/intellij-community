@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.Disposable;
@@ -9,12 +9,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 public final class ModalityStateEx extends ModalityState {
   private final WeakList<Object> myModalEntities = new WeakList<>();
@@ -23,7 +25,10 @@ public final class ModalityStateEx extends ModalityState {
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  ModalityStateEx(@NotNull Collection<Object> modalEntities) {
+  ModalityStateEx(@NotNull List<?> modalEntities) {
+    if (modalEntities.contains(null)) {
+      throw new IllegalArgumentException("Must not pass null modality: "+modalEntities);
+    }
     myModalEntities.addAll(modalEntities);
   }
 
@@ -35,6 +40,10 @@ public final class ModalityStateEx extends ModalityState {
   @NotNull
   public ModalityState appendProgress(@NotNull ProgressIndicator progress){
     return appendEntity(progress);
+  }
+
+  public @NotNull ModalityState appendJob(@NotNull Job job) {
+    return appendEntity(job);
   }
 
   @NotNull ModalityStateEx appendEntity(@NotNull Object anEntity){
@@ -52,15 +61,12 @@ public final class ModalityStateEx extends ModalityState {
   }
 
   @Override
-  public boolean dominates(@NotNull ModalityState anotherState){
-    if (anotherState == this || anotherState == ModalityState.any()) return false;
+  public boolean dominates(@NotNull ModalityState otherState) {
+    if (otherState == this || otherState == ModalityState.any()) return false;
     if (myModalEntities.isEmpty()) return false;
-    
-    List<@NotNull Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
-    for (Object entity : getModalEntities()) {
-      if (!otherEntities.contains(entity) && !ourTransparentEntities.contains(entity)) return true; // I have entity which is absent in anotherState
-    }
-    return false;
+
+    // I have entity which is absent in anotherState
+    return !((ModalityStateEx)otherState).myModalEntities.containsAll(myModalEntities, entity -> !ourTransparentEntities.contains(entity));
   }
 
   void cancelAllEntities() {
@@ -75,6 +81,9 @@ public final class ModalityStateEx extends ModalityState {
       else if (entity instanceof ProgressIndicator) {
         ((ProgressIndicator)entity).cancel();
       }
+      else if (entity instanceof JobProvider) {
+        ((JobProvider)entity).getJob().cancel(new CancellationException("force leave modal"));
+      }
     }
   }
 
@@ -85,7 +94,7 @@ public final class ModalityStateEx extends ModalityState {
            : "ModalityState:{" + StringUtil.join(getModalEntities(), it -> "[" + it + "]", ", ") + "}";
   }
 
-  void removeModality(Object modalEntity) {
+  void removeModality(@NotNull Object modalEntity) {
     myModalEntities.remove(modalEntity);
   }
 

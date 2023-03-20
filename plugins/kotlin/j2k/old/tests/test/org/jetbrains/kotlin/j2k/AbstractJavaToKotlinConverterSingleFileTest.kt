@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -9,14 +9,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
-import org.jetbrains.kotlin.test.Directives
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.FlexibleTypeImpl
 import java.io.File
 import java.util.regex.Pattern
@@ -61,6 +62,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             directives["OPEN_BY_DEFAULT"]?.let {
                 settings.openByDefault = it.toBoolean()
             }
+            directives["PUBLIC_BY_DEFAULT"]?.let {
+                settings.publicByDefault = it.toBoolean()
+            }
 
             val rawConverted = WriteCommandAction.runWriteCommandAction(project, Computable {
                 PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
@@ -82,7 +86,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
             if (prefix == "file") {
                 actual = createKotlinFile(actual)
-                    .dumpTextWithErrors(setOf(element = ErrorsJvm.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET_ERROR))
+                    .dumpTextWithErrors(setOf(element = ErrorsJvm.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET.errorFactory))
             }
 
 
@@ -151,12 +155,12 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             .trim()
     }
 
-    override fun getProjectDescriptor(): KotlinWithJdkAndRuntimeLightProjectDescriptor {
+    override fun getProjectDescriptor(): LightProjectDescriptor {
         val testName = getTestName(false)
         return if (testName.contains("WithFullJdk") || testName.contains("withFullJdk"))
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
         else
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     private fun String.removeFirstLine() = substringAfter('\n', "")

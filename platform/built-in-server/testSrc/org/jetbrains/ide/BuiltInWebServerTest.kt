@@ -95,7 +95,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `path outside of project`() {
     val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).use { project ->
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 
@@ -113,7 +113,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `file in hidden folder`() {
     val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).use { project ->
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 

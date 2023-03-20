@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Ref;
@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 
 /**
  * Storage for various Log objects like CommitId or VcsRef
- * which quantity is to big to keep them in memory.
+ * which quantity is too big to keep them in memory.
  * VcsLogStorage keeps a mapping from integers to those objects
  * allowing to operate with integers, not the objects themselves.
  */
@@ -55,8 +55,7 @@ public interface VcsLogStorage {
    *
    * @return matching commit or null if no commit matches the given condition
    */
-  @Nullable
-  default CommitId findCommitId(@NotNull Predicate<? super CommitId> condition) {
+  default @Nullable CommitId findCommitId(@NotNull Predicate<? super CommitId> condition) {
     Ref<CommitId> hashRef = Ref.create();
     iterateCommits(commitId -> {
       boolean matches = condition.test(commitId);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.application;
 
 import java.io.BufferedReader;
@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Locale;
 
 /**
- * @author ven
  * @noinspection UseOfSystemOutOrSystemErr, CharsetObjectCanBeUsed
  */
 public final class AppMainV2 {
@@ -26,10 +25,17 @@ public final class AppMainV2 {
     String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     if (osName.startsWith("windows")) {
       String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
-      File libFile = new File(binPath, "x86_64".equals(arch) || "amd64".equals(arch) ? "breakgen64.dll" : "breakgen.dll");
-      if (libFile.isFile()) {
-        System.load(libFile.getAbsolutePath());
-        return true;
+      //noinspection SpellCheckingInspection
+      String libName = "x86_64".equals(arch) || "amd64".equals(arch) ? "breakgen64.dll" :
+                       "aarch64".equals(arch) || "arm64".equals(arch) ? "breakgen64a.dll" :
+                       "i386".equals(arch) || "x86".equals(arch) ? "breakgen.dll" :
+                       null;  // see also: `ProcessProxyImpl#canSendBreak`
+      if (libName != null) {
+        File libFile = new File(binPath, libName);
+        if (libFile.isFile()) {
+          System.load(libFile.getAbsolutePath());
+          return true;
+        }
       }
     }
 
@@ -41,10 +47,8 @@ public final class AppMainV2 {
       @Override
       public void run() {
         try {
-          Socket client = new Socket("127.0.0.1", portNumber);
-          try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"));
-            try {
+          try (Socket client = new Socket("127.0.0.1", portNumber)) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"))) {
               while (true) {
                 String msg = reader.readLine();
                 if (msg == null || "TERM".equals(msg)) {
@@ -60,12 +64,6 @@ public final class AppMainV2 {
                 }
               }
             }
-            finally {
-              reader.close();
-            }
-          }
-          finally {
-            client.close();
           }
         }
         catch (Exception ignored) { }

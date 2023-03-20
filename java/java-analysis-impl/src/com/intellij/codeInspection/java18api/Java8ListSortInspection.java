@@ -24,7 +24,7 @@ public class Java8ListSortInspection extends AbstractBaseJavaLocalInspectionTool
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         PsiElement nameElement = expression.getMethodExpression().getReferenceNameElement();
         if(nameElement != null && expression.getArgumentList().getExpressionCount() == 2 &&

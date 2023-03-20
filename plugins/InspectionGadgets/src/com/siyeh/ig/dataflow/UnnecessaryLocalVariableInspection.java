@@ -16,6 +16,7 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
@@ -57,13 +59,10 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.ignore.option"),
-                             "m_ignoreImmediatelyReturnedVariables");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.annotation.option"),
-                             "m_ignoreAnnotatedVariablesNew");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreImmediatelyReturnedVariables", InspectionGadgetsBundle.message("redundant.local.variable.ignore.option")),
+      checkbox("m_ignoreAnnotatedVariablesNew", InspectionGadgetsBundle.message("redundant.local.variable.annotation.option")));
   }
 
   @Override
@@ -127,20 +126,17 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiElement parent = variable.getParent();
-      if (!(parent instanceof PsiDeclarationStatement)) {
+      if (!(parent instanceof PsiDeclarationStatement declarationStatement)) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class);
-      if (!(nextStatement instanceof PsiReturnStatement)) {
+      if (!(nextStatement instanceof PsiReturnStatement returnStatement)) {
         return false;
       }
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)nextStatement;
       final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-      if (!(returnValue instanceof PsiReferenceExpression)) {
+      if (!(returnValue instanceof PsiReferenceExpression referenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)returnValue;
       final PsiElement referent = referenceExpression.resolve();
       if (referent == null || !referent.equals(variable)) {
         return false;
@@ -168,15 +164,13 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiElement parent = variable.getParent();
-      if (!(parent instanceof PsiDeclarationStatement)) {
+      if (!(parent instanceof PsiDeclarationStatement declarationStatement)) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class);
-      if (!(nextStatement instanceof PsiThrowStatement)) {
+      if (!(nextStatement instanceof PsiThrowStatement throwStatement)) {
         return false;
       }
-      final PsiThrowStatement throwStatement = (PsiThrowStatement)nextStatement;
       final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(throwStatement.getException());
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return false;
@@ -194,32 +188,28 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiElement parent = variable.getParent();
-      if (!(parent instanceof PsiDeclarationStatement)) {
+      if (!(parent instanceof PsiDeclarationStatement declarationStatement)) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       if (declarationStatement.getParent() instanceof PsiForStatement) {
         return false;
       }
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class);
-      if (!(nextStatement instanceof PsiExpressionStatement)) {
+      if (!(nextStatement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)nextStatement;
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiAssignmentExpression)) {
+      if (!(expression instanceof PsiAssignmentExpression assignmentExpression)) {
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
       final IElementType tokenType = assignmentExpression.getOperationTokenType();
       if (tokenType != JavaTokenType.EQ) {
         return false;
       }
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
-      if (!(rhs instanceof PsiReferenceExpression)) {
+      if (!(rhs instanceof PsiReferenceExpression reference)) {
         return false;
       }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)rhs;
       if (!reference.isReferenceTo(variable)) {
         return false;
       }
@@ -246,22 +236,18 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         return false;
       }
       final PsiElement parent = variable.getParent();
-      if (!(parent instanceof PsiDeclarationStatement)) {
+      if (!(parent instanceof PsiDeclarationStatement declarationStatement)) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiStatement.class);
-      if (nextStatement instanceof PsiDeclarationStatement) {
+      if (nextStatement instanceof PsiDeclarationStatement nextDeclarationStatement) {
         boolean referenceFound = false;
-        final PsiDeclarationStatement nextDeclarationStatement = (PsiDeclarationStatement)nextStatement;
         for (PsiElement declaration : nextDeclarationStatement.getDeclaredElements()) {
-          if (!(declaration instanceof PsiVariable)) {
+          if (!(declaration instanceof PsiVariable nextVariable)) {
             continue;
           }
-          final PsiVariable nextVariable = (PsiVariable)declaration;
           final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(nextVariable.getInitializer());
-          if (!referenceFound && initializer instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer;
+          if (!referenceFound && initializer instanceof PsiReferenceExpression referenceExpression) {
             final PsiElement referent = referenceExpression.resolve();
             if (variable.equals(referent)) {
               referenceFound = true;
@@ -276,8 +262,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
           return false;
         }
       }
-      else if (nextStatement instanceof PsiTryStatement) {
-        final PsiTryStatement tryStatement = (PsiTryStatement)nextStatement;
+      else if (nextStatement instanceof PsiTryStatement tryStatement) {
         final PsiResourceList resourceList = tryStatement.getResourceList();
         if (resourceList == null) {
           return false;
@@ -286,8 +271,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         for (PsiResourceListElement resource : resourceList) {
           if (resource instanceof PsiResourceVariable) {
             final PsiExpression initializer = ((PsiResourceVariable)resource).getInitializer();
-            if (!referenceFound && initializer instanceof PsiReferenceExpression) {
-              final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer;
+            if (!referenceFound && initializer instanceof PsiReferenceExpression referenceExpression) {
               final PsiElement referent = referenceExpression.resolve();
               if (variable.equals(referent)) {
                 referenceFound = true;

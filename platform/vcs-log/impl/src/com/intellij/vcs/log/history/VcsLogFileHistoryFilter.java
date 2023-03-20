@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -12,15 +12,14 @@ import java.util.Collections;
 
 @ApiStatus.Internal
 public class VcsLogFileHistoryFilter extends VcsLogStructureFilterImpl {
-  @Nullable private final Hash myHash;
+  private final @Nullable Hash myHash;
 
   public VcsLogFileHistoryFilter(@NotNull FilePath file, @Nullable Hash hash) {
     super(Collections.singleton(file));
     myHash = hash;
   }
 
-  @Nullable
-  public Hash getHash() {
+  public @Nullable Hash getHash() {
     return myHash;
   }
 }

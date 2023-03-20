@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
@@ -12,12 +12,13 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
+import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -27,13 +28,13 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 
 class ReplaceProtectedToPublishedApiCallFix(
     element: KtExpression,
-    val classOwnerPointer: SmartPsiElementPointer<KtClass>,
-    val originalName: String,
-    val paramNames: Map<String, String>,
-    val newSignature: String,
-    val isProperty: Boolean,
-    val isVar: Boolean,
-    val isPublishedMemberAlreadyExists: Boolean
+    private val classOwnerPointer: SmartPsiElementPointer<KtClass>,
+    private val originalName: String,
+    private val paramNames: Map<String, String>,
+    private val newSignature: String,
+    private val isProperty: Boolean,
+    private val isVar: Boolean,
+    private val isPublishedMemberAlreadyExists: Boolean
 ) : KotlinQuickFixAction<KtExpression>(element) {
 
     override fun getFamilyName() = KotlinBundle.message("replace.with.publishedapi.bridge.call")
@@ -46,11 +47,13 @@ class ReplaceProtectedToPublishedApiCallFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
+        val psiFactory = KtPsiFactory(project)
+
         if (!isPublishedMemberAlreadyExists) {
             val classOwner = classOwnerPointer.element ?: return
             val newMember: KtDeclaration =
                 if (isProperty) {
-                    KtPsiFactory(classOwner).createProperty(
+                    psiFactory.createProperty(
                         "@kotlin.PublishedApi\n" +
                                 "internal " + newSignature +
                                 "\n" +
@@ -59,16 +62,22 @@ class ReplaceProtectedToPublishedApiCallFix(
                     )
 
                 } else {
-                    KtPsiFactory(classOwner).createFunction(
+                    psiFactory.createFunction(
                         "@kotlin.PublishedApi\n" +
                                 "internal " + newSignature +
                                 " = $originalName(${paramNames.keys.joinToString(", ") { it }})"
-                    )
+                    ).apply {
+                        if (element is KtOperationReferenceExpression) addModifier(KtTokens.INFIX_KEYWORD)
+                    }
                 }
 
             ShortenReferences.DEFAULT.process(classOwner.addDeclaration(newMember))
         }
-        element.replace(KtPsiFactory(element).createExpression(originalName.newNameQuoted))
+        if (element is KtOperationReferenceExpression) {
+            element.replace(psiFactory.createOperationName(originalName.newNameQuoted))
+        } else {
+            element.replace(psiFactory.createExpression(originalName.newNameQuoted))
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -81,7 +90,7 @@ class ReplaceProtectedToPublishedApiCallFix(
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val psiElement = diagnostic.psiElement as? KtExpression ?: return null
             val descriptor = DiagnosticFactory.cast(
-                diagnostic, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR
+                diagnostic, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE.warningFactory, Errors.PROTECTED_CALL_FROM_PUBLIC_INLINE.errorFactory
             ).a.let {
                 if (it is CallableMemberDescriptor) DescriptorUtils.getDirectMember(it) else it
             }
@@ -96,7 +105,7 @@ class ReplaceProtectedToPublishedApiCallFix(
                 } else {
                     signature.replaceFirst("$originalName(", "${originalName.newNameQuoted}(")
                 }
-            val paramNameAndType = descriptor.valueParameters.associate { it.name.asString() to it.type.getJetTypeFqName(false) }
+            val paramNameAndType = descriptor.valueParameters.associate { it.name.asString() to it.type.getKotlinTypeFqName(false) }
             val classDescriptor = descriptor.containingDeclaration as? ClassDescriptor ?: return null
             val source = classDescriptor.source.getPsi() as? KtClass ?: return null
 

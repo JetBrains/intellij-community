@@ -1,12 +1,7 @@
-import sys
-from collections import OrderedDict
-from typing import Any, Dict
+from typing import Any
 
 entitiesTrie: Any
-if sys.version_info >= (3, 7):
-    attributeMap = Dict[Any, Any]
-else:
-    attributeMap = OrderedDict[Any, Any]
+attributeMap = dict
 
 class HTMLTokenizer:
     stream: Any

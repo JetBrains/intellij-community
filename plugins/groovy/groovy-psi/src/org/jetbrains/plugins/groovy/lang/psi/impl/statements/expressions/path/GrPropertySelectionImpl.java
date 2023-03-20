@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 
-/**
- * @author ilyas
- */
 public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPropertySelection {
   private static final Logger LOG = Logger.getInstance(GrPropertySelectionImpl.class);
 

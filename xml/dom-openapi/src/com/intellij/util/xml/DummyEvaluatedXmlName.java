@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DummyEvaluatedXmlName implements EvaluatedXmlName {
   private final XmlName myXmlName;
   private final String myNamespace;

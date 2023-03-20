@@ -234,9 +234,8 @@ public class JavaFxBuiltInTagDescriptor implements XmlElementDescriptor, Validat
       final XmlElementDescriptor descriptor = referencedTag.getDescriptor();
       if (descriptor != null) {
         final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiClass) {
-          final PsiClass psiClass = (PsiClass)declaration;
-          JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), psiClass, (@InspectionMessage var errorMessage, var errorType) ->
+        if (declaration instanceof PsiClass psiClass) {
+          JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), psiClass, (@InspectionMessage String errorMessage, ValidationHost.ErrorType errorType) ->
             host.addMessage(context.getNavigationElement(), errorMessage, errorType));
           final String contextName = context.getName();
           if (FxmlConstants.FX_COPY.equals(contextName)) {

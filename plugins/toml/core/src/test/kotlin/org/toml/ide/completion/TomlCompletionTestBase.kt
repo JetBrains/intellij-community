@@ -19,12 +19,17 @@ abstract class TomlCompletionTestBase : TomlTestBase() {
     }
 
     override fun tearDown() {
-        completionFixture.tearDown()
-        super.tearDown()
+        try {
+            completionFixture.tearDown()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     fun checkContainsCompletion(
-        variants: List<String>,
+        variants: Set<String>,
         @Language("TOML") code: String,
         render: LookupElement.() -> String = { lookupString }
     ) = completionFixture.checkContainsCompletion(variants, code, render)

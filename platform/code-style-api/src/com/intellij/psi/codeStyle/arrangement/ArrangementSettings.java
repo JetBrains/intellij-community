@@ -26,8 +26,6 @@ import java.util.List;
  * Holds arrangement rules.
  * <p/>
  * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
- * 
- * @author Denis Zhdanov
  */
 public interface ArrangementSettings extends Cloneable {
 
@@ -40,7 +38,7 @@ public interface ArrangementSettings extends Cloneable {
   /**
    * @deprecated collect match rules from {@link #getSections()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   List<? extends ArrangementMatchRule> getRules();
 

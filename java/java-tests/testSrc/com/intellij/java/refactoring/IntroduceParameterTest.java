@@ -18,6 +18,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -26,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceParameterTest extends LightRefactoringTestCase  {
   @NotNull
@@ -470,7 +468,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     PsiMethod method = Util.getContainingMethod(context);
     if (method == null) return false;
 
-    final List<PsiMethod> methods = com.intellij.refactoring.introduceParameter.IntroduceParameterHandler.getEnclosingMethods(method);
+    final List<PsiMethod> methods = CommonJavaRefactoringUtil.getEnclosingMethods(method);
     assertTrue(methods.size() > enclosingLevel);
     method = methods.get(enclosingLevel);
 
@@ -504,7 +502,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       }
     };
     PsiType initializerType = initializer.getType();
-    if (initializerType != null && initializerType != PsiType.NULL) {
+    if (initializerType != null && initializerType != PsiTypes.nullType()) {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(initializer, initializerType);
       if (lambda != null) {
         processor.setParameterInitializer(lambda);

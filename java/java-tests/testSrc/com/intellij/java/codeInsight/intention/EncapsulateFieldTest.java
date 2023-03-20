@@ -3,9 +3,6 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-/**
- * @author Danila Ponomarenko
- */
 public class EncapsulateFieldTest extends LightIntentionActionTestCase {
   @Override
   protected String getBasePath() {

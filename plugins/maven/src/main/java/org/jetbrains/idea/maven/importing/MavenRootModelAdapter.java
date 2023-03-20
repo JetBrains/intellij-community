@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -28,6 +29,7 @@ import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.io.File;
 
@@ -137,7 +139,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   @Override
   public LibraryOrderEntry addLibraryDependency(MavenArtifact artifact,
                                                 DependencyScope scope,
-                                                ModifiableModelsProviderProxy provider,
+                                                IdeModifiableModelsProvider provider,
                                                 MavenProject project) {
     return myDelegate.addLibraryDependency(artifact, scope, provider, project);
   }
@@ -152,7 +154,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     myDelegate.setLanguageLevel(level);
   }
 
-  static boolean isChangedByUser(Library library) {
+  public static boolean isChangedByUser(Library library) {
     String[] classRoots = library.getUrls(
       OrderRootType.CLASSES);
     if (classRoots.length != 1) return true;
@@ -165,14 +167,10 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
     if (dotPos == -1) return true;
     String pathToJar = classes.substring(0, dotPos);
 
-    if (MavenRootModelAdapter
-      .hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
+    if (hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) {
       return true;
     }
-    if (MavenRootModelAdapter
-      .hasUserPaths(
-        JavadocOrderRootType
-          .getInstance(), library, pathToJar)) {
+    if (hasUserPaths(JavadocOrderRootType.getInstance(), library, pathToJar)) {
       return true;
     }
 
@@ -192,7 +190,7 @@ public class MavenRootModelAdapter implements MavenRootModelAdapterInterface {
   }
 
   public static ProjectModelExternalSource getMavenExternalSource() {
-    return ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID);
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID);
   }
 
   @Nullable

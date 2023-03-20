@@ -41,8 +41,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     @Override
     public boolean isAcceptable(Object element, PsiElement context) {
       final PsiElement parent = context.getParent();
-      if (parent instanceof XmlAttribute) {
-        final XmlAttribute attribute = ((XmlAttribute)parent);
+      if (parent instanceof XmlAttribute attribute) {
         return attribute.isNamespaceDeclaration();
       }
       return false;

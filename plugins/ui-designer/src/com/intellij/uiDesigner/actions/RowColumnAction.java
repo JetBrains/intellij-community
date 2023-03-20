@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -42,6 +43,11 @@ public abstract class RowColumnAction extends AnAction {
   }
 
   protected abstract void actionPerformed(CaptionSelection selection);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   public void update(@NotNull final AnActionEvent e) {

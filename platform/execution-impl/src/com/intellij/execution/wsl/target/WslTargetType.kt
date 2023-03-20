@@ -50,7 +50,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     )
   }
 
-  override fun createEnvironmentRequest(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentRequest {
+  override fun createEnvironmentRequest(project: Project?, config: WslTargetEnvironmentConfiguration): TargetEnvironmentRequest {
     return WslTargetEnvironmentRequest(config)
   }
 
@@ -66,14 +66,18 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
                                              title: String?,
                                              textComponentAccessor: TextComponentAccessor<T>,
                                              component: T,
-                                             configurationSupplier: Supplier<TargetEnvironmentConfiguration>): ActionListener = ActionListener {
+                                             configurationSupplier: Supplier<out TargetEnvironmentConfiguration>,
+                                             targetBrowserHints: TargetBrowserHints): ActionListener = ActionListener {
     val configuration = configurationSupplier.get()
     if (configuration is WslTargetEnvironmentConfiguration) {
       configuration.distribution?.let {
         WslPathBrowser(object : TextAccessor {
           override fun setText(text: String) = textComponentAccessor.setText(component, text)
           override fun getText() = textComponentAccessor.getText(component)
-        }).browsePath(it, component)
+        }).browsePath(it,
+                      component,
+                      accessWindowsFs = targetBrowserHints.showLocalFsInBrowser,
+                      customFileDescriptor = targetBrowserHints.customFileChooserDescriptor)
         return@ActionListener
       }
     }
@@ -82,6 +86,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
 
   companion object {
     const val TYPE_ID = "wsl"
+
     @NlsSafe
     const val DISPLAY_NAME = "WSL"
     private val LOG = logger<WslTargetType>()

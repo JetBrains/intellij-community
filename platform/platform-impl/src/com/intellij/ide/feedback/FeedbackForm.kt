@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.feedback
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.AboutDialog
+import com.intellij.ide.actions.ReportProblemAction
 import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
@@ -24,10 +25,7 @@ import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.util.BooleanFunction
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -35,6 +33,7 @@ import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.util.function.Predicate
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComboBox
@@ -118,7 +117,7 @@ class FeedbackForm(
             .gap(RightGap.SMALL)
             .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
           text(ApplicationBundle.message("feedback.form.issue")) {
-            SendFeedbackAction.submit(project, ApplicationInfoEx.getInstanceEx().youtrackUrl, SendFeedbackAction.getDescription(project))
+            ReportProblemAction.submit(project)
           }.visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
         }
       }
@@ -127,8 +126,7 @@ class FeedbackForm(
         textArea()
           .label(label, LabelPosition.TOP)
           .bindText(::details)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
           .rows(5)
           .focused()
           .errorOnApply(ApplicationBundle.message("feedback.form.details.required")) {
@@ -139,8 +137,7 @@ class FeedbackForm(
               ApplicationBundle.message("feedback.form.evaluation.details.emptyText")
             else
               ApplicationBundle.message("feedback.form.details.emptyText")
-            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              BooleanFunction<JBTextArea> { textArea -> textArea.text.isEmpty() })
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, Predicate<JBTextArea> { it.text.isEmpty() })
             addKeyListener(object : KeyAdapter() {
               override fun keyPressed(e: KeyEvent) {
                 if (e.keyCode == KeyEvent.VK_TAB) {

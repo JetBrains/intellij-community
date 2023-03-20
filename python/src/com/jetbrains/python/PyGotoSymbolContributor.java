@@ -57,7 +57,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
   }
 
   @Override
-  public String getQualifiedName(NavigationItem item) {
+  public String getQualifiedName(@NotNull NavigationItem item) {
     if (item instanceof PyQualifiedNameOwner) {
       return ((PyQualifiedNameOwner) item).getQualifiedName();
     }

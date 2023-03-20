@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -26,8 +26,8 @@ import java.util.Set;
 import static com.intellij.vcs.log.VcsLogDataKeys.*;
 
 public class VcsLogPanel extends JBPanel implements DataProvider {
-  @NotNull private final VcsLogManager myManager;
-  @NotNull private final VcsLogUiEx myUi;
+  private final @NotNull VcsLogManager myManager;
+  private final @NotNull VcsLogUiEx myUi;
 
   public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull VcsLogUiEx logUi) {
     super(new BorderLayout());
@@ -36,14 +36,12 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     add(myUi.getMainComponent(), BorderLayout.CENTER);
   }
 
-  @NotNull
-  public VcsLogUiEx getUi() {
+  public @NotNull VcsLogUiEx getUi() {
     return myUi;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (VcsLogInternalDataKeys.LOG_MANAGER.is(dataId)) {
       return myManager;
     }
@@ -56,19 +54,22 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     else if (VCS_LOG_DATA_PROVIDER.is(dataId) || VcsLogInternalDataKeys.LOG_DATA.is(dataId)) {
       return myManager.getDataManager();
     }
+    else if (VCS_LOG_COMMIT_SELECTION.is(dataId)) {
+      return myUi.getTable().getSelection();
+    }
     else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
-      List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
+      List<CommitId> hashes = myUi.getTable().getSelection().getCommits();
       if (hashes.isEmpty()) return null;
       return VcsLogUtil.convertToRevisionNumber(Objects.requireNonNull(ContainerUtil.getFirstItem(hashes)).getHash());
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
+      List<CommitId> hashes = myUi.getTable().getSelection().getCommits();
       if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil.map(hashes,
                                commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
     }
     else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(dataId)) {
-      List<VcsCommitMetadata> metadata = myUi.getVcsLog().getSelectedShortDetails();
+      List<VcsCommitMetadata> metadata = myUi.getTable().getSelection().getCachedMetadata();
       if (metadata.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ContainerUtil.map2Array(metadata, String.class, data -> data.getSubject());
     }
@@ -88,7 +89,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     return ContainerUtil.map(panels, VcsLogPanel::getUi);
   }
 
-  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<VcsLogPanel> result) {
+  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<? super VcsLogPanel> result) {
     if (component instanceof VcsLogPanel) {
       result.add((VcsLogPanel)component);
       return;

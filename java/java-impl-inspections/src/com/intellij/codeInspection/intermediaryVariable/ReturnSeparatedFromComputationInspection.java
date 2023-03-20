@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.intermediaryVariable;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -14,14 +14,11 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.CommonJavaInlineUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ReturnSeparatedFromComputationInspection.class);
 
@@ -40,7 +34,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReturnStatement(PsiReturnStatement returnStatement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
         super.visitReturnStatement(returnStatement);
         final ReturnContext context = createReturnContext(returnStatement);
         if (context != null && isApplicable(context)) {
@@ -52,8 +46,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
 
   private static ReturnContext createReturnContext(PsiReturnStatement returnStatement) {
     final PsiElement returnParent = returnStatement.getParent();
-    if (returnParent instanceof PsiCodeBlock) {
-      final PsiCodeBlock returnScope = (PsiCodeBlock)returnParent;
+    if (returnParent instanceof PsiCodeBlock returnScope) {
       final PsiStatement[] statements = returnScope.getStatements();
       if (statements.length != 0 && statements[statements.length - 1] == returnStatement) {
         final PsiType returnType = PsiTypesUtil.getMethodReturnType(returnStatement);
@@ -61,18 +54,14 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
           PsiStatement refactoredStatement = getPrevNonEmptyStatement(returnStatement, null);
           if (refactoredStatement != null) {
             final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-            if (returnValue instanceof PsiReferenceExpression) {
-              final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
-              if (resolved instanceof PsiVariable) {
-                final PsiVariable returnedVariable = (PsiVariable)resolved;
-                final PsiCodeBlock variableScope = getVariableScopeBlock(returnedVariable);
-                if (variableScope != null) {
-                  PsiElement variableMethod = PsiTreeUtil.getParentOfType(variableScope, PsiMethod.class, PsiLambdaExpression.class);
-                  PsiElement returnMethod = PsiTreeUtil.getParentOfType(returnScope, PsiMethod.class, PsiLambdaExpression.class);
-                  if (variableMethod == returnMethod) {
-                    return new ReturnContext(returnStatement, returnScope, returnType, refactoredStatement, returnedVariable,
-                                             variableScope);
-                  }
+            if (returnValue instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable returnedVariable) {
+              final PsiCodeBlock variableScope = getVariableScopeBlock(returnedVariable);
+              if (variableScope != null) {
+                PsiElement variableMethod = PsiTreeUtil.getParentOfType(variableScope, PsiMethod.class, PsiLambdaExpression.class);
+                PsiElement returnMethod = PsiTreeUtil.getParentOfType(returnScope, PsiMethod.class, PsiLambdaExpression.class);
+                if (variableMethod == returnMethod) {
+                  return new ReturnContext(returnStatement, returnScope, returnType, refactoredStatement, returnedVariable,
+                                           variableScope);
                 }
               }
             }
@@ -85,23 +74,18 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
 
   @Nullable
   private static PsiCodeBlock getVariableScopeBlock(@Nullable PsiVariable variable) {
-    if (variable instanceof PsiLocalVariable) {
-      final PsiElement variableScope = RefactoringUtil.getVariableScope((PsiLocalVariable)variable);
-      if (variableScope instanceof PsiCodeBlock) {
-        return (PsiCodeBlock)variableScope;
+    if (variable instanceof PsiLocalVariable localVar) {
+      if (CommonJavaRefactoringUtil.getVariableScope(localVar) instanceof PsiCodeBlock block) {
+        return block;
       }
     }
-    else if (variable instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)variable;
+    else if (variable instanceof PsiParameter parameter) {
       final PsiElement parameterScope = parameter.getDeclarationScope();
-      if (parameterScope instanceof PsiMethod) {
-        return ((PsiMethod)parameterScope).getBody();
+      if (parameterScope instanceof PsiMethod method) {
+        return method.getBody();
       }
-      else if (parameterScope instanceof PsiLambdaExpression) {
-        final PsiElement lambdaBody = ((PsiLambdaExpression)parameterScope).getBody();
-        if (lambdaBody instanceof PsiCodeBlock) {
-          return (PsiCodeBlock)lambdaBody;
-        }
+      else if (parameterScope instanceof PsiLambdaExpression lambda && lambda.getBody() instanceof PsiCodeBlock block) {
+        return block;
       }
     }
     return null;
@@ -122,11 +106,9 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     for (PsiStatement statement = getPrevNonEmptyStatement(lastStatementInScope, null);
          statement != null;
          statement = getPrevNonEmptyStatement(statement, null)) {
-      if (statement instanceof PsiExpressionStatement) {
-        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+      if (statement instanceof PsiExpressionStatement expressionStatement) {
         PsiExpression expression = expressionStatement.getExpression();
-        if (expression instanceof PsiAssignmentExpression) {
-          PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+        if (expression instanceof PsiAssignmentExpression assignmentExpression) {
           if (isVariableUsed(flow, assignmentExpression.getLExpression(), variable) &&
               isVariableUsed(flow, assignmentExpression.getRExpression(), variable)) {
             return true;
@@ -225,7 +207,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     boolean isSingleUsage = value != null && usages.size() == 1;
     if (isSimple || isSingleUsage) {
       for (PsiJavaCodeReferenceElement usage : usages) {
-        PsiExpression inlined = InlineUtil.inlineVariable(context.returnedVariable, value, usage);
+        PsiExpression inlined = CommonJavaInlineUtil.getInstance().inlineVariable(context.returnedVariable, value, usage, null);
         if (firstInlined == null) firstInlined = inlined;
         highlighter.add(inlined);
       }
@@ -419,7 +401,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     private boolean moveToSwitch(@NotNull PsiSwitchStatement targetStatement) {
       moveToBreaks(targetStatement, false);
       PsiCodeBlock body = targetStatement.getBody();
-      return body != null && moveToBlockBody(body, false) && hasDefaultSwitchLabel(body);
+      return body != null && moveToBlockBody(body, false) && hasTotalSwitchLabel(body);
     }
 
     private boolean moveToTry(@NotNull PsiTryStatement targetStatement, boolean returnAtTheEnd) {
@@ -453,8 +435,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
 
     private boolean inlineExpression(@NotNull PsiExpressionStatement statement) {
       PsiExpression expression = statement.getExpression();
-      if (expression instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+      if (expression instanceof PsiAssignmentExpression assignmentExpression) {
         PsiExpression lExpression = assignmentExpression.getLExpression();
         if (assignmentExpression.getOperationTokenType() == JavaTokenType.EQ && isReferenceTo(lExpression, resultVariable)) {
           PsiExpression rExpression = assignmentExpression.getRExpression();
@@ -483,9 +464,9 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
       }
     }
 
-    private static boolean hasDefaultSwitchLabel(@NotNull PsiCodeBlock switchBody) {
+    private static boolean hasTotalSwitchLabel(@NotNull PsiCodeBlock switchBody) {
       for (PsiStatement statement : switchBody.getStatements()) {
-        if (statement instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)statement).isDefaultCase()) {
+        if (statement instanceof PsiSwitchLabelStatement && SwitchUtils.isUnconditionalLabel((PsiSwitchLabelStatement)statement)) { // TODO check because isUnconditionalLabel was chanched
           return true;
         }
       }
@@ -517,13 +498,8 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     }
 
     private static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
-      if (expression instanceof PsiReferenceExpression) {
-        PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-        if (!referenceExpression.isQualified() && referenceExpression.resolve() == variable) {
-          return true;
-        }
-      }
-      return false;
+      return expression instanceof PsiReferenceExpression referenceExpression &&
+             !referenceExpression.isQualified() && referenceExpression.resolve() == variable;
     }
   }
 
@@ -590,29 +566,13 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     }
   }
 
-  private static final class ReturnContext {
-    final PsiReturnStatement returnStatement;
-    final PsiCodeBlock returnScope;
-    final PsiType returnType;
-    final PsiStatement refactoredStatement;
-    final PsiVariable returnedVariable;
-    final PsiCodeBlock variableScope;
-
-    private ReturnContext(@NotNull PsiReturnStatement returnStatement,
-                          @NotNull PsiCodeBlock returnScope,
-                          @NotNull PsiType returnType,
-                          @NotNull PsiStatement refactoredStatement,
-                          @NotNull PsiVariable returnedVariable,
-                          @NotNull PsiCodeBlock variableScope) {
-
-      this.returnStatement = returnStatement;
-      this.returnScope = returnScope;
-      this.returnType = returnType;
-      this.refactoredStatement = refactoredStatement;
-      this.returnedVariable = returnedVariable;
-      this.variableScope = variableScope;
+  private record ReturnContext(@NotNull PsiReturnStatement returnStatement,
+                              @NotNull PsiCodeBlock returnScope,
+                              @NotNull PsiType returnType,
+                              @NotNull PsiStatement refactoredStatement,
+                              @NotNull PsiVariable returnedVariable,
+                              @NotNull PsiCodeBlock variableScope) {
     }
-  }
 
   private static class Highlighter {
     private final List<PsiElement> myElements = new ArrayList<>();

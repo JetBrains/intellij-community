@@ -3,7 +3,9 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
 interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
@@ -13,21 +15,26 @@ interface SingleChangeListCommitWorkflowUi : CommitWorkflowUi {
 
   fun deactivate()
 
+  @RequiresEdt
+  fun refreshDataBeforeCommit()
+
   fun addStateListener(listener: CommitWorkflowUiStateListener, parent: Disposable)
 
   fun getChangeList(): LocalChangeList
 
   fun addChangeListListener(listener: ChangeListListener, parent: Disposable)
 
+  fun getInclusionModel(): InclusionModel
+
   interface ChangeListListener : EventListener {
-    fun changeListChanged()
+    fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList)
   }
 }
 
 interface CommitOptionsUi {
   fun setOptions(options: CommitOptions)
 
-  fun setVisible(vcses: Collection<AbstractVcs>)
+  fun setVisible(vcses: Collection<AbstractVcs>?)
 }
 
 interface CommitWorkflowUiStateListener : EventListener {

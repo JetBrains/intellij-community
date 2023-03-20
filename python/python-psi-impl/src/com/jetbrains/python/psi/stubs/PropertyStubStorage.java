@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.stubs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
@@ -19,7 +20,6 @@ import java.io.IOException;
 
 /**
  * Packs property description for storage in a stub.
- * User: dcheryasov
  */
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 
@@ -60,6 +60,16 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
   @Override
   public QualifiedName getCalleeName() {
     return null;  // ??
+  }
+
+  @Override
+  public String toString() {
+    return "PropertyStubStorage(" +
+           "getter=" + myGetter.valueOrNull() +
+           ", setter=" + mySetter.valueOrNull() +
+           ", deleter=" + myDeleter.valueOrNull() +
+           ", doc=" + (myDoc != null ? "'" + StringUtil.escapeStringCharacters(myDoc) + "'" : null) +
+           ')';
   }
 
   public static PropertyStubStorage deserialize(StubInputStream stream) throws IOException {

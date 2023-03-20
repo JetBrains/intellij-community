@@ -45,11 +45,20 @@ public final class CollectionFactory {
     return new ConcurrentWeakHashMap<>(HashingStrategy.identity());
   }
 
+  /**
+   * @deprecated use {@link java.util.WeakHashMap} instead
+   */
   @Contract(value = " -> new", pure = true)
+  @Deprecated
   public static @NotNull <K, V> Map<@NotNull K, V> createWeakMap() {
-    return createWeakMap(4, 0.8f, HashingStrategy.canonical());
+    return new java.util.WeakHashMap<>();
   }
 
+  /**
+   * Weak keys hard values hash map.
+   * Null keys are NOT allowed
+   * Null values are allowed
+   */
   @Contract(value = "_,_,_ -> new", pure = true)
   public static @NotNull <K, V> Map<@NotNull K, V> createWeakMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> hashingStrategy) {
     return new WeakHashMap<>(initialCapacity, loadFactor, hashingStrategy);

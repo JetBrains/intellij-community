@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import operator 'MyDelegate.getValue'" "true"
 // WITH_STDLIB
 // ERROR: Type 'MyDelegate<TypeVariable(T)>' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
 
@@ -8,3 +8,4 @@ import base.MyDelegate
 import base.getValue
 
 val myVal by MyDelegate { false }
+/* IGNORE_FIR */

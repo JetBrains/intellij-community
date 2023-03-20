@@ -2,10 +2,13 @@
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
@@ -22,18 +25,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +41,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.uast.*;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
   private static final Key<SuspiciousPackagePrivateAccessInspection> INSPECTION_KEY = Key.create("SuspiciousPackagePrivateAccess");
@@ -245,11 +242,11 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
                                                             boolean forClassReference) {
     UElement parent = sourceClass.getUastParent();
     if (parent instanceof UObjectLiteralExpression) {
-      if (((UCallExpression)parent).getValueArguments().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode))) {
+      if (ContainerUtil.exists(((UCallExpression)parent).getValueArguments(), it -> UastUtils.isPsiAncestor(it, sourceNode))) {
         return true;
       }
     }
-    return forClassReference && sourceClass.getUastSuperTypes().stream().anyMatch(it -> UastUtils.isPsiAncestor(it, sourceNode));
+    return forClassReference && ContainerUtil.exists(sourceClass.getUastSuperTypes(), it -> UastUtils.isPsiAncestor(it, sourceNode));
   }
 
   @Tag("modules-set")
@@ -260,30 +257,27 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   }
 
   @Override
-  public @NotNull JComponent createOptionsPanel() {
-    JBTextArea component = new JBTextArea(5, 80);
-    component.setText(MODULES_SETS_LOADED_TOGETHER.stream().map(it -> String.join(",", it.modules)).collect(Collectors.joining("\n")));
-    component.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        MODULES_SETS_LOADED_TOGETHER.clear();
-        for (String line : StringUtil.splitByLines(component.getText())) {
-          ModulesSet set = new ModulesSet();
-          set.modules = new LinkedHashSet<>(StringUtil.split(line, ","));
-          if (!set.modules.isEmpty()) {
-            MODULES_SETS_LOADED_TOGETHER.add(set);
-          }
-        }
-        myModuleSetByModuleName.drop();
-      }
-    });
-    JPanel panel = new JPanel(new BorderLayout());
-    JPanel labels = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    labels.add(new JBLabel(InspectionGadgetsBundle.message("groups.of.modules.loaded.together.label")));
-    labels.add(ContextHelpLabel.create(InspectionGadgetsBundle.message("groups.of.modules.loaded.together.description")));
-    panel.add(labels, BorderLayout.NORTH);
-    panel.add(new JBScrollPane(component), BorderLayout.CENTER);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      OptPane.stringList("MODULES_SETS_LOADED_TOGETHER", InspectionGadgetsBundle.message("groups.of.modules.loaded.together.label"))
+        .description(InspectionGadgetsBundle.message("groups.of.modules.loaded.together.description"))
+    );
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onValue("MODULES_SETS_LOADED_TOGETHER",
+               () -> StreamEx.of(MODULES_SETS_LOADED_TOGETHER).map(set -> String.join(",", set.modules)).toMutableList(),
+               newList -> {
+                 MODULES_SETS_LOADED_TOGETHER.clear();
+                 StreamEx.of(newList).map(line -> {
+                   ModulesSet set = new ModulesSet();
+                   set.modules = StreamEx.split(line, ",").toCollection(LinkedHashSet::new);
+                   return set;
+                 }).into(MODULES_SETS_LOADED_TOGETHER);
+                 myModuleSetByModuleName.drop();
+               });
   }
 
   @Override
@@ -313,6 +307,11 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     @Override
     public String getFamilyName() {
       return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.family.name");
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
     }
 
     @Override

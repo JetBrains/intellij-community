@@ -25,9 +25,6 @@ import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 
-/**
- * @author ilyas
- */
 public abstract class GrParameterTablePanel extends ParameterTablePanel {
 
   public GrParameterTablePanel() {

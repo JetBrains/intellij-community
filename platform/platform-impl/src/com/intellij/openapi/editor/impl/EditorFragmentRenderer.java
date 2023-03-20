@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -20,6 +20,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -237,7 +238,7 @@ final class EditorFragmentRenderer {
         translateInstance.preConcatenate(transform);
         g2d.setTransform(translateInstance);
         UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
-        Int2IntOpenHashMap rightEdges = new Int2IntOpenHashMap();
+        Int2IntMap rightEdges = new Int2IntOpenHashMap();
         int h = lineHeight - 2;
 
         EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
@@ -283,7 +284,7 @@ final class EditorFragmentRenderer {
         GraphicsUtil.setupAAPainting(g2);
         g2.setClip(new RoundRectangle2D.Double(0, 0, size.width - .5, size.height - .5, 2, 2));
         UIUtil.drawImage(g2, myCacheLevel1, 0, 0, this);
-        if (StartupUiUtil.isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula() && !ExperimentalUI.isNewUI()) {
           //Add glass effect
           Shape s = new Rectangle(0, 0, size.width, size.height);
           double cx = size.width / 2.0;

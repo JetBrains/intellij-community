@@ -22,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Refactorings invoke {@link #getListener(PsiElement)} of registered
  * {@linkplain RefactoringElementListenerProvider} before particular element is subjected to refactoring.
- *
- * @author dsl
  */
 public interface RefactoringElementListenerProvider {
 

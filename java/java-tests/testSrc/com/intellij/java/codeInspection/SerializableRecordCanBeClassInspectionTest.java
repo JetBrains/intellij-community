@@ -9,113 +9,118 @@ import org.jetbrains.annotations.Nullable;
 public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSerializableVersionUIDWithoutSerial() {
-    doTest("import java.io.Serializable;\n" +
-           "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
-           "  @MyAnn\n" +
-           "  private static final long serialVersionUID = 1;\n" +
-           "  static long number = 10;\n" +
-           "}");
-    checkQuickFix("Convert record to class", "import java.io.Serial;\n" +
-                                             "import java.io.Serializable;\n" +
-                                             "\n" +
-                                             "final class R implements Serializable {\n" +
-                                             "    @Serial\n" +
-                                             "    @MyAnn\n" +
-                                             "    private static final long serialVersionUID = 1;\n" +
-                                             "    static long number = 10;\n" +
-                                             "\n" +
-                                             "    R() {\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public boolean equals(Object obj) {\n" +
-                                             "        return obj == this || obj != null && obj.getClass() == this.getClass();\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public int hashCode() {\n" +
-                                             "        return 1;\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public String toString() {\n" +
-                                             "        return \"R[]\";\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "}");
+    doTest("""
+             import java.io.Serializable;
+             record <warning descr="Record can be converted to class"><caret>R</warning>() implements Serializable {
+               @MyAnn
+               private static final long serialVersionUID = 1;
+               static long number = 10;
+             }""");
+    checkQuickFix("Convert record to class", """
+      import java.io.Serial;
+      import java.io.Serializable;
+
+      final class R implements Serializable {
+          @Serial
+          @MyAnn
+          private static final long serialVersionUID = 1;
+          static long number = 10;
+
+          R() {
+          }
+
+          @Override
+          public boolean equals(Object obj) {
+              return obj == this || obj != null && obj.getClass() == this.getClass();
+          }
+
+          @Override
+          public int hashCode() {
+              return 1;
+          }
+
+          @Override
+          public String toString() {
+              return "R[]";
+          }
+
+      }""");
   }
 
   public void testSerializableVersionUIDWithSerial() {
-    doTest("import java.io.Serial;\n" +
-           "import java.io.Serializable;\n" +
-           "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
-           "  @Serial" +
-           "  @MyAnn\n" +
-           "  private static final long serialVersionUID = 1;\n" +
-           "  static long number = 10;\n" +
-           "}");
-    checkQuickFix("Convert record to class", "import java.io.Serial;\n" +
-                                             "import java.io.Serializable;\n" +
-                                             "\n" +
-                                             "final class R implements Serializable {\n" +
-                                             "    @Serial\n" +
-                                             "    @MyAnn\n" +
-                                             "    private static final long serialVersionUID = 1;\n" +
-                                             "    static long number = 10;\n" +
-                                             "\n" +
-                                             "    R() {\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public boolean equals(Object obj) {\n" +
-                                             "        return obj == this || obj != null && obj.getClass() == this.getClass();\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public int hashCode() {\n" +
-                                             "        return 1;\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public String toString() {\n" +
-                                             "        return \"R[]\";\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "}");
+    doTest("""
+             import java.io.Serial;
+             import java.io.Serializable;
+             record <warning descr="Record can be converted to class"><caret>R</warning>() implements Serializable {
+               @Serial  @MyAnn
+               private static final long serialVersionUID = 1;
+               static long number = 10;
+             }""");
+    checkQuickFix("Convert record to class", """
+      import java.io.Serial;
+      import java.io.Serializable;
+
+      final class R implements Serializable {
+          @Serial
+          @MyAnn
+          private static final long serialVersionUID = 1;
+          static long number = 10;
+
+          R() {
+          }
+
+          @Override
+          public boolean equals(Object obj) {
+              return obj == this || obj != null && obj.getClass() == this.getClass();
+          }
+
+          @Override
+          public int hashCode() {
+              return 1;
+          }
+
+          @Override
+          public String toString() {
+              return "R[]";
+          }
+
+      }""");
   }
 
   public void testWithoutSerialVersionUID() {
-    doTest("import java.io.Serializable;\n" +
-           "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
-           "  static long number = 10;\n" +
-           "}");
-    checkQuickFix("Convert record to class", "import java.io.Serial;\n" +
-                                             "import java.io.Serializable;\n" +
-                                             "\n" +
-                                             "final class R implements Serializable {\n" +
-                                             "    static long number = 10;\n" +
-                                             "    @Serial\n" +
-                                             "    private static final long serialVersionUID = 0L;\n" +
-                                             "\n" +
-                                             "    R() {\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public boolean equals(Object obj) {\n" +
-                                             "        return obj == this || obj != null && obj.getClass() == this.getClass();\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public int hashCode() {\n" +
-                                             "        return 1;\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public String toString() {\n" +
-                                             "        return \"R[]\";\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "}");
+    doTest("""
+             import java.io.Serializable;
+             record <warning descr="Record can be converted to class"><caret>R</warning>() implements Serializable {
+               static long number = 10;
+             }""");
+    checkQuickFix("Convert record to class", """
+      import java.io.Serial;
+      import java.io.Serializable;
+
+      final class R implements Serializable {
+          static long number = 10;
+          @Serial
+          private static final long serialVersionUID = 0L;
+
+          R() {
+          }
+
+          @Override
+          public boolean equals(Object obj) {
+              return obj == this || obj != null && obj.getClass() == this.getClass();
+          }
+
+          @Override
+          public int hashCode() {
+              return 1;
+          }
+
+          @Override
+          public String toString() {
+              return "R[]";
+          }
+
+      }""");
   }
 
   public void testSerialVersionUIDWithWrongModifier() {
@@ -125,32 +130,33 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
            "  @MyAnn\n" +
            "  private static long serialVersionUID = 10;\n" + // not final
            "}");
-    checkQuickFix("Convert record to class", "import java.io.Serializable;\n" +
-                                             "\n" +
-                                             "final class R implements Serializable {\n" +
-                                             "    static long number = 10;\n" +
-                                             "    @MyAnn\n" +
-                                             "    private static long serialVersionUID = 10;\n" +
-                                             "\n" +
-                                             "    R() {\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public boolean equals(Object obj) {\n" +
-                                             "        return obj == this || obj != null && obj.getClass() == this.getClass();\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public int hashCode() {\n" +
-                                             "        return 1;\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "    @Override\n" +
-                                             "    public String toString() {\n" +
-                                             "        return \"R[]\";\n" +
-                                             "    }\n" +
-                                             "\n" +
-                                             "}");
+    checkQuickFix("Convert record to class", """
+      import java.io.Serializable;
+
+      final class R implements Serializable {
+          static long number = 10;
+          @MyAnn
+          private static long serialVersionUID = 10;
+
+          R() {
+          }
+
+          @Override
+          public boolean equals(Object obj) {
+              return obj == this || obj != null && obj.getClass() == this.getClass();
+          }
+
+          @Override
+          public int hashCode() {
+              return 1;
+          }
+
+          @Override
+          public String toString() {
+              return "R[]";
+          }
+
+      }""");
   }
 
   @Override
@@ -161,14 +167,16 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[]{
-      "package java.io;\n" +
-      "@Target({ElementType.METHOD, ElementType.FIELD})\n" +
-      "@Retention(RetentionPolicy.SOURCE)\n" +
-      "public @interface Serial {}",
+      """
+package java.io;
+@Target({ElementType.METHOD, ElementType.FIELD})
+@Retention(RetentionPolicy.SOURCE)
+public @interface Serial {}""",
 
-      "@Target({ElementType.FIELD})\n" +
-      "@Retention(RetentionPolicy.SOURCE)\n" +
-      "public @interface MyAnn {}"
+      """
+@Target({ElementType.FIELD})
+@Retention(RetentionPolicy.SOURCE)
+public @interface MyAnn {}"""
     };
   }
 }

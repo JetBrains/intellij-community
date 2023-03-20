@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -33,7 +33,7 @@ fun PsiElement?.toValVar(): KotlinValVar = when {
 }
 
 fun KtParameter.setValOrVar(valOrVar: KotlinValVar): PsiElement? {
-    val newKeyword = valOrVar.createKeyword(KtPsiFactory(this))
+    val newKeyword = valOrVar.createKeyword(KtPsiFactory(project))
     val currentKeyword = valOrVarKeyword
 
     if (currentKeyword != null) {

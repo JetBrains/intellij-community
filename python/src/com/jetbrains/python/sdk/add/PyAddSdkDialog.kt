@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
@@ -55,7 +41,6 @@ import javax.swing.JPanel
  *
  * Use [show] to instantiate and show the dialog.
  *
- * @author vlan
  */
 class PyAddSdkDialog private constructor(private val project: Project?,
                                          private val module: Module?,
@@ -75,7 +60,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   override fun createCenterPanel(): JComponent {
     val sdks = existingSdks
-      .filter { it.sdkType is PythonSdkType && !PythonSdkUtil.isInvalid(it) }
+      .filter { it.sdkType is PythonSdkType && it.sdkSeemsValid }
       .sortedWith(PreferredSdkComparator())
     val panels = createPanels(sdks).toMutableList()
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
@@ -131,7 +116,6 @@ class PyAddSdkDialog private constructor(private val project: Project?,
                                                     cancelButton.value))
   }
 
-  @Suppress("SuspiciousPackagePrivateAccess") //todo: remove suppression when everyone update to IDEA where IDEA-210216 is fixed
   private val nextAction: Action = object : DialogWrapperAction(PyBundle.message("python.sdk.next")) {
     override fun doAction(e: ActionEvent) {
       selectedPanel?.let {
@@ -145,7 +129,6 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private val nextButton = lazy { createJButtonForAction(nextAction) }
 
-  @Suppress("SuspiciousPackagePrivateAccess")
   private val previousAction = object : DialogWrapperAction(PyBundle.message("python.sdk.previous")) {
     override fun doAction(e: ActionEvent) = onPrevious()
   }
@@ -193,6 +176,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
           }
         }
         addListSelectionListener {
+          // Only last even must be processed. Other events may leave UI in inconsistent state
+          if (it.valueIsAdjusting) return@addListSelectionListener
           selectedPanel = selectedValue
           cardLayout.show(cardPanel, selectedValue.panelName)
 
@@ -363,7 +348,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     private fun PyAddSdkProvider.safeCreateView(project: Project?,
                                                 module: Module?,
                                                 existingSdks: List<Sdk>,
-                                                context:UserDataHolder): PyAddSdkView? {
+                                                context: UserDataHolder): PyAddSdkView? {
       try {
         return createView(project, module, null, existingSdks, context)
       }

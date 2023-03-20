@@ -1,5 +1,22 @@
 // WITH_STDLIB
 import Enum.*
+import java.util.concurrent.TimeUnit
+
+fun libraryEnum(x: AnnotationTarget) {
+    if (x == AnnotationTarget.TYPE) {
+        if (<warning descr="Condition 'x == AnnotationTarget.CLASS' is always false">x == AnnotationTarget.CLASS</warning>) {
+
+        }
+    }
+}
+
+fun javaEnum(x: TimeUnit) {
+    if (x == TimeUnit.DAYS) {
+        if (<warning descr="Condition 'x == TimeUnit.MINUTES' is always false">x == TimeUnit.MINUTES</warning>) {
+
+        }
+    }
+}
 
 enum class Enum {
     A, B, C
@@ -7,7 +24,7 @@ enum class Enum {
 
 fun ordinal(e : Enum) {
     if (e == Enum.A) {
-        if (<warning descr="Condition 'e.ordinal == 0' is always true"><weak_warning descr="Value of 'e.ordinal' is always zero">e.ordinal</weak_warning> == 0</warning>) {}
+        if (<warning descr="Condition 'e.ordinal == 0' is always true">e.ordinal == 0</warning>) {}
     }
 }
 

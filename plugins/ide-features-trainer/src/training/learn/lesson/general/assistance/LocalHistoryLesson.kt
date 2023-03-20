@@ -2,10 +2,13 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.CommonBundle
+import com.intellij.history.integration.ui.actions.LocalHistoryGroup
+import com.intellij.history.integration.ui.actions.ShowHistoryAction
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ApplicationManager
@@ -48,14 +51,14 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiHighlightingManager.HighlightingOptions
 import training.ui.LearningUiUtil
 import training.util.LessonEndInfo
-import training.util.isToStringContains
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import javax.swing.JFrame
 
-class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
+class LocalHistoryLesson(private val helpUrl: String = "local-history.html")
+  : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
   override val languageId = "yaml"
   override val lessonType = LessonType.SCRATCH
   override val properties = LessonProperties(availableSince = "212.5284")
@@ -126,7 +129,9 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
 
     val localHistoryActionText = ActionsBundle.groupText("LocalHistory").dropMnemonic()
     task {
-      text(LessonsBundle.message("local.history.remove.code", strong(localHistoryActionText), action("EditorDelete")))
+      text(LessonsBundle.message("local.history.remove.code",
+                                 strong(localHistoryActionText),
+                                 action(IdeActions.ACTION_EDITOR_BACKSPACE)))
       stateCheck {
         editor.document.charsSequence.contains(textAfterDelete)
       }
@@ -145,7 +150,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
           LessonsBundle.message("recent.files.dialog.title"),
           CommonBundle.message("button.ok"),
           LearnBundle.message("learn.stop.lesson"),
-          FeaturesTrainerIcons.Img.PluginIcon
+          FeaturesTrainerIcons.PluginIcon
         )
         if (userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
@@ -160,8 +165,9 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       invokeMenuTaskId = taskId
       text(LessonsBundle.message("local.history.imagine.restore", strong(ActionsBundle.message("action.\$Undo.text"))))
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
-      triggerByUiComponentAndHighlight { ui: ActionMenu ->
-        ui.text.isToStringContains(localHistoryActionText)
+      triggerAndBorderHighlight().component { ui: EditorComponentImpl -> ui.editor == editor }
+      triggerAndFullHighlight().component { ui: ActionMenu ->
+        isClassEqual(ui.anAction, LocalHistoryGroup::class.java)
       }
       test {
         ideFrame { robot().rightClick(editor.component) }
@@ -171,22 +177,22 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     task("LocalHistory.ShowHistory") {
       val showHistoryActionText = ActionsBundle.actionText(it).dropMnemonic()
       text(LessonsBundle.message("local.history.show.history", strong(localHistoryActionText), strong(showHistoryActionText)))
-      triggerByUiComponentAndHighlight(clearPreviousHighlights = false) { ui: ActionMenuItem ->
-        ui.text == showHistoryActionText
+      triggerAndFullHighlight { clearPreviousHighlights = false }.component { ui: ActionMenuItem ->
+        isClassEqual(ui.anAction, ShowHistoryAction::class.java)
       }
       trigger(it)
       restoreByUi()
       test {
         ideFrame {
-          jMenuItem { item: ActionMenu -> item.text.isToStringContains(localHistoryActionText) }.click()
-          jMenuItem { item: ActionMenuItem -> item.text == showHistoryActionText }.click()
+          jMenuItem { item: ActionMenu -> isClassEqual(item.anAction, LocalHistoryGroup::class.java) }.click()
+          jMenuItem { item: ActionMenuItem -> isClassEqual(item.anAction, ShowHistoryAction::class.java) }.click()
         }
       }
     }
 
     var revisionsTable: JBTable? = null
     task {
-      triggerByPartOfComponent { ui: JBTable ->
+      triggerAndBorderHighlight().componentPart { ui: JBTable ->
         if (checkInsideLocalHistoryFrame(ui)) {
           revisionsTable = ui
           ui.getCellRect(revisionInd, 0, false)
@@ -201,7 +207,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       text(LessonsBundle.message("local.history.select.revision", strong(localHistoryActionText), strong(localHistoryActionText)))
       val step = CompletableFuture<Boolean>()
       addStep(step)
-      triggerByUiComponentAndHighlight(false, false, clearPreviousHighlights = false) l@{ ui: JBLoadingPanel ->
+      triggerUI { clearPreviousHighlights = false }.component l@{ ui: JBLoadingPanel ->
         if (!checkInsideLocalHistoryFrame(ui)) return@l false
         ui.addListener(object : JBLoadingPanelListener {
           override fun onLoadingStart() {
@@ -229,7 +235,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     }
 
     task {
-      triggerByPartOfComponent { ui: EditorGutterComponentEx -> findDiffGutterRect(ui) }
+      triggerAndBorderHighlight().componentPart { ui: EditorGutterComponentEx -> findDiffGutterRect(ui) }
     }
 
     task {
@@ -294,6 +300,10 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
         }
       }
     }
+  }
+
+  private fun isClassEqual(value: Any, expectedClass: Class<*>): Boolean {
+    return value.javaClass.name == expectedClass.name
   }
 
   private fun findDiffGutterRect(ui: EditorGutterComponentEx): Rectangle? {
@@ -373,10 +383,8 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     }
   }
 
-  override val suitableTips = listOf("local_history")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("local.history.help.link"),
-         LessonUtil.getHelpLink("local-history.html")),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

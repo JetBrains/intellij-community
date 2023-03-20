@@ -4,6 +4,7 @@ package com.intellij.jsonpath.ui
 import com.intellij.json.JsonUtil
 import com.intellij.json.psi.JsonFile
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -11,6 +12,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.psi.PsiDocumentManager
 
 internal class JsonPathEvaluateAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val editor = e.getData(CommonDataKeys.EDITOR)

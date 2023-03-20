@@ -94,8 +94,6 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
   @NotNull
   @Override
   public FrameDiffTool.ToolbarComponents init() {
-    myDirDiffPanel.setupSplitter();
-
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = Arrays.asList(myDirDiffPanel.getActions());
     components.statusPanel = myDirDiffPanel.extractFilterPanel();

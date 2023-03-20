@@ -17,14 +17,14 @@ public final class CounterUsageCollectorEP {
   /**
    * @deprecated Please use {@link CounterUsageCollectorEP#implementationClass} and {@link CounterUsagesCollector#getGroup()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Attribute("groupId")
   public String groupID;
 
   /**
    * @deprecated Please use {@link CounterUsageCollectorEP#implementationClass} and {@link CounterUsagesCollector#getGroup()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Attribute("version")
   public int version = 1;
 

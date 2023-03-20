@@ -1,8 +1,6 @@
 <html>
 <body>
 Reports methods that accept an arbitrary number of parameters (also known as varargs methods).
-<p>Such methods are not supported under Java 1.4 or earlier JVMs.</p>
-<!-- tooltip end -->
 <p><b>Example:</b></p>
 <pre><code>
   enum EnumConstants {
@@ -21,5 +19,10 @@ Reports methods that accept an arbitrary number of parameters (also known as var
   EnumConstants(String[] ss) {}
 }
 </code></pre>
+<!-- tooltip end -->
+<p>
+  <i>Varargs method</i> appeared in Java 5.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 </body>
 </html>

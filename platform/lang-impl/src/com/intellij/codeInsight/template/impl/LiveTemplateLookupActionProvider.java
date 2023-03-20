@@ -14,12 +14,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class LiveTemplateLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {
+  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
     if (element instanceof LiveTemplateLookupElementImpl) {
       final TemplateImpl template = ((LiveTemplateLookupElementImpl)element).getTemplate();
       final TemplateImpl templateFromSettings = TemplateSettings.getInstance().getTemplate(template.getKey(), template.getGroupName());

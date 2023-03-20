@@ -1,187 +1,136 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.FlyIdeaTestCase;
-import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.wsl.WslRule;
+import com.intellij.openapi.fileChooser.ex.FileTextFieldUtil.CompletionResult;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.fixtures.TestFixtureRule;
+import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ArrayUtil;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.RuleChain;
 
-import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-public class FileChooserCompletionTest extends FlyIdeaTestCase {
+import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
+import static org.assertj.core.api.Assertions.assertThat;
 
-  private File myParent;
-  private LocalFsFinder myFinder;
+public class FileChooserCompletionTest {
+  private static final TestFixtureRule appRule = new TestFixtureRule();
+  private static final WslRule wslRule = new WslRule(false);
+  @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
 
-  private final Map<String, String> myMacros = new HashMap<>();
-  private File myFolder11;
-  private File myFolder21;
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private void basicSetup() throws IOException {
-    myParent = getTempDir();
+  @Test
+  public void testEmpty() {
+    if (!SystemInfo.isWindows) {
+      assertComplete("", ArrayUtil.EMPTY_STRING_ARRAY, Map.of(), "", null);
+    }
 
-    myFolder11 = new File(myParent, "folder1/folder11");
-    assertTrue(myFolder11.mkdirs());
-    assertTrue(new File(myParent, "a").mkdirs());
-    myFolder21 = new File(myParent, "folder1/folder11/folder21");
-    assertTrue(myFolder21.mkdirs());
-    assertTrue(new File(myParent, "folder1/folder12").mkdirs());
-    assertTrue(new File(myParent, "file1").mkdir());
+    assertComplete("1", ArrayUtil.EMPTY_STRING_ARRAY, Map.of(), "", null);
   }
 
-  public void testBasicComplete() throws Exception {
-    assertComplete("", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
-    assertComplete("1", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
+  @Test
+  public void testStartMatching() {
+    tempDir.newDirectory("folder1/folder11/folder21");
+    tempDir.newDirectory("folder1/folder12");
+    tempDir.newFile("a");
+    tempDir.newFile("file1");
 
+    assertComplete("f", ArrayUtil.EMPTY_STRING_ARRAY, null);
 
-    basicSetup();
+    assertComplete("/", new String[]{"a", "folder1", "file1"}, "a");
+    assertComplete("/f", new String[]{"folder1", "file1"}, "file1");
+    assertComplete("/fo", new String[]{"folder1"}, "folder1");
+    assertComplete("/folder", new String[]{"folder1"}, "folder1");
+    assertComplete("/folder1", new String[]{"folder1"}, "folder1");
 
-    assertComplete("f", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
+    assertComplete("/folder1/", new String[]{"folder11", "folder12"}, "folder11");
+    assertComplete("/folder1/folder1", new String[]{"folder11", "folder12"}, "folder11");
 
-    assertComplete("/", new String[] {
-      "a",
-      "folder1",
-      "file1"
-    }, "a");
+    assertComplete("/foo", ArrayUtil.EMPTY_STRING_ARRAY, null);
 
-    assertComplete("/f", new String[] {
-      "folder1",
-      "file1"
-    }, "file1");
-
-    assertComplete("/fo", new String[] {
-      "folder1",
-    }, "folder1");
-
-    assertComplete("/folder", new String[] {
-      "folder1",
-    }, "folder1");
-
-    assertComplete("/folder1", new String[] {
-      "folder1",
-    }, "folder1");
-
-    assertComplete("/folder1/", new String[] {
-      "folder11",
-      "folder12",
-    }, "folder11");
-
-    assertComplete("/folder1/folder1", new String[] {
-      "folder11",
-      "folder12",
-    }, "folder11");
-
-    assertComplete("/foo", ArrayUtilRt.EMPTY_STRING_ARRAY, null);
-
-    assertTrue(new File(myParent, "qw/child.txt").mkdirs());
-    assertTrue(new File(myParent, "qwe").mkdir());
-    assertComplete("/qw", new String[] {
-      "qw",
-      "qwe"
-    }, "qw");
-
-    assertComplete("/qw/", new String[] {
-      "child.txt"
-    }, "child.txt");
+    tempDir.newFile("qw/child.txt");
+    tempDir.newDirectory("qwe");
+    assertComplete("/qw", new String[]{"qw", "qwe"}, "qw");
+    assertComplete("/qw/", new String[]{"child.txt"}, "child.txt");
   }
 
-  public void testMiddleMatching() throws Exception {
-    basicSetup();
+  @Test
+  public void testMiddleMatching() {
+    tempDir.newDirectory("folder1");
 
-    assertComplete("/old", new String[] {
-      "folder1"
-    }, "folder1");
+    assertComplete("/old", new String[]{"folder1"}, "folder1");
   }
 
-  public void testComplete() throws Exception {
-    basicSetup();
+  @Test
+  public void testMacros() {
+    File dir21 = tempDir.newDirectory("dir1/dir11/dir21");
+    Map<String, String> macros = Map.of(
+      "$DIR_11$", dir21.getParent(),
+      "$DIR_21$", dir21.getPath(),
+      "$WHATEVER$", "/some_path");
 
-    myParent = null;
-    myMacros.put("$FOLDER_11$", myFolder11.getAbsolutePath());
-    myMacros.put("$FOLDER_21$", myFolder21.getAbsolutePath());
-    myMacros.put("$WHATEVER$", "/somepath");
+    assertComplete("$", new String[]{"$DIR_11$", "$DIR_21$"}, macros, "", "$DIR_11$");
+  }
 
-    assertComplete("$", new String[] {"$FOLDER_11$", "$FOLDER_21$"}, "$FOLDER_11$");
+  @Test
+  public void testWindowsRoots() {
+    assumeWindows();
+
+    String[] fsRoots = StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false).map(Path::toString).toArray(String[]::new);
+    String[] wslRoots = wslRule.getVms().stream().map(d -> StringUtil.trimTrailing(d.getUNCRootPath().toString(), '\\')).toArray(String[]::new);
+    String[] allRoots = ArrayUtil.mergeArrays(fsRoots, wslRoots, String[]::new);
+    String firstRoot = Stream.of(allRoots).sorted().findFirst().orElseThrow();
+    assertComplete("", allRoots, Map.of(), "", firstRoot);
+
+    String sysDrive = System.getenv("SystemDrive");
+    assertThat(sysDrive).isNotBlank();
+    String[] expected = {sysDrive + '\\'};
+    assertComplete(sysDrive.substring(0, 1), expected, Map.of(), "", expected[0]);
+    assertComplete(sysDrive, expected, Map.of(), "", expected[0]);
+
+    if (wslRoots.length != 0) {
+      String firstWsl = Stream.of(wslRoots).sorted().findFirst().orElseThrow();
+      int p = firstWsl.indexOf('\\', 2);
+      assertThat(p).withFailMessage("Malformed name: '%s'", firstWsl).isGreaterThan(2);
+
+      assertComplete("\\\\", wslRoots, Map.of(), "", firstWsl);
+      assertComplete(firstWsl.substring(0, 3), wslRoots, Map.of(), "", firstWsl);  // '\\w'
+      assertComplete(firstWsl.substring(0, p + 1), wslRoots, Map.of(), "", firstWsl);  // '\\wsl$\'
+      assertComplete(firstWsl, new String[]{firstWsl}, Map.of(), "", firstWsl);  // '\\wsl$\xxx'
+      assertComplete(firstWsl + "\\ho", new String[]{"home"}, Map.of(), "", "home");  // '\\wsl$\xxx\ho'
+    }
   }
 
   private void assertComplete(String typed, String[] expected, String preselected) {
-    myFinder = new LocalFsFinder() {
-      @Override
-      public LookupFile find(@NotNull final String path) {
-        final File ioFile = new File(path);
-        return ioFile.isAbsolute() ? new IoFile(ioFile) : null;
-      }
-    };
+    assertComplete(typed, expected, Map.of(), tempDir.getRoot().getPath(), preselected);
+  }
 
-    String typedText = typed.replace("/", myFinder.getSeparator());
+  private static void assertComplete(String typed, String[] expected, Map<String, String> macros, String completionBase, String preselected) {
+    LocalFsFinder finder = new LocalFsFinder(false).withBaseDir(null);
+    String input = completionBase + typed.replace("/", finder.getSeparator());
+    CompletionResult result = FileTextFieldUtil.processCompletion(input, finder, file -> true, new TreeMap<>(macros), null);
 
-    final FileTextFieldImpl.CompletionResult result = new FileTextFieldImpl.CompletionResult();
-    result.myCompletionBase = myParent != null ? (myParent.getAbsolutePath() + typedText) : typedText;
+    String[] actualVariants = result.variants.stream().map(f -> FileTextFieldUtil.getLookupString(f, finder, result)).toArray(String[]::new);
+    String[] expectedVariants = Stream.of(expected).map(s -> s.replace("/", finder.getSeparator())).toArray(String[]::new);
+    assertThat(actualVariants).containsExactlyInAnyOrder(expectedVariants);
 
-    new FileTextFieldImpl(new JTextField(), myFinder, new FileLookup.LookupFilter() {
-      @Override
-      public boolean isAccepted(final FileLookup.LookupFile file) {
-        return true;
-      }
-    }, myMacros, getRootDisposable()) {
-      @Override
-      @Nullable
-      public VirtualFile getSelectedFile() {
-        return null;
-      }
-    }.processCompletion(result);
-
-    for (int i = 0; i < expected.length; i++) {
-      expected[i] = expected[i].replace("/", myFinder.getSeparator());
-    }
-
-    final List<String> expectedList = Arrays.asList(expected);
-
-    Collections.sort(result.myToComplete, Comparator.comparing(FileLookup.LookupFile::getName));
-    Collections.sort(expectedList);
-
-    assertEquals(asString(expectedList, result), asString(result.myToComplete, result));
-
-    final String preselectedText = preselected != null ? preselected.replace("/", myFinder.getSeparator()) : null;
-    assertEquals(preselectedText, toFileText(result.myPreselected, result));
+    String actualSelected = result.preselected != null ? FileTextFieldUtil.getLookupString(result.preselected, finder, result) : null;
+    String expectedSelected = preselected != null ? preselected.replace("/", finder.getSeparator()) : null;
+    assertThat(actualSelected).isEqualTo(expectedSelected);
     if (preselected != null) {
-      assertTrue(result.myToComplete.contains(result.myPreselected));
+      assertThat(result.variants).contains(result.preselected);
     }
   }
-
-  private String asString(List<?> objects, FileTextFieldImpl.CompletionResult completion) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < objects.size(); i++) {
-      final Object each = objects.get(i);
-      result.append(toFileText(each, completion));
-      if (i < objects.size() - 1) {
-        result.append("\n");
-      }
-    }
-
-    return result.toString();
-  }
-
-  private String toFileText(final Object each, final FileTextFieldImpl.CompletionResult completion) {
-    String text = null;
-    if (each instanceof FileLookup.LookupFile) {
-      final FileLookup.LookupFile file = (FileLookup.LookupFile)each;
-      if (file.getMacro() != null) {
-        text = file.getMacro();
-      } else {
-        text = file.getName();
-      }
-    } else if (each != null) {
-      text = each.toString();
-    }
-
-    if (text == null) return null;
-
-    return (completion.myKidsAfterSeparator.contains(each) ? myFinder.getSeparator() : "" ) + text;
-  }
-
 }

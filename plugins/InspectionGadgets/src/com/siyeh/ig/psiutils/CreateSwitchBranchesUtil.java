@@ -35,7 +35,8 @@ public final class CreateSwitchBranchesUtil {
    */
   public static @NotNull @Nls String getActionName(Collection<String> names) {
     if (names.size() == 1) {
-      return InspectionGadgetsBundle.message("create.missing.switch.branch", names.iterator().next());
+      return InspectionGadgetsBundle.message("create.missing.switch.branch",
+                                             StreamEx.of(names).collect(Joining.with("").maxChars(50).cutAfterDelimiter()));
     }
     return InspectionGadgetsBundle.message("create.missing.switch.branches", formatMissingBranches(names));
   }
@@ -68,7 +69,7 @@ public final class CreateSwitchBranchesUtil {
     final PsiCodeBlock body = switchBlock.getBody();
     final PsiExpression switchExpression = switchBlock.getExpression();
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
-    boolean isPatternsGenerated = selectorClass != null && selectorClass.hasModifierProperty(PsiModifier.SEALED);
+    boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && selectorClass.hasModifierProperty(PsiModifier.SEALED);
     if (body == null) {
       // replace entire switch statement if no code block is present
       @NonNls final StringBuilder newStatementText = new StringBuilder();
@@ -82,7 +83,7 @@ public final class CreateSwitchBranchesUtil {
       return PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
     }
     Map<String, String> prevToNext = StreamEx.of(allNames).pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
-    List<String> missingLabels = StreamEx.of(allNames).filter(missingNames::contains).toList();
+    List<String> missingLabels = ContainerUtil.filter(allNames, missingNames::contains);
     String nextLabel = getNextLabel(prevToNext, missingLabels);
     PsiElement bodyElement = body.getFirstBodyElement();
     List<PsiSwitchLabelStatementBase> addedLabels = new ArrayList<>();
@@ -92,7 +93,7 @@ public final class CreateSwitchBranchesUtil {
         List<String> caseLabelNames = caseExtractor.apply(label);
         while (nextLabel != null && caseLabelNames.contains(nextLabel)) {
           addedLabels.add(addSwitchLabelStatementBefore(missingLabels.get(0), bodyElement, switchBlock, isRuleBasedFormat, isPatternsGenerated));
-          missingLabels.remove(0);
+          missingLabels = missingLabels.subList(1, missingLabels.size());
           if (missingLabels.isEmpty()) {
             break;
           }
@@ -102,7 +103,7 @@ public final class CreateSwitchBranchesUtil {
           for (String missingElement : missingLabels) {
             addedLabels.add(addSwitchLabelStatementBefore(missingElement, bodyElement, switchBlock, isRuleBasedFormat, isPatternsGenerated));
           }
-          missingLabels.clear();
+          missingLabels = Collections.emptyList();
           break;
         }
       }

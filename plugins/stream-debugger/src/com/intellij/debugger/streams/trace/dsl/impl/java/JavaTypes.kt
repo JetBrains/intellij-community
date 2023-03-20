@@ -6,6 +6,7 @@ import com.intellij.debugger.streams.trace.impl.handler.type.*
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import one.util.streamex.StreamEx
@@ -55,7 +56,7 @@ object JavaTypes : Types {
       InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) -> INT
       InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM) -> LONG
       InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM) -> DOUBLE
-      PsiType.VOID == streamPsiType -> VOID
+      PsiTypes.voidType() == streamPsiType -> VOID
       else -> ANY
     }
   }
@@ -71,11 +72,11 @@ object JavaTypes : Types {
 
   fun fromPsiType(type: PsiType): GenericType {
     return when (type) {
-      PsiType.VOID -> VOID
-      PsiType.INT -> INT
-      PsiType.DOUBLE -> DOUBLE
-      PsiType.LONG -> LONG
-      PsiType.BOOLEAN -> BOOLEAN
+      PsiTypes.voidType() -> VOID
+      PsiTypes.intType() -> INT
+      PsiTypes.doubleType() -> DOUBLE
+      PsiTypes.longType() -> LONG
+      PsiTypes.booleanType() -> BOOLEAN
       else -> ClassTypeImpl(TypeConversionUtil.erasure(type).canonicalText)
     }
   }

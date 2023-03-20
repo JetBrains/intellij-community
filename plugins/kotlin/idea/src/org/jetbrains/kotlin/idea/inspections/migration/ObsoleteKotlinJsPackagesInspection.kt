@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.migration
 
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -20,11 +20,12 @@ internal class ObsoleteKotlinJsPackagesInspection : ObsoleteCodeMigrationInspect
     override val fromVersion: LanguageVersion = LanguageVersion.KOTLIN_1_3
     override val toVersion: LanguageVersion = LanguageVersion.KOTLIN_1_4
 
-    override val problemReporters: List<ObsoleteCodeProblemReporter> = listOf(
-        KotlinBrowserFullyQualifiedUsageReporter,
-        KotlinBrowserImportUsageReporter,
-        KotlinDomImportUsageReporter
-    )
+    override val problemReporters: List<ObsoleteCodeProblemReporter>
+        get() = listOf(
+            KotlinBrowserFullyQualifiedUsageReporter,
+            KotlinBrowserImportUsageReporter,
+            KotlinDomImportUsageReporter
+        )
 }
 
 private object ObsoleteKotlinJsPackagesUsagesInWholeProjectFix : ObsoleteCodeInWholeProjectFix() {
@@ -82,7 +83,7 @@ private object KotlinBrowserFullyQualifiedUsageReporter : ObsoleteCodeProblemRep
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val oldQualifier = descriptor.psiElement as? KtDotQualifiedExpression ?: return
 
-            val newQualifier = KtPsiFactory(oldQualifier).createExpression(KOTLINX_BROWSER_PACKAGE)
+            val newQualifier = KtPsiFactory(project).createExpression(KOTLINX_BROWSER_PACKAGE)
             oldQualifier.replace(newQualifier)
         }
     }

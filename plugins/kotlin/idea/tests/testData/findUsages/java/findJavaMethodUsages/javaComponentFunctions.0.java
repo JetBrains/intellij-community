@@ -10,3 +10,5 @@ public class JavaClass {
         return 0;
     }
 }
+
+// IGNORE_FIR_LOG

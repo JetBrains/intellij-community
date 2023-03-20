@@ -62,7 +62,7 @@ public class SuggestIndexNameMacro extends Macro {
           continue ChooseLetterLoop;
         }
       }
-      return new TextResult("" + letter);
+      return new TextResult(String.valueOf(letter));
     }
 
     return null;

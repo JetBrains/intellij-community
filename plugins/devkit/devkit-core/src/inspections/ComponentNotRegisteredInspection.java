@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.jvm.DefaultJvmElementVisitor;
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmElementVisitor;
@@ -29,11 +29,11 @@ import org.jetbrains.idea.devkit.inspections.quickfix.RegisterComponentFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
   private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
@@ -42,42 +42,17 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
   public boolean IGNORE_NON_PUBLIC = true;
 
   private static final Map<ComponentType, RegistrationCheckerUtil.RegistrationType> COMPONENT_TYPE_TO_REGISTRATION_TYPE =
-    ContainerUtil.<ComponentType, RegistrationCheckerUtil.RegistrationType>immutableMapBuilder()
-      .put(ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT)
-      .put(ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT)
-      .put(ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT)
-      .build();
+    Map.of(
+      ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT,
+      ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT,
+      ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT);
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-
-    final JCheckBox ignoreNonPublic = new JCheckBox(
-      DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public"),
-      IGNORE_NON_PUBLIC);
-    ignoreNonPublic.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        IGNORE_NON_PUBLIC = ignoreNonPublic.isSelected();
-      }
-    });
-
-    final JCheckBox checkJavaActions = new JCheckBox(
-      DevKitBundle.message("inspections.component.not.registered.option.check.actions"),
-      CHECK_ACTIONS);
-    checkJavaActions.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        boolean selected = checkJavaActions.isSelected();
-        CHECK_ACTIONS = selected;
-        ignoreNonPublic.setEnabled(selected);
-      }
-    });
-
-    panel.add(checkJavaActions);
-    panel.add(ignoreNonPublic);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_NON_PUBLIC", DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public")),
+      checkbox("CHECK_ACTIONS", DevKitBundle.message("inspections.component.not.registered.option.check.actions"))
+    );
   }
 
   @Nullable

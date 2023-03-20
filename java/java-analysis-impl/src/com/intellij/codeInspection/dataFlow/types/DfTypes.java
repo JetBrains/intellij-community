@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +91,7 @@ public final class DfTypes {
   /**
    * A type that corresponds to JVM int type
    */
-  public static final DfIntType INT = new DfIntRangeType(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.INT)), null);
+  public static final DfIntType INT = new DfIntRangeType(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiTypes.intType())), null);
 
   /**
    * Creates a type that represents a subset of int values, clamping values not representable in the JVM int type.
@@ -187,25 +188,17 @@ public final class DfTypes {
    * @return resulting DfType.
    */
   public static @NotNull DfType rangeClamped(@NotNull LongRangeSet range, @NotNull LongRangeType lrType) {
-    switch (lrType) {
-      case INT32:
-        return intRangeClamped(range);
-      case INT64:
-        return longRange(range);
-      default:
-        throw new IllegalStateException("Unexpected value: " + lrType);
-    }
+    return switch (lrType) {
+      case INT32 -> intRangeClamped(range);
+      case INT64 -> longRange(range);
+    };
   }
 
   static @NotNull DfType range(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange, @NotNull LongRangeType lrType) {
-    switch (lrType) {
-      case INT32:
-        return intRange(range, wideRange);
-      case INT64:
-        return longRange(range, wideRange);
-      default:
-        throw new IllegalStateException("Unexpected value: " + lrType);
-    }
+    return switch (lrType) {
+      case INT32 -> intRange(range, wideRange);
+      case INT64 -> longRange(range, wideRange);
+    };
   }
 
   /**
@@ -290,7 +283,7 @@ public final class DfTypes {
 
   /**
    * Returns a custom constant type
-   *
+   * <p>
    * The following types of the objects are supported:
    * <ul>
    *   <li>Integer/Long/Double/Float/Boolean (will be unboxed)</li>
@@ -323,7 +316,9 @@ public final class DfTypes {
     if (constant == null) return NULL;
     DfConstantType<?> primitiveConstant = primitiveConstantImpl(constant);
     if (primitiveConstant != null) return primitiveConstant;
-    if (!(type instanceof DfReferenceType)) throw new IllegalArgumentException("Not reference type: " + type + "; constant: " + constant);
+    if (!(type instanceof DfReferenceType)) {
+      throw new IllegalArgumentException("Not reference type: " + type + "; constant: " + constant);
+    }
     return new DfReferenceConstantType(constant, ((DfReferenceType)type).getConstraint(), false);
   }
 
@@ -388,11 +383,11 @@ public final class DfTypes {
 
   /**
    * @param constant string constant
-   * @param stringType string type
+   * @param constraint string type constraint
    * @return concatenation result string
    */
-  public static @NotNull DfConstantType<?> concatenationResult(@NotNull String constant, @NotNull PsiType stringType) {
-    return new DfReferenceConstantType(constant, TypeConstraints.exact(stringType), true);
+  public static @NotNull DfConstantType<?> concatenationResult(@NotNull String constant, @NotNull TypeConstraint constraint) {
+    return new DfReferenceConstantType(constant, constraint, true);
   }
 
   /**
@@ -401,21 +396,14 @@ public final class DfTypes {
    */
   public static DfConstantType<?> defaultValue(@NotNull PsiType type) {
     if (type instanceof PsiPrimitiveType) {
-      switch (type.getCanonicalText()) {
-        case "boolean":
-          return FALSE;
-        case "byte":
-        case "char":
-        case "short":
-        case "int":
-          return intValue(0);
-        case "long":
-          return longValue(0L);
-        case "float":
-          return floatValue(0F);
-        case "double":
-          return doubleValue(0D);
-      }
+      return switch (type.getCanonicalText()) {
+        case "boolean" -> FALSE;
+        case "byte", "char", "short", "int" -> intValue(0);
+        case "long" -> longValue(0L);
+        case "float" -> floatValue(0F);
+        case "double" -> doubleValue(0D);
+        default -> NULL;
+      };
     }
     return NULL;
   }
@@ -428,16 +416,16 @@ public final class DfTypes {
   public static @NotNull DfType typedObject(@Nullable PsiType type, @NotNull Nullability nullability) {
     if (type == null) return DfType.TOP;
     if (type instanceof PsiPrimitiveType) {
-      if (type.equals(PsiType.VOID)) return DfType.BOTTOM;
-      if (type.equals(PsiType.BOOLEAN)) return BOOLEAN;
-      if (type.equals(PsiType.INT)) return INT;
-      if (type.equals(PsiType.CHAR) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE)){
+      if (type.equals(PsiTypes.voidType())) return DfType.BOTTOM;
+      if (type.equals(PsiTypes.booleanType())) return BOOLEAN;
+      if (type.equals(PsiTypes.intType())) return INT;
+      if (type.equals(PsiTypes.charType()) || type.equals(PsiTypes.shortType()) || type.equals(PsiTypes.byteType())){
         return intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(type)));
       }
-      if (type.equals(PsiType.LONG)) return LONG;
-      if (type.equals(PsiType.DOUBLE)) return DOUBLE;
-      if (type.equals(PsiType.FLOAT)) return FLOAT;
-      if (type.equals(PsiType.NULL)) return NULL;
+      if (type.equals(PsiTypes.longType())) return LONG;
+      if (type.equals(PsiTypes.doubleType())) return DOUBLE;
+      if (type.equals(PsiTypes.floatType())) return FLOAT;
+      if (type.equals(PsiTypes.nullType())) return NULL;
     }
     TypeConstraint constraint = TypeConstraints.instanceOf(type);
     if (constraint == TypeConstraints.BOTTOM) {

@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
 
-/**
- * @author peter
- */
 public final class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAnnotationPattern> {
   static final PsiAnnotationPattern PSI_ANNOTATION_PATTERN = new PsiAnnotationPattern();
 

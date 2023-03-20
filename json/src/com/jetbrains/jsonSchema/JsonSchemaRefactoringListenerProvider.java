@@ -28,9 +28,6 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Irina.Chernushina on 2/17/2016.
- */
 public class JsonSchemaRefactoringListenerProvider implements RefactoringElementListenerProvider {
   @Nullable
   @Override

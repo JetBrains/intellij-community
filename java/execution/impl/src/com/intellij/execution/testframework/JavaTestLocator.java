@@ -18,6 +18,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +27,10 @@ import java.util.List;
 
 /**
  * Protocol format as follows:
- *
+ * <p>
  * java:suite://className
  * java:test://className/methodName
- *
- * <p/>
+ * <p>
  * "/" can't appear as part of package name and thus can be used as a valid separator between fully qualified class name and method name
  */
 public class JavaTestLocator implements SMTestLocator {
@@ -149,11 +149,9 @@ public class JavaTestLocator implements SMTestLocator {
       }
       else {
         PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
-        if (methods.length > 0) {
-          for (PsiMethod method : methods) {
-            results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
-                                          : MethodLocation.elementInClass(method, aClass));
-          }
+        for (PsiMethod method : methods) {
+          results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
+                                        : MethodLocation.elementInClass(method, aClass));
         }
       }
     }
@@ -163,5 +161,17 @@ public class JavaTestLocator implements SMTestLocator {
   private static Location createClassNavigatable(String paramName, @NotNull PsiClass aClass) {
     return paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
                              : new PsiLocation<>(aClass.getProject(), aClass);
+  }
+
+  public static @NotNull String createLocationUrl(@NotNull String protocol, @NotNull String fqClassName) {
+    return createLocationUrl(protocol, fqClassName, null);
+  }
+
+  public static @NotNull String createLocationUrl(@NotNull String protocol, @NotNull String fqClassName, @Nullable String methodName) {
+    var baseUrl = protocol + URLUtil.SCHEME_SEPARATOR;
+    if (methodName == null) {
+      return baseUrl + fqClassName;
+    }
+    return baseUrl + fqClassName + "/" + StringUtil.trimEnd(methodName, "()");
   }
 }

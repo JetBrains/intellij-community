@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -15,49 +15,49 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
 
   public void testLiteral1() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                     "Long l = new/**/ Long(1);",
+                     "Long l = new /**/Long(1);",
                      "Long l = 1L;");
   }
 
   public void testLiteral2() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                 "Float l = new/**/ Float(1);",
+                 "Float l = new /**/Float(1);",
                  "Float l = 1F;");
   }
 
   public void testLiteral3() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                 "Float l = new/**/ Float(1.0);",
+                 "Float l = new /**/Float(1.0);",
                  "Float l = 1.0F;");
   }
 
   public void testLiteral4() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                 "Float l = new/**/ Float(1d);",
+                 "Float l = new /**/Float(1d);",
                  "Float l = 1F;");
   }
 
   public void testLiteral5() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                 "Double l = new/**/ Double(1);",
+                 "Double l = new /**/Double(1);",
                  "Double l = 1.0;");
   }
 
   public void testBooleanLiteral() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                 "final Boolean aBoolean = Boolean.valueOf(/**/true);",
+                 "final Boolean aBoolean = Boolean.valueOf/**/(true);",
                  "final Boolean aBoolean = Boolean.TRUE;");
   }
 
   public void testStringConcatenation() {
     doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                     "\"a\" + Long/**/.valueOf(1L + 2L) + \"b\"",
+                     "\"a\" + Long./**/valueOf(1L + 2L) + \"b\"",
                      "\"a\" + (1L + 2L) + \"b\"");
   }
 
   public void testStringConcatenation2() {
     doExpressionTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
-                     "\"a\" + Long/**/.valueOf(1L - 2L) + \"b\"",
+                     "\"a\" + Long./**/valueOf(1L - 2L) + \"b\"",
                      "\"a\" + (1L - 2L) + \"b\"");
   }
 
@@ -90,23 +90,23 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
   }
 
   public void testCast() {
-    doFixTest();
+    doTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"));
   }
 
   public void testParseInt() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "parseInt"));
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.parseInt()"));
   }
 
   public void testStaticImport() {
-    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "parseInt"));
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.parseInt()"));
   }
 
   public void testShadowImport() {
     assertQuickfixNotAvailable("Fix all 'Unnecessary boxing' problems in file");
   }
 
-  private void doFixTest() {
-    doTest(getTestName(false), InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"));
+  public void testConstantReference() {
+    doTest("Fix all 'Unnecessary boxing' problems in file");
   }
 
   @Override

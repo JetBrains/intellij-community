@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.function.BooleanSupplier
 
 class RecentPlacesFeatures : ElementFeatureProvider {
   override fun getName(): String = "recent_places"
@@ -66,7 +68,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
 
       @Suppress("IncorrectParentDisposable")
       ReadAction
-        .nonBlocking(Runnable {
+        .nonBlocking(Callable {
           val element = provider.tryFindElementAt(offset)
           if (element != null && namesValidator.isIdentifier(element.text, project)) synchronized(recentPlaces) {
             recentPlaces.addToTop(element.text)
@@ -78,8 +80,9 @@ class RecentPlacesFeatures : ElementFeatureProvider {
             }
           }
         })
-        .coalesceBy(changePlace)
+        .coalesceBy(offset)
         .expireWith(project)
+        .expireWhen(BooleanSupplier { changePlace.window == null || changePlace.window.isDisposed })
         .submit(AppExecutorUtil.getAppExecutorService())
     }
 
@@ -90,7 +93,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
 
     private fun FileViewProvider.tryFindElementAt(offset: Int): PsiElement? =
       try {
-        if (getPsi(baseLanguage)?.isValid == true)
+        if (virtualFile.isValid && getPsi(baseLanguage)?.isValid == true)
           findElementAt(offset)
         else null
       } catch (t: Throwable) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.annotationEntryVisitor
@@ -30,20 +30,20 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
                 val expression = argument.getArgumentExpression() as? KtStringTemplateExpression ?: continue
                 val text = expression.text
                 if (text.firstOrNull() != '\"' || text.lastOrNull() != '\"') continue
-                val newDiagnosticFactory = MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
+                val newDiagnosticFactory = Holder.MIGRATION_MAP[StringUtil.unquoteString(text)] ?: continue
 
                 holder.registerProblem(
                     expression,
                     KotlinBundle.message("diagnostic.name.should.be.replaced.by.the.new.one"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    ReplaceDiagnosticNameFix(newDiagnosticFactory)
+                    ReplaceDiagnosticNameFix(newDiagnosticFactory.name)
                 )
             }
         })
     }
 
-    class ReplaceDiagnosticNameFix(private val diagnosticFactory: DiagnosticFactory<*>) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("replace.diagnostic.name.fix.text", familyName, diagnosticFactory.name!!)
+    class ReplaceDiagnosticNameFix(private val diagnosticFactoryName: String) : LocalQuickFix {
+        override fun getName() = KotlinBundle.message("replace.diagnostic.name.fix.text", familyName, diagnosticFactoryName)
 
         override fun getFamilyName() = KotlinBundle.message("replace.diagnostic.name.fix.family.name")
 
@@ -51,15 +51,13 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
             val expression = descriptor.psiElement as? KtStringTemplateExpression ?: return
             if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return
 
-            val psiFactory = KtPsiFactory(expression)
-            expression.replace(psiFactory.createExpression("\"${diagnosticFactory.name}\""))
+            val psiFactory = KtPsiFactory(project)
+            expression.replace(psiFactory.createExpression("\"$diagnosticFactoryName\""))
         }
-
     }
 
-    companion object {
-
-        private val MIGRATION_MAP = mapOf(
+    private object Holder {
+        val MIGRATION_MAP = mapOf(
             "HEADER_DECLARATION_WITH_BODY" to EXPECTED_DECLARATION_WITH_BODY,
             "HEADER_CLASS_CONSTRUCTOR_DELEGATION_CALL" to EXPECTED_CLASS_CONSTRUCTOR_DELEGATION_CALL,
             "HEADER_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER" to EXPECTED_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER,

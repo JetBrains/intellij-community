@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author ven
- */
 public class MethodSuperSearcher extends QueryExecutorBase<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance(MethodSuperSearcher.class);
 

@@ -3,20 +3,23 @@ package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivityMonitor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.*;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -25,10 +28,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 public class PlaybackRunner {
+  private PlaybackCommandReporter myCommandStartStopProcessor = PlaybackCommandReporter.EMPTY_PLAYBACK_COMMAND_REPORTER;
+
   private static final Logger LOG = Logger.getInstance(PlaybackRunner.class);
 
   private Robot myRobot;
@@ -55,7 +62,7 @@ public class PlaybackRunner {
 
   private final Map<String, String> myRegistryValues = new HashMap<>();
 
-  protected final Disposable myOnStop = Disposer.newDisposable();
+  protected final CheckedDisposable myOnStop = Disposer.newCheckedDisposable();
 
   public PlaybackRunner(String script,
                         StatusCallback callback,
@@ -79,6 +86,7 @@ public class PlaybackRunner {
   }
 
   public ActionCallback run() {
+    myCommandStartStopProcessor.startOfScript(getProject());
     myStopRequested = false;
 
     myRegistryValues.clear();
@@ -91,12 +99,16 @@ public class PlaybackRunner {
 
     subscribeListeners(ApplicationManager.getApplication().getMessageBus().connect(myOnStop));
     Disposer.register(myOnStop, () -> {
+      myCommandStartStopProcessor.endOfScript(getProject());
       onStop();
     });
 
-    try {
-      myActionCallback = new ActionCallback();
-      myActionCallback.doWhenProcessed(() -> {
+    myActionCallback = new ActionCallback();
+    myActionCallback
+      .doWhenRejected(() -> {
+        myCommandStartStopProcessor.scriptCanceled();
+      })
+      .doWhenProcessed(() -> {
         Disposer.dispose(myOnStop);
 
         SwingUtilities.invokeLater(() -> {
@@ -105,35 +117,32 @@ public class PlaybackRunner {
         });
       });
 
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        myRobot = new Robot();
-      }
-
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       try {
-        myCommands.addAll(includeScript(myScript, getScriptDir()));
+        myRobot = new Robot();
+      } catch (AWTException e){
+        LOG.info(e);
       }
-      catch (Exception e) {
-        String message = "Failed to parse script commands: " + myScript;
-        LOG.error(message, e);
-        myActionCallback.reject(message + ": " + e.getMessage());
-        return myActionCallback;
-      }
+    }
 
-      new Thread("playback runner") {
-        @Override
-        public void run() {
-          if (myUseDirectActionCall) {
-            executeFrom(0, getScriptDir());
-          }
-          else {
-            IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
-          }
-        }
-      }.start();
+    try {
+      myCommands.addAll(includeScript(myScript, getScriptDir()));
     }
-    catch (AWTException e) {
-      LOG.error(e);
+    catch (Exception e) {
+      String message = "Failed to parse script commands: " + myScript;
+      LOG.error(message, e);
+      myActionCallback.reject(message + ": " + e.getMessage());
+      return myActionCallback;
     }
+
+    new Thread(null, Context.current().wrap(() -> {
+      if (myUseDirectActionCall) {
+        executeFrom(0, getScriptDir());
+      }
+      else {
+        IdeEventQueue.getInstance().doWhenReady(Context.current().wrap(() -> executeFrom(0, getScriptDir())));
+      }
+    }), "playback runner").start();
 
     return myActionCallback;
   }
@@ -149,7 +158,7 @@ public class PlaybackRunner {
     if (cmdIndex < myCommands.size()) {
       CommandDescriptor commandDescriptor = myCommands.get(cmdIndex);
       final PlaybackCommand cmd = createCommand(commandDescriptor.fullLine, commandDescriptor.line, commandDescriptor.scriptDir);
-      if (myStopRequested) {
+      if (myStopRequested || cmd == null) {
         myCallback.message(null, "Stopped", StatusCallback.Type.message);
         myActionCallback.setRejected();
         return;
@@ -212,18 +221,42 @@ public class PlaybackRunner {
             return project;
           }
         };
+
+      myCommandStartStopProcessor.startOfCommand(commandDescriptor.fullLine);
+
       final Promise<Object> cmdCallback = cmd.execute(context);
+      Context initialContext = Context.current();
       cmdCallback
         .onSuccess(it -> {
-          if (cmd.canGoFurther()) {
-            executeFrom(cmdIndex + 1, context.getBaseDir());
-          }
-          else {
-            myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
-            myActionCallback.setDone();
+          myCommandStartStopProcessor.endOfCommand(null);
+          try(Scope ignored = initialContext.makeCurrent()) {
+            if (cmd.canGoFurther()) {
+              int delay = getDelay(cmd);
+              if (delay > 0) {
+                if (SwingUtilities.isEventDispatchThread()) {
+                  EdtScheduledExecutorService.getInstance().schedule(Context.current().wrap(() -> {
+                    if (!myOnStop.isDisposed()) {
+                      executeFrom(cmdIndex + 1, context.getBaseDir());
+                    }
+                  }), delay, TimeUnit.MILLISECONDS);
+                }
+                else {
+                  LockSupport.parkUntil(System.currentTimeMillis() + delay);
+                  executeFrom(cmdIndex + 1, context.getBaseDir());
+                }
+              }
+              else {
+                executeFrom(cmdIndex + 1, context.getBaseDir());
+              }
+            }
+            else {
+              myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
+              myActionCallback.setDone();
+            }
           }
         })
         .onError(error -> {
+          myCommandStartStopProcessor.endOfCommand(error.getMessage());
           myCallback.message(null, "Stopped: " + error, StatusCallback.Type.message);
           LOG.warn("Callback step stopped with error: " + error, error);
           myActionCallback.reject(error.getMessage());
@@ -233,6 +266,10 @@ public class PlaybackRunner {
       myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
       myActionCallback.setDone();
     }
+  }
+
+  public int getDelay(@NotNull PlaybackCommand command) {
+    return command instanceof TypeCommand ? Registry.intValue("actionSystem.playback.typecommand.delay") : 0;
   }
 
   protected void setProject(@Nullable Project project) {
@@ -247,9 +284,17 @@ public class PlaybackRunner {
     connection.subscribe(ApplicationActivationListener.TOPIC, myAppListener);
   }
 
+  public PlaybackRunner setCommandStartStopProcessor(@NotNull PlaybackCommandReporter commandStartStopProcessor) {
+    myCommandStartStopProcessor = commandStartStopProcessor;
+    return this;
+  }
+
   protected void onStop() {
     myCommands.clear();
   }
+
+  static final String INCLUDE_CMD = AbstractCommand.CMD_PREFIX + "include";
+  static final String IMPORT_CALL_CMD = AbstractCommand.CMD_PREFIX + "importCall";
 
   @NotNull
   private List<CommandDescriptor> includeScript(String scriptText, File scriptDir) {
@@ -259,11 +304,8 @@ public class PlaybackRunner {
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();
 
-      String includeCmd = AbstractCommand.CMD_PREFIX + "include";
-      String importCallCmd = AbstractCommand.CMD_PREFIX + "importCall";
-
-      if (eachLine.startsWith(includeCmd)) {
-        File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(includeCmd.length()).trim(), scriptDir);
+      if (eachLine.startsWith(INCLUDE_CMD)) {
+        File file = new PathMacro().setScriptDir(scriptDir).resolveFile(eachLine.substring(INCLUDE_CMD.length()).trim(), scriptDir);
         if (!file.exists()) {
           throw new RuntimeException("Cannot find file to include at line " + line + ": " + file.getAbsolutePath());
         }
@@ -277,8 +319,8 @@ public class PlaybackRunner {
           throw new RuntimeException("Error reading file at line " + line + ": " + file.getAbsolutePath());
         }
       }
-      else if (eachLine.startsWith(importCallCmd)) {
-        String className = eachLine.substring(importCallCmd.length()).trim();
+      else if (eachLine.startsWith(IMPORT_CALL_CMD)) {
+        String className = eachLine.substring(IMPORT_CALL_CMD.length()).trim();
         try {
           Class<?> facadeClass = Class.forName(className);
           myFacadeClasses.add(facadeClass);
@@ -300,19 +342,10 @@ public class PlaybackRunner {
    * We do not create instances of commands beforehand because
    * command classes may be provided by plugins and may prevent plugin from unloading [IDEA-259898].
    */
-  private static class CommandDescriptor {
-    public final String fullLine;
-    public final int line;
-    public final File scriptDir;
-
-    private CommandDescriptor(String fullLine, int line, File scriptDir) {
-      this.fullLine = fullLine;
-      this.line = line;
-      this.scriptDir = scriptDir;
-    }
+  private record CommandDescriptor(String fullLine, int line, File scriptDir) {
   }
 
-  @NotNull
+  @Nullable
   protected PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
 
@@ -360,12 +393,16 @@ public class PlaybackRunner {
     }
     else {
       if(string.startsWith(AbstractCommand.CMD_PREFIX)){
+        cmd = null;
         LOG.error("Command " + string + " is not found");
       }
-      cmd = new AlphaNumericTypeCommand(string, line);
+      else {
+        cmd = new AlphaNumericTypeCommand(string, line);
+      }
     }
-
-    cmd.setScriptDir(scriptDir);
+    if (cmd != null) {
+      cmd.setScriptDir(scriptDir);
+    }
 
     return cmd;
   }

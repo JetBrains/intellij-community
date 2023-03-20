@@ -105,23 +105,12 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    final byte[] applyContent;
-    switch (result) {
-      case CANCEL:
-        applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
-        break;
-      case LEFT:
-        applyContent = ThreeSide.LEFT.select(myByteContents);
-        break;
-      case RIGHT:
-        applyContent = ThreeSide.RIGHT.select(myByteContents);
-        break;
-      case RESOLVED:
-        applyContent = null;
-        break;
-      default:
-        throw new IllegalArgumentException(result.toString());
-    }
+    final byte[] applyContent = switch (result) {
+      case CANCEL -> MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
+      case LEFT -> ThreeSide.LEFT.select(myByteContents);
+      case RIGHT -> ThreeSide.RIGHT.select(myByteContents);
+      case RESOLVED -> null;
+    };
 
     if (applyContent != null) {
       try {

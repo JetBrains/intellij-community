@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class XmlName implements Comparable<XmlName> {
   private final String myLocalName;
   private final String myNamespaceKey;

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -23,7 +23,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -38,11 +39,10 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     return InspectionGadgetsBundle.message("unnecessary.string.escape.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option"), this, "reportChars");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportChars", InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option")));
   }
 
   @Nullable
@@ -68,12 +68,11 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiLiteralExpression)) {
+      if (!(element instanceof PsiLiteralExpression literalExpression)) {
         return;
       }
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       final PsiType type = literalExpression.getType();
       if (type == null) {
         return;
@@ -124,7 +123,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         }
         PsiReplacementUtil.replaceExpression(literalExpression, newExpression.toString());
       }
-      else if (PsiType.CHAR.equals(type) && text.equals("'\\\"'")) {
+      else if (PsiTypes.charType().equals(type) && text.equals("'\\\"'")) {
         PsiReplacementUtil.replaceExpression(literalExpression, "'\"'");
       }
     }
@@ -176,14 +175,14 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
   private class RedundantStringEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (type == null) {
         return;
       }
-      final HighlightInfo
-        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
+      HighlightInfo.Builder
+        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null, null);
       if (parsingError != null) {
         return;
       }
@@ -210,7 +209,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
           }
         }
       }
-      else if (reportChars && PsiType.CHAR.equals(type)) {
+      else if (reportChars && PsiTypes.charType().equals(type)) {
         final String text = expression.getText();
         if ("'\\\"'".equals(text)) {
           registerErrorAtOffset(expression, 1, 2, text);

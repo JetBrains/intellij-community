@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -17,13 +18,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -36,6 +35,11 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -53,7 +57,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -120,7 +127,7 @@ public final class PyInterpreterInspection extends PyInspection {
       else {
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
         if (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) {
-          final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.extensions()
+          final PyInterpreterInspectionQuickFixData fixData = PySdkProvider.EP_NAME.getExtensionList().stream()
             .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
             .filter(it -> it != null)
             .findFirst()
@@ -134,7 +141,7 @@ public final class PyInterpreterInspection extends PyInspection {
           }
         }
 
-        if (PythonSdkUtil.isInvalid(sdk)) {
+        if (! PySdkExtKt.getSdkSeemsValid(sdk)) {
           final @InspectionMessage String message;
           if (pyCharm) {
             message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.project");
@@ -231,9 +238,6 @@ public final class PyInterpreterInspection extends PyInspection {
       if (PyCondaSdkCustomizer.Companion.getInstance().getSuggestSharedCondaEnvironments()) {
         final var sharedCondaEnv = PySdkExtKt.mostPreferred(PySdkExtKt.filterSharedCondaEnvs(module, existingSdks));
         if (sharedCondaEnv != null) return new UseExistingInterpreterFix(sharedCondaEnv, module);
-
-        final var detectedCondaEnv = ContainerUtil.getFirstItem(PySdkExtKt.detectCondaEnvs(module, existingSdks, context));
-        if (detectedCondaEnv != null) return new UseDetectedInterpreterFix(detectedCondaEnv, existingSdks, false, module);
       }
 
       final var systemWideSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterSystemWideSdks(existingSdks));
@@ -307,12 +311,7 @@ public final class PyInterpreterInspection extends PyInspection {
       return envRoot == null ? null : PathUtil.getFileName(envRoot.getPath());
     }
 
-    private static class CacheCleaner implements ModuleRootListener, ProjectJdkTable.Listener {
-      @Override
-      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
-        invalidate();
-      }
-
+    private static class CacheCleaner implements WorkspaceModelChangeListener, ProjectJdkTable.Listener {
       @Override
       public void jdkAdded(@NotNull Sdk jdk) {
         invalidate();
@@ -328,7 +327,24 @@ public final class PyInterpreterInspection extends PyInspection {
         invalidate();
       }
 
-      private void invalidate() {
+      /**
+       * Invalidates the cache for the modules that were changed in any way. Especially interesting are
+       * content roots changes and current Python interpreter changes.
+       */
+      @Override
+      public void beforeChanged(@NotNull VersionedStorageChange event) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+          ModuleEntity entity = change.getOldEntity();
+          if (entity != null) {
+            var module = ModuleEntityUtils.findModule(entity, event.getStorageBefore());
+            if (module != null) {
+              DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidate(module);
+            }
+          }
+        }
+      }
+
+      private static void invalidate() {
         DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidateAll();
       }
     }
@@ -378,7 +394,7 @@ public final class PyInterpreterInspection extends PyInspection {
       showPythonInterpreterSettings(project, myModule);
     }
 
-    public static void showPythonInterpreterSettings(@NotNull Project project, @NotNull Module module) {
+    public static void showPythonInterpreterSettings(@NotNull Project project, @Nullable Module module) {
       final var id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
       final var group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true);
       if (ConfigurableVisitor.findById(id, Collections.singletonList(group)) != null) {
@@ -387,7 +403,7 @@ public final class PyInterpreterInspection extends PyInspection {
       }
 
       final ProjectSettingsService settingsService = ProjectSettingsService.getInstance(project);
-      if (justOneModuleInheritingSdk(project, module)) {
+      if (module == null || justOneModuleInheritingSdk(project, module)) {
         settingsService.openProjectSettings();
       }
       else {
@@ -459,6 +475,12 @@ public final class PyInterpreterInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension, () -> myExtension.createAndAddSdkForInspection(myModule));
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      // The quick fix doesn't change the code and is suggested on a file level
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 

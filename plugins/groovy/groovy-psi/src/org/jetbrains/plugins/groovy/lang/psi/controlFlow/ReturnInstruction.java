@@ -23,9 +23,6 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 
-/**
-* @author peter
-*/
 public class ReturnInstruction extends InstructionImpl {
   public ReturnInstruction(GrFinallyClause finallyClause) {
     super(finallyClause);

@@ -20,9 +20,6 @@ import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 final class CatchTypeProvider {
   static final ElementPattern<PsiElement> CATCH_CLAUSE_TYPE = psiElement().insideStarting(
     psiElement(PsiTypeElement.class).withParent(

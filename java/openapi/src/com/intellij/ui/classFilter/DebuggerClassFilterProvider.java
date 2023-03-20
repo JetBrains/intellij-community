@@ -7,8 +7,8 @@ import com.sun.jdi.request.StepRequest;
 import java.util.List;
 
 /**
- * Allows to provide custom filters for step requests
- * @see StepRequest#addClassExclusionFilter(java.lang.String)
+ * Allows providing custom filters for step requests
+ * @see StepRequest#addClassExclusionFilter(String)
  */
 public interface DebuggerClassFilterProvider {
   ExtensionPointName<DebuggerClassFilterProvider> EP_NAME = new ExtensionPointName<>("com.intellij.debuggerClassFilterProvider");

@@ -1,5 +1,6 @@
 {
   "type": "MARKED_ELEMENT",
   "newName": "aa",
-  "mainFile": "main.kt"
+  "mainFile": "main.kt",
+  "enabledInK2": true
 }

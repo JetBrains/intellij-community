@@ -280,12 +280,6 @@ public final class LayoutElementBuildersRegistry {
         generateModuleSourceInstructions(productionSources, instructionCreator, element);
       }
     }
-
-    @Override
-    public Collection<? extends BuildTarget<?>> getDependencies(@NotNull JpsProductionModuleSourcePackagingElement element,
-                                                                TargetOutputIndex outputIndex) {
-      return Collections.emptyList();
-    }
   }
 
   private static class ModuleTestOutputElementBuilder extends LayoutElementBuilderService<JpsTestModuleOutputPackagingElement> {

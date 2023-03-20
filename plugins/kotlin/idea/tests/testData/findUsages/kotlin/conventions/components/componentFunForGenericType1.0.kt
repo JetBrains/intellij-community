@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun <T> X<T>.component1(): Int"
 
 class X<T>
 
@@ -11,3 +12,7 @@ fun f() = X<String>()
 fun test() {
     val (x, y) = f()
 }
+
+
+
+// IGNORE_FIR_LOG

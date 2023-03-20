@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInsight.Nullability;
@@ -56,7 +56,10 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     if (method == null) return;
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     DfaCallArguments callArguments = getMethodReferenceCallArguments(state, methodRef, qualifier, interpreter, sam, method, substitutor);
-    CheckNotNullInstruction.dereference(interpreter, state, callArguments.getQualifier(), NullabilityProblemKind.callMethodRefNPE.problem(methodRef, null));
+    if (isQualifierDereferenced(methodRef)) {
+      CheckNotNullInstruction.dereference(interpreter, state, callArguments.getQualifier(),
+                                          NullabilityProblemKind.callMethodRefNPE.problem(methodRef, null));
+    }
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
     if (contracts.isEmpty() || !JavaMethodContractUtil.isPure(method)) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
@@ -81,6 +84,15 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     }
   }
 
+  static boolean isQualifierDereferenced(@NotNull PsiMethodReferenceExpression methodRef) {
+    if (methodRef.isConstructor()) return false;
+    PsiElement target = methodRef.resolve();
+    if (!(target instanceof PsiMethod)) return false;
+    if (((PsiMethod)target).hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (!PsiMethodReferenceUtil.isStaticallyReferenced(methodRef)) return false;
+    return true;
+  }
+
   private static @NotNull DfaCallArguments getMethodReferenceCallArguments(@NotNull DfaMemoryState state,
                                                                            @NotNull PsiMethodReferenceExpression methodRef,
                                                                            DfaValue qualifier,
@@ -89,19 +101,18 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
                                                                            @NotNull PsiMethod method,
                                                                            @NotNull PsiSubstitutor substitutor) {
     PsiParameter[] samParameters = sam.getParameterList().getParameters();
-    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    boolean instanceBound = !isStatic && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
+    boolean firstParameterIsQualifier = isQualifierDereferenced(methodRef);
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    DfaValue[] arguments = new DfaValue[parameters.length];
+    DfaValue[] arguments = parameters.length == 0 ? DfaValue.EMPTY_ARRAY : new DfaValue[parameters.length];
     Arrays.fill(arguments, interpreter.getFactory().getUnknown());
     for (int i = 0; i < samParameters.length; i++) {
       DfaValue value = interpreter.getFactory().fromDfType(
         typedObject(substitutor.substitute(samParameters[i].getType()), DfaPsiUtil.getFunctionalParameterNullability(methodRef, i)));
-      if (i == 0 && !isStatic && !instanceBound) {
+      if (i == 0 && firstParameterIsQualifier) {
         qualifier = value;
       }
       else {
-        int idx = i - ((isStatic || instanceBound) ? 0 : 1);
+        int idx = i - (firstParameterIsQualifier ? 1 : 0);
         if (idx >= arguments.length) break;
         PsiType parameterType = parameters[idx].getType();
         if (!(parameterType instanceof PsiEllipsisType)) {

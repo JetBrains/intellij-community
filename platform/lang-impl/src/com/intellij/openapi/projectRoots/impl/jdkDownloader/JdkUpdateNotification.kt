@@ -6,6 +6,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -14,11 +15,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.systemIndependentPath
 import java.util.concurrent.locks.ReentrantLock
@@ -43,7 +42,8 @@ private val LOG = logger<JdkUpdateNotification>()
 class JdkUpdateNotification(val jdk: Sdk,
                             val oldItem: JdkItem,
                             val newItem: JdkItem,
-                            private val whenComplete: (JdkUpdateNotification) -> Unit
+                            private val whenComplete: (JdkUpdateNotification) -> Unit,
+                            private val showVendorVersion: Boolean = false,
 ) {
   private val lock = ReentrantLock()
 
@@ -128,13 +128,18 @@ class JdkUpdateNotification(val jdk: Sdk,
     val jdkUpdateNotification = this@JdkUpdateNotification
 
     init {
-      templatePresentation.text = ProjectBundle.message("action.title.jdk.update.found", jdk.name, newItem.fullPresentationText, oldItem.versionPresentationText)
+      templatePresentation.text = ProjectBundle.message("action.title.jdk.update.found",
+                                                        jdk.name,
+                                                        if (showVendorVersion) newItem.fullPresentationWithVendorText else newItem.fullPresentationText,
+                                                        oldItem.versionPresentationText)
       templatePresentation.description = ProjectBundle.message("action.description.jdk.update.found", jdk.name, newItem.fullPresentationText, oldItem.versionPresentationText)
     }
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isUpdateActionVisible
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       performUpdateAction(e)

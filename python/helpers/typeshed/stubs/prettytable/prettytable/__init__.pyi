@@ -1,6 +1,7 @@
 from .prettytable import (
     ALL as ALL,
     DEFAULT as DEFAULT,
+    DOUBLE_BORDER as DOUBLE_BORDER,
     FRAME as FRAME,
     HEADER as HEADER,
     MARKDOWN as MARKDOWN,
@@ -9,6 +10,7 @@ from .prettytable import (
     ORGMODE as ORGMODE,
     PLAIN_COLUMNS as PLAIN_COLUMNS,
     RANDOM as RANDOM,
+    SINGLE_BORDER as SINGLE_BORDER,
     PrettyTable as PrettyTable,
     TableHandler as TableHandler,
     from_csv as from_csv,

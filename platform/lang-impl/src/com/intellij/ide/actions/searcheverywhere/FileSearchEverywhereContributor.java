@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.ui.DirtyUI;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,11 +74,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return model;
   }
 
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return new SearchEverywhereCommandInfo("f", IdeBundle.message("search.everywhere.filter.files.description"), this);
-  }
-
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
@@ -88,6 +84,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
     return new SearchEverywherePsiRenderer(this) {
+      @DirtyUI
       @NotNull
       @Override
       public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
@@ -110,15 +107,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     if (element == null) {
       LOG.error("Null returned from " + model + " in " + this.getClass().getSimpleName());
       return true;
-    }
-
-    SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-    if (mlService != null && mlService.shouldOrderByMl(this.getClass().getSimpleName())) {
-      double mlWeight = mlService.getMlWeight(this, element, degree);
-
-      if (mlWeight >= 0.0) {
-        return consumer.process(new FoundItemDescriptor<>(element, degree, mlWeight));
-      }
     }
 
     return consumer.process(new FoundItemDescriptor<>(element, degree));
@@ -149,9 +137,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
       return element;
     }
+    return super.getDataForItem(element, dataId);
+  }
 
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)
-        && (element instanceof PsiFile || element instanceof PsiDirectory)) {
+  @Override
+  public @Nullable String getItemDescription(@NotNull Object element) {
+    if ((element instanceof PsiFile || element instanceof PsiDirectory) && ((PsiFileSystemItem)element).isValid()) {
       String path = ((PsiFileSystemItem)element).getVirtualFile().getPath();
       path = FileUtil.toSystemIndependentName(path);
       if (myProject != null) {
@@ -162,8 +153,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
       }
       return path;
     }
-
-    return super.getDataForItem(element, dataId);
+    return super.getItemDescription(element);
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {

@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,9 +36,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
@@ -53,7 +56,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTypeElement(PsiTypeElement typeElement) {
+      public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
         VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
         if (candidate == null) return;
         PsiTypeParameterListOwner owner = candidate.typeParameter.getOwner();
@@ -69,7 +72,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         if (!REPORT_INSTANCE_METHODS &&
             !candidate.method.hasModifierProperty(PsiModifier.STATIC) &&
             !candidate.method.isConstructor()) {
-          return; // somebody don't want to report instance methods highlighted because they can be already overridden
+          return; // somebody doesn't want to report instance methods highlighted because they can be already overridden
         }
         Project project = holder.getProject();
         boolean canBeSuper = canChangeTo(project, candidate, false);
@@ -110,31 +113,25 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)  {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeElement) || !element.isValid() || element.getParent() == null || !element.isPhysical()) return;
-      PsiTypeElement typeElement = (PsiTypeElement)element;
+      if (!(element instanceof PsiTypeElement typeElement) || !element.isValid() || element.getParent() == null || !element.isPhysical()) return;
 
       VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
       if (candidate == null) return;
       PsiMethod method = candidate.method;
 
-      PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
 
       if (!isOverriddenOrOverrides) {
         PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
         if (field != null) {
-          replaceType(project, field.getTypeElement(), suggestMethodParameterType(candidate, isExtends));
+          replaceType(project, Objects.requireNonNull(field.getTypeElement()), suggestMethodParameterType(candidate, isExtends));
         }
 
-        PsiTypeElement methodParameterTypeElement = candidate.methodParameter.getTypeElement();
+        PsiTypeElement methodParameterTypeElement = Objects.requireNonNull(candidate.methodParameter.getTypeElement());
+        PsiClassType clone = suggestMethodParameterType(candidate, isExtends);
         replaceType(project, methodParameterTypeElement, clone);
         return;
       }
 
-      int[] i = {0};
-      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(method.getParameterList().getParameters(),
-                                                                 p -> ParameterInfoImpl.create(i[0]++)
-                                                                   .withName(p.getName())
-                                                                   .withType(p.getType()));
       int index = method.getParameterList().getParameterIndex(candidate.methodParameter);
       if (index == -1) return;
 
@@ -143,13 +140,17 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (superMethod != method) {
         method = superMethod;
         candidate = candidate.getSuperMethodVarianceCandidate(superMethod);
-        clone = suggestMethodParameterType(candidate, isExtends);
-        i[0] = 0;
-        parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(), 
-                                           p -> ParameterInfoImpl.create(i[0]++).withName(p.getName()).withType(p.getType()));
       }
-      parameterInfos.set(index, ParameterInfoImpl.create(index).withName(candidate.methodParameter.getName()).withType(clone));
-
+      PsiClassType clone = suggestMethodParameterType(candidate, isExtends);
+      int[] i = {0};
+      String candidateName = candidate.methodParameter.getName();
+      List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(),
+                                                                 p -> {
+                                                                   int i1 = i[0]++;
+                                                                   return ParameterInfoImpl.create(i1)
+                                                                     .withName(i1 == index ? candidateName : p.getName())
+                                                                     .withType(i1 == index ? clone : p.getType());
+                                                                 });
       JavaChangeSignatureDialog
         dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, false, null/*todo?*/);
       dialog.setParameterInfos(parameterInfos);
@@ -165,7 +166,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       PsiElementFactory pf = PsiElementFactory.getInstance(project);
       PsiTypeElement newTypeElement = pf.createTypeElement(withType);
       if (typeElement.isPhysical()) {
-        WriteCommandAction.runWriteCommandAction(project, (Runnable)() -> typeElement.replace(newTypeElement));
+        WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("command.name.replace.type"), null,
+                                                 () -> typeElement.replace(newTypeElement),
+                                                 typeElement.getContainingFile());
       }
       else {
         typeElement.replace(newTypeElement);
@@ -178,8 +181,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  @NotNull
-  private static PsiClassReferenceType suggestMethodParameterType(@NotNull VarianceCandidate candidate, boolean isExtends) {
+  private static @NotNull PsiClassType suggestMethodParameterType(@NotNull VarianceCandidate candidate, boolean isExtends) {
     PsiType type = candidate.type;
 
     PsiManager psiManager = candidate.method.getManager();
@@ -189,18 +191,13 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
     PsiClassReferenceType methodParamType = candidate.methodParameterType;
     PsiClassReferenceType clone = new PsiClassReferenceType((PsiJavaCodeReferenceElement)methodParamType.getReference().copy(), methodParamType.getLanguageLevel());
-    PsiAnnotation[] annotations = methodParamType.getApplicableAnnotations();
 
     PsiJavaCodeReferenceElement cloneReference = clone.getReference();
-    for (int i = annotations.length - 1; i >= 0; i--) {
-      PsiAnnotation annotation = annotations[i];
-      cloneReference.addBefore(annotation, cloneReference.getFirstChild());
-    }
     PsiTypeElement innerTypeElement = cloneReference.getParameterList().getTypeParameterElements()[candidate.typeParameterIndex];
 
 
     innerTypeElement.replace(newInnerTypeElement);
-    return clone;
+    return clone.annotate(methodParamType.getAnnotationProvider());
   }
 
   private static boolean isOverriddenOrOverrides(@NotNull PsiMethod method) {
@@ -240,7 +237,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return false;
 
-    PsiClassReferenceType newParameterType = suggestMethodParameterType(candidate, isExtends);
+    PsiClassType newParameterType = suggestMethodParameterType(candidate, isExtends);
 
     PsiMethod methodCopy = DebugUtil
       .performPsiModification("Creating method copy", () -> createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType));
@@ -310,7 +307,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     if (body == null || superMethods.isEmpty()) return;
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiMethod called = expression.resolveMethod();
         if (superMethods.contains(called)) {
           result.add(expression);
@@ -324,7 +321,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private static PsiMethod createMethodCopy(@NotNull Project project,
                                             PsiMethod method,
                                             int methodParameterIndex, // -1 if no parameter to change
-                                            @NotNull PsiClassReferenceType newParameterExtends) {
+                                            @NotNull PsiClassType newParameterExtends) {
     JavaDummyHolder dummyHolder = (JavaDummyHolder)DummyHolderFactory.createHolder(PsiManager.getInstance(project), method);
     PsiMethod methodCopy = (PsiMethod)dummyHolder.add(method);
 
@@ -346,7 +343,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                                           @Nullable PsiField field,
                                           @NotNull PsiClass containingClass, @NotNull PsiMethod method,
                                           @NotNull PsiMethod methodCopy,
-                                          @NotNull PsiClassReferenceType newParameterExtends) {
+                                          @NotNull PsiClassType newParameterExtends) {
     JavaDummyHolder dummyHolder = (JavaDummyHolder)DummyHolderFactory.createHolder(PsiManager.getInstance(project), containingClass);
     PsiClass classCopy = (PsiClass)dummyHolder.add(containingClass);
 
@@ -369,7 +366,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     List<PsiThisExpression> these = new ArrayList<>();
     methodCopy.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         super.visitThisExpression(expression);
         if (PsiUtil.resolveClassInType(expression.getType()) == classCopy) {
           these.add(expression);
@@ -439,14 +436,12 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiExpression r = ((PsiAssignmentExpression)parent).getRExpression();
     if (!PsiTreeUtil.isAncestor(r, refElement, false)) return null;
     PsiExpression l = skipParensAndCastsDown(((PsiAssignmentExpression)parent).getLExpression());
-    if (!(l instanceof PsiReferenceExpression)) return null;
-    PsiReferenceExpression lExpression = (PsiReferenceExpression)l;
+    if (!(l instanceof PsiReferenceExpression lExpression)) return null;
     PsiExpression lQualifier = skipParensAndCastsDown(lExpression.getQualifierExpression());
     if (lQualifier != null && !(lQualifier instanceof PsiThisExpression)) return null;
     PsiElement resolved = lExpression.resolve();
-    if (!(resolved instanceof PsiField)) return null;
+    if (!(resolved instanceof PsiField field)) return null;
     // too expensive to search for usages of public field otherwise
-    PsiField field = (PsiField)resolved;
     if (!field.hasModifierProperty(PsiModifier.PRIVATE) &&
         !field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return null;
     PsiType type = r.getType();
@@ -455,13 +450,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return Pair.createNonNull(field, type);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.invariant.option"), "REPORT_INVARIANT_CLASSES");
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.private.option"), "REPORT_PRIVATE_METHODS");
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.instance.option"), "REPORT_INSTANCE_METHODS");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_INVARIANT_CLASSES", InspectionGadgetsBundle.message("bounded.wildcard.report.invariant.option")),
+      checkbox("REPORT_PRIVATE_METHODS", InspectionGadgetsBundle.message("bounded.wildcard.report.private.option")),
+      checkbox("REPORT_INSTANCE_METHODS", InspectionGadgetsBundle.message("bounded.wildcard.report.instance.option")));
   }
 }

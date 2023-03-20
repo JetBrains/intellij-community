@@ -17,7 +17,6 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                @NotNull final CoverageSuitesBundle currentSuite) {
     final VirtualFile dir = directory.getVirtualFile();
 
-    final boolean isInTestContent = TestSourcesFilter.isTestSources(dir, directory.getProject());
+    final boolean isInTestContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, directory.getProject()));
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
@@ -91,8 +90,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
    * @deprecated SimpleCoverageAnnotator doesn't require normalized file paths any more
    * so now coverage report should work w/o usage of this method
   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String getFilePath(final String filePath) {
     return normalizeFilePath(filePath);
   }
@@ -190,13 +188,13 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     if (!shouldCollectCoverageInsideLibraryDirs()) {
-      if (index.isInLibrary(dir)) {
+      if (ReadAction.compute(() -> index.isInLibrary(dir))) {
         return null;
       }
     }
     visitedDirs.add(dir);
 
-    final boolean isInTestSrcContent = TestSourcesFilter.isTestSources(dir, getProject());
+    final boolean isInTestSrcContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, getProject()));
 
     // Don't count coverage for tests folders if track test folders is switched off
     if (!trackTestFolders && isInTestSrcContent) {

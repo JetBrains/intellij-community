@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,16 +13,14 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class RunManagerEx extends RunManager {
-  @NotNull
-  public static RunManagerEx getInstanceEx(@NotNull Project project) {
+  public static @NotNull RunManagerEx getInstanceEx(@NotNull Project project) {
     return (RunManagerEx)RunManager.getInstance(project);
   }
 
   /**
    * @deprecated Use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public final void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }
@@ -31,8 +28,7 @@ public abstract class RunManagerEx extends RunManager {
   /**
    * @deprecated Use {@link #addConfiguration(RunnerAndConfigurationSettings)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public final void addConfiguration(RunnerAndConfigurationSettings settings,
                                      boolean storeInDotIdeaFolder,
                                      List<BeforeRunTask> tasks,
@@ -47,8 +43,7 @@ public abstract class RunManagerEx extends RunManager {
     addConfiguration(settings);
   }
 
-  @NotNull
-  public abstract List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration configuration);
+  public abstract @NotNull List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration configuration);
 
   public abstract void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks);
 
@@ -60,34 +55,28 @@ public abstract class RunManagerEx extends RunManager {
     setBeforeRunTasks(configuration, tasks);
   }
 
-  @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderId);
+  public abstract @NotNull <T extends BeforeRunTask<?>> List<@NotNull T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderId);
 
-  @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderId);
+  public abstract @NotNull <T extends BeforeRunTask<?>> List<T> getBeforeRunTasks(Key<T> taskProviderId);
 
   public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings) {
     return getConfigurationIcon(settings, false);
   }
 
-  @NotNull
-  public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean withLiveIndicator);
+  public abstract @NotNull Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean withLiveIndicator);
 
   /**
    * @deprecated Use {@link #getAllSettings()}
    */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
+  @Deprecated(forRemoval = true)
+  public final @NotNull Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
     return getAllSettings();
   }
 
   /**
    * @deprecated Use {@link RunManagerListener#TOPIC} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void addRunManagerListener(@NotNull RunManagerListener listener) {
   }
 

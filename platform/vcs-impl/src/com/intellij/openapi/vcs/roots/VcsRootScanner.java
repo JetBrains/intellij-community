@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -32,6 +34,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
 @Service
@@ -125,7 +128,7 @@ public final class VcsRootScanner implements Disposable {
     });
   }
 
-  private static boolean isVcsDir(@NotNull List<VcsRootChecker> checkers, @NotNull String filePath) {
+  private static boolean isVcsDir(@NotNull List<? extends VcsRootChecker> checkers, @NotNull String filePath) {
     return checkers.stream().anyMatch(it -> it.isVcsDir(filePath));
   }
 
@@ -133,6 +136,7 @@ public final class VcsRootScanner implements Disposable {
     if (myAlarm.isDisposed()) return;
     if (VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList().isEmpty()) return;
 
+    MAPPING_DETECTION_LOG.debug("VcsRootScanner.scheduleScan");
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
     myAlarm.addRequest(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () -> {
       myRootProblemNotifier.rescanAndNotifyIfNeeded();
@@ -176,12 +180,21 @@ public final class VcsRootScanner implements Disposable {
     @Override
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (!TrustedProjects.isTrusted(project)) return; // vcs is disabled
+      MAPPING_DETECTION_LOG.debug("VcsRootScanner.start activity");
       getInstance(project).scheduleScan();
     }
 
     @Override
     public int getOrder() {
       return VcsInitObject.AFTER_COMMON.getOrder();
+    }
+  }
+
+  static final class TrustListener implements TrustedProjectsListener {
+    @Override
+    public void onProjectTrusted(@NotNull Project project) {
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> getInstance(project).scheduleScan());
     }
   }
 }

@@ -47,19 +47,17 @@ public final class ExternalSystemJdkUtil {
   @Contract("_, null -> null")
   public static Sdk resolveJdkName(@Nullable Sdk projectSdk, @Nullable String jdkName) throws ExternalSystemJdkException {
     if (jdkName == null) return null;
-    switch (jdkName) {
-      case USE_INTERNAL_JAVA:
-        return getInternalJdk();
-      case USE_PROJECT_JDK:
+    return switch (jdkName) {
+      case USE_INTERNAL_JAVA -> getInternalJdk();
+      case USE_PROJECT_JDK -> {
         if (projectSdk == null) {
           throw new ProjectJdkNotFoundException();
         }
-        return resolveDependentJdk(projectSdk);
-      case USE_JAVA_HOME:
-        return getJavaHomeJdk();
-      default:
-        return getJdk(jdkName);
-    }
+        yield resolveDependentJdk(projectSdk);
+      }
+      case USE_JAVA_HOME -> getJavaHomeJdk();
+      default -> getJdk(jdkName);
+    };
   }
 
   @NotNull
@@ -154,8 +152,7 @@ public final class ExternalSystemJdkUtil {
   private static Sdk findReferencedJdk(Sdk projectSdk) {
     if (projectSdk != null
         && projectSdk.getSdkType() instanceof DependentSdkType
-        && projectSdk.getSdkType() instanceof JavaSdkType) {
-      final JavaSdkType sdkType = (JavaSdkType)projectSdk.getSdkType();
+        && projectSdk.getSdkType() instanceof JavaSdkType sdkType) {
       String sdkBinPath = sdkType.getBinPath(projectSdk);
       if (sdkBinPath == null) {
         return null;

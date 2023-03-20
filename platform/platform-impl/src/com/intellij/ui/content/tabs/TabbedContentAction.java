@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.tabs;
 
 import com.intellij.idea.ActionsBundle;
@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.openapi.wm.impl.content.ContentTabLabel;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -60,6 +60,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -137,6 +142,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public static final class MyNextTabAction extends TabbedContentAction {
@@ -154,6 +164,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getNextContentActionName());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   public static class MyPreviousTabAction extends TabbedContentAction {
@@ -170,6 +185,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myManager.getContentCount() > 1);
       e.getPresentation().setText(myManager.getPreviousContentActionName());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -196,9 +216,16 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      ObjectUtils.consumeIfNotNull(ActionUtil.getAction(myHorizontal ? "SplitVertically" : "SplitHorizontally"),
-                                   action -> e.getPresentation().setIcon(action.getTemplatePresentation().getIcon()));
+      AnAction action = ActionUtil.getAction(myHorizontal ? "SplitVertically" : "SplitHorizontally");
+      if (action != null) {
+        e.getPresentation().setIcon(action.getTemplatePresentation().getIcon());
+      }
       e.getPresentation().setEnabledAndVisible(myManager.getContents().length > 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -219,6 +246,11 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
       InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
       e.getPresentation().setEnabledAndVisible(decorator != null && decorator.canUnsplit());
       e.getPresentation().setText(ActionsBundle.actionText("Unsplit"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

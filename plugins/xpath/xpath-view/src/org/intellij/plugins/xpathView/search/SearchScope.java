@@ -77,18 +77,12 @@ public final class SearchScope {
 
   @NotNull
   public String getName() {
-    switch (getScopeType()) {
-      case PROJECT:
-        return "Project";
-      case MODULE:
-        return "Module '" + getModuleName() + "'";
-      case DIRECTORY:
-        return "Directory '" + getPath() + "'";
-      case CUSTOM:
-        return getScopeName();
-    }
-    assert false;
-    return null;
+    return switch (getScopeType()) {
+      case PROJECT -> "Project";
+      case MODULE -> "Module '" + getModuleName() + "'";
+      case DIRECTORY -> "Directory '" + getPath() + "'";
+      case CUSTOM -> getScopeName();
+    };
   }
 
   @NotNull
@@ -147,30 +141,24 @@ public final class SearchScope {
     final String dirName = getPath();
     final String moduleName = getModuleName();
 
-    switch (getScopeType()) {
-      case MODULE:
-        return moduleName != null && !moduleName.isEmpty();
-      case DIRECTORY:
-        return dirName != null && !dirName.isEmpty() && findFile(dirName) != null;
-      case CUSTOM:
-        return myCustomScope != null;
-      case PROJECT:
-        return true;
-    }
-    return false;
+    return switch (getScopeType()) {
+      case MODULE -> moduleName != null && !moduleName.isEmpty();
+      case DIRECTORY -> dirName != null && !dirName.isEmpty() && findFile(dirName) != null;
+      case CUSTOM -> myCustomScope != null;
+      case PROJECT -> true;
+    };
   }
 
   void iterateContent(@NotNull final Project project, @NotNull Processor<? super VirtualFile> processor) {
     switch (getScopeType()) {
-      case PROJECT:
+      case PROJECT ->
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
-        break;
-      case MODULE:
+      case MODULE -> {
         final Module module = ModuleManager.getInstance(project).findModuleByName(getModuleName());
         assert module != null;
         ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
-        break;
-      case DIRECTORY:
+      }
+      case DIRECTORY -> {
         final String dirName = getPath();
         assert dirName != null;
 
@@ -178,13 +166,12 @@ public final class SearchScope {
         if (virtualFile != null) {
           iterateRecursively(virtualFile, processor, isRecursive());
         }
-        break;
-      case CUSTOM:
+      }
+      case CUSTOM -> {
         assert myCustomScope != null;
 
         final ContentIterator iterator;
-        if (myCustomScope instanceof GlobalSearchScope) {
-          final GlobalSearchScope searchScope = (GlobalSearchScope)myCustomScope;
+        if (myCustomScope instanceof GlobalSearchScope searchScope) {
           iterator = new MyFileIterator(processor, virtualFile13 -> searchScope.contains(virtualFile13));
           if (searchScope.isSearchInLibraries()) {
             final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();
@@ -206,6 +193,7 @@ public final class SearchScope {
         }
 
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
+      }
     }
   }
 

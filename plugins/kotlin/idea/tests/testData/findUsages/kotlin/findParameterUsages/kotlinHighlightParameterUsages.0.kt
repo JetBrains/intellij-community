@@ -9,3 +9,4 @@ class B() : A {
         println(foo) // not highlighted `foo`
     }
 }
+

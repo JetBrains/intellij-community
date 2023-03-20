@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.noarg
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinProjectDescriptorWithFacet
@@ -20,7 +21,7 @@ private const val noArgAnnotationName = "HelloNoArg"
 class TestNoArgForLightClass : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinProjectDescriptorWithFacet(LanguageVersion.LATEST_STABLE, multiPlatform = false)
+        KotlinProjectDescriptorWithFacet(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, multiPlatform = false)
 
     override fun setUp() {
         super.setUp()

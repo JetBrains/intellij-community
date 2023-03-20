@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -26,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -43,7 +46,6 @@ import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
@@ -57,12 +59,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialog {
   private static final Charset US_ASCII = StandardCharsets.US_ASCII;
@@ -71,7 +73,10 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   private static final String UTF8_XML_PROLOG = prolog(StandardCharsets.UTF_8);
   private static final byte[] NO_BOM = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   @org.intellij.lang.annotations.Language("XML")
-  private static final String XML_TEST_BODY = "<web-app>\n" + "<!--\u043f\u0430\u043f\u0430-->\n" + "</web-app>";
+  private static final String XML_TEST_BODY = """
+    <web-app>
+    <!--\u043f\u0430\u043f\u0430-->
+    </web-app>""";
   private static final String THREE_RUSSIAN_LETTERS = "\u043F\u0440\u0438\u0432\u0435\u0442";
 
   private TestDialog myOldTestDialogValue;
@@ -291,24 +296,26 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
   public void testHtmlEncodingMustBeCaseInsensitive() throws IOException {
     @org.intellij.lang.annotations.Language("HTML")
-    String content = "<html>\n" +
-                     "<head>\n" +
-                     "<meta http-equiv=\"content-type\" content=\"text/html;charset=us-ascii\"> \n" +
-                     "</head>\n" +
-                     "<body>\n" +
-                     "xyz\n" +
-                     "</body>\n" +
-                     "</html>";
+    String content = """
+      <html>
+      <head>
+      <meta http-equiv="content-type" content="text/html;charset=us-ascii">\s
+      </head>
+      <body>
+      xyz
+      </body>
+      </html>""";
     VirtualFile file = createTempFile("html", NO_BOM, content, WINDOWS_1252);
     assertEquals(US_ASCII, file.getCharset());
   }
   public void testHtmlContentAttributeOrder() throws IOException {
     @org.intellij.lang.annotations.Language("HTML")
-    String content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
-                     "\t\t\"http://www.w3.org/TR/html4/loose.dtd\">\n" +
-                     "<html> <head>\n" +
-                     "\t<meta content=\"text/html;charset=US-ASCII\" http-equiv=\"Content-Type\">\n" +
-                     "</head> </html>";
+    String content = """
+      <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+      \t\t"http://www.w3.org/TR/html4/loose.dtd">
+      <html> <head>
+      \t<meta content="text/html;charset=US-ASCII" http-equiv="Content-Type">
+      </head> </html>""";
     VirtualFile file = createTempFile("html", NO_BOM, content, WINDOWS_1252);
     assertEquals(US_ASCII, file.getCharset());
   }
@@ -816,8 +823,11 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       File temp = createTempDirectory();
       VirtualFile tempDir = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      Project newProject = ProjectManagerEx.getInstanceEx().newProject(Paths.get(tempDir.getPath()), new OpenProjectTaskBuilder().build());
-      PlatformTestUtil.openProject(newProject);
+      Project newProject = ProjectManagerEx.getInstanceEx().openProject(Path.of(tempDir.getPath()),
+                                                                        OpenProjectTaskBuilderKt.createTestOpenProjectOptions());
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
       try {
         PlatformTestUtil.saveProject(newProject);
 
@@ -994,26 +1004,35 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     }).assertTiming();
   }
 
-  public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() throws IOException {
-    Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
+  public void testEncodingDetectionRequestsRunAtMostOneThreadForEachDocument() throws Throwable {
+    Map<VirtualFile, Thread> detectThreads = new ConcurrentHashMap<>();
+    AtomicReference<Throwable> exception = new AtomicReference<>();
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
       private MyFT() { super(new Language("my") {}); }
       @Override public boolean isMyFileType(@NotNull VirtualFile file) { return getDefaultExtension().equals(file.getExtension()); }
       @Override public @NotNull String getName() { return "my"; }
       @Override public @NotNull String getDescription() { return getName(); }
       @Override public @NotNull String getDefaultExtension() { return "my"; }
-      @Override public @Nullable Icon getIcon() { return null; }
+      @Override public Icon getIcon() { return null; }
 
       @Override
       public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
-        detectThreads.add(Thread.currentThread());
-        TimeoutUtil.sleep(1000);
-        return US_ASCII;
+        Thread prev = detectThreads.put(file, Thread.currentThread());
+        try {
+          if (prev != null) {
+            exception.set(new Throwable(file +" has two detection threads: "+prev +" and "+ Thread.currentThread()+"\nThe full thread dump:\n"+ThreadDumper.dumpThreadsToString()));
+          }
+          TimeoutUtil.sleep(1000);
+          return US_ASCII;
+        }
+        finally {
+          detectThreads.remove(file);
+        }
       }
     }
 
     FileType foo = new MyFT();
-    ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).registerFileType(foo, List.of(), getTestRootDisposable());
+    ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).registerFileType(foo, List.of(), getTestRootDisposable(), PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
 
     VirtualFile file = createTempFile("my", NO_BOM, StringUtil.repeat("c", 20), US_ASCII);
     FileEditorManager.getInstance(getProject()).openFile(file, false);
@@ -1021,7 +1040,6 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     Document document = getDocument(file);
     assertEquals(foo, file.getFileType());
     file.setCharset(null);
-    detectThreads.clear();
 
     for (int i=0; i<1000; i++) {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, " "));
@@ -1031,9 +1049,12 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
     UIUtil.dispatchAllInvocationEvents();
 
-    Thread thread = assertOneElement(detectThreads);
+    FileEditorManager.getInstance(getProject()).closeFile(file);
     ApplicationManager.getApplication().assertIsDispatchThread();
-    assertNotEquals(Thread.currentThread(), thread);
+
+    if (exception.get() != null) {
+      throw exception.get();
+    }
   }
 
   public void testSetMappingMustResetEncodingOfNotYetLoadedFiles() {
@@ -1109,14 +1130,15 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       @Override public @NotNull String getName() { return "Test"; }
       @Override public @NotNull String getDescription() { return "Test"; }
       @Override public @NotNull String getDefaultExtension() { return ext; }
-      @Override public @Nullable Icon getIcon() { return null; }
+      @Override public Icon getIcon() { return null; }
       @Override public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) { return StandardCharsets.ISO_8859_1.name(); }
     }
     MyForcedFileType fileType = new MyForcedFileType();
     FileEncodingProvider encodingProvider = __ -> StandardCharsets.UTF_16;
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
-    fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable());
+    fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable(),
+                                     PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     VirtualFile file = createTempFile(ext, NO_BOM, "some", StandardCharsets.UTF_8);
     assertEquals(fileType, file.getFileType());
     assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
@@ -1143,7 +1165,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testEncodingWidgetMustBeAvailableForReadonlyFiles() {
-    EncodingPanel panel = new EncodingPanel(getProject()){
+    Project project = getProject();
+    EncodingPanel panel = new EncodingPanel(project, project.getCoroutineScope()) {
       @Override
       protected VirtualFile getSelectedFile() {
         LightVirtualFile file = new LightVirtualFile("x.txt", "xxx");
@@ -1153,5 +1176,6 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     };
     panel.updateInTests(true);
     assertTrue(panel.isActionEnabled());
+    Disposer.dispose(panel);
   }
 }

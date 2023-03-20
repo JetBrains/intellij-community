@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class TextIcon implements Icon {
 
   @NotNull private final String myText;

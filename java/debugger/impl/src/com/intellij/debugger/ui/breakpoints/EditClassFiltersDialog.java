@@ -63,7 +63,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
   }
 
   @Override
-  public void dispose(){
+  public void dispose() {
     myClassFilterEditor.stopEditing();
     myClassExclusionFilterEditor.stopEditing();
     super.dispose();
@@ -75,7 +75,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
   }
 
   @Override
-  protected String getDimensionServiceKey(){
+  protected String getDimensionServiceKey() {
     return "#com.intellij.debugger.ui.breakpoints.EditClassFiltersDialog";
   }
 

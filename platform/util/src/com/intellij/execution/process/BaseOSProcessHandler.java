@@ -8,7 +8,6 @@ import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.BaseOutputReader.Options;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,23 +32,10 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     myProcessStart = new Throwable("Process creation:");
   }
 
-  /**
-   * Override this method in order to execute the task with a custom pool
-   *
-   * @param task a task to run
-   * @deprecated override {@link #executeTask(Runnable)} instead of this method
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
-    return ProcessIOExecutorService.INSTANCE.submit(task);
-  }
-
   @Override
   @NotNull
   public Future<?> executeTask(@NotNull Runnable task) {
-    return executeOnPooledThread(task);
+    return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   /**

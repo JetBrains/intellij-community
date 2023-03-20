@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -19,7 +20,7 @@ public class CdCommand extends AbstractCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     File file = context.getPathMacro().resolveFile(myDir, context.getBaseDir());
     if (!file.exists()) {
       context.message("Cannot cd, directory doesn't exist: " + file.getAbsoluteFile(), getLine());

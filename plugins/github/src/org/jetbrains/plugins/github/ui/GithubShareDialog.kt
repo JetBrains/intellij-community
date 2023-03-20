@@ -1,45 +1,42 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel.Companion.accountSelector
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import java.awt.Component
 import java.util.regex.Pattern
-import javax.swing.JTextArea
 
 
-class GithubShareDialog(project: Project,
-                        accounts: Set<GithubAccount>,
-                        defaultAccount: GithubAccount?,
+class GithubShareDialog(private val project: Project,
                         existingRemotes: Set<String>,
                         private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>)
-  : DialogWrapper(project), DataProvider {
+  : DialogWrapper(project) {
 
   private val GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+")
 
   private val repositoryTextField = JBTextField(project.name)
-  private val privateCheckBox = JBCheckBox(message("share.dialog.private"), false)
+  private val privateCheckBox = JBCheckBox(message("share.dialog.private"), true)
 
   @NlsSafe
   private val remoteName = if (existingRemotes.isEmpty()) "origin" else "github"
   private val remoteTextField = JBTextField(remoteName)
-  private val descriptionTextArea = JTextArea()
+  private val descriptionTextArea = JBTextArea().apply { lineWrap = true }
   private val existingRepoValidator = RecordUniqueValidator(repositoryTextField,
                                                             message("share.error.repo.with.selected.name.exists"))
   private val existingRemoteValidator = RecordUniqueValidator(remoteTextField,
@@ -47,7 +44,12 @@ class GithubShareDialog(project: Project,
     .apply { records = existingRemotes }
   private var accountInformationLoadingError: ValidationInfo? = null
 
-  private val accountsModel = GHAccountsComboBoxModel(accounts, defaultAccount ?: accounts.firstOrNull())
+  private val accounts = GHAccountsUtil.accounts
+
+  private val accountsModel = CollectionComboBoxModel(
+    accounts.toMutableList(),
+    GHAccountsUtil.getDefaultAccount(project) ?: accounts.firstOrNull()
+  )
 
   init {
     title = message("share.on.github")
@@ -82,22 +84,39 @@ class GithubShareDialog(project: Project,
 
   override fun createCenterPanel() = panel {
     row(message("share.dialog.repo.name")) {
-      cell {
-        repositoryTextField(growX, pushX).withValidationOnApply { validateRepository() }
-        privateCheckBox()
-      }
+      cell(repositoryTextField)
+        .align(AlignX.FILL)
+        .validationOnApply { validateRepository() }
+        .resizableColumn()
+      cell(privateCheckBox)
     }
     row(message("share.dialog.remote")) {
-      remoteTextField(growX, pushX).withValidationOnApply { validateRemote() }
+      cell(remoteTextField)
+        .align(AlignX.FILL)
+        .validationOnApply { validateRemote() }
     }
-    row(message("share.dialog.description")) {
-      scrollPane(descriptionTextArea)
-    }
+    row {
+      label(message("share.dialog.description"))
+        .align(AlignY.TOP)
+      scrollCell(descriptionTextArea)
+        .align(Align.FILL)
+    }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+
     if (accountsModel.size != 1) {
       row(message("share.dialog.share.by")) {
-        accountSelector(accountsModel) { switchAccount(getAccount()) }
+        comboBox(accountsModel)
+          .align(AlignX.FILL)
+          .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
+          .applyToComponent { addActionListener { switchAccount(getAccount()) } }
+          .resizableColumn()
+
+        if (accountsModel.size == 0) {
+          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel))
+        }
       }
     }
+  }.apply {
+    preferredSize = JBUI.size(500, 250)
   }
 
   override fun doValidateAll(): List<ValidationInfo> {
@@ -123,10 +142,6 @@ class GithubShareDialog(project: Project,
   override fun getHelpId(): String = "github.share"
   override fun getDimensionServiceKey(): String = "Github.ShareDialog"
   override fun getPreferredFocusedComponent(): JBTextField = repositoryTextField
-
-  override fun getData(dataId: String): Any? =
-    if (GHAccountsHost.KEY.`is`(dataId)) accountsModel
-    else null
 
   @NlsSafe
   fun getRepositoryName(): String = repositoryTextField.text

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.google.gson.Gson;
@@ -8,22 +8,19 @@ import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import gnu.trove.THashSet;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
-import org.apache.log4j.Appender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -37,8 +34,10 @@ import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.xxh3.Xxh3;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -87,16 +86,18 @@ public final class ClasspathBootstrap {
   private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
   private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
 
-  private static final String BANNED_JAR = PathManager.getLibPath() + "/app.jar";
-
   private static void addToClassPath(Class<?> aClass, Set<String> result) {
-    String path = PathManager.getJarPathForClass(aClass);
+    Path path = PathManager.getJarForClass(aClass);
     if (path == null) {
       return;
     }
 
-    if (result.add(path) && path.equals(BANNED_JAR)) {
-      LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + PathUtilRt.getFileName(path) + " is added to build process classpath");
+    final String pathString = path.toString();
+
+    if (result.add(pathString) && pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
+      if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
+        LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+      }
     }
   }
 
@@ -116,6 +117,7 @@ public final class ClasspathBootstrap {
 
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
+
     ClassPathUtil.addKotlinStdlib(cp);
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
 
@@ -132,6 +134,7 @@ public final class ClasspathBootstrap {
     addToClassPath(IXMLBuilder.class, cp);  // nano-xml
     addToClassPath(JavaProjectBuilder.class, cp);  // QDox lightweight java parser
     addToClassPath(Gson.class, cp);  // gson
+    addToClassPath(Xxh3.class, cp);
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
     addToClassPath(Tracer.class, cp); // tracing infrastructure
@@ -159,9 +162,7 @@ public final class ClasspathBootstrap {
     final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
-    cp.add(getResourceFile(Appender.class)); // log4j
     cp.add(getResourceFile(SystemInfoRt.class)); // util_rt
-    cp.add(getResourceFile(THashSet.class)); // Trove
 
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
@@ -177,7 +178,7 @@ public final class ClasspathBootstrap {
     }
 
     try {
-      final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
+      final String localJavaHome = FileUtilRt.toSystemIndependentName(SystemProperties.getJavaHome());
       // sdkHome is not the same as the sdk used to run this process
       final File candidate = new File(sdkHome, "lib/tools.jar");
       if (candidate.exists()) {
@@ -195,11 +196,11 @@ public final class ClasspathBootstrap {
         }
         final File resourceFile = getResourceFile(compilerClass);
         if (resourceFile != null) {
-          String localJarPath = FileUtil.toSystemIndependentName(resourceFile.getPath());
-          String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+          String localJarPath = FileUtilRt.toSystemIndependentName(resourceFile.getPath());
+          String relPath = FileUtilRt.getRelativePath(localJavaHome, localJarPath, '/');
           if (relPath != null) {
             if (relPath.contains("..")) {
-              relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+              relPath = FileUtilRt.getRelativePath(FileUtilRt.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
             }
             if (relPath != null) {
               final File targetFile = new File(sdkHome, relPath);
@@ -237,7 +238,8 @@ public final class ClasspathBootstrap {
       // take the library from the local maven repository
       File localRepositoryDir = getMavenLocalRepositoryDir();
       File protobufJava6File = new File(
-        FileUtil.join(localRepositoryDir.getAbsolutePath(), "com", "google", "protobuf", "protobuf-java", PROTOBUF_JAVA6_VERSION, PROTOBUF_JAVA6_JAR_NAME)
+        String.join(File.separator, localRepositoryDir.getAbsolutePath(), "com", "google", "protobuf", "protobuf-java",
+                    PROTOBUF_JAVA6_VERSION, PROTOBUF_JAVA6_JAR_NAME)
       );
       cp.add(protobufJava6File);
     }
@@ -258,7 +260,7 @@ public final class ClasspathBootstrap {
     return resourcePath != null? new File(resourcePath) : null;
   }
 
-  public static void configureReflectionOpenPackages(Consumer<String> paramConsumer) {
+  public static void configureReflectionOpenPackages(Consumer<? super String> paramConsumer) {
     for (String aPackage : REFLECTION_OPEN_PACKAGES) {
       paramConsumer.accept("--add-opens");
       paramConsumer.accept(aPackage);

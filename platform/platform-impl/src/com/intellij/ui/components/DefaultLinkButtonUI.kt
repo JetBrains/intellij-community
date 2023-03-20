@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf.isAltPressed
@@ -15,6 +15,7 @@ import java.awt.*
 import java.beans.PropertyChangeEvent
 import java.io.StringReader
 import java.net.URL
+import java.util.function.Supplier
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.LookAndFeel.installProperty
@@ -35,7 +36,7 @@ import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.StyleSheet
 
-class DefaultLinkButtonUI : BasicButtonUI() {
+internal class DefaultLinkButtonUI : BasicButtonUI() {
   companion object {
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
@@ -194,7 +195,7 @@ private fun getLinkColor(button: AbstractButton) = when {
   else -> Link.Foreground.ENABLED
 }
 
-private class DynamicColor(button: AbstractButton) : UIResource, JBColor({ getLinkColor(button) })
+private class DynamicColor(button: AbstractButton) : UIResource, JBColor(Supplier { getLinkColor(button) })
 
 // support underlined <html>
 

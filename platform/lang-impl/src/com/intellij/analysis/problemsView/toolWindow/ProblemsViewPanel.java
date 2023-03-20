@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -9,21 +9,21 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -31,17 +31,21 @@ import com.intellij.ui.preview.DescriptorPreview;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Comparator;
@@ -60,7 +64,7 @@ import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider, ProblemsViewTab {
   protected final ClientId myClientId = ClientId.getCurrent();
-
+  volatile boolean myDisposed;
   private final Project myProject;
   private final String myId;
   private final ProblemsViewState myState;
@@ -78,7 +82,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     if (node != null) ProblemsViewStatsCollector.problemSelected(this, node.getProblem());
     updateAutoscroll();
     updatePreview();
-  }, 50, stateForComponent(this), this);
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
+
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
     ToolWindow window = getCurrentToolWindow();
     if (window == null) return;
@@ -88,9 +93,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Root root = myTreeModel.getRoot();
     int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getName(count));
-    Icon icon = getToolWindowIcon(count);
-    if (icon != null) window.setIcon(icon);
-  }, 50, stateForComponent(this), this);
+    ProblemsViewIconUpdater.update(getProject());
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
 
   private final Option myAutoscrollToSource = new Option() {
     @Override
@@ -164,7 +168,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       myTreeModel.setComparator(createComparator());
     }
   };
-  private final Option mySortBySeverity = new Option() {
+  protected final Option mySortBySeverity = new Option() {
     @Override
     public boolean isSelected() {
       return myState.getSortBySeverity();
@@ -205,7 +209,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(event -> mySelectionAlarm.cancelAndRequest());
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
     PopupHandler.installPopupMenu(myTree, getPopupHandlerGroupId(), "ProblemsView.ToolWindow.TreePopup");
@@ -214,10 +218,28 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myToolbar = getToolbar();
     myToolbar.setTargetComponent(myTree);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
-    UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
 
     myPanel = new JPanel(new BorderLayout());
-    myPanel.add(BorderLayout.CENTER, createScrollPane(myTree, true));
+    JScrollPane scrollPane = createScrollPane(myTree, true);
+    if (ExperimentalUI.isNewUI()) {
+      scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
+        int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
+        Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
+                                                          : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
+        Border innerBorder = i != null ? JBUI.Borders.empty(i.top, i.left, i.bottom, i.right)
+                                       : JBUI.Borders.empty(2);
+
+        Border border = event.getAdjustable().getValue() != 0 ? JBUI.Borders.compound(new CustomLineBorder(myToolbarInsets), innerBorder)
+                                                              : innerBorder;
+        myToolbar.getComponent().setBorder(border);
+        myToolbar.getComponent().repaint();
+      });
+    }
+    else {
+      UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
+    }
+
+    myPanel.add(BorderLayout.CENTER, scrollPane);
     myPanel.add(BorderLayout.WEST, myToolbar.getComponent());
     myPanel.putClientProperty(OPEN_IN_PREVIEW_TAB, true);
     setFirstComponent(myPanel);
@@ -227,17 +249,22 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public void dispose() {
     visibilityChangedTo(false);
     myPreview.close();
+    myDisposed = true;
   }
 
-  public Content getCurrentContent() {
+  private @Nullable Content getCurrentContent() {
     ToolWindow window = getCurrentToolWindow();
-    if (window == null) return null;
+    if (window == null) {
+      return null;
+    }
     ContentManager manager = window.getContentManagerIfCreated();
-    if (manager == null) return null;
+    if (manager == null) {
+      return null;
+    }
     return manager.getContent(this);
   }
 
-  public ToolWindow getCurrentToolWindow() {
+  private ToolWindow getCurrentToolWindow() {
     return ProblemsView.getToolWindow(getProject());
   }
 
@@ -245,6 +272,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
+    if (PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(dataId)) return shouldHideExpandCollapseActionsIfThereIsNoTreeExpander();
     if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       // this code allows performing Editor's Undo action from the Problems View
       Editor editor = getPreview();
@@ -256,16 +284,23 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Node node = getSelectedNode();
     if (node != null) {
       if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) return node;
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        Navigatable navigatable = node.getNavigatable();
-        return navigatable == null ? null : new Navigatable[]{navigatable};
-      }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         VirtualFile file = node.getVirtualFile();
         return file == null ? null : new VirtualFile[]{file};
       }
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId, node);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Node node) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      Navigatable navigatable = node.getNavigatable();
+      return navigatable == null ? null : new Navigatable[]{navigatable};
     }
     return null;
   }
@@ -274,17 +309,27 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myUpdateAlarm.cancelAndRequest();
   }
 
-  public @Nullable Icon getToolWindowIcon(int count) {
-    return null;
-  }
-
   @Override
   public @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
-    if (count <= 0) return name;
-    return new HtmlBuilder().append(name).append(" ").append(
-      HtmlChunk.tag("font").attr("color", toHtmlColor(UIUtil.getInactiveTextColor())).addText(String.valueOf(count))
-    ).wrapWithHtmlBody().toString();
+    String padding = String.valueOf(count <= 0 ? 0 : JBUI.scale(8));
+    String fg = toHtmlColor(NamedColorUtil.getInactiveTextColor());
+    String number = count <= 0 ? "" : String.valueOf(count);
+    @Language("HTML")
+    @NonNls String labelWithCounter = """
+      <html>
+        <body>
+          <table cellpadding='0' cellspacing='0'>
+            <tr>
+              <td><nobr>%s</nobr></td>
+              <td width='%s'></td>
+              <td><font color='%s'>%s</font></td>
+            </tr>
+          </table>
+        </body>
+      </html>
+      """;
+    return String.format(labelWithCounter, name, padding, fg, number);
   }
 
   @Override
@@ -317,8 +362,12 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return myPreview.editor();
   }
 
-  public @Nullable TreeExpander getTreeExpander() {
+  @Nullable TreeExpander getTreeExpander() {
     return myTreeExpander;
+  }
+
+  Boolean shouldHideExpandCollapseActionsIfThereIsNoTreeExpander() {
+    return true;
   }
 
   void orientationChangedTo(boolean vertical) {
@@ -331,7 +380,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     updatePreview();
   }
 
-  public void selectionChangedTo(boolean selected) {
+  void selectionChangedTo(boolean selected) {
     if (selected) {
       myTreeModel.setComparator(createComparator());
       updatePreview();
@@ -339,7 +388,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       ToolWindow window = ProblemsView.getToolWindow(getProject());
       if (window instanceof ToolWindowEx) {
         ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.SecondaryActions");
-        ((ToolWindowEx)window).setAdditionalGearActions(group);
+        window.setAdditionalGearActions(group);
       }
     }
     visibilityChangedTo(selected);
@@ -352,8 +401,13 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     }
     else {
       Long time = myShowTime.getAndSet(null);
-      if (time != null) ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
-      IntentionsUI.getInstance(getProject()).hide();
+      if (time != null) {
+        ProblemsViewStatsCollector.tabHidden(this, System.nanoTime() - time);
+      }
+      IntentionsUI intentionUI = getProject().getServiceIfCreated(IntentionsUI.class);
+      if (intentionUI != null) {
+        intentionUI.hide();
+      }
     }
   }
 
@@ -429,12 +483,12 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   @Nullable
-  public Option getAutoscrollToSource() {
+  Option getAutoscrollToSource() {
     return isNotNullAndSelected(getShowPreview()) ? null : myAutoscrollToSource;
   }
 
   @Nullable
-  public Option getOpenInPreviewTab() {
+  Option getOpenInPreviewTab() {
     return isNotNullAndSelected(getShowPreview()) ? null : myOpenInPreviewTab;
   }
 
@@ -443,22 +497,23 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return myShowPreview;
   }
 
-  @Nullable Option getGroupByToolId() {
+  @Nullable
+  Option getGroupByToolId() {
     return this instanceof HighlightingPanel ? myGroupByToolId : null;
   }
 
   @Nullable
-  public Option getSortFoldersFirst() {
+  Option getSortFoldersFirst() {
     return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
   }
 
   @Nullable
-  public Option getSortBySeverity() {
-    return this instanceof HighlightingPanel ? mySortBySeverity : null;
+  protected Option getSortBySeverity() {
+    return null;
   }
 
   @Nullable
-  public Option getSortByName() {
+  protected Option getSortByName() {
     return mySortByName;
   }
 
@@ -466,7 +521,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return option != null && option.isSelected();
   }
 
-  private static boolean isNullableOrSelected(@Nullable Option option) {
+  protected static boolean isNullableOrSelected(@Nullable Option option) {
     return option == null || option.isSelected();
   }
 }

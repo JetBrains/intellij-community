@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.console
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
@@ -48,17 +49,18 @@ import org.jetbrains.kotlin.console.gutter.IconWithTooltip
 import org.jetbrains.kotlin.console.gutter.ReplIcons
 import org.jetbrains.kotlin.descriptors.ScriptDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.forcedModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.trackers.KOTLIN_CONSOLE_KEY
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
@@ -117,7 +119,7 @@ class KotlinConsoleRunner(
             field = value
         }
 
-    fun changeConsoleEditorIndicator(newIconWithTooltip: IconWithTooltip) = WriteCommandAction.runWriteCommandAction(project) {
+    private fun changeConsoleEditorIndicator(newIconWithTooltip: IconWithTooltip) = WriteCommandAction.runWriteCommandAction(project) {
         consoleEditorHighlighter.gutterIconRenderer = ConsoleIndicatorRenderer(newIconWithTooltip)
     }
 
@@ -133,12 +135,12 @@ class KotlinConsoleRunner(
         override fun getScriptName(script: KtScript) = Name.identifier("REPL")
     }
 
-    override fun createProcess(): Process? {
+    override fun createProcess(): Process {
         environment = environmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
         return environment.createProcess(cmdLine, ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator())
     }
 
-    override fun createConsoleView(): LanguageConsoleView? {
+    override fun createConsoleView(): LanguageConsoleView {
         val builder = LanguageConsoleBuilder()
 
         val consoleView = builder.gutterContentProvider(ConsoleGutterContentProvider()).build(project, KotlinLanguage.INSTANCE)
@@ -230,7 +232,7 @@ class KotlinConsoleRunner(
         editor.setPlaceholderAttributes(placeholderAttrs)
     }
 
-    fun setupGutters(consoleView: LanguageConsoleView) {
+    private fun setupGutters(consoleView: LanguageConsoleView) {
         fun configureEditorGutter(editor: EditorEx, color: Color, iconWithTooltip: IconWithTooltip): RangeHighlighter {
             editor.settings.isLineMarkerAreaShown = true // hack to show gutter
             editor.settings.isFoldingOutlineShown = true
@@ -290,6 +292,10 @@ class KotlinConsoleRunner(
                 false
             ) as KtFile? ?: error("Failed to setup PSI for file:\n$text")
 
+            runInEdt {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
+            }
+
             replState.submitLine(psiFile)
             configureFileDependencies(psiFile)
             val scriptDescriptor =
@@ -308,13 +314,15 @@ class KotlinConsoleRunner(
         }
 
     private fun configureFileDependencies(psiFile: KtFile) {
-        psiFile.forcedModuleInfo = module.testSourceInfo() ?: module.productionSourceInfo() ?: NotUnderContentRootModuleInfo
+        psiFile.forcedModuleInfo = module.testSourceInfo
+            ?: module.productionSourceInfo
+            ?: NotUnderContentRootModuleInfo(psiFile.project, psiFile)
     }
 }
 
 class ConsoleScriptDefinitionContributor : ScriptDefinitionSourceAsContributor {
 
-    val definitionsSet = ContainerUtil.newConcurrentSet<ScriptDefinition>()
+    private val definitionsSet = ContainerUtil.newConcurrentSet<ScriptDefinition>()
 
     override val definitions: Sequence<ScriptDefinition>
         get() = definitionsSet.asSequence()

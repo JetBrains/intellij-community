@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
@@ -95,11 +96,6 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public boolean isSuspendedDumbMode() {
-    return false;
-  }
-
-  @Override
   public void unsafeRunWhenSmart(@NotNull Runnable runnable) {
     runnable.run();
   }
@@ -115,7 +111,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable) {
-    runnable.run();
+  public AccessToken runWithWaitForSmartModeDisabled() {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 }

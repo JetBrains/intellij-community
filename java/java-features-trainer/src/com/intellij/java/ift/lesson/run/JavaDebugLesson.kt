@@ -1,39 +1,87 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift.lesson.run
 
 import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.xdebugger.XDebuggerBundle
-import training.dsl.LessonContext
-import training.dsl.TaskTestContext
-import training.dsl.highlightButtonById
-import training.dsl.restoreChangedSettingsInformer
+import com.intellij.xdebugger.XDebuggerManager
+import training.dsl.*
+import training.learn.CourseManager
 import training.learn.lesson.general.run.CommonDebugLesson
+import training.statistic.LessonStartingWay
 import training.ui.LearningUiManager
-import javax.swing.JEditorPane
+import training.util.isToStringContains
 
 class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 30)
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
-  private val demoClassName = JavaRunLessonsUtils.demoClassName
+  private val demoClassName = "Sample"
   override val configurationName: String = demoClassName
-  override val sample = JavaRunLessonsUtils.demoSample
+
+  override val sample = parseLessonSample("""
+    public class $demoClassName {
+        public static void main(String[] args) {
+            double average = findAverage(prepareValues());
+            System.out.println("The average is " + average);
+        }
+
+        private static double findAverage(String[] input) {
+            checkInput(input);
+            double result = 0;
+            for (String s : input) {
+                <caret>result += <select id=1>validateNumber(extractNumber(removeQuotes(s)))</select>;
+            }
+            <caret id=3/>return <select id=4>result / input.length</select>;
+        }
+
+        private static String[] prepareValues() {
+            return new String[] {"'apple 1'", "orange 2", "'tomato 3'"};
+        }
+
+        private static int extractNumber(String s) {
+            return Integer.parseInt(<select id=2>s.split(" ")[0]</select>);
+        }
+
+        private static void checkInput(String[] input) {
+            if (input == null || input.length == 0) {
+                throw new IllegalArgumentException("Invalid input");
+            }
+        }
+
+        private static String removeQuotes(String s) {
+            if (s.startsWith("'") && s.endsWith("'") && s.length() > 1) {
+                return s.substring(1, s.length() - 1);
+            }
+            return s;
+        }
+
+        private static int validateNumber(int number) {
+            if (number < 0) throw new IllegalArgumentException("Invalid number: " + number);
+            return number;
+        }
+    }
+  """.trimIndent())
+
   override var logicalPosition: LogicalPosition = LogicalPosition(10, 6)
+  private val debugLineNumber = StringUtil.offsetToLineNumber(sample.text, sample.getPosition (2).startOffset)
 
   override val confNameForWatches: String = "Application"
   override val quickEvaluationArgument = "Integer.parseInt"
-  override val expressionToBeEvaluated = "result/input.length"
   override val debuggingMethodName = "findAverage"
   override val methodForStepInto: String = "extractNumber"
   override val stepIntoDirectionToRight = true
 
   override fun LessonContext.applyProgramChangeTasks() {
-
     if (isHotSwapDisabled()) {
       task {
         val feature = stateCheck { !isHotSwapDisabled() }
@@ -53,13 +101,17 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
       }
     }
 
-    highlightButtonById("CompileDirty")
-
     task("CompileDirty") {
-      text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it), icon(AllIcons.Actions.Compile)))
+      text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it)))
       if (isAlwaysHotSwap()) {
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JEditorPane ->
-          ui.text.contains(JavaDebuggerBundle.message("status.hot.swap.completed.stop"))
+        addFutureStep {
+          subscribeForMessageBus(Notifications.TOPIC, object : Notifications {
+            override fun notify(notification: Notification) {
+              if (notification.actions.singleOrNull()?.templateText == JavaDebuggerBundle.message("status.hot.swap.completed.stop")) {
+                completeStep()
+              }
+            }
+          })
         }
       }
       else {
@@ -83,18 +135,35 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
       }
       proposeModificationRestore(afterFixText)
       test(waitEditorToBeReady = false) {
-        dialog(null) {
+        dialog(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", demoClassName)) {
           button("Reload").click()
         }
       }
     }
 
-    highlightButtonById("Debugger.PopFrame")
+    task {
+      triggerAndBorderHighlight { usePulsation = true }.listItem { item ->
+        (item as? JavaStackFrame)?.descriptor.isToStringContains("extractNumber")
+      }
+    }
 
-    actionTask("Debugger.PopFrame") {
-      proposeModificationRestore(afterFixText)
-      JavaLessonsBundle.message("java.debug.workflow.drop.frame", code("extractNumber"), code("extractNumber"),
-                                icon(AllIcons.Actions.PopFrame), action(it))
+    task(IdeActions.ACTION_RESET_FRAME) {
+      text(JavaLessonsBundle.message("java.debug.workflow.drop.frame", code("extractNumber"), code("extractNumber"),
+                                icon(AllIcons.Actions.InlineDropFrame), action(it)))
+      stateCheck {
+        val currentSession = XDebuggerManager.getInstance(project).currentSession ?: return@stateCheck false
+        currentSession.currentPosition?.line == logicalPosition.line
+      }
+      proposeRestore {
+        val currentSession = XDebuggerManager.getInstance(project).currentSession
+        val line = currentSession?.currentPosition?.line
+        if (line == null || !(line == debugLineNumber || line == logicalPosition.line)) {
+          TaskContext.RestoreNotification(JavaLessonsBundle.message("java.debug.workflow.invalid.drop")) {
+            CourseManager.instance.openLesson(project, this@JavaDebugLesson, LessonStartingWay.RESTORE_LINK)
+          }
+        } else null
+      }
+      test { actions(it) }
     }
   }
 
@@ -115,5 +184,5 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     }
   }
 
-  override val fileName: String = "$demoClassName.java"
+  override val sampleFilePath: String = "src/$demoClassName.java"
 }

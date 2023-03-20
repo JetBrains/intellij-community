@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -17,7 +17,6 @@ class EditorConfigDeprecatedDescriptorInspection : LocalInspectionTool() {
     override fun visitDescribableElement(element: EditorConfigDescribableElement) {
       val descriptor = element.getDescriptor(true) ?: return
       val deprecation = descriptor.deprecation ?: return
-      @Suppress("HardCodedStringLiteral")
       val message = MessageFormat.format(deprecation, ApplicationNamesInfo.getInstance().fullProductName)
       holder.registerProblem(
         element,

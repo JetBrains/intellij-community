@@ -1,0 +1,14 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
+import MyInterface.Nested
+
+interface MyInterface {
+    class Nested
+}
+
+class Foo : MyInterface {
+    val prop: Nes<caret>
+}
+
+// ELEMENT: Nested

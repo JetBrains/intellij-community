@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -13,9 +13,9 @@ import java.util.*;
 
 @ApiStatus.Experimental
 @State(name = "ExternalSystem.GAVStateComponent", storages = @Storage("jps2ext.xml"))
-public class GAVStateComponent implements PersistentStateComponent<GAVStateComponent.State> {
-  public static class State {
-    public Set<String> moduleMapping = new HashSet<>();
+public final class GAVStateComponent implements PersistentStateComponent<GAVStateComponent.State> {
+  public static final class State {
+    public final Set<String> moduleMapping = new HashSet<>();
   }
 
   private State myState = new State();

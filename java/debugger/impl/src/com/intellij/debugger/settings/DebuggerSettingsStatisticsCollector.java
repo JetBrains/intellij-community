@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -30,6 +30,7 @@ public class DebuggerSettingsStatisticsCollector extends ApplicationUsagesCollec
   private static final VarargEventId KILL_PROCESS_IMMEDIATELY = GROUP.registerVarargEvent("killProcessImmediately", EventFields.Enabled);
   private static final VarargEventId RESUME_ONLY_CURRENT_THREAD = GROUP.registerVarargEvent("resumeOnlyCurrentThread", EventFields.Enabled);
   private static final VarargEventId INSTRUMENTING_AGENT = GROUP.registerVarargEvent("instrumentingAgent", EventFields.Enabled);
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;

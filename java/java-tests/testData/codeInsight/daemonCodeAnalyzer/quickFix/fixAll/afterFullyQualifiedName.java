@@ -4,6 +4,6 @@ import java.util.Date;
 class FullyQualifiedName {
 
   void m(Object value) {
-    value = new java.sql.Date(((Date) value).getTime());
+    value = ((Date) value).getTime();
   }
 }

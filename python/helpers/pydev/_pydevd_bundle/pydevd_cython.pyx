@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 33
+version = 37
 
 if not hasattr(sys, '_current_frames'):
 
@@ -171,7 +171,6 @@ def set_additional_thread_info(thread):
             thread.additional_info = additional_info
 
     return additional_info
-import dis
 import linecache
 import os.path
 import re
@@ -193,7 +192,7 @@ from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, get_current_thread_id
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame, ignore_exception_trace
 from _pydevd_bundle.pydevd_bytecode_utils import find_last_call_name, find_last_func_call_order
-from _pydevd_bundle.pydevd_utils import get_clsname_for_code, should_stop_on_failed_test, is_exception_in_test_unit_can_be_ignored
+from _pydevd_bundle.pydevd_utils import get_clsname_for_code, should_stop_on_failed_test, is_exception_in_test_unit_can_be_ignored, eval_expression
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, is_real_file
 
 try:
@@ -226,7 +225,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
         if condition is None:
             return False
 
-        return eval(condition, new_frame.f_globals, new_frame.f_locals)
+        return eval_expression(condition, new_frame.f_globals, new_frame.f_locals)
     except Exception as e:
         if IS_PY2:
             # Must be bytes on py2.
@@ -263,7 +262,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
 def handle_breakpoint_expression(breakpoint, info, new_frame):
     try:
         try:
-            val = eval(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+            val = eval_expression(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
         except:
             val = sys.exc_info()[1]
     finally:
@@ -841,7 +840,7 @@ cdef class PyDBFrame:
                 context_end_line = info.pydev_smart_step_context.end_line
                 is_within_context = context_start_line <= line <= context_end_line
 
-                if not is_return and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None and line in breakpoints_for_file:
+                if not is_return and info.pydev_state != STATE_SUSPEND and breakpoints_for_file is not None and line in breakpoints_for_file and not is_exception_event:
                     breakpoint = breakpoints_for_file[line]
                     new_frame = frame
                     stop = True
@@ -1141,7 +1140,7 @@ from os.path import basename, splitext
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
 
-threadingCurrentThread = threading.currentThread
+threadingCurrentThread = threading.current_thread
 get_file_type = DONT_TRACE.get
 
 # Note: this is different from pydevd_constants.thread_get_ident because we want Jython
@@ -1211,7 +1210,7 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
                 return None, False
 
             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
-                # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+                # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
                 t = f_unhandled.f_locals.get('self')
                 force_only_unhandled_tracer = True
                 if t is not None and isinstance(t, threading.Thread):

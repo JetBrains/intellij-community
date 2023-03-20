@@ -186,8 +186,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException {
-    return debugger(threadId).loadFrame(threadId, frameId);
+  public XValueChildrenList loadFrame(String threadId, String frameId, GROUP_TYPE groupType) throws PyDebuggerException {
+    return debugger(threadId).loadFrame(threadId, frameId, groupType);
   }
 
   @Override
@@ -458,6 +458,11 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   @Override
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     allDebuggers().forEach(d -> d.removeBreakpoint(typeId, file, line));
+  }
+
+  @Override
+  public void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers) {
+    allDebuggers().forEach(d -> d.setUserTypeRenderers(renderers));
   }
 
   @Override

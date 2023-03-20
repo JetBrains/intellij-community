@@ -19,62 +19,65 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTestCase {
   @Language("Java")
   private static final String APP_JAVA =
-    "package my.pack;\n" +
-    "public class App {\n" +
-    "  public int method() { return 42; }\n" +
-    "}";
+    """
+      package my.pack;
+      public class App {
+        public int method() { return 42; }
+      }""";
 
   // App.java with a new method added
   @Language("Java")
   private static final String APP_JAVA_WITH_NEW_METHOD =
-    "package my.pack;\n" +
-    "public class App extends Impl {\n" +
-    "  public int method() { return 42; }\n" +
-    "  public int methodX() { return 100_000; }\n" +
-    "}";
+    """
+      package my.pack;
+      public class App extends Impl {
+        public int method() { return 42; }
+        public int methodX() { return 100_000; }
+      }""";
 
   // App.java with new added NewInnerClass inner class
   @Language("Java")
   private static final String APP_JAVA_WITH_INNER_CLASS =
-    "package my.pack;\n" +
-    "public class App extends Impl {\n" +
-    "  public int method() { return 42; }\n" +
-    "  public static class NewInnerClass {\n" +
-    "    public void doNothing() {}" +
-    "  }" +
-    "}";
+    """
+      package my.pack;
+      public class App extends Impl {
+        public int method() { return 42; }
+        public static class NewInnerClass {
+          public void doNothing() {}  }}""";
 
   // the NewInnerClass method changed from 'doNothing' to 'doSomething'
   @Language("Java")
   private static final String APP_JAVA_WITH_MODIFIED_INNER_CLASS =
-    "package my.pack;\n" +
-    "public class App extends Impl {\n" +
-    "  public int method() { return 42; }\n" +
-    "  public static class NewInnerClass {\n" +
-    "    public boolean doSomething() { return true; }\n" +
-    "  }\n" +
-    "}";
+    """
+      package my.pack;
+      public class App extends Impl {
+        public int method() { return 42; }
+        public static class NewInnerClass {
+          public boolean doSomething() { return true; }
+        }
+      }""";
 
   @Language("Java")
   private static final String IMPL_JAVA =
-    "package my.pack;\n" +
-    "import my.pack.Api;\n" +
-    "public class Impl extends Api {}";
+    """
+      package my.pack;
+      import my.pack.Api;
+      public class Impl extends Api {}""";
 
   @Language("Java")
   private static final String IMPL_JAVA_WITH_NEW_METHOD =
-    "package my.pack;\n" +
-    "import my.pack.Api;\n" +
-    "public class Impl extends Api {\n" +
-    "  public void newImplMethod() {}\n" +
-    "}";
+    """
+      package my.pack;
+      import my.pack.Api;
+      public class Impl extends Api {
+        public void newImplMethod() {}
+      }""";
 
   private String mainRoot;
   private String testRoot;
@@ -114,9 +117,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildMainProject() {
     compileModules("project.main");
 
-    List<String> expected = newArrayList(mainRoot,
-                                         apiMainRoot, apiJar,
-                                         implMainRoot);
+    List<String> expected = new ArrayList<>(asList(apiJar));
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -151,11 +152,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildTestProject() {
     compileModules("project.test");
 
-    List<String> expected = newArrayList(mainRoot,
-                                         testRoot,
-                                         apiMainRoot,
-                                         apiJar,
-                                         implMainRoot);
+    List<String> expected = new ArrayList<>(asList(apiJar));
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -197,12 +194,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = newArrayList(mainRoot);
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+      assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileJava/previous-compilation-data.bin");
+    } else {
+      assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     }
 
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles)
       .containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
@@ -255,7 +252,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = newArrayList(implMainRoot);
+    List<String> expected = new ArrayList<>();
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -280,11 +277,11 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.test");
 
-    List<String> expected = newArrayList(testRoot);
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileTestJava/previous-compilation-data.bin");
+      assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileTestJava/previous-compilation-data.bin");
+    } else {
+      assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     }
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles).as("Generated files").containsOnly(
       Map.entry(testRoot, Set.of("my/pack/AppTest.class"))
     );
@@ -298,11 +295,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testRebuildMainProjectAfterUndoingChange() {
     compileModules("project.main");
 
-    setFileContent(appFile, "package my.pack;\n" +
-                            "public class App {\n" +
-                            "  public int method() { return 42; }\n" +
-                            "  public int methodX() { return 42; }\n" +
-                            "}", false);
+    setFileContent(appFile, """
+      package my.pack;
+      public class App {
+        public int method() { return 42; }
+        public int methodX() { return 42; }
+      }""", false);
 
     clearOutputs();
     compileModules("project.main");
@@ -313,12 +311,11 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = newArrayList(mainRoot);
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+      assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileJava/previous-compilation-data.bin");
+    } else {
+      assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     }
-
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles).containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
 
@@ -331,7 +328,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactly("build/resources/main");
+    assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     assertThat(generatedFiles).containsOnly(Map.entry("build/resources/main", Set.of("runtime.properties")));
   }
 
@@ -370,22 +367,25 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     appFile = createProjectSubFile("src/main/java/my/pack/App.java", APP_JAVA);
 
     createProjectSubFile("src/main/java/my/pack/Other.java",
-                         "package my.pack;\n" +
-                         "public class Other {\n" +
-                         "  public String method() { return \"foo\"; }\n" +
-                         "}");
+                         """
+                           package my.pack;
+                           public class Other {
+                             public String method() { return "foo"; }
+                           }""");
 
     createProjectSubFile("src/test/java/my/pack/AppTest.java",
-                         "package my.pack;\n" +
-                         "public class AppTest {\n" +
-                         "  public void test() { new App().method(); }\n" +
-                         "}");
+                         """
+                           package my.pack;
+                           public class AppTest {
+                             public void test() { new App().method(); }
+                           }""");
 
     createProjectSubFile("api/src/main/java/my/pack/Api.java",
-                         "package my.pack;\n" +
-                         "public class Api {\n" +
-                         "  public int method() { return 42; }\n" +
-                         "}");
+                         """
+                           package my.pack;
+                           public class Api {
+                             public int method() { return 42; }
+                           }""");
 
     createProjectSubFile("api/src/test/java/my/pack/ApiTest.java",
                          "package my.pack;\n" +
@@ -394,9 +394,10 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     implFile = createProjectSubFile("impl/src/main/java/my/pack/Impl.java", IMPL_JAVA);
 
     createProjectSubFile("impl/src/test/java/my/pack/ImplTest.java",
-                         "package my.pack;\n" +
-                         "import my.pack.ApiTest;\n" +
-                         "public class ImplTest extends ApiTest {}");
+                         """
+                           package my.pack;
+                           import my.pack.ApiTest;
+                           public class ImplTest extends ApiTest {}""");
 
     importProject(script(it -> {
       it.allprojects(TestGradleBuildScriptBuilder::withJavaPlugin)

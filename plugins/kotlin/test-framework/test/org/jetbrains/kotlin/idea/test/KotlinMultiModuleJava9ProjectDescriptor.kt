@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -49,7 +49,7 @@ object KotlinMultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor()
         fun testRoot(): VirtualFile? = if (this == MAIN) TempFileSystem.getInstance().findFileByPath("/test_src")!! else null
     }
 
-    override fun getSdk(): Sdk = PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK_9)
+    override fun getSdk(): Sdk = PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK_11)
 
     override fun setUpProject(project: Project, handler: SetupHandler) {
         super.setUpProject(project, handler)

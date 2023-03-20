@@ -4,18 +4,18 @@ package com.intellij.internal.statistic.uploader;
 public interface EventLogUploaderOptions {
   String IDE_TOKEN = "--ide-token";
 
-  String RECORDER_OPTION = "--recorder";
-  String LOGS_OPTION = "--files";
-
-  String DEVICE_OPTION = "--device";
-  String BUCKET_OPTION = "--bucket";
-  String MACHINE_ID_OPTION = "--machine-id";
-  String ID_REVISION_OPTION = "--id-revision-option";
+  String RECORDERS_OPTION = "--recorders";
+  String LOGS_OPTION = "--files-";
+  String DEVICE_OPTION = "--device-";
+  String BUCKET_OPTION = "--bucket-";
+  String MACHINE_ID_OPTION = "--machine-";
+  String ID_REVISION_OPTION = "--id-revision-";
 
   String URL_OPTION = "--url";
   String PRODUCT_OPTION = "--product";
   String PRODUCT_VERSION_OPTION = "--product-version";
   String USER_AGENT_OPTION = "--user-agent";
+  String EXTRA_HEADERS = "--extra-headers";
   String INTERNAL_OPTION = "--internal";
   String TEST_OPTION = "--test";
   String EAP_OPTION = "--eap";

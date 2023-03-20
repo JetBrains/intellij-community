@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 final class CompletionAssertions {
 
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
@@ -137,7 +134,7 @@ final class CompletionAssertions {
                   insertedElement.getNode().getChars())) {
       throw new RuntimeExceptionWithAttachments(
         "Inconsistent completion tree",
-        "range=" + range,
+        "range=" + range + "; fileLength=" + fileCopyText.length(),
         createFileTextAttachment(fileCopy, originalFile),
         createAstAttachment(fileCopy, originalFile),
         new Attachment("Element at caret.txt", insertedElement.getText()));

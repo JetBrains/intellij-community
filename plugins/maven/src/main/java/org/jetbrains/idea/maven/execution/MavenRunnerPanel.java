@@ -25,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class MavenRunnerPanel implements MavenSettingsObservable {
@@ -60,10 +59,8 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.insets.bottom = 5;
 
     myDelegateToMavenCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
-    myDelegateToMavenCheckbox.setMnemonic('d');
 
     myRunInBackgroundCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.run.in.background"));
-    myRunInBackgroundCheckbox.setMnemonic('b');
     if (!myRunConfigurationMode) {
       c.gridx = 0;
       c.gridy++;
@@ -78,7 +75,6 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.gridwidth = 1;
 
     JLabel labelVMParameters = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.vm.options"));
-    labelVMParameters.setDisplayedMnemonic('v');
     labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
     myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
 
@@ -103,7 +99,6 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.insets.left = 0;
 
     myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
-    myJdkLabel.setDisplayedMnemonic('j');
     myJdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
     c.gridx = 0;
     c.gridy++;
@@ -134,7 +129,6 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
 
     propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")), BorderLayout.NORTH);
-    mySkipTestsCheckBox.setMnemonic('t');
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
@@ -221,7 +215,7 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     if (!localTarget) {
       List<String> items = IntStream.range(0, myTargetJdkCombo.getItemCount())
         .mapToObj(i -> myTargetJdkCombo.getItemAt(i))
-        .collect(Collectors.toList());
+        .toList();
 
       List<String> targetItems = new ArrayList<>();
       TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)

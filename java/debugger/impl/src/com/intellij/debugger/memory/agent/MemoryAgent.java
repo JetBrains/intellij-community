@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
@@ -30,7 +29,7 @@ public interface MemoryAgent {
   @NotNull
   static MemoryAgent get(@NotNull EvaluationContextImpl evaluationContext) {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT ||
-         DebuggerUtilsImpl.isRemote(evaluationContext.getDebugProcess())) {
+        DebuggerUtilsImpl.isRemote(evaluationContext.getDebugProcess())) {
       return MemoryAgentImpl.DISABLED;
     }
     return MemoryAgentInitializer.getAgent(evaluationContext);

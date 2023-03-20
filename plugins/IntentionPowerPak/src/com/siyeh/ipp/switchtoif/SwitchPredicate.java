@@ -27,10 +27,9 @@ class SwitchPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final IElementType tokenType = token.getTokenType();
     if (!JavaTokenType.SWITCH_KEYWORD.equals(tokenType)) {
       return false;

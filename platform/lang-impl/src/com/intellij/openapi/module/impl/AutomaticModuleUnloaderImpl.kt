@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.SaveAndSyncHandler
@@ -14,10 +14,15 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.getModuleLevelLibraries
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.launch
 
 /**
  * If some modules were unloaded and new modules appears after loading project configuration, automatically unloads those which
@@ -26,49 +31,71 @@ import com.intellij.xml.util.XmlStringUtil
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
-    if (currentModules.isEmpty()) return
+  override fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {
+    if (currentModules.isEmpty()) {
+      return
+    }
 
-    val oldLoaded = state.modules.toSet()
-    //if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine, so let's not unload all modules
-    if (oldLoaded.isEmpty()) return
+    val oldLoaded = state.modules.toHashSet()
+    // if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine,
+    // so let's not unload all modules
+    if (oldLoaded.isEmpty()) {
+      return
+    }
 
     val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
-    val unloadedModules = unloadedStorage.unloadedModuleNames
+    val unloadedModulesHolder = unloadedStorage.unloadedModuleNameHolder
     // if no modules were unloaded by user, automatic unloading shouldn't start
-    if (unloadedModules.isEmpty()) {
+    if (!unloadedModulesHolder.hasUnloaded()) {
       return
     }
 
     //no new modules were added, nothing to process
-    if (currentModules.all { it in oldLoaded || it in unloadedModules }) {
+    if (currentModules.all { it in oldLoaded || unloadedModulesHolder.isUnloaded(it) }) {
       return
     }
 
     val oldLoadedWithDependencies = HashSet<String>()
     for (name in oldLoaded) {
-      processTransitiveDependencies(ModuleId(name), storage, unloadedModules, oldLoadedWithDependencies)
+      processTransitiveDependencies(ModuleId(name), builder, unloadedEntityBuilder, unloadedModulesHolder, oldLoadedWithDependencies)
     }
 
     val toLoad = currentModules.filter { it in oldLoadedWithDependencies && it !in oldLoaded }
-    val toUnload = currentModules.filter { it !in oldLoadedWithDependencies && it !in unloadedModules}
+    val toUnload = currentModules.filter { it !in oldLoadedWithDependencies && !unloadedModulesHolder.isUnloaded(it)}
     if (toUnload.isNotEmpty()) {
       LOG.info("Old loaded modules: $oldLoaded")
-      LOG.info("Old unloaded modules: $unloadedModules")
+      LOG.info("Old unloaded modules: $unloadedModulesHolder")
       LOG.info("New modules to unload: $toUnload")
     }
     fireNotifications(toLoad, toUnload)
     unloadedStorage.addUnloadedModuleNames(toUnload)
+    if (toUnload.isNotEmpty()) {
+      val toUnloadSet = toUnload.toSet()
+      /* we need to create a snapshot because adding entities from one builder to another will result
+         in "Entity is already created in a different builder" exception */
+      val snapshot = builder.toSnapshot()
+      val moduleEntitiesToAdd = snapshot.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()
+      val moduleEntitiesToRemove = builder.entities(ModuleEntity::class.java).filter { it.name in toUnloadSet }.toList()
+      for (moduleEntity in moduleEntitiesToAdd) {
+        unloadedEntityBuilder.addEntity(moduleEntity)
+        moduleEntity.getModuleLevelLibraries(snapshot).forEach { libraryEntity ->
+          unloadedEntityBuilder.addEntity(libraryEntity)
+        }
+      }
+      for (moduleEntity in moduleEntitiesToRemove) {
+        builder.removeEntity(moduleEntity)
+      }
+    }
   }
 
-  private fun processTransitiveDependencies(moduleId: ModuleId, storage: WorkspaceEntityStorage, explicitlyUnloaded: Set<String>,
-                                            result: MutableSet<String>) {
-    if (moduleId.name in explicitlyUnloaded) return
-    val moduleEntity = storage.resolve(moduleId) ?: return
+  private fun processTransitiveDependencies(moduleId: ModuleId, storage: EntityStorage, unloadedEntitiesStorage: EntityStorage,
+                                            explicitlyUnloadedHolder: UnloadedModulesNameHolder, result: MutableSet<String>) {
+    if (explicitlyUnloadedHolder.isUnloaded(moduleId.name)) return
+    val moduleEntity = storage.resolve(moduleId) ?: unloadedEntitiesStorage.resolve(moduleId) ?: return
     if (!result.add(moduleEntity.name)) return
     moduleEntity.dependencies.forEach {
       if (it is ModuleDependencyItem.Exportable.ModuleDependency) {
-        processTransitiveDependencies(it.module, storage, explicitlyUnloaded, result)
+        processTransitiveDependencies(it.module, storage, unloadedEntitiesStorage, explicitlyUnloadedHolder, result)
       }
     }
   }
@@ -114,7 +141,9 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
       val moduleManager = ModuleManager.getInstance(project)
       moduleManager.unloadedModuleDescriptions.mapTo(unloaded) { it.name }
       action(unloaded)
-      moduleManager.setUnloadedModules(unloaded)
+      project.coroutineScope.launch {
+        moduleManager.setUnloadedModules(unloaded)
+      }
       notification.expire()
     }
   }

@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -68,10 +69,16 @@ public interface RepositoryManager<T extends Repository> {
   @Nullable
   @CalledInAny
   T getRepositoryForRootQuick(@Nullable VirtualFile root);
+
+  @Nullable
+  @CalledInAny
+  T getRepositoryForRootQuick(@Nullable FilePath rootPath);
+
   /**
    * @return all repositories tracked by the manager.
    */
   @NotNull
+  @Unmodifiable
   List<T> getRepositories();
 
   /**

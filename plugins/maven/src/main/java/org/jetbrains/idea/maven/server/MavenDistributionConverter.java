@@ -5,6 +5,7 @@ import com.intellij.execution.wsl.WslPath;
 import com.intellij.util.xmlb.Converter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 
@@ -12,7 +13,7 @@ public class MavenDistributionConverter extends Converter<MavenDistribution> {
   @Nullable
   @Override
   public MavenDistribution fromString(@NotNull String value) {
-    File file = MavenServerManager.getMavenHomeFile(value);
+    File file = MavenUtil.getMavenHomeFile(value);
     if (file == null) return null;
     WslPath wslPath = WslPath.parseWindowsUncPath(file.getAbsolutePath());
     if (wslPath == null) {

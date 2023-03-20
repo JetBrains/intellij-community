@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
@@ -11,8 +11,6 @@ import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.isReusable
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
-import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
@@ -28,18 +26,23 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.content.ContentManager
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.swing.JPanel
 
 @Service
-internal class DocumentationToolWindowManager(private val project: Project) : Disposable {
+internal class DocumentationToolWindowManager(
+  private val project: Project,
+  private val cs: CoroutineScope,
+) {
 
   companion object {
-
     const val TOOL_WINDOW_ID: String = "documentation.v2"
 
     fun instance(project: Project): DocumentationToolWindowManager = project.service()
@@ -56,18 +59,20 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       }
   }
 
-  private val toolWindow: ToolWindowEx = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.closableSecondary(
-    id = TOOL_WINDOW_ID,
-    stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.documentation.v2"),
-    icon = AllIcons.Toolwindows.Documentation,
-    anchor = ToolWindowAnchor.RIGHT,
-  )) as ToolWindowEx
-  private val contentManager: ContentManager = toolWindow.contentManager
+  private val toolWindow: ToolWindowEx
 
-  private val cs = CoroutineScope(SupervisorJob())
   private var waitForFocusRequest: Boolean = false
 
   init {
+    toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(
+      id = TOOL_WINDOW_ID,
+      anchor = ToolWindowAnchor.RIGHT,
+      icon = AllIcons.Toolwindows.Documentation,
+      sideTool = true,
+      stripeTitle = IdeBundle.messagePointer("toolwindow.stripe.documentation.v2"),
+      shouldBeAvailable = false,
+    )) as ToolWindowEx
+
     toolWindow.setAdditionalGearActions(DefaultActionGroup(
       ActionManager.getInstance().getAction(TOGGLE_SHOW_IN_POPUP_ACTION_ID),
       ToggleShowDocsOnHoverAction(),
@@ -76,13 +81,9 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       AdjustFontSizeAction(),
     ))
     toolWindow.setTitleActions(navigationActions())
-    toolWindow.installWatcher(contentManager)
+    toolWindow.installWatcher(toolWindow.contentManager)
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
-  }
-
-  override fun dispose() {
-    cs.cancel()
   }
 
   /**
@@ -118,7 +119,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
       waitForFocusRequest = false
     }
     val content = getVisibleReusableContent() ?: return false
-    contentManager.requestFocus(content, false)
+    toolWindow.contentManager.requestFocus(content, false)
     return true
   }
 
@@ -133,7 +134,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     if (!toolWindow.isVisible) {
       return null
     }
-    return contentManager.selectedContent?.takeIf {
+    return toolWindow.contentManager.selectedContent?.takeIf {
       it.toolWindowUI.isReusable
     }
   }
@@ -147,7 +148,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     val reusableContent = getReusableContent()
     if (reusableContent == null) {
       val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
-      showInToolWindow(DocumentationUI(project, browser), addNewContent())
+      showInNewTab(DocumentationUI(project, browser))
     }
     else {
       reusableContent.toolWindowUI.browser.resetBrowser(request)
@@ -162,43 +163,48 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
   fun showInToolWindow(ui: DocumentationUI) {
     EDT.assertIsEdt()
     val reusableContent = getReusableContent()
-    val content = if (reusableContent == null) {
-      addNewContent()
+    if (reusableContent == null) {
+      showInNewTab(ui)
     }
     else {
       Disposer.dispose(reusableContent.toolWindowUI)
-      reusableContent
+      initUI(ui, reusableContent)
+      makeVisible(reusableContent)
     }
-    showInToolWindow(ui, content)
   }
 
-  private fun showInToolWindow(ui: DocumentationUI, content: Content) {
+  private fun showInNewTab(ui: DocumentationUI) {
+    val content = addNewContent()
+    initUI(ui, content)
+    makeVisible(content)
+  }
+
+  private fun initUI(ui: DocumentationUI, content: Content) {
     val newUI = DocumentationToolWindowUI(project, ui, content)
     if (autoUpdate) {
       newUI.toggleAutoUpdate(state = true)
     }
     content.component = newUI.contentComponent
-    makeVisible(content)
   }
 
   private fun makeVisible(content: Content) {
-    contentManager.setSelectedContent(content)
+    toolWindow.contentManager.setSelectedContent(content)
     toolWindow.show()
     waitForFocusRequest()
   }
 
   private fun getReusableContent(): Content? {
-    return contentManager.contents.firstOrNull {
+    return toolWindow.contentManager.contents.firstOrNull {
       it.isReusable
     }
   }
 
   private fun addNewContent(): Content {
-    val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(), null, false).also {
+    val content = ContentFactory.getInstance().createContent(JPanel(), null, false).also {
       it.isCloseable = true
       it.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
     }
-    contentManager.addContent(content)
+    toolWindow.contentManager.addContent(content)
     return content
   }
 

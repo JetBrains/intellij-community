@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.DeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcessor;
@@ -46,9 +47,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
 
   private final CachedValue<DeclarationHolder> myAnnotationsCache;
@@ -188,14 +186,18 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     myControlFlow = null;
   }
 
-  private volatile SoftReference<Instruction[]> myControlFlow;
+  private volatile SoftReference<GroovyControlFlow> myControlFlow;
 
   @Override
   public Instruction[] getControlFlow() {
+    return getGroovyControlFlow().getFlow();
+  }
+
+  public GroovyControlFlow getGroovyControlFlow() {
     assert isValid();
-    Instruction[] result = SoftReference.dereference(myControlFlow);
+    GroovyControlFlow result = SoftReference.dereference(myControlFlow);
     if (result == null) {
-      result = new ControlFlowBuilder().buildControlFlow(this);
+      result = ControlFlowBuilder.buildControlFlow(this);
       myControlFlow = new SoftReference<>(result);
     }
     return result;
@@ -265,8 +267,15 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     final GroovyFileImports imports = getImports();
     if (!imports.processAllNamedImports(processor, state, place)) return false;
     if (!processClassesInPackage(this, processor, state, place)) return false;
-    if (!imports.processAllStarImports(processor, state, place)) return false;
-    if (!imports.processDefaultImports(processor, state, place)) return false;
+    if (!areImportsIgnored(state)) {
+      return processComplexImports(processor, state, place);
+    }
     return true;
+  }
+
+  public boolean processComplexImports(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    final GroovyFileImports imports = getImports();
+    if (!imports.processAllStarImports(processor, state, place)) return false;
+    return imports.processDefaultImports(processor, state, place);
   }
 }

@@ -53,7 +53,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
 
   @NotNull
   @Override
-  public PsiMethodStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
+  public PsiMethodStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     String name = null;
     boolean isConstructor = true;
     boolean isVarArgs = false;

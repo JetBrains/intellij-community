@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -46,12 +47,17 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static String getHashesAsString(@NotNull List<VcsRevisionNumber> revisions) {
+  private static String getHashesAsString(@NotNull List<? extends VcsRevisionNumber> revisions) {
     return StringUtil.join(revisions, VcsRevisionNumber::asString, " ");
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(!getRevisionNumbersFromContext(e).isEmpty());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

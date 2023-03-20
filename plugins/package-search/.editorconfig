@@ -1,7 +1,6 @@
 [*]
 charset = utf-8
 indent_size = 4
-insert_final_newline = true
 max_line_length = 150
 tab_width = 4
 ij_continuation_indent_size = 8

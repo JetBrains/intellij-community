@@ -1,0 +1,1 @@
+Inner2(Inner1 inner1) { }

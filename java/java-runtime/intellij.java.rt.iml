@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="true">
     <exclude-output />
     <annotation-paths>
       <root url="file://$MODULE_DIR$/anno" />
@@ -11,7 +11,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit4" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="ant-1.7.1" type="repository">
         <properties maven-id="org.apache.ant:ant:1.7.1" />
@@ -23,5 +22,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="JUnit4" level="project" />
   </component>
 </module>

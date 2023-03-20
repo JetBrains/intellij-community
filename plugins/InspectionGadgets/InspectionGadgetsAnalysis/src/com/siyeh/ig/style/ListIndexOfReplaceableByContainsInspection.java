@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -35,8 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ListIndexOfReplaceableByContainsInspection
-  extends BaseInspection {
+public class ListIndexOfReplaceableByContainsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -72,7 +72,7 @@ public class ListIndexOfReplaceableByContainsInspection
     extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiBinaryExpression expression =
         (PsiBinaryExpression)descriptor.getPsiElement();
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
@@ -140,7 +140,7 @@ public class ListIndexOfReplaceableByContainsInspection
 
     @Override
     public void visitBinaryExpression(
-      PsiBinaryExpression expression) {
+      @NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
@@ -170,10 +170,9 @@ public class ListIndexOfReplaceableByContainsInspection
       }
       final Object object =
         ExpressionUtils.computeConstantExpression(rhs);
-      if (!(object instanceof Integer)) {
+      if (!(object instanceof Integer integer)) {
         return false;
       }
-      final Integer integer = (Integer)object;
       final int constant = integer.intValue();
       if (flipped) {
         if (constant == -1 && (JavaTokenType.NE.equals(tokenType) ||

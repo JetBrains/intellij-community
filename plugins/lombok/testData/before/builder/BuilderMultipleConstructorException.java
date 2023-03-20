@@ -21,6 +21,6 @@ public class BuilderMultipleConstructorException {
   }
 
   public static void main(String[] args) {
-    System.out.println(builder().first(2).second(2.0f).build());
+    System.out.println(builder().first(2).second(2.0F).build());
   }
 }

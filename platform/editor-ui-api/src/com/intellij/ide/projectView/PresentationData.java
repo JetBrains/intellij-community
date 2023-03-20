@@ -16,7 +16,6 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +27,8 @@ import java.util.List;
  * Default implementation of the {@link ItemPresentation} interface.
  */
 
-public class PresentationData implements ColoredItemPresentation, ComparableObject, LocationPresentation {
-  protected final List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createLockFreeCopyOnWriteList();
+public class PresentationData implements ColoredItemPresentation, ComparableObject, LocationPresentation, Cloneable {
+  private List<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private @Nullable Color myBackground;
   private Icon myIcon;
@@ -138,21 +137,19 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *             Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
    *             in a non-tree view.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setClosedIcon(Icon closedIcon) {
     setIcon(closedIcon);
   }
 
 
   /**
-   * @param openIcon the open icon for the node.
+   * @param ignoredOpenIcon ignored
    * @deprecated Different icons for open/closed no longer supported. This function is no op.
    *             Sets the icon shown for the node when it is expanded in the tree.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setOpenIcon(Icon openIcon) {
+  @Deprecated(forRemoval = true)
+  public void setOpenIcon(Icon ignoredOpenIcon) {
   }
 
   /**
@@ -261,6 +258,12 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   @Override
   public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null || obj.getClass() != getClass()) {
+      return false;
+    }
     return ComparableObjectCheck.equals(this, obj);
   }
 
@@ -285,9 +288,15 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   @Override
   public PresentationData clone() {
-    PresentationData clone = new PresentationData();
-    clone.copyFrom(this);
-    return clone;
+    PresentationData clone;
+    try {
+      clone = (PresentationData)super.clone();
+      clone.myColoredText = ContainerUtil.createLockFreeCopyOnWriteList(myColoredText);
+      return clone;
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void applyFrom(PresentationData from) {

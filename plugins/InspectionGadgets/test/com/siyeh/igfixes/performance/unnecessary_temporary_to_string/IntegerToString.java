@@ -1,5 +1,5 @@
 class Test {
   void test(int[] i) {
-    System.out.println(new Integer(i[/*zero*/0])<caret>.toString(/*foo*/));
+    System.out.println(new <caret>Integer(i[/*zero*/0]).toString(/*foo*/));
   }
 }

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 class StubSpine implements StubbedSpine {
   private final StubTree myTree;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.*
@@ -18,7 +18,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.PathUtil
 import com.intellij.util.io.*
-import com.intellij.util.toByteArray
+import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -144,7 +144,7 @@ internal class SchemeManagerTest {
   }
 
   fun TestScheme.save(file: Path) {
-    file.write(serialize(this)!!.toByteArray())
+    file.write(serialize(this)!!.toBufferExposingByteArray().toByteArray())
   }
 
   @Test fun `different extensions - old, new`() {
@@ -170,8 +170,8 @@ internal class SchemeManagerTest {
     val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
-      override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-        getFile(fileSpec).write(content, 0, size)
+      override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+        getFile(fileSpec).write(content)
       }
 
       override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -303,7 +303,6 @@ internal class SchemeManagerTest {
     s1 = writeScheme(1, "bar")
     s2 = writeScheme(2, "bar")
 
-    @Suppress("UNCHECKED_CAST")
     val schemeChangeApplicator = SchemeChangeApplicator(schemeManager)
     if (kind == UpdateScheme::class.java) {
       schemeChangeApplicator.reload(listOf(UpdateScheme(createVirtualFile(s1)), UpdateScheme(createVirtualFile(s2))))
@@ -595,7 +594,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must be system-independent`() {
-    DefaultLogger.disableStderrDumping(disposableRule.disposable);
+    DefaultLogger.disableStderrDumping(disposableRule.disposable)
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 

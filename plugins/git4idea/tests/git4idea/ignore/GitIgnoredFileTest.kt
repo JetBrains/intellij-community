@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.configurationStore.saveComponentManager
+import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -25,6 +25,7 @@ import com.intellij.util.io.createFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertFalse
 import java.io.File
@@ -36,7 +37,6 @@ const val EXCLUDED_CHILD = "$EXCLUDED/$EXCLUDED_CHILD_DIR"
 const val SHELF = "shelf"
 
 class GitIgnoredFileTest : GitSingleRepoTest() {
-
   override fun isCreateDirectoryBasedProject() = true
 
   override fun setUp() {
@@ -46,7 +46,11 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
   override fun setUpProject() {
     super.setUpProject()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
+
+    // will create .idea directory
+    runBlockingMaybeCancellable {
+      saveSettings(project)
+    }
   }
 
   override fun setUpModule() {
@@ -100,7 +104,9 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test generation default gitignore content in config dir`() {
     val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
 
-    GitIgnoreInStoreDirGenerator(project).run()
+    runBlocking {
+      GitIgnoreInStoreDirGenerator(project, project.coroutineScope).run()
+    }
 
     assertGitignoreValid(gitIgnore,
                          """

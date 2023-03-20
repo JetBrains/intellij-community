@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -30,9 +30,6 @@ import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author peter
-*/
 public class PreferByKindWeigher extends LookupElementWeigher {
   public static final Key<Boolean> INTRODUCED_VARIABLE = Key.create("INTRODUCED_VARIABLE");
 
@@ -349,7 +346,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (myCompletionType == CompletionType.SMART) {
         boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? ThreeState.YES : ThreeState.UNSURE;
-      } else if (ContainerUtil.exists(myExpectedTypes, info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
+      } else if (ContainerUtil.exists(myExpectedTypes, info -> PsiTypes.booleanType().isAssignableFrom(info.getDefaultType())) &&
                  !(myPosition.getParent() instanceof PsiIfStatement)) {
         return ThreeState.YES;
       }
@@ -389,7 +386,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (!(object instanceof PsiMethod)) return false;
 
     PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)object);
-    return field != null && PsiResolveHelper.SERVICE.getInstance(myPosition.getProject()).isAccessible(field, myPosition, null);
+    return field != null && PsiResolveHelper.getInstance(myPosition.getProject()).isAccessible(field, myPosition, null);
   }
 
   static boolean isInMethodTypeArg(PsiElement position) {
@@ -401,19 +398,18 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
     PsiElement parent = statement.getParent().getParent();
     if (parent instanceof PsiMethod) {
-      return ((PsiMethod)parent).isConstructor() || PsiType.VOID.equals(((PsiMethod)parent).getReturnType());
+      return ((PsiMethod)parent).isConstructor() || PsiTypes.voidType().equals(((PsiMethod)parent).getReturnType());
     }
     if (parent instanceof PsiLambdaExpression) {
       PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
-      return method != null && PsiType.VOID.equals(method.getReturnType());
+      return method != null && PsiTypes.voidType().equals(method.getReturnType());
     }
     return false;
   }
 
   private static boolean isGetter(Object object) {
-    if (!(object instanceof PsiMethod)) return false;
+    if (!(object instanceof PsiMethod method)) return false;
 
-    PsiMethod method = (PsiMethod)object;
     if (!PropertyUtilBase.hasGetterName(method)) return false;
     if (method.hasTypeParameters()) return false;
 
@@ -424,10 +420,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (statement == null) {
       return false;
     }
-    if (!(statement.getParent() instanceof PsiCodeBlock)) {
+    if (!(statement.getParent() instanceof PsiCodeBlock codeBlock)) {
       return true;
     }
-    PsiCodeBlock codeBlock = (PsiCodeBlock)statement.getParent();
     PsiStatement[] siblings = codeBlock.getStatements();
     PsiStatement lastOne = siblings[siblings.length - 1];
     if (statement == lastOne) {

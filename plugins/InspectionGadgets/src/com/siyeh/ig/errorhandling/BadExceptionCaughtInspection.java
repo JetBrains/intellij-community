@@ -15,9 +15,8 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,11 +26,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class BadExceptionCaughtInspection extends BaseInspection {
 
@@ -63,17 +63,11 @@ public class BadExceptionCaughtInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
-    final var panel = new InspectionOptionsPanel();
-    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(
-      InspectionGadgetsBundle.message("choose.exception.class"),
-      InspectionGadgetsBundle.message("choose.exception.label"),
-      table,
-      true,
-      CommonClassNames.JAVA_LANG_THROWABLE));
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("exceptions", InspectionGadgetsBundle.message("choose.exception.label"),
+                 new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)
+                          .withTitle(InspectionGadgetsBundle.message("choose.exception.class"))));
   }
 
   @Override
@@ -96,7 +90,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
   private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitCatchSection(PsiCatchSection section) {
+    public void visitCatchSection(@NotNull PsiCatchSection section) {
       super.visitCatchSection(section);
       final PsiParameter parameter = section.getParameter();
       if (parameter == null) {

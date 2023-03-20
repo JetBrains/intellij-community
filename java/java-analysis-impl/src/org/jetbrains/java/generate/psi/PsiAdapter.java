@@ -24,6 +24,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -375,7 +376,7 @@ public final class PsiAdapter {
 
             // must have void as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.VOID.equals(returnType)) {
+            if (!PsiTypes.voidType().equals(returnType)) {
                 continue;
             }
 
@@ -499,13 +500,8 @@ public final class PsiAdapter {
      * @return true if enum.
      */
     public static boolean isEnumField(PsiField field) {
-        PsiType type = field.getType();
-        if (!(type instanceof PsiClassType)) {
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass aClass = classType.resolve();
-        return (aClass != null) && aClass.isEnum();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+      return (aClass != null) && aClass.isEnum();
     }
 
     /**
@@ -542,7 +538,7 @@ public final class PsiAdapter {
 
             // must have boolean as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.BOOLEAN.equals(returnType)) {
+            if (!PsiTypes.booleanType().equals(returnType)) {
                 continue;
             }
 
@@ -589,7 +585,7 @@ public final class PsiAdapter {
 
             // must have int as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.INT.equals(returnType)) {
+            if (!PsiTypes.intType().equals(returnType)) {
                 continue;
             }
 

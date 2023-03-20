@@ -28,4 +28,3 @@ class Test {
     }
 }
 
-// FIR_IGNORE

@@ -61,5 +61,14 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @ApiStatus.Internal int COMMIT_NOT_FOUND = -1;
   @ApiStatus.Internal int COMMIT_DOES_NOT_MATCH = -2;
 
-  enum JumpResult {SUCCESS, COMMIT_NOT_FOUND, COMMIT_DOES_NOT_MATCH}
+  enum JumpResult {
+    SUCCESS, COMMIT_NOT_FOUND, COMMIT_DOES_NOT_MATCH;
+
+    static @NotNull JumpResult fromInt(int result) {
+      if (result == VcsLogUiEx.COMMIT_NOT_FOUND) return COMMIT_NOT_FOUND;
+      if (result == VcsLogUiEx.COMMIT_DOES_NOT_MATCH) return COMMIT_DOES_NOT_MATCH;
+      if (result >= 0) return SUCCESS;
+      return COMMIT_NOT_FOUND;
+    }
+  }
 }

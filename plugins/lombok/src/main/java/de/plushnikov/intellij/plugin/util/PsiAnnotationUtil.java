@@ -90,14 +90,12 @@ public final class PsiAnnotationUtil {
     if (psiElement instanceof PsiReferenceExpression) {
       final PsiElement resolved = ((PsiReferenceExpression) psiElement).resolve();
 
-      if (resolved instanceof PsiEnumConstant) {
-        final PsiEnumConstant psiEnumConstant = (PsiEnumConstant) resolved;
+      if (resolved instanceof PsiEnumConstant psiEnumConstant) {
         //Enums are supported as VALUE-Strings only
         if (asClass.isAssignableFrom(String.class)) {
           value = (T) psiEnumConstant.getName();
         }
-      } else if (resolved instanceof PsiVariable) {
-        final PsiVariable psiVariable = (PsiVariable) resolved;
+      } else if (resolved instanceof PsiVariable psiVariable) {
         Object elementValue = psiVariable.computeConstantValue();
         if (null != elementValue && asClass.isAssignableFrom(elementValue.getClass())) {
           value = (T) elementValue;

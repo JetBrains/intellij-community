@@ -2,7 +2,6 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.util.EnvironmentUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -54,7 +53,6 @@ public class SimpleProgramParameters {
 
   /** @deprecated Use {@link #setEnv(Map)} and {@link #setPassParentEnvs(boolean)} instead with already preprocessed variables */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
       envs = new HashMap<>(envs);

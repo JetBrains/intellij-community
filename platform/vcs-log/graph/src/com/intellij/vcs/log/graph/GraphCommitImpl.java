@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph;
 
 import com.google.common.primitives.Ints;
@@ -23,8 +23,7 @@ abstract class AbstractGraphCommit<CommitId> extends ImmutableList<CommitId> imp
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GraphCommit)) return false;
-    GraphCommit commit = (GraphCommit)o;
+    if (!(o instanceof GraphCommit commit)) return false;
     return getId().equals(commit.getId());
   }
 
@@ -74,8 +73,7 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
   @SuppressWarnings("unchecked")
   @Override
   public CommitId get(int index) {
-    if (myParents instanceof Object[]) {
-      Object[] array = (Object[])myParents;
+    if (myParents instanceof Object[] array) {
       if (index < 0 || index >= array.length) {
         throw new ArrayIndexOutOfBoundsException(index);
       }
@@ -96,7 +94,7 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
   public static <CommitId> GraphCommit<CommitId> createCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {
     if (id instanceof Integer) {
       //noinspection unchecked
-      return createIntCommit((Integer)id, (List)parents, timestamp);
+      return (GraphCommit<CommitId>)createIntCommit((Integer)id, (List<Integer>)parents, timestamp);
     }
     return new GraphCommitImpl<>(id, parents, timestamp);
   }

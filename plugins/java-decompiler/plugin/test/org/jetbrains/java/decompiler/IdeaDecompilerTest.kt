@@ -12,6 +12,7 @@ import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -42,6 +43,9 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     try {
       FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
       EditorHistoryManager.getInstance(project).removeAllFiles()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
       super.tearDown()
@@ -202,6 +206,12 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       }
       else if (file.fileType === JavaClassFileType.INSTANCE && !file.name.contains('$')) {
         val psiFile = psiManager.findFile(file)
+        if (psiFile == null) {
+          throw AssertionError("PSI file for ${file.name} not found")
+        }
+        if (psiFile.language != JavaLanguage.INSTANCE) {
+          return true //do not test kotlin decompiler here
+        }
         if (psiFile !is ClsFileImpl) {
           throw AssertionError("PSI file for ${file.name} should be an instance of ${ClsFileImpl::javaClass.name}")
         }

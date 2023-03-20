@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -31,6 +32,7 @@ import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.List;
@@ -40,12 +42,12 @@ import java.util.stream.Collectors;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
- *
+ * <p>
  * TODO: Extract SDK "flavor" specific methods into a "Python SDK provider" so that each SDK flavor can be defined independently
  *
  * @see PySdkUtil for run-time Python SDK utils
  */
-public class PythonSdkUtil {
+public final class PythonSdkUtil {
 
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   /**
@@ -62,10 +64,13 @@ public class PythonSdkUtil {
   private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
   private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkUtil::isRemote;
 
+  private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
+
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
     return PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName());
   }
 
+  @Unmodifiable
   public static List<Sdk> getAllSdks() {
     return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), PythonSdkUtil::isPythonSdk);
   }
@@ -74,7 +79,12 @@ public class PythonSdkUtil {
   private static PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
     final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
     if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, file, false)) {
-      return PySkeletonHeader.readSkeletonHeader(VfsUtilCore.virtualToIoFile(file));
+      PySkeletonHeader skeletonHeader = file.getUserData(CACHED_SKELETON_HEADER);
+      if (skeletonHeader == null) {
+        skeletonHeader = PySkeletonHeader.readSkeletonHeader(VfsUtilCore.virtualToIoFile(file));
+        file.putUserData(CACHED_SKELETON_HEADER, skeletonHeader);
+      }
+      return skeletonHeader;
     }
     return null;
   }
@@ -135,17 +145,18 @@ public class PythonSdkUtil {
 
   @Nullable
   public static Sdk findPythonSdk(@Nullable Module module) {
-    if (module == null) return null;
+    if (module == null || module.isDisposed()) return null;
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && isPythonSdk(sdk)) return sdk;
     return PyModuleService.getInstance().findPythonSdk(module);
   }
 
 
-  public static boolean isRemote(@Nullable String sdkPath) {
-    return isRemote(findSdkByPath(sdkPath));
-  }
-
+  /**
+   * Checks if SDK is legacy remote or remote bases on targets.
+   * Never assume {@link Sdk#getSdkAdditionalData()} has certain type if this method returns true.
+   * In most cases you are encouraged to obtain additional data and check it explicitly
+   */
   public static boolean isRemote(@Nullable Sdk sdk) {
     return sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataMarker;
   }
@@ -198,18 +209,6 @@ public class PythonSdkUtil {
   @NotNull
   public static String getSkeletonsRootPath(String basePath) {
     return basePath + File.separator + SKELETON_DIR_NAME;
-  }
-
-  public static String getRemoteSourcesLocalPath(String sdkHome) {
-    String sep = File.separator;
-
-    String basePath = PathManager.getSystemPath();
-    return basePath +
-           File.separator +
-           REMOTE_SOURCES_DIR_NAME +
-           sep +
-           FileUtil.toSystemIndependentName(sdkHome).hashCode() +
-           sep;
   }
 
   @Nullable
@@ -277,6 +276,10 @@ public class PythonSdkUtil {
     return false;
   }
 
+  /**
+   * @deprecated use PySdkExt.isValid
+   */
+  @Deprecated
   public static boolean isInvalid(@NotNull Sdk sdk) {
     if (isRemote(sdk)) {
       return PyRemoteSdkValidator.Companion.isInvalid(sdk);
@@ -421,6 +424,10 @@ public class PythonSdkUtil {
     return findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
+  /**
+   * @deprecated path is not unique, use {@link #findSdkByKey(String)} instead
+   */
+  @Deprecated
   @Nullable
   public static Sdk findSdkByPath(@Nullable String path) {
     if (path != null) {
@@ -429,6 +436,11 @@ public class PythonSdkUtil {
     return null;
   }
 
+
+  /**
+   * @deprecated path is not unique, use {@link #findSdkByKey(String)} instead
+   */
+  @Deprecated
   @Nullable
   public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
     if (path != null) {
@@ -493,15 +505,27 @@ public class PythonSdkUtil {
     return envs == null;
   }
 
+  /**
+   * @deprecated Check sdk flavour instead
+   */
+  @Deprecated
   // Conda virtual environment and base conda
   public static boolean isConda(@NotNull Sdk sdk) {
     return isConda(sdk.getHomePath());
   }
 
+  /**
+   * @deprecated flavour instead
+   */
+  @Deprecated
   public static boolean isConda(@Nullable String sdkPath) {
     return findCondaMeta(sdkPath) != null;
   }
 
+  /**
+   * @deprecated flavour instead
+   */
+  @Deprecated
   public static boolean isBaseConda(@Nullable String sdkPath) {
     final VirtualFile condaMeta = findCondaMeta(sdkPath);
     if (condaMeta == null) {
@@ -519,7 +543,7 @@ public class PythonSdkUtil {
   }
 
   @Nullable
-  private static VirtualFile findCondaMeta(@Nullable String sdkPath) {
+  public static VirtualFile findCondaMeta(@Nullable String sdkPath) {
     if (sdkPath == null) {
       return null;
     }

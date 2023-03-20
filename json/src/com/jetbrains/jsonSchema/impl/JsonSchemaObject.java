@@ -1,18 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
+import com.jetbrains.jsonSchema.JsonDependencyModificationTracker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -23,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -31,9 +34,6 @@ import java.util.stream.Stream;
 
 import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 
-/**
- * @author Irina.Chernushina on 8/28/2015.
- */
 public final class JsonSchemaObject {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObject.class);
 
@@ -54,8 +54,6 @@ public final class JsonSchemaObject {
   @Nullable private final VirtualFile myRawFile;
   @Nullable private Map<String, JsonSchemaObject> myDefinitionsMap;
   @NotNull public static final JsonSchemaObject NULL_OBJ = new JsonSchemaObject("$_NULL_$");
-  @NotNull private final ConcurrentMap<String, JsonSchemaObject> myComputedRefs = new ConcurrentHashMap<>();
-  @NotNull private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
   @NotNull private Map<String, JsonSchemaObject> myProperties;
 
   @Nullable private PatternProperties myPatternProperties;
@@ -130,6 +128,8 @@ public final class JsonSchemaObject {
   @Nullable private Map<String, Map<String, String>> myEnumMetadata;
 
   private boolean myForceCaseInsensitive = false;
+
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
@@ -227,31 +227,25 @@ public final class JsonSchemaObject {
                                                  @NotNull JsonSchemaType otherType) {
     if (otherType == JsonSchemaType._any) return selfType;
     if (selfType == JsonSchemaType._any) return otherType;
-    switch (selfType) {
-      case _string:
-        return otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
-      case _number:
-        if (otherType == JsonSchemaType._integer) return JsonSchemaType._integer;
-        return otherType == JsonSchemaType._number || otherType == JsonSchemaType._string_number ? JsonSchemaType._number : null;
-      case _integer:
-        return otherType == JsonSchemaType._number
-               || otherType == JsonSchemaType._string_number
-               || otherType == JsonSchemaType._integer ? JsonSchemaType._integer : null;
-      case _object:
-        return otherType == JsonSchemaType._object ? JsonSchemaType._object : null;
-      case _array:
-        return otherType == JsonSchemaType._array ? JsonSchemaType._array : null;
-      case _boolean:
-        return otherType == JsonSchemaType._boolean ? JsonSchemaType._boolean : null;
-      case _null:
-        return otherType == JsonSchemaType._null ? JsonSchemaType._null : null;
-      case _string_number:
-        return otherType == JsonSchemaType._integer
-               || otherType == JsonSchemaType._number
-               || otherType == JsonSchemaType._string
-               || otherType == JsonSchemaType._string_number ? otherType : null;
-    }
-    return otherType;
+    return switch (selfType) {
+      case _string -> otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
+      case _number -> {
+        if (otherType == JsonSchemaType._integer) yield JsonSchemaType._integer;
+        yield otherType == JsonSchemaType._number || otherType == JsonSchemaType._string_number ? JsonSchemaType._number : null;
+      }
+      case _integer -> otherType == JsonSchemaType._number
+                       || otherType == JsonSchemaType._string_number
+                       || otherType == JsonSchemaType._integer ? JsonSchemaType._integer : null;
+      case _object -> otherType == JsonSchemaType._object ? JsonSchemaType._object : null;
+      case _array -> otherType == JsonSchemaType._array ? JsonSchemaType._array : null;
+      case _boolean -> otherType == JsonSchemaType._boolean ? JsonSchemaType._boolean : null;
+      case _null -> otherType == JsonSchemaType._null ? JsonSchemaType._null : null;
+      case _string_number -> otherType == JsonSchemaType._integer
+                             || otherType == JsonSchemaType._number
+                             || otherType == JsonSchemaType._string
+                             || otherType == JsonSchemaType._string_number ? otherType : null;
+      default -> otherType;
+    };
   }
 
   @Nullable
@@ -1014,7 +1008,7 @@ public final class JsonSchemaObject {
       return false;
     } catch (Exception e) {
       // catch exceptions around to prevent things like:
-      // https://bugs.openjdk.java.net/browse/JDK-6984178
+      // https://bugs.openjdk.org/browse/JDK-6984178
       Logger.getInstance(JsonSchemaObject.class).info(e);
       return false;
     }
@@ -1132,13 +1126,10 @@ public final class JsonSchemaObject {
   public JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service) {
     final String ref = getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
-    JsonSchemaObject schemaObject = myComputedRefs.getOrDefault(ref, NULL_OBJ);
+    ConcurrentMap<String, JsonSchemaObject> refsStorage = getComputedRefsStorage(service.getProject());
+    JsonSchemaObject schemaObject = refsStorage.getOrDefault(ref, NULL_OBJ);
     if (schemaObject == NULL_OBJ) {
       JsonSchemaObject value = fetchSchemaFromRefDefinition(ref, this, service, isRefRecursive());
-      if (!mySubscribed.get()) {
-        service.getProject().getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_DEPS_CHANGED, () -> myComputedRefs.clear());
-        mySubscribed.set(true);
-      }
       if (!JsonFileResolver.isHttpPath(ref)) {
         service.registerReference(ref);
       }
@@ -1152,10 +1143,17 @@ public final class JsonSchemaObject {
       if (value != null && value != NULL_OBJ && !Objects.equals(value.myFileUrl, myFileUrl)) {
         value.setBackReference(this);
       }
-      myComputedRefs.put(ref, value == null ? NULL_OBJ : value);
+      refsStorage.put(ref, value == null ? NULL_OBJ : value);
       return value;
     }
     return schemaObject;
+  }
+
+  private ConcurrentMap<String, JsonSchemaObject> getComputedRefsStorage(@NotNull Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(
+      myUserDataHolder,
+      () -> CachedValueProvider.Result.create(new ConcurrentHashMap<String, JsonSchemaObject>(), JsonDependencyModificationTracker.forProject(project))
+    );
   }
 
   @Nullable

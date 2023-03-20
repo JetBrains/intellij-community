@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesUtil;
@@ -8,50 +9,37 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.reference.SoftLazyValue;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
-public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
-  private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<>() {
-    @NotNull
-    @Override
-    protected Set<String> compute() {
-      final Set<String> result = new HashSet<>();
-      for (Locale locale : Locale.getAvailableLocales()) {
-        result.add(locale.getLanguage());
-      }
-      return result;
+  private final static Supplier<Set<String>> JAVA_LOCALES = NotNullLazyValue.softLazy(() -> {
+    final Set<String> result = new HashSet<>();
+    for (Locale locale : Locale.getAvailableLocales()) {
+      result.add(locale.getLanguage());
     }
-  };
+    return result;
+  });
 
   private final List<String> myAdditionalLanguages = new ArrayList<>();
 
   @TestOnly
-  public void setAdditionalLanguages(List<String> additionalLanguages) {
+  void setAdditionalLanguages(List<String> additionalLanguages) {
     myAdditionalLanguages.clear();
     myAdditionalLanguages.addAll(additionalLanguages);
   }
@@ -68,17 +56,15 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (!myAdditionalLanguages.isEmpty()) {
-      final ArrayList<String> uniqueLanguages = new ArrayList<>(new HashSet<>(myAdditionalLanguages));
-      Collections.sort(uniqueLanguages);
+      List<String> uniqueLanguages = ContainerUtil.sorted(new HashSet<>(myAdditionalLanguages));
       final String locales = StringUtil.join(uniqueLanguages, ",");
       node.setAttribute(ADDITIONAL_LANGUAGES_ATTR_NAME, locales);
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new MyOptions().getComponent();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("myAdditionalLanguages", JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.label")));
   }
 
   @Override
@@ -96,7 +82,7 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
       final Locale locale = propertiesFile1.getLocale();
       return locale == PropertiesUtil.DEFAULT_LOCALE ? null : locale;
     });
-    bundleLocales = ContainerUtil.filter(bundleLocales, locale -> !JAVA_LOCALES.getValue().contains(locale.getLanguage()) && !myAdditionalLanguages.contains(locale.getLanguage()));
+    bundleLocales = ContainerUtil.filter(bundleLocales, locale -> !JAVA_LOCALES.get().contains(locale.getLanguage()) && !myAdditionalLanguages.contains(locale.getLanguage()));
     if (bundleLocales.isEmpty()) {
       return null;
     }
@@ -116,9 +102,8 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
       myResourceBundle = bundle;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.name");
     }
 
@@ -130,62 +115,6 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       DissociateResourceBundleAction.dissociate(Collections.singleton(myResourceBundle), project);
-    }
-  }
-
-  private class MyOptions {
-    private final JBList<String> myAdditionalLocalesList;
-
-    MyOptions() {
-      myAdditionalLocalesList = new JBList<>(new CollectionListModel<>(myAdditionalLanguages, true));
-      myAdditionalLocalesList.setCellRenderer(new DefaultListCellRenderer());
-    }
-
-    public JPanel getComponent() {
-      final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(
-        ToolbarDecorator.createDecorator(myAdditionalLocalesList)
-          .setAddAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              Messages.showInputDialog(panel, JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.input.text"),
-                                       JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.input.title"), null, "", new InputValidator() {
-                @Override
-                public boolean checkInput(String inputString) {
-                  return 1 < inputString.length() && inputString.length() < 9 && !myAdditionalLanguages.contains(inputString);
-                }
-
-                @Override
-                public boolean canClose(String inputString) {
-                  if (inputString != null) {
-                    myAdditionalLanguages.add(inputString);
-                    ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
-                  }
-                  return true;
-                }
-              });
-            }
-          })
-          .setRemoveAction(new AnActionButtonRunnable() {
-            @Override
-            public void run(AnActionButton button) {
-              final int index = myAdditionalLocalesList.getSelectedIndex();
-              if (index > -1 && index < myAdditionalLanguages.size()) {
-                myAdditionalLanguages.remove(index);
-                ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
-              }
-            }
-          })
-          .setPreferredSize(new Dimension(-1, 100))
-          .disableUpDownActions()
-          .setToolbarPosition(ActionToolbarPosition.RIGHT)
-          .createPanel());
-      return UI.PanelFactory
-        .panel(panel)
-        .withLabel(JavaI18nBundle.message("dissociate.resource.bundle.quick.fix.options.label"))
-        .moveLabelOnTop()
-        .resizeY(true)
-        .createPanel();
     }
   }
 }

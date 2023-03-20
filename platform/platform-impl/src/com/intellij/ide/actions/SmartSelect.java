@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.SmartSelectProvider;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class SmartSelect extends DumbAwareAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     SmartSelectProvider provider = getProvider(e.getDataContext());
@@ -35,7 +42,8 @@ public class SmartSelect extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    SmartSelectProvider provider = getProvider(e.getDataContext());
+    boolean hasSpeedSearch = e.getData(PlatformDataKeys.SPEED_SEARCH_TEXT) != null;
+    SmartSelectProvider provider = hasSpeedSearch ? null : getProvider(e.getDataContext());
     if (provider != null) {
       Object source = provider.getSource(e.getDataContext());
       //noinspection unchecked

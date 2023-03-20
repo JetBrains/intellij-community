@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config.gpg
 
-import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -14,12 +14,15 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
@@ -32,32 +35,18 @@ import kotlin.properties.Delegates
 class GitGpgConfigDialog(
   private val repository: GitRepository,
   val secretKeys: SecretKeysValue,
-  val repoConfig: RepoConfigValue
+  private val repoConfig: RepoConfigValue
 ) : DialogWrapper(repository.project) {
-  private val uiDispatcher get() = AppUIExecutor.onUiThread(ModalityState.any()).coroutineDispatchingContext()
+
+  private val uiDispatcher get() = Dispatchers.EDT + ModalityState.any().asContextElement()
   private val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
-  private val checkBox = JCheckBox(message("settings.configure.sign.gpg.with.key.checkbox.text")).apply {
-    addChangeListener { updatePresentation() }
-  }
-  private val comboBox = ComboBox<GpgKey>().apply {
-    renderer = MyComboboxRenderer()
-  }
-  private val loadingIcon = JBLabel(AnimatedIcon.Default()).apply {
-    isVisible = false
-  }
-  private val errorLabel = JBLabel().apply {
-    foreground = ERROR_FOREGROUND_COLOR
-    isVisible = false
-  }
-  private val docLinkLabel = LinkLabel<String>(message("gpg.error.see.documentation.link.text"),
-                                               null,
-                                               LinkListener { _, _ ->
-                                                 HelpManager.getInstance().invokeHelp(message("gpg.jb.manual.link"))
-                                               })
-    .apply {
-      isVisible = false
-    }
+  private lateinit var checkBox: JCheckBox
+  private lateinit var comboBox: ComboBox<GpgKey?>
+
+  private lateinit var loadingIcon: Cell<JLabel>
+  private lateinit var errorLabel: Cell<JLabel>
+  private lateinit var docLinkLabel: Cell<ActionLink>
 
   private var isLoading: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }
   private var hasLoadedKeys: Boolean by Delegates.observable(false) { _, _, _ -> updatePresentation() }
@@ -81,18 +70,28 @@ class GitGpgConfigDialog(
   override fun createCenterPanel(): JComponent =
     panel {
       row {
-        checkBox()
+        checkBox = checkBox(message("settings.configure.sign.gpg.with.key.checkbox.text"))
+          .applyToComponent { addChangeListener { updatePresentation() } }
+          .component
+      }
+      indent {
         row {
-          comboBox()
-            .growPolicy(GrowPolicy.MEDIUM_TEXT)
-          loadingIcon()
+          comboBox = comboBox(listOf(), MyComboboxRenderer())
+            .columns(COLUMNS_MEDIUM)
+            .component
+          loadingIcon = icon(AnimatedIcon.Default())
+            .visible(false)
         }
       }
       row {
-        errorLabel()
+        errorLabel = label("")
+          .visible(false)
+          .applyToComponent { foreground = NamedColorUtil.getErrorForeground() }
       }
       row {
-        docLinkLabel()
+        docLinkLabel = link(message("gpg.error.see.documentation.link.text")) {
+          HelpManager.getInstance().invokeHelp(message("gpg.jb.manual.link"))
+        }.visible(false)
       }
     }
 
@@ -119,7 +118,7 @@ class GitGpgConfigDialog(
   }
 
   private fun updatePresentation() {
-    loadingIcon.isVisible = isLoading
+    loadingIcon.visible(isLoading)
     checkBox.isEnabled = !isLoading
     comboBox.isEnabled = !isLoading && checkBox.isSelected
     isOKActionEnabled = !isLoading && (hasLoadedKeys || !checkBox.isSelected)
@@ -151,15 +150,15 @@ class GitGpgConfigDialog(
   }
 
   private fun reportError(message: @Nls String) {
-    errorLabel.text = message
-    errorLabel.isVisible = true
-    docLinkLabel.isVisible = true
+    errorLabel.component.text = message
+    errorLabel.visible(true)
+    docLinkLabel.visible(true)
   }
 
   @Throws(VcsException::class)
   private suspend fun writeGitSettings(gpgKey: GpgKey?) {
     withContext(Dispatchers.IO) {
-      runUnderIndicator { writeGitGpgConfig(repository, gpgKey) }
+      coroutineToIndicator { writeGitGpgConfig(repository, gpgKey) }
     }
   }
 

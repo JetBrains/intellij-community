@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,7 +34,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     return DomUtil.hasXml(getInterface()) ? getInterface().getValue() : getBeanClass().getValue();
   }
 
-  private static final @NonNls Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = ContainerUtil.immutableSet(
+  private static final @NonNls Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = Set.of(
     "implementationClass", "implementation", "instance",
     "factoryClass", // ToolWindowEP
     "extenderClass", // DomExtenderEP
@@ -59,19 +60,33 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
 
   @Nullable
   private GenericAttributeValue<PsiClass> findExtensionPointClassAttribute() {
+    final DomElement domElement = getExtensionPointClassNameElement();
+    if (domElement == null) return null;
+
+    if (domElement instanceof With with) {
+      return with.getImplements();
+    }
+    // only With and GenericAttributeValue<PsiClass> can be returned
+    @SuppressWarnings("unchecked")
+    GenericAttributeValue<PsiClass> genericAttributeValue = (GenericAttributeValue<PsiClass>)domElement;
+    return genericAttributeValue;
+  }
+
+  @Override
+  public @Nullable DomElement getExtensionPointClassNameElement() {
     if (DomUtil.hasXml(getInterface())) {
       return getInterface();
     }
 
     final List<With> elements = getWithElements();
     if (elements.size() == 1) {
-      return elements.get(0).getImplements();
+      return elements.get(0);
     }
 
     for (With element : elements) {
       final String attributeName = element.getAttribute().getStringValue();
-      if (EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES.contains(attributeName)) {
-        return element.getImplements();
+      if (attributeName != null && EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES.contains(attributeName)) {
+        return element;
       }
     }
 
@@ -124,11 +139,10 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
   /**
    * Hardcoded known deprecated EPs with corresponding replacement EP or {@code null} none.
    */
-  private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = ContainerUtil.<String, String>immutableMapBuilder()
-    .put("com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch")
-    .put("com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData")
-    .put("com.intellij.exportable", null)
-    .build();
+  private static final Map<String, String> ADDITIONAL_DEPRECATED_EP = Map.of(
+    "com.intellij.definitionsSearch", "com.intellij.definitionsScopedSearch",
+    "com.intellij.dom.fileDescription", "com.intellij.dom.fileMetaData",
+    "com.intellij.exportable", "");
 
   @NotNull
   @Override
@@ -153,12 +167,22 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
         if (effectiveClass.hasAnnotation(ApiStatus.ScheduledForRemoval.class.getCanonicalName())) {
           return Kind.SCHEDULED_FOR_REMOVAL_API;
         }
-        
+
         if (effectiveClass.hasAnnotation(ApiStatus.Experimental.class.getCanonicalName())) {
           return Kind.EXPERIMENTAL_API;
         }
 
+        if (effectiveClass.hasAnnotation(ApiStatus.Obsolete.class.getCanonicalName())) {
+          return Kind.OBSOLETE;
+        }
+
         if (effectiveClass.isDeprecated()) {
+          PsiAnnotation deprecatedAnno = effectiveClass.getAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
+          if (deprecatedAnno != null &&
+              AnnotationUtil.getBooleanAttributeValue(deprecatedAnno, "forRemoval") == Boolean.TRUE) {
+            return Kind.SCHEDULED_FOR_REMOVAL_API;
+          }
+
           return Kind.DEPRECATED;
         }
 
@@ -170,15 +194,15 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
       public String getAdditionalData() {
         final Kind kind = getKind();
         if (kind == Kind.ADDITIONAL_DEPRECATED) {
-          return ADDITIONAL_DEPRECATED_EP.get(getEffectiveQualifiedName());
+          return StringUtil.nullize(ADDITIONAL_DEPRECATED_EP.get(getEffectiveQualifiedName()));
         }
 
         if (kind == Kind.SCHEDULED_FOR_REMOVAL_API) {
           final PsiClass effectiveClass = getEffectiveClass();
           assert effectiveClass != null;
-          final PsiAnnotation annotation = effectiveClass.getAnnotation(ApiStatus.ScheduledForRemoval.class.getCanonicalName());
-          assert annotation != null;
-          return AnnotationUtil.getDeclaredStringAttributeValue(annotation, "inVersion");
+          final PsiAnnotation scheduledAnno = effectiveClass.getAnnotation(ApiStatus.ScheduledForRemoval.class.getCanonicalName());
+          if (scheduledAnno == null) return null;
+          return AnnotationUtil.getDeclaredStringAttributeValue(scheduledAnno, "inVersion");
         }
 
         return null;

@@ -25,16 +25,13 @@ public class XmlHighlightingLexer extends DelegateLexer {
     if (tokenType == XmlTokenType.XML_NAME) {
       if (state == __XmlLexer.TAG || state == __XmlLexer.END_TAG) {
         // translate XML names for tags into XmlTagName
-        tokenType = XmlTokenType.XML_TAG_NAME;
+        return XmlTokenType.XML_TAG_NAME;
       }
     } else if (tokenType == XmlTokenType.XML_WHITE_SPACE) {
-      switch (state) {
-        case __XmlLexer.ATTR_LIST:
-        case __XmlLexer.ATTR:
-          tokenType = XmlTokenType.TAG_WHITE_SPACE; break;
-        default:
-          tokenType = XmlTokenType.XML_REAL_WHITE_SPACE; break;
-      }
+      return switch (state) {
+        case __XmlLexer.ATTR_LIST, __XmlLexer.ATTR -> XmlTokenType.TAG_WHITE_SPACE;
+        default -> XmlTokenType.XML_REAL_WHITE_SPACE;
+      };
     } else if (tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
                tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
               ) {

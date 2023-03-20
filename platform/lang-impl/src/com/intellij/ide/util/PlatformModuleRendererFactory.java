@@ -6,6 +6,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TextWithIcon;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ public final class PlatformModuleRendererFactory extends ModuleRendererFactory {
       setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
       setHorizontalTextPosition(SwingConstants.LEFT);
       setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground());
-      setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
+      setForeground(isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
       return component;
     }
   }

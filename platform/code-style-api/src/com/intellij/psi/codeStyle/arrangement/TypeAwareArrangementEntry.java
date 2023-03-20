@@ -24,11 +24,9 @@ import java.util.Set;
  * Stands for the {@link ArrangementEntry} which provides information about its type.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public interface TypeAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull
-  Set<ArrangementSettingsToken> getTypes();
+  Set<? extends ArrangementSettingsToken> getTypes();
 }

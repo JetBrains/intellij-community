@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -13,15 +13,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 public final class PsiTypesUtil {
@@ -107,7 +105,7 @@ public final class PsiTypesUtil {
       return buffer.toString();
     }
     if (type instanceof PsiPrimitiveType) {
-      return PsiType.BOOLEAN.equals(type) ? PsiKeyword.FALSE : "0";
+      return PsiTypes.booleanType().equals(type) ? PsiKeyword.FALSE : "0";
     }
     if (customDefaultValues) {
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
@@ -204,7 +202,7 @@ public final class PsiTypesUtil {
           qualifierType = JavaPsiFacade.getElementFactory(project).createType((PsiClass)parent);
         }
       }
-      if (PsiType.NULL.equals(qualifierType)) {
+      if (PsiTypes.nullType().equals(qualifierType)) {
         LOG.error("Unexpected null qualifier", new Attachment("expression.txt", call.getText()));
       }
       return createJavaLangClassType(methodExpression, qualifierType, true);
@@ -255,7 +253,7 @@ public final class PsiTypesUtil {
       if (((PsiAssignmentExpression)parent).getOperationSign().getTokenType() == JavaTokenType.EQ &&
           PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
         PsiType type = ((PsiAssignmentExpression)parent).getLExpression().getType();
-        return !PsiType.NULL.equals(type) ? type : null;
+        return !PsiTypes.nullType().equals(type) ? type : null;
       }
     }
     else if (parent instanceof PsiReturnStatement) {
@@ -268,7 +266,7 @@ public final class PsiTypesUtil {
       }
     }
     else if (PsiUtil.isCondition(element, parent)) {
-      return PsiType.BOOLEAN;
+      return PsiTypes.booleanType();
     }
     else if (parent instanceof PsiArrayInitializerExpression) {
       final PsiElement gParent = parent.getParent();
@@ -430,12 +428,21 @@ public final class PsiTypesUtil {
     });
   }
 
+  /**
+   * @return i's parameter type. 
+   *         Never returns ellipsis type: in case of vararg usage, it returns the corresponding component type, otherwise an array type.
+   */
   @NotNull
   public static PsiType getParameterType(PsiParameter @NotNull [] parameters, int i, boolean varargs) {
     final PsiParameter parameter = parameters[i < parameters.length ? i : parameters.length - 1];
     PsiType parameterType = parameter.getType();
-    if (parameterType instanceof PsiEllipsisType && varargs) {
-      parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+    if (parameterType instanceof PsiEllipsisType) {
+      if (varargs) {
+        parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+      }
+      else {
+        parameterType = ((PsiEllipsisType)parameterType).toArrayType();
+      }
     }
     if (!parameterType.isValid()) {
       PsiUtil.ensureValidType(parameterType, "Invalid type of parameter " + parameter + " of " + parameter.getClass());
@@ -474,7 +481,7 @@ public final class PsiTypesUtil {
     TypeParameterSearcher searcher = new TypeParameterSearcher();
     targetType.accept(searcher);
     Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
-    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, context));
+    return ContainerUtil.and(parameters, parameter -> isAccessibleAt(parameter, context));
   }
 
   @NotNull
@@ -529,11 +536,11 @@ public final class PsiTypesUtil {
    * Checks if {@code type} mentions type parameters from the passed {@code Set}
    * Implicit type arguments of types based on inner classes of generic outer classes are explicitly checked
    */
-  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Set<PsiTypeParameter> typeParameters) {
+  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Set<? extends PsiTypeParameter> typeParameters) {
     return mentionsTypeParametersOrUnboundedWildcard(type, typeParameters::contains);
   }
 
-  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Predicate<PsiTypeParameter> wantedTypeParameter) {
+  public static boolean mentionsTypeParameters(@Nullable PsiType type, @NotNull Predicate<? super PsiTypeParameter> wantedTypeParameter) {
     return mentionsTypeParametersOrUnboundedWildcard(type, wantedTypeParameter);
   }
 
@@ -563,7 +570,7 @@ public final class PsiTypesUtil {
   }
 
   private static boolean mentionsTypeParametersOrUnboundedWildcard(@Nullable PsiType type,
-                                                                   final Predicate<PsiTypeParameter> wantedTypeParameter) {
+                                                                   final Predicate<? super PsiTypeParameter> wantedTypeParameter) {
     if (type == null) return false;
     return type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
@@ -631,6 +638,25 @@ public final class PsiTypesUtil {
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return false;
     return qualifiedClassName.equals(psiClass.getQualifiedName());
+  }
+
+  /**
+   * @return class types which are probably wrapped inside captured wildcard or inside intersection type
+   */
+  @NotNull
+  public static List<? extends PsiClassType> getClassTypeComponents(PsiType type) {
+    if (type instanceof PsiClassType) return Collections.singletonList((PsiClassType)type);
+    if (type instanceof PsiCapturedWildcardType) {
+      return getClassTypeComponents(((PsiCapturedWildcardType)type).getUpperBound());
+    }
+    if (type instanceof PsiIntersectionType) {
+      List<PsiClassType> classTypes = new ArrayList<>();
+      for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
+        classTypes.addAll(getClassTypeComponents(conjunct));
+      }
+      return classTypes;
+    }
+    return Collections.emptyList();
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

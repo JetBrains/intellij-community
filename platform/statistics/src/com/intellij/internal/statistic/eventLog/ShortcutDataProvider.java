@@ -92,16 +92,12 @@ public final class ShortcutDataProvider {
   }
 
   private static String getMouseButtonText(int buttonNum) {
-    switch (buttonNum) {
-      case MouseEvent.BUTTON1:
-        return "MouseLeft";
-      case MouseEvent.BUTTON2:
-        return "MouseMiddle";
-      case MouseEvent.BUTTON3:
-        return "MouseRight";
-      default:
-        return "NoMouseButton";
-    }
+    return switch (buttonNum) {
+      case MouseEvent.BUTTON1 -> "MouseLeft";
+      case MouseEvent.BUTTON2 -> "MouseMiddle";
+      case MouseEvent.BUTTON3 -> "MouseRight";
+      default -> "NoMouseButton";
+    };
   }
 
   private static String getShortcutText(KeyboardShortcut shortcut) {
@@ -162,7 +158,7 @@ public final class ShortcutDataProvider {
   private static String getLocaleUnawareKeyModifiersText(int modifiers) {
     List<String> pressed = ourModifiers.stream()
       .filter(p -> (p.first & modifiers) != 0)
-      .map(p -> p.second).collect(Collectors.toList());
+      .map(p -> p.second).toList();
     return StringUtil.join(pressed, "+");
   }
 

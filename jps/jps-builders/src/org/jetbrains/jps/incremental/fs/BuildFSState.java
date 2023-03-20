@@ -239,7 +239,6 @@ public final class BuildFSState {
 
   /**
    * Note: marked file will well be visible as "dirty" only on the next compilation round!
-   * @throws IOException
    */
   public boolean markDirty(@Nullable CompileContext context,
                            File file,

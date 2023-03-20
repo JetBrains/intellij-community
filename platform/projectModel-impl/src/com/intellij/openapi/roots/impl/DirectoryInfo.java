@@ -6,9 +6,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This is internal class used from the old implementation of {@link com.intellij.openapi.roots.ProjectFileIndex}.
+ * It will be removed when all code switches to use the new implementation (IDEA-276394).
+ * All plugins which still use this class must be updated to use {@link com.intellij.openapi.roots.ProjectFileIndex} and other APIs instead.
+ */
+@ApiStatus.Internal
+@ApiStatus.Obsolete
 public abstract class DirectoryInfo {
 
   /**

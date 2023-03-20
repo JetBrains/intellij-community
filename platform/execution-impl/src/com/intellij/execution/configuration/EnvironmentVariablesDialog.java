@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionBundle;
@@ -7,6 +7,7 @@ import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -34,15 +35,27 @@ import java.util.List;
 import java.util.*;
 
 public class EnvironmentVariablesDialog extends DialogWrapper {
+  @NotNull
   private final EnvironmentVariablesTextFieldWithBrowseButton myParent;
+  @NotNull
   private final EnvVariablesTable myUserTable;
+  @NotNull
   private final EnvVariablesTable mySystemTable;
+  @Nullable
   private final JCheckBox myIncludeSystemVarsCb;
+  @NotNull
   private final JPanel myWholePanel;
 
-  protected EnvironmentVariablesDialog(EnvironmentVariablesTextFieldWithBrowseButton parent) {
+  private final boolean myAlwaysIncludeSystemVars;
+
+  protected EnvironmentVariablesDialog(@NotNull EnvironmentVariablesTextFieldWithBrowseButton parent) {
+    this(parent, false);
+  }
+
+  protected EnvironmentVariablesDialog(@NotNull EnvironmentVariablesTextFieldWithBrowseButton parent, boolean alwaysIncludeSystemVars) {
     super(parent, true);
     myParent = parent;
+    myAlwaysIncludeSystemVars = alwaysIncludeSystemVars;
     Map<String, String> userMap = new LinkedHashMap<>(myParent.getEnvs());
     Map<String, String> parentMap = new TreeMap<>(new GeneralCommandLine().getParentEnvironment());
 
@@ -50,30 +63,51 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
 
     List<EnvironmentVariable> userList = EnvironmentVariablesTextFieldWithBrowseButton.convertToVariables(userMap, false);
     List<EnvironmentVariable> systemList = EnvironmentVariablesTextFieldWithBrowseButton.convertToVariables(parentMap, true);
-    myUserTable = new MyEnvVariablesTable(userList, true);
+    myUserTable = createEnvVariablesTable(userList, true);
 
-    mySystemTable = new MyEnvVariablesTable(systemList, false);
+    mySystemTable = createEnvVariablesTable(systemList, false);
 
-    myIncludeSystemVarsCb = new JCheckBox(ExecutionBundle.message("env.vars.system.title"));
-    myIncludeSystemVarsCb.setSelected(myParent.isPassParentEnvs());
-    myIncludeSystemVarsCb.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateSysTableState();
-      }
-    });
+    if (!alwaysIncludeSystemVars) {
+      myIncludeSystemVarsCb = new JCheckBox(ExecutionBundle.message("env.vars.system.include.title"));
+      myIncludeSystemVarsCb.setSelected(myParent.isPassParentEnvs());
+      myIncludeSystemVarsCb.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          updateSysTableState();
+        }
+      });
+    }
+    else {
+      myIncludeSystemVarsCb = null;
+    }
     JLabel label = new JLabel(ExecutionBundle.message("env.vars.user.title"));
     label.setLabelFor(myUserTable.getTableView().getComponent());
 
     myWholePanel = new JPanel(new MigLayout("fill, ins 0, gap 0, hidemode 3"));
     myWholePanel.add(label, "hmax pref, wrap");
     myWholePanel.add(myUserTable.getComponent(), "push, grow, wrap, gaptop 5");
-    myWholePanel.add(myIncludeSystemVarsCb, "hmax pref, wrap, gaptop 5");
+    JComponent tablesSeparator = myIncludeSystemVarsCb != null ? myIncludeSystemVarsCb : new JLabel(ExecutionBundle.message("env.vars.system.title"));
+    myWholePanel.add(tablesSeparator, "hmax pref, wrap, gaptop 5");
     myWholePanel.add(mySystemTable.getComponent(), "push, grow, wrap, gaptop 5");
 
     updateSysTableState();
     setTitle(ExecutionBundle.message("environment.variables.dialog.title"));
     init();
+  }
+
+  @NotNull
+  protected MyEnvVariablesTable createEnvVariablesTable(@NotNull List<EnvironmentVariable> variables, boolean userList) {
+    return new MyEnvVariablesTable(variables, userList);
+  }
+
+  @Override
+  public Dimension getInitialSize() {
+    var size = super.getInitialSize();
+    if (size != null) {
+      return size;
+    }
+
+    return new Dimension(500, 500);
   }
 
   @Nullable
@@ -83,11 +117,11 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
   }
 
   private void updateSysTableState() {
-    mySystemTable.getTableView().setEnabled(myIncludeSystemVarsCb.isSelected());
+    mySystemTable.getTableView().setEnabled(isIncludeSystemVars());
     List<EnvironmentVariable> userList = new ArrayList<>(myUserTable.getEnvironmentVariables());
     List<EnvironmentVariable> systemList = new ArrayList<>(mySystemTable.getEnvironmentVariables());
     boolean[] dirty = {false};
-    if (myIncludeSystemVarsCb.isSelected()) {
+    if (isIncludeSystemVars()) {
       //System properties are included so overridden properties should be shown as 'bold' or 'modified' in a system table
       for (Iterator<EnvironmentVariable> iterator = userList.iterator(); iterator.hasNext(); ) {
         EnvironmentVariable userVariable = iterator.next();
@@ -163,14 +197,18 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
       }
     }
     myParent.setEnvs(envs);
-    myParent.setPassParentEnvs(myIncludeSystemVarsCb.isSelected());
+    myParent.setPassParentEnvs(isIncludeSystemVars());
     super.doOKAction();
   }
 
-  private class MyEnvVariablesTable extends EnvVariablesTable {
-    private final boolean myUserList;
+  private boolean isIncludeSystemVars() {
+    return myAlwaysIncludeSystemVars || myIncludeSystemVarsCb != null && myIncludeSystemVarsCb.isSelected();
+  }
 
-    MyEnvVariablesTable(List<EnvironmentVariable> list, boolean userList) {
+  protected class MyEnvVariablesTable extends EnvVariablesTable {
+    protected final boolean myUserList;
+
+    protected MyEnvVariablesTable(List<EnvironmentVariable> list, boolean userList) {
       myUserList = userList;
       TableView<EnvironmentVariable> tableView = getTableView();
       tableView.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
@@ -217,6 +255,11 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
                                       if (myParent.isModifiedSysEnv(variable)) return true;
                                     }
                                     return false;
+                                  }
+
+                                  @Override
+                                  public @NotNull ActionUpdateThread getActionUpdateThread() {
+                                    return ActionUpdateThread.EDT;
                                   }
                                 });
     }

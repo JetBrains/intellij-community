@@ -66,35 +66,25 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
   @Override
   public Object getValueAt(int row,int column){
     TodoPattern pattern=myPatterns.get(row);
-    switch(column){
-      case 0:{ // "Icon" column
-        return pattern.getAttributes().getIcon();
-      }case 1:{ // "Case Sensitive" column
-        return pattern.isCaseSensitive()?Boolean.TRUE:Boolean.FALSE;
-      }case 2:{ // "Pattern" column
-        return pattern.getPatternString();
-      }default:{
-        throw new IllegalArgumentException();
-      }
-    }
+    return switch (column) {
+      // "Icon" column
+      case 0 -> pattern.getAttributes().getIcon();
+      // "Case Sensitive" column
+      case 1 -> Boolean.valueOf(pattern.isCaseSensitive());
+      // "Pattern" column
+      case 2 -> pattern.getPatternString();
+      default -> throw new IllegalArgumentException();
+    };
   }
 
   @Override
   public void setValueAt(Object value,int row,int column){
     TodoPattern pattern=myPatterns.get(row);
-    switch(column){
-      case 0:{
-        pattern.getAttributes().setIcon((Icon)value);
-        break;
-      }case 1:{
-        pattern.setCaseSensitive(((Boolean)value).booleanValue());
-        break;
-      }case 2:{
-        pattern.setPatternString(((String)value).trim());
-        break;
-      }default:{
-        throw new IllegalArgumentException();
-      }
+    switch (column) {
+      case 0 -> pattern.getAttributes().setIcon((Icon)value);
+      case 1 -> pattern.setCaseSensitive(((Boolean)value).booleanValue());
+      case 2 -> pattern.setPatternString(((String)value).trim());
+      default -> throw new IllegalArgumentException();
     }
   }
 

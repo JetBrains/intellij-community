@@ -22,6 +22,9 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
    * Allows implementing links to the configuration. F.e. the link for the project default target.
    *
    * Note. Some initializations with generated UUID are excessive because they will be overridden during the deserialization.
+   *
+   * This field is only persisted by [TargetEnvironmentsManager]. It will be regenerated on each launch unless you use
+   * this manager.
    */
   var uuid: String = UUID.randomUUID().toString()
     internal set
@@ -32,7 +35,7 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
 
   fun removeLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.removeConfig(runtime)
 
-  fun createEnvironmentRequest(project: Project): TargetEnvironmentRequest = getTargetType().createEnvironmentRequest(project, this)
+  fun createEnvironmentRequest(project: Project?): TargetEnvironmentRequest = getTargetType().createEnvironmentRequest(project, this)
 
   abstract var projectRootOnTarget: String
 

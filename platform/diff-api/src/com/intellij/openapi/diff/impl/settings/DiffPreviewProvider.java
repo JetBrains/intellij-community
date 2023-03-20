@@ -45,48 +45,54 @@ public abstract class DiffPreviewProvider {
     return DiffContentFactory.getInstance().create(text, fileType);
   }
 
-  @NonNls private static final String LEFT_TEXT = "class MyClass {\n" +
-                                                  "  int value;\n" +
-                                                  "\n" +
-                                                  "  void leftOnly() {}\n" +
-                                                  "\n" +
-                                                  "  void foo() {\n" +
-                                                  "   // Left changes\n" +
-                                                  "  }\n" +
-                                                  "\n" +
-                                                  "  void bar() {\n" +
-                                                  "\n" +
-                                                  "  }\n" +
-                                                  "}\n" +
-                                                  "\n" +
-                                                  "\n";
-  @NonNls private static final String CENTER_TEXT = "class MyClass {\n" +
-                                                    "  int value;\n" +
-                                                    "\n" +
-                                                    "  void foo() {\n" +
-                                                    "  }\n" +
-                                                    "\n" +
-                                                    "  void removedFromLeft() {}\n" +
-                                                    "\n" +
-                                                    "  void bar() {\n" +
-                                                    "\n" +
-                                                    "  }\n" +
-                                                    "}\n" +
-                                                    "\n" +
-                                                    "\n";
-  @NonNls private static final String RIGHT_TEXT = "class MyClass {\n" +
-                                                   "  long value;\n" +
-                                                   "\n" +
-                                                   "  void foo() {\n" +
-                                                   "   // Right changes\n" +
-                                                   "  }\n" +
-                                                   "\n" +
-                                                   "  void removedFromLeft() {}\n" +
-                                                   "\n" +
-                                                   "  void bar() {\n" +
-                                                   "  }\n" +
-                                                   "\n" +
-                                                   "}\n" +
-                                                   "\n" +
-                                                   "\n";
+  @NonNls private static final String LEFT_TEXT = """
+    class MyClass {
+      int value;
+
+      void leftOnly() {}
+
+      void foo() {
+       // Left changes
+      }
+
+      void bar() {
+
+      }
+    }
+
+
+    """;
+  @NonNls private static final String CENTER_TEXT = """
+    class MyClass {
+      int value;
+
+      void foo() {
+      }
+
+      void removedFromLeft() {}
+
+      void bar() {
+
+      }
+    }
+
+
+    """;
+  @NonNls private static final String RIGHT_TEXT = """
+    class MyClass {
+      long value;
+
+      void foo() {
+       // Right changes
+      }
+
+      void removedFromLeft() {}
+
+      void bar() {
+      }
+
+    }
+
+
+    """;
 }

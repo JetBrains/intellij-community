@@ -73,17 +73,6 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   }
 
   @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.checkbox.title");
-  }
-
-  @Override
-  @NotNull
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.title");
-  }
-
-  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;

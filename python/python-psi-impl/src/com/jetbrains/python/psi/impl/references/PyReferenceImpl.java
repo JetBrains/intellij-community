@@ -13,8 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -120,8 +120,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final PsiElement definition = instruction.getElement();
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
       if (isInnerComprehension(element, definition)) continue;
-      if (definition instanceof PyImportedNameDefiner && !(definition instanceof PsiNamedElement)) {
-        final PyImportedNameDefiner definer = (PyImportedNameDefiner)definition;
+      if (definition instanceof PyImportedNameDefiner definer && !(definition instanceof PsiNamedElement)) {
         final List<RatedResolveResult> resolvedResults = definer.multiResolveName(name);
         for (RatedResolveResult result : resolvedResults) {
           ret.add(new ImportedResolveResult(result.getElement(), result.getRate(), definer));
@@ -248,18 +247,20 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         // TODO: Use the results from the processor as a cache for resolving to latest defs
         final ResolveResultList latestDefs = resolveToLatestDefs(instructions, realContext, referencedName, typeEvalContext);
         if (!latestDefs.isEmpty()) {
-          if (ContainerUtil.exists(latestDefs, result -> result.getElement() instanceof PyCallable)) {
-            return StreamEx
-              .of(resolvedElements)
-              .nonNull()
-              .filter(element -> PyUtil.inSameFile(element, realContext))
-              .filter(element -> PyiUtil.isOverload(element, typeEvalContext))
-              .map(element -> new RatedResolveResult(getRate(element, typeEvalContext), element))
-              .prepend(latestDefs)
-              .toList();
-          }
-
-          return latestDefs;
+          return StreamEx.of(latestDefs)
+            .flatMap(r -> {
+              if (r.getClass() != RatedResolveResult.class || !(r.getElement() instanceof PyFunction pyFunction)) {
+                return StreamEx.of(r);
+              }
+              int adjustedRate = r.getRate() == RatedResolveResult.RATE_PY_FILE_OVERLOAD ?
+                                 RatedResolveResult.RATE_LIFTED_PY_FILE_OVERLOAD : r.getRate();
+              return StreamEx.of(PyiUtil.getOverloads(pyFunction, typeEvalContext))
+                .map(overload -> new RatedResolveResult(getRate(overload, typeEvalContext), overload))
+                .prepend(StreamEx.ofNullable(
+                  PyiUtil.isInsideStub(myElement) ? null : new RatedResolveResult(adjustedRate, pyFunction)
+                ));
+            })
+            .toImmutableList();
         }
         else if (resolvedOwner instanceof PyClass) {
           resolveInParentScope = () -> PyResolveUtil.parentScopeForUnresolvedClassLevelName((PyClass)resolvedOwner, referencedName);
@@ -430,9 +431,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
     else if (elt instanceof PyImportedNameDefiner ||
-             elt instanceof PyReferenceExpression ||
-             elt != null && !PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+             elt instanceof PyReferenceExpression) {
       rate = RatedResolveResult.RATE_LOW;
+    }
+    else if (elt != null && !PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+      rate = RatedResolveResult.RATE_PY_FILE_OVERLOAD;
     }
     else {
       rate = RatedResolveResult.RATE_NORMAL;
@@ -479,14 +482,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         resolveResult = resolveResult.getNavigationElement();
       }
       if (element instanceof PsiDirectory) {
-        if (resolveResult instanceof PyFile) {
-          final PyFile file = (PyFile)resolveResult;
+        if (resolveResult instanceof PyFile file) {
           if (PyUtil.isPackage(file) && file.getContainingDirectory() == element) {
             return true;
           }
         }
-        else if (resolveResult instanceof PsiDirectory) {
-          final PsiDirectory directory = (PsiDirectory)resolveResult;
+        else if (resolveResult instanceof PsiDirectory directory) {
           if (PyUtil.isPackage(directory, null) && directory == element) {
             return true;
           }
@@ -526,8 +527,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             }
           }
         }
-        if (element instanceof PyExpression) {
-          final PyExpression expr = (PyExpression)element;
+        if (element instanceof PyExpression expr) {
           if (PyUtil.isClassAttribute(myElement) && (PyUtil.isClassAttribute(expr) || PyUtil.isInstanceAttribute(expr))) {
             final PyClass c1 = PsiTreeUtil.getParentOfType(element, PyClass.class);
             final PyClass c2 = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
@@ -630,8 +630,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   protected boolean resolvesToWrapper(PsiElement element, PsiElement resolveResult) {
     if (element instanceof PyFunction && ((PyFunction) element).getContainingClass() != null && resolveResult instanceof PyTargetExpression) {
       final PyExpression assignedValue = ((PyTargetExpression)resolveResult).findAssignedValue();
-      if (assignedValue instanceof PyCallExpression) {
-        final PyCallExpression call = (PyCallExpression)assignedValue;
+      if (assignedValue instanceof PyCallExpression call) {
         final Pair<String,PyFunction> functionPair = PyCallExpressionHelper.interpretAsModifierWrappingCall(call);
         if (functionPair != null && functionPair.second == element) {
           return true;
@@ -700,7 +699,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       // if we're a normal module, add module's attrs
       if (PyPsiUtils.getRealContext(element).getContainingFile() instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
-          ret.add(LookupElementBuilder.create(name).withIcon(PlatformIcons.FIELD_ICON));
+          ret.add(LookupElementBuilder.create(name).withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
         }
       }
 

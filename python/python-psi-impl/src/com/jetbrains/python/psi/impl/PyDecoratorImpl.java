@@ -28,9 +28,6 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author dcheryasov
- */
 public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implements PyDecorator {
 
   public PyDecoratorImpl(ASTNode astNode) {

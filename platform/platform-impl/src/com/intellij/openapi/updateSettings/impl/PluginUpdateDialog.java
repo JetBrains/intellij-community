@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -201,12 +201,9 @@ final class PluginUpdateDialog extends DialogWrapper {
 
         ApplicationManager.getApplication().invokeLater(() -> {
           List<IdeaPluginDescriptor> installedDescriptors = installPluginUpdates(downloaders);
-          if (installedDescriptors.isEmpty()) {
-            return;
-          }
 
           if (downloaders.size() == installedDescriptors.size()) {
-            UpdateChecker.getNotificationGroupForUpdateResults()
+            UpdateChecker.getNotificationGroupForPluginUpdateResults()
               .createNotification(getUpdateNotificationMessage(installedDescriptors),
                                   NotificationType.INFORMATION)
               .setDisplayId("plugins.updated.without.restart")
@@ -243,7 +240,7 @@ final class PluginUpdateDialog extends DialogWrapper {
         return installedDescriptors;
       }
 
-      private @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<IdeaPluginDescriptor> descriptors) {
+      private @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
         if (descriptors.size() == 1) {
           IdeaPluginDescriptor descriptor = descriptors.get(0);
           return IdeBundle.message("notification.content.updated.plugin.to.version", descriptor.getName(), descriptor.getVersion());

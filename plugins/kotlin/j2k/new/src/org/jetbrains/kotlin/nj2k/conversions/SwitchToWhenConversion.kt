@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -7,10 +7,11 @@ import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.asStatement
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.runExpression
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.util.takeWhileInclusive
 
 
 class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -34,7 +35,7 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
     }
 
     private fun List<JKKtWhenCase>.moveElseCaseToTheEnd(): List<JKKtWhenCase> =
-        sortedBy { it.labels.any { it is JKKtElseWhenLabel } }
+        sortedBy { case -> case.labels.any { it is JKKtElseWhenLabel } }
 
     private fun switchCasesToWhenCases(cases: List<JKJavaSwitchCase>): List<JKKtWhenCase> {
         if (cases.isEmpty()) return emptyList()
@@ -43,14 +44,15 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
             cases
                 .takeWhileInclusive { it.statements.fallsThrough() }
                 .flatMap { it.statements }
-                .takeWhileInclusive { it.singleListOrBlockStatements().none { isSwitchBreakOrYield(it) } }
+                .takeWhileInclusive { statement -> statement.singleListOrBlockStatements().none { isSwitchBreakOrYield(it) } }
                 .mapNotNull { statement ->
                     when (statement) {
-                      is JKBlockStatement -> blockStatement(
-                          statement.block.statements
-                              .takeWhileInclusive { !isSwitchBreakOrYield(it) }
-                              .mapNotNull {  handleBreakOrYield(it) }
-                      ).withFormattingFrom(statement)
+                        is JKBlockStatement -> blockStatement(
+                            statement.block.statements
+                                .takeWhileInclusive { !isSwitchBreakOrYield(it) }
+                                .mapNotNull { handleBreakOrYield(it) }
+                        ).withFormattingFrom(statement)
+
                         else -> handleBreakOrYield(statement)
                     }
                 }
@@ -79,28 +81,19 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                 switchCasesToWhenCases(cases.drop(javaLabels.size))
 
     }
+
     private fun handleBreakOrYield(statement: JKStatement) = when {
         isSwitchBreak(statement) -> null
         else -> statement.copyTreeAndDetach()
     }
 
-    private fun <T> List<T>.takeWhileInclusive(predicate: (T) -> Boolean): List<T> =
-        takeWhile(predicate) + listOfNotNull(find { !predicate(it) })
-
     private fun List<JKStatement>.singleBlockOrWrapToRun(): JKStatement =
-        singleOrNull()
-            ?: JKBlockStatement(
-                JKBlockImpl(map { statement ->
-                    when (statement) {
-                        is JKBlockStatement ->
-                            JKExpressionStatement(
-                                runExpression(statement, symbolProvider)
-                            )
-                        else -> statement
-                    }
-                })
-            )
-
+        singleOrNull() ?: blockStatement(map { statement ->
+            when (statement) {
+                is JKBlockStatement -> JKExpressionStatement(runExpression(statement, symbolProvider))
+                else -> statement
+            }
+        })
 
     private fun JKStatement.singleListOrBlockStatements(): List<JKStatement> =
         when (this) {
@@ -123,16 +116,18 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                     this is JKBreakStatement ||
                     this is JKReturnStatement ||
                     this is JKContinueStatement -> false
+
             this is JKBlockStatement -> block.statements.fallsThrough()
             this is JKIfElseStatement ||
                     this is JKJavaSwitchBlock ||
                     this is JKKtWhenBlock ->
                 psi?.canCompleteNormally() == true
+
             else -> true
         }
 
     private fun JKStatement.isThrowStatement(): Boolean =
-        (this as? JKExpressionStatement)?.expression is JKKtThrowExpression
+        (this as? JKExpressionStatement)?.expression is JKThrowExpression
 
     private fun PsiElement.canCompleteNormally(): Boolean {
         val controlFlow =

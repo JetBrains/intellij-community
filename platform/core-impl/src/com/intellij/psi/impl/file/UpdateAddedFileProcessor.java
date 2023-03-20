@@ -33,9 +33,9 @@ public abstract class UpdateAddedFileProcessor {
 
   public static void updateAddedFiles(@NotNull Iterable<? extends PsiFile> copyPsis) throws IncorrectOperationException {
     for (PsiFile copyPsi : copyPsis) {
-      final UpdateAddedFileProcessor processor = forElement(copyPsi);
+      UpdateAddedFileProcessor processor = forElement(copyPsi);
       if (processor != null) {
-        final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
+        TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
         if (tree != null) {
           ChangeUtil.encodeInformation(tree);
         }

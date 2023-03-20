@@ -68,7 +68,7 @@ public class InferenceSessionContainer {
     }
     if (parent instanceof PsiCall) {
       //overload resolution can't depend on outer call => should not traverse to top
-      if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
+      if (//in order to avoid caching of candidates' errors on parent (!) , so check for overload resolution is left here
           //But overload resolution can depend on type of lambda parameter. As it can't depend on lambda body,
           //traversing down would stop at lambda level and won't take into account overloaded method
           !MethodCandidateInfo.isOverloadCheck(argumentList)) {
@@ -226,7 +226,7 @@ public class InferenceSessionContainer {
     Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     for (InferenceVariable variable : topLevelSession.getInferenceVariables()) {
       final PsiType instantiation = variable.getInstantiation();
-      if (instantiation != PsiType.NULL) {
+      if (instantiation != PsiTypes.nullType()) {
         final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(topInferenceSubstitutor.substitute(variable));
         if (psiClass instanceof InferenceVariable) {
           map.put((PsiTypeParameter)psiClass, instantiation);

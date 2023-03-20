@@ -81,7 +81,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     fireEvent(EventType.INIT);
 
-    new UiNotifyConnector(getComponent(), new Activatable() {
+    UiNotifyConnector.installOn(getComponent(), new Activatable() {
       private boolean wasNotShownYet = true;
 
       @Override
@@ -103,7 +103,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @RequiresEdt
   public final void dispose() {
     if (myDisposed) return;
-    if (!ApplicationManager.getApplication().isDispatchThread()) LOG.warn(new Throwable("dispose() not from EDT"));
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myDisposed) return;
@@ -283,21 +283,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   private void fireEvent(@NotNull EventType type) {
     for (DiffViewerListener listener : myListeners) {
       switch (type) {
-        case INIT:
-          listener.onInit();
-          break;
-        case DISPOSE:
-          listener.onDispose();
-          break;
-        case BEFORE_REDIFF:
-          listener.onBeforeRediff();
-          break;
-        case AFTER_REDIFF:
-          listener.onAfterRediff();
-          break;
-        case REDIFF_ABORTED:
-          listener.onRediffAborted();
-          break;
+        case INIT -> listener.onInit();
+        case DISPOSE -> listener.onDispose();
+        case BEFORE_REDIFF -> listener.onBeforeRediff();
+        case AFTER_REDIFF -> listener.onAfterRediff();
+        case REDIFF_ABORTED -> listener.onRediffAborted();
       }
     }
   }

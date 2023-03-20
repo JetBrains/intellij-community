@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.marketplace
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.certificates.PluginCertificateStore

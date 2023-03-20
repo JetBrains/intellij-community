@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
-import com.intellij.openapi.ui.Messages
 import com.intellij.ui.ToolbarDecorator
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
@@ -31,7 +29,7 @@ class ModulesEditorToolbarDecorator(
             val target = tree.selectedSettingItem?.safeAs<Module>()
             val isRootModule = target == null
             val popup = moduleCreator.create(
-                target = tree.selectedSettingItem?.safeAs(),
+                target = tree.selectedSettingItem as? Module,
                 allowMultiplatform = isMultiplatformProject()
                         && isRootModule
                         && allModules.none { it.configurator == MppModuleConfigurator },
@@ -47,10 +45,10 @@ class ModulesEditorToolbarDecorator(
                 ),
                 allowAndroid = isRootModule
                         && isMultiplatformProject()
-                        && allModules.none { it.configurator == AndroidSinglePlatformModuleConfigurator },
+                        && allModules.none { it.configurator is AndroidSinglePlatformModuleConfiguratorBase },
                 allowIos = isRootModule
                         && isMultiplatformProject()
-                        && allModules.none { it.configurator == IOSSinglePlatformModuleConfigurator },
+                        && allModules.none { it.configurator is IOSSinglePlatformModuleConfiguratorBase },
                 allModules = allModules,
                 createModule = model::add
             )
@@ -71,6 +69,7 @@ class ModulesEditorToolbarDecorator(
                     ModuleKind.singlePlatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.js.node.module")
                     ModuleKind.singlePlatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
                     ModuleKind.target -> ""
+                    ModuleKind.ios -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
                     null -> ""
                 }
 
@@ -82,7 +81,10 @@ class ModulesEditorToolbarDecorator(
         setRemoveAction { model.removeSelected() }
         setRemoveActionUpdater { event ->
             event.presentation.apply {
-                isEnabled = tree.selectedSettingItem is Module
+                isEnabled = when (val selected = tree.selectedSettingItem) {
+                    is Module -> selected.canBeRemoved
+                    else -> false
+                }
                 text = KotlinNewProjectWizardUIBundle.message(
                     "editor.modules.remove.tooltip",
                     selectedModuleKindText?.let { " ${it.capitalize(Locale.US)}" }.orEmpty()
@@ -125,4 +127,5 @@ private val Module.kindText
         ModuleKind.singlePlatformJsNode -> KotlinNewProjectWizardBundle.message("module.kind.module")
         ModuleKind.singlePlatformAndroid -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
         ModuleKind.target -> KotlinNewProjectWizardBundle.message("module.kind.target")
+        ModuleKind.ios -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
     }

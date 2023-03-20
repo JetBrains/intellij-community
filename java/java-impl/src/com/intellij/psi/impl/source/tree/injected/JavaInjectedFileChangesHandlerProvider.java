@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -19,22 +19,24 @@ import com.intellij.openapi.util.text.StringHash;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.BaseInjectedFileChangesHandler;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
 
   @Override
-  public InjectedFileChangesHandler createFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
+  public InjectedFileChangesHandler createFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
                                                              Editor hostEditor,
                                                              Document newDocument,
                                                              PsiFile injectedFile) {
-    if (Registry.is("injections.java.fragment.editor.new") && !hasBlockLiterals(shreds)) {
+    if (Registry.is("injections.java.fragment.editor.new") && !hasBlockLiterals(shreds) && !hasSnippet(shreds)) {
       return new JavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
     }
     else {
@@ -42,7 +44,14 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
     }
   }
 
-  private static boolean hasBlockLiterals(List<PsiLanguageInjectionHost.Shred> shreds) {
+  private static boolean hasSnippet(List<? extends PsiLanguageInjectionHost.Shred> shreds) {
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      if (shred.getHost() instanceof PsiSnippetDocTag) return true;
+    }
+    return false;
+  }
+
+  private static boolean hasBlockLiterals(List<? extends PsiLanguageInjectionHost.Shred> shreds) {
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       PsiLanguageInjectionHost host = shred.getHost();
       if (!(host instanceof PsiLiteralExpression)) continue;
@@ -57,7 +66,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
   @NotNull
   private final RangeMarker myAltFullRange;
 
-  OldJavaInjectedFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds, Editor editor,
+  OldJavaInjectedFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds, Editor editor,
                                     Document newDocument,
                                     PsiFile injectedFile) {
     super(editor, newDocument, injectedFile);
@@ -81,7 +90,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
     final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myHostDocument);
     String newText = myFragmentDocument.getText();
     // prepare guarded blocks
-    LinkedHashMap<String, String> replacementMap = new LinkedHashMap<>();
+    Map<String, String> replacementMap = new LinkedHashMap<>();
     int count = 0;
     for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myFragmentDocument).getGuardedBlocks())) {
       String replacement = o.getUserData(QuickEditHandler.REPLACEMENT_KEY);

@@ -9,11 +9,13 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -47,6 +49,25 @@ public final class FileTypeIndex {
   }
 
   public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().processValues(NAME, fileType, null, (file, value) -> processor.process(file), scope);
+    @NotNull Iterator<VirtualFile> files = FileBasedIndex.getInstance().getContainingFilesIterator(NAME, fileType, scope);
+    while (files.hasNext()) {
+      VirtualFile file = files.next();
+      if (!processor.process(file)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @ApiStatus.Experimental
+  public static final Topic<IndexChangeListener> INDEX_CHANGE_TOPIC =
+    new Topic<>(IndexChangeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  @ApiStatus.Experimental
+  public interface IndexChangeListener {
+    /**
+     * This event means that the set of files corresponding to the {@code fileType} has changed
+     * (i.e. gets fired for both additions and removals).
+     */
+    void onChangedForFileType(@NotNull FileType fileType);
   }
 }

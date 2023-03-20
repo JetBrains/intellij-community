@@ -11,9 +11,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   public static final ClassConditionKey<CastingLookupElementDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(CastingLookupElementDecorator.class);
 
@@ -44,7 +41,7 @@ public final class CastingLookupElementDecorator extends LookupElementDecorator<
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     getDelegate().renderElement(presentation);
     final String castType = getItemText(presentation, getCastItem());
     presentation.setItemText("(" + castType + ")" + presentation.getItemText());

@@ -12,34 +12,47 @@ class PySdkToInstallCollector : CounterUsagesCollector() {
 
   companion object {
 
+    internal enum class OS { WIN, MAC }
     internal enum class DownloadResult { EXCEPTION, SIZE, CHECKSUM, CANCELLED, OK }
     internal enum class InstallationResult { EXCEPTION, EXIT_CODE, TIMEOUT, CANCELLED, OK }
     internal enum class LookupResult { FOUND, NOT_FOUND }
 
-    internal fun logSdkDownload(project: Project?, version: String, result: DownloadResult) {
-      downloadEvent.log(project, result, version)
+    internal fun logSdkDownloadOnWindows(project: Project?, version: String, result: DownloadResult) {
+      downloadEventWin.log(project, result, version)
     }
 
-    internal fun logSdkInstallation(project: Project?, version: String, result: InstallationResult) {
-      installationEvent.log(project, result, version)
+    internal fun logSdkInstallationOnWindows(project: Project?, version: String, result: InstallationResult) {
+      installationEvent.log(project, installationResultField.with(result), osField.with(OS.WIN), versionField.with(version))
     }
 
-    internal fun logSdkLookup(project: Project?, version: String, result: LookupResult) {
-      lookupEvent.log(project, result, version)
+    internal fun logSdkLookupOnWindows(project: Project?, version: String, result: LookupResult) {
+      lookupEvent.log(project, lookupResultField.with(result), osField.with(OS.WIN), versionField.with(version))
     }
 
-    private val GROUP = EventLogGroup("python.sdk.install.events", 2)
+    internal fun logSdkInstallationOnMac(project: Project?, result: InstallationResult) {
+      installationEvent.log(project, installationResultField.with(result), osField.with(OS.MAC))
+    }
 
-    private val downloadEvent = GROUP.registerEvent("install.download",
-                                                    EventFields.Enum("download_result", DownloadResult::class.java),
-                                                    EventFields.StringValidatedByRegexp("py_version", "version"))
+    internal fun logSdkLookupOnMac(project: Project?, result: LookupResult) {
+      lookupEvent.log(project, lookupResultField.with(result), osField.with(OS.MAC))
+    }
 
-    private val installationEvent = GROUP.registerEvent("install.installation",
-                                                        EventFields.Enum("installation_result", InstallationResult::class.java),
-                                                        EventFields.StringValidatedByRegexp("py_version", "version"))
+    private val GROUP = EventLogGroup("python.sdk.install.events", 3)
 
-    private val lookupEvent = GROUP.registerEvent("install.lookup",
-                                                  EventFields.Enum("lookup_result", LookupResult::class.java),
-                                                  EventFields.StringValidatedByRegexp("py_version", "version"))
+    private val versionField = EventFields.StringValidatedByRegexp("py_version", "version")
+
+    private val osField = EventFields.Enum("os", OS::class.java)
+
+    private val downloadEventWin = GROUP.registerEvent("install.download.win",
+                                                       EventFields.Enum("download_result", DownloadResult::class.java),
+                                                       versionField)
+
+    private val installationResultField = EventFields.Enum("installation_result", InstallationResult::class.java)
+
+    private val installationEvent = GROUP.registerVarargEvent("install.installation", installationResultField, osField, versionField)
+
+    private val lookupResultField = EventFields.Enum("lookup_result", LookupResult::class.java)
+
+    private val lookupEvent = GROUP.registerVarargEvent("install.lookup", lookupResultField, osField, versionField)
   }
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,7 +86,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     myPatchTable.getEmptyText().setText(IdeCoreBundle.message("message.nothingToShow"));
     myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myPatchTable.setDragEnabled(true);
-    new TableSpeedSearch(myPatchTable);
+    TableSpeedSearch.installOn(myPatchTable);
     myPatchTable.setDropMode(DropMode.INSERT_ROWS);
     myPatchTable.setTransferHandler(new TableRowsTransferHandler(myPatchTable));
 
@@ -173,9 +172,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof HgMqUnAppliedPatchesPanel)) return false;
-
-    HgMqUnAppliedPatchesPanel panel = (HgMqUnAppliedPatchesPanel)o;
+    if (!(o instanceof HgMqUnAppliedPatchesPanel panel)) return false;
 
     if (!myRepository.equals(panel.myRepository)) return false;
 
@@ -252,6 +249,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
         };
         updatePatchSeriesInBackground(deleteTask);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

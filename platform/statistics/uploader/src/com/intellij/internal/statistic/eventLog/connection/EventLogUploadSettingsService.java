@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.filters.*;
@@ -30,8 +30,13 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
   }
 
-  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
-    super(getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()), appInfo, settingsCacheTimeoutMs);
+  public EventLogUploadSettingsService(@NotNull String recorderId,
+                                       @NotNull EventLogApplicationInfo appInfo,
+                                       long settingsCacheTimeoutMs) {
+    super(
+      getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()),
+      recorderId, appInfo, settingsCacheTimeoutMs
+    );
     myApplicationInfo = appInfo;
   }
 

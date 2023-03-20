@@ -3,8 +3,12 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * @see CommitMessageProvider
+ */
 @ApiStatus.Experimental
 interface DelayedCommitMessageProvider {
   companion object {
@@ -13,10 +17,10 @@ interface DelayedCommitMessageProvider {
 
     fun init(project: Project,
              commitUi: CommitWorkflowUi,
-             initialCommitMessagePolicy: () -> String?) = EP_DELAYED_COMMIT_MESSAGE_PROVIDER.forEachExtensionSafe { e ->
-      e.init(project, commitUi, initialCommitMessagePolicy)
+             initialCommitMessage: String?) = EP_DELAYED_COMMIT_MESSAGE_PROVIDER.forEachExtensionSafe { e ->
+      e.init(project, commitUi, initialCommitMessage)
     }
   }
 
-  fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessagePolicy: () -> String?)
+  fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessage: String?)
 }

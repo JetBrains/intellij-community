@@ -34,9 +34,6 @@ import java.util.*;
 
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 
-/**
- * @author Irina.Chernushina on 2/2/2016.
- */
 public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
   private Runnable myInitializer = null;

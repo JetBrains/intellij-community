@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -68,7 +69,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
       myExpandByCombo.addItem(s);
     }
     myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", (@ListItem String value) -> {
-      if (value == getCustom()) {
+      if (Strings.areSameInstance(value, getCustom())) {
         Shortcut[] shortcuts = getCurrentCustomShortcuts();
         String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);
         return StringUtil.isEmpty(shortcutText)
@@ -93,7 +94,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
 
     myOpenKeymapLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myOpenKeymapLabel));
         final KeymapPanel keymapPanel = allSettings == null ? new KeymapPanel() : allSettings.find(KeymapPanel.class);
         if (keymapPanel == null) return;

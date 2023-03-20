@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -19,7 +20,7 @@ public class DarculaCheckBoxBorder implements Border, UIResource {
   @Override
   public Insets getBorderInsets(Component c) {
     return ComponentUtil.getParentOfType(CellRendererPane.class, c) != null ?
-           JBUI.emptyInsets().asUIResource() :
+           JBInsets.emptyInsets().asUIResource() :
            JBUI.insets(borderWidthPropertyName(), JBUI.insets(1));
   }
 

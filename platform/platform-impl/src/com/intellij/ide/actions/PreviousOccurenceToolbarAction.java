@@ -3,9 +3,11 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class PreviousOccurenceToolbarAction extends PreviousOccurenceAction {
   private final OccurenceNavigator myNavigator;
@@ -18,5 +20,10 @@ public class PreviousOccurenceToolbarAction extends PreviousOccurenceAction {
   @Override
   protected OccurenceNavigator getNavigator(DataContext dataContext) {
     return myNavigator;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myNavigator.getActionUpdateThread();
   }
 }

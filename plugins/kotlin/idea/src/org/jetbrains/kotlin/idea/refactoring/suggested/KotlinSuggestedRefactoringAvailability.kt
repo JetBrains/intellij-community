@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.caches.project.forcedModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -34,7 +35,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         return iterator {
             if (state.additionalData[HAS_USAGES] == null) {
                 val declarationCopy = state.restoredDeclarationCopy()
-                val useScope = declarationCopy.useScope
+                val useScope = declarationCopy?.useScope
                 if (useScope is LocalSearchScope) {
                     val hasUsages = ReferencesSearch.search(declarationCopy, useScope).findFirst() != null
                     yield(state.withAdditionalData(HAS_USAGES, hasUsages))
@@ -46,7 +47,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
         val newDeclaration = state.declaration as? KtCallableDeclaration ?: return state
         val oldDeclaration = state.restoredDeclarationCopy() as? KtCallableDeclaration ?: return state
-        oldDeclaration.containingKtFile.forcedModuleInfo = newDeclaration.getModuleInfo()
+        oldDeclaration.containingKtFile.forcedModuleInfo = newDeclaration.moduleInfo
 
         val descriptorWithOldSignature = oldDeclaration.resolveToDescriptorIfAny() as CallableDescriptor?
         val descriptorWithNewSignature = newDeclaration.resolveToDescriptorIfAny() as CallableDescriptor?
@@ -139,7 +140,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
 
         val oldSignature = state.oldSignature
         val newSignature = state.newSignature
-        val updateUsagesData = SuggestedChangeSignatureData.create(state, USAGES)
+        val updateUsagesData = SuggestedChangeSignatureData.create(state, RefactoringBundle.message("suggested.refactoring.usages"))
         val updateOverridesData = overridesName?.let { updateUsagesData.copy(nameOfStuffToUpdate = it) }
 
         if (newSignature.parameters.size > oldSignature.parameters.size) {
@@ -212,9 +213,13 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     
     private fun KtCallableDeclaration.overridesName(): String? {
         return when {
-            hasModifier(KtTokens.ABSTRACT_KEYWORD) -> IMPLEMENTATIONS
-            hasModifier(KtTokens.OPEN_KEYWORD) -> OVERRIDES
-            containingClassOrObject?.isInterfaceClass() == true -> if (hasBody()) OVERRIDES else IMPLEMENTATIONS
+            hasModifier(KtTokens.ABSTRACT_KEYWORD) -> RefactoringBundle.message("suggested.refactoring.implementations")
+            hasModifier(KtTokens.OPEN_KEYWORD) -> RefactoringBundle.message("suggested.refactoring.overrides")
+            containingClassOrObject?.isInterfaceClass() == true -> if (hasBody()) {
+                RefactoringBundle.message("suggested.refactoring.overrides")
+            } else {
+                RefactoringBundle.message("suggested.refactoring.implementations")
+            }
             isExpectDeclaration() -> "actual declarations"
             else -> null
         }

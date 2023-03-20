@@ -13,8 +13,7 @@ internal class ModelRunnerWithCache(model: Model = JMModel()) : ModelRunner(mode
 
   private val myCache = FilePath2Tokens(this)
 
-  internal fun processFile(psiFile: PsiFile) {
-    val filePath = psiFile.virtualFile.path
+  internal fun processFile(psiFile: PsiFile, filePath: String) {
     if (filePath in myCache) return
     val tokens = lexPsiFile(psiFile, TEXT_RANGE_LIMIT)
     myCache[filePath] = tokens

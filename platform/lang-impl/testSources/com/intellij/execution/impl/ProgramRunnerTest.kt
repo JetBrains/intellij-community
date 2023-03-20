@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.RunManager
@@ -17,7 +17,7 @@ class ProgramRunnerTest : BasePlatformTestCase() {
   fun testRunnerSettingsSurvivesRunnerUnload() {
     val programRunnerWithSettings = MockProgramRunnerWithSettings()
     val disposable = Disposer.newDisposable()
-    ProgramRunner.PROGRAM_RUNNER_EP.getPoint().registerExtension(programRunnerWithSettings, disposable)
+    ProgramRunner.PROGRAM_RUNNER_EP.point.registerExtension(programRunnerWithSettings, disposable)
 
     val runManager = RunManager.getInstance(project)
     val runnerAndConfigurationSettings = runManager.createConfiguration("Test", FakeConfigurationFactory()) as RunnerAndConfigurationSettingsImpl
@@ -32,7 +32,7 @@ class ProgramRunnerTest : BasePlatformTestCase() {
 
     runnerAndConfigurationSettings.readExternal(element, false)
 
-    ProgramRunner.PROGRAM_RUNNER_EP.getPoint().registerExtension(programRunnerWithSettings, testRootDisposable)
+    ProgramRunner.PROGRAM_RUNNER_EP.point.registerExtension(programRunnerWithSettings, testRootDisposable)
     val settingsAfterReload = runnerAndConfigurationSettings.getRunnerSettings(programRunnerWithSettings)
     assertEquals("myTest", settingsAfterReload!!.test)
   }
@@ -62,7 +62,7 @@ class ProgramRunnerTest : BasePlatformTestCase() {
     override fun execute(environment: ExecutionEnvironment) {
     }
 
-    override fun createConfigurationData(settingsProvider: ConfigurationInfoProvider): MockSettings? {
+    override fun createConfigurationData(settingsProvider: ConfigurationInfoProvider): MockSettings {
       return MockSettings()
     }
   }

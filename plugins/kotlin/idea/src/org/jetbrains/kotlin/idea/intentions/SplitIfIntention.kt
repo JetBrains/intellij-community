@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.range
-import org.jetbrains.kotlin.idea.core.util.start
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -15,7 +15,12 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
+/**
+ * Affected tests:
+ * [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.SplitIf]
+ */
 class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::class.java, KotlinBundle.lazyMessage("split.if.into.two")) {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         return when (element) {
@@ -41,7 +46,7 @@ class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::clas
         val thenBranch = ifExpression.then!!
         val elseBranch = ifExpression.`else`
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val innerIf = psiFactory.createIf(rightExpression, thenBranch, elseBranch)
 
@@ -72,12 +77,12 @@ class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::clas
 
     private fun getRight(element: KtBinaryExpression, condition: KtExpression, commentSaver: CommentSaver): KtExpression {
         //gets the textOffset of the right side of the JetBinaryExpression in context to condition
-        val conditionRange = condition.range
-        val startOffset = element.right!!.startOffset - conditionRange.start
+        val conditionRange = condition.textRange
+        val startOffset = element.right!!.startOffset - conditionRange.startOffset
         val endOffset = conditionRange.length
         val rightString = condition.text.substring(startOffset, endOffset)
 
-        val expression = KtPsiFactory(element).createExpression(rightString)
+        val expression = KtPsiFactory(element.project).createExpression(rightString)
         commentSaver.elementCreatedByText(expression, condition, TextRange(startOffset, endOffset))
         return expression
     }
@@ -101,7 +106,7 @@ class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::clas
             if (expression.operationToken != operator) return false
         }
 
-        val ifExpression = expression.parent.parent as? KtIfExpression ?: return false
+        val ifExpression = expression.parents.match(KtContainerNode::class, last = KtIfExpression::class) ?: return false
 
         if (ifExpression.condition == null) return false
         if (!PsiTreeUtil.isAncestor(ifExpression.condition, element, false)) return false

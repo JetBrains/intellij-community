@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -28,13 +28,13 @@ import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.*
@@ -42,8 +42,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -63,7 +61,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("refactoring/changeSignature")
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun setUp() {
         super.setUp()
@@ -71,9 +69,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     override fun tearDown() {
-        files = emptyList()
-        psiFiles = PsiFile.EMPTY_ARRAY
-        super.tearDown()
+        try {
+            files = emptyList()
+            psiFiles = PsiFile.EMPTY_ARRAY
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
     }
 
     private lateinit var files: List<String>
@@ -193,7 +196,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         val project = method.project
 
         var newName = method.name
-        var newReturnType: PsiType = method.returnType ?: PsiType.VOID
+        var newReturnType: PsiType = method.returnType ?: PsiTypes.voidType()
         val newParameters = ArrayList<ParameterInfoImpl>()
         val parameterPropagationTargets = LinkedHashSet<PsiMethod>()
 
@@ -830,9 +833,9 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testRemoveParameterFromFunctionWithReceiver() = doJavaTest { newParameters.clear() }
 
-    fun testAddParameterFromFunctionWithReceiver() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
+    fun testAddParameterFromFunctionWithReceiver() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiTypes.intType())) }
 
-    fun testChangeJavaMethod() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
+    fun testChangeJavaMethod() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiTypes.intType())) }
 
     fun testChangeJavaMethodWithPrimitiveType() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
 
@@ -840,11 +843,11 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testChangeJavaMethodWithFlexibleMutableType() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
 
-    fun testChangeJavaMethodWithNestedFlexibleType() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
+    fun testChangeJavaMethodWithNestedFlexibleType() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiTypes.intType())) }
 
     fun testChangeJavaMethodWithFlexibleMutableType1() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
 
-    fun testChangeJavaMethodWithRawType() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
+    fun testChangeJavaMethodWithRawType() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiTypes.intType())) }
 
     fun testSimpleFlexibleType() = doJavaTest { newParameters.add(javaIntegerParameter()) }
 
@@ -866,7 +869,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testMutableFlexibleType8() = doJavaTest { newParameters.add(javaIntegerParameter()) }
 
-    private fun javaIntegerParameter() = ParameterInfoImpl(-1, "integer", PsiType.INT)
+    private fun javaIntegerParameter() = ParameterInfoImpl(-1, "integer", PsiTypes.intType())
 
     fun testEnumEntriesWithoutSuperCalls() = doTest {
         val defaultValueForCall = KtPsiFactory(project).createExpression("1")
@@ -942,7 +945,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testSAMAddToEmptyParamList() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }
 
-    fun testSAMAddToSingletonParamList() = doJavaTest { newParameters.add(0, ParameterInfoImpl(-1, "n", PsiType.INT)) }
+    fun testSAMAddToSingletonParamList() = doJavaTest { newParameters.add(0, ParameterInfoImpl(-1, "n", PsiTypes.intType())) }
 
     fun testSAMAddToNonEmptyParamList() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "o", objectPsiType)) }
 
@@ -1188,14 +1191,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testJavaMethodOverridesReplaceParam() = doJavaTestConflict {
         newReturnType = stringPsiType
-        newParameters[0] = ParameterInfoImpl(-1, "x", PsiType.INT, "1")
+        newParameters[0] = ParameterInfoImpl(-1, "x", PsiTypes.intType(), "1")
     }
 
     fun testJavaMethodOverridesChangeParam() = doJavaTest {
         newReturnType = stringPsiType
 
         newParameters[0].name = "x"
-        newParameters[0].setType(PsiType.INT)
+        newParameters[0].setType(PsiTypes.intType())
     }
 
     fun testChangeProperty() = doTest {
@@ -1258,6 +1261,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newReturnTypeInfo = KotlinTypeInfo(true, BUILT_INS.stringType)
     }
 
+    fun testChangeClassParameterWithInvalidCharacter() = doTest {
+        newParameters[0].name = "a@bc"
+    }
+
+    fun testChangeClassParameterWithEscapedName() = doTest {
+        newParameters[0].name = "`x@yz`"
+    }
+
     fun testParameterPropagation() = doTestAndIgnoreConflicts {
         val psiFactory = KtPsiFactory(project)
 
@@ -1279,22 +1290,22 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         ).apply { currentTypeInfo = kotlinStringType }
         addParameter(newParameter2)
 
-        val classA = KotlinFullClassNameIndex.getInstance().get("A", project, project.allScope()).first()
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
         val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
-        val functionTest = KotlinTopLevelFunctionFqnNameIndex.getInstance().get("test", project, project.allScope()).first()
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
 
         primaryPropagationTargets = listOf(functionBar, functionTest)
     }
 
     fun testJavaParameterPropagation() = doJavaTest {
-        newParameters.add(ParameterInfoImpl(-1, "n", PsiType.INT, "1"))
+        newParameters.add(ParameterInfoImpl(-1, "n", PsiTypes.intType(), "1"))
         newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType, "\"abc\""))
 
-        val classA = JavaFullClassNameIndex.getInstance().get("A".hashCode(), project, project.allScope()).first { it.name == "A" }
+        val classA = JavaFullClassNameIndex.getInstance().get("A", project, project.allScope()).first { it.name == "A" }
         val methodBar = classA.methods.first { it.name == "bar" }
         parameterPropagationTargets.add(methodBar)
 
-        val functionTest = KotlinTopLevelFunctionFqnNameIndex.getInstance().get("test", project, project.allScope()).first()
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
         parameterPropagationTargets.add(functionTest.getRepresentativeLightMethod()!!)
     }
 
@@ -1303,7 +1314,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 
@@ -1312,7 +1323,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 
@@ -1320,7 +1331,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         val defaultValueForCall = KtPsiFactory(project).createExpression("1")
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
-        val classA = KotlinFullClassNameIndex.getInstance().get("A", project, project.allScope()).first()
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
         val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
         primaryPropagationTargets = listOf(functionBar)
     }
@@ -1330,12 +1341,12 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
         primaryPropagationTargets = listOf(
-            KotlinTopLevelFunctionFqnNameIndex.getInstance().get("bar", project, project.allScope()).first()
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
         )
     }
 
     fun testJavaConstructorParameterPropagation() = doJavaTest {
-        newParameters.add(ParameterInfoImpl(-1, "n", PsiType.INT, "1"))
+        newParameters.add(ParameterInfoImpl(-1, "n", PsiTypes.intType(), "1"))
         parameterPropagationTargets.addAll(findCallers(method))
     }
 
@@ -1569,7 +1580,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testGetConventionRenameToInvoke() = doTest { newName = "invoke" }
 
     fun testKotlinOverridingJavaWithDifferentParamName() = doJavaTest {
-        newParameters.add(ParameterInfoImpl(-1, "n", PsiType.INT))
+        newParameters.add(ParameterInfoImpl(-1, "n", PsiTypes.intType()))
     }
 
     fun testAddParameterAfterLambdaParameter() = doTest {

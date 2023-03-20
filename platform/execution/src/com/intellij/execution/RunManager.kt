@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution
 
 import com.intellij.execution.configurations.*
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
@@ -20,22 +20,37 @@ abstract class RunManager {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunManager {
-      if (IS_RUN_MANAGER_INITIALIZED.get(project) != true) {
+      if (IS_RUN_MANAGER_INITIALIZED.get(project) != true && !project.isDefault) {
         // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
-        LOG.debug("Must be not called before project components initialized")
+        LOG.warn("Must be not called before project components initialized")
       }
       return project.getService(RunManager::class.java)
     }
 
     @JvmStatic
+    fun getInstanceIfCreated(project: Project): RunManager? = project.serviceIfCreated()
+
+    private const val UNNAMED = "Unnamed"
+
+    @JvmField
+    @ApiStatus.Internal
+    val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
+
+    private val LOG = logger<RunManager>()
+
+    @JvmStatic
     fun suggestUniqueName(str: String, currentNames: Collection<String>): String {
-      if (!currentNames.contains(str)) return str
+      if (!currentNames.contains(str)) {
+        return str
+      }
 
       val originalName = extractBaseName(str)
       var i = 1
       while (true) {
         val newName = String.format("%s (%d)", originalName, i)
-        if (!currentNames.contains(newName)) return newName
+        if (!currentNames.contains(newName)) {
+          return newName
+        }
         i++
       }
     }
@@ -63,7 +78,7 @@ abstract class RunManager {
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @Deprecated("", ReplaceWith("getConfigurationSettingsList(type)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings> = getConfigurationSettingsList(type).toTypedArray()
 
   /**
@@ -83,7 +98,7 @@ abstract class RunManager {
    * Returns the list of all run configurations.
    */
   @Deprecated("", ReplaceWith("allConfigurationsList"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun getAllConfigurations(): Array<RunConfiguration> = allConfigurationsList.toTypedArray()
 
   /**
@@ -118,7 +133,7 @@ abstract class RunManager {
    */
   abstract fun shouldSetRunConfigurationFromContext(): Boolean
 
-  abstract fun isRunWidgetActive(): Boolean
+  abstract fun isRiderRunWidgetActive(): Boolean
 
   /**
    * Creates a configuration of the specified type with the specified name. Note that you need to call
@@ -198,12 +213,12 @@ abstract class RunManager {
    */
   fun setUniqueNameIfNeeded(settings: RunnerAndConfigurationSettings): Boolean {
     val oldName = settings.name
-    settings.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), settings.type)
+    settings.name = suggestUniqueName(oldName.takeIf { it.isNotBlank() } ?: UNNAMED, settings.type)
     return oldName != settings.name
   }
 
   @Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.setUniqueNameIfNeeded(settings)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun setUniqueNameIfNeed(settings: RunnerAndConfigurationSettings): Boolean = setUniqueNameIfNeeded(settings)
 
   /**
@@ -213,7 +228,7 @@ abstract class RunManager {
   fun setUniqueNameIfNeeded(configuration: RunConfiguration): Boolean {
     val oldName = configuration.name
     @Suppress("UsePropertyAccessSyntax")
-    configuration.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type))
+    configuration.setName(suggestUniqueName(oldName.takeIf { it.isNotBlank() } ?: UNNAMED, configuration.type))
     return oldName != configuration.name
   }
 
@@ -234,8 +249,3 @@ abstract class RunManager {
   @ApiStatus.Internal
   abstract fun isTemplate(configuration: RunConfiguration): Boolean
 }
-
-private const val UNNAMED = "Unnamed"
-
-val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
-private val LOG = Logger.getInstance(RunManager::class.java)

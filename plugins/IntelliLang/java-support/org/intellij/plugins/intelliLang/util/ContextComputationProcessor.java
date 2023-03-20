@@ -78,17 +78,15 @@ public final class ContextComputationProcessor {
       addStringFragment(" ", result); // do not glue branches together
       collectOperands(((PsiConditionalExpression)expression).getElseExpression(), result, unparsable);
     }
-    else if (expression instanceof PsiPolyadicExpression &&
+    else if (expression instanceof PsiPolyadicExpression binaryExpression &&
              ((PsiPolyadicExpression)expression).getOperationTokenType() == JavaTokenType.PLUS) {
-      PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
       for (PsiExpression operand : binaryExpression.getOperands()) {
         collectOperands(operand, result, unparsable);
       }
     }
-    else if (expression instanceof PsiAssignmentExpression &&
+    else if (expression instanceof PsiAssignmentExpression assignmentExpression &&
              ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.PLUSEQ) {
       unparsable.set(Boolean.TRUE);
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
       collectOperands(assignmentExpression.getLExpression(), result, unparsable);
       collectOperands(assignmentExpression.getRExpression(), result, unparsable);
     }

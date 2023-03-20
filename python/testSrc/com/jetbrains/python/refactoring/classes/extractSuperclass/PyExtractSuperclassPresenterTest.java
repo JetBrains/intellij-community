@@ -106,7 +106,6 @@ public final class PyExtractSuperclassPresenterTest
   /**
    * Creates capture ready to capture error message and configures view to return it
    *
-   * @return
    */
   @NotNull
   private Capture<String> configureViewToCaptureError() {

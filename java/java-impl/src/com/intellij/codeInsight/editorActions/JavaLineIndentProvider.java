@@ -36,9 +36,6 @@ import java.util.HashMap;
 import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.JavaLikeElement.*;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
   private final static HashMap<IElementType, SemanticEditorPosition.SyntaxElement> SYNTAX_MAP = new HashMap<>();
   static {

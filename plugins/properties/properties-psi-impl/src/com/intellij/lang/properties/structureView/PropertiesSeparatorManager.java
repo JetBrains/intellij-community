@@ -33,7 +33,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
   private PropertiesSeparatorManagerState myUserDefinedSeparators = new PropertiesSeparatorManagerState();
   private final SoftFactoryMap<ResourceBundleImpl, String> myGuessedSeparators = new SoftFactoryMap<>() {
     @Override
-    protected String create(ResourceBundleImpl resourceBundle) {
+    protected String create(@NotNull ResourceBundleImpl resourceBundle) {
       return guessSeparator(resourceBundle);
     }
   };
@@ -44,10 +44,9 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
 
   @NotNull
   public String getSeparator(final ResourceBundle resourceBundle) {
-    if (!(resourceBundle instanceof ResourceBundleImpl)) {
+    if (!(resourceBundle instanceof ResourceBundleImpl resourceBundleImpl)) {
       return ".";
     }
-    final ResourceBundleImpl resourceBundleImpl = (ResourceBundleImpl)resourceBundle;
     String separator = myUserDefinedSeparators.getSeparators().get(resourceBundleImpl.getUrl());
     return separator == null ? Objects.requireNonNull(myGuessedSeparators.get(resourceBundleImpl)) : separator;
   }

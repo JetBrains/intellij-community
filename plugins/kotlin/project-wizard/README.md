@@ -50,7 +50,7 @@ The Wizard consists of several submodules:
 Thanks to its IDEA adaptor Kotlin-NPW can be though as a supplementary to the Platform-NPW.
 Platform one is all about common UI for supported languages, frameworks, build systems, etc. Kotlin-NPW plugs into this infrastructure.
 
-Kotlin plugin descriptor (`community/plugins/kotlin/plugin/resources/META-INF/core.xml`) has the following important declarations:
+Kotlin plugin descriptor (`community/plugins/kotlin/plugin/resources/META-INF/kotlin-core.xml`) has the following important declarations:
 ```xml
 <!-- Project Wizard -->
 <extensions defaultExtensionNs="com.intellij">

@@ -75,8 +75,8 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
-    return new LocalQuickFix[] { new CreateTemplateFix(myAttribute.getParent(), myName) };
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
+    return new LocalQuickFix[] { new CreateTemplateFix(myName) };
   }
 
   @Override

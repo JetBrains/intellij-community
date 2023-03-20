@@ -29,9 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 2/16/2017.
- */
 public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public static final JsonOriginalPsiWalker INSTANCE = new JsonOriginalPsiWalker();
 
@@ -83,8 +80,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     while (! (current instanceof PsiFile)) {
       final PsiElement position = current;
       current = current.getParent();
-      if (current instanceof JsonArray) {
-        JsonArray array = (JsonArray)current;
+      if (current instanceof JsonArray array) {
         final List<JsonValue> list = array.getValueList();
         int idx = -1;
         for (int i = 0; i < list.size(); i++) {

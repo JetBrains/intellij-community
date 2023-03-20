@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,19 +22,12 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class WindowWatcher implements PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance(WindowWatcher.class);
   private final Object myLock = new Object();
-  private final Map<@NotNull Window, WindowInfo> windowToInfo = CollectionFactory.createWeakMap();
+  private final Map<@NotNull Window, WindowInfo> windowToInfo = new WeakHashMap<>();
   /**
    * Currently focused window (window which has focused component). Can be {@code null} if there is no focused
    * window at all.

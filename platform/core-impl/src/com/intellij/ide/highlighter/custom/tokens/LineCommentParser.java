@@ -19,9 +19,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 import com.intellij.psi.CustomHighlighterTokenType;
 
 
-/**
- * @author dsl
- */
 public class LineCommentParser extends PrefixedTokenParser {
   private final boolean myAtStartOnly;
 

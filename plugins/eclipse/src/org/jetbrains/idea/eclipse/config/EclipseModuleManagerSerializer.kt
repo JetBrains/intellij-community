@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleCompon
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -19,21 +18,25 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
  * Implements loading and saving configuration from [EclipseModuleManagerImpl] in iml file when workspace model is used
  */
 class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
-  override fun loadComponent(builder: WorkspaceEntityStorageBuilder,
-                             moduleEntity: ModuleEntity,
+  override fun loadComponent(detachedModuleEntity: ModuleEntity.Builder,
                              reader: JpsFileContentReader,
                              imlFileUrl: VirtualFileUrl,
                              errorReporter: ErrorReporter,
                              virtualFileManager: VirtualFileUrlManager) {
     val componentTag = reader.loadComponent(imlFileUrl.url, "EclipseModuleManager") ?: return
-    val entity = builder.addEclipseProjectPropertiesEntity(moduleEntity, moduleEntity.entitySource)
-    builder.modifyEntity(ModifiableEclipseProjectPropertiesEntity::class.java, entity) {
+    val entity = EclipseProjectPropertiesEntity(LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0,
+                                                LinkedHashMap(), detachedModuleEntity.entitySource) {
+      this.module = detachedModuleEntity
+    }
+    (entity as EclipseProjectPropertiesEntity.Builder).apply {
       componentTag.getChildren(LIBELEMENT).forEach {
         eclipseUrls.add(virtualFileManager.fromUrl(it.getAttributeValue(VALUE_ATTR)!!))
       }
       componentTag.getChildren(VARELEMENT).forEach {
-        variablePaths[it.getAttributeValue(VAR_ATTRIBUTE)!!] =
-          it.getAttributeValue(PREFIX_ATTR, "") + it.getAttributeValue(VALUE_ATTR)
+        variablePaths = variablePaths.toMutableMap().also { map ->
+          map[it.getAttributeValue(VAR_ATTRIBUTE)!!] =
+            it.getAttributeValue(PREFIX_ATTR, "") + it.getAttributeValue(VALUE_ATTR)
+        }
       }
       componentTag.getChildren(CONELEMENT).forEach {
         unknownCons.add(it.getAttributeValue(VALUE_ATTR)!!)
@@ -43,7 +46,9 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
       if (srcDescriptionTag != null) {
         expectedModuleSourcePlace = srcDescriptionTag.getAttributeValue(EXPECTED_POSITION)?.toInt() ?: 0
         srcDescriptionTag.getChildren(SRC_FOLDER).forEach {
-          srcPlace[it.getAttributeValue(VALUE_ATTR)!!] = it.getAttributeValue(EXPECTED_POSITION)!!.toInt()
+          srcPlace = srcPlace.toMutableMap().also { map ->
+            map[it.getAttributeValue(VALUE_ATTR)!!] = it.getAttributeValue(EXPECTED_POSITION)!!.toInt()
+          }
         }
       }
     }
@@ -64,7 +69,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     eclipseProperties.eclipseUrls.forEach {
       componentTag.addContent(Element(LIBELEMENT).setAttribute(VALUE_ATTR, it.url))
     }
-    eclipseProperties.variablePaths.forEach { name, path ->
+    eclipseProperties.variablePaths.forEach { (name, path) ->
       val prefix = listOf(SRC_PREFIX, SRC_LINK_PREFIX, LINK_PREFIX).firstOrNull { name.startsWith(it) } ?: ""
       val varTag = Element(VARELEMENT)
       varTag.setAttribute(VAR_ATTRIBUTE, name.removePrefix(prefix))
@@ -82,7 +87,7 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     }
     val srcDescriptionTag = Element(SRC_DESCRIPTION)
     srcDescriptionTag.setAttribute(EXPECTED_POSITION, eclipseProperties.expectedModuleSourcePlace.toString())
-    eclipseProperties.srcPlace.forEach { url, position ->
+    eclipseProperties.srcPlace.forEach { (url, position) ->
       srcDescriptionTag.addContent(Element(SRC_FOLDER).setAttribute(VALUE_ATTR, url).setAttribute(EXPECTED_POSITION, position.toString()))
     }
     componentTag.addContent(srcDescriptionTag)

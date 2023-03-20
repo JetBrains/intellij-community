@@ -14,7 +14,8 @@ class ReadAsyncSupplier<R>(
   private val equality: Array<out Any>,
   private val backgroundExecutor: Executor
 ) : AsyncSupplier<R> {
-  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
+
+  override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
     if (shouldKeepTasksAsynchronous()) {
       var readAction = ReadAction.nonBlocking(supplier)
         .expireWith(parentDisposable)
@@ -30,6 +31,7 @@ class ReadAsyncSupplier<R>(
   }
 
   class Builder<R>(private val supplier: () -> R) {
+
     private var shouldKeepTasksAsynchronous: () -> Boolean =
       CoreProgressManager::shouldKeepTasksAsynchronous
 
@@ -43,7 +45,8 @@ class ReadAsyncSupplier<R>(
       this.equality = equality
     }
 
-    fun build(backgroundExecutor: Executor) =
-      ReadAsyncSupplier(supplier, shouldKeepTasksAsynchronous, equality, backgroundExecutor)
+    fun build(backgroundExecutor: Executor): AsyncSupplier<R> {
+      return ReadAsyncSupplier(supplier, shouldKeepTasksAsynchronous, equality, backgroundExecutor)
+    }
   }
 }

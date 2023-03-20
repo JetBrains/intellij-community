@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,10 +13,8 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class ToggleLaggingModeAction extends AnAction implements DumbAware {
+final class ToggleLaggingModeAction extends AnAction implements DumbAware {
+
   private volatile boolean myLagging = false;
   private final Alarm myAlarm = new Alarm();
 
@@ -49,13 +47,15 @@ public class ToggleLaggingModeAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    if (myLagging) {
-      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.ToggleLaggingModeAction.text.exit.lagging.mode"));
-    }
-    else {
-      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.ToggleLaggingModeAction.text.enter.lagging.mode"));
-    }
+    e.getPresentation().setText(myLagging ?
+                                InternalActionsBundle.messagePointer("action.presentation.ToggleLaggingModeAction.text.exit.lagging.mode") :
+                                InternalActionsBundle.messagePointer(
+                                  "action.presentation.ToggleLaggingModeAction.text.enter.lagging.mode"));
   }
 }

@@ -139,11 +139,9 @@ public final class ProjectWizardUtil {
     Sdk best = null;
     ComboBoxModel<JdkComboBox.JdkComboBoxItem> model = jdkComboBox.getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      JdkComboBox.JdkComboBoxItem item = model.getElementAt(i);
-      if (!(item instanceof JdkComboBox.ActualJdkComboBoxItem)) continue;
+      if (!(model.getElementAt(i) instanceof JdkComboBox.ActualJdkComboBoxItem item)) continue;
 
       Sdk jdk = item.getJdk();
-      if (jdk == null) continue;
 
       SdkTypeId jdkType = jdk.getSdkType();
       if (!sdkFilter.value(jdkType)) continue;

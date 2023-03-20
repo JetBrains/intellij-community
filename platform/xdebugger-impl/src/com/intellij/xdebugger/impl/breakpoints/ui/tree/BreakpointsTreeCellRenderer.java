@@ -34,8 +34,7 @@ class BreakpointsTreeCellRenderer  {
                                         boolean selected,
                                         boolean expanded,
                                         ColoredTreeCellRenderer renderer) {
-    if (value instanceof BreakpointItemNode) {
-      BreakpointItemNode node = (BreakpointItemNode)value;
+    if (value instanceof BreakpointItemNode node) {
       BreakpointItem breakpoint = node.getBreakpointItem();
       breakpoint.setupRenderer(renderer, project, selected);
     }

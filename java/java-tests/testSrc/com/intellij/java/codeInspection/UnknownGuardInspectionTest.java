@@ -19,12 +19,13 @@ public class UnknownGuardInspectionTest extends LightJavaCodeInsightFixtureTestC
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new UnknownGuardInspection());
-    myFixture.addClass("package javax.annotation.concurrent;\n" +
-                       "@java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})\n" +
-                       "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)\n" +
-                       "public @interface GuardedBy {\n" +
-                       "    java.lang.String value();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package javax.annotation.concurrent;
+                         @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})
+                         @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+                         public @interface GuardedBy {
+                             java.lang.String value();
+                         }""");
   }
 
   @NotNull

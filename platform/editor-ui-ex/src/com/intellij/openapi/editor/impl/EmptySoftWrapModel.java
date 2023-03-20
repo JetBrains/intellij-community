@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.SoftWrap;
@@ -10,28 +10,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class EmptySoftWrapModel implements SoftWrapModel {
-
+public final class EmptySoftWrapModel implements SoftWrapModel {
   @Override
   public boolean isSoftWrappingEnabled() {
     return false;
   }
 
-  @Nullable
   @Override
-  public SoftWrap getSoftWrap(int offset) {
+  public @Nullable SoftWrap getSoftWrap(int offset) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
+  public @NotNull List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
+  public @NotNull List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
     return Collections.emptyList();
   }
 

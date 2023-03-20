@@ -51,7 +51,7 @@ class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBrea
         return null;
       }
       for (XBreakpointClassGroup group : groups) {
-        if (group.getClassName().equals(className) && group.getPackageName().equals(packageName))  {
+        if (group.getClassName().equals(className) && group.getPackageName().equals(packageName)) {
           return group;
         }
       }

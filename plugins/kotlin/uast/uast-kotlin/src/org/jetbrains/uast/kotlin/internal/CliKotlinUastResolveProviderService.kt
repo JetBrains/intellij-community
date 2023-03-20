@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.project.Project
@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.ProjectContext
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
@@ -22,17 +21,24 @@ import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 
 class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
-    val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
+
+    private val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
         get() = getExtensions(AnalysisHandlerExtension.extensionPointName)
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()
 
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
+    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
+        @Suppress("DEPRECATION")
+        return element.project.analysisCompletedHandler?.getTypeMapper()
+    }
+    @Deprecated(
+        "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
+                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+        replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
+    )
     override fun getBindingContext(element: KtElement): BindingContext {
         return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
-    }
-
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
-        return element.project.analysisCompletedHandler?.getTypeMapper()
     }
 
     override fun isJvmElement(psiElement: PsiElement) = true
@@ -40,9 +46,6 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings {
         return element.project.analysisCompletedHandler?.getLanguageVersionSettings() ?: LanguageVersionSettingsImpl.DEFAULT
     }
-
-    override fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor> =
-        emptySequence() // Not supported
 }
 
 class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
@@ -54,6 +57,7 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
 
     fun getLanguageVersionSettings() = languageVersionSettings
 
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     fun getTypeMapper(): KotlinTypeMapper? {
         if (typeMapper != null) return typeMapper
         val bindingContext = context ?: return null

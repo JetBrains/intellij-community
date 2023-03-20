@@ -157,8 +157,7 @@ public class PyStringLiteralDecoder {
       return true;
     }
     final PsiFile file = myNode.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
+    if (file instanceof PyFile pyFile) {
       return pyFile.hasImportFromFuture(FutureFeature.UNICODE_LITERALS);
     }
     return false;

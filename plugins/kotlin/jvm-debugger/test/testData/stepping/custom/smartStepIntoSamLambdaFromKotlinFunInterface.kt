@@ -46,3 +46,5 @@ fun main() {
     // RESUME: 1
     Any().acceptI { foo1() } .acceptLambda { foo2() }.acceptI { foo3() }
 }
+
+// IGNORE_K2

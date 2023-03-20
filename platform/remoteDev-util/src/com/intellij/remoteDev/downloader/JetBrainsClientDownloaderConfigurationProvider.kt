@@ -1,12 +1,12 @@
 package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.remoteDev.util.getJetBrainsSystemCachesDir
+import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.isFile
 import com.intellij.util.io.size
@@ -15,7 +15,9 @@ import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
 import org.jetbrains.annotations.ApiStatus
-import java.net.*
+import java.net.Inet4Address
+import java.net.InetSocketAddress
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -28,27 +30,54 @@ import kotlin.io.path.*
 interface JetBrainsClientDownloaderConfigurationProvider {
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
 
-  val clientDownloadLocation: URI
-  val jreDownloadLocation: URI
+  val clientDownloadUrl: URI
+  val jreDownloadUrl: URI
   val clientCachesDir: Path
+  val clientVersionManagementEnabled: Boolean
+  val modifiedDateInManifestIncluded: Boolean
 
   val verifySignature: Boolean
 
-  fun patchVmOptions(vmOptionsFile: Path)
+  /**
+   * Due to macOS limitations, it's only possible to append to vmoptions, not patch it
+   */
+  fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI)
   val clientLaunched: Signal<Unit>
+
+  val downloadLatestBuildFromCDNForSnapshotHost: Boolean
 }
 
 @ApiStatus.Experimental
 class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownloaderConfigurationProvider {
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
-  override val clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override val jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
-  override val clientCachesDir: Path = getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
+  override val clientDownloadUrl: URI
+    get() = RemoteDevSystemSettings.getClientDownloadUrl().value
+  override val jreDownloadUrl: URI
+    get() = RemoteDevSystemSettings.getJreDownloadUrl().value
+
+  override val clientCachesDir: Path get () {
+    val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
+    if (downloadDestination.value != null) {
+      return Path(downloadDestination.value)
+    }
+
+    return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
+  }
+
+  override val clientVersionManagementEnabled: Boolean
+    get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
+  override val modifiedDateInManifestIncluded: Boolean
+    get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
   override val verifySignature: Boolean = true
 
-  override fun patchVmOptions(vmOptionsFile: Path) { }
+  override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
+
+  }
+
   override val clientLaunched: Signal<Unit> = Signal()
+
+  override val downloadLatestBuildFromCDNForSnapshotHost = true
 }
 
 @ApiStatus.Experimental
@@ -70,13 +99,18 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     }
   }
 
-  override var clientDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/code-with-me/")
-  override var jreDownloadLocation: URI = URI("https://cache-redirector.jetbrains.com/download.jetbrains.com/idea/jbr/")
-  override var clientCachesDir: Path = Files.createTempDirectory("")
+  override var clientDownloadUrl: URI = URI("https://download.jetbrains.com/idea/code-with-me/")
+  override var jreDownloadUrl: URI = URI("https://download.jetbrains.com/idea/jbr/")
+  override var clientCachesDir: Path = Files.createTempDirectory("jbc-test-storage")
+  override var clientVersionManagementEnabled: Boolean = true
+  override val modifiedDateInManifestIncluded: Boolean = true
   override var verifySignature: Boolean = true
 
   override val clientLaunched: Signal<Unit> = Signal()
-  override fun patchVmOptions(vmOptionsFile: Path) {
+
+  override val downloadLatestBuildFromCDNForSnapshotHost = false
+
+  override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
     thisLogger().info("Patching $vmOptionsFile")
 
     val traceCategories = listOf("#com.jetbrains.rdserver.joinLinks", "#com.jetbrains.rd.platform.codeWithMe.network")
@@ -94,7 +128,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     val testVmOptions = listOf(
       "-Djb.consents.confirmation.enabled=false", // hz
       "-Djb.privacy.policy.text=\"<!--999.999-->\"", // EULA
-      "-Didea.initially.ask.config=force-not",
+      "-Didea.initially.ask.config=never",
       "-Dfus.internal.test.mode=true",
       "-Didea.suppress.statistics.report=true",
       "-Drsch.send.usage.stat=false",
@@ -134,11 +168,11 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     thisLogger().info("Starting http server at ${server.address}")
 
 
-    clientDownloadLocation = URI("http:/${server.address}/")
+    clientDownloadUrl = URI("http:/${server.address}/")
     verifySignature = false
 
     lifetime.onTerminationOrNow {
-      clientDownloadLocation = URI("INVALID")
+      clientDownloadUrl = URI("INVALID")
       verifySignature = true
 
       tarGzServer = null

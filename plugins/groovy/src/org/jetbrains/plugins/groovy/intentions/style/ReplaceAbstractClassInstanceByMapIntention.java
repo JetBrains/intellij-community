@@ -160,8 +160,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
   static class MyPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(@NotNull PsiElement element) {
-      if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrAnonymousClassDefinition) {
-        final GrAnonymousClassDefinition anonymous = ((GrAnonymousClassDefinition)element.getParent());
+      if (element instanceof GrCodeReferenceElement && element.getParent() instanceof GrAnonymousClassDefinition anonymous) {
         if (anonymous.getFields().length == 0) {
           return true;
         }

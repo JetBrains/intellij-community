@@ -53,12 +53,11 @@ public class SamePackageImportInspection extends BaseInspection implements Clean
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitImportList(PsiImportList importList) {
+    public void visitImportList(@NotNull PsiImportList importList) {
       final PsiElement parent = importList.getParent();
-      if (!(parent instanceof PsiJavaFile)) {
+      if (!(parent instanceof PsiJavaFile javaFile)) {
         return;
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)parent;
       final String packageName = javaFile.getPackageName();
       final PsiImportStatement[] importStatements =
         importList.getImportStatements();

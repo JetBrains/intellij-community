@@ -42,11 +42,12 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testVarargPosition() {
-    myFixture.addClass("\n" +
-                       "class A {  \n" +
-                       "  <T> void foo(T... r) {}\n" +
-                       "  void bar(J i){foo(i, i, () -> {});}\n" +
-                       "}");
+    myFixture.addClass("""
+
+                         class A { \s
+                           <T> void foo(T... r) {}
+                           void bar(J i){foo(i, i, () -> {});}
+                         }""");
 
     doTestOneExpression();
   }
@@ -236,14 +237,15 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
   public void testConstructorReferences() {
     configure();
 
-    myFixture.addClass("class Bar extends Foo {\n" +
-                       "  public Bar() { super(() -> 1); }\n" +
-                       "\n" +
-                       "  {\n" +
-                       "    new Foo(() -> 2) { };\n" +
-                       "    new Foo(() -> 3);\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         class Bar extends Foo {
+                           public Bar() { super(() -> 1); }
+
+                           {
+                             new Foo(() -> 2) { };
+                             new Foo(() -> 3);
+                           }
+                         }""");
 
     assertSize(5, FunctionalExpressionSearch.search(findClassAtCaret()).findAll());
   }

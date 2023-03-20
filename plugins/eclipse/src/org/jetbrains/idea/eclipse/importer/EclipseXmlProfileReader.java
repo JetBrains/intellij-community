@@ -3,6 +3,7 @@ package org.jetbrains.idea.eclipse.importer;
 
 import com.intellij.openapi.options.SchemeImportException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -13,8 +14,6 @@ import java.io.InputStream;
 
 /**
  * Reads settings from Eclipse XML profile. The actual work is done by an implementor of <code>handleOption()</code> method.
- * 
- * @author Rustam Vishnyakov
  */
 public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXmlProfileElements {
 
@@ -28,7 +27,6 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
    * Reads either basic profile info (name) or all the settings depending on whether <code>settings</code> parameter is null.
    * 
    * @param input The input stream to read from.
-   * @throws SchemeImportException
    */
   protected void readSettings(InputStream input) throws SchemeImportException {
     SAXParserFactory spf = SAXParserFactory.newDefaultInstance();
@@ -80,8 +78,8 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
   }
 
 
-  interface OptionHandler {
+  public interface OptionHandler {
     void handleOption(@NotNull String eclipseKey, @NotNull String value) throws SchemeImportException;
-    void handleName(String name);
+    void handleName(@Nullable String name);
   }
 }

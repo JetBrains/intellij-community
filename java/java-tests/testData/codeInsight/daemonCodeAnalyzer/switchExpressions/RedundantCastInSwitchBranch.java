@@ -26,9 +26,17 @@ class RedundantCast {
   
   @SuppressWarnings("unchecked")
   <T> List<T> getList2(int x) {
-    return (<warning descr="Casting 'switch(x) { ...' to 'List<T>' is redundant">List<T></warning>) switch(x) {
+    return (<warning descr="Casting 'switch (x) {...}' to 'List<T>' is redundant">List<T></warning>) switch(x) {
       case 0 ->  new ArrayList<>();
       default -> new ArrayList<>();
     };
+  }
+
+  void castForFunctionalExpression(String s) {
+    (switch (s) {
+      case "a" -> (Runnable)() -> System.out.println("a");
+      case "b" -> (Runnable)() -> System.out.println("b");
+      default -> throw new IllegalArgumentException();
+    }).run();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GroovyDslScript {
   private static final Logger LOG = Logger.getInstance(GroovyDslScript.class);
   private final Project project;
@@ -110,6 +107,10 @@ public class GroovyDslScript {
       LOG.info("Error when executing internal GDSL " + myPath, e);
       GdslUtil.stopGdsl();
     }
+  }
+
+  public @Nullable VirtualFile getFile() {
+    return file;
   }
 
   @Override

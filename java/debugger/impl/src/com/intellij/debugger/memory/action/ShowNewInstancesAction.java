@@ -16,7 +16,7 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
 
   @Override
   protected boolean isEnabled(AnActionEvent e) {
-    final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+    final ReferenceType selectedClass = DebuggerActionUtil.getSelectedClass(e);
     final InstancesProvider provider = e.getData(ClassesFilteredView.NEW_INSTANCES_PROVIDER_KEY);
     final int count = getInstancesCount(e);
     return super.isEnabled(e) && selectedClass != null && provider != null && count > 0;
@@ -30,7 +30,7 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
   @Override
   protected int getInstancesCount(AnActionEvent e) {
     ClassesTable.ReferenceCountProvider countProvider = e.getData(ClassesTable.REF_COUNT_PROVIDER_KEY);
-    TypeInfo selectedClass = ActionUtil.getSelectedTypeInfo(e);
+    TypeInfo selectedClass = DebuggerActionUtil.getSelectedTypeInfo(e);
     if (countProvider == null || selectedClass == null) {
       return -1;
     }
@@ -40,7 +40,7 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
 
   @Override
   protected void perform(AnActionEvent e) {
-    final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+    final ReferenceType selectedClass = DebuggerActionUtil.getSelectedClass(e);
     final InstancesProvider provider = e.getData(ClassesFilteredView.NEW_INSTANCES_PROVIDER_KEY);
     final XDebugSession session = DebuggerUIUtil.getSession(e);
     if (selectedClass != null && provider != null && session != null) {

@@ -3,9 +3,16 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.util.PathUtil
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
-@ApiStatus.Experimental
-data class ExternalSystemProjectId(val systemId: ProjectSystemId, val externalProjectPath: String) {
-  val debugName = "${systemId.readableName} (${PathUtil.getFileName(externalProjectPath)})"
+data class ExternalSystemProjectId(
+  val systemId: ProjectSystemId,
+  val externalProjectPath: String
+) {
+
+  val systemName: @Nls String = systemId.readableName
+
+  val projectName: @Nls String = PathUtil.getFileName(externalProjectPath)
+
+  val debugName = "$systemName ($projectName)"
 }

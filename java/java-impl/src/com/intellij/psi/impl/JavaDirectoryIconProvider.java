@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -28,11 +28,10 @@ import javax.swing.*;
 final class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
   @Override
   public @Nullable Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (!(element instanceof PsiDirectory)) {
+    if (!(element instanceof PsiDirectory psiDirectory)) {
       return null;
     }
 
-    final PsiDirectory psiDirectory = (PsiDirectory)element;
     final VirtualFile vFile = psiDirectory.getVirtualFile();
     final Project project = psiDirectory.getProject();
 
@@ -56,7 +55,7 @@ final class JavaDirectoryIconProvider extends IconProvider implements DumbAware 
     }
     else if (isValidPackage(psiDirectory)) {
       IconManager iconManager = IconManager.getInstance();
-      symbolIcon = iconManager.createLayeredIcon(element, iconManager.tooltipOnlyIfComposite(PlatformIcons.PACKAGE_ICON), 0);
+      symbolIcon = iconManager.createLayeredIcon(element, iconManager.tooltipOnlyIfComposite(AllIcons.Nodes.Package), 0);
     }
     else if (!Registry.is("ide.hide.excluded.files") && ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile)) {
       symbolIcon = AllIcons.Modules.ExcludeRoot;

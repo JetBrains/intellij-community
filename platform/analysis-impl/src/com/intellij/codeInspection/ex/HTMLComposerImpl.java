@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -42,10 +42,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     myListStack = new int[5];
     myListStackTop = -1;
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      final HTMLComposerExtension extension = factory.createHTMLComposerExtension(this);
+      final HTMLComposerExtension<?> extension = factory.createHTMLComposerExtension(this);
       if (extension != null) {
         myExtensions.put(extension.getID(), extension);
-        myLanguageExtensions.put(extension.getLanguage(), extension);
+        extension.getLanguages().forEach(l -> myLanguageExtensions.put(l, extension));
       }
     }
   }
@@ -55,8 +55,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   public void compose(@NotNull StringBuilder buf, RefEntity refElement, CommonProblemDescriptor descriptor) {}
 
   protected void genPageHeader(@NotNull StringBuilder buf, RefEntity refEntity) {
-    if (refEntity instanceof RefElement) {
-      RefElement refElement = (RefElement)refEntity;
+    if (refEntity instanceof RefElement refElement) {
 
       appendHeading(buf, AnalysisBundle.message("inspection.export.results.capitalized.location"));
       buf.append("<div class=\"location\">");
@@ -76,6 +75,11 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
     if (refElement instanceof RefFile){
       buf.append(AnalysisBundle.message("inspection.export.results.file"));
+      buf.append(NBSP);
+      appendElementReference(buf, refElement, false);
+    }
+    else if (refElement instanceof RefDirectory){
+      buf.append(AnalysisBundle.message("inspection.export.results.directory"));
       buf.append(NBSP);
       appendElementReference(buf, refElement, false);
     }
@@ -174,7 +178,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
-    } else if (refElement instanceof RefFile) {
+    } else if (refElement instanceof RefFile || refElement instanceof RefDirectory) {
       buf.append(A_HREF_OPENING);
 
       buf.append(((RefElementImpl)refElement).getURL());

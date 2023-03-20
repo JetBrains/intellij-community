@@ -5,7 +5,6 @@ package com.intellij.codeInsight.actions;
 import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.formatting.KeptLineFeedsCollector;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
@@ -27,9 +26,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,7 +171,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       LOG.warn("Invalid file " + file.getName() + ", skipping reformat");
       return false;
     }
-    FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
+    CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.set(false);
     try {
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
       final LayoutCodeInfoCollector infoCollector = getInfoCollector();
@@ -184,6 +183,12 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       }
       try {
         EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
+          if (document != null) {
+            // In languages that are supported by a non-commit typing assistant (such as C++ and Kotlin),
+            // the `document` here can be in an uncommitted state. In the case of an external formatter,
+            // this may be the cause of formatting artifacts
+            PsiDocumentManager.getInstance(myProject).commitDocument(document);
+          }
           if (processChangedTextOnly) {
             ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
             if (info != null) {
@@ -221,7 +226,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         prepareUserNotificationMessage(document, before);
       }
 
-      return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
+      return !CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.get();
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -276,8 +281,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
-    
-    return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
+
+    return !myRanges.isEmpty() ? myRanges : List.of(file.getTextRange());
   }
 
   private static @NlsContexts.ProgressText String getProgressText() {

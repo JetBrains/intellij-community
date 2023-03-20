@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -15,6 +15,8 @@ import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.customization.CustomActionsListener;
+import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +31,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -41,14 +43,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   protected XWatchesViewImpl myWatchesView;
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
-  private final LinkedHashMap<String, XDebugView> myViews = new LinkedHashMap<>();
+  private final Map<String, XDebugView> myViews = new LinkedHashMap<>();
 
   @Nullable
   protected XDebugSessionImpl mySession;
@@ -71,11 +75,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.tool.window.layout")) {
-      tab = new XDebugSessionTab3(session, icon, environment);
-    }
-    else if (Registry.is("debugger.new.debug.tool.window.view")) {
-      tab = new XDebugSessionTab2(session, icon, environment);
+    if (Registry.is("debugger.new.tool.window.layout") || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
+      if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
+        tab = new XDebugSessionTab3(session, icon, environment);
+      }
+      else {
+        tab = new XDebugSessionTabNewUI(session, icon, environment);
+      }
     }
     else {
       tab = new XDebugSessionTab(session, icon, environment, true);
@@ -143,6 +149,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void initDebuggerTab(XDebugSessionImpl session) {
+    createDefaultTabs(session);
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
+  }
+
+  protected final void createDefaultTabs(XDebugSessionImpl session) {
     Content framesContent = createFramesContent();
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
@@ -222,7 +233,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
-      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables, false, false);
     } else {
       variablesView = new XVariablesView(session);
     }
@@ -248,7 +259,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @NotNull
   private Content createFramesContent() {
-    XFramesView framesView = new XFramesView(myProject);
+    XFramesView framesView = new XFramesView(mySession);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getDefaultFocusedComponent());
@@ -304,7 +315,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void initToolbars(@NotNull XDebugSessionImpl session) {
-    DefaultActionGroup leftToolbar = new DefaultActionGroup();
+    ActionGroup leftGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP);
+    DefaultActionGroup leftToolbar = new DefaultActionGroupWithDelegate(leftGroup);
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       leftToolbar.addAll(session.getRestartActions());
@@ -312,7 +324,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
-    leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
+    leftToolbar.addAll(leftGroup);
 
     for (AnAction action : session.getExtraStopActions()) {
       leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
@@ -333,8 +345,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
 
-    DefaultActionGroup topLeftToolbar = new DefaultActionGroup();
-    topLeftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
+    ActionGroup topGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
+    DefaultActionGroup topLeftToolbar = new DefaultActionGroupWithDelegate(topGroup);
+    topLeftToolbar.addAll(topGroup);
 
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
+import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
+import org.gradle.internal.impldep.gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +24,7 @@ public final class ObjectCollector<T, E extends Exception> {
   }
 
   public ObjectCollector(TObjectHashingStrategy<T> hashingStrategy) {
-    myObjectMap = new TObjectIntHashMap<T>(hashingStrategy);
+    myObjectMap = new TObjectIntHashMap<>(hashingStrategy);
   }
 
   public void add(@NotNull T object, @NotNull Processor<? extends E> consumer) throws E {

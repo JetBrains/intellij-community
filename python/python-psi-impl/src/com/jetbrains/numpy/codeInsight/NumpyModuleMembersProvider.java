@@ -23,7 +23,6 @@ import java.util.List;
  * Provides 'numpy' module dynamic members for numeric types.
  *
  * @author avereshchagin
- * @author vlan
  */
 public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   private static final String[] NUMERIC_TYPES = {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -10,7 +10,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.COMPLETION_TEST_DATA_BASE
 import org.jetbrains.kotlin.idea.completion.test.testCompletion
-import org.jetbrains.kotlin.idea.debugger.getContextElement
+import org.jetbrains.kotlin.idea.debugger.core.getContextElement
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -65,10 +65,8 @@ class CodeFragmentCompletionInLibraryTest : AbstractJvmBasicCompletionTest() {
         val sourceFile = findLibrarySourceDir().findChild("customLibrary.kt")!!
         val ktFile = PsiManager.getInstance(project).findFile(sourceFile) as KtFile
         val fooFunctionFromLibrary = ktFile.declarations.first() as KtFunction
-        val codeFragment = KtPsiFactory(fooFunctionFromLibrary).createExpressionCodeFragment(
-            fragmentText,
-            getContextElement(fooFunctionFromLibrary.bodyExpression)
-        )
+        val psiFactory = KtPsiFactory(project)
+        val codeFragment = psiFactory.createExpressionCodeFragment(fragmentText, getContextElement(fooFunctionFromLibrary.bodyExpression))
         codeFragment.forceResolveScope(GlobalSearchScope.allScope(project))
         myFixture.configureFromExistingVirtualFile(codeFragment.virtualFile)
     }

@@ -1,4 +1,4 @@
-// "Convert field to local variable in constructor" "true"
+// "Convert field to local variable in constructor" "true-preview"
 
 import javax.swing.*;
 

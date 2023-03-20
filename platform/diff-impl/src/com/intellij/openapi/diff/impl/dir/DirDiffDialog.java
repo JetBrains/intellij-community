@@ -48,7 +48,6 @@ public class DirDiffDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     setSize(800, 600);
-    myDiffPanel.setupSplitter();
     return "DirDiffDialog";
   }
 

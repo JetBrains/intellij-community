@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.statistics
 import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
 import com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 import com.intellij.ide.plugins.PluginUtil
+import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
@@ -19,7 +20,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES }
+enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES, WORKSPACE_MODEL_APPLY }
 
 /**
  * Collect gradle import stats.
@@ -33,10 +34,10 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.import", 4)
+    val GROUP = EventLogGroup("build.gradle.import", 6)
 
-    val activityIdField = EventFields.Long("ide_activity_id")
-    val importPhaseField = EventFields.Enum<Phase>("phase")
+    private val activityIdField = EventFields.Long("ide_activity_id")
+    private val importPhaseField = EventFields.Enum<Phase>("phase")
 
     private val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
     private val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, Boolean("sync_successful"))
@@ -47,10 +48,10 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
                                                                DurationMs,
                                                                Int("error_count"))
 
-    val errorField = StringValidatedByCustomRule("error", "class_name")
-    val severityField = EventFields.String("severity", listOf("fatal", "warning"))
-    val errorHashField = Int("error_hash")
-    val tooManyErrorsField = Boolean("too_many_errors")
+    private val errorField = StringValidatedByCustomRule("error", ClassNameRuleValidator::class.java)
+    private val severityField = EventFields.String("severity", listOf("fatal", "warning"))
+    private val errorHashField = Int("error_hash")
+    private val tooManyErrorsField = Boolean("too_many_errors")
 
     private val errorEvent = GROUP.registerVarargEvent("error",
                                                        activityIdField,
@@ -71,6 +72,7 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
     fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
 
     @JvmStatic
+    @JvmOverloads
     fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long, errorCount: Int = 0) =
       phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs),
         EventPair(Int("error_count"), errorCount))

@@ -152,8 +152,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     while (!breakCondition(current)) {
       final PsiElement position = current;
       current = current.getParent();
-      if (current instanceof YAMLSequence) {
-        YAMLSequence array = (YAMLSequence)current;
+      if (current instanceof YAMLSequence array) {
         final List<YAMLSequenceItem> expressions = array.getItems();
         int idx = -1;
         for (int i = 0; i < expressions.size(); i++) {
@@ -177,7 +176,9 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         // if either value or not first in the chain - needed for completion variant
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)position).getName());
         if (propertyName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) continue;
-        pos.addPrecedingStep(propertyName);
+        if (position != element || forceLastTransition) {
+          pos.addPrecedingStep(propertyName);
+        }
       } else if (breakCondition(current)) {
         break;
       } else {

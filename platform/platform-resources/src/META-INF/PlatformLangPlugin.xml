@@ -26,17 +26,28 @@
   <xi:include href="/META-INF/Inspect.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/WebSymbols.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/WebSymbolsExtensionPoints.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/xml.xml">
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
+  <xi:include href="/META-INF/Refactoring.xml"/>
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
   <xi:include href="/META-INF/LangExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
+
+  <xi:include href="intellij.platform.feedback.xml"/>
+  <xi:include href="intellij.platform.tips.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
@@ -54,9 +65,7 @@
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
-    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification"/>
-    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
@@ -79,9 +88,13 @@
     <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
     <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.LineBookmarkProvider" order="last"/>
     <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.ModuleBookmarkProvider"/>
+    <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.RootTypeBookmarkProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
+    <projectService serviceImplementation="com.intellij.ide.bookmark.BookmarksListProviderService"/>
+    <advancedSetting id="show.line.bookmarks.in.popup" default="true"
+                     bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
@@ -108,15 +121,6 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
-    <notificationGroup id="Show control flow group" displayType="BALLOON"/>
-    <notificationGroup id="Power Save Mode" displayType="BALLOON"/>
-    <notificationGroup id="IDE Caches" displayType="BALLOON"/>
-    <notificationGroup id="Cache Recovery" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Framework Detection" displayType="BALLOON"/>
-    <notificationGroup id="Code style settings migration" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Missing SDKs" displayType="BALLOON"/>
-    <notificationGroup id="Automatic indent detection" displayType="STICKY_BALLOON"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
@@ -126,10 +130,17 @@
     <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>
 
-  <xi:include href="/META-INF/VCS.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/VCS.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/lvcs.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/collaboration-tools.xml">
+    <xi:fallback/>
+  </xi:include>
+
+  <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>
   </xi:include>
 
@@ -156,11 +167,13 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="/META-INF/ExternalProcessAuthHelper.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/ExternalSystem.xml">
     <xi:fallback/>
   </xi:include>
-
-  <xi:include href="intellij.notebooks.visualization.xml">
+  <xi:include href="/META-INF/ExternalSystemDependencyUpdater.xml">
     <xi:fallback/>
   </xi:include>
 </idea-plugin>

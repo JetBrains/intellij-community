@@ -19,7 +19,7 @@ class SvnCloneDialogExtension(project: Project) : CheckoutDialog(project, Projec
 
   override fun getView(): JComponent = centerPanel
 
-  override fun doClone(project: Project, listener: CheckoutProvider.Listener) = this.doOKAction()
+  override fun doClone(listener: CheckoutProvider.Listener) = this.doOKAction()
 
   override fun isOkEnabled(): Boolean {
     return this.isOKActionEnabled

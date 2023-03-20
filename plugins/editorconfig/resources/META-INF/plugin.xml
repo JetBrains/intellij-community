@@ -6,14 +6,17 @@
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-Adds support for <a href="https://editorconfig.org/">EditorConfig</a> files.
-
-<ul><li>Define code style settings using EditorConfig files</li>
-<li>Use coding assistance in EditorConfig files</li></ul>
-
-To create an EditorConfig file in a directory, right-click this directory and select <b>New | EditorConfig File</b>.
-<p></p>
-<p>Originally developed by Kirill Glazyrin and Kevin Bell.</p>
+Handles properties in .editorconfig files and applies them to all supported languages in all JetBrains IDEs.
+<p>
+<b>Features</b>
+<ul><li>Code assistance for all supported properties, standard and extended</li>
+</ul>
+</p>
+<p>
+<b>Getting started</b>
+<br/>
+For more information, check the documentation for <a href="https://editorconfig.org/">EditorConfig</a> files and your <a href="https://www.jetbrains.com/help/">IDE</a>.
+</p>
 ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
@@ -372,11 +375,13 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
     <!-- Intention actions -->
     <intentionAction>
+      <language>EditorConfig</language>
       <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigInvertValueIntention</className>
       <bundleName>messages.EditorConfigBundle</bundleName>
       <categoryKey>editorconfig</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>EditorConfig</language>
       <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigAddDeclarationPartIntention</className>
       <bundleName>messages.EditorConfigBundle</bundleName>
       <categoryKey>editorconfig</categoryKey>
@@ -399,8 +404,15 @@ To create an EditorConfig file in a directory, right-click this directory and se
         nameBundle="messages.EditorConfigBundle"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
-    <notificationGroup id="editorconfig" displayType="BALLOON"/>
-    <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="editorconfig" displayType="BALLOON" bundle="messages.EditorConfigBundle" key="notification.group.error"/>
+    <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON" bundle="messages.EditorConfigBundle" key="notification.group.disabled"/>
+    <localInspection implementationClass="org.editorconfig.configmanagement.EditorConfigEncodingInspection"
+                     bundle="messages.EditorConfigBundle"
+                     key="inspection.file.encoding.mismatch.name"
+                     enabledByDefault="true"
+                     groupKey="editorconfig.inspection.group"/>
+
+    <statistics.counterUsagesCollector implementationClass="org.editorconfig.configmanagement.EditorConfigUsagesCollector"/>
   </extensions>
 
 
@@ -482,10 +494,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
   <applicationListeners>
     <listener class="org.editorconfig.plugincomponents.EditorConfigModificationListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$VfsListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
 
-  <projectListeners>
-    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$FileEditorListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
-  </projectListeners>
 </idea-plugin>

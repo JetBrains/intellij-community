@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.openapi.module.Module;
@@ -7,11 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
+import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -25,15 +22,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyIndexingTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "indexing/";
 
   @Override
   protected void setUp() throws Exception {
-
     super.setUp();
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
@@ -49,13 +42,11 @@ public class PyIndexingTest extends PyTestCase {
   }
 
   private static List<VirtualFile> getTodoFiles(@NotNull Project project) {
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     List<VirtualFile> files = new ArrayList<>();
-    for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
-      files.addAll(fileBasedIndex.getContainingFiles(
-        TodoIndex.NAME,
-        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(project)));
-    }
+    TodoCacheManager.getInstance(project).processFilesWithTodoItems(psi -> {
+      files.add(psi.getVirtualFile());
+      return true;
+    });
     return files;
   }
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Text
+from typing import Any
 
 from .api import (
     delete as delete,
@@ -16,6 +16,7 @@ from .exceptions import (
     ConnectTimeout as ConnectTimeout,
     FileModeWarning as FileModeWarning,
     HTTPError as HTTPError,
+    JSONDecodeError as JSONDecodeError,
     ReadTimeout as ReadTimeout,
     RequestException as RequestException,
     Timeout as Timeout,
@@ -35,4 +36,4 @@ __version__: Any
 class NullHandler(logging.Handler):
     def emit(self, record): ...
 
-def check_compatibility(urllib3_version: Text, chardet_version: Text) -> None: ...
+def check_compatibility(urllib3_version: str, chardet_version: str | None, charset_normalizer_version: str | None) -> None: ...

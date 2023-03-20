@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.navigation;
 
@@ -11,7 +11,7 @@ import static org.jetbrains.kotlin.idea.navigation.GotoCheck.checkGotoDirectives
 public abstract class AbstractKotlinGotoTest extends KotlinLightCodeInsightFixtureTestCase {
     protected void doSymbolTest(String path) {
         myFixture.configureByFile(path);
-        checkGotoDirectives(new GotoSymbolModel2(getProject()), myFixture.getEditor());
+        checkGotoDirectives(new GotoSymbolModel2(getProject(), myFixture.getTestRootDisposable()), myFixture.getEditor());
     }
 
     protected void doClassTest(String path) {

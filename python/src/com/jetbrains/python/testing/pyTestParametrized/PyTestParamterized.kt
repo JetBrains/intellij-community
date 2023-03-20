@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pyTestParametrized
 
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.util.ThreeState
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.psi.PyDecorator
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyNamedParameter
-import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.testing.isTestElement
+import com.jetbrains.python.testing.pyTestFixtures.getFixtures
 
 /**
  * @return Boolean is parameter provided to function by parametrized decorator
@@ -26,7 +25,7 @@ internal fun PyNamedParameter.asParametrized(evalContext: TypeEvalContext) =
     ?.find { it.name == name }
 
 
-private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: TypeEvalContext): List<PyTestParameter> {
+private fun getParametersFromDecorator(decorator: PyDecorator, function: PyFunction, evalContext: TypeEvalContext): List<PyTestParameter> {
   val decoratorArguments = decorator.arguments
   val evaluator = PyEvaluator()
   val parameterNamesExpression = evaluator.evaluate(decoratorArguments.firstOrNull()) ?: return emptyList()
@@ -56,12 +55,10 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
 
   val parameterTypes = arrayOfNulls<PyType?>(parameterNames.size)
 
-  val iteratedItemType = valuesExpression.iteratedItemType
-
-  when (iteratedItemType) {
+  when (val iteratedItemType = valuesExpression.iteratedItemType) {
     is PyUnionType -> {
       //Could be union of tuples
-      for (i in 0 until parameterTypes.size) {
+      for (i in parameterTypes.indices) {
         // If iterated elements is tuple -- open it. Otherwise use as union
         parameterTypes[i] = iteratedItemType.map { (it as? PyTupleType)?.getElementType(i) ?: it }
       }
@@ -69,8 +66,34 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
     is PyTupleType -> iteratedItemType.elementTypes.forEachIndexed { i, type -> if (parameterTypes.size > i) parameterTypes[i] = type }
     !is PyCollectionType -> parameterTypes.fill(iteratedItemType)
   }
+  // We now have array of param names and array of their types
+  // But if indirect=true or indirect=["param"..], we should replace param types with fixture result types
+
+  (decoratorArguments.lastOrNull() as? PyKeywordArgument)?.let {
+    patchTypesWithIndirectFixture(parameterNames, parameterTypes, function, evalContext, it)
+  }
 
   return parameterNames.mapIndexed { i, name -> PyTestParameter(name, parameterTypes[i]) }
+}
+
+private fun patchTypesWithIndirectFixture(paramNames: List<String>,
+                                          paramTypes: Array<PyType?>,
+                                          function: PyFunction,
+                                          evalContext: TypeEvalContext,
+                                          indirectKeyword: PyKeywordArgument) {
+  if (indirectKeyword.keyword != "indirect") return
+  val indirectParams = when (val expression = PyEvaluator().evaluate(indirectKeyword.valueExpression)) {
+    is Boolean -> if (expression) paramNames else emptyList() // indirect=True
+    is List<*> -> expression.map { it.toString() } // indirect=["param_name"]
+    else -> return
+  }
+  val module = ModuleUtilCore.findModuleForPsiElement(function) ?: return
+  val fixtures = getFixtures(module, function, evalContext).associateBy { it.name }
+  for ((i, paramName) in paramNames.withIndex()) {
+    if (paramName in indirectParams) {
+      paramTypes[i] = fixtures[paramName]?.function?.let { evalContext.getReturnType(it) } // fixture return type
+    }
+  }
 }
 
 
@@ -89,7 +112,7 @@ internal fun PyFunction.getParametersOfParametrized(evalContext: TypeEvalContext
   }
   return decoratorList.decorators
     .filter { it.name == "parametrize" }
-    .flatMap { getParametersFromDecorator(it, evalContext) }
+    .flatMap { getParametersFromDecorator(it, this, evalContext) }
 
 }
 

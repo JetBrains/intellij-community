@@ -46,8 +46,7 @@ public final class JavaPsiMathUtil {
     else if (value instanceof Long) {
       return String.valueOf(value.longValue() + addend);
     }
-    if (stripped instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)stripped;
+    if (stripped instanceof PsiPolyadicExpression polyadicExpression) {
       int multiplier = getMultiplier(polyadicExpression);
       if (multiplier != 0) {
         value = getNumberFromLiteral(ArrayUtil.getLastElement(polyadicExpression.getOperands()));
@@ -85,8 +84,7 @@ public final class JavaPsiMathUtil {
   @Contract("null, _ -> null")
   @Nullable
   public static String simplifyComparison(PsiExpression comparison, @NotNull CommentTracker ct) {
-    if (!(comparison instanceof PsiBinaryExpression)) return null;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)comparison;
+    if (!(comparison instanceof PsiBinaryExpression binOp)) return null;
     RelationType relationType = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
     if (relationType == null) return null;
     String operator = binOp.getOperationSign().getText();

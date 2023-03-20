@@ -15,16 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyOverlyComplexBooleanExpressionInspection extends GroovyOverlyComplexBooleanExpressionInspectionBase {
 
   @Override
-  public JComponent createGroovyOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"),
-                                              this, "m_limit");
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"), 2, 100));
   }
 }

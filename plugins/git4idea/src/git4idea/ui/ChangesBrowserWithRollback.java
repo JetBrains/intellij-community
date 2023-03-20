@@ -9,15 +9,12 @@ import com.intellij.openapi.vcs.changes.ChangeListAdapter;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +25,7 @@ import java.util.Set;
  * After the revert completes, the changes list is automatically refreshed according to the actual changes
  * retrieved from the {@link ChangeListManager}.
  */
-public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Disposable {
+public class ChangesBrowserWithRollback extends AsyncChangesBrowserBase implements Disposable {
   private final Set<Change> myOriginalChanges;
 
   public ChangesBrowserWithRollback(@NotNull Project project, @NotNull List<? extends Change> changes) {
@@ -45,6 +42,7 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
 
   @Override
   public void dispose() {
+    shutdown();
   }
 
   @NotNull
@@ -67,12 +65,14 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
 
   @NotNull
   @Override
-  protected DefaultTreeModel buildTreeModel() {
-    Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
-    List<Change> newChanges = ContainerUtil.filter(allChanges, myOriginalChanges::contains);
+  protected AsyncChangesTreeModel getChangesTreeModel() {
+    return SimpleAsyncChangesTreeModel.create(grouping -> {
+      Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
+      List<Change> newChanges = ContainerUtil.filter(allChanges, myOriginalChanges::contains);
 
-    RemoteStatusChangeNodeDecorator decorator = RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator();
-    return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), newChanges, decorator);
+      RemoteStatusChangeNodeDecorator decorator = RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator();
+      return TreeModelBuilder.buildFromChanges(myProject, grouping, newChanges, decorator);
+    });
   }
 
 

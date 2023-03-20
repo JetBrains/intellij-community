@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
@@ -60,13 +60,14 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     }
     FileEditor fileEditor = pair.second;
     LightEditorInfo editorInfo = new LightEditorInfoImpl(pair.first, fileEditor, file);
-    ObjectUtils.consumeIfNotNull(EditorHistoryManager.getInstance(project).getState(file, pair.first),
-                                 state -> {
-                                   fileEditor.getComponent();
-                                   fileEditor.setState(state);
-                                 });
-    ObjectUtils.consumeIfCast(LightEditorInfoImpl.getEditor(editorInfo), EditorImpl.class,
-                              editorImpl -> editorImpl.setDropHandler(new LightEditDropHandler()));
+    FileEditorState state = EditorHistoryManager.getInstance(project).getState(file, pair.first);
+    if (state != null) {
+      fileEditor.getComponent();
+      fileEditor.setState(state);
+    }
+    if (LightEditorInfoImpl.getEditor(editorInfo) instanceof EditorImpl editor) {
+      editor.setDropHandler(new LightEditDropHandler());
+    }
     myEditors.add(editorInfo);
     installListener(editorInfo);
     project.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(
@@ -91,8 +92,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   private static @Nullable Pair<FileEditorProvider, FileEditor> createFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-    for (FileEditorProvider provider : providers) {
+    for (FileEditorProvider provider : FileEditorProviderManager.getInstance().getProviderList(project, file)) {
       FileEditor editor = provider.createEditor(project, file);
       return Pair.create(provider, editor);
     }
@@ -185,7 +185,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     myEventDispatcher.getMulticaster().autosaveModeChanged(autosaveMode);
   }
 
-  void fireFileStatusChanged(@NotNull Collection<LightEditorInfo> editorInfos) {
+  void fireFileStatusChanged(@NotNull Collection<? extends LightEditorInfo> editorInfos) {
     myEventDispatcher.getMulticaster().fileStatusChanged(editorInfos);
   }
 

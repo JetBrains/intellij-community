@@ -11,10 +11,9 @@ class FlipComparisonPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiBinaryExpression)) {
+    if (!(element instanceof PsiBinaryExpression expression)) {
       return false;
     }
-    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
     if (!ComparisonUtils.isComparison(expression)) {
       return false;
     }

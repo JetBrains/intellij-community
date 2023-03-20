@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger;
 
 import com.intellij.lang.LangBundle;
@@ -25,7 +24,6 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class UiDebugger extends JPanel implements Disposable {
-
   private final DialogWrapper myDialog;
   private final JBTabs myTabs;
   private final List<UiDebuggerExtension> myExtensions;
@@ -34,10 +32,9 @@ public class UiDebugger extends JPanel implements Disposable {
     Disposer.register(ApplicationManager.getApplication(), this);
 
     myTabs = JBTabsFactory.createTabs(null, this);
-    myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setPaintBorder(1, 0, 0, 0).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
+    myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
       @Override
-      @NotNull
-      public UiDecoration getDecoration() {
+      public @NotNull UiDecoration getDecoration() {
         return new UiDecoration(null, JBUI.insets(4));
       }
     });
@@ -116,7 +113,7 @@ public class UiDebugger extends JPanel implements Disposable {
     myDialog.getPeer().getWindow().toFront();
   }
 
-  private void addToUi(List<UiDebuggerExtension> extensions) {
+  private void addToUi(List<? extends UiDebuggerExtension> extensions) {
     for (UiDebuggerExtension each : extensions) {
       myTabs.addTab(new TabInfo(each.getComponent()).setText(each.getName()));
     }

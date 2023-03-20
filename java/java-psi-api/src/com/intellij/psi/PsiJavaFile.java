@@ -50,37 +50,37 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
   PsiImportList getImportList();
 
   /**
-   * Returns the list of classes or packages which have been
+   * Returns the array of classes or packages which have been
    * imported on demand (for example, javax.swing.*)
    *
    * @param includeImplicit if true, implicitly imported packages (like java.lang) are included.
    * @param checkIncludes   deprecated, no longer used
-   * @return the list of PsiClass or PsiPackage elements for the imports.
+   * @return the array of PsiClass or PsiPackage elements for the imports.
    */
   PsiElement @NotNull [] getOnDemandImports(boolean includeImplicit, @Deprecated boolean checkIncludes);
 
   /**
-   * Returns the list of classes which have been imported as
+   * Returns the array of classes which have been imported as
    * single-class imports.
    *
    * @param checkIncludes deprecated, no longer used.
-   * @return the list of PsiClass elements for the import.
+   * @return the array of PsiClass elements for the import.
    */
   PsiClass @NotNull [] getSingleClassImports(@Deprecated boolean checkIncludes);
 
   /**
-   * Returns the list of names of implicitly imported packages
+   * Returns the array of names of implicitly imported packages
    * (for example, java.lang).
    *
-   * @return the list of implicitly imported package names.
+   * @return the array of implicitly imported package names.
    */
   String @NotNull [] getImplicitlyImportedPackages();
 
   /**
-   * returns the list of reference elements for the
+   * returns the array of reference elements for the
    * implicitly imported packages (for example, java.lang).
    *
-   * @return the list of implicitly imported package reference elements.
+   * @return the array of implicitly imported package reference elements.
    */
   PsiJavaCodeReferenceElement @NotNull [] getImplicitlyImportedPackageReferences();
 

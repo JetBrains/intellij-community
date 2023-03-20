@@ -28,7 +28,18 @@ public class OpenAlienProjectAction extends AnAction {
   }
 
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(ActionPlaces.WELCOME_SCREEN.equals(e.getPlace()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    if (myProjectPaths == null) return;
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (@NlsSafe String path : myProjectPaths) {
       actionGroup.add(new AnAction(path) {

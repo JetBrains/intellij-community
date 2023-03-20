@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.util
 
-import com.intellij.util.io.exists
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -11,6 +10,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 fun String.lastPathSegment() =
     Paths.get(this).last().toString()

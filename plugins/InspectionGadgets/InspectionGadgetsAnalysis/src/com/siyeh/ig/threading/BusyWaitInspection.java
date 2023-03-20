@@ -48,10 +48,10 @@ public class BusyWaitInspection extends BaseInspection {
       @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!MethodCallUtils.isCallToMethod(expression, "java.lang.Thread",
-                                          PsiType.VOID, "sleep", PsiType.LONG) &&
+                                          PsiTypes.voidType(), "sleep", PsiTypes.longType()) &&
           !MethodCallUtils.isCallToMethod(expression,
-                                          "java.lang.Thread", PsiType.VOID, "sleep",
-                                          PsiType.LONG, PsiType.INT)) {
+                                          "java.lang.Thread", PsiTypes.voidType(), "sleep",
+                                          PsiTypes.longType(), PsiTypes.intType())) {
         return;
       }
       PsiElement context = expression;

@@ -10,14 +10,13 @@ import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.NotNull
 
 class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProjectConfigurator {
   companion object {
     private val LOG: Logger = logger<UnknownSdkInspectionCommandLineConfigurator>()
 
     fun configureUnknownSdks(project: Project, indicator: ProgressIndicator) {
-      require(!ApplicationManager.getApplication().isWriteThread) {
+      require(!ApplicationManager.getApplication().isWriteIntentLockAcquired) {
         "The code below uses the same GUI thread to complete operations. Running from EDT would deadlock"
       }
       ApplicationManager.getApplication().assertIsNonDispatchThread()

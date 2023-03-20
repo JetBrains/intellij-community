@@ -181,7 +181,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
         assert relevantRange.containsOffset(startOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(0) = "+startOffsetInHost+" while its relevantRange="+relevantRange;
         int endOffsetInHost = textEscaper.getOffsetInHost(charsDecodedSuccessfully, info.registeredRangeInsideHost);
         assert relevantRange.containsOffset(endOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(" + charsDecodedSuccessfully +
-                                                                 ") = "+startOffsetInHost+" while its relevantRange="+relevantRange;
+                                                                 ") = "+endOffsetInHost+" while its relevantRange="+relevantRange;
         ProperTextRange successfulHostRange = new ProperTextRange(startOffsetInHost, endOffsetInHost);
         relevantRange = relevantRange.intersection(successfulHostRange);
       }
@@ -284,7 +284,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
                                                    @NotNull InjectedFileViewProvider viewProvider) {
     cacheEverything(place, documentWindow, viewProvider, psiFile);
 
-    final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(documentWindow);
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(documentWindow);
     PsiFile cachedPsiFile = ((PsiManagerEx)psiFile.getManager()).getFileManager().findCachedViewProvider(virtualFile).getPsi(psiFile.getLanguage());
     assert cachedPsiFile == psiFile : "Cached psi :"+ cachedPsiFile +" instead of "+psiFile;
 
@@ -471,7 +471,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
 
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
-      final PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
+      PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
       FileViewProvider viewProvider;
       if (oldFile == null ||
           !oldFile.isValid() ||
@@ -483,8 +483,8 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
         continue;
       }
 
-      final ASTNode newInjectedNode = newInjectedPsi.getNode();
-      final ASTNode oldFileNode = oldFile.getNode();
+      ASTNode newInjectedNode = newInjectedPsi.getNode();
+      ASTNode oldFileNode = oldFile.getNode();
       assert newInjectedNode != null : "New node is null";
       if (oldDocument.areRangesEqual(newDocumentWindow)) {
         if (oldFile.getFileType() != newInjectedPsi.getFileType() || oldFile.getLanguage() != newInjectedPsi.getLanguage()) {
@@ -516,7 +516,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     if (!oldFile.textMatches(injectedPsi)) {
       InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)oldFile.getViewProvider();
       oldViewProvider.performNonPhysically(() -> DebugUtil.performPsiModification("injected tree diff", () -> {
-        final DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
+        DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
                                                             oldFileNode.getText());
         diffLog.doActualPsiChange(oldFile);
       }));
@@ -571,7 +571,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     Place oldPlace = oldDocumentWindow.getShreds();
     // can be different from newText if decode fails in the middle and we'll have to shrink the document
     StringBuilder newDocumentText = new StringBuilder(newText.length());
-    // we need escaper but it only works with committed PSI,
+    // we need escaper, but it only works with committed PSI,
     // so we get the committed (but not yet applied) PSI from the commit-document-in-the-background process
     // and find the corresponding injection host there
     // and create literal escaper from that new (dummy) psi
@@ -579,17 +579,24 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     StringBuilder chars = new StringBuilder();
     for (PsiLanguageInjectionHost.Shred shred : oldPlace) {
       PsiLanguageInjectionHost oldHost = shred.getHost();
-      if (oldHost == null) return null;
+      if (oldHost == null) {
+        return null;
+      }
       SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = ((ShredImpl)shred).getSmartPointer();
-      Segment newInjectionHostRange = calcActualRange(hostPsiFile, hostDocument, hostPointer.getPsiRange());
-      if (newInjectionHostRange == null) return null;
+      Segment hostPsiRange = hostPointer.getPsiRange();
+      Segment newInjectionHostRange = SelfElementInfo.calcActualRangeAfterDocumentEvents(hostPsiFile, hostDocument, hostPsiRange, true);
+      if (newInjectionHostRange == null) {
+        return null;
+      }
       PsiLanguageInjectionHost newDummyInjectionHost = findNewInjectionHost(hostPsiFile, oldRoot, newRoot, oldHost, newInjectionHostRange);
       if (newDummyInjectionHost == null) {
         return null;
       }
       newInjectionHostRange = newDummyInjectionHost.getTextRange().shiftRight(oldRoot.getTextRange().getStartOffset());
       Segment hostInjectionRange = shred.getHostRangeMarker(); // in the new document
-      if (hostInjectionRange == null) return null;
+      if (hostInjectionRange == null) {
+        return null;
+      }
       TextRange rangeInsideHost = TextRange.create(hostInjectionRange).shiftLeft(newInjectionHostRange.getStartOffset());
 
       PlaceInfo info = new PlaceInfo(shred.getPrefix(), shred.getSuffix(), newDummyInjectionHost, rangeInsideHost);
@@ -654,12 +661,6 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
-  private static Segment calcActualRange(@NotNull PsiFile containingFile,
-                                         @NotNull Document document,
-                                         @NotNull Segment range) {
-    return SelfElementInfo.calcActualRangeAfterDocumentEvents(containingFile, document, range, true);
-  }
-
   private static ASTNode @NotNull [] parseFile(@NotNull Language language, Language forcedLanguage,
                                                @NotNull DocumentWindowImpl documentWindow,
                                                @NotNull VirtualFile hostVirtualFile,
@@ -686,7 +687,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
           psiFile.setContentElementType(elementType);
         }
       }
-      final ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
+      ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
 
       assert parsedNode instanceof FileElement : "Parsed to " + parsedNode + " instead of FileElement";
 
@@ -758,7 +759,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     }
     // JavaParserDefinition.create() throws this.
     // DO not over-generalize this exception type to avoid swallowing meaningful exceptions
-    catch (IllegalStateException e) {
+    catch (IllegalArgumentException e) {
       return null;
     }
   }
@@ -832,7 +833,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
             prevHostEndOffset = shredEndOffset;
           }
           ProperTextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes(),
+          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum,
                                                             iterator.getTextAttributesKeys()));
         }
         range = spilled;

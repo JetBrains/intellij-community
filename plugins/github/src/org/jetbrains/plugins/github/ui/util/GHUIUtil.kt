@@ -3,9 +3,11 @@ package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.UtilBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -13,9 +15,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
@@ -31,8 +32,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.util.CollectionDelta
-import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.event.ActionListener
@@ -54,13 +53,12 @@ object GHUIUtil {
       GHPullRequestState.OPEN -> CollaborationToolsIcons.PullRequestOpen
     }
 
-  @NlsSafe
-  fun getPullRequestStateText(state: GHPullRequestState, isDraft: Boolean): String =
-    if (isDraft) GithubBundle.message("pull.request.state.draft")
+  fun getPullRequestStateText(state: GHPullRequestState, isDraft: Boolean): @NlsSafe String =
+    if (isDraft) CollaborationToolsBundle.message("review.details.review.state.draft")
     else when (state) {
-      GHPullRequestState.CLOSED -> GithubBundle.message("pull.request.state.closed")
-      GHPullRequestState.MERGED -> GithubBundle.message("pull.request.state.merged")
-      GHPullRequestState.OPEN -> GithubBundle.message("pull.request.state.open")
+      GHPullRequestState.CLOSED -> CollaborationToolsBundle.message("review.details.review.state.closed")
+      GHPullRequestState.MERGED -> CollaborationToolsBundle.message("review.details.review.state.merged")
+      GHPullRequestState.OPEN -> CollaborationToolsBundle.message("review.details.review.state.open")
     }
 
   fun getIssueStateIcon(state: GithubIssueState): Icon =
@@ -76,51 +74,20 @@ object GHUIUtil {
       GithubIssueState.closed -> GithubBundle.message("issue.state.closed")
     }
 
-  fun focusPanel(panel: JComponent) {
-    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
-    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
-    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
-  }
-
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
-    background = getLabelBackground(label)
-    foreground = getLabelForeground(background)
+    background = CollaborationToolsUIUtil.getLabelBackground(label.color)
+    foreground = CollaborationToolsUIUtil.getLabelForeground(background)
   }.andOpaque()
 
-  fun getLabelBackground(label: GHLabel): JBColor {
-    val apiColor = ColorUtil.fromHex(label.color)
-    return JBColor(apiColor, ColorUtil.darker(apiColor, 3))
-  }
-
-  fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
-
-  fun getFontEM(component: JComponent): Float {
-    val metrics = component.getFontMetrics(component.font)
-    //em dash character
-    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.toInt())
-  }
-
   fun formatActionDate(date: Date): String {
-    val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
+    val prettyDate = DateFormatUtil.formatPrettyDate(date).lowercase(Locale.getDefault())
     val datePrefix = if (prettyDate.equals(UtilBundle.message("date.format.today"), true) ||
                          prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "
     return datePrefix + prettyDate
   }
 
-  fun createNoteWithAction(action: () -> Unit): SimpleColoredComponent {
-    return SimpleColoredComponent().apply {
-      isFocusable = true
-      isOpaque = false
-
-      LinkMouseListenerBase.installSingleTagOn(this)
-      registerKeyboardAction({ action() },
-                             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                             JComponent.WHEN_FOCUSED)
-    }
-  }
-
-  fun <T> showChooserPopup(@NlsContexts.PopupTitle popupTitle: String, parentComponent: JComponent,
+  fun <T> showChooserPopup(parentComponent: JComponent,
                            cellRenderer: SelectionListCellRenderer<T>,
                            currentList: List<T>,
                            availableListFuture: CompletableFuture<List<T>>)
@@ -148,12 +115,15 @@ object GHUIUtil {
       cellRenderer.getText(it.value)
     }
 
-    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField.textEditor)
+    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField).apply {
+      val size = searchField.preferredSize
+      preferredSize = JBDimension(size.width, size.height * 5, true) // default size for loading popup state
+    }
     ListUtil.installAutoSelectOnMouseMove(list)
 
     fun toggleSelection() {
       for (item in list.selectedValuesList) {
-        item.selected = !item.selected
+        item.isSelected = !item.isSelected
       }
       list.repaint()
     }
@@ -171,19 +141,19 @@ object GHUIUtil {
     JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchField)
       .setRequestFocus(true)
       .setCancelOnClickOutside(true)
-      .setTitle(popupTitle)
       .setResizable(true)
       .setMovable(true)
       .setKeyboardActions(listOf(Pair.create(ActionListener { toggleSelection() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
       .addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {
+          panel.preferredSize = null // needed that popup does not drop out outside an IDE window
           list.setPaintBusy(true)
           list.emptyText.text = ApplicationBundle.message("label.loading.page.please.wait")
 
           availableListFuture
             .thenApplyAsync { available ->
               available.map { SelectableWrapper(it, originalSelection.contains(it)) }
-                .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.selected }
+                .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.isSelected }
                               .thenComparing({ cellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
             }.successOnEdt {
               listModel.replaceAll(it)
@@ -200,7 +170,7 @@ object GHUIUtil {
         }
 
         override fun onClosed(event: LightweightWindowEvent) {
-          val selected = listModel.items.filter { it.selected }.map { it.value }
+          val selected = listModel.items.filter { it.isSelected }.map { it.value }
           result.complete(CollectionDelta(originalSelection, selected))
         }
       })
@@ -209,23 +179,15 @@ object GHUIUtil {
     return result
   }
 
-  fun getPRTimelineWidth() = (getFontEM(JLabel()) * 42).toInt()
-
-  data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
-
-  sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>>, BorderLayoutPanel() {
-
-    private val mainLabel = JLabel()
-    private val checkIconLabel = JLabel()
-
-    init {
-      checkIconLabel.iconTextGap = JBUI.scale(UIUtil.DEFAULT_VGAP)
-      checkIconLabel.border = JBUI.Borders.empty(0, 4)
-
-      addToLeft(checkIconLabel)
-      addToCenter(mainLabel)
-
-      border = JBUI.Borders.empty(4, 0)
+  sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>> {
+    private val checkBox: JBCheckBox = JBCheckBox().apply {
+      isOpaque = false
+    }
+    private val label: SimpleColoredComponent = SimpleColoredComponent()
+    private val panel = BorderLayoutPanel(10, 5).apply {
+      addToLeft(checkBox)
+      addToCenter(label)
+      border = JBUI.Borders.empty(5)
     }
 
     override fun getListCellRendererComponent(list: JList<out SelectableWrapper<T>>,
@@ -233,35 +195,38 @@ object GHUIUtil {
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      foreground = UIUtil.getListForeground(isSelected, true)
-      background = UIUtil.getListBackground(isSelected, true)
+      checkBox.apply {
+        this.isSelected = value.isSelected
+        this.isFocusPainted = cellHasFocus
+        this.isFocusable = cellHasFocus
+      }
 
-      mainLabel.foreground = foreground
-      mainLabel.font = font
+      label.apply {
+        clear()
+        append(getText(value.value))
+        icon = getIcon(value.value)
+        foreground = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
+      }
 
-      mainLabel.text = getText(value.value)
-      mainLabel.icon = getIcon(value.value)
+      UIUtil.setBackgroundRecursively(panel, ListUiUtil.WithTallRow.background(list, isSelected, true))
 
-      val icon = LafIconLookup.getIcon("checkmark", isSelected, false)
-      checkIconLabel.icon = if (value.selected) icon else EmptyIcon.create(icon)
-
-      return this
+      return panel
     }
 
-    @NlsContexts.Label
-    abstract fun getText(value: T): String
+    abstract fun getText(value: T): @NlsContexts.Label String
+
     abstract fun getIcon(value: T): Icon
 
     class PRReviewers(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHPullRequestRequestedReviewer>() {
       override fun getText(value: GHPullRequestRequestedReviewer) = value.shortName
-      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
     }
 
     class Users(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHUser>() {
       override fun getText(value: GHUser) = value.login
-      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
     }
 
     class Labels : SelectionListCellRenderer<GHLabel>() {
@@ -299,6 +264,3 @@ object GHUIUtil {
     return repos.any { it.serverPath != firstServer }
   }
 }
-
-@NlsSafe
-fun Action.getName(): String = (getValue(Action.NAME) as? String).orEmpty()

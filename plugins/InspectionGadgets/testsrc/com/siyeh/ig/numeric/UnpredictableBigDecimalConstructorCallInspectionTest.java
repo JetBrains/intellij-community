@@ -41,7 +41,6 @@ public class UnpredictableBigDecimalConstructorCallInspectionTest extends LightJ
            "  void foo() {" +
            "    new BigDecimal(.1);" +
            "  }" +
-           "" +
            "  class BigDecimal {" +
            "    BigDecimal(double d) {}" +
            "  }" +

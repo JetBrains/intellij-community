@@ -39,9 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> INDEX_ID = ID.create("html5.custom.attributes.index");
 

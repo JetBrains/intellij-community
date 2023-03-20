@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven.inspections
 
@@ -21,11 +21,7 @@ import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 import org.jetbrains.kotlin.utils.PathUtil
 
 class DifferentMavenStdlibVersionInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
-    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>?, holder: DomElementAnnotationHolder?) {
-        if (domFileElement == null || holder == null) {
-            return
-        }
-
+    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val file = domFileElement.file
         val module = domFileElement.module ?: return
         val manager = MavenProjectsManager.getInstance(module.project) ?: return
@@ -69,7 +65,7 @@ class DifferentMavenStdlibVersionInspection : DomElementsInspection<MavenDomProj
             }
     }
 
-    private fun createFixes(project: MavenProject, versionElement: GenericDomValue<*>, versions: List<String>): List<SetVersionQuickFix> {
+    private fun createFixes(project: MavenProject, versionElement: GenericDomValue<String>, versions: List<String>): List<SetVersionQuickFix> {
         val bestVersion = versions.maxByOrNull(::MavenVersionComparable)!!
         if (bestVersion == versionElement.stringValue) {
             return emptyList()
@@ -81,7 +77,8 @@ class DifferentMavenStdlibVersionInspection : DomElementsInspection<MavenDomProj
                 SetVersionQuickFix(versionElement, bestVersion, null)
     }
 
-    private class SetVersionQuickFix(val versionElement: GenericDomValue<*>, val newVersion: String, val versionResolved: String?) :
+    @Suppress("ActionIsNotPreviewFriendly")
+    private class SetVersionQuickFix(val versionElement: GenericDomValue<String>, val newVersion: String, val versionResolved: String?) :
         LocalQuickFix {
         override fun getName() = when (versionResolved) {
             null -> KotlinMavenBundle.message("fix.set.version.name", newVersion)

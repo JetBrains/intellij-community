@@ -16,9 +16,6 @@ import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.ClassUtils
 import java.util.*
 
-/**
- * @author peter
- */
 data class ExpressionRange internal constructor (val startOffset: Int, val endOffset: Int) {
 
   companion object {
@@ -128,7 +125,7 @@ interface MethodReturnInferenceResult {
         return Mutability.UNKNOWN
       }
       return delegateCalls.stream().map { range -> getDelegateMutability(method, range, body()) }.reduce(
-        Mutability::unite).orElse(
+        Mutability::join).orElse(
         Mutability.UNKNOWN)
     }
 

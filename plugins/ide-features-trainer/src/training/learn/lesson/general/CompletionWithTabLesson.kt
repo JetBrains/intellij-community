@@ -20,8 +20,8 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
 
       task("CodeCompletion") {
         text(LessonsBundle.message("completion.with.tab.begin.completion", action(it), code(proposal)))
-        triggerByListItemAndHighlight { item -> item.isToStringContains(proposal) }
-        restoreIfModifiedOrMoved()
+        triggerAndBorderHighlight().listItem { item -> item.isToStringContains(proposal) }
+        restoreIfModifiedOrMoved(sample)
         test { actions(it) }
       }
 
@@ -30,8 +30,6 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
         LessonsBundle.message("completion.with.tab.finish.with.tab", code(proposal), action("EditorTab"))
       }
     }
-
-  override val suitableTips = listOf("TabInLookups")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.code.completion"),

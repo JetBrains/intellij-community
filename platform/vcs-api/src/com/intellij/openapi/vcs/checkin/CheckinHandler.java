@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalCommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.util.PairConsumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -21,11 +20,12 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * A callback which can be used to extend the user interface of the Checkin Project/Checkin File
  * dialogs and to perform actions before commit, on successful commit and on failed commit.
+ * <p>
+ * Handlers may also implement {@link CommitCheck} interface, that supersedes {@link #beforeCheckin} method.
  *
- * @author lesya
  * @see BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
  * @see CodeAnalysisBeforeCheckinHandler
- * @see CheckinMetaHandler
+ * @see CheckinModificationHandler
  */
 public abstract class CheckinHandler {
   /**
@@ -39,29 +39,27 @@ public abstract class CheckinHandler {
   }
 
   /**
-   * Returns the panel which is inserted in the "Before Check In" group box of the Checkin Project
-   * or Checkin File dialogs.
+   * Returns the panel which is inserted in the "Before Commit" group of the commit options panel.
    *
-   * @return the panel instance, or {@code null} if the handler does not provide any options to show in the
-   * "Before Check In" group.
+   * @see com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
    */
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     return null;
   }
 
-  @ApiStatus.Experimental
+  /**
+   * Returns the panel which is inserted in the "Settings | Version Control | Commit" configurable panel.
+   *
+   * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
+   */
   @Nullable
   public UnnamedConfigurable getBeforeCheckinSettings() {
     return tryCast(getBeforeCheckinConfigurationPanel(), UnnamedConfigurable.class);
   }
 
   /**
-   * Returns the panel which is inserted in the "After Check In" group box of the Checkin Project
-   * or Checkin File dialogs.
-   *
-   * @return the panel instance, or {@code null} if the handler does not provide any options to show in the
-   * "After Check In" group.
+   * Returns the panel which is inserted in the "After Commit" group of the commit options panel.
    */
   @Nullable
   public RefreshableOnComponent getAfterCheckinConfigurationPanel(final Disposable parentDisposable) {
@@ -73,10 +71,13 @@ public abstract class CheckinHandler {
    * {@link CheckinProjectPanel} instance passed to
    * {@link BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)} to
    * get information about the files to be checked in.
+   * <p>
+   * This method will not be called if {@link CommitCheck} interface is implemented.
    *
    * @param executor the commit executor, or {@code null} if the standard commit operation is executed.
    * @return the code indicating whether the check-in operation should be performed or aborted.
    */
+  @Nullable
   public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     return beforeCheckin();
   }
@@ -123,9 +124,10 @@ public abstract class CheckinHandler {
   }
 
   /**
-   * Allows to skip before checkin steps when is not applicable. E.g., there should be no check for todos before shelf/create patch.
+   * Allows to skip {@link #beforeCheckin()} before checkin steps when not applicable.
+   * E.g., there should be no check for todos before shelf/create patch.
    *
-   * @param executor current operation ({@code null} for commit)
+   * @param executor current operation ({@code null} for VCS commit)
    * @return {@code true} if handler should be skipped
    */
   public boolean acceptExecutor(CommitExecutor executor) {

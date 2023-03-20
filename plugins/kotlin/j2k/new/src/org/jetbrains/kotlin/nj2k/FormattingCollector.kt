@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -20,7 +20,7 @@ class FormattingCollector {
         takeTrailingComments: Boolean,
         takeLeadingComments: Boolean
     ) {
-        if (psi == null) return
+        if (psi == null || psi is PsiCompiledElement) return
         val (leftTokens, rightTokens) = psi.collectComments(takeTrailingComments, takeLeadingComments)
         element.trailingComments += leftTokens
         element.leadingComments += rightTokens
@@ -44,6 +44,7 @@ class FormattingCollector {
                     this
                 )
             )
+
             is PsiComment -> JKComment(text, indent())
             else -> null
         } ?: return null

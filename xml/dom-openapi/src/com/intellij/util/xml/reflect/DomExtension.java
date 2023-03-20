@@ -26,9 +26,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public interface DomExtension {
 
   @NotNull

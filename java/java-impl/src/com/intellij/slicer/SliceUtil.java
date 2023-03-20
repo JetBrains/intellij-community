@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -116,8 +116,7 @@ final class SliceUtil {
         }
       }
     }
-    if (expression instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)expression;
+    if (expression instanceof PsiVariable variable) {
       Collection<PsiExpression> values = DfaUtil.getVariableValues(variable, original);
       PsiExpression initializer = variable.getInitializer();
       if (values.isEmpty() && initializer != null) {
@@ -149,8 +148,7 @@ final class SliceUtil {
         return processParameterUsages((PsiParameter)variable, builder.withFilter(f -> f.popFrame(variable.getProject())), processor);
       }
     }
-    if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) { // ctr call can't return value or be container get, so don't use PsiCall here
       PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(call);
       if (returnedValue != null) {
         if (!builder.process(returnedValue, processor)) {
@@ -194,15 +192,13 @@ final class SliceUtil {
       }
       return processMethodReturnValue(call, processor, builder);
     }
-    if (expression instanceof PsiConditionalExpression) {
-      PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
+    if (expression instanceof PsiConditionalExpression conditional) {
       PsiExpression thenE = conditional.getThenExpression();
       PsiExpression elseE = conditional.getElseExpression();
       if (thenE != null && !builder.process(thenE, processor)) return false;
       if (elseE != null && !builder.process(elseE, processor)) return false;
     }
-    if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignment) {
       IElementType tokenType = assignment.getOperationTokenType();
       PsiExpression rExpression = assignment.getRExpression();
 
@@ -272,8 +268,7 @@ final class SliceUtil {
     if (r instanceof PsiCompiledElement) {
       r = r.getNavigationElement();
     }
-    if (!(r instanceof PsiMethod)) return true;
-    PsiMethod methodCalled = (PsiMethod)r;
+    if (!(r instanceof PsiMethod methodCalled)) return true;
 
     PsiType returnType = methodCalled.getReturnType();
     if (returnType == null) return true;
@@ -323,13 +318,13 @@ final class SliceUtil {
 
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
         @Override
-        public void visitReturnStatement(final PsiReturnStatement statement) {
+        public void visitReturnStatement(final @NotNull PsiReturnStatement statement) {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
           PsiType right = superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType()));
@@ -377,8 +372,7 @@ final class SliceUtil {
         element = element.getNavigationElement();
         if (!scope.contains(element)) return true;
       }
-      if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      if (element instanceof PsiReferenceExpression referenceExpression) {
         PsiElement parentExpr = referenceExpression.getParent();
         if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
           PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
@@ -392,8 +386,7 @@ final class SliceUtil {
             }
           }
         }
-        if (parentExpr instanceof PsiUnaryExpression && ((PsiUnaryExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          PsiUnaryExpression unaryExpression = (PsiUnaryExpression)parentExpr;
+        if (parentExpr instanceof PsiUnaryExpression unaryExpression && ((PsiUnaryExpression)parentExpr).getOperand() == referenceExpression && (((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
           return builder.process(unaryExpression, processor);
         }
       }
@@ -406,16 +399,14 @@ final class SliceUtil {
                                                 @NotNull final JavaSliceBuilder builder,
                                                 @NotNull final Processor<? super SliceUsage> processor) {
     PsiElement declarationScope = parameter.getDeclarationScope();
-    if (declarationScope instanceof PsiForeachStatement) {
-      PsiForeachStatement statement = (PsiForeachStatement)declarationScope;
+    if (declarationScope instanceof PsiForeachStatement statement) {
       PsiExpression iterated = statement.getIteratedValue();
       return statement.getIterationParameter() != parameter ||
              iterated == null ||
              builder.incrementNesting().process(iterated, processor);
     }
-    if (!(declarationScope instanceof PsiMethod)) return true;
+    if (!(declarationScope instanceof PsiMethod method)) return true;
 
-    final PsiMethod method = (PsiMethod)declarationScope;
     final PsiType actualParameterType = parameter.getType();
 
     final PsiParameter[] actualParameters = method.getParameterList().getParameters();
@@ -431,7 +422,7 @@ final class SliceUtil {
                                processor, actualParameterType, actualParameters, paramSeqNo, specificMethodCall.getElement());
     }
 
-    Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
+    Collection<PsiMethod> superMethods = ContainerUtil.newHashSet(method.findDeepestSuperMethods());
     superMethods.add(method);
 
     final Set<PsiReference> processed = new HashSet<>(); //usages of super method and overridden method can overlap
@@ -479,16 +470,14 @@ final class SliceUtil {
     else {
       PsiElement element = refElement.getParent();
       if (element instanceof PsiCompiledElement) return true;
-      if (element instanceof PsiAnonymousClass) {
-        PsiAnonymousClass anon = (PsiAnonymousClass)element;
+      if (element instanceof PsiAnonymousClass anon) {
         argumentList = anon.getArgumentList();
         PsiElement callExp = element.getParent();
         if (!(callExp instanceof PsiCallExpression)) return true;
         result = ((PsiCall)callExp).resolveMethodGenerics();
       }
-      else if (element instanceof PsiCall) {
-          PsiCall call = (PsiCall)element;
-          argumentList = call.getArgumentList();
+      else if (element instanceof PsiCall call) {
+        argumentList = call.getArgumentList();
           result = call.resolveMethodGenerics();
       }
       else {
@@ -571,8 +560,7 @@ final class SliceUtil {
     if (builder.hasNesting()) {
       ReferencesSearch.search(variable).forEach(reference -> {
         PsiElement element = reference.getElement();
-        if (element instanceof PsiExpression && !element.getManager().areElementsEquivalent(element, builder.getParent().getElement())) {
-          PsiExpression expression = (PsiExpression)element;
+        if (element instanceof PsiExpression expression && !element.getManager().areElementsEquivalent(element, builder.getParent().getElement())) {
           return addContainerItemModification(expression, processor, builder);
         }
         return true;

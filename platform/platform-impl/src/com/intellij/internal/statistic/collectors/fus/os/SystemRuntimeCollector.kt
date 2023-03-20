@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.diagnostic.VMOptions
@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
+import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.PathManager
@@ -20,14 +21,16 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
+import com.intellij.util.ui.UIUtil
 import com.sun.management.OperatingSystemMXBean
+import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.util.*
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class SystemRuntimeCollector : ApplicationUsagesCollector() {
+class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")
@@ -56,9 +59,12 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
     result += CORES.metric(getCpuCoreCount())
 
-    val (physicalMemory, swapSize) = getPhysicalMemoryAndSwapSize()
-    result += MEMORY_SIZE.metric(physicalMemory)
-    result += SWAP_SIZE.metric(swapSize)
+    val physicalMemoryData = getPhysicalMemoryAndSwapSize()
+    if (physicalMemoryData != null) {
+      val (physicalMemory, swapSize) = physicalMemoryData
+      result += MEMORY_SIZE.metric(physicalMemory)
+      result += SWAP_SIZE.metric(swapSize)
+    }
 
     val indexVolumeData = getIndexVolumeSizeAndFreeSpace()
     if (indexVolumeData != null) {
@@ -67,7 +73,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     }
 
     result += GC.metric(getGcName())
-    result += RENDERING.metric(getRenderingPipelineName())
+
+    // proper detection is implemented only for macOS
+    if (SystemInfo.isMac) result += RENDERING.metric(getRenderingPipelineName())
 
     result += JVM.metric(
       Version(1, JavaVersion.current().feature, 0),
@@ -90,14 +98,19 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private fun getCpuCoreCount(): Int =
     StatisticsUtil.roundToUpperBound(Runtime.getRuntime().availableProcessors(), intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64))
 
-  private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int> {
-    @Suppress("FunctionName") fun GiB(bytes: Long) = (bytes.toDouble() / (1 shl 30)).roundToInt()
-    val bean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-    val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalPhysicalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
-    val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), physicalMemory))
-    return physicalMemory to swapSize
+  private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int>? {
+    try {
+      @Suppress("FunctionName") fun GiB(bytes: Long) = (bytes.toDouble() / (1 shl 30)).roundToInt()
+      val bean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
+      val physicalMemory = StatisticsUtil.roundToUpperBound(GiB(bean.totalMemorySize), intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
+      val swapSize = StatisticsUtil.roundToPowerOfTwo(min(GiB(bean.totalSwapSpaceSize), physicalMemory))
+      return physicalMemory to swapSize
+    }
+    catch (_: Exception) { }  // ignoring internal errors in JRE code
+    return null
   }
 
+  //@Suppress("LocalVariableName")
   private fun getIndexVolumeSizeAndFreeSpace(): Pair<Int, Int>? {
     try {
       val fileStore = Files.getFileStore(PathManager.getIndexRoot())
@@ -108,8 +121,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
         return size to freeSpace
       }
     }
+    catch (_: IOException) { }  // missing directory or something
     catch (_: UnsupportedOperationException) { }  // some non-standard FS
-    catch (_: SecurityException) { }  // security manager denies reading of FS attributes
+    catch (_: SecurityException) { }  // the security manager denies reading of FS attributes
     return null
   }
 
@@ -126,7 +140,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     return "Other"
   }
 
-  private fun getRenderingPipelineName() = if (SystemInfo.isMetalRendering) "Metal" else "OpenGL"
+  private fun getRenderingPipelineName() = if (UIUtil.isMetalRendering()) "Metal" else "OpenGL"
 
   private fun getJavaVendor(): String =
     when {

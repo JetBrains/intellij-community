@@ -1,0 +1,9 @@
+// WITH_STDLIB
+package my
+
+import pkg.A
+import pkg.getValue
+
+class Some(a: A) {
+    val x1 by a
+}<caret>

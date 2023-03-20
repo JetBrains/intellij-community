@@ -2,7 +2,10 @@
 
 package com.intellij.tasks.actions.context;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
@@ -17,7 +20,6 @@ import com.intellij.tasks.context.LoadContextUndoableAction;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -47,7 +49,7 @@ public class LoadContextAction extends BaseTaskAction {
     final WorkingContextManager manager = WorkingContextManager.getInstance(project);
     List<ContextInfo> history = manager.getContextHistory();
     List<ContextHolder> infos =
-      new ArrayList<>(ContainerUtil.map2List(history, (Function<ContextInfo, ContextHolder>)info -> new ContextHolder() {
+      new ArrayList<>(ContainerUtil.map(history, info -> new ContextHolder() {
         @Override
         void load(final boolean clear) {
           LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
@@ -190,14 +192,9 @@ public class LoadContextAction extends BaseTaskAction {
             }
           }};
       }
-
-      @Override
-      public boolean canBePerformed(@NotNull DataContext context) {
-        return true;
-      }
-
     };
     contextGroup.setPopup(true);
+    contextGroup.getTemplatePresentation().setPerformGroup(true);
     return contextGroup;
   }
 }

@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -24,19 +21,20 @@ import com.intellij.util.Url
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import java.awt.event.InputEvent
-
+import java.awt.event.ActionEvent
 
 internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction(browser.name, null, browser.icon) {
-  companion object {
+  object Handler {
     private val LOG = logger<BaseOpenInBrowserAction>()
+
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
       val request = createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = false)
-      val applicable = request != null && WebBrowserServiceImpl.getProviders(request).findAny().isPresent
+      val applicable = request != null && WebBrowserServiceImpl.getProviders(request).any()
       event.presentation.isEnabledAndVisible = applicable
       return if (applicable) request else  null
     }
+
     internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolean = false, browser: WebBrowser? = null) {
       try {
         val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
@@ -58,20 +56,13 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
     internal fun openInBrowser(event: AnActionEvent, browser: WebBrowser?) {
       createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = true)?.let {
-        openInBrowser(it, BitUtil.isSet(event.modifiers, InputEvent.SHIFT_MASK), browser)
+        openInBrowser(it, BitUtil.isSet(event.modifiers, ActionEvent.SHIFT_MASK), browser)
       }
     }
-
   }
 
-  private fun getBrowser(): WebBrowser? {
-    if (WebBrowserManager.getInstance().isActive(browser) && browser.path != null) {
-      return browser
-    }
-    else {
-      return null
-    }
-  }
+  private fun getBrowser(): WebBrowser? =
+    if (WebBrowserManager.getInstance().isActive(browser) && browser.path != null) browser else null
 
   override fun update(e: AnActionEvent) {
     val browser = getBrowser()
@@ -91,7 +82,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
       result!!
     }
     else {
-      result = doUpdate(e) ?: return
+      result = Handler.doUpdate(e) ?: return
     }
 
     var description = templatePresentation.text
@@ -111,9 +102,13 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
     e.presentation.text = description
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     getBrowser()?.let {
-      openInBrowser(e, it)
+      Handler.openInBrowser(e, it)
     }
   }
 }
@@ -157,7 +152,7 @@ internal fun chooseUrl(urls: Collection<Url>): Promise<Url> {
   val result = AsyncPromise<Url>()
   JBPopupFactory.getInstance()
     .createPopupChooserBuilder(urls.toMutableList())
-    .setRenderer(SimpleListCellRenderer.create<Url> { label, value, _ ->
+    .setRenderer(SimpleListCellRenderer.create { label, value, _ ->
       // todo icons looks good, but is it really suitable for all URLs providers?
       label.icon = AllIcons.Nodes.Servlet
       label.text = (value as Url).toDecodedForm()

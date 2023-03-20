@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.model.task;
 
-/**
- * @author Denis Zhdanov
- */
 public enum ExternalSystemTaskState {
   
   NOT_STARTED, IN_PROGRESS, FINISHED, FAILED, CANCELING, CANCELED, CANCELLATION_FAILED;

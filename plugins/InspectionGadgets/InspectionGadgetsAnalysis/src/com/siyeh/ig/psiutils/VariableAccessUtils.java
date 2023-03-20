@@ -147,7 +147,6 @@ public final class VariableAccessUtils {
    * Returns true if the specified variable is assigned in the specified context.
    * @param variable  the variable to check
    * @param context  the context to check for assignments
-   * @param recurseIntoClasses
    * @return true, if the specified variable was assigned in the specified context, false otherwise
    */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean recurseIntoClasses) {
@@ -213,38 +212,33 @@ public final class VariableAccessUtils {
     if (expression == null) {
       return false;
     }
-    if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression containedExpression = parenthesizedExpression.getExpression();
       return mayEvaluateToVariable(containedExpression, variable, builderPattern);
     }
-    if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+    if (expression instanceof PsiTypeCastExpression typeCastExpression) {
       final PsiExpression containedExpression = typeCastExpression.getOperand();
       return mayEvaluateToVariable(containedExpression, variable, builderPattern);
     }
-    if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
+    if (expression instanceof PsiConditionalExpression conditional) {
       final PsiExpression thenExpression = conditional.getThenExpression();
       final PsiExpression elseExpression = conditional.getElseExpression();
       return mayEvaluateToVariable(thenExpression, variable, builderPattern) ||
              mayEvaluateToVariable(elseExpression, variable, builderPattern);
     }
-    if (expression instanceof PsiArrayAccessExpression) {
+    if (expression instanceof PsiArrayAccessExpression arrayAccessExpression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiArrayAccessExpression) {
         return false;
       }
       final PsiType type = variable.getType();
-      if (!(type instanceof PsiArrayType)) {
+      if (!(type instanceof PsiArrayType arrayType)) {
         return false;
       }
-      final PsiArrayType arrayType = (PsiArrayType)type;
       final int dimensions = arrayType.getArrayDimensions();
       if (dimensions <= 1) {
         return false;
       }
-      PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)expression;
       PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       int count = 1;
       while (arrayExpression instanceof PsiArrayAccessExpression) {
@@ -254,8 +248,7 @@ public final class VariableAccessUtils {
       }
       return count != dimensions && mayEvaluateToVariable(arrayExpression, variable, builderPattern);
     }
-    if (builderPattern && expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    if (builderPattern && expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return false;
@@ -299,16 +292,12 @@ public final class VariableAccessUtils {
 
   private static boolean variableIsIncrementedOrDecremented(@NotNull PsiVariable variable, @Nullable PsiStatement statement,
                                                             boolean incremented) {
-    if (!(statement instanceof PsiExpressionStatement)) {
+    if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
       return false;
     }
-    final PsiExpressionStatement expressionStatement =
-      (PsiExpressionStatement)statement;
     PsiExpression expression = expressionStatement.getExpression();
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiUnaryExpression) {
-      final PsiUnaryExpression unaryExpression =
-        (PsiUnaryExpression)expression;
+    if (expression instanceof PsiUnaryExpression unaryExpression) {
       final IElementType tokenType = unaryExpression.getOperationTokenType();
       if (!tokenType.equals(incremented ? JavaTokenType.PLUSPLUS : JavaTokenType.MINUSMINUS)) {
         return false;
@@ -316,9 +305,7 @@ public final class VariableAccessUtils {
       final PsiExpression operand = unaryExpression.getOperand();
       return ExpressionUtils.isReferenceTo(operand, variable);
     }
-    if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression =
-        (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       final IElementType tokenType =
         assignmentExpression.getOperationTokenType();
       final PsiExpression lhs = assignmentExpression.getLExpression();
@@ -328,11 +315,9 @@ public final class VariableAccessUtils {
       PsiExpression rhs = assignmentExpression.getRExpression();
       rhs = PsiUtil.skipParenthesizedExprDown(rhs);
       if (tokenType == JavaTokenType.EQ) {
-        if (!(rhs instanceof PsiBinaryExpression)) {
+        if (!(rhs instanceof PsiBinaryExpression binaryExpression)) {
           return false;
         }
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)rhs;
         final IElementType binaryTokenType =
           binaryExpression.getOperationTokenType();
         if (binaryTokenType != (incremented ? JavaTokenType.PLUS : JavaTokenType.MINUS)) {
@@ -362,10 +347,9 @@ public final class VariableAccessUtils {
       return false;
     }
     final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiVariable)) {
+    if (!(target instanceof PsiVariable variable)) {
       return false;
     }
-    final PsiVariable variable = (PsiVariable)target;
     return variableIsAssignedAtPoint(variable, context, referenceExpression);
   }
 
@@ -446,10 +430,9 @@ public final class VariableAccessUtils {
         expression = operand;
       }
     }
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression reference)) {
       return false;
     }
-    final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
     final PsiVariable initialization = ObjectUtils.tryCast(reference.resolve(), PsiVariable.class);
     if (initialization == null) {
       return false;
@@ -529,10 +512,10 @@ public final class VariableAccessUtils {
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
 
       @Override
-      public void visitClass(final PsiClass aClass) {}
+      public void visitClass(final @NotNull PsiClass aClass) {}
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         variables.add(variable);
         super.visitVariable(variable);
       }
@@ -558,8 +541,7 @@ public final class VariableAccessUtils {
           variableIsAssigned(variable, containingScope, false)) {
         return true;
       }
-      if (!(qualifier instanceof PsiReferenceExpression)) break;
-      PsiReferenceExpression qualifierReference = (PsiReferenceExpression)qualifier;
+      if (!(qualifier instanceof PsiReferenceExpression qualifierReference)) break;
       qualifier = PsiUtil.skipParenthesizedExprDown(qualifierReference.getQualifierExpression());
       variable = ObjectUtils.tryCast(qualifierReference.resolve(), PsiVariable.class);
     }
@@ -586,13 +568,12 @@ public final class VariableAccessUtils {
 
     @Override
     public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+      @NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      if (!(target instanceof PsiVariable variable)) {
         return;
       }
-      final PsiVariable variable = (PsiVariable)target;
       usedVariables.add(variable);
     }
 

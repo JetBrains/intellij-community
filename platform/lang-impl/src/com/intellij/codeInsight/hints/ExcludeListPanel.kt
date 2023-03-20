@@ -17,9 +17,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -67,11 +68,11 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
       row {
         link(LangBundle.message("action.link.reset")) {
           setLanguageExcludelistToDefault(language)
-        }.horizontalAlign(HorizontalAlign.RIGHT)
+        }.align(AlignX.RIGHT)
       }
       row {
         cell(editorTextField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }.bottomGap(BottomGap.SMALL)
       baseLanguageComment(provider)?.let {
         row {
@@ -84,7 +85,7 @@ class ExcludeListDialog(val language: Language, private val patternToAdd: String
     }
   }
 
-  private fun baseLanguageComment(provider: InlayParameterHintsProvider): String? {
+  private fun baseLanguageComment(provider: InlayParameterHintsProvider): @Nls String? {
     return provider.blackListDependencyLanguage
       ?.let { CodeInsightBundle.message("inlay.hints.base.exclude.list.description", it.displayName) }
   }

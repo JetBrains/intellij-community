@@ -2,9 +2,14 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils.runWithChangedSettings
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
 class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
+  @Test
   fun `test single enter inside cell`() {
     // language=Markdown
     val before = """
@@ -21,6 +26,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after)
   }
 
+  @Test
   fun `test double enter inside cell`() {
     // language=Markdown
     val before = """
@@ -38,6 +44,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 2)
   }
 
+  @Test
   fun `test single enter at the row end`() {
     // language=Markdown
     val before = """
@@ -55,6 +62,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after)
   }
 
+  @Test
   fun `test shift enter at the row end`() {
     // language=Markdown
     val before = """
@@ -72,6 +80,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, shift = true)
   }
 
+  @Test
   fun `test shift enter at the separator row end`() {
     // language=Markdown
     val before = """
@@ -89,6 +98,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, shift = true)
   }
 
+  @Test
   fun `test shift enter at the header row end`() {
     // language=Markdown
     val before = """
@@ -107,15 +117,13 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest(content: String, expected: String, count: Int = 1, shift: Boolean = false) {
-    runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        when {
-          shift -> executeAction("EditorStartNewLine")
-          else -> type("\n")
-        }
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      when {
+        shift -> executeAction("EditorStartNewLine")
+        else -> type("\n")
       }
-      checkResultByText(expected)
     }
+    checkResultByText(expected)
   }
 }

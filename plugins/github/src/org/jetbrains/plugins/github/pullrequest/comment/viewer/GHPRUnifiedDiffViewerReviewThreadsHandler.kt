@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
+import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
@@ -8,16 +11,14 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
-import com.intellij.collaboration.ui.SingleValueModel
 import kotlin.math.max
 import kotlin.math.min
 
 class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewProcessModel,
                                                 commentableRangesModel: SingleValueModel<List<Range>?>,
-                                                reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
+                                                reviewThreadsModel: SingleValueModel<List<DiffMappedValue<GHPullRequestReviewThread>>?>,
                                                 viewer: UnifiedDiffViewer,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory,
                                                 cumulative: Boolean)
@@ -74,9 +75,9 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
     commentableRanges.value = transferredRanges
   }
 
-  override fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?) {
+  override fun showThreads(threads: List<DiffMappedValue<GHPullRequestReviewThread>>?) {
     editorThreads.update(threads
-                           ?.groupBy({ viewer.transferLineToOneside(it.diffSide, it.fileLineIndex) }, { it.thread })
+                           ?.groupBy({ viewer.transferLineToOneside(it.side, it.lineIndex) }, { it.value })
                            ?.filterKeys { it >= 0 }.orEmpty())
   }
 }

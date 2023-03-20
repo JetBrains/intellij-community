@@ -28,10 +28,11 @@ public interface CodeInsightColors {
   /**
    * @deprecated use {@link #WEAK_WARNING_ATTRIBUTES} instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated @ApiStatus.ScheduledForRemoval
   TextAttributesKey INFO_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INFO_ATTRIBUTES");
   TextAttributesKey WEAK_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INFO_ATTRIBUTES");
   TextAttributesKey INFORMATION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("INFORMATION_ATTRIBUTES");
+  TextAttributesKey CONSIDERATION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("CONSIDERATION_ATTRIBUTES");
   TextAttributesKey NOT_USED_ELEMENT_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("NOT_USED_ELEMENT_ATTRIBUTES");
   TextAttributesKey DEPRECATED_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("DEPRECATED_ATTRIBUTES");
   TextAttributesKey MARKED_FOR_REMOVAL_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MARKED_FOR_REMOVAL_ATTRIBUTES");
@@ -42,23 +43,15 @@ public interface CodeInsightColors {
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#INSTANCE_FIELD_ATTRIBUTES}.
    * The field will be removed in future versions.
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated @ApiStatus.ScheduledForRemoval
   TextAttributesKey INSTANCE_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
-  /**
-   * @deprecated as of version 16.
-   * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#STATIC_FIELD} or define your own.
-   * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#STATIC_FIELD_ATTRIBUTES}.
-   * The field will be removed in future versions.
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  TextAttributesKey STATIC_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
    * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#STATIC_FIELD} or define your own.
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#STATIC_FINAL_FIELD_ATTRIBUTES}.
    * The field will be removed in future versions.
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated @ApiStatus.ScheduledForRemoval
   TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -67,7 +60,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey METHOD_CALL_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -76,7 +69,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ANNOTATION_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
 
   TextAttributesKey MATCHED_BRACE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MATCHED_BRACE_ATTRIBUTES");

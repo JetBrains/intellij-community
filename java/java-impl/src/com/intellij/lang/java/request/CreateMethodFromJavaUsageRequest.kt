@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.request
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.guessExpectedTypes
@@ -9,6 +9,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.withPrevious
+import com.siyeh.ig.psiutils.ExpressionUtils
 
 internal class CreateMethodFromJavaUsageRequest(
   methodCall: PsiMethodCallExpression,
@@ -21,7 +22,7 @@ internal class CreateMethodFromJavaUsageRequest(
 
   override fun getMethodName() = call.methodExpression.referenceName!!
 
-  override fun getReturnType() = guessExpectedTypes(call, call.parent is PsiStatement).map(::ExpectedJavaType)
+  override fun getReturnType() = guessExpectedTypes(call, ExpressionUtils.isVoidContext(call)).map(::ExpectedJavaType)
 
   fun getAnchor(targetClass: PsiClass): PsiElement? {
     val enclosingMember = call.parentOfTypes(PsiMethod::class, PsiField::class, PsiClassInitializer::class) ?: return null

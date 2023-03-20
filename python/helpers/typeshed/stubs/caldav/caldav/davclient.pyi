@@ -1,5 +1,7 @@
+from _typeshed import Self
 from collections.abc import Iterable, Mapping
 from typing import Any
+from typing_extensions import TypeAlias
 from urllib.parse import ParseResult, SplitResult
 
 from requests.auth import AuthBase
@@ -9,7 +11,7 @@ from requests.structures import CaseInsensitiveDict
 from .lib.url import URL
 from .objects import Calendar, DAVObject, Principal
 
-_Element = Any  # actually lxml.etree._Element
+_Element: TypeAlias = Any  # actually lxml.etree._Element
 
 class DAVResponse:
     reason: str
@@ -45,6 +47,8 @@ class DAVClient:
         ssl_verify_cert: bool | str = ...,
         ssl_cert: str | tuple[str, str] | None = ...,
     ) -> None: ...
+    def __enter__(self: Self) -> Self: ...
+    def __exit__(self, exc_type: object, exc_value: object, traceback: object) -> None: ...
     def principal(self, *, url: str | ParseResult | SplitResult | URL | None = ...) -> Principal: ...
     def calendar(
         self,

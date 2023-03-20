@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k.ast
 
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.j2k.Converter
 import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.j2k.buildList
 
-class TypeParameter(val name: Identifier, val extendsTypes: List<Type>) : Element() {
+class TypeParameter(val name: Identifier, private val extendsTypes: List<Type>) : Element() {
     fun hasWhere(): Boolean = extendsTypes.size > 1
 
     fun whereToKotlin(builder: CodeBuilder) {

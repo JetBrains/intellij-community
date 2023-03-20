@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StaticVariableUninitializedUseInspection extends BaseInspection {
 
@@ -48,9 +51,9 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"),
-      this, "m_ignorePrimitives");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignorePrimitives", InspectionGadgetsBundle.message("primitive.fields.ignore.option")));
   }
 
   @Override
@@ -61,7 +64,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
   private class StaticVariableInitializationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       PsiField[] fields = aClass.getFields();
       if (aClass.isEnum()) {
         return;

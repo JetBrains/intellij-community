@@ -16,21 +16,29 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RemoveNewQualifierFix implements IntentionAction {
-  private final PsiNewExpression expression;
-  private final PsiClass aClass;
+  private final @NotNull PsiNewExpression expression;
+  private final @Nullable PsiClass aClass;
 
-  public RemoveNewQualifierFix(@NotNull PsiNewExpression expression, PsiClass aClass) {
+  public RemoveNewQualifierFix(@NotNull PsiNewExpression expression, @Nullable PsiClass aClass) {
     this.expression = expression;
     this.aClass = aClass;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new RemoveNewQualifierFix(PsiTreeUtil.findSameElementInCopy(expression, target), aClass);
   }
 
   @Override
@@ -54,13 +62,16 @@ public class RemoveNewQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return expression;
+    return expression.getContainingFile();
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-    expression.getQualifier().delete();
+    PsiExpression qualifier = expression.getQualifier();
+    if (qualifier != null) {
+      qualifier.delete();
+    }
     if (aClass != null && classReference != null) {
       classReference.bindToElement(aClass);
     }

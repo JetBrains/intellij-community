@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.java.inst;
 
@@ -54,9 +54,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myAssignedValue == null) return this;
-    var instruction = new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
   }
 
   @Override
@@ -79,27 +77,23 @@ public class AssignInstruction extends ExpressionPushingInstruction {
       stateBefore.push(dfaDest);
       return nextStates(interpreter, stateBefore);
     }
-    if (!(dfaDest instanceof DfaVariableValue &&
-          ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
-          dfaSource instanceof DfaVariableValue &&
-          (ControlFlow.isTempVariable((DfaVariableValue)dfaSource) ||
-           ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
+    if (!(dfaDest instanceof DfaVariableValue destVar && destVar.getPsiVariable() instanceof PsiLocalVariable &&
+          dfaSource instanceof DfaVariableValue sourceVar &&
+          (ControlFlow.isTempVariable(sourceVar) || (sourceVar).getDescriptor().isCall()))) {
       JavaDfaHelpers.dropLocality(dfaSource, stateBefore);
     }
 
-    if (dfaDest instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue) dfaDest;
-
+    if (dfaDest instanceof DfaVariableValue var) {
       PsiElement psi = var.getPsiVariable();
       if (dfaSource instanceof DfaTypeValue &&
-          ((psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) ||
+          ((psi instanceof PsiField field && field.hasModifierProperty(PsiModifier.STATIC)) ||
            (var.getQualifier() != null && !stateBefore.getDfType(var.getQualifier()).isLocal()))) {
         DfType dfType = dfaSource.getDfType();
-        if (dfType instanceof DfReferenceType) {
-          dfaSource = dfaSource.getFactory().fromDfType(((DfReferenceType)dfType).dropLocality());
+        if (dfType instanceof DfReferenceType refType) {
+          dfaSource = dfaSource.getFactory().fromDfType(refType.dropLocality());
         }
       }
-      if (!(psi instanceof PsiField) || !((PsiField)psi).hasModifierProperty(PsiModifier.VOLATILE)) {
+      if (!(psi instanceof PsiField field) || !field.hasModifierProperty(PsiModifier.VOLATILE)) {
         stateBefore.setVarValue(var, dfaSource);
       }
       if (DfaNullability.fromDfType(var.getInherentType()) == DfaNullability.NULLABLE &&

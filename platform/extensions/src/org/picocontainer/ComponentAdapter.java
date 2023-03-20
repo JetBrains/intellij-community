@@ -16,8 +16,6 @@ package org.picocontainer;
  * @author Jon Tirs&eacute;n
  * @author Paul Hammant
  * @author Aslak Helles&oslash;y
- * @see MutablePicoContainer an extension of the PicoContainer interface which allows you to modify the contents of the
- * container.
  */
 public interface ComponentAdapter {
   /**
@@ -36,13 +34,5 @@ public interface ComponentAdapter {
    */
   Class<?> getComponentImplementation();
 
-  /**
-   * @param container the {@link PicoContainer}, that is used to resolve any possible dependencies of the instance.
-   * @return the component instance.
-   * @throws PicoInitializationException if the component could not be instantiated.
-   * @throws PicoIntrospectionException  if the component has dependencies which could not be resolved, or
-   *                                     instantiation of the component lead to an ambiguous situation within the
-   *                                     container.
-   */
-  Object getComponentInstance(PicoContainer container);
+  Object getComponentInstance();
 }

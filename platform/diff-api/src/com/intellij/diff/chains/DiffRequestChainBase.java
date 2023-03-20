@@ -17,6 +17,10 @@ package com.intellij.diff.chains;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 
+/**
+ * @deprecated Do not use: see {@link #setIndex(int)} deprecation.
+ */
+@Deprecated
 public abstract class DiffRequestChainBase extends UserDataHolderBase implements DiffRequestChain {
   private int myIndex;
 

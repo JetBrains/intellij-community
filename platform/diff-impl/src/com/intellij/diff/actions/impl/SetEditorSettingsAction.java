@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.SyncScrollSupport;
@@ -20,25 +20,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettings myTextSettings;
-  @NotNull private final List<? extends Editor> myEditors;
+  private final @NotNull Supplier<? extends List<? extends Editor>> myEditors;
   @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
 
   protected final AnAction @NotNull [] myActions;
 
   public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
                                  @NotNull List<? extends Editor> editors) {
+    this(settings, () -> editors);
+  }
+
+  public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
+                                 @NotNull Supplier<? extends List<? extends Editor>> editors) {
     super(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain);
     setPopup(true);
     myTextSettings = settings;
     myEditors = editors;
 
-    for (Editor editor : myEditors) {
-      ((EditorGutterComponentEx)editor.getGutter()).setGutterPopupGroup(this);
-    }
+    installGutterPopup();
 
     myActions = new AnAction[]{
       new EditorSettingToggleAction("EditorToggleShowWhitespaces") {
@@ -144,9 +149,15 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     mySyncScrollSupport = syncScrollSupport;
   }
 
+  public void installGutterPopup() {
+    for (Editor editor : myEditors.get()) {
+      ((EditorGutterComponentEx)editor.getGutter()).setGutterPopupGroup(this);
+    }
+  }
+
   public void applyDefaults() {
     for (AnAction action : myActions) {
-      ((EditorSettingAction)action).applyDefaults(myEditors);
+      ((EditorSettingAction)action).applyDefaults(myEditors.get());
     }
   }
 
@@ -164,7 +175,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     ActionGroup gutterGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP);
-    List<AnAction> result = ContainerUtil.newArrayList(gutterGroup.getChildren(e));
+    List<AnAction> result = new ArrayList<>(Arrays.asList(gutterGroup.getChildren(e)));
     result.add(Separator.getInstance());
     replaceOrAppend(result, editorSettingsGroup, new DefaultActionGroup(actions));
     return result.toArray(AnAction.EMPTY_ARRAY);
@@ -184,6 +195,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return isSelected();
     }
@@ -191,7 +207,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       setSelected(state);
-      for (Editor editor : myEditors) {
+      for (Editor editor : myEditors.get()) {
         apply(editor, state);
       }
     }
@@ -229,8 +245,10 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
 
     private void apply(@NotNull HighlightingLevel layer) {
-      for (Editor editor : myEditors) {
-        ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
+      for (Editor editor : myEditors.get()) {
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).setHighlightingPredicate(layer.getCondition());
+        }
       }
     }
 
@@ -240,6 +258,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       OptionAction(@NotNull HighlightingLevel layer) {
         super(layer.getText(), null, layer.getIcon());
         myLayer = layer;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -279,6 +302,11 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       OptionAction(@NotNull BreadcrumbsPlacement option) {
         ActionUtil.copyFrom(this, option.getActionId());
         myOption = option;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

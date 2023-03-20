@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.scripting.gradleJava
 
@@ -11,8 +11,8 @@ import java.io.File
 
 class ScriptingGradleProjectImportHandler : GradleProjectImportHandler {
 
-    val compilerPluginId = KOTLIN_SCRIPTING_PLUGIN_ID
-    val gradlePluginJars = listOf(
+    private val compilerPluginId = KOTLIN_SCRIPTING_PLUGIN_ID
+    private val gradlePluginJars = listOf(
         "scripting-gradle", // obsolete artifact name, only for compatibility with 1.2.5x, where it was introduced (and immediately dropped afterwards)
         "scripting-compiler",
         "scripting-compiler-embeddable"

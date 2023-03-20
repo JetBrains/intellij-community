@@ -117,12 +117,12 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  public final Icon getIcon(final int flags) {
+  public final Icon getIcon(int flags) {
     return super.getIcon(flags);
   }
 
   @Override
-  protected final Icon getElementIcon(final int flags) {
+  protected final Icon getElementIcon(int flags) {
     return super.getElementIcon(flags);
   }
 
@@ -139,7 +139,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
 
   @Override
   public PsiManager getManager() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
     return parent != null ? parent.getManager() : null;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
 import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayUtil;
@@ -307,7 +308,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-     if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
@@ -315,6 +316,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (parent.getPsi() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
         if (settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
             settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
+          return Indent.getNormalIndent();
+        }
+        return Indent.getNoneIndent();
+      }
+      if (parent.getPsi() instanceof PsiSwitchExpression &&
+          child instanceof PsiCodeBlock) {
+        if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+            settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
           return Indent.getNormalIndent();
         }
         return Indent.getNoneIndent();
@@ -571,6 +580,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrap);
         child = processParenthesisBlock(result, child, wrapStrategy, myJavaSettings.ALIGN_MULTILINE_RECORDS);
       }
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.DECONSTRUCTION_LIST) {
+        Wrap wrap = Wrap.createWrap(getWrapType(myJavaSettings.DECONSTRUCTION_LIST_WRAP), false);
+        WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrap);
+        child = processParenthesisBlock(result, child, wrapStrategy, myJavaSettings.ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS);
+      }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.RESOURCE_LIST) {
         Wrap wrap = Wrap.createWrap(getWrapType(mySettings.RESOURCE_LIST_WRAP), false);
         child = processParenthesisBlock(result, child,
@@ -640,8 +654,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
         Block block = createJavaBlock(child, mySettings, myJavaSettings, childIndent, wrap, alignmentStrategyToUse, childOffset, myFormattingMode);
 
-        if (block instanceof AbstractJavaBlock) {
-          final AbstractJavaBlock javaBlock = (AbstractJavaBlock)block;
+        if (block instanceof AbstractJavaBlock javaBlock) {
           if (nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION) {
             javaBlock.setReservedWrap(getReservedWrap(nodeType), nodeType);
             javaBlock.setReservedWrap(getReservedWrap(childType), childType);
@@ -1198,7 +1211,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * Defines contract for associating operation type and particular wrap instance. I.e. given wrap object <b>may</b> be returned
    * from subsequent {@link #getReservedWrap(IElementType)} call if given operation type is used as an argument there.
    * <p/>
-   * Default implementation ({@link AbstractJavaBlock#setReservedWrap(Wrap, IElementType)}) does nothing.
+   * @implNote default implementation does nothing.
    * <p/>
    * <b>Note:</b> this method is considered to be a legacy heritage and is assumed to be removed as soon as formatting processing
    * is refactored
@@ -1255,10 +1268,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final Block previousBlock = getSubBlocks().get(newChildIndex - 1);
     if (!(previousBlock instanceof AbstractBlock)) return false;
     final IElementType previousElementType = ((AbstractBlock)previousBlock).getNode().getElementType();
-    for (IElementType elementType : elementTypes) {
-      if (previousElementType == elementType) return true;
-    }
-    return false;
+    return ArrayUtil.contains(previousElementType, elementTypes);
   }
 
   @Nullable

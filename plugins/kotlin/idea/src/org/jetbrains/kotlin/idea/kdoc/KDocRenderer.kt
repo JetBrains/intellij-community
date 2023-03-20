@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.kdoc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -27,11 +29,14 @@ import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForKtElement
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
-import org.jetbrains.kotlin.idea.highlighter.textAttributesKeyForKtElement
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager
+import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager.Companion.eraseTypeParameter
+import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.util.wrapTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -45,10 +50,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
 object KDocRenderer {
 
-    fun StringBuilder.appendKDocContent(docComment: KDocTag): StringBuilder =
+    private fun StringBuilder.appendKDocContent(docComment: KDocTag): StringBuilder =
         append(markdownToHtml(docComment, allowSingleParagraph = true))
 
-    fun StringBuilder.appendKDocSections(sections: List<KDocSection>) {
+    private fun StringBuilder.appendKDocSections(sections: List<KDocSection>) {
         fun findTagsByName(name: String) =
             sequence { sections.forEach { yieldAll(it.findTagsByName(name)) } }
 
@@ -72,7 +77,7 @@ object KDocRenderer {
         val exceptionTags = findTagsByName("exception").filter { it.getSubjectName() != null }
         appendThrows(throwTags, exceptionTags)
 
-        appendTag(findTagByName("author"), KotlinBundle.message("kdoc.section.title.author"))
+        appendAuthors(findTagsByName("author"))
         appendTag(findTagByName("since"), KotlinBundle.message("kdoc.section.title.since"))
         appendTag(findTagByName("suppress"), KotlinBundle.message("kdoc.section.title.suppress"))
 
@@ -80,6 +85,20 @@ object KDocRenderer {
 
         val sampleTags = findTagsByName("sample").filter { it.getSubjectLink() != null }
         appendSamplesList(sampleTags)
+    }
+
+    fun StringBuilder.renderKDoc(
+        contentTag: KDocTag,
+        sections: List<KDocSection> = if (contentTag is KDocSection) listOf(contentTag) else emptyList()
+    ) {
+        insert(KDocTemplate.DescriptionBodyTemplate.Kotlin()) {
+            content {
+                appendKDocContent(contentTag)
+            }
+            sections {
+                appendKDocSections(sections)
+            }
+        }
     }
 
     private fun StringBuilder.appendHyperlink(kDocLink: KDocLink) {
@@ -127,7 +146,22 @@ object KDocRenderer {
     }
 
     private fun KDocLink.getTargetElement(): PsiElement? {
-        return getChildrenOfType<KDocName>().last().mainReference.resolve()
+        return getChildrenOfType<KDocName>().last().references.firstOrNull { it is KDocReference }?.resolve()
+    }
+
+    @Nls
+    fun generateJavadoc(psiMethod: PsiMethod): String {
+        val javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(psiMethod.project, psiMethod)
+        val builder = StringBuilder()
+        @Suppress("HardCodedStringLiteral")
+        if (javaDocInfoGenerator.generateDocInfoCore(builder, false)) {
+            val renderedJava = builder.toString()
+            return renderedJava.removeRange(
+                renderedJava.indexOf(DEFINITION_START),
+                renderedJava.indexOf(DEFINITION_END)
+            ) // Cut off light method signature
+        }
+        return ""
     }
 
     private fun PsiElement.extractExampleText() = when (this) {
@@ -210,6 +244,21 @@ object KDocRenderer {
         }
     }
 
+    private fun StringBuilder.appendAuthors(authorTags: Sequence<KDocTag>) {
+        if (!authorTags.any()) return
+
+        val iterator = authorTags.iterator()
+
+        appendSection(KotlinBundle.message("kdoc.section.title.author")) {
+            while (iterator.hasNext()) {
+                append(iterator.next().getContent())
+                if (iterator.hasNext()) {
+                    append(", ")
+                }
+            }
+        }
+    }
+
     private fun StringBuilder.appendThrows(throwsTags: Sequence<KDocTag>, exceptionsTags: Sequence<KDocTag>) {
         if (!throwsTags.any() && !exceptionsTags.any()) return
 
@@ -273,13 +322,20 @@ object KDocRenderer {
 
         // Avoid wrapping the entire converted contents in a <p> tag if it's just a single paragraph
         val maybeSingleParagraph = markdownNode.children.singleOrNull { it.type != MarkdownTokenTypes.EOL }
-        return if (maybeSingleParagraph != null && !allowSingleParagraph) {
-            maybeSingleParagraph.children.joinToString("") {
-                if (it.text == "\n") " " else it.toHtml()
-            }
-        } else {
-            markdownNode.toHtml()
+
+        val firstParagraphOmitted = when {
+          maybeSingleParagraph != null && !allowSingleParagraph -> {
+              maybeSingleParagraph.children.joinToString("") { if (it.text == "\n") " " else it.toHtml() }
+          }
+          else -> markdownNode.toHtml()
         }
+
+        val topMarginOmitted = when {
+            firstParagraphOmitted.startsWith("<p>") -> firstParagraphOmitted.replaceFirst("<p>", "<p style='margin-top:0;padding-top:0;'>")
+            else -> firstParagraphOmitted
+        }
+
+        return topMarginOmitted
     }
 
     class MarkdownNode(val node: ASTNode, val parent: MarkdownNode?, val comment: KDocTag) {
@@ -372,7 +428,8 @@ object KDocRenderer {
                             sb.append(linkText)
                         } else {
                             comment.findDescendantOfType<KDocName> { it.text == label }
-                                ?.mainReference
+                                ?.references
+                                ?.firstOrNull { it is KDocReference }
                                 ?.resolve()
                                 ?.let { resolvedLinkElement ->
                                     DocumentationManagerUtil.createHyperlink(
@@ -408,7 +465,8 @@ object KDocRenderer {
                 MarkdownTokenTypes.LBRACKET,
                 MarkdownTokenTypes.RBRACKET,
                 MarkdownTokenTypes.EXCLAMATION_MARK,
-                GFMTokenTypes.CHECK_BOX -> {
+                GFMTokenTypes.CHECK_BOX,
+                GFMTokenTypes.GFM_AUTOLINK -> {
                     sb.append(nodeText)
                 }
                 MarkdownTokenTypes.CODE_LINE,
@@ -489,7 +547,7 @@ object KDocRenderer {
     }
 
     private fun StringBuilder.trimEnd() {
-        while (length > 0 && this[length - 1] == ' ') {
+        while (isNotEmpty() && this[length - 1] == ' ') {
             deleteCharAt(length - 1)
         }
     }
@@ -591,5 +649,99 @@ object KDocRenderer {
         val lower = StringUtil.toLowerCase(name)
         return Language.findLanguageByID(lower)
             ?: Language.getRegisteredLanguages().firstOrNull { StringUtil.toLowerCase(it.id) == lower }
+    }
+
+    fun StringBuilder.appendHighlighted(
+        value: String,
+        project : Project,
+        attributesBuilder: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes>.()
+        -> KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
+    ) {
+        with(createHighlightingManager(project)) {
+            this@appendHighlighted.appendHighlighted(value, attributesBuilder())
+        }
+    }
+
+    fun highlight(
+        value: String,
+        project : Project,
+        attributesBuilder: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes>.()
+        -> KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
+    ): String {
+        return buildString { appendHighlighted(value, project, attributesBuilder) }
+    }
+
+    fun StringBuilder.appendCodeSnippetHighlightedByLexer(project: Project, codeSnippet: String) {
+        with(createHighlightingManager(project)) {
+            appendCodeSnippetHighlightedByLexer(codeSnippet)
+        }
+    }
+    
+    private data class TextAttributesAdapter(val attributes: TextAttributes) :
+            KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
+
+    fun createHighlightingManager(project: Project): KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes> {
+        if (!DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
+            return KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING
+        }
+        return object : KotlinIdeDescriptorRendererHighlightingManager<TextAttributesAdapter> {
+            override fun StringBuilder.appendHighlighted(
+                value: String,
+                attributes: TextAttributesAdapter
+            ) {
+                HtmlSyntaxInfoUtil.appendStyledSpan(
+                    this,
+                    attributes.attributes,
+                    value,
+                    DocumentationSettings.getHighlightingSaturation(false)
+                )
+            }
+
+            override fun StringBuilder.appendCodeSnippetHighlightedByLexer(codeSnippet: String) {
+                HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+                    this,
+                    project,
+                    KotlinLanguage.INSTANCE,
+                    codeSnippet,
+                    DocumentationSettings.getHighlightingSaturation(false)
+                )
+            }
+
+            private fun resolveKey(key: TextAttributesKey): TextAttributesAdapter {
+                return TextAttributesAdapter(
+                    EditorColorsManager.getInstance().globalScheme.getAttributes(key)
+                )
+            }
+
+            override val asError get() = resolveKey(KotlinHighlightingColors.RESOLVED_TO_ERROR)
+            override val asInfo get() = resolveKey(KotlinHighlightingColors.BLOCK_COMMENT)
+            override val asDot get() = resolveKey(KotlinHighlightingColors.DOT)
+            override val asComma get() = resolveKey(KotlinHighlightingColors.COMMA)
+            override val asColon get() = resolveKey(KotlinHighlightingColors.COLON)
+            override val asDoubleColon get() = resolveKey(KotlinHighlightingColors.DOUBLE_COLON)
+            override val asParentheses get() = resolveKey(KotlinHighlightingColors.PARENTHESIS)
+            override val asArrow get() = resolveKey(KotlinHighlightingColors.ARROW)
+            override val asBrackets get() = resolveKey(KotlinHighlightingColors.BRACKETS)
+            override val asBraces get() = resolveKey(KotlinHighlightingColors.BRACES)
+            override val asOperationSign get() = resolveKey(KotlinHighlightingColors.OPERATOR_SIGN)
+            override val asNonNullAssertion get() = resolveKey(KotlinHighlightingColors.EXCLEXCL)
+            override val asNullityMarker get() = resolveKey(KotlinHighlightingColors.QUEST)
+            override val asKeyword get() = resolveKey(KotlinHighlightingColors.KEYWORD)
+            override val asVal get() = resolveKey(KotlinHighlightingColors.VAL_KEYWORD)
+            override val asVar get() = resolveKey(KotlinHighlightingColors.VAR_KEYWORD)
+            override val asAnnotationName get() = resolveKey(KotlinHighlightingColors.ANNOTATION)
+            override val asAnnotationAttributeName get() = resolveKey(KotlinHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
+            override val asClassName get() = resolveKey(KotlinHighlightingColors.CLASS)
+            override val asPackageName get() = resolveKey(DefaultLanguageHighlighterColors.IDENTIFIER)
+            override val asObjectName get() = resolveKey(KotlinHighlightingColors.OBJECT)
+            override val asInstanceProperty get() = resolveKey(KotlinHighlightingColors.INSTANCE_PROPERTY)
+            override val asTypeAlias get() = resolveKey(KotlinHighlightingColors.TYPE_ALIAS)
+            override val asParameter get() = resolveKey(KotlinHighlightingColors.PARAMETER)
+            override val asTypeParameterName get() = resolveKey(KotlinHighlightingColors.TYPE_PARAMETER)
+            override val asLocalVarOrVal get() = resolveKey(KotlinHighlightingColors.LOCAL_VARIABLE)
+            override val asFunDeclaration get() = resolveKey(KotlinHighlightingColors.FUNCTION_DECLARATION)
+            override val asFunCall get() = resolveKey(KotlinHighlightingColors.FUNCTION_CALL)
+        }
+            .eraseTypeParameter()
     }
 }

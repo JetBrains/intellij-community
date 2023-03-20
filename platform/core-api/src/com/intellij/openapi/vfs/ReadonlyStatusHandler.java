@@ -7,7 +7,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -45,6 +47,9 @@ public abstract class ReadonlyStatusHandler {
 
     @NotNull
     public abstract @NlsContexts.DialogMessage String getReadonlyFilesMessage();
+
+    @Nullable
+    public HyperlinkListener getHyperlinkListener() { return null; }
   }
 
   /**

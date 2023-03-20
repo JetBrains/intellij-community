@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 import MyClass.Companion.TEST
 
 fun main() {

@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -14,7 +13,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.awt.*;
 
-public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
+public final class FormLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type ourFormLayoutType = Type.getType(FormLayout.class);
   private static final Type ourCellConstraintsType = Type.getType(CellConstraints.class);
   private static final Type ourCellAlignmentType = Type.getType(CellConstraints.Alignment.class);
@@ -23,8 +22,8 @@ public class FormLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Method ourSetRowGroupsMethod = Method.getMethod("void setRowGroups(int[][])");
   private static final Method ourSetColumnGroupsMethod = Method.getMethod("void setColumnGroups(int[][])");
 
-  public static String[] HORZ_ALIGN_FIELDS = new String[] { "LEFT", "CENTER", "RIGHT", "FILL" };
-  public static String[] VERT_ALIGN_FIELDS = new String[] { "TOP", "CENTER", "BOTTOM", "FILL" };
+  public static final String[] HORZ_ALIGN_FIELDS = new String[]{"LEFT", "CENTER", "RIGHT", "FILL"};
+  public static final String[] VERT_ALIGN_FIELDS = new String[]{"TOP", "CENTER", "BOTTOM", "FILL"};
 
   @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {

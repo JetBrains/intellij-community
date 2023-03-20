@@ -1,31 +1,39 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.application.Application
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 
-internal class SettingsSyncUpdateChecker(private val application: Application,
-                                         private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
+@ApiStatus.Internal
+class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
 
-  @RequiresBackgroundThread
-  fun updateFromServer() {
-    val updateResult = remoteCommunicator.receiveUpdates()
-    when (updateResult) {
-      is UpdateResult.Success -> {
-        val snapshot = updateResult.settingsSnapshot
-        val event = SettingsChangeEvent(ChangeSource.FROM_SERVER, snapshot)
-        application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(event)
-      }
-      is UpdateResult.Error -> {
-        // todo remove the error notification after next successful update
-        notifyError(SettingsSyncBundle.message("notification.title.update.error"), updateResult.message)
-        return
-      }
-      is UpdateResult.NoFileOnServer -> {
-        notifyError(SettingsSyncBundle.message("notification.title.update.error"),
-                    SettingsSyncBundle.message("notification.title.update.no.such.file"))
-      }
-    }
+  companion object {
+    private val LOG = logger<SettingsSyncUpdateChecker>()
   }
 
-  // todo update by app focus receive & by timer
+  @RequiresBackgroundThread
+  fun scheduleUpdateFromServer() : UpdateResult {
+    val updateResult = remoteCommunicator.receiveUpdates()
+    when(updateResult) {
+      is UpdateResult.Success -> {
+        val snapshot = updateResult.settingsSnapshot
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(snapshot, updateResult.serverVersionId))
+      }
+      is UpdateResult.FileDeletedFromServer -> {
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeletedOnCloud)
+        SettingsSyncEventsStatistics.DISABLED_AUTOMATICALLY.log(SettingsSyncEventsStatistics.AutomaticDisableReason.REMOVED_FROM_SERVER)
+      }
+      is UpdateResult.NoFileOnServer -> {
+        LOG.info("Settings update requested, but there was no file on the server.")
+      }
+      is UpdateResult.Error -> {
+        LOG.warn("Settings update requested, but failed with error: " + updateResult.message)
+        SettingsSyncStatusTracker.getInstance().updateOnError(
+          SettingsSyncBundle.message("notification.title.update.error") + ": " + updateResult.message)
+
+      }
+    }
+    return updateResult
+  }
+
 }

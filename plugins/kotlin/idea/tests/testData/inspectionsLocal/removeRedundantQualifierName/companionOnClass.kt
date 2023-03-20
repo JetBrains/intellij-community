@@ -12,3 +12,5 @@ fun main() {
     val b = my.simple.name.Foo.Companion.VARIABLE
     val c = my.simple.name<caret>.Foo()
 }
+
+// IGNORE_FIR

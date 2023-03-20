@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * Implement this interface and register the implementation as {@code com.intellij.pom.declarationSearcher} extension in plugin.xml
  * to provide {@link PomTarget POM targets}.
  *
- * @author peter
  * @see com.intellij.model.psi.PsiSymbolDeclarationProvider
  */
 public abstract class PomDeclarationSearcher {
@@ -28,5 +27,5 @@ public abstract class PomDeclarationSearcher {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  public abstract void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<PomTarget> consumer);
+  public abstract void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
@@ -20,13 +20,21 @@ import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
-public class FindUsagesAction extends AnAction implements UpdateInBackground {
+public class FindUsagesAction extends AnAction {
 
+  /**
+   * @see SearchTargetsDataRule
+   */
   @Experimental
   public static final DataKey<Collection<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");
 
   public FindUsagesAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean toShowDialog() {

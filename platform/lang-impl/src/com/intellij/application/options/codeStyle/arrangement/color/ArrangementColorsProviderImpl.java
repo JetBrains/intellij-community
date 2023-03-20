@@ -14,9 +14,6 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementColorsProviderImpl implements ArrangementColorsProvider {
 
   @NotNull private final Map<ArrangementSettingsToken, TextAttributes> myNormalAttributesCache   =

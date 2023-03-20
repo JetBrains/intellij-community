@@ -1,24 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiComment
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.highlighter.dsl.DslHighlighterExtension
+import org.jetbrains.kotlin.idea.highlighter.dsl.DslKotlinHighlightingVisitorExtension
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTreeVisitor
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 abstract class AbstractDslHighlighterTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected fun doTest(unused: String) {
         val psiFile = myFixture.configureByFile(fileName()) as KtFile
-        val extension = DslHighlighterExtension()
+        val extension = DslKotlinHighlightingVisitorExtension()
         val bindingContext = psiFile.analyzeWithAllCompilerChecks().bindingContext
 
         fun checkCall(element: KtElement) {
@@ -26,7 +26,9 @@ abstract class AbstractDslHighlighterTest : KotlinLightCodeInsightFixtureTestCas
             val lineNumber = editor.document.getLineNumber(element.textOffset)
             val endOffset = editor.document.getLineEndOffset(lineNumber)
             val commentText = (file.findElementAt(endOffset - 1) as? PsiComment)?.text
-            val styleIdByComment = commentText?.replace("//", "")?.trim()?.toInt()?.let { DslHighlighterExtension.externalKeyName(it) }
+            val styleIdByComment = commentText?.replace("//", "")?.trim()?.toInt()
+                ?.let { DslKotlinHighlightingVisitorExtension.externalKeyName(it) }
+
             val styleIdByCall = extension.highlightCall(element, call)?.externalName
             if (styleIdByCall != null && styleIdByCall == styleIdByComment) {
                 val holder = HighlightInfoHolder(psiFile)

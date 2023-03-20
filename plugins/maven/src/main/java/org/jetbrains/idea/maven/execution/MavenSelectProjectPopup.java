@@ -31,9 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenSelectProjectPopup {
 
   public static void attachToWorkingDirectoryField(@NotNull final MavenProjectsManager projectsManager,
@@ -103,7 +100,7 @@ public final class MavenSelectProjectPopup {
           }
         });
 
-        new TreeSpeedSearch(projectTree, o -> {
+        TreeSpeedSearch.installOn(projectTree, false, o -> {
           Object lastPathComponent = o.getLastPathComponent();
           if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
 

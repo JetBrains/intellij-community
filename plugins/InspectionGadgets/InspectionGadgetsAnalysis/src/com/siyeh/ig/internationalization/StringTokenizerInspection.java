@@ -66,11 +66,9 @@ public class StringTokenizerInspection extends BaseInspection {
 
     private static boolean isTokenizingNonNlsAnnotatedElement(
       PsiExpression initializer) {
-      if (!(initializer instanceof PsiNewExpression)) {
+      if (!(initializer instanceof PsiNewExpression newExpression)) {
         return false;
       }
-      final PsiNewExpression newExpression =
-        (PsiNewExpression)initializer;
       final PsiExpressionList argumentList =
         newExpression.getArgumentList();
       if (argumentList == null) {

@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author peter
- */
 public abstract class SdkHomeConfigurable implements SearchableConfigurable {
   private JPanel myPanel;
   private TextFieldWithBrowseButton myPathField;

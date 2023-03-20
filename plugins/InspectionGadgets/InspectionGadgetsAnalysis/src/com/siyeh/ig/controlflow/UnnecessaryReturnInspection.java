@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
@@ -29,9 +30,10 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class UnnecessaryReturnInspection extends BaseInspection {
+public class UnnecessaryReturnInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreInThenBranch = false;
 
@@ -58,8 +60,9 @@ public class UnnecessaryReturnInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.return.option"), this, "ignoreInThenBranch");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInThenBranch", InspectionGadgetsBundle.message("unnecessary.return.option")));
   }
 
   @Override
@@ -83,7 +86,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       super.visitReturnStatement(statement);
       final Ref<Boolean> constructorRef = Ref.create();
       if (isReturnRedundant(statement, ignoreInThenBranch, true, constructorRef)) {
-        registerStatementError(statement, constructorRef.get());
+        registerError(statement.getFirstChild(), constructorRef.get());
       }
     }
 
@@ -98,22 +101,20 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     }
     final PsiElement methodParent = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
     PsiCodeBlock codeBlock = null;
-    if (methodParent instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)methodParent;
+    if (methodParent instanceof PsiMethod method) {
       codeBlock = method.getBody();
       if (isInConstructorRef != null) {
         isInConstructorRef.set(method.isConstructor());
       }
-      if (checkReturnType && !method.isConstructor() && !PsiType.VOID.equals(method.getReturnType())) {
+      if (checkReturnType && !method.isConstructor() && !PsiTypes.voidType().equals(method.getReturnType())) {
         return false;
       }
     }
-    else if (methodParent instanceof PsiLambdaExpression) {
+    else if (methodParent instanceof PsiLambdaExpression lambdaExpression) {
       if (isInConstructorRef != null) {
         isInConstructorRef.set(false);
       }
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)methodParent;
-      if (checkReturnType && !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
+      if (checkReturnType && !PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         return false;
       }
       final PsiElement lambdaBody = lambdaExpression.getBody();
@@ -127,7 +128,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     if (codeBlock == null) {
       return false;
     }
-    if (!ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement) || ControlFlowUtils.isInFinallyBlock(statement)) {
+    if (!ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement) || ControlFlowUtils.isInFinallyBlock(statement, null)) {
       return false;
     }
     if (ignoreInThenBranch && isInThenBranch(statement)) {

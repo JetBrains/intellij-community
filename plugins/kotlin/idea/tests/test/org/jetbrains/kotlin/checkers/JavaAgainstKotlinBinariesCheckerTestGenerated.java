@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -108,9 +108,9 @@ public class JavaAgainstKotlinBinariesCheckerTestGenerated extends AbstractJavaA
         runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/FunctionInNestedClassInDataFlowInspection.kt");
     }
 
-    @TestMetadata("ImplementedMethodsFromTraits.kt")
-    public void testImplementedMethodsFromTraits() throws Exception {
-        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ImplementedMethodsFromTraits.kt");
+    @TestMetadata("ImplementedMethodsFromInterfaces.kt")
+    public void testImplementedMethodsFromInterfaces() throws Exception {
+        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ImplementedMethodsFromInterfaces.kt");
     }
 
     @TestMetadata("InferenceReturnType_1_6.kt")

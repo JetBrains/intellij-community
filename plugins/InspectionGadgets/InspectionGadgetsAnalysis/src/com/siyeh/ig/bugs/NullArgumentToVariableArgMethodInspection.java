@@ -88,20 +88,20 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
   private static class NullArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
       super.visitEnumConstant(enumConstant);
       visitCall(enumConstant);
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression call) {
+    public void visitCallExpression(@NotNull PsiCallExpression call) {
       super.visitCallExpression(call);
       visitCall(call);
     }
 
       private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<? extends PsiMethod> resolver) {
       final boolean checkArray;
-      if (PsiType.NULL.equals(type)) {
+      if (PsiTypes.nullType().equals(type)) {
         checkArray = false;
       }
       else if (type instanceof PsiArrayType) {
@@ -125,12 +125,11 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
         return null;
       }
       final PsiType type1 = lastParameter.getType();
-      if (!(type1 instanceof PsiEllipsisType)) {
+      if (!(type1 instanceof PsiEllipsisType ellipsisType)) {
         return null;
       }
 
-      final PsiEllipsisType ellipsisType = (PsiEllipsisType)type1;
-      final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
+        final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
       final PsiType componentType = arrayType.getComponentType();
       if (checkArray) {
         if (!componentType.equals(TypeUtils.getObjectType(call))) {

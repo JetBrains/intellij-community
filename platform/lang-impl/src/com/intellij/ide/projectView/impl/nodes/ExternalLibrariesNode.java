@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -17,6 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -49,13 +56,12 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (final OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+        if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
           final Library library = libraryOrderEntry.getLibrary();
           if (library == null) continue;
           String libraryPresentableName = libraryOrderEntry.getPresentableName();
           List<Library> librariesWithSameName = processedLibraries.getOrDefault(libraryPresentableName, new ArrayList<>());
-          if (librariesWithSameName.stream().anyMatch(processedLibrary -> processedLibrary.hasSameContent(library))) continue;
+          if (ContainerUtil.exists(librariesWithSameName, processedLibrary -> processedLibrary.hasSameContent(library))) continue;
           librariesWithSameName.add(library);
           processedLibraries.put(libraryPresentableName, librariesWithSameName);
 
@@ -69,8 +75,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
             children.add(new NamedLibraryElementNode(project, new NamedLibraryElement(null, libraryOrderEntry), getSettings()));
           }
         }
-        else if (orderEntry instanceof JdkOrderEntry) {
-          final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+        else if (orderEntry instanceof JdkOrderEntry jdkOrderEntry) {
           final Sdk jdk = jdkOrderEntry.getJdk();
           if (jdk != null) {
             if (processedSdk.contains(jdk)) continue;
@@ -93,10 +98,36 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
         }
       }
     }
+    List<ExternalLibrariesWorkspaceModelNodesProvider<?>> extensionList =
+      ExternalLibrariesWorkspaceModelNodesProvider.EP.getExtensionList();
+    if (!extensionList.isEmpty()) {
+      EntityStorage current = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+      for (ExternalLibrariesWorkspaceModelNodesProvider<?> provider : extensionList) {
+        handleProvider(provider, project, current, children);
+      }
+    }
     return children;
   }
 
-  public static void addLibraryChildren(final LibraryOrderEntry entry, final List<? super AbstractTreeNode<?>> children, Project project, ProjectViewNode node) {
+  private <T extends WorkspaceEntity> void handleProvider(ExternalLibrariesWorkspaceModelNodesProvider<T> provider,
+                                                          @NotNull Project project,
+                                                          EntityStorage storage,
+                                                          List<? super AbstractTreeNode<?>> children) {
+    Sequence<T> sequence = storage.entities(provider.getWorkspaceClass());
+    for (T entity : SequencesKt.asIterable(sequence)) {
+      ProgressManager.checkCanceled();
+      AbstractTreeNode<?> node = provider.createNode(entity, project, getSettings());
+      if (node != null) {
+        children.add(node);
+      }
+    }
+  }
+
+
+  public static void addLibraryChildren(final LibraryOrderEntry entry,
+                                        final List<? super AbstractTreeNode<?>> children,
+                                        Project project,
+                                        ProjectViewNode<?> node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile[] files = entry.getRootFiles(OrderRootType.CLASSES);
     for (final VirtualFile file : files) {

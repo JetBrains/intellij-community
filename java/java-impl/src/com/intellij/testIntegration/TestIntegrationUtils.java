@@ -305,7 +305,7 @@ public final class TestIntegrationUtils {
   public static PsiMethod createDummyMethod(@NotNull PsiElement context) {
     JVMElementFactory factory = JVMElementFactories.getFactory(context.getLanguage(), context.getProject());
     if (factory == null) factory = JavaPsiFacade.getElementFactory(context.getProject());
-    return factory.createMethod("dummy", PsiType.VOID);
+    return factory.createMethod("dummy", PsiTypes.voidType());
   }
 
   public static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {

@@ -17,9 +17,10 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,9 +32,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class FilterByThemeComboBoxAction extends ComboBoxAction implements UpdateInBackground {
+public final class FilterByThemeComboBoxAction extends ComboBoxAction {
 
-    @Override
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+
+  @Override
     public void update(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
@@ -46,7 +53,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction implements
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
         DefaultActionGroup group = new DefaultActionGroup();
         group.add(new FilterImagesAction(new ThemeFilter() {
             @Override

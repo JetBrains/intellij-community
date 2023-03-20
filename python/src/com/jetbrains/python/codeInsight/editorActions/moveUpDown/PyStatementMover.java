@@ -91,7 +91,7 @@ public class PyStatementMover extends LineMover {
     if (nearLine >= document.getLineCount() || nearLine <= 0) return false;
     final PyStringLiteralExpression stringLiteralExpression = PsiTreeUtil.getParentOfType(elementToMove1, PyStringLiteralExpression.class);
     if (stringLiteralExpression != null) {
-      final Pair<String,String> quotes = PyStringLiteralUtil.getQuotes(stringLiteralExpression.getText());
+      final Pair<String,String> quotes = PyStringLiteralCoreUtil.getQuotes(stringLiteralExpression.getText());
       if (quotes != null && (quotes.first.equals("'''") || quotes.first.equals("\"\"\""))) {
         final String text1 = document.getText(TextRange.create(start, end)).trim();
         final String text2 = document.getText(TextRange.create(document.getLineStartOffset(nearLine), document.getLineEndOffset(nearLine))).trim();

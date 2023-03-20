@@ -50,9 +50,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   /**
    * @deprecated use {@link JavaProjectData#JavaProjectData(ProjectSystemId, String, LanguageLevel, String)} instead
    */
-  @NotNull
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @SuppressWarnings("DeprecatedIsStillUsed")
   public JavaProjectData(
     @NotNull ProjectSystemId owner,
@@ -82,8 +80,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
    * @deprecated use {@link ProjectSdkData#getSdkName()} instead
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public JavaSdkVersion getJdkVersion() {
     return jdkVersion;
   }
@@ -97,8 +94,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
    * @deprecated needed to support backward compatibility
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public static JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
     if (jdk == null) {
       return null;

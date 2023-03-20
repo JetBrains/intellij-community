@@ -198,8 +198,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
         myChildren.add(child);
         myChildrenLoadState = oldState;
       }
-      else if (child instanceof SimpleTextNode) {
-        SimpleTextNode node = (SimpleTextNode)child;
+      else if (child instanceof SimpleTextNode node) {
         myChildren.add(new SimpleTextNode(node.getText(), node.isError()));
         myChildrenLoadState = oldState;
       }

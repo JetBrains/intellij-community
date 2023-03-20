@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-/**
- * @author ilyas
- */
 public interface GrBlockStatement extends GrStatement {
 
   @NotNull

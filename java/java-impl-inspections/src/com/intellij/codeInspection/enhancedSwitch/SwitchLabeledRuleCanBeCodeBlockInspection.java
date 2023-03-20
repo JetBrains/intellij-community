@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.java.JavaBundle.message;
 
-/**
- * @author Pavel.Dolgov
- */
 public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTool {
   @NotNull
   @Override
@@ -30,7 +27,7 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
 
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+      public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
         super.visitSwitchLabeledRuleStatement(statement);
 
         PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
@@ -86,8 +83,7 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
       if (element instanceof PsiKeyword) {
         element = element.getParent();
       }
-      if (element instanceof PsiSwitchLabeledRuleStatement) {
-        PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)element;
+      if (element instanceof PsiSwitchLabeledRuleStatement rule) {
         PsiSwitchBlock switchBlock = rule.getEnclosingSwitchBlock();
         PsiStatement body = rule.getBody();
 

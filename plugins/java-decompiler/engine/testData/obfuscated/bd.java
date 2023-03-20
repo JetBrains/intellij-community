@@ -353,21 +353,21 @@ public class bd {
       byte var10008;
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -381,21 +381,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -409,21 +409,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -437,21 +437,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -465,21 +465,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -493,21 +493,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -521,21 +521,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -549,21 +549,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -577,21 +577,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -605,21 +605,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -633,21 +633,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -661,21 +661,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -689,21 +689,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -717,21 +717,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -745,21 +745,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -773,21 +773,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -801,21 +801,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -829,21 +829,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -857,21 +857,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -885,21 +885,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -913,21 +913,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -941,21 +941,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -969,21 +969,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -997,21 +997,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1025,21 +1025,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1053,21 +1053,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1081,21 +1081,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1109,21 +1109,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1137,21 +1137,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1165,21 +1165,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1193,21 +1193,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1221,21 +1221,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1249,21 +1249,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1277,21 +1277,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1305,21 +1305,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1333,21 +1333,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1361,21 +1361,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1389,21 +1389,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1417,21 +1417,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1445,21 +1445,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1473,21 +1473,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1501,21 +1501,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1529,21 +1529,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1557,21 +1557,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1585,21 +1585,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1613,21 +1613,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1641,21 +1641,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1669,21 +1669,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1697,21 +1697,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1725,21 +1725,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1753,21 +1753,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1781,21 +1781,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1809,21 +1809,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1837,21 +1837,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1865,21 +1865,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1893,21 +1893,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1921,21 +1921,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1949,21 +1949,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -1977,21 +1977,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2005,21 +2005,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2033,21 +2033,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2061,21 +2061,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2089,21 +2089,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2117,21 +2117,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2145,21 +2145,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2173,21 +2173,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2201,21 +2201,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2229,21 +2229,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2257,21 +2257,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2285,21 +2285,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2313,21 +2313,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2341,21 +2341,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2369,21 +2369,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2397,21 +2397,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2425,21 +2425,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2453,21 +2453,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2481,21 +2481,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2509,21 +2509,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2537,21 +2537,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2565,21 +2565,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2593,21 +2593,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2621,21 +2621,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2649,21 +2649,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2677,21 +2677,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2705,21 +2705,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2733,21 +2733,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2761,21 +2761,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2789,21 +2789,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2817,21 +2817,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2845,21 +2845,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2873,21 +2873,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2901,21 +2901,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2929,21 +2929,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2957,21 +2957,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -2985,21 +2985,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3013,21 +3013,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3041,21 +3041,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3069,21 +3069,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3097,21 +3097,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3125,21 +3125,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3153,21 +3153,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3181,21 +3181,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3209,21 +3209,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3237,21 +3237,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3265,21 +3265,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3293,21 +3293,21 @@ public class bd {
 
       for(var2 = 0; var12 > var2; ++var2) {
          var10007 = var10004[var2];
-         switch(var2 % 5) {
-         case 0:
-            var10008 = 40;
-            break;
-         case 1:
-            var10008 = 7;
-            break;
-         case 2:
-            var10008 = 65;
-            break;
-         case 3:
-            var10008 = 119;
-            break;
-         default:
-            var10008 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var10008 = 40;
+               break;
+            case 1:
+               var10008 = 7;
+               break;
+            case 2:
+               var10008 = 65;
+               break;
+            case 3:
+               var10008 = 119;
+               break;
+            default:
+               var10008 = 49;
          }
 
          var10004[var2] = (char)(var10007 ^ var10008);
@@ -3324,21 +3324,21 @@ public class bd {
       byte var16;
       for(var2 = 0; var7 > var2; ++var2) {
          var15 = var10001[var2];
-         switch(var2 % 5) {
-         case 0:
-            var16 = 40;
-            break;
-         case 1:
-            var16 = 7;
-            break;
-         case 2:
-            var16 = 65;
-            break;
-         case 3:
-            var16 = 119;
-            break;
-         default:
-            var16 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var16 = 40;
+               break;
+            case 1:
+               var16 = 7;
+               break;
+            case 2:
+               var16 = 65;
+               break;
+            case 3:
+               var16 = 119;
+               break;
+            default:
+               var16 = 49;
          }
 
          var10001[var2] = (char)(var15 ^ var16);
@@ -3352,21 +3352,21 @@ public class bd {
 
       for(var2 = 0; var7 > var2; ++var2) {
          var15 = var10001[var2];
-         switch(var2 % 5) {
-         case 0:
-            var16 = 40;
-            break;
-         case 1:
-            var16 = 7;
-            break;
-         case 2:
-            var16 = 65;
-            break;
-         case 3:
-            var16 = 119;
-            break;
-         default:
-            var16 = 49;
+         switch (var2 % 5) {
+            case 0:
+               var16 = 40;
+               break;
+            case 1:
+               var16 = 7;
+               break;
+            case 2:
+               var16 = 65;
+               break;
+            case 3:
+               var16 = 119;
+               break;
+            default:
+               var16 = 49;
          }
 
          var10001[var2] = (char)(var15 ^ var16);
@@ -3392,21 +3392,21 @@ public class bd {
 
          for(var2 = 0; var7 > var2; ++var2) {
             var15 = var10001[var2];
-            switch(var2 % 5) {
-            case 0:
-               var16 = 40;
-               break;
-            case 1:
-               var16 = 7;
-               break;
-            case 2:
-               var16 = 65;
-               break;
-            case 3:
-               var16 = 119;
-               break;
-            default:
-               var16 = 49;
+            switch (var2 % 5) {
+               case 0:
+                  var16 = 40;
+                  break;
+               case 1:
+                  var16 = 7;
+                  break;
+               case 2:
+                  var16 = 65;
+                  break;
+               case 3:
+                  var16 = 119;
+                  break;
+               default:
+                  var16 = 49;
             }
 
             var10001[var2] = (char)(var15 ^ var16);
@@ -3429,21 +3429,21 @@ public class bd {
 
          for(var2 = 0; var7 > var2; ++var2) {
             var15 = var10001[var2];
-            switch(var2 % 5) {
-            case 0:
-               var16 = 40;
-               break;
-            case 1:
-               var16 = 7;
-               break;
-            case 2:
-               var16 = 65;
-               break;
-            case 3:
-               var16 = 119;
-               break;
-            default:
-               var16 = 49;
+            switch (var2 % 5) {
+               case 0:
+                  var16 = 40;
+                  break;
+               case 1:
+                  var16 = 7;
+                  break;
+               case 2:
+                  var16 = 65;
+                  break;
+               case 3:
+                  var16 = 119;
+                  break;
+               default:
+                  var16 = 49;
             }
 
             var10001[var2] = (char)(var15 ^ var16);

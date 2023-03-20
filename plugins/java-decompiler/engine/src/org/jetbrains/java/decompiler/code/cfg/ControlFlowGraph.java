@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.code.cfg;
 
 import org.jetbrains.java.decompiler.code.*;
@@ -64,7 +64,7 @@ public class ControlFlowGraph implements CodeConstants {
 
     for (BasicBlock block : blocks) {
       buf.append("----- Block ").append(block.id).append(" -----").append(new_line_separator);
-      buf.append(block.toString());
+      buf.append(block);
       buf.append("----- Edges -----").append(new_line_separator);
 
       List<BasicBlock> suc = block.getSuccessors();
@@ -307,13 +307,12 @@ public class ControlFlowGraph implements CodeConstants {
       BasicBlock bTemp;
 
       switch (instr.group) {
-        case GROUP_JUMP:
+        case GROUP_JUMP -> {
           int dest = ((JumpInstruction)instr).destination;
           bTemp = mapInstrBlocks.get(dest);
           block.addSuccessor(bTemp);
-
-          break;
-        case GROUP_SWITCH:
+        }
+        case GROUP_SWITCH -> {
           SwitchInstruction sinstr = (SwitchInstruction)instr;
           int[] dests = sinstr.getDestinations();
 
@@ -323,6 +322,7 @@ public class ControlFlowGraph implements CodeConstants {
             bTemp = mapInstrBlocks.get(dest1);
             block.addSuccessor(bTemp);
           }
+        }
       }
 
       if (fallthrough && i < lstbb.size() - 1) {
@@ -393,10 +393,8 @@ public class ControlFlowGraph implements CodeConstants {
           setVisited.add(node);
 
           switch (node.getSeq().getLastInstr().opcode) {
-            case CodeConstants.opc_jsr:
-              jsrstack.add(node);
-              break;
-            case CodeConstants.opc_ret:
+            case CodeConstants.opc_jsr -> jsrstack.add(node);
+            case CodeConstants.opc_ret -> {
               BasicBlock enter = jsrstack.getLast();
               BasicBlock exit = blocks.getWithKey(enter.id + 1); // FIXME: find successor in a better way
 
@@ -410,6 +408,7 @@ public class ControlFlowGraph implements CodeConstants {
               else {
                 throw new RuntimeException("ERROR: last instruction jsr");
               }
+            }
           }
 
           if (!jsrstack.isEmpty()) {
@@ -686,17 +685,16 @@ public class ControlFlowGraph implements CodeConstants {
       InstructionImpact.stepTypes(data, instr, pool);
 
       switch (instr.opcode) {
-        case CodeConstants.opc_jsr:
-        case CodeConstants.opc_ret:
+        case CodeConstants.opc_jsr, CodeConstants.opc_ret -> {
           seq.removeInstruction(i);
           i--;
-          break;
-        case CodeConstants.opc_astore:
-        case CodeConstants.opc_pop:
-          if (var.type == CodeConstants.TYPE_ADDRESS) {
+        }
+        case CodeConstants.opc_astore, CodeConstants.opc_pop -> {
+          if (var.getType() == CodeConstants.TYPE_ADDRESS) {
             seq.removeInstruction(i);
             i--;
           }
+        }
       }
     }
 

@@ -1,4 +1,4 @@
-// "Create field 'field'" "true"
+// "Create field 'field'" "true-preview"
 class A {
   public static final String NOTIFICATION_ENABLED     = "NOTIFICATION_ENABLED";
   public static final String NOTIFICATION_DEVICE_NAME = "NOTIFICATION_DEVICE_NAME";

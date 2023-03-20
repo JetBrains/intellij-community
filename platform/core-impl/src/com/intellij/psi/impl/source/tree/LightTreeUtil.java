@@ -131,7 +131,7 @@ public final class LightTreeUtil {
     if (node == null) return null;
     node = tree.getParent(node);
     while (node != null) {
-      final IElementType type = node.getTokenType();
+      IElementType type = node.getTokenType();
       if (types.contains(type)) return node;
       if (stopAt.contains(type)) return null;
       node = tree.getParent(node);

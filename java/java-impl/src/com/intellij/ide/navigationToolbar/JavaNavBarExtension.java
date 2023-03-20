@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
 import com.intellij.ide.structureView.impl.java.JavaLambdaNodeProvider;
 import com.intellij.ide.ui.UISettings;
@@ -28,7 +27,7 @@ import static com.intellij.psi.util.PsiFormatUtilBase.*;
  * @author anna
  */
 public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
-  private final List<NodeProvider<?>> myNodeProviders = ImmutableList.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
+  private final List<NodeProvider<?>> myNodeProviders = List.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
 
   @Nullable
   @Override
@@ -80,13 +79,10 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null &&
           (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibrary(file))) {
-        if (psiElement instanceof PsiJavaFile) {
-          final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
-          if (psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
-            final PsiClass[] psiClasses = psiJavaFile.getClasses();
-            if (psiClasses.length == 1) {
-              return psiClasses[0];
-            }
+        if (psiElement instanceof PsiJavaFile psiJavaFile && psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
+          final PsiClass[] psiClasses = psiJavaFile.getClasses();
+          if (psiClasses.length == 1) {
+            return psiClasses[0];
           }
         }
         if (!UISettings.getInstance().getShowMembersInNavigationBar() && psiElement instanceof PsiClass) {

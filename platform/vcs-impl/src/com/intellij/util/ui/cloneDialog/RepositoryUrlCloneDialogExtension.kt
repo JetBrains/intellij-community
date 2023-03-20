@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
@@ -14,13 +14,11 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
-import java.util.*
-import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -31,14 +29,10 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
   override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
 
-  override fun getTooltip(): String? {
+  override fun getTooltip(): String {
     return CheckoutProvider.EXTENSION_POINT_NAME.extensions
       .map { it.vcsName }
-      .joinToString { it.replace("_", "") }
-  }
-
-  override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
-    throw AssertionError("Shouldn't be called") // NON-NLS
+      .joinToString { UIUtil.removeMnemonic(it) }
   }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
@@ -58,27 +52,27 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     private val mainPanel = JPanel(BorderLayout())
     private val centerPanel = Wrapper()
 
-    private val comboBox: ComboBox<CheckoutProvider> = ComboBox<CheckoutProvider>().apply {
-      renderer = SimpleListCellRenderer.create<CheckoutProvider>("") { it.vcsName.removePrefix("_") }
-    }
+    private lateinit var comboBox: ComboBox<CheckoutProvider>
 
     init {
-      val northPanel = panel {
-        row(VcsBundle.message("vcs.common.labels.version.control")) {
-          comboBox()
-        }
-      }
-      val insets = UIUtil.PANEL_REGULAR_INSETS
-      northPanel.border = JBUI.Borders.empty(insets.top, insets.left, 0, insets.right)
-      mainPanel.add(northPanel, BorderLayout.NORTH)
-      mainPanel.add(centerPanel, BorderLayout.CENTER)
-
       val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
       val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
       providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
-      comboBox.model = DefaultComboBoxModel(providers).apply {
-        selectedItem = null
+
+      val northPanel = panel {
+        row(VcsBundle.message("vcs.common.labels.version.control")) {
+          comboBox = comboBox(providers.asList(), SimpleListCellRenderer.create("") { UIUtil.removeMnemonic(it.vcsName) })
+            .applyToComponent {
+              selectedItem = null
+            }
+            .component
+        }
       }
+      val insets = UIUtil.PANEL_REGULAR_INSETS
+      northPanel.border = JBUI.Borders.empty(insets)
+      mainPanel.add(northPanel, BorderLayout.NORTH)
+      mainPanel.add(centerPanel, BorderLayout.CENTER)
+
       comboBox.addItemListener { e: ItemEvent ->
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
@@ -103,7 +97,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     }
 
     override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-      getCurrentVcsComponent()?.doClone(project, checkoutListener)
+      getCurrentVcsComponent()?.doClone(checkoutListener)
     }
 
     override fun doValidateAll(): List<ValidationInfo> {
@@ -112,6 +106,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
     override fun getPreferredFocusedComponent(): JComponent? = getCurrentVcsComponent()?.getPreferredFocusedComponent()
 
-    private fun getCurrentVcsComponent() = vcsComponents[comboBox.selectedItem as CheckoutProvider]
+    internal fun getCurrentVcsComponent(): VcsCloneComponent? = vcsComponents[comboBox.selectedItem as CheckoutProvider]
   }
 }

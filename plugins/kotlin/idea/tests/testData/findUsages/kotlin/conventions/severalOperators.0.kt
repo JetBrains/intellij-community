@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun minus(Diction): Diction"
 
 open class Diction {
     operator fun <caret>minus(other: Diction): Diction = Diction()
@@ -38,3 +39,6 @@ fun test3() {
 fun test4() {
     tt() - tt()
 }
+
+
+// IGNORE_FIR_LOG

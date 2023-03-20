@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -9,18 +10,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 
-class GrChangeModifiersFix(private val modifiersToRemove: List<String>,
-                           val modifierToInsert: String?,
+class GrChangeModifiersFix(@FileModifier.SafeFieldForPreview private val modifiersToRemove: List<String>,
+                           private val modifierToInsert: String?,
                            @Nls private val textRepresentation: String,
-                           val removeModifierUnderCaret : Boolean = false)
+                           private val removeModifierUnderCaret : Boolean = false)
   : IntentionAction {
-  val modifiersToRemoveSet = modifiersToRemove.toSet()
 
   override fun startInWriteAction(): Boolean = true
 
@@ -42,7 +42,7 @@ class GrChangeModifiersFix(private val modifiersToRemove: List<String>,
     val elementUnderCaret = file.findElementAt(editor.caretModel.offset) ?: return
     val owner = elementUnderCaret.parentOfType<PsiModifierListOwner>() ?: return
     val elementUnderCaretRepresentation = elementUnderCaret.text
-    val modifiers = owner.modifierList?.castSafelyTo<GrModifierList>()?.modifiers ?: return
+    val modifiers = owner.modifierList?.asSafely<GrModifierList>()?.modifiers ?: return
 
     var hasRequiredModifier = false
 

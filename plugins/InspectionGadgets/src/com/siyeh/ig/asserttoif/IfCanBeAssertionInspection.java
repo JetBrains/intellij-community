@@ -57,8 +57,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
         return getThrownNewException(statements[0]);
       }
     }
-    else if (element instanceof PsiThrowStatement) {
-      final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
+    else if (element instanceof PsiThrowStatement throwStatement) {
       final PsiExpression exception = PsiUtil.skipParenthesizedExprDown(throwStatement.getException());
       if (exception instanceof PsiNewExpression) {
         return (PsiNewExpression)exception;
@@ -70,7 +69,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   private static class IfToAssertionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
       if (condition == null || statement.getElseBranch() != null || getThrownNewException(statement.getThenBranch()) == null) {
@@ -83,7 +82,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (MATCHER.test(expression) && expression.getArgumentList().getExpressionCount() <= 2) { // for parametrized messages we don't suggest anything
         registerMethodCallError(expression, PsiUtil.isLanguageLevel7OrHigher(expression), false);
@@ -106,11 +105,10 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myIsIfStatement) {
         final PsiElement parent = descriptor.getPsiElement().getParent();
-        if (!(parent instanceof PsiIfStatement)) return;
-        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+        if (!(parent instanceof PsiIfStatement ifStatement)) return;
         final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
         if (!(condition instanceof PsiBinaryExpression)) return;
         PsiExpression nullComparedExpression = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
@@ -169,12 +167,11 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement parent = descriptor.getPsiElement().getParent();
-      if (!(parent instanceof PsiIfStatement)) {
+      if (!(parent instanceof PsiIfStatement ifStatement)) {
         return;
       }
-      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
       CommentTracker tracker = new CommentTracker();
       newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition(), tracker));

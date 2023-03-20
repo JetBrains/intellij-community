@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -42,6 +42,8 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
 
   public abstract void beClassConfiguration(PsiClass aClass);
 
+  public void withNestedClass(PsiClass aClass) {}
+
   public abstract boolean isConfiguredByElement(PsiElement element);
 
   public abstract @NonNls String getTestType();
@@ -71,14 +73,17 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
+    Element mode = element.getChild("shortenClasspath");
+    setShortenCommandLine(mode != null ? ShortenCommandLine.valueOf(mode.getAttributeValue("name")) : null);
     myUseModulePath = element.getChild(USE_CLASS_PATH_ONLY) == null;
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
+    if (myShortenCommandLine != null) {
+      element.addContent(new Element("shortenClasspath").setAttribute("name", myShortenCommandLine.name()));
+    }
     if (!myUseModulePath) {
       element.addContent(new Element(USE_CLASS_PATH_ONLY));
     }

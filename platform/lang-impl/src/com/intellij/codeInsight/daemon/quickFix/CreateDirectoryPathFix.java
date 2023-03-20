@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -56,5 +59,11 @@ public class CreateDirectoryPathFix extends AbstractCreateFileFix {
     throws IncorrectOperationException {
 
     targetDirectory.createSubdirectory(myNewFileName);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    HtmlChunk description = getDescription(AllIcons.Nodes.Folder);
+    return description == null ? IntentionPreviewInfo.EMPTY : new IntentionPreviewInfo.Html(description);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
@@ -25,17 +26,27 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class DeleteRepeatedInterfaceFix implements IntentionAction {
   private final PsiTypeElement myConjunct;
-  private final List<? extends PsiTypeElement> myConjList;
+  private final PsiTypeElement[] myConjList;
 
-  public DeleteRepeatedInterfaceFix(PsiTypeElement conjunct, List<? extends PsiTypeElement> conjList) {
+  public DeleteRepeatedInterfaceFix(PsiTypeElement conjunct) {
     myConjunct = conjunct;
-    myConjList = conjList;
+    PsiTypeElement[] elements = PsiTreeUtil.getChildrenOfType(myConjunct.getParent(), PsiTypeElement.class);
+    myConjList = elements == null ? PsiTypeElement.EMPTY_ARRAY : elements;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new DeleteRepeatedInterfaceFix(PsiTreeUtil.findSameElementInCopy(myConjunct, target));
   }
 
   @NotNull
@@ -52,10 +63,8 @@ public class DeleteRepeatedInterfaceFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    for (PsiTypeElement element : myConjList) {
-      if (!element.isValid()) return false;
-    }
-    return true;
+    if (myConjList.length == 0) return false;
+    return ContainerUtil.and(myConjList, PsiElement::isValid);
   }
 
   @Override
@@ -66,10 +75,10 @@ public class DeleteRepeatedInterfaceFix implements IntentionAction {
       if (castType != null) {
         final PsiType type = castType.getType();
         if (type instanceof PsiIntersectionType) {
-          final String typeText = StringUtil.join(ContainerUtil.filter(myConjList, element -> element != myConjunct), element -> element.getText(), " & ");
+          final String typeText = StreamEx.of(myConjList).without(myConjunct).map(PsiElement::getText).joining(" & ");
           final PsiTypeCastExpression newCastExpr =
             (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("(" + typeText + ")a", castType);
-          CodeStyleManager.getInstance(project).reformat(castType.replace(newCastExpr.getCastType()));
+          CodeStyleManager.getInstance(project).reformat(castType.replace(Objects.requireNonNull(newCastExpr.getCastType())));
         }
       }
     }

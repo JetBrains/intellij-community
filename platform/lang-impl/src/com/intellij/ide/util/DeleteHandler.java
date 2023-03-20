@@ -9,6 +9,8 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -27,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -50,6 +53,7 @@ import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.FileSystemException;
@@ -61,9 +65,17 @@ import java.util.Collection;
 import java.util.List;
 
 public final class DeleteHandler {
+
+  private static Boolean ourOverrideNeedsConfirmation;
+
   private DeleteHandler() { }
 
   public static class DefaultDeleteProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
@@ -112,6 +124,7 @@ public final class DeleteHandler {
 
   public static void deletePsiElement(final PsiElement[] elementsToDelete, final Project project, boolean needConfirmation) {
     if (elementsToDelete == null || elementsToDelete.length == 0) return;
+    needConfirmation = ourOverrideNeedsConfirmation != null ? ourOverrideNeedsConfirmation : needConfirmation;
 
     final PsiElement[] elements = PsiTreeUtil.filterAncestors(elementsToDelete);
 
@@ -357,6 +370,12 @@ public final class DeleteHandler {
       }
     }
     return true;
+  }
+
+  @TestOnly
+  public static void overrideNeedsConfirmationInTests(boolean needsConfirmation, @NotNull Disposable disposable) {
+    ourOverrideNeedsConfirmation = needsConfirmation;
+    Disposer.register(disposable, () -> ourOverrideNeedsConfirmation = null);
   }
 
   private static class LocalFilesDeleteTask extends Task.Modal {

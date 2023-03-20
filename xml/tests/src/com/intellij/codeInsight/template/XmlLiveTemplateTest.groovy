@@ -9,9 +9,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author peter
- */
 class XmlLiveTemplateTest extends LightJavaCodeInsightFixtureTestCase {
 
   private TemplateState getState() {

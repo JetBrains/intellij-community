@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -25,13 +24,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
-  private final Map<@NotNull Document,FileStatus> myDocumentToStatusMap = CollectionFactory.createWeakMap(); // all dirty if absent
+  private final Map<@NotNull Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
   FileStatusMap(@NotNull Project project) {
@@ -91,6 +91,7 @@ public final class FileStatusMap implements Disposable {
       setDirtyScope(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.SLOW_LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
       TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
         setDirtyScope(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
@@ -121,7 +122,7 @@ public final class FileStatusMap implements Disposable {
         return document.createRangeMarker(scope);
       }
       if (old == WHOLE_FILE_DIRTY_MARKER) return old;
-      TextRange oldRange = TextRange.create(old);
+      TextRange oldRange = old.getTextRange();
       TextRange union = scope.union(oldRange);
       if (old.isValid() && union.equals(oldRange)) {
         return old;
@@ -137,7 +138,7 @@ public final class FileStatusMap implements Disposable {
     public String toString() {
       @NonNls StringBuilder s = new StringBuilder();
       s.append("defensivelyMarked = ").append(defensivelyMarked);
-      s.append("; wolfPassFinfished = ").append(wolfPassFinished);
+      s.append("; wolfPassFinished = ").append(wolfPassFinished);
       s.append("; errorFound = ").append(errorFound);
       s.append("; dirtyScopes: (");
       dirtyScopes.forEach((passId, rangeMarker) ->
@@ -189,9 +190,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   TextRange getFileDirtyScopeForAllPassesCombined(@NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
-
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) {
@@ -211,26 +209,41 @@ public final class FileStatusMap implements Disposable {
   }
 
   /**
+   * @deprecated use {@link #getFileDirtyScope(Document, PsiFile, int)}
+   */
+  @Deprecated
+  @Nullable
+  public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
+    return getFileDirtyScope(document, PsiDocumentManager.getInstance(myProject).getPsiFile(document), passId);
+  }
+
+  /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for dirty region (optimization)
    */
   @Nullable
-  public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
-
+  public TextRange getFileDirtyScope(@NotNull Document document, @Nullable PsiFile file, int passId) {
+    RangeMarker marker;
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) {
-        return file == null ? null : file.getTextRange();
+        marker = WHOLE_FILE_DIRTY_MARKER;
       }
-      if (status.defensivelyMarked) {
-        status.markWholeFileDirty(myProject);
-        status.defensivelyMarked = false;
+      else {
+        if (status.defensivelyMarked) {
+          status.markWholeFileDirty(myProject);
+          status.defensivelyMarked = false;
+        }
+        assertRegisteredPass(passId, status);
+        marker = status.dirtyScopes.get(passId);
       }
-      assertRegisteredPass(passId, status);
-      RangeMarker marker = status.dirtyScopes.get(passId);
-      return marker == null ? null : marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
     }
+    if (marker == null) {
+      return null;
+    }
+    if (marker == WHOLE_FILE_DIRTY_MARKER) {
+      return file == null ? null : file.getTextRange();
+    }
+    return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
   }
 
   private static void assertRegisteredPass(int passId, @NotNull FileStatus status) {
@@ -240,8 +253,8 @@ public final class FileStatusMap implements Disposable {
   void markFileScopeDirtyDefensively(@NotNull PsiFile file, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     log("Mark dirty file defensively: ",file.getName(),reason);
-    // mark whole file dirty in case no subsequent PSI events will come, but file requires rehighlighting nevertheless
-    // e.g. in the case of quick typing/backspacing char
+    // mark whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
+    // e.g., in the case of quick typing/backspacing char
     synchronized(myDocumentToStatusMap){
       Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
       if (document == null) return;
@@ -265,12 +278,20 @@ public final class FileStatusMap implements Disposable {
   }
 
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
-
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull();
+    }
+  }
+
+  public String toString(@NotNull Document document) {
+    synchronized (myDocumentToStatusMap) {
+      if (myDocumentToStatusMap.containsKey(document)) {
+        return myDocumentToStatusMap.get(document).toString();
+      }
+      else {
+        return "";
+      }
     }
   }
 
@@ -282,9 +303,15 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  /**
+   * (Dis)Allows file modifications during highlighting testing. Might be useful to catch unexpected modification requests.
+   * @return the old value: true if modifications were allowed, false otherwise
+   */
   @TestOnly
-  void allowDirt(boolean allow) {
+  boolean allowDirt(boolean allow) {
+    boolean old = myAllowDirt;
     myAllowDirt = allow;
+    return old;
   }
 
   private static final RangeMarker WHOLE_FILE_DIRTY_MARKER =

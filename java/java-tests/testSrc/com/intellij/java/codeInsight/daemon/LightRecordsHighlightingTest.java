@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -20,14 +18,14 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testRecordBasics() {
     doTest();
   }
   public void testRecordBasicsJava16() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
+    doTest();
   }
   public void testRecordAccessors() {
     doTest();
@@ -50,16 +48,18 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
                        "public abstract int hashCode();" +
                        "public abstract String toString();" +
                        "}");
-    myFixture.configureByText("A.java", "record Point(int x) {" +
-                                        "    public Point {\n" +
-                                        "        int x<caret>1 = 0\n" +
-                                        "    }" + 
-                                        "}");
+    myFixture.configureByText("A.java", """
+      record Point(int x) {    public Point {
+              int x<caret>1 = 0
+          }}""");
 
     PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiDeclarationStatement.class);
     assertNotNull(decl);
     ReassignVariableUtil.registerDeclaration(getEditor(), decl, getTestRootDisposable());
     ReassignVariableUtil.reassign(getEditor());
+  }
+  public void testModifiersInsideAnonymousLocal() {
+    doTest();
   }
 
   private void doTest() {

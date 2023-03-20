@@ -1,4 +1,5 @@
-from typing import Any, Dict, Generic, Iterable, Iterator, Mapping, MutableMapping, TypeVar
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
+from typing import Any, Generic, TypeVar
 
 _VT = TypeVar("_VT")
 
@@ -12,9 +13,9 @@ class CaseInsensitiveDict(MutableMapping[str, _VT], Generic[_VT]):
     def __len__(self) -> int: ...
     def copy(self) -> CaseInsensitiveDict[_VT]: ...
 
-class LookupDict(Dict[str, _VT]):
+class LookupDict(dict[str, _VT]):
     name: Any
     def __init__(self, name: Any = ...) -> None: ...
-    def __getitem__(self, key: str) -> _VT | None: ...  # type: ignore
+    def __getitem__(self, key: str) -> _VT | None: ...  # type: ignore[override]
     def __getattr__(self, attr: str) -> _VT: ...
-    def __setattr__(self, attr: str, value: _VT) -> None: ...
+    def __setattr__(self, __attr: str, __value: _VT) -> None: ...

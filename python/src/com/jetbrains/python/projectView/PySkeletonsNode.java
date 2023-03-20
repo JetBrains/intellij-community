@@ -15,9 +15,6 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public final class PySkeletonsNode extends PsiDirectoryNode {
   private PySkeletonsNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

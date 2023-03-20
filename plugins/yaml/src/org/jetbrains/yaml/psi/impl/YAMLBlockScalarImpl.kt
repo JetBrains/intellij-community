@@ -6,12 +6,9 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.*
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.tailOrEmpty
 import com.intellij.util.text.splitLineRanges
 import org.jetbrains.yaml.YAMLElementTypes
 import org.jetbrains.yaml.YAMLTokenTypes
@@ -50,9 +47,18 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
           listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
         contentRanges.isEmpty() -> emptyList()
         includeFirstLineInContent -> contentRanges
-        else -> contentRanges.tailOrEmpty()
+        else -> contentRanges.drop(1)
       }, PsiModificationTracker.MODIFICATION_COUNT)
   })
+
+  // it is a memory optimisation
+  private val textCache: ReadActionCachedValue<String> = ReadActionCachedValue { super.getText() }
+  
+  override fun getText(): String = textCache.getCachedOrEvaluate()
+
+  private val validCache: ReadActionCachedValue<Boolean> = ReadActionCachedValue { super.isValid() }
+  
+  override fun isValid(): Boolean = validCache.getCachedOrEvaluate()
 
   protected open val includeFirstLineInContent: Boolean get() = false
 
@@ -125,7 +131,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       }
       return result
     }
-  
+
   // YAML 1.2 standard does not allow more then 1 symbol in indentation number
   private val explicitIndent: Int
     get() {
@@ -149,7 +155,7 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node) {
       }
       return IMPLICIT_INDENT
     }
-  
+
 }
 
 const val DEFAULT_CONTENT_INDENT = 2

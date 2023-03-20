@@ -1,13 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
-import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.build.issue.BuildIssue;
@@ -22,22 +21,19 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -61,6 +57,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDat
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -70,13 +67,13 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -90,16 +87,13 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashingStrategy;
@@ -110,6 +104,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -120,7 +115,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 public final class ExternalSystemUtil {
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
-  @NotNull private static final Map<String, String> RUNNER_IDS = new HashMap<>();
+  private static final @NotNull Map<String, String> RUNNER_IDS = new HashMap<>();
 
   public static final HashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
     new HashingStrategy<>() {
@@ -167,31 +162,7 @@ public final class ExternalSystemUtil {
     return FileUtil.filesEqual(file1, file2);
   }
 
-  public static void ensureToolWindowInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
-    try {
-      ToolWindowManager manager = ToolWindowManager.getInstance(project);
-      if (!(manager instanceof ToolWindowManagerEx)) {
-        return;
-      }
-      ToolWindowManagerEx managerEx = (ToolWindowManagerEx)manager;
-      String id = externalSystemId.getReadableName();
-      ToolWindow window = manager.getToolWindow(id);
-      if (window != null) {
-        return;
-      }
-      for (final ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
-        if (id.equals(bean.id)) {
-          managerEx.initToolWindow(bean);
-        }
-      }
-    }
-    catch (Exception e) {
-      LOG.error(String.format("Unable to initialize %s tool window", externalSystemId.getReadableName()), e);
-    }
-  }
-
-  @Nullable
-  public static ToolWindow ensureToolWindowContentInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
+  public static @Nullable ToolWindow ensureToolWindowContentInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     return ToolWindowManager.getInstance(project).getToolWindow(externalSystemId.getReadableName());
   }
 
@@ -200,7 +171,7 @@ public final class ExternalSystemUtil {
    *
    * @param specBuilder import specification builder
    */
-  public static void refreshProjects(@NotNull final ImportSpecBuilder specBuilder) {
+  public static void refreshProjects(final @NotNull ImportSpecBuilder specBuilder) {
     refreshProjects(specBuilder.build());
   }
 
@@ -209,7 +180,7 @@ public final class ExternalSystemUtil {
    *
    * @param spec import specification
    */
-  public static void refreshProjects(@NotNull final ImportSpec spec) {
+  public static void refreshProjects(final @NotNull ImportSpec spec) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(spec.getExternalSystemId());
     if (manager == null) {
       return;
@@ -243,20 +214,22 @@ public final class ExternalSystemUtil {
     }
   }
 
-  @NotNull
-  private static String extractDetails(@NotNull Throwable e) {
+  private static @NotNull String extractDetails(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
     if (unwrapped instanceof ExternalSystemException) {
-      return ((ExternalSystemException)unwrapped).getOriginalReason();
+      String reason = ((ExternalSystemException)unwrapped).getOriginalReason();
+      if (!reason.isEmpty()) {
+        return reason;
+      }
     }
     return ExternalSystemApiUtil.stacktraceAsString(e);
   }
 
-  public static void refreshProject(@NotNull final Project project,
-                                    @NotNull final ProjectSystemId externalSystemId,
-                                    @NotNull final String externalProjectPath,
+  public static void refreshProject(final @NotNull Project project,
+                                    final @NotNull ProjectSystemId externalSystemId,
+                                    final @NotNull String externalProjectPath,
                                     final boolean isPreviewMode,
-                                    @NotNull final ProgressExecutionMode progressExecutionMode) {
+                                    final @NotNull ProgressExecutionMode progressExecutionMode) {
     ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).use(progressExecutionMode);
     if (isPreviewMode) builder.usePreviewMode();
     refreshProject(externalProjectPath, builder);
@@ -271,12 +244,12 @@ public final class ExternalSystemUtil {
    * @param callback            callback to be notified on refresh result
    * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
    */
-  public static void refreshProject(@NotNull final Project project,
-                                    @NotNull final ProjectSystemId externalSystemId,
-                                    @NotNull final String externalProjectPath,
-                                    @NotNull final ExternalProjectRefreshCallback callback,
+  public static void refreshProject(final @NotNull Project project,
+                                    final @NotNull ProjectSystemId externalSystemId,
+                                    final @NotNull String externalProjectPath,
+                                    final @NotNull ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
-                                    @NotNull final ProgressExecutionMode progressExecutionMode) {
+                                    final @NotNull ProgressExecutionMode progressExecutionMode) {
     ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
     if (isPreviewMode) builder.usePreviewMode();
     refreshProject(externalProjectPath, builder);
@@ -292,12 +265,12 @@ public final class ExternalSystemUtil {
    * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
    * @param reportRefreshError  prevent to show annoying error notification, e.g. if auto-import mode used
    */
-  public static void refreshProject(@NotNull final Project project,
-                                    @NotNull final ProjectSystemId externalSystemId,
-                                    @NotNull final String externalProjectPath,
-                                    @NotNull final ExternalProjectRefreshCallback callback,
+  public static void refreshProject(final @NotNull Project project,
+                                    final @NotNull ProjectSystemId externalSystemId,
+                                    final @NotNull String externalProjectPath,
+                                    final @NotNull ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
-                                    @NotNull final ProgressExecutionMode progressExecutionMode,
+                                    final @NotNull ProgressExecutionMode progressExecutionMode,
                                     final boolean reportRefreshError) {
     ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
     if (isPreviewMode) builder.usePreviewMode();
@@ -309,13 +282,14 @@ public final class ExternalSystemUtil {
     refreshProject(externalProjectPath, importSpecBuilder.build());
   }
 
-  public static void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
+  public static void refreshProject(final @NotNull String externalProjectPath, final @NotNull ImportSpec importSpec) {
     Project project = importSpec.getProject();
     ProjectSystemId externalSystemId = importSpec.getExternalSystemId();
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
-    boolean reportRefreshError = importSpec.isReportRefreshError();
+    boolean isActivateBuildToolWindowOnStart = importSpec.isActivateBuildToolWindowOnStart();
+    boolean isActivateBuildToolWindowOnFailure = importSpec.isActivateBuildToolWindowOnFailure();
     ThreeState isNavigateToError = importSpec.isNavigateToError();
 
     File projectFile = new File(externalProjectPath);
@@ -331,9 +305,10 @@ public final class ExternalSystemUtil {
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
     if (!isPreviewMode && !TrustedProjects.isTrusted(project)) {
-      LOG.debug("Skip " + externalSystemId + " load, because project is not trusted");
+      LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
       return;
     }
+    LOG.debug("Stated " + externalSystemId + " load", new Throwable());
 
     AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
     AbstractExternalSystemLocalSettings.SyncType syncType =
@@ -341,16 +316,16 @@ public final class ExternalSystemUtil {
       localSettings.getProjectSyncType().get(externalProjectPath) == PREVIEW ? IMPORT : RE_IMPORT;
     localSettings.getProjectSyncType().put(externalProjectPath, syncType);
 
-    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
+    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, projectName, externalProjectPath, importSpec);
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+
         StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
-          DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
+          executeImpl(indicator);
         }
         finally {
           activity.finished();
@@ -404,12 +379,7 @@ public final class ExternalSystemUtil {
 
         final ExecutionConsole consoleView =
           consoleManager.attachExecutionConsole(project, resolveProjectTask, null, processHandler);
-        if (consoleView != null) {
-          Disposer.register(project, consoleView);
-        }
-        else {
-          Disposer.register(project, processHandler);
-        }
+        Disposer.register(project, Objects.requireNonNullElse(consoleView, processHandler));
 
         Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
         SyncViewManager syncViewManager = project.getService(SyncViewManager.class);
@@ -423,6 +393,11 @@ public final class ExternalSystemUtil {
                 public void update(@NotNull AnActionEvent e) {
                   Presentation p = e.getPresentation();
                   p.setEnabled(processHandler.isProcessTerminated());
+                }
+
+                @Override
+                public @NotNull ActionUpdateThread getActionUpdateThread() {
+                  return ActionUpdateThread.EDT;
                 }
 
                 @Override
@@ -451,14 +426,14 @@ public final class ExternalSystemUtil {
                 .withRestartAction(rerunImportAction)
                 .withContentDescriptor(() -> {
                   if (consoleView == null) return null;
-                  boolean activateToolWindow = isNewProject(project);
-                  BuildContentDescriptor contentDescriptor =
-                    new BuildContentDescriptor(consoleView, processHandler, consoleView.getComponent(),
-                                               ExternalSystemBundle.message("build.event.title.sync"));
-                  contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
-                  contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                  BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
+                    consoleView, processHandler, consoleView.getComponent(),
+                    ExternalSystemBundle.message("build.event.title.sync")
+                  );
+                  contentDescriptor.setActivateToolWindowWhenAdded(isActivateBuildToolWindowOnStart);
+                  contentDescriptor.setActivateToolWindowWhenFailed(isActivateBuildToolWindowOnFailure);
                   contentDescriptor.setNavigateToError(isNavigateToError);
-                  contentDescriptor.setAutoFocusContent(reportRefreshError);
+                  contentDescriptor.setAutoFocusContent(isActivateBuildToolWindowOnFailure);
                   return contentDescriptor;
                 })
                 .withActions(consoleManager.getCustomActions(project, resolveProjectTask, null))
@@ -480,8 +455,7 @@ public final class ExternalSystemUtil {
               String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
                                                           externalSystemId.getReadableName(), projectName);
               DataContext dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
-              com.intellij.build.events.FailureResult failureResult =
-                createFailureResult(title, e, externalSystemId, project, dataContext);
+              FailureResult failureResult = createFailureResult(title, e, externalSystemId, project, dataContext);
               finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                          BuildBundle.message("build.status.failed"), failureResult));
               processHandler.notifyProcessTerminated(1);
@@ -528,7 +502,7 @@ public final class ExternalSystemUtil {
 
       private void handExecutionResult(@NotNull ExternalSystemTaskActivator externalSystemTaskActivator,
                                        @NotNull BuildEventDispatcher eventDispatcher,
-                                       @NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
+                                       @NotNull Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         if (project.isDisposed()) return;
 
         try {
@@ -564,6 +538,14 @@ public final class ExternalSystemUtil {
           if (callback != null) {
             callback.onFailure(resolveProjectTask.getId(), message, extractDetails(error));
           }
+        } catch (Throwable t) {
+          ExternalSystemTaskId id = resolveProjectTask.getId();
+          String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
+                                                      externalSystemId.getReadableName(), projectName);
+          FailureResult failureResult = createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
+          finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                     BuildBundle.message("build.status.failed"), failureResult));
+
         }
         finally {
           if (!isPreviewMode) {
@@ -581,8 +563,7 @@ public final class ExternalSystemUtil {
         }
       }
 
-      @NotNull
-      private FinishBuildEvent getSyncFinishEvent(@NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
+      private @NotNull FinishBuildEvent getSyncFinishEvent(@NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
         Exception exception = null;
         Supplier<? extends FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
         if (finishBuildEventSupplier != null) {
@@ -607,10 +588,8 @@ public final class ExternalSystemUtil {
 
     final String title;
     switch (progressExecutionMode) {
-      case NO_PROGRESS_SYNC:
-      case NO_PROGRESS_ASYNC:
-        throw new ExternalSystemException("Please, use progress for the project import!");
-      case MODAL_SYNC:
+      case NO_PROGRESS_SYNC, NO_PROGRESS_ASYNC -> throw new ExternalSystemException("Please, use progress for the project import!");
+      case MODAL_SYNC -> {
         title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
         new Task.Modal(project, title, true) {
           @Override
@@ -623,8 +602,8 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
-        break;
-      case IN_BACKGROUND_ASYNC:
+      }
+      case IN_BACKGROUND_ASYNC -> {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title) {
           @Override
@@ -637,8 +616,8 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
-        break;
-      case START_IN_FOREGROUND_ASYNC:
+      }
+      case START_IN_FOREGROUND_ASYNC -> {
         title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
         new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
           @Override
@@ -651,29 +630,42 @@ public final class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
+      }
     }
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   */
+  @Deprecated
+  public static boolean confirmLinkingUntrustedProject(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull Path projectRoot
+  ) {
+    return ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProject(project, systemId, projectRoot);
+  }
+
+  /**
+   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   */
+  @Deprecated
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId
   ) {
-    return confirmLoadingUntrustedProject(project, Collections.singletonList(systemId));
+    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemId);
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   */
+  @Deprecated
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
-    String systemsPresentation = naturalJoinSystemIds(systemIds);
-    return TrustedProjects.isTrusted(project) ||
-           TrustedProjects.confirmLoadingUntrustedProject(
-             project,
-             IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
-             IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size()),
-             IdeBundle.message("untrusted.project.dialog.trust.button"),
-             IdeBundle.message("untrusted.project.dialog.distrust.button")
-           );
+    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemIds);
   }
 
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
@@ -688,13 +680,32 @@ public final class ExternalSystemUtil {
            project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
   }
 
+  // To be used only in internal New Project Wizard/Project Opening machinery
   @ApiStatus.Internal
-  @NotNull
-  public static FailureResultImpl createFailureResult(@NotNull @Nls(capitalization = Sentence) String title,
-                                                      @NotNull Exception exception,
-                                                      @NotNull ProjectSystemId externalSystemId,
-                                                      @NotNull Project project,
-                                                      @NotNull DataContext dataContext) {
+  public static void configureNewModule(@NotNull Module module, boolean isCreatingNewProject, boolean isMavenModule) {
+    Project project = module.getProject();
+
+    // Postpone project refresh, disable unwanted notifications
+    project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
+    project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
+
+    markModuleAsMaven(module, isMavenModule);
+  }
+
+  // To be used only in internal New Project Wizard/Project Opening machinery
+  @ApiStatus.Internal
+  public static void markModuleAsMaven(@NotNull Module module, boolean isMavenModule) {
+    // This module will be replaced after import
+    // Make sure the .iml file is not created under the project dir, if 'Store generated project files externally' setting is on.
+    ExternalSystemModulePropertyManager.getInstance(module).setMavenized(isMavenModule);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull FailureResultImpl createFailureResult(@NotNull @Nls(capitalization = Sentence) String title,
+                                                               @NotNull Throwable exception,
+                                                               @NotNull ProjectSystemId externalSystemId,
+                                                               @NotNull Project project,
+                                                               @NotNull DataContext dataContext) {
     ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
     NotificationData notificationData =
       notificationManager.createNotification(title, exception, externalSystemId, project, dataContext);
@@ -704,12 +715,11 @@ public final class ExternalSystemUtil {
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
   }
 
-  @NotNull
-  private static FailureResultImpl createFailureResult(@NotNull Exception exception,
-                                                       @NotNull ProjectSystemId externalSystemId,
-                                                       @NotNull Project project,
-                                                       @NotNull ExternalSystemNotificationManager notificationManager,
-                                                       @NotNull NotificationData notificationData) {
+  private static @NotNull FailureResultImpl createFailureResult(@NotNull Throwable exception,
+                                                                @NotNull ProjectSystemId externalSystemId,
+                                                                @NotNull Project project,
+                                                                @NotNull ExternalSystemNotificationManager notificationManager,
+                                                                @NotNull NotificationData notificationData) {
     if (notificationData.isBalloonNotification()) {
       notificationManager.showNotification(externalSystemId, notificationData);
       return new FailureResultImpl(exception);
@@ -723,8 +733,7 @@ public final class ExternalSystemUtil {
               ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
     }
     else {
-      final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-      group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+      group = notificationData.getBalloonGroup();
     }
     int line = notificationData.getLine() - 1;
     int column = notificationData.getColumn() - 1;
@@ -771,57 +780,18 @@ public final class ExternalSystemUtil {
     return navigatable == null || navigatable == NonNavigatable.INSTANCE;
   }
 
-  public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
-    ExternalSystemProgressEvent progressEvent = taskExecutionEvent.getProgressEvent();
-    String displayName = progressEvent.getDescriptor().getDisplayName();
-    long eventTime = progressEvent.getDescriptor().getEventTime();
-    Object parentEventId = ObjectUtils.chooseNotNull(progressEvent.getParentEventId(), taskExecutionEvent.getId());
-
-    AbstractBuildEvent buildEvent;
-    if (progressEvent instanceof ExternalSystemStartEvent) {
-      buildEvent = new StartEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+  public static @NotNull BuildEvent convert(@NotNull ExternalSystemTaskExecutionEvent event) {
+    var buildEvent = ExternalSystemProgressEventConverter.convertBuildEvent(event);
+    if (buildEvent == null) {
+      // Migrated old fallback from previous implementation
+      return new OutputBuildEventImpl(
+        event.getProgressEvent().getEventId(),
+        ObjectUtils.chooseNotNull(event.getProgressEvent().getParentEventId(), event.getId()),
+        event.getProgressEvent().getDescriptor().getDisplayName(),
+        true
+      );
     }
-    else if (progressEvent instanceof ExternalSystemFinishEvent) {
-      final EventResult eventResult;
-      final OperationResult operationResult = ((ExternalSystemFinishEvent<?>)progressEvent).getOperationResult();
-      if (operationResult instanceof FailureResult) {
-        List<com.intellij.build.events.Failure> failures = new SmartList<>();
-        for (Failure failure : ((FailureResult)operationResult).getFailures()) {
-          failures.add(convert(failure));
-        }
-        eventResult = new FailureResultImpl(failures);
-      }
-      else if (operationResult instanceof SkippedResult) {
-        eventResult = new SkippedResultImpl();
-      }
-      else if (operationResult instanceof SuccessResult) {
-        eventResult = new SuccessResultImpl(((SuccessResult)operationResult).isUpToDate());
-      }
-      else {
-        eventResult = new SuccessResultImpl();
-      }
-      buildEvent = new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName, eventResult);
-    }
-    else if (progressEvent instanceof ExternalSystemStatusEvent) {
-      ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
-      buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), progressEvent.getParentEventId(), eventTime, displayName,
-                                              statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
-    }
-    else {
-      buildEvent = new OutputBuildEventImpl(progressEvent.getEventId(), parentEventId, displayName, true);
-    }
-
-    String hint = progressEvent.getDescriptor().getHint();
-    buildEvent.setHint(hint);
     return buildEvent;
-  }
-
-  private static com.intellij.build.events.Failure convert(Failure failure) {
-    List<com.intellij.build.events.Failure> causes = new SmartList<>();
-    for (Failure cause : failure.getCauses()) {
-      causes.add(convert(cause));
-    }
-    return new FailureImpl(failure.getMessage(), failure.getDescription(), causes);
   }
 
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
@@ -831,31 +801,31 @@ public final class ExternalSystemUtil {
     runTask(taskSettings, executorId, project, externalSystemId, null, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
 
-  public static void runTask(@NotNull final ExternalSystemTaskExecutionSettings taskSettings,
-                             @NotNull final String executorId,
-                             @NotNull final Project project,
-                             @NotNull final ProjectSystemId externalSystemId,
-                             @Nullable final TaskCallback callback,
-                             @NotNull final ProgressExecutionMode progressExecutionMode) {
+  public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                             final @NotNull String executorId,
+                             final @NotNull Project project,
+                             final @NotNull ProjectSystemId externalSystemId,
+                             final @Nullable TaskCallback callback,
+                             final @NotNull ProgressExecutionMode progressExecutionMode) {
     runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, true);
   }
 
-  public static void runTask(@NotNull final ExternalSystemTaskExecutionSettings taskSettings,
-                             @NotNull final String executorId,
-                             @NotNull final Project project,
-                             @NotNull final ProjectSystemId externalSystemId,
-                             @Nullable final TaskCallback callback,
-                             @NotNull final ProgressExecutionMode progressExecutionMode,
+  public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                             final @NotNull String executorId,
+                             final @NotNull Project project,
+                             final @NotNull ProjectSystemId externalSystemId,
+                             final @Nullable TaskCallback callback,
+                             final @NotNull ProgressExecutionMode progressExecutionMode,
                              boolean activateToolWindowBeforeRun) {
     runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, activateToolWindowBeforeRun, null);
   }
 
-  public static void runTask(@NotNull final ExternalSystemTaskExecutionSettings taskSettings,
-                             @NotNull final String executorId,
-                             @NotNull final Project project,
-                             @NotNull final ProjectSystemId externalSystemId,
-                             @Nullable final TaskCallback callback,
-                             @NotNull final ProgressExecutionMode progressExecutionMode,
+  public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                             final @NotNull String executorId,
+                             final @NotNull Project project,
+                             final @NotNull ProjectSystemId externalSystemId,
+                             final @Nullable TaskCallback callback,
+                             final @NotNull ProgressExecutionMode progressExecutionMode,
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
     ExecutionEnvironment environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
@@ -883,14 +853,14 @@ public final class ExternalSystemUtil {
 
         project.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
           @Override
-          public void processStartScheduled(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+          public void processStartScheduled(final @NotNull String executorIdLocal, final @NotNull ExecutionEnvironment environmentLocal) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
               targetDone.down();
             }
           }
 
           @Override
-          public void processNotStarted(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+          public void processNotStarted(final @NotNull String executorIdLocal, final @NotNull ExecutionEnvironment environmentLocal) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
               targetDone.up();
             }
@@ -949,43 +919,33 @@ public final class ExternalSystemUtil {
 
     final String title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
     switch (progressExecutionMode) {
-      case NO_PROGRESS_SYNC:
-        task.execute(new EmptyProgressIndicator());
-        break;
-      case MODAL_SYNC:
-        new Task.Modal(project, title, true) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
-        break;
-      case NO_PROGRESS_ASYNC:
-        ApplicationManager.getApplication().executeOnPooledThread(() -> task.execute(new EmptyProgressIndicator()));
-        break;
-      case IN_BACKGROUND_ASYNC:
-        new Task.Backgroundable(project, title) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
-        break;
-      case START_IN_FOREGROUND_ASYNC:
-        new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            task.execute(indicator);
-          }
-        }.queue();
+      case NO_PROGRESS_SYNC -> task.execute(new EmptyProgressIndicator());
+      case MODAL_SYNC -> new Task.Modal(project, title, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
+      case NO_PROGRESS_ASYNC -> ApplicationManager.getApplication().executeOnPooledThread(() -> task.execute(new EmptyProgressIndicator()));
+      case IN_BACKGROUND_ASYNC -> new Task.Backgroundable(project, title) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
+      case START_IN_FOREGROUND_ASYNC -> new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          task.execute(indicator);
+        }
+      }.queue();
     }
   }
 
-  @Nullable
-  public static ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
-                                                                @NotNull ProjectSystemId externalSystemId,
-                                                                @NotNull ExternalSystemTaskExecutionSettings taskSettings,
-                                                                @NotNull String executorId) {
+  public static @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                                          @NotNull ProjectSystemId externalSystemId,
+                                                                          @NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                                                                          @NotNull String executorId) {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     if (executor == null) return null;
 
@@ -1001,10 +961,9 @@ public final class ExternalSystemUtil {
     return new ExecutionEnvironment(executor, runner, settings, project);
   }
 
-  @Nullable
-  public static RunnerAndConfigurationSettings createExternalSystemRunnerAndConfigurationSettings(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
-                                                                                                  @NotNull Project project,
-                                                                                                  @NotNull ProjectSystemId externalSystemId) {
+  public static @Nullable RunnerAndConfigurationSettings createExternalSystemRunnerAndConfigurationSettings(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                                                                                                            @NotNull Project project,
+                                                                                                            @NotNull ProjectSystemId externalSystemId) {
     AbstractExternalSystemTaskConfigurationType configurationType = findConfigurationType(externalSystemId);
     if (configurationType == null) {
       return null;
@@ -1016,11 +975,9 @@ public final class ExternalSystemUtil {
     return settings;
   }
 
-  @Nullable
-  public static AbstractExternalSystemTaskConfigurationType findConfigurationType(@NotNull ProjectSystemId externalSystemId) {
+  public static @Nullable AbstractExternalSystemTaskConfigurationType findConfigurationType(@NotNull ProjectSystemId externalSystemId) {
     for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
-      if (type instanceof AbstractExternalSystemTaskConfigurationType) {
-        AbstractExternalSystemTaskConfigurationType candidate = (AbstractExternalSystemTaskConfigurationType)type;
+      if (type instanceof AbstractExternalSystemTaskConfigurationType candidate) {
         if (externalSystemId.equals(candidate.getExternalSystemId())) {
           return candidate;
         }
@@ -1029,9 +986,17 @@ public final class ExternalSystemUtil {
     return null;
   }
 
-  @Nullable
-  public static String getRunnerId(@NotNull String executorId) {
+  public static @Nullable String getRunnerId(@NotNull String executorId) {
     return RUNNER_IDS.get(executorId);
+  }
+
+  @SuppressWarnings("unused")
+  public static void registerRunnerId(@NotNull String executorId, @NotNull String externalSystemRunnerId)  {
+    if (!RUNNER_IDS.containsKey(executorId)) {
+      RUNNER_IDS.put(executorId, externalSystemRunnerId);
+    } else {
+      throw new ExternalSystemException("Executor with ID " + executorId + " is already registered");
+    }
   }
 
   /**
@@ -1046,12 +1011,12 @@ public final class ExternalSystemUtil {
    * @param isPreviewMode         flag which identifies if missing external project binaries should be downloaded
    * @param progressExecutionMode identifies how progress bar will be represented for the current processing
    */
-  public static void linkExternalProject(@NotNull final ProjectSystemId externalSystemId,
-                                         @NotNull final ExternalProjectSettings projectSettings,
-                                         @NotNull final Project project,
-                                         @Nullable final Consumer<? super Boolean> importResultCallback,
+  public static void linkExternalProject(final @NotNull ProjectSystemId externalSystemId,
+                                         final @NotNull ExternalProjectSettings projectSettings,
+                                         final @NotNull Project project,
+                                         final @Nullable Consumer<? super Boolean> importResultCallback,
                                          boolean isPreviewMode,
-                                         @NotNull final ProgressExecutionMode progressExecutionMode) {
+                                         final @NotNull ProgressExecutionMode progressExecutionMode) {
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, externalSystemId);
     ExternalProjectSettings existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
     if (existingSettings != null) {
@@ -1060,17 +1025,16 @@ public final class ExternalSystemUtil {
 
     //noinspection unchecked
     systemSettings.linkProject(projectSettings);
-    ensureToolWindowInitialized(project, externalSystemId);
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
       @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
         if (externalProject == null) {
           if (importResultCallback != null) {
             importResultCallback.consume(false);
           }
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, true);
+        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
         if (importResultCallback != null) {
           importResultCallback.consume(true);
         }
@@ -1089,8 +1053,7 @@ public final class ExternalSystemUtil {
     refreshProject(projectSettings.getExternalProjectPath(), importSpecBuilder);
   }
 
-  @Nullable
-  public static VirtualFile refreshAndFindFileByIoFile(@NotNull final File file) {
+  public static @Nullable VirtualFile refreshAndFindFileByIoFile(final @NotNull File file) {
     final Application app = ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
       assert !((ApplicationEx)app).holdsReadLock();
@@ -1098,24 +1061,21 @@ public final class ExternalSystemUtil {
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toPath());
   }
 
-  @Nullable
-  public static VirtualFile findLocalFileByPath(String path) {
+  public static @Nullable VirtualFile findLocalFileByPath(String path) {
     return ApplicationManager.getApplication().isReadAccessAllowed()
            ? findLocalFileByPathUnderReadAction(path)
            : findLocalFileByPathUnderWriteAction(path);
   }
 
-  @Nullable
-  private static VirtualFile findLocalFileByPathUnderWriteAction(final String path) {
+  private static @Nullable VirtualFile findLocalFileByPathUnderWriteAction(final String path) {
     return doWriteAction(() -> StandardFileSystems.local().refreshAndFindFileByPath(path));
   }
 
-  @Nullable
-  private static VirtualFile findLocalFileByPathUnderReadAction(final String path) {
+  private static @Nullable VirtualFile findLocalFileByPathUnderReadAction(final String path) {
     return ReadAction.compute(() -> StandardFileSystems.local().findFileByPath(path));
   }
 
-  public static void scheduleExternalViewStructureUpdate(@NotNull final Project project, @NotNull final ProjectSystemId systemId) {
+  public static void scheduleExternalViewStructureUpdate(final @NotNull Project project, final @NotNull ProjectSystemId systemId) {
     ExternalProjectsView externalProjectsView = ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(systemId);
     if (externalProjectsView instanceof ExternalProjectsViewImpl) {
       ((ExternalProjectsViewImpl)externalProjectsView).scheduleStructureUpdate();
@@ -1132,10 +1092,9 @@ public final class ExternalSystemUtil {
    * To wait for project info to become available, use
    * {@link com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager#runWhenInitialized(Runnable) ExternalProjectsManager#runWhenInitialized}
    */
-  @Nullable
-  public static ExternalProjectInfo getExternalProjectInfo(@NotNull final Project project,
-                                                           @NotNull final ProjectSystemId projectSystemId,
-                                                           @NotNull final String externalProjectPath) {
+  public static @Nullable ExternalProjectInfo getExternalProjectInfo(final @NotNull Project project,
+                                                                     final @NotNull ProjectSystemId projectSystemId,
+                                                                     final @NotNull String externalProjectPath) {
     final ExternalProjectSettings linkedProjectSettings =
       ExternalSystemApiUtil.getSettings(project, projectSystemId).getLinkedProjectSettings(externalProjectPath);
     if (linkedProjectSettings == null) return null;
@@ -1144,8 +1103,7 @@ public final class ExternalSystemUtil {
       project, projectSystemId, linkedProjectSettings.getExternalProjectPath());
   }
 
-  @NotNull
-  public static ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
+  public static @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
   getConsoleManagerFor(@NotNull ExternalSystemTask task) {
     for (ExternalSystemExecutionConsoleManager executionConsoleManager : ExternalSystemExecutionConsoleManager.EP_NAME.getExtensions()) {
       if (executionConsoleManager.isApplicableFor(task)) {
@@ -1180,7 +1138,7 @@ public final class ExternalSystemUtil {
     void execute(@NotNull ProgressIndicator indicator);
   }
 
-  private static class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
+  private static final class MyMultiExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
 
     MyMultiExternalProjectRefreshCallback(Project project) {
@@ -1188,11 +1146,11 @@ public final class ExternalSystemUtil {
     }
 
     @Override
-    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+    public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
       if (externalProject == null) {
         return;
       }
-      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, true);
+      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
     }
 
     @Override

@@ -47,6 +47,15 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     myName = name;
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   @NotNull
   @Override
   public String getName() {
@@ -147,12 +156,12 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
 
   @Nullable
   @Override
-  public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
   @Override
-  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
@@ -163,7 +172,7 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
 
   @NotNull
   @Override
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases) {
+  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
@@ -203,7 +212,7 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
   }
 
   @Override
-  public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
+  public boolean isInheritorDeep(@NotNull PsiClass baseClass, @Nullable PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 

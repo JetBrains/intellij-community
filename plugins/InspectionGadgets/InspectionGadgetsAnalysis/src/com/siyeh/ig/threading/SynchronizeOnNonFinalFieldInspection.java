@@ -63,10 +63,9 @@ public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
         return;
       }
       final PsiElement element = ((PsiReferenceExpression)lockExpression).resolve();
-      if (!(element instanceof PsiField)) {
+      if (!(element instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)element;
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }

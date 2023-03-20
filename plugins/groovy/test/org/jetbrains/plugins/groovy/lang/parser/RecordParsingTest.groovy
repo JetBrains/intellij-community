@@ -18,4 +18,8 @@ class RecordParsingTest extends GroovyParsingTestCase {
   void testRecord5() { doTest() }
 
   void testRecord6() { doTest() }
+
+  void testRecord7() { doTest() }
+
+  void testRecord8() { doTest() }
 }

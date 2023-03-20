@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -27,16 +26,16 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class QuestionableNameInspection extends BaseInspection {
 
@@ -55,10 +54,8 @@ public class QuestionableNameInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(nameList, InspectionGadgetsBundle.message("questionable.name.column.title")));
-    return UiUtils.createAddRemovePanel(table, InspectionGadgetsBundle.message("questionable.name.list.label"), true);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("nameList", InspectionGadgetsBundle.message("questionable.name.list.label")));
   }
 
   @Override

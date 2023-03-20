@@ -2,9 +2,10 @@
     <id>org.toml.lang</id>
     <name>Toml</name>
     <vendor>JetBrains</vendor>
+    <category>Languages</category>
 
     <description><![CDATA[
-      TOML language support
+      Adds support for the <a href="https://toml.io/en/">TOML</a> configuration file syntax.
     ]]></description>
 
     <dependencies>
@@ -52,6 +53,9 @@
 
         <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
 
+        <psi.referenceContributor language="TOML"
+                                  implementation="org.toml.ide.resolve.TomlReferenceContributor"/>
+
         <localInspection language="TOML"
                          groupKey="inspection.group.toml"
                          key="inspection.toml.unresolved.reference.display.name"
@@ -59,10 +63,12 @@
                          implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
 
         <intentionAction>
+            <language>TOML</language>
             <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
             <categoryKey>intention.category.toml</categoryKey>
         </intentionAction>
 
-        <registryKey key="org.toml.json.schema" defaultValue="false" description="JSON schemas support for TOML"/>
+        <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
+        <iconMapper mappingFile="TomlIconMappings.json"/>
     </extensions>
 </idea-plugin>

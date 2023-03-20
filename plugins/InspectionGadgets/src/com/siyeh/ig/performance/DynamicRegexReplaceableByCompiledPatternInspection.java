@@ -74,22 +74,20 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiClass aClass = ClassUtils.getContainingStaticClass(element);
       if (aClass == null) {
         return;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (!(parent instanceof PsiReferenceExpression methodExpression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiElement grandParent = methodExpression.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList list = methodCallExpression.getArgumentList();
       final PsiExpression[] expressions = list.getExpressions();
       CommentTracker commentTracker = new CommentTracker();
@@ -165,8 +163,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
     private static PsiReferenceExpression getReference(PsiMethodCallExpression newMethodCallExpression) {
       final PsiReferenceExpression methodExpression = newMethodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (qualifierExpression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifierExpression;
+      if (qualifierExpression instanceof PsiMethodCallExpression methodCallExpression) {
         return getReference(methodCallExpression);
       }
       if (!(qualifierExpression instanceof PsiReferenceExpression)) {
@@ -179,7 +176,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
   private static class DynamicRegexReplaceableByCompiledPatternVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!isCallToRegexMethod(expression)) {
         return;
@@ -199,10 +196,9 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
         return false;
       }
       final Object value = ExpressionUtils.computeConstantExpression(arguments[0]);
-      if (!(value instanceof String)) {
+      if (!(value instanceof String regex)) {
         return false;
       }
-      final String regex = (String)value;
       if (PsiUtil.isLanguageLevel7OrHigher(expression) && "split".equals(name) && isOptimizedPattern(regex) ||
           PsiUtil.isLanguageLevel9OrHigher(expression) && "replace".equals(name)) {
         return false;

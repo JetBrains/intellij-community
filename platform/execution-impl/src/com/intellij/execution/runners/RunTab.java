@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
@@ -37,10 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class RunTab implements DataProvider, Disposable {
   /**
@@ -51,6 +48,9 @@ public abstract class RunTab implements DataProvider, Disposable {
    */
   @ApiStatus.Experimental
   public static final Key<PreferredPlace> PREFERRED_PLACE = Key.create("RunTab.preferredActionPlace");
+
+  @ApiStatus.Experimental
+  public static final DataKey<RunTab> KEY = DataKey.create("RunTab");
 
   @NotNull
   protected final RunnerLayoutUi myUi;
@@ -101,6 +101,8 @@ public abstract class RunTab implements DataProvider, Disposable {
       return myRunContentDescriptor;
     } else if (SingleContentSupplier.KEY.is(dataId)) {
       return getSupplier();
+    } else if (KEY.is(dataId)) {
+      return this;
     }
     return null;
   }
@@ -135,8 +137,7 @@ public abstract class RunTab implements DataProvider, Disposable {
 
   protected final void initLogConsoles(@NotNull RunProfile runConfiguration, @NotNull RunContentDescriptor contentDescriptor, @Nullable ExecutionConsole console) {
     ProcessHandler processHandler = contentDescriptor.getProcessHandler();
-    if (runConfiguration instanceof RunConfigurationBase) {
-      RunConfigurationBase configuration = (RunConfigurationBase)runConfiguration;
+    if (runConfiguration instanceof RunConfigurationBase configuration) {
       if (myManager == null) {
         myManager = new LogFilesManager(myProject, getLogConsoleManager(), contentDescriptor);
       }
@@ -149,17 +150,43 @@ public abstract class RunTab implements DataProvider, Disposable {
 
   /**
    * Default implementation of {@link SingleContentSupplier}.
-   *
    * Isn't used directly by {@link RunTab}, but can be used by inheritors.
    */
   protected class RunTabSupplier implements SingleContentSupplier {
 
     @Nullable
     private final ActionGroup myActionGroup;
+    private final Map<TabInfo, Content> myTabInfoContentMap = new LinkedHashMap<>();
     private boolean myMoveToolbar = false;
+
+    private final ActionGroup layoutActionGroup = new ActionGroup(
+      ExecutionBundle.messagePointer("runner.content.tooltip.layout.settings"), () -> "", AllIcons.Debugger.RestoreLayout
+    ) {
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+        return Objects.requireNonNull(contentUi).getViewActions();
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabledAndVisible(getChildren(null).length > 0);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+    };
 
     public RunTabSupplier(@Nullable ActionGroup group) {
       myActionGroup = group;
+      layoutActionGroup.setPopup(true);
+      layoutActionGroup.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     }
 
     @NotNull
@@ -178,27 +205,7 @@ public abstract class RunTab implements DataProvider, Disposable {
     @NotNull
     @Override
     public List<AnAction> getContentActions() {
-      var layout = new ActionGroup(ExecutionBundle.messagePointer("runner.content.tooltip.layout.settings"), () -> "", AllIcons.Debugger.RestoreLayout) {
-          @Override
-          public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-            RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
-            return Objects.requireNonNull(contentUi).getViewActions();
-          }
-
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabledAndVisible(getChildren(null).length > 0);
-        }
-
-        @Override
-        public boolean isDumbAware() {
-          return true;
-        }
-      };
-      layout.setPopup(true);
-      layout.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
-      return List.of(layout);
+      return List.of(layoutActionGroup);
     }
 
     @Override
@@ -233,6 +240,17 @@ public abstract class RunTab implements DataProvider, Disposable {
         return;
       }
       context.getContentManager().removeContent(content[0], context.isToDisposeRemovedContent());
+    }
+
+    @Override
+    public void addSubContent(@NotNull TabInfo tabInfo, @NotNull Content content) {
+      myTabInfoContentMap.put(tabInfo, content);
+    }
+
+    @NotNull
+    @Override
+    public Collection<Content> getSubContents() {
+      return myTabInfoContentMap.values();
     }
 
     public boolean isMoveToolbar() {

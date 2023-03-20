@@ -1,100 +1,103 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.UserDataHolderEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
- * A custom visual element displayed in editor. It is associated with a certain position in a document, but is not
- * represented in document text in any way. Inlay's document position (offset) is updated on document changes just like
- * for a {@link RangeMarker}. Both 'inline' (displayed within text lines) and 'block' (displayed between text lines) elements are supported.
+ * A custom visual element displayed in the editor.
  * <p>
- * Inlay becomes invalid on explicit disposal, or when a document range fully containing inlay's offset, is deleted.
+ * Each inlay is associated with a certain offset in a document but is not represented in the document text in any way.
+ * The inlay's offset in the document is updated on document changes just like for a zero-range {@link RangeMarker}.
  * <p>
+ * There are several kinds of inlays:
+ * <ul>
+ * <li><b>Inline</b> inlays are inserted between characters in a line of text
+ *     and move the remaining text of the line further to the end of the line.
+ *     Examples of inline inlays are parameter hints or inferred types.
+ * <li><b>After-line-end</b> inlays are appended to the end of a logical line.
+ *     An example of after-line-end inlays are evaluated expressions during debugging.
+ * <li><b>Block</b> inlays are inserted between lines of text
+ *     and move the remaining lines of the file further down.
+ *     An example of block inlays are author attributions.
+ * </ul>
+ * An inlay becomes invalid on explicit disposal, or when a document range that contains the inlay's offset is deleted.
  *
  * @see InlayModel
  */
 public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable, UserDataHolderEx {
-  /**
-   * Returns editor, this custom visual element belongs to.
-   */
-  @NotNull
-  Editor getEditor();
+  /** Returns the editor to which this custom visual element belongs. */
+  @NotNull Editor getEditor();
+
+  /** Defines the position of the inlay element relative to the containing text. */
+  @NotNull Placement getPlacement();
 
   /**
-   * Defines relative position of inlay element with respect to the containing text.
-   */
-  @NotNull
-  Placement getPlacement();
-
-  /**
-   * Tells whether this element is valid. Inlay becomes invalid on explicit disposal, or when a document range fully containing inlay's
-   * offset, is deleted. It also becomes invalid on editor disposal.
+   * Tells whether this element is valid.
+   * <p>
+   * An inlay becomes invalid on explicit disposal, or when a document range containing the inlay's offset is deleted.
+   * It also becomes invalid on editor disposal.
    */
   boolean isValid();
 
   /**
-   * Returns current inlay's position in the document. This position is updated on document changes just like for a {@link RangeMarker}.
+   * Returns the inlay's position in the document.
+   * This position is updated on document changes just like for a {@link RangeMarker}.
    */
   int getOffset();
 
-  /**
-   * See {@link InlayProperties#relatesToPrecedingText(boolean)}
-   */
+  /** See {@link InlayProperties#relatesToPrecedingText(boolean)}. */
   boolean isRelatedToPrecedingText();
 
   /**
-   * Returns current visual position of the inlay's left boundary. For 'block' elements, this is just a visual position associated with
-   * inlay's offset.
+   * Returns the visual position of the inlay's left boundary.
+   * For 'block' elements, this is just a visual position associated with the inlay's offset.
    */
-  @NotNull
-  VisualPosition getVisualPosition();
+  @NotNull VisualPosition getVisualPosition();
 
   /**
-   * Returns inlay element's bounds in editor coordinate system if it's visible (not folded), or {@code null} otherwise
+   * Returns the inlay element's bounds in the editor's screen coordinate system
+   * if it's visible (not folded), otherwise {@code null}.
    */
-  @Nullable
-  Rectangle getBounds();
+  @Nullable Rectangle getBounds();
 
   /**
-   * Returns renderer, which defines size and representation for this inlay.
+   * Returns the renderer, which defines the size and visual representation for this inlay.
    */
-  @NotNull
-  T getRenderer();
+  @NotNull T getRenderer();
 
   /**
-   * Returns current inlay's width. Width is defined at inlay's creation using information returned by inlay's renderer.
-   * To change width, {@link #update()} method should be called.
+   * Returns the inlay's width.
+   * The width is defined when the inlay is created, using information returned by the inlay's renderer.
+   * To change the width, call {@link #update()}.
    */
   int getWidthInPixels();
 
   /**
-   * Returns current inlay's height. Height is defined at inlay's creation using information returned by inlay's renderer.
-   * To change height (supported for 'block' elements only), {@link #update()} method should be called.
+   * Returns the inlay's height.
+   * The height is defined when the inlay is created, using information returned by the inlay's renderer.
+   * To change the height (supported for 'block' elements only), call {@link #update()}.
    */
   int getHeightInPixels();
 
   /**
-   * Returns {@link GutterIconRenderer} instance defining an icon displayed in gutter, and associated actions (supported for block inlays
+   * Returns the {@link GutterIconRenderer} instance defining an icon displayed in gutter, and associated actions (supported for block inlays
    * at the moment). This provider is defined at inlay's creation using information returned by inlay's renderer. To change it,
    * {@link #update()} method should be called.
    *
    * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
    */
-  @Nullable
-  GutterIconRenderer getGutterIconRenderer();
+  @Nullable GutterIconRenderer getGutterIconRenderer();
 
   /**
    * @deprecated Use {@link #update()} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void updateSize() {
     update();
   }
@@ -128,5 +131,5 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   /**
    * @see #getPlacement()
    */
-  enum Placement { INLINE, ABOVE_LINE, BELOW_LINE, AFTER_LINE_END }
+  enum Placement {INLINE, ABOVE_LINE, BELOW_LINE, AFTER_LINE_END}
 }

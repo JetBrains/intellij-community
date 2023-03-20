@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
@@ -7,22 +7,22 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
+import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.builtIns
@@ -47,8 +47,8 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                         }
                     ) return@check false
                 }
-                if (conversion.replacement == "maxBy" || conversion.replacement == "minBy") {
-                    val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
+                if (conversion.replacement in listOf("maxBy", "minBy", "minByOrNull", "maxByOrNull")) {
+                    val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgument(context)?.returnType ?: return@check false
                     if (functionalArgumentReturnType.isNullable()) return@check false
                 }
                 if (conversion.removeNotNullAssertion &&
@@ -60,17 +60,32 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 }
 
                 if (conversion.firstName == "map" && conversion.secondName == "sum" && conversion.replacement == "sumOf") {
-                    val type = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
-                    if (!KotlinBuiltIns.isInt(type) && !KotlinBuiltIns.isLong(type) &&
+                    val lastFunctionalArgument = firstResolvedCall.lastFunctionalArgument(context) ?: return@check false
+                    val type = lastFunctionalArgument.returnType ?: return@check false
+                    val isInt = KotlinBuiltIns.isInt(type)
+                    if (!isInt && !KotlinBuiltIns.isLong(type) &&
                         !KotlinBuiltIns.isUInt(type) && !KotlinBuiltIns.isULong(type) &&
                         !KotlinBuiltIns.isDouble(type)
+                    ) return@check false
+                    if (isInt && lastFunctionalArgument.isLambda && lastFunctionalArgument.lastStatement.isLiteralValue()) {
+                        // 'sumOf' call with integer literals leads to an overload resolution ambiguity: KT-46360
+                        return@check false
+                    }
+                }
+                if (conversion.firstName == "map" && conversion.secondName == "toMap") {
+                    val argumentSize = expression.callExpression?.valueArguments?.size ?: return@check false
+                    if (conversion.replacement == "associate" && argumentSize != 0
+                        || conversion.replacement == "associateTo" && argumentSize != 1
                     ) return@check false
                 }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
             } ?: return
 
             val associateFunction = getAssociateFunction(conversion, expression.receiverExpression)
-            if (associateFunction != null) conversion = conversion.copy(replacement = associateFunction.functionName)
+                ?.let { (associateFunction, associateFunctionName) ->
+                    conversion = conversion.copy(replacement = associateFunctionName)
+                    associateFunction
+                }
 
             val replacement = conversion.replacement
             val descriptor = holder.manager.createProblemDescriptor(
@@ -97,22 +112,45 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         })
     }
 
-    private fun ResolvedCall<*>.lastFunctionalArgumentReturnType(context: BindingContext): KotlinType? {
+    private class FunctionalArgument(val isLambda: Boolean, val returnType: KotlinType?, val lastStatement: KtExpression?)
+
+    private fun ResolvedCall<*>.lastFunctionalArgument(context: BindingContext): FunctionalArgument? {
         val argument = valueArguments.entries.lastOrNull()?.value?.arguments?.firstOrNull()
         return when (val argumentExpression = argument?.getArgumentExpression()) {
             is KtLambdaExpression -> {
-                val functionLiteral = argumentExpression.functionLiteral
-                val body = argumentExpression.bodyExpression
-                val lastStatementType = body?.statements?.lastOrNull()?.getType(context)
-                val returnedTypes = body
-                    ?.collectDescendantsOfType<KtReturnExpression> { it.getTargetFunction(context) == functionLiteral }
-                    ?.mapNotNull { it.returnedExpression?.getType(context) }
-                    .orEmpty()
-                val types = listOfNotNull(lastStatementType) + returnedTypes
-                types.firstOrNull { it.isNullable() } ?: types.firstOrNull()
+                val lastStatement = argumentExpression.bodyExpression?.lastBlockStatementOrThis()
+                FunctionalArgument(
+                    isLambda = true,
+                    returnType = lastStatement?.getType(context),
+                    lastStatement = lastStatement
+                )
             }
-            is KtNamedFunction -> argumentExpression.typeReference?.let { context[BindingContext.TYPE, it] }
+
+            is KtNamedFunction -> {
+                FunctionalArgument(
+                    isLambda = false,
+                    returnType = argumentExpression.typeReference?.let { context[BindingContext.TYPE, it] },
+                    lastStatement = argumentExpression.lastBlockStatementOrThis()
+                )
+            }
+
             else -> null
+        }
+    }
+
+    private fun KtExpression?.isLiteralValue(): Boolean {
+        return this != null && when (val expr = KtPsiUtil.safeDeparenthesize(this)) {
+            is KtBinaryExpression -> expr.left.isLiteralValue() && expr.right.isLiteralValue()
+
+            is KtIfExpression -> expr.then?.lastBlockStatementOrThis().isLiteralValue() &&
+                    expr.`else`?.lastBlockStatementOrThis().isLiteralValue()
+
+            is KtWhenExpression -> expr.entries.all { it.expression?.lastBlockStatementOrThis().isLiteralValue() }
+
+            is KtTryExpression -> expr.tryBlock.lastBlockStatementOrThis().isLiteralValue() &&
+                    expr.catchClauses.all { c -> c.catchBody?.lastBlockStatementOrThis().isLiteralValue() }
+
+            else -> expr is KtConstantExpression
         }
     }
 
@@ -122,14 +160,15 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         }
     }
 
-    private fun getAssociateFunction(conversion: Conversion, expression: KtExpression): AssociateFunction? {
-        if (conversion.replacement != "associate") return null
+    private fun getAssociateFunction(conversion: Conversion, expression: KtExpression): Pair<AssociateFunction, String>? {
+        val isAssociateTo = conversion.replacement == "associateTo"
+        if (conversion.replacement != "associate" && !isAssociateTo) return null
         if (expression !is KtDotQualifiedExpression) return null
         val (associateFunction, problemHighlightType) =
             ReplaceAssociateFunctionInspection.getAssociateFunctionAndProblemHighlightType(expression) ?: return null
         if (problemHighlightType == ProblemHighlightType.INFORMATION) return null
         if (associateFunction != AssociateFunction.ASSOCIATE_WITH && associateFunction != AssociateFunction.ASSOCIATE_BY) return null
-        return associateFunction
+        return associateFunction to associateFunction.name(isAssociateTo)
     }
 
     private val conversionGroups = conversions.group()
@@ -181,6 +220,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             Conversion("kotlin.collections.map", "kotlin.collections.joinToString", "joinToString", enableSuspendFunctionCall = false),
             Conversion("kotlin.collections.map", "kotlin.collections.filterNotNull", "mapNotNull"),
             Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associate"),
+            Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associateTo"),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.sum", "sumOf", replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),

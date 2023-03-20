@@ -39,7 +39,7 @@ public class SuppressLocalWithCommentFix extends SuppressByJavaCommentFix {
   }
 
   @Override
-  protected PsiElement getElementToAnnotate(PsiElement element, PsiElement container) {
+  protected PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
     return null;
   }
 

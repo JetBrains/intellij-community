@@ -16,7 +16,6 @@
 package org.jetbrains.jps.model.serialization.artifact;
 
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 public abstract class JpsPackagingElementSerializer<E extends JpsPackagingElement> {
@@ -41,8 +40,7 @@ public abstract class JpsPackagingElementSerializer<E extends JpsPackagingElemen
   /**
    * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void save(E element, Element tag) {
   }
 }

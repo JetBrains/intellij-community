@@ -7,9 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
   private final List<SingleChildDescriptor> mySingleChildDescriptors = new ArrayList<>();
   private final List<MultiChildDescriptor> myMultiChildDescriptors = new ArrayList<>();

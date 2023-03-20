@@ -25,8 +25,7 @@ public final class MultiResolutionImageProvider {
   private static final class Converter {
     @Nullable
     public static Image convert(Image jbImage) {
-      if (jbImage instanceof JBHiDPIScaledImage) {
-        JBHiDPIScaledImage scaledImage = (JBHiDPIScaledImage)jbImage;
+      if (jbImage instanceof JBHiDPIScaledImage scaledImage) {
         Image lowResImage = ImageUtil.toBufferedImage(scaledImage, true);
         Image highResImage = ImageUtil.toBufferedImage(scaledImage);
         return new BaseMultiResolutionImage(lowResImage, highResImage);
@@ -51,23 +50,6 @@ public final class MultiResolutionImageProvider {
     return Converter.convert(jbImage);
   }
 
-  /**
-   * Converts the provided icon with {@link JBHiDPIScaledImage} to an {@link ImageIcon} with {@code MultiResolutionImage}.
-   * If the provided icon's image is not {@code JBHiDPIScaledImage} the provided icon is returned unchanged.
-   */
-  @Contract("null, _ -> null; !null, _ -> !null")
-  public static Icon convertFromJBIcon(@Nullable Icon jbIcon, @Nullable ScaleContext ctx) {
-    if (jbIcon == null) {
-      return null;
-    }
-
-    Image image = IconLoader.toImage(jbIcon, ctx);
-    if (image == null) {
-      return jbIcon; // not convertable icon (e.g. with zero size)
-    }
-    Image newImage = convertFromJBImage(image);
-    return newImage == image ? jbIcon : new ImageIcon(newImage);
-  }
 
   /**
    * Returns the max-size resolution variant image of the provided {@code MultiResolutionImage}.
@@ -106,7 +88,7 @@ public final class MultiResolutionImageProvider {
       scaleContext = ScaleContext.create();
     }
     Image image = Objects.requireNonNull(IconLoader.toImage(mrIcon, scaleContext));
-    if (image instanceof MultiResolutionImage) {
+    if (!(image instanceof MultiResolutionImage)) {
       return mrIcon;
     }
     image = getMaxSizeResolutionVariant(image);

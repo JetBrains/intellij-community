@@ -58,7 +58,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   /**
    * Launch process, setup history, actions etc.
    *
-   * @throws ExecutionException
    */
   public void initAndRun() throws ExecutionException {
     // Create Server process

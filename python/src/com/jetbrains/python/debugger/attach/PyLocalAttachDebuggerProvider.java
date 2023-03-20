@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -30,9 +16,11 @@ import com.intellij.xdebugger.attach.*;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -59,7 +47,6 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
    * Get all local Python Sdks, sort them by version and put the currently selected Sdk (if it exists) to the beginning.
    * Create a debuggers for attaching based on this list of Sdks.
    *
-   * @param project
    * @return list of debuggers for attaching to process
    */
   @NotNull
@@ -78,7 +65,7 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     final List<XAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
       .stream()
       .filter(sdk -> sdk != selectedSdk)
-      .filter(sdk -> !PythonSdkUtil.isInvalid(sdk))
+      .filter(sdk -> PySdkExtKt.getSdkSeemsValid(sdk))
       .sorted(PreferredSdkComparator.INSTANCE)
       .map(PyLocalAttachDebugger::new)
       .collect(Collectors.toList());
@@ -88,12 +75,11 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     return result;
   }
 
-  @NotNull
   @Override
-  public List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                     @NotNull XAttachHost hostInfo,
-                                                     @NotNull ProcessInfo processInfo,
-                                                     @NotNull UserDataHolder contextHolder) {
+  public @NotNull List<? extends XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                                        @NotNull XAttachHost attachHost,
+                                                                        @NotNull ProcessInfo processInfo,
+                                                                        @NotNull UserDataHolder contextHolder) {
     final String filter = PyDebuggerOptionsProvider.getInstance(project).getAttachProcessFilter();
     if (StringUtil.containsIgnoreCase(processInfo.getCommandLine(), filter)) {
       List<XAttachDebugger> result;
@@ -117,15 +103,18 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
 
   private static class PyLocalAttachDebugger implements XAttachDebugger {
     private final String mySdkHome;
+    @Nullable private final Sdk mySdk;
     @NotNull @NlsSafe private final String myName;
 
     PyLocalAttachDebugger(@NotNull Sdk sdk) {
       mySdkHome = sdk.getHomePath();
+      mySdk = sdk;
       myName = PythonSdkType.getInstance().getVersionString(sdk) + " (" + mySdkHome + ")";
     }
 
     PyLocalAttachDebugger(@NotNull String sdkHome) {
       mySdkHome = sdkHome;
+      mySdk = PythonSdkUtil.findSdkByPath(mySdkHome);
       myName = "Python Debugger";
     }
 
@@ -137,9 +126,9 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
 
     @Override
     public void attachDebugSession(@NotNull Project project,
-                                   @NotNull XAttachHost hostInfo,
-                                   @NotNull ProcessInfo info) throws ExecutionException {
-      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, info.getPid(), mySdkHome);
+                                   @NotNull XAttachHost attachHost,
+                                   @NotNull ProcessInfo processInfo) throws ExecutionException {
+      PyAttachToProcessDebugRunner runner = new PyAttachToProcessDebugRunner(project, processInfo.getPid(), mySdk);
       runner.launch();
     }
   }

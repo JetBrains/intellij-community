@@ -1,26 +1,43 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.compensateForHighlightableComponentMarginLeft
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.noInsets
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledAsString
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.skipInvisibleComponents
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.withHtmlStyling
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -32,7 +49,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
     @ScaledPixels private val maxRowHeight = 180.scaled()
 
     private val noDataLabel = PackageSearchUI.createLabel {
-        foreground = PackageSearchUI.GRAY_COLOR
+        foreground = PackageSearchUI.Colors.infoLabelForeground
         text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.noData")
             .withHtmlStyling(wordWrap = true)
     }.withMaxHeight(maxRowHeight)
@@ -65,7 +82,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
             LC().fillX()
                 .noInsets()
                 .skipInvisibleComponents()
-                .gridGap("0", 8.scaledAsString()),
+                .gridGap("0", "8"),
             AC().grow(), // One column only
             AC().fill().gap() // All rows are filling all available width
                 .fill().gap()
@@ -76,13 +93,11 @@ internal class PackageDetailsInfoPanel : JPanel() {
                 .fill().gap()
                 .fill().gap()
         )
-        background = PackageSearchUI.UsualBackgroundColor
+        background = PackageSearchUI.Colors.panelBackground
         alignmentX = Component.LEFT_ALIGNMENT
 
-        @ScaledPixels val horizontalBorder = 12.scaled()
-        border = emptyBorder(left = horizontalBorder, bottom = 20.scaled(), right = horizontalBorder)
-
-        fun CC.compensateForHighlightableComponentMarginLeft() = pad(0, (-2).scaled(), 0, 0)
+        val horizontalBorder = 12
+        border = emptyBorder(left = horizontalBorder, bottom = 20, right = horizontalBorder)
 
         add(noDataLabel, CC().wrap())
         add(repositoriesLabel, CC().wrap())
@@ -100,33 +115,36 @@ internal class PackageDetailsInfoPanel : JPanel() {
     internal data class ViewModel(
         val packageModel: PackageModel,
         val selectedVersion: PackageVersion,
-        val allKnownRepositories: KnownRepositories.All
+        val allKnownRepositories: List<RepositoryModel>,
+        val knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>>
     )
 
     fun display(viewModel: ViewModel) {
         clearPanelContents()
-        if (viewModel.packageModel.remoteInfo == null) {
+        background = PackageSearchUI.Colors.panelBackground
+        displayUsagesIfAny(viewModel.packageModel)
+        val remoteInfo = viewModel.packageModel.remoteInfo
+        if (remoteInfo == null) {
             return
         }
 
         noDataLabel.isVisible = false
 
-        displayDescriptionIfAny(viewModel.packageModel.remoteInfo)
+        displayDescriptionIfAny(remoteInfo)
 
-        val selectedVersionInfo = viewModel.packageModel.remoteInfo
+        val selectedVersionInfo = remoteInfo
             .versions.find { it.version == viewModel.selectedVersion.versionName }
         displayRepositoriesIfAny(selectedVersionInfo, viewModel.allKnownRepositories)
 
-        displayAuthorsIfAny(viewModel.packageModel.remoteInfo.authors)
+        displayAuthorsIfAny(remoteInfo.authors)
 
-        val linkExtractor = LinkExtractor(viewModel.packageModel.remoteInfo)
+        val linkExtractor = LinkExtractor(remoteInfo)
         displayGitHubInfoIfAny(linkExtractor.scm())
         displayLicensesIfAny(linkExtractor.licenses())
         displayProjectWebsiteIfAny(linkExtractor.projectWebsite())
         displayDocumentationIfAny(linkExtractor.documentation())
         displayReadmeIfAny(linkExtractor.readme())
         displayKotlinPlatformsIfAny(viewModel.packageModel.remoteInfo)
-        displayUsagesIfAny(viewModel.packageModel)
 
         updateAndRepaint()
         (parent as JComponent).updateAndRepaint()
@@ -161,12 +179,12 @@ internal class PackageDetailsInfoPanel : JPanel() {
         }
 
         descriptionLabel.isVisible = true
-        descriptionLabel.text = description.normalizeWhitespace().withHtmlStyling(wordWrap = true)
+        descriptionLabel.text = description.normalizeWhitespace()?.withHtmlStyling(wordWrap = true)
     }
 
     private fun displayRepositoriesIfAny(
         selectedVersionInfo: ApiStandardPackage.ApiStandardVersion?,
-        allKnownRepositories: KnownRepositories.All
+        allKnownRepositories: List<RepositoryModel>
     ) {
         if (selectedVersionInfo == null) {
             repositoriesLabel.isVisible = false
@@ -174,7 +192,7 @@ internal class PackageDetailsInfoPanel : JPanel() {
         }
 
         val repositoryNames = selectedVersionInfo.repositoryIds
-            .mapNotNull { repoId -> allKnownRepositories.findById(repoId)?.displayName }
+            .mapNotNull { repoId -> allKnownRepositories.find { it.id == repoId }?.displayName }
             .filterNot { it.isBlank() }
         val repositoryNamesToDisplay = repositoryNames.joinToString()
 

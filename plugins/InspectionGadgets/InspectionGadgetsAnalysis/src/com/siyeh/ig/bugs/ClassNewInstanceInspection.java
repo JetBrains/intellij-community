@@ -50,24 +50,22 @@ public class ClassNewInstanceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (!(parent instanceof PsiReferenceExpression methodExpression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
       final PsiElement parentOfType = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiTryStatement.class, PsiLambdaExpression.class);
-      if (parentOfType instanceof PsiTryStatement) {
-        final PsiTryStatement tryStatement = (PsiTryStatement)parentOfType;
+      if (parentOfType instanceof PsiTryStatement tryStatement) {
         addCatchBlock(tryStatement, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
       }
       else if (parentOfType instanceof PsiLambdaExpression) {
@@ -81,7 +79,6 @@ public class ClassNewInstanceInspection extends BaseInspection {
         final PsiMethod method = (PsiMethod)parentOfType;
         addThrowsClause(method, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       @NonNls final String newExpression = qualifier.getText() + ".getConstructor().newInstance()";
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, new CommentTracker());
     }
@@ -135,7 +132,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
   private static class ClassNewInstanceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"newInstance".equals(methodName)) {

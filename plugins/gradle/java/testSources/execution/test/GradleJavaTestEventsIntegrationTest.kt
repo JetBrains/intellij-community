@@ -1,286 +1,204 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test
 
-import com.intellij.openapi.externalSystem.model.task.*
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
-import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.runAll
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.assertj.core.api.Condition
-import org.jetbrains.plugins.gradle.GradleManager
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.buildScript
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.Test
+import org.junit.jupiter.params.ParameterizedTest
 
-open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
+class GradleJavaTestEventsIntegrationTest : GradleJavaTestEventsIntegrationTestCase() {
 
-  override fun setUp() {
-    super.setUp()
-    if (testLauncherAPISupported()) {
-      Registry.get("gradle.testLauncherAPI.enabled").setValue(true, testRootDisposable)
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test call test task produces test events`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      appendText("build.gradle", """
+        |import java.util.concurrent.atomic.AtomicBoolean;
+        |def resolutionAllowed = new AtomicBoolean(false)
+        |
+        |if (configurations.findByName("testRuntimeClasspath") != null) {
+        |  configurations.testRuntimeClasspath.incoming.beforeResolve {
+        |    if (!resolutionAllowed.get() && !System.properties["idea.sync.active"]) {
+        |      logger.warn("Attempt to resolve configuration too early")
+        |    }
+        |  }
+        |}
+        |
+        |gradle.taskGraph.beforeTask { Task task ->
+        |  if (task.path == ":test" ) {
+        |    resolutionAllowed.set(true)
+        |  }
+        |}
+      """.trimMargin())
+      writeText("src/test/java/pkg/AClassTest.java", """
+        |package pkg;
+        |import $jUnitTestAnnotationClass;
+        |public class AClassTest {
+        |  @Test public void testSuccess() {}
+        |  @Test public void testFail() { throw new RuntimeException(); }
+        |}
+      """.trimMargin())
+      writeText("src/test/java/other/pkg/AClassTest.java", """
+        |package other.pkg;
+        |import $jUnitTestAnnotationClass;
+        |public class AClassTest {
+        |  @Test public void testSuccess() {}
+        |}
+      """.trimMargin())
+
+      val output = executeTasks(":test", hasFailingTests = true)
+      assertThat(output.testsDescriptors)
+        .transform { it.className to it.methodName }
+        .contains("pkg.AClassTest" to "testSuccess")
+        .contains("pkg.AClassTest" to "testFail")
+        .contains("other.pkg.AClassTest" to "testSuccess")
+      assertThat(output.outputLog)
+        .doesNotContain("Attempt to resolve configuration too early")
     }
   }
 
-  @Test
-  @TargetVersions("!6.9")
-  fun test() {
-    val gradleSupportsJunitPlatform = isGradleNewerOrSameAs("4.6")
-    createProjectSubFile("src/main/java/my/pack/AClass.java",
-                         "package my.pack;\n" +
-                         "public class AClass {\n" +
-                         "  public int method() { return 42; }" +
-                         "}")
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test call build task does not produce test events`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/pkg/AClassTest.java", """
+        |package pkg;
+        |import $jUnitTestAnnotationClass;
+        |public class AClassTest {
+        |  @Test public void testSuccess() {}
+        |  @Test public void testFail() { throw new RuntimeException(); }
+        |}
+      """.trimMargin())
 
-    createProjectSubFile("src/test/java/my/pack/AClassTest.java",
-                         "package my.pack;\n" +
-                         "import org.junit.Test;\n" +
-                         "import static org.junit.Assert.*;\n" +
-                         "public class AClassTest {\n" +
-                         "  @Test\n" +
-                         "  public void testSuccess() {\n" +
-                         "    assertEquals(42, new AClass().method());\n" +
-                         "  }\n" +
-                         "  @Test\n" +
-                         "  public void testFail() {\n" +
-                         "    fail(\"failure message\");\n" +
-                         "  }\n" +
-                         "}")
-
-    createProjectSubFile("src/test/java/my/otherpack/AClassTest.java",
-                         "package my.otherpack;\n" +
-                         "import my.pack.AClass;\n" +
-                         "import org.junit.Test;\n" +
-                         "import static org.junit.Assert.*;\n" +
-                         "public class AClassTest {\n" +
-                         "  @Test\n" +
-                         "  public void testSuccess() {\n" +
-                         "    assertEquals(42, new AClass().method());\n" +
-                         "  }\n" +
-                         "}")
-
-    createProjectSubFile("src/junit5test/java/my/otherpack/ADisplayNamedTest.java",
-                         """
-                           package my.otherpack;
-                           import org.junit.jupiter.api.DisplayNameGeneration;
-                           import org.junit.jupiter.api.DisplayNameGenerator;
-                           import org.junit.jupiter.api.Test;
-                           import static org.junit.jupiter.api.Assertions.assertTrue;
-                           @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-                           public class ADisplayNamedTest {
-                               @Test
-                               void successful_test() {
-                                   assertTrue(true);
-                               }
-                           }
-                         """.trimIndent())
-
-    importProject(buildscript {
-      withJavaPlugin()
-      withJUnit4()
-      if (gradleSupportsJunitPlatform) {
-        addPostfix("""
-          sourceSets {
-            junit5test
-          }
-          
-          dependencies {
-            junit5testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-            junit5testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-          }
-          
-          task junit5test(type: Test) {
-            useJUnitPlatform()
-            testClassesDirs = sourceSets.junit5test.output.classesDirs
-            classpath = sourceSets.junit5test.runtimeClasspath
-          }
-        """.trimIndent())
-      }
-      addPostfix("test { filter { includeTestsMatching 'my.pack.*' } }")
-      addPostfix("""
-        import java.util.concurrent.atomic.AtomicBoolean;
-        def resolutionAllowed = new AtomicBoolean(false)
-
-        if (configurations.findByName("testRuntimeClasspath") != null) {
-          configurations.testRuntimeClasspath.incoming.beforeResolve {
-              if (!resolutionAllowed.get() && !System.properties["idea.sync.active"]) {
-                  logger.warn("Attempt to resolve configuration too early")
-              }
-          }
-        }
-        
-        gradle.taskGraph.beforeTask { Task task ->
-            if (task.path == ":test" ) {
-                println("Greenlight to resolving the configuration!")
-                resolutionAllowed.set(true)
-            }
-        }
-      """.trimIndent())
-    })
-
-    runAll(
-      { `call test task produces test events`() },
-      { `call build task does not produce test events`() },
-      { `call task for specific test overrides existing filters`() },
-      { if (gradleSupportsJunitPlatform) `test events use display name`() }
-    )
-  }
-
-  private fun testLauncherAPISupported(): Boolean = isGradleNewerOrSameAs("6.1")
-
-  private fun extractTestClassesAndMethods(testListener: LoggingESStatusChangeListener) =
-    testListener.eventLog
-      .filterIsInstance<ExternalSystemTaskExecutionEvent>()
-      .map { it.progressEvent.descriptor }
-      .filterIsInstance<TestOperationDescriptor>()
-      .map { it.run { className to methodName } }
-
-  private fun `call test task produces test events`() {
-    val testEventListener = LoggingESStatusChangeListener()
-    val testListener = LoggingESOutputListener(testEventListener)
-
-    val settings = createSettings { putUserData(GradleConstants.RUN_TASK_AS_TEST, true) }
-
-    assertThatThrownBy {
-      GradleTaskManager().executeTasks(createId(),
-                                       listOf(":test"),
-                                       projectPath,
-                                       settings,
-                                       null,
-                                       testListener)
-    }
-      .`is`(Condition({
-                        val message = it.message ?: return@Condition false
-                        message.contains("Test failed.") || message.contains("There were failing tests")
-                      },
-                      "Contain failed tests message"))
-
-
-    if (testLauncherAPISupported()) {
-      val testOperationDescriptors = extractTestClassesAndMethods(testEventListener)
-
-      assertThat(testOperationDescriptors)
-        .contains("my.pack.AClassTest" to "testSuccess",
-                  "my.pack.AClassTest" to "testFail",
-                  "my.otherpack.AClassTest" to "testSuccess")
-    }
-    else {
-      assertThat(testListener.eventLog)
-        .contains(
-          "<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
-          "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
-        .doesNotContain(
-          "<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
-        .doesNotContain(
-          "Attempt to resolve configuration too early")
+      val output = executeTasks("clean build", hasFailingTests = true)
+      assertThat(output.outputLog)
+        .noneMatch { it.contains("<ijLogEol/>") }
     }
   }
 
-  private fun `call build task does not produce test events`() {
-    val testListener = LoggingESOutputListener()
-    val settings = createSettings()
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test call task for specific test overrides existing filters`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      appendText("build.gradle", """
+        |test { 
+        |  filter { 
+        |    includeTestsMatching 'pkg.*'
+        |  } 
+        |}
+      """.trimMargin())
+      writeText("src/test/java/pkg/AClassTest.java", """
+        |package pkg;
+        |import $jUnitTestAnnotationClass;
+        |public class AClassTest {
+        |  @Test public void testSuccess() {}
+        |  @Test public void testFail() { throw new RuntimeException(); }
+        |}
+      """.trimMargin())
+      writeText("src/test/java/other/pkg/AClassTest.java", """
+        |package other.pkg;
+        |import $jUnitTestAnnotationClass;
+        |public class AClassTest {
+        |  @Test public void testSuccess() {}
+        |}
+      """.trimMargin())
 
-    assertThatThrownBy {
-      GradleTaskManager().executeTasks(createId(),
-                                       listOf("clean", "build"),
-                                       projectPath,
-                                       settings,
-                                       null,
-                                       testListener)
-    }
-      .hasMessageContaining("There were failing tests")
-    assertThat(testListener.eventLog).noneMatch { it.contains("<ijLogEol/>") }
-  }
+      val output1 = executeTasks("test", hasFailingTests = true)
+      assertThat(output1.testsDescriptors)
+        .transform { it.className to it.methodName }
+        .contains("pkg.AClassTest" to "testFail")
+        .contains("pkg.AClassTest" to "testSuccess")
+        .doesNotContain("other.pkg.AClassTest" to "testSuccess")
 
-  private fun `call task for specific test overrides existing filters`() {
-    val testListener = LoggingESOutputListener()
+      val output2 = executeTasks("test --tests pkg.AClassTest.testFail", hasFailingTests = true)
+      assertThat(output2.testsDescriptors)
+        .transform { it.className to it.methodName }
+        .contains("pkg.AClassTest" to "testFail")
+        .doesNotContain("pkg.AClassTest" to "testSuccess")
+        .doesNotContain("other.pkg.AClassTest" to "testSuccess")
 
-    val settings = createSettings {
-      putUserData(GradleConstants.RUN_TASK_AS_TEST, true)
-      withArguments("--tests","my.otherpack.*")
-    }
-
-      GradleTaskManager().executeTasks(createId(),
-                                       listOf(":cleanTest", ":test"),
-                                       projectPath,
-                                       settings,
-                                       null,
-                                       testListener)
-
-    assertThat(testListener.eventLog)
-      .contains("<descriptor name='testSuccess' displayName='testSuccess' className='my.otherpack.AClassTest' />")
-      .doesNotContain("<descriptor name='testFail' displayName='testFail' className='my.pack.AClassTest' />",
-                      "<descriptor name='testSuccess' displayName='testSuccess' className='my.pack.AClassTest' />")
-  }
-
-  private fun `test events use display name`() {
-    val testEventListener = LoggingESStatusChangeListener()
-    val testListener = LoggingESOutputListener(testEventListener)
-
-    val settings = createSettings { putUserData(GradleConstants.RUN_TASK_AS_TEST, true) }
-
-    GradleTaskManager().executeTasks(createId(),
-                                     listOf(":junit5test"),
-                                     projectPath,
-                                     settings,
-                                     null,
-                                     testListener)
-
-    if (testLauncherAPISupported()) {
-      val testOperationDescriptors = testEventListener.eventLog
-        .filterIsInstance<ExternalSystemTaskExecutionEvent>()
-        .map { it.progressEvent.descriptor }
-        .filterIsInstance<TestOperationDescriptor>()
-        .map { it.run { "$className$$methodName" to displayName } }
-
-      assertThat(testOperationDescriptors)
-        .contains("my.otherpack.ADisplayNamedTest\$successful_test()" to "successful test")
-    }
-    else {
-      if (GradleVersionComparator(currentGradleVersion).isOrGreaterThan("4.10.3")) {
-        assertThat(testListener.eventLog)
-          .contains("<descriptor name='successful_test()' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
-      } else {
-        assertThat(testListener.eventLog)
-          .contains("<descriptor name='successful test' displayName='successful test' className='my.otherpack.ADisplayNamedTest' />")
+      if (isGradleAtLeast("4.1")) {
+        val output3 = executeTasks("test --tests other.pkg.*", noMatchingTests = true)
+        assertThat(output3.testsDescriptors)
+          .transform { it.className to it.methodName }
+          .doesNotContain("pkg.AClassTest" to "testFail")
+          .doesNotContain("pkg.AClassTest" to "testSuccess")
+          .doesNotContain("other.pkg.AClassTest" to "testSuccess")
       }
     }
-
   }
 
-  private fun createSettings(config: GradleExecutionSettings.() -> Unit = {}) = GradleManager()
-    .executionSettingsProvider
-    .`fun`(Pair.create(myProject, projectPath))
-    .apply { config() }
+  @ParameterizedTest
+  @TargetVersions("4.10.3+")
+  @AllGradleVersionsSource
+  fun `test display name is used by test events`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/pkg/ADisplayNamedTest.java", """
+        |package pkg;
+        |import org.junit.jupiter.api.DisplayNameGeneration;
+        |import org.junit.jupiter.api.DisplayNameGenerator;
+        |import org.junit.jupiter.api.Test;
+        |@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+        |public class ADisplayNamedTest {
+        |  @Test public void successful_test() {}
+        |}
+      """.trimMargin())
 
-  private fun createId() = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myProject)
-
-  class LoggingESOutputListener(delegate: ExternalSystemTaskNotificationListener? = null) : ExternalSystemTaskNotificationListenerAdapter(
-    delegate) {
-    val eventLog = mutableListOf<String>()
-
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-      addEventLogLines(text, eventLog)
-    }
-
-    private fun addEventLogLines(text: String, eventLog: MutableList<String>) {
-      text.split("<ijLogEol/>").mapTo(eventLog) { it.trim('\r', '\n', ' ') }
-    }
-  }
-
-  class LoggingESStatusChangeListener : ExternalSystemTaskNotificationListenerAdapter() {
-    val eventLog = mutableListOf<ExternalSystemTaskNotificationEvent>()
-
-    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-      eventLog.add(event)
+      val output = executeTasks(":test --tests pkg.ADisplayNamedTest")
+      assertThat(output.testsDescriptors)
+        .transform { it.className to it.methodName to it.displayName }
+        .contains("pkg.ADisplayNamedTest" to "successful_test" to "successful test")
     }
   }
 
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test rerun test`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/pkg/AClassTest.java", """
+        |package pkg;
+        |import $jUnitTestAnnotationClass;
+        |public class AClassTest {
+        |  @Test public void testSuccess() {}
+        |  @Test public void testFail() { throw new RuntimeException(); }
+        |}
+      """.trimMargin())
+
+      executeTasks("test --tests 'pkg.AClassTest.testSuccess'")
+      val output = executeTasks("test --tests 'pkg.AClassTest.testSuccess'")
+      assertThat(output.testsDescriptors)
+        .transform { it.className to it.methodName }
+        .contains("pkg.AClassTest" to "testSuccess")
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test tasks order`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      appendText("build.gradle", buildScript(gradleVersion) {
+        withPostfix {
+          call("tasks.create", "beforeTest")
+          call("tasks.create", "afterTest")
+        }
+      })
+      writeText("src/test/java/pkg/AClassTest.java", """
+        |package pkg;
+        |import $jUnitTestAnnotationClass;
+        |public class AClassTest {
+        |  @Test public void testSuccess() {}
+        |  @Test public void testFail() { throw new RuntimeException(); }
+        |}
+      """.trimMargin())
+
+      val output1 = executeTasks("beforeTest test --tests pkg.AClassTest.testSuccess")
+      assertTaskOrder(output1, ":beforeTest", ":test")
+      val output2 = executeTasks("test --tests pkg.AClassTest.testSuccess afterTest")
+      assertTaskOrder(output2, ":test", ":afterTest")
+      val output3 = executeTasks("beforeTest test --tests pkg.AClassTest.testSuccess afterTest")
+      assertTaskOrder(output3, ":beforeTest", ":test", ":afterTest")
+    }
+  }
 }

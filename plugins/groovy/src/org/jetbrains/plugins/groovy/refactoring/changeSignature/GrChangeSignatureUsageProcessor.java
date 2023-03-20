@@ -96,9 +96,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
-    if (!(changeInfo instanceof JavaChangeInfo)) return false;
+    if (!(changeInfo instanceof JavaChangeInfo info)) return false;
 
-    JavaChangeInfo info = (JavaChangeInfo)changeInfo;
     PsiMethod method = info.getMethod();
     if (!(method instanceof GrMethod)) return false;
 
@@ -125,8 +124,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   public boolean setupDefaultValues(ChangeInfo changeInfo, Ref<UsageInfo[]> refUsages, Project project) {
     if (!(changeInfo instanceof JavaChangeInfo)) return true;
     for (UsageInfo usageInfo : refUsages.get()) {
-      if (usageInfo instanceof  GrMethodCallUsageInfo) {
-        GrMethodCallUsageInfo methodCallUsageInfo = (GrMethodCallUsageInfo)usageInfo;
+      if (usageInfo instanceof GrMethodCallUsageInfo methodCallUsageInfo) {
         if (methodCallUsageInfo.isToChangeArguments()){
           final PsiElement element = methodCallUsageInfo.getElement();
           if (element == null) continue;
@@ -182,7 +180,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       buffer.append("this");
     }
     else {
-      if (!PsiType.VOID.equals(method.getReturnType())) {
+      if (!PsiTypes.voidType().equals(method.getReturnType())) {
         buffer.append("return ");
       }
       buffer.append(GrChangeSignatureUtil.getNameWithQuotesIfNeeded(grInfo.getNewName(), method.getProject()));
@@ -407,45 +405,43 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages) {
-    if (!(changeInfo instanceof JavaChangeInfo)) return false;
+    if (!(changeInfo instanceof JavaChangeInfo info)) return false;
 
     PsiElement element = usageInfo.getElement();
     if (element == null) return false;
     if (!GroovyLanguage.INSTANCE.equals(element.getLanguage())) return false;
 
     if (beforeMethodChange) {
-      if (usageInfo instanceof OverriderUsageInfo) {
-        PsiMethod method = ((OverriderUsageInfo)usageInfo).getOverridingMethod();
-        if (!(method instanceof GrMethod)) return true;
-        processPrimaryMethodInner(((JavaChangeInfo)changeInfo), (GrMethod)method, ((OverriderUsageInfo)usageInfo).getBaseMethod());
+      if (usageInfo instanceof OverriderUsageInfo overriderUsageInfo) {
+        PsiMethod method = overriderUsageInfo.getOverridingMethod();
+        if (!(method instanceof GrMethod grMethod)) return true;
+        processPrimaryMethodInner(info, grMethod, overriderUsageInfo.getBaseMethod());
       }
     }
     else {
-      if (usageInfo instanceof GrMethodCallUsageInfo) {
-        processMethodUsage(element, ((JavaChangeInfo)changeInfo), ((GrMethodCallUsageInfo)usageInfo).isToChangeArguments(),
-                           ((GrMethodCallUsageInfo)usageInfo).isToCatchExceptions(),
-                           ((GrMethodCallUsageInfo)usageInfo).getMapToArguments(), ((GrMethodCallUsageInfo)usageInfo).getSubstitutor());
+      if (usageInfo instanceof GrMethodCallUsageInfo methodCallUsageInfo) {
+        processMethodUsage(element, info, methodCallUsageInfo.isToChangeArguments(),
+                           methodCallUsageInfo.isToCatchExceptions(),
+                           methodCallUsageInfo.getMapToArguments(), methodCallUsageInfo.getSubstitutor());
         return true;
       }
-      else if (usageInfo instanceof DefaultConstructorImplicitUsageInfo) {
-        processConstructor(
-          (GrMethod)((DefaultConstructorImplicitUsageInfo)usageInfo).getConstructor(),
-          (JavaChangeInfo)changeInfo);
+      else if (usageInfo instanceof DefaultConstructorImplicitUsageInfo constructorImplicitUsageInfo) {
+        processConstructor((GrMethod)constructorImplicitUsageInfo.getConstructor(), info);
         return true;
       }
-      else if (usageInfo instanceof NoConstructorClassUsageInfo) {
-        processClassUsage((GrTypeDefinition)((NoConstructorClassUsageInfo)usageInfo).getPsiClass(), ((JavaChangeInfo)changeInfo));
+      else if (usageInfo instanceof NoConstructorClassUsageInfo noConstructorClassUsageInfo) {
+        processClassUsage((GrTypeDefinition)noConstructorClassUsageInfo.getPsiClass(), info);
         return true;
       }
-      else if (usageInfo instanceof ChangeSignatureParameterUsageInfo) {
-        String newName = ((ChangeSignatureParameterUsageInfo)usageInfo).newParameterName;
+      else if (usageInfo instanceof ChangeSignatureParameterUsageInfo changeSignatureParameterUsageInfo) {
+        String newName = changeSignatureParameterUsageInfo.newParameterName;
         ((PsiReference)element).handleElementRename(newName);
         return true;
       }
       else {
         PsiReference ref = element.getReference();
-        if (ref != null && changeInfo.getMethod() != null) {
-          ref.bindToElement(changeInfo.getMethod());
+        if (ref != null) {
+          ref.bindToElement(info.getMethod());
           return true;
         }
       }

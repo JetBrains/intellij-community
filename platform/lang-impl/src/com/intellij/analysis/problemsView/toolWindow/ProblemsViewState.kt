@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.ide.ui.UISettings
@@ -29,11 +29,35 @@ open class ProblemsViewState : BaseState() {
 
   @get:XCollection(style = XCollection.Style.v2)
   val hideBySeverity: MutableSet<Int> by property(Collections.newSetFromMap(ConcurrentHashMap())) { it.isEmpty() }
+
+  fun removeSeverity(severity: Int): Boolean {
+    val changed = hideBySeverity.remove(severity)
+    if (changed) incrementModificationCount()
+    return changed
+  }
+
+  fun addSeverity(severity: Int): Boolean {
+    val changed = hideBySeverity.add(severity)
+    if (changed) incrementModificationCount()
+    return changed
+  }
+
+  fun removeAllSeverities(severities: Collection<Int>): Boolean {
+    val changed = hideBySeverity.removeAll(severities)
+    if (changed) incrementModificationCount()
+    return changed
+  }
+
+  fun addAllSeverities(severities: Collection<Int>): Boolean {
+    val changed = hideBySeverity.addAll(severities)
+    if (changed) incrementModificationCount()
+    return changed
+  }
 }
 
 @State(name = "ProblemsViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 internal class ProblemsViewStateManager : SimplePersistentStateComponent<ProblemsViewState>(ProblemsViewState()) {
   override fun noStateLoaded() {
-    state.autoscrollToSource = UISettings.instance.state.defaultAutoScrollToSource
+    state.autoscrollToSource = UISettings.getInstance().state.defaultAutoScrollToSource
   }
 }

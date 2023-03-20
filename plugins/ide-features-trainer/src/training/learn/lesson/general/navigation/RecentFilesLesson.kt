@@ -4,6 +4,7 @@ package training.learn.lesson.general.navigation
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.Switcher
+import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -11,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
@@ -32,7 +32,7 @@ import javax.swing.JLabel
 import kotlin.math.min
 
 abstract class RecentFilesLesson : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name")) {
-  abstract override val existedFile: String
+  abstract override val sampleFilePath: String
   abstract val transitionMethodName: String
   abstract val transitionFileName: String
   abstract val stringForRecentFilesSearch: String  // should look like transitionMethodName
@@ -42,6 +42,8 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private val countOfFilesToDelete: Int = 5
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     setInitialPosition()
 
     task("GotoDeclaration") {
@@ -60,7 +62,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
           LessonsBundle.message("recent.files.dialog.title"),
           CommonBundle.message("button.ok"),
           LearnBundle.message("learn.stop.lesson"),
-          FeaturesTrainerIcons.Img.PluginIcon
+          FeaturesTrainerIcons.PluginIcon
         )
         if (userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
@@ -78,7 +80,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("rfd") {
       text(LessonsBundle.message("recent.files.search.typing", code(it)))
-      triggerByUiComponentAndHighlight(false, false) { ui: ExtendableTextField ->
+      triggerUI().component { ui: ExtendableTextField ->
         ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
       stateCheck { checkRecentFilesSearch(it) }
@@ -93,7 +95,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.search.jump", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name == existedFile.substringAfterLast("/") }
+      stateCheck { virtualFile.name == sampleFilePath.substringAfterLast("/") }
       restoreState {
         !checkRecentFilesSearch("rfd") || previous.ui?.isShowing != true
       }
@@ -111,14 +113,14 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     var initialRecentFilesCount = -1
     var curRecentFilesCount: Int
     task {
-      text(
-        LessonsBundle.message("recent.files.delete", strong(countOfFilesToDelete.toString()), LessonUtil.rawKeyStroke(KeyEvent.VK_DELETE)))
-      stateCheck {
-        val focusOwner = focusOwner as? JBList<*> ?: return@stateCheck false
+      text(LessonsBundle.message("recent.files.delete", strong(countOfFilesToDelete.toString()),
+                                 LessonUtil.rawKeyStroke(KeyEvent.VK_DELETE)))
+      triggerUI().component l@{ list: JBListWithOpenInRightSplit<*> ->
+        if (list != focusOwner) return@l false
         if (initialRecentFilesCount == -1) {
-          initialRecentFilesCount = focusOwner.itemsCount
+          initialRecentFilesCount = list.itemsCount
         }
-        curRecentFilesCount = focusOwner.itemsCount
+        curRecentFilesCount = list.itemsCount
         initialRecentFilesCount - curRecentFilesCount >= countOfFilesToDelete
       }
       restoreByUi()
@@ -131,15 +133,15 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.close.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
-      stateCheck { focusOwner is IdeFrame }
+      stateCheck { previous.ui?.isShowing != true }
       test { invokeActionViaShortcut("ESCAPE") }
     }
 
     task("RecentLocations") {
       text(LessonsBundle.message("recent.files.show.recent.locations", action(it)))
       val recentLocationsText = IdeBundle.message("recent.locations.popup.title")
-      triggerByUiComponentAndHighlight(false, false) { ui: SimpleColoredComponent ->
-        ui.getCharSequence(true).contains(recentLocationsText)
+      triggerUI().component { ui: SimpleColoredComponent ->
+        ui.getCharSequence(true) == recentLocationsText
       }
       test { actions(it) }
     }
@@ -147,7 +149,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     task(stringForRecentFilesSearch) {
       text(LessonsBundle.message("recent.files.locations.search.typing", code(it)))
       stateCheck { checkRecentLocationsSearch(it) }
-      triggerByUiComponentAndHighlight(false, false) { _: SearchTextField -> true } // needed in next task to restore if search field closed
+      triggerUI().component { _: SearchTextField -> true } // needed in next task to restore if search field closed
       restoreByUi()
       test {
         ideFrame {
@@ -159,14 +161,16 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.locations.search.jump", LessonUtil.rawEnter()))
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(transitionFileName)
       }
       stateCheck { virtualFile.name.contains(transitionFileName) }
       restoreState {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
-      test { invokeActionViaShortcut("ENTER") }
+      test {
+        waitAndUsePreviouslyFoundListItem { it.doubleClick() }
+      }
     }
   }
 
@@ -215,15 +219,13 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
   private fun TaskContext.triggerOnRecentFilesShown() {
     val recentFilesText = IdeBundle.message("title.popup.recent.files")
-    triggerByUiComponentAndHighlight(false, false) { ui: JLabel ->
-      ui.text.isToStringContains(recentFilesText)
+    triggerUI().component { ui: JLabel ->
+      ui.text == recentFilesText
     }
   }
 
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)
-
-  override val suitableTips = listOf("recent-locations", "RecentFiles")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("recent.files.locations.help.link"),

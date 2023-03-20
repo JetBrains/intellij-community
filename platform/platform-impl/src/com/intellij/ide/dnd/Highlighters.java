@@ -26,6 +26,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     ourHightlighters.add(new TextHighlighter());
     ourHightlighters.add(new ErrorTextHighlighter());
     ourHightlighters.add(new VerticalLinesHighlighter());
+    ourHightlighters.add(new BottomHighlighter());
   }
 
   static void show(int aType, JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
@@ -274,4 +275,23 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       return V_ARROWS;
     }
   }
+
+  private static class BottomHighlighter extends AbstractComponentHighlighter {
+    BottomHighlighter() {
+      super();
+      setOpaque(false);
+      setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR, 0, 0, 2, 0));
+    }
+
+    @Override
+    protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
+      setBounds(aRectangle);
+    }
+
+    @Override
+    public int getMask() {
+      return BOTTOM;
+    }
+  }
+
 }

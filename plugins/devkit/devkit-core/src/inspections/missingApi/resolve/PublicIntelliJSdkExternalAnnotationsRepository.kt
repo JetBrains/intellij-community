@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.indeterminateStep
+import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +19,6 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
  */
 class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Project) : IntelliJSdkExternalAnnotationsRepository {
 
-  @Suppress("HardCodedStringLiteral")
   companion object {
     const val RELEASES_REPO_URL = "https://www.jetbrains.com/intellij-repository/releases/"
     const val SNAPSHOTS_REPO_URL = "https://www.jetbrains.com/intellij-repository/snapshots/"
@@ -35,13 +37,13 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
 
   }
 
-  private fun getAnnotationsCoordinates(): Pair<String, String>? {
+  private fun getAnnotationsCoordinates(): Pair<String, String> {
     //Currently, for any IDE download ideaIU's annotations.
     return "com.jetbrains.intellij.idea" to "ideaIU"
   }
 
-  override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
-    val (groupId, artifactId) = getAnnotationsCoordinates() ?: return null
+  override suspend fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
+    val (groupId, artifactId) = getAnnotationsCoordinates()
 
     val lastReleaseVersion = "${ideBuildNumber.baselineVersion}.999999"
     val lastReleaseAnnotations = tryDownload(groupId, artifactId, lastReleaseVersion, listOf(RELEASES_REPO_DESCRIPTION))
@@ -65,7 +67,7 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
                       latestTrunkSnapshotAnnotations).filterNotNull().maxByOrNull { it.annotationsBuild }
   }
 
-  private fun tryDownload(
+  private suspend fun tryDownload(
     groupId: String,
     artifactId: String,
     version: String,
@@ -81,19 +83,22 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
     return null
   }
 
-  private fun tryDownloadAnnotationsArtifact(
+  private suspend fun tryDownloadAnnotationsArtifact(
     groupId: String,
     artifactId: String,
     version: String,
     repos: List<RemoteRepositoryDescription>
-  ): VirtualFile? {
-    return JarRepositoryManager.loadDependenciesSync(
-      project,
-      JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version),
-      setOf(ArtifactKind.ANNOTATIONS),
-      repos,
-      null
-    )?.firstOrNull()?.file
+  ): VirtualFile? = indeterminateStep {
+    withRawProgressReporter {
+      coroutineToIndicator {
+        JarRepositoryManager.loadDependenciesSync(
+          project,
+          JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version),
+          setOf(ArtifactKind.ANNOTATIONS),
+          repos,
+          null
+        )?.firstOrNull()?.file
+      }
+    }
   }
-
 }

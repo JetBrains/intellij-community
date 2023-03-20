@@ -127,28 +127,18 @@ public final class JsonUtil {
 
   @Nullable
   public static Object nextAny(JsonReaderEx reader)  {
-    switch (reader.peek()) {
-      case BEGIN_ARRAY:
-        return nextList(reader);
-
-      case BEGIN_OBJECT:
-        return nextObject(reader);
-
-      case STRING:
-        return reader.nextString();
-
-      case NUMBER:
-        return reader.nextDouble();
-
-      case BOOLEAN:
-        return reader.nextBoolean();
-
-      case NULL:
+    return switch (reader.peek()) {
+      case BEGIN_ARRAY -> nextList(reader);
+      case BEGIN_OBJECT -> nextObject(reader);
+      case STRING -> reader.nextString();
+      case NUMBER -> reader.nextDouble();
+      case BOOLEAN -> reader.nextBoolean();
+      case NULL -> {
         reader.nextNull();
-        return null;
-
-      default: throw new IllegalStateException();
-    }
+        yield null;
+      }
+      default -> throw new IllegalStateException();
+    };
   }
 
   public static <T> void readListBody(JsonReaderEx reader, List<T> list)  {

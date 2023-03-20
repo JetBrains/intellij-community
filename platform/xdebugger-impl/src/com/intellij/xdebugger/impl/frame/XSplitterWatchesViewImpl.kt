@@ -5,7 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
+import com.intellij.xdebugger.impl.ui.getBottomLocalsComponentProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -29,7 +29,7 @@ class XSplitterWatchesViewImpl(
         error("XDebugProcess must provide a properly configured XDebugSessionTabCustomizer to use XSplitterWatchesViewImpl. Read JavaDoc for details")
     }
 
-    private fun tryGetBottomComponentProvider(session: XDebugSessionImpl) = (session.debugProcess as? XDebugSessionTabCustomizer)?.bottomLocalsComponentProvider
+    private fun tryGetBottomComponentProvider(session: XDebugSessionImpl) = session.debugProcess.getBottomLocalsComponentProvider()
   }
 
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {

@@ -1,37 +1,34 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
-import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
@@ -49,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 import java.util.function.Consumer;
@@ -61,24 +57,23 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
 
 /**
- * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
+ * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
-public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
-  @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
-  @NotNull private final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
+public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implements Disposable {
+  public static final @NotNull DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
+  private final @NotNull MainVcsLogUiProperties myUiProperties;
+  private final @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
-  @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
+  private final @NotNull VcsLogUiProperties.PropertiesChangeListener myListener;
 
-  @NotNull private final Set<VirtualFile> myRoots = new HashSet<>();
-  private boolean myHasMergeCommits = false;
-  @NotNull private final List<Change> myChanges = new ArrayList<>();
-  @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
-  @Nullable private Collection<FilePath> myAffectedPaths;
-  @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
-  @NotNull private final Wrapper myToolbarWrapper;
-  @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  @Nullable private EditorDiffPreview myEditorDiffPreview;
+  @NotNull private CommitModel myCommitModel = CommitModel.createEmpty();
+  private boolean myShowChangesFromParents = false;
+  private boolean myShowOnlyAffectedSelected = false;
+
+  private @Nullable Collection<? extends FilePath> myAffectedPaths;
+  private final @NotNull Wrapper myToolbarWrapper;
+  private final @NotNull EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
+  private @Nullable DiffPreviewController myEditorDiffPreviewController;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -92,12 +87,14 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     myListener = new VcsLogUiProperties.PropertiesChangeListener() {
       @Override
       public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+        updateUiSettings();
         if (SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
           myViewer.rebuildTree();
         }
       }
     };
     myUiProperties.addChangeListener(myListener);
+    updateUiSettings();
 
     Disposer.register(parent, this);
 
@@ -107,31 +104,30 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
     init();
 
-    setEditorDiffPreview(isWithEditorDiffPreview && VcsLogUiUtil.isDiffPreviewInEditor(myProject));
     if (isWithEditorDiffPreview) {
-      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, () -> {
-        setEditorDiffPreview(VcsLogUiUtil.isDiffPreviewInEditor(myProject));
-      });
+      setEditorDiffPreview();
+      EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
     }
 
     hideViewerBorder();
+    JScrollPane scrollPane = getViewerScrollPane();
+    ScrollableContentBorder.setup(scrollPane, Side.TOP);
+
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
   }
 
-  @NotNull
   @Override
-  protected JComponent createToolbarComponent() {
+  protected @NotNull JComponent createToolbarComponent() {
     return myToolbarWrapper;
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
     JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
     if (scrollPane != null) {
-      ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+      ClientProperty.put(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     }
     return centerPanel;
   }
@@ -146,107 +142,104 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   @Override
   public void dispose() {
-    super.dispose();
+    shutdown();
     myUiProperties.removeChangeListener(myListener);
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull List<AnAction> createToolbarActions() {
     return ContainerUtil.append(
       super.createToolbarActions(),
-      CustomActionsSchema.getInstance().getCorrectedAction(VcsActions.VCS_LOG_CHANGES_BROWSER_TOOLBAR)
+      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
     );
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createPopupMenuActions() {
+  protected @NotNull List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
       ActionManager.getInstance().getAction(VcsLogActionIds.CHANGES_BROWSER_POPUP_ACTION_GROUP)
     );
   }
 
-  private void updateModel(@NotNull Runnable update) {
-    myChanges.clear();
-    myChangesToParents.clear();
-    myRoots.clear();
-    myHasMergeCommits = false;
-    myUpdateEmptyText = this::updateEmptyText;
-
-    update.run();
-
-    myUpdateEmptyText.accept(myViewer.getEmptyText());
-    myViewer.rebuildTree();
-    myDispatcher.getMulticaster().onModelUpdated();
+  private void updateModel() {
+    updateStatusText();
+    getViewer().requestRefresh(() -> {
+      myDispatcher.getMulticaster().onModelUpdated();
+    });
   }
 
   public void resetSelectedDetails() {
-    updateModel(() -> myUpdateEmptyText = text -> text.setText(""));
+    showText(text -> text.setText(""));
   }
 
-  public void showText(@NotNull Consumer<StatusText> statusTextConsumer) {
-    updateModel(() -> myUpdateEmptyText = statusTextConsumer);
+  public void showText(@NotNull Consumer<? super StatusText> statusTextConsumer) {
+    myCommitModel = CommitModel.createText(statusTextConsumer);
+    updateModel();
   }
 
-  @Override
-  protected void onActiveChangesFilterChanges() {
-    super.onActiveChangesFilterChanges();
-    myUpdateEmptyText.accept(myViewer.getEmptyText());
-  }
-
-  public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
+  public void setAffectedPaths(@Nullable Collection<? extends FilePath> paths) {
     myAffectedPaths = paths;
-    myUpdateEmptyText.accept(myViewer.getEmptyText());
+    updateStatusText();
     myViewer.rebuildTree();
   }
 
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    updateModel(() -> {
-      if (!detailsList.isEmpty()) {
-        myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
-        myHasMergeCommits = ContainerUtil.exists(detailsList, detail -> detail.getParents().size() > 1);
-
-        if (detailsList.size() == 1) {
-          VcsFullCommitDetails detail = Objects.requireNonNull(getFirstItem(detailsList));
-          myChanges.addAll(detail.getChanges());
-
-          if (detail.getParents().size() > 1) {
-            for (int i = 0; i < detail.getParents().size(); i++) {
-              Set<Change> changesSet = new ReferenceOpenHashSet<>(detail.getChanges(i));
-              myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
-            }
-          }
-        }
-        else {
-          myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-        }
-      }
-    });
+    myCommitModel = createCommitModel(detailsList);
+    updateModel();
   }
 
-  private void updateEmptyText(@NotNull StatusText emptyText) {
-    if (myRoots.isEmpty()) {
+  @NotNull
+  private static CommitModel createCommitModel(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
+    if (detailsList.isEmpty()) return CommitModel.createEmpty();
+
+    Set<VirtualFile> roots = ContainerUtil.map2Set(detailsList, detail -> detail.getRoot());
+    boolean hasMergeCommits = ContainerUtil.exists(detailsList, detail -> detail.getParents().size() > 1);
+
+    List<Change> changes = new ArrayList<>();
+    Map<CommitId, Set<Change>> changesToParents = new LinkedHashMap<>();
+    if (detailsList.size() == 1) {
+      VcsFullCommitDetails detail = Objects.requireNonNull(getFirstItem(detailsList));
+      changes.addAll(detail.getChanges());
+
+      if (detail.getParents().size() > 1) {
+        for (int i = 0; i < detail.getParents().size(); i++) {
+          Set<Change> changesSet = new ReferenceOpenHashSet<>(detail.getChanges(i));
+          changesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
+        }
+      }
+    }
+    else {
+      changes.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
+    }
+
+    return new CommitModel(roots, changes, changesToParents, null, hasMergeCommits);
+  }
+
+  private void updateStatusText() {
+    StatusText emptyText = myViewer.getEmptyText();
+    CommitModel commitModel = myCommitModel;
+
+    Consumer<? super StatusText> customStatus = commitModel.myCustomEmptyTextStatus;
+    if (customStatus != null) {
+      customStatus.accept(emptyText);
+      return;
+    }
+
+    if (commitModel.myRoots.isEmpty()) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     }
-    else if (!myChangesToParents.isEmpty()) {
+    else if (!commitModel.myChangesToParents.isEmpty()) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
         appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                             e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
     }
-    else if (isShowOnlyAffectedSelected() && myAffectedPaths != null) {
+    else if (myShowOnlyAffectedSelected && myAffectedPaths != null) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
         .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
                              SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                              e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
-    }
-    else if (!myHasMergeCommits && hasActiveChangesFilter()) {
-      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status"))
-        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"),
-                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                             e -> clearActiveChangesFilter());
     }
     else {
       emptyText.setText("");
@@ -255,42 +248,55 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   @NotNull
   @Override
-  protected DefaultTreeModel buildTreeModel() {
-    List<Change> changes = collectAffectedChanges(myChanges);
-    ChangesFilterer.FilteredState filteredState = filterChanges(changes, !myHasMergeCommits);
-
-    Map<CommitId, Collection<Change>> changesToParents = new LinkedHashMap<>();
-    for (Map.Entry<CommitId, Set<Change>> entry : myChangesToParents.entrySet()) {
-      changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
-    }
-
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
-    setFilteredChanges(builder, filteredState, null);
-
-    if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
-      if (changes.isEmpty()) {
-        builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
-      }
-      for (CommitId commitId : changesToParents.keySet()) {
-        Collection<Change> changesFromParent = changesToParents.get(commitId);
-        if (!changesFromParent.isEmpty()) {
-          ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
-                                                                       SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
-          parentNode.markAsHelperNode();
-
-          builder.insertSubtreeRoot(parentNode);
-          builder.insertChanges(changesFromParent, parentNode);
-        }
-      }
-    }
-
-    return builder.build();
+  protected AsyncChangesTreeModel getChangesTreeModel() {
+    return new MyVcsLogAsyncChangesTreeModel();
   }
 
-  @NotNull
-  private List<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
-    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return new ArrayList<>(changes);
-    return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
+  private class MyVcsLogAsyncChangesTreeModel extends SimpleAsyncChangesTreeModel {
+    @NotNull
+    @Override
+    public DefaultTreeModel buildTreeModelSync(@NotNull ChangesGroupingPolicyFactory grouping) {
+      CommitModel commitModel = myCommitModel;
+      Collection<? extends FilePath> affectedPaths = myAffectedPaths;
+      boolean showOnlyAffectedSelected = myShowOnlyAffectedSelected;
+      boolean showChangesFromParents = myShowChangesFromParents;
+
+      List<Change> changes = collectAffectedChanges(commitModel.myChanges, affectedPaths, showOnlyAffectedSelected);
+
+      Map<CommitId, Collection<Change>> changesToParents = new LinkedHashMap<>();
+      for (Map.Entry<CommitId, Set<Change>> entry : commitModel.myChangesToParents.entrySet()) {
+        changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue(), affectedPaths, showOnlyAffectedSelected));
+      }
+
+      TreeModelBuilder builder = new TreeModelBuilder(myProject, grouping);
+      builder.setChanges(changes, null);
+
+      if (showChangesFromParents && !changesToParents.isEmpty()) {
+        if (changes.isEmpty()) {
+          builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
+        }
+        for (CommitId commitId : changesToParents.keySet()) {
+          Collection<Change> changesFromParent = changesToParents.get(commitId);
+          if (!changesFromParent.isEmpty()) {
+            ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
+                                                                         SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
+            parentNode.markAsHelperNode();
+
+            builder.insertSubtreeRoot(parentNode);
+            builder.insertChanges(changesFromParent, parentNode);
+          }
+        }
+      }
+
+      return builder.build();
+    }
+  }
+
+  private static @NotNull List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes,
+                                                              Collection<? extends FilePath> affectedPaths,
+                                                              boolean showOnlyAffectedSelected) {
+    if (!showOnlyAffectedSelected || affectedPaths == null) return new ArrayList<>(changes);
+    return ContainerUtil.filter(changes, change -> ContainerUtil.or(affectedPaths, filePath -> {
       if (filePath.isDirectory()) {
         return FileHistoryUtil.affectsDirectory(change, filePath);
       }
@@ -301,36 +307,31 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }));
   }
 
-  private boolean isShowChangesFromParents() {
-    return myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
-           myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
+  private void updateUiSettings() {
+    myShowChangesFromParents = myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
+                               myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
+    myShowOnlyAffectedSelected = myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
+                                 myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }
 
-  private boolean isShowOnlyAffectedSelected() {
-    return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
-           myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
+  public @NotNull List<Change> getDirectChanges() {
+    return myCommitModel.myChanges;
   }
 
-  @NotNull
-  public List<Change> getDirectChanges() {
-    return myChanges;
-  }
-
-  @NotNull
-  public List<Change> getSelectedChanges() {
+  public @NotNull List<Change> getSelectedChanges() {
     return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (VcsDataKeys.VCS.is(dataId)) {
-      AbstractVcs vcs = getVcs();
-      if (vcs == null) return null;
-      return vcs.getKeyInstanceMethod();
-    }
-    else if (HAS_AFFECTED_FILES.is(dataId)) {
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (HAS_AFFECTED_FILES.is(dataId)) {
       return myAffectedPaths != null;
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      Set<VirtualFile> roots = new HashSet<>(myCommitModel.myRoots);
+      VcsTreeModelData selectedData = VcsTreeModelData.selected(myViewer);
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, roots, selectedData), superProvider);
     }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {
@@ -353,14 +354,27 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return super.getData(dataId);
   }
 
-  @Nullable
-  private AbstractVcs getVcs() {
-    List<AbstractVcs> allVcs = ContainerUtil.mapNotNull(myRoots, root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root));
-    if (allVcs.size() == 1) return Objects.requireNonNull(getFirstItem(allVcs));
+  private @Nullable Object getSlowData(@NotNull String dataId,
+                                       @NotNull Set<? extends VirtualFile> roots,
+                                       @NotNull VcsTreeModelData selectedData) {
+    if (VcsDataKeys.VCS.is(dataId)) {
+      AbstractVcs rootsVcs = JBIterable.from(roots)
+        .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
+        .filterNotNull()
+        .unique()
+        .single();
+      if (rootsVcs != null) return rootsVcs.getKeyInstanceMethod();
 
-    Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(getSelectedChanges(), myProject);
-    if (selectedVcs.size() == 1) return Objects.requireNonNull(getFirstItem(selectedVcs));
+      AbstractVcs selectionVcs = selectedData.iterateUserObjects(Change.class)
+        .map(change -> ChangesUtil.getFilePath(change))
+        .map(root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root))
+        .filterNotNull()
+        .unique()
+        .single();
+      if (selectionVcs != null) return selectionVcs.getKeyInstanceMethod();
 
+      return null;
+    }
     return null;
   }
 
@@ -369,10 +383,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return getDiffRequestProducer(userObject, false);
   }
 
-  @Nullable
-  public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
-    if (!(userObject instanceof Change)) return null;
-    Change change = (Change)userObject;
+  public @Nullable ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
+    if (!(userObject instanceof Change change)) return null;
 
     Map<Key<?>, Object> context = new HashMap<>();
     if (!(change instanceof MergedChange)) {
@@ -381,13 +393,11 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return createDiffRequestProducer(myProject, change, context, forDiffPreview);
   }
 
-  @Nullable
-  public static ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
-                                                                          @NotNull Change change,
-                                                                          @NotNull Map<Key<?>, Object> context,
-                                                                          boolean forDiffPreview) {
-    if (change instanceof MergedChange) {
-      MergedChange mergedChange = (MergedChange)change;
+  public static @Nullable ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
+                                                                                    @NotNull Change change,
+                                                                                    @NotNull Map<Key<?>, Object> context,
+                                                                                    boolean forDiffPreview) {
+    if (change instanceof MergedChange mergedChange) {
       if (mergedChange.getSourceChanges().size() == 2) {
         if (forDiffPreview) {
           putFilePathsIntoMergedChangeContext(mergedChange, context);
@@ -403,37 +413,49 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  public void setEditorDiffPreview(boolean isWithEditorDiffPreview) {
-    EditorDiffPreview preview = myEditorDiffPreview;
+  private void setEditorDiffPreview() {
 
-    if (isWithEditorDiffPreview && preview == null) {
-      preview = new VcsLogEditorDiffPreview(myProject, this);
-      myEditorDiffPreview = preview;
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+
+    boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
+
+    if (isWithEditorDiffPreview && editorDiffPreviewController == null) {
+      myEditorDiffPreviewController = new VcsLogChangesBrowserDiffPreviewController();
     }
-    else if (!isWithEditorDiffPreview && preview != null) {
-      preview.closePreview();
-      myEditorDiffPreview = null;
+    else if (!isWithEditorDiffPreview && editorDiffPreviewController != null) {
+      editorDiffPreviewController.getActivePreview().closePreview();
+      myEditorDiffPreviewController = null;
     }
   }
 
-  @NotNull
-  public VcsLogChangeProcessor createChangeProcessor(boolean isInEditor) {
+  public @NotNull VcsLogChangeProcessor createChangeProcessor(boolean isInEditor) {
     return new VcsLogChangeProcessor(myProject, this, isInEditor, this);
   }
 
   @Override
   protected @Nullable DiffPreview getShowDiffActionPreview() {
-    return myEditorDiffPreview;
+    DiffPreviewController editorDiffPreviewController = myEditorDiffPreviewController;
+    return editorDiffPreviewController != null ? editorDiffPreviewController.getActivePreview() : null;
   }
 
   public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
-    selectObjectWithTag(myViewer, userObject, tag);
+    getViewer().invokeAfterRefresh(() -> {
+      selectObjectWithTag(myViewer, userObject, tag);
+    });
+  }
+
+  public void selectFile(@Nullable FilePath toSelect) {
+    getViewer().invokeAfterRefresh(() -> {
+      getViewer().selectFile(toSelect);
+    });
   }
 
   public @Nullable ChangesBrowserNode.Tag getTag(@NotNull Change change) {
+    Map<CommitId, Set<Change>> changesToParents = myCommitModel.myChangesToParents;
+
     CommitId parentId = null;
-    for (CommitId commitId : myChangesToParents.keySet()) {
-      if (myChangesToParents.get(commitId).contains(change)) {
+    for (CommitId commitId : changesToParents.keySet()) {
+      if (changesToParents.get(commitId).contains(change)) {
         parentId = commitId;
         break;
       }
@@ -462,9 +484,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
-  @NotNull
-  @Nls
-  private String getText(@NotNull CommitId commitId) {
+  private @NotNull @Nls String getText(@NotNull CommitId commitId) {
     String text = VcsLogBundle.message("vcs.log.changes.changes.to.parent.node", commitId.getHash().toShortString());
     VcsShortCommitDetails detail = myDataGetter.fun(commitId);
     if (!(detail instanceof LoadingDetails) || (detail instanceof IndexedDetails)) {
@@ -473,23 +493,20 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     return text;
   }
 
-  public static void selectObjectWithTag(@NotNull ChangesTree tree,
-                                         @NotNull Object userObject,
-                                         @Nullable ChangesBrowserNode.Tag tag) {
-    DefaultMutableTreeNode root = tree.getRoot();
-    if (tag != null) {
-      DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
-      if (tagNode != null) {
-        root = tagNode;
-      }
-    }
-    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
-    if (node == null) return;
-    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false);
-  }
-
   public interface Listener extends EventListener {
     void onModelUpdated();
+  }
+
+  private class VcsLogChangesBrowserDiffPreviewController extends DiffPreviewControllerBase {
+    @Override
+    protected @NotNull DiffPreview getSimplePreview() {
+      return new VcsLogEditorDiffPreview(myProject, VcsLogChangesBrowser.this);
+    }
+
+    @Override
+    protected @NotNull CombinedDiffPreview createCombinedDiffPreview() {
+      return new VcsLogCombinedDiffPreview(VcsLogChangesBrowser.this);
+    }
   }
 
   private static class ParentTag extends ChangesBrowserNode.ValueTag<Hash> {
@@ -503,6 +520,42 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     @Override
     public String toString() {
       return myText;
+    }
+  }
+
+  private static class CommitModel {
+    public static CommitModel createEmpty() {
+      return new CommitModel(Collections.emptySet(),
+                             Collections.emptyList(),
+                             Collections.emptyMap(),
+                             null,
+                             false);
+    }
+
+    public static CommitModel createText(@Nullable Consumer<? super StatusText> statusTextConsumer) {
+      return new CommitModel(Collections.emptySet(),
+                             Collections.emptyList(),
+                             Collections.emptyMap(),
+                             statusTextConsumer,
+                             false);
+    }
+
+    private final @NotNull Set<VirtualFile> myRoots;
+    private final @NotNull List<Change> myChanges;
+    private final @NotNull Map<CommitId, Set<Change>> myChangesToParents;
+    private final @Nullable Consumer<? super StatusText> myCustomEmptyTextStatus;
+    private final boolean myHasMergeCommits;
+
+    private CommitModel(@NotNull Set<VirtualFile> roots,
+                        @NotNull List<Change> changes,
+                        @NotNull Map<CommitId, Set<Change>> changesToParents,
+                        @Nullable Consumer<? super StatusText> status,
+                        boolean hasMergeCommits) {
+      myRoots = roots;
+      myChanges = changes;
+      myChangesToParents = changesToParents;
+      myCustomEmptyTextStatus = status;
+      myHasMergeCommits = hasMergeCommits;
     }
   }
 }

@@ -1,38 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie.async
 
 import ai.grazie.spell.lists.WordList
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.grazie.dictionary.SimpleWordList
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class WordListLoader(private val project: Project) {
-  companion object {
-    private val logger = Logger.getInstance(WordListLoader::class.java)
-  }
+private val LOG = logger<WordListLoader>()
 
-  private val myIsLoadingList = AtomicBoolean(false)
-  private val myListsToLoad: MutableList<Pair<Loader, (String, WordList) -> Unit>> = ContainerUtil.createLockFreeCopyOnWriteList()
+internal class WordListLoader(private val project: Project, private val coroutineScope: CoroutineScope) {
+  private val isLoadingList = AtomicBoolean(false)
+  private val listsToLoad = ContainerUtil.createLockFreeCopyOnWriteList<Pair<Loader, (String, WordList) -> Unit>>()
 
   fun loadWordList(loader: Loader, consumer: (String, WordList) -> Unit) {
     if (AsyncUtils.isNonAsyncMode()) {
       consumer(loader.name, SimpleWordList(readAll(loader)))
     }
-    else {
-      loadWordListAsync(loader, consumer)
-    }
-  }
-
-  private fun loadWordListAsync(loader: Loader, consumer: (String, WordList) -> Unit) {
-    if (myIsLoadingList.compareAndSet(false, true)) {
-      logger.debug("Loading ${loader.name}")
+    else if (isLoadingList.compareAndSet(false, true)) {
+      LOG.debug("Loading $loader")
       doLoadWordListAsync(loader, consumer)
     }
     else {
@@ -41,31 +38,28 @@ internal class WordListLoader(private val project: Project) {
   }
 
   private fun doLoadWordListAsync(loader: Loader, consumer: (String, WordList) -> Unit) {
-    if (project.isDefault) return
+    if (project.isDefault) {
+      return
+    }
 
-    StartupManager.getInstance(project).runWhenProjectIsInitialized {
-      logger.debug("Loading ${loader.name}")
-      val app = ApplicationManager.getApplication()
+    StartupManager.getInstance(project).runAfterOpened {
+      LOG.debug { "Loading ${loader}" }
 
-      app.executeOnPooledThread {
-        if (app.isDisposed) return@executeOnPooledThread
-
-        logger.debug("${loader.name} loaded!")
+      coroutineScope.launch {
+        LOG.debug("${loader} loaded!")
         consumer(loader.name, SimpleWordList(readAll(loader)))
 
-        while (myListsToLoad.isNotEmpty()) {
-          if (app.isDisposed) return@executeOnPooledThread
-          val (curLoader, curConsumer) = myListsToLoad.removeAt(0)
-
-          logger.debug("${curLoader.name} loaded!")
-          curConsumer(curLoader.name, SimpleWordList(readAll(curLoader)))
+        while (listsToLoad.isNotEmpty()) {
+          val (curLoader, currentConsumer) = listsToLoad.removeAt(0)
+          LOG.debug("${curLoader.name} loaded!")
+          currentConsumer(curLoader.name, SimpleWordList(readAll(curLoader)))
         }
 
-        logger.debug("Loading finished, restarting daemon...")
-        myIsLoadingList.set(false)
+        LOG.debug("Loading finished, restarting daemon...")
+        isLoadingList.set(false)
 
-        UIUtil.invokeLaterIfNeeded {
-          AsyncUtils.restartInspection(app)
+        withContext(Dispatchers.EDT) {
+          AsyncUtils.restartInspection(ApplicationManager.getApplication())
         }
       }
     }
@@ -80,7 +74,7 @@ internal class WordListLoader(private val project: Project) {
   }
 
   private fun queueWordListLoad(loader: Loader, consumer: (String, WordList) -> Unit) {
-    logger.debug("Queuing load for: ${loader.name}")
-    myListsToLoad.add(loader to consumer)
+    LOG.debug("Queuing load for: ${loader.name}")
+    listsToLoad.add(loader to consumer)
   }
 }

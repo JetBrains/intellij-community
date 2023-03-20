@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -8,9 +8,16 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.chooseApplicableComponentFunctions
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.suggestNamesForComponent
@@ -22,12 +29,13 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 
 class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
     KotlinBundle.lazyMessage("iterate.over.collection")
 ),
-    HighPriorityAction {
+                                   HighPriorityAction {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         if (element.parent !is KtBlockExpression) return false
         val range = element.textRange
@@ -47,7 +55,7 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
 
     private fun data(expression: KtExpression): Data? {
         val resolutionFacade = expression.getResolutionFacade()
-        val bindingContext = resolutionFacade.analyze(expression, BodyResolveMode.PARTIAL)
+        val bindingContext = expression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
         val type = bindingContext.getType(expression) ?: return null
         if (KotlinBuiltIns.isNothing(type)) return null
         val scope = expression.getResolutionScope(bindingContext, resolutionFacade)
@@ -61,7 +69,11 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
     override fun applyTo(element: KtExpression, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val elementType = data(element)!!.elementType
-        val nameValidator = NewDeclarationNameValidator(element, element.siblings(), NewDeclarationNameValidator.Target.VARIABLES)
+        val nameValidator = Fe10KotlinNewDeclarationNameValidator(
+            element,
+            element.siblings(),
+            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+        )
         val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
 
         val project = element.project
@@ -74,10 +86,10 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
                     val collectingValidator = CollectingNameValidator(filter = nameValidator)
                     componentFunctions.map { suggestNamesForComponent(it, project, collectingValidator) }
                 } else {
-                    listOf(KotlinNameSuggester.suggestIterationVariableNames(element, elementType, bindingContext, nameValidator, "e"))
+                    listOf(Fe10KotlinNameSuggester.suggestIterationVariableNames(element, elementType, bindingContext, nameValidator, "e"))
                 }
 
-                val paramPattern = (names.asSequence().singleOrNull()?.first()
+                val paramPattern = (names.singleOrNull()?.first()
                     ?: psiFactory.createDestructuringParameter(names.indices.joinToString(prefix = "(", postfix = ")") { "p$it" }))
                 var forExpression = psiFactory.createExpressionByPattern("for($0 in $1) {\nx\n}", paramPattern, element) as KtForExpression
                 forExpression = element.replaced(forExpression)

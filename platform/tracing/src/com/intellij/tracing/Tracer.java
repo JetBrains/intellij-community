@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tracing;
 
 import java.io.*;
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class Tracer {
+public final class Tracer {
   private static long tracingStartNs;
   private static long tracingStartMs;
   private static final AtomicLong eventId = new AtomicLong();
@@ -42,7 +42,7 @@ public class Tracer {
     return new Span(eventId, threadId, name, startNs);
   }
 
-  public static void runTracer(int pid, Path filePath, long threshold, Consumer<Exception> exceptionHandler) throws IOException {
+  public static void runTracer(int pid, Path filePath, long threshold, Consumer<? super Exception> exceptionHandler) throws IOException {
     if (running) throw new IllegalStateException("Tracer already started");
     tracingStartMs = System.currentTimeMillis();
     tracingStartNs = System.nanoTime();
@@ -60,7 +60,7 @@ public class Tracer {
     running = true;
   }
 
-  public static void finishTracer(Consumer<Exception> exceptionHandler) {
+  public static void finishTracer(Consumer<? super Exception> exceptionHandler) {
     if (fileState == null) return;
     new FlushingTask(fileState, true, exceptionHandler).run();
     fileState = null;
@@ -147,9 +147,9 @@ public class Tracer {
   private static class FlushingTask implements Runnable {
     private final FileState fileState;
     private final boolean shouldFinish;
-    private final Consumer<Exception> myExceptionHandler;
+    private final Consumer<? super Exception> myExceptionHandler;
 
-    private FlushingTask(FileState fileState, boolean shouldFinish, Consumer<Exception> exceptionHandler) {
+    private FlushingTask(FileState fileState, boolean shouldFinish, Consumer<? super Exception> exceptionHandler) {
       this.fileState = fileState;
       this.shouldFinish = shouldFinish;
       myExceptionHandler = exceptionHandler;
@@ -207,6 +207,6 @@ public class Tracer {
   }
 
   static long getTimeUs(long timeNs) {
-    return (tracingStartMs * 1000_000 - tracingStartNs + timeNs) / 1000;
+    return (tracingStartMs * 1_000_000 - tracingStartNs + timeNs) / 1000;
   }
 }

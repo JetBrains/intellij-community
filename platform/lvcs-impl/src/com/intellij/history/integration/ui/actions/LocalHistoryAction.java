@@ -5,6 +5,7 @@ package com.intellij.history.integration.ui.actions;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,12 +19,22 @@ import java.util.Objects;
 public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (LocalHistoryImpl.getInstanceImpl().isDisabled()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     Project project = e.getProject();
     LocalHistoryFacade vcs = getVcs();
     IdeaGateway gateway = getGateway();
 
     e.getPresentation().setEnabled(project != null && vcs != null && gateway != null);
     e.getPresentation().setVisible(project != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

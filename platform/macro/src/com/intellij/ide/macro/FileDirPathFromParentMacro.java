@@ -21,12 +21,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class FileDirPathFromParentMacro extends Macro {
+public class FileDirPathFromParentMacro extends Macro implements MacroWithParams{
 
   private static final String PATH_DELIMITER = "/";
-
+  private String myCachedDirUrl = "";
   @NotNull
   @Override
   public String getName() {
@@ -45,11 +47,20 @@ public class FileDirPathFromParentMacro extends Macro {
   }
 
   @Override
+  public void cachePreview(@NotNull DataContext dataContext) {
+    super.cachePreview(dataContext);
+    myCachedDirUrl = ObjectUtils.doIfNotNull(getVirtualDirOrParent(dataContext), VirtualFile::getUrl);
+  }
+
+  @Override
   public String expand(@NotNull DataContext dataContext, String @NotNull ... args) throws ExecutionCancelledException {
     if(args.length == 0) {
       return super.expand(dataContext, args);
     }
     VirtualFile dir = getVirtualDirOrParent(dataContext);
+    if (dir == null && myCachedDirUrl != null) {
+      dir = VirtualFileManager.getInstance().findFileByUrl(myCachedDirUrl);
+    }
     if (dir == null) {
       return "";
     }

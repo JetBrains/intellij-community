@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.coroutines
 
@@ -8,28 +8,29 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.UnusedReceiverParameterInspection
 import org.jetbrains.kotlin.idea.intentions.ConvertReceiverToParameterIntention
 import org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
@@ -153,25 +154,27 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                     val selectorExpression = it.selectorExpression
                     if (receiverExpression?.getTargetLabel() != null && selectorExpression != null) {
                         if (context[BindingContext.REFERENCE_TARGET, receiverExpression.instanceReference] == functionDescriptor) {
-                            if (it === expressionToWrap) {
-                                expressionToWrap = it.replaced(selectorExpression)
-                            } else {
-                                it.replace(selectorExpression)
+                            runWriteAction {
+                                if (it === expressionToWrap) {
+                                    expressionToWrap = it.replaced(selectorExpression)
+                                } else {
+                                    it.replace(selectorExpression)
+                                }
                             }
                         }
                     }
                 }
             }
 
-            val factory = KtPsiFactory(function)
+            val psiFactory = KtPsiFactory(project)
             val blockExpression = function.bodyBlockExpression
             project.executeWriteCommand(name, this) {
                 val result = when {
                     expressionToWrap != bodyExpression -> expressionToWrap.replaced(
-                        factory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", expressionToWrap)
+                        psiFactory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", expressionToWrap)
                     )
                     blockExpression == null -> bodyExpression.replaced(
-                        factory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", bodyExpression)
+                        psiFactory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", bodyExpression)
                     )
                     else -> {
                         val bodyText = buildString {
@@ -181,7 +184,7 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                             }
                         }
                         blockExpression.replaced(
-                            factory.createBlock("$COROUTINE_SCOPE_WRAPPER { $bodyText }")
+                            psiFactory.createBlock("$COROUTINE_SCOPE_WRAPPER { $bodyText }")
                         )
                     }
                 }

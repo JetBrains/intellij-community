@@ -1,35 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +37,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance(CreateFromUsageBaseFix.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -111,21 +108,6 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     builder.createPopup().showInBestPositionFor(editor);
   }
 
-  @Nullable("null means unable to open the editor")
-  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
-    TextRange range = element.getTextRange();
-    LOG.assertTrue(range != null, element.getClass());
-    int textOffset = range.getStartOffset();
-    VirtualFile file = targetFile.getVirtualFile();
-    if (file == null) {
-      file = PsiUtilCore.getVirtualFile(element);
-      if (file == null) return null;
-    }
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
-    descriptor.setScrollType(ScrollType.MAKE_VISIBLE); // avoid centering caret in editor if it's already visible
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-  }
-
   protected void setupVisibility(PsiClass parentClass, @NotNull PsiClass targetClass, PsiModifierList list) throws IncorrectOperationException {
     if (targetClass.isInterface() && list.getFirstChild() != null) {
       list.deleteChildRange(list.getFirstChild(), list.getLastChild());
@@ -159,12 +141,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       qualifierExpression = ((PsiParenthesizedExpression) qualifierExpression).getExpression();
     }
 
-    if (qualifierExpression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression) qualifierExpression;
-
-      PsiElement resolvedElement = referenceExpression.resolve();
-
-      return resolvedElement instanceof PsiClass;
+    if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
+      return referenceExpression.resolve() instanceof PsiClass;
     } else if (qualifierExpression != null) {
       return false;
     } else if (ref instanceof PsiMethodReferenceExpression) {
@@ -173,7 +151,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     else {
       assert PsiTreeUtil.isAncestor(targetClass, ref, true);
       PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(ref, PsiModifierListOwner.class);
-      if (owner instanceof PsiMethod && ((PsiMethod)owner).isConstructor()) {
+      if (owner instanceof PsiMethod method && method.isConstructor()) {
         //usages inside delegating constructor call
         PsiExpression run = ref;
         while (run.getParent() instanceof PsiExpression) {
@@ -258,20 +236,16 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         }
       }
     }
-    if (element instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)element;
+    if (element instanceof PsiNewExpression newExpression) {
       PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
       if (ref != null) {
         PsiElement refElement = ref.resolve();
-        if (refElement instanceof PsiClass) {
-          psiClass = (PsiClass)refElement;
-        } else {
-          final PsiElement refQualifier = ref.getQualifier();
-          if (refQualifier instanceof PsiJavaCodeReferenceElement) {
-            refElement = ((PsiJavaCodeReferenceElement)refQualifier).resolve();
-            if (refElement instanceof PsiClass) {
-              psiClass = (PsiClass)refElement;
-            }
+        if (refElement instanceof PsiClass cls) {
+          psiClass = cls;
+        } else if (ref.getQualifier() instanceof PsiJavaCodeReferenceElement refQualifier) {
+          refElement = refQualifier.resolve();
+          if (refElement instanceof PsiClass cls) {
+            psiClass = cls;
           }
         }
       }
@@ -385,7 +359,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       final TemplateEditingListener listener,
                                       final @NlsContexts.Command String commandName) {
     Runnable runnable = () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener);
-    if (!ApplicationManager.getApplication().isWriteThread()) {
+    if (!ApplicationManager.getApplication().isWriteIntentLockAcquired() || IntentionPreviewUtils.isIntentionPreviewActive()) {
       runnable.run();
     } else {
       CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName);
@@ -409,20 +383,33 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       }
     }
     int idx = 0;
+    PsiTypeParameterList typeParameterList = Objects.requireNonNull(targetClass.getTypeParameterList());
     for (PsiType type : ref.getTypeParameters()) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
       if (psiClass instanceof PsiTypeParameter) {
-        targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(psiClass.getName(), null));
+        typeParameterList.add(factory.createTypeParameterFromText(psiClass.getName(), null));
       } else {
         while (true) {
           final @NonNls String paramName = idx > 0 ? "T" + idx : "T";
           if (typeParamNames.add(paramName)) {
-            targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(paramName, null));
+            typeParameterList.add(factory.createTypeParameterFromText(paramName, null));
             break;
           }
           idx++;
         }
       }
     }
+  }
+
+  public static void startTemplate(@NotNull Project project, @NotNull PsiClass aClass, @NotNull Template template, @Nls @NotNull String text) {
+    aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
+    template.setToReformat(true);
+
+    final Editor editor = CodeInsightUtil.positionCursor(project, Objects.requireNonNull(aClass).getContainingFile(), aClass);
+    if (editor == null) return;
+
+    Segment textRange = aClass.getTextRange();
+    editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+    startTemplate(editor, template, project, null, text);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.amazon.ion.IonType
@@ -16,8 +16,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Consumer
 import com.intellij.util.net.HttpConfigurable
-import gnu.trove.THash
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.gradle.internal.impldep.com.google.common.collect.Multimap
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.idea.IdeaModule
@@ -53,8 +51,6 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
       Init::class.java,  // gradle-tooling-extension-impl jar
       Multimap::class.java, // repacked gradle guava
       GsonBuilder::class.java,
-      THash::class.java,  // trove4j jar
-      ObjectOpenHashSet::class.java,  // fastutil jar
       IonType::class.java,  // ion-java jar
       SystemInfoRt::class.java // jar containing classes of `intellij.platform.util.rt` module
     )

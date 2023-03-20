@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +44,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private static final Key<Boolean> MARK_FOR_UPDATE = Key.create("marked.for.position.update");
   private static final Key<Boolean> DO_NOT_NOTIFY = Key.create("do.not.notify.on.region.disposal");
 
+  static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
+
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myIsFoldingEnabled;
@@ -60,6 +63,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
   private boolean myDocumentChangeProcessed = true;
+  boolean myComplexDocumentChange;
   private final AtomicLong myExpansionCounter = new AtomicLong();
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
@@ -122,8 +126,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   };
   @Override
-  @NotNull
-  public List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
+  public @NotNull List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group) {
     return (List<FoldRegion>)myGroups.get(group);
   }
 
@@ -140,7 +143,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   public int getEndOffset(@NotNull FoldingGroup group) {
-    final List<FoldRegion> regions = getGroupedRegions(group);
+    List<FoldRegion> regions = getGroupedRegions(group);
     int endOffset = 0;
     for (FoldRegion region : regions) {
       if (region.isValid()) {
@@ -153,14 +156,13 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   void refreshSettings() {
     updateTextAttributes();
 
-    runBatchFoldingOperation(() -> {
+    runBatchFoldingOperation(() ->
       myRegionTree.processAll(region -> {
         if (region instanceof CustomFoldRegion) {
           ((CustomFoldRegion)region).update();
         }
         return true;
-      });
-    });
+      }));
   }
 
   private void updateTextAttributes() {
@@ -204,6 +206,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (!(region instanceof FoldRegionImpl)) {
       throw new IllegalArgumentException("Only regions created by this instance of FoldingModel are accepted");
     }
+  }
+
+  /**
+   * Do not show default gutter icon for a collapsed region.
+   * E.g. if Editor provides another means of expanding the region.
+   */
+  public static void hideGutterRendererForCollapsedRegion(@NotNull FoldRegion region) {
+    region.putUserData(HIDE_GUTTER_RENDERER_FOR_COLLAPSED, Boolean.TRUE);
   }
 
   @Override
@@ -311,7 +321,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       myEditor.getContentComponent().repaint();
     }
     if (gutterMarkChanged) {
-      myEditor.getGutterComponentEx().updateSize();
+      ((EditorGutterComponentImpl)myEditor.getGutterComponentEx()).updateSize();
     }
   }
 
@@ -328,37 +338,34 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  @Nullable
-  public FoldRegion getCollapsedRegionAtOffset(int offset) {
+  public @Nullable FoldRegion getCollapsedRegionAtOffset(int offset) {
     return myFoldTree.fetchOutermost(offset);
   }
 
-  @Nullable
   @Override
-  public FoldRegion getFoldRegion(int startOffset, int endOffset) {
+  public @Nullable FoldRegion getFoldRegion(int startOffset, int endOffset) {
     assertReadAccess();
     return myFoldTree.getRegionAt(startOffset, endOffset);
   }
 
   @Override
-  @Nullable
-  public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
-    return getFoldingPlaceholderAt(new EditorLocation(myEditor, p));
+  public @Nullable FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
+    return getFoldingPlaceholderAt(new EditorLocation(myEditor, p), false);
   }
 
-  FoldRegion getFoldingPlaceholderAt(@NotNull EditorLocation location) {
+  FoldRegion getFoldingPlaceholderAt(@NotNull EditorLocation location, boolean ignoreCustomRegionWidth) {
     Point p = location.getPoint();
     if (p.y < location.getVisualLineStartY() || p.y >= location.getVisualLineEndY()) {
       // block inlay area
       return null;
     }
     FoldRegion region = location.getCollapsedRegion();
-    return region instanceof CustomFoldRegion &&
+    return !ignoreCustomRegionWidth && region instanceof CustomFoldRegion &&
            p.x >= myEditor.getContentComponent().getInsets().left + ((CustomFoldRegion)region).getWidthInPixels() ? null : region;
   }
 
   @Override
-  public void removeFoldRegion(@NotNull final FoldRegion region) {
+  public void removeFoldRegion(@NotNull FoldRegion region) {
     assertIsDispatchThreadForEditor();
     assertOurRegion(region);
 
@@ -382,7 +389,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     removeRegionFromGroup(region);
   }
 
-  void removeRegionFromGroup(@NotNull FoldRegion region) {
+  private void removeRegionFromGroup(@NotNull FoldRegion region) {
     myGroups.remove(region.getGroup(), region);
   }
 
@@ -479,7 +486,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     myEditor.updateCaretCursor();
     myEditor.recalculateSizeAndRepaint();
-    myEditor.getGutterComponentEx().updateSize();
+    ((EditorGutterComponentImpl)myEditor.getGutterComponentEx()).updateSize();
     myEditor.getGutterComponentEx().repaint();
     myEditor.invokeDelayedErrorStripeRepaint();
 
@@ -491,7 +498,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
         boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
 
-        if (savedPosition != null && savedPosition.isUpToDate(myEditor)) {
+        if (ClientId.isLocal(ClientEditorManager.getClientId(myEditor)) &&
+            savedPosition != null && savedPosition.isUpToDate(myEditor)) {
           int savedOffset = myEditor.logicalPositionToOffset(savedPosition.position);
           FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
           if (collapsedAtSaved == null) {
@@ -523,7 +531,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
         int selectionEnd = caret.getSelectionEnd();
         if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
           caret.removeSelection();
-        } else if (selectionStart < myEditor.getDocument().getTextLength()) {
+        }
+        else if (caret.hasSelection() && selectionEnd <= myEditor.getDocument().getTextLength()) {
           caret.setSelection(selectionStart, selectionEnd);
         }
       }
@@ -598,7 +607,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.intersectsRegion(startOffset, endOffset);
   }
 
-  FoldRegion @Nullable [] fetchVisible() {
+  @ApiStatus.Internal
+  public FoldRegion @Nullable [] fetchVisible() {
     return myFoldTree.fetchVisible();
   }
 
@@ -620,7 +630,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     clearCachedValues();
   }
 
-  void clearCachedValues() {
+  private void clearCachedValues() {
     myFoldTree.clearCachedValues();
   }
 
@@ -653,6 +663,16 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   private void validateAffectedCustomRegions() {
+    if (myComplexDocumentChange) {
+      // validate all custom fold regions
+      myRegionTree.processAll(r -> {
+        if (r instanceof CustomFoldRegionImpl) {
+          myAffectedCustomRegions.add((CustomFoldRegionImpl)r);
+        }
+        return true;
+      });
+      myComplexDocumentChange = false;
+    }
     for (CustomFoldRegionImpl region : myAffectedCustomRegions) {
       if (region.isValid() && !myFoldTree.checkIfValidToCreate(region.getStartOffset(), region.getEndOffset(), true, region)) {
         myRegionTree.removeInterval(region);
@@ -667,20 +687,19 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+  public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
     if ((inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE) &&
         (changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0) {
       myFoldTree.clearCachedInlayValues();
     }
   }
 
-  @Nullable
   @Override
-  public FoldRegion createFoldRegion(int startOffset,
-                                     int endOffset,
-                                     @NotNull String placeholder,
-                                     @Nullable FoldingGroup group,
-                                     boolean neverExpands) {
+  public @Nullable FoldRegion createFoldRegion(int startOffset,
+                                               int endOffset,
+                                               @NotNull String placeholder,
+                                               @Nullable FoldingGroup group,
+                                               boolean neverExpands) {
     assertIsDispatchThreadForEditor();
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
@@ -716,7 +735,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void addListener(@NotNull final FoldingListener listener, @NotNull Disposable parentDisposable) {
+  public void addListener(@NotNull FoldingListener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
@@ -765,9 +784,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return Arrays.toString(myFoldTree.fetchTopLevel());
   }
 
@@ -871,8 +889,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       super(document);
     }
 
-    @NotNull
-    private FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
+    private static @NotNull FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
       assert node.intervals.size() == 1;
       FoldRegionImpl region = node.intervals.get(0).get();
       assert region != null;
@@ -891,15 +908,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       return c1 == c2 ? 0 : c1 ? 1 : -1;
     }
 
-    @NotNull
     @Override
-    protected RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
-                                                 int start,
-                                                 int end,
-                                                 boolean greedyToLeft,
-                                                 boolean greedyToRight,
-                                                 boolean stickingToRight,
-                                                 int layer) {
+    protected @NotNull RMNode<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+                                                            int start,
+                                                            int end,
+                                                            boolean greedyToLeft,
+                                                            boolean greedyToRight,
+                                                            boolean stickingToRight,
+                                                            int layer) {
       return new FRNode(this, key, start, end);
     }
 
@@ -918,7 +934,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       finally {
         inCollectCall = false;
       }
-      final int oldLength = end - start;
+      int oldLength = end - start;
       if (oldLength > 0 /* document change can cause regions to become equal*/) {
         for (Object o : affected) {
           //noinspection unchecked
@@ -948,7 +964,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
       @Override
       void onRemoved() {
-        for (Supplier<FoldRegionImpl> getter : intervals) {
+        for (Supplier<? extends FoldRegionImpl> getter : intervals) {
           removeRegionFromGroup(getter.get());
         }
       }

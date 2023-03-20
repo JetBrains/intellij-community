@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.psi
 
@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import java.util.*
 
 @RunWith(JUnit38ClassRunner::class)
 class StringTemplateExpressionManipulatorTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -86,7 +87,8 @@ class StringTemplateExpressionManipulatorTest : KotlinLightCodeInsightFixtureTes
 
 private fun suppressFallingOnLogError(call: () -> Unit) {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean = false
+        override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+            Action.NONE
     }) {
         call()
     }

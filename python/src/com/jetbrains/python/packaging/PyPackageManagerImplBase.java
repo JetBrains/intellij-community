@@ -15,6 +15,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -53,8 +54,6 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
 
   @Nullable protected volatile List<PyPackage> myPackagesCache = null;
   private final AtomicBoolean myUpdatingCache = new AtomicBoolean(false);
-
-  @NotNull protected final Sdk mySdk;
 
   @Override
   public void refresh() {
@@ -134,15 +133,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
 
   protected abstract void installUsingPipWheel(String @NotNull ... pipArgs) throws ExecutionException;
 
-  protected PyPackageManagerImplBase(@NotNull Sdk sdk) { mySdk = sdk; }
-
-  protected void subscribeToLocalChanges() {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(getSdk(), this, () -> PythonSdkType.getInstance().setupSdkPaths(getSdk()));
-  }
-
-  protected final @NotNull Sdk getSdk() {
-    return mySdk;
-  }
+  protected PyPackageManagerImplBase(@NotNull Sdk sdk) { super(sdk); }
 
   @Override
   @NotNull
@@ -207,9 +198,9 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       myPackagesCache = null;
       try {
         final List<PyPackage> packages = collectPackages();
-        LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
+        LOG.debug("Packages installed in " + getSdk().getName() + ": " + packages);
         myPackagesCache = packages;
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(mySdk);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(getSdk());
         return Collections.unmodifiableList(packages);
       }
       catch (ExecutionException e) {
@@ -252,16 +243,19 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     final List<String> safeCommand = new ArrayList<>(cmdline);
     for (int i = 0; i < safeCommand.size(); i++) {
       if (cmdline.get(i).equals("--proxy") && i + 1 < cmdline.size()) {
-        safeCommand.set(i + 1, makeSafeProxyArgument(cmdline.get(i + 1)));
+        safeCommand.set(i + 1, makeSafeUrlArgument(cmdline.get(i + 1)));
+      }
+      if (cmdline.get(i).equals("--index-url") && i + 1 < cmdline.size()) {
+        safeCommand.set(i + 1, makeSafeUrlArgument(cmdline.get(i + 1)));
       }
     }
     return safeCommand;
   }
 
   @NotNull
-  private static String makeSafeProxyArgument(@NotNull String proxyArgument) {
+  private static String makeSafeUrlArgument(@NotNull String urlArgument) {
     try {
-      final URI proxyUri = new URI(proxyArgument);
+      final URI proxyUri = new URI(urlArgument);
       final String credentials = proxyUri.getUserInfo();
       if (credentials != null) {
         final int colonIndex = credentials.indexOf(":");
@@ -270,13 +264,19 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
           final String password = credentials.substring(colonIndex + 1);
           final String maskedPassword = StringUtil.repeatSymbol('*', password.length());
           final String maskedCredentials = login + ":" + maskedPassword;
-          return proxyArgument.replaceFirst(Pattern.quote(credentials), maskedCredentials);
+          if (urlArgument.contains(credentials)) {
+            return urlArgument.replaceFirst(Pattern.quote(credentials), maskedCredentials);
+          }
+          else {
+            final String encodedCredentials = PyPackageRepositoryUtil.encodeCredentialsForUrl(login, password);
+            return urlArgument.replaceFirst(Pattern.quote(encodedCredentials), maskedCredentials);
+          }
         }
       }
     }
     catch (URISyntaxException ignored) {
     }
-    return proxyArgument;
+    return urlArgument;
   }
 
   protected final @NotNull List<PyPackage> parsePackagingToolOutput(@NotNull String output) throws PyExecutionException {

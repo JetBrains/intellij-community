@@ -2,6 +2,7 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -57,7 +58,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     table.setEnableAntialiasing(true);
     table.setPreferredScrollableViewportSize(JBUI.size(200, -1));
     table.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
-    new TableSpeedSearch(table);
+    TableSpeedSearch.installOn(table);
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
       TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0), 0);
@@ -248,6 +249,10 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
           TableUtil.updateScroller(table);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       }
     ).createPanel();

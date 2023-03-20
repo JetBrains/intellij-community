@@ -10,3 +10,5 @@ public class JavaClassWI {
     public static class Other extends JavaClassWI {
     }
 }
+
+// IGNORE_FIR_LOG

@@ -23,7 +23,6 @@ UFile (package = test.pkg)
                         USimpleNameReferenceExpression (identifier = suspendPrivate, resolvesTo = null)
         UMethod (name = suspendPrivate)
             UParameter (name = $completion)
-                UAnnotation (fqName = null)
             UBlockExpression
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public interface ExternalFormatProcessor {
    * @return true, if there is an active external (enabled) formatter for the source
    */
   static boolean useExternalFormatter(@NotNull PsiFile source) {
-    return EP_NAME.getExtensionList().stream().anyMatch(efp -> efp.activeForFile(source));
+    return ContainerUtil.exists(EP_NAME.getExtensionList(), efp -> efp.activeForFile(source));
   }
 
   /**
@@ -83,7 +84,7 @@ public interface ExternalFormatProcessor {
 
   @Nullable
   static ExternalFormatProcessor activeExternalFormatProcessor(@NotNull PsiFile source) {
-    return EP_NAME.getExtensionList().stream().filter(efp -> efp.activeForFile(source)).findFirst().orElse(null);
+    return ContainerUtil.find(EP_NAME.getExtensionList(), efp -> efp.activeForFile(source));
   }
 
   /**

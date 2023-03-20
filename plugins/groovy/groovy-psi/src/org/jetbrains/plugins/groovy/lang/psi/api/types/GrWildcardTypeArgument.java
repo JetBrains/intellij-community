@@ -4,8 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.types;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 28.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrWildcardTypeArgument extends GrTypeElement {
 

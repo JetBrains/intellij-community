@@ -21,16 +21,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.terminal.actions.TerminalActionWrapper;
 import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.ui.TerminalAction;
+import com.jediterm.terminal.ui.TerminalActionMenuBuilder;
+import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
-import org.intellij.lang.annotations.JdkConstants;
+import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,6 +184,28 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
+  public List<TerminalAction> getActions() {
+    List<TerminalAction> actions = super.getActions();
+    String clearBufferActionName = mySettingsProvider.getClearBufferActionPresentation().getName();
+    TerminalAction clearBufferAction = ContainerUtil.find(actions, action -> action.getName().equals(clearBufferActionName));
+    if (clearBufferAction != null) {
+      clearBufferAction.withEnabledSupplier(() -> {
+        if (getTerminalTextBuffer().isUsingAlternateBuffer()) {
+          return false;
+        }
+        JBTerminalWidget terminalWidget = DataManager.getInstance().getDataContext(this).getData(JBTerminalWidget.TERMINAL_DATA_KEY);
+        if (terminalWidget == null || terminalWidget.getTerminalPanel() != this) {
+          return false;
+        }
+        ProcessTtyConnector connector = terminalWidget.getProcessTtyConnector();
+        WinConPtyProcess winConPtyProcess = connector != null ? ObjectUtils.tryCast(connector.getProcess(), WinConPtyProcess.class) : null;
+        return winConPtyProcess == null;
+      });
+    }
+    return actions;
+  }
+
+  @Override
   protected void setupAntialiasing(Graphics graphics) {
     UIUtil.setupComposite((Graphics2D)graphics);
     UISettings.setupAntialiasing(graphics);
@@ -186,6 +215,30 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   @Override
   protected TerminalCopyPasteHandler createCopyPasteHandler() {
     return new IdeTerminalCopyPasteHandler();
+  }
+
+  @Override
+  protected @NotNull JPopupMenu createPopupMenu(@NotNull TerminalActionProvider actionProvider) {
+    return ActionManager.getInstance().createActionPopupMenu(
+      ActionPlaces.TOOLWINDOW_POPUP,
+      wrapTerminalActions(actionProvider)
+    ).getComponent();
+  }
+
+  private static @NotNull ActionGroup wrapTerminalActions(@NotNull TerminalActionProvider provider) {
+    var result = new DefaultActionGroup();
+    TerminalAction.buildMenu(provider, new TerminalActionMenuBuilder() {
+      @Override
+      public void addAction(@NotNull TerminalAction action) {
+        result.add(new TerminalActionWrapper(action));
+      }
+
+      @Override
+      public void addSeparator() {
+        result.addSeparator();
+      }
+    });
+    return result;
   }
 
   @Override
@@ -273,7 +326,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
-  protected Font getFontToDisplay(char c, TextStyle style) {
+  protected @NotNull Font getFontToDisplay(char[] text, int start, int end, @NotNull TextStyle style) {
     int fontStyle = Font.PLAIN;
     if (style.hasOption(TextStyle.Option.BOLD)) {
       fontStyle |= Font.BOLD;
@@ -281,21 +334,15 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     if (style.hasOption(TextStyle.Option.ITALIC)) {
       fontStyle |= Font.ITALIC;
     }
-    FontInfo fontInfo = fontForChar(c, fontStyle);
+    FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(
+      text, start, end, fontStyle,
+      mySettingsProvider.getColorsScheme().getConsoleFontPreferences(),
+      null);
     return fontInfo.getFont().deriveFont((float)mySettingsProvider.getUiSettingsManager().getFontSize());
-  }
-
-  private @NotNull FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorsScheme().getConsoleFontPreferences(), null);
   }
 
   public void fontChanged() {
     reinitFontAndResize();
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
   }
 
   @Override
@@ -332,27 +379,27 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
 
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
-      return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
+      if (e instanceof KeyEvent) {
+        dispatchKeyEvent((KeyEvent)e);
+      }
+      return false;
     }
 
-    private boolean dispatchKeyEvent(@NotNull KeyEvent e) {
-      if (!skipKeyEvent(e)) {
+    private void dispatchKeyEvent(@NotNull KeyEvent e) {
+      if (e.getID() == KeyEvent.KEY_PRESSED && !skipKeyEvent(e)) {
         if (!JBTerminalPanel.this.isFocusOwner()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Prevented attempt to process " + KeyStroke.getKeyStrokeForEvent(e) + " by not focused " +
                       getDebugTerminalPanelName() + ", unregistering");
           }
           unregister();
-          return false;
+          return;
         }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
-        IdeEventQueue.getInstance().flushDelayedKeyEvents();
         JBTerminalPanel.this.dispatchEvent(e);
-        return true;
       }
-      return false;
     }
 
     void register() {

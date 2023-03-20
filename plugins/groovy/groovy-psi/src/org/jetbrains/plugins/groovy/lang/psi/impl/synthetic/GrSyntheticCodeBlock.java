@@ -92,8 +92,7 @@ public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
 
   @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
-    if (newElement instanceof GrSyntheticCodeBlock) {
-      GrSyntheticCodeBlock other = (GrSyntheticCodeBlock)newElement;
+    if (newElement instanceof GrSyntheticCodeBlock other) {
       PsiElement replaced = myCodeBlock.replace(other.myCodeBlock);
       LOG.assertTrue(replaced instanceof GrOpenBlock);
       return PsiImplUtil.getOrCreatePsiCodeBlock((GrOpenBlock)replaced);

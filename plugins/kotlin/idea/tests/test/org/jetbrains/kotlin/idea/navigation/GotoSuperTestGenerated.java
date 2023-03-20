@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -63,6 +63,11 @@ public class GotoSuperTestGenerated extends AbstractGotoSuperTest {
         runTest("testData/navigation/gotoSuper/FunctionSimple.test");
     }
 
+    @TestMetadata("InterfaceSimple.test")
+    public void testInterfaceSimple() throws Exception {
+        runTest("testData/navigation/gotoSuper/InterfaceSimple.test");
+    }
+
     @TestMetadata("ObjectSimple.test")
     public void testObjectSimple() throws Exception {
         runTest("testData/navigation/gotoSuper/ObjectSimple.test");
@@ -76,11 +81,6 @@ public class GotoSuperTestGenerated extends AbstractGotoSuperTest {
     @TestMetadata("SuperWithNativeToGenericMapping.test")
     public void testSuperWithNativeToGenericMapping() throws Exception {
         runTest("testData/navigation/gotoSuper/SuperWithNativeToGenericMapping.test");
-    }
-
-    @TestMetadata("TraitSimple.test")
-    public void testTraitSimple() throws Exception {
-        runTest("testData/navigation/gotoSuper/TraitSimple.test");
     }
 
     @TestMetadata("TypeAliasInSuperType.test")

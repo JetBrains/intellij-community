@@ -31,14 +31,15 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
+public final class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
   private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
 
@@ -58,7 +59,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    final Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
+    Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
     if (stamp != null && stamp.longValue() == nowStamp()) return;
 
     myDescriptors = buildDescriptors();
@@ -87,12 +88,12 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
   @Override
   public void doApplyInformationToEditor() {
-    final Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
+    Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
     if (stamp != null && stamp.longValue() == nowStamp()) return;
 
     List<RangeHighlighter> oldHighlighters = myEditor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
-    final List<RangeHighlighter> newHighlighters = new ArrayList<>();
-    final MarkupModel mm = myEditor.getMarkupModel();
+    List<RangeHighlighter> newHighlighters = new ArrayList<>();
+    MarkupModel mm = myEditor.getMarkupModel();
 
     int curRange = 0;
 
@@ -129,7 +130,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
     }
 
-    final int startRangeIndex = curRange;
+    int startRangeIndex = curRange;
     DocumentUtil.executeInBulk(myDocument, myRanges.size() > 10000, () -> {
       for (int i = startRangeIndex; i < myRanges.size(); i++) {
         newHighlighters.add(createHighlighter(mm, myRanges.get(i)));
@@ -149,8 +150,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     calculator.calculate();
     int[] lineIndents = calculator.lineIndents;
 
-    IntStack lines = new IntStack();
-    IntStack indents = new IntStack();
+    IntStack lines = new IntArrayList();
+    IntStack indents = new IntArrayList();
 
     lines.push(0);
     indents.push(0);
@@ -159,14 +160,14 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       ProgressManager.checkCanceled();
       int curIndent = Math.abs(lineIndents[line]);
 
-      while (!indents.empty() && curIndent <= indents.peek()) {
+      while (!indents.isEmpty() && curIndent <= indents.topInt()) {
         ProgressManager.checkCanceled();
-        final int level = indents.pop();
-        int startLine = lines.pop();
+        int level = indents.popInt();
+        int startLine = lines.popInt();
         if (level > 0) {
           for (int i = startLine; i < line; i++) {
             if (level != Math.abs(lineIndents[i])) {
-              final IndentGuideDescriptor descriptor = createDescriptor(level, startLine, line, lineIndents);
+              IndentGuideDescriptor descriptor = createDescriptor(level, startLine, line, lineIndents);
               if (IndentsPassFilterUtils.shouldShowIndentGuide(myEditor, descriptor)) descriptors.add(descriptor);
               break;
             }
@@ -183,12 +184,12 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
     }
 
-    while (!indents.empty()) {
+    while (!indents.isEmpty()) {
       ProgressManager.checkCanceled();
-      final int level = indents.pop();
-      int startLine = lines.pop();
+      int level = indents.popInt();
+      int startLine = lines.popInt();
       if (level > 0) {
-        final IndentGuideDescriptor descriptor = createDescriptor(level, startLine, myDocument.getLineCount(), lineIndents);
+        IndentGuideDescriptor descriptor = createDescriptor(level, startLine, myDocument.getLineCount(), lineIndents);
         if (IndentsPassFilterUtils.shouldShowIndentGuide(myEditor, descriptor)) descriptors.add(descriptor);
       }
     }
@@ -221,7 +222,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
   @NotNull
   private static RangeHighlighter createHighlighter(MarkupModel mm, TextRange range) {
-    final RangeHighlighter highlighter = mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0,
+    RangeHighlighter highlighter = mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0,
                                                                 HighlighterTargetArea.EXACT_RANGE);
     highlighter.setCustomRenderer(RENDERER);
     return highlighter;
@@ -252,7 +253,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
      * Calculates line indents for the {@link #myDocument target document}.
      */
     void calculate() {
-      final FileType fileType = myFile.getFileType();
+      FileType fileType = myFile.getFileType();
       int tabSize = getTabSize();
 
       for (int line = 0; line < lineIndents.length; line++) {
@@ -321,7 +322,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     }
 
     private boolean isComment(int offset) {
-      final HighlighterIterator it = myEditor.getHighlighter().createIterator(offset);
+      HighlighterIterator it = myEditor.getHighlighter().createIterator(offset);
       IElementType tokenType = it.getTokenType();
       Language language = tokenType.getLanguage();
       TokenSet comments = myComments.get(language);

@@ -26,7 +26,6 @@ public final class NewItemPopupUtil {
     .setCancelKeyEnabled(true)
     .setCancelOnWindowDeactivation(false)
     .setCancelOnClickOutside(true)
-    .addUserData("SIMPLE_WINDOW")
     .setNormalWindowLevel(true)
     .createPopup();
 

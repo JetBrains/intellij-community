@@ -760,8 +760,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     final String namespace = tag.getNamespace();
     while(parent instanceof XmlTag && !namespace.equals(((XmlTag)parent).getNamespace()))
       parent = parent.getContext();
-    if (parent instanceof XmlTag) {
-      final XmlTag parentTag = (XmlTag)parent;
+    if (parent instanceof XmlTag parentTag) {
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if(parentDescriptor != null){
@@ -861,8 +860,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private boolean initSubstitutes() {
     if (mySubstitutions == null && myTag != null) {
       mySubstitutions = new MultiMap<>();
-
-      if (myTag == null) return false;
 
       XmlTag[] tags = myTag.getSubTags();
 

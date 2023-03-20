@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -29,13 +29,14 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -58,7 +59,6 @@ import java.util.List;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.ui.RelativeFont.SMALL;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-import static com.intellij.util.ui.UIUtil.getLabelFont;
 
 public abstract class BreadcrumbsPanel extends JComponent implements Disposable {
   private static final Logger LOG = getInstance(BreadcrumbsPanel.class);
@@ -127,13 +127,11 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     JScrollPane pane = createScrollPane(breadcrumbs, true);
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     pane.getHorizontalScrollBar().setEnabled(false);
-    setBorder(JBUI.Borders.emptyLeft(getLeftOffset()));
     setLayout(new BorderLayout());
     add(BorderLayout.CENTER, pane);
 
     EditorGutter gutter = editor.getGutter();
-    if (gutter instanceof EditorGutterComponentEx) {
-      EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)gutter;
+    if (gutter instanceof EditorGutterComponentEx gutterComponent) {
       MouseEventAdapter mouseListener = new MouseEventAdapter<>(gutterComponent) {
         @NotNull
         @Override
@@ -145,8 +143,6 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
         @DirtyUI
         @Override
         public void componentResized(ComponentEvent event) {
-          //breadcrumbs.updateBorder(getLeftOffset());
-          setBorder(JBUI.Borders.emptyLeft(getLeftOffset()));
           breadcrumbs.setFont(getNewFont(myEditor));
         }
       };
@@ -159,12 +155,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
         gutterComponent.removeComponentListener(resizeListener);
         breadcrumbs.removeMouseListener(mouseListener);
       });
-      setBorder(JBUI.Borders.emptyLeft(getLeftOffset()));
     }
-    else {
-      breadcrumbs.updateBorder(0);
-    }
-    Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
+    Disposer.register(this, UiNotifyConnector.installOn(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
     BreadcrumbsProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
@@ -269,8 +261,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   protected abstract Iterable<? extends Crumb> computeCrumbs(int offset);
 
   protected void navigateToCrumb(Crumb crumb, boolean withSelection) {
-    if (crumb instanceof NavigatableCrumb) {
-      NavigatableCrumb navigatableCrumb = (NavigatableCrumb)crumb;
+    if (crumb instanceof NavigatableCrumb navigatableCrumb) {
       myUserCaretChange = false;
       navigatableCrumb.navigate(myEditor, withSelection);
     }
@@ -325,8 +316,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   }
 
   private static Font getNewFont(Editor editor) {
-    Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? getLabelFont() : getEditorFont(editor);
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
+    Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? StartupUiUtil.getLabelFont() : getEditorFont(editor);
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() && !ExperimentalUI.isNewUI() ? SMALL.derive(font) : font;
   }
 
   private static Font getEditorFont(Editor editor) {

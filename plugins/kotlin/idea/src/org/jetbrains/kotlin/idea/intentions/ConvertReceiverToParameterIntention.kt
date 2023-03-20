@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -7,17 +7,19 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.core.getOrCreateValueParameterList
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.resolveToExpectedDescriptorIfPossible
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -54,7 +56,7 @@ class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntent
             val receiverNames = suggestReceiverNames(project, descriptor)
             val defaultReceiverName = receiverNames.first()
             val receiverTypeRef = function.receiverTypeReference!!
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(project)
             val newParameter = psiFactory.createParameter("$defaultReceiverName: Dummy").apply { typeReference!!.replace(receiverTypeRef) }
 
             project.executeWriteCommand(text) {
@@ -78,7 +80,6 @@ class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntent
                             runWriteAction {
                                 function.setReceiverTypeReference(addedParameter.typeReference)
                                 function.valueParameterList!!.removeParameter(addedParameter)
-                                PsiDocumentManager.getInstance(project).commitDocument(editor.document)
                             }
                         }
 

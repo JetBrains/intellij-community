@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.components;
 
 import com.intellij.ui.components.JBPanel;
@@ -24,32 +24,27 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
     super(new BorderLayout(JBUIScale.scale(hgap), JBUIScale.scale(vgap)));
   }
 
-  @NotNull
-  public final BorderLayoutPanel addToCenter(@NotNull Component comp) {
+  public final @NotNull BorderLayoutPanel addToCenter(@NotNull Component comp) {
     add(comp, BorderLayout.CENTER);
     return this;
   }
 
-  @NotNull
-  public final BorderLayoutPanel addToRight(@NotNull Component comp) {
+  public final @NotNull BorderLayoutPanel addToRight(@NotNull Component comp) {
     add(comp, BorderLayout.EAST);
     return this;
   }
 
-  @NotNull
-  public final BorderLayoutPanel addToLeft(@NotNull Component comp) {
+  public final @NotNull BorderLayoutPanel addToLeft(@NotNull Component comp) {
     add(comp, BorderLayout.WEST);
     return this;
   }
 
-  @NotNull
-  public final BorderLayoutPanel addToTop(@NotNull Component comp) {
+  public final @NotNull BorderLayoutPanel addToTop(@NotNull Component comp) {
     add(comp, BorderLayout.NORTH);
     return this;
   }
 
-  @NotNull
-  public final BorderLayoutPanel addToBottom(@NotNull Component comp) {
+  public final @NotNull BorderLayoutPanel addToBottom(@NotNull Component comp) {
     add(comp, BorderLayout.SOUTH);
     return this;
   }
@@ -85,7 +80,7 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
     return super.getAccessibleContext();
   }
 
-  private class MyAccessibleContextDelegate extends AccessibleContextDelegate {
+  private final class MyAccessibleContextDelegate extends AccessibleContextDelegate {
     MyAccessibleContextDelegate(AccessibleContext context) {super(context);}
 
     @Override

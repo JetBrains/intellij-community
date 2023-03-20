@@ -36,16 +36,13 @@ public abstract class ExecutionTarget {
   public abstract String getDisplayName();
 
   @Nullable
-  public abstract Icon getIcon();
-
-  /**
-   * @deprecated implement {@link #canRun(RunConfiguration)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public boolean canRun(@NotNull RunnerAndConfigurationSettings configuration) {
-    return canRun(configuration.getConfiguration());
+  @Nls
+  public String getGroupName() {
+    return null;
   }
+
+  @Nullable
+  public abstract Icon getIcon();
 
   /**
    * Implementation-specific logic should decide whether to suggest this target for the given configuration.

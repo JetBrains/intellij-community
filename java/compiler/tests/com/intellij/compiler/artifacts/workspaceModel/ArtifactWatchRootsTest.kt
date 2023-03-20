@@ -8,12 +8,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.junit.Assume.assumeTrue
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -21,8 +21,6 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
   override fun runInDispatchThread(): Boolean = true
 
   fun `test watch roots rename artifact content via workspace model`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
     val outputDir = Files.createDirectories(Path.of(FileUtil.getTempDirectory(), "output")).toFile()
     val file = runWriteAction {
@@ -43,14 +41,12 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
       file.rename(this, "AnotherName")
     }
 
-    val artifactEntity = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactEntity::class.java).single()
+    val artifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).single()
     val copyElement = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
     assertEquals("AnotherName", copyElement.filePath.fileName)
   }
 
   fun `test watch roots rename artifact content via bridge`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Files.createDirectories(Path.of(FileUtil.getTempDirectory())))!!
     val file = runWriteAction {
       testRoot.createChildDirectory(Any(), "source").createChildData(Any(), "JustAFile")

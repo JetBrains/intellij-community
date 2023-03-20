@@ -31,6 +31,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,10 +52,18 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
   public PushDownProcessor(@NotNull Klass sourceClass,
                            @NotNull List<MemberInfo> memberInfos,
                            @NotNull DocCommentPolicy javaDocPolicy) {
+    this(sourceClass, memberInfos, javaDocPolicy, false);
+  }
+
+  @ApiStatus.Experimental
+  public PushDownProcessor(@NotNull Klass sourceClass,
+                           @NotNull List<MemberInfo> memberInfos,
+                           @NotNull DocCommentPolicy javaDocPolicy,
+                           boolean preserveExternalLinks) {
     super(sourceClass.getProject());
     myDelegate = PushDownDelegate.findDelegate(sourceClass);
     LOG.assertTrue(myDelegate != null);
-    myPushDownData = new PushDownData<>(sourceClass, memberInfos, javaDocPolicy);
+    myPushDownData = new PushDownData<>(sourceClass, memberInfos, javaDocPolicy, preserveExternalLinks);
   }
 
   @Override

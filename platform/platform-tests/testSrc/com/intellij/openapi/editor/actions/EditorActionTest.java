@@ -5,12 +5,15 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.ui.components.JBTextArea;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -66,9 +69,10 @@ public class EditorActionTest extends AbstractEditorTest {
 
   public void testLineDeleteWithSelectionEndAtLineStart() {
     String text =
-      "line 1\n" +
-      "<selection>line 2\n" +
-      "</selection>line 3";
+      """
+        line 1
+        <selection>line 2
+        </selection>line 3""";
     init(text, PlainTextFileType.INSTANCE);
     deleteLine();
     checkResultByText(
@@ -79,9 +83,10 @@ public class EditorActionTest extends AbstractEditorTest {
 
   public void testDeleteLastLine() {
     String text =
-      "1\n" +
-      "2<caret>\n" +
-      "3";
+      """
+        1
+        2<caret>
+        3""";
     init(text, PlainTextFileType.INSTANCE);
 
     deleteLine();
@@ -96,9 +101,10 @@ public class EditorActionTest extends AbstractEditorTest {
   }
 
   public void testDeleteLineBeforeGuardedBlock() {
-    init("\n" +
-         "<caret>text\n" +
-         "#", PlainTextFileType.INSTANCE);
+    init("""
+
+           <caret>text
+           #""", PlainTextFileType.INSTANCE);
     getEditor().getDocument().createGuardedBlock(5, 7); // "\n#"
     deleteLine();
     checkResultByText("\n" +
@@ -106,10 +112,11 @@ public class EditorActionTest extends AbstractEditorTest {
   }
 
   public void testDeleteLineHonorSelection() {
-    init("xxxx\n" +
-         "bla <selection><caret>bla\n" +
-         "bla</selection> bla\n" +
-         "yyy",
+    init("""
+           xxxx
+           bla <selection><caret>bla
+           bla</selection> bla
+           yyy""",
          PlainTextFileType.INSTANCE);
     deleteLine();
     checkResultByText("xxxx\n" +
@@ -154,71 +161,91 @@ public class EditorActionTest extends AbstractEditorTest {
   }
 
   public void testUpWithSelectionOnCaretInsideSelection() {
-    initText("blah blah\n" +
-             "blah <selection>bl<caret>ah</selection>\n" +
-             "blah blah");
+    initText("""
+               blah blah
+               blah <selection>bl<caret>ah</selection>
+               blah blah""");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
-    checkResultByText("blah bl<selection><caret>ah\n" +
-                      "blah blah</selection>\n" +
-                      "blah blah");
+    checkResultByText("""
+                        blah bl<selection><caret>ah
+                        blah blah</selection>
+                        blah blah""");
   }
   
   public void testDownWithSelectionOnCaretInsideSelection() {
-    initText("blah blah\n" +
-             "blah <selection>bl<caret>ah</selection>\n" +
-             "blah blah");
+    initText("""
+               blah blah
+               blah <selection>bl<caret>ah</selection>
+               blah blah""");
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
-    checkResultByText("blah blah\n" +
-                      "blah <selection>blah\n" +
-                      "blah bl<caret></selection>ah");
+    checkResultByText("""
+                        blah blah
+                        blah <selection>blah
+                        blah bl<caret></selection>ah""");
   }
   
   public void testUpOnCaretOnSelectionEnd() {
-    initText("A mad boxer shot\n" +
-             "a quick<selection>, gloved jab\n" +
-             "to the jaw of<caret></selection> his \n" +
-             "dizzy opponent.\n");
+    initText("""
+               A mad boxer shot
+               a quick<selection>, gloved jab
+               to the jaw of<caret></selection> his\s
+               dizzy opponent.
+               """);
     up();
-    checkResultByText("A mad b<caret>oxer shot\n" +
-                      "a quick, gloved jab\n" +
-                      "to the jaw of his \n" +
-                      "dizzy opponent.\n");
+    checkResultByText("""
+                        A mad b<caret>oxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponent.
+                        """);
   }
 
   public void testUpOnCaretInsideSelection() {
-    initText("A mad boxer shot\n" +
-             "a quick<selection>, gloved<caret> jab\n" +
-             "to the jaw of</selection> his \n" +
-             "dizzy opponent.\n");
+    initText("""
+               A mad boxer shot
+               a quick<selection>, gloved<caret> jab
+               to the jaw of</selection> his\s
+               dizzy opponent.
+               """);
     up();
-    checkResultByText("A mad b<caret>oxer shot\n" +
-                      "a quick, gloved jab\n" +
-                      "to the jaw of his \n" +
-                      "dizzy opponent.\n");
+    checkResultByText("""
+                        A mad b<caret>oxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponent.
+                        """);
   }
 
   public void testDownOnCaretOnSelectionStart() {
-    initText("A mad boxer shot\n" +
-             "a quick<selection><caret>, gloved jab\n" +
-             "to the jaw of</selection> his \n" +
-             "dizzy opponent.\n");
+    initText("""
+               A mad boxer shot
+               a quick<selection><caret>, gloved jab
+               to the jaw of</selection> his\s
+               dizzy opponent.
+               """);
     down();
-    checkResultByText("A mad boxer shot\n" +
-                      "a quick, gloved jab\n" +
-                      "to the jaw of his \n" +
-                      "dizzy opponen<caret>t.\n");
+    checkResultByText("""
+                        A mad boxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponen<caret>t.
+                        """);
   }
 
   public void testDownOnCaretInsideSelection() {
-    initText("A mad boxer shot\n" +
-             "a quick<selection>, gloved<caret> jab\n" +
-             "to the jaw of</selection> his \n" +
-             "dizzy opponent.\n");
+    initText("""
+               A mad boxer shot
+               a quick<selection>, gloved<caret> jab
+               to the jaw of</selection> his\s
+               dizzy opponent.
+               """);
     down();
-    checkResultByText("A mad boxer shot\n" +
-                      "a quick, gloved jab\n" +
-                      "to the jaw of his \n" +
-                      "dizzy opponen<caret>t.\n");
+    checkResultByText("""
+                        A mad boxer shot
+                        a quick, gloved jab
+                        to the jaw of his\s
+                        dizzy opponen<caret>t.
+                        """);
   }
 
   public void testCaretComesBeforeTextOnUnindent() {
@@ -292,6 +319,15 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("a" + SURROGATE_PAIR + "<caret>b");
     backspace();
     checkResultByText("a<caret>b");
+  }
+
+  public void testBackspaceInsideVirtualTab() {
+    initText("<caret>\ta");
+    getEditor().getSettings().setCaretInsideTabs(true);
+    right();
+    backspace();
+    checkResultByText("<caret>\ta");
+    assertEquals(new LogicalPosition(0, 1), getEditor().getCaretModel().getLogicalPosition());
   }
 
   public void testCaretMovementNearSurrogatePair() {
@@ -380,5 +416,22 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("<selection>line1\nline2\nli<caret></selection>ne3");
     executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
     checkResultByText("line1<caret>\nline2<caret>\nline3<caret>");
+  }
+
+  public void testTextComponentEditor() {
+    JBTextArea area = new JBTextArea("text \u00df text");
+    TextComponentEditorImpl editor = new TextComponentEditorImpl(getProject(), area);
+
+    area.select(0, 4);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE, editor);
+    assertEquals("TEXT ß text", area.getText());
+    assertEquals(0, area.getSelectionStart());
+    assertEquals(4, area.getSelectionEnd());
+
+    area.select(5, 6);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE, editor);
+    assertEquals("TEXT SS text", area.getText());
+    assertEquals(5, area.getSelectionStart());
+    assertEquals(7, area.getSelectionEnd());
   }
 }

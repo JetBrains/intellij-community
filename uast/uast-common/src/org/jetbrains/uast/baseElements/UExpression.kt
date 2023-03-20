@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
@@ -38,7 +38,6 @@ interface UAnnotated : UElement {
   /**
    * Returns the list of annotations applied to the current element.
    */
-  @JvmDefault
   val uAnnotations: List<UAnnotation>
 
   /**
@@ -78,7 +77,7 @@ open class UastEmptyExpression(override val uastParent: UElement?) : UExpression
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?

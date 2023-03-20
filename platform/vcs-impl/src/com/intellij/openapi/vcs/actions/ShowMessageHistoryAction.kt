@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.TextCopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.COPY_PROVIDER
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -59,6 +60,10 @@ class ShowMessageHistoryAction : DumbAwareAction() {
     e.presentation.isEnabled = e.presentation.isVisible && !VcsConfiguration.getInstance(project!!).recentMessages.isEmpty()
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val commitMessage = getCommitMessage(e)!!
@@ -111,8 +116,9 @@ class ShowMessageHistoryAction : DumbAwareAction() {
       .apply {
         setDataProvider { dataId ->
           when (dataId) {
-          // default list action does not work as "CopyAction" is invoked first, but with other copy provider
+            // default list action does not work as "CopyAction" is invoked first, but with other copy provider
             COPY_PROVIDER.name -> object : TextCopyProvider() {
+              override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
               override fun getTextLinesToCopy() = listOfNotNull(selectedMessage).nullize()
             }
             else -> null

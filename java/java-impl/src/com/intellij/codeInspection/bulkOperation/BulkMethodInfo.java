@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,8 +32,7 @@ public final class BulkMethodInfo {
   public boolean isMyMethod(PsiReferenceExpression ref) {
     if (!mySimpleName.equals(ref.getReferenceName())) return false;
     PsiElement element = ref.resolve();
-    if (!(element instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)element;
+    if (!(element instanceof PsiMethod method)) return false;
     PsiParameterList parameters = method.getParameterList();
     if (parameters.getParametersCount() != getSimpleParametersCount()) return false;
     if (getSimpleParametersCount() == 1) {
@@ -86,8 +85,7 @@ public final class BulkMethodInfo {
     PsiClass commonParent = psiFacade.findClass(bulkParameterType, aClass.getResolveScope());
     if (!InheritanceUtil.isInheritorOrSelf(aClass, commonParent, true)) return false;
     PsiExpression expression = factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + text + ")", iterable);
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (!(expression instanceof PsiMethodCallExpression call)) return false;
     PsiMethod bulkMethod = call.resolveMethod();
     if (bulkMethod == null) return false;
     PsiParameterList parameters = bulkMethod.getParameterList();

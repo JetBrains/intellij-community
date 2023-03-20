@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.google.gson.JsonObject
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
@@ -16,20 +17,20 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
-import com.intellij.util.ActionRunner
+import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.changePackage.KotlinChangePackageRefactoring
 import org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareDelegatingMoveDestination
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.idea.search.allScope
-import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
@@ -161,7 +162,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val targetPackage = config.getNullableString("targetPackage")
             val targetDirPath = targetPackage?.replace('.', '/') ?: config.getNullableString("targetDirectory")
             if (targetDirPath != null) {
-                ActionRunner.runInsideWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDirPath) }
+                runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDirPath) }
                 val newParent = if (targetPackage != null) {
                     JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories[0]
                 } else {
@@ -244,7 +245,25 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
 
     CHANGE_PACKAGE_DIRECTIVE {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
-            KotlinChangePackageRefactoring(mainFile as KtFile).run(FqName(config.getString("newPackageName")))
+            withCorrectMoveSettings(config) {
+                KotlinChangePackageRefactoring(mainFile as KtFile).run(FqName(config.getString("newPackageName")))
+            }
+        }
+
+        private fun withCorrectMoveSettings(config: JsonObject, action: () -> Unit) {
+            val kotlinSettings = KotlinRefactoringSettings.instance
+            val snapshot = KotlinRefactoringSettings().apply { loadState(kotlinSettings) }
+
+            try {
+                kotlinSettings.apply {
+                    MOVE_SEARCH_IN_COMMENTS = config.get("searchInCommentsAndStrings")?.asBoolean ?: MOVE_SEARCH_IN_COMMENTS
+                    MOVE_SEARCH_FOR_TEXT = config.get("searchInNonCode")?.asBoolean ?: MOVE_SEARCH_FOR_TEXT
+                }
+
+                action()
+            } finally {
+                kotlinSettings.loadState(snapshot)
+            }
         }
     },
 
@@ -264,7 +283,7 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
             val targetClassName = config.getNullableString("targetClass")
             val targetClass =
                 if (targetClassName != null) {
-                    KotlinFullClassNameIndex.getInstance().get(targetClassName, project, project.projectScope()).first()!!
+                    KotlinFullClassNameIndex.get(targetClassName, project, project.projectScope()).first()!!
                 } else null
             val delegate = MoveDeclarationsDelegate.NestedClass(
                 config.getNullableString("newName"),
@@ -290,15 +309,14 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             val project = mainFile.project
             val method =
-                KotlinFunctionShortNameIndex.getInstance().get(config.getString("methodToMove"), project, project.projectScope()).first()
+                KotlinFunctionShortNameIndex.get(config.getString("methodToMove"), project, project.projectScope()).first()
             val methodParameterName = config.getNullableString("methodParameter")
             val sourcePropertyName = config.getNullableString("sourceProperty")
             val targetObjectName = config.getNullableString("targetObject")
             val targetVariable = when {
                 methodParameterName != null -> method.valueParameters.find { it.name == methodParameterName }!!
-                sourcePropertyName != null -> KotlinPropertyShortNameIndex.getInstance()
-                    .get(sourcePropertyName, project, project.projectScope()).first()
-                else -> KotlinFullClassNameIndex.getInstance().get(targetObjectName!!, project, project.projectScope()).first()
+                sourcePropertyName != null -> KotlinPropertyShortNameIndex.get(sourcePropertyName, project, project.projectScope()).first()
+                else -> KotlinFullClassNameIndex.get(targetObjectName!!, project, project.projectScope()).first()
 
             }
             val oldClassParameterNames = mutableMapOf<KtClass, String>()

@@ -6,9 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
 import java.util.List;
 
 public interface DiffUserDataKeys {
@@ -102,13 +100,6 @@ public interface DiffUserDataKeys {
   Key<Side> MASTER_SIDE = Key.create("Diff.MasterSide");
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
   Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");
-
-  /**
-   * @deprecated Use {@link DiffUtil#addNotification}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  Key<List<JComponent>> NOTIFICATIONS = Key.create("Diff.Notifications");
 
   /**
    * Use {@link DiffUtil#addNotification}

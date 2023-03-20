@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Responses")
 package org.jetbrains.io
 
@@ -35,7 +35,6 @@ fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): Fu
 }
 
 fun HttpResponse.addNoCache(): HttpResponse {
-  @Suppress("SpellCheckingInspection")
   headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")//NON-NLS
   headers().add(HttpHeaderNames.PRAGMA, "no-cache")//NON-NLS
   return this
@@ -119,20 +118,39 @@ fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, desc
   createStatusResponse(this, request, description).send(channel, request, extraHeaders)
 }
 
-internal fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String? = null): HttpResponse {
+@JvmOverloads
+fun HttpResponseStatus.sendPlainText(channel: Channel, request: HttpRequest? = null, description: String? = null, extraHeaders: HttpHeaders? = null) {
+  createStatusResponse(this, request, description, usePlainText = true).send(channel, request, extraHeaders)
+}
+
+internal fun createStatusResponse(responseStatus: HttpResponseStatus,
+                                  request: HttpRequest?,
+                                  description: String? = null,
+                                  usePlainText: Boolean = false): HttpResponse {
   if (request != null && request.method() == HttpMethod.HEAD) {
     return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.EMPTY_BUFFER)
   }
 
+  val message = responseStatus.toString()
+
   @NlsSafe
   val builder = StringBuilder()
-  val message = responseStatus.toString()
-  builder.append("<!doctype html><title>").append(message).append("</title>").append("<h1 style=\"text-align: center\">").append(message).append("</h1>")
-  if (description != null) {
-    builder.append("<p>").append(description).append("</p>")
+  if (usePlainText) {
+    builder.append(message)
+    if (description != null) {
+      builder.append("\n").append(description)
+    }
+  }
+  else {
+    builder.append("<!doctype html><title>").append(message).append("</title>")
+      .append("<h1 style=\"text-align: center\">").append(message).append("</h1>")
+    if (description != null) {
+      builder.append("<p>").append(description).append("</p>")
+    }
   }
 
-  val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, ByteBufUtil.encodeString(ByteBufAllocator.DEFAULT, CharBuffer.wrap(builder), Charsets.UTF_8))
-  response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html")
+  val content = ByteBufUtil.encodeString(ByteBufAllocator.DEFAULT, CharBuffer.wrap(builder), Charsets.UTF_8)
+  val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, content)
+  response.headers().set(HttpHeaderNames.CONTENT_TYPE, if (usePlainText) HttpHeaderValues.TEXT_PLAIN else HttpHeaderValues.TEXT_HTML)
   return response
 }

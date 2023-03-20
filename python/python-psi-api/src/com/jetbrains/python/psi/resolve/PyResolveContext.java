@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -38,8 +37,7 @@ public final class PyResolveContext {
    * to explicitly specify type evaluation context.
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static PyResolveContext defaultContext() {
     return new PyResolveContext(false, true, false, TypeEvalContext.codeInsightFallback(null));
   }
@@ -50,17 +48,6 @@ public final class PyResolveContext {
   }
 
   /**
-   * @deprecated Please use {@link PyResolveContext#implicitContext(TypeEvalContext)}
-   * to explicitly specify type evaluation context.
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static PyResolveContext implicitContext() {
-    return new PyResolveContext(true, true, false, TypeEvalContext.codeInsightFallback(null));
-  }
-
-  /**
    * Allow searching for dynamic usages based on duck typing and guesses during resolve.
    *
    * Note that this resolve context is slower than the default one. Use it only for one-off user actions.
@@ -68,17 +55,6 @@ public final class PyResolveContext {
   @NotNull
   public static PyResolveContext implicitContext(@NotNull TypeEvalContext context) {
     return new PyResolveContext(true, true, false, context);
-  }
-
-  /**
-   * @deprecated Please use {@link PyResolveContext#noProperties(TypeEvalContext)}
-   * to explicitly specify type evaluation context.
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static PyResolveContext noProperties() {
-    return new PyResolveContext(false, false, false, TypeEvalContext.codeInsightFallback(null));
   }
 
   @NotNull

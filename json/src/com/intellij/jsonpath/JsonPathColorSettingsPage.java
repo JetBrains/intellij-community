@@ -59,13 +59,16 @@ final class JsonPathColorSettingsPage implements ColorSettingsPage {
 
   @Override
   public @NonNls @NotNull String getDemoText() {
-    return "$.store.book[0, 2].title\n" +
-           "$['store'][\"book\"][0]['title']\n" +
-           "$.authors[*].publications[:10]\n" +
-           "$.text.<functionCall>concat</functionCall>(\"-\", \"some\")\n" +
-           "$.text[?(@ =~ /9.*9/ && $.enabled == false)]\n" +
-           "$..book[?($.count > @['stats counter'].<functionCall>sum</functionCall>())]\n" +
-           "@.sales[?(@.active == true || $.library != null)]\n";
+    return """
+      $.store.book[0, 2].title
+      $['store']["book"][0]['title']
+      $.authors[*].publications[:10]
+      $.text.<functionCall>concat</functionCall>("-", "some")
+      $.text[?(@ =~ /9.*9/ && $.enabled == false)]
+      $..book[?($.count > @['stats counter'].<functionCall>sum</functionCall>())]
+      @.sales[?(@.active == true || $.library != null)]
+      $.store.bicycle[?(@.extra == { 'x': [{}, {'key' : 'value'}] })]
+      """;
   }
 
   @Override

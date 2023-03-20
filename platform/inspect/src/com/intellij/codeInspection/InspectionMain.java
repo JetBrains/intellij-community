@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class InspectionMain implements ApplicationStarter {
   private InspectionApplicationBase myApplication;
 
@@ -23,16 +24,26 @@ public class InspectionMain implements ApplicationStarter {
   public void premain(@NotNull List<String> args) {
     InspectionApplication.LOG.info("Command line arguments: " + args);
     if (args.size() > 1 && "qodana".equals(args.get(1))) {
-      myApplication = InspectionApplicationFactory.getApplication("qodana", args.subList(2, args.size()));
+      try {
+        myApplication = InspectionApplicationFactory.getApplication("qodana", args.subList(2, args.size()));
+      }
+      catch (InspectionApplicationException e) {
+        System.err.println(e.getMessage());
+        System.exit(1);
+      }
+      catch (Exception e) {
+        e.printStackTrace(); // workaround for IDEA-289086
+        System.exit(1);
+      }
       return;
     }
     myApplication = new InspectionApplication();
     if (args.size() < 4) {
       System.err.println("invalid args:" + args);
-      printHelp();
+      printHelpAndExit();
     }
 
-    myApplication.myHelpProvider = () -> printHelp();
+    myApplication.myHelpProvider = InspectionMain::printHelpAndExit;
     myApplication.myProjectPath = args.get(1);
     myApplication.myStubProfile = args.get(2);
     myApplication.myOutPath = args.get(3);
@@ -41,7 +52,7 @@ public class InspectionMain implements ApplicationStarter {
         || myApplication.myOutPath == null
         || myApplication.myStubProfile == null) {
       System.err.println(myApplication.myProjectPath + myApplication.myOutPath + myApplication.myStubProfile);
-      printHelp();
+      printHelpAndExit();
     }
 
     try {
@@ -88,29 +99,28 @@ public class InspectionMain implements ApplicationStarter {
         }
         else //noinspection StatementWithEmptyBody
           if ("-qodana".equals(arg)) {
-        }
-        else {
-          System.err.println("unexpected argument: " + arg);
-          printHelp();
-        }
+          }
+          else {
+            System.err.println("unexpected argument: " + arg);
+            printHelpAndExit();
+          }
       }
     }
-    catch (ArrayIndexOutOfBoundsException e) {
+    catch (IndexOutOfBoundsException e) {
       e.printStackTrace();
-      printHelp();
+      printHelpAndExit();
     }
 
     myApplication.myRunGlobalToolsOnly = System.getProperty("idea.no.local.inspections") != null;
   }
 
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     myApplication.startup();
   }
 
-  private static void printHelp() {
+  private static void printHelpAndExit() {
     System.out.println(InspectionsBundle.message("inspection.command.line.explanation"));
     System.exit(1);
   }
 }
-

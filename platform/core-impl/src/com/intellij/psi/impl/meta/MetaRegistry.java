@@ -25,7 +25,7 @@ public final class MetaRegistry extends MetaDataRegistrar {
   private static final List<MyBinding> ourBindings = ContainerUtil.createLockFreeCopyOnWriteList();
   private static volatile boolean ourContributorsLoaded;
 
-  public static PsiMetaData getMeta(final PsiElement element) {
+  public static PsiMetaData getMeta(PsiElement element) {
     return getMetaBase(element);
   }
 

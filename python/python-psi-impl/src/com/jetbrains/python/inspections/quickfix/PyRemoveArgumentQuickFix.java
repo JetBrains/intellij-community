@@ -23,8 +23,7 @@ public class PyRemoveArgumentQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PyExpression)) return;
-    final PyExpression expression = (PyExpression)element;
+    if (!(element instanceof PyExpression expression)) return;
     final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(expression);
     final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(expression);
     expression.delete();

@@ -5,26 +5,22 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import java.util.*
 
-abstract class GHPRTimelineMergedEvents<T : GHPRTimelineEvent>
-  : GHPRTimelineEvent {
-
-  private val events = mutableListOf<T>()
-
+abstract class GHPRTimelineMergedEvents<T : GHPRTimelineEvent> : GHPRTimelineGroupedItems<T>(), GHPRTimelineEvent {
   override val actor: GHActor?
-    get() = events.last().actor
+    get() = items.last().actor
   override val createdAt: Date
-    get() = events.last().createdAt
+    get() = items.last().createdAt
 
-  fun add(event: T) {
-    events.add(event)
-    if (event is GHPRTimelineMergedEvents<*>) {
-      for (evt in event.events) {
+  override fun add(item: T) {
+    super.add(item)
+    if (item is GHPRTimelineMergedEvents<*>) {
+      for (evt in item.items) {
         @Suppress("UNCHECKED_CAST")
         add(evt as T)
       }
     }
     else {
-      addNonMergedEvent(event)
+      addNonMergedEvent(item)
     }
   }
 

@@ -27,7 +27,3 @@ UFile (package = )
                                 ULiteralExpression (value = 3)
         UMethod (name = getA)
         UMethod (name = getB)
-        UMethod (name = <no name provided>)
-            UBlockExpression
-                ULiteralExpression (value = "abc1")
-                ULiteralExpression (value = "def1")

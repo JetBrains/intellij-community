@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.jetbrains.extensions.python.toPsi
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.run.PythonRunConfigurationProducer
 import com.jetbrains.python.sdk.pythonSdk
@@ -42,10 +43,11 @@ class PoetryRunScript : AnAction() {
     val project = e.project ?: return
     val scriptPath = project.pythonSdk?.homeDirectory?.parent?.findChild(tomlKey.text) ?: return
     val scriptFile = scriptPath.toPsi(project) ?: return ExecutionErrorDialog.show(
-      PyExecutionException("Cannot find a script file\nPlease run 'poetry install' before executing scripts", "poetry", emptyList()),
-      "Poetry Plugin", project)
+      PyExecutionException(
+        PyBundle.message("python.sdk.dialog.message.cannot.find.script.file.please.run.poetry.install.before.executing.scripts"), "poetry",
+        emptyList()),
+      PyBundle.message("python.sdk.dialog.title.poetry.scripts"), project)
     runScriptFromRunConfiguration(project, scriptFile.containingFile)
-
   }
 
   init {

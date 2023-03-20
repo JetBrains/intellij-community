@@ -2,6 +2,7 @@
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmActionGroup
@@ -15,6 +16,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.util.PropertyUtilBase
+import com.intellij.psi.util.PsiTreeUtil
 
 internal abstract class CreatePropertyActionBase(
   target: PsiClass,
@@ -25,14 +27,14 @@ internal abstract class CreatePropertyActionBase(
 
   private fun doGetPropertyInfo() = PropertyUtilBase.getPropertyNameAndKind(request.methodName)
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (!super.isAvailable(project, editor, file)) return false
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    if (!super.isAvailable(project, file, target)) return false
 
     val accessorName = request.methodName
     if (!PsiNameHelper.getInstance(project).isIdentifier(accessorName)) return false
 
     val (propertyName: String, propertyKind: PropertyKind) = doGetPropertyInfo() ?: return false
-    if (propertyName == null || propertyName.isEmpty() || propertyKind == null) return false
+    if (propertyName.isNullOrEmpty() || propertyKind == null) return false
 
     // check parameters count
     when (propertyKind) {
@@ -49,9 +51,15 @@ internal abstract class CreatePropertyActionBase(
 
   override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    createRenderer(project).doRender()
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
+    createRenderer(project, copyClass).doRender()
+    return IntentionPreviewInfo.DIFF
   }
 
-  abstract fun createRenderer(project: Project): PropertyRenderer
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
+    createRenderer(project, target).doRender()
+  }
+
+  abstract fun createRenderer(project: Project, targetClass: PsiClass): PropertyRenderer
 }

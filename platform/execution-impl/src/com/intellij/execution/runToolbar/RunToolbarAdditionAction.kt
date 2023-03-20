@@ -3,30 +3,36 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 
-internal class RunToolbarAdditionAction(val executorGroup: ExecutorGroup<*>,
+internal class RunToolbarAdditionAction(private val executorGroup: ExecutorGroup<*>,
                                         val process: RunToolbarProcess, val selectedAction: () -> AnAction?) : AnAction() {
 
   init {
-    updatePresentation(templatePresentation)
+    updateAndGetVisibility(templatePresentation)
   }
 
   override fun update(e: AnActionEvent) {
-    updatePresentation(e.presentation)
+    e.presentation.isVisible = updateAndGetVisibility(e.presentation)
 
     e.project?.let {
       e.presentation.isEnabled = !e.isActiveProcess()
     }
   }
 
-  private fun updatePresentation(presentation: Presentation) {
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  private fun updateAndGetVisibility(presentation: Presentation): Boolean {
     val action = selectedAction()
-    if (action is ExecutorRegistryImpl.ExecutorAction) {
+    return if (action is ExecutorRegistryImpl.ExecutorAction) {
       presentation.copyFrom(action.getTemplatePresentation())
       presentation.text = executorGroup.getRunToolbarActionText(action.templatePresentation.text)
+      true
+    } else {
+      false
     }
   }
 

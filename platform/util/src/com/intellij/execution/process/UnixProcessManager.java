@@ -44,10 +44,17 @@ public final class UnixProcessManager {
     }
   }
 
-  // https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals
+  // We assume that the following 7 signals have portable number.
+  // At least the Open Group mentions them in Shell & Utilities of the Base Specifications:
+  //   - https://pubs.opengroup.org/onlinepubs/9699919799/utilities/kill.html
+  //   - https://pubs.opengroup.org/onlinepubs/000095399/utilities/trap.html
+
+  public static final int SIGHUP = 1;
   public static final int SIGINT = 2;
+  public static final int SIGQUIT = 3;
   public static final int SIGABRT = 6;
   public static final int SIGKILL = 9;
+  public static final int SIGALRM = 14;
   public static final int SIGTERM = 15;
 
   private UnixProcessManager() { }
@@ -69,6 +76,26 @@ public final class UnixProcessManager {
 
   public static int getCurrentProcessId() {
     return Java8Helper.C_LIB != null ? Java8Helper.C_LIB.getpid() : 0;
+  }
+
+  /**
+   * Retrieve the number value of a signal if it's one of those believed to have
+   * the same constant value across all the systems.
+   *
+   * @param signalName without the 'SIG' prefix ('INT', not 'SIGINT')
+   * @return -1 for unknown signal
+   */
+  public static int getPortableSignalNumber(@NotNull String signalName) {
+    switch (signalName) {
+      case "HUP": return SIGHUP;
+      case "INT": return SIGINT;
+      case "QUIT": return SIGQUIT;
+      case "ABRT": return SIGABRT;
+      case "KILL": return SIGKILL;
+      case "ALRM": return SIGALRM;
+      case "TERM": return SIGTERM;
+      default: return -1;
+    }
   }
 
   /**

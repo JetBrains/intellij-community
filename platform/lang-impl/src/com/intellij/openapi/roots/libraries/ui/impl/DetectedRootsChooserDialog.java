@@ -121,8 +121,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     CheckboxTreeTable treeTable = new CheckboxTreeTable(root, new CheckboxTree.CheckboxTreeCellRenderer(true) {
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof VirtualFileCheckedTreeNode)) return;
-        VirtualFileCheckedTreeNode node = (VirtualFileCheckedTreeNode)value;
+        if (!(value instanceof VirtualFileCheckedTreeNode node)) return;
         VirtualFile file = node.getFile();
         @NlsSafe String text;
         SimpleTextAttributes attributes;
@@ -168,7 +167,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     column.setPreferredWidth(width);
     column.setMaxWidth(width);
     treeTable.setRootVisible(false);
-    new TreeTableSpeedSearch(treeTable, o -> {
+    TreeTableSpeedSearch.installOn(treeTable, o -> {
       Object node = o.getLastPathComponent();
       if (!(node instanceof VirtualFileCheckedTreeNode)) return "";
       return ((VirtualFileCheckedTreeNode)node).getFile().getPresentableUrl();

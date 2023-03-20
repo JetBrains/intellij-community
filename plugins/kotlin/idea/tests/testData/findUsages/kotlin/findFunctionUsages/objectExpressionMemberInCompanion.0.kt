@@ -1,6 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
-// FIR_COMPARISON
+// PSI_ELEMENT_AS_TITLE: "fun f(): Unit"
+
 
 class Foo {
     companion object {

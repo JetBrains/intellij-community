@@ -35,6 +35,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
     myTable.getEmptyText().setText(ExecutionBundle.message("settings.project.startup.add.run.configurations.with.the.button"));
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 
@@ -140,7 +141,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
     final JPanel tasksPanel = myDecorator.createPanel();
     final JLabel label = new JLabel(ExecutionBundle.message("settings.project.startup.run.tasks.and.tools.via.run.configurations"));
-    label.setForeground(UIUtil.getInactiveTextColor());
+    label.setForeground(NamedColorUtil.getInactiveTextColor());
     label.setHorizontalAlignment(SwingConstants.RIGHT);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(new JLabel(ExecutionBundle.message("settings.project.startup.to.be.started.on.project.opening")), BorderLayout.WEST);
@@ -271,8 +272,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
       }, false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
-      if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
-        final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
+      if (setting.getValue() instanceof RunnerAndConfigurationSettings settings) {
         if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
           wrappers.add(setting);
         }
@@ -285,8 +285,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
         label.setText(value.getText());
       }))
       .setItemChosenCallback((at) -> {
-        if (at.getValue() instanceof RunnerAndConfigurationSettings) {
-          final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
+        if (at.getValue() instanceof RunnerAndConfigurationSettings added) {
           addConfiguration(added);
         }
         else {
@@ -300,11 +299,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
   private void showPopup(AnActionButton button, JBPopup popup) {
     final RelativePoint point = button.getPreferredPopupPoint();
-    if (point != null) {
-      popup.show(point);
-    } else {
-      popup.showInCenterOf(myDecorator.getActionsPanel());
-    }
+    popup.show(point);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// "Replace 'collect(toList())' with 'toList()'" "true"
+// "Replace 'collect(toList())' with 'toList()'" "true-preview"
 
 import java.util.List;
 import java.util.stream.*;

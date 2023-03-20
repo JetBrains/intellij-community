@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -18,10 +18,8 @@ import java.util.Arrays;
  * Used in navigation, code completion, speed search etc.
  *
  * @see NameUtil#buildMatcher(String)
- *
- * @author peter
  */
-class MinusculeMatcherImpl extends MinusculeMatcher {
+final class MinusculeMatcherImpl extends MinusculeMatcher {
   /** Camel-hump matching is >O(n), so for larger prefixes we fall back to simpler matching to avoid pauses */
   private static final int MAX_CAMEL_HUMP_MATCHING_LENGTH = 100;
 
@@ -106,8 +104,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     return false;
   }
 
-  @NotNull
-  private static FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, int from, int length) {
+  private static @NotNull FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, int from, int length) {
     TextRange head = ranges.getHead();
     if (head != null && head.getStartOffset() == from + length) {
       return ranges.getTail().prepend(new TextRange(from, head.getEndOffset()));
@@ -197,14 +194,12 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
   }
 
   @Override
-  @NotNull
-  public String getPattern() {
+  public @NotNull String getPattern() {
     return new String(myPattern);
   }
 
   @Override
-  @Nullable
-  public FList<TextRange> matchingFragments(@NotNull String name) {
+  public @Nullable FList<TextRange> matchingFragments(@NotNull String name) {
     if (name.length() < myMinNameLength) {
       return null;
     }
@@ -233,8 +228,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     return matchWildcards(name, 0, 0, isAscii);
   }
 
-  @Nullable
-  private FList<TextRange> matchBySubstring(@NotNull String name) {
+  private @Nullable FList<TextRange> matchBySubstring(@NotNull String name) {
     boolean infix = isPatternChar(0, '*');
     char[] patternWithoutWildChar = filterWildcard(myPattern);
     if (name.length() < patternWithoutWildChar.length) {
@@ -267,8 +261,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
    * After a wildcard (* or space), search for the first non-wildcard pattern character in the name starting from nameIndex
    * and try to {@link #matchFragment} for it.
    */
-  @Nullable
-  private FList<TextRange> matchWildcards(@NotNull String name,
+  private @Nullable FList<TextRange> matchWildcards(@NotNull String name,
                                           int patternIndex,
                                           int nameIndex,
                                           boolean isAsciiName) {
@@ -315,8 +308,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
    * Enumerates places in name that could be matched by the pattern at patternIndex position
    * and invokes {@link #matchFragment} at those candidate positions
    */
-  @Nullable
-  private FList<TextRange> matchSkippingWords(@NotNull String name,
+  private @Nullable FList<TextRange> matchSkippingWords(@NotNull String name,
                                               final int patternIndex,
                                               int nameIndex,
                                               boolean allowSpecialChars,
@@ -381,11 +373,10 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
            isIgnoreCase && (toLowerCase[patternIndex] == c || toUpperCase[patternIndex] == c);
   }
 
-  @Nullable
-  private FList<TextRange> matchFragment(@NotNull String name,
-                                         int patternIndex,
-                                         int nameIndex,
-                                         boolean isAsciiName) {
+  private @Nullable FList<TextRange> matchFragment(@NotNull String name,
+                                                   int patternIndex,
+                                                   int nameIndex,
+                                                   boolean isAsciiName) {
     int fragmentLength = maxMatchingFragment(name, patternIndex, nameIndex);
     return fragmentLength == 0 ? null : matchInsideFragment(name, patternIndex, nameIndex, isAsciiName, fragmentLength);
   }
@@ -415,8 +406,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
   }
 
   // we've found the longest fragment matching pattern and name
-  @Nullable
-  private FList<TextRange> matchInsideFragment(@NotNull String name,
+  private @Nullable FList<TextRange> matchInsideFragment(@NotNull String name,
                                                int patternIndex,
                                                int nameIndex,
                                                boolean isAsciiName,
@@ -438,12 +428,11 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
            Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtilCore.isWordStart(name, nameIndex);
   }
 
-  @Nullable
-  private FList<TextRange> findLongestMatchingPrefix(@NotNull String name,
-                                                     int patternIndex,
-                                                     int nameIndex,
-                                                     boolean isAsciiName,
-                                                     int fragmentLength, int minFragment) {
+  private @Nullable FList<TextRange> findLongestMatchingPrefix(@NotNull String name,
+                                                               int patternIndex,
+                                                               int nameIndex,
+                                                               boolean isAsciiName,
+                                                               int fragmentLength, int minFragment) {
     if (patternIndex + fragmentLength >= myPattern.length) {
       return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, fragmentLength));
     }
@@ -585,9 +574,8 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     return c;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "MinusculeMatcherImpl{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
   }
 

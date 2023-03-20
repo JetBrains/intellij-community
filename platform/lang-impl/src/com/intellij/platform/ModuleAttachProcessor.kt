@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
 import com.intellij.CommonBundle
-import com.intellij.configurationStore.StoreUtil
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveSettings
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -14,7 +18,6 @@ import com.intellij.openapi.module.PrimaryModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -23,8 +26,11 @@ import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.Files
 import java.nio.file.Path
 
 private val LOG = logger<ModuleAttachProcessor>()
@@ -32,7 +38,9 @@ private val LOG = logger<ModuleAttachProcessor>()
 class ModuleAttachProcessor : ProjectAttachProcessor() {
   companion object {
     @JvmStatic
-    fun getPrimaryModule(project: Project) = if (canAttachToProject()) PrimaryModuleManager.findPrimaryModule(project) else null
+    fun getPrimaryModule(project: Project): Module? {
+      return if (canAttachToProject()) PrimaryModuleManager.findPrimaryModule(project) else null
+    }
 
     @JvmStatic
     fun getSortedModules(project: Project): List<Module> {
@@ -73,47 +81,60 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
   }
 
-  override fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-    LOG.info(String.format("Attaching directory: \"%s\"", projectDir))
+  override suspend fun attachToProjectAsync(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
+    LOG.info("Attaching directory: $projectDir")
     val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
-    if (!dotIdeaDir.exists()) {
-      val options = OpenProjectTask(useDefaultProjectAsTemplate = true, isNewProject = true)
-      val newProject = ProjectManagerEx.getInstanceEx().newProject(projectDir, options) ?: return false
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(projectDir, newProject, true)
-      StoreUtil.saveSettings(newProject)
-      runWriteAction { Disposer.dispose(newProject) }
+    if (!Files.exists(dotIdeaDir)) {
+      val options = OpenProjectTask { useDefaultProjectAsTemplate = true; isNewProject = true }
+      val newProject = ProjectManagerEx.getInstanceEx().newProjectAsync(file = projectDir, options = options)
+      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir = projectDir,
+                                                                    project = newProject,
+                                                                    newProject = true)
+      runInAutoSaveDisabledMode {
+        saveSettings(newProject)
+      }
+      writeAction { Disposer.dispose(newProject) }
     }
 
     val newModule = try {
       findMainModule(project, dotIdeaDir) ?: findMainModule(project, projectDir)
     }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Exception) {
-      LOG.info(e)
-      Messages.showErrorDialog(project,
-                               LangBundle.message("module.attach.dialog.message.cannot.attach.project", e.message),
-                               CommonBundle.getErrorTitle())
+      LOG.error(e)
+      withContext(Dispatchers.EDT) {
+        Messages.showErrorDialog(project,
+                                 LangBundle.message("module.attach.dialog.message.cannot.attach.project", e.message),
+                                 CommonBundle.getErrorTitle())
+      }
       return false
     }
 
     LifecycleUsageTriggerCollector.onProjectModuleAttached(project)
 
     if (newModule != null) {
-      callback?.projectOpened(project, newModule)
+      withContext(Dispatchers.EDT) {
+        callback?.projectOpened(project, newModule)
+      }
       return true
     }
 
-    return Messages.showYesNoDialog(project,
-                                    LangBundle.message("module.attach.dialog.message.project.uses.non.standard.layout", projectDir),
-                                    LangBundle.message("module.attach.dialog.title.open.project"),
-                                    Messages.getQuestionIcon()) != Messages.YES
+    return withContext(Dispatchers.EDT) {
+      Messages.showYesNoDialog(project,
+                               LangBundle.message("module.attach.dialog.message.project.uses.non.standard.layout", projectDir),
+                               LangBundle.message("module.attach.dialog.title.open.project"),
+                               Messages.getQuestionIcon()) != Messages.YES
+    }
   }
 
   override fun beforeDetach(module: Module) {
-   module.project.messageBus.syncPublisher(ModuleAttachListener.TOPIC).beforeDetach(module)
+    module.project.messageBus.syncPublisher(ModuleAttachListener.TOPIC).beforeDetach(module)
   }
 }
 
-private fun findMainModule(project: Project, projectDir: Path): Module? {
+private suspend fun findMainModule(project: Project, projectDir: Path): Module? {
   projectDir.directoryStreamIfExists({ path -> path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION) }) { directoryStream ->
     for (file in directoryStream) {
       return attachModule(project, file)
@@ -122,14 +143,21 @@ private fun findMainModule(project: Project, projectDir: Path): Module? {
   return null
 }
 
-private fun attachModule(project: Project, imlFile: Path): Module {
-  val module = project.modifyModules {
-    loadModule(imlFile.systemIndependentPath)
+private suspend fun attachModule(project: Project, imlFile: Path): Module {
+  val moduleManager = ModuleManager.getInstance(project)
+  val model = moduleManager.getModifiableModel()
+  val module = model.loadModule(imlFile.systemIndependentPath)
+  writeAction {
+    model.commit()
   }
 
-  val newModule = ModuleManager.getInstance(project).findModuleByName(module.name)!!
-  val primaryModule = addPrimaryModuleDependency(project, newModule)
-  module.project.messageBus.syncPublisher(ModuleAttachListener.TOPIC).afterAttach(newModule, primaryModule, imlFile)
+  val newModule = readAction { moduleManager.findModuleByName(module.name)!! }
+  val primaryModule = withContext(Dispatchers.EDT) { addPrimaryModuleDependency(project, newModule) }
+  val tasks = mutableListOf<suspend () -> Unit>()
+  module.project.messageBus.syncPublisher(ModuleAttachListener.TOPIC).afterAttach(newModule, primaryModule, imlFile, tasks)
+  for (task in tasks) {
+    runCatching { task() }.getOrLogException(LOG)
+  }
   return newModule
 }
 

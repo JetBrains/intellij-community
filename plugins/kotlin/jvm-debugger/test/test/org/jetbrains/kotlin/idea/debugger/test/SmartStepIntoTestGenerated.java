@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -26,6 +26,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @TestMetadata("annotation.kt")
     public void testAnnotation() throws Exception {
         runTest("testData/smartStepInto/annotation.kt");
+    }
+
+    @TestMetadata("anonymousExtensionFunction.kt")
+    public void testAnonymousExtensionFunction() throws Exception {
+        runTest("testData/smartStepInto/anonymousExtensionFunction.kt");
     }
 
     @TestMetadata("arrayAccess.kt")
@@ -116,6 +121,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @TestMetadata("invoke.kt")
     public void testInvoke() throws Exception {
         runTest("testData/smartStepInto/invoke.kt");
+    }
+
+    @TestMetadata("javaSyntheticPropertyReference.kt")
+    public void testJavaSyntheticPropertyReference() throws Exception {
+        runTest("testData/smartStepInto/javaSyntheticPropertyReference.kt");
     }
 
     @TestMetadata("libraryFun.kt")

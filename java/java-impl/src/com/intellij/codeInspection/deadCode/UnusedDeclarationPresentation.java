@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -14,6 +14,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -169,7 +170,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
       if (skipEntryPoints(refElement)) return;
 
-      Element element = refEntity.getRefManager().export(refEntity, -1);
+      Element element = refEntity.getRefManager().export(refEntity);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
@@ -263,14 +264,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class MoveToEntries extends QuickFixAction {
     MoveToEntries(@NotNull InspectionToolWrapper toolWrapper) {
-      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), null, null, toolWrapper);
+      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), AllIcons.Nodes.EntryPoints, null, toolWrapper);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabledAndVisible()) {
-        final RefEntity[] elements = getInvoker(e).getTree().getSelectedElements();
+        final RefEntity[] elements = InspectionTree.getSelectedRefElements(e);
         for (RefEntity element : elements) {
           if (!((RefElement) element).isEntry()) {
             return;
@@ -417,22 +418,25 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public synchronized void updateContent() {
-    getTool().checkForReachableRefs(getContext());
-    clearContents();
-    final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
-    getContext().getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
-        RefJavaElement refElement = (RefJavaElement)refEntity;
-        if (!compareVisibilities(refElement, localInspectionTool)) return;
-        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
-              (myFixedElements.containsKey(refElement) ||
-              isExcluded(refEntity) ||
-              isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
-          if (skipEntryPoints(refElement)) return;
-          registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
+    ReadAction.run(() -> {
+      getTool().checkForReachableRefs(getContext());
+      clearContents();
+      final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
+      getContext().getRefManager().iterate(new RefJavaVisitor() {
+        @Override public void visitElement(@NotNull RefEntity refEntity) {
+          if (!(refEntity instanceof RefJavaElement refElement)) return;//dead code doesn't work with refModule | refPackage
+          if (!compareVisibilities(refElement, localInspectionTool)) return;
+          if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
+                (myFixedElements.containsKey(refElement) ||
+                 isExcluded(refEntity) ||
+                 isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
+            final PsiElement element = refElement.getPsiElement();
+            if (element != null && element.getLanguage() != JavaLanguage.INSTANCE) return;
+            if (skipEntryPoints(refElement)) return;
+            registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
+          }
         }
-      }
+      });
     });
     updateProblemElements();
   }
@@ -598,7 +602,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
     htmlView.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         URL url = e.getURL();
         if (url == null) {
           return;
@@ -627,7 +631,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
-    DescriptionEditorPaneKt.readHTML(htmlView, DescriptionEditorPaneKt.toHTML(htmlView, text, false));
+    DescriptionEditorPaneKt.readHTML(htmlView, text);
     return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
 

@@ -79,56 +79,44 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
         final int length = s.length();
         if (length == 1 || c != '\\') return -1;
         final int codePoint = s.codePointAt(1);
-        switch (codePoint) {
-            case 'n':
-                return '\n';
-            case 'r':
-                return '\r';
-            case 't':
-                return '\t';
-            case 'a':
-                return '\u0007'; // The alert (bell) character
-            case 'e':
-                return '\u001b'; // The escape character
-            case 'f':
-                return '\f'; // The form-feed character
-            case 'b':
-                return '\b';
-            case 'c':
-                if (length != 3) return -1;
-                return s.codePointAt(2) ^ 64; // control character
-            case 'N':
-                if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
-                    return -1;
-                }
-                return UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
-            case 'x':
-                if (length <= 2) return -1;
-                if (s.charAt(2) == '{') {
-                    return (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
-                }
-                if (length == 3) {
-                    return parseNumber(s, 2, 16);
-                }
-                return length == 4 ? parseNumber(s, 2, 16) : -1;
-            case 'u':
-                if (length <= 2) return 'u';
-                if (s.charAt(2) == '{') {
-                    return (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
-                }
-                return length != 6 ? -1 : parseNumber(s, 2, 16);
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-                return parseNumber(s, 1, 8);
-            default:
-                return codePoint;
+      return switch (codePoint) {
+        case 'n' -> '\n';
+        case 'r' -> '\r';
+        case 't' -> '\t';
+        case 'a' -> '\u0007'; // The alert (bell) character
+        case 'e' -> '\u001b'; // The escape character
+        case 'f' -> '\f'; // The form-feed character
+        case 'b' -> '\b';
+        case 'c' -> {
+          if (length != 3) yield -1;
+          yield s.codePointAt(2) ^ 64; // control character
         }
+        case 'N' -> {
+          if (length < 4 || s.charAt(2) != '{' || s.charAt(length - 1) != '}') {
+            yield -1;
+          }
+          yield UnicodeCharacterNames.getCodePoint(s.substring(3, length - 1));
+        }
+        case 'x' -> {
+          if (length <= 2) yield -1;
+          if (s.charAt(2) == '{') {
+            yield (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
+          }
+          if (length == 3) {
+            yield parseNumber(s, 2, 16);
+          }
+          yield length == 4 ? parseNumber(s, 2, 16) : -1;
+        }
+        case 'u' -> {
+          if (length <= 2) yield 'u';
+          if (s.charAt(2) == '{') {
+            yield (s.charAt(length - 1) != '}') ? -1 : parseNumber(s, 3, 16);
+          }
+          yield length != 6 ? -1 : parseNumber(s, 2, 16);
+        }
+        case '0', '1', '2', '3', '4', '5', '6', '7' -> parseNumber(s, 1, 8);
+        default -> codePoint;
+      };
     }
 
     private static int parseNumber(String s, int offset, int radix) {

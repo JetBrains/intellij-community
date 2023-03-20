@@ -68,7 +68,7 @@ public class OptionalInlining {
       }
       return "baz";
     });
-    if (<warning descr="Condition 's.equals(\"bar\") && !opt.isPresent()' is always 'false'">s.equals("bar") && <warning descr="Condition '!opt.isPresent()' is always 'false' when reached">!<warning descr="Result of 'opt.isPresent()' is always 'true'">opt.isPresent()</warning></warning></warning>) {
+    if (<warning descr="Condition 's.equals(\"bar\") && !opt.isPresent()' is always 'false'">s.equals("bar") && <warning descr="Condition '!opt.isPresent()' is always 'false' when reached">!opt.isPresent()</warning></warning>) {
       System.out.println("Impossible");
     }
   }
@@ -111,7 +111,7 @@ public class OptionalInlining {
   void testMap(Optional<String> opt) {
     opt.map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     String res = opt.<String>map(s -> null).orElse("abc");
-    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!<warning descr="Result of 'res.equals(\"abc\")' is always 'true'">res.equals("abc")</warning></warning>) {
+    if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!res.equals("abc")</warning>) {
       System.out.println("Never");
     }
     String trimmed = Optional.ofNullable(nullableMethod()).map(xx -> xx.trim()).orElse("");

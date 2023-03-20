@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
@@ -13,12 +15,13 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 /**
  * @author Bas Leijdekkers
@@ -27,13 +30,12 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 
-  @Nullable
   @Override
-  @SuppressWarnings("DialogTitleCapitalization")
-  public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(ignoredClasses,
-                                              InspectionGadgetsBundle.message("options.label.ignored.classes"),
-                                              InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.chooserTitle"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignoredClasses", InspectionGadgetsBundle.message("options.label.ignored.classes"),
+                 new JavaClassValidator().withTitle(
+                          InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.chooserTitle"))));
   }
 
   @Nullable
@@ -72,7 +74,7 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
   private class ResultOfObjectAllocationIgnoredVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (!ExpressionUtils.isVoidContext(expression)) {
         return;
@@ -85,10 +87,9 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
         return;
       }
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!(expression instanceof PsiAnonymousClass) && ignoredClasses.contains(aClass.getQualifiedName())) {
         return;
       }

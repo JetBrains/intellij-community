@@ -23,8 +23,6 @@ import java.util.List;
 
 /**
  * PSI element that contains named children that are visible in the current scope.
- *
- * @author dcheryasov
  */
 public interface PyNamedElementContainer extends PsiElement {
   /**

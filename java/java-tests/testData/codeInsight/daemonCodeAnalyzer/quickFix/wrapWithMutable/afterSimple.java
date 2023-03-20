@@ -1,4 +1,4 @@
-// "Wrap 'integers' with 'ArrayList'" "true"
+// "Wrap 'integers' with 'ArrayList'" "true-preview"
 import java.util.*;
 
 class Test {

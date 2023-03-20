@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -7,27 +7,47 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
-import org.jetbrains.kotlin.test.TagsTestDataUtil
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
-class NativeRunConfigurationTest : MultiplePluginVersionGradleImportingTestCase() {
+@OldMppTestsInfraDuplicate
+abstract class NativeRunConfigurationTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "nativeRunConfiguration"
 
-    @Test
-    @TargetVersions("6.0+")
-    fun multiplatformNativeRunGutter() {
-        doTest()
+    class MultiplatformNativeRunGutter : NativeRunConfigurationTest() {
+        @Test
+        @TargetVersions("6.0+")
+        fun multiplatformNativeRunGutter() {
+            doTest()
+        }
     }
 
-    @Test
-    @TargetVersions("6.0+")
-    fun customEntryPointWithoutRunGutter() {
-        doTest()
+    class MultiplatformWithoutHmppNativeRunGutter : NativeRunConfigurationTest() {
+        @Test
+        @TargetVersions("6.0+")
+        fun multiplatformWithoutHmppNativeRunGutter() {
+            doTest()
+        }
     }
 
-    private fun doTest() {
+    class CustomEntryPointWithoutRunGutter : NativeRunConfigurationTest() {
+        @Test
+        @TargetVersions("6.0+")
+        fun multiplatformWithoutHmppNativeRunGutter() {
+            doTest()
+        }
+
+        @Test
+        @TargetVersions("6.0+")
+        fun customEntryPointWithoutRunGutter() {
+            doTest()
+        }
+    }
+
+    protected fun doTest() {
         val files = importProjectFromTestData()
         val project = myTestFixture.project
 

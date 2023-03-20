@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -14,7 +14,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
-import com.intellij.util.io.readChars
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
@@ -209,8 +208,7 @@ internal class ProjectStoreTest {
   <component name="AppLevelLoser" foo="old?" />
   <component name="ValidComponent" foo="some data" />
 </project>""".trimIndent()
-      assertThat(project.stateStore.storageManager.expandMacro(PROJECT_CONFIG_DIR).resolve(obsoleteStorageBean.file)).isEqualTo(
-        expected)
+      assertThat(project.stateStore.storageManager.expandMacro(PROJECT_CONFIG_DIR).resolve(obsoleteStorageBean.file)).isEqualTo(expected)
     }
   }
 
@@ -221,14 +219,19 @@ internal class ProjectStoreTest {
 
     val testComponent = TestComponent()
     testComponent.loadState(TestState(AAvalue = "foo"))
-    (projectManager.defaultProject as ComponentManager).stateStore.initComponent(testComponent, null, null)
+    (projectManager.defaultProject as ComponentManager).stateStore.initComponent(component = testComponent,
+                                                                                 serviceDescriptor = null,
+                                                                                 pluginId = null)
 
-    val newProjectPath = tempDirManager.newPath()
-    val newProject = projectManager.openProject(newProjectPath, OpenProjectTask(isNewProject = true, isRefreshVfsNeeded = false))!!
-    newProject.use {
-      val miscXml = newProjectPath.resolve(".idea/misc.xml").readChars()
-      assertThat(miscXml).contains("AATestComponent")
-      assertThat(miscXml).contains("""<option name="AAvalue" value="foo" />""")
+    runBlocking {
+      val newProjectPath = tempDirManager.newPath()
+      val newProject = projectManager.openProjectAsync(newProjectPath, OpenProjectTask { isNewProject = true; isRefreshVfsNeeded = false })!!
+      newProject.useProjectAsync {
+        saveSettings(newProject, forceSavingAllSettings = true)
+        val miscXml = newProjectPath.resolve(".idea/misc.xml").readText()
+        assertThat(miscXml).contains("AATestComponent")
+        assertThat(miscXml).contains("""<option name="AAvalue" value="foo" />""")
+      }
     }
   }
 

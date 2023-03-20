@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.BranchType;
@@ -8,10 +8,11 @@ import com.intellij.openapi.project.Project;
 import git4idea.branch.GitBranchType;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import static git4idea.log.GitRefManager.MASTER;
-import static git4idea.log.GitRefManager.ORIGIN_MASTER;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static git4idea.log.GitRefManager.*;
 
 @Service(Service.Level.PROJECT)
 public final class GitBranchManager extends DvcsBranchManager {
@@ -19,11 +20,17 @@ public final class GitBranchManager extends DvcsBranchManager {
     super(project, GitVcsSettings.getInstance(project).getBranchSettings(), GitBranchType.values());
   }
 
-  @Nullable
   @Override
-  protected String getDefaultBranchName(@NotNull BranchType type) {
-    if (type == GitBranchType.LOCAL) return MASTER;
-    if (type == GitBranchType.REMOTE) return ORIGIN_MASTER;
-    return null;
+  protected Collection<String> getDefaultBranchNames(@NotNull BranchType type) {
+    ArrayList<String> branches = new ArrayList<>();
+    if (type == GitBranchType.LOCAL) {
+      branches.add(MASTER);
+      branches.add(MAIN);
+    }
+    if (type == GitBranchType.REMOTE) {
+      branches.add(ORIGIN_MASTER);
+      branches.add(ORIGIN_MAIN);
+    }
+    return branches;
   }
 }

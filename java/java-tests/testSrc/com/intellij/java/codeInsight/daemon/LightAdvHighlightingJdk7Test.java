@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -55,31 +55,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDuplicateAnnotations() { doTest(false, false); }
   public void testSwitchByString() { doTest(false, false); }
   public void testSwitchByInaccessibleEnum() { doTest(false, false); }
-  public void testDiamondPos1() { doTest(false, false); }
-  public void testDiamondPos2() { doTest(false, false); }
-  public void testDiamondPos3() { doTest(false, false); }
-  public void testDiamondPos4() { doTest(false, false); }
-  public void testDiamondPos5() { doTest(false, false); }
-  public void testDiamondPos6() { doTest(false, false); }
-  public void testDiamondPos7() { doTest(false, false); }
-  public void testDiamondNeg15() { doTest(false, false); }
-  public void testDiamondPos9() { doTest(false, false); }
-  public void testDiamondNeg1() { doTest(false, false); }
-  public void testDiamondNeg2() { doTest(false, false); }
-  public void testDiamondNeg3() { doTest(false, false); }
-  public void testDiamondNeg4() { doTest(false, false); }
-  public void testDiamondNeg5() { doTest(false, false); }
-  public void testDiamondNeg6() { doTest(false, false); }
-  public void testDiamondNeg7() { doTest(false, false); }
-  public void testDiamondNeg8() { doTest(false, false); }
-  public void testDiamondNeg9() { doTest(false, false); }
-  public void testDiamondNeg10() { doTest(false, false); }
-  public void testDiamondNeg11() { doTest(false, false); }
-  public void testDiamondNeg12() { doTest(false, false); }
-  public void testDiamondNeg13() { doTest(false, false); }
-  public void testDiamondNeg14() { doTest(false, false); }
-  public void testDiamondMisc() { doTest(false, false); }
-  public void testNestedDiamond() { doTest(false, false); }
   public void testMultipleConstructors() { doTest(false, false); }
   public void testHighlightInaccessibleFromClassModifierList() { doTest(false, false); }
   public void testInnerInTypeArguments() { doTest(false, false); }
@@ -119,6 +94,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testSafeVarargsApplicability() { doTest(true, false); }
   public void testUncheckedGenericsArrayCreation() { doTest(true, false); }
   public void testGenericsArrayCreation() { doTest(false, false); }
+  public void testCannotCreateArrayWithEmptyDiamond() { doTest(false, false); }
   public void testPreciseRethrow() { doTest(false, false); }
   public void testPreciseRethrowCaptured() { doTest(false, false); }
   public void testPreciseRethrowNonAssignableToException() { doTest(false, false); }

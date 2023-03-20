@@ -27,7 +27,12 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction, UpdateInBackground {
+public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -111,8 +116,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     final UAnnotation annotation = UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(uClass.getJavaPsi(), Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
     if (annotation == null) return null;
     UExpression value = annotation.findAttributeValue("value");
-    if (!(value instanceof UClassLiteralExpression)) return null;
-    UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
+    if (!(value instanceof UClassLiteralExpression classLiteralExpression)) return null;
     PsiType type = classLiteralExpression.getType();
     return type != null && type.equalsToText(TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME) ? uClass.getJavaPsi() : null;
   }
@@ -123,13 +127,14 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     if (location != null) {
       UMethod method = UastContextKt.getUastParentOfType(location.getPsiElement(), UMethod.class, false);
       if (method != null) {
-        return method;
+        return method.getJavaPsi();
       }
     }
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file != null && editor != null) {
-      return UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+      UMethod method = UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
+      return method != null ? method.getJavaPsi() : null;
     }
 
     return null;

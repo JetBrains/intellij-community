@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn
 
 import com.intellij.ide.IdeEventQueue
@@ -12,12 +12,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileOpenedSyncListener
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.ui.FocusUtil
 import com.intellij.util.ui.TimerUtil
 import training.dsl.TaskContext
 import training.dsl.impl.LessonExecutor
@@ -27,7 +31,6 @@ import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 import training.util.DataLoader
-import java.awt.KeyboardFocusManager
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
@@ -59,8 +62,6 @@ internal class ActionsRecorder(private val project: Project,
   private var editorListener: FileEditorManagerListener? = null
 
   private var checkCallback: (() -> Unit)? = null
-
-  private var focusChangeListener: PropertyChangeListener? = null
 
   init {
     Disposer.register(lessonExecutor, this)
@@ -108,6 +109,13 @@ internal class ActionsRecorder(private val project: Project,
         commandListener?.undoTransparentActionFinished()
       }
     })
+    busConnection.subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
+      override fun fileOpenedSync(source: FileEditorManager,
+                                  file: VirtualFile,
+                                  editorsWithProviders: List<FileEditorWithProvider>) {
+        editorListener?.fileOpenedSync(source, file, editorsWithProviders)
+      }
+    })
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
         editorListener?.fileClosed(source, file)
@@ -115,12 +123,6 @@ internal class ActionsRecorder(private val project: Project,
 
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
         editorListener?.fileOpened(source, file)
-      }
-
-      override fun fileOpenedSync(source: FileEditorManager,
-                                  file: VirtualFile,
-                                  editors: Pair<Array<FileEditor>, Array<FileEditorProvider>>) {
-        editorListener?.fileOpenedSync(source, file, editors)
       }
 
       override fun selectionChanged(event: FileEditorManagerEvent) {
@@ -132,7 +134,6 @@ internal class ActionsRecorder(private val project: Project,
   override fun dispose() {
     removeListeners()
     disposed = true
-    Disposer.dispose(this)
   }
 
   fun futureActionOnStart(actionId: String, check: () -> Boolean): CompletableFuture<Boolean> {
@@ -236,10 +237,7 @@ internal class ActionsRecorder(private val project: Project,
       }
     })
 
-    PropertyChangeListener { check() }.let {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", it)
-      focusChangeListener = it
-    }
+    FocusUtil.addFocusOwnerListener(this, PropertyChangeListener { check() })
 
     return future
   }
@@ -305,7 +303,6 @@ internal class ActionsRecorder(private val project: Project,
     eventDispatchers.clear()
     commandListener = null
     editorListener = null
-    focusChangeListener?.let { KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", it) }
     timer?.stop()
     timer = null
   }

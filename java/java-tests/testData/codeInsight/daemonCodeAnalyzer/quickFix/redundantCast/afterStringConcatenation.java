@@ -1,4 +1,4 @@
-// "Remove redundant cast(s)" "true"
+// "Remove redundant cast(s)" "true-preview"
 class Test {
   {
       //c1

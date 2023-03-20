@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
@@ -17,7 +17,7 @@ import java.awt.event.InputEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-class ActionsLoader {
+final class ActionsLoader {
   private static final Logger LOG = Logger.getInstance(ActionsLoader.class);
   private static final boolean ENABLE_FN_MODE = Boolean.getBoolean("touchbar.fn.mode.enable");
   private static int FN_WIDTH = Integer.getInteger("touchbar.fn.width", 68);
@@ -102,16 +102,20 @@ class ActionsLoader {
     return Pair.create(defaultGroup, customizer);
   }
 
-  static @Nullable Pair<Map<Long, ActionGroup>, Customizer> getToolWindowActionGroup(@NotNull String id) {
-    final @Nullable Map<Long, ActionGroup> actions = getActionGroup(IdeActions.GROUP_TOUCHBAR + id);
+  static @Nullable Pair<Map<Long, ActionGroup>, Customizer> getToolWindowActionGroup(@NotNull String toolWindowId) {
+    if ("Services".equals(toolWindowId)) {
+      LOG.debug("Services tool-window will use action-group from debug tool window");
+      toolWindowId = "Debug";
+    }
+    final @Nullable Map<Long, ActionGroup> actions = getActionGroup(IdeActions.GROUP_TOUCHBAR + toolWindowId);
     if (actions == null || actions.get(0L) == null) {
-      LOG.debug("null action group (or it doesn't contain main-layout) for tool window: %s", id);
+      LOG.debug("null action group (or it doesn't contain main-layout) for tool window: %s", toolWindowId);
       return null;
     }
 
     final Customizer customizer = new Customizer(
       TOOLWINDOW_CROSS_ESC ? new TBPanel.CrossEscInfo(TOOLWINDOW_EMULATE_ESC, TOOLWINDOW_PERSISTENT) : null,
-      getAutoCloseActions(id)
+      getAutoCloseActions(toolWindowId)
     );
     return Pair.create(actions, customizer);
   }
@@ -191,8 +195,7 @@ class ActionsLoader {
     ret.put(0L, result);
 
     Customizer customizer = new Customizer(null, null, (parentInfo, butt, presentation) -> {
-      if (butt.getAnAction() instanceof FNKeyAction) {
-        final FNKeyAction act = ((FNKeyAction)butt.getAnAction());
+      if (butt.getAnAction() instanceof FNKeyAction act) {
         butt.setWidth(FN_WIDTH);
         butt.setIcon(null);
         final String hint = presentation.getText() == null || presentation.getText().isEmpty() ? " " : presentation.getText();
@@ -231,7 +234,6 @@ class ActionsLoader {
   private static String[] getAutoCloseActionsDefault(@NotNull String toolWindowId) {
     if (
       toolWindowId.equals(ToolWindowId.DEBUG) ||
-      toolWindowId.equals(ToolWindowId.RUN_DASHBOARD) ||
       toolWindowId.equals(ToolWindowId.RUN) ||
       toolWindowId.equals(ToolWindowId.SERVICES)
     ) {

@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: functionUsages
+// PSI_ELEMENT_AS_TITLE: "interface X"
 interface <caret>X {
     val a: String
         get() {
@@ -36,4 +37,3 @@ open class A : X {
     }
 }
 
-// FIR_COMPARISON

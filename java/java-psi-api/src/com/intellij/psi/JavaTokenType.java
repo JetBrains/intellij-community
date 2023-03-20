@@ -146,4 +146,5 @@ public interface JavaTokenType extends TokenType {
   IElementType SEALED_KEYWORD = new IJavaElementType("SEALED");
   IElementType NON_SEALED_KEYWORD = new IKeywordElementType("NON_SEALED");
   IElementType PERMITS_KEYWORD = new IJavaElementType("PERMITS");
+  IElementType WHEN_KEYWORD = new IJavaElementType("WHEN_KEYWORD");
 }

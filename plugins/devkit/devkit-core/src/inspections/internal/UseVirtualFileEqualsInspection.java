@@ -4,9 +4,6 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class UseVirtualFileEqualsInspection extends UseEqualsInspectionBase {
 
   @Override

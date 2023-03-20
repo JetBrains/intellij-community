@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.CopyPasteUtil;
@@ -30,7 +30,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -38,6 +37,7 @@ import javax.swing.tree.TreePath;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
 import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
@@ -55,7 +55,6 @@ public class AsyncProjectViewSupport {
                           @NotNull Comparator<NodeDescriptor<?>> comparator) {
     myStructureTreeModel = new StructureTreeModel<>(structure, comparator, parent);
     myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, parent);
-    myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
       @Override
       protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
@@ -145,8 +144,7 @@ public class AsyncProjectViewSupport {
   }
 
   public ActionCallback select(JTree tree, Object object, VirtualFile file) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
+    if (object instanceof AbstractTreeNode node) {
       object = node.getValue();
       LOG.debug("select AbstractTreeNode");
     }
@@ -189,12 +187,10 @@ public class AsyncProjectViewSupport {
   private static boolean selectPaths(@NotNull JTree tree, @NotNull List<TreePath> paths, @NotNull TreeVisitor visitor) {
     if (paths.isEmpty()) return false;
     if (paths.size() > 1) {
-      if (visitor instanceof ProjectViewNodeVisitor) {
-        ProjectViewNodeVisitor nodeVisitor = (ProjectViewNodeVisitor)visitor;
+      if (visitor instanceof ProjectViewNodeVisitor nodeVisitor) {
         return selectPaths(tree, new SelectionDescriptor(nodeVisitor.getElement(), nodeVisitor.getFile(), paths));
       }
-      if (visitor instanceof ProjectViewFileVisitor) {
-        ProjectViewFileVisitor fileVisitor = (ProjectViewFileVisitor)visitor;
+      if (visitor instanceof ProjectViewFileVisitor fileVisitor) {
         return selectPaths(tree, new SelectionDescriptor(null, fileVisitor.getElement(), paths));
       }
     }
@@ -213,8 +209,10 @@ public class AsyncProjectViewSupport {
 
   public void updateAll(Runnable onDone) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    Promise<?> promise = myStructureTreeModel.invalidate();
-    if (onDone != null) promise.onSuccess(res -> myAsyncTreeModel.onValidThread(onDone));
+    CompletableFuture<?> future = myStructureTreeModel.invalidateAsync();
+    if (onDone != null) {
+      future.thenRun(() -> myAsyncTreeModel.onValidThread(onDone));
+    }
   }
 
   public void update(@NotNull TreePath path, boolean structure) {

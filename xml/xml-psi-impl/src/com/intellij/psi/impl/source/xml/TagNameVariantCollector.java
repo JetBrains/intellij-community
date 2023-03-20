@@ -35,8 +35,7 @@ public final class TagNameVariantCollector {
     PsiElement context = element.getParent();
     PsiElement curElement = element.getParent();
 
-    while(curElement instanceof XmlTag){
-      final XmlTag declarationTag = (XmlTag)curElement;
+    while(curElement instanceof XmlTag declarationTag){
       final String namespace = declarationTag.getNamespace();
 
       if(!descriptorsMap.containsKey(namespace)) {

@@ -41,8 +41,8 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
       val result = HashMap<VirtualFile, List<TextRange>>()
       for (file in psiFiles) {
         val info = vcsFacade.getChangedRangesInfo(file)
+        val document = file.viewProvider.document
         if (info != null) {
-          val document = file.viewProvider.document
           val ranges = ArrayList<TextRange>()
           if (logger.isTraceEnabled)
             logger.trace("Changed ranges for a file $file: ${info.allChangedRanges.joinToString()}")
@@ -64,6 +64,12 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
         else {
           if (logger.isTraceEnabled)
             logger.trace("No changes for file $file")
+
+          val virtualFile = file.virtualFile
+          if (changeListManager.isUnversioned(virtualFile) && !changeListManager.isIgnoredFile(virtualFile)) {
+            // Must be a new file, not yet added to VCS
+            result[file.virtualFile] = listOf(TextRange(0, document.textLength))
+          }
         }
       }
       result
@@ -73,11 +79,13 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
   override fun getVirtualFiles(): Array<VirtualFile> = rangeMap.keys.toTypedArray()
 
   override fun getPsiElements(): Array<PsiElement> = ReadAction.compute<Array<PsiElement>, RuntimeException> {
-    val elements: List<PsiElement> = ArrayList()
+    val elements: MutableList<PsiElement> = ArrayList()
     val psiManager = PsiManager.getInstance(myProject)
     this.rangeMap.forEach { (virtualFile, ranges) ->
       val psiFile = psiManager.findFile(virtualFile)
-      ranges.forEach { collectPsiElementsAtRange(psiFile, elements, it.startOffset, it.endOffset) }
+      if (psiFile != null) {
+        ranges.forEach { collectPsiElementsAtRange(psiFile, elements, it.startOffset, it.endOffset) }
+      }
     }
 
     elements.toTypedArray()

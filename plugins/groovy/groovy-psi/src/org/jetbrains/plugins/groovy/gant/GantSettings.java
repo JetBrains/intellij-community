@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.SdkHomeBean;
 import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
 
-/**
- * @author peter
- */
 @State(name = "GantSettings", storages = @Storage("ant.xml"))
 public final class GantSettings extends SdkHomeSettings {
   private final Project myProject;

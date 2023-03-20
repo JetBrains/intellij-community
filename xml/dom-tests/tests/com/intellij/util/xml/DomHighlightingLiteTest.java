@@ -2,12 +2,15 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.mock.MockInspectionProfile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlElement;
@@ -19,9 +22,10 @@ import com.intellij.util.xml.impl.DomTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class DomHighlightingLiteTest extends DomTestCase {
   private DomElementAnnotationsManagerImpl myAnnotationsManager;
@@ -118,7 +122,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   private DomElementAnnotationHolderImpl createHolder() {
-    return new DomElementAnnotationHolderImpl(true, myElement);
+    return new DomElementAnnotationHolderImpl(true, myElement, new AnnotationHolderImpl(new AnnotationSession(myElement.getFile()), false));
   }
 
   private static DomElementsProblemsHolderImpl assertNotEmptyHolder(final DomElementsProblemsHolder holder1) {
@@ -163,28 +167,28 @@ public class DomHighlightingLiteTest extends DomTestCase {
   public void testDefaultAnnotator() {
     final DefaultDomAnnotator annotator = new DefaultDomAnnotator() {
       @Override
-      protected DomElementAnnotationsManagerImpl getAnnotationsManager(final DomElement element) {
+      protected @NotNull DomElementAnnotationsManagerImpl getAnnotationsManager(final @NotNull Project project) {
         return myAnnotationsManager;
       }
     };
     final StringBuilder s = new StringBuilder();
-    final ArrayList<Annotation> toFill = new ArrayList<>();
+    AnnotationHolder toFill = new AnnotationHolderImpl(new AnnotationSession(myElement.getFile()), false);
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
         s.append("visited");
       }
     };
     annotator.runInspection(inspection, myElement, toFill);
     assertEquals("visited", s.toString());
     final DomElementsProblemsHolderImpl holder = assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement));
-    assertEmpty(toFill);
+    assertEmpty((List<Annotation>)toFill);
 
     annotator.runInspection(inspection, myElement, toFill);
     assertEquals("visited", s.toString());
     assertSame(holder, assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement)));
-    assertEmpty(toFill);
+    assertEmpty((List<Annotation>)toFill);
   }
 
   public void testHighlightStatus_MockDomInspection() {
@@ -212,7 +216,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
       }
     };
     registerInspectionKey(inspection);
@@ -240,7 +244,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
       }
     };
     registerInspectionKey(inspection);
@@ -295,7 +299,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     }
 
     @Override
-    protected void checkDomElement(final DomElement element, final DomElementAnnotationHolder holder, final DomHighlightingHelper helper) {
+    protected void checkDomElement(final @NotNull DomElement element, final @NotNull DomElementAnnotationHolder holder, final @NotNull DomHighlightingHelper helper) {
       super.checkDomElement(element, holder, helper);
     }
 

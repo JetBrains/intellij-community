@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -26,7 +26,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public abstract @NotNull String getSmallIconUrl();
 
   /**
@@ -84,9 +84,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWhatsNewUrl();
 
-  public static final int WHATS_NEW_EMBED = 1;
-  public static final int WHATS_NEW_AUTO = 2;
-  public abstract boolean isWhatsNewEligibleFor(int role);
+  public abstract boolean isShowWhatsNewOnUpdate();
 
   public abstract String getWinKeymapUrl();
 
@@ -147,6 +145,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 
+  /**
+   * @deprecated Not used anymore.
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract @Nullable String getDefaultLightLaf();
 
   public abstract @Nullable String getDefaultDarkLaf();

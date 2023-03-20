@@ -317,21 +317,13 @@ public class HgRegularUpdater implements HgUpdater {
     for (HgChange change : changes) {
       HgFileStatusEnum status = change.getStatus();
       switch (status) {
-        case ADDED:
-          addToGroup(updatedFiles, change, FileGroup.CREATED_ID);
-          break;
-        case MODIFIED:
-          addToGroup(updatedFiles, change, FileGroup.UPDATED_ID);
-          break;
-        case DELETED:
-          addToGroup(updatedFiles, change, FileGroup.REMOVED_FROM_REPOSITORY_ID);
-          break;
-        case COPY:
-          addToGroup(updatedFiles, change, FileGroup.CHANGED_ON_SERVER_ID);
-          break;
-        default:
+        case ADDED -> addToGroup(updatedFiles, change, FileGroup.CREATED_ID);
+        case MODIFIED -> addToGroup(updatedFiles, change, FileGroup.UPDATED_ID);
+        case DELETED -> addToGroup(updatedFiles, change, FileGroup.REMOVED_FROM_REPOSITORY_ID);
+        case COPY -> addToGroup(updatedFiles, change, FileGroup.CHANGED_ON_SERVER_ID);
+        default -> {
           //do nothing
-          break;
+        }
       }
     }
   }

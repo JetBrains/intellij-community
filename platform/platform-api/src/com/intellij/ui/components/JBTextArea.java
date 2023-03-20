@@ -1,27 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
-
-  //private final DefaultBoundedRangeModel visibility;
-
   private final TextComponentEmptyText myEmptyText;
 
   public JBTextArea() {
@@ -47,21 +42,11 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
   public JBTextArea(Document doc, @NlsContexts.DetailedDescription String text, int rows, int columns) {
     super(doc, text, rows, columns);
 
-    myEmptyText = new TextComponentEmptyText(this) {
-      @Override
-      protected boolean isStatusVisible() {
-        Object function = getClientProperty(STATUS_VISIBLE_FUNCTION);
-        if (function instanceof BooleanFunction) {
-          //noinspection unchecked
-          return ((BooleanFunction<JTextComponent>)function).fun(JBTextArea.this);
-        }
-        return super.isStatusVisible();
-      }
-
+    myEmptyText = new TextComponentEmptyText(this, true) {
       @Override
       protected Rectangle getTextComponentBound() {
-        Insets insets = ObjectUtils.notNull(getInsets(), JBUI.emptyInsets());
-        Insets margin = ObjectUtils.notNull(getMargin(), JBUI.emptyInsets());
+        Insets insets = ObjectUtils.notNull(getInsets(), JBInsets.emptyInsets());
+        Insets margin = ObjectUtils.notNull(getMargin(), JBInsets.emptyInsets());
         Insets ipad = getComponent().getIpad();
         Dimension size = getSize();
         int left = insets.left + margin.left - ipad.left - 1;
@@ -79,6 +64,17 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
         repaint();
       }
     });
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) myEmptyText.resetFontToOwnerFont();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @Override
@@ -104,15 +100,16 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
+  @SuppressWarnings("DuplicatedCode")
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+
     if (!myEmptyText.getStatusTriggerText().isEmpty() && myEmptyText.isStatusVisible()) {
       g.setColor(getBackground());
 
@@ -123,6 +120,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
 
       g.setColor(getForeground());
     }
+
     myEmptyText.paintStatusText(g);
   }
 }

@@ -17,9 +17,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public interface ExternalConfigPathAware {
 
   @NotNull

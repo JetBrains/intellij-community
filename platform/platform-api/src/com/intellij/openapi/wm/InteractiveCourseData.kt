@@ -21,7 +21,8 @@ interface InteractiveCourseData {
 
   fun getAction(): Action
 
-  fun getExpandContent(): JComponent
-
   fun newContentMarker(): JComponent? = null
+
+  // it's a method to implement temporary design for 2022.3, it will be removed in 2023.1
+  fun isEduTools(): Boolean = false
 }

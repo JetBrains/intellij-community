@@ -5,7 +5,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -26,6 +25,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * @author Dmitry Avdeev
@@ -94,7 +94,7 @@ public class ProjectTemplateList extends JPanel {
   }
 
   public void setTemplates(List<? extends ProjectTemplate> list, boolean preserveSelection) {
-    list.sort((o1, o2) -> Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
+    list.sort((o1, o2) -> Boolean.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
 
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
     myList.setModel(new CollectionListModel<>(list));
@@ -162,5 +162,15 @@ public class ProjectTemplateList extends JPanel {
     }
 
     return false;
+  }
+
+  @TestOnly
+  public String availableProjectTemplatesToString() {
+    ListModel<ProjectTemplate> model = myList.getModel();
+    StringJoiner builder = new StringJoiner(", ");
+    for (int i = 0; i < model.getSize(); i++) {
+      builder.add(model.getElementAt(i).getName());
+    }
+    return builder.toString();
   }
 }

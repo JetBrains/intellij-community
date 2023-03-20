@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -78,7 +78,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
 
   @NotNull
   private static String getPrefixLastPart(@NotNull String prefix) {
-    String lastPart = StringUtil.substringAfterLast(prefix, LoadingOrder.ORDER_RULE_SEPARATOR);
+    String lastPart = StringUtil.substringAfterLast(prefix, String.valueOf(LoadingOrder.ORDER_RULE_SEPARATOR));
     if (lastPart == null) {
       lastPart = prefix;
     }
@@ -91,7 +91,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   }
 
   private static boolean shouldProposeFirstLastKeywordsAfterPrefix(@NotNull String prefix) {
-    String[] parts = prefix.split(LoadingOrder.ORDER_RULE_SEPARATOR);
+    String[] parts = prefix.split(String.valueOf(LoadingOrder.ORDER_RULE_SEPARATOR));
     for (String part : parts) {
       if (part.trim().equalsIgnoreCase(LoadingOrder.FIRST_STR) || part.trim().equalsIgnoreCase(LoadingOrder.LAST_STR)) {
         return false;
@@ -103,7 +103,7 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     String prefix = result.getPrefixMatcher().getPrefix();
-    if (prefix.endsWith(LoadingOrder.ORDER_RULE_SEPARATOR)) {
+    if (prefix.endsWith(String.valueOf(LoadingOrder.ORDER_RULE_SEPARATOR))) {
       result = result.withPrefixMatcher(""); // keywords should be proposed after comma even without space
     }
     else {

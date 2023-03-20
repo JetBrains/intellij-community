@@ -21,6 +21,11 @@ import javax.swing.JComponent
 abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: String) : ContributedTypeBase<C>(id) {
 
   /**
+   * Returns true if configuration of given type should be run locally without additional preparations in advance
+   */
+  open fun isLocalTarget(): Boolean = false
+
+  /**
    * Returns true if configurations of given type can be run on this OS.
    */
   open fun isSystemCompatible(): Boolean = true
@@ -39,7 +44,7 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   /**
    * Instantiates a new environment factory for given prepared [configuration][config].
    */
-  abstract fun createEnvironmentRequest(project: Project, config: C): TargetEnvironmentRequest
+  abstract fun createEnvironmentRequest(project: Project?, config: C): TargetEnvironmentRequest
 
   abstract fun createConfigurable(project: Project,
                                   config: C,
@@ -82,6 +87,13 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
         }
       }
     }
+
+    @Throws(IllegalStateException::class)
+    @JvmStatic
+    fun <T : TargetEnvironmentType<*>> findInstance(targetClass: Class<T>): T {
+      return EXTENSION_NAME.extensionList.filterIsInstance(targetClass).firstOrNull()
+             ?: throw IllegalStateException("Cannot find TargetEnvironmentType instance of $targetClass")
+    }
   }
 
   /**
@@ -117,3 +129,5 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
     fun toStorableMap(): Map<String, String>
   }
 }
+
+inline fun <reified T : TargetEnvironmentType<*>> findTargetEnvironmentType() = TargetEnvironmentType.findInstance(T::class.java)

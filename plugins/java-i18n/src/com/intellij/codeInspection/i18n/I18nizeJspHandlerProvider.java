@@ -21,9 +21,6 @@ import org.jetbrains.uast.UExpression;
 
 import java.util.Collection;
 
-/**
- * @author sergey.evdokimov
- */
 public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
 
   private static final I18nQuickFixHandler<UExpression> HADLER = new I18nQuickFixHandler<>() {

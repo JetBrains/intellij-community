@@ -3,11 +3,12 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,18 +35,14 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.providers.JpsF
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-/**
- * @author peter
- */
 public class PsiFileReferenceHelper extends FileReferenceHelper {
   @NotNull
   public static PsiFileReferenceHelper getInstance() {
     return Objects.requireNonNull(FileReferenceHelper.EP_NAME.findExtension(PsiFileReferenceHelper.class));
   }
 
-  @NotNull
   @Override
-  public List<? extends LocalQuickFix> registerFixes(@NotNull FileReference reference) {
+  public @NotNull List<? extends @NotNull LocalQuickFix> registerFixes(@NotNull FileReference reference) {
     return FileReferenceQuickFixProvider.registerQuickFix(reference);
   }
 
@@ -84,8 +81,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
 
     List<FileTargetContext> fileTargetContexts = new ArrayList<>();
     for (PsiFileSystemItem context : contexts) {
-      if (context instanceof VirtualPsiDirectory) {
-        VirtualPsiDirectory virtual = (VirtualPsiDirectory)context;
+      if (context instanceof VirtualPsiDirectory virtual) {
         fileTargetContexts.add(new FileTargetContext(virtual.getRoot(), virtual.getPathToCreate()));
       }
       else {
@@ -280,9 +276,9 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   static List<PsiFileSystemItem> getContextsForModule(@NotNull Module module,
                                                       @NotNull String packageName,
                                                       @Nullable GlobalSearchScope scope) {
-    Query<VirtualFile> query = DirectoryIndex.getInstance(module.getProject()).getDirectoriesByPackageName(packageName, false);
+    Query<VirtualFile> query = PlatformPackageUtil.getDirectoriesByPackageName(packageName, false, module.getProject());
 
-    return StreamEx.of(query.findAll()).filter(scope == null ? file -> true : file -> scope.contains(file))
+    return StreamEx.of(query.findAll()).filter(scope == null ? Predicates.alwaysTrue() : file -> scope.contains(file))
       .<PsiFileSystemItem>map(PsiManager.getInstance(module.getProject())::findDirectory)
       .nonNull()
       .toList();
@@ -292,8 +288,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   static List<PsiFileSystemItem> getContextsForScope(@NotNull Project project,
                                                      @NotNull String packageName,
                                                      @NotNull GlobalSearchScope scope) {
-    DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-    Query<VirtualFile> query = dirIndex.getDirectoriesByPackageName(packageName, scope);
+    Query<VirtualFile> query = PlatformPackageUtil.getDirectoriesByPackageName(packageName, scope, project);
     Collection<VirtualFile> files = ContainerUtil.reverse(ContainerUtil.sorted(query.findAll(), scope::compare));
     return ContainerUtil.mapNotNull(files, PsiManager.getInstance(project)::findDirectory);
   }

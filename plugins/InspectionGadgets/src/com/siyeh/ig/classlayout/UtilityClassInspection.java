@@ -16,7 +16,8 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifierListOwner;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,17 +29,19 @@ import com.siyeh.ig.psiutils.UtilityClassUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class UtilityClassInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
   @Override
-  public JComponent createOptionsPanel() {
-    return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()));
   }
 
   @Override

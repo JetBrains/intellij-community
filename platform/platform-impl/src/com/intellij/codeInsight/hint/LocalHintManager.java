@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -13,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
@@ -23,7 +21,6 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -35,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,8 +116,8 @@ public class LocalHintManager implements ClientHintManager {
   private void onDocumentChange() {
     EDT.assertIsEdt();
     for (HintManagerImpl.HintInfo info : myHintsStack) {
-      if (BitUtil.isSet(info.flags, HintManager.HIDE_BY_TEXT_CHANGE)) {
-        info.hint.hide();
+      if (BitUtil.isSet(info.flags(), HintManager.HIDE_BY_TEXT_CHANGE)) {
+        info.hint().hide();
         myHintsStack.remove(info);
       }
     }
@@ -172,8 +168,8 @@ public class LocalHintManager implements ClientHintManager {
   private void updateScrollableHints(VisibleAreaEvent e) {
     EDT.assertIsEdt();
     for (HintManagerImpl.HintInfo info : myHintsStack) {
-      if (info.hint != null && BitUtil.isSet(info.flags, HintManager.UPDATE_BY_SCROLLING)) {
-        HintManagerImpl.updateScrollableHintPosition(e, info.hint, BitUtil.isSet(info.flags, HintManager.HIDE_IF_OUT_OF_EDITOR));
+      if (info.hint() != null && BitUtil.isSet(info.flags(), HintManager.UPDATE_BY_SCROLLING)) {
+        HintManagerImpl.updateScrollableHintPosition(e, info.hint(), BitUtil.isSet(info.flags(), HintManager.HIDE_IF_OUT_OF_EDITOR));
       }
     }
   }
@@ -182,8 +178,8 @@ public class LocalHintManager implements ClientHintManager {
   public boolean hasShownHintsThatWillHideByOtherHint(boolean willShowTooltip) {
     EDT.assertIsEdt();
     for (HintManagerImpl.HintInfo hintInfo : myHintsStack) {
-      if (hintInfo.hint.isVisible() && BitUtil.isSet(hintInfo.flags, HintManager.HIDE_BY_OTHER_HINT)) return true;
-      if (willShowTooltip && hintInfo.hint.isAwtTooltip()) {
+      if (hintInfo.hint().isVisible() && BitUtil.isSet(hintInfo.flags(), HintManager.HIDE_BY_OTHER_HINT)) return true;
+      if (willShowTooltip && hintInfo.hint().isAwtTooltip()) {
         // only one AWT tooltip can be visible, so this hint will hide even though it's not marked with HIDE_BY_OTHER_HINT
         return true;
       }
@@ -191,46 +187,15 @@ public class LocalHintManager implements ClientHintManager {
     return false;
   }
 
-  /**
-   * In this method the point to show hint depends on current caret position.
-   * So, first of all, editor will be scrolled to make the caret position visible.
-   */
   @Override
-  public void showEditorHint(final LightweightHint hint,
-                             final Editor editor,
-                             @HintManager.PositionFlags final short constraint,
-                             @HintManager.HideFlags final int flags,
-                             final int timeout,
-                             final boolean reviveOnEditorChange) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-      LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-      Point p = HintManagerImpl.getHintPosition(hint, editor, pos, constraint);
-      showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, HintManagerImpl.createHintHint(editor, p, hint, constraint));
-    });
-  }
-
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(@NotNull LightweightHint hint,
                              @NotNull Editor editor,
+                             @NotNull HintHint hintInfo,
                              @NotNull Point p,
                              @HintManager.HideFlags int flags,
                              int timeout,
                              boolean reviveOnEditorChange,
-                             @HintManager.PositionFlags short position) {
-
-    HintHint hintHint = HintManagerImpl.createHintHint(editor, p, hint, position).setShowImmediately(true);
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, hintHint);
-  }
-
-  @Override
-  public void showEditorHint(@NotNull final LightweightHint hint,
-                             @NotNull Editor editor,
-                             @NotNull Point p,
-                             @HintManager.HideFlags int flags,
-                             int timeout,
-                             boolean reviveOnEditorChange,
-                             HintHint hintInfo) {
+                             @Nullable Runnable onHintHidden) {
     EDT.assertIsEdt();
     myHideAlarm.cancelAllRequests();
 
@@ -245,7 +210,7 @@ public class LocalHintManager implements ClientHintManager {
 
     updateLastEditor(editor);
 
-    HintManagerImpl.getPublisher().hintShown(editor.getProject(), hint, flags);
+    HintManagerImpl.getPublisher().hintShown(editor, hint, flags, hintInfo);
 
     Component component = hint.getComponent();
 
@@ -338,8 +303,8 @@ public class LocalHintManager implements ClientHintManager {
   public void hideAllHints() {
     EDT.assertIsEdt();
     for (HintManagerImpl.HintInfo info : myHintsStack) {
-      if (!info.hint.vetoesHiding()) {
-        info.hint.hide();
+      if (!info.hint().vetoesHiding()) {
+        info.hint().hide();
       }
     }
     cleanup();
@@ -369,40 +334,39 @@ public class LocalHintManager implements ClientHintManager {
     if (rootPane != null) {
       JLayeredPane lp = rootPane.getLayeredPane();
       for (HintManagerImpl.HintInfo info : myHintsStack) {
-        if (!info.hint.isSelectingHint()) continue;
-        IdeTooltip tooltip = info.hint.getCurrentIdeTooltip();
+        if (!info.hint().isSelectingHint()) continue;
+        IdeTooltip tooltip = info.hint().getCurrentIdeTooltip();
         if (tooltip != null) {
           Point p = tooltip.getShowingPoint().getPoint(lp);
-          if (info.hint != hint) {
+          if (info.hint() != hint) {
             switch (constraint) {
-              case HintManager.ABOVE:
+              case HintManager.ABOVE -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.below) {
                   p.y -= tooltip.getPositionChangeY();
                 }
-                break;
-              case HintManager.UNDER:
-              case HintManager.RIGHT_UNDER:
+              }
+              case HintManager.UNDER, HintManager.RIGHT_UNDER -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.above) {
                   p.y += tooltip.getPositionChangeY();
                 }
-                break;
-              case HintManager.RIGHT:
+              }
+              case HintManager.RIGHT -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.atLeft) {
                   p.x += tooltip.getPositionChangeX();
                 }
-                break;
-              case HintManager.LEFT:
+              }
+              case HintManager.LEFT -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.atRight) {
                   p.x -= tooltip.getPositionChangeX();
                 }
-                break;
+              }
             }
           }
           return p;
         }
 
-        Rectangle rectangle = info.hint.getBounds();
-        JComponent c = info.hint.getComponent();
+        Rectangle rectangle = info.hint().getBounds();
+        JComponent c = info.hint().getComponent();
         rectangle = SwingUtilities.convertRectangle(c.getParent(), rectangle, lp);
 
         return HintManagerImpl.getHintPositionRelativeTo(hint, editor, constraint, rectangle, pos);
@@ -413,42 +377,12 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   @Override
-  public void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position) {
-    JComponent label = HintUtil.createErrorLabel(text);
-    LightweightHint hint = new LightweightHint(label);
-    Point p = getHintPosition(hint, editor, position);
-    showEditorHint(hint, editor, p,
-                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                   0, false, position);
-  }
-
-  @Override
-  public void showInformationHint(@NotNull Editor editor,
-                                  @NotNull JComponent component,
-                                  @HintManager.PositionFlags short position,
-                                  @Nullable Runnable onHintHidden) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-    AccessibleContextUtil.setName(component, IdeBundle.message("information.hint.accessible.context.name"));
-    LightweightHint hint = new LightweightHint(component);
-    if (onHintHidden != null) {
-      hint.addHintListener((event) -> {
-        onHintHidden.run();
-      });
-    }
-    Point p = getHintPosition(hint, editor, position);
-    showEditorHint(hint, editor, p,
-                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false, position);
-  }
-
-
-  @Override
   public void showQuestionHint(@NotNull final Editor editor,
                                @NotNull final Point p,
                                final int offset1,
                                final int offset2,
                                @NotNull final LightweightHint hint,
+                               int flags,
                                @NotNull final QuestionAction action,
                                @HintManager.PositionFlags short constraint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -480,11 +414,8 @@ public class LocalHintManager implements ClientHintManager {
       }
     });
 
-    showEditorHint(hint, editor, p,
-                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
-                   HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE,
-                   0, false,
-                   HintManagerImpl.createHintHint(editor, p, hint, constraint));
+    showEditorHint(hint, editor, HintManagerImpl.createHintHint(editor, p, hint, constraint),
+                   p, flags, 0, false, null);
     myQuestionAction = action;
     myQuestionHint = hint;
   }
@@ -544,15 +475,15 @@ public class LocalHintManager implements ClientHintManager {
     HintManagerImpl.HintInfo[] arr = myHintsStack.toArray(new HintManagerImpl.HintInfo[0]);
     for (int i = arr.length - 1; i > -1; i--) {
       HintManagerImpl.HintInfo info = arr[i];
-      if (!info.hint.isVisible()) {
+      if (!info.hint().isVisible()) {
         if (isEDT) {
           myHintsStack.remove(info);
-          info.hint.hide();
+          info.hint().hide();
         }
         continue;
       }
 
-      if ((info.flags & (HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY)) != 0) {
+      if ((info.flags() & (HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY)) != 0) {
         return true;
       }
     }
@@ -566,16 +497,16 @@ public class LocalHintManager implements ClientHintManager {
     HintManagerImpl.HintInfo[] arr = myHintsStack.toArray(new HintManagerImpl.HintInfo[0]);
     for (int i = arr.length - 1; i > -1; i--) {
       HintManagerImpl.HintInfo info = arr[i];
-      if (!info.hint.isVisible() && !info.hint.vetoesHiding()) {
+      if (!info.hint().isVisible() && !info.hint().vetoesHiding()) {
         myHintsStack.remove(info);
-        info.hint.hide();
+        info.hint().hide();
         continue;
       }
 
-      if ((info.flags & mask) != 0 || editorChanged && !info.reviveOnEditorChange) {
+      if ((info.flags() & mask) != 0 || editorChanged && !info.reviveOnEditorChange()) {
         myHintsStack.remove(info);
-        info.hint.hide();
-        if ((mask & HintManager.HIDE_BY_ESCAPE) == 0 || (info.flags & HintManager.DONT_CONSUME_ESCAPE) == 0) {
+        info.hint().hide();
+        if ((mask & HintManager.HIDE_BY_ESCAPE) == 0 || (info.flags() & HintManager.DONT_CONSUME_ESCAPE) == 0) {
           result = true;
           if (onlyOne) {
             break;

@@ -23,9 +23,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author ven
- */
 public final class GroovyNamesUtil {
   private static final Pattern PATTERN = Pattern.compile("[A-Za-z][a-z0-9]*");
 

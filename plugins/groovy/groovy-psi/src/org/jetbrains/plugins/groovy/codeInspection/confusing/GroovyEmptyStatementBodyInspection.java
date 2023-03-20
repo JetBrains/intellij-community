@@ -92,10 +92,9 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
     }
 
     private static boolean isEmpty(GroovyPsiElement body) {
-      if (!(body instanceof GrBlockStatement)) {
+      if (!(body instanceof GrBlockStatement block)) {
         return false;
       }
-      final GrBlockStatement block = (GrBlockStatement)body;
       final GrOpenBlock openBlock = block.getBlock();
 
       final PsiElement brace = openBlock.getLBrace();

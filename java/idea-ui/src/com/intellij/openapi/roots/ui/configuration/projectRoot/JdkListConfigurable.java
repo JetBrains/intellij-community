@@ -2,11 +2,11 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -18,7 +18,10 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProject
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.util.IconUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -160,15 +163,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return super.isModified() || myJdksTreeModel.isModified();
   }
 
-  /**
-   * @deprecated use {@link ProjectStructureConfigurable#getJdkConfig()} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static JdkListConfigurable getInstance(Project project) {
-    return ProjectStructureConfigurable.getInstance(project).getJdkConfig();
-  }
-
   @NotNull
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
@@ -228,6 +222,11 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

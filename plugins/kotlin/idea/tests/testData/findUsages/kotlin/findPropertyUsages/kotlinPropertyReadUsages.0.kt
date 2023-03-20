@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages, skipWrite
-// FIR_IGNORE
+// PSI_ELEMENT_AS_TITLE: "var foo: T"
 package server
 
 open class A<T> {

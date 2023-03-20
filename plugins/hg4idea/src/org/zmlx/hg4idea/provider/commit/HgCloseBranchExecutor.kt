@@ -10,9 +10,7 @@ import org.jetbrains.annotations.Nls
 import org.zmlx.hg4idea.HgBundle
 import org.zmlx.hg4idea.repo.HgRepository
 
-class HgCloseBranchExecutor : CommitExecutor {
-  var repositories: Collection<HgRepository> = emptyList()
-
+class HgCloseBranchExecutor(private val repositories: Collection<HgRepository>) : CommitExecutor {
   override fun areChangesRequired(): Boolean = false
 
   @Nls

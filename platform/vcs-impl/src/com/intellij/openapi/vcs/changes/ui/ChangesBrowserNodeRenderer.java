@@ -37,6 +37,11 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     myIssueLinkRenderer = project != null ? new IssueLinkRenderer(project, this) : null;
   }
 
+  @Nullable
+  public Project getProject() {
+    return myProject;
+  }
+
   public boolean isShowFlatten() {
     return myShowFlatten.get();
   }

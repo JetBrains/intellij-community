@@ -25,10 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
-abstract class WeighingActionGroup extends ActionGroup implements UpdateInBackground {
+abstract class WeighingActionGroup extends ActionGroup {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -36,8 +33,8 @@ abstract class WeighingActionGroup extends ActionGroup implements UpdateInBackgr
   }
 
   @Override
-  public boolean isUpdateInBackground() {
-    return UpdateInBackground.isUpdateInBackground(getDelegate());
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return getDelegate().getActionUpdateThread();
   }
 
   protected abstract ActionGroup getDelegate();
@@ -49,7 +46,7 @@ abstract class WeighingActionGroup extends ActionGroup implements UpdateInBackgr
 
   @NotNull
   @Override
-  public List<AnAction> postProcessVisibleChildren(@NotNull List<AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
+  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
     LinkedHashSet<AnAction> heaviest = null;
     double maxWeight = Presentation.DEFAULT_WEIGHT;
     for (AnAction action : visibleChildren) {
@@ -66,7 +63,7 @@ abstract class WeighingActionGroup extends ActionGroup implements UpdateInBackgr
     }
 
     if (heaviest == null) {
-      return visibleChildren;
+      return new ArrayList<>(visibleChildren);
     }
 
     ArrayList<AnAction> chosen = new ArrayList<>();

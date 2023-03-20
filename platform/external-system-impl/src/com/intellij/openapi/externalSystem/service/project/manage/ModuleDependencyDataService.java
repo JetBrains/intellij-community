@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,11 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.concat;
-import static com.intellij.util.containers.ContainerUtil.toCollection;
 
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
-
+public final class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
   private static final Logger LOG = Logger.getInstance(ModuleDependencyDataService.class);
 
   @NotNull
@@ -60,8 +58,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     final Map<OrderEntry, OrderAware> orderEntryDataMap = new LinkedHashMap<>();
     final List<ModuleOrderEntry> duplicatesToRemove = new ArrayList<>();
     for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry e = (ModuleOrderEntry)entry;
+      if (entry instanceof ModuleOrderEntry e) {
         Pair<String, DependencyScope> key = Pair.create(e.getModuleName(), e.getScope());
         if (toRemove.containsKey(key)) {
           duplicatesToRemove.add(e);
@@ -118,7 +115,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     }
 
     if (!toRemove.isEmpty() || !duplicatesToRemove.isEmpty()) {
-      Collection<ModuleOrderEntry> orderEntries = toCollection(concat(duplicatesToRemove, toRemove.values()));
+      Collection<ModuleOrderEntry> orderEntries = ContainerUtil.toCollection(concat(duplicatesToRemove, toRemove.values()));
       removeData(orderEntries, module, modelsProvider);
     }
     return orderEntryDataMap;

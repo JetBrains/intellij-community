@@ -2,5 +2,6 @@
   "type": "MARKED_ELEMENT",
   "mainFile": "test/test.kt",
   "newName": "second",
-  "withRuntime": "true"
+  "withRuntime": "true",
+  "enabledInK2": true
 }

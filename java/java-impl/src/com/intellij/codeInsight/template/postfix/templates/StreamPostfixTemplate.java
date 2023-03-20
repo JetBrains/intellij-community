@@ -27,13 +27,15 @@ public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> IS_SUPPORTED_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 
+    if (element instanceof PsiAssignmentExpression && element.getParent() instanceof PsiExpressionStatement) return false;
+
     PsiType type = ((PsiExpression)element).getType();
     if (!(type instanceof PsiArrayType)) return false;
 
     PsiType componentType = ((PsiArrayType)type).getComponentType();
     if (!(componentType instanceof PsiPrimitiveType)) return true;
 
-    return componentType.equals(PsiType.INT) || componentType.equals(PsiType.LONG) || componentType.equals(PsiType.DOUBLE);
+    return componentType.equals(PsiTypes.intType()) || componentType.equals(PsiTypes.longType()) || componentType.equals(PsiTypes.doubleType());
   };
 
   public StreamPostfixTemplate() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -47,11 +47,11 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
+import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +216,7 @@ public final class FindUsagesManager {
     startFindUsages(findUsagesOptions, handler, scopeFile, editor);
   }
 
-  void startFindUsages(@NotNull PsiElement psiElement, @NotNull FindUsagesOptions findUsagesOptions) {
+  public void startFindUsages(@NotNull PsiElement psiElement, @NotNull FindUsagesOptions findUsagesOptions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
     if (handler == null) return;
@@ -228,7 +228,6 @@ public final class FindUsagesManager {
                                PsiFile scopeFile,
                                FileEditor fileEditor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    UsageViewStatisticsCollector.logSearchStarted(myProject);
     boolean singleFile = scopeFile != null;
 
     clearFindingNextUsageInFile();
@@ -288,7 +287,6 @@ public final class FindUsagesManager {
     startProcessUsages(indicator, handler.getProject(), createUsageSearcher(handler, primaryElements, secondaryElements, findUsagesOptions), processor, onComplete);
   }
 
-  @ApiStatus.Internal
   public static UsageSearcher createUsageSearcher(@NotNull FindUsagesHandlerBase handler,
                                                   PsiElement @NotNull [] primaryElements,
                                                   PsiElement @NotNull [] secondaryElements, @NotNull FindUsagesOptions findUsagesOptions) {
@@ -376,8 +374,13 @@ public final class FindUsagesManager {
       if (scopeFile != null) {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);
       }
+      ClusteringSearchSession clusteringSearchSession = ClusteringSearchSession.createClusteringSessionIfEnabled();
       Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<>(usageInfo -> {
-        Usage usage = ReadAction.compute(() -> UsageInfoToUsageConverter.convert(primaryElements, usageInfo));
+        Usage usage = ReadAction.compute(
+          () -> clusteringSearchSession != null
+                ? UsageInfoToUsageConverter.convertToSimilarUsage(primaryElements, usageInfo, clusteringSearchSession)
+                : UsageInfoToUsageConverter.convert(primaryElements, usageInfo)
+        );
         return processor.process(usage);
       });
       PsiElement[] elements = ArrayUtil.mergeArrays(primaryElements, secondaryElements, PsiElement.ARRAY_FACTORY);
@@ -592,19 +595,18 @@ public final class FindUsagesManager {
       usagesWereFound.set(true);
       int usageOffset = usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getNavigationRange().getStartOffset() : 0;
       switch (direction) {
-        case FROM_START:
+        case FROM_START -> {
           foundUsage.compareAndSet(null, usage);
           return false;
-        case FROM_END:
-          foundUsage.set(usage);
-          break;
-        case AFTER_CARET:
+        }
+        case FROM_END -> foundUsage.set(usage);
+        case AFTER_CARET -> {
           if (usageOffset > startOffset) {
             foundUsage.set(usage);
             return false;
           }
-          break;
-        case BEFORE_CARET:
+        }
+        case BEFORE_CARET -> {
           if (usageOffset >= startOffset) {
             return false;
           }
@@ -614,11 +616,12 @@ public final class FindUsagesManager {
               if (foundUsage.compareAndSet(null, usage)) break;
             }
             else {
-              int foundOffset = found instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)found).getNavigationRange().getStartOffset() : 0;
+              int foundOffset =
+                found instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)found).getNavigationRange().getStartOffset() : 0;
               if (foundOffset < usageOffset && foundUsage.compareAndSet(found, usage)) break;
             }
           }
-          break;
+        }
       }
 
       return true;
@@ -671,7 +674,7 @@ public final class FindUsagesManager {
     PsiElement element = handler.getPsiElement();
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
-    if (file != null && ProjectFileIndex.SERVICE.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
+    if (file != null && ProjectFileIndex.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
       return GlobalSearchScope.projectScope(project);
     }
     return GlobalSearchScope.allScope(project);

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
@@ -18,7 +19,7 @@ import java.util.stream.Stream;
 
 public final class ConstructionUtils {
   private static final Set<String> GUAVA_UTILITY_CLASSES =
-    ContainerUtil.set("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");
+    Set.of("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");
   private static final CallMatcher ENUM_SET_NONE_OF =
     CallMatcher.staticCall("java.util.EnumSet", "noneOf").parameterCount(1);
 
@@ -43,8 +44,7 @@ public final class ConstructionUtils {
   @Contract("null -> null")
   public static String getStringBuilderInitializerText(PsiExpression construction) {
     construction = PsiUtil.skipParenthesizedExprDown(construction);
-    if (!(construction instanceof PsiNewExpression)) return null;
-    final PsiNewExpression newExpression = (PsiNewExpression)construction;
+    if (!(construction instanceof PsiNewExpression newExpression)) return null;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (!isReferenceTo(classReference, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
       return null;
@@ -56,7 +56,7 @@ public final class ConstructionUtils {
     if (arguments.length != 1) return null;
     final PsiExpression argument = arguments[0];
     final PsiType argumentType = argument.getType();
-    if (PsiType.INT.equals(argumentType)) return "\"\"";
+    if (PsiTypes.intType().equals(argumentType)) return "\"\"";
     return argument.getText();
   }
 
@@ -69,17 +69,20 @@ public final class ConstructionUtils {
   @Contract("null -> false")
   public static boolean isEmptyCollectionInitializer(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)expression;
+    if (expression instanceof PsiNewExpression newExpression) {
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList != null && argumentList.isEmpty() && newExpression.getAnonymousClass() == null) {
-        PsiType type = expression.getType();
-        return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
-               com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
+        PsiClassType type = ObjectUtils.tryCast(expression.getType(), PsiClassType.class);
+        if (type == null) return false;
+        PsiClass aClass = type.resolve();
+        if (aClass == null) return false;
+        String qualifiedName = aClass.getQualifiedName();
+        if (qualifiedName == null || !qualifiedName.startsWith("java.util.")) return false;
+        return com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+               com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_MAP);
       }
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       @NonNls String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
       if(name != null && name.startsWith("new") && argumentList.isEmpty()) {
@@ -88,7 +91,7 @@ public final class ConstructionUtils {
           PsiClass aClass = method.getContainingClass();
           if(aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
-            if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
+            if (qualifiedName != null && GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
               return true;
             }
           }
@@ -117,8 +120,7 @@ public final class ConstructionUtils {
         }
       }
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       @NonNls String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
       if(name != null && name.startsWith("new") && !argumentList.isEmpty()) {
@@ -127,7 +129,7 @@ public final class ConstructionUtils {
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) return false;
         String qualifiedName = aClass.getQualifiedName();
-        if (!GUAVA_UTILITY_CLASSES.contains(qualifiedName)) return false;
+        if (qualifiedName == null || !GUAVA_UTILITY_CLASSES.contains(qualifiedName)) return false;
         for (PsiParameter parameter : method.getParameterList().getParameters()) {
           PsiType type = parameter.getType();
           if (type instanceof PsiEllipsisType) {
@@ -167,8 +169,7 @@ public final class ConstructionUtils {
                                                      com.intellij.psi.util.InheritanceUtil.isInheritor(t, CommonClassNames.JAVA_LANG_CLASS);
       return Stream.of(constructor.getParameterList().getParameters()).map(PsiParameter::getType).allMatch(allowedParameterType);
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (ENUM_SET_NONE_OF.test(call)) return true;
       @NonNls String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
@@ -178,7 +179,7 @@ public final class ConstructionUtils {
           PsiClass aClass = method.getContainingClass();
           if (aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
-            if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
+            if (qualifiedName != null && GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
               return ContainerUtil.and(method.getParameterList().getParameters(), p -> p.getType() instanceof PsiPrimitiveType);
             }
           }
@@ -196,8 +197,7 @@ public final class ConstructionUtils {
    */
   public static boolean isEmptyArrayInitializer(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiNewExpression)) return false;
-    final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    if (!(expression instanceof PsiNewExpression newExpression)) return false;
     final PsiExpression[] dimensions = newExpression.getArrayDimensions();
     if (dimensions.length == 0) {
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();

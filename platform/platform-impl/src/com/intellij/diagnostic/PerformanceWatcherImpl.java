@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -19,10 +18,13 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -75,23 +77,16 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
 
   private final JitWatcher myJitWatcher = new JitWatcher();
 
-  private final @NotNull RegistryValue mySamplingInterval;
-  private final @NotNull RegistryValue myMaxAttemptsCount;
   private final @NotNull RegistryValue myUnresponsiveInterval;
-  private final @NotNull RegistryValue myMaxDumpDuration;
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private PerformanceWatcherImpl() {
     Application application = ApplicationManager.getApplication();
     if (application == null) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
 
     RegistryManager registryManager = application.getService(RegistryManager.class);
-    mySamplingInterval = registryManager.get("performance.watcher.sampling.interval.ms");
-    myMaxAttemptsCount = registryManager.get("performance.watcher.unresponsive.max.attempts.before.log");
     myUnresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms");
-    myMaxDumpDuration = registryManager.get("performance.watcher.dump.duration.s");
 
     if (application.isHeadlessEnvironment()) {
       return;
@@ -100,16 +95,14 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     RegistryValueListener cancelingListener = new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
-        int samplingIntervalMs = getUnresponsiveInterval() > 0 && getMaxAttemptsCount() > 0 ?
-                                 getSamplingInterval() :
-                                 0;
-
+        LOG.info("on UI freezes more than " + getUnresponsiveInterval() + " ms will " +
+                 "dump threads each " + getDumpInterval() + " ms for " + getMaxDumpDuration() + " ms max");
+        int samplingIntervalMs = getSamplingInterval();
+        cancelThread();
         if (samplingIntervalMs <= 0) {
-          cancelThread();
           myThread = null;
         }
-        else if (mySamplingInterval == value) {
-          cancelThread();
+        else {
           myThread = myExecutor.scheduleWithFixedDelay(() -> samplePerformance(samplingIntervalMs),
                                                        samplingIntervalMs,
                                                        samplingIntervalMs,
@@ -117,27 +110,24 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
         }
       }
     };
-
-    for (RegistryValue value : List.of(mySamplingInterval, myMaxAttemptsCount, myUnresponsiveInterval)) {
-      value.addListener(cancelingListener, this);
+    myUnresponsiveInterval.addListener(cancelingListener, this);
+    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+      RegistryValue ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size");
+      AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+      final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
+      service.setNewThreadListener((__, ___) -> {
+        int executorSize = service.getBackendPoolExecutorSize();
+        if (executorSize > ourReasonableThreadPoolSize.asInteger() + AVAILABLE_PROCESSORS) {
+          String message = "Too many threads: " + executorSize + " created in the global Application pool. (" + ourReasonableThreadPoolSize+", available processors: "+AVAILABLE_PROCESSORS+")";
+          File file = doDumpThreads("newPooledThread/", true, message, true);
+          LOG.info(message + (file == null ? "" : "; thread dump is saved to '" + file.getPath() + "'"));
+        }
+      });
     }
-
-    RegistryValue ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size");
-    AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-    service.setNewThreadListener((thread, runnable) -> {
-      if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize.asInteger() &&
-          ApplicationInfoImpl.getShadowInstance().isEAP()) {
-        String message = "Too many pooled threads created (" + service.getBackendPoolExecutorSize() + " > " + ourReasonableThreadPoolSize + ")";
-        File file = doDumpThreads("newPooledThread/", true, message);
-        LOG.info(message + (file == null ? "" : "; thread dump is saved to '" + file.getPath() + "'"));
-      }
-    });
-
     reportCrashesIfAny();
     cleanOldFiles(myLogDir, 0);
 
-    cancelingListener.afterValueChanged(mySamplingInterval);
-    ourInstance = this;
+    cancelingListener.afterValueChanged(myUnresponsiveInterval);
   }
 
 
@@ -150,52 +140,54 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
       // Only report if on JetBrains jre
       if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
         String pid = Files.readString(pidFile);
-        File[] crashFiles = new File(SystemProperties.getUserHome()).listFiles(file -> {
-          return file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile();
-        });
-        if (crashFiles != null) {
-          long appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis();
-          for (File file : crashFiles) {
-            if (file.lastModified() > appInfoFileLastModified) {
-              if (file.length() > 5 * FileUtilRt.MEGABYTE) {
-                LOG.info("Crash file " + file + " is too big to report");
-                break;
-              }
-              String content = FileUtil.loadFile(file);
-              // TODO: maybe we need to notify the user
-              if (content.contains("fuck_the_regulations")) {
-                break;
-              }
-              Attachment attachment = new Attachment("crash.txt", content);
-              attachment.setIncluded(true);
-
-              // include plugins list
-              String plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
-                .filter(d -> d.isEnabled() && !d.isBundled())
-                .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
-                .filter(PluginInfo::isSafeToReport)
-                .map(i -> i.getId() + " (" + i.getVersion() + ")")
-                .joining("\n", "Extra plugins:\n", "");
-              Attachment pluginsAttachment = new Attachment("plugins.txt", plugins);
-              attachment.setIncluded(true);
-
-              Attachment[] attachments = new Attachment[]{attachment, pluginsAttachment};
-
-              // look for extended crash logs
-              File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
-              if (extraLog != null) {
-                Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
-                extraAttachment.setIncluded(true);
-                attachments = ArrayUtil.append(attachments, extraAttachment);
-              }
-
-              String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
-              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
-              IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile));
-              IdeaFreezeReporter.report(event);
-              LifecycleUsageTriggerCollector.onCrashDetected();
+        File[] crashFiles = ObjectUtils.notNull(new File(SystemProperties.getUserHome()).listFiles(file
+          -> file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile()), new File[0]);
+        long appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis();
+        for (File file : crashFiles) {
+          if (file.lastModified() > appInfoFileLastModified) {
+            if (file.length() > 5 * FileUtilRt.MEGABYTE) {
+              LOG.info("Crash file " + file + " is too big to report");
               break;
             }
+            String content = FileUtil.loadFile(file);
+            // TODO: maybe we need to notify the user
+            if (content.contains("fuck_the_regulations")) {
+              break;
+            }
+            Attachment attachment = new Attachment("crash.txt", content);
+            attachment.setIncluded(true);
+
+            // include plugins list
+            String plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
+              .filter(d -> d.isEnabled() && !d.isBundled())
+              .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
+              .filter(PluginInfo::isSafeToReport)
+              .map(i -> i.getId() + " (" + i.getVersion() + ")")
+              .joining("\n", "Extra plugins:\n", "");
+            Attachment pluginsAttachment = new Attachment("plugins.txt", plugins);
+            attachment.setIncluded(true);
+
+            Attachment[] attachments = {attachment, pluginsAttachment};
+
+            // look for extended crash logs
+            File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
+            if (extraLog != null) {
+              String jbrErrContent = FileUtil.loadFile(extraLog);
+              // Detect crashes caused by OOME
+              if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
+                LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true);
+              }
+              Attachment extraAttachment = new Attachment("jbr_err.txt", jbrErrContent);
+              extraAttachment.setIncluded(true);
+              attachments = ArrayUtil.append(attachments, extraAttachment);
+            }
+
+            String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
+            IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
+            IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile));
+            IdeaFreezeReporter.report(event);
+            LifecycleUsageTriggerCollector.onCrashDetected();
+            break;
           }
         }
       }
@@ -263,7 +255,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   private static long ageInDays(File file) {
-    return TimeUnit.DAYS.convert(System.currentTimeMillis() - file.lastModified(), TimeUnit.MILLISECONDS);
+    return TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - file.lastModified());
   }
 
   private void cancelThread() {
@@ -305,27 +297,28 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     });
   }
 
-  private int getSamplingInterval() {
-    return mySamplingInterval.asInteger();
+  /** for {@link IdePerformanceListener#uiResponded} events (ms) */
+  private static int getSamplingInterval() {
+    return 1000;
   }
 
-  private int getMaxAttemptsCount() {
-    return myMaxAttemptsCount.asInteger();
-  }
-
+  /** for dump files on disk and in EA reports (ms) */
   @Override
   public int getDumpInterval() {
-    return getSamplingInterval() * getMaxAttemptsCount();
+    return MathUtil.clamp(5000, 500, getUnresponsiveInterval());
   }
 
+  /** defines the freeze (ms) */
   @Override
   public int getUnresponsiveInterval() {
-    return myUnresponsiveInterval.asInteger();
+    int value = myUnresponsiveInterval.asInteger();
+    return value <= 0 ? 0 : MathUtil.clamp(value, 500, 20000);
   }
 
+  /** to limit the number of dumps and the size of performance snapshot */
   @Override
   public int getMaxDumpDuration() {
-    return myMaxDumpDuration.asInteger() * 1000;
+    return MathUtil.clamp(getDumpInterval() * 20, 0, 40000); // 20 files max
   }
 
   private static String buildName() {
@@ -366,16 +359,16 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   @Override
-  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName) {
-    return doDumpThreads(pathPrefix, appendMillisecondsToFileName, "");
+  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, boolean stripDump) {
+    return doDumpThreads(pathPrefix, appendMillisecondsToFileName, "", stripDump);
   }
 
   @Nullable
-  private File doDumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String contentsPrefix) {
+  private File doDumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String contentsPrefix, boolean stripDump) {
     return myThread == null
            ? null
            : dumpThreads(pathPrefix, appendMillisecondsToFileName,
-                         contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos()).getRawDump());
+                         contentsPrefix + ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), stripDump).getRawDump());
   }
 
   private @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, @NotNull String rawDump) {
@@ -437,7 +430,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   }
 
   @NotNull
-  static List<StackTraceElement> getStacktraceCommonPart(final @NotNull List<StackTraceElement> commonPart,
+  static List<? extends StackTraceElement> getStacktraceCommonPart(final @NotNull List<? extends StackTraceElement> commonPart,
                                                          final StackTraceElement @NotNull [] stackTraceElements) {
     for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
       StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
@@ -618,7 +611,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     }
 
     private String getFreezePlaceSuffix() {
-      List<StackTraceElement> stacktraceCommonPart = null;
+      List<? extends StackTraceElement> stacktraceCommonPart = null;
       SamplingTask task = myDumpTask;
       if (task == null) {
         return "";
@@ -629,7 +622,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
           StackTraceElement[] edtStack = edt.getStackTrace();
           if (edtStack != null) {
             if (stacktraceCommonPart == null) {
-              stacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+              stacktraceCommonPart = Arrays.asList(edtStack);
             }
             else {
               stacktraceCommonPart = getStacktraceCommonPart(stacktraceCommonPart, edtStack);

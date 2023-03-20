@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -6,8 +6,13 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.impl.NotificationGroupEP;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -32,14 +37,18 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
+    moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(RegistryManager.class));
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
-    moduleBuilder.addLibrary("platform-impl", PathUtil.getJarPathForClass(ITNReporter.class));
-    moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
+    moduleBuilder.addLibrary("platform-ide-impl", PathUtil.getJarPathForClass(ITNReporter.class));
+    moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable.class));
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
-    moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
+    moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable.class));
+    moduleBuilder.addLibrary("platform-ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
+    moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AdvancedSettings.class));
+    moduleBuilder.addLibrary("platform-extensions", PathUtil.getJarPathForClass(BaseExtensionPointName.class));
   }
 
   public void testRegistryKeyIdHighlighting() {
@@ -90,6 +99,23 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(AllIcons.Nodes.Plugin, internal.getIcon());
   }
 
+  public void testAdvancedSettingsIdHighlighting() {
+    doHighlightingTest("AdvancedSettingsId.java",
+                       "advancedSettingsId.xml");
+  }
+
+  public void testAdvancedSettingsIdCompletion() {
+    final List<String> variants = myFixture.getCompletionVariants("AdvancedSettingsIdCompletion.java",
+                                                                  "advancedSettingsId.xml");
+    assertContainsElements(variants,
+                           "advancedSettingId",
+                           "advancedSettingId2");
+
+    final LookupElementPresentation setting = getLookupElementPresentation("advancedSettingId");
+    assertEquals("defaultValue", setting.getTypeText());
+    assertEquals(AllIcons.General.Settings, setting.getIcon());
+  }
+
   public void testNotificationGroupIdHighlighting() {
     doHighlightingTest("NotificationGroupId.java",
                        "notificationGroupId.xml");
@@ -111,6 +137,27 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(" (my.toolwindow.id)", toolwindow.getTailText());
     assertEquals("TOOL_WINDOW", toolwindow.getTypeText());
     assertNull(toolwindow.getTypeIcon());
+  }
+
+  public void testExtensionPointHighlighting() {
+    doHighlightingTest("ExtensionPointReference.java",
+                       "extensionPointReference.xml");
+  }
+
+  public void testExtensionPointCompletion() {
+    List<String> variants = myFixture.getCompletionVariants("ExtensionPointReferenceCompletion.java",
+                                                            "extensionPointReference.xml");
+
+    assertContainsElements(variants,
+                           "plugin.id.ep.name",
+                           "ep.qualified.name");
+
+    final LookupElementPresentation epPresentation = getLookupElementPresentation("plugin.id.ep.name");
+    assertTrue(epPresentation.isItemTextBold());
+    assertEquals(" (extensionPointReference.xml)", epPresentation.getTailText());
+    assertEquals(myFixture.getModule().getName(), epPresentation.getTypeText());
+    assertEquals(ModuleType.get(myFixture.getModule()).getIcon(), epPresentation.getTypeIcon());
+    assertTrue(epPresentation.isTypeIconRightAligned());
   }
 
   private void doHighlightingTest(String... filePaths) {

@@ -20,7 +20,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +39,7 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -83,8 +83,7 @@ public class ComponentValidator {
   /**
    * @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
     this.validator = () -> {
       validator.accept(this);
@@ -225,16 +224,33 @@ public class ComponentValidator {
     return validationInfo;
   }
 
+  private boolean needResetForInfo(@Nullable ValidationInfo info) {
+    if (info == null && validationInfo != null) return true;
+    else if (info != null && validationInfo != null) {
+      if (info.warning != validationInfo.warning) return true;
+      if (tipComponent != null && !Objects.equals(info.message, validationInfo.message)) {
+        String message = HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent)).
+                           wrapWith(HtmlChunk.html()).toString();
+        View v = BasicHTML.createHTMLView(tipComponent, message);
+
+        Dimension size = tipComponent.getPreferredSize();
+        JBInsets.removeFrom(size, tipComponent.getInsets());
+
+        if (v.getPreferredSpan(View.Y_AXIS) != size.height) return true;
+      }
+    }
+    return false;
+  }
+
   public void updateInfo(@Nullable ValidationInfo info) {
     if (disableValidation) return;
 
-    boolean resetInfo = info == null && validationInfo != null;
     boolean hasNewInfo = info != null && !info.equals(validationInfo);
-
-    if (resetInfo) {
+    if (needResetForInfo(info)) {
       reset();
     }
-    else if (hasNewInfo) {
+
+    if (hasNewInfo || (info != null && popup != null && !popup.isVisible())) {
       validationInfo = info;
 
       if (popup != null && popup.isVisible() && tipComponent != null) {
@@ -389,12 +405,18 @@ public class ComponentValidator {
   }
 
   private static Optional<Component> getFocusable(Component source) {
-    return (source instanceof JComboBox && !((JComboBox<?>)source).isEditable() ||
-            source instanceof JCheckBox ||
-            source instanceof JRadioButton ||
-            source instanceof TagButton) ?
-           Optional.of(source) :
-           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst();
+    if (source instanceof JComboBox && !((JComboBox<?>)source).isEditable() ||
+        source instanceof JCheckBox ||
+        source instanceof JRadioButton ||
+        source instanceof TagButton) {
+      return Optional.of(source);
+    }
+    return UIUtil.uiTraverser(source)
+      .filter(c -> (
+        (c instanceof JTextComponent && c.isFocusable())
+        || (c instanceof EditorTextComponent && c instanceof FocusListener)) // EditorTextField
+      )
+      .toList().stream().findFirst();
   }
 
   private class ValidationFocusListener implements FocusListener {

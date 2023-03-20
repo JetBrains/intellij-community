@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ProjectTopics;
@@ -25,8 +25,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.JdomKt;
 import com.intellij.util.PathMapper;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -88,7 +88,6 @@ public class GradleResourceCompilerConfigurationGenerator {
 
     final BuildManager buildManager = BuildManager.getInstance();
     final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
-    if (projectSystemDir == null) return;
 
     final File gradleConfigFile = new File(projectSystemDir, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 
@@ -121,7 +120,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       }
       FileUtil.createIfDoesntExist(gradleConfigFile);
       try {
-        JdomKt.write(element, gradleConfigFile.toPath());
+        JDOMUtil.write(element, gradleConfigFile.toPath());
         myModulesConfigurationHash.putAll(affectedConfigurationHash);
       }
       catch (IOException e) {
@@ -207,8 +206,10 @@ public class GradleResourceCompilerConfigurationGenerator {
                      sourceSet.getSources().get(ExternalSystemSourceType.TEST), pathMapper);
       }
 
+      boolean useCompilerOutputForResources = PlatformUtils.isFleetBackend();
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      if (compilerModuleExtension != null && compilerModuleExtension.isCompilerOutputPathInherited()) {
+      if (compilerModuleExtension != null &&
+          (useCompilerOutputForResources || compilerModuleExtension.isCompilerOutputPathInherited())) {
         String outputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrl());
         for (ResourceRootConfiguration resource : resourceConfig.resources) {
           resource.targetPath = toRemote(pathMapper, outputPath);

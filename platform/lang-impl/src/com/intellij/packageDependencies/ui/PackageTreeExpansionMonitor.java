@@ -23,8 +23,7 @@ public final class PackageTreeExpansionMonitor {
         Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
           final Object nextElement = enumeration.nextElement();
-          if (nextElement instanceof PackageDependenciesNode) { //do not include root
-            PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
+          if (nextElement instanceof PackageDependenciesNode child) { //do not include root
             if (child.equals(node)) {
               return new TreePath(child.getPath());
             }

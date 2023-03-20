@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -11,13 +11,12 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory0
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.canBeInternal
-import org.jetbrains.kotlin.idea.core.canBePrivate
-import org.jetbrains.kotlin.idea.core.canBeProtected
-import org.jetbrains.kotlin.idea.core.setVisibility
-import org.jetbrains.kotlin.idea.inspections.RemoveRedundantSetterFix
-import org.jetbrains.kotlin.idea.inspections.isRedundantSetter
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
+import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -52,12 +51,18 @@ open class ChangeVisibilityFix(
 
         val propertyAccessor = pointer?.element as? KtPropertyAccessor
         if (propertyAccessor?.isRedundantSetter() == true) {
-            RemoveRedundantSetterFix.removeRedundantSetter(propertyAccessor)
+            removeRedundantSetter(propertyAccessor)
         }
     }
 
     protected class ChangeToPublicFix(element: KtModifierListOwner, elementName: String) :
-        ChangeVisibilityFix(element, elementName, KtTokens.PUBLIC_KEYWORD), HighPriorityAction
+        ChangeVisibilityFix(element, elementName, KtTokens.PUBLIC_KEYWORD), HighPriorityAction {
+
+        override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+            val element = element ?: return false
+            return element.canBePublic()
+        }
+    }
 
     protected class ChangeToProtectedFix(element: KtModifierListOwner, elementName: String) :
         ChangeVisibilityFix(element, elementName, KtTokens.PROTECTED_KEYWORD) {
@@ -102,7 +107,10 @@ open class ChangeVisibilityFix(
             descriptor: DeclarationDescriptorWithVisibility,
             targetVisibility: DescriptorVisibility
         ): IntentionAction? {
-            if (!ExposedVisibilityChecker().checkDeclarationWithVisibility(declaration, descriptor, targetVisibility)) return null
+            if (!ExposedVisibilityChecker(declaration.languageVersionSettings).checkDeclarationWithVisibility(
+                    declaration, descriptor, targetVisibility
+                )
+            ) return null
 
             val name = descriptor.name.asString()
 

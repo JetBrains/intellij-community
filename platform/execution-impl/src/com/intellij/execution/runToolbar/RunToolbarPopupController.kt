@@ -14,14 +14,14 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.*
 import java.util.function.Supplier
+import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
 class RunToolbarPopupController(val project: Project,
                                 val mainWidgetComponent: RunToolbarMainWidgetComponent) : PopupControllerComponentListener, Disposable {
-  private val manager = RunToolbarSlotManager.getInstance(project)
   private var popup: JBPopup? = null
-  private var pane: RunToolbarExtraSlotPane = RunToolbarExtraSlotPane(project, {mainWidgetComponent.width})
+  private var pane: RunToolbarExtraSlotPane = RunToolbarExtraSlotPane(project, { mainWidgetComponent.width })
 
   private val t: Int = JBUI.scale(4)
 
@@ -44,7 +44,7 @@ class RunToolbarPopupController(val project: Project,
   }
 
   private fun getPopupControllers(): MutableList<PopupControllerComponent> {
-    return popupControllerComponents.filter { it is PopupControllerComponent }.map { it as PopupControllerComponent }.toMutableList()
+    return popupControllerComponents.filter { it is PopupControllerComponent  }.map { (it as PopupControllerComponent).getController() }.toMutableList()
   }
 
   private fun show() {
@@ -54,7 +54,11 @@ class RunToolbarPopupController(val project: Project,
     }
 
     mainWidgetComponent.isOpened = true
-    val slotPane = (if (pane.project == project) pane else null) ?: RunToolbarExtraSlotPane(project, {mainWidgetComponent.width})
+    val slotPane = (if (pane.project == project) pane else null) ?:
+                   run {
+                     pane.clear()
+                     RunToolbarExtraSlotPane(project, { mainWidgetComponent.width })
+                   }
     pane = slotPane
 
     fun getTrackerRelativePoint(): RelativePoint {
@@ -94,11 +98,29 @@ class RunToolbarPopupController(val project: Project,
       .setShowBorder(true)
       .createPopup()
 
+    fun updatePopupLocation() {
+      if (popup is AbstractPopup) {
+        popup.setLocation(tracker.recalculateLocation(popup))
+
+        popup.popupWindow?.let {
+          if (it.isShowing) {
+            it.pack()
+          }
+        }
+      }
+    }
+
+    SwingUtilities.invokeLater {
+      updatePopupLocation()
+    }
+
     popup.show(if (popup is AbstractPopup)
                  tracker.recalculateLocation(popup)
                else
                  getTrackerRelativePoint()
     )
+
+    updatePopupLocation()
 
     val ancestorListener = object : AncestorListener {
       override fun ancestorAdded(event: AncestorEvent?) {
@@ -125,11 +147,11 @@ class RunToolbarPopupController(val project: Project,
       }
 
       private fun updateLocation() {
-        if (popup is AbstractPopup) {
-          popup.setLocation(tracker.recalculateLocation(popup))
-        }
+        updatePopupLocation()
       }
     }
+
+    mainWidgetComponent.addComponentListener(adapterListener)
 
     val awtEventListener = AWTEventListener {
       if (it.id == MouseEvent.MOUSE_RELEASED) {
@@ -158,11 +180,14 @@ class RunToolbarPopupController(val project: Project,
       mainWidgetComponent.isOpened = false
       getPopupControllers().forEach { it.updateIconImmediately(mainWidgetComponent.isOpened) }
       mainWidgetComponent.removeAncestorListener(ancestorListener)
+      mainWidgetComponent.removeComponentListener(adapterListener)
       Toolkit.getDefaultToolkit().removeAWTEventListener(awtEventListener)
       canClose = false
+      pane.clear()
       this.popup = null
     }
     getPopupControllers().forEach { it.updateIconImmediately(mainWidgetComponent.isOpened) }
+
     this.popup = popup
   }
 
@@ -174,9 +199,10 @@ class RunToolbarPopupController(val project: Project,
     }
   }
 
-  private fun cancel() {
+  internal fun cancel() {
     componentPressed = false
     canClose = true
+    pane.clear()
     popup?.cancel()
   }
 
@@ -194,6 +220,10 @@ interface PopupControllerComponent {
   fun addListener(listener: PopupControllerComponentListener)
   fun removeListener(listener: PopupControllerComponentListener)
   fun updateIconImmediately(isOpened: Boolean)
+
+  fun getController(): PopupControllerComponent {
+    return this
+  }
 }
 
 interface PopupControllerComponentListener {

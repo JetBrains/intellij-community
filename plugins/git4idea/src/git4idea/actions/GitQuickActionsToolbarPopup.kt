@@ -3,77 +3,63 @@ package git4idea.actions
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.icons.AllIcons
-import com.intellij.ide.navigationToolbar.experimental.NewToolbarPaneListener
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBInsets
-import git4idea.branch.GitBranchUtil
-import git4idea.i18n.GitBundle
-import java.awt.Color
+import git4idea.GitVcs
 import java.awt.Dimension
-import java.awt.Insets
 import javax.swing.Icon
 import javax.swing.JComponent
 
 /**
  * Git implementation of the quick popup action
  */
-internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
+@Service
+class GitQuickActionsToolbarService {
+  var gitMappingInitialized = false
+    private set
 
-  init {
-    templatePresentation.text = GitBundle.message("action.Vcs.ShowMoreActions.text")
+  fun initializationComplete() {
+    gitMappingInitialized = true
   }
 
-  private inner class MyActionButtonWithText(
-    action: AnAction,
-    presentation: Presentation,
-    place: String,
-  ) : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+  companion object {
+    fun getInstance(project: Project): GitQuickActionsToolbarService = project.getService(GitQuickActionsToolbarService::class.java)
+  }
+}
 
-    override fun getInactiveTextColor(): Color = foreground
+internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
 
-    override fun getInsets(): Insets = JBInsets(0, 0, 0, 0)
+  override fun getName(project: Project): String {
+    return GitVcs.getInstance(project).name
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return MyActionButtonWithText(this, presentation, place)
+    return MyActionButtonWithText(this, presentation.apply { text = "" }, place)
   }
 
   override fun update(e: AnActionEvent) {
-    val repo = e.project?.let { GitBranchUtil.getCurrentRepository(it) }
-    val noRepo = repo == null
-
+    val project = e.project
     val presentation = e.presentation
-    presentation.icon = if (noRepo) {
-      AllIcons.Vcs.BranchNode
-    }
-    else {
-      templatePresentation.icon.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+
+    if (!updateVcs(project, e)) return
+    val instance = GitQuickActionsToolbarService.getInstance(project!!)
+    if (!instance.gitMappingInitialized) {
+      presentation.isEnabledAndVisible = false
+      return
     }
 
-    presentation.text = if (noRepo) {
-      templatePresentation.text + " "
-    }
-    else {
-      ""
-    }
+    presentation.isEnabledAndVisible = true
+    presentation.icon = AllIcons.Actions.More.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
   }
 
-  internal class MyGitRepositoryListener(private val project: Project) : VcsRepositoryMappingListener {
-
+  class MyGitRepositoryListener(val project: Project) : VcsRepositoryMappingListener {
     override fun mappingChanged() {
-      ApplicationManager.getApplication().invokeLater(Runnable {
-        project.messageBus
-          .syncPublisher(NewToolbarPaneListener.TOPIC)
-          .stateChanged()
-      }, project.disposed)
+      GitQuickActionsToolbarService.getInstance(project).initializationComplete()
     }
   }
 

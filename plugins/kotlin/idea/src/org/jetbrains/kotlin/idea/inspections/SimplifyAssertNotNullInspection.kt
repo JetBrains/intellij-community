@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -6,8 +6,9 @@ import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -66,10 +67,10 @@ class SimplifyAssertNotNullInspection : AbstractApplicabilityBasedInspection<KtC
         val commentSaver = CommentSaver(element)
 
         if (message == null) {
-            val newInitializer = KtPsiFactory(element).createExpressionByPattern("$0!!", initializer)
+            val newInitializer = KtPsiFactory(project).createExpressionByPattern("$0!!", initializer)
             initializer.replace(newInitializer)
         } else {
-            val newInitializer = KtPsiFactory(element).createExpressionByPattern("$0 ?: kotlin.error($1)", initializer, message)
+            val newInitializer = KtPsiFactory(project).createExpressionByPattern("$0 ?: kotlin.error($1)", initializer, message)
             val result = initializer.replace(newInitializer)
 
             val qualifiedExpression = (result as KtBinaryExpression).right as KtDotQualifiedExpression

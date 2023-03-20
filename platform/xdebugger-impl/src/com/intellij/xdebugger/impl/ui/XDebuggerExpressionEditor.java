@@ -2,9 +2,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -65,16 +63,24 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         return editor;
       }
 
-      @Override
-      public Object getData(@NotNull String dataId) {
-        if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) {
-          return new Language[]{myExpression.getLanguage()};
-        } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-          return PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument());
+        @Override
+        public Object getData(@NotNull String dataId) {
+          if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) {
+            return new Language[]{myExpression.getLanguage()};
+          }
+          else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+            return (DataProvider)slowId -> getSlowData(slowId);
+          }
+          return super.getData(dataId);
         }
-        return super.getData(dataId);
-      }
-    };
+
+        private @Nullable Object getSlowData(@NotNull String dataId) {
+          if (CommonDataKeys.PSI_FILE.is(dataId)) {
+            return PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument());
+          }
+          return null;
+        }
+      };
     if (editorFont) {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());

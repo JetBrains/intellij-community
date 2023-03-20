@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -13,6 +13,7 @@ import com.intellij.debugger.memory.agent.MemoryAgentActionResult;
 import com.intellij.debugger.memory.agent.ui.RetainedSizeDialog;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -86,7 +87,8 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
             sizes[0],
             sizes[1]
           );
-        } else {
+        }
+        else {
           dialog.setCalculationTimeoutMessage();
         }
       }
@@ -96,6 +98,11 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
         LOG.info("command cancelled");
       }
     });
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

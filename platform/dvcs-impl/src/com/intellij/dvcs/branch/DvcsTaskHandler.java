@@ -67,8 +67,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
         checkout(taskName, problems, null);
         map.addAll(problems);
       }
+      repositories = ContainerUtil.filter(repositories, r->!problems.contains(r));
     }
-    repositories.removeAll(problems);
     if (!repositories.isEmpty()) {
       checkoutAsNewBranch(taskName, repositories);
     }
@@ -85,7 +85,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     if (!notFound.isEmpty()) {
       checkoutAsNewBranch(branchName, notFound);
     }
-    repositories.removeAll(notFound);
+    repositories = new ArrayList<>(ContainerUtil.subtract(repositories, notFound));
     if (!repositories.isEmpty()) {
       checkout(branchName, repositories, invokeAfter);
       return true;
@@ -116,7 +116,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     }
     if (tasks.size() == 0) return new TaskInfo[0];
     if (isSyncEnabled()) {
-      return new TaskInfo[] { tasks.values().iterator().next() };
+      return new TaskInfo[]{tasks.values().iterator().next()};
     }
     else {
       return tasks.values().toArray(new TaskInfo[0]);

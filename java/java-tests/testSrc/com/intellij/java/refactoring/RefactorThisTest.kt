@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
 import com.intellij.ide.DataManager
@@ -60,10 +60,6 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
 
   fun testFindAndReplaceDuplicatesOnFieldDeclaration() {
     assertTrue(doActionExists<MethodDuplicatesAction>())
-  }
-
-  fun testGenerifyIsFiltered() {
-    assertFalse(doActionExists<TypeCookAction>())
   }
 
   fun testUseInterfaceWherePossibleOnDeclaration() {
@@ -193,8 +189,7 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     val group = DefaultActionGroup()
     val dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(editor.component))
     action.fillActions(project, group, dataContext)
-    return Utils.expandActionGroup(false, group, PresentationFactory(), dataContext,
-                                   ActionPlaces.REFACTORING_QUICKLIST)
+    return Utils.expandActionGroup(group, PresentationFactory(), dataContext, ActionPlaces.REFACTORING_QUICKLIST)
   }
 
 }

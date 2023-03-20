@@ -83,16 +83,13 @@ final class ScopeUtils {
     // make common parent may only be for-statement if first reference is
     // the initialization of the for statement or the initialization is
     // empty.
-    if (commonParent instanceof PsiForStatement) {
-      final PsiForStatement forStatement = (PsiForStatement)commonParent;
+    if (commonParent instanceof PsiForStatement forStatement) {
       final PsiElement referenceElement = referenceElements.get(0);
       final PsiStatement initialization = forStatement.getInitialization();
       if (!(initialization instanceof PsiEmptyStatement)) {
-        if (initialization instanceof PsiExpressionStatement) {
-          final PsiExpressionStatement statement = (PsiExpressionStatement)initialization;
+        if (initialization instanceof PsiExpressionStatement statement) {
           final PsiExpression expression = statement.getExpression();
-          if (expression instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+          if (expression instanceof PsiAssignmentExpression assignmentExpression) {
             final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
             if (!lExpression.equals(referenceElement)) {
               commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class);
@@ -133,8 +130,7 @@ final class ScopeUtils {
     }
     while (!result.equals(scope)) {
       final PsiElement element = getChildWhichContainsElement(result, scope);
-      if (element instanceof PsiForStatement) {
-        final PsiForStatement forStatement = (PsiForStatement)element;
+      if (element instanceof PsiForStatement forStatement) {
         if (forStatement.getInitialization() instanceof PsiEmptyStatement) {
           return element;
         }

@@ -2,15 +2,23 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.Comparator;
 
 public class SortedComboBoxModel<T> extends SortedListModel<T> implements ComboBoxModel<T> {
+
   private T mySelection;
 
-  public SortedComboBoxModel(Comparator<? super T> comparator) {
+  public SortedComboBoxModel(@NotNull Comparator<? super T> comparator) {
     super(comparator);
+  }
+
+  public SortedComboBoxModel(@NotNull Collection<? extends T> items,
+                             @NotNull Comparator<? super T> comparator) {
+    super(items, comparator);
   }
 
   @Override

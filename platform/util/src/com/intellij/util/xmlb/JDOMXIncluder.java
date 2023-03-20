@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,6 @@ import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,55 +28,12 @@ public final class JDOMXIncluder {
     }
   };
 
-  @NonNls private static final String INCLUDE = "include";
-  @NonNls private static final String HREF = "href";
-  @NonNls private static final String BASE = "base";
-  @NonNls private static final String PARSE = "parse";
-  @NonNls private static final String XML = "xml";
-  @NonNls private static final String XPOINTER = "xpointer";
-
   private final boolean myIgnoreMissing;
   private final PathResolver myPathResolver;
 
   private JDOMXIncluder(boolean ignoreMissing, @NotNull PathResolver pathResolver) {
     myIgnoreMissing = ignoreMissing;
     myPathResolver = pathResolver;
-  }
-
-  /**
-   * The original element will be mutated in place.
-   */
-  public static @NotNull Element resolveRoot(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
-    List<Element> resolved = new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original.clone(), base);
-    if (resolved.size() == 1) {
-      return resolved.get(0);
-    }
-    else if (resolved.size() > 1) {
-      throw new XIncludeException("Tried to include multiple roots");
-    }
-    else {
-      throw new XIncludeException("No root element");
-    }
-  }
-
-  /**
-   * The original element will be mutated in place.
-   *
-   * (used by groovy).
-   */
-  @SuppressWarnings("unused")
-  public static void resolveNonXIncludeElement(@NotNull Element original,
-                                               @Nullable URL base,
-                                               boolean ignoreMissing,
-                                               @NotNull PathResolver pathResolver)
-    throws XIncludeException, MalformedURLException {
-    LOG.assertTrue(!isIncludeElement(original));
-
-    Stack<URL> bases = new Stack<>();
-    if (base != null) {
-      bases.push(base);
-    }
-    new JDOMXIncluder(ignoreMissing, pathResolver).resolveNonXIncludeElement(original, bases);
   }
 
   public static @NotNull List<Element> resolve(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
@@ -93,7 +49,7 @@ public final class JDOMXIncluder {
   }
 
   private static boolean isIncludeElement(Element element) {
-    return element.getName().equals(INCLUDE) && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
+    return element.getName().equals("include") && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
   }
 
   private @NotNull List<Element> resolve(@NotNull Element original, @NotNull Stack<URL> bases) throws XIncludeException, MalformedURLException {
@@ -113,17 +69,17 @@ public final class JDOMXIncluder {
       base = bases.peek();
     }
 
-    String href = element.getAttributeValue(HREF);
+    String href = element.getAttributeValue("href");
     assert href != null : "Missing href attribute";
 
-    String baseAttribute = element.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
+    String baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE);
     if (baseAttribute != null) {
       base = new URL(baseAttribute);
     }
 
-    final String parseAttribute = element.getAttributeValue(PARSE);
+    final String parseAttribute = element.getAttributeValue("parse");
     if (parseAttribute != null) {
-      LOG.assertTrue(parseAttribute.equals(XML), parseAttribute + " is not a legal value for the parse attribute");
+      LOG.assertTrue(parseAttribute.equals("xml"), parseAttribute + " is not a legal value for the parse attribute");
     }
 
     URL remote = myPathResolver.resolvePath(href, base);
@@ -156,7 +112,7 @@ public final class JDOMXIncluder {
   }
 
   private static @NotNull List<Element> extractNeededChildren(@NotNull Element element, @NotNull List<Element> remoteElements) {
-    final String xpointer = element.getAttributeValue(XPOINTER);
+    final String xpointer = element.getAttributeValue("xpointer");
     if (xpointer == null) {
       return remoteElements;
     }

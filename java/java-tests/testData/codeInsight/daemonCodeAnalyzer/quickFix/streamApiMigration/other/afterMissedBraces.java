@@ -1,4 +1,4 @@
-// "Replace with forEach" "true"
+// "Collapse loop with stream 'forEach()'" "true-preview"
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

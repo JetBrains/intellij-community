@@ -1,15 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@Service(Service.Level.APP)
 @State(name = "WebBrowsersConfiguration", storages = @Storage(value = "web-browsers.xml", roamingType = RoamingType.DISABLED))
 public final class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
@@ -32,7 +31,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   public static final UUID PREDEFINED_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
   private static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
   private static final UUID PREDEFINED_OPERA_ID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776");
-  private static final UUID PREDEFINED_YANDEX_ID = UUID.fromString("B1B2EC2C-20BD-4EE2-89C4-616DB004BCD4");
   private static final UUID PREDEFINED_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
   private static final UUID PREDEFINED_OLD_EDGE_ID = UUID.fromString("B2A9DCA7-9D0B-4E1E-98A8-AFB19C1328D2");
   private static final UUID PREDEFINED_EDGE_ID = UUID.fromString("37cae5b9-e8b2-4949-9172-aafa37fbc09c");
@@ -42,7 +40,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     PREDEFINED_FIREFOX_ID,
     PREDEFINED_SAFARI_ID,
     PREDEFINED_OPERA_ID,
-    PREDEFINED_YANDEX_ID,
     PREDEFINED_EXPLORER_ID,
     PREDEFINED_EDGE_ID
   };
@@ -70,9 +67,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
                                  BrowserFamily.SAFARI.getExecutionPath(), SystemInfo.isMac,
                                  BrowserFamily.SAFARI.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.CHROME, "Opera", SystemInfo.isMac ? "Opera" : "opera", false, null),
-      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex",
-                                 SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false,
-                                 BrowserFamily.CHROME.createBrowserSpecificSettings()),
       new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER, BrowserFamily.EXPLORER.getName(),
                                  BrowserFamily.EXPLORER.getExecutionPath(), false,
                                  BrowserFamily.EXPLORER.createBrowserSpecificSettings()),
@@ -98,11 +92,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   public static boolean isYandexBrowser(@NotNull WebBrowser browser) {
-    return browser.getFamily().equals(BrowserFamily.CHROME) && (browser.getId().equals(PREDEFINED_YANDEX_ID) || checkNameAndPath("Yandex", browser));
-  }
-
-  public static boolean isDartium(@NotNull WebBrowser browser) {
-    return browser.getFamily().equals(BrowserFamily.CHROME) && checkNameAndPath("Dartium", browser);
+    return browser.getFamily().equals(BrowserFamily.CHROME) && checkNameAndPath("Yandex", browser);
   }
 
   public static boolean isEdge(@NotNull WebBrowser browser) {
@@ -137,12 +127,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
   boolean isPredefinedBrowser(@NotNull ConfigurableWebBrowser browser) {
     UUID id = browser.getId();
-    for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
-      if (id.equals(predefinedBrowserId)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(id, PREDEFINED_BROWSER_IDS);
   }
 
   public @NotNull DefaultBrowserPolicy getDefaultBrowserPolicy() {
@@ -227,21 +212,13 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     if (StringUtil.isEmpty(value)) {
       UUID id;
       switch (family) {
-        case CHROME:
-          id = PREDEFINED_CHROME_ID;
-          break;
-        case EXPLORER:
-          id = PREDEFINED_EXPLORER_ID;
-          break;
-        case FIREFOX:
-          id = PREDEFINED_FIREFOX_ID;
-          break;
-        case SAFARI:
-          id = PREDEFINED_SAFARI_ID;
-          break;
-
-        default:
+        case CHROME -> id = PREDEFINED_CHROME_ID;
+        case EXPLORER -> id = PREDEFINED_EXPLORER_ID;
+        case FIREFOX -> id = PREDEFINED_FIREFOX_ID;
+        case SAFARI -> id = PREDEFINED_SAFARI_ID;
+        default -> {
           return null;
+        }
       }
 
       for (ConfigurableWebBrowser browser : existingBrowsers) {
@@ -284,6 +261,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
 
     showBrowserHover = !"false".equals(element.getAttributeValue("showHover"));
+    showBrowserHoverXml = "true".equals(element.getAttributeValue("showHoverXml"));
 
     List<ConfigurableWebBrowser> list = new ArrayList<>();
     for (Element child : element.getChildren("browser")) {
@@ -327,7 +305,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     Map<UUID, ConfigurableWebBrowser> idToBrowser = null;
     int n = list.size();
     pb: for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < n; i++) {
         if (list.get(i).getId().equals(predefinedBrowserId)) {
           continue pb;

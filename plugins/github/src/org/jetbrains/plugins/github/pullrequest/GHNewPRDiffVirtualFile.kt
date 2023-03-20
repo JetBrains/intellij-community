@@ -1,29 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.diff.editor.DiffContentVirtualFile
-import com.intellij.diff.editor.DiffVirtualFile.Companion.useDiffWindowDimensionKey
-import com.intellij.ide.actions.SplitAction
+import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 
 @Suppress("EqualsOrHashCode")
 internal class GHNewPRDiffVirtualFile(fileManagerId: String,
                                       project: Project,
                                       repository: GHRepositoryCoordinates)
-  : GHRepoVirtualFile(fileManagerId, project, repository), DiffContentVirtualFile {
+  : GHPRDiffVirtualFileBase(fileManagerId, project, repository) {
 
-  init {
-    useDiffWindowDimensionKey()
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
-    isWritable = false
+  override fun createProcessor(project: Project): DiffRequestProcessor {
+    val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
+    val diffRequestModel = dataContext.newPRDiffModel
+
+    return GHPRDiffRequestChainProcessor(project, diffRequestModel)
   }
 
   override fun getName() = "newPR.diff"
   override fun getPresentableName() = GithubBundle.message("pull.request.new.diff.editor.title")
 
-  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, null, true)
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, null, null, true)
   override fun getPresentablePath() = "${repository.toUrl()}/pulls/newPR.diff"
 
   override fun equals(other: Any?): Boolean {

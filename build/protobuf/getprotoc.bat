@@ -5,7 +5,7 @@
 ::   @echo on
 @echo off
 
-if not defined PROTOC_VERSION set PROTOC_VERSION=3.15.8
+if not defined PROTOC_VERSION set PROTOC_VERSION=3.19.4
 
 if not defined PROTOC_BIN_DIR (
   for /f %%i in ('git.exe rev-parse --show-toplevel') do set "toplevel=%%~fi"

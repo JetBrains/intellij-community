@@ -1,4 +1,4 @@
-// "Convert variable 'res' from String to StringBuilder (null-safe)" "true"
+// "Convert variable 'res' from String to StringBuilder (null-safe)" "true-preview"
 
 import java.util.Optional;
 

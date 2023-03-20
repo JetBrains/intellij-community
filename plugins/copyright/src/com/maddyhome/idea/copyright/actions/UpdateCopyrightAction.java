@@ -98,7 +98,7 @@ public final class UpdateCopyrightAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected @NotNull JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+  protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
     myUi = new UpdateCopyrightAdditionalUi();
     myUi.getUpdateExistingCopyrightsCb().setSelected(PropertiesComponent.getInstance().getBoolean(UPDATE_EXISTING_COPYRIGHTS, true));
     return myUi.getPanel();

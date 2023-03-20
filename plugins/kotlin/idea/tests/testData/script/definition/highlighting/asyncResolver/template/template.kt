@@ -9,7 +9,7 @@ import kotlin.script.experimental.location.*
 class TestDependenciesResolver : AsyncDependenciesResolver {
     suspend override fun resolveAsync(scriptContents: ScriptContents, environment: Environment): DependenciesResolver.ResolveResult {
         return ScriptDependencies(
-                classpath = listOf(environment["template-classes"] as File)
+                classpath = environment["template-classes"] as List<File>
         ).asSuccess()
     }
 }

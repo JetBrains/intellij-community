@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,17 +12,33 @@ import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.*;
 
+/**
+ * Cache of {@link FileChannel}s.
+ * Cache eviction policy is kind of FIFO -- the first channel cached is the first candidate to drop
+ * from the cache, given it is not used right now.
+ */
 @ApiStatus.Internal
 final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
-  private final int myCacheSizeLimit;
+  private final int myCapacity;
+  private int myHitCount;
+  private int myMissCount;
+  private int myLoadCount;
+
+  //@GuardedBy("myCacheLock")
   @NotNull
   private final Map<Path, ChannelDescriptor> myCache;
 
-  private final Object myLock = new Object();
+  private final transient Object myCacheLock = new Object();
 
-  OpenChannelsCache(final int cacheSizeLimit) {
-    myCacheSizeLimit = cacheSizeLimit;
-    myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
+  OpenChannelsCache(final int capacity) {
+    myCapacity = capacity;
+    myCache = new LinkedHashMap<>(capacity, 0.5f, true);
+  }
+
+  @NotNull CachedChannelsStatistics getStatistics() {
+    synchronized (myCacheLock) {
+      return new CachedChannelsStatistics(myHitCount, myMissCount, myLoadCount, myCapacity);
+    }
   }
 
   @FunctionalInterface
@@ -37,14 +54,20 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
                    @NotNull ChannelProcessor<T> processor,
                    boolean read) throws IOException {
     ChannelDescriptor descriptor;
-    synchronized (myLock) {
+    synchronized (myCacheLock) {
       descriptor = myCache.get(path);
       if (descriptor == null) {
-        releaseOverCachedChannels();
+        boolean somethingDropped = releaseOverCachedChannels();
         descriptor = new ChannelDescriptor(path, read);
         myCache.put(path, descriptor);
+        if (somethingDropped) {
+          myMissCount++;
+        }
+        else {
+          myLoadCount++;
+        }
       }
-      if (!read && descriptor.isReadOnly()) {
+      else if (!read && descriptor.isReadOnly()) {
         if (descriptor.isLocked()) {
           descriptor = new ChannelDescriptor(path, false);
         }
@@ -54,32 +77,38 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
           descriptor = new ChannelDescriptor(path, false);
           myCache.put(path, descriptor);
         }
+        myMissCount++;
+      }
+      else {
+        myHitCount++;
       }
       descriptor.lock();
     }
 
+    //channel access is NOT guarded by the myCacheLock
     try {
       return processor.process(descriptor.getChannel());
-    } finally {
-      synchronized (myLock) {
+    }
+    finally {
+      synchronized (myCacheLock) {
         descriptor.unlock();
       }
     }
   }
 
   void closeChannel(Path path) throws IOException {
-    synchronized (myLock) {
+    synchronized (myCacheLock) {
       final ChannelDescriptor descriptor = myCache.remove(path);
 
       if (descriptor != null) {
-        assert !descriptor.isLocked();
+        assert !descriptor.isLocked() : "Channel is in use: " + descriptor;
         descriptor.close();
       }
     }
   }
 
-  private void releaseOverCachedChannels() throws IOException {
-    int dropCount = myCache.size() - myCacheSizeLimit;
+  private boolean releaseOverCachedChannels() throws IOException {
+    int dropCount = myCache.size() - myCapacity;
 
     if (dropCount >= 0) {
       List<Path> keysToDrop = new ArrayList<>();
@@ -94,7 +123,10 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
       for (Path file : keysToDrop) {
         closeChannel(file);
       }
+
+      return true;
     }
+    return false;
   }
 
   static final class ChannelDescriptor implements Closeable {
@@ -147,6 +179,15 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     @Override
     public void close() throws IOException {
       myChannel.close();
+    }
+
+    @Override
+    public String toString() {
+      return "ChannelDescriptor{" +
+             "locks=" + myLockCount +
+             ", channel=" + myChannel +
+             ", readOnly=" + myReadOnly +
+             '}';
     }
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces.isPopupPlace
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -13,6 +14,10 @@ abstract class AbstractChangeListAction : DumbAwareAction() {
   protected fun updateEnabledAndVisible(e: AnActionEvent, enabled: Boolean, contextMenuVisible: Boolean = true) = with(e.presentation) {
     isEnabled = enabled
     isVisible = !isPopupPlace(e.place) || enabled && contextMenuVisible
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   protected fun getChangeLists(e: AnActionEvent): Sequence<LocalChangeList> {

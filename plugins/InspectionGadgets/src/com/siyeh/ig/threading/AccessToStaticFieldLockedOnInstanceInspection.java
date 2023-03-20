@@ -17,6 +17,8 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,23 +30,24 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(ignoredClasses,
-                                              InspectionGadgetsBundle.message("options.label.ignored.classes"),
-                                              InspectionGadgetsBundle.message("choose.class.type.to.ignore"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(stringList(
+      "ignoredClasses", InspectionGadgetsBundle.message("options.label.ignored.classes"), 
+      new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.type.to.ignore"))
+    ));
   }
 
   @Nullable
@@ -76,10 +79,9 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField lockedField)) {
         return;
       }
-      final PsiField lockedField = (PsiField)target;
       if (!lockedField.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isConstant(lockedField)) {
         return;
       }
@@ -121,11 +123,9 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
           break;
         }
         final PsiExpression lockExpression = synchronizedStatement.getLockExpression();
-        if (lockExpression instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression reference = (PsiReferenceExpression)lockExpression;
+        if (lockExpression instanceof PsiReferenceExpression reference) {
           final PsiElement lockTarget = reference.resolve();
-          if (lockTarget instanceof PsiField) {
-            final PsiField lockField = (PsiField)lockTarget;
+          if (lockTarget instanceof PsiField lockField) {
             if (lockField.hasModifierProperty(PsiModifier.STATIC)) {
               isLockedOnClass = true;
             }

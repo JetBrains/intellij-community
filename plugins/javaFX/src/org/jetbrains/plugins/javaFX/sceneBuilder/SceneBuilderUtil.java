@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -26,7 +26,7 @@ final class SceneBuilderUtil {
   private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
 
   static final String SCENE_BUILDER_VERSION = "11.0.6";
-  static final String JAVAFX_VERSION = "16";
+  static final String JAVAFX_VERSION = "17.0.2";
   static final String SCENE_BUILDER_KIT_FULL_NAME = "scenebuilderkit-" + SCENE_BUILDER_VERSION + ".jar";
 
   public static final String[] JAVAFX_ARTIFACTS = {
@@ -100,7 +100,7 @@ final class SceneBuilderUtil {
           .filter(path -> {
             String name = path.toFile().getName();
             return name.startsWith(artifact + "-" + JAVAFX_VERSION) && name.endsWith(".jar"); //include os-specific jars
-          }).collect(Collectors.toList());
+          }).toList();
 
         for (Path path : paths) {
           urls.add(path.toUri().toURL());

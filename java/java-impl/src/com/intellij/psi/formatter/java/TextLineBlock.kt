@@ -17,7 +17,7 @@ class TextLineBlock(private val range: TextRange, private val alignment: Alignme
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? = spacing
 
-  override fun getChildAttributes(newChildIndex: Int): ChildAttributes = throw UnsupportedOperationException("Should not be called")
+  override fun getChildAttributes(newChildIndex: Int): ChildAttributes = ChildAttributes(null, null)
 
   override fun isIncomplete(): Boolean = false
 

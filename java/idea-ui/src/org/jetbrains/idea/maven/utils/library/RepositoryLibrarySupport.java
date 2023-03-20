@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.google.common.collect.Iterables;
@@ -12,8 +12,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
-import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
@@ -37,8 +35,7 @@ public class RepositoryLibrarySupport {
   /**
    * @deprecated Use {@link #addSupport(Module, ModifiableRootModel, ModifiableModelsProvider, DependencyScope)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public void addSupport(@NotNull Module module,
                          @NotNull final ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider) {
@@ -101,20 +98,18 @@ public class RepositoryLibrarySupport {
   }
 
   private boolean isLibraryEqualsToSelected(Library library) {
-    if (!(library instanceof LibraryEx)) {
+    if (!(library instanceof LibraryEx libraryEx)) {
       return false;
     }
 
-    LibraryEx libraryEx = (LibraryEx)library;
     if (!RepositoryLibraryType.REPOSITORY_LIBRARY_KIND.equals(libraryEx.getKind())) {
       return false;
     }
 
-    LibraryProperties libraryProperties = libraryEx.getProperties();
-    if (!(libraryProperties instanceof RepositoryLibraryProperties)) {
+    LibraryProperties<?> libraryProperties = libraryEx.getProperties();
+    if (!(libraryProperties instanceof RepositoryLibraryProperties repositoryLibraryProperties)) {
       return false;
     }
-    RepositoryLibraryProperties repositoryLibraryProperties = (RepositoryLibraryProperties)libraryProperties;
     RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(repositoryLibraryProperties);
 
     if (!description.equals(libraryDescription)) {

@@ -2,7 +2,6 @@
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.util.HashMap;
@@ -12,7 +11,7 @@ import java.util.Set;
 public final class TMHInstrumenter {
   static boolean instrument(ClassReader classReader,
                             ClassVisitor classWriter,
-                            Set<TMHAssertionGenerator> generators,
+                            Set<? extends TMHAssertionGenerator> generators,
                             boolean generateLineNumbers) {
     AnnotatedMethodsCollector collector = new AnnotatedMethodsCollector(generators);
     int options = ClassReader.SKIP_FRAMES;
@@ -29,7 +28,7 @@ public final class TMHInstrumenter {
   }
 
   public static boolean instrument(ClassReader classReader, ClassVisitor classWriter, boolean generateLineNumbers) {
-    return instrument(classReader, classWriter, ContainerUtil.immutableSet(
+    return instrument(classReader, classWriter, Set.of(
       new TMHAssertionGenerator.AssertEdt(),
       new TMHAssertionGenerator.AssertBackgroundThread(),
       new TMHAssertionGenerator.AssertReadAccess(),
@@ -39,10 +38,10 @@ public final class TMHInstrumenter {
   }
 
   private static class AnnotatedMethodsCollector extends ClassVisitor {
-    final Set<TMHAssertionGenerator> assertionGenerators;
+    final Set<? extends TMHAssertionGenerator> assertionGenerators;
     final Map<MethodKey, InstrumentationInfo> annotatedMethods = new HashMap<>();
 
-    AnnotatedMethodsCollector(Set<TMHAssertionGenerator> assertionGenerators) {
+    AnnotatedMethodsCollector(Set<? extends TMHAssertionGenerator> assertionGenerators) {
       super(Opcodes.API_VERSION);
       this.assertionGenerators = assertionGenerators;
     }

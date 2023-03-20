@@ -9,9 +9,6 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxColorProvider
 import java.awt.Color
 import java.util.*
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaFxColorProviderFormatTest : AbstractJavaFXTestCase() {
   override fun getTestDataPath() = PluginPathManager.getPluginHomePath("javaFX") + "/testData/colorProviderFormat"
 

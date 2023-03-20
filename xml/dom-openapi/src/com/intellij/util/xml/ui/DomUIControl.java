@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
- * @author peter
- * 
  * @see DomUIFactory
  */
 public abstract class DomUIControl<T extends DomElement> implements CommittablePanel {

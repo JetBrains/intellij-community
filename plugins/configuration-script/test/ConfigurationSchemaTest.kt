@@ -34,7 +34,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
     """.trimIndent())
 
     checkDescription(variants, "env", "Environment variables")
-    checkDescription(variants, "isAllowRunningInParallel", "Allow parallel run")
+    checkDescription(variants, "isAllowRunningInParallel", "Allow multiple instances")
     checkDescription(variants, "isShowConsoleOnStdErr", "Show console when a message is printed to standard error stream")
     checkDescription(variants, "isShowConsoleOnStdOut", "Show console when a message is printed to standard output stream")
   }
@@ -111,7 +111,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
         componentStateJsonSchemaGenerator.doGenerate(rootBuilder, mapOf(path to beanClass))
       }
 
-      override val definitionNodeKey: CharSequence?
+      override val definitionNodeKey: CharSequence
         get() = componentStateJsonSchemaGenerator.definitionNodeKey
 
       override fun generateDefinitions() = componentStateJsonSchemaGenerator.generateDefinitions()

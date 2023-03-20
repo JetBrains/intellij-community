@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -45,6 +46,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -61,8 +63,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.util.InjectActionsUtils.ENABLED_FOR_HOST;
 
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
@@ -108,7 +108,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
-    if (Boolean.FALSE.equals(host.getUserData(ENABLED_FOR_HOST))) return false;
+    if (!InjectionUtils.isInjectLanguageActionEnabled(host)) return false;
     List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
     if (injectedPsi == null || injectedPsi.isEmpty()) {
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
@@ -116,11 +116,26 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return false;
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+    if (host == null) return IntentionPreviewInfo.EMPTY;
+    String text = StringUtil.shortenTextWithEllipsis(ElementManipulators.getValueText(host), 40, 10);
+    return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.inject.language.action.preview", text));
+  }
+
   @Nullable
   protected static PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
                                                               @NotNull PsiFile file) {
     if (editor instanceof EditorWindow) return null;
     int offset = editor.getCaretModel().getOffset();
+
+    PsiLanguageInjectionHost fileLanguageHost = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
+
+    if (fileLanguageHost != null && fileLanguageHost.isValidHost()) {
+      return fileLanguageHost;
+    }
+
     FileViewProvider vp = file.getViewProvider();
     for (Language language : vp.getLanguages()) {
       PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(vp.findElementAt(offset, language), PsiLanguageInjectionHost.class, false);
@@ -273,7 +288,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                  @NotNull TextRange range,
                  @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer,
                  @NotNull @Nls String text,
-                 @NotNull Processor<PsiLanguageInjectionHost> data);
+                 @NotNull Processor<? super PsiLanguageInjectionHost> data);
   }
 
 

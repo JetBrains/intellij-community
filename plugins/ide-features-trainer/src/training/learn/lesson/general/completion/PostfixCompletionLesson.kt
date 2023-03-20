@@ -27,7 +27,7 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
 
     task {
       text(LessonsBundle.message("postfix.completion.intro") + " " + getTypeTaskText())
-      triggerByListItemAndHighlight {
+      triggerAndBorderHighlight().listItem {
         it.isToStringContains(completionItem)
       }
       proposeRestore {
@@ -49,8 +49,6 @@ abstract class PostfixCompletionLesson : KLesson("Postfix completion", LessonsBu
       }
     }
   }
-
-  override val suitableTips = listOf("PostfixCompletion")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("postfix.completion.help.link"),

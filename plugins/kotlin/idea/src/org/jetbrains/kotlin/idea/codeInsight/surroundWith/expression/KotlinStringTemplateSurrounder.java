@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
@@ -27,9 +27,8 @@ public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
     @Nullable
     @Override
     public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull KtExpression expression) {
-        KtStringTemplateExpression stringTemplateExpression = (KtStringTemplateExpression) KtPsiFactoryKt.KtPsiFactory(expression).createExpression(
-                getCodeTemplate(expression)
-        );
+        KtStringTemplateExpression stringTemplateExpression =
+                (KtStringTemplateExpression) new KtPsiFactory(expression.getProject()).createExpression(getCodeTemplate(expression));
         KtStringTemplateEntry templateEntry = stringTemplateExpression.getEntries()[0];
         KtExpression innerExpression = templateEntry.getExpression();
         assert innerExpression != null : "KtExpression should exists for " + stringTemplateExpression;

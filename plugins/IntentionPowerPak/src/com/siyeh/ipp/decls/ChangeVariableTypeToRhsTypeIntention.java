@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.decls;
 
 import com.intellij.psi.*;
@@ -14,6 +12,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class ChangeVariableTypeToRhsTypeIntention extends MutablyNamedIntention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("change.variable.type.to.rhs.type.intention.family.name");
+  }
 
   @NotNull
   @Override
@@ -35,10 +38,9 @@ public class ChangeVariableTypeToRhsTypeIntention extends MutablyNamedIntention 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiVariable)) {
+    if (!(parent instanceof PsiVariable variable)) {
       return;
     }
-    final PsiVariable variable = (PsiVariable)parent;
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) {
       return;

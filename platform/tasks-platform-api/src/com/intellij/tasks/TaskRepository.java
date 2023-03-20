@@ -26,7 +26,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,8 +108,7 @@ public abstract class TaskRepository {
   /**
    * @deprecated use #createCancellableConnection()
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void testConnection() throws Exception {
   }
 
@@ -133,11 +131,9 @@ public abstract class TaskRepository {
    * @param max   maximum issues number to return
    * @param since last updated timestamp. If 0, all issues should be returned.
    * @return found issues
-   * @throws Exception
    * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2014")
+  @Deprecated(forRemoval = true)
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     throw new UnsupportedOperationException("Deprecated: should not be called");
   }
@@ -153,7 +149,6 @@ public abstract class TaskRepository {
    * @param limit      maximum number of issues returned by server in this request (or number of issues per page in some interpretations)
    * @param withClosed whether to include closed (e.g. fixed/resolved) issues to response
    * @return found tasks
-   * @throws Exception
    */
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     return getIssues(query, offset + limit, 0);
@@ -201,7 +196,6 @@ public abstract class TaskRepository {
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
    * @return found task or {@code null} otherwise. Basically you should return {@code null} on e.g. 404 error and throw exception with
    * information about failure in other cases.
-   * @throws Exception
    */
   @Nullable
   public abstract Task findTask(@NotNull String id) throws Exception;
@@ -230,8 +224,7 @@ public abstract class TaskRepository {
   /**
    * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }
@@ -283,9 +276,8 @@ public abstract class TaskRepository {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TaskRepository)) return false;
+    if (!(o instanceof TaskRepository that)) return false;
 
-    TaskRepository that = (TaskRepository)o;
     if (!Comparing.equal(myType, that.myType)) return false;
     if (isShared() != that.isShared()) return false;
     if (getUrl() != null ? !getUrl().equals(that.getUrl()) : that.getUrl() != null) return false;

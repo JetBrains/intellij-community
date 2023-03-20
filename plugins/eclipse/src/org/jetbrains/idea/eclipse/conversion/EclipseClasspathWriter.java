@@ -89,8 +89,7 @@ public class EclipseClasspathWriter {
       }
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
-    else if (entry instanceof LibraryOrderEntry) {
-      final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+    else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
       final String libraryName = libraryOrderEntry.getLibraryName();
       if (libraryOrderEntry.isModuleLevel()) {
         final String[] files = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);
@@ -164,7 +163,7 @@ public class EclipseClasspathWriter {
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, model);
 
-            final String[] nativeRoots = libraryOrderEntry.getUrls(NativeLibraryOrderRootType.getInstance());
+            final String[] nativeRoots = libraryOrderEntry.getRootUrls(NativeLibraryOrderRootType.getInstance());
             if (nativeRoots.length > 0) {
               EJavadocUtil.setupAttributes(orderEntry, nativeRoot -> EPathUtil.collapse2EclipsePath(nativeRoot, model), EclipseXml.DLL_LINK, nativeRoots);
             }

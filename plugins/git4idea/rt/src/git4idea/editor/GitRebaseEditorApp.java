@@ -1,48 +1,49 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.editor;
 
-import git4idea.GitAppUtil;
-import git4idea.GitExternalApp;
+import externalApp.ExternalApp;
+import externalApp.ExternalAppUtil;
 
 import java.io.File;
 import java.util.Arrays;
 
-import static git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
-import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV;
+import static git4idea.editor.GitRebaseEditorAppHandler.ERROR_EXIT_CODE;
 
 /**
  * The rebase editor application, this editor is invoked by the git.
- * The application passes its parameter using XML RCP service
- * registered on the host passed as the first parameter. The application
- * exits with exit code returned from the service.
  */
-public class GitRebaseEditorApp implements GitExternalApp {
+public class GitRebaseEditorApp implements ExternalApp {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     try {
-      if (args.length != 2) {
-        System.err.println("Invalid amount of arguments: " + Arrays.asList(args));
+      if (args.length != 1) {
+        System.err.println("Invalid arguments: " + Arrays.asList(args));
         System.exit(ERROR_EXIT_CODE);
         return;
       }
 
-      int xmlRpcPort;
-      try {
-        xmlRpcPort = Integer.parseInt(args[0]);
-      }
-      catch (NumberFormatException ex) {
-        System.err.println("Invalid port number: " + args[0]);
+      String handlerId = ExternalAppUtil.getEnv(GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV);
+      int idePort = ExternalAppUtil.getEnvInt(GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV);
+
+      String workingDir = new File("").getAbsolutePath();
+      String path = args[0];
+      String bodyContent = path + "\n" + workingDir;
+
+      ExternalAppUtil.Result result = ExternalAppUtil.sendIdeRequest(GitRebaseEditorAppHandler.ENTRY_POINT_NAME, idePort,
+                                                                     handlerId, bodyContent);
+
+      if (result.isError) {
+        System.err.println(result.error);
         System.exit(ERROR_EXIT_CODE);
-        return;
       }
 
-      String handlerNo = GitAppUtil.getEnv(IJ_EDITOR_HANDLER_ENV);
+      String response = result.response;
+      if (response == null) {
+        System.exit(ERROR_EXIT_CODE); // dialog cancelled
+      }
 
-      Integer response = GitAppUtil.sendXmlRequest(GitRebaseEditorXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
-                                                   handlerNo, args[1], new File("").getAbsolutePath());
-      int exitCode = response != null ? response.intValue() : ERROR_EXIT_CODE;
-
+      int exitCode = Integer.parseInt(response);
       System.exit(exitCode);
     }
     catch (Throwable t) {

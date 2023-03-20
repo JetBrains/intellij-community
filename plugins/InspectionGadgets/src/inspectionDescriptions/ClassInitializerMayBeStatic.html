@@ -5,6 +5,7 @@ Reports instance initializers which may be made <code>static</code>.
   An instance initializer may be static if it does not reference any of its class' non-static members.
   Static initializers are executed once the class is resolved,
   while instance initializers are executed on each instantiation of the class.</p>
+<p>This inspection doesn't report instance empty initializers and initializers in anonymous classes.
 <p><b>Example:</b></p>
 <pre><code>
   class A {

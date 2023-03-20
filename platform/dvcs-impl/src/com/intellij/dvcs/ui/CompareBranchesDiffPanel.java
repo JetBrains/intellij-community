@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
@@ -21,15 +7,11 @@ import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.dvcs.util.LocalCommitCompareInfo;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -38,7 +20,10 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -52,12 +37,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class CompareBranchesDiffPanel extends JPanel {
+public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
+  public static final DataKey<CompareBranchesDiffPanel> DATA_KEY = DataKey.create("com.intellij.dvcs.ui.CompareBranchesDiffPanel");
+
   private final @NlsSafe String myBranchName;
   private final Project myProject;
   private final @NlsSafe String myCurrentBranchName;
@@ -91,15 +77,14 @@ public class CompareBranchesDiffPanel extends JPanel {
     myLabel.setFocusable(false);
     myLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
-        myVcsSettings.setSwapSidesInCompareBranches(!swapSides);
-        refreshView();
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+        swapSides();
       }
     });
     updateLabelText();
 
     myChangesBrowser = new MyChangesBrowser(project, emptyList());
+    myChangesBrowser.getViewer().setTreeStateStrategy(ChangesTree.KEEP_NON_EMPTY);
 
     setLayout(new BorderLayout());
     add(myLabel, BorderLayout.NORTH);
@@ -109,20 +94,33 @@ public class CompareBranchesDiffPanel extends JPanel {
   @RequiresEdt
   public void setCompareInfo(@NotNull CommitCompareInfo compareInfo) {
     myCompareInfo = compareInfo;
-    refreshView();
+    refreshView(false);
   }
 
   @NotNull
-  public SimpleChangesBrowser getChangesBrowser() {
+  public ChangesBrowserBase getChangesBrowser() {
     return myChangesBrowser;
   }
 
-  private void refreshView() {
-    if (myCompareInfo != null) {
-      boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
-      updateLabelText();
-      List<Change> diff = myCompareInfo.getTotalDiff();
-      if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
+  private void swapSides() {
+    boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+    myVcsSettings.setSwapSidesInCompareBranches(!swapSides);
+
+    refreshView(true);
+  }
+
+  private void refreshView(boolean onSwapSides) {
+    if (myCompareInfo == null) return;
+
+    boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+    updateLabelText();
+    List<Change> diff = myCompareInfo.getTotalDiff();
+    if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
+
+    if (onSwapSides) {
+      myChangesBrowser.setChangesToDisplay(diff, new OnSwapSidesTreeStateStrategy());
+    }
+    else {
       myChangesBrowser.setChangesToDisplay(diff);
     }
   }
@@ -164,17 +162,18 @@ public class CompareBranchesDiffPanel extends JPanel {
     return myChangesBrowser.getPreferredFocusedComponent();
   }
 
-  private class MyChangesBrowser extends SimpleChangesBrowser {
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    return null;
+  }
+
+  private static class MyChangesBrowser extends SimpleAsyncChangesBrowser {
     MyChangesBrowser(@NotNull Project project, @NotNull List<? extends Change> changes) {
       super(project, false, true);
       setChangesToDisplay(changes);
-    }
-
-    @Override
-    public void setChangesToDisplay(@NotNull Collection<? extends Change> changes) {
-      List<Change> oldSelection = getSelectedChanges();
-      super.setChangesToDisplay(changes);
-      myViewer.setSelectedChanges(DvcsBranchUtil.swapRevisions(oldSelection));
     }
 
     @NotNull
@@ -182,7 +181,7 @@ public class CompareBranchesDiffPanel extends JPanel {
     protected List<AnAction> createToolbarActions() {
       return ContainerUtil.append(
         super.createToolbarActions(),
-        new MyCopyChangesAction()
+        ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }
 
@@ -191,45 +190,59 @@ public class CompareBranchesDiffPanel extends JPanel {
     protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
-        new MyCopyChangesAction()
+        ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }
   }
 
-  private class MyCopyChangesAction extends DumbAwareAction {
-    MyCopyChangesAction() {
-      super(DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action"),
-            DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action.description", myBranchName),
-            AllIcons.Actions.Download);
-      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
+  public static class GetVersionActionProvider implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return e.getData(DATA_KEY) != null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean isEnabled = !myChangesBrowser.getSelectedChanges().isEmpty();
-      boolean isVisible = myCompareInfo instanceof LocalCommitCompareInfo;
-      e.getPresentation().setEnabled(isEnabled && isVisible);
-      e.getPresentation().setVisible(isVisible);
+      CompareBranchesDiffPanel panel = e.getRequiredData(DATA_KEY);
+
+      Presentation presentation = e.getPresentation();
+      presentation.setText(DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action"));
+      presentation.setDescription(DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action.description",
+                                                            panel.myBranchName));
+
+      boolean isEnabled = !panel.myChangesBrowser.getSelectedChanges().isEmpty();
+      boolean isVisible = panel.myCompareInfo instanceof LocalCommitCompareInfo;
+      presentation.setEnabled(isEnabled && isVisible);
+      presentation.setVisible(isVisible);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String title = DvcsBundle.message("compare.branches.diff.panel.get.from.branch.title", myBranchName);
-      List<Change> changes = myChangesBrowser.getSelectedChanges();
-      boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+      CompareBranchesDiffPanel panel = e.getRequiredData(DATA_KEY);
 
-      ReplaceFileConfirmationDialog confirmationDialog = new ReplaceFileConfirmationDialog(myProject, title);
+      Project project = panel.myProject;
+      List<Change> changes = panel.myChangesBrowser.getSelectedChanges();
+      boolean swapSides = panel.myVcsSettings.shouldSwapSidesInCompareBranches();
+      CommitCompareInfo compareInfo = panel.myCompareInfo;
+
+      String title = DvcsBundle.message("compare.branches.diff.panel.get.from.branch.title", panel.myBranchName);
+      ReplaceFileConfirmationDialog confirmationDialog = new ReplaceFileConfirmationDialog(project, title);
       if (!confirmationDialog.confirmFor(ChangesUtil.getFilesFromChanges(changes))) return;
 
       FileDocumentManager.getInstance().saveAllDocuments();
       LocalHistoryAction action = LocalHistory.getInstance().startAction(title);
 
-      new Task.Modal(myProject, DvcsBundle.message("compare.branches.diff.panel.loading.content.from.branch.process"), false) {
+      new Task.Modal(project, DvcsBundle.message("compare.branches.diff.panel.loading.content.from.branch.process"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (myCompareInfo != null) {
-              ((LocalCommitCompareInfo)myCompareInfo).copyChangesFromBranch(changes, swapSides);
+            if (compareInfo != null) {
+              ((LocalCommitCompareInfo)compareInfo).copyChangesFromBranch(changes, swapSides);
             }
           }
           catch (VcsException err) {
@@ -242,9 +255,30 @@ public class CompareBranchesDiffPanel extends JPanel {
         public void onFinished() {
           action.finish();
 
-          refreshView();
+          panel.refreshView(false);
         }
       }.queue();
+    }
+  }
+
+  private static class OnSwapSidesTreeStateStrategy implements ChangesTree.TreeStateStrategy<OnSwapSidesTreeStateStrategy.MyState> {
+    @Override
+    public MyState saveState(@NotNull ChangesTree tree) {
+      List<Change> changes = VcsTreeModelData.selected(tree).userObjects(Change.class);
+      return new MyState(changes);
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, MyState state, boolean scrollToSelection) {
+      if (state != null && !state.selectedChanges.isEmpty()) {
+        tree.setSelectedChanges(DvcsBranchUtil.swapRevisions(state.selectedChanges));
+      }
+      else {
+        tree.resetTreeState();
+      }
+    }
+
+    private record MyState(@NotNull List<Change> selectedChanges) {
     }
   }
 }

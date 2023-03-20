@@ -11,7 +11,7 @@ public class CleanupWrongElement {
   public static void main(String[] args) throws IOException {
     InputStream in = new FileInputStream("name");
 
-    for (<error descr="'@Cleanup': is legal only on a local variable declaration inside a block">@Cleanup</error> int i = 0; i < 10; i++) {
+    for (<error descr="@Cleanup: is legal only on a local variable declaration inside a block">@Cleanup</error> int i = 0; i < 10; i++) {
 
     }
   }

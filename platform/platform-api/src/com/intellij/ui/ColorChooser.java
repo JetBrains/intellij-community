@@ -12,9 +12,12 @@ import java.util.List;
 /**
  * Utility wrapper around JColorChooser. Helps to avoid memory leak through JColorChooser.ColorChooserDialog.cancelButton.
  *
+ * @deprecated Use ColorChooserService.getInstance().showDialog
+ *
  * @author max
  * @author Konstantin Bulenkov
  */
+@Deprecated(forRemoval = true)
 public final class ColorChooser {
   @Nullable
   public static Color chooseColor(Component parent,
@@ -23,7 +26,7 @@ public final class ColorChooser {
                                   boolean enableOpacity,
                                   List<? extends ColorPickerListener> listeners,
                                   boolean opacityInPercent) {
-    return ColorChooserService.getInstance().showDialog(null, parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
+    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
 
   @Nullable

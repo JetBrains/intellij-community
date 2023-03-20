@@ -70,5 +70,7 @@ class X {
 
     test(message("property.icu4j.title", 10));
     test2(<warning descr="String 'Generate Code with {0, plural, one {Foo} other {Bar}}' is not properly capitalized. It should have sentence capitalization">message("property.icu4j.title", 10)</warning>);
+
+    test(message("property.with.underscore.mnemonic"));
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.VcsApplicationSettings
@@ -24,6 +25,10 @@ private object ShowOnDoubleClickToggleAction {
       e.presentation.isEnabledAndVisible = isCommitToolwindowShown
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     class EditorPreview : CommitView(true)
     class Source : CommitView(false)
   }
@@ -42,6 +47,10 @@ private object ShowOnDoubleClickToggleAction {
 
       val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
       e.presentation.isEnabledAndVisible = !isCommitToolwindowShown
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
     class EditorPreview : LocalChangesView(true)

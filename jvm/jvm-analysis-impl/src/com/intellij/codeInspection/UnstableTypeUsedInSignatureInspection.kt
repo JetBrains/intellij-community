@@ -2,21 +2,21 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.StaticAnalysisAnnotationManager
+import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.AnnotatedApiUsageUtil.findAnnotatedTypeUsedInDeclarationSignature
-import com.intellij.codeInspection.UnstableApiUsageInspection.Companion.DEFAULT_UNSTABLE_API_ANNOTATIONS
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiField
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.uast.UastVisitorAdapter
-import com.intellij.util.ui.FormBuilder
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import java.awt.BorderLayout
-import javax.swing.JPanel
 
 /**
  * Reports declarations of classes, method and fields that in their signatures refer to a type marked with "unstable API" annotation,
@@ -28,7 +28,8 @@ import javax.swing.JPanel
 class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
 
   @JvmField
-  val unstableApiAnnotations: MutableList<String> = ExternalizableStringSet(*DEFAULT_UNSTABLE_API_ANNOTATIONS.toTypedArray())
+  val unstableApiAnnotations: MutableList<String> =
+    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations)
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (unstableApiAnnotations.none { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {
@@ -37,19 +38,10 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
     return UastVisitorAdapter(UnstableTypeUsedInSignatureVisitor(holder, unstableApiAnnotations.toList()), true)
   }
 
-  override fun createOptionsPanel(): JPanel {
-    val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      unstableApiAnnotations,
-      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list")
-    )
-
-    val formBuilder = FormBuilder.createFormBuilder()
-    formBuilder.addComponent(annotationsListControl)
-
-    val container = JPanel(BorderLayout())
-    container.add(formBuilder.panel, BorderLayout.NORTH)
-    return container
-  }
+  override fun getOptionsPane(): OptPane = pane(
+    stringList("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
+               JavaClassValidator().annotationsOnly())
+  )
 }
 
 private class UnstableTypeUsedInSignatureVisitor(

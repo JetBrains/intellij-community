@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content
 
 import com.intellij.CommonBundle
@@ -15,26 +15,28 @@ import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl
+import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.AbstractLayoutManager
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.*
@@ -48,18 +50,16 @@ import javax.swing.SwingUtilities
 /**
  * Tool window header that shows tabs and actions from its content.
  *
- * If toolwindow [Content] returns [SingleContentSupplier] as a data provider
- * via [SingleContentSupplier.KEY] that in case of single content view
+ * If the toolwindow [Content] returns [SingleContentSupplier] as a data provider
+ * via [SingleContentSupplier.KEY], then in case of a single content view,
  * all [JBTabs] and actions are moved into this header.
  *
- * When two or more contents exist then header looks like [TabContentLayout].
+ * When two or more contents exist, the header looks like [TabContentLayout].
  */
 internal class SingleContentLayout(
   ui: ToolWindowContentUi
 ) : TabContentLayout(ui) {
-
-  private var isSingleContentView: Boolean = false
-
+  val closeCurrentContentAction: AnAction = CloseCurrentContentAction()
   private var tabAdapter: TabAdapter? = null
   private val toolbars = mutableMapOf<ToolbarType, ActionToolbar>()
   private var wrapper: JComponent? = null
@@ -71,6 +71,10 @@ internal class SingleContentLayout(
 
   override fun rebuild() {
     super.rebuild()
+
+    if (isSingleContentView && Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
+      resetSingleContentView()
+    }
     tryUpdateContentView()
   }
 
@@ -78,12 +82,17 @@ internal class SingleContentLayout(
     return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
   }
 
+  fun getSupplier() = getSingleContentOrNull()?.getSupplier()
+
   private fun getSingleContentOrNull(): Content? {
-    return findTopLevelContentManager()?.contentsRecursively?.singleOrNull()
+    return if (Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
+      ui.contentManager.contents.singleOrNull()?.takeIf { it !is SubContent }
+    }
+    else findTopLevelContentManager()?.contentsRecursively?.singleOrNull()
   }
 
   private fun findTopLevelContentManager(): ContentManagerImpl? {
-    return InternalDecoratorImpl.findTopLevelDecorator(myUi.component)?.contentManager as? ContentManagerImpl
+    return InternalDecoratorImpl.findTopLevelDecorator(ui.component)?.contentManager as? ContentManagerImpl
   }
 
   private fun tryUpdateContentView() {
@@ -102,7 +111,7 @@ internal class SingleContentLayout(
       resetSingleContentView()
     }
 
-    val toolwindow = myUi.getWindow().castSafelyTo<ToolWindowEx>()
+    val toolwindow = ui.getWindow().asSafely<ToolWindowEx>()
     if (toolwindow != null) {
       val group = toolwindow.decoration?.actionGroup
       if (isSingleContentView) {
@@ -125,9 +134,9 @@ internal class SingleContentLayout(
   }
 
   private fun initSingleContentView(content: Content, supplier: SingleContentSupplier) {
-    tabAdapter = TabAdapter(content, supplier.getTabs(), tabPainter, myUi).also {
+    tabAdapter = TabAdapter(content, supplier.getTabs(), tabPainter, ui).also {
       Disposer.register(content, it)
-      myUi.tabComponent.add(it)
+      ui.tabComponent.add(it)
     }
     assert(toolbars.isEmpty())
     supplier.getToolbarActions()?.let { mainActionGroup ->
@@ -138,37 +147,39 @@ internal class SingleContentLayout(
       )
     }
 
-    let {
-      val contentActions = DefaultActionGroup()
-      contentActions.add(CloseCurrentContentAction())
-      contentActions.add(Separator.create())
-      contentActions.addAll(supplier.getContentActions())
-      contentActions.add(MyInvisibleAction())
+    if (!isNewUI()) {
+      let {
+        val contentActions = DefaultActionGroup()
+        contentActions.add(closeCurrentContentAction)
+        contentActions.add(Separator.create())
+        contentActions.addAll(supplier.getContentActions())
+        contentActions.add(MyInvisibleAction())
 
-      toolbars[ToolbarType.CLOSE_GROUP] = createToolbar(
-        supplier.getContentToolbarPlace(),
-        contentActions,
-        content.component
-      ).apply {
-        setReservePlaceAutoPopupIcon(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        toolbars[ToolbarType.CLOSE_GROUP] = createToolbar(
+          supplier.getContentToolbarPlace(),
+          contentActions,
+          content.component
+        ).apply {
+          setReservePlaceAutoPopupIcon(false)
+          layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        }
       }
     }
 
-    toolbars.forEach { (_, toolbar) -> myUi.tabComponent.add(toolbar.component) }
+    toolbars.forEach { (_, toolbar) -> ui.tabComponent.add(toolbar.component) }
 
     wrapper = NonOpaquePanel(HorizontalLayout(0)).also {
       MyRedispatchMouseEventListener { e ->
         // extra actions are registered in ToolWindowContentUi#initMouseListeners
         if (SwingUtilities.isLeftMouseButton(e)) {
-          myUi.tabComponent.parent?.let { westPanel ->
+          ui.tabComponent.parent?.let { westPanel ->
             westPanel.dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, westPanel))
           }
         }
       }.installOn(it)
       MouseDragHelper.setComponentDraggable(it, true)
-      ToolWindowContentUi.initMouseListeners(it, myUi, true)
-      myUi.tabComponent.add(it)
+      ToolWindowContentUi.initMouseListeners(it, ui, true)
+      ui.tabComponent.add(it)
     }
 
     isSingleContentView = true
@@ -187,22 +198,22 @@ internal class SingleContentLayout(
         toolbar.updateActionsImmediately()
       }
       supplier.customize(wrapper)
-      myUi.tabComponent.repaint()
+      ui.tabComponent.repaint()
     }
   }
 
   private fun resetSingleContentView() {
     val adapter = tabAdapter ?: error("Adapter must not be null")
     tabAdapter = null
-    myUi.tabComponent.remove(adapter)
+    ui.tabComponent.remove(adapter)
     Disposer.dispose(adapter)
 
     toolbars.values.forEach {
-      myUi.tabComponent.remove(it.component)
+      ui.tabComponent.remove(it.component)
     }
     toolbars.clear()
 
-    myUi.tabComponent.remove(wrapper ?: error("Wrapper must not be null"))
+    ui.tabComponent.remove(wrapper ?: error("Wrapper must not be null"))
     wrapper = null
 
     isSingleContentView = false
@@ -224,10 +235,10 @@ internal class SingleContentLayout(
     super.layout()
 
     if (isSingleContentView) {
-      val component = myUi.tabComponent
+      val component = ui.tabComponent
       component.bounds = component.bounds.apply { width = component.parent.width }
 
-      val labelWidth = myIdLabel.x + myIdLabel.preferredSize.width
+      val labelWidth = idLabel.x + idLabel.width  // label is laid out by parent
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
       var mainToolbarWidth = toolbars[ToolbarType.MAIN]?.component?.preferredSize?.width ?: 0
       val contentToolbarWidth = toolbars[ToolbarType.CLOSE_GROUP]?.component?.preferredSize?.width ?: 0
@@ -251,7 +262,8 @@ internal class SingleContentLayout(
       }
 
       toolbars[ToolbarType.MAIN]?.component?.apply {
-        bounds = Rectangle(x, 0, mainToolbarWidth, component.height)
+        val height = preferredSize.height
+        bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
         x += mainToolbarWidth
       }
 
@@ -261,38 +273,40 @@ internal class SingleContentLayout(
       }
 
       toolbars[ToolbarType.CLOSE_GROUP]?.component?.apply {
-        bounds = Rectangle(x, 0, contentToolbarWidth, component.height)
+        val height = preferredSize.height
+        bounds = Rectangle(x, (component.height - height) / 2, contentToolbarWidth, height)
         x += contentToolbarWidth
       }
     }
   }
 
   override fun updateIdLabel(label: BaseLabel) {
+    super.updateIdLabel(label)
     if (!isSingleContentView) {
       label.icon = null
       label.toolTipText = null
-      super.updateIdLabel(label)
     }
-    else if (myTabs.size == 1) {
-      label.icon = myTabs[0].content.icon
-      val displayName = myTabs[0].content.displayName
+    else if (tabs.size == 1) {
+      label.icon = tabs[0].content.icon
+      val displayName = tabs[0].content.displayName
       label.text = createProcessName(
-        prefix = myUi.window.stripeTitle,
+        prefix = ui.window.stripeTitle,
         title = displayName
       )
       label.toolTipText = displayName
-      label.border = JBUI.Borders.empty(0, 2, 0, 7)
     }
   }
 
   @NlsSafe
-  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let { "$it:" } ?: title
+  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let {
+    if (isNewUI()) it else "$it:"
+  } ?: title
 
-  private inner class TabAdapter(
+  internal inner class TabAdapter(
     val content: Content,
     val jbTabs: JBTabs,
-    val tabPainter: JBTabPainter,
-    val twcui: ToolWindowContentUi
+    private val tabPainter: JBTabPainter,
+    private val twcui: ToolWindowContentUi
   ) : NonOpaquePanel(),
       TabsListener,
       PropertyChangeListener,
@@ -311,7 +325,7 @@ internal class SingleContentLayout(
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
           if (tabLabel != null && tabLabel.content.isCloseable) {
-            tabLabel?.closeContent()
+            tabLabel.closeContent()
           }
         }
       }
@@ -331,7 +345,9 @@ internal class SingleContentLayout(
       updateTabs()
 
       jbTabs.addListener(object : TabsListener {
-        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) = checkAndUpdate()
+        override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
+          checkAndUpdate()
+        }
         override fun tabRemoved(tabToRemove: TabInfo) = checkAndUpdate()
         override fun tabsMoved() = checkAndUpdate()
       }, this)
@@ -349,6 +365,10 @@ internal class SingleContentLayout(
         labels.find { it.content.info == jbTabs.selectedInfo }
       }
 
+      if (twcui.dropOverIndex != -1 && Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
+        add(dropOverPlaceholder, twcui.dropOverIndex.coerceAtMost(this.componentCount))
+      }
+
       add(popupToolbar, HorizontalTabLayoutWithHiddenControl.CONTROL)
     }
 
@@ -359,7 +379,7 @@ internal class SingleContentLayout(
     private fun checkAndUpdate() {
       val currentContent = getSingleContentOrNull()
       val currentSupplier = currentContent?.getSupplier()
-      val src = currentSupplier?.getTabs()?.tabs ?: return
+      val src = currentSupplier?.getTabs()?.tabs?.filter { !it.isHidden } ?: return
       val dst = labels.map(::retrieveInfo)
       if (!ContainerUtil.equalsIdentity(src, dst)) {
         updateTabs()
@@ -370,17 +390,19 @@ internal class SingleContentLayout(
     }
 
     fun updateTabs() {
-      labels.removeAll {
-        retrieveInfo(it).changeSupport.removePropertyChangeListener(this)
-        remove(it)
-        true
+      labels.removeAll { remove(it); true }
+      jbTabs.tabs.forEach { info ->
+        info.changeSupport.removePropertyChangeListener(this)
+        info.changeSupport.addPropertyChangeListener(this)
       }
 
       val supplier = getSingleContentOrNull()?.getSupplier() ?: return
-      if (jbTabs.tabs.size > 1) {
-        labels.addAll(jbTabs.tabs.map { info ->
-          info.changeSupport.addPropertyChangeListener(this)
-          MyContentTabLabel(FakeContent(supplier, info), this@SingleContentLayout).apply {
+      val visibleTabs = jbTabs.tabs.filter { !it.isHidden }
+      if (visibleTabs.size > 1 || twcui.dropOverIndex != -1 && Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
+        labels.addAll(visibleTabs.map { info ->
+          val content = SubContent(supplier, info)
+          supplier.addSubContent(info, content)
+          MyContentTabLabel(content, this@SingleContentLayout).apply {
             addMouseListener(closeHandler)
           }
         })
@@ -389,13 +411,13 @@ internal class SingleContentLayout(
       updateLabels(labels)
     }
 
-    fun updateLabels(labels: List<MyContentTabLabel>) {
+    private fun updateLabels(labels: List<MyContentTabLabel>) {
       labels.associateBy { it.content.info }.forEach(::copyValues)
     }
 
     override fun dispose() {
-      labels.forEach {
-        retrieveInfo(it).changeSupport.removePropertyChangeListener(this)
+      jbTabs.tabs.forEach {
+        it.changeSupport.removePropertyChangeListener(this)
       }
       jbTabs.component.removeContainerListener(containerListener)
     }
@@ -408,14 +430,14 @@ internal class SingleContentLayout(
       return Dimension(minWidth, 0)
     }
 
-    fun copyValues(from: TabInfo, to: ContentLabel) {
+    private fun copyValues(from: TabInfo, to: ContentLabel) {
       to.icon = from.icon
       to.text = from.text
     }
 
     fun showPopup(component: Component, x: Int, y: Int) {
       // ViewContext.CONTENT_KEY
-      val info = ((component as? ContentTabLabel)?.content as? FakeContent)?.info
+      val info = ((component as? ContentTabLabel)?.content as? SubContent)?.info
       if (info == null) {
         logger<SingleContentLayout>().warn("Cannot resolve label popup component. Event will be ignored")
         return
@@ -457,11 +479,18 @@ internal class SingleContentLayout(
 
     override fun propertyChange(evt: PropertyChangeEvent) {
       val source = evt.source as? TabInfo ?: error("Bad event source")
-      val label = labels.find { it.content.info == source } ?: error("Cannot find label for $source")
-      copyValues(source, label)
+      if (TabInfo.HIDDEN == evt.propertyName) {
+        val isHidden = evt.newValue as Boolean
+        ClientProperty.put(source.component, SingleContentSupplier.DRAGGED_OUT_KEY, if (isHidden) true else null)
+        checkAndUpdate()
+      }
+      else {
+        val label = labels.find { it.content.info == source }
+        if (label != null) copyValues(source, label)
+      }
     }
 
-    private inner class MyContentTabLabel(content: FakeContent, layout: TabContentLayout) : ContentTabLabel(content, layout), DataProvider {
+    private inner class MyContentTabLabel(content: SubContent, layout: TabContentLayout) : ContentTabLabel(content, layout), DataProvider {
 
       init {
         addMouseListener(popupHandler)
@@ -484,8 +513,8 @@ internal class SingleContentLayout(
         return DataManagerImpl.getDataProviderEx(retrieveInfo(this).component)?.getData(dataId)
       }
 
-      override fun getContent(): FakeContent {
-        return super.getContent() as FakeContent
+      override fun getContent(): SubContent {
+        return super.getContent() as SubContent
       }
     }
 
@@ -505,15 +534,15 @@ internal class SingleContentLayout(
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)
 
-      val step = object : BaseListPopupStep<FakeContent>(null, contentToShow) {
-        override fun onChosen(selectedValue: FakeContent, finalChoice: Boolean): PopupStep<*>? {
+      val step = object : BaseListPopupStep<SubContent>(null, contentToShow) {
+        override fun onChosen(selectedValue: SubContent, finalChoice: Boolean): PopupStep<*>? {
           jbTabs.select(selectedValue.info, true)
           return FINAL_CHOICE
         }
 
-        override fun getIconFor(value: FakeContent) = value.icon
+        override fun getIconFor(value: SubContent) = value.icon
 
-        override fun getTextFor(value: FakeContent) = value.displayName
+        override fun getTextFor(value: SubContent) = value.displayName
       }
 
       JBPopupFactory.getInstance()
@@ -555,19 +584,19 @@ internal class SingleContentLayout(
       }
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     private fun isPinned(): Boolean {
       return getSingleContentOrNull()?.isPinned == true
     }
   }
 
   /**
-   * The minimal [Content] implementation.
-   *
-   * Is used only to pass as an argument to support [SingleContentLayout.TabAdapter.MyContentTabLabel].
-   *
-   * All unused methods throw [IllegalStateException].
+   * The content implementation for the tab provided by [SingleContentSupplier]
    */
-  private class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : Content {
+  internal class SubContent(val supplier: SingleContentSupplier, val info: TabInfo) : ContentImpl(info.component, info.text, false) {
 
     private val pcs = PropertyChangeSupport(this)
 
@@ -587,189 +616,8 @@ internal class SingleContentLayout(
       return supplier.isClosable(info)
     }
 
-    override fun isPinned(): Boolean {
-      return false
-    }
-
-    override fun getManager(): ContentManager? {
-      return null
-    }
-
     override fun getIcon(): Icon? {
       return info.icon
-    }
-
-    @NlsSafe
-    override fun getDisplayName(): String {
-      return info.text
-    }
-
-    override fun <T : Any?> getUserData(key: Key<T>): T? {
-      error("An operation is not supported")
-    }
-
-    override fun <T : Any?> putUserData(key: Key<T>, value: T?) {
-      error("An operation is not supported")
-    }
-
-    override fun dispose() {
-      error("An operation is not supported")
-    }
-
-    override fun getComponent(): JComponent {
-      error("An operation is not supported")
-    }
-
-    override fun getPreferredFocusableComponent(): JComponent? {
-      error("An operation is not supported")
-    }
-
-    override fun setComponent(component: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun setPreferredFocusableComponent(component: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun setPreferredFocusedComponent(computable: Computable<out JComponent>?) {
-      error("An operation is not supported")
-    }
-
-    override fun setIcon(icon: Icon?) {
-      error("An operation is not supported")
-    }
-
-    override fun setDisplayName(displayName: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun setTabName(tabName: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun getTabName(): String {
-      error("An operation is not supported")
-    }
-
-    override fun getToolwindowTitle(): String {
-      error("An operation is not supported")
-    }
-
-    override fun setToolwindowTitle(toolwindowTitle: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun getDisposer(): Disposable? {
-      error("An operation is not supported")
-    }
-
-    override fun setDisposer(disposer: Disposable) {
-      error("An operation is not supported")
-    }
-
-    override fun setShouldDisposeContent(value: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun getDescription(): String? {
-      error("An operation is not supported")
-    }
-
-    override fun setDescription(description: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun release() {
-      error("An operation is not supported")
-    }
-
-    override fun isValid(): Boolean {
-      error("An operation is not supported")
-    }
-
-    override fun setPinned(locked: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun setPinnable(pinnable: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun isPinnable(): Boolean {
-      error("An operation is not supported")
-    }
-
-    override fun setCloseable(closeable: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun setActions(actions: ActionGroup?, place: String?, contextComponent: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun getActions(): ActionGroup? {
-      error("An operation is not supported")
-    }
-
-    override fun setSearchComponent(comp: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun getSearchComponent(): JComponent? {
-      error("An operation is not supported")
-    }
-
-    override fun getPlace(): String {
-      error("An operation is not supported")
-    }
-
-    override fun getActionsContextComponent(): JComponent? {
-      error("An operation is not supported")
-    }
-
-    override fun setAlertIcon(icon: AlertIcon?) {
-      error("An operation is not supported")
-    }
-
-    override fun getAlertIcon(): AlertIcon? {
-      error("An operation is not supported")
-    }
-
-    override fun fireAlert() {
-      error("An operation is not supported")
-    }
-
-    override fun getBusyObject(): BusyObject? {
-      error("An operation is not supported")
-    }
-
-    override fun setBusyObject(`object`: BusyObject?) {
-      error("An operation is not supported")
-    }
-
-    override fun getSeparator(): String {
-      error("An operation is not supported")
-    }
-
-    override fun setSeparator(separator: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun setPopupIcon(icon: Icon?) {
-      error("An operation is not supported")
-    }
-
-    override fun getPopupIcon(): Icon? {
-      error("An operation is not supported")
-    }
-
-    override fun setExecutionId(executionId: Long) {
-      error("An operation is not supported")
-    }
-
-    override fun getExecutionId(): Long {
-      error("An operation is not supported")
     }
   }
 
@@ -851,7 +699,10 @@ internal class SingleContentLayout(
         toRemove.forEach {
           it.bounds = Rectangle(0, 0, 0, 0)
         }
-        control?.let { it.bounds = Rectangle(Point(toFitWidth, 0), it.preferredSize) }
+        control?.let {
+          val controlPrefSize = it.preferredSize
+          it.bounds = Rectangle(Point(toFitWidth, (parent.height - controlPrefSize.height) / 2), controlPrefSize)
+        }
       }
     }
 

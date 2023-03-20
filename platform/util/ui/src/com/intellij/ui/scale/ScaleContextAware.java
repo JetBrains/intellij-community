@@ -4,6 +4,8 @@ package com.intellij.ui.scale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * Provides ScaleContext awareness of a UI object.
  *

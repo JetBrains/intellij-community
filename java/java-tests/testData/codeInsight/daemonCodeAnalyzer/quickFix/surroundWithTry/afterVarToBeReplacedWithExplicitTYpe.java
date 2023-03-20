@@ -1,11 +1,11 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 public class Test {
     public static void main(String[] args) {
         Object foo = null;
         try {
             foo = bar();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         foo.toString();
     }

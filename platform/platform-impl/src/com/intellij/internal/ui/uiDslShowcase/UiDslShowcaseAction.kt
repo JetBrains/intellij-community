@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
@@ -11,10 +12,10 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBEmptyBorder
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -22,9 +23,9 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
-const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/"
+private const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/"
 
-val DEMOS = arrayOf(
+private val DEMOS = arrayOf(
   ::demoBasics,
   ::demoRowLayout,
   ::demoComponentLabels,
@@ -37,19 +38,20 @@ val DEMOS = arrayOf(
   ::demoTips
 )
 
-class UiDslShowcaseAction : DumbAwareAction("UI DSL Showcase") {
+internal class UiDslShowcaseAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    UiDslShowcaseDialog(e.project).show()
+    UiDslShowcaseDialog(e.project, templatePresentation.text).show()
   }
 }
 
-@Suppress("DialogTitleCapitalization")
-private class UiDslShowcaseDialog(val project: Project?) :
+private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   init {
-    title = "UI DSL Showcase"
+    title = dialogTitle
     init()
   }
 
@@ -101,15 +103,14 @@ private class UiDslShowcaseDialog(val project: Project?) :
         row {
           dialogPanel.border = JBEmptyBorder(10)
           scrollCell(dialogPanel)
-            .horizontalAlign(HorizontalAlign.FILL)
-            .verticalAlign(VerticalAlign.FILL)
+            .align(Align.FILL)
             .resizableColumn()
         }.resizableRow()
       }
       else {
         row {
           cell(dialogPanel)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .resizableColumn()
         }
       }

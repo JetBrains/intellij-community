@@ -15,15 +15,21 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -54,13 +60,19 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
   }
 
   @Override
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    String castTo = (String)infos[0];
+    return new IntegerDivisionInFloatingPointContextFix(castTo);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IntegerDivisionInFloatingPointContextVisitor();
   }
 
   private static class IntegerDivisionInFloatingPointContextVisitor extends BaseInspectionVisitor {
 
-    IntegerDivisionInFloatingPointContextVisitor() {}
+    IntegerDivisionInFloatingPointContextVisitor() { }
 
     @Override
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -74,10 +86,14 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
       }
       final PsiExpression context = getContainingExpression(expression);
       final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
-      if (!PsiType.FLOAT.equals(contextType) && !PsiType.DOUBLE.equals(contextType)) {
+      String castTo;
+      if (PsiTypes.floatType().equals(contextType) || PsiTypes.doubleType().equals(contextType)) {
+        castTo = contextType.getCanonicalText();
+      }
+      else {
         return;
       }
-      registerError(expression);
+      registerError(expression, castTo);
     }
 
     private static boolean hasIntegerDivision(@NotNull PsiPolyadicExpression expression) {
@@ -88,22 +104,52 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
     private static boolean isIntegral(PsiType type) {
       return type != null && s_integralTypes.contains(type.getCanonicalText());
     }
+  }
 
-    private static @NotNull PsiExpression getContainingExpression(@NotNull PsiExpression expression) {
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-        return !ComparisonUtils.isComparisonOperation(binaryExpression.getOperationTokenType())
-               ? getContainingExpression(binaryExpression)
-               : expression;
-      }
-      else if (parent instanceof PsiPolyadicExpression ||
-               parent instanceof PsiParenthesizedExpression ||
-               parent instanceof PsiPrefixExpression ||
-               parent instanceof PsiConditionalExpression) {
-        return getContainingExpression((PsiExpression)parent);
-      }
-      return expression;
+  private static class IntegerDivisionInFloatingPointContextFix extends InspectionGadgetsFix {
+    private final String myCastTo;
+
+    private IntegerDivisionInFloatingPointContextFix(String castTo) {
+      myCastTo = castTo;
     }
+
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      if (!(descriptor.getPsiElement() instanceof PsiPolyadicExpression expression)) {
+        return;
+      }
+      PsiExpression[] operands = expression.getOperands();
+      if (operands.length < 1) return;
+      PsiExpression operand = operands[0];
+      CommentTracker tracker = new CommentTracker();
+      String text = tracker.text(operand, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
+      tracker.replace(operand, "(" + myCastTo + ")" + text);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.fix.family.name");
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.fix.name", myCastTo);
+    }
+  }
+
+  private static @NotNull PsiExpression getContainingExpression(@NotNull PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiBinaryExpression binaryExpression) {
+      return !ComparisonUtils.isComparisonOperation(binaryExpression.getOperationTokenType())
+             ? getContainingExpression(binaryExpression)
+             : expression;
+    }
+    else if (parent instanceof PsiPolyadicExpression ||
+             parent instanceof PsiParenthesizedExpression ||
+             parent instanceof PsiPrefixExpression ||
+             parent instanceof PsiConditionalExpression) {
+      return getContainingExpression((PsiExpression)parent);
+    }
+    return expression;
   }
 }

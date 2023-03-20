@@ -1,8 +1,9 @@
 package com.intellij.tools.launch
 
-import java.io.File
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import java.io.File
 
 interface PathsProvider {
   val productId: String
@@ -11,7 +12,7 @@ interface PathsProvider {
   val outputRootFolder: File
 
   val tempFolder: File
-    get() = TeamCityHelper.tempDirectory ?: sourcesRootFolder.resolve("out").resolve("tmp")
+    get() = TeamCityHelper.tempDirectory?.toFile() ?: sourcesRootFolder.resolve("out").resolve("tmp")
 
   val launcherFolder: File
     get() = tempFolder.resolve("launcher").resolve(productId)
@@ -42,4 +43,7 @@ interface PathsProvider {
 
   val dockerVolumesToWritable: Map<File, Boolean>
     get() = emptyMap()
+
+  val pluginsFolder: File
+    get() = configFolder.resolve("plugins")
 }

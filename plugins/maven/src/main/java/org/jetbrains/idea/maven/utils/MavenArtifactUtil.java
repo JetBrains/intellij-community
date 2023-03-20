@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -123,8 +124,11 @@ public final class MavenArtifactUtil {
         }
       });
     }
+    catch (NoSuchFileException e) {
+      return "";
+    }
     catch (Exception e) {
-      MavenLog.LOG.warn(e);
+      MavenLog.LOG.warn(e.getMessage());
       return "";
     }
 
@@ -139,8 +143,7 @@ public final class MavenArtifactUtil {
     try {
       if (!Files.exists(file)) return null;
 
-      ZipFile jar = new ZipFile(file.toFile());
-      try {
+      try (ZipFile jar = new ZipFile(file.toFile())) {
         ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
         if (entry == null) {
@@ -148,17 +151,10 @@ public final class MavenArtifactUtil {
           return null;
         }
 
-        InputStream is = jar.getInputStream(entry);
-        try {
+        try (InputStream is = jar.getInputStream(entry)) {
           byte[] bytes = FileUtil.loadBytes(is);
           return new MavenPluginInfo(bytes);
         }
-        finally {
-          is.close();
-        }
-      }
-      finally {
-        jar.close();
       }
     }
     catch (IOException e) {

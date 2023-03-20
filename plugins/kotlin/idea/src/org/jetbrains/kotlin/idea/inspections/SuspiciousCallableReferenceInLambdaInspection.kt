@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
@@ -14,24 +12,30 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.ConvertLambdaToReferenceIntention
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.lambdaExpressionVisitor
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParentCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParentResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getParentCall
+import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
+import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
@@ -40,24 +44,33 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
             val context = lambdaExpression.analyze()
             val parentResolvedCall = lambdaExpression.getParentResolvedCall(context)
             if (parentResolvedCall != null) {
-                val expectedType = parentResolvedCall.getParameterForArgument(lambdaExpression.parent as? ValueArgument)?.type
+                val parameter = parentResolvedCall.getParameterForArgument(lambdaExpression.parent as? ValueArgument)
+                val expectedType = parameter?.type
                 if (expectedType?.isBuiltinFunctionalType == true) {
                     val returnType = expectedType.getReturnTypeFromFunctionType()
                     if (returnType.isFunctionOrSuspendFunctionType) return
+
+                    val originalReturnType = parameter.original.type.getReturnTypeFromFunctionType()
+                    if (originalReturnType.isFunctionInterfaceOrPropertyType() ||
+                        originalReturnType.isTypeParameter() && originalReturnType.supertypes().any {
+                            it.isFunctionInterfaceOrPropertyType()
+                        }
+                    ) return
+
                     if (parentResolvedCall.call.callElement.getParentCall(context) != null) return
                 }
             }
 
             val quickFix = if (canMove(lambdaExpression, callableReference, context))
-                IntentionWrapper(MoveIntoParenthesesIntention())
+                arrayOf(IntentionWrapper(MoveIntoParenthesesIntention()))
             else
-                null
+                LocalQuickFix.EMPTY_ARRAY
 
             holder.registerProblem(
                 lambdaExpression,
                 KotlinBundle.message("suspicious.callable.reference.as.the.only.lambda.element"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                quickFix
+                *quickFix
             )
         })
 
@@ -83,18 +96,18 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
     }
 
     class MoveIntoParenthesesIntention : ConvertLambdaToReferenceIntention(
-        KotlinBundle.lazyMessage("move.suspicious.callable.reference.into.parentheses")
+        KotlinBundle.lazyMessage("move.reference.into.parentheses")
     ) {
-        override fun buildReferenceText(element: KtLambdaExpression): String? {
+        override fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
             val callableReferenceExpression =
-                element.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression ?: return null
+                lambdaExpression.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression ?: return null
             val callableReference = callableReferenceExpression.callableReference
             val receiverExpression = callableReferenceExpression.receiverExpression
             val receiver = if (receiverExpression == null) {
                 ""
             } else {
                 val descriptor = receiverExpression.getCallableDescriptor()
-                val literal = element.functionLiteral
+                val literal = lambdaExpression.functionLiteral
                 if (descriptor == null ||
                     descriptor is ValueParameterDescriptor && descriptor.containingDeclaration == literal.resolveToDescriptorIfAny()
                 ) {
@@ -110,6 +123,24 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
         }
 
         override fun isApplicableTo(element: KtLambdaExpression) = true
+
+        override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean = false
     }
 }
 
+private val functionInterfaces: Set<FqName> = listOf(
+    "kotlin.Function",
+    "kotlin.reflect.KFunction"
+).map { FqName(it) }.toSet()
+
+private val propertyTypes: Set<FqName> = listOf(
+    "kotlin.reflect.KProperty",
+    "kotlin.reflect.KProperty0",
+    "kotlin.reflect.KProperty1",
+    "kotlin.reflect.KMutableProperty",
+    "kotlin.reflect.KMutableProperty0",
+    "kotlin.reflect.KMutableProperty1",
+).map { FqName(it) }.toSet()
+
+private fun KotlinType.isFunctionInterfaceOrPropertyType(): Boolean =
+    fqName in functionInterfaces || fqName in propertyTypes

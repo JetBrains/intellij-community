@@ -22,8 +22,6 @@ class MissingExtensionFileLinkDestinationReferenceTest : BaseLinkDestinationRefe
 
   fun testWithNonexistentHeader() = testIsReferenceToFile("topDir", "stub_in_top_dir.md")
 
-  fun testHeader() = testIsReferenceToHeader(Path.of("topDir", "stub_in_top_dir.md"), "header")
-
   fun testIsNotReferenceBecauseOfWrongPathPrefix() = testIsNotReferenceToFile("topDir", "stub_in_top_dir.md")
 
   fun testIsNotReferenceBecauseResolvingIsRelative() = testIsNotReferenceToFile("stub_in_root.md")

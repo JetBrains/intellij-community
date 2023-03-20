@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
@@ -42,6 +42,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UClass;
@@ -162,8 +163,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
               return false;
             }
           }
-          else if (entry instanceof LibraryOrderEntry) {
-            LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+          else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
             Library library = libraryOrderEntry.getLibrary();
             if (library == null) {
               System.err.println(JavaBundle.message("offline.inspections.library.was.not.resolved",
@@ -172,7 +172,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
             else {
               Set<String> detectedUrls =
                 Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(VirtualFile::getUrl).collect(Collectors.toSet());
-              Set<String> declaredUrls = ContainerUtil.set(library.getUrls(OrderRootType.CLASSES));
+              Set<String> declaredUrls = ContainerUtil.newHashSet(library.getUrls(OrderRootType.CLASSES));
               declaredUrls.removeAll(detectedUrls);
               declaredUrls.removeIf(library::isJarDirectory);
               if (!declaredUrls.isEmpty()) {
@@ -262,7 +262,9 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
 
         List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
         LOG.assertTrue(processors != null, uClass.getClass().getName());
-        ClassInheritorsSearch.search(uClass.getJavaPsi(), searchScope, false).forEach(createMembersProcessor(processors, scope));
+        Query<PsiClass> search = ClassInheritorsSearch.search(uClass.getJavaPsi(), searchScope, false);
+        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        search.forEach(createMembersProcessor(processors, scope));
       }
 
       myDerivedClassesRequests = null;
@@ -279,7 +281,9 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
 
         List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(sortedID);
         LOG.assertTrue(processors != null, uMethod.getClass().getName());
-        OverridingMethodsSearch.search(uMethod.getJavaPsi(), searchScope, true).forEach(createMembersProcessor(processors, scope));
+        Query<PsiMethod> search = OverridingMethodsSearch.search(uMethod.getJavaPsi(), searchScope, true);
+        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        search.forEach(createMembersProcessor(processors, scope));
       }
 
       myDerivedMethodsRequests = null;
@@ -295,8 +299,9 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         LOG.assertTrue(processors != null, field.getClass().getName());
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(field)));
 
-        ReferencesSearch.search(field, searchScope, false)
-          .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
+        Query<PsiReference> search = ReferencesSearch.search(field, searchScope, false);
+        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
 
       myFieldUsagesRequests = null;
@@ -312,13 +317,11 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         LOG.assertTrue(processors != null, classDeclaration.getClass().getName());
         UClass uClass = ReadAction.compute(() -> UastContextKt.toUElement(classDeclaration, UClass.class));
         String name = getClassPresentableName(uClass);
-        if (name == null) {
-          LOG.error(classDeclaration.getText());
-          continue;
-        }
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, name);
 
-        ReferencesSearch.search(classDeclaration, searchScope, false).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
+        Query<PsiReference> search = ReferencesSearch.search(classDeclaration, searchScope, false);
+        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
 
       myClassUsagesRequests = null;
@@ -336,7 +339,9 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
 
         PsiMethod javaMethod = ReadAction.compute(() -> uMethod.getJavaPsi());
         if (javaMethod != null) {
-          MethodReferencesSearch.search(javaMethod, searchScope, true).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
+          Query<PsiReference> search = MethodReferencesSearch.search(javaMethod, searchScope, true);
+          if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+          search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
         }
       }
 
@@ -490,6 +495,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
 
   @Override
   public void performPostRunActivities(@NotNull List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest, @NotNull GlobalInspectionContext context) {
+    long timestamp = System.currentTimeMillis();
     JobDescriptor progress = context.getStdJobDescriptors().FIND_EXTERNAL_USAGES;
     progress.setTotalAmount(getRequestCount());
 
@@ -514,6 +520,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
       progress.setDoneAmount(oldDoneAmount);
     }
     while (!needRepeatSearchRequest.isEmpty());
+    LOG.info("Processing external usages finished in " + (System.currentTimeMillis() - timestamp) + " ms");
   }
 
 }

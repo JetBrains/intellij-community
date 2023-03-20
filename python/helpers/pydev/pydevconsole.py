@@ -16,7 +16,7 @@ import os
 import sys
 
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE, dict_keys
+from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE, dict_keys, IS_ASYNCIO_REPL
 from _pydevd_bundle.pydevd_utils import save_main_module
 
 from _pydev_bundle import fix_getpass
@@ -68,7 +68,10 @@ class InterpreterInterface(BaseInterpreterInterface):
         BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue, rpc_client)
         self.namespace = {}
         self.save_main()
-        self.interpreter = InteractiveConsole(self.namespace)
+        if AsyncioInteractiveConsole is not None:
+            self.interpreter = AsyncioInteractiveConsole(self.namespace)
+        else:
+            self.interpreter = InteractiveConsole(self.namespace)
         self._input_error_printed = False
 
     def save_main(self):
@@ -317,6 +320,64 @@ except:
     IPYTHON = False
     pass
 
+AsyncioInteractiveConsole = None
+
+if IS_ASYNCIO_REPL and not IPYTHON:
+    import asyncio
+    import ast
+    import types
+    import inspect
+
+    def create_new_loop():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    def create_task(coro, name=None):
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            create_new_loop()
+            loop = asyncio.get_event_loop()
+
+        task = loop.create_task(coro)
+
+        if name is not None:
+            task.set_name(name)
+
+        return task
+
+    asyncio.create_task = create_task
+
+
+    class _AsyncioInteractiveConsole(InteractiveConsole):
+        """ Simulates asyncio REPL (python -m asyncio) """
+        def get_event_loop_err(self):
+            return 'There is no current event loop in thread %r.' % threading.current_thread().name
+
+        def __init__(self, locals):
+            super(_AsyncioInteractiveConsole, self).__init__(locals)
+            self.compile.compiler.flags |= ast.PyCF_ALLOW_TOP_LEVEL_AWAIT
+
+        def runcode(self, code):
+            try:
+                func = types.FunctionType(code, self.locals)
+                coro = func()
+                if inspect.iscoroutine(coro):
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(coro)
+            except SystemExit:
+                raise
+            except RuntimeError as err:
+                if str(err) == self.get_event_loop_err():
+                    create_new_loop()
+                    self.runcode(code)
+                else:
+                    self.showtraceback()
+            except:
+                self.showtraceback()
+
+    AsyncioInteractiveConsole = _AsyncioInteractiveConsole
+
 
 #=======================================================================================================================
 # _DoExit
@@ -390,7 +451,7 @@ def start_server(port):
     # 1. Start Python console server
 
     # `InterpreterInterface` implements all methods required for `server_handler`
-    interpreter = InterpreterInterface(threading.currentThread())
+    interpreter = InterpreterInterface(threading.current_thread())
 
     # Tell UMD the proper default namespace
     _set_globals_function(interpreter.get_namespace)
@@ -420,7 +481,7 @@ def start_client(host, port):
 
     client, server_transport = make_rpc_client(client_service, host, port)
 
-    interpreter = InterpreterInterface(threading.currentThread(), rpc_client=client)
+    interpreter = InterpreterInterface(threading.current_thread(), rpc_client=client)
 
     # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
 
@@ -454,7 +515,7 @@ def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
-        interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
+        interpreterInterface = InterpreterInterface(None, None, threading.current_thread())
         __builtin__.interpreter = interpreterInterface
         print(interpreterInterface.get_greeting_msg())
 

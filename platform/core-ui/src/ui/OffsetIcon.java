@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,14 +66,18 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
     return myIcon;
   }
 
+  @ApiStatus.Internal
+  public int getOffset() {
+    return myOffset;
+  }
+
   public int hashCode() {
     return myOffset + myIcon.hashCode();
   }
 
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (obj instanceof OffsetIcon) {
-      OffsetIcon icon = (OffsetIcon)obj;
+    if (obj instanceof OffsetIcon icon) {
       return icon.myOffset == myOffset && Objects.equals(icon.myIcon, myIcon);
     }
     return false;

@@ -9,8 +9,13 @@ class Main {
         var d2 = new int[4];
         <error descr="Cannot infer type: 'var' on variable without initializer">var</error> e;
         var f = <error descr="Array initializer is not allowed here">{ 6 }</error>;
-        <error descr="Cannot infer type: variable initializer is self-referencing">var</error> g = (g = 7);
+        var g = (<error descr="Cannot infer type for 'g', it is used in its own variable initializer">g</error> = 7);
+        var x = (<error descr="Cannot infer type for 'x', it is used in its own variable initializer">x</error> = 1) + 1;
+        var y = new Object[] {<error descr="Cannot infer type for 'y', it is used in its own variable initializer">y</error> = null};
+        var z = baz(<error descr="Cannot infer type for 'z', it is used in its own variable initializer">z</error> = 1);
     }
+    
+    static int baz(Object o) {return 42;}
 
     private static  void localVariableType() {
         var a =  1;
@@ -35,6 +40,7 @@ class Main {
         Function<String, String> f1 = (<error descr="Cannot resolve symbol 'var'">var</error> var) -> var;
 
         <error descr="Cannot infer type: variable initializer is 'void'">var</error> h = localVariableDeclaration();
+        <error descr="Cannot infer type: variable initializer is 'null'">var</error> cond = true ? null : null;
     }
 
     private void forEachType(String[] strs, Iterable<String> it, Iterable raw) {
@@ -53,7 +59,7 @@ class Main {
 
         for (var v:<error descr="Expression expected"> </error>) {}
 
-        for (var v: <error descr="foreach not applicable to type 'null'">null</error>) {}
+        for (var v: <error descr="Foreach not applicable to type 'null'">null</error>) {}
 
         for (var v: (<error descr="Cannot resolve symbol 'v'">v</error>)) {}
     }
@@ -68,7 +74,7 @@ class Main {
                                               Hello iterableExistingHello,
                                               <error descr="Cannot resolve symbol 'World'">World</error> iterableUnresolvedWorld) {
         for (String arg: iterableStrings) { }
-        for (String arg: <error descr="foreach not applicable to type 'Main.Hello'">iterableExistingHello</error>) { }
+        for (String arg: <error descr="Foreach not applicable to type 'Main.Hello'">iterableExistingHello</error>) { }
         for (String arg: iterableUnresolvedWorld) {}
     }
 
@@ -76,12 +82,12 @@ class Main {
     interface B {}
     void test(Object x) {
         java.util.Optional.of((A & B)x).ifPresent(valueOfAandB -> {
-            for(Object foo : <error descr="foreach not applicable to type 'Main.A & Main.B'">valueOfAandB</error>) {
+            for(Object foo : <error descr="Foreach not applicable to type 'Main.A & Main.B'">valueOfAandB</error>) {
                 System.out.println(foo);
             }
         });
         java.util.Optional.of((A & <error descr="Cannot resolve symbol 'World'">World</error>)x).ifPresent(valueOfAandUnresolvedWorld -> {
-            for(Object foo : <error descr="foreach not applicable to type 'Main.A & World'">valueOfAandUnresolvedWorld</error>) {
+            for(Object foo : <error descr="Foreach not applicable to type 'Main.A & World'">valueOfAandUnresolvedWorld</error>) {
                 System.out.println(foo);
             }
         });

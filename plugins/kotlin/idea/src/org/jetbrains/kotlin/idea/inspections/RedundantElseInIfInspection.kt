@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -10,16 +10,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
-import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.types.typeUtil.isNothing
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 
 class RedundantElseInIfInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -65,7 +67,7 @@ private class RemoveRedundantElseFix : LocalQuickFix {
 
         val elseStartLine = (elseExpression as? KtBlockExpression)?.statements?.firstOrNull()?.getLineNumber()
         if (elseStartLine == null || elseKeywordLineNumber == lastThenEndLine && elseKeywordLineNumber == elseStartLine) {
-            parent.addAfter(KtPsiFactory(ifExpression).createNewLine(), ifExpression)
+            parent.addAfter(KtPsiFactory(project).createNewLine(), ifExpression)
         }
 
         elseExpression.parent.delete()
@@ -87,8 +89,8 @@ private fun KtIfExpression.lastSingleElseKeyword(): PsiElement? {
 }
 
 private fun KtIfExpression.hasRedundantElse(): Boolean {
-    val context = analyze()
-    if (isUsedAsExpression(context)) return false
+    val context = safeAnalyzeNonSourceRootCode()
+    if (context == BindingContext.EMPTY || isUsedAsExpression(context)) return false
     var ifExpression = this
     while (true) {
         if ((ifExpression.then)?.isReturnOrNothing(context) != true) return false

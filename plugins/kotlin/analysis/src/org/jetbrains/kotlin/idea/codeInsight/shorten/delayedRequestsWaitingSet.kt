@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.shorten
 
@@ -111,7 +111,7 @@ private val LOG = Logger.getInstance(Project::class.java.canonicalName)
 
 fun prepareDelayedRequests(project: Project) {
     val requests = project.delayedRefactoringRequests
-    if (project.ensureNoRefactoringRequestsBeforeRefactoring && requests != null && requests.isNotEmpty()) {
+    if (project.ensureNoRefactoringRequestsBeforeRefactoring && !requests.isNullOrEmpty()) {
         LOG.warn("Waiting set for reference shortening is not empty")
         project.delayedRefactoringRequests = null
     }

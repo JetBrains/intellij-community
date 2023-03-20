@@ -12,7 +12,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 
-internal class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
+class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
   private val scope = GrazieScopeTab()
   internal val rules = GrazieRulesTab()
   private val exceptions = GrazieExceptionsTab()
@@ -45,4 +45,5 @@ internal class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
   override fun getComponent(): JComponent = component
 
   override fun dispose() = rules.dispose()
+
 }

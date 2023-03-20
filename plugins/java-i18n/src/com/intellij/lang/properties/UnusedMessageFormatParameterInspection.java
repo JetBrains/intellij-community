@@ -40,8 +40,7 @@ public class UnusedMessageFormatParameterInspection extends PropertiesInspection
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (!(file instanceof PropertiesFile)) return null;
-    PropertiesFile propertiesFile = (PropertiesFile)file;
+    if (!(file instanceof PropertiesFile propertiesFile)) return null;
     final List<IProperty> properties = propertiesFile.getProperties();
     List<ProblemDescriptor> problemDescriptors = new ArrayList<>();
     for (IProperty property : properties) {

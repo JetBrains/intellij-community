@@ -43,9 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
-/**
- * @author peter
- */
 public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo<T> {
   private static final Logger LOG = Logger.getInstance(GroovyGenerationInfo.class);
 

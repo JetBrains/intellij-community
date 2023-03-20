@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
-import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.instance
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilBase
 
@@ -18,7 +19,6 @@ open class ShowQuickDocInfoAction : AnAction(),
                                     ActionToIgnore,
                                     DumbAware,
                                     PopupAction,
-                                    UpdateInBackground,
                                     PerformWithDocumentsCommitted {
 
   init {
@@ -27,9 +27,11 @@ open class ShowQuickDocInfoAction : AnAction(),
     setInjectedContext(true)
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    if (Registry.`is`("documentation.v2")) {
-      e.presentation.isEnabled = documentationTargets(e.dataContext).isNotEmpty()
+    if (isDocumentationV2Enabled()) {
+      e.presentation.isEnabled = e.dataContext.getData(DOCUMENTATION_TARGETS)?.isNotEmpty() ?: false
       return
     }
     val presentation = e.presentation
@@ -53,7 +55,7 @@ open class ShowQuickDocInfoAction : AnAction(),
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (Registry.`is`("documentation.v2")) {
+    if (isDocumentationV2Enabled()) {
       actionPerformedV2(e.dataContext)
       return
     }
@@ -61,7 +63,6 @@ open class ShowQuickDocInfoAction : AnAction(),
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
     if (editor != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE)
       val activeLookup = LookupManager.getActiveLookup(editor)
       if (activeLookup != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE)

@@ -3,14 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.config
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
+import git4idea.remote.hosting.knownRepositories
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 @Service
 @State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
@@ -21,39 +21,23 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
 
   class SettingsState : BaseState() {
     var selectedUrlAndAccountId by property<UrlAndAccount?>(null) { it == null }
-    var recentSearchFilters by list<String>()
     var recentNewPullRequestHead by property<RepoCoordinatesHolder?>(null) { it == null }
   }
 
   var selectedRepoAndAccount: Pair<GHGitRepositoryMapping, GithubAccount>?
     get() {
       val (url, accountId) = state.selectedUrlAndAccountId ?: return null
-      val repo = project.service<GHProjectRepositoriesManager>().knownRepositories.find {
-        it.gitRemoteUrlCoordinates.url == url
+      val repo = project.service<GHHostedRepositoriesManager>().knownRepositories.find {
+        it.remote.url == url
       } ?: return null
       val account = GHAccountSerializer.deserialize(accountId) ?: return null
       return repo to account
     }
     set(value) {
       state.selectedUrlAndAccountId = value?.let { (repo, account) ->
-        UrlAndAccount(repo.gitRemoteUrlCoordinates.url, GHAccountSerializer.serialize(account))
+        UrlAndAccount(repo.remote.url, GHAccountSerializer.serialize(account))
       }
     }
-
-  fun getRecentSearchFilters(): List<String> = state.recentSearchFilters.toList()
-
-  fun addRecentSearchFilter(searchFilter: String) {
-    val addExisting = state.recentSearchFilters.remove(searchFilter)
-    state.recentSearchFilters.add(0, searchFilter)
-
-    if (state.recentSearchFilters.size > RECENT_SEARCH_FILTERS_LIMIT) {
-      state.recentSearchFilters.removeLastOrNull()
-    }
-
-    if (!addExisting) {
-      state.intIncrementModificationCount()
-    }
-  }
 
   var recentNewPullRequestHead: GHRepositoryCoordinates?
     get() = state.recentNewPullRequestHead?.let { GHRepositoryCoordinates(it.server, GHRepositoryPath(it.owner, it.repository)) }
@@ -71,11 +55,11 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     @JvmStatic
     fun getInstance(project: Project) = project.service<GithubPullRequestsProjectUISettings>()
 
-    private const val RECENT_SEARCH_FILTERS_LIMIT = 10
-
     class UrlAndAccount private constructor() {
 
+      @Suppress("MemberVisibilityCanBePrivate")
       var url: String = ""
+      @Suppress("MemberVisibilityCanBePrivate")
       var accountId: String = ""
 
       constructor(url: String, accountId: String) : this() {

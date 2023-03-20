@@ -12,12 +12,11 @@ import com.intellij.task.ProjectTaskListener
 import com.intellij.task.ProjectTaskManager
 import com.intellij.tracing.Tracer
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.io.exists
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
-import kotlin.jvm.Throws
 
 internal class TracingProjectTaskListener : ProjectTaskListener {
   companion object {

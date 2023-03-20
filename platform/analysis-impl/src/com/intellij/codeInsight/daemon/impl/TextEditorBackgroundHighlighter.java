@@ -5,9 +5,13 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -20,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
   private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
@@ -71,8 +76,25 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
       return Collections.emptyList();
     }
 
-    TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
-    return passRegistrar.instantiatePasses(file, myEditor, passesToIgnore);
+    int @NotNull [] finalPassesToIgnore = passesToIgnore;
+    PsiFile finalFile = file;
+    return TraceUtil.computeWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, "passes instantiation", span -> {
+      Activity startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation");
+      boolean cancelled = false;
+      try {
+        TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
+        return passRegistrar.instantiatePasses(finalFile, myEditor, finalPassesToIgnore);
+      }
+      catch (ProcessCanceledException | CancellationException e) {
+        cancelled = true;
+        throw e;
+      }
+      finally {
+        startupActivity.end();
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, finalFile.getName());
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, Boolean.toString(cancelled));
+      }
+    });
   }
 
   @Override

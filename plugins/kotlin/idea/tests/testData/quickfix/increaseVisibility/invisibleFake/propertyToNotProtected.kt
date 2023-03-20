@@ -1,7 +1,7 @@
 // "Make 'foo' protected" "false"
-// ACTION: Make 'foo' public
-// ACTION: Make 'foo' internal
 // ACTION: Introduce local variable
+// ACTION: Make 'foo' internal
+// ACTION: Make 'foo' public
 // ERROR: Cannot access 'foo': it is private in 'A'
 
 class A {

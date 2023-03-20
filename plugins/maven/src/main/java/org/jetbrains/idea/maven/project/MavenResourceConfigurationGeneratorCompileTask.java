@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -14,12 +14,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -31,6 +31,8 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
+import org.jetbrains.idea.maven.importing.MavenImportUtil;
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
@@ -47,6 +49,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX;
+import static org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX;
 
 @ApiStatus.Internal
 public class MavenResourceConfigurationGeneratorCompileTask implements CompileTask {
@@ -70,9 +75,6 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
     final BuildManager buildManager = BuildManager.getInstance();
     File projectSystemIoFile = buildManager.getProjectSystemDirectory(project);
-    if (projectSystemIoFile == null) {
-      return;
-    }
 
     final Path projectSystemDir = projectSystemIoFile.toPath();
     RemotePathTransformerFactory.Transformer transformer = RemotePathTransformerFactory.createForProject(project);
@@ -88,19 +90,13 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     final Path crcFile = mavenConfigFile.resolveSibling("configuration.crc");
 
     if (!force) {
-      try {
-        DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ));
-        try {
-          final int lastCrc = crcInput.readInt();
-          if (lastCrc == crc) return; // Project had not change since last config generation.
+      try (DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ))) {
+        final int lastCrc = crcInput.readInt();
+        if (lastCrc == crc) return; // Project had not changed since last config generation.
 
-          LOG.debug(String.format(
-            "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
-            lastCrc, crc, projectRootModificationCount, mavenConfigCrc));
-        }
-        finally {
-          crcInput.close();
-        }
+        LOG.debug(String.format(
+          "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
+          lastCrc, crc, projectRootModificationCount, mavenConfigCrc));
       }
       catch (IOException e) {
         LOG.debug("Unable to read or find config file: " + e.getMessage());
@@ -109,14 +105,75 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
     MavenProjectConfiguration projectConfig = new MavenProjectConfiguration();
     for (MavenProject mavenProject : mavenProjectsManager.getProjects()) {
+      new ResourceConfigGenerator(fileIndex, mavenProjectsManager, transformer, projectConfig, mavenProject).generateResourceConfig();
+    }
+    addNonMavenResources(transformer, projectConfig, mavenProjectsManager, project);
+
+    final Element element = new Element("maven-project-configuration");
+    XmlSerializer.serializeInto(projectConfig, element);
+    buildManager.runCommand(() -> {
+      if (!project.isDefault()) {
+        buildManager.clearState(project);
+      }
+      try {
+        JDOMUtil.write(element, mavenConfigFile);
+        try (DataOutputStream crcOutput = new DataOutputStream(
+          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)))) {
+          crcOutput.writeInt(crc);
+        }
+      }
+      catch (IOException e) {
+        LOG.debug("Unable to write config file", e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  private static class ResourceConfigGenerator {
+    private final ProjectFileIndex fileIndex;
+    private final MavenProjectsManager mavenProjectsManager;
+    private final RemotePathTransformerFactory.Transformer transformer;
+    private final MavenProjectConfiguration projectConfig;
+    private final MavenProject mavenProject;
+
+    ResourceConfigGenerator(ProjectFileIndex fileIndex,
+                            MavenProjectsManager mavenProjectsManager,
+                            RemotePathTransformerFactory.Transformer transformer,
+                            MavenProjectConfiguration projectConfig,
+                            MavenProject mavenProject) {
+      this.fileIndex = fileIndex;
+      this.mavenProjectsManager = mavenProjectsManager;
+      this.transformer = transformer;
+      this.projectConfig = projectConfig;
+      this.mavenProject = mavenProject;
+    }
+
+    public void generateResourceConfig() {
       // do not add resource roots for 'pom' packaging projects
-      if ("pom".equals(mavenProject.getPackaging())) continue;
+      if ("pom".equals(mavenProject.getPackaging())) return;
 
       VirtualFile pomXml = mavenProject.getFile();
       Module module = fileIndex.getModuleForFile(pomXml);
-      if (module == null) continue;
+      if (module == null) return;
 
-      if (!Comparing.equal(mavenProject.getDirectoryFile(), fileIndex.getContentRootForFile(pomXml))) continue;
+      if (!Comparing.equal(mavenProject.getDirectoryFile(), fileIndex.getContentRootForFile(pomXml))) return;
+
+      var javaVersions = MavenImportUtil.getMavenJavaVersions(mavenProject);
+      var moduleType = MavenImportUtil.getModuleType(mavenProject, javaVersions);
+
+      generate(module, moduleType);
+
+      if (moduleType == StandardMavenModuleType.COMPOUND_MODULE) {
+        var moduleManager = ModuleManager.getInstance(module.getProject());
+        var moduleName = module.getName();
+
+        generate(moduleManager.findModuleByName(moduleName + MAIN_SUFFIX), StandardMavenModuleType.MAIN_ONLY);
+        generate(moduleManager.findModuleByName(moduleName + TEST_SUFFIX), StandardMavenModuleType.TEST_ONLY);
+      }
+    }
+
+    private void generate(Module module, StandardMavenModuleType moduleType) {
+      if (module == null) return;
 
       MavenModuleResourceConfiguration resourceConfig = new MavenModuleResourceConfiguration();
       MavenId projectId = mavenProject.getMavenId();
@@ -144,8 +201,13 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
       resourceConfig.testOutputDirectory =
         transformer.toRemotePathOrSelf(getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources"));
 
-      addResources(transformer, resourceConfig.resources, mavenProject.getResources());
-      addResources(transformer, resourceConfig.testResources, mavenProject.getTestResources());
+      if (moduleType != StandardMavenModuleType.TEST_ONLY) {
+        addResources(transformer, resourceConfig.resources, mavenProject.getResources());
+      }
+
+      if (moduleType != StandardMavenModuleType.MAIN_ONLY) {
+        addResources(transformer, resourceConfig.testResources, mavenProject.getTestResources());
+      }
 
       addWebResources(transformer, module, projectConfig, mavenProject);
       addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
@@ -171,30 +233,6 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
       generateManifest(mavenProject, module, resourceConfig);
     }
-    addNonMavenResources(transformer, projectConfig, mavenProjectsManager, project);
-
-    final Element element = new Element("maven-project-configuration");
-    XmlSerializer.serializeInto(projectConfig, element);
-    buildManager.runCommand(() -> {
-      if (!project.isDefault()) {
-        buildManager.clearState(project);
-      }
-      try {
-        JdomKt.write(element, mavenConfigFile);
-        DataOutputStream crcOutput = new DataOutputStream(
-          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)));
-        try {
-          crcOutput.writeInt(crc);
-        }
-        finally {
-          crcOutput.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.debug("Unable to write config file", e);
-        throw new RuntimeException(e);
-      }
-    });
   }
 
   private static void addEarModelMapEntries(@NotNull MavenProject mavenProject, @NotNull Map<String, String> modelMap) {
@@ -221,7 +259,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
                                        @NotNull Module module,
                                        @NotNull MavenModuleResourceConfiguration resourceConfig) {
     if (mavenProject.isAggregator()) return;
-    if (Boolean.valueOf(IDEA_MAVEN_DISABLE_MANIFEST)) {
+    if (Boolean.parseBoolean(IDEA_MAVEN_DISABLE_MANIFEST)) {
       resourceConfig.manifest = null;
       return;
     }
@@ -258,14 +296,8 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     final Properties properties = new Properties();
 
     for (String each : mavenProject.getFilterPropertiesFiles()) {
-      try {
-        FileInputStream in = new FileInputStream(each);
-        try {
-          properties.load(in);
-        }
-        finally {
-          in.close();
-        }
+      try (FileInputStream in = new FileInputStream(each)) {
+        properties.load(in);
       }
       catch (IOException ignored) {
       }
@@ -294,9 +326,6 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
     for (MavenResource resource : resources) {
       final String dir = resource.getDirectory();
-      if (dir == null) {
-        continue;
-      }
 
       final ResourceRootConfiguration props = new ResourceRootConfiguration();
       props.directory = transformer.toRemotePathOrSelf(FileUtil.toSystemIndependentName(dir));
@@ -461,9 +490,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
 
       for (MavenResource resource : ContainerUtil.concat(mavenProject.getResources(), mavenProject.getTestResources())) {
         String directory = resource.getDirectory();
-        if (directory != null) {
-          ContainerUtil.addIfNotNull(processedRoots, LocalFileSystem.getInstance().findFileByPath(directory));
-        }
+        ContainerUtil.addIfNotNull(processedRoots, LocalFileSystem.getInstance().findFileByPath(directory));
       }
     }
 

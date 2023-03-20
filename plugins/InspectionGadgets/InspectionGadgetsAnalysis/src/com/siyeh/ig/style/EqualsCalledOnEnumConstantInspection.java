@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,7 +29,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
+public class EqualsCalledOnEnumConstantInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

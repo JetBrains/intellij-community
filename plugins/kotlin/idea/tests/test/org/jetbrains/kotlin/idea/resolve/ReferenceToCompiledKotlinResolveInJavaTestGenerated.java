@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -73,6 +73,16 @@ public class ReferenceToCompiledKotlinResolveInJavaTestGenerated extends Abstrac
         runTest("testData/resolve/referenceInJava/binaryAndSource/MethodWithParameters.java");
     }
 
+    @TestMetadata("MultifileFacade1.java")
+    public void testMultifileFacade1() throws Exception {
+        runTest("testData/resolve/referenceInJava/binaryAndSource/MultifileFacade1.java");
+    }
+
+    @TestMetadata("MultifileFacade2.java")
+    public void testMultifileFacade2() throws Exception {
+        runTest("testData/resolve/referenceInJava/binaryAndSource/MultifileFacade2.java");
+    }
+
     @TestMetadata("ObjectInstance.java")
     public void testObjectInstance() throws Exception {
         runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectInstance.java");
@@ -81,5 +91,15 @@ public class ReferenceToCompiledKotlinResolveInJavaTestGenerated extends Abstrac
     @TestMetadata("PlatformStaticFun.java")
     public void testPlatformStaticFun() throws Exception {
         runTest("testData/resolve/referenceInJava/binaryAndSource/PlatformStaticFun.java");
+    }
+
+    @TestMetadata("SingleFileMultifileFacade.java")
+    public void testSingleFileMultifileFacade() throws Exception {
+        runTest("testData/resolve/referenceInJava/binaryAndSource/SingleFileMultifileFacade.java");
+    }
+
+    @TestMetadata("TopLevelFunction.java")
+    public void testTopLevelFunction() throws Exception {
+        runTest("testData/resolve/referenceInJava/binaryAndSource/TopLevelFunction.java");
     }
 }

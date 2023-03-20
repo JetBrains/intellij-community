@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.MathUtil;
@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -41,6 +42,21 @@ public final class PersistentHashMapValueStorage {
   static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
+  /**
+   * Default options for {@link PersistentHashMap} and {@link PersistentHashMapValueStorage}.
+   * <br/>
+   * Why: Both PHMap and its components (like PHMValueStorage) are frequently initialized quite deeply
+   * inside some wrapping code. Also, it could be >1 instances of PHMap/ValueStorage to support single
+   * top-level structure, and params like READONLY should be the same for all them. But it is quite
+   * daunting to pass parameters like READONLY through all the ctors and intermediate methods down to
+   * the point of actual initialization (e.g. READONLY is used in {@linkplain com.intellij.util.io.PagedFileStorage}
+   * even). CreationTimeOptions allows to set those arguments in thread-local instance, and get them
+   * there they are needed.
+   * <br/>
+   * Instances of the class are immutable, all mutation methods return new instances -- one could
+   * safely keep any instance of this class for later use.
+   */
+  //@Immutable
   public static final class CreationTimeOptions {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
@@ -83,8 +99,7 @@ public final class PersistentHashMapValueStorage {
       return myUseCompression;
     }
 
-    @NotNull
-    CreationTimeOptions setReadOnly() {
+    public CreationTimeOptions setReadOnly() {
       return new CreationTimeOptions(
         myIOCancellationCallback,
         true,
@@ -94,14 +109,57 @@ public final class PersistentHashMapValueStorage {
       );
     }
 
+    public CreationTimeOptions readOnly(final boolean readOnly) {
+      return new CreationTimeOptions(
+        myIOCancellationCallback,
+        readOnly,
+        myCompactChunksWithValueDeserialization,
+        myHasNoChunks,
+        myUseCompression
+      );
+    }
+
+    public CreationTimeOptions setCompactChunksWithValueDeserialization(){
+      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+                                     true,
+                                     myHasNoChunks, myUseCompression);
+    }
+
+    public CreationTimeOptions setHasNoChunks(){
+      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+                                     myCompactChunksWithValueDeserialization,
+                                     true,
+                                     myUseCompression);
+    }
+
+    public <T, E extends Throwable> T with(final @NotNull ThrowableComputable<T, E> func) throws E {
+      final CreationTimeOptions previousOptions = setThreadLocalOptions(this);
+      try {
+        return func.compute();
+      }
+      finally {
+        setThreadLocalOptions(previousOptions);
+      }
+    }
+
     @NotNull
-    static CreationTimeOptions threadLocalOptions() {
+    public static CreationTimeOptions threadLocalOptions() {
       return new CreationTimeOptions(
         IOCancellationCallbackHolder.INSTANCE.getUsedIoCallback(),
         READONLY.get() == Boolean.TRUE,
         COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get() == Boolean.TRUE,
         HAS_NO_CHUNKS.get() == Boolean.TRUE,
         DO_COMPRESSION.get() == Boolean.TRUE);
+    }
+
+    @NotNull
+    public static CreationTimeOptions setThreadLocalOptions(final CreationTimeOptions options){
+      final CreationTimeOptions currentOptions = threadLocalOptions();
+      READONLY.set(options.myReadOnly);
+      COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(options.myCompactChunksWithValueDeserialization);
+      HAS_NO_CHUNKS.set(options.myHasNoChunks);
+      DO_COMPRESSION.set(options.myUseCompression);
+      return currentOptions;
     }
   }
 
@@ -126,18 +184,17 @@ public final class PersistentHashMapValueStorage {
       }
     };
 
-  private static final FileAccessorCache<Path, OutputStream> ourAppendersCache =
-    new FileAccessorCache<Path, OutputStream>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
+  private static final FileAccessorCache<Path, SyncAbleBufferedOutputStreamOverCachedFileChannel> ourAppendersCache =
+    new FileAccessorCache<Path, SyncAbleBufferedOutputStreamOverCachedFileChannel>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
       @NotNull
       @Override
-      protected OutputStream createAccessor(Path path) {
-        OutputStream out = new OutputStreamOverRandomAccessFileCache(path);
-        return new BufferedOutputStream(out);
+      protected PersistentHashMapValueStorage.SyncAbleBufferedOutputStreamOverCachedFileChannel createAccessor(Path path) {
+        return new SyncAbleBufferedOutputStreamOverCachedFileChannel(path);
       }
 
       @Override
-      protected void disposeAccessor(@NotNull OutputStream fileAccessor) throws IOException {
-        fileAccessor.close();
+      protected void disposeAccessor(@NotNull PersistentHashMapValueStorage.SyncAbleBufferedOutputStreamOverCachedFileChannel stream) throws IOException {
+        stream.close();
       }
     };
 
@@ -182,10 +239,12 @@ public final class PersistentHashMapValueStorage {
 
       // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
       // code depends on correct value of mySize
-      FileAccessorCache.Handle<OutputStream> streamCacheValue = ourAppendersCache.getIfCached(myPath);
+      FileAccessorCache.Handle<SyncAbleBufferedOutputStreamOverCachedFileChannel> streamCacheValue = ourAppendersCache.getIfCached(myPath);
       if (streamCacheValue != null) {
         try {
-          IOUtil.syncStream(streamCacheValue.get());
+          final SyncAbleBufferedOutputStreamOverCachedFileChannel stream = streamCacheValue.get();
+          stream.flush();
+          stream.sync();
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -229,7 +288,7 @@ public final class PersistentHashMapValueStorage {
         }
       });
     } else {
-      FileAccessorCache.@NotNull Handle<OutputStream> appender = ourAppendersCache.get(myPath);
+      FileAccessorCache.@NotNull Handle<SyncAbleBufferedOutputStreamOverCachedFileChannel> appender = ourAppendersCache.get(myPath);
       dataOutputStream = toDataOutputStream(appender);
     }
 
@@ -265,7 +324,7 @@ public final class PersistentHashMapValueStorage {
   private long compactValuesWithoutChunks(@NotNull List<CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
-    infos.sort((info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
+    infos.sort(Comparator.comparingLong(info -> info.valueAddress));
 
     final int fileBufferLength = 256 * 1024;
     final byte[] buffer = new byte[fileBufferLength];
@@ -332,7 +391,7 @@ public final class PersistentHashMapValueStorage {
     }
 
     PriorityQueue<CompactionRecordInfo> records = new PriorityQueue<>(
-      infos.size(), (info, info2) -> Comparing.compare(info2.valueAddress, info.valueAddress));
+      infos.size(), (info, info2) -> Long.compare(info2.valueAddress, info.valueAddress));
 
     records.addAll(infos);
 
@@ -680,7 +739,7 @@ public final class PersistentHashMapValueStorage {
   }
 
   private static void forceAppender(Path path) {
-    final FileAccessorCache.Handle<OutputStream> cached = ourAppendersCache.getIfCached(path);
+    final FileAccessorCache.Handle<? extends OutputStream> cached = ourAppendersCache.getIfCached(path);
     if (cached != null) {
       try {
         cached.get().flush();
@@ -738,7 +797,7 @@ public final class PersistentHashMapValueStorage {
   }
 
   @NotNull
-  private static DataOutputStream toDataOutputStream(FileAccessorCache.@NotNull Handle<OutputStream> handle) {
+  private static DataOutputStream toDataOutputStream(FileAccessorCache.@NotNull Handle<SyncAbleBufferedOutputStreamOverCachedFileChannel> handle) {
     return new DataOutputStream(handle.get()) {
       @Override
       public void close() throws IOException {
@@ -816,30 +875,45 @@ public final class PersistentHashMapValueStorage {
     }
   }
 
-  private static class OutputStreamOverRandomAccessFileCache extends OutputStream {
+  private static class SyncAbleBufferedOutputStreamOverCachedFileChannel extends BufferedOutputStream {
     private final Path myPath;
 
-    OutputStreamOverRandomAccessFileCache(Path path) {
+    SyncAbleBufferedOutputStreamOverCachedFileChannel(final Path path) {
+      super(new OutputStreamOverRandomAccessFileCache(path));
       myPath = path;
     }
 
-    @Override
-    public void write(byte @NotNull [] b, int off, int len) throws IOException {
-      FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
-      FileChannelWithSizeTracking file = fileAccessor.get();
-      try {
-        file.write(file.length(), b, off, len);
+    public void sync() throws IOException {
+      final FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
+      final FileChannelWithSizeTracking fileChannel = fileAccessor.get();
+      fileChannel.force();
+    }
+
+    /** Implements output stream by writing data through {@link FileChannelWithSizeTracking} out of {@link #ourFileChannelCache} */
+    private static class OutputStreamOverRandomAccessFileCache extends OutputStream {
+      private final Path myPath;
+
+      public OutputStreamOverRandomAccessFileCache(Path path) { myPath = path; }
+
+      @Override
+      public void write(byte @NotNull [] b, int off, int len) throws IOException {
+        FileAccessorCache.Handle<FileChannelWithSizeTracking> fileAccessor = ourFileChannelCache.get(myPath);
+        FileChannelWithSizeTracking file = fileAccessor.get();
+        try {
+          file.write(file.length(), b, off, len);
+        }
+        finally {
+          fileAccessor.release();
+        }
       }
-      finally {
-        fileAccessor.release();
+
+      @Override
+      public void write(int b) throws IOException {
+        byte[] r = {(byte)(b & 0xFF)};
+        write(r);
       }
     }
 
-    @Override
-    public void write(int b) throws IOException {
-      byte[] r = {(byte)(b & 0xFF)};
-      write(r);
-    }
   }
 
   private class MyCompressedAppendableFile extends CompressedAppendableFile {

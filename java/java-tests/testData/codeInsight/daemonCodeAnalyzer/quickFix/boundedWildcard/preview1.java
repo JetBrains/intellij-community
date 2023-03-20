@@ -1,0 +1,1 @@
+public void foo(List<? super String> s)

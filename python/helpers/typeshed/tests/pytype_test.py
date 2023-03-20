@@ -11,21 +11,19 @@ Option two will load the file and all the builtins, typeshed dependencies. This
 will also discover incorrect usage of imported modules.
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import sys
 import traceback
-from typing import List, Optional, Sequence
+from collections.abc import Sequence
 
-from pytype import config as pytype_config, load_pytd
-from pytype.pytd import typeshed
+from pytype import config as pytype_config, load_pytd  # type: ignore[import]
+from pytype.pytd import typeshed  # type: ignore[import]
 
 TYPESHED_SUBDIRS = ["stdlib", "stubs"]
-
-
 TYPESHED_HOME = "TYPESHED_HOME"
-UNSET = object()  # marker for tracking the TYPESHED_HOME environment variable
-
 _LOADERS = {}
 
 
@@ -34,16 +32,13 @@ def main() -> None:
     typeshed_location = args.typeshed_location or os.getcwd()
     subdir_paths = [os.path.join(typeshed_location, d) for d in TYPESHED_SUBDIRS]
     check_subdirs_discoverable(subdir_paths)
-    old_typeshed_home = os.environ.get(TYPESHED_HOME, UNSET)
+    old_typeshed_home = os.environ.get(TYPESHED_HOME)
     os.environ[TYPESHED_HOME] = typeshed_location
     files_to_test = determine_files_to_test(typeshed_location=typeshed_location, paths=args.files or subdir_paths)
     run_all_tests(
-        files_to_test=files_to_test,
-        typeshed_location=typeshed_location,
-        print_stderr=args.print_stderr,
-        dry_run=args.dry_run,
+        files_to_test=files_to_test, typeshed_location=typeshed_location, print_stderr=args.print_stderr, dry_run=args.dry_run
     )
-    if old_typeshed_home is UNSET:
+    if old_typeshed_home is None:
         del os.environ[TYPESHED_HOME]
     else:
         os.environ[TYPESHED_HOME] = old_typeshed_home
@@ -59,23 +54,19 @@ def create_parser() -> argparse.ArgumentParser:
         "--print-stderr", action="store_true", default=False, help="Print stderr every time an error is encountered."
     )
     parser.add_argument(
-        "files",
-        metavar="FILE",
-        type=str,
-        nargs="*",
-        help="Files or directories to check. (Default: Check all files.)",
+        "files", metavar="FILE", type=str, nargs="*", help="Files or directories to check. (Default: Check all files.)"
     )
     return parser
 
 
-def run_pytype(*, filename: str, python_version: str, typeshed_location: str) -> Optional[str]:
+def run_pytype(*, filename: str, python_version: str, typeshed_location: str) -> str | None:
     """Runs pytype, returning the stderr if any."""
     if python_version not in _LOADERS:
-        options = pytype_config.Options.create(
-            "", parse_pyi=True, python_version=python_version)
+        options = pytype_config.Options.create("", parse_pyi=True, python_version=python_version)
         loader = load_pytd.create_loader(options)
         _LOADERS[python_version] = (options, loader)
     options, loader = _LOADERS[python_version]
+    stderr: str | None
     try:
         with pytype_config.verbosity_from(options):
             ast = loader.load_file(_get_module_name(filename), filename)
@@ -91,7 +82,7 @@ def _get_relative(filename: str) -> str:
     top = 0
     for d in TYPESHED_SUBDIRS:
         try:
-            top = filename.index(d)
+            top = filename.index(d + os.path.sep)
         except ValueError:
             continue
         else:
@@ -103,7 +94,7 @@ def _get_module_name(filename: str) -> str:
     """Converts a filename {subdir}/m.n/module/foo to module.foo."""
     parts = _get_relative(filename).split(os.path.sep)
     if "@python2" in parts:
-        module_parts = parts[parts.index("@python2") + 1:]
+        module_parts = parts[parts.index("@python2") + 1 :]
     elif parts[0] == "stdlib":
         module_parts = parts[1:]
     else:
@@ -113,16 +104,16 @@ def _get_module_name(filename: str) -> str:
 
 
 def _is_version(path: str, version: str) -> bool:
-    return any("{}{}{}".format(d, os.path.sep, version) in path for d in TYPESHED_SUBDIRS)
+    return any(f"{d}{os.path.sep}{version}" in path for d in TYPESHED_SUBDIRS)
 
 
-def check_subdirs_discoverable(subdir_paths: List[str]) -> None:
+def check_subdirs_discoverable(subdir_paths: list[str]) -> None:
     for p in subdir_paths:
         if not os.path.isdir(p):
-            raise SystemExit("Cannot find typeshed subdir at {} (specify parent dir via --typeshed-location)".format(p))
+            raise SystemExit(f"Cannot find typeshed subdir at {p} (specify parent dir via --typeshed-location)")
 
 
-def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> List[str]:
+def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> list[str]:
     """Determine all files to test, checking if it's in the exclude list and which Python versions to use.
 
     Returns a list of pairs of the file path and Python version as an int."""
@@ -138,8 +129,8 @@ def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> 
     return files
 
 
-def find_stubs_in_paths(paths: Sequence[str]) -> List[str]:
-    filenames = []
+def find_stubs_in_paths(paths: Sequence[str]) -> list[str]:
+    filenames: list[str] = []
     for path in paths:
         if os.path.isdir(path):
             for root, _, fns in os.walk(path):
@@ -157,13 +148,7 @@ def run_all_tests(*, files_to_test: Sequence[str], typeshed_location: str, print
     for i, f in enumerate(files_to_test):
         python_version = "{0.major}.{0.minor}".format(sys.version_info)
         stderr = (
-            run_pytype(
-                filename=f,
-                python_version=python_version,
-                typeshed_location=typeshed_location,
-            )
-            if not dry_run
-            else None
+            run_pytype(filename=f, python_version=python_version, typeshed_location=typeshed_location) if not dry_run else None
         )
         if stderr:
             if print_stderr:
@@ -174,11 +159,11 @@ def run_all_tests(*, files_to_test: Sequence[str], typeshed_location: str, print
 
         runs = i + 1
         if runs % 25 == 0:
-            print("  {:3d}/{:d} with {:3d} errors".format(runs, total_tests, errors))
+            print(f"  {runs:3d}/{total_tests:d} with {errors:3d} errors")
 
-    print("Ran pytype with {:d} pyis, got {:d} errors.".format(total_tests, errors))
+    print(f"Ran pytype with {total_tests:d} pyis, got {errors:d} errors.")
     for f, v, err in bad:
-        print("{} ({}): {}".format(f, v, err))
+        print(f"{f} ({v}): {err}")
     if errors:
         raise SystemExit("\nRun again with --print-stderr to get the full stacktrace.")
 

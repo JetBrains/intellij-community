@@ -59,15 +59,13 @@ public interface FileDownloader {
   /**
    * @deprecated specify target directory in {@link #downloadWithProgress} or {@link #downloadFilesWithProgress} method instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath);
 
   /**
    * @deprecated use {@link #downloadFilesWithProgress} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   VirtualFile @Nullable [] download();
 }

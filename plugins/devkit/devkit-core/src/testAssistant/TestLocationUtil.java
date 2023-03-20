@@ -99,12 +99,13 @@ public final class TestLocationUtil {
       }
       if (StringUtil.isJavaIdentifier(nameWithoutExtension)) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-        PsiMethod method = aClass.findMethodBySignature(elementFactory.createMethod("test" + nameWithoutExtension, PsiType.VOID), true);
+        PsiMethod method = aClass.findMethodBySignature(elementFactory.createMethod("test" + nameWithoutExtension, PsiTypes.voidType()), true);
         if (method != null) {
           return MethodLocation.elementInClass(method, aClass);
         }
 
-        method = aClass.findMethodBySignature(elementFactory.createMethod("test" + StringUtil.capitalize(nameWithoutExtension), PsiType.VOID), true);
+        method = aClass.findMethodBySignature(elementFactory.createMethod("test" + StringUtil.capitalize(nameWithoutExtension),
+                                                                          PsiTypes.voidType()), true);
         if (method != null) {
           return MethodLocation.elementInClass(method, aClass);
         }

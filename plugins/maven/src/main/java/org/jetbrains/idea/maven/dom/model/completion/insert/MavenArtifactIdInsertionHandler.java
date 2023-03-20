@@ -20,9 +20,6 @@ public class MavenArtifactIdInsertionHandler extends MavenDependencyInsertionHan
   protected void setDependency(@NotNull InsertionContext context,
                                MavenRepositoryArtifactInfo completionItem,
                                XmlFile contextFile, MavenDomShortArtifactCoordinates domCoordinates) {
-    if (completionItem.getArtifactId() == null) {
-      return;
-    }
     domCoordinates.getArtifactId().setStringValue(completionItem.getArtifactId());
     XmlTag tag = domCoordinates.getGroupId().getXmlTag();
     if (tag == null) {

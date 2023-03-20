@@ -7,3 +7,4 @@ class OptionManager:
 
 class OptionValue:
     value: Any
+    key: str

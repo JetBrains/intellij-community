@@ -4,9 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public final class AdditionalPageAtBottomEditorCustomization extends SimpleEditorCustomization {
 
   public static final AdditionalPageAtBottomEditorCustomization ENABLED = new AdditionalPageAtBottomEditorCustomization(true);

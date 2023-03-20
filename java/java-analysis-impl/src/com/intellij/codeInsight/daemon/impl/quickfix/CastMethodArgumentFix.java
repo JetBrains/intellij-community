@@ -17,9 +17,10 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
 
   private CastMethodArgumentFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
-    myText = list.getExpressionCount() == 1
-             ? QuickFixBundle.message("cast.single.parameter.text", myToType.getPresentableText())
-             : QuickFixBundle.message("cast.parameter.text", myIndex + 1, myToType.getPresentableText());
+    String role = list.getExpressionCount() == 1
+               ? QuickFixBundle.message("fix.expression.role.argument")
+               : QuickFixBundle.message("fix.expression.role.nth.argument", myIndex + 1);
+    myText = QuickFixBundle.message("add.typecast.cast.text", myToType.getPresentableText(), role);
   }
 
   @Override
@@ -51,7 +52,7 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
         if (parameterType == null) return false;
       }
       if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
-        if (PsiType.NULL.equals(exprType)) {
+        if (PsiTypes.nullType().equals(exprType)) {
           return true;
         }
         parameterType = PsiPrimitiveType.getUnboxedType(parameterType);

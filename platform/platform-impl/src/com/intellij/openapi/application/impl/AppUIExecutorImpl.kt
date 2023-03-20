@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.constraints.Expiration
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -19,14 +18,12 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
 /**
- * @author peter
  * @author eldar
  */
 internal class AppUIExecutorImpl private constructor(private val modality: ModalityState,
@@ -50,9 +47,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   private class MyWtExecutor(private val modality: ModalityState) : Executor {
     override fun execute(command: Runnable) {
-      if (ApplicationManager.getApplication().isWriteThread
-          && (ApplicationImpl.USE_SEPARATE_WRITE_THREAD
-              || !TransactionGuard.getInstance().isWriteSafeModality(modality)
+      if (ApplicationManager.getApplication().isWriteIntentLockAcquired
+          && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
           && !ModalityState.current().dominates(modality)) {
         command.run()
@@ -121,73 +117,9 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     return withConstraint(WithDocumentsCommitted(project, modality), project)
   }
 
-  override fun inTransaction(parentDisposable: Disposable): AppUIExecutorImpl {
-    val id = TransactionGuard.getInstance().contextTransaction
-    return withConstraint(object : ContextConstraint {
-      override fun isCorrectContext(): Boolean {
-        return TransactionGuard.getInstance().contextTransaction != null
-      }
-
-      override fun schedule(runnable: Runnable) {
-        // The Application instance is passed as a disposable here to ensure the runnable is always invoked,
-        // regardless expiration state of the proper parentDisposable. In case the latter is disposed,
-        // a continuation is resumed with a cancellation exception anyway (.expireWith() takes care of that).
-        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), id, runnable)
-      }
-
-      override fun toString() = "inTransaction"
-    }).expireWith(parentDisposable)
-  }
-
-  @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-              "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun inUndoTransparentAction(): AppUIExecutorImpl {
-    return withConstraint(object : ContextConstraint {
-      override fun isCorrectContext(): Boolean =
-        CommandProcessor.getInstance().isUndoTransparentActionInProgress
-
-      override fun schedule(runnable: Runnable) {
-        CommandProcessor.getInstance().runUndoTransparentAction(runnable)
-      }
-
-      override fun toString() = "inUndoTransparentAction"
-    })
-  }
-
-  @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-              "Use runWriteAction instead.", ReplaceWith("this"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun inWriteAction(): AppUIExecutorImpl {
-    return withConstraint(object : ContextConstraint {
-      override fun isCorrectContext(): Boolean =
-        ApplicationManager.getApplication().isWriteAccessAllowed
-
-      override fun schedule(runnable: Runnable) {
-        ApplicationManager.getApplication().runWriteAction(runnable)
-      }
-
-      override fun toString() = "inWriteAction"
-    })
-  }
-
   override fun inSmartMode(project: Project): AppUIExecutorImpl {
     return withConstraint(InSmartMode(project), project)
   }
-}
-
-@Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-            "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-fun AppUIExecutor.inUndoTransparentAction(): AppUIExecutor {
-  return (this as AppUIExecutorImpl).inUndoTransparentAction()
-}
-
-@Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-            "Use runWriteAction instead.", ReplaceWith("this"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-fun AppUIExecutor.inWriteAction():AppUIExecutor {
-  return (this as AppUIExecutorImpl).inWriteAction()
 }
 
 fun AppUIExecutor.withConstraint(constraint: ContextConstraint): AppUIExecutor {
@@ -202,6 +134,11 @@ fun AppUIExecutor.withConstraint(constraint: ContextConstraint, parentDisposable
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
  * Contains: [ContinuationInterceptor].
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(
+  message = "Do not use: coroutine cancellation must not be handled by a dispatcher. " +
+            "Use Dispatchers.Main and ModalityState.asContextElement() if needed",
+)
 fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor {
   return (this as AppUIExecutorImpl).asCoroutineDispatcher()
 }

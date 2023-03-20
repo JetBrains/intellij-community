@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.HeavyFileEditorManagerTestCase;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -11,15 +10,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Dmitry Avdeev
  */
 public class GotoClassTest extends HeavyFileEditorManagerTestCase {
   public void testGotoClass() {
-    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Foo.java", "public class Foo {\n" +
-                                                         "}\n" +
-                                                         "\n" +
-                                                         "class Bar {}\n");
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Foo.java", """
+      public class Foo {
+      }
+
+      class Bar {}
+      """);
 
     VirtualFile virtualFile = file.getVirtualFile();
     assertNotNull(virtualFile);
@@ -34,8 +37,10 @@ public class GotoClassTest extends HeavyFileEditorManagerTestCase {
     assertEquals(identifierOffset, getOffset(virtualFile));
 
     getEditor(virtualFile).getCaretModel().moveToOffset(identifierOffset + 3); // it's still inside the class, so keep it
-
+    assertEquals(identifierOffset + 3, getOffset(virtualFile));
     manager.closeAllFiles();
+
+    assertThat(manager.getSelectedEditor()).isNull();
     NavigationUtil.activateFileWithPsiElement(psiClass);
     assertEquals(identifierOffset + 3, getOffset(virtualFile));
 
@@ -54,7 +59,6 @@ public class GotoClassTest extends HeavyFileEditorManagerTestCase {
   }
 
   private Editor getEditor(VirtualFile virtualFile) {
-    FileEditor[] editors = FileEditorManagerEx.getInstanceEx(getProject()).getEditors(virtualFile);
-    return ((TextEditor)editors[0]).getEditor();
+    return ((TextEditor)FileEditorManagerEx.getInstanceEx(getProject()).getSelectedEditor(virtualFile)).getEditor();
   }
 }

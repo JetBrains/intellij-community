@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -6,10 +6,13 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.MessageEventImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import junit.framework.AssertionFailedError
+import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.applySuggestedScriptConfiguration
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -17,12 +20,12 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptC
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinGradleDslErrorReporter.Companion.build_script_errors_group
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
+import org.jetbrains.kotlin.idea.core.script.ucache.listDependencies
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -34,7 +37,7 @@ import kotlin.test.assertFailsWith
 
 @RunWith(value = Parameterized::class)
 @Suppress("ACCIDENTAL_OVERRIDE")
-class GradleKtsImportTest : KotlinGradleImportingTestCase() {
+abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
     companion object {
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
@@ -42,69 +45,121 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         fun data(): Collection<Array<Any?>> = listOf(arrayOf("6.0.1"))
     }
 
-    val projectDir: File
-        get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
+    val projectDir: File get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
 
-    private val scriptConfigurationManager: CompositeScriptConfigurationManager
+    internal val scriptConfigurationManager: CompositeScriptConfigurationManager
         get() = ScriptConfigurationManager.getInstance(myProject) as CompositeScriptConfigurationManager
 
-    override fun testDataDirName(): String {
-        return "gradleKtsImportTest"
-    }
+    override fun testDataDirName(): String = "gradleKtsImportTest"
 
-    @Test
-    @TargetVersions("6.0.1+")
-    fun testEmpty() {
-        configureByFiles()
-        importProject()
 
-        checkConfiguration("build.gradle.kts")
-    }
+    class WorkspaceModelSyncTest : GradleKtsImportTest() {
 
-    @Test
-    @TargetVersions("6.0.1+")
-    fun testError() {
-        val events = mutableListOf<BuildEvent>()
-        val syncViewManager = object : SyncViewManager(myProject) {
-            override fun onEvent(buildId: Any, event: BuildEvent) {
-                events.add(event)
-            }
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testWorkspaceModelInSyncAfterImport() {
+            Registry.get("kotlin.scripts.as.entities").setValue(true)
+
+            configureByFiles()
+            importProject()
+
+            checkEquivalence("build.gradle.kts")
+            checkEquivalence("settings.gradle.kts")
         }
-        myProject.replaceService(SyncViewManager::class.java, syncViewManager, testRootDisposable)
 
-        configureByFiles()
+        private fun checkEquivalence(fileName: String) {
+            val ktsFile = KtsFixture(fileName).virtualFile
 
-        assertFailsWith<AssertionFailedError> { importProject() }
+            val (managerClassFiles, managerSourceFiles) = getDependenciesFromManager(ktsFile)
+            val (sdkClasses, sdkSources) = getSdkDependencies(ktsFile)
 
-        val expectedErrorMessage = "Unresolved reference: unresolved"
-        val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
-        val buildScriptErrors = errors.filter { it.message == expectedErrorMessage }
-        assertTrue(
-            "$expectedErrorMessage error has not been reported among other errors: $errors",
-            buildScriptErrors.isNotEmpty()
-        )
+            val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot
+            val scriptEntity = entityStorage.entities(KotlinScriptEntity::class.java).find { it.path.contains(fileName) }
+                ?: error("Workspace model is unaware of script $fileName")
+
+            val entityClassFiles = scriptEntity.listDependencies(myProject, KotlinScriptLibraryRootTypeId.COMPILED)
+            val entitySourceFiles = scriptEntity.listDependencies(myProject, KotlinScriptLibraryRootTypeId.SOURCES)
+
+            assertEquals("Class dependencies for $fileName are not equivalent", entityClassFiles, managerClassFiles + sdkClasses)
+            assertEquals("Source dependencies for $fileName are not equivalent", entitySourceFiles, managerSourceFiles + sdkSources)
+        }
+
+        // classes, sources
+        private fun getDependenciesFromManager(file: VirtualFile): Pair<Collection<VirtualFile>, Collection<VirtualFile>> {
+            val managerClassFiles = scriptConfigurationManager.getScriptDependenciesClassFiles(file)
+            val managerSourceFiles = scriptConfigurationManager.getScriptDependenciesSourceFiles(file)
+            return Pair(managerClassFiles, managerSourceFiles)
+        }
+
+        // classes, sources
+        private fun getSdkDependencies(file: VirtualFile): Pair<Collection<VirtualFile>, Collection<VirtualFile>> {
+            val managerClassFiles = scriptConfigurationManager.getScriptSdkDependenciesClassFiles(file)
+            val managerSourceFiles = scriptConfigurationManager.getScriptSdkDependenciesSourceFiles(file)
+            return Pair(managerClassFiles, managerSourceFiles)
+        }
     }
 
-    @Test
-    @TargetVersions("6.0.1+")
-    fun testCompositeBuild() {
-        configureByFiles()
-        importProject()
 
-        checkConfiguration(
-            "settings.gradle.kts",
-            "build.gradle.kts",
-            "subProject/build.gradle.kts",
-            "subBuild/settings.gradle.kts",
-            "subBuild/build.gradle.kts",
-            "subBuild/subProject/build.gradle.kts",
-            "buildSrc/settings.gradle.kts",
-            "buildSrc/build.gradle.kts",
-            "buildSrc/subProject/build.gradle.kts"
-        )
+
+    class Empty : GradleKtsImportTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testEmpty() {
+            configureByFiles()
+            importProject()
+
+            checkConfiguration("build.gradle.kts")
+        }
     }
 
-    private fun checkConfiguration(vararg files: String) {
+    class Error : GradleKtsImportTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testError() {
+            val events = mutableListOf<BuildEvent>()
+            val syncViewManager = object : SyncViewManager(myProject) {
+                override fun onEvent(buildId: Any, event: BuildEvent) {
+                    events.add(event)
+                }
+            }
+            myProject.replaceService(SyncViewManager::class.java, syncViewManager, testRootDisposable)
+
+            configureByFiles()
+
+            assertFailsWith<AssertionFailedError> { importProject() }
+
+            val expectedErrorMessage = "Unresolved reference: unresolved"
+            val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
+            val buildScriptErrors = errors.filter { it.message == expectedErrorMessage }
+            assertTrue(
+                "$expectedErrorMessage error has not been reported among other errors: $errors",
+                buildScriptErrors.isNotEmpty()
+            )
+        }
+    }
+
+    class CompositeBuild2 : GradleKtsImportTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testCompositeBuild() {
+            configureByFiles()
+            importProject()
+
+            checkConfiguration(
+                "settings.gradle.kts",
+                "build.gradle.kts",
+                "subProject/build.gradle.kts",
+                "subBuild/settings.gradle.kts",
+                "subBuild/build.gradle.kts",
+                "subBuild/subProject/build.gradle.kts",
+                "buildSrc/settings.gradle.kts",
+                "buildSrc/build.gradle.kts",
+                "buildSrc/subProject/build.gradle.kts"
+            )
+        }
+    }
+
+    protected fun checkConfiguration(vararg files: String) {
         val scripts = files.map {
             KtsFixture(it).also { kts ->
                 assertTrue("Configuration for ${kts.file.path} is missing", scriptConfigurationManager.hasConfiguration(kts.psiFile))
@@ -145,7 +200,7 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    inner class KtsFixture(val fileName: String) {
+    inner class KtsFixture(fileName: String) {
         val file = projectDir.resolve(fileName)
 
         val virtualFile get() = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!

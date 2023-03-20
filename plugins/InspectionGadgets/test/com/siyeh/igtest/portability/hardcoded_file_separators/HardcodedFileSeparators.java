@@ -33,6 +33,9 @@ public class HardcodedFileSeparators {
   void images() {
     this.getClass().getResource("/a/b/c/d/e.png");
     this.getClass().getResourceAsStream("/a/b/c/d/e.png");
+    this.getClass().getClassLoader().getResource("/a/b/c/d/e.png");
+    this.getClass().getClassLoader().getResource("/a/b/c/d/e.png");
+    ClassLoader.getSystemResource("/a/b/c/d/e.png");
   }
 
   void urls() throws Exception {

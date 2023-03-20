@@ -66,7 +66,11 @@
       <key>JVMVersion</key>
       <string>1.8*,1.8+</string>
       <key>MainClass</key>
-      <string>com.intellij.idea.Main</string>
+      <string>@@main_class_name@@</string>
+      <key>ErrorFile</key>
+      <string>@@xx_error_file@@</string>
+      <key>HeapDump</key>
+      <string>@@xx_heap_dump@@</string>
       <key>Options</key>
       <array>
         @@vm_options@@
@@ -97,5 +101,7 @@
     <string>An application in @@bundle_name@@ requests access to files on a removable volume.</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to Bluetooth.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests the ability to send Apple events.</string>
   </dict>
 </plist>

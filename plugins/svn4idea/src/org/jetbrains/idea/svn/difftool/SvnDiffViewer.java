@@ -12,10 +12,7 @@ import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -161,7 +158,7 @@ public class SvnDiffViewer implements DiffViewer {
   @Nullable
   private JComponent createNotification() {
     if (myPropertyRequest instanceof ErrorDiffRequest) {
-      return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage());
+      return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage(), EditorNotificationPanel.Status.Error);
     }
 
     List<DiffContent> contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();
@@ -172,11 +169,13 @@ public class SvnDiffViewer implements DiffViewer {
     if (before.isEmpty() && after.isEmpty()) return null;
 
     if (!before.keySet().equals(after.keySet())) {
-      return createNotification(message("label.svn.properties.changed"));
+      return createNotification(message("label.svn.properties.changed"), EditorNotificationPanel.Status.Info);
     }
 
     for (String key : before.keySet()) {
-      if (!Comparing.equal(before.get(key), after.get(key))) return createNotification(message("label.svn.properties.changed"));
+      if (!Comparing.equal(before.get(key), after.get(key))) {
+        return createNotification(message("label.svn.properties.changed"), EditorNotificationPanel.Status.Info);
+      }
     }
 
     return null;
@@ -199,8 +198,8 @@ public class SvnDiffViewer implements DiffViewer {
   }
 
   @NotNull
-  private static JPanel createNotification(@NlsContexts.Label @NotNull String text) {
-    return new EditorNotificationPanel().text(text);
+  private static JPanel createNotification(@NlsContexts.Label @NotNull String text, @NotNull EditorNotificationPanel.Status status) {
+    return new EditorNotificationPanel(status).text(text);
   }
 
   //
@@ -299,6 +298,11 @@ public class SvnDiffViewer implements DiffViewer {
   private class ToggleHidePropertiesAction extends ToggleAction implements DumbAware {
     ToggleHidePropertiesAction() {
       ActionUtil.copyFrom(this, "Subversion.TogglePropertiesDiff");
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

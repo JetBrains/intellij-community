@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -13,6 +13,7 @@ import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
@@ -254,8 +255,8 @@ public final class TestResultsXmlFormatter {
           final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
           try {
             HashMap<String, String> attributes = new HashMap<>();
-            attributes.put(EXPECTED, replaceZeroTokens(diffHyperlink.getLeft()));
-            attributes.put(ACTUAL, replaceZeroTokens(diffHyperlink.getRight()));
+            attributes.put(EXPECTED, JDOMUtil.removeControlChars(diffHyperlink.getLeft()));
+            attributes.put(ACTUAL, JDOMUtil.removeControlChars(diffHyperlink.getRight()));
             startElement(DIFF, attributes);
             endElement(DIFF);
           }
@@ -299,7 +300,7 @@ public final class TestResultsXmlFormatter {
     StringBuilder output = new StringBuilder();
     StringTokenizer t = new StringTokenizer(text.toString(), "\n");
     while (t.hasMoreTokens()) {
-      output.append(replaceZeroTokens(t.nextToken())).append("\n");
+      output.append(JDOMUtil.removeControlChars(t.nextToken())).append("\n");
     }
 
     Map<String, String> a = new HashMap<>();
@@ -310,11 +311,6 @@ public final class TestResultsXmlFormatter {
     endElement(ELEM_OUTPUT);
   }
 
-  @NotNull
-  private static String replaceZeroTokens(String str) {
-    return str.replaceAll("\u0000", "");
-  }
-
   private static @NonNls String getTypeString(ConsoleViewContentType type) {
     return type == ConsoleViewContentType.ERROR_OUTPUT ? "stderr" : "stdout";
   }
@@ -322,23 +318,14 @@ public final class TestResultsXmlFormatter {
   private static String getStatusString(AbstractTestProxy node) {
     int magnitude = node.getMagnitude();
     // TODO enumeration!
-    switch (magnitude) {
-      case 0:
-        return STATUS_SKIPPED;
-      case 2:
-      case 4:
-        return STATUS_SKIPPED;
-      case 5:
-        return STATUS_IGNORED;
-      case 1:
-        return STATUS_PASSED;
-      case 6:
-        return STATUS_FAILED;
-      case 8:
-        return STATUS_ERROR;
-      default:
-        return node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
-    }
+    return switch (magnitude) {
+      case 0, 2, 4 -> STATUS_SKIPPED;
+      case 5 -> STATUS_IGNORED;
+      case 1 -> STATUS_PASSED;
+      case 6 -> STATUS_FAILED;
+      case 8 -> STATUS_ERROR;
+      default -> node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
+    };
   }
 
   private void startElement(String name, Map<String, String> attributes) throws SAXException {

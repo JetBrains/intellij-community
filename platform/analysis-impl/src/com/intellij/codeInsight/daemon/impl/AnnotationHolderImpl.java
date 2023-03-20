@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -19,6 +20,9 @@ import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -190,12 +194,20 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
       new IncorrectOperationException("'AnnotationHolder."+methodName + "()' method" + callerInfo + " is slow, non-incremental " +
                                       "and thus can cause unexpected behaviour (e.g. annoying blinking), " +
                                       "is deprecated and will be removed soon. " +
-                                      "Please use `newAnnotation().create()` instead"), callerClass == null ? getClass() : callerClass);
-    // temporary fix, CLion guys promised to fix their annotator eventually
+                                      "Please use `newAnnotation(...).create()` instead"), callerClass == null ? getClass() : callerClass);
     if ("com.jetbrains.cidr.lang.daemon.OCAnnotator".equals(callerClass == null ? null : callerClass.getName())) {
-      //todo
+      //todo temporary fix. CLion guys promised to fix their annotator eventually
       //LOG.warnInProduction(pluginException);
-      LOG.warn(pluginException);
+      if (LocalDate.now().isAfter(LocalDate.of(2023, Month.MARCH, 13))) {
+        if (ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode()) {
+          Period p = Period.between(LocalDate.of(2020, Month.APRIL, 27), LocalDate.now());
+          String f = String.format("CLion developers promised to fix their annotator %d centuries %d years %d months %d days ago", p.getYears() / 100, p.getYears() % 100, p.getMonths(), p.getDays());
+          LOG.warn(f, pluginException);
+        }
+        else {
+          LOG.warn(pluginException);
+        }
+      }
     }
     else {
       LOG.warnInProduction(pluginException);

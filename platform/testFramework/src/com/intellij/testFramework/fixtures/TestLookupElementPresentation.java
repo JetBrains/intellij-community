@@ -4,28 +4,36 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.ui.DeferredIcon;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.RowIcon;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.ExecutionException;
 
-/**
- * @author peter
- */
 public final class TestLookupElementPresentation extends LookupElementPresentation {
   public static @NotNull TestLookupElementPresentation renderReal(@NotNull LookupElement e) {
     TestLookupElementPresentation p = new TestLookupElementPresentation();
-    //noinspection rawtypes
-    LookupElementRenderer renderer = e.getExpensiveRenderer();
-    if (renderer != null) {
-      //noinspection unchecked
-      renderer.renderElement(e, p);
-    } else {
-      e.renderElement(p);
+    try {
+      ReadAction.nonBlocking(()-> {
+        //noinspection rawtypes
+        LookupElementRenderer renderer = e.getExpensiveRenderer();
+        if (renderer == null) {
+          e.renderElement(p);
+        }
+        else {
+          //noinspection unchecked
+          renderer.renderElement(e, p);
+        }
+      }).submit(AppExecutorUtil.getAppExecutorService()).get();
+    }
+    catch (InterruptedException | ExecutionException ex) {
+      throw new RuntimeException(ex);
     }
     return p;
   }

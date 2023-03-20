@@ -41,10 +41,9 @@ public class GotoPropertyDeclarationsProvider extends GotoRelatedProvider {
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
-    if (!(editor instanceof ResourceBundleEditor)) {
+    if (!(editor instanceof ResourceBundleEditor resourceBundleEditor)) {
       return Collections.emptyList();
     }
-    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)editor;
     final Collection<ResourceBundleEditorViewElement> elements = resourceBundleEditor.getSelectedElements();
     if (elements.size() != 1) {
       return Collections.emptyList();

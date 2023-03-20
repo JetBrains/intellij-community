@@ -6,11 +6,12 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintMap
-import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.asString
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -18,18 +19,14 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.memberProperties
 
 /**
- * EntityId2Vfu may contains these possible variants, due to memory optimization:
+ * EntityId2Vfu may contain these possible variants, due to memory optimization:
  * 1) Object2ObjectOpenHashMap<EntityId, Pair<String, VirtualFileUrl>>
  * 2) Object2ObjectOpenHashMap<EntityId, Pair<String, ObjectOpenHashSet<VirtualFileUrl>>>
  * 3) Object2ObjectOpenHashMap<EntityId, Object2ObjectOpenHashMap<String, VirtualFileUrl>>
@@ -39,7 +36,7 @@ import kotlin.reflect.full.memberProperties
 //internal typealias Vfu2EntityId = Object2ObjectOpenHashMap<VirtualFileUrl, Object2ObjectOpenHashMap<String, EntityId>>
 //internal typealias EntityId2JarDir = BidirectionalMultiMap<EntityId, VirtualFileUrl>
 internal typealias EntityId2Vfu = Long2ObjectOpenHashMap<Any>
-internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongOpenHashMap<String>>
+internal typealias Vfu2EntityId = Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<EntityIdWithProperty>>
 internal typealias EntityId2JarDir = BidirectionalLongMultiMap<VirtualFileUrl>
 
 @Suppress("UNCHECKED_CAST")
@@ -56,7 +53,7 @@ open class VirtualFileIndex internal constructor(
     val result = mutableSetOf<VirtualFileUrl>()
     entityId2VirtualFileUrl[id]?.also { value ->
       when (value) {
-        is Object2ObjectOpenHashMap<*, *> -> value.values.forEach { vfu -> result.addAll(getVirtualFileUrl(vfu)) }
+        is Map<*, *> -> value.values.forEach { vfu -> result.addAll(getVirtualFileUrl(vfu!!)) }
         is Pair<*, *> -> result.addAll(getVirtualFileUrl(value.second!!))
       }
     }
@@ -72,7 +69,7 @@ open class VirtualFileIndex internal constructor(
 
   private fun addVirtualFileUrlsToMap(result: HashMap<String, MutableSet<VirtualFileUrl>>, value: Any) {
     when (value) {
-      is Object2ObjectOpenHashMap<*, *> -> value.forEach { result[it.key as String] = getVirtualFileUrl(it.value) }
+      is Map<*, *> -> value.forEach { result[it.key as String] = getVirtualFileUrl(it.value!!) }
       is Pair<*, *> -> result[value.first as String] = getVirtualFileUrl(value.second!!)
     }
   }
@@ -87,7 +84,7 @@ open class VirtualFileIndex internal constructor(
   override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
-      entityData.createEntity(entityStorage) to it.key.substring(it.value.asString().length + 1)
+      entityData.createEntity(entityStorage) to it.key.propertyName
     } ?: emptySequence()
 
   fun getIndexedJarDirectories(): Set<VirtualFileUrl> = entityId2JarDir.values
@@ -117,7 +114,7 @@ open class VirtualFileIndex internal constructor(
       }
 
       when (property2Vfu) {
-        is Object2ObjectOpenHashMap<*, *> -> property2Vfu.forEach { (property, vfus) -> assertProperty2Vfu(property as String, vfus) }
+        is Map<*, *> -> property2Vfu.forEach { (property, vfus) -> assertProperty2Vfu(property as String, vfus!!) }
         is Pair<*, *> -> assertProperty2Vfu(property2Vfu.first as String, property2Vfu.second!!)
       }
     }
@@ -128,7 +125,8 @@ open class VirtualFileIndex internal constructor(
     assert(existingVfuInFirstMap.isEmpty()) { "Both maps contain the same amount of VirtualFileUrls but they are different" }
   }
 
-  internal fun getCompositeKey(entityId: EntityId, propertyName: String) = "${entityId.asString()}_$propertyName"
+  internal fun getCompositeKey(entityId: EntityId, propertyName: String) =
+    EntityIdWithProperty(entityId, propertyName)
 
   class MutableVirtualFileIndex private constructor(
     // Do not write to [entityId2VirtualFileUrl]  and [vfu2EntityId] directly! Create a dedicated method for that
@@ -146,7 +144,7 @@ open class VirtualFileIndex internal constructor(
     }
 
     @Synchronized
-    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Collection<VirtualFileUrl>) {
       startWrite()
       val newVirtualFileUrls = HashSet(virtualFileUrls)
       fun cleanExistingVfu(existingVfu: Any): Boolean {
@@ -175,7 +173,7 @@ open class VirtualFileIndex internal constructor(
       val property2Vfu = entityId2VirtualFileUrl[id]
       if (property2Vfu != null) {
         when (property2Vfu) {
-          is Object2ObjectOpenHashMap<*, *> -> {
+          is MutableMap<*, *> -> {
             val existingVfu = property2Vfu[propertyName]
             if (existingVfu != null && cleanExistingVfu(existingVfu)) {
               property2Vfu.remove(propertyName)
@@ -218,8 +216,8 @@ open class VirtualFileIndex internal constructor(
       entityId2JarDir.removeKey(id)
       val removedValue = entityId2VirtualFileUrl.remove(id) ?: return
       when (removedValue) {
-        is Object2ObjectOpenHashMap<*, *> -> removedValue.forEach { (property, vfu) ->
-          removeFromVfu2EntityIdMap(id, property as String, vfu)
+        is MutableMap<*, *> -> removedValue.forEach { (property, vfu) ->
+          removeFromVfu2EntityIdMap(id, property as String, vfu!!)
         }
         is Pair<*, *> -> removeFromVfu2EntityIdMap(id, removedValue.first as String, removedValue.second!!)
       }
@@ -263,7 +261,7 @@ open class VirtualFileIndex internal constructor(
           return vfu
         }
         else {
-          val result = createSmallMemoryFootprintSet<VirtualFileUrl>()
+          val result = CollectionFactory.createSmallMemoryFootprintSet<VirtualFileUrl>(DEFAULT_COLLECTION_SIZE)
           result.add(vfu as VirtualFileUrl)
           result.add(virtualFileUrl)
           return result
@@ -272,8 +270,8 @@ open class VirtualFileIndex internal constructor(
 
       if (property2Vfu != null) {
         val newProperty2Vfu = when (property2Vfu) {
-          is Object2ObjectOpenHashMap<*, *> -> {
-            property2Vfu as Object2ObjectOpenHashMap<String, Any>
+          is MutableMap<*, *> -> {
+            property2Vfu as MutableMap<String, Any>
             val vfu = property2Vfu[propertyName]
             if (vfu == null) {
               property2Vfu[propertyName] = virtualFileUrl
@@ -286,7 +284,7 @@ open class VirtualFileIndex internal constructor(
           is Pair<*, *> -> {
             property2Vfu as Pair<String, Any>
             if (property2Vfu.first != propertyName) {
-              val result = createSmallMemoryFootprintMap<String, Any>()
+              val result = CollectionFactory.createSmallMemoryFootprintMap<String, Any>(DEFAULT_COLLECTION_SIZE)
               result[property2Vfu.first] = property2Vfu.second
               result[propertyName] = virtualFileUrl
               result
@@ -311,8 +309,8 @@ open class VirtualFileIndex internal constructor(
     private fun removeByPropertyFromIndexes(id: EntityId, propertyName: String) {
       val property2vfu = entityId2VirtualFileUrl[id] ?: return
       when (property2vfu) {
-        is Object2ObjectOpenHashMap<*, *> -> {
-          property2vfu as Object2ObjectOpenHashMap<String, Any>
+        is MutableMap<*, *> -> {
+          property2vfu as MutableMap<String, Any>
           val vfu = property2vfu.remove(propertyName) ?: return
           if (property2vfu.isEmpty()) entityId2VirtualFileUrl.remove(id)
           removeFromVfu2EntityIdMap(id, propertyName, vfu)
@@ -345,13 +343,13 @@ open class VirtualFileIndex internal constructor(
 
     private fun copyEntityMap(originMap: EntityId2Vfu): EntityId2Vfu {
       val copiedMap = EntityId2Vfu()
-      fun getVirtualFileUrl(value: Any) = if (value is Set<*>) ObjectOpenHashSet(value as Set<VirtualFileUrl>) else value
+      fun getVirtualFileUrl(value: Any) = if (value is Set<*>) CollectionFactory.createSmallMemoryFootprintSet(value as Set<VirtualFileUrl>) else value
 
       originMap.forEach { (entityId, vfuMap) ->
         when (vfuMap) {
           is Map<*, *> -> {
             vfuMap as Map<String, *>
-            val copiedVfuMap = Object2ObjectOpenHashMap<String, Any>()
+            val copiedVfuMap = CollectionFactory.createSmallMemoryFootprintMap<String, Any>(vfuMap.size)
             vfuMap.forEach { copiedVfuMap[it.key] = getVirtualFileUrl(it.value!!) }
             copiedMap[entityId] = copiedVfuMap
           }
@@ -372,12 +370,20 @@ open class VirtualFileIndex internal constructor(
 
     companion object {
       private val LOG = logger<MutableVirtualFileIndex>()
+      private const val DEFAULT_COLLECTION_SIZE = 2
+
       const val VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY = "entitySource"
       fun from(other: VirtualFileIndex): MutableVirtualFileIndex {
         if (other is MutableVirtualFileIndex) other.freezed = true
         return MutableVirtualFileIndex(other.entityId2VirtualFileUrl, other.vfu2EntityId, other.entityId2JarDir)
       }
     }
+  }
+}
+
+internal data class EntityIdWithProperty(val entityId: EntityId, val propertyName: String) {
+  override fun toString(): String {
+    return "${entityId.asString()}_$propertyName"
   }
 }
 
@@ -409,91 +415,5 @@ private val CASE_INSENSITIVE_STRATEGY: Hash.Strategy<VirtualFileUrl> = object : 
   override fun hashCode(fileUrl: VirtualFileUrl?): Int {
     if (fileUrl == null) return 0
     return Strings.stringHashCodeInsensitive(fileUrl.url)
-  }
-}
-
-//---------------------------------------------------------------------
-class VirtualFileUrlProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, VirtualFileUrl> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as VirtualFileUrl
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value)
-  }
-}
-
-//---------------------------------------------------------------------
-class VirtualFileUrlNullableProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, VirtualFileUrl?> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl? {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as VirtualFileUrl?
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl?) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value)
-  }
-}
-
-//---------------------------------------------------------------------
-class VirtualFileUrlListProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, List<VirtualFileUrl>> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): List<VirtualFileUrl> {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as List<VirtualFileUrl>
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: List<VirtualFileUrl>) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value.toHashSet())
-  }
-}
-
-/**
- * This delegate was created specifically for the handling VirtualFileUrls from LibraryRoot
- */
-class VirtualFileUrlLibraryRootProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, List<LibraryRoot>> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): List<LibraryRoot> {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as List<LibraryRoot>
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: List<LibraryRoot>) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-
-    val jarDirectories = mutableSetOf<VirtualFileUrl>()
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value.map {
-      if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
-        jarDirectories.add(it.url)
-      }
-      it.url
-    }.toHashSet())
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.indexJarDirectories(thisRef.id, jarDirectories)
   }
 }

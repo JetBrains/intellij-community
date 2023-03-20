@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.Patches;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.application.Application;
@@ -92,6 +93,8 @@ public final class HttpRequests {
     }
 
     @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException;
+
+    @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator, boolean progressDescription) throws IOException;
 
     byte @NotNull [] readBytes(@Nullable ProgressIndicator indicator) throws IOException;
 
@@ -212,8 +215,7 @@ public final class HttpRequests {
       if (includeHeaders) {
         builder.append("\n, headers: ").append(connection.getHeaderFields());
       }
-      if (connection instanceof HttpURLConnection) {
-        HttpURLConnection httpConnection = (HttpURLConnection)connection;
+      if (connection instanceof HttpURLConnection httpConnection) {
         builder.append("\n, response: ").append(httpConnection.getResponseCode()).append(' ').append(httpConnection.getResponseMessage());
       }
     }
@@ -435,7 +437,7 @@ public final class HttpRequests {
       long contentLength = getConnection().getContentLengthLong();
       if (contentLength > Integer.MAX_VALUE) throw new IOException("Cannot download more than 2 GiB; content length is " + contentLength);
       BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? (int)contentLength : 16384);
-      NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength);
+      NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength, false);
       return out;
     }
 
@@ -451,11 +453,16 @@ public final class HttpRequests {
 
     @Override
     public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator) throws IOException {
+      return saveToFile(file, indicator, false);
+    }
+
+    @Override
+    public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator, boolean progressDescription) throws IOException {
       NioFiles.createDirectories(file.getParent());
 
       boolean deleteFile = true;
       try (OutputStream out = Files.newOutputStream(file)) {
-        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong());
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong(), progressDescription);
         deleteFile = false;
       }
       catch (HttpStatusException e) {
@@ -488,7 +495,8 @@ public final class HttpRequests {
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     Application app = ApplicationManager.getApplication();
     LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.isReadAccessAllowed(),
-                   "Network shouldn't be accessed in EDT or inside read action");
+                   "Network must not be accessed in EDT or inside read action, because this may take considerable amount of time, " +
+                   "and write actions will be blocked during that time so user won't be able to perform tasks in the IDE");
 
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
     if (contextLoader != null && shouldOverrideContextClassLoader()) {
@@ -543,11 +551,15 @@ public final class HttpRequests {
       if (!builder.myUseProxy) {
         connection = new URL(url).openConnection(Proxy.NO_PROXY);
       }
-      else if (ApplicationManager.getApplication() == null) {
-        connection = new URL(url).openConnection();
-      }
       else {
-        connection = IdeUiService.getInstance().openHttpConnection(url);
+        Application app = ApplicationManager.getApplication();
+        IdeUiService uiService = app != null ? app.getServiceIfCreated(IdeUiService.class) : null;
+        if (uiService != null) {
+          connection = uiService.openHttpConnection(url);
+        }
+        else {
+          connection = new URL(url).openConnection();
+        }
       }
 
       if (connection instanceof HttpsURLConnection) {
@@ -585,7 +597,7 @@ public final class HttpRequests {
 
       checkRequestHeadersForNulBytes(connection);
 
-      if (!(connection instanceof HttpURLConnection)) {
+      if (!(connection instanceof HttpURLConnection httpURLConnection)) {
         return connection;
       }
 
@@ -593,7 +605,6 @@ public final class HttpRequests {
         return connection;
       }
 
-      HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
       String method = httpURLConnection.getRequestMethod();
 
       LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
@@ -653,7 +664,7 @@ public final class HttpRequests {
   }
 
   private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {
-    if (ApplicationManager.getApplication() == null) {
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
       return;
     }

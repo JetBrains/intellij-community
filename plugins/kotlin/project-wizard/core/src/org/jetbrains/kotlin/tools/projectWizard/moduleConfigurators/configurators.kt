@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.service.JvmTargetVersionsPr
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinBuildSystemPluginIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinExtensionConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenPropertyIR
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
@@ -30,7 +30,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             GenerationPhase.PROJECT_GENERATION
         ) {
             tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.tooltip")
-            defaultValue = value(TargetJvmVersion.JVM_1_8)
+            defaultValue = value(TargetJvmVersion.JVM_11)
             filter = { _, targetJvmVersion ->
                 // we need to make sure that kotlin compiler supports this target
                 val projectKind = KotlinPlugin.projectKind.settingValue
@@ -90,16 +90,18 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
     }
 }
 
-enum class TargetJvmVersion(@NonNls val value: String) : DisplayableSettingItem {
-    JVM_1_8("1.8"),
-    JVM_9("9"),
-    JVM_10("10"),
-    JVM_11("11"),
-    JVM_12("12"),
-    JVM_13("13"),
-    JVM_14("14"),
-    JVM_15("15"),
-    JVM_16("16");
+enum class TargetJvmVersion(@NonNls val value: String, val versionNumber: Int) : DisplayableSettingItem {
+    JVM_1_8("1.8", 8),
+    JVM_9("9", 9),
+    JVM_10("10", 10),
+    JVM_11("11", 11),
+    JVM_12("12", 12),
+    JVM_13("13", 13),
+    JVM_14("14", 14),
+    JVM_15("15", 15),
+    JVM_16("16", 16),
+    JVM_17("17", 17),
+    ;
 
     override val text: String
         @NlsSafe
@@ -160,40 +162,22 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
     ): List<BuildSystemIR> =
         buildList {
             +super<JvmModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
-            if (configurationData.buildSystemType == BuildSystemType.GradleKotlinDsl) {
-                +GradleImportIR("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
-            }
 
-            val targetVersionValue = inContextOfModuleConfigurator(module) {
+            val targetVersion = inContextOfModuleConfigurator(module) {
                 reader {
-                    JvmModuleConfigurator.targetJvmVersion.reference.settingValue.value
+                    JvmModuleConfigurator.targetJvmVersion.reference.settingValue
                 }
             }
             when (configurationData.buildSystemType) {
-                BuildSystemType.GradleKotlinDsl -> {
-                    +GradleConfigureTaskIR(
-                        GradleByClassTasksAccessIR("KotlinCompile"),
-                        irs = listOf(
-                            GradleAssignmentIR("kotlinOptions.jvmTarget", GradleStringConstIR(targetVersionValue))
-                        )
-                    )
-                }
-                BuildSystemType.GradleGroovyDsl -> {
-                    +jvmTargetSetup("compileKotlin", targetVersionValue)
-                    +jvmTargetSetup("compileTestKotlin", targetVersionValue)
+                BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> {
+                    +KotlinExtensionConfigurationIR(targetVersion)
                 }
                 BuildSystemType.Maven -> {
-                    +MavenPropertyIR("kotlin.compiler.jvmTarget", targetVersionValue)
+                    +MavenPropertyIR("kotlin.compiler.jvmTarget", targetVersion.value)
                 }
+                else -> {}
             }
         }
-
-    private fun jvmTargetSetup(taskName: String, targetVersion: String) = GradleSectionIR(
-        taskName,
-        irs = listOf(
-            GradleAssignmentIR("kotlinOptions.jvmTarget", GradleStringConstIR(targetVersion))
-        )
-    )
 }
 
 
@@ -201,6 +185,7 @@ val ModuleType.defaultTarget
     get() = when (this) {
         ModuleType.jvm -> JvmTargetConfigurator
         ModuleType.js -> JsBrowserTargetConfigurator
+        ModuleType.wasm -> WasmTargetConfigurator
         ModuleType.native -> NativeForCurrentSystemTarget
         ModuleType.common -> CommonTargetConfigurator
         ModuleType.android -> AndroidTargetConfigurator

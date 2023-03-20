@@ -1,4 +1,4 @@
-// "Change existent retention to SOURCE" "false"
+// "Change existing retention to SOURCE" "false"
 // DISABLE-ERRORS
 // ACTION: Add SOURCE retention
 // ACTION: Make internal

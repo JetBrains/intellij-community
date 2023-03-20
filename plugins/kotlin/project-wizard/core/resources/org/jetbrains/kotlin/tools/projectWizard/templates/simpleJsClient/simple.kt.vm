@@ -1,5 +1,5 @@
 fun main() {
-    console.log("Hello, #[[${greet()}]]#")
+    println("Hello, #[[${greet()}]]#")
 }
 
 fun greet() = "world"

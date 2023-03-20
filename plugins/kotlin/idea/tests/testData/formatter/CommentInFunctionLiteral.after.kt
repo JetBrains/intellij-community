@@ -19,8 +19,8 @@ fun foo() {
 
     test() {
         /*
-            val a = 42
-        */
+        val a = 42
+    */
     }
 
     test() {

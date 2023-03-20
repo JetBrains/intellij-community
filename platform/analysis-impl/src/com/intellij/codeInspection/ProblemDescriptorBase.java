@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -15,10 +15,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.stream.Stream;
+import java.util.List;
 
 public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(ProblemDescriptorBase.class);
@@ -39,13 +40,13 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
                                @NotNull @InspectionMessage String descriptionTemplate,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
                                boolean showTooltip,
                                boolean onTheFly) {
-    super(filterFixes(fixes, onTheFly), descriptionTemplate);
+    super(descriptionTemplate, filterFixes(fixes, onTheFly));
     myShowTooltip = showTooltip;
     PsiFile startContainingFile = startElement.getContainingFile();
     LOG.assertTrue(startContainingFile != null && startContainingFile.isValid() || startElement.isValid(), startElement);
@@ -94,9 +95,10 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
   }
 
-  private static LocalQuickFix @Nullable [] filterFixes(LocalQuickFix @Nullable [] fixes, boolean onTheFly) {
+  private static @NotNull LocalQuickFix @Nullable [] filterFixes(LocalQuickFix @Nullable [] fixes, boolean onTheFly) {
     if (onTheFly || fixes == null) return fixes;
-    return Stream.of(fixes).filter(fix -> fix != null && fix.availableInBatchMode()).toArray(LocalQuickFix[]::new);
+    List<LocalQuickFix> filtered = ContainerUtil.filter(fixes, fix -> fix != null && fix.availableInBatchMode());
+    return filtered.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : filtered.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   public boolean isOnTheFly() {
@@ -285,7 +287,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getFixes() {
+  public /*final*/ @NotNull LocalQuickFix @Nullable [] getFixes() {
     return (LocalQuickFix[])super.getFixes();
   }
 }

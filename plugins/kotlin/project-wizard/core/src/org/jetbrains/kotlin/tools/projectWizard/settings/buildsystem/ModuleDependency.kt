@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem
 
@@ -73,7 +73,7 @@ sealed class ModuleDependencyType(
     )
 
     object AndroidSinglePlatformToMPP : ModuleDependencyType(
-        from = AndroidSinglePlatformModuleConfigurator::class,
+        from = AndroidSinglePlatformModuleConfiguratorBase::class,
         to = MppModuleConfigurator::class
     )
 
@@ -101,7 +101,7 @@ sealed class ModuleDependencyType(
         from,
         MppModuleConfigurator::class
     ) {
-        protected fun Writer.updateReference(from: Module, to: Module) = inContextOfModuleConfigurator(from) {
+        private fun Writer.updateReference(from: Module, to: Module) = inContextOfModuleConfigurator(from) {
             IOSSinglePlatformModuleConfigurator.dependentModule.reference.update {
                 IOSSinglePlatformModuleConfiguratorBase.DependentModuleReference(to).asSuccess()
             }

@@ -101,6 +101,14 @@ public abstract class XValue extends XValueContainer {
   }
 
   /**
+   * Async version of {@link #canNavigateToTypeSource()}
+   */
+  public Promise<Boolean> canNavigateToTypeSourceAsync() {
+    return Promises.resolvedPromise(canNavigateToTypeSource());
+  }
+
+
+  /**
    * Start computing source position of the value's type and call {@link XNavigatable#setSourcePosition(com.intellij.xdebugger.XSourcePosition)}
    * when computation is finished.
    * Note that this method is called from the Event Dispatch thread so it should return quickly.

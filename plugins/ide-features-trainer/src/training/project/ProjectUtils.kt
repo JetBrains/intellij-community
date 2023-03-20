@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.project
 
 import com.intellij.ide.GeneralSettings
@@ -6,39 +6,27 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
 import training.util.featureTrainerVersion
-import training.util.iftNotificationGroup
 import java.io.File
 import java.io.FileFilter
 import java.io.IOException
@@ -47,13 +35,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.name
 
 object ProjectUtils {
   private const val LEARNING_PROJECT_MODIFICATION = "LEARNING_PROJECT_MODIFICATION"
   private const val FEATURE_TRAINER_VERSION = "feature-trainer-version.txt"
-  private val LOG = logger<ProjectUtils>()
 
   val learningProjectsPath: Path
     get() = Paths.get(PathManager.getSystemPath(), "demo")
@@ -73,22 +61,19 @@ object ProjectUtils {
           dest.delete()
         }
         langSupport.installAndOpenLearningProject(dest, projectToClose) {
-          it.basePath?.let { path ->
-            copyLearnProjectIcon(File(path))
-          }
           postInitCallback(it)
         }
       }
       else {
         val path = langSupport.getLearningProjectPath(dest).toAbsolutePath().toString()
         LangManager.getInstance().setLearningProjectPath(langSupport, path)
-        openOrImportLearningProject(dest, OpenProjectTask(projectToClose = projectToClose), langSupport, postInitCallback)
+        openOrImportLearningProject(dest, OpenProjectTask { this.projectToClose = projectToClose }, langSupport, postInitCallback)
       }
     }
   }
 
   private fun getLearningInstallationContentRoot(langSupport: LangSupport): Path? {
-    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport)
+    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport.primaryLanguage)
     val path = if (storedProjectPath != null) langSupport.getContentRootPath(Paths.get(storedProjectPath)) else null
     val canonicalPlace = learningProjectsPath.resolve(langSupport.contentRootDirectoryName)
 
@@ -136,15 +121,17 @@ object ProjectUtils {
     return true
   }
 
-  fun getProjectRoot(project: Project): VirtualFile {
-    val roots = ProjectRootManager.getInstance(project).contentRoots
-    if (roots.isNotEmpty()) {
-      if (roots.size > 1) LOG.warn("Multiple content roots in project ${project.name}: ${roots.toList()}")
-      return roots[0]
-    }
-    LOG.error("Not found content roots in project ${project.name}. " +
-              "Base path: ${project.basePath}, project file path: ${project.projectFilePath}")
-    throw error("Not found content roots for project")
+  fun getCurrentLearningProjectRoot(): VirtualFile {
+    val languageSupport = LangManager.getInstance().getLangSupport() ?: error("No current language support")
+    return getProjectRoot(languageSupport)
+  }
+
+  fun getProjectRoot(languageSupport: LangSupport): VirtualFile {
+    val learningInstallationContentRoot = getLearningInstallationContentRoot(languageSupport)
+                                          ?: error("No path for learning project for $languageSupport")
+    val projectPath = languageSupport.getLearningProjectPath(learningInstallationContentRoot)
+    return VirtualFileManager.getInstance().findFileByNioPath(projectPath)
+           ?: error("Cannot to convert $projectPath to virtual file")
   }
 
   fun simpleInstallAndOpenLearningProject(contentRoot: Path,
@@ -176,20 +163,22 @@ object ProjectUtils {
       NOTIFICATIONS_SILENT_MODE.set(it, true)
     })
     invokeLater {
-      val nioPath = projectDirectoryVirtualFile.toNioPath()
+      // Set it every time when project opens to ensure that it will be trusted in case of restoring default settings
+      TrustedPaths.getInstance().setProjectPathTrusted(contentRoot, true)
+
       val confirmOpenNewProject = GeneralSettings.getInstance().confirmOpenNewProject
       if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
         GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
       }
       val project = try {
-        ProjectUtil.openOrImport(nioPath, task)
-                      ?: error("Cannot create project for ${langSupport.primaryLanguage} at $nioPath")
+        langSupport.openOrImportLearningProject(projectDirectoryVirtualFile, task)
       }
       finally {
         if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
           GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
         }
       }
+
       postInitCallback(project)
     }
   }
@@ -215,7 +204,6 @@ object ProjectUtils {
     }
     val path = langSupport.getLearningProjectPath(targetDirectory)
     LangManager.getInstance().setLearningProjectPath(langSupport, path.toAbsolutePath().toString())
-    TrustedPaths.getInstance().setProjectPathTrusted(path, true)
     return targetDirectory
   }
 
@@ -236,15 +224,6 @@ object ProjectUtils {
     val chosen = directories.single()
     val canonicalPath = chosen.canonicalPath ?: error("No canonical path for $chosen")
     return File(canonicalPath, langSupport.contentRootDirectoryName).toPath()
-  }
-
-  private fun copyLearnProjectIcon(projectDir: File) {
-    val iconPath = "learnProjects/.idea"
-    val iconUrl = ProjectUtils::class.java.classLoader.getResource(iconPath) ?: throw IllegalArgumentException(
-      "Unable to locate icon for learn project by path: $iconPath")
-    val ideaDir = File(projectDir, ".idea")
-    FileUtil.ensureExists(ideaDir)
-    FileUtils.copyResourcesRecursively(iconUrl, ideaDir)
   }
 
   private fun createVersionFile(newProjectDirectory: Path) {
@@ -287,23 +266,8 @@ object ProjectUtils {
     } ?: error("Failed to find content entry for file: ${sourcesRoot.name}")
 
     contentEntry.addSourceFolder(sourcesRoot, false)
-    runWriteAction {
-      rootsModel.commit()
-      project.save()
-    }
-  }
-
-  fun createSdkDownloadingNotification(): Notification {
-    return iftNotificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),
-                                                LearnBundle.message("learn.project.initializing.jdk.download.notification.message",
-                                                                    ApplicationNamesInfo.getInstance().fullProductName),
-                                                NotificationType.INFORMATION)
-  }
-
-  fun closeAllEditorsInProject(project: Project) {
-    FileEditorManagerEx.getInstanceEx(project).windows.forEach {
-      it.files.forEach { file -> it.closeFile(file) }
-    }
+    runWriteAction(rootsModel::commit)
+    project.save()
   }
 
   fun restoreProject(languageSupport: LangSupport, project: Project) {
@@ -314,7 +278,7 @@ object ProjectUtils {
         val needReplace = mutableListOf<Path>()
         val validContent = mutableListOf<Path>()
         val directories = mutableListOf<Path>()
-        val root = getProjectRoot(project)
+        val root = getProjectRoot(languageSupport)
         val contentRootPath = languageSupport.getContentRootPath(root.toNioPath())
 
         for (path in Files.walk(contentRootPath)) {

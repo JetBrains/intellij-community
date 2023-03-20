@@ -3,5 +3,6 @@
   "classId": "/A",
   "oldName": "compareTo",
   "newName": "foo",
-  "mainFile": "compareTo.kt"
+  "mainFile": "compareTo.kt",
+  "enabledInK2": true
 }

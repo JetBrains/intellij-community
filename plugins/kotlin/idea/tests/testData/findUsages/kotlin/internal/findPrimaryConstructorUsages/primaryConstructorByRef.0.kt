@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtPrimaryConstructor
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "constructor A(Int)"
 // FIND_BY_REF
 open class A internal constructor(n: Int) {
     constructor() : this(1)
@@ -15,3 +16,5 @@ fun test() {
     A()
     <caret>A(1)
 }
+
+

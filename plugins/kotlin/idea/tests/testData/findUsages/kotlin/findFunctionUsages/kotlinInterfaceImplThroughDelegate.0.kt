@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages, skipImports
+// PSI_ELEMENT_AS_TITLE: "fun foo()"
 package server
 
 interface InterfaceWithImpl {
@@ -10,4 +11,3 @@ public class InterfaceWithDelegatedWithImpl(f: InterfaceWithImpl) : InterfaceWit
 
 fun test(twdwi: InterfaceWithDelegatedWithImpl) = twdwi.foo()
 
-// FIR_COMPARISON

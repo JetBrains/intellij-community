@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public class GrDocReferenceElementImpl extends GroovyDocPsiElementImpl implements GrDocReferenceElement {
   
   public GrDocReferenceElementImpl(@NotNull ASTNode node) {

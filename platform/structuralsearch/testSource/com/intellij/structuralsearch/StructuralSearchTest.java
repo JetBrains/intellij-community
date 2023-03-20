@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -27,29 +26,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     setLanguageLevel(LanguageLevel.JDK_16);
   }
 
-  @Override
-  protected int findMatchesCount(@Language("JAVA") String in, String pattern, LanguageFileType fileType) {
-    return super.findMatchesCount(in, pattern, fileType);
+  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern) {
+    return super.findMatches(in, pattern, JavaFileType.INSTANCE);
   }
 
-  @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in,
-                                          String pattern,
-                                          LanguageFileType patternFileType,
-                                          com.intellij.lang.Language patternLanguage,
-                                          LanguageFileType sourceFileType,
-                                          boolean physicalSourceFile) {
-    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, physicalSourceFile);
-  }
-
-  @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, LanguageFileType patternFileType) {
-    return super.findMatches(in, pattern, patternFileType);
-  }
-
-  @Override
   protected int findMatchesCount(@Language("JAVA") String in, String pattern) {
-    return super.findMatchesCount(in, pattern);
+    return findMatchesCount(in, pattern, JavaFileType.INSTANCE);
   }
 
   public void testSearchExpressions() {
@@ -142,6 +124,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  }\n" +
                 "}";
     assertEquals("Find cast to array", 1, findMatchesCount(s5, "('_T[])'_expr"));
+
+    String s6 = "import java.util.HashMap;" +
+                "class X {" +
+                "  HashMap x() {" +
+                "    x();" +
+                "    return null;" +
+                "  }" +
+                "}";
+    assertEquals("Find expression only once for method call", 1, findMatchesCount(s6, "'Clz:[exprtype( java.util.HashMap )]"));
 
     String s7 = "import java.math.BigDecimal;\n" +
                 "\n" +
@@ -244,6 +235,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Try to find String array initializer expressions", 0,
                  findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
 
+    assertEquals("Find empty array initializers", 2, findMatchesCount(s9, "new Object[] {}"));
+
     String arrays = "class X {{" +
                     "int[] a = new int[20];\n" +
                     "byte[] b = new @Q byte[30];" +
@@ -300,6 +293,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("match literal by value", 1, findMatchesCount(s3, "32"));
     assertEquals("match char with substitution", 3, findMatchesCount(s3, "\\''_x\\'"));
     assertEquals("string literal should not match char", 0, findMatchesCount(s3, "\"a\""));
+
+    String s4 = "class X {" +
+                "  String s = \"\\n\";" +
+                "  String t = \" \";" +
+                "  String u = \" \";" +
+                "  String v = \"\";" +
+                "}";
+    assertEquals("match empty string", 1, findMatchesCount(s4, "\"\""));
+    assertEquals("match space", 2, findMatchesCount(s4, "\" \""));
   }
 
   public void testCovariantArraySearch() {
@@ -1884,6 +1886,40 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings"));
     assertEquals("Find SuppressWarnings annotations", 2, findMatchesCount(source6, "@SuppressWarnings(value='_any)"));
     assertEquals("Find annotation with 3 value array initializer", 1, findMatchesCount(source6, "@SuppressWarnings({'_value{3,3} })"));
+
+    String source7 = "class X {" +
+                     "    @interface Annotation {\n" +
+                     "        String[] value() default {};\n" +
+                     "    }\n" +
+                     "    @Annotation(\"Hello\")\n" +
+                     "    static void singleValue() {}\n" +
+                     "    @Annotation({\"Hello\"})\n" +
+                     "    static void multiValue() {}\n" +
+                     "    @Annotation(value = \"Hello\")\n" +
+                     "    static void explicitSingleValue() {}\n" +
+                     "    @Annotation(value = {\"Hello\"})\n" +
+                     "    static void explicitMultiValue() {}\n" +
+                     "    @Annotation({\"Hello\", \"World\"})\n" +
+                     "    static void different() {}\n" +
+                     "    @Annotation(\"Bye!\")\n" +
+                     "    static void end() {}\n" +
+                     "}";
+    assertEquals("Find all equivalent annotations", 4, findMatchesCount(source7, "@Annotation(\"Hello\")"));
+    assertEquals("Find all annotations with a specific value", 5, findMatchesCount(source7, "@Annotation({\"Hello\", '_O*})"));
+    assertEquals("Find all annotations", 6, findMatchesCount(source7, "@Annotation('_V)"));
+
+    String source8 = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) " +
+                     "@interface NotNull {}" +
+                     "class X {" +
+                     "  boolean a(@NotNull String s, @NotNull String t, String u) {" +
+                     "    java.util.Objects.equals(s, t);" +
+                     "    return java.util.Objects.equals(t, u);" +
+                     "  }" +
+                     "}";
+    assertEquals("Call with @NotNull annotated argument", 1,
+                 findMatchesCount(source8, "Objects.equals('_a:[exprtype( ~@NotNull.* )], '_b:[exprtype( ~@NotNull.* )])"));
+    assertEquals("Call with arguments with @NotNull String type", 1,
+                 findMatchesCount(source8, "Objects.equals('_a:[exprtype(  @NotNull String  )], '_b:[exprtype(  @NotNull String  )])"));
   }
 
   public void testBoxingAndUnboxing() {
@@ -2008,6 +2044,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}}";
     assertEquals("Find static methods within expr type hierarchy", 3,
                  findMatchesCount(s1, "'_Instance:[regex( *A )].'_Method:[regex( foo )] ( '_Params* )"));
+
+    String s2 = "import static java.lang.String.valueOf;" +
+                "class A {" +
+                "  void x() {" +
+                "    valueOf(1);" +
+                "  }" +
+                "}" +
+                "class B {" +
+                "  void x() {" +
+                "    valueOf(1);" +
+                "  }" +
+                "  void valueOf(int i) {}" +
+                "}";
+    assertEquals("matching implicit class qualifier within hierarchy", 1, findMatchesCount(s2, "'_Q?:*Object .'_m:valueOf ('_a)"));
   }
 
   public void testFindClassesWithinHierarchy() {
@@ -2145,7 +2195,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     //noinspection AnonymousInnerClassMayBeStatic
     file.acceptChildren(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitVariable(final PsiVariable variable) {
+      @Override public void visitVariable(final @NotNull PsiVariable variable) {
         super.visitVariable(variable);
         vars.add(variable);
       }
@@ -2346,7 +2396,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(source, pattern3));
 
     String pattern4 = "class '_A {" +
-                      "  '_type 'method () throws '_E{0,0}:[ regex( E2 )];" +
+                      "  '_type 'method () throws '_E{0,0}:[ regex( E2 ) ];" +
                       "}";
     assertEquals(2, findMatchesCount(source, pattern4));
   }
@@ -2458,13 +2508,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  }" +
                     "}";
 
-    String pattern1 = "() -> {}";
+    String pattern1 = "() -> '_body";
     assertEquals("should find lambdas", 4, findMatchesCount(source, pattern1));
 
-    String pattern2 = "(int '_a) -> {}";
+    String pattern2 = "(int '_a) -> '_body";
     assertEquals("should find lambdas with specific parameter type", 1, findMatchesCount(source, pattern2));
 
-    String pattern3 = "('_a{0,0})->{}";
+    String pattern3 = "('_a{0,0})->'_body";
     assertEquals("should find lambdas without any parameters", 2, findMatchesCount(source, pattern3));
 
     String pattern4 = "()->System.out.println()";
@@ -2540,6 +2590,28 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "    '_statements*;\n" +
                       "})";
     assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
+
+    String source5 = "class X {" +
+                     "  void x() {" +
+                     "    Runnable r = () -> {};" +
+                     "  }" +
+                     "}";
+    String pattern10 = "() -> '_B";
+    assertEquals("match empty lambda expression body", 1, findMatchesCount(source5, pattern10));
+    final String pattern11 = "() -> { '_body*; }";
+    assertEquals("match empty lambda expression body 2", 1, findMatchesCount(source5, pattern11));
+
+    String source6 = "class X {" +
+                     "  void x() {" +
+                     "    Runnable r = () -> {\n" +
+                     "      // comment\n" +
+                     "      System.out.println();\n" +
+                     "      System.out.println();\n" +
+                     "    };" +
+                     "  }" +
+                     "}";
+    assertEquals("match lambda code block body", 1, findMatchesCount(source6, pattern10));
+    assertEquals("match lambda body starting with comment", 1, findMatchesCount(source6, pattern11));
   }
 
   public void testFindDefaultMethods() {
@@ -2835,12 +2907,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
 
     String pattern7 = "try { '_St1*; } catch ('E '_e) { '_St2*; }";
-    final List<MatchResult> matches = findMatches(source, pattern7, JavaFileType.INSTANCE);
+    final List<MatchResult> matches = findMatches(source, pattern7);
     assertEquals(3, matches.size());
     assertEquals("NullPointerException  | UnsupportedOperationException", matches.get(1).getMatchImage());
 
     String pattern8 = "try { '_St1*; } catch ('_E '_e{2,2}) { '_St2*; }";
-    final List<MatchResult> matches2 = findMatches(source, pattern8, JavaFileType.INSTANCE);
+    final List<MatchResult> matches2 = findMatches(source, pattern8);
     assertEquals(1, matches2.size());
     assertEquals("Find try with exactly 2 catch blocks",
                  "try {\n" +
@@ -2852,7 +2924,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  matches2.get(0).getMatchImage());
 
     String pattern9 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; }";
-    final List<MatchResult> matches3 = findMatches(source, pattern9, JavaFileType.INSTANCE);
+    final List<MatchResult> matches3 = findMatches(source, pattern9);
     assertEquals(1, matches3.size());
     assertEquals("Should find try without catch blocks",
                  "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
@@ -2864,7 +2936,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  try {} finally {}" +
                      "}}";
     String pattern10 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; } finally { '_St3*; }";
-    final List<MatchResult> matches4 = findMatches(source2, pattern10, JavaFileType.INSTANCE);
+    final List<MatchResult> matches4 = findMatches(source2, pattern10);
     assertEquals(1, matches4.size());
     assertEquals("Should find try without catch blocks",
                  "try {} finally {}",
@@ -2978,7 +3050,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "    new <String>X();" +
                     "    new <String>X();" +
                     "    new X();" +
-                    "    new X(s);" +
+                    "    new X() {};" +
+                    "    new <String>X(\"\") {};" +
+                    "    new <String>X(s);" +
+                    "    new <String, Integer>X(s);" +
                     "  }" +
                     "}";
     assertEquals("find parameterized method calls 1", 1, findMatchesCount(source, "foo.<Integer>bar()"));
@@ -2988,7 +3063,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("find parameterized constructor calls 1", 2, findMatchesCount(source, "new <String>X()"));
     assertEquals("find parameterized constructor calls 2", 1, findMatchesCount(source, "new <String>X(s)"));
-    assertEquals("find constructor calls 3", 3, findMatchesCount(source, "new X()"));
+    assertEquals("find parameterized constructor calls 3", 5, findMatchesCount(source, "new <'_a+>'_b('_c*)"));
+    assertEquals("find parameterized constructor calls 4", 4, findMatchesCount(source, "new <'_a>'_b('_c*)"));
+    assertEquals("find parameterized anonymous class", 1, findMatchesCount(source, "new <'_a>'_b('_c*) {}"));
+    assertEquals("find constructor calls 3", 7, findMatchesCount(source, "new X('_a*)"));
   }
 
   public void testFindDiamondTypes() {
@@ -3194,8 +3272,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     assertEquals("find code ignoring comments 2", 2,
                  findMatchesCount(source2, "new int['_a]"));
-    assertEquals("find code ignoring comments 2a", 1,
-                 findMatchesCount(source2, "new int/*1*/['_a]"));
 
     String source3 = "class X {{" +
                      "  new java.util.ArrayList(/**/1);" +
@@ -3335,6 +3411,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should match generic and raw types 2", 7, findMatchesCount(in, "'_A:List <'_B? >"));
   }
 
+  public void testIfStatements() {
+    String in = "class X {" +
+                "  void x(boolean b) {" +
+                "    if (b) {" +
+                "      System.out.println();" +
+                "      System.out.println();" +
+                "    }" +
+                "    if (b) {" +
+                "      System.out.println();" +
+                "    }" +
+                "    else {" +
+                "      System.out.println();" +
+                "    }" +
+                "  }" +
+                "}";
+    assertEquals("Should find if without else", 1, findMatchesCount(in, "if ('_a) '_b; else '_c{0,0};"));
+  }
+
   public void testSwitchStatements() {
     final String in = "class X {" +
                       "  void x(int i) {" +
@@ -3381,7 +3475,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testFindSwitchExpressions() {
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     final String in = "class X {" +
                       "  void dummy(int i) {" +
                       "    int j = switch (i) {\n" +

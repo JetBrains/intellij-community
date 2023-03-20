@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
@@ -20,12 +22,14 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.OpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.hover.HoverStateListener
 import com.intellij.util.animation.*
 import com.intellij.util.animation.components.BezierPainter
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
@@ -43,8 +47,7 @@ import javax.swing.border.CompoundBorder
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 
-@Suppress("HardCodedStringLiteral")
-class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
+internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
   private class DemoPanel(val disposable: Disposable, val bezier: () -> Easing) : BorderLayoutPanel() {
 
@@ -307,7 +310,6 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         add(custom, HorizontalLayout.CENTER)
         add(linear, HorizontalLayout.CENTER)
       }
-      addToCenter(content)
 
       val animations = listOf(
         animation(custom::value::set),
@@ -317,13 +319,13 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       val fillers = JBAnimator(JBAnimator.Thread.POOLED_THREAD, disposable)
       var taskId = -1L
 
-      addToLeft(AnimationSettings { options, button ->
+      addToCenter(AnimationSettings { options, button, info ->
         if (fillers.isRunning(taskId)) {
           fillers.stop()
-          button.icon = AllIcons.Actions.Execute
-          button.text = "Start Animation"
           return@AnimationSettings
         }
+        linear.background = options.color
+        custom.background = options.color
         fillers.period = options.period
         fillers.isCyclic = options.cyclic
         fillers.type = options.type
@@ -332,6 +334,10 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         animations.forEach { animation ->
           animation.duration = options.duration
           animation.delay = options.delay
+          animation.easing = animation.easing.freeze(
+            options.freezeBefore / 100.0,
+            options.freezeAfter / 100.0
+          )
           animation.easing = animation.easing.coerceIn(
             options.coerceMin / 100.0,
             options.coerceMax / 100.0
@@ -352,10 +358,13 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
           runWhenExpiredOrCancelled {
             button.icon = AllIcons.Actions.Execute
             button.text = "Start Animation"
+            info.text = "updates: %d, duration: %d ms".format(fillers.statistic!!.count, fillers.statistic!!.duration)
           }
         })
         button.icon = AllIcons.Actions.Suspend
         button.text = "Stop Animation"
+      }.apply {
+        addToRight(content)
       })
 
       revalidate()
@@ -425,19 +434,22 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
   }
 
   class Options {
-    var period: Int = 10
-    var duration: Int = 500
+    var period: Int = 5
+    var duration: Int = 1000
     var delay: Int = 0
     var cyclic: Boolean = false
     var reverse: Boolean = false
     var inverse: Boolean = false
     var mirror: Boolean = false
+    var freezeBefore: Int = 0
+    var freezeAfter: Int = 100
     var coerceMin: Int = 0
     var coerceMax: Int = 100
     var type: JBAnimator.Type = JBAnimator.Type.IN_TIME
+    var color: Color = JBColor(0x9776A9, 0xD0A708)
   }
 
-  private class AnimationSettings(val onStart: (Options, customize: JButton) -> Unit) : BorderLayoutPanel() {
+  private class AnimationSettings(val onStart: (Options, customize: JButton, info: JLabel) -> Unit) : BorderLayoutPanel() {
 
     private val options = Options()
 
@@ -447,7 +459,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
           spinner(0..60000, 50).bindIntValue(options::duration)
         }
         row("Period:") {
-          spinner(5..1000, 5).bindIntValue(options::period)
+          spinner(1..1000, 1).bindIntValue(options::period)
         }
         row("Delay:") {
           spinner(0..10000, 100).bindIntValue(options::delay)
@@ -464,6 +476,10 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         row {
           checkBox("Mirror").bindSelected(options::mirror)
         }
+        row("Freeze (%)") {
+          spinner(0..100, 5).bindIntValue(options::freezeBefore)
+          spinner(0..100, 5).bindIntValue(options::freezeAfter)
+        }
         row("Coerce (%)") {
           spinner(0..100, 5).bindIntValue(options::coerceMin)
           spinner(0..100, 5).bindIntValue(options::coerceMax)
@@ -473,14 +489,33 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
             label.text = value.toString().split("_").joinToString(" ") {
               it.toLowerCase().capitalize()
             }
-          }).bindItem(options::type)
+          }).bindItem(options::type.toNullableProperty())
+        }
+        row {
+          link("Change color") {
+            ColorChooserService.instance.showPopup(null, options.color, { color, _ -> color?.let { options.color = it }})
+          }
+        }
+        row {
+          checkBox("Enable high precision timer").bindSelected(
+            JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable
+          )
+        }.visible(SystemInfoRt.isWindows)
+        row {
+          cell()
         }
       }
       addToCenter(panel)
-      addToBottom(JButton("Start Animation", AllIcons.Actions.Execute).apply {
-        addActionListener {
-          panel.apply()
-          onStart(options, this@apply)
+      addToBottom(panel {
+        row {
+          lateinit var info: Cell<JLabel>
+          cell(JButton("Start Animation", AllIcons.Actions.Execute).apply {
+            addActionListener {
+              panel.apply()
+              onStart(options, this@apply, info.component)
+            }
+          })
+          info = label("")
         }
       })
     }
@@ -491,7 +526,6 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     var value: Double = 1.0
 
     init {
-      background = JBColor(0xC2D6F6, 0x455563)
       preferredSize = Dimension(40, 0)
       border = JBUI.Borders.empty(40, 5, 40, 0)
     }
@@ -539,7 +573,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     }
 
     init {
-      border = JBUI.Borders.customLine(UIUtil.getBoundsColor(), 1)
+      border = JBUI.Borders.customLine(NamedColorUtil.getBoundsColor(), 1)
       painter.addPropertyChangeListener { e ->
         if (e.propertyName.endsWith("ControlPoint")) {
           display.text = getControlPoints(painter).joinToString(transform = format::format)
@@ -557,7 +591,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
           }
           catch (ignore: NumberFormatException) {
             JBAnimator().animate(
-              animation(UIUtil.getErrorForeground(), UIUtil.getTextFieldForeground(), display::setForeground).apply {
+              animation(NamedColorUtil.getErrorForeground(), UIUtil.getTextFieldForeground(), display::setForeground).apply {
                 duration = 800
                 easing = Easing { x -> x * x * x }
               }
@@ -646,6 +680,8 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
 
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project) {
       val bezier = BezierEasingPanel()
@@ -687,7 +723,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       addTo(component)
     }
 
-    override fun hoverChanged(component: Component, hovered: Boolean) = helper.setVisible(hovered)
+    override fun hoverChanged(component: Component, hovered: Boolean) = helper.setVisible(hovered) {}
   }
 
   private enum class RColors {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.openapi.projectRoots.Sdk
@@ -18,11 +18,7 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
-import kotlin.streams.toList
 
-/**
- * @author vlan
- */
 class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?, preferredType: String?) : PyAddSdkPanel() {
   override val panelName: String get() = com.jetbrains.python.PyBundle.message("python.add.sdk.panel.name.new.environment.using")
   override val nameExtensionComponent: JComboBox<PyAddNewEnvPanel>
@@ -95,9 +91,9 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath)
     val venvPanel = PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context)
 
-    val envPanelsFromProviders = PySdkProvider.EP_NAME.extensions()
+    val envPanelsFromProviders = PySdkProvider.EP_NAME.extensionList
       .map { it.createNewEnvironmentPanel(null, null, existingSdks, newProjectPath, context) }
-      .toList().toTypedArray()
+      .toTypedArray()
 
     return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
       listOf(condaPanel, venvPanel, *envPanelsFromProviders)

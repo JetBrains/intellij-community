@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
@@ -94,8 +94,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiElement psiElement = ((MethodHierarchyNodeDescriptor)descriptor).getPsiClass();
-    if (!(psiElement instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    PsiClass psiClass = (PsiClass)psiElement;
+    if (!(psiElement instanceof PsiClass psiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     Collection<PsiClass> subclasses = getSubclasses(psiClass);
 
     List<HierarchyNodeDescriptor> descriptors = new ArrayList<>(subclasses.size());
@@ -120,7 +119,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       });
     }
 
-    return descriptors.toArray(new HierarchyNodeDescriptor[0]);
+    return descriptors.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
   }
 
   private Collection<PsiClass> getSubclasses(PsiClass psiClass) {

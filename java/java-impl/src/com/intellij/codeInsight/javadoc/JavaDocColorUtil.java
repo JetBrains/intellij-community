@@ -1,24 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.psi.*;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author spleaner
- */
 public final class JavaDocColorUtil {
   private JavaDocColorUtil() {
   }
 
   public static String generatePreviewHtml(@NotNull final Color color) {
     return DocumentationMarkup.SECTION_HEADER_START + "Preview:" + DocumentationMarkup.SECTION_SEPARATOR + "<p>" +
-           String.format("<div style=\"padding: 1px; width: 52px; height: 32px; background-color: #555555;\"><div style=\"width: 50px; height: 30px; background-color: #%s;\">&nbsp;</div></div>", com.intellij.ui.ColorUtil.toHex(color)) +
+           String.format("<div style=\"padding: 1px; width: 52px; height: 32px; background-color: #555555;\"><div style=\"width: 50px; height: 30px; background-color: #%s;\">&nbsp;</div></div>", ColorUtil.toHex(color)) +
            DocumentationMarkup.SECTION_END;
   }
 
@@ -53,30 +51,18 @@ public final class JavaDocColorUtil {
 
             Color c = null;
             if (i == expressions.length) {
-              switch (values.length) {
-                case 1:
-                  c = new Color(values[0]);
-                  break;
-                case 3:
-                  c = new Color(values[0], values[1], values[2]);
-                  break;
-                case 4:
-                  c = new Color(values[0], values[1], values[2], values[3]);
-                  break;
-                default:
-                  break;
-              }
+              c = switch (values.length) {
+                case 1 -> new Color(values[0]);
+                case 3 -> new Color(values[0], values[1], values[2]);
+                case 4 -> new Color(values[0], values[1], values[2], values[3]);
+                default -> null;
+              };
             } else if (j == expressions.length) {
-              switch (values2.length) {
-                case 3:
-                  c = new Color(values2[0], values2[1], values2[2]);
-                  break;
-                case 4:
-                  c = new Color(values2[0], values2[1], values2[2], values2[3]);
-                  break;
-                default:
-                  break;
-              }
+              c = switch (values2.length) {
+                case 3 -> new Color(values2[0], values2[1], values2[2]);
+                case 4 -> new Color(values2[0], values2[1], values2[2], values2[3]);
+                default -> null;
+              };
             }
 
             if (c != null) {
@@ -85,16 +71,12 @@ public final class JavaDocColorUtil {
           }
         } else if (initializer instanceof PsiReferenceExpression) {
           final PsiReference reference = initializer.getReference();
-          if (reference != null) {
-            final PsiElement psiElement = reference.resolve();
-            if (psiElement instanceof PsiField) {
-              PsiField psiField = (PsiField)psiElement;
-              final PsiClass psiClass = psiField.getContainingClass();
-              if (psiClass != null && "java.awt.Color".equals(psiClass.getQualifiedName())) {
-                Color c = ReflectionUtil.getStaticFieldValue(Color.class, Color.class, psiField.getName());
-                if (c != null) {
-                  buffer.append(generatePreviewHtml(c));
-                }
+          if (reference != null && reference.resolve() instanceof PsiField psiField) {
+            final PsiClass psiClass = psiField.getContainingClass();
+            if (psiClass != null && "java.awt.Color".equals(psiClass.getQualifiedName())) {
+              Color c = ReflectionUtil.getStaticFieldValue(Color.class, Color.class, psiField.getName());
+              if (c != null) {
+                buffer.append(generatePreviewHtml(c));
               }
             }
           }

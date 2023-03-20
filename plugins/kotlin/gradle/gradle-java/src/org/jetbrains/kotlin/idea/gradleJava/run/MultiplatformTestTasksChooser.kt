@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.run
 
@@ -7,14 +7,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
-import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
+import org.jetbrains.kotlin.idea.base.facet.externalSystemTestRunTasks
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
-import org.jetbrains.plugins.gradle.execution.test.runner.*
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.execution.test.runner.SourcePath
+import org.jetbrains.plugins.gradle.execution.test.runner.TestName
+import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser
+import org.jetbrains.plugins.gradle.execution.test.runner.getSourceFile
 import org.jetbrains.plugins.gradle.util.TasksToRun
-import java.util.*
 
 private typealias TaskFilter = (ExternalSystemTestRunTask) -> Boolean
 
@@ -32,7 +34,7 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         contextualSuffix: String? = null, // like "js, browser, HeadlessChrome85.0.4183, MacOSX10.14.6"
         handler: (List<Map<SourcePath, TasksToRun>>) -> Unit
     ) {
-        val testTasks = resolveTestTasks(elements, contextualFilter(contextualSuffix ))
+        val testTasks = resolveTestTasks(elements, contextualFilter(contextualSuffix))
         when {
             testTasks.isEmpty() -> super.chooseTestTasks(project, dataContext, elements, handler)
             testTasks.size == 1 -> handler(testTasks.values.toList())
@@ -40,7 +42,11 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         }
     }
 
-    private fun contextualFilter(contextualSuffix: String?): TaskFilter {
+    fun listAvailableTasks(elements: Iterable<PsiElement>): List<TasksToRun> {
+        return resolveTestTasks(elements, contextualFilter()).values.flatMap { it.values }
+    }
+
+    private fun contextualFilter(contextualSuffix: String? = null): TaskFilter {
         val parts = contextualSuffix?.split(", ")
             ?.filter { it.isNotEmpty() }
             ?.takeIf { it.isNotEmpty() }
@@ -68,27 +74,23 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
             val module = element.module ?: continue
             val sourceFile = getSourceFile(element) ?: continue
 
-            val groupedTasks = module.externalSystemTestRunTasks()
+            module.externalSystemTestRunTasks()
                 .filter { taskFilter(it) }
                 .groupBy { it.targetName }
-
-            for ((group, tasksInGroup) in groupedTasks) {
-                if (tasksInGroup.isEmpty()) {
-                    continue
-                } else if (tasksInGroup.size == 1) {
-                    val task = tasksInGroup[0]
-                    val presentableName = task.presentableName
-                    val tasksMap = tasks.getOrPut(presentableName) { LinkedHashMap() }
-                    tasksMap[sourceFile.path] = TasksToRun.Impl(presentableName, getTaskNames(task))
-                } else {
-                    for (task in tasksInGroup) {
-                        val rawTaskName = ':' + task.taskName
-                        val presentableName = if (group != null) "$group ($rawTaskName)" else rawTaskName
+                .forEach { (targetName, targetTasks) ->
+                    val singleTask = targetTasks.size == 1
+                    targetTasks.forEach { task ->
+                        //KT-56540: by default, android tests are being launched on a local JVM
+                        val isAndroidTarget = task.kotlinPlatformId == KotlinPlatform.ANDROID.id
+                        val presentableName = if (isAndroidTarget) {
+                            if (singleTask) "$targetName (local)" else "$targetName (local :${task.taskName})"
+                        } else {
+                            if (singleTask) targetName else "$targetName (:${task.taskName})"
+                        }
                         val tasksMap = tasks.getOrPut(presentableName) { LinkedHashMap() }
                         tasksMap[sourceFile.path] = TasksToRun.Impl(presentableName, getTaskNames(task))
                     }
                 }
-            }
         }
 
         return tasks
@@ -121,6 +123,3 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         return listOf("${taskNamePrefix}clean${task.taskName.capitalizeAsciiOnly()}", "${taskNamePrefix}${task.taskName}")
     }
 }
-
-private val ExternalSystemRunTask.presentableName: String
-    get() = targetName ?: (":$taskName")

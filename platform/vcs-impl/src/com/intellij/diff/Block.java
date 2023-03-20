@@ -124,8 +124,7 @@ public class Block {
   }
 
   public boolean equals(Object object) {
-    if (!(object instanceof Block)) return false;
-    Block other = (Block)object;
+    if (!(object instanceof Block other)) return false;
     return myStart == other.myStart
            && myEnd == other.myEnd
            && Arrays.equals(mySource, other.mySource);

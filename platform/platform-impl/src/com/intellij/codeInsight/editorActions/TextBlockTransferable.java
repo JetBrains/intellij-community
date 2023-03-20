@@ -8,6 +8,8 @@ import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +53,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @Override
   public int getSize() {
     int size = myText.length();
-    if (myRawText != null && myRawText.rawText != myText) {
+    if (myRawText != null && !Strings.areSameInstance(myRawText.rawText, myText)) {
       size += StringUtil.length(myRawText.rawText);
     }
     return size;
@@ -71,12 +73,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
-    for (DataFlavor flavor1 : flavors) {
-      if (flavor.equals(flavor1)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(flavor, flavors);
   }
 
   @Override
@@ -130,7 +127,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
         index = data.getOffsets(offsets, index);
       }
 
-      text = StringUtil.convertLineSeparators(text, newSeparator, offsets);
+      text = Strings.convertLineSeparators(text, newSeparator, offsets);
 
       index = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {
@@ -144,13 +141,6 @@ public class TextBlockTransferable implements Transferable, Sizeable {
     }
   }
 
-  private static final class DataFlavorWithPriority {
-    private final DataFlavor flavor;
-    private final int priority;
-
-    private DataFlavorWithPriority(DataFlavor flavor, int priority) {
-      this.flavor = flavor;
-      this.priority = priority;
-    }
+  private record DataFlavorWithPriority(DataFlavor flavor, int priority) {
   }
 }

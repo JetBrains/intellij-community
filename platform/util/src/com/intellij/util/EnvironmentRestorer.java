@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class EnvironmentRestorer {
+public final class EnvironmentRestorer {
 
   static final String RESERVED_ORIGINAL_VARIABLE_PREFIX = "INTELLIJ_ORIGINAL_ENV_";
 
@@ -41,7 +41,7 @@ public class EnvironmentRestorer {
    * So this method will restore the original variables values and remove all extra ones.
    * <p/>
    * Real case: some environment variables are overridden for IDE process in the way described above
-   * by {@code plugins/remote-dev-server/build/resources/linux/scripts/launcher.sh}
+   * by {@code remote-dev/remote-dev-server-plugin/build/resources/linux/scripts/launcher.sh}
    *
    * @param envs modifiable environment. The overridden variables values will be restored right in it.
    */

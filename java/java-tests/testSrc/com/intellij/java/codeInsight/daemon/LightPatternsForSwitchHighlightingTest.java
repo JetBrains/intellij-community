@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -25,14 +25,66 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     return JAVA_17;
   }
 
-  public void testPatternsInSwitchInOldJava() {
-      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
+  public void testPatternsInSwitchIn16Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
+  }
+
+  public void testPatternsInSwitchIn11Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest);
+  }
+
+  public void testPatternsInSwitchIn19Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testPatternsInSwitchIn20Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+  }
+
+  public void testMismatchedDeconstructionIn19Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testIllegalFallthroughIn19Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testIllegalFallthroughIn20Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+  }
+
+  public void testUnconditionalDestructuringAndDefaultIn19Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testSwitchExhaustivenessIn19Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testSwitchExhaustivenessIn20Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
+  }
+
+  public void testSwitchExhaustivenessWithSealedIntersection(){
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testSwitchExhaustivenessWithGenericsIn19Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testSwitchDominanceIn19Java() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
   public void testPatternMatchingInSwitch() {
     doTest();
     IntentionAction action = myFixture.getAvailableIntention("Remove 'default' branch");
     assertNotNull(action);
+  }
+
+  public void testPatternMatchingInSwitchJava18() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, this::doTest);
   }
 
   public void testPatternMatchingWithGuard() {
@@ -55,6 +107,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testEffectivelyFinalWhen() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
   public void testSameVariableNameInPatternMatchingInSwitch() {
     doTest();
   }
@@ -65,6 +121,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
 
   public void testGuardedPatterns() {
     doTest();
+  }
+
+  public void testWhenExpressions() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
   public void testSwitchExprHasResult() {
@@ -111,6 +171,22 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
 
   public void testMalformedReferenceExpression() {
     doTest();
+  }
+
+  public void testBrokenSealedHierarchy() {
+    doTest();
+  }
+
+  public void testRecordPatternsAndWhenGuardsInJava18() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, this::doTest);
+  }
+
+  public void testRecordPatternsAndWhenGuardsInJava19() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+  }
+
+  public void testWhenExpressionIsFalse() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
   private void doTest() {

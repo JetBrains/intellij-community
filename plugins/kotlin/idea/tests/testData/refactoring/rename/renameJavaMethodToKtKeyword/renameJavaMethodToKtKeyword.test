@@ -1,5 +1,6 @@
 {
   "type": "MARKED_ELEMENT",
   "mainFile": "JFoo.java",
-  "newName": "fun"
+  "newName": "fun",
+  "enabledInK2": true
 }

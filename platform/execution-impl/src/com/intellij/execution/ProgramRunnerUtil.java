@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -10,6 +10,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.InvalidRunConfigurationIcon;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,15 +129,12 @@ public final class ProgramRunnerUtil {
   }
 
   private static ShortenCommandLine getShortenerFromLink(@NotNull String eventDescription) {
-    switch (eventDescription) {
-      case "args":
-        return ShortenCommandLine.ARGS_FILE;
-      case "jar":
-        return ShortenCommandLine.MANIFEST;
-      case "classpath":
-        return ShortenCommandLine.CLASSPATH_FILE;
-    }
-    return null;
+    return switch (eventDescription) {
+      case "args" -> ShortenCommandLine.ARGS_FILE;
+      case "jar" -> ShortenCommandLine.MANIFEST;
+      case "classpath" -> ShortenCommandLine.CLASSPATH_FILE;
+      default -> null;
+    };
   }
 
   private static boolean noShortenerConfigured(ConfigurationWithCommandLineShortener configuration) {
@@ -171,7 +168,7 @@ public final class ProgramRunnerUtil {
     Icon icon = getRawIcon(settings);
     Icon configurationIcon = settings.isTemporary() ? getTemporaryIcon(icon) : icon;
     if (invalid) {
-      return LayeredIcon.create(configurationIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer);
+      return new InvalidRunConfigurationIcon(configurationIcon);
     }
     return configurationIcon;
   }

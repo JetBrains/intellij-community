@@ -1,3 +1,3 @@
-class SimpleClass <selection>{
-    <caret>
-}</selection>
+class SimpleClass {
+<selection>    <caret></selection>
+}

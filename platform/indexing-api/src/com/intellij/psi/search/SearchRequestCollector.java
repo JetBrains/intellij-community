@@ -11,14 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author peter
-*/
 public class SearchRequestCollector {
   private final Object lock = new Object();
   private final List<PsiSearchRequest> myWordRequests = new ArrayList<>();
   private final List<QuerySearchRequest> myQueryRequests = new ArrayList<>();
-  private final List<Processor<Processor<? super PsiReference>>> myCustomSearchActions = new ArrayList<>();
+  private final List<Processor<? super Processor<? super PsiReference>>> myCustomSearchActions = new ArrayList<>();
   private final SearchSession mySession;
 
   public SearchRequestCollector(@NotNull SearchSession session) {
@@ -140,7 +137,7 @@ public class SearchRequestCollector {
     }
   }
 
-  public void searchCustom(@NotNull Processor<Processor<? super PsiReference>> searchAction) {
+  public void searchCustom(@NotNull Processor<? super Processor<? super PsiReference>> searchAction) {
     synchronized (lock) {
       myCustomSearchActions.add(searchAction);
     }
@@ -166,7 +163,7 @@ public class SearchRequestCollector {
   }
 
   @NotNull
-  public List<Processor<Processor<? super PsiReference>>> takeCustomSearchActions() {
+  public List<Processor<? super Processor<? super PsiReference>>> takeCustomSearchActions() {
     return takeRequests(myCustomSearchActions);
   }
 

@@ -6,6 +6,7 @@ import com.intellij.lang.java.beans.PropertyKind.*
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType.getUnboxedType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import java.beans.Introspector
 
 fun getPropertyNameAndKind(accessorName: String): Pair<String, PropertyKind>? {
@@ -36,14 +37,14 @@ internal fun PsiMethod.checkKind(kind: PropertyKind): Boolean {
   val expectedParamCount = if (kind === SETTER) 1 else 0
   if (parameterList.parametersCount != expectedParamCount) return false
 
-  if (kind == GETTER && returnType == PsiType.VOID) return false
+  if (kind == GETTER && returnType == PsiTypes.voidType()) return false
   if (kind == BOOLEAN_GETTER && !returnType.isBooleanOrBoxed()) return false
 
   return true
 }
 
 private fun PsiType?.isBooleanOrBoxed(): Boolean {
-  return this == PsiType.BOOLEAN || getUnboxedType(this) == PsiType.BOOLEAN
+  return this == PsiTypes.booleanType() || getUnboxedType(this) == PsiTypes.booleanType()
 }
 
 internal fun String.isPropertyName(): Boolean {

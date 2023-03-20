@@ -64,8 +64,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   }
   
   public boolean equals(Object o) {
-    if (!(o instanceof LogicalPosition)) return false;
-    final LogicalPosition logicalPosition = (LogicalPosition) o;
+    if (!(o instanceof LogicalPosition logicalPosition)) return false;
 
     return column == logicalPosition.column && line == logicalPosition.line;
   }

@@ -1,4 +1,4 @@
-// "Replace with 'Math.min'" "true"
+// "Replace with 'Math.min()' call" "true"
 class Test {
 
   public int mymin(int a, int b) {

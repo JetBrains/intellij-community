@@ -26,7 +26,7 @@ import java.util.List;
 public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
   private static class StringLiteralTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
-    public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
+    public void tokenize(@NotNull PyStringLiteralExpression element, @NotNull TokenConsumer consumer) {
       final Splitter splitter = PlainTextSplitter.getInstance();
       for (PyStringElement stringElement : element.getStringElements()) {
         final List<TextRange> literalPartRanges;
@@ -57,7 +57,7 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
 
   private static class FormatStringTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
-    public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
+    public void tokenize(@NotNull PyStringLiteralExpression element, @NotNull TokenConsumer consumer) {
       String stringValue = element.getStringValue();
       List<PyStringFormatParser.FormatStringChunk> chunks = PyStringFormatParser.parsePercentFormat(stringValue);
       Splitter splitter = PlainTextSplitter.getInstance();
@@ -84,8 +84,7 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
         return EMPTY_TOKENIZER;
       }
       PsiElement parent = element.getParent();
-      if (parent instanceof PyBinaryExpression) {
-        PyBinaryExpression binaryExpression = (PyBinaryExpression)parent;
+      if (parent instanceof PyBinaryExpression binaryExpression) {
         if (element == binaryExpression.getLeftExpression() && binaryExpression.getOperator() == PyTokenTypes.PERC) {
           return myFormatStringTokenizer;
         }

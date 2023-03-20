@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -23,7 +23,7 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
             return null;
         }
 
-        KtPsiFactory psiFactory = KtPsiFactoryKt.KtPsiFactory(project);
+        KtPsiFactory psiFactory = new KtPsiFactory(project);
         KtCallExpression callExpression = (KtCallExpression) psiFactory.createExpression("run {\n}");
         callExpression = (KtCallExpression) container.addAfter(callExpression, statements[statements.length - 1]);
         container.addBefore(psiFactory.createWhiteSpace(), callExpression);
@@ -38,8 +38,9 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
         //Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-        callExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callExpression);
+        callExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callExpression);
 
+        assert callExpression != null;
         KtExpression literalName = callExpression.getCalleeExpression();
         assert literalName != null : "Run expression should have callee expression " + callExpression.getText();
         return literalName.getTextRange();
@@ -47,6 +48,7 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
 
     @Override
     public String getTemplateDescription() {
-        return "{ }";
+        //noinspection DialogTitleCapitalization,HardCodedStringLiteral
+        return "run { }";
     }
 }

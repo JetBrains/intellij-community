@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -17,15 +17,16 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -37,10 +38,13 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.OverridingUtil
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getValueArgumentsInParentheses
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
+import org.jetbrains.kotlin.resolve.calls.util.isFakeElement
+import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
+import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.sam.SamConversionOracle
 import org.jetbrains.kotlin.resolve.sam.SamConversionResolver
@@ -50,6 +54,8 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
     val ktExpression = this.getArgumentExpression()
@@ -127,16 +133,17 @@ fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
 fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
     if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) return false
     val lastLambdaExpression = getLastLambdaExpression() ?: return false
+    if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) return false
 
     val callee = calleeExpression
     if (callee is KtNameReferenceExpression) {
         val resolutionFacade = getResolutionFacade()
         val samConversionTransformer = resolutionFacade.frontendService<SamConversionResolver>()
         val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
-        val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
+        val languageVersionSettings = resolutionFacade.languageVersionSettings
         val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
 
-        val bindingContext = analyze(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+        val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
         if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
             val resolvedCall = getResolvedCall(bindingContext)
             if (resolvedCall != null) {
@@ -169,6 +176,10 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
     }
 
     return true
+}
+
+private fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
+    return getStrictParentOfType<KtLabeledExpression>()?.takeIf { it.baseExpression == this }
 }
 
 private fun KotlinType.allowsMoveOutsideParentheses(
@@ -246,7 +257,7 @@ fun KtCallExpression.moveFunctionLiteralOutsideParentheses() {
 
 fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
     val rBrace = rBrace
-    val newLine = KtPsiFactory(this).createNewLine()
+    val newLine = KtPsiFactory(project).createNewLine()
     val anchor = if (rBrace == null) {
         val lastChild = lastChild
         lastChild as? PsiWhiteSpace ?: addAfter(newLine, lastChild)!!
@@ -270,7 +281,7 @@ fun PsiElement.deleteElementAndCleanParent() {
 
 // Delete element if it doesn't contain children of a given type
 private fun <T : PsiElement> deleteChildlessElement(element: PsiElement, childClass: Class<T>) {
-    if (PsiTreeUtil.getChildrenOfType<T>(element, childClass) == null) {
+    if (PsiTreeUtil.getChildrenOfType(element, childClass) == null) {
         element.delete()
     }
 }
@@ -302,13 +313,18 @@ fun PsiElement.deleteSingle() {
 
 fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
     companionObjects.firstOrNull()?.let { return it }
-    return appendDeclaration(KtPsiFactory(this).createCompanionObject())
+    return appendDeclaration(KtPsiFactory(project).createCompanionObject())
 }
 
 inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
     val body = getOrCreateBody()
     val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
-    val newDeclaration = if (anchor?.nextSibling is PsiErrorElement) body.addBefore(declaration, anchor) else body.addAfter(declaration, anchor)
+    val newDeclaration =
+        if (anchor?.nextSibling is PsiErrorElement)
+            body.addBefore(declaration, anchor)
+        else
+            body.addAfter(declaration, anchor)
+
     return newDeclaration as T
 }
 
@@ -325,8 +341,16 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
         val defaultVisibilityKeyword = implicitVisibility()
 
         if (visibilityModifier == defaultVisibilityKeyword) {
-            this.visibilityModifierType()?.let { removeModifier(it) }
-            return
+            // Fake elements do not have ModuleInfo and languageVersionSettings because they can't be analysed
+            // Effectively, this leads to J2K not respecting explicit api mode, but this case seems to be rare anyway.
+            val explicitVisibilityRequired = !this.isFakeElement &&
+                    this.languageVersionSettings.explicitApiEnabled &&
+                    this.resolveToDescriptorIfAny()?.let { !ExplicitApiDeclarationChecker.explicitVisibilityIsNotRequired(it) } == true
+
+            if (!explicitVisibilityRequired) {
+                this.visibilityModifierType()?.let { removeModifier(it) }
+                return
+            }
         }
     }
 
@@ -336,12 +360,16 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
 fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
     return when {
         this is KtPropertyAccessor && isSetter && property.hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
-            (property.resolveToDescriptorIfAny() as? PropertyDescriptor)?.overriddenDescriptors?.forEach {
-                val visibility = it.setter?.visibility?.toKeywordToken()
-                if (visibility != null) return visibility
-            }
+            property.resolveToDescriptorIfAny()
+                ?.safeAs<PropertyDescriptor>()
+                ?.overriddenDescriptors?.forEach {
+                    val visibility = it.setter?.visibility?.toKeywordToken()
+                    if (visibility != null) return visibility
+                }
+
             KtTokens.DEFAULT_VISIBILITY_KEYWORD
         }
+
         this is KtConstructor<*> -> {
             // constructors cannot be declared in objects
             val klass = getContainingClassOrObject() as? KtClass ?: return KtTokens.DEFAULT_VISIBILITY_KEYWORD
@@ -351,18 +379,19 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
                 klass.isSealed() ->
                     if (klass.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) KtTokens.PROTECTED_KEYWORD
                     else KtTokens.PRIVATE_KEYWORD
+
                 else -> KtTokens.DEFAULT_VISIBILITY_KEYWORD
             }
         }
+
         hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
-            (resolveToDescriptorIfAny() as? CallableMemberDescriptor)
+            resolveToDescriptorIfAny()?.safeAs<CallableMemberDescriptor>()
                 ?.overriddenDescriptors
                 ?.let { OverridingUtil.findMaxVisibility(it) }
                 ?.toKeywordToken()
         }
-        else -> {
-            KtTokens.DEFAULT_VISIBILITY_KEYWORD
-        }
+
+        else -> KtTokens.DEFAULT_VISIBILITY_KEYWORD
     }
 }
 
@@ -373,25 +402,25 @@ fun KtModifierListOwner.canBePrivate(): Boolean {
 
     if (this is KtDeclaration) {
         if (hasActualModifier() || isExpectDeclaration()) return false
-        val containingClassOrObject = containingClassOrObject ?: return true
-        if (containingClassOrObject is KtClass &&
-            (containingClassOrObject.isInterface() || containingClassOrObject.isAnnotation())
-        ) {
-            return false
-        }
+        val containingClassOrObject = containingClassOrObject as? KtClass ?: return true
+        if (containingClassOrObject.isAnnotation()) return false
+        if (containingClassOrObject.isInterface() && !hasBody()) return false
     }
 
     return true
 }
 
+fun KtModifierListOwner.canBePublic(): Boolean = !isSealedClassConstructor()
+
 fun KtModifierListOwner.canBeProtected(): Boolean {
-    val parent = when (this) {
-        is KtPropertyAccessor -> this.property.parent
-        else -> this.parent
-    }
-    return when (parent) {
-        is KtClassBody -> parent.parent is KtClass
+    return when (val parent = if (this is KtPropertyAccessor) this.property.parent else this.parent) {
+        is KtClassBody -> {
+            val parentClass = parent.parent as? KtClass
+            parentClass != null && !parentClass.isInterface() && !this.isFinalClassConstructor()
+        }
+
         is KtParameterList -> parent.parent is KtPrimaryConstructor
+        is KtClass -> !this.isAnnotationClassPrimaryConstructor() && !this.isFinalClassConstructor()
         else -> false
     }
 }
@@ -401,11 +430,24 @@ fun KtModifierListOwner.canBeInternal(): Boolean {
         val objectDeclaration = getStrictParentOfType<KtObjectDeclaration>() ?: return false
         if (objectDeclaration.isCompanion() && hasJvmFieldAnnotation()) return false
     }
-    return !isAnnotationClassPrimaryConstructor()
+
+    return !isAnnotationClassPrimaryConstructor() && !isSealedClassConstructor()
 }
 
 private fun KtModifierListOwner.isAnnotationClassPrimaryConstructor(): Boolean =
     this is KtPrimaryConstructor && (this.parent as? KtClass)?.hasModifier(KtTokens.ANNOTATION_KEYWORD) ?: false
+
+private fun KtModifierListOwner.isFinalClassConstructor(): Boolean {
+    if (this !is KtConstructor<*>) return false
+    val ktClass = getContainingClassOrObject().safeAs<KtClass>() ?: return false
+    return ktClass.toDescriptor().safeAs<ClassDescriptor>()?.isFinalOrEnum ?: return false
+}
+
+private fun KtModifierListOwner.isSealedClassConstructor(): Boolean {
+    if (this !is KtConstructor<*>) return false
+    val ktClass = getContainingClassOrObject().safeAs<KtClass>() ?: return false
+    return ktClass.isSealed()
+}
 
 fun KtClass.isInheritable(): Boolean {
     return when (getModalityFromDescriptor()) {
@@ -422,7 +464,8 @@ val KtProperty.isOverridable: Boolean
 
 private val KtDeclaration.isEffectivelyFinal: Boolean
     get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
-            !(hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD)) ||
+            !(hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
+                    (containingClassOrObject as? KtClass)?.isInterface() == true) ||
             containingClassOrObject?.isEffectivelyFinal == true
 
 private val KtClassOrObject.isEffectivelyFinal: Boolean
@@ -432,40 +475,29 @@ private val KtClassOrObject.isEffectivelyFinal: Boolean
 private val KtClass.isEffectivelyFinal: Boolean
     get() = hasModifier(KtTokens.FINAL_KEYWORD) ||
             isData() ||
-            !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD))
+            !(isSealed() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.ABSTRACT_KEYWORD) || isInterface())
 
-fun KtDeclaration.isOverridable(): Boolean {
-    val parent = parent
-    if (!(parent is KtClassBody || parent is KtParameterList)) return false
-
-    val klass = if (parent.parent is KtPrimaryConstructor)
-        parent.parent.parent as? KtClass
-    else
-        parent.parent as? KtClass
-
-    if (klass == null || (!klass.isInheritable() && !klass.isEnum())) return false
-
-    if (this.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-        // 'private' is incompatible with 'open'
-        return false
-    }
-
-    return when (getModalityFromDescriptor()) {
-        KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD -> true
-        else -> false
-    }
-}
+/**
+ * copy-paste in K2: [org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl.isOverridable]
+ */
+fun KtDeclaration.isOverridable(): Boolean =
+    !hasModifier(KtTokens.PRIVATE_KEYWORD) &&  // 'private' is incompatible with 'open'
+            (parents.match(KtParameterList::class, KtPrimaryConstructor::class, last = KtClass::class)
+                ?: parents.match(KtClassBody::class, last = KtClass::class))
+                ?.let { it.isInheritable() || it.isEnum() } == true &&
+            getModalityFromDescriptor() in setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD)
 
 fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? = resolveToDescriptorIfAny()): KtModifierKeywordToken? {
     if (descriptor is MemberDescriptor) {
         return mapModality(descriptor.modality)
     }
+
     return null
 }
 
 fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
     var predictedModality = predictImplicitModality()
-    val bindingContext = analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this] ?: return predictedModality
     val containingDescriptor = descriptor.containingDeclaration ?: return predictedModality
 
@@ -527,7 +559,7 @@ fun KtSecondaryConstructor.getOrCreateBody(): KtBlockExpression {
 
     val delegationCall = getDelegationCall()
     val anchor = if (delegationCall.isImplicit) valueParameterList else delegationCall
-    val newBody = KtPsiFactory(this).createEmptyBody()
+    val newBody = KtPsiFactory(project).createEmptyBody()
     return addAfter(newBody, anchor) as KtBlockExpression
 }
 
@@ -537,16 +569,10 @@ fun KtParameter.dropDefaultValue() {
     deleteChildRange(from, to)
 }
 
-fun dropEnclosingParenthesesIfPossible(expression: KtExpression): KtExpression {
-    val parent = expression.parent as? KtParenthesizedExpression ?: return expression
-    if (!KtPsiUtil.areParenthesesUseless(parent)) return expression
-    return parent.replaced(expression)
-}
-
 fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): KtTypeParameter? {
     typeParameterList?.let { return it.addParameter(typeParameter) }
 
-    val list = KtPsiFactory(this).createTypeParameterList("<X>")
+    val list = KtPsiFactory(project).createTypeParameterList("<X>")
     list.parameters[0].replace(typeParameter)
     val leftAnchor = when (this) {
         is KtClass -> nameIdentifier
@@ -560,7 +586,7 @@ fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): K
 
 fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
     valueParameterList?.let { return it }
-    val parameterList = KtPsiFactory(this).createParameterList("()")
+    val parameterList = KtPsiFactory(project).createParameterList("()")
     val anchor = nameIdentifier ?: funKeyword!!
     return addAfter(parameterList, anchor) as KtParameterList
 }
@@ -588,17 +614,17 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
 fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
     defaultValue?.let { return it.replaced(newDefaultValue) }
 
-    val psiFactory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     val eq = equalsToken ?: add(psiFactory.createEQ())
     return addAfter(newDefaultValue, eq) as KtExpression
 }
 
 fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {
-    add(KtPsiFactory(this).createModifier(modifier))
+    add(KtPsiFactory(project).createModifier(modifier))
 }
 
 fun KtModifierList.normalize(): KtModifierList {
-    val psiFactory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
     return psiFactory.createEmptyModifierList().also { newList ->
         val modifiers = SmartList<PsiElement>()
         allChildren.forEach {
@@ -615,20 +641,4 @@ fun KtModifierList.normalize(): KtModifierList {
         modifiers.sortBy { MODIFIERS_ORDER.indexOf(it.node.elementType) }
         modifiers.forEach { newList.add(it) }
     }
-}
-
-fun KtBlockStringTemplateEntry.canDropBraces(): Boolean {
-    val expression = this.expression
-    return (expression is KtNameReferenceExpression || (expression is KtThisExpression && expression.labelQualifier == null))
-            && canPlaceAfterSimpleNameEntry(nextSibling)
-}
-
-fun KtBlockStringTemplateEntry.dropBraces(): KtSimpleNameStringTemplateEntry {
-    val name = if (expression is KtThisExpression) {
-        KtTokens.THIS_KEYWORD.value
-    } else {
-        (expression as KtNameReferenceExpression).getReferencedNameElement().text
-    }
-    val newEntry = KtPsiFactory(this).createSimpleNameStringTemplateEntry(name)
-    return replaced(newEntry)
 }

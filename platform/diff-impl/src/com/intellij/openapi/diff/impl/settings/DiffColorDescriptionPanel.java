@@ -83,8 +83,7 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
 
   @Override
   public void reset(@NotNull EditorSchemeAttributeDescriptor attrDescription) {
-    if (!(attrDescription instanceof ColorAndFontDescription)) return;
-    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+    if (!(attrDescription instanceof ColorAndFontDescription description)) return;
 
     Color backgroundColor = getBackgroundColor(description);
     Color ignoredColor = getIgnoredColor(description);
@@ -104,8 +103,7 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
 
   @Override
   public void apply(@NotNull EditorSchemeAttributeDescriptor attrDescription, EditorColorsScheme scheme) {
-    if (!(attrDescription instanceof ColorAndFontDescription)) return;
-    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+    if (!(attrDescription instanceof ColorAndFontDescription description)) return;
 
     description.setBackgroundChecked(true);
     description.setForegroundChecked(true);

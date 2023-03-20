@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.customizeActions;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -15,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,14 +24,13 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class CombinePropertiesFilesAction extends AnAction {
-
+public final class CombinePropertiesFilesAction extends AnAction {
   public CombinePropertiesFilesAction() {
     super(PropertiesBundle.messagePointer("combine.properties.files.title"), AllIcons.FileTypes.Properties);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final List<PropertiesFile> initialPropertiesFiles = getPropertiesFiles(e);
     final List<PropertiesFile> propertiesFiles = initialPropertiesFiles == null ? new ArrayList<>()
                                                                                 : new ArrayList<>(initialPropertiesFiles);
@@ -70,7 +69,12 @@ public class CombinePropertiesFilesAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     final Collection<PropertiesFile> propertiesFiles = getPropertiesFiles(e);
     final List<ResourceBundle> resourceBundles = getResourceBundles(e);
     int elementCount = 0;
@@ -83,14 +87,12 @@ public class CombinePropertiesFilesAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(elementCount > 1);
   }
 
-  @Nullable
-  private static List<ResourceBundle> getResourceBundles(@NotNull AnActionEvent e) {
+  private static @Nullable List<ResourceBundle> getResourceBundles(@NotNull AnActionEvent e) {
     final ResourceBundle[] resourceBundles = e.getData(ResourceBundle.ARRAY_DATA_KEY);
-    return resourceBundles == null ? null : ContainerUtil.newArrayList(resourceBundles);
+    return resourceBundles == null ? null : List.of(resourceBundles);
   }
 
-  @Nullable
-  private static List<PropertiesFile> getPropertiesFiles(@NotNull AnActionEvent e) {
+  private static @Nullable List<PropertiesFile> getPropertiesFiles(@NotNull AnActionEvent e) {
     final PsiElement[] psiElements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (psiElements == null || psiElements.length == 0) {
       return null;
@@ -123,14 +125,12 @@ public class CombinePropertiesFilesAction extends AnAction {
       return !newBaseName.isEmpty() && checkBaseName(newBaseName) == null;
     }
 
-    @Nullable
     @Override
-    public String getErrorText(String inputString) {
+    public @Nullable String getErrorText(String inputString) {
       return checkInput(inputString) ? null : PropertiesBundle.message("combine.properties.files.validation.error", checkBaseName(inputString).getFailedFile());
     }
 
-    @Nullable
-    private BaseNameError checkBaseName(final String baseNameCandidate) {
+    private @Nullable BaseNameError checkBaseName(final String baseNameCandidate) {
       for (PropertiesFile propertiesFile : myPropertiesFiles) {
         final String name = propertiesFile.getVirtualFile().getName();
         if (name.startsWith(baseNameCandidate) &&

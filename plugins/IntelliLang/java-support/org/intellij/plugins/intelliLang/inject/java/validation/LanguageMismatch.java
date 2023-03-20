@@ -15,33 +15,41 @@
  */
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
+import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
-import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      IntelliLangBundle.message("flag.usages.of.non.annotated.elements"), this, "CHECK_NON_ANNOTATED_REFERENCES");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("CHECK_NON_ANNOTATED_REFERENCES", IntelliLangBundle.message("flag.usages.of.non.annotated.elements"))
+        .description(HtmlChunk.text(IntelliLangBundle.message("flag.usages.of.non.annotated.elements.description")))
+    );
   }
 
   @Override
@@ -51,12 +59,12 @@ public class LanguageMismatch extends LocalInspectionTool {
       final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getLanguageAnnotationPair();
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         checkExpression(expression, holder, annotationName);
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.getParent() instanceof PsiMethodCallExpression) return;
         final PsiElement element = expression.resolve();
         if (!(element instanceof PsiModifierListOwner)) {
@@ -87,7 +95,7 @@ public class LanguageMismatch extends LocalInspectionTool {
               final String actual = AnnotationUtilEx.calcAnnotationValue(as, "value");
               if (!expected.equals(actual)) {
                 // language annotation values from context and declaration don't match
-                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description3", expected, actual));
+                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description", expected, actual));
               }
             }
             else if (CHECK_NON_ANNOTATED_REFERENCES) {
@@ -99,14 +107,12 @@ public class LanguageMismatch extends LocalInspectionTool {
                   return;
                 }
               }
-              else if (var instanceof PsiExpressionList) {
-                final PsiExpressionList list = (PsiExpressionList)var;
+              else if (var instanceof PsiExpressionList list) {
                 if (!ArrayUtil.contains(expression, list.getExpressions())) {
                   return;
                 }
               }
-              else if (var instanceof PsiAssignmentExpression) {
-                final PsiAssignmentExpression a = (PsiAssignmentExpression)var;
+              else if (var instanceof PsiAssignmentExpression a) {
                 if (a.getRExpression() != expression) {
                   return;
                 }
@@ -116,22 +122,15 @@ public class LanguageMismatch extends LocalInspectionTool {
                 return;
               }
               // context implies language, but declaration isn't annotated
-              if (AnnotateFix.canApplyOn(declOwner)) {
-                final PsiAnnotation annotation = annotations[annotations.length - 1];
-                final String initializer = annotation.getParameterList().getText();
-                final AnnotateFix fix = new AnnotateFix(annotation.getQualifiedName(), initializer) {
-                  @Override
-                  @NotNull
-                  public String getName() {
-                    return initializer == null ? super.getName() : super.getName() + initializer;
-                  }
-                };
-                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description2", expected),
-                                       fix);
+              final PsiAnnotation annotation = annotations[annotations.length - 1];
+              String fqn = Objects.requireNonNull(annotation.getQualifiedName());
+              List<LocalQuickFix> fixes = new SmartList<>();
+              PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
+              if (owner != null && AddAnnotationPsiFix.isAvailable(owner, fqn)) {
+                fixes.add(new AddAnnotationFix(fqn, owner, annotation.getParameterList().getAttributes()));
               }
-              else {
-                holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.mismatch.description", expected));
-              }
+              holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.problem.description", expected),
+                                     fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
             }
           }
         }

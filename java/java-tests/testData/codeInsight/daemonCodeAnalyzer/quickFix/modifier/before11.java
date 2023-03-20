@@ -1,4 +1,4 @@
-// "Make 'inner' static" "true"
+// "Make 'inner' static" "true-preview"
 import java.io.*;
 
 class a {

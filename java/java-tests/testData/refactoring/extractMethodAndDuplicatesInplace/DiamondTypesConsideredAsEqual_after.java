@@ -11,7 +11,7 @@ class T {
   }
 
     @NotNull
-    private ArrayList<String> getList1() {
+    private static ArrayList<String> getList1() {
         return new ArrayList<>();
     }
 }

@@ -1,0 +1,26 @@
+<html>
+<title>Command to open a new project</title>
+<body>
+To open a project in the current frame closing the current one:
+<p>
+  Example: %openProject C:\Users\username\intellij
+</p>
+
+<br/>
+To open a project in a new frame and don't close the current one:
+<p>
+  Example: %openProject C:\Users\username\intellij false
+</p>
+
+If you do the following:
+%openProject /tmp/a false
+%openProject /tmp/b false
+%openProject /tmp/a false
+
+In the end, the same project a will be active and there will be 2 window frames.
+
+<br/>
+To perform Project Leak detection, pass the fourth argument as true.
+%openProject /tmp/a true true
+</body>
+</html>

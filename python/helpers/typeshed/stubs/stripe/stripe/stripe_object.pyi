@@ -1,11 +1,13 @@
 import json
-from typing import Any, Dict
+from _typeshed import Self
+from typing import Any
 
 from stripe import api_requestor as api_requestor
 
-class StripeObject(Dict[Any, Any]):
+class StripeObject(dict[Any, Any]):
     class ReprJSONEncoder(json.JSONEncoder):
         def default(self, obj): ...
+
     def __init__(
         self,
         id: Any | None = ...,
@@ -27,14 +29,19 @@ class StripeObject(Dict[Any, Any]):
     def __reduce__(self): ...
     @classmethod
     def construct_from(
-        cls, values, key, stripe_version: Any | None = ..., stripe_account: Any | None = ..., last_response: Any | None = ...
-    ): ...
+        cls: type[Self],
+        values: Any,
+        key: str | None,
+        stripe_version: Any | None = ...,
+        stripe_account: Any | None = ...,
+        last_response: Any | None = ...,
+    ) -> Self: ...
     api_key: Any
     stripe_version: Any
     stripe_account: Any
     def refresh_from(
         self,
-        values,
+        values: Any,
         api_key: Any | None = ...,
         partial: bool = ...,
         stripe_version: Any | None = ...,
@@ -50,5 +57,5 @@ class StripeObject(Dict[Any, Any]):
     @property
     def stripe_id(self): ...
     def serialize(self, previous): ...
-    def __copy__(self): ...
-    def __deepcopy__(self, memo): ...
+    def __copy__(self) -> StripeObject: ...
+    def __deepcopy__(self, memo: Any) -> StripeObject: ...

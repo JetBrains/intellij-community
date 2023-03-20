@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -42,26 +41,19 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
 
-  IntentionActionWithTextCaching(@NotNull IntentionAction action){
-    this(action, action.getText(), null, (__1, __2) -> {});
-  }
-
-  IntentionActionWithTextCaching(@NotNull HighlightInfo.IntentionActionDescriptor descriptor, @NotNull BiConsumer<? super IntentionActionWithTextCaching,? super IntentionAction> markInvoked) {
-    this(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), markInvoked);
-  }
-
-  private IntentionActionWithTextCaching(@NotNull IntentionAction action, @NlsContexts.PopupTitle String displayName, @Nullable Icon icon, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+  IntentionActionWithTextCaching(@NotNull IntentionAction action,
+                                 @NlsContexts.PopupTitle String displayName,
+                                 @Nullable Icon icon,
+                                 @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
-    //noinspection ConstantConditions
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
   }
 
-  @NotNull
-  public @IntentionName String getText() {
+  public @NotNull @IntentionName String getText() {
     return myText;
   }
 
@@ -75,8 +67,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     myOptionInspectionFixes.add(action);
   }
 
-  @NotNull
-  public IntentionAction getAction() {
+  public @NotNull IntentionAction getAction() {
     return myAction;
   }
 
@@ -95,8 +86,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return myOptionInspectionFixes;
   }
 
-  @NotNull
-  public List<IntentionAction> getOptionActions() {
+  public @NotNull List<IntentionAction> getOptionActions() {
     return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }
 
@@ -105,13 +95,12 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   }
 
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return getText();
   }
 
   @Override
-  public int compareTo(@NotNull final IntentionActionWithTextCaching other) {
+  public int compareTo(@NotNull IntentionActionWithTextCaching other) {
     if (myAction instanceof Comparable) {
       //noinspection unchecked
       return ((Comparable)myAction).compareTo(other.getAction());
@@ -132,19 +121,18 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return DumbService.isDumbAware(myAction);
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
-    return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+  public @Nullable ShortcutSet getShortcut() {
+    ShortcutSet shortcut = myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
   }
 
-  @NotNull
   @Override
-  public IntentionAction getDelegate() {
+  public @NotNull IntentionAction getDelegate() {
     return getAction();
   }
 
-  public boolean isShowSubmenu() {
+  boolean isShowSubmenu() {
     IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
     if (action instanceof CustomizableIntentionAction) {
       return ((CustomizableIntentionAction)myAction).isShowSubmenu();
@@ -171,8 +159,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof IntentionActionWithTextCaching)) return false;
-    IntentionActionWithTextCaching other = (IntentionActionWithTextCaching) o;
+    if (!(o instanceof IntentionActionWithTextCaching other)) return false;
     return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
   }
 
@@ -189,8 +176,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
                                              ShortcutProvider, PossiblyDumbAware {
     private final IntentionAction myAction;
-    @NotNull
-    private final BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
+    private final @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
 
     MyIntentionAction(@NotNull IntentionAction action, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
       myAction = action;
@@ -202,21 +188,18 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
       return DumbService.isDumbAware(myAction);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return myText;
     }
 
     @Override
     public String toString() {
-      return getDelegate().getClass() + ": " + getDelegate();
+      return getDelegate()+" ("+getDelegate().getClass()+")";
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull @Nls String getFamilyName() {
       return myAction.getFamilyName();
     }
 
@@ -236,9 +219,8 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
       return myAction.startInWriteAction();
     }
 
-    @NotNull
     @Override
-    public IntentionAction getDelegate() {
+    public @NotNull IntentionAction getDelegate() {
       return myAction;
     }
 
@@ -247,20 +229,20 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
       return myAction.generatePreview(project, editor, file);
     }
 
-    @Nullable
     @Override
-    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
       return myAction.getElementToMakeWritable(currentFile);
     }
 
-    @Nullable
     @Override
-    public ShortcutSet getShortcut() {
-      return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+    public @Nullable ShortcutSet getShortcut() {
+      return myAction instanceof ShortcutProvider
+             ? ((ShortcutProvider)myAction).getShortcut()
+             : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
     }
 
     @Override
-    public int compareTo(@NotNull final MyIntentionAction other) {
+    public int compareTo(@NotNull MyIntentionAction other) {
       if (myAction instanceof Comparable) {
         //noinspection unchecked
         return ((Comparable)myAction).compareTo(other.getDelegate());

@@ -27,13 +27,14 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
 
   public void testSimple() {
     doMemberTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
-                 "void test(boolean foo, boolean bar) {\n" +
-                 "    boolean c = false;\n" +
-                 "    boolean b = (!foo &&/**/ (c = bar)) || (foo && true);" +
-                 "}",
-                 "void test(boolean foo, boolean bar) {\n" +
-                 "    boolean c = false;\n" +
-                 "    boolean b = foo ? true : (c = bar);}"
+                 """
+                   void test(boolean foo, boolean bar) {
+                       boolean c = false;
+                       boolean b = (!foo &&/**/ (c = bar)) || (foo && true);}""",
+                 """
+                   void test(boolean foo, boolean bar) {
+                       boolean c = false;
+                       boolean b = foo ? true : (c = bar);}"""
                  );
   }
 
@@ -77,16 +78,18 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
 
   public void testComparison() {
     doTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
-           "class X {\n" +
-           "  boolean test(int x, int y, int z) {\n" +
-           "    return (x > y && z == 1) || /**/(x <= y && z == 2);\n" +
-           "  }\n" +
-           "}",
-           "class X {\n" +
-           "  boolean test(int x, int y, int z) {\n" +
-           "    return x > y ? z == 1 : z == 2;\n" +
-           "  }\n" +
-           "}");
+           """
+             class X {
+               boolean test(int x, int y, int z) {
+                 return (x > y && z == 1) || /**/(x <= y && z == 2);
+               }
+             }""",
+           """
+             class X {
+               boolean test(int x, int y, int z) {
+                 return x > y ? z == 1 : z == 2;
+               }
+             }""");
   }
 
   @Override

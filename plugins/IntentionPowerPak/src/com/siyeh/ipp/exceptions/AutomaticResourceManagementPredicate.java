@@ -24,19 +24,17 @@ class AutomaticResourceManagementPredicate
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken javaToken)) {
       return false;
     }
-    final PsiJavaToken javaToken = (PsiJavaToken)element;
     final IElementType tokenType = javaToken.getTokenType();
     if (!JavaTokenType.TRY_KEYWORD.equals(tokenType)) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiTryStatement)) {
+    if (!(parent instanceof PsiTryStatement tryStatement)) {
       return false;
     }
-    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
     if (tryStatement.getTryBlock() == null) {
       return false;
     }

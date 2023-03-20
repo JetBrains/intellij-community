@@ -8,6 +8,7 @@ plugins {
 #if ($context.hasLanguage("kotlin"))
   id 'org.jetbrains.kotlin.jvm' version '${context.getVersion("org.jetbrains.kotlin", "kotlin-gradle-plugin")}'
 #end
+  id 'org.javamodularity.moduleplugin' version '${context.getBomProperty("javamodularity.version")}'
   id 'org.openjfx.javafxplugin' version '${context.getVersion("org.openjfx", "javafxplugin")}'
   id 'org.beryx.jlink' version '${context.getVersion("org.beryx", "badass-jlink-plugin")}'
 }
@@ -25,7 +26,7 @@ ext {
 }
 #end
 
-#if ($context.sdkFeatureVersion > 0)
+#if ($context.sdkFeatureVersion > 0 && !$context.hasLanguage("kotlin"))
 sourceCompatibility = '${context.sdkFeatureVersion}'
 targetCompatibility = '${context.sdkFeatureVersion}'
 #end
@@ -39,22 +40,19 @@ application {
   mainClass = '${context.rootPackage}.HelloApplication'
 }
 #if ($context.hasLanguage("kotlin"))
-
-[compileKotlin, compileTestKotlin].forEach {
-  it.kotlinOptions {
-    jvmTarget = '11'
-  }
+kotlin {
+  jvmToolchain(#if ($context.sdkFeatureVersion < 17) 11 #else 17 #end)
 }
 #end
 
 javafx {
   version = '${context.getProperty("javafx.version")}'
-  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web'#end]
+  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web'#end#if ($context.hasLibrary("fxgl")), 'javafx.media'#end]
 }
 
 dependencies {
 #if ($context.hasLanguage("groovy"))
-  implementation('org.codehaus.groovy:groovy:${context.getVersion("org.codehaus.groovy", "groovy")}')
+  implementation('org.apache.groovy:groovy:${context.getVersion("org.apache.groovy", "groovy")}')
 #end
 #if ($context.hasLibrary("controlsfx"))
   implementation('org.controlsfx:controlsfx:${context.getVersion("org.controlsfx", "controlsfx")}')
@@ -77,6 +75,11 @@ dependencies {
 #end
 #if ($context.hasLibrary("tilesfx"))
   implementation('eu.hansolo:tilesfx:${context.getVersion("eu.hansolo", "tilesfx")}') {
+    exclude(group: 'org.openjfx')
+  }
+#end
+#if ($context.hasLibrary("fxgl"))
+  implementation('com.github.almasb:fxgl:#if ($context.sdkFeatureVersion >= 17)${context.getBomProperty("fxgl17.version")}#else${context.getBomProperty("fxgl11.version")}#end') {
     exclude(group: 'org.openjfx')
   }
 #end

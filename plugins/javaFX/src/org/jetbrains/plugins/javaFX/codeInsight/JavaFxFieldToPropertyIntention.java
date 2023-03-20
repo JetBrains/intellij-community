@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.codeInsight;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -40,9 +42,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(JavaFxFieldToPropertyIntention.class);
 
@@ -77,6 +76,12 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     final PropertyInfo property = PropertyInfo.createPropertyInfo(field, project);
     LOG.assertTrue(property != null, "propertyInfo");
     new SearchUsagesTask(project, property).queue();
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    // As the action spawns the search which could be very long, let's disable preview here
+    return IntentionPreviewInfo.EMPTY;
   }
 
   private static class SearchUsagesTask extends Task.Modal {
@@ -126,8 +131,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
 
         for (PsiReference reference : myReferences) {
           final PsiElement refElement = reference.getElement();
-          if (refElement instanceof PsiExpression) {
-            final PsiExpression expression = (PsiExpression)refElement;
+          if (refElement instanceof PsiExpression expression) {
             final TypeConversionDescriptor conversion =
               myProperty.myObservableType.findDirectConversion(expression, toType, fromType);
             if (conversion != null) {
@@ -421,14 +425,11 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
           final PsiExpression replaced = super.replace(expression, evaluator);
           // Replace the getter's return type: List -> ObservableList
           final PsiElement parent = replaced.getParent();
-          if (parent instanceof PsiReturnStatement) {
-            final PsiReturnStatement returnStatement = (PsiReturnStatement)parent;
+          if (parent instanceof PsiReturnStatement returnStatement) {
             final PsiElement statementParent = returnStatement.getParent();
-            if (statementParent instanceof PsiCodeBlock) {
-              final PsiCodeBlock codeBlock = (PsiCodeBlock)statementParent;
+            if (statementParent instanceof PsiCodeBlock codeBlock) {
               final PsiElement blockParent = codeBlock.getParent();
-              if (blockParent instanceof PsiMethod) {
-                final PsiMethod method = (PsiMethod)blockParent;
+              if (blockParent instanceof PsiMethod method) {
                 final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
                 if (returnTypeElement != null && myOriginalType.equals(method.getReturnType())) {
                   final String text = JavaFxCommonNames.JAVAFX_COLLECTIONS_OBSERVABLE_LIST + "<" + myItemType.getCanonicalText() + ">";

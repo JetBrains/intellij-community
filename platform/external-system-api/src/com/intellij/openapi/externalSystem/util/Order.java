@@ -22,8 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * Direct spring annotation analogue.
- *
- * @author Denis Zhdanov
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})

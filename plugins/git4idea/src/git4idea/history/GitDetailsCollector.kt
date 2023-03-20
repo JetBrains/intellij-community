@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
+import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.runWithSpan
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
@@ -10,17 +12,13 @@ import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.util.StopWatch
 import git4idea.GitCommit
-import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
 
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
                                                                                      protected val root: VirtualFile,
                                                                                      private val recordBuilder: GitLogRecordBuilder<R>) {
-  private val vcs = GitVcs.getInstance(project)
-
   @Throws(VcsException::class)
   fun readFullDetails(commitConsumer: Consumer<in C>,
                       requirements: GitCommitRequirements,
@@ -40,7 +38,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     val handler = GitLogUtil.createGitHandler(project, root, requirements.configParameters(), lowPriorityProcess)
     GitLogUtil.sendHashesToStdin(hashes, handler)
 
-    readFullDetailsFromHandler(commitConsumer, handler, requirements, GitLogUtil.getNoWalkParameter(vcs), GitLogUtil.STDIN)
+    readFullDetailsFromHandler(commitConsumer, handler, requirements, GitLogUtil.getNoWalkParameter(project), GitLogUtil.STDIN)
   }
 
   @Throws(VcsException::class)
@@ -50,14 +48,14 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
                                          vararg parameters: String) {
     val factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project) ?: return
 
-    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters()), *parameters)
+    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project)), *parameters)
     if (requirements.diffInMergeCommits == GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS) {
       val consumer = { records: List<R> ->
         val firstRecord = records.first()
         val parents = firstRecord.parentsHashes
 
         if (parents.isEmpty() || parents.size == records.size) {
-          commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
+          commitConsumer.consume(createCommit(records, factory, requirements))
         }
         else {
           LOG.warn("Not enough records for commit ${firstRecord.hash} " +
@@ -71,8 +69,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     }
     else {
       val consumer = Consumer<R> { record ->
-        commitConsumer.consume(createCommit(mutableListOf(record), factory,
-                                            requirements.diffRenameLimit))
+        commitConsumer.consume(createCommit(mutableListOf(record), factory, requirements))
       }
 
       readRecordsFromHandler(handler, consumer, *commandParameters)
@@ -88,19 +85,18 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    val sw = StopWatch.start("loading details in [" + root.name + "]")
+    runWithSpan(TraceManager.getTracer("vcs"), "loading details") { span ->
+      span.setAttribute("rootName", root.name)
 
-    val handlerListener = GitLogOutputSplitter(handler, parser, converter)
-    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
-    handlerListener.reportErrors()
-
-    sw.report()
+      val handlerListener = GitLogOutputSplitter(handler, parser, converter)
+      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
+      handlerListener.reportErrors()
+    }
   }
 
   protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>
 
-  protected abstract fun createCommit(records: List<R>, factory: VcsLogObjectsFactory,
-                                      renameLimit: GitCommitRequirements.DiffRenameLimit): C
+  protected abstract fun createCommit(records: List<R>, factory: VcsLogObjectsFactory, requirements: GitCommitRequirements): C
 
   companion object {
     private val LOG = Logger.getInstance(GitDetailsCollector::class.java)
@@ -113,15 +109,15 @@ internal class GitFullDetailsCollector(project: Project, root: VirtualFile,
 
   internal constructor(project: Project, root: VirtualFile) : this(project, root, DefaultGitLogFullRecordBuilder())
 
-  override fun createCommit(records: List<GitLogFullRecord>, factory: VcsLogObjectsFactory,
-                            renameLimit: GitCommitRequirements.DiffRenameLimit): GitCommit {
+  override fun createCommit(records: List<GitLogFullRecord>, factory: VcsLogObjectsFactory, requirements: GitCommitRequirements): GitCommit {
     val record = records.last()
     val parents = record.parentsHashes.map { factory.createHash(it) }
 
     return GitCommit(project, HashImpl.build(record.hash), parents, record.commitTime, root, record.subject,
                      factory.createUser(record.authorName, record.authorEmail), record.fullMessage,
                      factory.createUser(record.committerName, record.committerEmail), record.authorTimeStamp,
-                     records.map { it.statusInfos }
+                     records.map { it.statusInfos },
+                     requirements
     )
   }
 

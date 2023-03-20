@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,6 +30,17 @@ public abstract class TabLayout {
     return false;
   }
 
+  public boolean isWithScrollBar() {
+    return false;
+  }
+
+  public int getScrollOffset() {
+    return 0;
+  }
+
+  public void scroll(int units) {
+  }
+
   public static double getDragOutMultiplier() {
     return Registry.doubleValue("ide.tabbedPane.dragOutMultiplier");
   }
@@ -43,5 +56,11 @@ public abstract class TabLayout {
 
   protected static int getMinTabWidth() {
     return JBUI.scale(50);
+  }
+
+
+  public static boolean showPinnedTabsSeparately() {
+    return UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow() &&
+           AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left");
   }
 }

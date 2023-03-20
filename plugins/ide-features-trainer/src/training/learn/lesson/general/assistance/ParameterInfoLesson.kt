@@ -16,7 +16,7 @@ class ParameterInfoLesson(private val sample: LessonSample) :
     val initialOffset = sample.getPosition(0).startOffset
 
     actionTask("ParameterInfo") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("parameter.info.use.action", action(it))
     }
 
@@ -43,8 +43,6 @@ class ParameterInfoLesson(private val sample: LessonSample) :
     val partOfSequence = sequence.subSequence(initialOffset, min(initialOffset + 20, sequence.length))
     return partOfSequence.matches(parametersRegex)
   }
-
-  override val suitableTips = listOf("ParameterInfo")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("parameter.info.help.link"),

@@ -12,9 +12,6 @@ import java.util.regex.Pattern;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class FileStatusResultParser {
 
   @NotNull

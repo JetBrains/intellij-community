@@ -39,8 +39,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     return Registry.is(RUN_PROCESSES_WITH_PTY);
   }
 
-  private final LocalPtyOptions.Builder myOptionsBuilder = LocalPtyOptions.DEFAULT.builder().consoleMode(true)
-    .useWinConPty(LocalPtyOptions.shouldUseWinConPty());
+  private final LocalPtyOptions.Builder myOptionsBuilder = getDefaultPtyOptions().builder();
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
   private boolean myUnixOpenTtyToPreserveOutputAfterTermination = true;
 
@@ -167,5 +166,12 @@ public class PtyCommandLine extends GeneralCommandLine {
     return ProcessService.getInstance()
       .startPtyProcess(command, directory, env, options, app, isRedirectErrorStream(), myWindowsAnsiColorEnabled,
                        myUnixOpenTtyToPreserveOutputAfterTermination);
+  }
+
+  public static @NotNull LocalPtyOptions getDefaultPtyOptions() {
+    return LocalPtyOptions.DEFAULT.builder()
+      .consoleMode(true)
+      .useWinConPty(LocalPtyOptions.shouldUseWinConPty())
+      .build();
   }
 }

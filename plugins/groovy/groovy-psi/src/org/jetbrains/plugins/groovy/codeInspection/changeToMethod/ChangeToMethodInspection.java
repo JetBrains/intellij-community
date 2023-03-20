@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToMethod;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -51,25 +51,32 @@ public class ChangeToMethodInspection extends BaseInspection {
   }
 
   @Nullable
-  protected GroovyFix getFix(@NotNull Transformation<?> transformation) {
+  protected GroovyFix getFix(@NotNull final Transformation<?> transformation) {
+    return new TransformationBasedFix(transformation);
+  }
 
-    return new GroovyFix() {
-      @Nls
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return GroovyBundle.message("replace.with.method.fix", transformation.getMethod());
-      }
+  private static class TransformationBasedFix extends GroovyFix {
 
-      @Override
-      protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-        PsiElement call = descriptor.getPsiElement().getParent();
-        if (!(call instanceof GrExpression)) return;
-        if (!transformation.couldApplyRow((GrExpression)call)) return;
+    @SafeFieldForPreview
+    private final Transformation<?> myTransformation;
 
-        transformation.applyRow((GrExpression)call);
-      }
-    };
+    private TransformationBasedFix(Transformation<?> transformation) { myTransformation = transformation; }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return GroovyBundle.message("replace.with.method.fix", myTransformation.getMethod());
+    }
+
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+      PsiElement call = descriptor.getPsiElement().getParent();
+      if (!(call instanceof GrExpression)) return;
+      if (!myTransformation.couldApplyRow((GrExpression)call)) return;
+
+      myTransformation.applyRow((GrExpression)call);
+    }
   }
 
   @Nullable

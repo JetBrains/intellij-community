@@ -46,43 +46,46 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testInnersOnDemand1() { doTest(); }
   public void testInnersOnDemand2() { doTest(); }
   public void testStaticImportingInner() {
-    myFixture.addClass("package package1;\n" +
-                       "/** @noinspection ALL*/ public interface c\n" +
-                       "{\n" +
-                       "    public interface MyInner\n" +
-                       "    {\n" +
-                       "        int a = 1;\n" +
-                       "        int b = 2;\n" +
-                       "    }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package package1;
+                         /** @noinspection ALL*/ public interface c
+                         {
+                             public interface MyInner
+                             {
+                                 int a = 1;
+                                 int b = 2;
+                             }
+                         }""");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting(true, false, false);
   }
 
   public void testImportFromSamePackage1() {
-    myFixture.addClass("package package1;\n" +
-                       "import package1.*;" +
-                       "class b {\n" +
-                       " a a = null;\n" +
-                       "}");
+    myFixture.addClass("""
+                         package package1;
+                         import package1.*;class b {
+                          a a = null;
+                         }""");
     myFixture.configureByFile("/package1/a.java");
     myFixture.checkHighlighting(true,false, false);
   }
   public void testImportFromSamePackage2() {
-    myFixture.addClass("package package1;\n" +
-                       "import package1.b;\n" +
-                       "class a {\n" +
-                       " b b = null;\n" +
-                       "}");
+    myFixture.addClass("""
+                         package package1;
+                         import package1.b;
+                         class a {
+                          b b = null;
+                         }""");
     myFixture.configureByFile("/package1/b.java");
     myFixture.checkHighlighting(true,false, false);
   }
 
   public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
-    myFixture.addClass("package a; public class A {\n" +
-                       " public static void foo(Object o) {}\n" +
-                       " public static void foo(String s) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package a; public class A {
+                          public static void foo(Object o) {}
+                          public static void foo(String s) {}
+                         }""");
     doTest();
   }
 

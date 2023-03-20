@@ -8,7 +8,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -129,7 +129,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     // don't care about errors in multiCaret mode
     if (editor.getCaretModel().getAllCarets().size() == 1) {
       LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
-                AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
+                CoreAttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
     }
   }
 
@@ -155,7 +155,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     // don't care about errors in multiCaret mode
     else if (editor.getCaretModel().getAllCarets().size() == 1) {
       LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
-                AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
+                CoreAttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
     }
   }
 
@@ -296,7 +296,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     Document fileDocument = file.getViewProvider().getDocument();
     if (fileDocument != null && fileDocument.getTextLength() < currentOffset) {
       LOG.error("File document length (" + fileDocument.getTextLength() + ") is less than offset (" + currentOffset + ")",
-                AttachmentFactory.createAttachment(fileDocument), AttachmentFactory.createAttachment(editor.getDocument()));
+                CoreAttachmentFactory.createAttachment(fileDocument), CoreAttachmentFactory.createAttachment(editor.getDocument()));
     }
     Document originalDocument = editor.getDocument();
     OffsetTranslator translator = new OffsetTranslator(originalDocument, file, copyDocument, newOffset, currentOffset, "");

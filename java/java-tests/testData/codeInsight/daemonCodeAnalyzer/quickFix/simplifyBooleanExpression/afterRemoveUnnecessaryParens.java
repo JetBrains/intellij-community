@@ -1,4 +1,4 @@
-// "Simplify boolean expression" "true"
+// "Simplify boolean expression" "true-preview"
 package test;
 
 public class TestSimplifyIf

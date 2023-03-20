@@ -18,6 +18,7 @@ import com.intellij.vcs.log.VcsLogRootFilter
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
@@ -77,8 +78,8 @@ internal class GitCompareBranchesUi(internal val project: Project,
     val bottomLogUiFactory = MyLogUiFactory("git-compare-branches-bottom-" + UUID.randomUUID(),
                                             MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesBottomLogProperties>()),
                                             logManager.colorManager, rangeFilter.asReversed(), rootFilter)
-    val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
-    val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
+    val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogTabLocation.EDITOR)
+    val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogTabLocation.EDITOR)
     return OnePixelSplitter(true).apply {
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)

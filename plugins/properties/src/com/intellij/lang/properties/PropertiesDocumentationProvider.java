@@ -48,8 +48,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
 
   @Override
   public @Nls String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
-    if (element instanceof IProperty) {
-      IProperty property = (IProperty)element;
+    if (element instanceof IProperty property) {
       String text = property.getDocCommentText();
 
       @NonNls String info = "";
@@ -71,7 +70,7 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
           info += "</div>";
         }
       }
-      info += "\n<b>" + property.getName() + "</b>=\"" + renderPropertyValue(((IProperty)element)) + "\"";
+      info += "\n<b>" + property.getName() + "</b>=\"" + renderPropertyValue((IProperty)element) + "\"";
       info += getLocationString(element);
       return info;
     }

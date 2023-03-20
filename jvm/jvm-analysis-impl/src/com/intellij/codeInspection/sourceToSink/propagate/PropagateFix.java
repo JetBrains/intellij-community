@@ -1,28 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink.propagate;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.sourceToSink.MarkAsSafeFix;
 import com.intellij.codeInspection.sourceToSink.TaintAnalyzer;
 import com.intellij.codeInspection.sourceToSink.TaintValue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.UsageViewContentManager;
-import com.intellij.util.ObjectUtils;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +44,11 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
+  public boolean availableInBatchMode() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile file,
                      @Nullable Editor editor,
@@ -59,30 +59,37 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (reportedElement == null) return;
     TaintAnalyzer analyzer = new TaintAnalyzer();
     if (analyzer.analyze(uExpression) != TaintValue.UNKNOWN) return;
-    PsiModifierListOwner target = ObjectUtils.tryCast(((UResolvable)uExpression).resolve(), PsiModifierListOwner.class);
-    if (target == null) return;
-    // TODO: won't work if we start from kotlin
-    PsiMethod method = PsiTreeUtil.getParentOfType(reportedElement, PsiMethod.class);
-    if (method == null) return;
-    String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
+    PsiElement target = ((UResolvable)uExpression).resolve();
     TaintNode root = new TaintNode(null, target, reportedElement);
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       Set<TaintNode> toAnnotate = new HashSet<>();
       toAnnotate = PropagateAnnotationPanel.getSelectedElements(root, toAnnotate);
       if (toAnnotate == null || root.myTaintValue == TaintValue.TAINTED) return;
-      annotate(project, title, toAnnotate);
+      annotate(project, toAnnotate, true);
       return;
     }
     Consumer<Collection<TaintNode>> callback = toAnnotate -> {
-      annotate(project, title, toAnnotate);
-      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
+      annotate(project, toAnnotate, false);
+      ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
       if (toolWindow != null) toolWindow.hide();
     };
     PropagateAnnotationPanel panel = new PropagateAnnotationPanel(project, root, callback);
-    Content content = UsageViewContentManager.getInstance(project).addContent(title, false, panel, true, true);
+    String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
+    ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+    if (toolWindow == null) return;
+    Content content = ContentFactory.getInstance().createContent(panel, title, true);
     panel.setContent(content);
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
-    if (toolWindow != null) toolWindow.activate(null);
+    ContentManager contentManager = toolWindow.getContentManager();
+    contentManager.addContent(content);
+    contentManager.setSelectedContent(content);
+    toolWindow.activate(null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(
+      JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.preview")
+    );
   }
 
   @Override
@@ -95,10 +102,11 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.family");
   }
 
-  private static void annotate(Project project, @NlsSafe String actionTitle, @NotNull Collection<TaintNode> toAnnotate) {
+  private static void annotate(@NotNull Project project, @NotNull Collection<TaintNode> toAnnotate, boolean isHeadlessMode) {
     List<TaintNode> nonMarkedNodes = ContainerUtil.filter(toAnnotate, PropagateFix::isNonMarked);
-    if (getPsiElements(nonMarkedNodes) == null) return;
-    WriteCommandAction.runWriteCommandAction(project, actionTitle, null, () -> markSafe(project, nonMarkedNodes));
+    Set<PsiElement> psiElements = getPsiElements(nonMarkedNodes);
+    if (psiElements == null) return;
+    MarkAsSafeFix.markAsSafe(project, psiElements, isHeadlessMode);
   }
 
   private static boolean isNonMarked(@NotNull TaintNode taintNode) {
@@ -108,18 +116,12 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return TaintAnalyzer.fromAnnotation(psiElement) != TaintValue.UNTAINTED; 
   }
 
-  private static void markSafe(Project project, @NotNull Collection<TaintNode> nonMarked) {
-    Set<PsiElement> psiElements = getPsiElements(nonMarked);
-    if (psiElements == null) return;
-    psiElements.forEach(e -> MarkAsSafeFix.markAsSafe(project, e));
-  }
-
   private static @Nullable Set<@NotNull PsiElement> getPsiElements(@NotNull Collection<TaintNode> toAnnotate) {
     Set<PsiElement> psiElements = new HashSet<>();
     for (TaintNode node : toAnnotate) {
       PsiElement psiElement = node.getPsiElement();
       if (psiElement == null) return null;
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(psiElement)) return null;
+      if (psiElement instanceof PsiLocalVariable) continue;
       psiElements.add(psiElement);
     }
     return psiElements;

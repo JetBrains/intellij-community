@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class AddOperationNode extends ZenCodingNode {
   private final ZenCodingNode myLeftOperand;
   private final ZenCodingNode myRightOperand;

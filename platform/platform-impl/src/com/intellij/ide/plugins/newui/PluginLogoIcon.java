@@ -1,23 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * @author Alexander Lobas
  */
 class PluginLogoIcon implements PluginLogoIconProvider {
-  static final Map<Icon, Icon> disabledIcons = ContainerUtil.createWeakMap(200);
+  static final Map<Icon, Icon> disabledIcons = new WeakHashMap<>(200);
 
   private final Icon myPluginLogo;
   private final Icon myPluginLogoError;
@@ -47,34 +48,29 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     myPluginLogoDisabledErrorBig = setSouthWest(logoDisabledBig, errorLogo2x);
   }
 
-  @NotNull
-  protected Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
+  protected @NotNull Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
     return createDisabledIcon(icon, base);
   }
 
-  @NotNull
-  protected static Icon createDisabledIcon(@NotNull Icon icon, boolean base) {
+  protected static @NotNull Icon createDisabledIcon(@NotNull Icon icon, boolean base) {
     return calculateDisabledIcon(icon, base);
   }
 
-  @NotNull
-  private static Icon calculateDisabledIcon(@NotNull Icon icon, boolean base) {
-    Icon i = icon instanceof IconLoader.LazyIcon ? ((IconLoader.LazyIcon)icon).retrieveIcon() : icon;
+  private static @NotNull Icon calculateDisabledIcon(@NotNull Icon icon, boolean base) {
+    Icon i = icon instanceof RetrievableIcon ? ((RetrievableIcon)icon).retrieveIcon() : icon;
     synchronized (disabledIcons) {
       return disabledIcons.computeIfAbsent(i, __->
         base
-             ? IconLoader.filterIcon(i, () -> new UIUtil.GrayFilter(), null)
-             : IconLoader.filterIcon(i, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100), null));
+             ? IconLoader.INSTANCE.filterIcon(i, () -> new UIUtil.GrayFilter())
+             : IconLoader.INSTANCE.filterIcon(i, () -> new UIUtil.GrayFilter(JBColor.isBright() ? 20 : 19, 0, 100)));
     }
   }
 
-  @NotNull
-  protected Icon getScaled2xIcon(@NotNull Icon icon) {
+  protected @NotNull Icon getScaled2xIcon(@NotNull Icon icon) {
     return IconUtil.scale(icon, null, 2.0f);
   }
 
-  @NotNull
-  private static Icon setSouthWest(@NotNull Icon main, @NotNull Icon southWest) {
+  private static @NotNull Icon setSouthWest(@NotNull Icon main, @NotNull Icon southWest) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
 
     layeredIcon.setIcon(main, 0);
@@ -83,14 +79,12 @@ class PluginLogoIcon implements PluginLogoIconProvider {
     return layeredIcon;
   }
 
-  @NotNull
-  protected Icon getErrorLogo2x() {
+  protected @NotNull Icon getErrorLogo2x() {
     return PluginLogo.reloadIcon(AllIcons.Plugins.ModifierInvalid, 20, 20, PluginLogo.LOG);
   }
 
-  @NotNull
   @Override
-  public Icon getIcon(boolean big, boolean error, boolean disabled) {
+  public @NotNull Icon getIcon(boolean big, boolean error, boolean disabled) {
     if (error) {
       if (big) {
         return disabled ? myPluginLogoDisabledErrorBig : myPluginLogoErrorBig;

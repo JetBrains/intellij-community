@@ -18,12 +18,11 @@ package org.jetbrains.plugins.groovy.codeInspection.exception;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -33,7 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   public boolean myIgnore = true;
@@ -46,13 +46,11 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
     return new Visitor();
   }
 
-  @Nullable
   @Override
-  public JComponent createGroovyOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(GroovyBundle.message("comments.count.as.content"), "myCountCommentsAsContent");
-    panel.addCheckbox(GroovyBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored"), "myIgnore");
-    return panel;
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("myCountCommentsAsContent", GroovyBundle.message("comments.count.as.content")),
+      checkbox("myIgnore", GroovyBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored")));
   }
 
   private class Visitor extends BaseInspectionVisitor {

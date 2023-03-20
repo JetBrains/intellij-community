@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf
 
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.concurrency.NonUrgentExecutor
@@ -21,7 +22,7 @@ sealed class SystemDarkThemeDetector {
     @JvmStatic
     fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector {
       return when {
-        SystemInfo.isMacOSMojave -> MacOSDetector(syncFunction)
+        SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
         else -> EmptyDetector()
       }
@@ -51,7 +52,7 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
 
 private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
   override val detectionSupported: Boolean
-    get() = SystemInfo.isMacOSMojave && JnaLoader.isLoaded()
+    get() = SystemInfoRt.isMac && JnaLoader.isLoaded()
 
   val themeChangedCallback = object : Callback {
     @Suppress("unused")

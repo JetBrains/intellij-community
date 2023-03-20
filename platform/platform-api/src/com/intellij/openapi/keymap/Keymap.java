@@ -30,15 +30,22 @@ public interface Keymap extends Scheme {
 
   /**
    * @return Action ids including parent keymap ids
+   * Weakly consistent when called from background thread (may not reflect all the ongoing updates). 
    */
   @NotNull
   Collection<String> getActionIdList();
 
+  /**
+   * @return array of all action IDs registered in this Keymap or its parent keymaps.
+   * Weakly consistent when called from background thread (may not reflect all the ongoing updates). 
+   */
   String @NotNull [] getActionIds();
 
   /**
    * @return all keyboard shortcuts for the action with the specified {@code actionId}
    * or an empty array if the action doesn't have any keyboard shortcut.
+   * 
+   * Can be called in background thread.
    */
   // 60 external usages - actionId cannot be marked as NotNull
   Shortcut @NotNull [] getShortcuts(@Nullable String actionId);
@@ -55,7 +62,7 @@ public interface Keymap extends Scheme {
    */
   String[] getActionIds(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke);
 
-  @NotNull String[] getActionIds(@NotNull Shortcut shortcut);
+  @NotNull String @NotNull [] getActionIds(@NotNull Shortcut shortcut);
 
   /**
    * @return all actions with specified mouse shortcut.

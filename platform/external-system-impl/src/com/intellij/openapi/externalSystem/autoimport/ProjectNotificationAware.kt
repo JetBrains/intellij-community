@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
 
 @Suppress("TestOnlyProblems")
 @Deprecated("This API was replaced", ReplaceWith("ExternalSystemProjectNotificationAware", "com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware"))
-class ProjectNotificationAware(private val project: Project) : ExternalSystemProjectNotificationAware, Disposable {
+@Service(Service.Level.PROJECT)
+final class ProjectNotificationAware(private val project: Project) : ExternalSystemProjectNotificationAware, Disposable {
   override fun notificationNotify(projectAware: ExternalSystemProjectAware) {
     AutoImportProjectNotificationAware.getInstance(project).notificationNotify(projectAware)
   }
@@ -21,13 +23,9 @@ class ProjectNotificationAware(private val project: Project) : ExternalSystemPro
     AutoImportProjectNotificationAware.getInstance(project).notificationExpire()
   }
 
-  @Suppress("SSBasedInspection")
   override fun dispose() {
     AutoImportProjectNotificationAware.getInstance(project).dispose()
   }
-
-
-  override fun hideNotification() = AutoImportProjectNotificationAware.getInstance(project).hideNotification()
 
   override fun getSystemIds(): Set<ProjectSystemId> {
     return AutoImportProjectNotificationAware.getInstance(project).getSystemIds()

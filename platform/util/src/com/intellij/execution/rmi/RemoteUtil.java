@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi;
 
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,10 +68,9 @@ public final class RemoteUtil {
 
   @NotNull
   public static <T> T castToLocal(@Nullable Object remote, @NotNull Class<T> clazz) {
-    if (clazz.isInstance(remote)) return (T)remote;
+    if (clazz.isInstance(remote)) return clazz.cast(remote);
     ClassLoader loader = clazz.getClassLoader();
-    //noinspection unchecked
-    return (T)Proxy.newProxyInstance(loader, new Class[]{clazz}, new RemoteInvocationHandler(remote, clazz, loader));
+    return ReflectionUtil.proxy(clazz, new RemoteInvocationHandler(remote, clazz, loader));
   }
 
   private static Class<?> tryFixReturnType(Object result, Class<?> returnType, ClassLoader loader) throws Exception {

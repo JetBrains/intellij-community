@@ -6,21 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class IndentHelper {
   public static IndentHelper getInstance() {
     return ApplicationManager.getApplication().getService(IndentHelper.class);
-  }
-
-  /**
-   * @deprecated Use {@link #getIndent(PsiFile, ASTNode)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final int getIndent(Project project, FileType fileType, ASTNode element) {
-    return getIndent(getFile(element), element);
   }
 
   /**

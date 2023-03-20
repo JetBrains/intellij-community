@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
@@ -57,7 +57,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
         IFernflowerPreferences.REMOVE_SYNTHETIC to "1",
         IFernflowerPreferences.REMOVE_BRIDGE to "1",
-        IFernflowerPreferences.LITERALS_AS_IS to "1",
         IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
         IFernflowerPreferences.BANNER to BANNER,
         IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,

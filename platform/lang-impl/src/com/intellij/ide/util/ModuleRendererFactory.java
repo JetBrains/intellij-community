@@ -63,10 +63,9 @@ public abstract class ModuleRendererFactory {
       return null;
     }
     Component component = renderer.getListCellRendererComponent(new JList<>(), element, -1, false, false);
-    if (!(component instanceof JLabel)) {
+    if (!(component instanceof JLabel label)) {
       return null;
     }
-    JLabel label = (JLabel)component;
     return new TextWithIcon(label.getText(), label.getIcon());
   }
 }

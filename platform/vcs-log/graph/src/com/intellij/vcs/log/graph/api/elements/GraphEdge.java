@@ -28,16 +28,11 @@ public final class GraphEdge implements GraphElement {
   }
 
   public static GraphEdge createEdgeWithTargetId(int nodeIndex, @Nullable Integer targetId, @NotNull GraphEdgeType type) {
-    switch (type) {
-      case DOTTED_ARROW_UP:
-        return new GraphEdge(null, nodeIndex, targetId, type);
-      case NOT_LOAD_COMMIT:
-      case DOTTED_ARROW_DOWN:
-        return new GraphEdge(nodeIndex, null, targetId, type);
-
-      default:
-        throw new AssertionError("Unexpected edge type: " + type);
-    }
+    return switch (type) {
+      case DOTTED_ARROW_UP -> new GraphEdge(null, nodeIndex, targetId, type);
+      case NOT_LOAD_COMMIT, DOTTED_ARROW_DOWN -> new GraphEdge(nodeIndex, null, targetId, type);
+      default -> throw new AssertionError("Unexpected edge type: " + type);
+    };
   }
 
   @Nullable private final Integer myUpNodeIndex;

@@ -1,20 +1,14 @@
 import datetime
-import sys
-from typing import Set
+from typing_extensions import Literal, TypeAlias, TypedDict
 
-from dateparser.date import DateDataParser
-
-if sys.version_info >= (3, 8):
-    from typing import Literal, TypedDict
-else:
-    from typing_extensions import Literal, TypedDict
+from .date import DateDataParser, _DetectLanguagesFunction
 
 __version__: str
 
 _default_parser: DateDataParser
 
-_Part = Literal["day", "month", "year"]
-_ParserKind = Literal["timestamp", "relative-time", "custom-formats", "absolute-time", "no-spaces-time"]
+_Part: TypeAlias = Literal["day", "month", "year"]
+_ParserKind: TypeAlias = Literal["timestamp", "relative-time", "custom-formats", "absolute-time", "no-spaces-time"]
 
 class _Settings(TypedDict, total=False):
     DATE_ORDER: str
@@ -34,9 +28,10 @@ class _Settings(TypedDict, total=False):
 
 def parse(
     date_string: str,
-    date_formats: list[str] | tuple[str] | Set[str] | None = ...,
-    languages: list[str] | tuple[str] | Set[str] | None = ...,
-    locales: list[str] | tuple[str] | Set[str] | None = ...,
+    date_formats: list[str] | tuple[str, ...] | set[str] | None = ...,
+    languages: list[str] | tuple[str, ...] | set[str] | None = ...,
+    locales: list[str] | tuple[str, ...] | set[str] | None = ...,
     region: str | None = ...,
     settings: _Settings | None = ...,
+    detect_languages_function: _DetectLanguagesFunction | None = ...,
 ) -> datetime.datetime | None: ...

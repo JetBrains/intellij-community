@@ -16,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL;
 
-/**
- * @author ilyas
- */
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   private static final BracePair[] PAIRS = {

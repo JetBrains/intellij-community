@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
 import com.google.gson.GsonBuilder;
 import com.intellij.build.SyncViewManager;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.target.TargetProgressIndicator;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -11,9 +15,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.execution.*;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -24,8 +26,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
+import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
@@ -48,7 +50,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -58,12 +59,8 @@ import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHel
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
-import static com.intellij.util.containers.ContainerUtil.set;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
@@ -134,10 +131,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         .orElse(null);
       setupGradleScriptDebugging(settings);
       setupDebuggerDispatchPort(settings);
-      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
+
+      var isApplicableTestLauncher = isApplicableTestLauncher(settings);
+      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion, isApplicableTestLauncher);
+
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
       }
+      prepareTaskState(id, settings, listener);
 
       if (Registry.is("gradle.report.recently.saved.paths")) {
         ApplicationManager.getApplication()
@@ -145,17 +146,17 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           .notifyConnectionAboutChangedPaths(connection);
       }
 
-      if (testLauncherIsApplicable(tasks, settings)) {
-        TestLauncher launcher = myHelper.getTestLauncher(id, connection, tasks, settings, listener);
+      if (isApplicableTestLauncher) {
+        TestLauncher launcher = myHelper.getTestLauncher(connection, id, tasks, settings, listener);
         launcher.withCancellationToken(cancellationTokenSource.token());
         launcher.run();
       }
       else {
-        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
-        launcher.forTasks(ArrayUtil.toStringArray(tasks));
+        BuildLauncher launcher = myHelper.getBuildLauncher(connection, id, tasks, settings, listener);
         launcher.withCancellationToken(cancellationTokenSource.token());
         launcher.run();
       }
+      GradleTaskResultListener.EP_NAME.forEachExtensionSafe(ext -> ext.onSuccess(id, projectPath));
     }
     catch (RuntimeException e) {
       LOG.debug("Gradle build launcher error", e);
@@ -164,23 +165,40 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
-  private static boolean testLauncherIsApplicable(@NotNull List<String> taskNames,
-                                                  @NotNull GradleExecutionSettings effectiveSettings) {
-    boolean allowedByRegistry = Registry.is("gradle.testLauncherAPI.enabled", false);
-    boolean allowedByGradleVersion = isSupportedByGradleVersion(effectiveSettings);
-    boolean allowedByTasksList = taskNames.size() < 2;
-    return Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
-      && allowedByGradleVersion
-      && allowedByTasksList
-      && allowedByRegistry;
+  private static boolean isApplicableTestLauncher(@NotNull GradleExecutionSettings settings) {
+    return Registry.is("gradle.testLauncherAPI.enabled", false)
+           && Boolean.TRUE.equals(settings.getUserData(GradleConstants.RUN_TASK_AS_TEST))
+           && Optional.ofNullable(settings.getGradleHome())
+             .map(GradleInstallationManager::getGradleVersion)
+             .map(GradleInstallationManager::getGradleVersionSafe)
+             .map(v -> GradleVersion.version("7.6").compareTo(v) <= 0)
+             .orElse(false);
   }
 
-  private static boolean isSupportedByGradleVersion(GradleExecutionSettings effectiveSettings) {
-    return Optional.ofNullable(effectiveSettings.getGradleHome())
-      .map(GradleInstallationManager::getGradleVersion)
-      .map(GradleInstallationManager::getGradleVersionSafe)
-      .map(v -> GradleVersion.version("6.1").compareTo(v) <= 0)
-      .orElse(false);
+  private static void prepareTaskState(@NotNull ExternalSystemTaskId id,
+                                       @NotNull GradleExecutionSettings settings,
+                                       @NotNull ExternalSystemTaskNotificationListener listener) {
+    TargetEnvironmentConfigurationProvider provider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
+    if (provider != null) return; // Prepared by TargetBuildLauncher.
+
+    RunConfigurationTaskState taskState = settings.getUserData(RunConfigurationTaskState.getKEY());
+    if (taskState == null) return;
+
+    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
+    TargetProgressIndicator progressIndicator = TargetProgressIndicator.EMPTY;
+    try {
+      taskState.prepareTargetEnvironmentRequest(request, progressIndicator);
+      LocalTargetEnvironment environment = request.prepareEnvironment(progressIndicator);
+      String taskStateInitScript = taskState.handleCreatedTargetEnvironment(environment, progressIndicator);
+      if (taskStateInitScript != null) {
+        writeAndAppendScript(settings, taskStateInitScript, "ijtgttaskstate");
+      }
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+    listener.onEnvironmentPrepared(id);
   }
 
   protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
@@ -212,29 +230,25 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     return false;
   }
 
-  public static void appendInitScriptArgument(@NotNull List<String> taskNames,
-                                              @Nullable String jvmParametersSetup,
-                                              @NotNull GradleExecutionSettings effectiveSettings) {
-    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null);
+  public static void appendInitScriptArgument(
+    @NotNull List<String> taskNames,
+    @Nullable String jvmParametersSetup,
+    @NotNull GradleExecutionSettings effectiveSettings
+  ) {
+    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null, false);
   }
 
-  public static void appendInitScriptArgument(@NotNull List<String> taskNames,
-                                              @Nullable String jvmParametersSetup,
-                                              @NotNull GradleExecutionSettings effectiveSettings,
-                                              @Nullable String gradleVersion) {
+  private static void appendInitScriptArgument(
+    @NotNull List<String> taskNames,
+    @Nullable String jvmParametersSetup,
+    @NotNull GradleExecutionSettings effectiveSettings,
+    @Nullable String gradleVersion,
+    boolean isApplicableTestLauncher
+  ) {
     final List<String> initScripts = new ArrayList<>();
-    List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).collect(Collectors.toList());
+    List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).toList();
     for (GradleProjectResolverExtension resolverExtension : extensions) {
       final String resolverClassName = resolverExtension.getClass().getName();
-      Consumer<String> initScriptConsumer = script -> {
-        if (StringUtil.isNotEmpty(script)) {
-          addAllNotNull(
-            initScripts,
-            "//-- Generated by " + resolverClassName,
-            script,
-            "//");
-        }
-      };
 
       Map<String, String> enhancementParameters = new HashMap<>();
       enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParametersSetup);
@@ -254,13 +268,20 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_ADDR_KEY, debugDispatchAddr);
       }
 
-      enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY,
-                                String.valueOf(testLauncherIsApplicable(taskNames, effectiveSettings)));
+      enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY, String.valueOf(isApplicableTestLauncher));
 
       enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion);
 
 
-      resolverExtension.enhanceTaskProcessing(taskNames, initScriptConsumer, enhancementParameters);
+      resolverExtension.enhanceTaskProcessing(taskNames, script -> {
+        if (StringUtil.isNotEmpty(script)) {
+          addAllNotNull(
+            initScripts,
+            "//-- Generated by " + resolverClassName,
+            script,
+            "//");
+        }
+      }, enhancementParameters);
     }
 
     if (!initScripts.isEmpty()) {
@@ -294,21 +315,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,
                                            @NotNull String initScript,
                                            @NotNull String initScriptPrefix) {
-    try {
-      String initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
-      File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(initScript, initScriptPrefixName);
-      effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-    }
-    catch (IOException e) {
-      throw wrapWithESException(e);
-    }
-  }
-
-  @NotNull
-  private static ExternalSystemException wrapWithESException(IOException e) {
-    ExternalSystemException externalSystemException = new ExternalSystemException(e);
-    externalSystemException.initCause(e);
-    return externalSystemException;
+    String initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
+    File tempFile = GradleInitScriptUtil.createInitScript(initScriptPrefixName, initScript);
+    effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
   }
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
@@ -341,43 +350,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
-  public static void runCustomTask(@NotNull Project project,
+  public static void runCustomTaskScript(@NotNull Project project,
                                    @NotNull @Nls String executionName,
-                                   @NotNull Class<? extends Task> taskClass,
                                    @NotNull String projectPath,
                                    @NotNull String gradlePath,
-                                   @Nullable String taskConfiguration,
-                                   @Nullable TaskCallback callback) {
-    runCustomTask(project, executionName, taskClass, projectPath, gradlePath, taskConfiguration,
-                  ProgressExecutionMode.IN_BACKGROUND_ASYNC, callback);
-  }
-
-  public static void runCustomTask(@NotNull Project project,
-                                   @NotNull @Nls String executionName,
-                                   @NotNull Class<? extends Task> taskClass,
-                                   @NotNull String projectPath,
-                                   @NotNull String gradlePath,
-                                   @Nullable String taskConfiguration,
                                    @NotNull ProgressExecutionMode progressExecutionMode,
-                                   @Nullable TaskCallback callback) {
-
-    String taskName = taskClass.getSimpleName();
-    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(set(taskClass, GsonBuilder.class, ExternalSystemException.class));
-    String initScript = "initscript {\n" +
-                        "  dependencies {\n" +
-                        "    classpath files(" + paths + ")\n" +
-                        "  }\n" +
-                        "}\n" +
-                        "allprojects {\n" +
-                        "  afterEvaluate { project ->\n" +
-                        "    if(project.path == '" + gradlePath + "' || ':' + rootProject.projectDir.name + project.path == '" + gradlePath + "' ) {\n" +
-                        "        def overwrite = project.tasks.findByName('" + taskName + "') != null\n" +
-                        "        project.tasks.create(name: '" + taskName + "', overwrite: overwrite, type: " + taskClass.getName() + ") {\n" +
-                        notNullize(taskConfiguration) + "\n" +
-                        "        }\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}\n";
+                                   @Nullable TaskCallback callback,
+                                   @NotNull String initScript,
+                                   @NotNull String taskName) {
     UserDataHolderBase userData = new UserDataHolderBase();
     userData.putUserData(INIT_SCRIPT_KEY, initScript);
     userData.putUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY, SyncViewManager.class);
@@ -392,5 +372,36 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
     ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID, callback,
                                progressExecutionMode, false, userData);
+  }
+
+  public static void runCustomTask(@NotNull Project project,
+                                   @NotNull @Nls String executionName,
+                                   @NotNull Class<? extends Task> taskClass,
+                                   @NotNull String projectPath,
+                                   @NotNull String gradlePath,
+                                   @Nullable String taskConfiguration,
+                                   @NotNull ProgressExecutionMode progressExecutionMode,
+                                   @Nullable TaskCallback callback,
+                                   @NotNull Set<Class<?>> toolingExtensionClasses) {
+    String taskName = taskClass.getSimpleName();
+    String taskType = taskClass.getName();
+    Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
+    tools.add(taskClass);
+    tools.add(GsonBuilder.class);
+    tools.add(ExternalSystemException.class);
+    String initScript = GradleInitScriptUtil.loadTaskInitScript(gradlePath, taskName, taskType, tools, taskConfiguration);
+    runCustomTaskScript(project, executionName, projectPath, gradlePath, progressExecutionMode, callback, initScript, taskName);
+  }
+
+  public static void runCustomTask(@NotNull Project project,
+                                   @NotNull @Nls String executionName,
+                                   @NotNull Class<? extends Task> taskClass,
+                                   @NotNull String projectPath,
+                                   @NotNull String gradlePath,
+                                   @Nullable String taskConfiguration,
+                                   @NotNull ProgressExecutionMode progressExecutionMode,
+                                   @Nullable TaskCallback callback) {
+    runCustomTask(project, executionName, taskClass, projectPath, gradlePath, taskConfiguration, progressExecutionMode, callback,
+                  new HashSet<>());
   }
 }

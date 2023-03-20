@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -12,14 +14,28 @@ import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpClass;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
  */
 public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
+
+  public boolean ignoreEscapedMetaCharacters = false;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreEscapedMetaCharacters", RegExpBundle.message("inspection.option.ignore.escaped.closing.brackets")));
+  }
 
   @NotNull
   @Override
@@ -27,7 +43,7 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
     return new RedundantEscapeVisitor(holder);
   }
 
-  private static class RedundantEscapeVisitor extends RegExpElementVisitor {
+  private class RedundantEscapeVisitor extends RegExpElementVisitor {
 
     private final ProblemsHolder myHolder;
 
@@ -39,6 +55,12 @@ public class RegExpRedundantEscapeInspection extends LocalInspectionTool {
     public void visitRegExpChar(RegExpChar ch) {
       final String text = ch.getUnescapedText();
       if (!text.startsWith("\\") || !RegExpLanguageHosts.getInstance().isRedundantEscape(ch, text)) {
+        return;
+      }
+      if (text.equals("\\{") && !(ch.getParent() instanceof RegExpClass)) {
+        return;
+      }
+      if (ignoreEscapedMetaCharacters && (text.equals("\\}") || text.equals("\\]")) && !(ch.getParent() instanceof RegExpClass)) {
         return;
       }
       final ASTNode astNode = ch.getNode().getFirstChildNode();

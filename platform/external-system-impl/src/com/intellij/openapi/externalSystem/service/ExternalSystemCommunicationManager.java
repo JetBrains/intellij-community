@@ -35,8 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * That's why that stuff is covered by the current interface, i.e. different implementations are supposed to provide
  * different 'in process' modes.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemCommunicationManager {
 

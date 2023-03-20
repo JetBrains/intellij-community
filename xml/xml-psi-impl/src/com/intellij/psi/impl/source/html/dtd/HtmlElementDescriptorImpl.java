@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlDeprecationOwnerDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.BaseXmlElementDescriptorImpl;
@@ -40,10 +41,11 @@ import static com.intellij.util.ObjectUtils.doIfNotNull;
 /**
  * @author Maxim.Mossienko
  */
-public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
+public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl implements XmlDeprecationOwnerDescriptor {
   private final Set<String> ourHtml4DeprecatedTags = ContainerUtil.newHashSet("applet", "basefont", "center", "dir",
                                                                               "font", "frame", "frameset", "isindex", "menu",
                                                                               "noframes", "s", "strike", "u", "xmp");
+  private final Set<String> ourHtml5DeprecatedTags = ContainerUtil.newHashSet("basefont");
 
   private final XmlElementDescriptor myDelegate;
   private final boolean myRelaxed;
@@ -243,16 +245,17 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return myCaseSensitive;
   }
 
+  @Override
   public boolean isDeprecated() {
     boolean html4Deprecated = ourHtml4DeprecatedTags.contains(myDelegate.getName());
     MdnSymbolDocumentation documentation = doIfNotNull(
       myDelegate.getDeclaration(), declaration -> MdnDocumentationKt.getHtmlMdnDocumentation(declaration, null));
-    boolean deprecatedInHtml5 = documentation != null && documentation.isDeprecated();
-    if (!html4Deprecated && !deprecatedInHtml5) {
+    boolean html5Deprecated = documentation != null && documentation.isDeprecated() || ourHtml5DeprecatedTags.contains(myDelegate.getName());
+    if (!html4Deprecated && !html5Deprecated) {
       return false;
     }
     boolean inHtml5 = HtmlUtil.isHtml5Schema(getNSDescriptor());
-    return inHtml5 && deprecatedInHtml5 || !inHtml5 && html4Deprecated;
+    return inHtml5 && html5Deprecated || !inHtml5 && html4Deprecated;
   }
 
   private String toLowerCaseIfNeeded(String name) {

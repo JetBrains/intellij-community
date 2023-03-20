@@ -20,7 +20,6 @@ import java.util.Collection;
 
 /**
  * Checks that no value is returned from __init__().
- * User: dcheryasov
  */
 public class PyReturnFromInitInspection extends PyInspection {
 

@@ -43,10 +43,10 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
     task("ShowIntentionActions") {
       showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.intentions.for.warning", LessonUtil.actionName(it), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(warningQuickFix)
       }
-      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
+      restoreIfModifiedOrMovedIncorrectly(warningPossibleArea, sample)
       test {
         actions(it)
       }
@@ -78,7 +78,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
     task("ShowIntentionActions") {
       showIntentionsTaskId = taskId
       text(LessonsBundle.message("context.actions.invoke.general.intentions", LessonUtil.actionName(it), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains(intentionText)
       }
       restoreIfModifiedOrMovedIncorrectly(intentionPossibleArea)
@@ -118,8 +118,6 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
       focusOwner is EditorComponentImpl
     }
   }
-
-  override val suitableTips = listOf("ContextActions")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("context.actions.help.intention.actions"),

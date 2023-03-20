@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 
-/**
- * @author Sergey Evdokimov
- */
 public class DisposeAwareRunnable<T extends Runnable> extends WeakReference<Object> implements Runnable {
   protected final T myDelegate;
 

@@ -1,4 +1,4 @@
-// "Make 'Foo.f' static" "true"
+// "Make 'Foo.f' static" "true-preview"
 public class Foo {
     int g,f;
     static void foo() {

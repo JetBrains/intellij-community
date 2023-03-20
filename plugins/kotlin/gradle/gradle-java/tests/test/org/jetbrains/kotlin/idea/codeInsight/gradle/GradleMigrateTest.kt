@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -7,82 +7,74 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.concurrency.FutureResult
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService.MigrationTestState
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.configuration.notifications.disableNewKotlinCompilerAvailableNotification
+import org.jetbrains.kotlin.idea.notification.catchNotificationText
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Ignore
+import org.junit.AssumptionViolatedException
 import org.junit.Test
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
-class GradleMigrateTest : GradleImportingTestCase() {
+class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
+
     @Test
-    @Ignore // Import failed: A problem occurred evaluating project ':app'
-    @TargetVersions("5.3+")
+    @TargetVersions("6.9+")
     fun testMigrateStdlib() {
-        val migrateComponentState = doMigrationTest(
+        if (kotlinPluginVersion != KotlinGradlePluginVersions.lastStable) {
+            if (IS_UNDER_TEAMCITY) return else throw AssumptionViolatedException("Ignored KGP version $kotlinPluginVersion")
+        }
+
+        val notificationText = doMigrationTest(
             beforeText = """
             buildscript {
                 repositories {
-                    jcenter()
-                    mavenCentral()
+                    ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.40"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_7_21}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                compile "org.jetbrains.kotlin:kotlin-stdlib:1.3.40"
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_7_21}"
             }
             """,
-            //ToDo: Change 1.4-M3 to 1.4.0 version after release
             afterText =
             """
             buildscript {
                 repositories {
-                    jcenter()
-                    mavenCentral()
+                    ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0-rc"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_8_0}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                compile "org.jetbrains.kotlin:kotlin-stdlib:1.4.0-rc"
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_8_0}"
             }
             """
         )
 
-        assertEquals(false, migrateComponentState?.hasApplicableTools)
-
         assertEquals(
-            MigrationInfo.create(
-                oldStdlibVersion = "1.3.40",
-                oldApiVersion = ApiVersion.KOTLIN_1_3,
-                oldLanguageVersion = LanguageVersion.KOTLIN_1_3,
-                newStdlibVersion = "1.4.0-rc",
-                newApiVersion = ApiVersion.KOTLIN_1_4,
-                newLanguageVersion = LanguageVersion.KOTLIN_1_4
-            ),
-            migrateComponentState?.migrationInfo
+            "Update your code to replace the use of deprecated language and library features with supported constructs<br/><br/>" +
+                    "Detected migration:<br/>&nbsp;&nbsp;Language version: 1.7 to 1.8<br/>&nbsp;&nbsp;API version: 1.7 to 1.8<br/>",
+            notificationText,
         )
     }
 
-    @Suppress("SameParameterValue")
-    private fun doMigrationTest(beforeText: String, afterText: String): MigrationTestState? {
+    private fun doMigrationTest(beforeText: String, afterText: String): String? = catchNotificationText(myProject) {
         createProjectSubFile("settings.gradle", "include ':app'")
         val gradleFile = createProjectSubFile("app/build.gradle", beforeText.trimIndent())
+
+        runInEdtAndWait {
+            runWriteAction {
+                disableNewKotlinCompilerAvailableNotification(KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion)
+            }
+        }
 
         importProject()
 
@@ -97,21 +89,6 @@ class GradleMigrateTest : GradleImportingTestCase() {
             }
         }
 
-        val importResult = FutureResult<MigrationTestState?>()
-        val migrationProjectComponent = KotlinMigrationProjectService.getInstance(myProject)
-
-        migrationProjectComponent.setImportFinishListener { migrationState ->
-            importResult.set(migrationState)
-        }
-
         importProject()
-
-        return try {
-            importResult.get(5, TimeUnit.SECONDS)
-        } catch (te: TimeoutException) {
-            throw IllegalStateException("No reply with result from migration component")
-        } finally {
-            migrationProjectComponent.setImportFinishListener(null)
-        }
     }
 }

@@ -1,6 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.runToolbar.components.MouseListenerHelper
+import com.intellij.execution.runToolbar.components.ProcessesByType
+import com.intellij.execution.runToolbar.data.RWActiveProcesses
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -11,28 +14,26 @@ import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustom
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Color
-import java.awt.Font
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
 import javax.swing.UIManager
 
-class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration {
+internal class RunToolbarMainSlotInfoAction : SegmentedCustomAction(),
+                                              RTRunConfiguration {
+
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainSlotInfoAction::class.java)
     private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
+    private val PROP_ACTIVE_PROCESSES_COUNT = Key<Int>("PROP_ACTIVE_PROCESSES_COUNT")
+    private val PROP_ACTIVE_PROCESSES = Key<RWActiveProcesses>("PROP_ACTIVE_PROCESSES")
   }
 
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.FLEXIBLE
 
   override fun actionPerformed(e: AnActionEvent) {
-
   }
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -40,32 +41,30 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = e.project?.let { project ->
+    val presentation = e.presentation
+    presentation.isVisible = e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
-
-
       val activeProcesses = manager.activeProcesses
 
       manager.getMainOrFirstActiveProcess()?.let {
-        e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
+        presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
       }
 
-      e.presentation.putClientProperty(RunToolbarMainSlotActive.ARROW_DATA, e.arrowIcon())
+      presentation.putClientProperty(RunToolbarMainSlotActive.ARROW_DATA, e.arrowIcon())
+      presentation.putClientProperty(PROP_ACTIVE_PROCESSES_COUNT, activeProcesses.getActiveCount())
+      presentation.putClientProperty(PROP_ACTIVE_PROCESSES, activeProcesses)
 
-      activeProcesses.getText()?.let {
-        e.presentation.setText(it, false)
-        true
-      } ?: false
+      activeProcesses.processes.isNotEmpty()
     } ?: false
 
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
-        e.presentation.isVisible = e.presentation.isVisible && checkMainSlotVisibility(it)
+        presentation.isVisible = presentation.isVisible && checkMainSlotVisibility(it)
       }
     }
+    presentation.isEnabled = presentation.isEnabled && e.isFromActionToolbar
     traceLog(LOG, e)
   }
-
 
   override fun createCustomComponent(presentation: Presentation, place: String): SegmentedCustomPanel {
     return RunToolbarMainSlotInfo(presentation)
@@ -73,46 +72,47 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
   private class RunToolbarMainSlotInfo(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
+    private val dragArea = RunWidgetResizePane()
 
-    private val setting = object : JLabel() {
-      override fun getFont(): Font {
-        return UIUtil.getToolbarFont()
-      }
-    }
+    private val processComponents = mutableListOf<ProcessesByType>()
+    private val migLayout = MigLayout("fill, hidemode 3, ins 0, novisualpadding, ay center, flowx, gapx 0")
+    private val info = JPanel(migLayout)
+    private val one = ProcessesByType()
 
     init {
-      layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]5[]")
-      add(JPanel().apply {
+      layout = MigLayout("ins 0, fill, ay center")
+      val pane = JPanel(MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]5[fill]5")).apply {
+        add(JPanel().apply {
+          isOpaque = false
+          add(arrow)
+
+          val d = preferredSize
+          getProject()?.let {
+            d.width = RunWidgetWidthHelper.getInstance(it).arrow
+          }
+
+          preferredSize = d
+        })
+        add(JPanel().apply {
+          preferredSize = JBDimension(1, 12)
+          minimumSize = JBDimension(1, 12)
+
+          background = UIManager.getColor("Separator.separatorColor")
+        })
+
+        add(JPanel(MigLayout("ins 0, fill, novisualpadding, ay center, gap 0, hidemode 3")).apply {
+          add(info, "growx")
+          add(one, "growx")
+          isOpaque = false
+        }, "pushx, ay center, wmin 0")
         isOpaque = false
-        add(arrow)
-        val d = preferredSize
-        d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
-        preferredSize = d
-      })
-      add(JPanel().apply {
-        preferredSize = JBDimension(1, 12)
-        minimumSize = JBDimension(1, 12)
+      }
 
-        background = UIManager.getColor("Separator.separatorColor")
-      })
-      add(setting)
+      add(dragArea, "pos 0 0")
+      add(pane, "growx, wmin 10")
 
-      addMouseListener(object : MouseAdapter() {
-        override fun mousePressed(e: MouseEvent) {
-          if (SwingUtilities.isLeftMouseButton(e)) {
-            e.consume()
-            if (e.isShiftDown) {
-              doShiftClick()
-            }
-            else {
-              doClick()
-            }
-          }
-          else if (SwingUtilities.isRightMouseButton(e)) {
-            doRightClick()
-          }
-        }
-      })
+      info.isOpaque = false
+      MouseListenerHelper.addListener(pane, { doClick() }, { doShiftClick() }, { doRightClick() })
     }
 
     fun doRightClick() {
@@ -144,14 +144,64 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
     }
 
     override fun presentationChanged(event: PropertyChangeEvent) {
+      updateState()
+    }
+
+    private fun updateState() {
       updateArrow()
-      setting.icon = presentation.icon
-      setting.text = presentation.text
 
       presentation.getClientProperty(PROP_ACTIVE_PROCESS_COLOR)?.let {
         background = it
       } ?: kotlin.run {
         isOpaque = false
+      }
+
+      updateActiveProcesses()
+    }
+
+    private fun updateActiveProcesses() {
+      presentation.getClientProperty(PROP_ACTIVE_PROCESSES)?.let { activeProcesses ->
+        val processes = activeProcesses.processes
+        val keys = processes.keys.toList()
+        if (activeProcesses.getActiveCount() == 1) {
+          info.isVisible = false
+          one.isVisible = processes.keys.firstOrNull()?.let { process ->
+            processes[process]?.let {
+              one.update(process, it, false)
+              true
+            }
+          } ?: false
+
+          return
+        }
+        else {
+          info.isVisible = true
+          one.isVisible = false
+
+          for (i in processComponents.size..processes.size) {
+            val component = ProcessesByType()
+            processComponents.add(component)
+            info.add(component, "w pref!")
+          }
+
+          var constraint = ""
+          for (i in 0 until processComponents.size) {
+            constraint += "[]"
+            val component = processComponents[i]
+            if (i < keys.size) {
+              val key = keys[i]
+              processes[key]?.let {
+                component.isVisible = true
+                component.update(key, it, true)
+              }
+            }
+            else {
+              component.isVisible = false
+            }
+          }
+          constraint += "push"
+          migLayout.columnConstraints = constraint
+        }
       }
     }
 

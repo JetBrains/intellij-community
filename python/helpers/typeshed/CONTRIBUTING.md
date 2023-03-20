@@ -15,8 +15,8 @@ are important to the project's success.
       but [contact us](README.md#discussion) before starting significant work.
     * Create your stubs, considering [what to include](#what-to-include) and
       conforming to the [coding style](#stub-file-coding-style).
-4. [Format and check your stubs](#formatting-stubs).
-5. Optionally [run the tests](#running-the-tests).
+4. Optionally [format and check your stubs](#code-formatting).
+5. Optionally [run the tests](tests/README.md).
 6. [Submit your changes](#submitting-changes) by opening a pull request.
 
 You can expect a reply within a few days, but please be patient when
@@ -24,20 +24,91 @@ it takes a bit longer. For more details, read below.
 
 ## Preparing the environment
 
-To reformat the code, check for common problems, and
-run the tests, you need to prepare a
-[virtual environment](https://docs.python.org/3/tutorial/venv.html)
-with the necessary libraries installed. To do this, run:
+### Code away!
+
+Typeshed runs continuous integration (CI) on all pull requests. This means that
+if you file a pull request (PR), our full test suite -- including our linter,
+`flake8` -- is run on your PR. It also means that bots will automatically apply
+changes to your PR (using `pycln`, `black` and `isort`) to fix any formatting issues.
+This frees you up to ignore all local setup on your side, focus on the
+code and rely on the CI to fix everything, or point you to the places that
+need fixing.
+
+### ... Or create a local development environment
+
+If you prefer to run the tests & formatting locally, it's
+possible too. Follow platform-specific instructions below.
+For more information about our available tests, see
+[tests/README.md](tests/README.md).
+
+Whichever platform you're using, you will need a
+virtual environment. If you're not familiar with what it is and how it works,
+please refer to this
+[documentation](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
+
+### Linux/Mac OS
+
+On Linux and Mac OS, you will be able to run the full test suite on Python 3.8,
+3.9 or 3.10.
+To install the necessary requirements, run the following commands from a
+terminal window:
 
 ```
-$ python3 -m venv .venv3
-$ source .venv3/bin/activate
-(.venv3)$ pip install -U pip
-(.venv3)$ pip install -r requirements-tests-py3.txt
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+(.venv)$ pip install -U pip
+(.venv)$ pip install -r requirements-tests.txt
 ```
 
-To automatically check your code before committing, copy the file
-`pre-commit` to `.git/hooks/pre-commit`.
+### Windows
+
+If you are using a Windows operating system, you will not be able to run the pytype
+tests, as pytype
+[does not currently support running on Windows](https://github.com/google/pytype#requirements).
+One option is to install
+[Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/faq),
+which will allow you to run the full suite of tests. If you choose to install
+WSL, follow the Linux/Mac OS instructions above.
+
+If you do not wish to install WSL, run the following commands from a Windows
+terminal to install all non-pytype requirements:
+
+```
+> python -m venv .venv
+> ".venv/scripts/activate"
+(.venv) > pip install -U pip
+(.venv) > pip install -r requirements-tests.txt
+```
+
+## Code formatting
+
+The code is formatted using `black` and `isort`. Unused imports are also
+auto-removed using `pycln`.
+
+The repository is equipped with a [`pre-commit.ci`](https://pre-commit.ci/)
+configuration file. This means that you don't *need* to do anything yourself to
+run the code formatters. When you push a commit, a bot will run those for you
+right away and add a commit to your PR.
+
+That being said, if you *want* to run the checks locally when you commit,
+you're free to do so. Either run `pycln`, `black` and `isort` manually...
+
+```
+pycln --all .
+isort .
+black .
+```
+
+...Or install the pre-commit hooks: please refer to the
+[pre-commit](https://pre-commit.com/) documentation.
+
+Our code is also linted using `flake8`, with plugins `flake8-pyi` and `flake8-bugbear`. As with our other checks, running
+flake8 before filing a PR is not required. However, if you wish to run flake8
+locally, install the test dependencies as outlined above, and then run:
+
+```
+flake8 .
+```
 
 ## Where to make changes
 
@@ -59,22 +130,15 @@ We accept stubs for third-party packages into typeshed as long as:
 * the package supports any Python version supported by typeshed; and
 * the package does not ship with its own stubs or type annotations.
 
+The fastest way to generate new stubs is to use `scripts/create_baseline_stubs.py` (see below).
+
 Stubs for third-party packages
 go into `stubs`. Each subdirectory there represents a PyPI distribution, and
 contains the following:
 * `METADATA.toml`, describing the package. See below for details.
 * Stubs (i.e. `*.pyi` files) for packages and modules that are shipped in the
   source distribution.
-* If the stubs are either Python 2-only, or if the Python 2 and Python 3 stubs
-  are separate, the Python 2 stubs are put in a `@python2` subdirectory.
-  Stubs outside `@python2` are always used with Python 3,
-  and also with Python 2 if `python2 = true` is set in `METADATA.toml` (see below).
 * (Rarely) some docs specific to a given type stub package in `README` file.
-
-The fastest way to generate new stubs is to use [stubgen](https://mypy.readthedocs.io/en/stable/stubgen.html),
-a tool shipped with mypy. Please make sure to use the latest version.
-The generated stubs usually need some trimming of imports. You also need
-to run `black` and `isort` manually on the generated stubs (see below).
 
 When a third party stub is added or
 modified, an updated version of the corresponding distribution will be
@@ -107,8 +171,6 @@ supported:
   When the stubs are updated to a newer version
   of the library, the version of the stub should be bumped (note that
   previous versions are still available on PyPI).
-* `python2` (default: `false`): If set to `true`, the top-level stubs
-  support both Python 2 and Python 3.
 * `requires` (optional): A list of other stub packages or packages with type
   information that are imported by the stubs in this package. Only packages
   generated by typeshed or required by the upstream package are allowed to
@@ -120,6 +182,18 @@ supported:
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
   its own `py.typed` file.
+* `no_longer_updated` (optional): This field is set to `true` before removing
+  stubs for other reasons than the upstream library shipping with type
+  information.
+
+In addition, we specify configuration for stubtest in the `tool.stubtest` table.
+This has the following keys:
+* `skip` (default: `false`): Whether stubtest should be run against this
+  package. Please avoid setting this to `true`, and add a comment if you have
+  to.
+* `apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
+  that need to be installed for stubtest to run successfully. These are
+  usually packages needed to pip install the implementation distribution.
 
 The format of all `METADATA.toml` files can be checked by running
 `python3 ./tests/check_consistent.py`.
@@ -148,6 +222,27 @@ See [PEP 484](http://www.python.org/dev/peps/pep-0484/) for the exact
 syntax of the stub files and [below](#stub-file-coding-style) for the
 coding style used in typeshed.
 
+### Auto-generating stub files
+
+Typeshed includes `scripts/create_baseline_stubs.py`.
+It generates stubs automatically using a tool called
+[stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html) that comes with mypy.
+
+To get started, fork typeshed, clone your fork, and then
+[create a virtualenv](#-or-create-a-local-development-environment).
+You can then install the library with `pip` into the virtualenv and run the script,
+replacing `libraryname` with the name of the library below:
+
+```
+(.venv3)$ pip install libraryname
+(.venv3)$ python3 scripts/create_baseline_stubs.py libraryname
+```
+
+When the script has finished running, it will print instructions telling you what to do next.
+
+If it has been a while since you set up the virtualenv, make sure you have
+the latest mypy (`pip install -r requirements-tests.txt`) before running the script.
+
 ### Supported type system features
 
 Since PEP 484 was accepted, there have been many other PEPs that added
@@ -159,8 +254,6 @@ Accepted features that *cannot* yet be used in typeshed include:
 - [PEP 570](https://www.python.org/dev/peps/pep-0570/) (positional-only
   arguments): see [#4972](https://github.com/python/typeshed/issues/4972),
   use argument names prefixed with `__` instead
-- [PEP 613](https://www.python.org/dev/peps/pep-0613/) (TypeAlias):
-  see [#4913](https://github.com/python/typeshed/issues/4913)
 
 The following features are partially supported:
 - [PEP 585](https://www.python.org/dev/peps/pep-0585/) (builtin
@@ -187,10 +280,13 @@ instead in typeshed stubs. This currently affects:
 - `Literal` (new in Python 3.8)
 - `SupportsIndex` (new in Python 3.8)
 - `TypedDict` (new in Python 3.8)
+- `Concatenate` (new in Python 3.10)
+- `ParamSpec` (new in Python 3.10)
 - `TypeGuard` (new in Python 3.10)
 
-An exception is `Protocol`: although it was added in Python 3.8, it
-can be used in stubs regardless of Python version.
+Two exceptions are `Protocol` and `runtime_checkable`: although
+these were added in Python 3.8, they can be used in stubs regardless
+of Python version.
 
 ### What to include
 
@@ -236,7 +332,7 @@ project's tracker to fix their documentation.
 You can use checks
 like `if sys.version_info >= (3, 8):` to denote new functionality introduced
 in a given Python version or solve type differences.  When doing so, only use
-one-tuples or two-tuples. Because of this, if a given functionality was
+two-tuples. Because of this, if a given functionality was
 introduced in, say, Python 3.7.4, your check:
 
 * should be expressed as `if sys.version_info >= (3, 7):`
@@ -278,15 +374,6 @@ class Foo:
 def bar(x: str, y, *, z=...): ...
 ```
 
-### Using stubgen
-
-Mypy includes a tool called [stubgen](https://mypy.readthedocs.io/en/latest/stubgen.html)
-that auto-generates stubs for Python and C modules using static analysis,
-Sphinx docs, and runtime introspection.  It can be used to get a starting
-point for your stubs.  Note that this generator is currently unable to
-determine most argument and return types and omits them or uses ``Any`` in
-their place.  Fill out manually the types that you know.
-
 ## Stub file coding style
 
 ### Syntax example
@@ -304,7 +391,7 @@ class date:
     @classmethod
     def today(cls: Type[_S]) -> _S: ...
     @classmethod
-    def fromordinal(cls: Type[_S], n: int) -> _S: ...
+    def fromordinal(cls: Type[_S], __n: int) -> _S: ...
     @property
     def year(self) -> int: ...
     def replace(self, year: int = ..., month: int = ..., day: int = ...) -> date: ...
@@ -354,7 +441,9 @@ Some further tips for good type hints:
 * in Python 2, whenever possible, use `unicode` if that's the only
   possible type, and `Text` if it can be either `unicode` or `bytes`;
 * use platform checks like `if sys.platform == 'win32'` to denote
-  platform-dependent APIs.
+  platform-dependent APIs;
+* use mypy error codes for mypy-specific `# type: ignore` annotations,
+  e.g. `# type: ignore[override]` for Liskov Substitution Principle violations.
 
 Imports in stubs are considered private (not part of the exported API)
 unless:
@@ -405,37 +494,6 @@ into any of those categories, use your best judgement.
 * Use `HasX` for protocols that have readable and/or writable attributes
   or getter/setter methods (e.g. `HasItems`, `HasFileno`).
 
-## Formatting stubs
-
-Stubs should be reformatted with the formatters
-[black](https://github.com/psf/black) and
-[isort](https://github.com/PyCQA/isort) before submission. They
-should also be checked for common problems by using
-[flake8](https://flake8.pycqa.org/en/latest/) and the flake8 plugins
-[flake8-pyi](https://github.com/ambv/flake8-pyi) and
-[flake8-bugbear](https://github.com/PyCQA/flake8-bugbear).
-All of these packages have been installed if you followed the
-[setup instructions above](#preparing-the-environment).
-
-To format and check your stubs, run the following commands:
-
-```
-(.venv3)$ black stdlib stubs
-(.venv3)$ isort stdlib stubs
-(.venv3)$ flake8
-```
-
-
-## Running the tests
-
-The tests are automatically run on every PR and push to the repo.
-Therefore you don't need to run them locally, unless you want to run
-them before making a pull request or you want to debug some problem without
-creating several small commits.
-
-For more information about our available tests, see
-[tests/README.md](tests/README.md).
-
 
 ## Submitting Changes
 
@@ -467,10 +525,10 @@ if it consisted of several smaller commits.
 
 ## Third-party library removal policy
 
-Third-party packages are generally removed from typeshed when one of the
+Third-party stubs are generally removed from typeshed when one of the
 following criteria is met:
 
-* The upstream package ships a `py.typed` file for at least 6-12 months, or
+* The upstream package ships a `py.typed` file for at least six months, or
 * the package does not support any of the Python versions supported by
   typeshed.
 
@@ -481,6 +539,21 @@ If a package ships its own `py.typed` file, please follow these steps:
    ["removal" label](https://github.com/python/typeshed/labels/removal).
 3. Open a PR that sets the `obsolete_since` field in the `METADATA.toml`
    file to the first version of the package that shipped `py.typed`.
+4. After at least six months, open a PR to remove the stubs.
+
+If third-party stubs should be removed for other reasons, please follow these
+steps:
+
+1. Open an issue explaining why the stubs should be removed.
+2. A maintainer will add the
+   ["removal" label](https://github.com/python/typeshed/labels/removal).
+3. Open a PR that sets the `no_longer_updated` field in the `METADATA.toml`
+   file to `true`.
+4. When a new version of the package was automatically uploaded to PyPI
+   (which usually takes up to 3 hours), open a PR to remove the stubs.
+
+If feeling kindly, please update [mypy](https://github.com/python/mypy/blob/master/mypy/stubinfo.py)
+for any stub obsoletions or removals.
 
 ## Maintainer guidelines
 

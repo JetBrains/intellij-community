@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.MemberChooser;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,6 +84,24 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     ApplicationManager.getApplication().runWriteAction(() -> addFieldInitialization(constructors, field, project, editor));
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiField field = PsiTreeUtil.findSameElementInCopy(ObjectUtils.tryCast(getStartElement(), PsiField.class), file);
+    if (field == null) return IntentionPreviewInfo.EMPTY;
+    final PsiClass myClass = field.getContainingClass();
+    if (myClass == null) return IntentionPreviewInfo.EMPTY;
+    if (myClass.getConstructors().length == 0) {
+      new AddDefaultConstructorFix(myClass).invoke(project, editor, file);
+    }
+
+    PsiMethod[] ctors = CreateConstructorParameterFromFieldFix.filterConstructorsIfFieldAlreadyAssigned(myClass.getConstructors(), field)
+      .toArray(PsiMethod.EMPTY_ARRAY);
+    final List<PsiMethod> constructors = Arrays.asList(ctors);
+
+    addFieldInitialization(constructors, field, project, editor);
+    return IntentionPreviewInfo.DIFF;
+  }
+
   private static void addFieldInitialization(@NotNull List<? extends PsiMethod> constructors,
                                              @NotNull PsiField field,
                                              @NotNull Project project,
@@ -95,7 +115,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
       PsiExpression initializer = addFieldInitialization(constructor, suggestedInitializers, field, project);
       rExprPointers.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(initializer));
     }
-    Document doc = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(field.getContainingFile()));
+    Document doc = Objects.requireNonNull(field.getContainingFile().getViewProvider().getDocument());
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
     List<PsiExpression> rExpressions = ContainerUtil.mapNotNull(rExprPointers, SmartPsiElementPointer::getElement);
     AddVariableInitializerFix.runAssignmentTemplate(rExpressions, suggestedInitializers, editor);

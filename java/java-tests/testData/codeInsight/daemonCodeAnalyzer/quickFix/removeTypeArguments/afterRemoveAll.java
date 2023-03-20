@@ -1,4 +1,4 @@
-// "Remove type arguments" "true"
+// "Remove type arguments" "true-preview"
 abstract class SomeClass<K, T> implements Some<K, T> {
     public abstract void doSomething(K key, Node<caret> root);
 }

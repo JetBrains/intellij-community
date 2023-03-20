@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.internal;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -32,10 +32,12 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-final class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware, UpdateInBackground {
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+
+final class DumpCleanHighlightingTestdataAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(DumpCleanHighlightingTestdataAction.class);
 
-  private final NullableLazyValue<Class<?>> myHighlightingDataClass = NullableLazyValue.createValue(() -> {
+  private final NullableLazyValue<Class<?>> myHighlightingDataClass = lazyNullable(() -> {
     try {
       Path jar = Path.of(PathManager.getLibPath(), "testFramework.jar");
       if (Files.exists(jar)) {
@@ -51,6 +53,11 @@ final class DumpCleanHighlightingTestdataAction extends AnAction implements Dumb
       return null;
     }
   });
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

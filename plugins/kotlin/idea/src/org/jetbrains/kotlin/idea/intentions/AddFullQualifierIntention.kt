@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -10,20 +10,23 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.core.thisOrParentIsRoot
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
@@ -55,13 +58,18 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
                 if (prevSibling is KtNameReferenceExpression || prevSibling is KtDotQualifiedExpression) return false
             }
 
+            val file = referenceExpression.containingKtFile
+            val identifier = referenceExpression.getIdentifier()?.text
+            val fqName = resultDescriptor.importableFqName
+            if (file.importDirectives.any { it.aliasName == identifier && it.importedFqName == fqName }) return false
+
             return true
         }
 
         fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName): KtElement {
             val qualifier = fqName.parent().quoteSegmentsIfNeeded()
             return referenceExpression.project.executeWriteCommand(KotlinBundle.message("add.full.qualifier"), groupId = null) {
-                val psiFactory = KtPsiFactory(referenceExpression)
+                val psiFactory = KtPsiFactory(referenceExpression.project)
                 when (val parent = referenceExpression.parent) {
                     is KtCallableReferenceExpression -> addOrReplaceQualifier(psiFactory, parent, qualifier)
                     is KtCallExpression -> replaceExpressionWithDotQualifier(psiFactory, parent, qualifier)
@@ -110,8 +118,9 @@ private fun replaceExpressionWithDotQualifier(psiFactory: KtPsiFactory, expressi
 }
 
 private fun addQualifierToType(psiFactory: KtPsiFactory, userType: KtUserType, qualifier: String): KtElement {
-    val typeWithQualifier = psiFactory.createType("$qualifier.${userType.text}")
-    return userType.parent.replaced(typeWithQualifier)
+    val type = userType.parent.safeAs<KtNullableType>() ?: userType
+    val typeWithQualifier = psiFactory.createType("$qualifier.${type.text}")
+    return type.parent.replaced(typeWithQualifier)
 }
 
 private fun replaceExpressionWithQualifier(
@@ -123,9 +132,15 @@ private fun replaceExpressionWithQualifier(
     return referenceExpression.replaced(expressionWithQualifier)
 }
 
-private val DeclarationDescriptor.isInRoot: Boolean get() = importableFqName?.thisOrParentIsRoot() != false
+private val DeclarationDescriptor.isInRoot: Boolean
+    get() {
+        val fqName = importableFqName ?: return true
+        return fqName.isRoot || fqName.parentOrNull()?.isRoot == true
+    }
 
-private val DeclarationDescriptor.isTopLevelCallable: Boolean get() = this is CallableMemberDescriptor && containingDeclaration is PackageFragmentDescriptor
+private val DeclarationDescriptor.isTopLevelCallable: Boolean
+    get() = safeAs<CallableMemberDescriptor>()?.containingDeclaration is PackageFragmentDescriptor ||
+            safeAs<ConstructorDescriptor>()?.containingDeclaration?.containingDeclaration is PackageFragmentDescriptor
 
 private fun KtNameReferenceExpression.prevElementWithoutSpacesAndComments(): PsiElement? = prevLeaf {
     it.elementType !in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET

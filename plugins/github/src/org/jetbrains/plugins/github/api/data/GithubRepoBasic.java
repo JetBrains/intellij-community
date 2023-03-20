@@ -85,8 +85,7 @@ public class GithubRepoBasic {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GithubRepoBasic)) return false;
-    GithubRepoBasic basic = (GithubRepoBasic)o;
+    if (!(o instanceof GithubRepoBasic basic)) return false;
     return id.equals(basic.id);
   }
 

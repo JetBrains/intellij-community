@@ -7,6 +7,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +27,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   private final Module myModule;
 
   public ModuleFileIndexImpl(@NotNull Module module) {
-    super(DirectoryIndex.getInstance(module.getProject()));
+    super(module.getProject());
 
     myModule = module;
   }
@@ -47,15 +51,15 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
       Set<VirtualFile> result = new LinkedHashSet<>();
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModule);
+      ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myModule.getProject());
       for (VirtualFile[] roots : Arrays.asList(moduleRootManager.getContentRoots(), moduleRootManager.getSourceRoots())) {
         for (VirtualFile root : roots) {
-          DirectoryInfo info = getInfoForFileOrDirectory(root);
-          if (!info.isInProject(root)) continue;
+          if (!projectFileIndex.isInProject(root)) continue;
 
           VirtualFile parent = root.getParent();
           if (parent != null) {
-            DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
-            if (myModule.equals(parentInfo.getModule())) {
+            Module parentModule = projectFileIndex.getModuleForFile(parent, false);
+            if (myModule.equals(parentModule)) {
               // inner content - skip it
               continue;
             }
@@ -69,11 +73,25 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<ModuleContentOrSourceRootData> fileSet = 
+        myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleContentOrSourceRootData.class);
+      return isFromThisModule(fileSet);
+    }
+
     return isInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
+  }
+
+  private boolean isFromThisModule(@Nullable WorkspaceFileSetWithCustomData<? extends ModuleContentOrSourceRootData> fileSet) {
+    return fileSet != null && fileSet.getData().getModule().equals(myModule);
   }
 
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleSourceRootData.class);
+      return fileSet != null && isFromThisModule(fileSet);
+    }
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule());
   }
@@ -81,24 +99,34 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
-    return findAllOrderEntriesWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(fileOrDir)));
+    return findAllOrderEntriesWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(fileOrDir));
   }
 
   @Override
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
-    return findOrderEntryWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(fileOrDir)));
+    return findOrderEntryWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(fileOrDir));
   }
 
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleSourceRootData.class);
+      return fileSet != null && isFromThisModule(fileSet) && fileSet.getKind() == WorkspaceFileKind.TEST_CONTENT;
+    }
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && isTestSourcesRoot(info);
   }
 
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet = myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, ModuleSourceRootData.class);
+      return isFromThisModule(fileSet) && ProjectFileIndexImpl.isSourceRootOfType(fileSet, rootTypes);
+    }
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+    if (!info.isInModuleSource(fileOrDir) || !myModule.equals(info.getModule())) return  false;
+    JpsModuleSourceRootType<?> rootType = myDirectoryIndex.getSourceRootType(info);
+    return rootType != null && rootTypes.contains(rootType);
   }
 
   @Override
@@ -197,5 +225,10 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return ProjectFileIndexImpl.isFileInContent(file, info) && myModule.equals(info.getModule());
+  }
+
+  @Override
+  protected boolean isInContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
+    return fileSet.getData() instanceof ModuleContentOrSourceRootData data && myModule.equals(data.getModule());
   }
 }

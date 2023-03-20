@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -138,6 +138,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
       throw new ConfigurationException(JavaDebuggerBundle.message("error.text.invalid.port"));
     }
   }
+
   private int parsePort() {
     return Math.max(0, StringUtil.parseInt(myPortField.getText(), 0));
   }

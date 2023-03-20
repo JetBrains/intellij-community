@@ -60,11 +60,12 @@ final class AccessibleGutterLine extends JPanel {
       new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), null));
   }
 
-  public static AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
+  @NotNull
+  private static AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
     return new AccessibleGutterLine(gutter);
   }
 
-  public void escape(boolean requestFocusToEditor) {
+  void escape(boolean requestFocusToEditor) {
     myGutter.remove(this);
     myGutter.repaint();
     myGutter.setCurrentAccessibleLine(null);
@@ -78,7 +79,7 @@ final class AccessibleGutterLine extends JPanel {
     mySelectedElement.paint(g);
   }
 
-  public static void installListeners(@NotNull EditorGutterComponentImpl gutter) {
+  static void installListeners(@NotNull EditorGutterComponentImpl gutter) {
     if (!actionHandlerInstalled) {
       // [tav] todo: when the API is stable and open move it to ShowGutterIconTooltipAction
       actionHandlerInstalled = true;
@@ -137,7 +138,7 @@ final class AccessibleGutterLine extends JPanel {
     IdeFocusManager.getGlobalInstance().requestFocus(getFocusTraversalPolicy().getComponentBefore(this, mySelectedElement), true);
   }
 
-  public void showTooltipIfPresent() {
+  private void showTooltipIfPresent() {
     mySelectedElement.showTooltip();
   }
 
@@ -234,7 +235,7 @@ final class AccessibleGutterLine extends JPanel {
           if (rect != null) {
             Rectangle bounds = ((ActiveGutterRenderer)renderer).calcBounds(editor, myVisualLineNum, rect);
             if (bounds != null) {
-              addNewElement(new MySimpleAccessibleDelegat((ActiveGutterRenderer)renderer), bounds.x, 0, bounds.width, bounds.height);
+              addNewElement(new MySimpleAccessibleDelegate((ActiveGutterRenderer)renderer), bounds.x, 0, bounds.width, bounds.height);
             }
           }
         }
@@ -313,7 +314,7 @@ final class AccessibleGutterLine extends JPanel {
     return this == myGutter.getCurrentAccessibleLine();
   }
 
-  public static boolean isAccessibleGutterElement(Object element) {
+  static boolean isAccessibleGutterElement(Object element) {
     return element instanceof MySimpleAccessible;
   }
 
@@ -370,7 +371,7 @@ final class AccessibleGutterLine extends JPanel {
       }
     }
 
-    public void showTooltip() {
+    void showTooltip() {
       if (myAccessible.getAccessibleTooltipText() != null) {
         Rectangle bounds = getBounds();
         Rectangle pBounds = getParent().getBounds();
@@ -409,10 +410,10 @@ final class AccessibleGutterLine extends JPanel {
   /**
    * This delegate implements wrapping over SimpleAccessible for active gutter renderer.
    */
-  private static final class MySimpleAccessibleDelegat implements MySimpleAccessible {
+  private static final class MySimpleAccessibleDelegate implements MySimpleAccessible {
     @NotNull private final SimpleAccessible simpleAccessible;
 
-    private MySimpleAccessibleDelegat(@NotNull SimpleAccessible accessible) {
+    private MySimpleAccessibleDelegate(@NotNull SimpleAccessible accessible) {
       simpleAccessible = accessible;
     }
 

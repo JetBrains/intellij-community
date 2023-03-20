@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -13,7 +13,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -65,7 +68,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
-  public abstract @Nullable AbstractVcs getVcsFor(@NotNull VirtualFile file);
+  public abstract @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file);
 
   /**
    * Returns the VCS managing the specified file path.
@@ -73,7 +76,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
-  public abstract @Nullable AbstractVcs getVcsFor(@NotNull FilePath file);
+  public abstract @Nullable AbstractVcs getVcsFor(@Nullable FilePath file);
 
   /**
    * Return the parent directory of the specified file which is mapped to a VCS.
@@ -91,7 +94,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract @Nullable VcsRoot getVcsRootObjectFor(@Nullable VirtualFile file);
 
-  public abstract @Nullable VcsRoot getVcsRootObjectFor(FilePath file);
+  public abstract @Nullable VcsRoot getVcsRootObjectFor(@Nullable FilePath file);
 
   /**
    * Checks if the specified VCS is used by any of the modules in the project.
@@ -125,12 +128,17 @@ public abstract class ProjectLevelVcsManager {
   /**
    * @deprecated use {@link #addMessageToConsoleWindow(String, ConsoleViewContentType)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addMessageToConsoleWindow(@Nls String message, TextAttributes attributes);
 
+  /**
+   * @see com.intellij.vcs.console.VcsConsoleTabService
+   */
   public abstract void addMessageToConsoleWindow(@Nls @Nullable String message, @NotNull ConsoleViewContentType contentType);
 
+  /**
+   * @see com.intellij.vcs.console.VcsConsoleTabService
+   */
   public abstract void addMessageToConsoleWindow(@Nullable VcsConsoleLine line);
 
   public abstract @NotNull VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,
@@ -138,13 +146,6 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                              AbstractVcs vcs);
-
-  /**
-   * @param vcsActionName is used both in interface and as a key in settings.
-   */
-  @Deprecated
-  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName,
-                                                                        @NotNull AbstractVcs vcs);
 
   @RequiresEdt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
@@ -183,20 +184,18 @@ public abstract class ProjectLevelVcsManager {
   /**
    * @deprecated Use just {@link #setDirectoryMappings(List)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void updateActiveVcss() {}
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
   public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
 
-  public abstract @Nullable VcsDirectoryMapping getDirectoryMappingFor(FilePath path);
+  public abstract @Nullable VcsDirectoryMapping getDirectoryMappingFor(@Nullable FilePath path);
 
   /**
    * This method can be used only when initially loading the project configuration!
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setDirectoryMapping(@NonNls String path, @NonNls String activeVcsName);
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
@@ -221,34 +220,45 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
 
   /**
-   * Shows VCS console.
-   * <p>
-   * Does nothing if {@code vcs.showConsole} turned off.
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
+  @Deprecated
   public abstract void showConsole();
 
   /**
-   * Shows VCS console and then performs the given command.
-   * <p>
-   * Does nothing if {@code vcs.showConsole} turned off.
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
+  @Deprecated
   public abstract void showConsole(@Nullable Runnable then);
 
   /**
-   * Navigates to the end in VCS console.
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
+  @Deprecated
   public abstract void scrollConsoleToTheEnd();
 
   /**
-   * Executes task on pooled thread, delayed until core vcs services are initialized.
+   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
+   */
+  @RequiresEdt
+  @Deprecated
+  public abstract boolean isConsoleVisible();
+
+  /**
+   * Execute the task on pooled thread, delayed until core vcs services are initialized.
    */
   public abstract void runAfterInitialization(@NotNull Runnable runnable);
 
   /**
-   * Checks whether VCS console is enabled and VCS tool window exists.
+   * Whether vcs mappings were already processed after opening the project.
+   * ie: if true, one can assume that {@link #hasActiveVcss()} and {@link #hasAnyMappings()} match if the mappings are correct.
+   * <p>
+   * See {@link com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx#VCS_ACTIVATED} listener that will be notified when this value changes.
    */
-  public abstract boolean isConsoleVisible();
+  public boolean areVcsesActivated() {
+    return false;
+  }
 }

@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "x: Int"
 
 data class A(val <caret>x: Int, val y: Int, val z: String)
 data class B(val a: A, val n: Int)
@@ -17,4 +18,5 @@ fun f(b: B, c: C) {
     val (x1, y1, z1) = a1
 }
 
-// FIR_IGNORE
+
+// IGNORE_FIR_LOG

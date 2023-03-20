@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -12,7 +12,9 @@ import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -60,23 +62,37 @@ public final class ColorSettingsUtil {
     return true;
   }
 
-  private static void addInspectionSeverityAttributes(List<? super AttributesDescriptor> descriptors) {
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol"), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol"), CodeInsightColors.DEPRECATED_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.marked.for.removal.symbol"), CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.weak.warning"), CodeInsightColors.WEAK_WARNING_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.runtime"), CodeInsightColors.RUNTIME_ERROR));
+  public static ArrayList<Pair<TextAttributesKey, @Nls String>> getErrorTextAttributes() {
+    final ArrayList<Pair<TextAttributesKey, @Nls String>> attributes = new ArrayList<>(
+      List.of(
+       new Pair<>(CodeInsightColors.ERRORS_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.error")),
+       new Pair<>(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol")),
+       new Pair<>(CodeInsightColors.WARNINGS_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.warning")),
+       new Pair<>(CodeInsightColors.WEAK_WARNING_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.weak.warning")),
+       new Pair<>(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unused.symbol")),
+       new Pair<>(CodeInsightColors.DEPRECATED_ATTRIBUTES,OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol") ),
+       new Pair<>(CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.marked.for.removal.symbol")),
+       new Pair<>(CodeInsightColors.DUPLICATE_FROM_SERVER, OptionsBundle.message("options.java.attribute.descriptor.server.duplicate")),
+       new Pair<>(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING, OptionsBundle.message("options.java.attribute.descriptor.server.problems")),
+       new Pair<>(CodeInsightColors.RUNTIME_ERROR, OptionsBundle.message("options.java.attribute.descriptor.runtime"))
+    ));
+
+    attributes.add(new Pair<>(TextAttributesKey.find("REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES"), 
+                              OptionsBundle.message("options.language.defaults.reassigned.local.variable")));
 
     for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
         final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
-        descriptors.add(new AttributesDescriptor(toDisplayName(attributesKey), attributesKey));
+        attributes.add(new Pair<>(attributesKey, toDisplayName(attributesKey)));
       }
+    }
+
+    return attributes;
+  }
+
+  private static void addInspectionSeverityAttributes(List<? super AttributesDescriptor> descriptors) {
+    for (Pair<TextAttributesKey, @Nls String> pair : getErrorTextAttributes()) {
+      descriptors.add(new AttributesDescriptor(pair.second, pair.first));
     }
   }
 

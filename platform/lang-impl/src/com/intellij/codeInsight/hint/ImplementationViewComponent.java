@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -88,22 +89,15 @@ public class ImplementationViewComponent extends JPanel {
     return myElements != null && myElements.length > 0;
   }
 
-  private static class FileDescriptor {
-    @NotNull public final VirtualFile myFile;
-    public final ImplementationViewElement myElement;
-
-    FileDescriptor(@NotNull VirtualFile file, ImplementationViewElement element) {
-      myFile = file;
-      myElement = element;
-    }
+  private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
   }
 
-  public ImplementationViewComponent(Collection<ImplementationViewElement> elements,
-                                   final int index) {
+  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
+                                     final int index) {
     this(elements, index, null);
   }
 
-  public ImplementationViewComponent(Collection<ImplementationViewElement> elements, final int index, Consumer<ImplementationViewComponent> openUsageView) {
+  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements, final int index, Consumer<? super ImplementationViewComponent> openUsageView) {
     super(new BorderLayout());
 
     project = elements.size() > 0 ? elements.iterator().next().getProject() : null;
@@ -184,13 +178,18 @@ public class ImplementationViewComponent extends JPanel {
     });
   }
 
-  private DefaultActionGroup createGearActionButton(Consumer<ImplementationViewComponent> openUsageView) {
+  private DefaultActionGroup createGearActionButton(Consumer<? super ImplementationViewComponent> openUsageView) {
     DefaultActionGroup gearActions = new DefaultActionGroup() {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setIcon(AllIcons.Actions.More);
         e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     gearActions.setPopup(true);
@@ -217,7 +216,7 @@ public class ImplementationViewComponent extends JPanel {
     JLabel label = new JLabel(myElements[myIndex].getPresentableText(), getIconForFile(virtualFile, project), SwingConstants.LEFT);
     mySingleEntryPanel.add(label, BorderLayout.CENTER);
     label.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
-    
+
     mySingleEntryPanel.add(new JLabel(myElements[myIndex].getLocationText(), myElements[myIndex].getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
     mySingleEntryPanel.setOpaque(false);
     mySingleEntryPanel.setVisible(true);
@@ -259,10 +258,10 @@ public class ImplementationViewComponent extends JPanel {
                                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         setBackground(UIUtil.getListBackground(selected, true));
         if (value != null) {
-          ImplementationViewElement element = value.myElement;
-          setIcon(getIconForFile(value.myFile, project));
-          append(element.getPresentableText());
-          String presentation = element.getContainerPresentation();
+          @NotNull TargetPresentation targetPresentation = value.element;
+          setIcon(getIconForFile(value.file, project));
+          append(targetPresentation.getPresentableText());
+          String presentation = targetPresentation.getContainerText();
           if (presentation != null) {
             append("  ");
             append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -276,8 +275,8 @@ public class ImplementationViewComponent extends JPanel {
                             FileDescriptor value, int index, boolean selected, boolean hasFocus) {
         setForeground(UIUtil.getListForeground(selected, true));
         if (value != null) {
-          setText(value.myElement.getLocationText());
-          setIcon(value.myElement.getLocationIcon());
+          setText(value.element.getLocationText());
+          setIcon(value.element.getLocationIcon());
         }
       }
     };
@@ -290,7 +289,7 @@ public class ImplementationViewComponent extends JPanel {
     String[] result = new String[model.getSize()];
     for (int i = 0; i < model.getSize(); i++) {
       FileDescriptor o = model.getElementAt(i);
-      result[i] = o.myElement.getPresentableText();
+      result[i] = o.element.getPresentableText();
     }
     return result;
   }
@@ -354,15 +353,24 @@ public class ImplementationViewComponent extends JPanel {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
-        files.add(new FileDescriptor(file, element));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element)));
       }
       else {
-        files.add(new FileDescriptor(file, element.getContainingMemberOrSelf()));
+        files.add(new FileDescriptor(file, candidates.size(), getPresentation(element.getContainingMemberOrSelf())));
       }
       candidates.add(element);
     }
 
     fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
+  }
+
+  @NotNull
+  private static TargetPresentation getPresentation(ImplementationViewElement element) {
+    return TargetPresentation.builder(element.getPresentableText())
+      .locationText(element.getLocationText(), element.getLocationIcon())
+      .containerText(element.getContainerPresentation())
+      .icon(element.getLocationIcon())
+      .presentation();
   }
 
   private static Icon getIconForFile(VirtualFile virtualFile, Project project) {
@@ -416,8 +424,7 @@ public class ImplementationViewComponent extends JPanel {
       }
     }
 
-    final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
-    for (FileEditorProvider provider : providers) {
+    for (FileEditorProvider provider : FileEditorProviderManager.getInstance().getProviderList(project, vFile)) {
       if (provider instanceof QuickDefinitionProvider) {
         updateTextElement(foundElement);
         myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
@@ -517,7 +524,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private ActionToolbar createToolbar(Consumer<ImplementationViewComponent> openUsageView) {
+  private ActionToolbar createToolbar(Consumer<? super ImplementationViewComponent> openUsageView) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     BackAction back = new BackAction();
@@ -545,12 +552,17 @@ public class ImplementationViewComponent extends JPanel {
           presentation.setVisible(false);
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     });
 
     ForwardAction forward = new ForwardAction();
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
-    
+
     group.add(createGearActionButton(openUsageView));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
@@ -599,6 +611,11 @@ public class ImplementationViewComponent extends JPanel {
       presentation.setEnabled(myIndex > 0);
       presentation.setVisible(myElements != null && myElements.length > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -616,6 +633,11 @@ public class ImplementationViewComponent extends JPanel {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myElements != null && myIndex < myElements.length - 1);
       presentation.setVisible(myElements != null && myElements.length > 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -644,6 +666,11 @@ public class ImplementationViewComponent extends JPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myFileChooser == null || !myFileChooser.isPopupVisible());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

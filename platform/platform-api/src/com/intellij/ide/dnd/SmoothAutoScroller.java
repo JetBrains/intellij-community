@@ -1,17 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
 import static com.intellij.openapi.util.SystemInfo.JAVA_VERSION;
 import static com.intellij.ui.scale.JBUIScale.sysScale;
@@ -19,7 +22,7 @@ import static com.intellij.util.ui.TimerUtil.createNamedTimer;
 
 /**
  * This class provides the application-wide scroller for drag targets.
- * Note, that the target component must not use default auto-scrolling.
+ * Note that the target component must not use default auto-scrolling.
  *
  * @see Autoscroll
  * @see JComponent#setAutoscrolls
@@ -70,11 +73,12 @@ public final class SmoothAutoScroller {
 
     private DragListener() {
       try {
-        //noinspection ConstantConditions
-        listener = (DropTargetListener)ReflectionUtil.getDeclaredMethod(TransferHandler.class, "getDropTargetListener").invoke(null);
+        listener = (DropTargetListener)MethodHandles.privateLookupIn(TransferHandler.class, MethodHandles.lookup())
+          .findStatic(TransferHandler.class, "getDropTargetListener", MethodType.methodType(DropTargetListener.class))
+          .invokeExact();
       }
-      catch (Exception exception) {
-        throw new InternalError("Unexpected JDK: " + JAVA_VERSION, exception);
+      catch (Throwable e) {
+        throw new InternalError("Unexpected JDK: " + JAVA_VERSION, e);
       }
     }
 
@@ -134,7 +138,7 @@ public final class SmoothAutoScroller {
         Point location = new Point(event.getLocation());
         SwingUtilities.convertPointToScreen(location, component);
         if (Registry.is("ide.dnd.to.front")) {
-          Window window = UIUtil.getWindow(component);
+          Window window = ComponentUtil.getWindow(component);
           if (window != null) window.toFront();
         }
         this.screen.setLocation(location);
@@ -155,13 +159,18 @@ public final class SmoothAutoScroller {
 
     private boolean validate(DropTargetDragEvent event) {
       JComponent component = getComponent(event);
-      if (component == null) return false;
+      if (component == null) {
+        return false;
+      }
 
       Point location = new Point(this.screen);
       SwingUtilities.convertPointFromScreen(location, component);
 
       Rectangle bounds = component.getVisibleRect();
-      if (!bounds.contains(location.x, location.y)) return false; // mouse out of component
+      // mouse out of a component
+      if (!bounds.contains(location.x, location.y)) {
+        return false;
+      }
 
       int margin = (int)(5 * sysScale(component));
       int deltaX = getDelta(3, margin, location.x, bounds.x, bounds.x + bounds.width);
@@ -222,8 +231,8 @@ public final class SmoothAutoScroller {
     if (component == null) return null; // heavyweight components are not supported
     if (component instanceof Autoscroll) return null; // Swing DnD is used
     if (component.getAutoscrolls()) return null; // default scroller is used
-    if (!component.isShowing()) return null; // component is not visible on screen
-    return UIUtil.isClientPropertyTrue(component, ENABLED) ? component : null;
+    if (!component.isShowing()) return null; // the component is not visible on screen
+    return ClientProperty.isTrue(component, ENABLED) ? component : null;
   }
 
   private static int getDelta(int count, int margin, int value, int min, int max) {

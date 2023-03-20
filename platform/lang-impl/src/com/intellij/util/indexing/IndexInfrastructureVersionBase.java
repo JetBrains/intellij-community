@@ -72,7 +72,7 @@ public class IndexInfrastructureVersionBase {
 
   @NotNull
   public static Map<String, FileBasedIndexVersionInfo> fileBasedIndexVersions(
-    @NotNull List<FileBasedIndexExtension<?, ?>> fileBasedIndexExtensions,
+    @NotNull List<? extends FileBasedIndexExtension<?, ?>> fileBasedIndexExtensions,
     @NotNull Function<? super FileBasedIndexExtension<?, ?>, String> versionExtractor
   ) {
     var builder = new HashMap<String, FileBasedIndexVersionInfo>();
@@ -95,14 +95,15 @@ public class IndexInfrastructureVersionBase {
   }
 
   @NotNull
-  public static Map<String, String> stubIndexVersions(@NotNull List<StubIndexExtension<?, ?>> stubIndexExtensions) {
+  public static Map<String, String> stubIndexVersions(@NotNull List<? extends StubIndexExtension<?, ?>> stubIndexExtensions) {
     var builder = new HashMap<String, String>();
 
     FileBasedIndexExtension<?, ?> stubUpdatingIndex =
       FileBasedIndexExtension.EXTENSION_POINT_NAME.findFirstSafe(ex -> ex.getName().equals(StubUpdatingIndex.INDEX_ID));
 
     if (stubUpdatingIndex == null) {
-      throw new RuntimeException("Failed to find " + StubUpdatingIndex.INDEX_ID);
+      LOG.warn("Failed to find " + StubUpdatingIndex.INDEX_ID);
+      return Collections.emptyMap();
     }
 
     String commonPrefix = stubUpdatingIndex.getVersion() + ":";

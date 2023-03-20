@@ -18,7 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
@@ -47,11 +49,10 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     return InspectionGadgetsBundle.message("unnecessary.this.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.this.ignore.assignments.option"), this,
-                                          "ignoreAssignments");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAssignments", InspectionGadgetsBundle.message("unnecessary.this.ignore.assignments.option")));
   }
 
   @Override
@@ -68,7 +69,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement thisToken = descriptor.getPsiElement();
       final PsiElement thisParenthesized = findBiggestParenthesizedExpr(thisToken);
       new CommentTracker().deleteAndRestoreComments(thisParenthesized);
@@ -93,13 +94,13 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
   private class UnnecessaryThisVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       PsiElement parenthesizedThis = findBiggestParenthesizedExpr(expression);
       if (parenthesizedThis.getParent() instanceof PsiNewExpression) {
         final PsiReference qualifier = expression.getQualifier();
         if (qualifier == null || qualifier.resolve() == PsiTreeUtil.getParentOfType(expression, PsiClass.class)) {
-          registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(expression);
         }
       }
     }
@@ -115,10 +116,9 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         return;
       }
       final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(expression.getQualifierExpression());
-      if (!(qualifierExpression instanceof PsiThisExpression)) {
+      if (!(qualifierExpression instanceof PsiThisExpression thisExpression)) {
         return;
       }
-      final PsiThisExpression thisExpression = (PsiThisExpression)qualifierExpression;
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       final String referenceName = expression.getReferenceName();
       if (referenceName == null) {
@@ -135,29 +135,27 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         }
         if (parent instanceof PsiCallExpression) {
           // method calls are always in error
-          registerError(qualifierExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(qualifierExpression);
           return;
         }
         final PsiElement target = expression.resolve();
-        if (!(target instanceof PsiVariable)) {
+        if (!(target instanceof PsiVariable variable)) {
           return;
         }
-        final PsiVariable variable = (PsiVariable)target;
         if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
           return;
         }
         if (variable instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(expression, (PsiField)variable, true) != null) {
           return;
         }
-        registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        registerError(thisExpression);
       }
       else {
         final String qualifierName = qualifier.getReferenceName();
         if (qualifierName == null) {
           return;
         }
-        if (parent instanceof PsiCallExpression) {
-          final PsiCallExpression callExpression = (PsiCallExpression)parent;
+        if (parent instanceof PsiCallExpression callExpression) {
           final PsiMethod calledMethod = callExpression.resolveMethod();
           if (calledMethod == null) {
             return;
@@ -169,7 +167,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
           final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
-              registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+              registerError(thisExpression);
             }
             final PsiMethod[] methods = parentClass.findMethodsByName(methodName, true);
             for (PsiMethod method : methods) {
@@ -186,17 +184,16 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         }
         else {
           final PsiElement target = expression.resolve();
-          if (!(target instanceof PsiVariable)) {
+          if (!(target instanceof PsiVariable variable)) {
             return;
           }
-          final PsiVariable variable = (PsiVariable)target;
           if (!DeclarationSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
             return;
           }
           PsiClass parentClass = ClassUtils.getContainingClass(expression);
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
-              registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+              registerError(thisExpression);
             }
             final PsiField field = parentClass.findFieldByName(referenceName, true);
             if (field != null) {

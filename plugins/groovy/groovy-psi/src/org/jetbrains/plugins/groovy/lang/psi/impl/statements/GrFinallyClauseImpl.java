@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrFinallyClauseImpl extends GroovyPsiElementImpl implements GrFinallyClause {
   public GrFinallyClauseImpl(@NotNull ASTNode node) {
     super(node);

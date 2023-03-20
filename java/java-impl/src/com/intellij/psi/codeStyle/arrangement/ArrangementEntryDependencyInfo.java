@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementEntryDependencyInfo {
 
   @NotNull private final List<ArrangementEntryDependencyInfo> myDependentEntries = new ArrayList<>();

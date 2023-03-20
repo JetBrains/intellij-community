@@ -67,7 +67,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   fun closePopup() = getUI().closePopup()
 
   @Deprecated("Use setOptions(Action[]) instead", ReplaceWith("setOptions(options)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun updateOptions(options: Array<Action>?) {
     this.options = options
   }

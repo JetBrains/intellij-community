@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ProjectTopics
@@ -33,14 +33,12 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
         unregisterPointer(module)
       }
 
-      override fun moduleAdded(project: Project, module: Module) {
-        moduleAppears(module)
+      override fun modulesAdded(project: Project, modules: List<Module>) {
+        modulesAppears(modules)
       }
 
       override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
-        for (module in modules) {
-          moduleAppears(module)
-        }
+        modulesAppears(modules)
         val renamedOldToNew = modules.associateBy({ oldNameProvider.`fun`(it) }, { it.name })
         for (entry in oldToNewName.entries) {
           val newValue = renamedOldToNew.get(entry.value)
@@ -95,11 +93,13 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
     }
   }
 
-  private fun moduleAppears(module: Module) {
+  private fun modulesAppears(modules: List<Module>) {
     lock.write {
-      unresolved.remove(module.name)?.forEach {
-        it.moduleAdded(module)
-        registerPointer(module, it)
+      for (module in modules) {
+        unresolved.remove(module.name)?.forEach {
+          it.moduleAdded(module)
+          registerPointer(module, it)
+        }
       }
     }
   }
@@ -118,7 +118,6 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
     }
   }
 
-  @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
   override fun create(module: Module): ModulePointer {
     return lock.read { pointers.get(module).firstOrNull() } ?: lock.write {
       pointers.get(module).firstOrNull()?.let {
@@ -126,7 +125,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
       }
 
       val pointers = unresolved.remove(module.name)
-      if (pointers == null || pointers.isEmpty()) {
+      if (pointers.isNullOrEmpty()) {
         val pointer = ModulePointerImpl(module, lock)
         registerPointer(module, pointer)
         pointer

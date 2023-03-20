@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.openapi.project.Project;
@@ -144,7 +144,7 @@ public final class PsiReplacementUtil {
     }
   }
 
-  public static void replaceOperatorAssignmentWithAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
+  public static @NotNull PsiElement replaceOperatorAssignmentWithAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
     CommentTracker tracker = new CommentTracker();
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final PsiExpression lhs = assignmentExpression.getLExpression();
@@ -170,7 +170,9 @@ public final class PsiReplacementUtil {
     if (!cast.isEmpty()) {
       newExpression.append(')');
     }
-    replaceExpression(assignmentExpression, newExpression.toString(), tracker);
+    final Project project = assignmentExpression.getProject();
+    final PsiElement replacementExpression = tracker.replaceAndRestoreComments(assignmentExpression, newExpression.toString());
+    return CodeStyleManager.getInstance(project).reformat(replacementExpression);
   }
 
   private static String getCastString(PsiExpression lhs, PsiExpression rhs) {
@@ -191,10 +193,9 @@ public final class PsiReplacementUtil {
 
   /**
    * Replaces the specified boolean PsiExpression with a negated expression created from the specified string.
-   * The expression is negated by surrounding with {@code !(...)} or if already surrounded removes the {@oce !(...)}.
+   * The expression is negated by surrounding with {@code !(...)} or if already surrounded removes the {@code !(...)}.
    * @param expression  a boolean PsiExpression
    * @param newExpression  text for the new expression, which will be negated/inverted.
-   * @param tracker
    */
   public static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression expression,
                                                             @NotNull String newExpression,

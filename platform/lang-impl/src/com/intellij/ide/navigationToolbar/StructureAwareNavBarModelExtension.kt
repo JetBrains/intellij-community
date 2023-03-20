@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar
 
 import com.intellij.ide.structureView.StructureViewModel
@@ -30,10 +30,15 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   private var currentFileModCount = -1L
 
   override fun getLeafElement(dataContext: DataContext): PsiElement? {
-    if (UISettings.instance.showMembersInNavigationBar) {
+    if (UISettings.getInstance().showMembersInNavigationBar) {
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
       val editor = CommonDataKeys.EDITOR.getData(dataContext)
-      if (psiFile == null || !psiFile.isValid || editor == null) return null
+      if (editor == null
+          || psiFile == null
+          || !psiFile.isValid
+          || !isAcceptableLanguage(psiFile)) {
+        return null
+      }
       val psiElement = psiFile.findElementAt(editor.caretModel.offset)
       if (isAcceptableLanguage(psiElement)) {
         try {
@@ -53,7 +58,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   override fun processChildren(`object`: Any,
                                rootElement: Any?,
                                processor: Processor<Any>): Boolean {
-    if (UISettings.instance.showMembersInNavigationBar) {
+    if (UISettings.getInstance().showMembersInNavigationBar) {
       (`object` as? PsiElement)?.let { psiElement ->
         if (isAcceptableLanguage(psiElement)) {
           buildStructureViewModel(psiElement.containingFile)?.let { model ->
@@ -93,7 +98,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return null
   }
 
-  protected fun buildStructureViewModel(file: PsiFile, editor: Editor? = null): StructureViewModel? {
+  private fun buildStructureViewModel(file: PsiFile, editor: Editor? = null): StructureViewModel? {
     if (currentFile?.get() == file && currentFileModCount == file.modificationStamp) {
       if (editor == null) {
         currentFileStructure?.get()?.let { return it }

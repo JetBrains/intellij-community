@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang.java6;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.BloomFilterBase;
 import com.intellij.util.containers.IntObjectHashMap;
 import com.intellij.util.lang.java6.fastutil.StrippedIntOpenHashSet;
 import com.intellij.util.lang.java6.fastutil.StrippedLongOpenHashSet;
@@ -26,8 +25,8 @@ public final class ClasspathCache {
       return s==0?ArrayUtilRt.EMPTY_OBJECT_ARRAY:new Object[s];
     }
   };
-  private final IntObjectHashMap<Object/*Loader|Loader[]*/> myResourcePackagesCache = new IntObjectHashMap<Object>(OBJECT_ARRAY_PRODUCER);
-  private final IntObjectHashMap<Object/*Loader|Loader[]*/>  myClassPackagesCache = new IntObjectHashMap<Object>(OBJECT_ARRAY_PRODUCER);
+  private final IntObjectHashMap<Object/*Loader|Loader[]*/> myResourcePackagesCache = new IntObjectHashMap<>(OBJECT_ARRAY_PRODUCER);
+  private final IntObjectHashMap<Object/*Loader|Loader[]*/>  myClassPackagesCache = new IntObjectHashMap<>(OBJECT_ARRAY_PRODUCER);
 
   private static final double PROBABILITY = 0.005d;
 

@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * A transparent icon.
+ *
  * @author max
  * @author Konstantin Bulenkov
  * @author tav
@@ -39,8 +40,8 @@ import java.util.Map;
 
   /**
    * Creates an icon of the provided size.
-   *
-   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
+   * <p>
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} to meet HiDPI.
    */
   public static @NotNull EmptyIcon create(int size) {
     return create(size, size);
@@ -48,27 +49,18 @@ import java.util.Map;
 
   /**
    * Creates an icon of the provided size.
-   *
-   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
+   * <p>
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} to meet HiDPI.
    */
   public static @NotNull EmptyIcon create(int width, int height) {
     return create(width, height, true);
   }
 
   /**
-   * Creates an icon of the size of the provided icon base.
+   * Creates an icon of the size of the provided base icon.
    */
   public static @NotNull EmptyIcon create(@NotNull Icon base) {
     return create(base.getIconWidth(), base.getIconHeight());
-  }
-
-  /**
-   * @deprecated use {@linkplain #create(int)} for caching.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public EmptyIcon(int size) {
-    this(size, size, false);
   }
 
   /**
@@ -136,9 +128,7 @@ import java.util.Map;
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EmptyIcon)) return false;
-
-    final EmptyIcon icon = (EmptyIcon)o;
+    if (!(o instanceof EmptyIcon icon)) return false;
 
     if (scaleVal(height, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.height, DerivedScaleType.PIX_SCALE)) return false;
     if (scaleVal(width, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.width, DerivedScaleType.PIX_SCALE)) return false;

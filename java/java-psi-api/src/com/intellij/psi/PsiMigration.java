@@ -15,9 +15,6 @@
  */
 package com.intellij.psi;
 
-/**
- * @author dsl
- */
 public interface PsiMigration {
   PsiClass createClass(String qualifiedName);
   PsiPackage createPackage(String qualifiedName);

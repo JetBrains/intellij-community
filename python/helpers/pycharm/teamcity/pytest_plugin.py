@@ -26,10 +26,6 @@ diff_tools.patch_unittest_diff()
 _ASSERTION_FAILURE_KEY = '_teamcity_assertion_failure'
 
 
-def _repr_if_needed(obj):
-    return repr(obj) if '_JB_REPR_DIFF' in os.environ else obj
-
-
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
 
@@ -286,7 +282,7 @@ class EchoTeamCityMessages(object):
         self.report_test_finished(test_id, duration)
 
     def pytest_assertrepr_compare(self, config, op, left, right):
-        setattr(self.current_test_item, _ASSERTION_FAILURE_KEY, (op, _repr_if_needed(left), _repr_if_needed(right)))
+        setattr(self.current_test_item, _ASSERTION_FAILURE_KEY, (op, left, right))
 
     def pytest_runtest_logreport(self, report):
         """

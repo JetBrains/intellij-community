@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.authentication.util
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.Url
 import com.intellij.util.Urls.newUrl
 import org.jetbrains.plugins.github.api.*
@@ -15,14 +16,12 @@ object GHSecurityUtil {
   private const val WORKFLOW_SCOPE = "workflow"
   val MASTER_SCOPES = listOf(REPO_SCOPE, GIST_SCOPE, READ_ORG_SCOPE, WORKFLOW_SCOPE)
 
-  const val DEFAULT_CLIENT_NAME = "Github Integration Plugin"
-
   @JvmStatic
   internal fun loadCurrentUserWithScopes(executor: GithubApiRequestExecutor,
-                                         progressIndicator: ProgressIndicator,
                                          server: GithubServerPath): Pair<GithubAuthenticatedUser, String?> {
     var scopes: String? = null
-    val details = executor.execute(progressIndicator,
+    val indicator = ProgressManager.getInstance().progressIndicator
+    val details = executor.execute(indicator,
                                    object : GithubApiRequest.Get.Json<GithubAuthenticatedUser>(
                                      GithubApiRequests.getUrl(server,
                                                               GithubApiRequests.CurrentUser.urlSuffix),

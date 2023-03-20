@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,12 +52,6 @@ public class DfDoubleConstantType extends DfConstantType<Double> implements DfDo
       return relationType == RelationType.NE ? DfTypes.DOUBLE : BOTTOM;
     }
     return DfDoubleRangeType.fromRelation(relationType, value, value);
-  }
-
-  @NotNull
-  @Override
-  public PsiPrimitiveType getPsiType() {
-    return DfDoubleType.super.getPsiType();
   }
 
   @NotNull

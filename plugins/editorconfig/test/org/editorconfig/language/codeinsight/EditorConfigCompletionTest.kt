@@ -27,6 +27,9 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
       val descriptorManager = EditorConfigOptionDescriptorManager.instance as EditorConfigOptionDescriptorManagerImpl
       descriptorManager.loadDescriptors()
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

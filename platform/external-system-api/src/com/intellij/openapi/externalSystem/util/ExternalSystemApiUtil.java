@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
@@ -42,8 +42,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.PathsList;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -55,15 +53,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemApiUtil {
+  public static final @NotNull String PATH_SEPARATOR = "/";
 
-  @NotNull public static final String PATH_SEPARATOR = "/";
-
-  @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<>() {
+  public static final @NotNull Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<>() {
 
     @Override
     public int compare(@NotNull Object o1, @NotNull Object o2) {
@@ -92,13 +87,12 @@ public final class ExternalSystemApiUtil {
     }
   };
 
-  @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
+  private static final @NotNull NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
 
   private ExternalSystemApiUtil() {
   }
 
-  @NotNull
-  public static String extractNameFromPath(@NotNull String path) {
+  public static @NotNull String extractNameFromPath(@NotNull String path) {
     String strippedPath = stripPath(path);
     final int i = strippedPath.lastIndexOf(PATH_SEPARATOR);
     final String result;
@@ -111,8 +105,7 @@ public final class ExternalSystemApiUtil {
     return result;
   }
 
-  @NotNull
-  private static String stripPath(@NotNull String path) {
+  private static @NotNull String stripPath(@NotNull String path) {
     String[] endingsToStrip = {"/", "!", ".jar"};
     StringBuilder buffer = new StringBuilder(path);
     for (String ending : endingsToStrip) {
@@ -123,8 +116,7 @@ public final class ExternalSystemApiUtil {
     return buffer.toString();
   }
 
-  @NotNull
-  public static String getLibraryName(@NotNull Library library) {
+  public static @NotNull String getLibraryName(@NotNull Library library) {
     final String result = library.getName();
     if (result != null) {
       return result;
@@ -157,15 +149,13 @@ public final class ExternalSystemApiUtil {
    * @param path target path
    * @return path that points to the same location as the given one and that uses only slashes
    */
-  @NotNull
-  public static String toCanonicalPath(@NotNull String path) {
+  public static @NotNull String toCanonicalPath(@NotNull String path) {
     String p = normalizePath(path);
     assert p != null;
     return FileUtil.toCanonicalPath(p);
   }
 
-  @NotNull
-  public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
+  public static @NotNull String getLocalFileSystemPath(@NotNull VirtualFile file) {
     if (FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)) {
       final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (jar != null) {
@@ -175,13 +165,11 @@ public final class ExternalSystemApiUtil {
     return toCanonicalPath(file.getPath());
   }
 
-  @Nullable
-  public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
+  public static @Nullable ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
     return ExternalSystemManager.EP_NAME.findFirstSafe(manager -> externalSystemId.equals(manager.getSystemId()));
   }
 
-  @NotNull
-  public static List<ExternalSystemManager<?, ?, ?, ?, ?>> getAllManagers() {
+  public static @NotNull List<ExternalSystemManager<?, ?, ?, ?, ?>> getAllManagers() {
     return ExternalSystemManager.EP_NAME.getExtensionList();
   }
 
@@ -199,24 +187,20 @@ public final class ExternalSystemApiUtil {
     return result;
   }
 
-  @NotNull
-  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<? extends DataNode<?>> nodes) {
+  public static @NotNull MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<? extends DataNode<?>> nodes) {
     return ContainerUtil.groupBy(nodes, GROUPER);
   }
 
-  @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, final Class<K> moduleDataClass) {
+  public static @NotNull <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, final Class<K> moduleDataClass) {
     return ContainerUtil.groupBy(nodes, node -> node.getParent(moduleDataClass));
   }
 
-  @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, @NotNull final Key<K> key) {
+  public static @NotNull <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, final @NotNull Key<K> key) {
     return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
   @SuppressWarnings("unchecked")
-  @NotNull
-  public static <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+  public static @NotNull <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
     Collection<DataNode<T>> result = null;
     for (DataNode<?> child : node.getChildren()) {
       if (!key.equals(child.getKey())) {
@@ -230,47 +214,85 @@ public final class ExternalSystemApiUtil {
     return result == null ? Collections.emptyList() : result;
   }
 
-  @SuppressWarnings("unchecked")
-  @Nullable
-  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+  public static @Nullable <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+    return findChild(node, key, null);
+  }
+
+  public static @Nullable <T> DataNode<T> findChild(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable Predicate<? super DataNode<T>> predicate
+  ) {
     for (DataNode<?> child : node.getChildren()) {
       if (key.equals(child.getKey())) {
-        return (DataNode<T>)child;
+        //noinspection unchecked
+        var childNode = (DataNode<T>)child;
+        if (predicate == null || predicate.test(childNode)) {
+          return childNode;
+        }
       }
     }
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  @Nullable
-  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<? super DataNode<T>> predicate) {
-    for (DataNode<?> child : node.getChildren()) {
-      if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
-        return (DataNode<T>)child;
+  public static @Nullable <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+    return findParentRecursively(node, key, null);
+  }
+
+  public static @Nullable <T> DataNode<T> findParentRecursively(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable Predicate<? super DataNode<T>> predicate
+  ) {
+    var parent = node.getParent();
+    if (parent == null) {
+      return null;
+    }
+    if (key.equals(parent.getKey())) {
+      //noinspection unchecked
+      var parentNode = (DataNode<T>)parent;
+      if (predicate == null || predicate.test(parentNode)) {
+        return parentNode;
       }
     }
-    return null;
+    return findParentRecursively(parent, key, predicate);
   }
 
-  @Nullable
-  public static <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
-    return findParent(node, key, null);
+  /**
+   * @deprecated Use findChild instead
+   */
+  @Deprecated
+  public static @Nullable <T> DataNode<T> find(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable BooleanFunction<? super DataNode<T>> predicate
+  ) {
+    if (predicate == null) {
+      return findChild(node, key, null);
+    }
+    else {
+      return findChild(node, key, it -> predicate.fun(it));
+    }
   }
 
-
-  @SuppressWarnings("unchecked")
-  @Nullable
-  public static <T> DataNode<T> findParent(@NotNull DataNode<?> node,
-                                           @NotNull Key<T> key,
-                                           @Nullable BooleanFunction<? super DataNode<T>> predicate) {
-    DataNode<?> parent = node.getParent();
-    if (parent == null) return null;
-    return key.equals(parent.getKey()) && (predicate == null || predicate.fun((DataNode<T>)parent))
-           ? (DataNode<T>)parent : findParent(parent, key, predicate);
+  /**
+   * @deprecated Use findParentRecursively instead
+   */
+  @Deprecated
+  public static @Nullable <T> DataNode<T> findParent(
+    @NotNull DataNode<?> node,
+    @NotNull Key<T> key,
+    @Nullable BooleanFunction<? super DataNode<T>> predicate
+  ) {
+    if (predicate == null) {
+      return findParentRecursively(node, key, null);
+    }
+    else {
+      return findParentRecursively(node, key, it -> predicate.fun(it));
+    }
   }
 
-  @NotNull
-  public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
+  public static @NotNull <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
   }
 
@@ -280,34 +302,30 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  @NotNull
-  public static <T> Collection<DataNode<T>> findAllRecursively(@Nullable final DataNode<?> node,
-                                                               @NotNull final Key<T> key) {
-    if (node == null) return Collections.emptyList();
+  public static @NotNull <T> Collection<DataNode<T>> findAllRecursively(@Nullable DataNode<?> node, @NotNull Key<T> key) {
+    if (node == null) {
+      return Collections.emptyList();
+    }
 
-    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), node1 -> node1.getKey().equals(key));
     //noinspection unchecked
-    return new SmartList(nodes);
+    return (Collection)findAllRecursively(node.getChildren(), it -> it.getKey().equals(key));
   }
 
-  @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes) {
+  public static @NotNull Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes) {
     return findAllRecursively(nodes, null);
   }
 
-  @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
-                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
+  public static @NotNull Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
+                                                                    @Nullable Predicate<? super DataNode<?>> predicate) {
     if (node == null) return Collections.emptyList();
     return findAllRecursively(node.getChildren(), predicate);
   }
 
-  @NotNull
-  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
-                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
-    SmartList<DataNode<?>> result = new SmartList<>();
+  public static @NotNull Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                                    @Nullable Predicate<? super DataNode<?>> predicate) {
+    List<DataNode<?>> result = new ArrayList<>();
     for (DataNode<?> node : nodes) {
-      if (predicate == null || predicate.fun(node)) {
+      if (predicate == null || predicate.test(node)) {
         result.add(node);
       }
     }
@@ -317,26 +335,23 @@ public final class ExternalSystemApiUtil {
     return result;
   }
 
-  @Nullable
-  public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
-                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
+  public static @Nullable DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
+                                                           @NotNull Predicate<? super DataNode<?>> predicate) {
     Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
   }
 
-  @Nullable
-  public static DataNode<?> findFirstRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
-                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
+  public static @Nullable DataNode<?> findFirstRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
+                                                           @NotNull Predicate<? super DataNode<?>> predicate) {
     return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
-  @Nullable
-  private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
-                                         @NotNull BooleanFunction<? super DataNode<?>> predicate) {
+  private static @Nullable DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
+                                                   @NotNull Predicate<? super DataNode<?>> predicate) {
     while (!queue.isEmpty()) {
       DataNode<?> node = queue.remove();
-      if (predicate.fun(node)) {
+      if (predicate.test(node)) {
         return node;
       }
       queue.addAll(node.getChildren());
@@ -344,11 +359,11 @@ public final class ExternalSystemApiUtil {
     return null;
   }
 
-  public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
+  public static void executeProjectChangeAction(final @NotNull DisposeAwareProjectChange task) {
     executeProjectChangeAction(true, task);
   }
 
-  public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
+  public static void executeProjectChangeAction(boolean synchronous, final @NotNull DisposeAwareProjectChange task) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     }
@@ -370,18 +385,18 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
+  public static <T> T executeOnEdt(final @NotNull Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
     final Ref<T> result = Ref.create();
     app.invokeAndWait(() -> result.set(task.compute()));
     return result.get();
   }
 
-  public static <T> T doWriteAction(@NotNull final Computable<T> task) {
+  public static <T> T doWriteAction(final @NotNull Computable<T> task) {
     return executeOnEdt(() -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
-  public static void doWriteAction(@NotNull final Runnable task) {
+  public static void doWriteAction(final @NotNull Runnable task) {
     executeOnEdt(true, () -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
@@ -405,26 +420,7 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  /**
-   * @deprecated there is no need to call this method since we don't put message bundles to separate resources_en.jar files (IDEA-255246)
-   */
-  @Deprecated
-  public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
-    String pathToUse = bundlePath.replace('.', '/');
-    if (!pathToUse.endsWith(".properties")) {
-      pathToUse += ".properties";
-    }
-    if (!pathToUse.startsWith("/")) {
-      pathToUse = '/' + pathToUse;
-    }
-    String root = PathManager.getResourceRoot(contextClass, pathToUse);
-    if (root != null) {
-      classPath.add(root);
-    }
-  }
-
-  @Nullable
-  public static String normalizePath(@Nullable String s) {
+  public static @Nullable String normalizePath(@Nullable String s) {
     return s == null ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
   }
 
@@ -476,8 +472,7 @@ public final class ExternalSystemApiUtil {
     return true;
   }
 
-  @NotNull
-  public static @NlsSafe String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
+  public static @NotNull @NlsSafe String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
     if (rootProjectPath == null) {
       File rootProjectDir = new File(targetProjectPath);
       if (rootProjectDir.isFile()) {
@@ -514,8 +509,7 @@ public final class ExternalSystemApiUtil {
    * {@code null} if it's not possible to find a root project's config path on the basis of the
    * given path
    */
-  @Nullable
-  public static String getRootProjectPath(@NotNull String externalProjectPath,
+  public static @Nullable String getRootProjectPath(@NotNull String externalProjectPath,
                                           @NotNull ProjectSystemId externalSystemId,
                                           @NotNull Project project) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
@@ -534,8 +528,7 @@ public final class ExternalSystemApiUtil {
    * @param e exception to process
    * @return error message for the given exception
    */
-  @NotNull
-  public static @Nls String buildErrorMessage(@NotNull Throwable e) {
+  public static @NotNull @Nls String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
     String reason = unwrapped.getLocalizedMessage();
     if (!StringUtil.isEmpty(reason)) {
@@ -543,6 +536,9 @@ public final class ExternalSystemApiUtil {
     }
     else if (unwrapped.getClass() == ExternalSystemException.class) {
       String originalReason = ((ExternalSystemException)unwrapped).getOriginalReason();
+      if (originalReason.isBlank()) {
+        return stacktraceAsString(unwrapped);
+      }
       return ExternalSystemBundle.message("external.system.api.error.message.prefix", originalReason);
     }
     else {
@@ -550,16 +546,14 @@ public final class ExternalSystemApiUtil {
     }
   }
 
-  @NotNull
-  public static @NlsSafe String stacktraceAsString(@NotNull Throwable throwable) {
+  public static @NotNull @NlsSafe String stacktraceAsString(@NotNull Throwable throwable) {
     Throwable unwrapped = RemoteUtil.unwrap(throwable);
     StringWriter writer = new StringWriter();
     unwrapped.printStackTrace(new PrintWriter(writer));
     return writer.toString();
   }
 
-  @NotNull
-  public static AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
+  public static @NotNull AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
     throws IllegalArgumentException {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
     if (manager == null) {
@@ -635,27 +629,23 @@ public final class ExternalSystemApiUtil {
            systemId.equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
   }
 
-  @Nullable
   @Contract(pure = true)
-  public static String getExternalProjectPath(@Nullable Module module) {
+  public static @Nullable String getExternalProjectPath(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectPath() : null;
   }
 
-  @Nullable
   @Contract(pure = true)
-  public static String getExternalRootProjectPath(@Nullable Module module) {
+  public static @Nullable String getExternalRootProjectPath(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath() : null;
   }
 
-  @Nullable
   @Contract(pure = true)
-  public static String getExternalProjectId(@Nullable Module module) {
+  public static @Nullable String getExternalProjectId(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectId() : null;
   }
 
-  @Nullable
   @Contract(pure = true)
-  public static String getExternalProjectGroup(@Nullable Module module) {
+  public static @Nullable String getExternalProjectGroup(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleGroup() : null;
   }
 
@@ -685,17 +675,15 @@ public final class ExternalSystemApiUtil {
     return getExternalProjectContentRoots(module, List.of(sourceType));
   }
 
-  @Nullable
   @Contract(pure = true)
-  public static String getExternalProjectVersion(@Nullable Module module) {
+  public static @Nullable String getExternalProjectVersion(@Nullable Module module) {
     return module != null && !module.isDisposed()
            ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleVersion()
            : null;
   }
 
-  @Nullable
   @Contract(pure = true)
-  public static String getExternalModuleType(@Nullable Module module) {
+  public static @Nullable String getExternalModuleType(@Nullable Module module) {
     return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleType() : null;
   }
 
@@ -714,61 +702,65 @@ public final class ExternalSystemApiUtil {
     getSettings(project, systemId).subscribe(listener, parentDisposable);
   }
 
-  @NotNull
-  public static Collection<TaskData> findProjectTasks(@NotNull Project project,
-                                                      @NotNull ProjectSystemId systemId,
-                                                      @NotNull String projectPath) {
-    AbstractExternalSystemSettings settings = getSettings(project, systemId);
-    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
-    if (linkedProjectSettings == null) return Collections.emptyList();
-
-    ExternalProjectInfo projectInfo = ContainerUtil.find(
-      ProjectDataManager.getInstance().getExternalProjectsData(project, systemId),
-      info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath())
-    );
-
-    if (projectInfo == null) return Collections.emptyList();
-    DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
-    if (projectStructure == null) return Collections.emptyList();
-
-    List<TaskData> tasks = new SmartList<>();
-
-    DataNode<ModuleData> moduleDataNode = ContainerUtil.find(
-      findAll(projectStructure, ProjectKeys.MODULE),
-      moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath())
-    );
+  public static @NotNull Collection<TaskData> findProjectTasks(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    var moduleDataNode = findModuleNode(project, systemId, projectPath);
     if (moduleDataNode == null) return Collections.emptyList();
-
-    findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);
-    return tasks;
+    var taskNodes = findAll(moduleDataNode, ProjectKeys.TASK);
+    return ContainerUtil.map(taskNodes, it -> it.getData());
   }
 
-  @ApiStatus.Experimental
-  @Nullable
-  public static DataNode<ProjectData> findProjectData(@NotNull Project project,
-                                                      @NotNull ProjectSystemId systemId,
-                                                      @NotNull String projectPath) {
+  /**
+   * @deprecated use ExternalSystemApiUtil.findProjectNode instead
+   */
+  @Deprecated(forRemoval = true)
+  public static @Nullable DataNode<ProjectData> findProjectData(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    return findProjectNode(project, systemId, projectPath);
+  }
+
+  public static @Nullable DataNode<ProjectData> findProjectNode(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
     ExternalProjectInfo projectInfo = findProjectInfo(project, systemId, projectPath);
     if (projectInfo == null) return null;
     return projectInfo.getExternalProjectStructure();
   }
 
-  @ApiStatus.Experimental
-  @Nullable
-  public static ExternalProjectInfo findProjectInfo(@NotNull Project project,
-                                                    @NotNull ProjectSystemId systemId,
-                                                    @NotNull String projectPath) {
-    AbstractExternalSystemSettings settings = getSettings(project, systemId);
-    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
+  public static @Nullable ExternalProjectInfo findProjectInfo(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    var settings = getSettings(project, systemId);
+    var linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
     if (linkedProjectSettings == null) return null;
-    String rootProjectPath = linkedProjectSettings.getExternalProjectPath();
+    var rootProjectPath = linkedProjectSettings.getExternalProjectPath();
     return ProjectDataManager.getInstance().getExternalProjectData(project, systemId, rootProjectPath);
+  }
+
+  public static @Nullable DataNode<ModuleData> findModuleNode(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    var projectNode = findProjectNode(project, systemId, projectPath);
+    if (projectNode == null) return null;
+    var moduleNodes = findAll(projectNode, ProjectKeys.MODULE);
+    return ContainerUtil.find(moduleNodes, it -> FileUtil.pathsEqual(projectPath, it.getData().getLinkedExternalProjectPath()));
   }
 
   public static @NotNull FileChooserDescriptor getExternalProjectConfigDescriptor(@NotNull ProjectSystemId systemId) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(systemId);
-    if (manager instanceof ExternalSystemUiAware) {
-      ExternalSystemUiAware uiAware = ((ExternalSystemUiAware)manager);
+    if (manager instanceof ExternalSystemUiAware uiAware) {
       FileChooserDescriptor descriptor = uiAware.getExternalProjectConfigDescriptor();
       if (descriptor != null) {
         return descriptor;

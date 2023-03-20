@@ -6,6 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 
+/**
+ * Soft keys hash map.
+ * Null keys are NOT allowed
+ * Null values are allowed
+ */
 final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   SoftHashMap(int initialCapacity) {
     super(initialCapacity);
@@ -22,9 +27,10 @@ final class SoftHashMap<K,V> extends RefHashMap<K,V> {
 
   private static final class SoftKey<T> extends SoftReference<T> implements Key<T> {
     private final int myHash;  /* Hash code of key, stored here since the key may be tossed by the GC */
+    @NotNull
     private final HashingStrategy<? super T> myStrategy;
 
-    private SoftKey(T k, HashingStrategy<? super T> strategy, ReferenceQueue<? super T> q) {
+    private SoftKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);
       myStrategy = strategy;
       myHash = strategy.hashCode(k);

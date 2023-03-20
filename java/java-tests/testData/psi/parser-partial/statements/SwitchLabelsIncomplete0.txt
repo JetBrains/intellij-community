@@ -4,5 +4,5 @@ PsiJavaFile:SwitchLabelsIncomplete0.java
     PsiCaseLabelElementList
       PsiErrorElement:Expression, pattern, 'default' or 'null' expected
         <empty list>
-    PsiErrorElement:':' expected
+    PsiErrorElement:':' or '->' expected
       <empty list>

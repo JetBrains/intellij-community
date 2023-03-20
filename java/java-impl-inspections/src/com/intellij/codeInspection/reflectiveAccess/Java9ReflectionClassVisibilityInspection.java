@@ -2,6 +2,8 @@
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddOpensDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -17,9 +19,6 @@ import java.util.List;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
@@ -31,7 +30,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
       if (javaModule != null) {
         return new JavaElementVisitor() {
           @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
 
             if (isCallToMethod(expression, JAVA_LANG_CLASS, FOR_NAME) || isCallToMethod(expression, JAVA_LANG_CLASS_LOADER, LOAD_CLASS)) {
@@ -61,8 +60,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
           final PsiJavaModule otherModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {
             if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
-              String message = JavaBundle.message(
-                "module.not.in.requirements", javaModule.getName(), otherModule.getName());
+              String message = JavaBundle.message("module.not.in.requirements", javaModule.getName(), otherModule.getName());
               holder.registerProblem(classNameArgument, message, new AddRequiresDirectiveFix(javaModule, otherModule.getName()));
               return;
             }
@@ -80,10 +78,13 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
               if (publicApi && isPackageAccessible(otherModule.getExports(), packageName, javaModule)) {
                 return;
               }
-              final String message = JavaBundle.message(
-                publicApi ? "module.package.not.exported" : "module.package.not.open",
-                otherModule.getName(), packageName, javaModule.getName());
-              holder.registerProblem(classNameArgument, message);
+              if (publicApi) {
+                final String message = JavaBundle.message("module.package.not.exported", otherModule.getName(), packageName, javaModule.getName());
+                holder.registerProblem(classNameArgument, message, new AddExportsDirectiveFix(otherModule, packageName, javaModule.getName()));
+              } else {
+                final String message = JavaBundle.message("module.package.not.open", otherModule.getName(), packageName, javaModule.getName());
+                holder.registerProblem(classNameArgument, message, new AddOpensDirectiveFix(otherModule, packageName, javaModule.getName()));
+              }
             }
           }
         }

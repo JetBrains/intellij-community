@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith
 
@@ -10,8 +10,8 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -77,9 +77,10 @@ private fun kotlinStyleDeclareOut(
     property: KtProperty
 ) {
     val name = property.name ?: return
-    var declaration = KtPsiFactory(property).createProperty(name, property.typeReference?.text, property.isVar, null)
+    val psiFactory = KtPsiFactory(property.project)
+    var declaration = psiFactory.createProperty(name, property.typeReference?.text, property.isVar, null)
     declaration = container.addBefore(declaration, dummyFirstStatement) as KtProperty
-    container.addAfter(KtPsiFactory(declaration).createEQ(), declaration)
+    container.addAfter(psiFactory.createEQ(), declaration)
     propertiesDeclarations.add(declaration)
     property.initializer?.let {
         resultStatements.add(property.replace(it))
@@ -103,7 +104,7 @@ private fun declareOut(
 
 private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
     val propertyName = property.name ?: error("Property should have a name " + property.text)
-    val assignment = KtPsiFactory(property).createExpression("$propertyName = x") as KtBinaryExpression
+    val assignment = KtPsiFactory(property.project).createExpression("$propertyName = x") as KtBinaryExpression
     val right = assignment.right ?: error("Created binary expression should have a right part " + assignment.text)
     val initializer = property.initializer ?: error("Initializer should exist for property " + property.text)
     right.replace(initializer)
@@ -114,7 +115,7 @@ private fun createVariableDeclaration(property: KtProperty, generateDefaultIniti
     val propertyType = getPropertyType(property)
     var defaultInitializer: String? = null
     if (generateDefaultInitializers && property.isVar) {
-        defaultInitializer = CodeInsightUtils.defaultInitializer(propertyType)
+        defaultInitializer = propertyType.getDefaultInitializer()
     }
     return createProperty(property, propertyType, defaultInitializer)
 }
@@ -133,7 +134,7 @@ private fun createProperty(property: KtProperty, propertyType: KotlinType, initi
         else -> null
     }
 
-    return KtPsiFactory(property).createProperty(property.name!!, typeString, property.isVar, initializer)
+    return KtPsiFactory(property.project).createProperty(property.name!!, typeString, property.isVar, initializer)
 }
 
 private fun needToDeclareOut(element: PsiElement, lastStatementOffset: Int, scope: SearchScope): Boolean {

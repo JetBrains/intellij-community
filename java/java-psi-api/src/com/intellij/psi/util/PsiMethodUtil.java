@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 public final class PsiMethodUtil {
 
   public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
-    if (psiClass instanceof PsiAnonymousClass) return false;
+    if (PsiUtil.isLocalOrAnonymousClass(psiClass)) return false;
     if (psiClass.isAnnotationType()) return false;
     if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
     return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
@@ -25,20 +25,30 @@ public final class PsiMethodUtil {
       }
     }
     final PsiMethod[] mainMethods = aClass.findMethodsByName("main", true);
-    return findMainMethod(mainMethods);
+    return findMainMethod(mainMethods, aClass);
   }
 
   @Nullable
-  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
+  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass) {
     for (final PsiMethod mainMethod : mainMethods) {
+      PsiClass containingClass = mainMethod.getContainingClass();
+      if (containingClass != null && containingClass != aClass && containingClass.isInterface()) {
+        continue;
+      }
       if (isMainMethod(mainMethod)) return mainMethod;
     }
     return null;
   }
 
+  /**
+   * ATTENTION: does not check the method name equals "main"
+   *
+   * @param method  the method to check
+   * @return true, if the method satisfies a main method signature. false, otherwise
+   */
   public static boolean isMainMethod(final PsiMethod method) {
     if (method == null || method.getContainingClass() == null) return false;
-    if (!PsiType.VOID.equals(method.getReturnType())) return false;
+    if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
     if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -55,7 +65,7 @@ public final class PsiMethodUtil {
         return provider.hasMainMethod(psiClass);
       }
     }
-    return findMainMethod(psiClass.findMethodsByName("main", true)) != null;
+    return findMainMethod(psiClass.findMethodsByName("main", true), psiClass) != null;
   }
 
   @Nullable

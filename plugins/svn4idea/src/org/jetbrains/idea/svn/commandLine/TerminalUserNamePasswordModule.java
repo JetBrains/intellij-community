@@ -11,9 +11,6 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalUserNamePasswordModule extends BaseTerminalModule {
 
   private static final Pattern USER_NAME_PROMPT = Pattern.compile("Username:\\s?");

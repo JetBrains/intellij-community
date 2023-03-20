@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -121,14 +121,14 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         int yStart = y + lineHeight / 4;
         int yEnd = y + lineHeight * 3 / 4;
         switch (drawingType) {
-          case BEFORE_SOFT_WRAP_LINE_FEED:
+          case BEFORE_SOFT_WRAP_LINE_FEED -> {
             g.drawLine(xEnd, yStart, xEnd, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
-          case AFTER_SOFT_WRAP:
+          }
+          case AFTER_SOFT_WRAP -> {
             g.drawLine(xStart, yStart, xStart, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
+          }
         }
         return charWidthInPixels;
       }
@@ -257,6 +257,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
                     @NotNull BufferedImage expectedImage,
                     @NotNull BufferedImage actualImage) throws IOException {
     File savedImage = saveTmpImage(actualImage, "actual");
+    System.out.println("##teamcity[publishArtifacts '" + savedImage.getAbsolutePath() + "']");
     if (expectedResultsFile == null) {
       expectedResultsFile = saveTmpImage(expectedImage, "expected");
     }

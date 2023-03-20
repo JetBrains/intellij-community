@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -48,6 +45,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -58,6 +56,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +70,6 @@ import java.lang.ref.Reference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
@@ -107,7 +105,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       if (project == null) {
-        project = ProjectUtil.guessProjectForFile(getFile(document));
+        VirtualFile virtualFile = getFile(document);
+        project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
       }
       String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
@@ -129,8 +128,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       return null;
     };
 
-    ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
-    myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
+    myMultiCaster = ReflectionUtil.proxy(FileDocumentManagerListener.class, handler);
 
     // remove VirtualFiles sitting in the DocumentImpl.rmTreeQueue reference queue which could retain plugin-registered FS in their VirtualDirectoryImpl.myFs
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -229,6 +227,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!myUnsavedDocuments.isEmpty()) {
+      for (Document document : myUnsavedDocuments) {
+        VirtualFile file = getFile(document);
+        if (file == null) continue;
+        unbindFileFromDocument(file, document);
+      }
       myUnsavedDocuments.clear();
       myMultiCaster.unsavedDocumentsDropped();
     }
@@ -348,7 +351,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     VirtualFile file = getFile(document);
     if (LOG.isTraceEnabled()) LOG.trace("saving: " + file);
 
-    if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
+    if (file == null ||
+        !isTrackable(file) ||
+        file.isValid() && !isFileModified(file)) {
       removeFromUnsaved(document);
       return;
     }
@@ -489,7 +494,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       ReadonlyStatusHandler.OperationStatus writableStatus =
         ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file));
       if (writableStatus.hasReadonlyFiles()) {
-        return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
+        return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage(), writableStatus.getHyperlinkListener());
       }
       assert file.isWritable() : file;
     }
@@ -826,7 +831,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     ApplicationManager.getApplication().invokeLater(() -> {
       String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
 
-      DialogWrapper dialog = new DialogWrapper(null) {
+      DialogWrapper dialog = new DialogWrapper((Project)null) {
         {
           init();
           setTitle(UIBundle.message("cannot.save.files.dialog.title"));
@@ -870,9 +875,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   /** @deprecated another dirty Rider hack; don't use */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("StaticNonFinalField")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean ourConflictsSolverEnabled = true;
 
   @Override
@@ -883,5 +887,17 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @Override
   protected @NotNull DocumentListener getDocumentListener() {
     return myPhysicalDocumentChangeTracker;
+  }
+
+  @ApiStatus.Internal
+  static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
+    @Override
+    public void connectionOpen() {
+      FileDocumentManagerImpl fileDocumentManager =
+        (FileDocumentManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
+      if (fileDocumentManager != null) {
+        fileDocumentManager.clearDocumentCache();
+      }
+    }
   }
 }

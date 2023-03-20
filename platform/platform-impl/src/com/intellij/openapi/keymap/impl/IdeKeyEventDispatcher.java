@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
@@ -49,7 +49,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.KeyboardLayoutUtil;
+import com.intellij.util.text.matching.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -71,9 +71,6 @@ import java.util.function.Function;
 
 /**
  * This class is automaton with finite number of state.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
@@ -144,14 +141,7 @@ public final class IdeKeyEventDispatcher {
       myIgnoreNextKeyTypedEvent = false;
     }
 
-    if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && focusOwner instanceof JComponent) {
-      SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)focusOwner);
-      if (supply != null && supply.isPopupActive()) {
-        return false;
-      }
-    }
-
-    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
       if (id == KeyEvent.KEY_PRESSED) {
         myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
@@ -178,6 +168,15 @@ public final class IdeKeyEventDispatcher {
       return false;
     }
 
+    if (getState() == KeyState.STATE_INIT && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getModifiersEx() == 0 &&
+        (e.getKeyCode() == KeyEvent.VK_BACK_SPACE ||
+         e.getKeyCode() == KeyEvent.VK_SPACE ||
+         Character.isLetterOrDigit(e.getKeyChar()))) {
+      SpeedSearchSupply supply = focusOwner instanceof JComponent ? SpeedSearchSupply.getSupply((JComponent)focusOwner) : null;
+      if (supply != null) {
+        return false;
+      }
+    }
     if (getState() == KeyState.STATE_INIT && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED &&
         focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
       if (id == KeyEvent.KEY_PRESSED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
@@ -222,22 +221,14 @@ public final class IdeKeyEventDispatcher {
     myContext.setProject(CommonDataKeys.PROJECT.getData(dataContext));
 
     try {
-      switch (getState()) {
-        case STATE_INIT:
-          return inInitState();
-        case STATE_PROCESSED:
-          return inProcessedState();
-        case STATE_WAIT_FOR_SECOND_KEYSTROKE:
-          return inWaitForSecondStrokeState();
-        case STATE_SECOND_STROKE_IN_PROGRESS:
-          return inSecondStrokeInProgressState();
-        case STATE_KEY_GESTURE_PROCESSOR:
-          return myKeyGestureProcessor.process();
-        case STATE_WAIT_FOR_POSSIBLE_ALT_GR:
-          return inWaitForPossibleAltGr();
-        default:
-          throw new IllegalStateException("state = " + getState());
-      }
+      return switch (getState()) {
+        case STATE_INIT -> inInitState();
+        case STATE_PROCESSED -> inProcessedState();
+        case STATE_WAIT_FOR_SECOND_KEYSTROKE -> inWaitForSecondStrokeState();
+        case STATE_SECOND_STROKE_IN_PROGRESS -> inSecondStrokeInProgressState();
+        case STATE_KEY_GESTURE_PROCESSOR -> myKeyGestureProcessor.process();
+        case STATE_WAIT_FOR_POSSIBLE_ALT_GR -> inWaitForPossibleAltGr();
+      };
     }
     finally {
       myContext.clear();
@@ -259,17 +250,33 @@ public final class IdeKeyEventDispatcher {
    * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
+    Boolean valueOrNull = isModalContextOrNull(component);
+    return valueOrNull != null ? valueOrNull : true;
+  }
+
+  /**
+   * Check whether the {@code component} represents a modal context.
+   * @return {@code null} if it's impossible to deduce.
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public static Boolean isModalContextOrNull(@NotNull Component component) {
     Window window = ComponentUtil.getWindow(component);
+    if (window == null) {
+      return null;
+    }
 
     if (window instanceof IdeFrameImpl) {
-      Component pane = ((JFrame)window).getGlassPane();
-      if (pane instanceof IdeGlassPaneEx) {
-        return ((IdeGlassPaneEx) pane).isInModalContext();
+      JRootPane rootPane = ((JFrame)window).getRootPane();
+      if (rootPane != null) {
+        Component pane = rootPane.getGlassPane();
+        if (pane instanceof IdeGlassPaneEx) {
+          return ((IdeGlassPaneEx) pane).isInModalContext();
+        }
       }
     }
 
-    if (window instanceof JDialog) {
-      final JDialog dialog = (JDialog)window;
+    if (window instanceof JDialog dialog) {
       if (!dialog.isModal()) {
         final Window owner = dialog.getOwner();
         return owner != null && isModalContext(owner);
@@ -413,8 +420,11 @@ public final class IdeKeyEventDispatcher {
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
       return true;
     }
-    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
+    boolean isCandidateForAltGr = myLeftCtrlPressed &&
+                                  myRightAltPressed &&
+                                  focusOwner != null &&
+                                  ( (e.getModifiers() & ~InputEvent.SHIFT_MASK) == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK) );
     if (isCandidateForAltGr) {
       if (Registry.is("actionSystem.force.alt.gr", false)) {
         return false;
@@ -500,8 +510,7 @@ public final class IdeKeyEventDispatcher {
   private static @Nullable KeyStroke getSecondKeystroke(@NotNull AnAction action, @NotNull KeyStroke firstKeyStroke) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut shortcut : shortcuts) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut keyShortcut = (KeyboardShortcut)shortcut;
+      if (shortcut instanceof KeyboardShortcut keyShortcut) {
         if (firstKeyStroke.equals(keyShortcut.getFirstKeyStroke())) {
           KeyStroke secondKeyStroke = keyShortcut.getSecondKeyStroke();
           if (secondKeyStroke != null) return secondKeyStroke;
@@ -584,19 +593,14 @@ public final class IdeKeyEventDispatcher {
   };
 
   public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
-    boolean result = processAction(
-      e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
-      new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
-    if (!result) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
-    }
-    return result;
+    return processAction(e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
+                         new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
   }
 
   boolean processAction(@NotNull InputEvent e,
                         @NotNull String place,
                         @NotNull DataContext context,
-                        @NotNull List<AnAction> actions,
+                        @NotNull List<? extends AnAction> actions,
                         @NotNull ActionProcessor processor,
                         @NotNull PresentationFactory presentationFactory,
                         @NotNull Shortcut shortcut) {
@@ -604,8 +608,7 @@ public final class IdeKeyEventDispatcher {
     DataContext wrappedContext = Utils.wrapDataContext(context);
     Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
-      .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context);
+    fireBeforeShortcutTriggered(shortcut, actions, context);
 
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
     ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
@@ -614,17 +617,14 @@ public final class IdeKeyEventDispatcher {
     Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean> chosenPair = ProgressManager.getInstance().runProcess(() -> {
       Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
       Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
-        e, wrappedContext, place, processor, presentationFactory,
+        actions, e, wrappedContext, place, processor, presentationFactory,
         event -> events.put(event.getPresentation(), event),
-        session -> Utils.tryInReadAction(
-          () -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null))) ?
-                   doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get) : null);
+        (session, adjusted) -> doUpdateActionsInner(session, adjusted, dumb, wouldBeEnabledIfNotDumb, events::get));
       if (chosen == null) return null;
 
       if (!myContext.getSecondStrokeActions().contains(chosen.first)) {
         AnActionEvent actionEvent = chosen.second.withDataContext(wrappedContext); // use not frozen data context
-        if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
-            !ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
           LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + chosen.first.getClass() + ") " +
                    "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
           logTimeMillis(chosen.third, chosen.first);
@@ -652,7 +652,6 @@ public final class IdeKeyEventDispatcher {
       waitSecondStroke(chosen.first, chosen.second.getPresentation());
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
       showDumbModeBalloonLater(project, getActionUnavailableMessage(wouldBeEnabledIfNotDumb), () -> {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() ->
@@ -666,10 +665,10 @@ public final class IdeKeyEventDispatcher {
   }
 
   @Nullable
-  private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull List<AnAction> actions,
+  private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull UpdateSession session,
+                                                                             @NotNull List<? extends AnAction> actions,
                                                                              boolean dumb,
                                                                              @NotNull List<? super AnAction> wouldBeEnabledIfNotDumb,
-                                                                             @NotNull UpdateSession session,
                                                                              @NotNull Function<? super Presentation, ? extends AnActionEvent> events) {
     for (AnAction action : actions) {
       long startedAt = System.currentTimeMillis();
@@ -730,21 +729,15 @@ public final class IdeKeyEventDispatcher {
     }
     ContainerUtil.removeDuplicates(actionNames);
     if (actionNames.isEmpty()) {
-      return getUnavailableMessage(IdeBundle.message("dumb.balloon.this.action"), false);
+      return IdeBundle.message("dumb.balloon.this.action.is.not.available.during.indexing");
     }
     else if (actionNames.size() == 1) {
-      return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
+      return IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", actionNames.get(0));
     }
     else {
       @NlsSafe String join = String.join(", ", actionNames);
-      return getUnavailableMessage(IdeBundle.message("dumb.balloon.none.of.the.following.actions"), true) +
-             ": " + join;
+      return IdeBundle.message("dumb.balloon.none.of.the.following.actions.are.available.during.indexing.0", join);
     }
-  }
-
-  public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
-    return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
-           IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
   }
 
   /**
@@ -788,11 +781,10 @@ public final class IdeKeyEventDispatcher {
 
     addActionsFromActiveKeymap(sc);
 
-    if (myContext.getSecondStrokeActions().isEmpty() && sc instanceof KeyboardShortcut) {
+    if (myContext.getSecondStrokeActions().isEmpty() && sc instanceof KeyboardShortcut keyboardShortcut) {
       // little trick to invoke action which second stroke is a key w/o modifiers, but user still
       // holds the modifier key(s) of the first stroke
 
-      final KeyboardShortcut keyboardShortcut = (KeyboardShortcut)sc;
       final KeyStroke firstKeyStroke = keyboardShortcut.getFirstKeyStroke();
       final KeyStroke secondKeyStroke = keyboardShortcut.getSecondKeyStroke();
 
@@ -803,27 +795,14 @@ public final class IdeKeyEventDispatcher {
     }
   }
 
-  private static boolean rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext context) {
-    List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-    List<ActionPromoter> promoters = ContainerUtil.concat(
-      ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
-    for (ActionPromoter promoter : promoters) {
-      try {
-        List<AnAction> promoted = promoter.promote(readOnlyActions, context);
-        if (promoted != null && !promoted.isEmpty()) {
-          actions.removeAll(promoted);
-          actions.addAll(0, promoted);
-        }
-        List<AnAction> suppressed = promoter.suppress(readOnlyActions, context);
-        if (suppressed != null && !suppressed.isEmpty()) {
-          actions.removeAll(suppressed);
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+  private static void fireBeforeShortcutTriggered(@NotNull Shortcut shortcut, @NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+    try {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
+        .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context);
     }
-    return true;
+    catch (Exception ex) {
+      LOG.error(ex);
+    }
   }
 
   private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {
@@ -953,9 +932,8 @@ public final class IdeKeyEventDispatcher {
   }
 
   private static JRootPane getMenuActionsHolder(Component component) {
-    if (component instanceof JPopupMenu) {
+    if (component instanceof JPopupMenu menu) {
       // BasicPopupMenuUI.MenuKeyboardHelper#stateChanged
-      JPopupMenu menu = (JPopupMenu)component;
       return SwingUtilities.getRootPane(menu.getInvoker());
     }
     return SwingUtilities.getRootPane(component);

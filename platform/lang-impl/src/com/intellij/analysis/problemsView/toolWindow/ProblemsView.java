@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.actions.ToggleToolbarAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
@@ -12,37 +13,38 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible;
-import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public static final String ID = "Problems View";
 
-  public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
-    return project == null || project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
+  public static @Nullable ToolWindow getToolWindow(@NotNull Project project) {
+    return project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
   public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile file) {
     ToolWindow window = getToolWindow(project);
     if (window == null) return; // does not exist
     ContentManager manager = window.getContentManager();
-    HighlightingPanel panel = get(HighlightingPanel.class, manager.getSelectedContent());
+    Content selectedContent = manager.getSelectedContent();
+    HighlightingPanel panel = selectedContent == null ? null : get(HighlightingPanel.class, selectedContent);
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl) ToolWindowManager.getInstance(project);
     if (file == null || panel == null || !panel.isShowing()) {
       ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, HighlightingPanel.ID);
@@ -50,7 +52,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
     else if (file.equals(panel.getCurrentFile())) {
-      toolWindowManager.hideToolWindow(window.getId(), false, true, ToolWindowEventSource.InspectionsWidget);
+      toolWindowManager.hideToolWindow(window.getId(), false, true, false, ToolWindowEventSource.InspectionsWidget);
     }
     else {
       panel.setCurrentFile(file);
@@ -59,94 +61,127 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   public static void selectHighlighterIfVisible(@NotNull Project project, @NotNull RangeHighlighterEx highlighter) {
-    HighlightingPanel panel = get(HighlightingPanel.class, getSelectedContent(project));
+    Content selectedContent = getSelectedContent(project);
+    HighlightingPanel panel = selectedContent == null ? null : get(HighlightingPanel.class, selectedContent);
     if (panel != null && panel.isShowing()) panel.selectHighlighter(highlighter);
   }
 
-  public static @Nullable Document getDocument(@Nullable Project project, @NotNull VirtualFile file) {
-    Object item = file.isDirectory() ? null : findFileSystemItem(project, file);
-    return item instanceof PsiFile ? PsiDocumentManager.getInstance(project).getDocument((PsiFile)item) : null;
+  public static @Nullable Document getDocument(@NotNull Project project, @NotNull VirtualFile file) {
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    return psiFile == null ? null : PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }
 
-  public static @Nullable ProblemsViewPanel getSelectedPanel(@Nullable Project project) {
-    return get(ProblemsViewPanel.class, getSelectedContent(project));
+  public static @Nullable ProblemsViewPanel getSelectedPanel(@NotNull Project project) {
+    Content selectedContent = getSelectedContent(project);
+    return selectedContent == null ? null : get(ProblemsViewPanel.class, selectedContent);
   }
 
-  private static @Nullable Content getSelectedContent(@Nullable Project project) {
+  private static @Nullable Content getSelectedContent(@NotNull Project project) {
     ToolWindow window = getToolWindow(project);
     ContentManager manager = window == null ? null : window.getContentManagerIfCreated();
     return manager == null ? null : manager.getSelectedContent();
   }
 
   private static void createContent(@NotNull ContentManager manager, @NotNull ProblemsViewTab panel) {
-    if (!(panel instanceof JComponent))
-      throw new IllegalArgumentException("panel is not JComponent");
+    if (!(panel instanceof JComponent component)) {
+      throw new IllegalArgumentException("panel " + panel.getClass()+ " is not a JComponent");
+    }
 
-    var component = (JComponent)panel;
     Content content = manager.getFactory().createContent(component, panel.getName(0), false);
     content.setCloseable(false);
     manager.addContent(content);
   }
 
-  private static void selectionChanged(boolean selected, @Nullable Content content) {
+  private static void selectionChanged(boolean selected, @NotNull Content content) {
     ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
     if (panel != null) panel.selectionChangedTo(selected);
   }
 
-  private static void visibilityChanged(boolean visible, @Nullable Content content) {
+  private static void visibilityChanged(boolean visible, @NotNull Content content) {
     ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
     if (panel != null) panel.visibilityChangedTo(visible);
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> @Nullable T get(@NotNull Class<T> type, @Nullable Content content) {
-    JComponent component = content == null ? null : content.getComponent();
+  private static <T> @Nullable T get(@NotNull Class<T> type, @NotNull Content content) {
+    JComponent component = content.getComponent();
+    //noinspection unchecked
     return type.isInstance(component) ? (T)component : null;
-  }
-
-  static boolean isProjectErrorsEnabled() {
-    return true; // TODO: use this method to disable Project Errors tab in other IDEs
   }
 
   @Override
   public void init(@NotNull ToolWindow window) {
-    if (!isProjectErrorsEnabled()) return;
-    Project project = ((ToolWindowEx)window).getProject();
+    Project project = window.getProject();
     HighlightingErrorsProviderBase.getInstance(project);
+  }
+
+  public static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
+    ToolWindow window = getToolWindow(project);
+    assert window != null;
+    ContentManager manager = window.getContentManager();
+    ProblemsViewTab panel = provider.create();
+    if (panel == null) return;
+    createContent(manager, panel);
+  }
+
+  public static void removePanel(Project project, String id) {
+    Content content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
+    ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+    if (content == null || toolWindow == null)
+      return;
+
+    toolWindow.getContentManager().removeContent(content, true);
   }
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow window) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ProblemsViewState state = ProblemsViewState.getInstance(project);
-    state.setShowToolbar(isToolbarVisible(window, project));
+    state.setShowToolbar(ToggleToolbarAction.isToolbarVisible(window, project));
     ContentManager manager = window.getContentManager();
 
+    // initialize javax.swing.ActionMap in EDT to avoid weird NPEs when ProblemsViewPanelProvider.create() will mess with swing in BGT later
+    window.getComponent().getActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
+    CompletableFuture<?> result = CompletableFuture.completedFuture(null);
     for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensions(project)) {
-      var panel = provider.create();
-      if (panel == null) continue;
-      createContent(manager, panel);
-    }
+      CompletableFuture<ProblemsViewTab> future = new CompletableFuture<>();
+      ReadAction.nonBlocking(() -> provider.create())
+        .finishOnUiThread(ModalityState.NON_MODAL, panel -> {
+          if (panel != null && !manager.isDisposed()) {
+            createContent(manager, panel);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService())
+        .onError(throwable -> future.completeExceptionally(throwable))
+        .onSuccess(o->future.complete(o));
 
-    var selectedTabId = state.getSelectedTabId();
-    if (selectedTabId != null) {
-      ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, selectedTabId);
+      result = result.thenCompose(__->future);
     }
-
-    selectionChanged(true, manager.getSelectedContent());
-    manager.addContentManagerListener(new ContentManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull ContentManagerEvent event) {
-        boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
-        var component = event.getContent().getComponent();
-        if (component instanceof ProblemsViewTab) {
-          var problemsView = (ProblemsViewTab)component;
-          ProblemsView.selectionChanged(selected, event.getContent());
-          if (selected)
-            state.setSelectedTabId(problemsView.getTabId());
-        }
+    // after all problem views are created in BGT, perform initial setup in EDT
+    result.thenRun(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed() || manager.isDisposed()) return;
+      String selectedTabId = state.getSelectedTabId();
+      if (selectedTabId != null) {
+        ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, selectedTabId);
       }
-    });
-    project.getMessageBus().connect(manager).subscribe(ToolWindowManagerListener.TOPIC, createListener());
+      Content selectedContent = manager.getSelectedContent();
+      if (selectedContent != null) {
+        selectionChanged(true, selectedContent);
+      }
+      manager.addContentManagerListener(new ContentManagerListener() {
+        @Override
+        public void selectionChanged(@NotNull ContentManagerEvent event) {
+          boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
+          JComponent component = event.getContent().getComponent();
+          if (component instanceof ProblemsViewTab problemsView) {
+            ProblemsView.selectionChanged(selected, event.getContent());
+            if (selected) {
+              state.setSelectedTabId(problemsView.getTabId());
+            }
+          }
+        }
+      });
+      project.getMessageBus().connect(manager).subscribe(ToolWindowManagerListener.TOPIC, createListener());
+    }));
   }
 
   @NotNull
@@ -169,7 +204,10 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         }
         boolean visible = window.isVisible();
         if (visible != visibility.getAndSet(visible)) {
-          visibilityChanged(visible, window.getContentManager().getSelectedContent());
+          Content selectedContent = window.getContentManager().getSelectedContent();
+          if (selectedContent != null) {
+            visibilityChanged(visible, selectedContent);
+          }
         }
       }
     };

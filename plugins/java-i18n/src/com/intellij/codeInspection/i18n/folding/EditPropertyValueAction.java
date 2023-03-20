@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
@@ -32,13 +32,16 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.IconUtil;
@@ -55,7 +58,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class EditPropertyValueAction extends BaseRefactoringAction {
+public final class EditPropertyValueAction extends BaseRefactoringAction {
   private static final Key<Boolean> EDITABLE_PROPERTY_VALUE = Key.create("editable.property.value");
   private static final KeyStroke SHIFT_ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
 
@@ -234,31 +237,19 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
       }
       else if (escaped) {
         escaped = false;
-        String replacement;
-        switch (c) {
-          case '\n':
-            replacement = "";
-            break;
-          case 'r':
-            replacement = "\n";
-            break;
-          case 'n':
-            replacement = "\r";
-            break;
-          case 'u':
-          case 'U':
-            replacement = null;
-            break;
-          default:
-            replacement = Character.toString(c);
-            break;
-        }
+        String replacement = switch (c) {
+          case '\n' -> "";
+          case 'r' -> "\n";
+          case 'n' -> "\r";
+          case 'u', 'U' -> null;
+          default -> Character.toString(c);
+        };
         if (replacement != null) {
           i = replaceEscapePair(b, i, replacement, offsets);
         }
       }
     }
-    String result = StringUtil.convertLineSeparators(b.toString(), "\n", offsets);
+    String result = Strings.convertLineSeparators(b.toString(), "\n", offsets);
     return Pair.create(result, offsets[0]);
   }
 
@@ -281,7 +272,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
 
       @Override
       public Insets getInsets() {
-        return JBUI.emptyInsets();
+        return JBInsets.emptyInsets();
       }
     };
     button.setLook(ActionButtonLook.INPLACE_LOOK);
@@ -298,7 +289,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
                            SwingConstants.LEFT));
     }
     if (key != null) {
-      panel.add(new JLabel(key, AllIcons.Nodes.Property, SwingConstants.LEFT));
+      panel.add(new JLabel(key, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property), SwingConstants.LEFT));
     }
     return EditPropertyValueTooltipManager.showTooltip(editor, panel, true);
   }
@@ -403,6 +394,11 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
       presentation.setDescription(JavaI18nBundle.message("action.description.new.line.0", KeymapUtil.getKeystrokeText(SHIFT_ENTER)));
       presentation.setIcon(AllIcons.Actions.SearchNewLine);
       presentation.setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     private static class Handler extends EditorWriteActionHandler {

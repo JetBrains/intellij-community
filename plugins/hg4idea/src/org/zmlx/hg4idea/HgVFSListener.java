@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.containers.ContainerUtil.map2List;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.RENAME_FAILED;
 
 /**
@@ -332,7 +331,7 @@ public final class HgVFSListener extends VcsVFSListener {
         NotificationAction viewFilesAction =
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
             DialogWrapper dialog =
-              new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
+              new ProcessedFilePathsDialog(myProject, ContainerUtil.map(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
             dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
             dialog.show();
           });

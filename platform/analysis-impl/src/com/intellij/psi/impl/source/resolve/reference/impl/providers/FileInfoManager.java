@@ -16,20 +16,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public final class FileInfoManager {
   public static FileInfoManager getFileInfoManager() {
     return ApplicationManager.getApplication().getService(FileInfoManager.class);
   }
 
   public static Object getFileLookupItem(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
+    if (!(psiElement instanceof PsiFile file) || !(psiElement.isPhysical())) {
       return psiElement;
     }
 
-    final PsiFile file = (PsiFile)psiElement;
     return _getLookupItem(file, file.getName(), file.getIcon(0));
   }
 
@@ -40,11 +36,9 @@ public final class FileInfoManager {
 
   @Nullable
   private static String _getInfo(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
+    if (!(psiElement instanceof PsiFile psiFile) || !(psiElement.isPhysical())) {
       return null;
     }
-
-    final PsiFile psiFile = (PsiFile)psiElement;
 
     FileLookupInfoProvider provider =
       ContainerUtil.find(FileLookupInfoProvider.EP_NAME.getExtensionList(),

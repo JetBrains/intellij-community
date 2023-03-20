@@ -125,7 +125,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     myProject.registerService(PsiManager.class, myPsiManager);
     myProject.registerService(TreeAspect.class, new TreeAspect());
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
-    myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));
+    myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject, myProject.getCoroutineScope()));
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
@@ -174,7 +174,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     registerExtensions(name, (Class<T>)extension.getClass(), Collections.singletonList(extension));
   }
 
-  protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<T> extensions) {
+  protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<? extends T> extensions) {
     ExtensionsAreaImpl area = myApp.getExtensionArea();
     ExtensionPoint<T> point = area.getExtensionPointIfRegistered(name.getName());
     if (point == null) {

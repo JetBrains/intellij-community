@@ -19,7 +19,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Test;
@@ -32,45 +32,49 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testIgnoredProject() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<modules>" +
-                     "  <module>moduleA</module>" +
-                     "  <module>moduleIgnored</module>" +
-                     "  <module>moduleB</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>moduleA</module>
+                         <module>moduleIgnored</module>
+                         <module>moduleB</module>
+                       </modules>
+                       """);
 
-    VirtualFile moduleA = createModulePom("moduleA", "<groupId>test</groupId>" +
-                                                     "<artifactId>moduleA</artifactId>" +
-                                                     "<version>1</version>");
+    VirtualFile moduleA = createModulePom("moduleA", """
+      <groupId>test</groupId>
+      <artifactId>moduleA</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile moduleIgnored = createModulePom("moduleIgnored", "<groupId>test</groupId>" +
-                                                                 "<artifactId>moduleIgnored</artifactId>" +
-                                                                 "<version>1</version>");
+    VirtualFile moduleIgnored = createModulePom("moduleIgnored", """
+      <groupId>test</groupId>
+      <artifactId>moduleIgnored</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile moduleB = createModulePom("moduleB", "<groupId>test</groupId>" +
-                                                     "<artifactId>moduleB</artifactId>" +
-                                                     "<version>1</version>" +
-                                                     "<dependencies>" +
-                                                     "  <dependency>" +
-                                                     "    <groupId>test</groupId>" +
-                                                     "    <artifactId>moduleA</artifactId>" +
-                                                     "    <version>1</version>" +
-                                                     "  </dependency>" +
-                                                     "  <dependency>" +
-                                                     "    <groupId>test</groupId>" +
-                                                     "    <artifactId>moduleIgnored</artifactId>" +
-                                                     "    <version>1</version>" +
-                                                     "  </dependency>" +
-                                                     "</dependencies>"
+    VirtualFile moduleB = createModulePom("moduleB", """
+      <groupId>test</groupId>
+      <artifactId>moduleB</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>moduleA</artifactId>
+          <version>1</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>moduleIgnored</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>"""
     );
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(moduleIgnored.getPath()));
@@ -118,8 +122,7 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
   }
 
   private static Properties readProperties(String filePath) throws IOException {
-    InputStream is = new BufferedInputStream(new FileInputStream(filePath));
-    try {
+    try (InputStream is = new BufferedInputStream(new FileInputStream(filePath))) {
       Properties properties = new Properties();
       properties.load(is);
 
@@ -129,9 +132,6 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
       }
 
       return properties;
-    }
-    finally {
-      is.close();
     }
   }
 

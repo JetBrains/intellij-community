@@ -38,7 +38,6 @@ public class TextMateSyntaxTable {
    * Append table with new syntax rules in order to support new language.
    *
    * @param plist Plist represented syntax file (*.tmLanguage) of target language.
-   * @param interner
    * @return language scope root name
    */
   @NotNull

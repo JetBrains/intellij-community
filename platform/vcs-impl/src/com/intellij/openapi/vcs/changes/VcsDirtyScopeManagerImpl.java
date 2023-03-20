@@ -7,12 +7,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -53,15 +56,33 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     myProject = project;
 
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
-    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    busConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+      public void fileTypesChanged(@NotNull FileTypeEvent event) {
+        // Listen changes in 'FileTypeManager.getIgnoredFilesList':
+        //   'ProjectLevelVcsManager.getVcsFor' depends on it via 'ProjectLevelVcsManager.isIgnored',
+        //   which might impact which files are visible in ChangeListManager.
+
+        // Event does not allow to listen for 'getIgnoredFilesList' changes directly, listen for all generic events instead.
+        boolean isGenericEvent = event.getAddedFileType() == null && event.getRemovedFileType() == null;
+        if (isGenericEvent) {
+          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+        }
       }
     });
-    busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
-      ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
-    }));
+
+    if (Registry.is("ide.hide.excluded.files")) {
+      busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        @Override
+        public void rootsChanged(@NotNull ModuleRootEvent event) {
+          // 'ProjectLevelVcsManager.getVcsFor' depends on excluded roots via 'ProjectLevelVcsManager.isIgnored'
+          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+        }
+      });
+      //busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
+      //  ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
+      //}));
+    }
   }
 
   private static ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
@@ -102,7 +123,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     if (wasReady) {
-      ChangeListManager.getInstance(myProject).scheduleUpdate();
+      ChangeListManagerImpl.getInstanceImpl(myProject).scheduleUpdateImpl();
       if (ongoingRefresh != null) ongoingRefresh.setRejected();
     }
   }
@@ -165,7 +186,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     if (hasSomethingDirty) {
-      ChangeListManager.getInstance(myProject).scheduleUpdate();
+      ChangeListManagerImpl.getInstanceImpl(myProject).scheduleUpdateImpl();
     }
   }
 
@@ -227,6 +248,15 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       myRefreshInProgress = callback;
     }
     return calculateInvalidated(dirtBuilder, callback);
+  }
+
+  public boolean hasDirtyScopes() {
+    synchronized (LOCK) {
+      if (!myReady) return false;
+      LOG.assertTrue(myDirtInProgress == null);
+
+      return !myDirtBuilder.isEmpty();
+    }
   }
 
   public void changesProcessed() {

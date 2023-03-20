@@ -11,9 +11,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 @State(name = "mavenExecuteGoalHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @Service(Service.Level.PROJECT)
 public final class ExecuteMavenGoalHistoryService implements PersistentStateComponent<String[]> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
@@ -13,9 +13,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
@@ -46,12 +47,12 @@ public final class GuiUtils {
   private static JPanel constructFieldWithBrowseButton(final JComponent aComponent, final ActionListener aActionListener, int delta) {
     JPanel result = new JPanel(new GridBagLayout());
     result.add(aComponent,
-               new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+               new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0));
     FixedSizeButton browseButton =
       new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseButton, aComponent);
     result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                    JBUI.emptyInsets(), 0, 0));
+                                                    JBInsets.emptyInsets(), 0, 0));
     browseButton.addActionListener(aActionListener);
 
     return result;
@@ -80,12 +81,11 @@ public final class GuiUtils {
 
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root, boolean useOnePixelDivider) {
     final Container parent = root.getParent();
-    if (root instanceof JSplitPane) {
+    if (root instanceof JSplitPane pane) {
       // we can painlessly replace only splitter which is the only child in container
       if (parent.getComponents().length != 1 && !(parent instanceof Splitter)) {
         return;
       }
-      final JSplitPane pane = (JSplitPane)root;
       final Component component1 = pane.getTopComponent();
       final Component component2 = pane.getBottomComponent();
       final int orientation = pane.getOrientation();
@@ -112,8 +112,7 @@ public final class GuiUtils {
         });
       }
 
-      if (parent instanceof Splitter) {
-        final Splitter psplitter = (Splitter)parent;
+      if (parent instanceof Splitter psplitter) {
         if (psplitter.getFirstComponent() == root) {
           psplitter.setFirstComponent(splitter);
         }
@@ -172,14 +171,14 @@ public final class GuiUtils {
     if (component instanceof JPanel) {
       final Border border = ((JPanel)component).getBorder();
       if (border instanceof TitledBorder) {
-        Color color = enabled ? component.getForeground() : UIUtil.getInactiveTextColor();
+        Color color;
+        color = enabled ? component.getForeground() : NamedColorUtil.getInactiveTextColor();
         ((TitledBorder)border).setTitleColor(color);
       }
     }
-    else if (component instanceof JLabel) {
-      Color color = UIUtil.getInactiveTextColor();
+    else if (component instanceof JLabel label) {
+      Color color = NamedColorUtil.getInactiveTextColor();
       @NonNls String changeColorString = "<font color=#" + colorToHex(color) + ">";
-      final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
         if (StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && enabled) {
@@ -210,8 +209,7 @@ public final class GuiUtils {
    * @deprecated Use {@link Application#invokeAndWait}
    */
   @SuppressWarnings("RedundantThrows")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void runOrInvokeAndWait(@NotNull Runnable runnable) throws InvocationTargetException, InterruptedException {
     ApplicationManager.getApplication().invokeAndWait(runnable);
   }
@@ -219,8 +217,7 @@ public final class GuiUtils {
   /**
    * @deprecated Use ModalityUiUtil instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
@@ -234,8 +231,7 @@ public final class GuiUtils {
   /**
    * @deprecated Use ModalityUiUtil instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {

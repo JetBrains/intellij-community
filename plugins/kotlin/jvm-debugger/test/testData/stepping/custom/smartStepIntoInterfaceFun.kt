@@ -26,3 +26,5 @@ fun main(args: Array<String>) {
     //Breakpoint!
     simple.act2(1)
 }
+
+// IGNORE_K2

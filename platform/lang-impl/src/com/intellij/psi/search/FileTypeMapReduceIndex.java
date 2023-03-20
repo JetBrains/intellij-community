@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,23 +7,26 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
-class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> implements FileTypeNameEnumerator {
+class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, VfsAwareMapReduceIndex.IndexerIdHolder>
+  implements FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImpl.class);
   private PersistentStringEnumerator myFileTypeNameEnumerator;
 
   FileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                          @NotNull VfsAwareIndexStorageLayout<FileType, Void> layout) throws IOException {
-    super(extension, layout, null);
+    super(extension, layout);
     myFileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 
@@ -62,7 +65,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> i
   protected void doClear() throws StorageException, IOException {
     super.doClear();
     IOUtil.closeSafe(LOG, myFileTypeNameEnumerator);
-    IOUtil.deleteAllFilesStartingWith(getFileTypeNameEnumeratorPath().toFile());
+    IOUtil.deleteAllFilesStartingWith(getFileTypeNameEnumeratorPath());
     myFileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 
@@ -72,13 +75,13 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> i
   }
 
   @Override
-  public String getFileTypeName(int id) throws IOException {
+  public @Nullable String getFileTypeName(int id) throws IOException {
     return myFileTypeNameEnumerator.valueOf(id);
   }
 
   @NotNull
   private static PersistentStringEnumerator createFileTypeNameEnumerator() throws IOException {
-    return new PersistentStringEnumerator(getFileTypeNameEnumeratorPath(),  128, true, new StorageLockContext(true));
+    return new PersistentStringEnumerator(getFileTypeNameEnumeratorPath(),  128, true, new StorageLockContext());
   }
 
   private static @NotNull Path getFileTypeNameEnumeratorPath() throws IOException {

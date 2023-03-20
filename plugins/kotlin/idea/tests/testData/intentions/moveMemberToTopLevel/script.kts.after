@@ -1,0 +1,6 @@
+// RUNTIME_WITH_SCRIPT_RUNTIME
+object Foo {
+    val a = 1
+}
+
+fun foo() = 1

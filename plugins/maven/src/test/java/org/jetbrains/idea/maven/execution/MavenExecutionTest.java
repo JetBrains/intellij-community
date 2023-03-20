@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.maven.testFramework.MavenExecutionTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -51,9 +52,10 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     });
 
     WriteAction.computeAndWait(()->
-        createProjectPom("<groupId>test</groupId>" +
-                         "<artifactId>project</artifactId>" +
-                         "<version>1</version>")
+        createProjectPom("""
+                           <groupId>test</groupId>
+                           <artifactId>project</artifactId>
+                           <version>1</version>""")
     );
 
     assertFalse(new File(getProjectPath(), "target").exists());
@@ -70,9 +72,11 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     WriteAction.runAndWait(() -> {
       createStdProjectFolders();
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """);
 
       createProjectSubDirs("target/generated-sources/foo",
                            "target/bar");

@@ -44,7 +44,7 @@ public class SingleClassImportInspection extends BaseInspection {
   private static class SingleClassImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitImportStatement(PsiImportStatement statement) {
+    public void visitImportStatement(@NotNull PsiImportStatement statement) {
       super.visitImportStatement(statement);
       if (!statement.isOnDemand()) {
         registerError(statement);

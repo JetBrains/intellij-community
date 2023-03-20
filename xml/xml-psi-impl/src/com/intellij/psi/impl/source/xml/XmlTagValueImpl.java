@@ -135,11 +135,9 @@ public class XmlTagValueImpl implements XmlTagValue{
         }
       }
 
-      if(myElements.length > 0){
-        for (final XmlTagChild child : myElements) {
-          if (child != text) {
-            child.delete();
-          }
+      for (final XmlTagChild child : myElements) {
+        if (child != text) {
+          child.delete();
         }
       }
     }

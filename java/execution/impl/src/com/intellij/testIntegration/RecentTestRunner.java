@@ -48,14 +48,10 @@ class RecentTestRunnerImpl implements RecentTestRunner {
 
   @Override
   public void setMode(Mode mode) {
-    switch (mode) {
-      case RUN:
-        myCurrentAction = RUN;
-        break;
-      case DEBUG:
-        myCurrentAction = DEBUG;
-        break;
-    }
+    myCurrentAction = switch (mode) {
+      case RUN -> RUN;
+      case DEBUG -> DEBUG;
+    };
   }
 
   RecentTestRunnerImpl(TestLocator testLocator) {

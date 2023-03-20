@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
@@ -27,11 +28,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection {
 
@@ -54,12 +56,10 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.option"), "ignoreGetMessage");
-    panel.addCheckbox(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.cant.wrap.option"), "ignoreCantWrap");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreGetMessage", InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.option")),
+      checkbox("ignoreCantWrap", InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.cant.wrap.option")));
   }
 
   @Override
@@ -70,7 +70,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
   private class ExceptionFromCatchWhichDoesntWrapVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiCatchSection catchSection = PsiTreeUtil.getParentOfType(statement, PsiCatchSection.class, true, PsiClass.class);
       if (catchSection == null) {
@@ -90,8 +90,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
       }
       if (ignoreCantWrap) {
         final PsiType thrownType = exception.getType();
-        if (thrownType instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)thrownType;
+        if (thrownType instanceof PsiClassType classType) {
           final PsiClass exceptionClass = classType.resolve();
           if (exceptionClass != null) {
             final PsiMethod[] constructors = exceptionClass.getConstructors();
@@ -135,15 +134,26 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (argumentsContainCatchParameter || !visited.add(expression)) {
         return;
       }
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
-      if (!parameter.equals(target)) {
-        if (target instanceof PsiLocalVariable) {
-          final PsiLocalVariable variable = (PsiLocalVariable)target;
+      if (parameter.equals(target)) {
+        if (!ignoreGetMessage) {
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiReferenceExpression) {
+            final PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiMethodCallExpression) {
+              return;
+            }
+          }
+        }
+        argumentsContainCatchParameter = true;
+      }
+      else {
+        if (target instanceof PsiLocalVariable variable) {
           final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope(), false);
           query.forEach(reference -> {
             final PsiElement element = reference.getElement();
@@ -152,10 +162,9 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
               return true;
             }
             final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiMethodCallExpression)) {
+            if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
               return true;
             }
-            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
             final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             for (PsiExpression argument : arguments) {
@@ -168,18 +177,26 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
             initializer.accept(this);
           }
         }
-        return;
-      }
-      if (!ignoreGetMessage) {
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiReferenceExpression) {
-          final PsiElement grandParent = parent.getParent();
-          if (grandParent instanceof PsiMethodCallExpression) {
+        else if (target instanceof PsiPatternVariable) {
+          final PsiElement pattern = target.getParent();
+          if (!(pattern instanceof PsiTypeTestPattern)) {
             return;
+          }
+          final PsiElement parent = JavaPsiPatternUtil.skipParenthesizedPatternUp(pattern.getParent());
+          if (parent instanceof PsiInstanceOfExpression instanceOfExpression) {
+            instanceOfExpression.getOperand().accept(this);
+          }
+          else if (parent instanceof PsiCaseLabelElementList && parent.getParent() instanceof PsiSwitchLabelStatementBase label) {
+            PsiSwitchBlock switchBlock = label.getEnclosingSwitchBlock();
+            if (switchBlock != null) {
+              PsiExpression selector = switchBlock.getExpression();
+              if (selector != null) {
+                selector.accept(this);
+              }
+            }
           }
         }
       }
-      argumentsContainCatchParameter = true;
     }
 
     boolean usesParameter() {

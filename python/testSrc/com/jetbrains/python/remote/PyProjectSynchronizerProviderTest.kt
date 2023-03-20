@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote
 
 import com.intellij.openapi.module.Module
@@ -11,8 +11,8 @@ import com.intellij.remote.ext.RemoteCredentialsHandler
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.TestApplicationManager
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.util.function.Consumer
 
 class PyProjectSynchronizerProviderTest : LightPlatformTestCase() {
@@ -45,7 +45,7 @@ class PyProjectSynchronizerProviderTest : LightPlatformTestCase() {
     `when`(unsupportedRemoteSdkAdditionalData.remoteConnectionType).thenReturn(TestCredentialsType.INSTANCE)
     `when`(sdk.sdkAdditionalData).thenReturn(unsupportedRemoteSdkAdditionalData)
 
-    PyProjectSynchronizerProvider.EP_NAME.getPoint().registerExtension(PyTestProjectSynchronizerProvider(), testRootDisposable)
+    PyProjectSynchronizerProvider.EP_NAME.point.registerExtension(PyTestProjectSynchronizerProvider(), testRootDisposable)
 
     assertEquals(PyTestProjectSynchronizer.INSTANCE, PyProjectSynchronizerProvider.getSynchronizer(sdk))
   }
@@ -74,16 +74,16 @@ class PyProjectSynchronizerProviderTest : LightPlatformTestCase() {
   }
 
   private class PyTestProjectSynchronizer private constructor() : PyProjectSynchronizer {
-    override fun checkSynchronizationAvailable(syncCheckStrategy: PySyncCheckStrategy): String? = throwUnsupportedOperationException()
+    override fun checkSynchronizationAvailable(syncCheckStrategy: PySyncCheckStrategy): String = throwUnsupportedOperationException()
 
-    override fun getDefaultRemotePath(): String? = throwUnsupportedOperationException()
+    override fun getDefaultRemotePath(): String = throwUnsupportedOperationException()
 
     override fun syncProject(module: Module,
                              syncDirection: PySyncDirection,
                              callback: Consumer<Boolean>?,
                              vararg fileNames: String) = throwUnsupportedOperationException()
 
-    override fun mapFilePath(project: Project, direction: PySyncDirection, filePath: String): String? = throwUnsupportedOperationException()
+    override fun mapFilePath(project: Project, direction: PySyncDirection, filePath: String): String = throwUnsupportedOperationException()
 
     companion object {
       val INSTANCE = PyTestProjectSynchronizer()

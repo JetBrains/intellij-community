@@ -1,4 +1,4 @@
-// "Assert 'foo != null'" "true"
+// "Assert 'foo != null'" "true-preview"
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.refactoring.ui
 
 import com.intellij.openapi.editor.Document
@@ -25,8 +25,9 @@ class KotlinTypeReferenceEditorComboWithBrowseButton(
 ), TextAccessor {
     companion object {
         private fun createDocument(text: String?, contextElement: PsiElement): Document? {
-            val codeFragment = KtPsiFactory(contextElement).createTypeCodeFragment(text ?: "", contextElement)
-            return PsiDocumentManager.getInstance(contextElement.project).getDocument(codeFragment)
+            val project = contextElement.project
+            val codeFragment = KtPsiFactory(project).createTypeCodeFragment(text ?: "", contextElement)
+            return PsiDocumentManager.getInstance(project).getDocument(codeFragment)
         }
     }
 

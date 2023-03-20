@@ -1,4 +1,4 @@
-// "Replace with 'new Object[]{b}'" "true"
+// "Replace with 'new Object[]{b}'" "true-preview"
 
 class Test {
   static void bar(boolean flag) {

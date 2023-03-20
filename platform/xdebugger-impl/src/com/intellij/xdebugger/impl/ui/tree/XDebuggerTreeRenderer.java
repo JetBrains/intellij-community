@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     myIconTag = node.getIconTag();
 
     Rectangle treeVisibleRect = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
-    int rowX = getNodeRowX(tree, row);
+    int rowX = getNodeRowX(tree, row) + tree.getInsets().left;
 
     // Renderer is not in the hierarchy yet, so we need to set FRC etc. manually
     AppUIUtil.targetToDevice(this, tree);
@@ -81,7 +81,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
-    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, false, selected);
+    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, false, selected);
   }
 
   private void updateIcon(XDebuggerTreeNode node) {

@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 @State(name = "TerminalCommandHistoryManager", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
 public final class TerminalCommandHistoryManager implements PersistentStateComponent<TerminalCommandHistoryManager.State> {
 
-  private static final Logger LOG = Logger.getInstance(TerminalArrangementManager.class);
+  private static final Logger LOG = Logger.getInstance(TerminalCommandHistoryManager.class);
   private static final AtomicBoolean PRUNE_SCHEDULED = new AtomicBoolean(false);
 
   private final Map<String, CommandHistoryFileInfo> myMap = new ConcurrentHashMap<>();
@@ -87,7 +87,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
       return dir;
     }
     if (Files.exists(dir)) {
-      LOG.warn("Not a directory " + dir.toString());
+      LOG.warn("Not a directory " + dir);
       return null;
     }
     deleteOldHistoryDir();
@@ -96,7 +96,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
       return dir;
     }
     catch (IOException e) {
-      LOG.warn("Cannot create " + dir.toString(), e);
+      LOG.warn("Cannot create " + dir, e);
       return null;
     }
   }
@@ -220,7 +220,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
     deleteHistoryFiles(toRemove, "outdated sessions");
   }
 
-  public static @NotNull String getFilename(@NotNull Path path) {
+  private static @NotNull String getFilename(@NotNull Path path) {
     return PathUtil.getFileName(path.toString());
   }
 

@@ -26,8 +26,10 @@ public abstract class LazyUiDisposable<T> implements Activatable {
     myUI = new AtomicReference<>(ui);
     myParent = parent;
     myChild = child;
+  }
 
-    new UiNotifyConnector.Once(ui, this);
+  public void setupListeners() {
+    UiNotifyConnector.Once.installOn(myUI.get(), this);
   }
 
   @Override

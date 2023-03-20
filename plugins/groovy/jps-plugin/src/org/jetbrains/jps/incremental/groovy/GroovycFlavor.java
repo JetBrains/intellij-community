@@ -21,9 +21,6 @@ import org.jetbrains.jps.incremental.CompileContext;
 import java.io.File;
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public interface GroovycFlavor {
   @Nullable
   GroovycContinuation runGroovyc(Collection<String> compilationClassPath,

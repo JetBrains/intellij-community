@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -22,9 +23,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public final class ModelMergerImpl implements ModelMerger {
   private final List<Pair<InvocationStrategy, Class<?>>> myInvocationStrategies = new ArrayList<>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<>();
@@ -72,7 +70,7 @@ public final class ModelMergerImpl implements ModelMerger {
 
         final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
         assert type != null : "No generic return type in method " + method;
-        return getMergedImplementations(method.getMethod(), args, ReflectionUtil.getRawType(type), implementations,
+        return getMergedImplementations(method.getMethod(), args, ClassUtil.getRawType(type), implementations,
                                         isIntersectionMethod(method));
       }
     });

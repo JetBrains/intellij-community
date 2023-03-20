@@ -6,8 +6,11 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.json.*;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonDialectUtil;
+import com.intellij.json.JsonElementTypes;
+import com.intellij.json.JsonLanguage;
 import com.intellij.json.jsonLines.JsonLinesFileType;
 import com.intellij.json.psi.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -22,7 +25,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * Compliance checks include
@@ -56,9 +60,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     return new StandardJsonValidatingElementVisitor(holder);
   }
 
-  @Nullable
-  private static PsiElement findTrailingComma(@NotNull JsonContainer container, @NotNull IElementType ending) {
-    final PsiElement lastChild = container.getLastChild();
+  protected static @Nullable PsiElement findTrailingComma(@NotNull PsiElement lastChild, @NotNull IElementType ending) {
     if (lastChild.getNode().getElementType() != ending) {
       return null;
     }
@@ -69,15 +71,35 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     return null;
   }
 
-
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.comments"), "myWarnAboutComments");
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.multiple.top.level.values"), "myWarnAboutMultipleTopLevelValues");
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.trailing.comma"), "myWarnAboutTrailingCommas");
-    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.nan.infinity"), "myWarnAboutNanInfinity");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myWarnAboutComments", JsonBundle.message("inspection.compliance.option.comments")),
+      checkbox("myWarnAboutMultipleTopLevelValues", JsonBundle.message("inspection.compliance.option.multiple.top.level.values")),
+      checkbox("myWarnAboutTrailingCommas", JsonBundle.message("inspection.compliance.option.trailing.comma")),
+      checkbox("myWarnAboutNanInfinity", JsonBundle.message("inspection.compliance.option.nan.infinity")));
+  }
+
+  protected static @NotNull String escapeSingleQuotedStringContent(@NotNull String content) {
+    final StringBuilder result = new StringBuilder();
+    boolean nextCharEscaped = false;
+    for (int i = 0; i < content.length(); i++) {
+      final char c = content.charAt(i);
+      if ((nextCharEscaped && c != '\'') || (!nextCharEscaped && c == '"')) {
+        result.append('\\');
+      }
+      if (c != '\\' || nextCharEscaped) {
+        result.append(c);
+        nextCharEscaped = false;
+      }
+      else {
+        nextCharEscaped = true;
+      }
+    }
+    if (nextCharEscaped) {
+      result.append('\\');
+    }
+    return result.toString();
   }
 
   private static class AddDoubleQuotesFix implements LocalQuickFix {
@@ -103,29 +125,6 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         Logger.getInstance(JsonStandardComplianceInspection.class)
           .error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
       }
-    }
-
-    @NotNull
-    private static String escapeSingleQuotedStringContent(@NotNull String content) {
-      final StringBuilder result = new StringBuilder();
-      boolean nextCharEscaped = false;
-      for (int i = 0; i < content.length(); i++) {
-        final char c = content.charAt(i);
-        if ((nextCharEscaped && c != '\'') || (!nextCharEscaped && c == '"')) {
-          result.append('\\');
-        }
-        if (c != '\\' || nextCharEscaped) {
-          result.append(c);
-          nextCharEscaped = false;
-        }
-        else {
-          nextCharEscaped = true;
-        }
-      }
-      if (nextCharEscaped) {
-        result.append('\\');
-      }
-      return result.toString();
     }
   }
 
@@ -201,7 +200,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitArray(@NotNull JsonArray array) {
       if (myWarnAboutTrailingCommas && !allowTrailingCommas() &&
           JsonStandardComplianceProvider.shouldWarnAboutTrailingComma(array)) {
-        final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
+        final PsiElement trailingComma = findTrailingComma(array.getLastChild(), JsonElementTypes.R_BRACKET);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
         }
@@ -213,7 +212,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitObject(@NotNull JsonObject object) {
       if (myWarnAboutTrailingCommas && !allowTrailingCommas() &&
           JsonStandardComplianceProvider.shouldWarnAboutTrailingComma(object)) {
-        final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
+        final PsiElement trailingComma = findTrailingComma(object.getLastChild(), JsonElementTypes.R_CURLY);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
         }
@@ -223,8 +222,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
     @Override
     public void visitValue(@NotNull JsonValue value) {
-      if (value.getContainingFile() instanceof JsonFile) {
-        final JsonFile jsonFile = (JsonFile)value.getContainingFile();
+      if (value.getContainingFile() instanceof JsonFile jsonFile) {
         if (myWarnAboutMultipleTopLevelValues &&
             value.getParent() == jsonFile &&
             value != jsonFile.getTopLevelValue() &&

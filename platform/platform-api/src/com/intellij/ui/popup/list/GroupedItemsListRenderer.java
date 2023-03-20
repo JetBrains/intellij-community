@@ -16,11 +16,14 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,10 +47,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
   @Override
   public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
     String caption = myDescriptor.getCaptionAboveOf(value);
-    boolean hasSeparator = myDescriptor.hasSeparatorAboveOf(value);
-    if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
-    if (hasSeparator) setSeparatorFont(list.getFont());
-
+    boolean hasSeparator = hasSeparator(value, index);
     Icon icon = getItemIcon(value, isSelected);
     final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
                                                  icon, icon, isSelected, hasSeparator,
@@ -55,7 +55,21 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     myCurrentIndex = index;
     myRendererComponent.setBackground(list.getBackground());
     customizeComponent(list, value, isSelected);
+
+    if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
+      selectablePanel.setSelectionColor(isSelected ? JBUI.CurrentTheme.List.background(true, true) : null);
+    }
+
     return result;
+  }
+
+  @ApiStatus.Internal
+  protected boolean hasSeparator(E value, int index) {
+    String caption = myDescriptor.getCaptionAboveOf(value);
+    if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) {
+      return false;
+    }
+    return myDescriptor.hasSeparatorAboveOf(value);
   }
 
   @Nullable
@@ -71,16 +85,26 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
 
   protected void createLabel() {
     myTextLabel = new ErrorLabel();
-    myTextLabel.setBorder(JBUI.Borders.emptyBottom(1));
+    myTextLabel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.emptyBottom(1));
     myTextLabel.setOpaque(true);
   }
 
   protected JComponent layoutComponent(JComponent middleItemComponent) {
     myNextStepLabel = new JLabel();
     myNextStepLabel.setOpaque(false);
-    return JBUI.Panels.simplePanel(middleItemComponent)
-      .addToRight(myNextStepLabel)
-      .withBorder(getDefaultItemComponentBorder());
+
+    if (ExperimentalUI.isNewUI()) {
+      SelectablePanel result = SelectablePanel.wrap(middleItemComponent);
+      PopupUtil.configListRendererFlexibleHeight(result);
+      result.add(myNextStepLabel, BorderLayout.EAST);
+      return result;
+    }
+    else {
+      return JBUI.Panels.simplePanel(middleItemComponent)
+        .addToRight(myNextStepLabel)
+        .withBorder(getDefaultItemComponentBorder());
+
+    }
   }
 
   protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {

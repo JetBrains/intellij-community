@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +16,6 @@ import java.util.function.Supplier;
  * Represents a language level (i.e. features available) of a Java code.
  * The {@link org.jetbrains.jps.model.java.LanguageLevel} class is a compiler-side counterpart of this enum.
  *
- * @author dsl
  * @see LanguageLevelProjectExtension
  * @see LanguageLevelModuleExtension
  * @see JavaSdkVersion
@@ -37,13 +35,20 @@ public enum LanguageLevel {
   JDK_14(JavaPsiBundle.messagePointer("jdk.14.language.level.description"), 14),
   JDK_15(JavaPsiBundle.messagePointer("jdk.15.language.level.description"), 15),
   JDK_16(JavaPsiBundle.messagePointer("jdk.16.language.level.description"), 16),
-  JDK_16_PREVIEW(JavaPsiBundle.messagePointer("jdk.16.preview.language.level.description"), 16),
   JDK_17(JavaPsiBundle.messagePointer("jdk.17.language.level.description"), 17),
   JDK_17_PREVIEW(JavaPsiBundle.messagePointer("jdk.17.preview.language.level.description"), 17),
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 18);
+  JDK_18(JavaPsiBundle.messagePointer("jdk.18.language.level.description"), 18),
+  JDK_18_PREVIEW(JavaPsiBundle.messagePointer("jdk.18.preview.language.level.description"), 18),
+  JDK_19(JavaPsiBundle.messagePointer("jdk.19.language.level.description"), 19),
+  JDK_19_PREVIEW(JavaPsiBundle.messagePointer("jdk.19.preview.language.level.description"), 19),
+  JDK_20(JavaPsiBundle.messagePointer("jdk.20.language.level.description"), 20),
+  JDK_20_PREVIEW(JavaPsiBundle.messagePointer("jdk.20.preview.language.level.description"), 20),
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 21);
 
-  public static final LanguageLevel HIGHEST = JDK_17;
-  public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
+  /**
+   * Should point to the last released JDK.
+   */
+  public static final LanguageLevel HIGHEST = JDK_19;
 
   private final Supplier<@Nls String> myPresentableText;
   private final JavaVersion myVersion;

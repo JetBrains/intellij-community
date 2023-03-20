@@ -65,14 +65,12 @@ public class ReDoSInspection extends LocalInspectionTool {
 
     private static boolean isAtomic(RegExpAtom element) {
       while (element != null) {
-        if (element instanceof RegExpClosure) {
-          final RegExpClosure closure = (RegExpClosure)element;
+        if (element instanceof RegExpClosure closure) {
           if (closure.getQuantifier().isPossessive()) {
             return true;
           }
         }
-        else if (element instanceof RegExpGroup) {
-          final RegExpGroup group = (RegExpGroup)element;
+        else if (element instanceof RegExpGroup group) {
           if (group.getType() == RegExpGroup.Type.ATOMIC) {
             return true;
           }

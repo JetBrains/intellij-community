@@ -8,22 +8,22 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-final class EmptyFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class EmptyFMap<K, V> implements FMap<K, V> {
 
   static final EmptyFMap<?, ?> INSTANCE = new EmptyFMap<>();
 
   @Override
-  public @NotNull FMap<K, V> plus(K key, V value) {
+  public @NotNull FMap<K, V> plus(@NotNull K key, @NotNull V value) {
     return new OneKeyFMap<>(key, value);
   }
 
   @Override
-  public @NotNull FMap<K, V> minus(K key) {
+  public @NotNull FMap<K, V> minus(@NotNull K key) {
     return this;
   }
 
   @Override
-  public @Nullable V get(K key) {
+  public @Nullable V get(@NotNull K key) {
     return null;
   }
 

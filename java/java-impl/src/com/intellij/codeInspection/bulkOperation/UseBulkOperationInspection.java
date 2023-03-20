@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -24,8 +24,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.regex.Pattern;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
@@ -39,11 +41,10 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
 
   public boolean USE_ARRAYS_AS_LIST = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.replace.with.bulk.wrap.arrays"), this,
-                                          "USE_ARRAYS_AS_LIST");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("USE_ARRAYS_AS_LIST", JavaBundle.message("inspection.replace.with.bulk.wrap.arrays")));
   }
 
   @Nullable
@@ -60,13 +61,10 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     if (parent instanceof PsiLambdaExpression) {
       return findIterableForLambda((PsiLambdaExpression)parent, args, info);
     }
-    if (parent instanceof PsiExpressionStatement) {
-      PsiExpressionStatement expressionStatement = (PsiExpressionStatement)parent;
-      if (expressionStatement.getParent() instanceof PsiCodeBlock) {
-        PsiCodeBlock codeBlock = (PsiCodeBlock)expressionStatement.getParent();
+    if (parent instanceof PsiExpressionStatement expressionStatement) {
+      if (expressionStatement.getParent() instanceof PsiCodeBlock codeBlock) {
         PsiStatement[] statements = codeBlock.getStatements();
-        if (codeBlock.getParent() instanceof PsiBlockStatement) {
-          PsiBlockStatement blockStatement = (PsiBlockStatement)codeBlock.getParent();
+        if (codeBlock.getParent() instanceof PsiBlockStatement blockStatement) {
           if (statements.length == 1) {
             return findIterableForSingleStatement(blockStatement, args);
           }
@@ -76,7 +74,8 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
             if (declaration != null) {
               if (args.length == 1 && ExpressionUtils.isReferenceTo(args[0], declaration.getNextElementVariable(statements[0]))) {
                 return declaration.getIterable();
-              } else if (args.length == 2) {
+              }
+              else if (args.length == 2) {
                 if (isGetKeyAndGetValue(args, declaration.getNextElementVariable(statements[0]))) {
                   PsiMethodCallExpression entrySetCandidate = ObjectUtils.tryCast(declaration.getIterable(), PsiMethodCallExpression.class);
                   if (MAP_ENTRY_SET.test(entrySetCandidate)) {
@@ -85,13 +84,11 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
                 }
               }
             }
-            if (blockParent instanceof PsiForStatement && statements[0] instanceof PsiDeclarationStatement) {
-              PsiElement[] elements = ((PsiDeclarationStatement)statements[0]).getDeclaredElements();
-              if (elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
-                PsiLocalVariable var = (PsiLocalVariable)elements[0];
-                if (ExpressionUtils.isReferenceTo(args[0], var)) {
-                  return findIterableForIndexedLoop((PsiForStatement)blockParent, var.getInitializer());
-                }
+            if (blockParent instanceof PsiForStatement forStatement &&
+                statements[0] instanceof PsiDeclarationStatement declarationStatement) {
+              PsiElement[] elements = declarationStatement.getDeclaredElements();
+              if (elements.length == 1 && elements[0] instanceof PsiLocalVariable var && ExpressionUtils.isReferenceTo(args[0], var)) {
+                return findIterableForIndexedLoop(forStatement, var.getInitializer());
               }
             }
           }
@@ -136,8 +133,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   private static PsiExpression findIterableForSingleStatement(PsiStatement statement, PsiExpression[] args) {
     assert args.length == 1 || args.length == 2 : "The number of arguments must be either 1 or 2";
     PsiElement parent = statement.getParent();
-    if (parent instanceof PsiForeachStatement) {
-      PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
+    if (parent instanceof PsiForeachStatement foreachStatement) {
       PsiExpression iteratedValue = foreachStatement.getIteratedValue();
       if (args.length == 2) {
         if (isGetKeyAndGetValue(args, foreachStatement.getIterationParameter())) {
@@ -146,7 +142,8 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
             return entrySetCandidate.getMethodExpression().getQualifierExpression();
           }
         }
-      } else if (ExpressionUtils.isReferenceTo(args[0], foreachStatement.getIterationParameter())) {
+      }
+      else if (ExpressionUtils.isReferenceTo(args[0], foreachStatement.getIterationParameter())) {
         return iteratedValue;
       }
     }
@@ -163,12 +160,8 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   @Nullable
-  public static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
-    return findIterableForIndexedLoop(CountingLoop.from(loop), getElementExpression);
-  }
-
-  @Nullable
-  public static PsiExpression findIterableForIndexedLoop(CountingLoop countingLoop, PsiExpression getElementExpression) {
+  private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
+    CountingLoop countingLoop = CountingLoop.from(loop);
     if (countingLoop == null ||
         countingLoop.isIncluding() ||
         countingLoop.isDescending() ||
@@ -190,8 +183,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
     PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
     if (args.length != 1) return null;
     parent = parent.getParent();
-    if (!(parent instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression parentCall = (PsiMethodCallExpression)parent;
+    if (!(parent instanceof PsiMethodCallExpression parentCall)) return null;
     PsiExpression parentQualifier = PsiUtil.skipParenthesizedExprDown(parentCall.getMethodExpression().getQualifierExpression());
     if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_LANG_ITERABLE, null, "forEach", new PsiType[]{null})) {
       PsiMethodCallExpression entrySetCandidate = ObjectUtils.tryCast(parentQualifier, PsiMethodCallExpression.class);
@@ -203,8 +195,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       return ExpressionUtils.getEffectiveQualifier(parentCall.getMethodExpression());
     }
     if (MethodCallUtils.isCallToMethod(parentCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, null, FOR_EACH_METHOD, new PsiType[]{null}) &&
-        parentQualifier instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression grandParentCall = (PsiMethodCallExpression)parentQualifier;
+        parentQualifier instanceof PsiMethodCallExpression grandParentCall) {
       if (MethodCallUtils.isCallToMethod(grandParentCall, CommonClassNames.JAVA_UTIL_COLLECTION, null, "stream", PsiType.EMPTY_ARRAY)) {
         return ExpressionUtils.getEffectiveQualifier(grandParentCall.getMethodExpression());
       }
@@ -230,7 +221,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         BulkMethodInfo info = findInfo(call.getMethodExpression());
         if (info == null) return;
@@ -241,7 +232,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReference) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodReference) {
         super.visitMethodReferenceExpression(methodReference);
         BulkMethodInfo info = findInfo(methodReference);
         if (info == null) return;
@@ -280,6 +271,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static class UseBulkOperationFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final BulkMethodInfo myInfo;
 
     UseBulkOperationFix(BulkMethodInfo info) {
@@ -316,7 +308,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
         iterable = findIterable((PsiMethodCallExpression)parent, myInfo);
       }
       if (iterable == null) return;
-      PsiElement parent = RefactoringUtil.getParentStatement(iterable, false);
+      PsiElement parent = CommonJavaRefactoringUtil.getParentStatement(iterable, false);
       if (parent == null) return;
       CommentTracker ct = new CommentTracker();
       String iterableText = calculateIterableText(iterable, ct);

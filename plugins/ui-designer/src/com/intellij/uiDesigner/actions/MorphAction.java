@@ -136,8 +136,7 @@ public class MorphAction extends AbstractGuiEditorAction {
       public boolean visit(final IComponent component) {
         RadComponent rc = (RadComponent) component;
         for(IProperty p: component.getModifiedProperties()) {
-          if (p instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty) p;
+          if (p instanceof IntroComponentProperty icp) {
             final String value = icp.getValue(rc);
             if (value.equals(c.getId())) {
               try {

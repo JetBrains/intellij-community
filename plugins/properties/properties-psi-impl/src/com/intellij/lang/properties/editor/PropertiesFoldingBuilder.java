@@ -18,7 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.properties.parsing.PropertiesElementTypes;
+import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class PropertiesFoldingBuilder extends CustomFoldingBuilder {
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
@@ -49,6 +46,6 @@ public class PropertiesFoldingBuilder extends CustomFoldingBuilder {
 
   @Override
   protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
-    return node.getElementType() == PropertiesElementTypes.FILE;
+    return node.getElementType() == PropertiesParserDefinition.FILE_ELEMENT_TYPE;
   }
 }

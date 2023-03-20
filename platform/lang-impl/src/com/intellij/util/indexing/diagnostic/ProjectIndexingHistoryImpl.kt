@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.impl.ProgressSuspender
+import com.intellij.openapi.progress.impl.ProgressSuspender.SuspenderListener
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
@@ -19,7 +22,7 @@ import kotlin.reflect.KMutableProperty1
 @ApiStatus.Internal
 data class ProjectIndexingHistoryImpl(override val project: Project,
                                       override val indexingReason: String?,
-                                      private val wasFullIndexing: Boolean) : ProjectIndexingHistory {
+                                      private val scanningType: ScanningType) : ProjectIndexingHistory {
   private companion object {
     val indexingSessionIdSequencer = AtomicLong()
     val log = thisLogger()
@@ -31,7 +34,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   override val times: IndexingTimes by ::timesImpl
 
-  private val timesImpl = IndexingTimesImpl(indexingReason = indexingReason, wasFullIndexing = wasFullIndexing,
+  private val timesImpl = IndexingTimesImpl(indexingReason = indexingReason, scanningType = scanningType,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
@@ -42,15 +45,17 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   override val totalStatsPerIndexer = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
 
+  override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
+
   private val events = mutableListOf<Event>()
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
     scanningStatistics += statistics.toJsonStatistics()
   }
 
-  fun addProviderStatistics(statistics: IndexingJobStatistics) {
+  fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
     // Convert to Json to release memory occupied by statistic values.
-    providerStatistics += statistics.toJsonStatistics()
+    providerStatistics += statistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio)
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
@@ -77,7 +82,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
           totalNumberOfFiles = 0,
           totalNumberOfFilesIndexedByExtensions = 0,
           totalBytes = 0,
-          totalIndexingTimeInAllThreads = 0,
+          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
           snapshotInputMappingStats = SnapshotInputMappingStatsImpl(
             requests = 0,
             misses = 0
@@ -87,7 +92,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
       totalStats.totalNumberOfFiles += stats.numberOfFiles
       totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
       totalStats.totalBytes += stats.totalBytes
-      totalStats.totalIndexingTimeInAllThreads += stats.indexingTime
+      totalStats.totalIndexValueChangerEvaluationTimeInAllThreads += stats.evaluateIndexValueChangerTime
     }
   }
 
@@ -98,7 +103,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
           totalNumberOfFiles = 0,
           totalNumberOfFilesIndexedByExtensions = 0,
           totalBytes = 0,
-          totalIndexingTimeInAllThreads = 0,
+          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
           snapshotInputMappingStats = SnapshotInputMappingStatsImpl(requests = 0, misses = 0))
       }
       totalStats.snapshotInputMappingStats.requests += mappingsStatistic.totalRequests
@@ -137,6 +142,19 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     }
   }
 
+  fun getSuspendListener(suspender: ProgressSuspender): SuspenderListener = object : SuspenderListener {
+    override fun suspendedStatusChanged(changedSuspender: ProgressSuspender) {
+      if (suspender == changedSuspender) {
+        if (suspender.isSuspended) {
+          suspendStages()
+        }
+        else {
+          stopSuspendingStages()
+        }
+      }
+    }
+  }
+
   fun indexingFinished() {
     writeStagesToDurations()
   }
@@ -156,7 +174,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   /**
    * Some StageEvent may appear between begin and end of suspension, because it actually takes place only on ProgressIndicator's check.
-   * This normalizations moves moment of suspension start from declared to after all other events between it and suspension end:
+   * These normalizations move moment of suspension start from declared to after all other events between it and suspension end:
    * suspended, event1, ..., eventN, unsuspended -> event1, ..., eventN, suspended, unsuspended
    *
    * Suspended and unsuspended events appear only on pairs with none in between.
@@ -169,8 +187,9 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
         when (event) {
           is Event.SuspensionEvent -> {
             if (event.started) {
-              log.assertTrue(suspensionStartTime == null, "Two suspension starts, no stops. Events $events")
-              suspensionStartTime = event.instant
+              if (suspensionStartTime == null) {
+                suspensionStartTime = event.instant
+              }
             }
             else {
               //speculate suspension start as time of last meaningful event, if it ever happened
@@ -247,6 +266,9 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   /** Just a stage, don't have to cover whole indexing period, may intersect **/
   enum class Stage {
+    CreatingIterators {
+      override fun getProperty(): KMutableProperty1<IndexingTimesImpl, Duration> = IndexingTimesImpl::creatingIteratorsDuration
+    },
     Scanning {
       override fun getProperty() = IndexingTimesImpl::scanFilesDuration
     },
@@ -313,22 +335,25 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     override var totalNumberOfFiles: Int,
     override var totalNumberOfFilesIndexedByExtensions: Int,
     override var totalBytes: BytesNumber,
-    override var totalIndexingTimeInAllThreads: TimeNano,
+    override var totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano,
     override var snapshotInputMappingStats: SnapshotInputMappingStatsImpl
   ): StatsPerIndexer
 
   data class IndexingTimesImpl(
     override val indexingReason: String?,
-    override val wasFullIndexing: Boolean,
+    override val scanningType: ScanningType,
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var indexingDuration: Duration = Duration.ZERO,
-    override var contentLoadingDuration: Duration = Duration.ZERO,
+    override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
     override var pushPropertiesDuration: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
+    override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var scanFilesDuration: Duration = Duration.ZERO,
     override var suspendedDuration: Duration = Duration.ZERO,
+    override var appliedAllValuesSeparately: Boolean = true,
+    override var separateValueApplicationVisibleTime: TimeNano = 0,
     override var wasInterrupted: Boolean = false
   ): IndexingTimes
 

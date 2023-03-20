@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.injected.editor.DocumentWindow
@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.refactoring.suggested.range
 import com.intellij.util.DocumentUtil
 import com.intellij.util.io.write
@@ -21,6 +22,7 @@ class FileUpdates(
   val filesToAdd: List<Pair<Path, CharSequence>>,
   val filesToMove: List<Pair<VirtualFile, Path>>,
   val filesToRemove: List<VirtualFile>,
+  val filesToRename: List<Pair<VirtualFile, String>>,
   val documentModifications: List<Pair<RangeMarker, CharSequence>>
 ) {
   fun doUpdate() {
@@ -57,11 +59,21 @@ class FileUpdates(
       }
       val parentPath: Path = path.parent ?: continue
       val parentFile: VirtualFile = VfsUtil.findFile(parentPath, false) ?: continue
-      virtualFile.move(this, parentFile)
+      if (parentFile != virtualFile.parent) {
+        virtualFile.move(this, parentFile)
+      }
       val newFileName: String = path.fileName.toString()
       if (virtualFile.name != newFileName) {
         virtualFile.rename(this, newFileName)
       }
+    }
+
+    for ((virtualFile: VirtualFile, newName: String) in filesToRename) {
+      if (!virtualFile.isValid) {
+        LOG.warn("Cannot apply rename patch: invalid file to rename. File: $virtualFile")
+        continue
+      }
+      virtualFile.rename(this, newName)
     }
 
     for ((path: Path, content: CharSequence) in filesToAdd) {
@@ -111,9 +123,39 @@ class FileUpdates(
           filesToAdd = left.filesToAdd + right.filesToAdd,
           filesToMove = left.filesToMove + right.filesToMove,
           filesToRemove = left.filesToRemove + right.filesToRemove,
+          filesToRename = left.filesToRename + right.filesToRename,
           documentModifications = left.documentModifications + right.documentModifications
         )
       }
+    }
+
+    fun createFileUpdates(fileOperations: Collection<FileOperation>): FileUpdates {
+      ApplicationManager.getApplication().assertReadAccessAllowed()
+
+      val filesToAdd = ArrayList<Pair<Path, CharSequence>>()
+      val filesToMove = ArrayList<Pair<VirtualFile, Path>>()
+      val filesToRemove = ArrayList<VirtualFile>()
+      val filesToRename = ArrayList<Pair<VirtualFile, String>>()
+      val fileModifications = ArrayList<Pair<RangeMarker, CharSequence>>()
+
+      loop@
+      for (fileOperation: FileOperation in fileOperations) {
+        when (fileOperation) {
+          is FileOperation.Add -> filesToAdd += Pair(fileOperation.path, fileOperation.content)
+          is FileOperation.Move -> filesToMove += Pair(fileOperation.file, fileOperation.path)
+          is FileOperation.Remove -> filesToRemove += fileOperation.file
+          is FileOperation.Rename -> filesToRename += Pair(fileOperation.file, fileOperation.newName)
+          is FileOperation.Modify -> {
+            val document: Document = FileDocumentManager.getInstance().getDocument(fileOperation.file.virtualFile) ?: continue@loop
+            for (stringOperation: StringOperation in fileOperation.modifications) {
+              val rangeMarker: RangeMarker = document.createRangeMarker(stringOperation.range)
+              fileModifications += Pair(rangeMarker, stringOperation.replacement)
+            }
+          }
+        }
+      }
+
+      return FileUpdates(filesToAdd, filesToMove, filesToRemove, filesToRename, fileModifications)
     }
   }
 }

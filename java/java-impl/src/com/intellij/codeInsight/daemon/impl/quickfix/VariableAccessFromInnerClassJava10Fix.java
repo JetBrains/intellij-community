@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -13,7 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -43,6 +44,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
   public VariableAccessFromInnerClassJava10Fix(PsiElement context) {
     myContext = context;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new VariableAccessFromInnerClassJava10Fix(PsiTreeUtil.findSameElementInCopy(myContext, target));
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -75,20 +81,17 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!(myContext instanceof PsiReferenceExpression) || !myContext.isValid()) return;
+    if (!(myContext instanceof PsiReferenceExpression referenceExpression) || !myContext.isValid()) return;
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext)) return;
 
-    PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myContext;
     PsiLocalVariable variable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
     if (variable == null) return;
     final String variableText = getFieldText(variable);
 
-    PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(myContext, PsiLambdaExpression.class);
-    if (lambdaExpression == null) return;
     DeclarationInfo declarationInfo = DeclarationInfo.findExistingAnonymousClass(variable);
 
     if (declarationInfo != null) {
-      replaceReferences(variable, declarationInfo.myName);
+      replaceReferences(variable, declarationInfo.name);
       declarationInfo.replace(variableText);
       variable.delete();
       return;
@@ -146,20 +149,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     }
   }
 
-  private static class DeclarationInfo {
-    private final boolean myIsBefore;
-    private final @NotNull PsiLocalVariable myVariable;
-    private final @NotNull String myName;
-
-    DeclarationInfo(boolean isBefore, @NotNull PsiLocalVariable variable, @NotNull String name) {
-      myIsBefore = isBefore;
-      myVariable = variable;
-      myName = name;
-    }
+  private record DeclarationInfo(boolean isBefore, @NotNull PsiLocalVariable variable, @NotNull String name) {
 
     @Nullable
     static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
-      PsiElement varDeclarationStatement = RefactoringUtil.getParentStatement(variable, false);
+      PsiElement varDeclarationStatement = CommonJavaRefactoringUtil.getParentStatement(variable, false);
       if (varDeclarationStatement == null) return null;
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(varDeclarationStatement, PsiStatement.class);
       PsiDeclarationStatement nextDeclarationStatement = tryCast(nextStatement, PsiDeclarationStatement.class);
@@ -171,7 +165,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     }
 
     void replace(@NotNull String variableText) {
-      PsiNewExpression newExpression = (PsiNewExpression)myVariable.getInitializer();
+      PsiNewExpression newExpression = (PsiNewExpression)variable.getInitializer();
       assert newExpression != null;
       PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
       assert anonymousClass != null;
@@ -184,15 +178,15 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
         expressionText.append(child.getText());
       }
       for (PsiElement child = anonymousClass.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (!myIsBefore && child == rBrace) expressionText.append(variableText);
+        if (!isBefore && child == rBrace) expressionText.append(variableText);
         expressionText.append(child.getText());
-        if (myIsBefore && child == lBrace) expressionText.append(variableText);
+        if (isBefore && child == lBrace) expressionText.append(variableText);
       }
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
-      myVariable.setInitializer(factory.createExpressionFromText(expressionText.toString(), myVariable));
-      PsiTypeElement typeElement = myVariable.getTypeElement();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
+      variable.setInitializer(factory.createExpressionFromText(expressionText.toString(), variable));
+      PsiTypeElement typeElement = variable.getTypeElement();
       if (!typeElement.isInferredType()) {
-        typeElement.replace(factory.createTypeElementFromText("var", myVariable));
+        typeElement.replace(factory.createTypeElementFromText("var", variable));
       }
     }
 
@@ -228,7 +222,8 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     List<PsiReferenceExpression> references = new SmartList<>();
     outerCodeBlock.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
         if (ExpressionUtils.isReferenceTo(expression, variable)) {
           references.add(expression);
         }

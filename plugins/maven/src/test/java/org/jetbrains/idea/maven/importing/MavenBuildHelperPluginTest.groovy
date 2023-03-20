@@ -15,12 +15,9 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenBuildHelperPluginTest extends MavenDomTestCase {
   @Test
   void testCompletion() {

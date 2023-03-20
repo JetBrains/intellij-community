@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -10,13 +10,19 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.sun.jdi.*
 import com.sun.jdi.Value
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
 import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
@@ -29,25 +35,22 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
-import org.jetbrains.kotlin.idea.core.util.attachmentByPsiFile
-import org.jetbrains.kotlin.idea.core.util.mergeAttachments
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus.EvaluationContextLanguage
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.Companion.compileCodeFragmentCacheAware
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
+import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.ClassLoadingResult
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
-import org.jetbrains.kotlin.idea.debugger.safeLocation
-import org.jetbrains.kotlin.idea.debugger.safeMethod
-import org.jetbrains.kotlin.idea.debugger.safeVisibleVariableByName
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
+import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -57,6 +60,7 @@ import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import org.jetbrains.eval4j.Value as Eval4JValue
 
 internal val LOG = Logger.getInstance(KotlinEvaluator::class.java)
@@ -85,87 +89,45 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             return context.debugProcess.virtualMachineProxy.mirrorOfVoid()
         }
 
-        val status = EvaluationStatus()
-
-        val evaluationType = codeFragment.getUserData(KotlinCodeFragmentFactory.EVALUATION_TYPE)
-        if (evaluationType != null) {
-            status.evaluationType(evaluationType)
-        }
-
-        val language = runReadAction {
-            when {
-                codeFragment.getCopyableUserData(KtCodeFragment.FAKE_CONTEXT_FOR_JAVA_FILE) != null -> EvaluationContextLanguage.Java
-                codeFragment.context?.language == KotlinLanguage.INSTANCE -> EvaluationContextLanguage.Kotlin
-                else -> EvaluationContextLanguage.Other
-            }
-        }
-
-        status.contextLanguage(language)
-
-        try {
-            return evaluateWithStatus(context, status)
-        } finally {
-            status.send()
-        }
-    }
-
-    private fun evaluateWithStatus(context: EvaluationContextImpl, status: EvaluationStatus): Any? {
         runReadAction {
             if (DumbService.getInstance(codeFragment.project).isDumb) {
-                status.error(EvaluationError.DumbMode)
                 evaluationException(KotlinDebuggerEvaluationBundle.message("error.dumb.mode"))
             }
         }
 
         if (!context.debugProcess.isAttached) {
-            status.error(EvaluationError.DebuggerNotAttached)
             throw EvaluateExceptionUtil.PROCESS_EXITED
         }
 
         val frameProxy = context.frameProxy ?: run {
-            status.error(EvaluationError.NoFrameProxy)
             throw EvaluateExceptionUtil.NULL_STACK_FRAME
         }
 
         val operatingThread = context.suspendContext.thread ?: run {
-            status.error(EvaluationError.ThreadNotAvailable)
             evaluationException(KotlinDebuggerEvaluationBundle.message("error.thread.unavailable"))
         }
 
         if (!operatingThread.isSuspended) {
-            status.error(EvaluationError.ThreadNotSuspended)
             evaluationException(KotlinDebuggerEvaluationBundle.message("error.thread.not.suspended"))
         }
 
         try {
             val executionContext = ExecutionContext(context, frameProxy)
-            return evaluateSafe(executionContext, status)
+            return evaluateSafe(executionContext)
         } catch (e: CodeFragmentCodegenException) {
-            status.error(EvaluationError.BackendException)
             evaluationException(e.reason)
         } catch (e: EvaluateException) {
-            val error = if (e.exceptionFromTargetVM != null) {
-                EvaluationError.ExceptionFromEvaluatedCode
-            } else {
-                EvaluationError.EvaluateException
-            }
-
-            status.error(error)
             throw e
         } catch (e: ProcessCanceledException) {
-            status.error(EvaluationError.ProcessCancelledException)
             evaluationException(e)
         } catch (e: Eval4JInterpretingException) {
-            status.error(EvaluationError.InterpretingException)
             evaluationException(e.cause)
         } catch (e: Exception) {
             val isSpecialException = isSpecialException(e)
             if (isSpecialException) {
-                status.error(EvaluationError.SpecialException)
                 evaluationException(e)
             }
 
-            status.error(EvaluationError.GenericException)
             reportError(codeFragment, sourcePosition, e.message ?: KotlinDebuggerEvaluationBundle.message("error.exception.occurred"), e)
 
             val cause = if (e.message != null) ": ${e.message}" else ""
@@ -173,40 +135,49 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun evaluateSafe(context: ExecutionContext, status: EvaluationStatus): Any? {
-        fun compilerFactory(): CompiledDataDescriptor = compileCodeFragment(context, status)
-
-        val (compiledData, _) = compileCodeFragmentCacheAware(codeFragment, sourcePosition, ::compilerFactory, force = false)
+    private fun evaluateSafe(context: ExecutionContext): Any? {
+        val compiledData = getCompiledCodeFragment(context)
 
         val classLoadingResult = loadClassesSafely(context, compiledData.classes)
-        val classLoaderRef = (classLoadingResult as? ClassLoadingResult.Success)?.classLoader
-
-        if (classLoadingResult is ClassLoadingResult.Failure) {
-            status.classLoadingFailed()
-        }
+        val classLoaderRef = classLoadingResult.getOrNull()
 
         val result = if (classLoaderRef != null) {
             try {
-                status.usedEvaluator(EvaluationStatus.EvaluatorType.Bytecode)
-                return evaluateWithCompilation(context, compiledData, classLoaderRef, status)
+                return evaluateWithCompilation(context, compiledData, classLoaderRef)
             } catch (e: Throwable) {
-                status.compilingEvaluatorFailed()
-                LOG.warn("Compiling evaluator failed", e)
-
-                status.usedEvaluator(EvaluationStatus.EvaluatorType.Eval4j)
-                evaluateWithEval4J(context, compiledData, classLoaderRef, status)
+                LOG.warn("Compiling evaluator failed: " + e.message, e)
+                evaluateWithEval4J(context, compiledData, classLoaderRef)
             }
         } else {
-            status.usedEvaluator(EvaluationStatus.EvaluatorType.Eval4j)
-            evaluateWithEval4J(context, compiledData, null, status)
+            evaluateWithEval4J(context, compiledData, null)
         }
 
-        return result.toJdiValue(context, status)
+        return result.toJdiValue(context)
     }
 
-    private fun compileCodeFragment(context: ExecutionContext, status: EvaluationStatus): CompiledDataDescriptor {
+    private fun getCompiledCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
+        val cache = runReadAction {
+            val contextElement = codeFragment.context ?: return@runReadAction null
+            CachedValuesManager.getCachedValue(contextElement) {
+                val storage = ConcurrentHashMap<String, CompiledCodeFragmentData>()
+                CachedValueProvider.Result(ConcurrentFactoryCache(storage), PsiModificationTracker.MODIFICATION_COUNT)
+            }
+        }
+        if (cache == null) return compileCodeFragment(context)
+
+        val key = buildString {
+            appendLine(codeFragment.importsToString())
+            append(codeFragment.text)
+        }
+
+        return cache.get(key) {
+            compileCodeFragment(context)
+        }
+    }
+
+    private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
         val debugProcess = context.debugProcess
-        var analysisResult = analyze(codeFragment, status, debugProcess)
+        var analysisResult = analyze(codeFragment, debugProcess)
         val codeFragmentWasEdited = KotlinCodeFragmentEditor(codeFragment)
             .withToStringWrapper(analysisResult.bindingContext)
             .withSuspendFunctionWrapper(
@@ -218,22 +189,72 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         if (codeFragmentWasEdited) {
             // Repeat analysis for edited code fragment
-            analysisResult = analyze(codeFragment, status, debugProcess)
+            analysisResult = analyze(codeFragment, debugProcess)
         }
 
         analysisResult.illegalSuspendFunCallDiagnostic?.let {
-            reportErrorDiagnostic(it, status)
+            evaluationException(DefaultErrorMessages.render(it))
         }
 
         val (bindingContext, filesToCompile) = runReadAction {
             val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
-            analyzeInlinedFunctions(resolutionFacade, codeFragment, false, analysisResult.bindingContext)
+            try {
+                val filesToCompile = if (!CodeFragmentCompiler.useIRFragmentCompiler()) {
+                    analyzeInlinedFunctions(
+                        resolutionFacade,
+                        codeFragment,
+                        analyzeOnlyReifiedInlineFunctions = false,
+                    )
+                } else {
+                    // The IR Evaluator is sensitive to the analysis order of files in fragment compilation:
+                    // The codeFragment must be passed _last_ to analysis such that the result is stacked at
+                    // the _bottom_ of the composite analysis result.
+                    //
+                    // The situation as seen from here is as follows:
+                    //   1) `analyzeWithAllCompilerChecks` analyze each individual file passed to it separately.
+                    //   2) The individual results are "stacked" on top of each other.
+                    //   3) With distinct files, "stacking on top" is equivalent to "side by side" - there is
+                    //      no overlap in what is analyzed, so the order doesn't matter: the composite analysis
+                    //      result is just a look-up mechanism for convenience.
+                    //   4) Code Fragments perform partial analysis of the context of the fragment, e.g. a
+                    //      breakpoint in a function causes partial analysis of the surrounding function.
+                    //   5) If the surrounding function is _also_ included in the `filesToCompile`, that
+                    //      function will be analyzed more than once: in particular, fresh symbols will be
+                    //      allocated anew upon repeated analysis.
+                    //   6) Now the order of composition is significant: layering the fragment at the bottom
+                    //      ensures code that needs a consistent view of the entire function (i.e. psi2ir)
+                    //      does not mix the fresh, partial view of the function in the fragment analysis with
+                    //      the complete analysis from the separate analysis of the entire file included in the
+                    //      compilation.
+                    //
+                    fun <T> MutableList<T>.moveToLast(element: T) {
+                        removeAll(listOf(element))
+                        add(element)
+                    }
+
+                    gatherProjectFilesDependedOnByFragment(
+                        codeFragment,
+                        analysisResult.bindingContext
+                    ).toMutableList().apply {
+                        moveToLast(codeFragment)
+                    }
+                }
+                val analysis = resolutionFacade.analyzeWithAllCompilerChecks(filesToCompile)
+                Pair(analysis.bindingContext, filesToCompile)
+            } catch (e: IllegalArgumentException) {
+                evaluationException(e.message ?: e.toString())
+            }
         }
 
         val moduleDescriptor = analysisResult.moduleDescriptor
 
-        val result = CodeFragmentCompiler(context, status).compile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
-        return createCompiledDataDescriptor(result, sourcePosition)
+        val result = CodeFragmentCompiler(context).compile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
+
+        if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
+            LOG.debug("Compile bytecode for ${codeFragment.text}")
+        }
+
+        return createCompiledDataDescriptor(result)
     }
 
     private fun isCoroutineScopeAvailable(frameProxy: StackFrameProxy) =
@@ -249,10 +270,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val illegalSuspendFunCallDiagnostic: Diagnostic?
     )
 
-    private fun analyze(codeFragment: KtCodeFragment, status: EvaluationStatus, debugProcess: DebugProcessImpl): ErrorCheckingResult {
+    private fun analyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl): ErrorCheckingResult {
         val result = ReadAction.nonBlocking<Result<ErrorCheckingResult>> {
             try {
-                Result.success(doAnalyze(codeFragment, status, debugProcess))
+                Result.success(doAnalyze(codeFragment, debugProcess))
             } catch (ex: ProcessCanceledException) {
                 throw ex // Restart the action
             } catch (ex: Exception) {
@@ -262,11 +283,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         return result.getOrThrow()
     }
 
-    private fun doAnalyze(codeFragment: KtCodeFragment, status: EvaluationStatus, debugProcess: DebugProcessImpl): ErrorCheckingResult {
+    private fun doAnalyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl): ErrorCheckingResult {
         try {
             AnalyzingUtils.checkForSyntacticErrors(codeFragment)
         } catch (e: IllegalArgumentException) {
-            status.error(EvaluationError.ErrorElementOccurred)
             evaluationException(e.message ?: e.toString())
         }
 
@@ -277,12 +297,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(codeFragment)
 
         if (analysisResult.isError()) {
-            status.error(EvaluationError.FrontendException)
             evaluationException(analysisResult.error)
         }
 
         val bindingContext = analysisResult.bindingContext
-        reportErrorDiagnosticIfAny(status, bindingContext)
+        reportErrorDiagnosticIfAny(bindingContext)
         return ErrorCheckingResult(
             bindingContext,
             analysisResult.moduleDescriptor,
@@ -293,15 +312,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         )
     }
 
-    private fun reportErrorDiagnosticIfAny(status: EvaluationStatus, bindingContext: BindingContext) =
+    private fun reportErrorDiagnosticIfAny(bindingContext: BindingContext) {
         bindingContext.diagnostics
             .filter { it.factory !in IGNORED_DIAGNOSTICS }
             .firstOrNull { it.severity == Severity.ERROR && it.psiElement.containingFile == codeFragment }
-            ?.let { reportErrorDiagnostic(it, status) }
-
-    private fun reportErrorDiagnostic(diagnostic: Diagnostic, status: EvaluationStatus) {
-        status.error(EvaluationError.ErrorsInCode)
-        evaluationException(DefaultErrorMessages.render(diagnostic))
+            ?.let { evaluationException(DefaultErrorMessages.render(it)) }
     }
 
     private fun Diagnostic.isIllegalSuspendFunCallInCodeFragment() =
@@ -310,30 +325,28 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun evaluateWithCompilation(
         context: ExecutionContext,
-        compiledData: CompiledDataDescriptor,
-        classLoader: ClassLoaderReference,
-        status: EvaluationStatus
+        compiledData: CompiledCodeFragmentData,
+        classLoader: ClassLoaderReference
     ): Value? {
-        return runEvaluation(context, compiledData, classLoader, status) { args ->
+        return runEvaluation(context, compiledData, classLoader) { args ->
             val mainClassType = context.findClass(GENERATED_CLASS_NAME, classLoader) as? ClassType
                 ?: error("Can not find class \"$GENERATED_CLASS_NAME\"")
-            val mainMethod = mainClassType.methods().single { it.name() == GENERATED_FUNCTION_NAME }
+            val mainMethod = mainClassType.methods().single { isEvaluationEntryPoint(it.name()) }
             val returnValue = context.invokeMethod(mainClassType, mainMethod, args)
-            EvaluatorValueConverter(context).unref(returnValue)
+            EvaluatorValueConverter.unref(returnValue)
         }
     }
 
     private fun evaluateWithEval4J(
         context: ExecutionContext,
-        compiledData: CompiledDataDescriptor,
-        classLoader: ClassLoaderReference?,
-        status: EvaluationStatus
+        compiledData: CompiledCodeFragmentData,
+        classLoader: ClassLoaderReference?
     ): InterpreterResult {
         val mainClassBytecode = compiledData.mainClass.bytes
         val mainClassAsmNode = ClassNode().apply { ClassReader(mainClassBytecode).accept(this, 0) }
-        val mainMethod = mainClassAsmNode.methods.first { it.name == GENERATED_FUNCTION_NAME }
+        val mainMethod = mainClassAsmNode.methods.first { it.isEvaluationEntryPoint }
 
-        return runEvaluation(context, compiledData, classLoader ?: context.evaluationContext.classLoader, status) { args ->
+        return runEvaluation(context, compiledData, classLoader ?: context.evaluationContext.classLoader) { args ->
             val vm = context.vm.virtualMachine
             val thread = context.suspendContext.thread?.threadReference?.takeIf { it.isSuspended }
                 ?: error("Can not find a thread to run evaluation on")
@@ -357,9 +370,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun <T> runEvaluation(
         context: ExecutionContext,
-        compiledData: CompiledDataDescriptor,
+        compiledData: CompiledCodeFragmentData,
         classLoader: ClassLoaderReference?,
-        status: EvaluationStatus,
         block: (List<Value?>) -> T
     ): T {
         // Preload additional classes
@@ -372,7 +384,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
 
         val variableFinder = VariableFinder(context)
-        val args = calculateMainMethodCallArguments(variableFinder, compiledData, status)
+        val args = calculateMainMethodCallArguments(variableFinder, compiledData)
 
         val result = block(args)
 
@@ -385,7 +397,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun updateLocalVariableValue(converter: EvaluatorValueConverter, ref: VariableFinder.RefWrapper) {
         val frameProxy = converter.context.frameProxy
-        val newValue = converter.unref(ref.wrapper)
+        val newValue = EvaluatorValueConverter.unref(ref.wrapper)
         val variable = frameProxy.safeVisibleVariableByName(ref.localVariableName)
         if (variable != null) {
             try {
@@ -398,11 +410,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun calculateMainMethodCallArguments(
-        variableFinder: VariableFinder,
-        compiledData: CompiledDataDescriptor,
-        status: EvaluationStatus
-    ): List<Value?> {
+    private fun calculateMainMethodCallArguments(variableFinder: VariableFinder, compiledData: CompiledCodeFragmentData): List<Value?> {
         val asmValueParameters = compiledData.mainMethodSignature.parameterTypes
         val valueParameters = compiledData.parameters
         require(asmValueParameters.size == valueParameters.size)
@@ -423,22 +431,16 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
 
                 if (parameter.kind == CodeFragmentParameter.Kind.COROUTINE_CONTEXT) {
-                    status.error(EvaluationError.CoroutineContextUnavailable)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.coroutine.context.unavailable"))
                 } else if (parameter in compiledData.crossingBounds) {
-                    status.error(EvaluationError.ParameterNotCaptured)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.not.captured", name))
                 } else if (parameter.kind == CodeFragmentParameter.Kind.FIELD_VAR) {
-                    status.error(EvaluationError.BackingFieldNotFound)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.cant.find.backing.field", parameter.name))
                 } else if (parameter.kind == CodeFragmentParameter.Kind.ORDINARY && isInsideDefaultInterfaceMethod()) {
-                    status.error(EvaluationError.InsideDefaultMethod)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.parameter.evaluation.default.methods"))
                 } else if (parameter.kind == CodeFragmentParameter.Kind.ORDINARY && frameProxy is CoroutineStackFrameProxyImpl) {
-                    status.error(EvaluationError.OptimisedVariable)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.variable.was.optimised"))
                 } else {
-                    status.error(EvaluationError.CannotFindVariable)
                     evaluationException(KotlinDebuggerEvaluationBundle.message("error.cant.find.variable", name, asmType.className))
                 }
             }
@@ -450,9 +452,13 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     override fun getModifier() = null
 
     companion object {
+        @get:TestOnly
+        @get:ApiStatus.Internal
+        var LOG_COMPILATIONS: Boolean = false
+
         internal val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
                 setOf(
-                    Errors.EXPERIMENTAL_API_USAGE_ERROR,
+                    Errors.OPT_IN_USAGE_ERROR,
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
                     Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
                     Errors.FIR_COMPILED_CLASS,
@@ -461,37 +467,30 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         private val DEFAULT_METHOD_MARKERS = listOf(AsmTypes.OBJECT_TYPE, AsmTypes.DEFAULT_CONSTRUCTOR_MARKER)
 
-        private fun InterpreterResult.toJdiValue(context: ExecutionContext, status: EvaluationStatus): Value? {
+        private fun InterpreterResult.toJdiValue(context: ExecutionContext): Value? {
             val jdiValue = when (this) {
                 is ValueReturned -> result
                 is ExceptionThrown -> {
-                    when (this.kind) {
+                    when (kind) {
                         ExceptionThrown.ExceptionKind.FROM_EVALUATED_CODE -> {
-                            status.error(EvaluationError.ExceptionFromEvaluatedCode)
-                            evaluationException(InvocationException(this.exception.value as ObjectReference))
+                            val exceptionReference = exception.value as ObjectReference
+                            evaluationException(InvocationException(exceptionReference))
                         }
-                        ExceptionThrown.ExceptionKind.BROKEN_CODE ->
-                            throw exception.value as Throwable
-                        else -> {
-                            status.error(EvaluationError.Eval4JUnknownException)
-                            evaluationException(exception.toString())
-                        }
+                        ExceptionThrown.ExceptionKind.BROKEN_CODE -> throw exception.value as Throwable
+                        else -> evaluationException(exception.toString())
                     }
                 }
-                is AbnormalTermination -> {
-                    status.error(EvaluationError.Eval4JAbnormalTermination)
-                    evaluationException(message)
-                }
+                is AbnormalTermination -> evaluationException(message)
                 else -> throw IllegalStateException("Unknown result value produced by eval4j")
             }
 
-            val sharedVar = if ((jdiValue is AbstractValue<*>)) getValueIfSharedVar(jdiValue, context) else null
+            val sharedVar = if ((jdiValue is AbstractValue<*>)) getValueIfSharedVar(jdiValue) else null
             return sharedVar?.value ?: jdiValue.asJdiValue(context.vm.virtualMachine, jdiValue.asmType)
         }
 
-        private fun getValueIfSharedVar(value: Eval4JValue, context: ExecutionContext): VariableFinder.Result? {
+        private fun getValueIfSharedVar(value: Eval4JValue): VariableFinder.Result? {
             val obj = value.obj(value.asmType) as? ObjectReference ?: return null
-            return VariableFinder.Result(EvaluatorValueConverter(context).unref(obj))
+            return VariableFinder.Result(EvaluatorValueConverter.unref(obj))
         }
     }
 }
@@ -514,7 +513,7 @@ private fun reportError(codeFragment: KtCodeFragment, position: SourcePosition?,
     runReadAction {
         val contextFile = codeFragment.context?.containingFile
 
-        val attachments = arrayOf(
+        val attachments = listOfNotNull(
             attachmentByPsiFile(contextFile),
             attachmentByPsiFile(codeFragment),
             Attachment("breakpoint.info", "Position: " + position?.run { "${file.name}:$line" }),
@@ -525,12 +524,12 @@ private fun reportError(codeFragment: KtCodeFragment, position: SourcePosition?,
         LOG.error(
             "Cannot evaluate a code fragment of type ${codeFragment::class.java}: $decapitalizedMessage",
             throwable,
-            mergeAttachments(*attachments)
+            attachments.merge()
         )
     }
 }
 
-fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult, sourcePosition: SourcePosition?): CompiledDataDescriptor {
+fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult): CompiledCodeFragmentData {
     val localFunctionSuffixes = result.localFunctionSuffixes
 
     val dumbParameters = ArrayList<CodeFragmentParameter.Dumb>(result.parameterInfo.parameters.size)
@@ -547,12 +546,11 @@ fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult,
         dumbParameters += dumb
     }
 
-    return CompiledDataDescriptor(
+    return CompiledCodeFragmentData(
         result.classes,
         dumbParameters,
         result.parameterInfo.crossingBounds,
-        result.mainMethodSignature,
-        sourcePosition
+        result.mainMethodSignature
     )
 }
 
@@ -562,5 +560,5 @@ internal fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptio
 internal fun getResolutionFacadeForCodeFragment(codeFragment: KtCodeFragment): ResolutionFacade {
     val filesToAnalyze = listOf(codeFragment)
     val kotlinCacheService = KotlinCacheService.getInstance(codeFragment.project)
-    return kotlinCacheService.getResolutionFacade(filesToAnalyze, JvmPlatforms.unspecifiedJvmPlatform)
+    return kotlinCacheService.getResolutionFacadeWithForcedPlatform(filesToAnalyze, JvmPlatforms.unspecifiedJvmPlatform)
 }

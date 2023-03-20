@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.startup.ServiceNotReadyException
@@ -12,11 +12,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.junit.Test
-import java.util.*
 import java.util.function.Consumer
 
 class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
@@ -36,11 +35,12 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
   }
 
   private fun reindexFile(fileA: VirtualFile) {
-    val moduleEntity = WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).iterator().next()
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
-    val iterators = IndexableEntityProviderMethods.createIterators(moduleEntity, fileA, myFixture.project)
-    UnindexedFilesUpdater(myFixture.project, ArrayList(iterators),
-                          "Partial reindex of one of two indexable files").queue(myFixture.project)
+    val iterators = createIterators(moduleEntity, listOf(fileA), storage)
+    UnindexedFilesUpdater(myFixture.project, ArrayList(iterators), null,
+                          "Partial reindex of one of two indexable files").queue()
   }
 
   @Test
@@ -87,7 +87,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
                  fileBasedIndex.getFileData(countingIndex.name, fileA, myFixture.project))
     assertEquals("File was not reindexed after indexing on creation", 0, countingIndex.counter.get())
 
-    UnindexedFilesUpdater(myFixture.project).queue(myFixture.project)
+    UnindexedFilesUpdater(myFixture.project).queue()
     assertEquals("File was not reindexed after full project reindex request", 0, countingIndex.counter.get())
 
     fileBasedIndex.requestRebuild(countingIndex.name)

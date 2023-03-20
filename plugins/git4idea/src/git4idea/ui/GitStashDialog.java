@@ -3,7 +3,9 @@ package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitStashUsageCollector;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.stash.GitStashUtils;
@@ -41,6 +43,10 @@ public class GitStashDialog extends DialogWrapper {
 
   public GitLineHandler handler() {
     return GitStashUtils.createStashHandler(myProject, getGitRoot(), myKeepIndexCheckBox.isSelected(), myMessageTextField.getText());
+  }
+
+  public void logUsage() {
+    GitStashUsageCollector.logStashPushDialog(!StringUtil.isEmpty(myMessageTextField.getText()), myKeepIndexCheckBox.isSelected());
   }
 
   /**

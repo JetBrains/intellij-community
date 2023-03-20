@@ -15,6 +15,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -219,7 +220,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myBranchTagBaseComboBox.setEnabled(myBranchOrTagRadioButton.isSelected());
     myBranchTextField.setEnabled(myBranchOrTagRadioButton.isSelected());
     myToURLText.setEnabled(myAnyLocationRadioButton.isSelected());
-    myUseThisVariantToLabel.setForeground(myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
+    myUseThisVariantToLabel.setForeground(myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : NamedColorUtil.getInactiveTextColor());
   }
 
   @Nullable

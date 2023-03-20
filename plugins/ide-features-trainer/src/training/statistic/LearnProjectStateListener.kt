@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.statistic
 
 import com.intellij.ide.RecentProjectsManagerBase
@@ -25,10 +25,10 @@ import training.util.*
 
 private class LearnProjectStateListener : ProjectManagerListener {
   override fun projectOpened(project: Project) {
-    val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (isLearningProject(project, langSupport)) {
+    val languageId = LangManager.getInstance().getLanguageId() ?: return
+    if (isLearningProject(project, languageId)) {
       CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
-      removeFromRecentProjects(project)
+      RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project, hidden = true)
     }
     else {
       val learnProjectState = LearnProjectState.instance
@@ -42,23 +42,17 @@ private class LearnProjectStateListener : ProjectManagerListener {
   }
 
   override fun projectClosingBeforeSave(project: Project) {
-    val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (isLearningProject(project, langSupport) && !StatisticBase.isLearnProjectCloseLogged) {
+    val languageId = LangManager.getInstance().getLanguageId() ?: return
+    if (isLearningProject(project, languageId) && !StatisticBase.isLearnProjectCloseLogged) {
       StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_PROJECT)
     }
   }
 
   override fun projectClosed(project: Project) {
-    val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (isLearningProject(project, langSupport)) {
+    val languageId = LangManager.getInstance().getLanguageId() ?: return
+    if (isLearningProject(project, languageId)) {
       StatisticBase.isLearnProjectCloseLogged = false
-      removeFromRecentProjects(project)
     }
-  }
-
-  private fun removeFromRecentProjects(project: Project) {
-    val manager = RecentProjectsManagerBase.instanceEx
-    manager.getProjectPath(project)?.let { manager.removePath(it) }
   }
 }
 
@@ -87,7 +81,7 @@ private fun considerNotifyAboutNewLessons(project: Project) {
   if (!PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true)) {
     return
   }
-  if (learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing || showingNotificationIsConsidered) {
+  if (!enableLessonsAndPromoters || learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing || showingNotificationIsConsidered) {
     return
   }
   showingNotificationIsConsidered = true
@@ -114,7 +108,7 @@ private fun notifyAboutNewLessons(project: Project, newLessons: List<Lesson>) {
   val previousOpenedVersion = CourseManager.instance.previousOpenedVersion
   StatisticBase.logNewLessonsNotification(newLessonsCount, previousOpenedVersion)
   val notification = iftNotificationGroup.createNotification(LearnBundle.message("notification.about.new.lessons"), NotificationType.INFORMATION)
-  notification.icon = FeaturesTrainerIcons.Img.FeatureTrainer
+  notification.icon = FeaturesTrainerIcons.FeatureTrainer
 
   notification.addAction(object : NotificationAction(LearnBundle.message("notification.show.new.lessons")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {

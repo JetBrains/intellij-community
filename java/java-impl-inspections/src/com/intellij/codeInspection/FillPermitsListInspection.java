@@ -21,7 +21,7 @@ public class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTo
     if (!HighlightingFeature.SEALED_CLASSES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitClass(PsiClass psiClass) {
+      public void visitClass(@NotNull PsiClass psiClass) {
         PsiIdentifier identifier = psiClass.getNameIdentifier();
         if (identifier == null) return;
         PsiFile containingFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
@@ -29,16 +29,15 @@ public class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTo
         PsiModifierList modifiers = psiClass.getModifierList();
         if (modifiers == null || !modifiers.hasExplicitModifier(PsiModifier.SEALED)) return;
         Set<PsiClass> permittedClasses = ContainerUtil.map2Set(psiClass.getPermitsListTypes(), PsiClassType::resolve);
-        boolean hasMissingInheritors = false;
         for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass)) {
           if (PsiUtil.isLocalOrAnonymousClass(inheritor)) return;
           // handled in highlighter
           if (inheritor.getContainingFile() != containingFile) return;
-          hasMissingInheritors |= !permittedClasses.remove(inheritor);
-        }
-        if (hasMissingInheritors) {
-          holder.registerProblem(identifier, JavaBundle.message("inspection.fill.permits.list.display.name"),
-                                 new FillPermitsListFix(identifier));
+          if (!permittedClasses.contains(inheritor)) {
+            holder.registerProblem(identifier, JavaBundle.message("inspection.fill.permits.list.display.name"),
+                                   new FillPermitsListFix(identifier));
+            break;
+          }
         }
       }
     };

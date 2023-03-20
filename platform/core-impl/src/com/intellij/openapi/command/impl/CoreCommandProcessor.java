@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
@@ -193,7 +193,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                               boolean shouldRecordCommandForActiveDocument,
                               @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
-    application.assertIsWriteThread();
+    application.assertWriteIntentLockAcquired();
 
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
@@ -231,7 +231,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                                              final String name,
                                              final @Nullable Object groupId,
                                              final @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (project != null && project.isDisposed()) return null;
 
     if (CommandLog.LOG.isDebugEnabled()) {
@@ -254,13 +254,13 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();
   }
 
   private void fireCommandFinished() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this, currentCommand.myCommand,
                                           currentCommand.myName,
@@ -281,7 +281,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void enterModal() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     myInterruptedCommands.push(currentCommand);
     if (currentCommand != null) {
@@ -291,7 +291,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void leaveModal() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
@@ -302,7 +302,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandName(String name) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myName = name;
@@ -310,7 +310,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myGroupId = groupId;
@@ -356,24 +356,44 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void removeCommandListener(@NotNull CommandListener listener) {
-    myListeners.remove(listener);
-  }
-
-  @Override
   public void runUndoTransparentAction(@NotNull Runnable action) {
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (myCurrentCommand != null) +
                            ", in transparent action = " + isUndoTransparentActionInProgress());
     }
-    if (myUndoTransparentCount++ == 0) eventPublisher.undoTransparentActionStarted();
+    if (myUndoTransparentCount++ == 0) {
+      eventPublisher.undoTransparentActionStarted();
+    }
     try {
       action.run();
     }
     finally {
-      if (myUndoTransparentCount == 1) eventPublisher.beforeUndoTransparentActionFinished();
-      if (--myUndoTransparentCount == 0) eventPublisher.undoTransparentActionFinished();
+      if (myUndoTransparentCount == 1) {
+        eventPublisher.beforeUndoTransparentActionFinished();
+      }
+      if (--myUndoTransparentCount == 0) {
+        eventPublisher.undoTransparentActionFinished();
+      }
     }
+  }
+
+  @Override
+  public final AutoCloseable withUndoTransparentAction() {
+    if (CommandLog.LOG.isDebugEnabled()) {
+      CommandLog.LOG.debug("withUndoTransparentAction in command = " + (myCurrentCommand != null) +
+                           ", in transparent action = " + isUndoTransparentActionInProgress());
+    }
+    if (myUndoTransparentCount++ == 0) {
+      eventPublisher.undoTransparentActionStarted();
+    }
+    return () -> {
+      if (myUndoTransparentCount == 1) {
+        eventPublisher.beforeUndoTransparentActionFinished();
+      }
+      if (--myUndoTransparentCount == 0) {
+        eventPublisher.undoTransparentActionFinished();
+      }
+    };
   }
 
   @Override
@@ -401,7 +421,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void allowMergeGlobalCommands(@NotNull Runnable action) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (myAllowMergeGlobalCommands) {
       action.run();
     }
@@ -415,7 +435,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   private void fireCommandStarted() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this,
                                           currentCommand.myCommand,

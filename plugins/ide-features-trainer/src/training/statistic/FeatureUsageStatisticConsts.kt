@@ -29,7 +29,7 @@ object FeatureUsageStatisticConsts {
   const val NEW_LESSONS_COUNT = "new_lessons_count"
   const val LAST_BUILD_LEARNING_OPENED = "last_build_learning_opened"
   const val SHOULD_SHOW_NEW_LESSONS = "show_it"
-  const val TIP_FILENAME = "filename"
+  const val TIP_ID = "tip_id"
   const val LESSON_LINK_CLICKED_FROM_TIP = "lesson_link_clicked_from_tip"
   const val LESSON_STARTING_WAY = "starting_way"
   const val HELP_LINK_CLICKED = "help_link_clicked"
@@ -40,4 +40,6 @@ object FeatureUsageStatisticConsts {
   const val FEEDBACK_OPENED_VIA_NOTIFICATION = "feedback_opened_via_notification"
   const val FEEDBACK_LIKENESS_ANSWER = "feedback_likeness_answer"
   const val FEEDBACK_EXPERIENCED_USER = "feedback_experienced_user"
+  const val PROBLEM = "problem"
+  const val INTERNAL_PROBLEM = "internal_problem"
 }

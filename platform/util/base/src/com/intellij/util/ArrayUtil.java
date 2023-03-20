@@ -2,6 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -288,6 +291,19 @@ public final class ArrayUtil {
     return result;
   }
 
+  @Contract(pure=true)
+  public static int[] intersection(int @NotNull [] a1, int @NotNull [] a2) {
+    if (a1.length == 0) {
+      return a2;
+    }
+    if (a2.length == 0) {
+      return a1;
+    }
+    IntSet result = new IntOpenHashSet(a1);
+    result.retainAll(new IntArrayList(a2));
+    return result.toIntArray();
+  }
+
   /**
    * Allocates new array of size {@code array.length + collection.size()} and copies elements of {@code array} and
    * {@code collection} to it.
@@ -530,7 +546,7 @@ public final class ArrayUtil {
   /**
    * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Comparator<? super T> comparator) {
     //noinspection ArrayEquality
@@ -592,14 +608,13 @@ public final class ArrayUtil {
 
   //must be Comparables
   @Contract(pure=true)
-  public static <T> int lexicographicCompare(T @NotNull [] obj1, T @NotNull [] obj2) {
+  public static <T extends Comparable<T>> int lexicographicCompare(T @NotNull [] obj1, T @NotNull [] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
       T o1 = i < obj1.length ? obj1[i] : null;
       T o2 = i < obj2.length ? obj2[i] : null;
       if (o1 == null) return -1;
       if (o2 == null) return 1;
-      //noinspection unchecked
-      int res = ((Comparable<T>)o1).compareTo(o2);
+      int res = o1.compareTo(o2);
       if (res != 0) return res;
     }
     return 0;
@@ -726,28 +741,6 @@ public final class ArrayUtil {
     for (int i = src.length - 1; i >= 0; i--) {
       int o = src[i];
       if (o != obj) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
-  public static <T> int lastIndexOf(T @NotNull [] src, T obj, @NotNull BiPredicate<? super T, ? super T> predicate) {
-    for (int i = src.length - 1; i >= 0; i--) {
-      T o = src[i];
-      if (predicate.test(obj, o)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull List<? extends T> src, T obj, @NotNull BiPredicate<? super T, ? super T> comparator) {
-    for (int i = src.size() - 1; i >= 0; i--) {
-      T o = src.get(i);
-      if (comparator.test(obj, o)) {
         return i;
       }
     }
@@ -971,13 +964,33 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOfIdentity(T @NotNull [] list, T element) {
-    for (int i = 0; i < list.length; i++) {
-      if (list[i] == element) {
+  public static <T> int indexOfIdentity(T @NotNull [] array, T element) {
+    for (int i = 0; i < array.length; i++) {
+      if (array[i] == element) {
         return i;
       }
     }
     return -1;
+  }
+
+  /**
+   * Checks the equality of two arrays, according to a custom condition. Like {@code Arrays#equals} but doesn't
+   * require a comparator.
+   * 
+   * @param arr1 first array
+   * @param arr2 second array
+   * @param equalityCondition BiPredicate that returns true if two elements are considered to be equal. Must return true
+   *                          if both arguments are the same object.
+   * @return true if both arrays are equal in terms of equalityCondition
+   * @param <T> type of array elements
+   */
+  public static <T> boolean areEqual(T @NotNull [] arr1, T @NotNull [] arr2, @NotNull BiPredicate<? super T, ? super T> equalityCondition) {
+    if (arr1 == arr2) return true;
+    if (arr1.length != arr2.length) return false;
+    for (int i = 0; i < arr1.length; i++) {
+      if (!equalityCondition.test(arr1[i], arr2[i])) return false;
+    }
+    return true;
   }
 
 }

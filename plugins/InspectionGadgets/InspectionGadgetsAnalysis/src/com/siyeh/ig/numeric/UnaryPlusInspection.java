@@ -17,6 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public final class UnaryPlusInspection extends BaseInspection {
   public boolean onlyReportInsideBinaryExpression = true;
 
@@ -47,11 +50,10 @@ public final class UnaryPlusInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("unary.plus.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.unary.plus.unary.binary.option"), this,
-                                          "onlyReportInsideBinaryExpression");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportInsideBinaryExpression", JavaAnalysisBundle.message("inspection.unary.plus.unary.binary.option")));
   }
 
   @Override
@@ -79,13 +81,12 @@ public final class UnaryPlusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiPrefixExpression)) {
+      if (!(parent instanceof PsiPrefixExpression prefixExpression)) {
         return;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
       final PsiExpression operand = prefixExpression.getOperand();
       if (operand == null) {
         return;
@@ -102,7 +103,7 @@ public final class UnaryPlusInspection extends BaseInspection {
   private class UnaryPlusVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression prefixExpression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpression) {
       super.visitPrefixExpression(prefixExpression);
       if (!ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression(prefixExpression, true)) {
         return;
@@ -131,7 +132,7 @@ public final class UnaryPlusInspection extends BaseInspection {
         // unary plus might have been used as cast to int
         return;
       }
-      registerError(prefixExpression.getOperationSign(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly(), prefixExpression);
+      registerError(prefixExpression.getOperationSign(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly(), prefixExpression);
     }
   }
 
@@ -210,7 +211,7 @@ public final class UnaryPlusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
       if (prefixExpr == null) {
         return;

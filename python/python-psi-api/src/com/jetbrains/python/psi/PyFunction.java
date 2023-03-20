@@ -18,9 +18,9 @@ import java.util.List;
 /**
  * Function declaration in source (the {@code def} and everything within).
  */
-public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyStatement, PyCallable,
-                                    PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement, PyStatementListContainer,
-                                    PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
+public interface PyFunction extends StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyCompoundStatement,
+                                    PyDecoratable, PyCallable, PyStatementListContainer, PyPossibleClassMember,
+                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];

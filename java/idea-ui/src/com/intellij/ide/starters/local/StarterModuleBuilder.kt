@@ -1,11 +1,13 @@
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
 import com.intellij.ide.starters.StarterModuleProcessListener
 import com.intellij.ide.starters.local.generator.AssetsProcessor
+import com.intellij.ide.starters.local.generator.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
@@ -14,20 +16,24 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -41,6 +47,7 @@ import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -57,8 +64,8 @@ import javax.swing.Icon
 abstract class StarterModuleBuilder : ModuleBuilder() {
 
   companion object {
-    @JvmStatic
-    private val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z0-9_.]")
+    @JvmField
+    val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
 
     @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =
@@ -79,6 +86,11 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
         .replace("-", "")
         .replace(INVALID_PACKAGE_NAME_SYMBOL_PATTERN, "_")
         .lowercase()
+    }
+
+    @JvmStatic
+    fun setupProject(project: Project) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
     }
 
     @JvmStatic
@@ -105,7 +117,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
 
     @JvmStatic
-    internal fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
+    fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
       val contentRoot = module.rootManager.contentRoots.firstOrNull()
       if (contentRoot != null) {
         val fileEditorManager = FileEditorManager.getInstance(module.project)
@@ -169,7 +181,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected abstract fun getProjectTypes(): List<StarterProjectType>
   protected abstract fun getLanguages(): List<StarterLanguage>
   protected abstract fun getStarterPack(): StarterPack
-  protected abstract fun getTestFrameworks(): List<StarterTestRunner>
+  protected open fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
   protected abstract fun getAssets(starter: Starter): List<GeneratorAsset>
   protected open fun isExampleCodeProvided(): Boolean = false
   protected open fun getMinJavaVersion(): JavaVersion? = LanguageLevel.JDK_1_8.toJavaVersion()
@@ -198,15 +210,18 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return null
   }
 
+  override fun createProject(name: String?, path: String?): Project? {
+    val project = super.createProject(name, path)
+    project?.let { setupProject(it) }
+    return project
+  }
+
+  @Throws(ConfigurationException::class)
   override fun setupModule(module: Module) {
     super.setupModule(module)
 
-    if (starterContext.isCreatingNewProject) {
-      val project = module.project
-
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, java.lang.Boolean.TRUE)
-      project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, java.lang.Boolean.TRUE)
-    }
+    val isMaven = starterContext.projectType?.id?.contains("Maven", ignoreCase = true) ?: false
+    ExternalSystemUtil.configureNewModule(module, starterContext.isCreatingNewProject, isMaven)
 
     startGenerator(module)
   }
@@ -261,6 +276,44 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     doAddContentEntry(modifiableRootModel)
   }
 
+  internal fun loadDependencyConfigInternal(): Map<String, DependencyConfig> {
+    return loadDependencyConfig()
+  }
+
+  protected fun loadDependencyConfig(): Map<String, DependencyConfig> {
+    return starterContext.starterPack.starters.associate { starter ->
+      starter.id to starter.versionConfigUrl.openStream().use {
+        val dependencyConfigUpdates = starterContext.startersDependencyUpdates[starter.id]
+        val dependencyConfigUpdatesVersion = dependencyConfigUpdates?.version?.let { version -> Version.parseVersion(version) }
+                                             ?: Version(-1, -1, -1)
+
+        val starterDependencyConfig = JDOMUtil.load(it)
+        val starterDependencyConfigVersion = StarterUtils.parseDependencyConfigVersion(starterDependencyConfig,
+                                                                                       starter.versionConfigUrl.path)
+
+        val mergeDependencyUpdate = starterDependencyConfigVersion < dependencyConfigUpdatesVersion
+        if (mergeDependencyUpdate) {
+          StarterUtils.mergeDependencyConfigs(
+            StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path, false),
+            dependencyConfigUpdates)
+        }
+        else {
+          StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path)
+        }
+      }
+    }
+  }
+
+  @Throws(ConfigurationException::class)
+  protected open fun validateConfiguration() {
+  }
+
+  @Throws(ConfigurationException::class)
+  internal fun validateConfigurationInternal() {
+    return validateConfiguration()
+  }
+
+  @Throws(ConfigurationException::class)
   private fun startGenerator(module: Module) {
     val moduleContentRoot =
       if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -274,7 +327,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     val starter = starterContext.starter ?: throw IllegalStateException("Starter is not set")
     val dependencyConfig = starterContext.starterDependencyConfig ?: error("Starter dependency config is not set")
-    val sdk = ModuleRootManager.getInstance(module).sdk
+    val sdk = moduleJdk
 
     val rootPackage = suggestPackageName(starterContext.group, starterContext.artifact)
 
@@ -284,7 +337,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       starterContext.group,
       starterContext.artifact,
       starterContext.version,
-      starterContext.testFramework!!.id,
+      starterContext.testFramework?.id,
       rootPackage,
       sdk?.let { JavaSdk.getInstance().getVersion(it) },
       starterContext.language.id,
@@ -292,31 +345,33 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       dependencyConfig,
       getGeneratorContextProperties(sdk, dependencyConfig),
       getAssets(starter),
-      moduleContentRoot
+      convertOutputLocationForTests(moduleContentRoot)
     )
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        {
-          WriteAction.runAndWait<Throwable> {
-            try {
-              AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
-            }
-            catch (e: IOException) {
-              logger<StarterModuleBuilder>().error("Unable to create module by template", e)
+      WriteAction.runAndWait<Throwable> {
+        try {
+          AssetsProcessor.getInstance().generateSources(
+            generatorContext.outputDirectory,
+            generatorContext.assets,
+            getTemplateProperties() + ("context" to generatorContext)
+          )
+        }
+        catch (e: IOException) {
+          logger<StarterModuleBuilder>().error("Unable to create module by template", e)
 
-              ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                  JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
-                  presentableName)
-              }
-            }
-
-            applyAdditionalChanges(module)
+          ApplicationManager.getApplication().invokeLater {
+            Messages.showErrorDialog(
+              JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
+              presentableName)
           }
-        },
-        JavaStartersBundle.message("starter.generation.progress", presentableName),
-        true, module.project)
+          return@runAndWait
+        }
+
+        applyAdditionalChanges(module)
+      }
+
+      preprocessModuleCreated(module, this, starterContext.starter?.id)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.disposed, Runnable {
@@ -326,13 +381,24 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
           // import of module may dispose it and create another, open files first
           openSampleFiles(module, getFilePathsToOpen())
 
+          if (starterContext.gitIntegration) {
+            runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
+              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
+            }
+          }
+
           importModule(module)
         })
       }
     }
     else {
       // test mode, open files immediately, do not import module
-      AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+      AssetsProcessor.getInstance().generateSources(
+        generatorContext.outputDirectory,
+        generatorContext.assets,
+        getTemplateProperties() + ("context" to generatorContext)
+      )
+
       ReformatCodeProcessor(module.project, module, false).run()
       openSampleFiles(module, getFilePathsToOpen())
     }

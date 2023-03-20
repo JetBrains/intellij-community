@@ -3,9 +3,11 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
 class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
   private val description
     get() = MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.description")
@@ -55,10 +57,8 @@ class MarkdownIncorrectTableFormattingInspectionTest: LightPlatformCodeInsightFi
   }
 
   private fun doTest(expected: String) {
-    TableTestUtils.runWithChangedSettings(myFixture.project) {
-      myFixture.configureByText("some.md", expected)
-      myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
-      myFixture.checkHighlighting()
-    }
+    myFixture.configureByText("some.md", expected)
+    myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
+    myFixture.checkHighlighting()
   }
 }

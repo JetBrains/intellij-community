@@ -22,4 +22,9 @@ class PythonGrazieSupportTest : GrazieTestBase() {
   fun `test grammar check in string literals`() {
     runHighlightTestForFile("StringLiterals.py")
   }
+
+  // PY-53047
+  fun `test docstring tags are excluded`() {
+    runHighlightTestForFile("DocstringTagsAreExcluded.py")
+  }
 }

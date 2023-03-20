@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +26,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
-public class ContentRevisionCache {
+public final class ContentRevisionCache {
   private final Object myLock;
   private final SLRUMap<Key, SoftReference<byte[]>> myCache;
   private final SLRUMap<CurrentKey, VcsRevisionNumber> myCurrentRevisionsCache;
@@ -95,9 +95,8 @@ public class ContentRevisionCache {
     }
   }
 
-  @Nullable
   @Contract("!null, _, _ -> !null")
-  public static String getAsString(byte @Nullable [] bytes, @NotNull FilePath file, @Nullable Charset charset) {
+  public static @Nullable String getAsString(byte @Nullable [] bytes, @NotNull FilePath file, @Nullable Charset charset) {
     if (bytes == null) return null;
     if (charset == null) {
       return bytesToString(file, bytes);
@@ -107,29 +106,26 @@ public class ContentRevisionCache {
     }
   }
 
-  @NotNull
-  public static String getOrLoadAsString(@NotNull Project project,
-                                         @NotNull FilePath file,
-                                         VcsRevisionNumber number,
-                                         @NotNull VcsKey key,
-                                         @NotNull UniqueType type,
-                                         @NotNull Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader,
-                                         @Nullable Charset charset)
+  public static @NotNull String getOrLoadAsString(@NotNull Project project,
+                                                  @NotNull FilePath file,
+                                                  VcsRevisionNumber number,
+                                                  @NotNull VcsKey key,
+                                                  @NotNull UniqueType type,
+                                                  @NotNull Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader,
+                                                  @Nullable Charset charset)
     throws VcsException, IOException {
     final byte[] bytes = getOrLoadAsBytes(project, file, number, key, type, loader);
     return getAsString(bytes, file, charset);
   }
 
 
-  @NotNull
-  public static String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
-                                         @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
+  public static @NotNull String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
+                                                  @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
     return getOrLoadAsString(project, path, number, vcsKey, type, loader, null);
   }
 
-  @NotNull
-  private static String bytesToString(FilePath path, byte @NotNull [] bytes) {
+  private static @NotNull String bytesToString(FilePath path, byte @NotNull [] bytes) {
     Charset charset = null;
     if (path.getVirtualFile() != null) {
       charset = path.getVirtualFile().getCharset();
@@ -166,6 +162,13 @@ public class ContentRevisionCache {
     }
   }
 
+  public static byte @NotNull [] loadAsBytes(@NotNull FilePath path,
+                                             Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
+    throws VcsException, IOException {
+    checkLocalFileSize(path);
+    return loader.compute();
+  }
+
   public static byte @NotNull [] getOrLoadAsBytes(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
                                                   @NotNull UniqueType type, final Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
@@ -185,7 +188,7 @@ public class ContentRevisionCache {
     return bytes;
   }
 
-  private static void checkLocalFileSize(FilePath path) throws VcsException {
+  private static void checkLocalFileSize(@NotNull FilePath path) throws VcsException {
     File ioFile = path.getIOFile();
     if (ioFile.exists()) {
       checkContentsSize(ioFile.getPath(), ioFile.length());

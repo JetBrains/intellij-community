@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -90,7 +90,9 @@ abstract class OverrideImplementMethodAction extends AnAction {
       return;
     }
 
-    HierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
+    Object[] data = PlatformCoreDataKeys.SELECTED_ITEMS.getData(dataContext);
+    HierarchyNodeDescriptor[] selectedDescriptors = data instanceof HierarchyNodeDescriptor[] ? ((HierarchyNodeDescriptor[])data) 
+                                                                                              : HierarchyNodeDescriptor.EMPTY_ARRAY;
     int toImplement = 0;
     int toOverride = 0;
 
@@ -123,6 +125,11 @@ abstract class OverrideImplementMethodAction extends AnAction {
     update(presentation, toImplement, toOverride);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Nullable
   private static MethodHierarchyBrowser getMethodHierarchyBrowser(@NotNull AnActionEvent event) {
     return ObjectUtils.tryCast(event.getData(HierarchyBrowserBaseEx.HIERARCHY_BROWSER), MethodHierarchyBrowser.class);
@@ -132,8 +139,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
 
   private static boolean canImplementOverride(MethodHierarchyNodeDescriptor descriptor, MethodHierarchyBrowser methodHierarchyBrowser, boolean toImplement) {
     PsiElement psiElement = descriptor.getPsiClass();
-    if (!(psiElement instanceof PsiClass)) return false;
-    PsiClass psiClass = (PsiClass)psiElement;
+    if (!(psiElement instanceof PsiClass psiClass)) return false;
     if (psiClass instanceof PsiSyntheticClass) return false;
     PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
     if (baseMethod == null) return false;
@@ -142,12 +148,6 @@ abstract class OverrideImplementMethodAction extends AnAction {
     Collection<MethodSignature> allOriginalSignatures = toImplement
                                                         ? OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass)
                                                         : OverrideImplementExploreUtil.getMethodSignaturesToOverride(psiClass);
-    for (MethodSignature originalSignature : allOriginalSignatures) {
-      if (originalSignature.equals(signature)) {
-        return true;
-      }
-    }
-
-    return false;
+    return allOriginalSignatures.contains(signature);
   }
 }

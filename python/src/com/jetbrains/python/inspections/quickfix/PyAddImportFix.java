@@ -19,13 +19,11 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,16 +35,11 @@ import org.jetbrains.annotations.NotNull;
 public class PyAddImportFix implements LocalQuickFix {
   @NotNull
   private final String myImportToAdd;
-  @NotNull
-  private final SmartPsiElementPointer<PyFile> myFile;
-
   /**
    * @param importToAdd string representing what to add (i.e. "from foo import bar")
-   * @param file where to add
    */
-  public PyAddImportFix(@NotNull final String importToAdd, @NotNull final PyFile file) {
+  public PyAddImportFix(@NotNull String importToAdd) {
     myImportToAdd = importToAdd;
-    myFile = SmartPointerManager.createPointer(file);
   }
 
   @NotNull
@@ -58,8 +51,9 @@ public class PyAddImportFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    final PyFile file = myFile.getElement();
-    if (file == null) return;
+    PsiElement element = descriptor.getPsiElement();
+    if (element == null) return;
+    PsiFile file = element.getContainingFile();
     final PyImportStatementBase statement =
       generator.createFromText(LanguageLevel.forElement(file), PyImportStatementBase.class, myImportToAdd);
     final PsiElement recommendedPosition = AddImportHelper.getFileInsertPosition(file);

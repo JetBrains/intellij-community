@@ -1,4 +1,4 @@
-// "Remove switch branch 'Integer i'" "true"
+// "Remove switch branch 'Integer i'" "true-preview"
 class Test {
   int foo(Object o) {
     return switch (o) {

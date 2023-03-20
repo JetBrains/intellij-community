@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -30,10 +30,9 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
-    if (!(enclosingElement instanceof PsiMethod)) {
+    if (!(enclosingElement instanceof PsiMethod method)) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
-    PsiMethod method = (PsiMethod)enclosingElement;
 
     List<PsiMethod> methods = new ArrayList<>();
 
@@ -76,26 +75,21 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {
       collectCallees(child, methods);
-      if (child instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression callExpression = (PsiMethodCallExpression)child;
+      if (child instanceof PsiMethodCallExpression callExpression) {
         PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
         PsiMethod method = (PsiMethod)methodExpression.resolve();
         if (method != null) {
           methods.add(method);
         }
       }
-      else if (child instanceof PsiNewExpression) {
-        PsiNewExpression newExpression = (PsiNewExpression)child;
+      else if (child instanceof PsiNewExpression newExpression) {
         PsiMethod method = newExpression.resolveConstructor();
         if (method != null) {
           methods.add(method);
         }
       }
-      else if (child instanceof PsiMethodReferenceExpression) {
-        PsiElement method = ((PsiMethodReferenceExpression)child).resolve();
-        if (method instanceof PsiMethod) {
-          methods.add((PsiMethod)method);
-        }
+      else if (child instanceof PsiMethodReferenceExpression methodRef && methodRef.resolve() instanceof PsiMethod method) {
+        methods.add(method);
       }
     }
   }

@@ -55,7 +55,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
   public static List<? extends Artifact> getAvailableArtifacts(@NotNull final ArtifactEditorContext context,
                                                                @NotNull final Artifact artifact,
                                                                final boolean notIncludedOnly) {
-    final Set<Artifact> result = ContainerUtil.set(context.getArtifactModel().getArtifacts());
+    final Set<Artifact> result = ContainerUtil.newHashSet(context.getArtifactModel().getArtifacts());
     if (notIncludedOnly) {
       ArtifactUtil.processPackagingElements(artifact, ARTIFACT_ELEMENT_TYPE, artifactPackagingElement -> {
         result.remove(artifactPackagingElement.findArtifact(context));

@@ -12,26 +12,30 @@ import java.io.IOException;
 public class RestLexerTest extends TestCase {
 
   public void testTitle() throws IOException {
-    doTest("\n" +
-           ".. _quickstart:\n" +
-           "\n" +
-           "Quick start guide\n" +
-           "=================\n",
+    doTest("""
+
+             .. _quickstart:
+
+             Quick start guide
+             =================
+             """,
            "[\n, WHITESPACE]",
            "[.. , EXPLISIT_MARKUP_START]",
            "[_quickstart:, HYPERLINK]",
            "[\n, WHITESPACE]",
            "[\n, WHITESPACE]",
-           "[Quick start guide\n" +
-           "=================\n" +
-           ", TITLE]"
+           """
+             [Quick start guide
+             =================
+             , TITLE]"""
     );
   }
 
   public void testDirective() throws IOException {
-    doTest("\n" +
-           ".. note::\n" +
-           "    Please",
+    doTest("""
+
+             .. note::
+                 Please""",
            "[\n, WHITESPACE]",
            "[.. , EXPLISIT_MARKUP_START]",
            "[note::, DIRECTIVE]",
@@ -66,9 +70,11 @@ public class RestLexerTest extends TestCase {
   }
 
   public void testRole() throws IOException {                //PY-3810
-    doTest(" role :roole1:`some text` :notparsed: text\n" +
-           ":list field:\n" +
-           " :second field:\n",
+    doTest("""
+              role :roole1:`some text` :notparsed: text
+             :list field:
+              :second field:
+             """,
            "[ , LINE]",
            "[role, LINE]",
            "[ , LINE]",
@@ -133,9 +139,10 @@ public class RestLexerTest extends TestCase {
   }
 
   public void testSubstitutions() throws IOException {
-    doTest(".. |end-user| replace:: :term:`user`\n" +
-           ".. |PNS ID| replace:: :term:`user`\n" +
-           ".. |PNS.ID| replace:: :term:`user`",
+    doTest("""
+             .. |end-user| replace:: :term:`user`
+             .. |PNS ID| replace:: :term:`user`
+             .. |PNS.ID| replace:: :term:`user`""",
            "[.. , EXPLISIT_MARKUP_START]",
            "[|end-user|, SUBSTITUTION]",
            "[ , WHITESPACE]",
@@ -157,11 +164,13 @@ public class RestLexerTest extends TestCase {
   }
 
   public void testLinks() throws IOException {
-    doTest("link_/\n" +
-           "link_!\n" +
-           "\"link_\"\n" +
-           "'link_'\n" +
-           "link_;\n",
+    doTest("""
+             link_/
+             link_!
+             "link_"
+             'link_'
+             link_;
+             """,
            "[link_, REFERENCE_NAME]",
            "[/, LINE]",
            "[\n, WHITESPACE]",
@@ -183,11 +192,12 @@ public class RestLexerTest extends TestCase {
   }
 
   public void testFieldInCodeBlock() throws IOException {
-    doTest(".. code-block:: python\n" +
-           "   :class: extra-css-class\n" +
-           "\n" +
-           "    def thing(x):  # comment\n" +
-           "        print(\"{x} is a thing\".format(x=x))",
+    doTest("""
+             .. code-block:: python
+                :class: extra-css-class
+
+                 def thing(x):  # comment
+                     print("{x} is a thing".format(x=x))""",
            "[.. , EXPLISIT_MARKUP_START]",
            "[code-block::, CUSTOM_DIRECTIVE]",
            "[ , WHITESPACE]",
@@ -207,19 +217,20 @@ public class RestLexerTest extends TestCase {
   }
 
   public void testInterpreted() throws IOException {
-    doTest(":kbd:`1`\n" +
-           "\n" +
-           ":kbd:`a`\n" +
-           "\n" +
-           ":kbd:`*`\n" +
-           "\n" +
-           ":kbd:`12`\n" +
-           "\n" +
-           ":kbd:`ab`\n" +
-           "\n" +
-           ":kbd:`**`\n" +
-           "\n" +
-           ":kbd:`1`, :kbd:`2`",
+    doTest("""
+             :kbd:`1`
+
+             :kbd:`a`
+
+             :kbd:`*`
+
+             :kbd:`12`
+
+             :kbd:`ab`
+
+             :kbd:`**`
+
+             :kbd:`1`, :kbd:`2`""",
            "[:kbd:, FIELD]",
            "[`1`, INTERPRETED]",
            "[\n" +

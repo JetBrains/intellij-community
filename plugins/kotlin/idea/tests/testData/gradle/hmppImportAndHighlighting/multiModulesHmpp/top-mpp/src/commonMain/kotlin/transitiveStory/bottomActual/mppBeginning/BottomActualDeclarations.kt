@@ -2,13 +2,13 @@ package transitiveStory.bottomActual.mppBeginning
 
 val moduleName = "top-mpp"
 val commonInt = 42
-expect val <!LINE_MARKER("descr='Has actuals in Native (3 modules), JS, JVM'")!>sourceSetName<!>: String
+expect val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.dummyiOSMain, multimod-hmpp.top-mpp.jsMain, multimod-hmpp.top-mpp.jvm18Main, multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain] modules'")!>sourceSetName<!>: String
 
-expect open class <!LINE_MARKER("descr='Has subclasses'"), LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>BottomActualDeclarations<!>() {
-    val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>simpleVal<!>: Int
+expect open class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'"), LINE_MARKER("descr='Has subclasses'")!>BottomActualDeclarations<!>() {
+    val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>simpleVal<!>: Int
 
-    companion object <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>Compainon<!> {
-        val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>inTheCompanionOfBottomActualDeclarations<!>: String
+    companion object <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>Compainon<!> {
+        val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>inTheCompanionOfBottomActualDeclarations<!>: String
     }
 }
 
@@ -26,9 +26,9 @@ fun bottActualApiCaller(k: KotlinApiContainer, s: JavaApiContainer) {
 internal val tlInternalInCommon = 42
 
 // has a child in jsJvm18Main
-open class <!LINE_MARKER("descr='Is subclassed by ChildOfCommonInMacos ChildOfCommonInShared Subclass  Click or press ... to navigate'")!>Outer<!> {
+open class <!LINE_MARKER("descr='Is subclassed by ChildOfCommonInMacos (transitiveStory.bottomActual.mppBeginning) ChildOfCommonInShared (transitiveStory.bottomActual.intermediateSrc) Subclass (transitiveStory.bottomActual.intermediateSrc) Press ... to navigate'")!>Outer<!> {
     private val a = 1
-    protected open val <!LINE_MARKER("descr='Is overridden in transitiveStory.bottomActual.mppBeginning.ChildOfCommonInMacos transitiveStory.bottomActual.intermediateSrc.ChildOfCommonInShared transitiveStory.bottomActual.intermediateSrc.Subclass'")!>b<!> = 2
+    protected open val <!LINE_MARKER("descr='Is overridden in ChildOfCommonInMacos (transitiveStory.bottomActual.mppBeginning) ChildOfCommonInShared (transitiveStory.bottomActual.intermediateSrc) Subclass (transitiveStory.bottomActual.intermediateSrc) Press ... to navigate'")!>b<!> = 2
     internal val c = 3
     val d = 4  // public by default
 
@@ -38,13 +38,12 @@ open class <!LINE_MARKER("descr='Is subclassed by ChildOfCommonInMacos ChildOfCo
 }
 
 // has a child in jsJvm18Main
-expect open class <!LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos ChildOfMPOuterInShared  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>MPOuter<!> {
-    protected open val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>b<!>: Int
-    internal val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>c<!>: Int
-    val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>d<!>: Int // public by default
+expect open class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'"), LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos (transitiveStory.bottomActual.mppBeginning) ChildOfMPOuterInShared (transitiveStory.bottomActual.intermediateSrc) Press ... to navigate'")!>MPOuter<!> {
+    protected open val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>b<!>: Int
+    internal val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>c<!>: Int
+    val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>d<!>: Int // public by default
 
-    protected class <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>MPNested<!> {
-        public val <!LINE_MARKER("descr='Has actuals in Native (2 modules), common'")!>e<!>: Int
+    protected class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>MPNested<!> {
+        public val <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.linuxMain, multimod-hmpp.top-mpp.macosMain, multimod-hmpp.top-mpp.jsJvm18iOSMain] modules'")!>e<!>: Int
     }
 }
-

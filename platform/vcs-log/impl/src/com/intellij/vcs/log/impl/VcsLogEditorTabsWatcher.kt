@@ -7,9 +7,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
-import com.intellij.vcs.log.visible.VisiblePackRefresher
-import org.jetbrains.annotations.NonNls
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import org.jetbrains.annotations.NonNls
 
 internal class VcsLogEditorTabsWatcher(private val project: Project,
                                        parentDisposable: Disposable) : VcsLogTabsWatcherExtension<VcsLogEditorTabsWatcher.VcsLogEditorTab> {
@@ -34,7 +33,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
 
   override fun closeTabs(tabs: List<VcsLogWindow>) {
     val editorTabs = tabs.filterIsInstance(VcsLogEditorTab::class.java).filter { it.isClosedOnDispose }.map { it.id }
-    val closed = closeLogTabs(project, editorTabs)
+    val closed = VcsLogEditorUtil.closeLogTabs(project, editorTabs)
     LOG.assertTrue(closed, "Could not close tabs: $editorTabs")
   }
 
@@ -51,7 +50,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
   private inner class MyFileManagerListener : FileEditorManagerListener {
     override fun selectionChanged(e: FileEditorManagerEvent) {
       e.newEditor?.let { editor ->
-        for (tabId in getLogIds(editor)) {
+        for (tabId in VcsLogEditorUtil.getLogIds(editor)) {
           tabSelectedCallback(tabId)
         }
       }
@@ -62,7 +61,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
     private val LOG = Logger.getInstance(VcsLogEditorTabsWatcher::class.java)
 
     private fun getSelectedEditorTabIds(project: Project): Set<String> {
-      return findSelectedLogIds(project)
+      return VcsLogEditorUtil.findSelectedLogIds(project)
     }
   }
 }

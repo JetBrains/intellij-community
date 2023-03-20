@@ -3,11 +3,11 @@ package com.jetbrains.python;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -465,7 +465,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-22971
   public void testOverloadsAndNoImplementationInImportedModule() {
-    // resolve to the last overload
+    // resolve to the first overload
     myFixture
       .copyDirectoryToProject("resolve/OverloadsAndNoImplementationInImportedModuleDep", "OverloadsAndNoImplementationInImportedModuleDep");
     final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
@@ -475,7 +475,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
       .getOverloads(foo, context)
       .forEach(
         overload -> {
-          if (overload != foo) assertTrue(PyPsiUtils.isBefore(overload, foo));
+          if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
         }
       );
   }
@@ -565,6 +565,21 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-21493
   public void testRegexpAndFStringCombined() {
     assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-29898
+  public void testKeywordArgumentToDataclassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "some_attr");
+  }
+
+  // PY-29898
+  public void testKeywordArgumentToAttrsAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "some_attr");
+  }
+
+  // PY-55231
+  public void testKeywordArgumentToConstructorParameter() {
+    assertResolvesTo(PyNamedParameterImpl.class, "param");
   }
 
   // PY-30942
@@ -762,6 +777,11 @@ public class Py3ResolveTest extends PyResolveTestCase {
     assertNull(doResolve());
   }
 
+  // PY-36158
+  public void testDataclassFieldsDataclassesStarImport() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
   public void testInstanceAttrAbove() {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
@@ -856,5 +876,4 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testKeywordPatternResolvesToInheritedProperty() {
     assertResolvesTo(PyFunction.class, "foo");
   }
-
 }

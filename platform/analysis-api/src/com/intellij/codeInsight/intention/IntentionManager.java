@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -9,10 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,8 +30,7 @@ public abstract class IntentionManager  {
   /**
    * @deprecated Use {@link #getInstance()} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static IntentionManager getInstance(Project project) {
     return getInstance();
   }
@@ -58,9 +57,17 @@ public abstract class IntentionManager  {
    * Returns all registered intention actions which are available now
    * (not disabled via Settings|Intentions or Alt-Enter|Disable intention quick fix)
    *
-   * @return array of actions.
+   * @return list of actions.
    */
   public abstract @NotNull List<IntentionAction> getAvailableIntentions();
+
+  /**
+   * Returns all registered intention actions which are available for passed languages
+   * (not disabled via Settings|Intentions or Alt-Enter|Disable intention quick fix)
+   *
+   * @return list of actions.
+   */
+  public abstract @NotNull List<IntentionAction> getAvailableIntentions(Collection<String> languages);
 
   /**
    * @deprecated Please use {@code <intentionAction>} extension point instead
@@ -75,33 +82,28 @@ public abstract class IntentionManager  {
    * E.g. actions for suppress the problem via comment, javadoc or annotation,
    * and edit corresponding inspection settings.
    */
-  @NotNull
-  public abstract List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context);
+  public abstract @NotNull List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context);
 
   /**
    * @return "Fix all '' inspections problems for a file" intention if toolWrapper is local inspection or simple global one
    */
-  @Nullable
-  public abstract IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action);
+  public abstract @Nullable IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action);
 
   /**
    * @return intention to start code cleanup on file
    */
-  @NotNull
-  public abstract IntentionAction createCleanupAllIntention();
+  public abstract @NotNull IntentionAction createCleanupAllIntention();
 
   /**
    * @return options for cleanup intention {@link #createCleanupAllIntention()}
    * e.g. edit enabled cleanup inspections or starting cleanup on predefined scope
    */
-  @NotNull
-  public abstract List<IntentionAction> getCleanupIntentionOptions();
+  public abstract @NotNull List<IntentionAction> getCleanupIntentionOptions();
 
   /**
    * Wraps given action in a LocalQuickFix object.
    * @param action action to convert.
    * @return quick fix instance.
    */
-  @NotNull
-  public abstract LocalQuickFix convertToFix(@NotNull IntentionAction action);
+  public abstract @NotNull LocalQuickFix convertToFix(@NotNull IntentionAction action);
 }

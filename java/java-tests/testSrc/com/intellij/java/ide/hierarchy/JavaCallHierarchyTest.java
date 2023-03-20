@@ -3,10 +3,12 @@ package com.intellij.java.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction;
 import com.intellij.ide.hierarchy.call.CalleeMethodsTreeStructure;
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
@@ -47,14 +49,14 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
       assertNotNull("Method '" + methodName + "' not found in " + classFqn + ". Available methods are " +
                     Arrays.toString(psiClass.getMethods()), method);
       return new CallerMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, fileNames);
+    }, JavaHierarchyUtil.getComparator(myProject), fileNames);
   }
   private void doJavaCalleeTypeHierarchyTest(@NotNull String classFqn, @NotNull String methodName, String @NotNull ... fileNames) throws Exception {
     doHierarchyTest(() -> {
       PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
       PsiMember method = psiClass.findMethodsByName(methodName, false) [0];
       return new CalleeMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, fileNames);
+    }, JavaHierarchyUtil.getComparator(myProject),fileNames);
   }
 
   public void testDirectRecursion() throws Exception {
@@ -98,7 +100,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
       PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
       PsiMember method = psiClass.findMethodsByName("testMethod", false) [0];
       return new CalleeMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, "A.java");
+    }, JavaHierarchyUtil.getComparator(myProject),"A.java");
   }
 
   public void testField() throws Exception {
@@ -106,7 +108,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
       PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
       PsiField field = psiClass.findFieldByName("testField", false);
       return new CallerMethodsTreeStructure(getProject(), field, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, "A.java");
+    }, JavaHierarchyUtil.getComparator(myProject),"A.java");
   }
 
   public void testAnonymous2() throws Exception {
@@ -116,7 +118,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   public void testActionAvailableInXml() {
     configureByText(XmlFileType.INSTANCE, "<foo>java.lang.Str<caret>ing</foo>");
     BrowseTypeHierarchyAction action = new BrowseTypeHierarchyAction();
-    TestActionEvent e = new TestActionEvent(action);
+    AnActionEvent e = TestActionEvent.createTestEvent(action);
     assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true));
     assertTrue(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
   }
@@ -143,5 +145,8 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   }
   public void testThroughAnonymousCalledByOther() throws Exception {
     doJavaCallerTypeHierarchyTest("x.AcmClientImpl", "returnSomething", "X.java");
+  }
+  public void testWildcards() throws Exception {
+    doJavaCallerTypeHierarchyTest("p.BoardImpl", "getCount", "A.java");
   }
 }

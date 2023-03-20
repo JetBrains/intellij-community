@@ -86,8 +86,7 @@ public final class JavaI18nUtil {
 
   @NotNull
   static UExpression getTopLevelExpression(@NotNull UExpression expression, boolean stopAtCall) {
-    while (expression.getUastParent() instanceof UExpression) {
-      final UExpression parent = (UExpression)expression.getUastParent();
+    while (expression.getUastParent() instanceof UExpression parent) {
       if (parent instanceof UBlockExpression || parent instanceof UReturnExpression) {
         break;
       }
@@ -117,10 +116,9 @@ public final class JavaI18nUtil {
     Ref<PsiAnnotationMemberValue> resourceBundleRef = Ref.create();
     if (mustBePropertyKey(expression, resourceBundleRef)) {
       final Object resourceBundleName = resourceBundleRef.get();
-      if (!(resourceBundleName instanceof PsiExpression)) {
+      if (!(resourceBundleName instanceof PsiExpression expr)) {
         return false;
       }
-      PsiExpression expr = (PsiExpression)resourceBundleName;
       final PsiConstantEvaluationHelper constantEvaluationHelper = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
       Object value = constantEvaluationHelper.computeConstantExpression(expr);
       if (value == null) {
@@ -207,8 +205,7 @@ public final class JavaI18nUtil {
                                                 @NotNull PsiElement context,
                                                 @NotNull Collection<? super String> result) {
     PsiScopesUtil.treeWalkUp((element, state) -> {
-      if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
+      if (element instanceof PsiMethod method) {
         PsiType returnType = method.getReturnType();
         if (returnType != null && TypeConversionUtil.isAssignable(type, returnType)
             && method.getParameterList().isEmpty()) {

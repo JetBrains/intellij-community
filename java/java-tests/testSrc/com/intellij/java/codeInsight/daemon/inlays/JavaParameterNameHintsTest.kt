@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
@@ -33,9 +19,16 @@ class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   override fun tearDown() {
-    val default = ParameterNameHintsSettings()
-    ParameterNameHintsSettings.getInstance().loadState(default.state)
-    super.tearDown()
+    try {
+      val default = ParameterNameHintsSettings()
+      ParameterNameHintsSettings.getInstance().loadState(default.state)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun check(text: String) {
@@ -94,44 +87,6 @@ class Fooo {
  public void show(String title, String message) {}
 
 }""")
-  }
-
-
-  fun `test no hints for generic builders`() {
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(10);
-    new Stream<Integer>().skip(10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(<hint text="n:"/>10);
-    new Stream<Integer>().skip(<hint text="n:"/>10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
   }
 
 
@@ -516,83 +471,6 @@ interface DockManager {}
 interface Content {}
 """)
   }
-
-  fun `test do not inline builder pattern`() {
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int time) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(false).timeWait(100);
-  }
-
-}
-""")
-    
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int millis) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(<hint text="xvalue:"/>false).timeWait(<hint text="millis:"/>100);
-  }
-
-}
-""")
-  }
-
-  
-  fun `test builder method only method with one param`() {
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(<hint text="value:"/>false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-  
-  }
-  
 
   fun `test do not show single parameter hint if it is string literal`() {
     check("""

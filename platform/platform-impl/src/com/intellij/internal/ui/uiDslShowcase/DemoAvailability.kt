@@ -18,15 +18,13 @@ fun demoAvailability(): DialogPanel {
         checkBox = checkBox("Check to enable options")
       }
       indent {
-        rowsRange {
-          row {
-            checkBox("Option 1")
-          }
-          row {
-            checkBox("Option 2")
-          }
-        }.enabledIf(checkBox.selected)
-      }
+        row {
+          checkBox("Option 1")
+        }
+        row {
+          checkBox("Option 2")
+        }
+      }.enabledIf(checkBox.selected)
       row {
         val mailCheckBox = checkBox("Use mail:")
           .gap(RightGap.SMALL)
@@ -41,15 +39,13 @@ fun demoAvailability(): DialogPanel {
         checkBox = checkBox("Check to show options")
       }
       indent {
-        rowsRange {
-          row {
-            checkBox("Option 1")
-          }
-          row {
-            checkBox("Option 2")
-          }
-        }.visibleIf(checkBox.selected)
-      }
+        row {
+          checkBox("Option 1")
+        }
+        row {
+          checkBox("Option 2")
+        }
+      }.visibleIf(checkBox.selected)
     }
   }
 }

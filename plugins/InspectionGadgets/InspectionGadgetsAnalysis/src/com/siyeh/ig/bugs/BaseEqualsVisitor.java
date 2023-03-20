@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -43,7 +46,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
                                                                                PREDICATE_NEGATE);
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     super.visitMethodReferenceExpression(expression);
     if (!OBJECT_EQUALS.methodReferenceMatches(expression) && !STATIC_EQUALS.methodReferenceMatches(expression)) {
       return;
@@ -113,8 +116,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
 
       //example: Predicate.not(Predicate.isEqual("1")) or predicate.or(Predicate.isEqual("1")) or predicate.and(Predicate.isEqual("1"))
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(highestPredicate.getParent());
-      if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression) {
-        final PsiExpression psiExpressionNextParent = (PsiExpression)parent.getParent();
+      if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression psiExpressionNextParent) {
         if (PREDICATE_NOT_OR_AND.matches(psiExpressionNextParent)) {
           highestPredicate = psiExpressionNextParent;
           continue;
@@ -155,10 +157,9 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
   @Nullable
   private static PsiType findPredicateExpectedType(@NotNull PsiExpression predicate) {
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(predicate, true);
-    if (!(expectedType instanceof PsiClassType)) {
+    if (!(expectedType instanceof PsiClassType classType)) {
       return null;
     }
-    PsiClassType classType = (PsiClassType)expectedType;
     if (classType.getParameterCount() != 1 || !PsiTypesUtil.classNameEquals(classType, JAVA_UTIL_FUNCTION_PREDICATE)) {
       return null;
     }
@@ -167,8 +168,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     if (parameter == null || parameter.equalsToText(JAVA_LANG_OBJECT)) {
       return null;
     }
-    if (parameter instanceof PsiWildcardType) {
-      PsiWildcardType psiWildcardType = (PsiWildcardType)parameter;
+    if (parameter instanceof PsiWildcardType psiWildcardType) {
       parameter = psiWildcardType.isSuper() ? psiWildcardType.getSuperBound() : parameter;
     }
     return parameter;
@@ -180,17 +180,37 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     }
     final PsiType leftType = getType(expression1);
     final PsiType rightType = getType(expression2);
-    if (leftType != null && rightType != null) checkTypes(expression.getMethodExpression(), leftType, rightType);
+    if (leftType != null && rightType != null) {
+      if (!checkTypes(expression.getMethodExpression(), leftType, rightType)) {
+        CommonDataflow.DataflowResult dfa = CommonDataflow.getDataflowResult(expression);
+        if (dfa != null) {
+          Project project = getCurrentFile().getProject();
+          PsiType refinedLeftType =
+            leftType instanceof PsiPrimitiveType ? leftType : TypeConstraint.fromDfType(dfa.getDfType(expression1)).getPsiType(project);
+          PsiType refinedRightType =
+            rightType instanceof PsiPrimitiveType ? rightType : TypeConstraint.fromDfType(dfa.getDfType(expression2)).getPsiType(project);
+          if (refinedLeftType != null && refinedRightType != null &&
+              (!refinedLeftType.equals(leftType) || !refinedRightType.equals(rightType))) {
+            checkTypes(expression.getMethodExpression(), refinedLeftType, refinedRightType);
+          }
+        }
+      }
+    }
   }
 
-  private static PsiType getType(PsiExpression expression) {
-    if (!(expression instanceof PsiNewExpression)) {
+  protected static PsiType getType(PsiExpression expression) {
+    if (!(expression instanceof PsiNewExpression newExpression)) {
       return expression.getType();
     }
-    final PsiNewExpression newExpression = (PsiNewExpression)expression;
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     return anonymousClass != null ? anonymousClass.getBaseClassType() : expression.getType();
   }
 
-  abstract void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType);
+  /**
+   * @param expression anchor to report error
+   * @param leftType   left type
+   * @param rightType  right type
+   * @return true if error is reported due to incompatible types
+   */
+  abstract boolean checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType);
 }

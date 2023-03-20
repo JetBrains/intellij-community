@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,10 +58,19 @@ final class CompositeBinaryBuilderMap {
 
   void persistState(int fileId, @NotNull VirtualFile file) throws IOException {
     int version = getBuilderCumulativeVersion(file);
+    persistVersion(version, fileId);
+  }
+
+  private void persistVersion(int version, int fileId) throws IOException {
     if (version == 0) return;
     try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
       DataInputOutputUtil.writeINT(stream, version);
     }
+  }
+
+  void persistState(int fileId, @NotNull FileType fileType) throws IOException {
+    int version = myCumulativeVersionMap.getInt(fileType);
+    persistVersion(version, fileId);
   }
 
   void resetPersistedState(int fileId) throws IOException {

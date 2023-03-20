@@ -1,4 +1,7 @@
+from _typeshed import Self
+
 from stripe.api_resources.abstract.api_resource import APIResource as APIResource
 
 class DeletableAPIResource(APIResource):
-    def delete(self, **params): ...
+    @classmethod
+    def delete(cls: type[Self], sid: str = ..., **params) -> Self: ...

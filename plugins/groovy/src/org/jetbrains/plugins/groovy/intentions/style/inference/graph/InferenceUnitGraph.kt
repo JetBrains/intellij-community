@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiIntersectionType
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
 import org.jetbrains.plugins.groovy.intentions.style.inference.InferenceGraphNode
 import org.jetbrains.plugins.groovy.intentions.style.inference.removeWildcard
@@ -228,7 +225,7 @@ private fun propagateTypeInstantiations(unitGraph: InferenceUnitGraph): Inferenc
   val instantiations = mutableMapOf<InferenceUnit, PsiType>()
 
   for (unit in unitGraph.units) {
-    if (unit.typeInstantiation != PsiType.NULL && !unitGraph.dependsOnNode(unit.typeInstantiation)) {
+    if (unit.typeInstantiation != PsiTypes.nullType() && !unitGraph.dependsOnNode(unit.typeInstantiation)) {
       var currentUnit: InferenceUnitNode = unit
       while (currentUnit.parent != null) {
         currentUnit = currentUnit.parent!!
@@ -256,8 +253,8 @@ private fun propagateTypeInstantiations(unitGraph: InferenceUnitGraph): Inferenc
 
 private fun mergeTypes(firstType: PsiType, secondType: PsiType): PsiType {
   // it is possible to diagnose errors here
-  if (firstType == PsiType.NULL) return secondType
-  if (secondType == PsiType.NULL) return firstType
+  if (firstType == PsiTypes.nullType()) return secondType
+  if (secondType == PsiTypes.nullType()) return firstType
   val context = firstType.resolve() ?: return firstType
   if (firstType is PsiWildcardType && secondType is PsiWildcardType) {
     if (firstType.isExtends && secondType.isExtends) {

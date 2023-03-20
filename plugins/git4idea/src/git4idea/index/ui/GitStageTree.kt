@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.ide.dnd.DnDActionInfo
@@ -7,6 +7,8 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -18,6 +20,7 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -42,7 +45,7 @@ import javax.swing.tree.DefaultTreeModel
 abstract class GitStageTree(project: Project,
                             private val settings: GitStageUiSettings,
                             parentDisposable: Disposable) :
-  HoverChangesTree(project, false, true) {
+  AsyncChangesTree(project, false, true) {
 
   protected abstract val state: GitStageTracker.State
   protected abstract val ignoredFilePaths: Map<VirtualFile, List<FilePath>>
@@ -58,6 +61,21 @@ abstract class GitStageTree(project: Project,
         rebuildTree()
       }
     }, parentDisposable)
+
+    object : HoverChangesTree(this@GitStageTree) {
+      override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
+        if (node == root) return null
+        if (node is ChangesBrowserGitFileStatusNode) {
+          val hoverIcon = createHoverIcon(node)
+          if (hoverIcon != null) return hoverIcon
+        }
+        val statusNode = allUnder(node).iterateUserObjects(GitFileStatusNode::class.java).first()
+                         ?: return null
+        val operation = operations.find { it.matches(statusNode) } ?: return null
+        if (operation.icon == null) return null
+        return GitStageHoverIcon(operation)
+      }
+    }.install()
   }
 
   override fun getToggleClickCount(): Int = 2
@@ -70,38 +88,29 @@ abstract class GitStageTree(project: Project,
 
   protected abstract fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon?
 
-  override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
-    if (node == root) return null
-    if (node is ChangesBrowserGitFileStatusNode) {
-      val hoverIcon = createHoverIcon(node)
-      if (hoverIcon != null) return hoverIcon
-    }
-    val statusNode = VcsTreeModelData.children(node).userObjectsStream(GitFileStatusNode::class.java).findFirst().orElse(null)
-                     ?: return null
-    val operation = operations.find { it.matches(statusNode) } ?: return null
-    if (operation.icon == null) return null
-    return GitStageHoverIcon(operation)
-  }
-
-  override fun rebuildTree() {
-    val builder = MyTreeModelBuilder(myProject, groupingSupport.grouping)
-
-    builder.createKindNode(NodeKind.STAGED)
-    builder.createKindNode(NodeKind.UNSTAGED)
-
-    state.forEachStatus(*NodeKind.values()) { root, status, kind ->
-      builder.insertStatus(root, status, kind)
-    }
-
-    if (settings.ignoredFilesShown()) {
-      builder.insertIgnoredPaths(ignoredFilePaths)
-    }
-
-    customizeTreeModel(builder)
-    updateTreeModel(builder.build())
-  }
-
   protected open fun customizeTreeModel(builder: TreeModelBuilder) = Unit
+
+  override val changesTreeModel: AsyncChangesTreeModel = GitStateTreeModel()
+
+  private inner class GitStateTreeModel : SimpleAsyncChangesTreeModel() {
+    override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val builder = MyTreeModelBuilder(myProject, grouping)
+
+      builder.createKindNode(NodeKind.STAGED)
+      builder.createKindNode(NodeKind.UNSTAGED)
+
+      state.forEachStatus(*NodeKind.values()) { root, status, kind ->
+        builder.insertStatus(root, status, kind)
+      }
+
+      if (settings.ignoredFilesShown()) {
+        builder.insertIgnoredPaths(ignoredFilePaths)
+      }
+
+      customizeTreeModel(builder)
+      return builder.build()
+    }
+  }
 
   override fun getData(dataId: String): Any? {
     return when {
@@ -109,25 +118,35 @@ abstract class GitStageTree(project: Project,
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
       GitStageDataKeys.GIT_FILE_STATUS_NODES.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
-      VcsDataKeys.VIRTUAL_FILES.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-        .toList().toTypedArray()
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
-        .map { OpenFileDescriptor(project, it!!) }.toList().toTypedArray()
-      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty()) VirtualFileDeleteProvider() else null
+      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
+      PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
+        val selectedNodes = selectedStatusNodes()
+        return DataProvider { slowId -> getSlowData(selectedNodes, slowId) }
+      }
       else -> super.getData(dataId)
     }
   }
 
+  private fun getSlowData(selectedNodes: JBIterable<GitFileStatusNode>, slowId: String): Any? {
+    return when {
+      VcsDataKeys.VIRTUAL_FILES.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+        .toList().toTypedArray()
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+        .map { OpenFileDescriptor(project, it) }.toList().toTypedArray()
+      else -> null
+    }
+  }
+
   fun selectedStatusNodes(): JBIterable<GitFileStatusNode> {
-    val data = VcsTreeModelData.selected(this)
-    return JBIterable.create { data.userObjectsStream(GitFileStatusNode::class.java).iterator() }
+    return VcsTreeModelData.selected(this).iterateUserObjects(GitFileStatusNode::class.java)
   }
 
   fun statusNodesListSelection(preferLimitedContext: Boolean): ListSelection<GitFileStatusNode> {
     val entries = VcsTreeModelData.selected(this).userObjects(GitFileStatusNode::class.java)
     if (entries.size > 1) {
       return ListSelection.createAt(entries, 0)
+        .asExplicitSelection()
     }
 
     val selected = entries.singleOrNull()
@@ -148,6 +167,7 @@ abstract class GitStageTree(project: Project,
     val allEntries = allEntriesData.userObjects(GitFileStatusNode::class.java)
     return if (allEntries.size <= entries.size) {
       ListSelection.createAt(entries, 0)
+        .asExplicitSelection()
     }
     else {
       ListSelection.create(allEntries, selected)
@@ -157,7 +177,7 @@ abstract class GitStageTree(project: Project,
   private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
     : HoverIcon(operation.icon!!, operation.actionText.get()) {
     override fun invokeAction(node: ChangesBrowserNode<*>) {
-      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+      val nodes = allUnder(node).userObjects(GitFileStatusNode::class.java)
       performStageOperation(nodes, operation)
     }
 
@@ -274,7 +294,7 @@ abstract class GitStageTree(project: Project,
                         Runnable {
                           val conflictedFiles = traverseObjectsUnder().filter(GitFileStatusNode::class.java).map {
                             it.filePath.virtualFile
-                          }.filter { it != null }.toList() as List<VirtualFile>
+                          }.filterNotNull().toList()
                           showMergeDialog(conflictedFiles)
                         })
       }
@@ -299,7 +319,7 @@ abstract class GitStageTree(project: Project,
   }
 
   private class MyUntrackedNode(project: Project, files: List<FilePath>) :
-    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
+    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project).show() }) {
     init {
       markAsHelperNode()
       setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)

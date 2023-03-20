@@ -29,9 +29,6 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public abstract class AbstractConfigUtils {
 
   private static final Logger LOG = Logger.getInstance(AbstractConfigUtils.class);
@@ -49,8 +46,6 @@ public abstract class AbstractConfigUtils {
   /**
    * Define, whether  given home is appropriate SDK home
    *
-   * @param file
-   * @return
    */
   public abstract boolean isSDKHome(final VirtualFile file);
 

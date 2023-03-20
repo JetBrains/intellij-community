@@ -27,11 +27,6 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   }
 
   @Override
-  public boolean forcesShowPreview() {
-    return true;
-  }
-
-  @Override
   public boolean isToSearchInComments(@NotNull PsiElement element) {
     return PyCodeInsightSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION;
   }
@@ -72,14 +67,11 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
                                               deepestSuperMethod.getContainingClass().getQualifiedName());
       final int rc =
         Messages.showYesNoCancelDialog(element.getProject(), message, PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
-      switch (rc) {
-        case Messages.YES:
-          return deepestSuperMethod;
-        case Messages.NO:
-          return function;
-        default:
-          return null;
-      }
+      return switch (rc) {
+        case Messages.YES -> deepestSuperMethod;
+        case Messages.NO -> function;
+        default -> null;
+      };
     }
 
     final Property property = containingClass.findPropertyByCallable(function);
@@ -92,14 +84,11 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
         final int rc =
           Messages.showYesNoCancelDialog(element.getProject(),
                                          PyBundle.message("python.rename.processor.property", property.getName(), function.getName()), PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
-        switch (rc) {
-          case Messages.YES:
-            return site;
-          case Messages.NO:
-            return function;
-          default:
-            return null;
-        }
+        return switch (rc) {
+          case Messages.YES -> site;
+          case Messages.NO -> function;
+          default -> null;
+        };
       }
     }
 

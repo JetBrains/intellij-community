@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -13,9 +13,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 public class KtFunctionPsiElementCellRenderer extends DefaultPsiElementCellRenderer {
     @Override
     public String getElementText(PsiElement element) {
-        if (element instanceof KtNamedFunction) {
-            KtNamedFunction function = (KtNamedFunction) element;
-            DeclarationDescriptor descriptor = ResolutionUtils.unsafeResolveToDescriptor(function, BodyResolveMode.PARTIAL);
+        if (element instanceof KtNamedFunction function) {
+          DeclarationDescriptor descriptor = ResolutionUtils.unsafeResolveToDescriptor(function, BodyResolveMode.PARTIAL);
             return DescriptorRenderer.SHORT_NAMES_IN_TYPES.render(descriptor);
         }
         return super.getElementText(element);

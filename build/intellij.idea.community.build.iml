@@ -3,17 +3,28 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/scripts" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/groovy" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/build" />
       <excludeFolder url="file://$MODULE_DIR$/jdk" />
       <excludeFolder url="file://$MODULE_DIR$/restApiDocGenerator/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/protobuf/cache" />
       <excludeFolder url="file://$MODULE_DIR$/protobuf/bin" />
       <excludeFolder url="file://$MODULE_DIR$/download" />
+      <excludeFolder url="file://$MODULE_DIR$/jps-bootstrap-work" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" exported="" />
+    <orderEntry type="library" scope="RUNTIME" name="test-discovery-plugin-base" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
   </component>
 </module>

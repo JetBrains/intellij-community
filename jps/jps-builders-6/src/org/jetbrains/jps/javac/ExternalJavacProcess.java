@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import io.netty.bootstrap.Bootstrap;
@@ -10,11 +10,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import io.netty.util.internal.logging.JdkLoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
@@ -26,44 +22,37 @@ import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Formatter;
+import java.util.logging.*;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ExternalJavacProcess {
+public final class ExternalJavacProcess {
   public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
-  private final ChannelInitializer<?> myChannelInitializer;
+  public static final int MINIMUM_REQUIRED_JAVA_VERSION = 7;
   private final EventLoopGroup myEventLoopGroup;
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
-  private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<UUID, Boolean>();
+  private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<>();
   private final Executor myThreadPool = Executors.newCachedThreadPool();
 
   static {
-    Logger root = Logger.getRootLogger();
-    if (!root.getAllAppenders().hasMoreElements()) {
+    Logger root = Logger.getLogger("");
+    if (root.getHandlers().length == 0) {
       root.setLevel(Level.INFO);
-      root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+      ConsoleHandler handler = new ConsoleHandler();
+      handler.setFormatter(new Formatter() {
+        @Override
+        public String format(LogRecord record) {
+          return record.getMessage() + "\n";
+        }
+      });
+      root.addHandler(handler);
     }
-    InternalLoggerFactory.setDefaultFactory(Log4JLoggerFactory.INSTANCE);
+    InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE);
   }
 
   public ExternalJavacProcess(boolean keepRunning) {
     myKeepRunning = keepRunning;
-    final JavacRemoteProto.Message msgDefaultInstance = JavacRemoteProto.Message.getDefaultInstance();
-
     myEventLoopGroup = new NioEventLoopGroup(1, myThreadPool);
-    myChannelInitializer = new ChannelInitializer() {
-      @Override
-      protected void initChannel(Channel channel) {
-        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
-                                   new ProtobufDecoder(msgDefaultInstance),
-                                   new ProtobufVarint32LengthFieldPrepender(),
-                                   new ProtobufEncoder(),
-                                   new CompilationRequestsHandler()
-                                   );
-      }
-    };
   }
 
   //static volatile long myGlobalStart;
@@ -97,7 +86,7 @@ public class ExternalJavacProcess {
       }
 
       if (args.length > 3) {
-        keepRunning = Boolean.valueOf(args[3]);
+        keepRunning = Boolean.parseBoolean(args[3]);
       }
     }
     else {
@@ -105,8 +94,8 @@ public class ExternalJavacProcess {
       System.exit(-1);
     }
 
-    final ExternalJavacProcess process = new ExternalJavacProcess(keepRunning);
     try {
+      final ExternalJavacProcess process = new ExternalJavacProcess(keepRunning);
       //final long connectStart = System.nanoTime();
       if (process.connect(host, port)) {
         //final long connectEnd = System.nanoTime();
@@ -126,9 +115,18 @@ public class ExternalJavacProcess {
     }
   }
 
-  private  boolean connect(final String host, final int port) throws Throwable {
-    final Bootstrap bootstrap = new Bootstrap().group(myEventLoopGroup).channel(NioSocketChannel.class).handler(myChannelInitializer);
-    bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
+  private  boolean connect(final String host, final int port) {
+    final Bootstrap bootstrap = new Bootstrap().group(myEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
+      @Override
+      protected void initChannel(Channel channel) {
+        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
+                                   new ProtobufDecoder(JavacRemoteProto.Message.getDefaultInstance()),
+                                   new ProtobufVarint32LengthFieldPrepender(),
+                                   new ProtobufEncoder(),
+                                   new CompilationRequestsHandler()
+        );
+      }
+    }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     final ChannelFuture future = bootstrap.connect(host, port).syncUninterruptibly();
     if (future.isSuccess()) {
       myConnectFuture = future;
@@ -248,9 +246,9 @@ public class ExternalJavacProcess {
 
               final List<File> upgradeModulePath = toFiles(request.getUpgradeModulePathList());
 
-              final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
+              final Map<File, Set<File>> outs = new HashMap<>();
               for (JavacRemoteProto.Message.Request.OutputGroup outputGroup : request.getOutputList()) {
-                final Set<File> srcRoots = new HashSet<File>();
+                final Set<File> srcRoots = new HashSet<>();
                 for (String root : outputGroup.getSourceRootList()) {
                   srcRoots.add(new File(root));
                 }
@@ -350,7 +348,7 @@ public class ExternalJavacProcess {
   }
 
   private static List<File> toFiles(List<String> paths) {
-    final List<File> files = new ArrayList<File>(paths.size());
+    final List<File> files = new ArrayList<>(paths.size());
     for (String path : paths) {
       files.add(new File(path));
     }

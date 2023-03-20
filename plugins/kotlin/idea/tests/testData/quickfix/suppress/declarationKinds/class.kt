@@ -3,3 +3,5 @@
 class C {
     var foo: String?<caret>? = null
 }
+
+// IGNORE_FIR

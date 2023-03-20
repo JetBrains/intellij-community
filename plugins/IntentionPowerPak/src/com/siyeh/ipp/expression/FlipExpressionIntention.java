@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2007-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,11 @@ import org.jetbrains.annotations.NotNull;
 public class FlipExpressionIntention extends MutablyNamedIntention {
 
   @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("flip.expression.intention.family.name");
+  }
+
+  @Override
   public String getTextForElement(PsiElement element) {
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element.getParent();
     final PsiExpression[] operands = expression.getOperands();
@@ -59,10 +64,9 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
   public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiElement parent = token.getParent();
-    if (!(parent instanceof PsiPolyadicExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
       return;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiExpression[] operands = polyadicExpression.getOperands();
     final StringBuilder newExpression = new StringBuilder();
     CommentTracker commentTracker = new CommentTracker();

@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
+import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.combineWhenConditions
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -27,16 +28,19 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
         if (entries.any { it != lastEntry && it.isElse }) return null
         if (entries.all { it.isElse }) return null // 'when' with only 'else' branch is not supported
         if (element.subjectExpression is KtProperty) return null
-        if (!lastEntry.isElse && element.isUsedAsExpression(element.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return null
+        if (!lastEntry.isElse) {
+            val bindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
+            if (bindingContext == BindingContext.EMPTY || element.isUsedAsExpression(bindingContext)) return null
+        }
         return element.whenKeyword.textRange
     }
 
     override fun applyTo(element: KtWhenExpression, editor: Editor?) {
         val commentSaver = CommentSaver(element)
+        val psiFactory = KtPsiFactory(element.project)
 
-        val factory = KtPsiFactory(element)
         val isTrueOrFalseCondition = element.isTrueOrFalseCondition()
-        val ifExpression = factory.buildExpression {
+        val ifExpression = psiFactory.buildExpression {
             val entries = element.entries
             for ((i, entry) in entries.withIndex()) {
                 if (i > 0) {
@@ -46,7 +50,7 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
                 if (entry.isElse || (isTrueOrFalseCondition && i == 1)) {
                     appendExpression(branch)
                 } else {
-                    val condition = factory.combineWhenConditions(entry.conditions, element.subjectExpression)
+                    val condition = psiFactory.combineWhenConditions(entry.conditions, element.subjectExpression)
                     appendFixedText("if (")
                     appendExpression(condition)
                     appendFixedText(")")

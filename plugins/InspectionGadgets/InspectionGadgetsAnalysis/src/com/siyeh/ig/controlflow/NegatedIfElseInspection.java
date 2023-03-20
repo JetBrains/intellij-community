@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class NegatedIfElseInspection extends BaseInspection {
 
@@ -57,11 +60,10 @@ public class NegatedIfElseInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.null.option"), "m_ignoreNegatedNullComparison");
-    panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.zero.option"), "m_ignoreNegatedZeroComparison");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreNegatedNullComparison", InspectionGadgetsBundle.message("negated.if.else.ignore.negated.null.option")),
+      checkbox("m_ignoreNegatedZeroComparison", InspectionGadgetsBundle.message("negated.if.else.ignore.negated.zero.option")));
   }
 
   @Override
@@ -78,7 +80,7 @@ public class NegatedIfElseInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement ifToken = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)ifToken.getParent();
       assert ifStatement != null;
@@ -98,8 +100,7 @@ public class NegatedIfElseInspection extends BaseInspection {
       final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
       String elseText = tracker.text(elseBranch);
       final PsiElement lastChild = elseBranch.getLastChild();
-      if (lastChild instanceof PsiComment) {
-        final PsiComment comment = (PsiComment)lastChild;
+      if (lastChild instanceof PsiComment comment) {
         final IElementType tokenType = comment.getTokenType();
         if (JavaTokenType.END_OF_LINE_COMMENT.equals(tokenType)) {
           elseText += '\n';

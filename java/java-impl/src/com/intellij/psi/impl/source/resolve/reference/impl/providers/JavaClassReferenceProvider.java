@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -11,14 +11,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
   /** Tells reference provider to process only qualified class references (e.g. not resolve String as java.lang.String) */
@@ -38,10 +34,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> ALLOW_WILDCARDS = new CustomizationKey<>("ALLOW_WILDCARDS");
 
   /** @deprecated use {@link #SUPER_CLASSES} instead */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
   public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<>("EXTEND_CLASS_NAMES");
   /** @deprecated use {@link #IMPORTS} instead */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
 
   @Nullable
@@ -65,7 +61,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       myOptions = new HashMap<>();
     }
     if (option == EXTEND_CLASS_NAMES) {
-      SUPER_CLASSES.putValue(myOptions, ContainerUtil.immutableList((String[])value));
+      SUPER_CLASSES.putValue(myOptions, List.of((String[])value));
     }
     else if (option == DEFAULT_PACKAGE) {
       IMPORTS.putValue(myOptions, Collections.singletonList((String)value));
@@ -131,6 +127,14 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   @NotNull
   static List<PsiPackage> getDefaultPackages(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, ourPackagesKey, ourPackagesProvider, false, project);
+  }
+
+  @NotNull
+  static Set<String> getDefaultPackagesNames(@NotNull Project project) {
+    return CachedValuesManager.getManager(project)
+      .getCachedValue(project, 
+                      () -> CachedValueProvider.Result.create(ContainerUtil.map2Set(getDefaultPackages(project), PsiPackage::getName), 
+                                                              PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override

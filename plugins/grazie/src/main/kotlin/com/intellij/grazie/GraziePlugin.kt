@@ -4,13 +4,15 @@ package com.intellij.grazie
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-internal object GraziePlugin {
+@ApiStatus.Internal
+object GraziePlugin {
   const val id = "tanvd.grazi"
 
   object LanguageTool {
-    const val version = "5.5"
+    const val version = "6.0"
     const val url = "https://resources.jetbrains.com/grazie/model/language-tool"
   }
 
@@ -20,8 +22,8 @@ internal object GraziePlugin {
   val group: String
     get() = GrazieBundle.message("grazie.group.name")
 
-  val name: String
-    get() = GrazieBundle.message("grazie.name")
+  val settingsPageName: String
+    get() = GrazieBundle.message("grazie.settings.page.name")
 
   val isBundled: Boolean
     get() = descriptor.isBundled

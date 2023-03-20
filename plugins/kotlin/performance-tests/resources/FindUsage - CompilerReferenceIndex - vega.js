@@ -5,10 +5,8 @@
   "$schema": "https://vega.github.io/schema/vega/v4.3.0.json",
   "description": "FindUsage - CompilerReferenceIndex",
   "title": "FindUsage - CompilerReferenceIndex",
-  "width": 800,
-  "height": 500,
   "padding": 5,
-  "autosize": {"type": "pad", "resize": true},
+  "autosize": {"type": "fit", "contains": "padding"},
   "signals": [
     {
       "name": "clear",
@@ -5166,14 +5164,7 @@
                      ]
                    }
                 },
-                {
-                  "bool": {
-                    "should": [
-                      {"term": {"benchmark.keyword": "findUsages50_50"}},
-                      {"term": {"benchmark.keyword": "findUsages50_50_with_cri"}}
-                    ]
-                  }
-                },
+                {"prefix": {"benchmark.keyword": "findUsages"}},
                 {"range": {"buildTimestamp": {"%timefilter%": true}}}
               ]
             }

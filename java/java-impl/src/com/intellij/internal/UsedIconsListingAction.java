@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
@@ -31,9 +31,23 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 final class UsedIconsListingAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
 
     final MultiMap<String, PsiExpression> calls = new MultiMap<>();
 
@@ -44,7 +58,6 @@ final class UsedIconsListingAction extends AnAction {
         PsiCallExpression call = PsiTreeUtil.getParentOfType(reference.getElement(), PsiCallExpression.class, false);
         if (call == null) return true;
         if (call.getArgumentList() == null) return true;
-        if (call.getArgumentList().getExpressions() == null) return true;
 
         PsiFile file = reference.getElement().getContainingFile();
         if ("AllIcons.java".equals(file.getName())) return true;
@@ -91,18 +104,14 @@ final class UsedIconsListingAction extends AnAction {
 
     PsiMethod getIconMethod = iconLoader.findMethodsByName("getIcon", false)[0];
     PsiMethod findIconMethod = iconLoader.findMethodsByName("findIcon", false)[0];
-    if (true) {
-      MethodReferencesSearch.search(getIconMethod, false).forEach(consumer);
-      MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
-    }
+    MethodReferencesSearch.search(getIconMethod, false).forEach(consumer);
+    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    if (true) {
-      PsiClass javaeeIcons = psiFacade.findClass("com.intellij.javaee.JavaeeIcons", allScope);
-      MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
+    PsiClass javaeeIcons = psiFacade.findClass("com.intellij.javaee.JavaeeIcons", allScope);
+    MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
 
-      MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
-    }
+    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
 
     final List<XmlAttribute> xmlAttributes = new ArrayList<>();
 
@@ -120,7 +129,7 @@ final class UsedIconsListingAction extends AnAction {
         public boolean process(PsiFile file) {
           file.accept(new XmlRecursiveElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               super.visitXmlTag(tag);
 
               String icon = tag.getAttributeValue("icon");
@@ -168,7 +177,6 @@ final class UsedIconsListingAction extends AnAction {
                                      PsiClass iconClass) {
     final HashMap<String, String> mappings = new HashMap<>();
     collectFields(iconClass, "", mappings);
-    System.out.println("Found " + mappings.size() + " icons in " + iconClass.getQualifiedName());
 
     GlobalSearchScope useScope = (GlobalSearchScope)iconClass.getUseScope();
 

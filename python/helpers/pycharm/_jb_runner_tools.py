@@ -5,6 +5,7 @@ Tools to implement runners (https://confluence.jetbrains.com/display/~link/PyCha
 import os
 import re
 import sys
+from collections import OrderedDict
 
 import _jb_utils
 from teamcity import teamcity_presence_env_var, messages
@@ -79,6 +80,13 @@ PARSE_FUNC = None
 
 class NewTeamcityServiceMessages(_old_service_messages):
     _latest_subtest_result = None
+    # [full_test_name] = (test_name, node_id, parent_node_id)
+    _test_suites = OrderedDict()
+    INSTANCE = None
+
+    def __init__(self, *args, **kwargs):
+        super(NewTeamcityServiceMessages, self).__init__(*args, **kwargs)
+        NewTeamcityServiceMessages.INSTANCE = self
 
     def message(self, messageName, **properties):
         if messageName in {"enteredTheMatrix", "testCount"}:
@@ -86,34 +94,38 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 _old_service_messages.message(self, messageName, **properties)
             return
 
+        full_name = properties["name"]
         try:
             # Report directory so Java site knows which folder to resolve names against
 
             # tests with docstrings are reported in format "test.name (some test here)".
             # text should be part of name, but not location.
-            possible_location = str(properties["name"])
+            possible_location = str(full_name)
             loc = possible_location.find("(")
             if loc > 0:
                 possible_location = possible_location[:loc].strip()
-            properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR, possible_location)
+            properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR,
+                                                                    possible_location)
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
             _old_service_messages.message(self, messageName, **properties)
             return
 
-        current, parent = _TREE_MANAGER_HOLDER.manager.get_node_ids(properties["name"])
+        current, parent = _TREE_MANAGER_HOLDER.manager.get_node_ids(full_name)
         if not current and not parent:
             return
         # Shortcut for name
         try:
-            properties["name"] = str(properties["name"]).split(".")[-1]
+            properties["name"] = str(full_name).split(".")[-1]
         except IndexError:
             pass
 
         properties["nodeId"] = str(current)
         properties["parentNodeId"] = str(parent)
 
+        if messageName == "testSuiteStarted":
+            self._test_suites[full_name] = (full_name, current, parent)
         _old_service_messages.message(self, messageName, **properties)
 
     def _test_to_list(self, test_name):
@@ -188,7 +200,8 @@ class NewTeamcityServiceMessages(_old_service_messages):
         _old_service_messages.testFailed(self, testName, message, details, comparison_failure=comparison_failure)
 
     def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
-        testName = ".".join(self._test_to_list(testName))
+        test_parts = self._test_to_list(testName)
+        testName = ".".join(test_parts)
 
         def _write_finished_message():
             # testName, captureStandardOutput, flowId
@@ -205,13 +218,15 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 args["duration"] = str(duration_ms)
 
             if is_suite:
+                del self._test_suites[testName]
                 if is_parallel_mode():
                     del args["duration"]
                 self.message("testSuiteFinished", **args)
             else:
                 self.message("testFinished", **args)
 
-        commands = _TREE_MANAGER_HOLDER.manager.level_closed(self._test_to_list(testName), _write_finished_message)
+        commands = _TREE_MANAGER_HOLDER.manager.level_closed(
+            self._test_to_list(testName), _write_finished_message)
         if commands:
             self.do_commands(commands)
             self.testFinished(testName, testDuration)
@@ -228,6 +243,24 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 self.testStarted(test_name, is_suite=True)
             else:
                 self.testFinished(test_name, is_suite=True)
+
+    def _repose_suite_closed(self, suite):
+        name = suite.full_name
+        if name:
+            _old_service_messages.testSuiteFinished(self, ".".join(name))
+        for child in suite.children.values():
+            self._repose_suite_closed(child)
+
+    def close_suites(self):
+        # Go in reverse order and close all suites
+        for (test_suite, node_id, parent_node_id) in \
+                reversed(list(self._test_suites.values())):
+            _old_service_messages.message(self, "testSuiteFinished", **{
+                "name": test_suite,
+                "nodeId": str(node_id),
+                "parentNodeId": str(parent_node_id)
+            })
+        self._test_suites = OrderedDict()
 
 
 messages.TeamcityServiceMessages = NewTeamcityServiceMessages
@@ -272,6 +305,15 @@ def jb_start_tests():
     return path, targets, additional_args
 
 
+def jb_finish_tests():
+    # To be called before process exist to close all suites
+    instance = NewTeamcityServiceMessages.INSTANCE
+
+    # instance may not be set if you run like pytest --version
+    if instance:
+        instance.close_suites()
+
+
 def start_protocol():
     properties = {"durationStrategy": "manual"} if is_parallel_mode() else dict()
     NewTeamcityServiceMessages().message('enteredTheMatrix', **properties)
@@ -302,7 +344,8 @@ def parse_arguments():
     # PyCharm helpers dir is first dir in sys.path because helper is launched.
     # But sys.path should be same as when launched with test runner directly
     try:
-        if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
+        if os.path.abspath(sys.path[0]) == os.path.abspath(
+                os.environ["PYCHARM_HELPERS_DIR"]):
             path = sys.path.pop(0)
             if path not in sys.path:
                 sys.path.append(path)
@@ -317,4 +360,6 @@ def jb_doc_args(framework_name, args):
     Runner encouraged to report its arguments to user with aid of this function
 
     """
-    print("Launching {0} with arguments {1} in {2}\n".format(framework_name, " ".join(args), PROJECT_DIR))
+    print("Launching {0} with arguments {1} in {2}\n".format(framework_name,
+                                                             " ".join(args),
+                                                             PROJECT_DIR))

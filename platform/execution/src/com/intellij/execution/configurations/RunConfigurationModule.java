@@ -15,7 +15,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,15 +60,6 @@ public class RunConfigurationModule implements JDOMExternalizable {
       parent.addContent(prev);
     }
     prev.setAttribute(ATTRIBUTE, getModuleName());
-  }
-
-  /**
-   * @deprecated It is not init. It sets module to any first module if no module yet configured. Use {@link #setModuleToAnyFirstIfNotSpecified} if need.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void init() {
-    setModuleToAnyFirstIfNotSpecified();
   }
 
   public void setModuleToAnyFirstIfNotSpecified() {

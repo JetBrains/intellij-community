@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +18,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +29,19 @@ import java.util.Map;
 public abstract class FileDocumentManagerBase extends FileDocumentManager {
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
   public static final Key<Boolean> TRACK_NON_PHYSICAL = Key.create("TRACK_NON_PHYSICAL");
+
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
   private static final Object lock = new Object();
 
+  @ApiStatus.Experimental
+  public static boolean isTrackable(@NotNull VirtualFile file) {
+    return !(file.getFileSystem() instanceof NonPhysicalFileSystem) ||
+           Boolean.TRUE.equals(file.getUserData(TRACK_NON_PHYSICAL));
+  }
+
   @Override
-  @Nullable
-  public Document getDocument(@NotNull VirtualFile file) {
+  public @Nullable Document getDocument(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
@@ -46,7 +53,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       CharSequence text = loadText(file, tooLarge);
       synchronized (lock) {
         document = (DocumentEx)getCachedDocument(file);
-        if (document != null) return document; // Double checking
+        if (document != null) return document;  // double-checking
 
         document = (DocumentEx)createDocument(text, file);
         document.setModificationStamp(file.getModificationStamp());
@@ -54,7 +61,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
         FileType fileType = file.getFileType();
         document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
 
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem) || Boolean.TRUE.equals(TRACK_NON_PHYSICAL.get(file))) {
+        if (isTrackable(file)) {
           document.addDocumentListener(getDocumentListener());
         }
 
@@ -77,8 +84,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
   }
 
-  @NotNull
-  private CharSequence loadText(@NotNull VirtualFile file, boolean tooLarge) {
+  private @NotNull CharSequence loadText(@NotNull VirtualFile file, boolean tooLarge) {
     if (file instanceof LightVirtualFile) {
       FileViewProvider vp = findCachedPsiInAnyProject(file);
       if (vp != null) {
@@ -89,22 +95,26 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
   }
 
-  @NotNull
-  protected abstract Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file);
+  protected abstract @NotNull Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file);
 
   @Override
-  @Nullable
-  public Document getCachedDocument(@NotNull VirtualFile file) {
+  public @Nullable Document getCachedDocument(@NotNull VirtualFile file) {
     Document hard = file.getUserData(HARD_REF_TO_DOCUMENT_KEY);
     return hard != null ? hard : getDocumentFromCache(file);
   }
 
-  // store file<->document association with hard references to avoid undesired gc.
-  // use for non-physical ViewProviders only to avoid memleaks
+  /**
+   * Storing file<->document association with hard references to avoid undesired GCs.
+   * Works for non-physical ViewProviders only, to avoid memory leaks.
+   * Please do not use under the penalty of severe memory leaks and wild PSI inconsistencies.
+   */
+  @ApiStatus.Internal
   public static void registerDocument(@NotNull Document document, @NotNull VirtualFile virtualFile) {
     if (!(virtualFile instanceof LightVirtualFile) &&
         !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem)) {
-      throw new IllegalArgumentException("Hard-coding file<->document association is permitted for non-physical files only (see ViewProvider.isPhysical()) to avoid memleaks. virtualFile="+virtualFile);
+      throw new IllegalArgumentException(
+        "Hard-coding file<->document association is permitted for non-physical files only (see FileViewProvider.isPhysical())" +
+        " to avoid memory leaks. virtualFile=" + virtualFile);
     }
     synchronized (lock) {
       document.putUserData(FILE_KEY, virtualFile);
@@ -113,10 +123,8 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getFile(@NotNull Document document) {
-    if (document instanceof FrozenDocument) return null;
-    return document.getUserData(FILE_KEY);
+  public @Nullable VirtualFile getFile(@NotNull Document document) {
+    return document instanceof FrozenDocument ? null : document.getUserData(FILE_KEY);
   }
 
   @Override
@@ -159,6 +167,11 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
 
   private Document getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
+  }
+
+  @ApiStatus.Internal
+  protected void clearDocumentCache() {
+    myDocumentCache.clear();
   }
 
   protected abstract void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document);

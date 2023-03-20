@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.configuration;
 import com.intellij.CommonBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,16 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.bundles.Bundle;
+import org.jetbrains.plugins.textmate.TextMateServiceImpl;
+import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
 
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createMultipleFoldersDescriptor;
-import static com.intellij.ui.ToolbarDecorator.createDecorator;
-import static org.jetbrains.plugins.textmate.TextMateServiceImpl.BUNDLED_BUNDLES_PATH;
-
-public class TextMateBundlesListPanel implements Disposable {
+public final class TextMateBundlesListPanel implements Disposable {
   private static final String TEXTMATE_LAST_ADDED_BUNDLE = "textmate.last.added.bundle";
 
   private final CheckBoxList<BundleConfigBean> myBundlesList;
@@ -53,12 +51,12 @@ public class TextMateBundlesListPanel implements Disposable {
       }
     });
     myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    new ListSpeedSearch<>(myBundlesList, box -> box.getText());
+    ListSpeedSearch.installOn(myBundlesList, box -> box.getText());
   }
 
   private static boolean isBuiltin(BundleConfigBean bean) {
     String path = bean != null ? bean.getPath() : null;
-    return path != null && path.startsWith(BUNDLED_BUNDLES_PATH);
+    return path != null && path.startsWith(TextMateServiceImpl.getBundledBundlePath());
   }
 
   public @NotNull Collection<BundleConfigBean> getState() {
@@ -77,7 +75,7 @@ public class TextMateBundlesListPanel implements Disposable {
   }
 
   public JPanel createMainComponent() {
-    return createDecorator(myBundlesList)
+    return ToolbarDecorator.createDecorator(myBundlesList)
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -91,16 +89,17 @@ public class TextMateBundlesListPanel implements Disposable {
             .noText(CommonBundle.getCancelButtonText())
             .icon(null)
             .ask(myBundlesList)) {
-            return;
+            ListUtil.removeSelectedItems(myBundlesList);
+            fireStateChanged();
           }
-          ListUtil.removeSelectedItems(myBundlesList);
-          fireStateChanged();
         }
       })
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(createMultipleFoldersDescriptor(), null, myBundlesList);
+          FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, true, false, false, false, true)
+            .withFileFilter(file -> false);
+          FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(chooserDescriptor, null, myBundlesList);
 
           VirtualFile fileToSelect = null;
           int itemsCount = myBundlesList.getItemsCount();
@@ -116,14 +115,14 @@ public class TextMateBundlesListPanel implements Disposable {
             String errorMessage = null;
             for (VirtualFile bundleDirectory : bundleDirectories) {
               PropertiesComponent.getInstance().setValue(TEXTMATE_LAST_ADDED_BUNDLE, bundleDirectory.getPath());
-              ThrowableComputable<Bundle, Exception> readBundleProcess = () -> TextMateService.getInstance().createBundle(bundleDirectory);
-              Bundle bundle = null;
+              ThrowableComputable<TextMateBundleReader, Exception> readBundleProcess = () -> TextMateService.getInstance().readBundle(bundleDirectory);
+              TextMateBundleReader bundleReader = null;
               try {
-                bundle = ProgressManager.getInstance().runProcessWithProgressSynchronously(readBundleProcess, TextMateBundle.message("button.add.bundle"), true, null);
+                bundleReader = ProgressManager.getInstance().runProcessWithProgressSynchronously(readBundleProcess, TextMateBundle.message("button.add.bundle"), true, null);
               }
               catch (Exception ignore) { }
               final String bundleDirectoryPath = bundleDirectory.getPath();
-              if (bundle != null) {
+              if (bundleReader != null) {
                 boolean alreadyAdded = false;
                 for (int i = 0; i < myBundlesList.getItemsCount(); i++) {
                   BundleConfigBean item = myBundlesList.getItemAt(i);
@@ -136,7 +135,7 @@ public class TextMateBundlesListPanel implements Disposable {
                   }
                 }
                 if (!alreadyAdded) {
-                  BundleConfigBean item = new BundleConfigBean(bundle.getName(), bundleDirectoryPath, true);
+                  BundleConfigBean item = new BundleConfigBean(bundleReader.getBundleName(), bundleDirectoryPath, true);
                   myBundlesList.addItem(item, item.getName(), true);
                   fireStateChanged();
                 }

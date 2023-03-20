@@ -81,6 +81,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(null, project);
   }
 
+  protected final AbstractEditor getEditor() {
+    return myEditor;
+  }
+
   protected @NotNull SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     return new SettingsTreeView(filter, groups);
   }
@@ -118,8 +122,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (myEditor instanceof DataProvider) {
-      DataProvider provider = (DataProvider)myEditor;
+    if (myEditor instanceof DataProvider provider) {
       return provider.getData(dataId);
     }
     return null;

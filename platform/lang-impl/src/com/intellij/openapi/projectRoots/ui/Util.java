@@ -30,6 +30,7 @@ public final class Util{
       @Override
       public boolean canClose(String inputString) {
         try {
+          //noinspection ResultOfObjectAllocationIgnored
           new URL(inputString);
           return true;
         }

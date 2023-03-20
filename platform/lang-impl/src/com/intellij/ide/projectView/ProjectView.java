@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,8 +62,7 @@ public abstract class ProjectView {
   /**
    * @deprecated unused method
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
+  @Deprecated(forRemoval = true)
   public abstract void changeView();
 
   public abstract void refresh();
@@ -118,6 +116,8 @@ public abstract class ProjectView {
   public abstract void setFlattenModules(@NotNull String paneId, boolean flattenModules);
 
   public abstract boolean isShowURL(String paneId);
+
+  public abstract boolean isShowScratchesAndConsoles(String paneId);
 
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -72,7 +72,7 @@ public class LibraryDataNodeSubstitutor {
 
     boolean shouldKeepTransitiveDependencies = libraryPaths.size() > 0 && !libraryDependencyDataNode.getChildren().isEmpty();
 
-    final LinkedList<String> unprocessedPaths = new LinkedList<>(libraryPaths);
+    final ArrayDeque<String> unprocessedPaths = new ArrayDeque<>(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
       final String path = unprocessedPaths.remove();
 
@@ -83,7 +83,7 @@ public class LibraryDataNodeSubstitutor {
       if (sourceTypePair == null) {
         moduleId = artifactsMap.get(path);
         if (moduleId != null) {
-          targetModuleOutputPaths = ContainerUtil.set(path);
+          targetModuleOutputPaths = Set.of(path);
         }
       }
       else {

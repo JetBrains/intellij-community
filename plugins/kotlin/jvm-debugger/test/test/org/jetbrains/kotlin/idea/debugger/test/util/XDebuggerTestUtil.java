@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test.util;
 
@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNull;
 /**
  * Kotlin clone of com.intellij.xdebugger.XDebuggerTestUtil
  */
-public class XDebuggerTestUtil {
+public final class XDebuggerTestUtil {
     public static final int TIMEOUT_MS = 25_000;
 
     public static List<XStackFrame> collectFrames(@NotNull XExecutionStack thread) {

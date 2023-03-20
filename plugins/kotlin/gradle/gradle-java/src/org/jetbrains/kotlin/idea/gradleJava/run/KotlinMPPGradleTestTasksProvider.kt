@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.run
 
@@ -8,11 +8,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinMPPGradleTestTasksProvider : GradleTestTasksProvider {
@@ -35,7 +36,7 @@ class KotlinMPPGradleTestTasksProvider : GradleTestTasksProvider {
         val moduleData = GradleProjectResolverUtil.findModule(externalProjectInfo.externalProjectStructure, projectPath)
             ?: return emptyList()
 
-        val gradlePath = GradleProjectResolverUtil.getGradlePath(module) ?: return emptyList()
+        val gradlePath = getGradleIdentityPathOrNull(module) ?: return emptyList()
         val taskNamePrefix = if (gradlePath.endsWith(':')) gradlePath else "$gradlePath:"
 
         val kotlinTaskNameCandidates = ExternalSystemApiUtil.findAll(moduleData, KotlinTargetData.KEY)
@@ -50,7 +51,7 @@ class KotlinMPPGradleTestTasksProvider : GradleTestTasksProvider {
     private fun isMultiplatformTestModule(module: Module): Boolean {
         val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return false
         val settings = settingsProvider.getInitializedSettings(module)
-        return settings.isMPPModule && settings.isTestModule
+        return settings.isMultiPlatformModule && settings.isTestModule
     }
 
     private fun getTaskNames(task: TaskData, namePrefix: String): List<String> {

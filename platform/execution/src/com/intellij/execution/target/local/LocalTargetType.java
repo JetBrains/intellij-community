@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.local;
 
-public class LocalTargetType {
+public final class LocalTargetType {
   /**
    * This value is used to express explicitly selected "local machine" target for Run Configuration.
    *

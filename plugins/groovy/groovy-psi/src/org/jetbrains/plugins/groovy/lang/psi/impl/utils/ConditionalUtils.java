@@ -10,8 +10,7 @@ public final class ConditionalUtils {
   private ConditionalUtils() {}
 
   public static GrStatement stripBraces(GrStatement branch) {
-    if (branch instanceof GrBlockStatement) {
-      final GrBlockStatement block = (GrBlockStatement) branch;
+    if (branch instanceof GrBlockStatement block) {
       final GrOpenBlock codeBlock = block.getBlock();
       final GrStatement[] statements = codeBlock.getStatements();
       if (statements.length == 1) {

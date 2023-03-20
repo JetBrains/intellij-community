@@ -3,6 +3,7 @@ package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.diff.util.DiffDrawUtil.MarkerRange;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -104,11 +105,11 @@ public final class DiffDividerDrawUtil {
 
     final EditorColorsScheme scheme = editor1.getColorsScheme();
 
-    paintable.process((line1, line2) -> {
+    paintable.process((line1, line2, isHovered) -> {
       if (leftInterval.start > line1 + 1 && rightInterval.start > line2 + 1) return true;
       if (leftInterval.end < line1 && rightInterval.end < line2) return false;
 
-      separators.add(createSeparator(editor1, editor2, line1, line2, height1, height2, scheme));
+      separators.add(createSeparator(editor1, editor2, line1, line2, height1, height2, isHovered, scheme));
       return true;
     });
 
@@ -122,7 +123,7 @@ public final class DiffDividerDrawUtil {
   }
 
   /**
-   * Use EditorInlayFoldingMapper-friendly renderer for folded lines.
+   * Use CustomFoldRegion-friendly renderer for folded lines.
    * We do not use it by default to avoid potential inconsistency with {@link DiffLineMarkerRenderer}.
    *
    * @see DiffDrawUtil#getGutterMarkerPaintRange
@@ -137,22 +138,24 @@ public final class DiffDividerDrawUtil {
 
   @NotNull
   private static DividerSeparator createSeparator(@NotNull Editor editor1, @NotNull Editor editor2,
-                                                  int line1, int line2, int height1, int height2,
+                                                  int line1, int line2, int height1, int height2, boolean isHovered,
                                                   @Nullable EditorColorsScheme scheme) {
     int topOffset1 = getEditorTopOffset(editor1);
     int topOffset2 = getEditorTopOffset(editor2);
     int start1 = lineToY(editor1, line1) + topOffset1;
     int start2 = lineToY(editor2, line2) + topOffset2;
-    return new DividerSeparator(start1, start2, start1 + height1, start2 + height2, scheme);
+    return new DividerSeparator(start1, start2, start1 + height1, start2 + height2, isHovered, scheme);
   }
 
   @NotNull
   private static LineRange getVisibleInterval(Editor editor) {
-    Rectangle area = editor.getScrollingModel().getVisibleArea();
-    if (area.height < 0) return new LineRange(0, 0);
-    LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
-    LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
-    return new LineRange(position1.line, position2.line);
+    return ReadAction.compute(() -> {
+      Rectangle area = editor.getScrollingModel().getVisibleArea();
+      if (area.height < 0) return new LineRange(0, 0);
+      LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
+      LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
+      return new LineRange(position1.line, position2.line);
+    });
   }
 
   public interface DividerPaintable {
@@ -415,7 +418,7 @@ public final class DiffDividerDrawUtil {
     void process(@NotNull Handler handler);
 
     interface Handler {
-      boolean process(int line1, int line2);
+      boolean process(int line1, int line2, boolean isHovered);
     }
   }
 
@@ -530,18 +533,20 @@ public final class DiffDividerDrawUtil {
     private final int myStart2;
     private final int myEnd1;
     private final int myEnd2;
+    private final boolean myIsHovered;
     @Nullable private final EditorColorsScheme myScheme;
 
-    public DividerSeparator(int start1, int start2, int end1, int end2, @Nullable EditorColorsScheme scheme) {
+    public DividerSeparator(int start1, int start2, int end1, int end2, boolean isHovered, @Nullable EditorColorsScheme scheme) {
       myStart1 = start1;
       myStart2 = start2;
       myEnd1 = end1;
       myEnd2 = end2;
+      myIsHovered = isHovered;
       myScheme = scheme;
     }
 
     public void paint(Graphics2D g, int width) {
-      DiffLineSeparatorRenderer.drawConnectorLine(g, 0, width, myStart1, myStart2, myEnd1 - myStart1, myScheme);
+      DiffLineSeparatorRenderer.drawConnectorLine(g, 0, width, myStart1, myStart2, myEnd1 - myStart1, myIsHovered, myScheme);
     }
 
     public String toString() {

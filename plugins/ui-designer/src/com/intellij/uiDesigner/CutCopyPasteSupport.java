@@ -5,6 +5,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +31,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
   private static final Logger LOG = Logger.getInstance(CutCopyPasteSupport.class);
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
@@ -46,6 +43,11 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   public CutCopyPasteSupport(final GuiEditor uiEditor) {
     myEditor = uiEditor;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -197,11 +199,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private static String getSerializedComponents() {
     try {
       final Object transferData = CopyPasteManager.getInstance().getContents(ourDataFlavor);
-      if (!(transferData instanceof SerializedComponentData)) {
+      if (!(transferData instanceof SerializedComponentData dataProxy)) {
         return null;
       }
 
-      final SerializedComponentData dataProxy = (SerializedComponentData)transferData;
       return dataProxy.getSerializedComponents();
     }
     catch (Exception e) {

@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.moveUpDown;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -853,6 +853,21 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
         @TestMetadata("hasComment4.kt")
         public void testHasComment4() throws Exception {
             runTest("testData/codeInsight/moveUpDown/expressions/hasComment4.kt");
+        }
+
+        @TestMetadata("hasComment5.kt")
+        public void testHasComment5() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/hasComment5.kt");
+        }
+
+        @TestMetadata("hasComment6.kt")
+        public void testHasComment6() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/hasComment6.kt");
+        }
+
+        @TestMetadata("hasComment7.kt")
+        public void testHasComment7() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/hasComment7.kt");
         }
 
         @TestMetadata("If1.kt")

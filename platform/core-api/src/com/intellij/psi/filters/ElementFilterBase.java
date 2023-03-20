@@ -18,9 +18,6 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class ElementFilterBase<T> implements ElementFilter {
   private final Class<T> myClass;
 

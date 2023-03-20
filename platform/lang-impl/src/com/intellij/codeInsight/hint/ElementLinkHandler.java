@@ -20,8 +20,7 @@ public final class ElementLinkHandler extends TooltipLinkHandler {
     Project project = editor.getProject();
     if (project != null) {
       PsiElement element = qualifiedNameToElement(name, project);
-      if (element instanceof Navigatable) {
-        Navigatable navigatable = (Navigatable)element;
+      if (element instanceof Navigatable navigatable) {
         if (navigatable.canNavigate()) {
           navigatable.navigate(true);
           return true;

@@ -1,4 +1,4 @@
-// "Cast argument to 'int'" "true"
+// "Cast argument to 'int'" "true-preview"
 class a {
     private void test()  {}
     private void test(int i)  {}

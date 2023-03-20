@@ -16,8 +16,6 @@
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -48,10 +46,7 @@ public class ModuleRule implements GetDataRule {
 
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
     if (files == null) {
-      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
-      if (dataRule != null) {
-        files = (VirtualFile[])dataRule.getData(dataProvider);
-      }
+      files = (VirtualFile[])new VirtualFileArrayRule().getData(dataProvider);
     }
 
     if (files == null) {

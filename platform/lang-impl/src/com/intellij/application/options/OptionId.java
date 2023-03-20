@@ -12,4 +12,5 @@ public final class OptionId {
   public static final OptionId AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION = new OptionId();
   public static final OptionId SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = new OptionId();
   public static final OptionId PROJECT_VIEW_SHOW_VISIBILITY_ICONS = new OptionId();
+  public static final OptionId INSERT_PARENTHESES_AUTOMATICALLY = new OptionId();
 }

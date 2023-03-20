@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
@@ -40,7 +40,7 @@ public class ReplaceOptions implements JDOMExternalizable {
   public ReplaceOptions(@NotNull MatchOptions matchOptions) {
     variableDefs = new LinkedHashMap<>();
     this.matchOptions = matchOptions;
-    replacement = "";
+    replacement = matchOptions.getSearchPattern();
     myToUseStaticImport = false;
   }
 
@@ -160,9 +160,7 @@ public class ReplaceOptions implements JDOMExternalizable {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReplaceOptions)) return false;
-
-    final ReplaceOptions replaceOptions = (ReplaceOptions)o;
+    if (!(o instanceof ReplaceOptions replaceOptions)) return false;
 
     if (myToReformatAccordingToStyle != replaceOptions.myToReformatAccordingToStyle) return false;
     if (toShortenFQN != replaceOptions.toShortenFQN) return false;

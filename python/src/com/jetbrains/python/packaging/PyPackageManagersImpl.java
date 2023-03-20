@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.Disposable;
@@ -8,20 +8,15 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.packaging.ui.PyCondaManagementService;
+import com.jetbrains.python.packaging.common.PackageManagerHolder;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
-import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-
 
 public class PyPackageManagersImpl extends PyPackageManagers {
   private static final Logger LOG = Logger.getInstance(PyPackageManagersImpl.class);
@@ -51,7 +46,6 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       manager = myProvidedManagers.get(key);
     }
     if (manager == null) {
-      final VirtualFile homeDirectory = sdk.getHomeDirectory();
       final Map<String, PyPackageManager> cache;
       PyPackageManager customPackageManager = PyCustomPackageManagers.tryCreateCustomPackageManager(sdk);
       if (customPackageManager != null) {
@@ -60,24 +54,31 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       }
       else {
         cache = myStandardManagers;
-        if (PySdkExtKt.isTargetBased(sdk)) {
-          manager = new PyTargetEnvironmentPackageManager(sdk);
-        }
-        else if (PythonSdkUtil.isRemote(sdk)) {
-          manager = new PyUnsupportedPackageManager(sdk);
-        }
-        else if (PythonSdkUtil.isConda(sdk) &&
-                 homeDirectory != null &&
-                 PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
+        // TODO:
+        // * There should be no difference between local and "Remote" package manager
+        // * But python flavor makes the difference.
+        // So one must check flavor and execute appropriate command on SDK target
+        // (be it localRequest or target request)
+
+        // This is a temporary solution to support local conda
+        if (PythonSdkUtil.isConda(sdk) &&
+            sdk.getHomePath() != null &&
+            PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
           manager = new PyCondaPackageManagerImpl(sdk);
         }
         else {
-          manager = new PyPackageManagerImpl(sdk);
+          manager = new PyTargetEnvironmentPackageManager(sdk);
         }
       }
       cache.put(key, manager);
       if (sdk instanceof Disposable) {
         Disposer.register((Disposable)sdk, () -> clearCache(sdk));
+      }
+      var parentDisposable = (sdk instanceof Disposable ? (Disposable)sdk : this);
+      Disposer.register(parentDisposable, manager);
+
+      if (manager.shouldSubscribeToLocalChanges()) {
+        PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, manager, () -> PythonSdkType.getInstance().setupSdkPaths(sdk));
       }
     }
     return manager;
@@ -89,18 +90,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       LOG.assertTrue(!Disposer.isDisposed((Disposable)sdk),
                      "Requesting a package service for an already disposed SDK " + sdk + " (" + sdk.getClass() + ")");
     }
-    Optional<PyPackageManagementService> provided = PySdkProvider.EP_NAME.extensions()
-      .map(ext -> ext.tryCreatePackageManagementServiceForSdk(project, sdk))
-      .filter(service -> service != null)
-      .findFirst();
-
-    if (provided.isPresent()) {
-      return provided.get();
-    }
-    else if (PythonSdkUtil.isConda(sdk)) {
-      return new PyCondaManagementService(project, sdk);
-    }
-    return new PyPackageManagementService(project, sdk);
+    return project.getService(PackageManagerHolder.class).bridgeForSdk(project, sdk);
   }
 
   @Override

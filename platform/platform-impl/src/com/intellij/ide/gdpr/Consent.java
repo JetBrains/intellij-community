@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 06-Dec-17
  */
 public final class Consent extends ConsentBase {
   private final @NlsSafe String myName;

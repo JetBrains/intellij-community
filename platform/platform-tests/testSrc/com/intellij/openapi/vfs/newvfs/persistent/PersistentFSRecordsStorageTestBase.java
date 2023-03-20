@@ -1,0 +1,590 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent;
+
+import com.intellij.util.ExceptionUtil;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.joining;
+import static org.junit.Assert.*;
+
+/**
+ *
+ */
+public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSRecordsStorage> {
+
+  protected final int maxRecordsToInsert;
+
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  protected Path storagePath;
+  protected T storage;
+
+  protected PersistentFSRecordsStorageTestBase(final int maxRecordsToInsert) { this.maxRecordsToInsert = maxRecordsToInsert; }
+
+  @Before
+  public void setUp() throws Exception {
+    storagePath = temporaryFolder.newFile().toPath();
+
+    storage = openStorage(storagePath);
+    //System.out.println("File: " + storagePath);
+  }
+
+  @NotNull
+  protected abstract T openStorage(final Path storageFile) throws IOException;
+
+  @Test
+  public void recordsCountIsZeroForEmptyStorage() {
+    assertEquals(
+      "Should be 0 records in the empty storage",
+      0,
+      storage.recordsCount()
+    );
+  }
+
+  @Test
+  public void firstRecordInserted_MustGetValidId() throws Exception {
+    final int recordId = storage.allocateRecord();
+
+    assertTrue("First inserted record should get id (=" + recordId + ") > FSRecords.RESERVED_FILE_ID",
+               recordId > FSRecords.NULL_FILE_ID //TODO replace with universal NULL_ID
+    );
+
+    assertEquals("Should be 1 (just inserted) record in the storage",
+                 1,
+                 storage.recordsCount()
+    );
+  }
+
+  @Test
+  public void cleanRecord_throwsException_IfRecordIdIsOutsideOfAllocatedRange() throws IOException {
+    final int cleanedRecordId = 10;
+    try {
+      storage.cleanRecord(cleanedRecordId);
+      fail(".cleanRecord(" +
+           cleanedRecordId +
+           ") must throw IndexOutOfBoundsException since there record " +
+           cleanedRecordId +
+           " is not allocated");
+    }
+    catch (IndexOutOfBoundsException e) {
+      //OK
+    }
+  }
+
+  @Test
+  public void singleWrittenRecord_CouldBeReadBackUnchanged() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordOriginal = generateRecordFields(recordId);
+
+    recordOriginal.updateInStorage(storage);
+
+    assertEquals("Should be 1 (just inserted) record in the storage",
+                 1,
+                 storage.recordsCount()
+    );
+
+    final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
+
+    assertEqualExceptModCount("Record updated and record read back by same ID should be equal", recordOriginal, recordReadBack);
+  }
+
+  @Test
+  public void singleWrittenRecord_MakeStorageDirty_AndForceMakeItNonDirtyAgain() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordOriginal = generateRecordFields(recordId);
+
+    recordOriginal.updateInStorage(storage);
+    assertTrue("Record is written -- storage must be dirty",
+               storage.isDirty());
+    storage.force();
+    assertFalse(".force() is called -> storage must be !dirty",
+                storage.isDirty());
+  }
+
+  @Test
+  public void singleRecordWritten_AndCleaned_ReadsBackAsAllZeroes() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordOriginal = generateRecordFields(recordId);
+
+    recordOriginal.updateInStorage(storage);
+    storage.cleanRecord(recordId);
+    final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
+
+    //all fields are 0:
+    assertEquals("Cleaned record must have parent=0", recordReadBack.parentRef, 0);
+    assertEquals("Cleaned record must have name=0", recordReadBack.nameRef, 0);
+    assertEquals("Cleaned record must have flags=0", recordReadBack.flags, 0);
+    assertEquals("Cleaned record must have content=0", recordReadBack.contentRef, 0);
+    assertEquals("Cleaned record must have attribute=0", recordReadBack.attributeRef, 0);
+    assertEquals("Cleaned record must have length=0", recordReadBack.length, 0);
+    assertEquals("Cleaned record must have timestamp=0", recordReadBack.timestamp, 0);
+    assertEquals("Cleaned record must have modCount=0", recordReadBack.modCount, 0);
+  }
+
+
+  @Test
+  public void manyRecordsWritten_CouldBeReadBackUnchanged() throws Exception {
+    final FSRecord[] records = new FSRecord[maxRecordsToInsert];
+
+    for (int i = 0; i < records.length; i++) {
+      final int recordId = storage.allocateRecord();
+      records[i] = generateRecordFields(recordId);
+      records[i].updateInStorage(storage);
+    }
+
+    assertEquals(
+      "storage.recordsCount() should be == number of inserted records",
+      records.length,
+      storage.recordsCount()
+    );
+
+    final Map<FSRecord, FSRecord> incorrectlyReadBackRecords = new HashMap<>();
+    for (final FSRecord recordOriginal : records) {
+      final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
+      if (!recordOriginal.equalsExceptModCount(recordReadBack)) {
+        incorrectlyReadBackRecords.put(recordOriginal, recordReadBack);
+      }
+    }
+
+    if (!incorrectlyReadBackRecords.isEmpty()) {
+      fail("Records read back should be all equal to their originals, but " + incorrectlyReadBackRecords.size() +
+           " different: \n" +
+           incorrectlyReadBackRecords.entrySet().stream()
+             .sorted(comparing(e -> e.getKey().id))
+             .map(e -> e.getKey() + "\n" + e.getValue())
+             .collect(joining("\n"))
+      );
+    }
+  }
+
+  @Test
+  public void processRecords_reportsAllRecordsIdWrittenBefore() throws Exception {
+    final FSRecord[] records = new FSRecord[maxRecordsToInsert];
+
+    final IntSet recordIdsWritten = new IntOpenHashSet();
+    for (int i = 0; i < records.length; i++) {
+      final int recordId = storage.allocateRecord();
+      records[i] = generateRecordFields(recordId);
+      records[i].updateInStorage(storage);
+
+      recordIdsWritten.add(recordId);
+    }
+
+    assertEquals(
+      "storage.recordsCount() should be == number of inserted records",
+      records.length,
+      storage.recordsCount()
+    );
+
+    final IntSet recordIdsReadBack = new IntOpenHashSet();
+    storage.processAllRecords((fileId, nameId, flags, parentId, corrupted) -> {
+      recordIdsReadBack.add(fileId);
+    });
+
+    if (!recordIdsReadBack.equals(recordIdsWritten)) {
+      final int[] missedIds = recordIdsWritten.intStream()
+        .filter(id -> !recordIdsReadBack.contains(id))
+        .sorted().toArray();
+      final int[] excessiveIds = recordIdsReadBack.intStream()
+        .filter(id -> !recordIdsWritten.contains(id))
+        .sorted().toArray();
+      fail("fileIds written and read back should be the same, but: \n" +
+           "\tmissed ids:    " + Arrays.toString(missedIds) + ", \n" +
+           "\texcessive ids: " + Arrays.toString(excessiveIds));
+    }
+
+    assertEquals(
+      recordIdsReadBack,
+      recordIdsWritten
+    );
+  }
+
+  @Test
+  public void markModified_JustIncrementsRecordVersion_OtherRecordFieldsAreUnchanged() throws Exception {
+    final FSRecord[] recordsToInsert = new FSRecord[maxRecordsToInsert];
+
+    for (int i = 0; i < recordsToInsert.length; i++) {
+      final int recordId = storage.allocateRecord();
+      recordsToInsert[i] = generateRecordFields(recordId);
+      recordsToInsert[i].updateInStorage(storage);
+    }
+
+    final FSRecord[] recordsReadBack = new FSRecord[maxRecordsToInsert];
+    for (int i = 0; i < recordsToInsert.length; i++) {
+      recordsReadBack[i] = FSRecord.readFromStorage(storage, recordsToInsert[i].id);
+    }
+
+    for (FSRecord record : recordsReadBack) {
+      storage.markRecordAsModified(record.id);
+    }
+
+    final Map<FSRecord, FSRecord> incorrectlyReadBackRecords = new HashMap<>();
+    for (final FSRecord recordReadBack : recordsReadBack) {
+      final FSRecord recordReadBackAgain = FSRecord.readFromStorage(storage, recordReadBack.id);
+      assertTrue(
+        "Record.modCount was increased by .markRecordAsModified",
+        recordReadBackAgain.modCount > recordReadBack.modCount
+      );
+      //...but everything else in the record is unchanged:
+      if (!recordReadBack.equalsExceptModCount(recordReadBackAgain)) {
+        incorrectlyReadBackRecords.put(recordReadBack, recordReadBack);
+      }
+    }
+
+    if (!incorrectlyReadBackRecords.isEmpty()) {
+      fail("Records read back should be all equal to their originals, but " + incorrectlyReadBackRecords.size() +
+           " different: \n" +
+           incorrectlyReadBackRecords.entrySet().stream()
+             .sorted(comparing(e -> e.getKey().id))
+             .map(e -> e.getKey() + "\n" + e.getValue())
+             .collect(joining("\n"))
+      );
+    }
+  }
+
+
+  @Test
+  public void manyRecordsWritten_MultiThreadedWithoutContention_CouldBeReadBackUnchanged() throws Exception {
+    final FSRecord[] records = new FSRecord[maxRecordsToInsert];
+
+    for (int i = 0; i < records.length; i++) {
+      final int recordId = storage.allocateRecord();
+      records[i] = generateRecordFields(recordId);
+    }
+
+    final int threadsCount = Runtime.getRuntime().availableProcessors();
+
+    final Thread[] threads = new Thread[threadsCount];
+    for (int i = 0; i < threads.length; i++) {
+      final int threadNo = i;
+      threads[threadNo] = new Thread(() -> {
+        //each thread updates own subset of all records:
+        for (int recordNo = threadNo; recordNo < records.length; recordNo += threadsCount) {
+          try {
+            final FSRecord record = records[recordNo];
+            record.updateInStorage(storage);
+          }
+          catch (IOException e) {
+            ExceptionUtil.rethrow(e);
+          }
+        }
+      }, "updater-" + threadNo);
+    }
+    for (Thread thread : threads) {
+      thread.start();
+    }
+
+    for (Thread thread : threads) {
+      thread.join();
+    }
+
+    for (int i = 0; i < records.length; i++) {
+      final FSRecord recordOriginal = records[i];
+      final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
+      assertEqualExceptModCount("[" + i + "]: fields inserted and fields read back by same ID should be equal",
+                                recordOriginal,
+                                recordReadBack
+      );
+    }
+  }
+
+  @Test
+  public void manyRecordsWritten_MultiThreadedWithHighContention_CouldBeReadBackUnchanged() throws Exception {
+    final FSRecord[] records = new FSRecord[maxRecordsToInsert];
+
+    for (int i = 0; i < records.length; i++) {
+      final int recordId = storage.allocateRecord();
+      records[i] = generateRecordFields(recordId);
+    }
+
+    final int threadsCount = Runtime.getRuntime().availableProcessors();
+
+    final Thread[] threads = new Thread[threadsCount];
+    for (int threadNo = 0; threadNo < threads.length; threadNo++) {
+      threads[threadNo] = new Thread(() -> {
+        //each thread updates each record (so each record is updated threadCount times):
+        for (FSRecord fsRecord : records) {
+          try {
+            final FSRecord record = fsRecord;
+            record.updateInStorage(storage);
+          }
+          catch (IOException e) {
+            ExceptionUtil.rethrow(e);
+          }
+        }
+      }, "updater-" + threadNo);
+    }
+
+    for (Thread thread : threads) {
+      thread.start();
+    }
+
+    for (Thread thread : threads) {
+      thread.join();
+    }
+
+    for (int i = 0; i < records.length; i++) {
+      final FSRecord recordOriginal = records[i];
+      final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
+      assertEqualExceptModCount("[" + i + "]: fields inserted and fields read back by same ID should be equal", recordOriginal,
+                                recordReadBack
+      );
+    }
+  }
+
+  /* =================== PERSISTENCE: values are kept through close-and-reopen =============================== */
+
+  @Test
+  public void emptyStorageRemains_EmptyButHeaderFieldsStillRestored_AfterStorageClosedAndReopened() throws IOException {
+    final int version = 10;
+    final int connectionStatus = PersistentFSHeaders.CONNECTED_MAGIC;
+
+    storage.setVersion(version);
+    storage.setConnectionStatus(connectionStatus);
+    final int globalModCount = storage.getGlobalModCount();
+    assertTrue("Storage must be 'dirty' after few header fields were written",
+               storage.isDirty());
+
+    final long lengthBeforeClose = storage.length();
+    assertEquals("No records were allocated => (storage size == HEADER_SIZE)",
+                 PersistentFSHeaders.HEADER_SIZE,
+                 lengthBeforeClose
+    );
+
+    //close storage, and reopen from same file again:
+    storage.close();
+    final T storageReopened = openStorage(storagePath);
+    storage = storageReopened;//for tearDown to successfully close it
+
+    //now re-read values from re-opened storage:
+    assertFalse("Storage must be !dirty since no modifications since open", storageReopened.isDirty());
+    assertEquals("globalModCount", globalModCount, storageReopened.getGlobalModCount());
+    assertEquals("version", version, storageReopened.getVersion());
+    assertEquals("connectionStatus", connectionStatus, storageReopened.getConnectionStatus());
+    assertEquals("length", lengthBeforeClose, storageReopened.length());
+  }
+
+  @Test
+  public void singleWrittenRecord_CouldBeReadBackUnchanged_AfterStorageClosedAndReopened() throws Exception {
+    final int recordId = storage.allocateRecord();
+    final FSRecord recordWritten = generateRecordFields(recordId);
+    recordWritten.updateInStorage(storage);
+
+    storage.close();
+    final T storageReopened = openStorage(storagePath);
+    storage = storageReopened;//for tearDown to successfully close it
+
+    assertEquals("Records count should be still 1 after re-open",
+                 1,
+                 storage.recordsCount()
+    );
+    final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordId);
+    assertEqualExceptModCount("Record written should be read back as-is", recordWritten, recordReadBack);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    if (storage != null) {
+      storage.close();
+    }
+  }
+
+
+  /* ========================== INFRASTRUCTURE =============================================================== */
+
+  /**
+   * Plain data holder
+   */
+  public static final class FSRecord {
+    public final int id;
+
+    public int parentRef;
+    public int nameRef;
+    public int flags;
+    public int attributeRef;
+    public int contentRef;
+    public long timestamp;
+    public int modCount;
+    public long length;
+
+    public static FSRecord readFromStorage(final PersistentFSRecordsStorage storage,
+                                           final int recordId) throws IOException {
+      return new FSRecord(recordId,
+                          storage.getParent(recordId),
+                          storage.getNameId(recordId),
+                          storage.getFlags(recordId),
+                          storage.getAttributeRecordId(recordId),
+                          storage.getContentRecordId(recordId),
+                          storage.getTimestamp(recordId),
+                          storage.getModCount(recordId),
+                          storage.getLength(recordId)
+      );
+    }
+
+    public FSRecord(final int id,
+                    final int parentRef,
+                    final int nameRef,
+                    final int flags,
+                    final int attributeRef,
+                    final int contentRef,
+                    final long timestamp,
+                    final int modCount,
+                    final long length) {
+      this.id = id;
+      this.parentRef = parentRef;
+      this.nameRef = nameRef;
+      this.flags = flags;
+      this.attributeRef = attributeRef;
+      this.contentRef = contentRef;
+      this.timestamp = timestamp;
+      this.modCount = modCount;
+      this.length = length;
+    }
+
+    public void updateInStorage(final PersistentFSRecordsStorage storage) throws IOException {
+      //storage.fillRecord(id, this.timestamp, this.length, this.flags, this.nameRef, this.parentRef, false);
+      if (storage instanceof IPersistentFSRecordsStorage newStorage) {
+        newStorage.updateRecord(id, record -> {
+          record.setParent(this.parentRef);
+          record.setNameId(this.nameRef);
+          record.setFlags(this.flags);
+          record.setAttributeRecordId(this.attributeRef);
+          record.setContentRecordId(this.contentRef);
+          record.setTimestamp(this.timestamp);
+          record.setLength(this.length);
+          return true;
+        });
+      }
+      else {
+        storage.setParent(id, this.parentRef);
+        storage.setNameId(id, this.nameRef);
+        storage.setFlags(id, this.flags);
+        storage.setAttributeRecordId(id, this.attributeRef);
+        storage.setContentRecordId(id, this.contentRef);
+        storage.setTimestamp(id, this.timestamp);
+        storage.setLength(id, this.length);
+      }
+
+      //storage.overwriteModCount(id, this.modCount);
+    }
+
+    //public FSRecord insertInStorage(final PersistentFSRecordsStorage storage) throws IOException {
+    //  final int id = storage.allocateRecord();
+    //  final FSRecord recordWithId = assignId(id);
+    //  recordWithId.updateInStorage(storage);
+    //  return recordWithId;
+    //}
+
+    public FSRecord assignId(final int id) {
+      return new FSRecord(id, parentRef, nameRef, flags, attributeRef, contentRef, timestamp, modCount, length);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FSRecord record = (FSRecord)o;
+
+      if (id != record.id) return false;
+      if (parentRef != record.parentRef) return false;
+      if (nameRef != record.nameRef) return false;
+      if (flags != record.flags) return false;
+      if (attributeRef != record.attributeRef) return false;
+      if (contentRef != record.contentRef) return false;
+      if (timestamp != record.timestamp) return false;
+      if (modCount != record.modCount) return false;
+      if (length != record.length) return false;
+
+      return true;
+    }
+
+    public boolean equalsExceptModCount(FSRecord other) {
+      if (this == other) return true;
+      if (other == null) return false;
+
+      if (id != other.id) return false;
+      if (parentRef != other.parentRef) return false;
+      if (nameRef != other.nameRef) return false;
+      if (flags != other.flags) return false;
+      if (attributeRef != other.attributeRef) return false;
+      if (contentRef != other.contentRef) return false;
+      if (timestamp != other.timestamp) return false;
+      if (length != other.length) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = id;
+      result = 31 * result + parentRef;
+      result = 31 * result + nameRef;
+      result = 31 * result + flags;
+      result = 31 * result + attributeRef;
+      result = 31 * result + contentRef;
+      result = 31 * result + (int)(timestamp ^ (timestamp >>> 32));
+      result = 31 * result + modCount;
+      result = 31 * result + (int)(length ^ (length >>> 32));
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "FSRecord{" +
+             "id=" + id +
+             ", parentRef=" + parentRef +
+             ", nameRef=" + nameRef +
+             ", flags=" + flags +
+             ", attributeRef=" + attributeRef +
+             ", contentRef=" + contentRef +
+             ", timestamp=" + timestamp +
+             ", length=" + length +
+             ", modCount=" + modCount +
+             '}';
+    }
+  }
+
+  @NotNull
+  private static FSRecord generateRecordFields(final int recordId) {
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    return new FSRecord(
+      recordId,
+      rnd.nextInt(),
+      rnd.nextInt(1, Integer.MAX_VALUE),//nameId should be >0
+      rnd.nextInt(),
+      rnd.nextInt(),
+      rnd.nextInt(),
+      //rnd.nextBoolean() ? System.currentTimeMillis() : Long.MAX_VALUE,
+      System.currentTimeMillis(),
+      -1,
+      Long.MAX_VALUE
+      //rnd.nextBoolean() ? rnd.nextLong(0, Long.MAX_VALUE) : Long.MAX_VALUE //check extreme long values
+    );
+  }
+
+  private static void assertEqualExceptModCount(final String message,
+                                                final FSRecord recordOriginal,
+                                                final FSRecord recordReadBack) {
+    assertTrue(message + "\n" +
+               "\toriginal:  " + recordOriginal + "\n" +
+               "\tread back: " + recordReadBack + "\n",
+               recordOriginal.equalsExceptModCount(recordReadBack));
+  }
+}

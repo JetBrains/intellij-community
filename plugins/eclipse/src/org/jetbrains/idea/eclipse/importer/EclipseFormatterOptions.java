@@ -4,12 +4,30 @@
 package org.jetbrains.idea.eclipse.importer;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public interface EclipseFormatterOptions {
   @NonNls String VALUE_INSERT = "insert";
   @NonNls String VALUE_DO_NOT_INSERT = "do not insert";
   String VALUE_FALSE = "false";
   String VALUE_TRUE = "true";
+
+  @NonNls String BRACES_ONE_LINE_NEVER = "one_line_never";
+  @NonNls String BRACES_ONE_LINE_IF_EMPTY = "one_line_if_empty";
+  @NonNls String BRACES_ONE_LINE_IF_SINGLE_ITEM = "one_line_if_single_item";
+  @NonNls String BRACES_ONE_LINE_IF_IN_WIDTH_LIMIT = "one_line_always";
+  @NonNls String BRACES_ONE_LINE_PRESERVE_STATE = "one_line_preserve";
+
+  @NonNls String PARENS_COMMON_LINES = "common_lines";
+  @NonNls String PARENS_SEPARATE_LINES_IF_NOT_EMPTY = "separate_lines_if_not_empty";
+  @NonNls String PARENS_PRESERVE_POSITIONS = "preserve_positions";
+  @NonNls String PARENS_SEPARATE_LINES_IF_WRAPPED = "separate_lines_if_wrapped";
+  @NonNls String PARENS_SEPARATE_LINES = "separate_lines";
+
+  @NonNls String TEXT_BLOCK_INDENT_DO_NOT_TOUCH = "3";
+  @NonNls String TEXT_BLOCK_INDENT_BY_ONE = "2";
+  @NonNls String TEXT_BLOCK_INDENT_DEFAULT = "0";
+  @NonNls String TEXT_BLOCK_INDENT_ON_COLUMN = "1";
 
   @NonNls String VALUE_NEXT_LINE = "next_line";
   @NonNls String VALUE_NEXT_LINE_SHIFTED = "next_line_shifted";
@@ -22,36 +40,6 @@ public interface EclipseFormatterOptions {
 
   String FORMATTER_OPTIONS_PREFIX = "org.eclipse.jdt.core.formatter";
 
-  String OPTION_SPACE_AFTER_BINARY_OPERATOR = "org.eclipse.jdt.core.formatter.insert_space_after_binary_operator";
-  String OPTION_REMOVE_JAVADOC_BLANK_LINES = "org.eclipse.jdt.core.formatter.comment.clear_blank_lines_in_javadoc_comment";
-  String OPTION_NEW_LINE_AT_EOF = "org.eclipse.jdt.core.formatter.insert_new_line_at_end_of_file_if_missing";
-  String OPTION_INDENT_CLASS_BODY_DECL = "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_type_header";
-  String OPTION_TAB_CHAR = "org.eclipse.jdt.core.formatter.tabulation.char";
-  String OPTION_CONTINUATION_INDENT = "org.eclipse.jdt.core.formatter.continuation_indentation";
-  String OPTION_TAB_SIZE = "org.eclipse.jdt.core.formatter.tabulation.size";
-
-  String OPTION_ALIGN_EXPR_IN_ARRAY_INITIALIZER = "org.eclipse.jdt.core.formatter.alignment_for_expressions_in_array_initializer";
-  String OPTION_ALIGN_ARGS_IN_ANNOTATION = "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_annotation";
-  String OPTION_ALIGN_ARGS_IN_METHOD_INVOCATION = "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_method_invocation";
-  String OPTION_ALIGN_SUPERCLASS_IN_TYPE_DECL = "org.eclipse.jdt.core.formatter.alignment_for_superclass_in_type_declaration";
-  String OPTION_ALIGN_INTERFACES_IN_TYPE_DECL = "org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_type_declaration";
-  String OPTION_ALIGN_ASSIGNMENT = "org.eclipse.jdt.core.formatter.alignment_for_assignment";
-  String OPTION_ALIGN_METHOD_DECL_PARAMETERS = "org.eclipse.jdt.core.formatter.alignment_for_parameters_in_method_declaration";
-  String OPTION_ALIGN_BINARY_EXPR = "org.eclipse.jdt.core.formatter.alignment_for_binary_expression";
-  String OPTION_ALIGN_THROWS_IN_METHOD_DECL = "org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_method_declaration";
-  String OPTION_ALIGN_RESOURCES_IN_TRY = "org.eclipse.jdt.core.formatter.alignment_for_resources_in_try";
-  String OPTION_ALIGN_METHOD_DECL = "org.eclipse.jdt.core.formatter.alignment_for_method_declaration";
-  String OPTION_ALIGN_CHAINED_CALLS = "org.eclipse.jdt.core.formatter.alignment_for_selector_in_method_invocation";
-  String OPTION_ALIGN_CONDITIONALS = "org.eclipse.jdt.core.formatter.alignment_for_conditional_expression";
-
-  String OPTION_BLANK_LINES_BEFORE_FIRST_DECLARATION_IN_CLASS = "org.eclipse.jdt.core.formatter.blank_lines_before_first_class_body_declaration";
-  String OPTION_EMPTY_LINES_TO_PRESERVE = "org.eclipse.jdt.core.formatter.number_of_empty_lines_to_preserve";
-
-  String OPTION_SPACE_AFTER_CLOSING_BRACE_IN_BLOCK = "org.eclipse.jdt.core.formatter.insert_space_after_closing_brace_in_block";
-  String OPTION_SPACE_BEFORE_OPENING_BRACE_IN_BLOCK = "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_block";
-
-  String OPTION_JOIN_WRAPPED_LINES = "org.eclipse.jdt.core.formatter.join_wrapped_lines";
-
   String OPTION_ON_DEMAND_IMPORT_THRESHOLD = "org.eclipse.jdt.ui.ondemandthreshold";
   String OPTION_ON_DEMAND_STATIC_IMPORT_THRESHOLD = "org.eclipse.jdt.ui.staticondemandthreshold";
 
@@ -60,12 +48,38 @@ public interface EclipseFormatterOptions {
 
   int DEFAULT_IMPORTS_THRESHOLD = 99;
 
-  int WRAP_MASK = 0x70;
+  int LINE_WRAP_POLICY_MASK = 0x70;
 
-  int DO_NOT_WRAP                       = 0x00;
-  int WRAP_WHERE_NECESSARY              = 0x10;
-  int WRAP_FIRST_OTHERS_WHERE_NECESSARY = 0x20;
-  int WRAP_ALL_ON_NEW_LINE_EACH         = 0x30;
-  int WRAP_ALL_INDENT_EXCEPT_FIRST      = 0x40;
-  int WRAP_ALL_EXCEPT_FIRST             = 0x50;
+  enum LineWrapPolicy {
+    DO_NOT_WRAP(0x00),
+    WRAP_WHERE_NECESSARY(0x10),
+    WRAP_FIRST_OTHERS_WHERE_NECESSARY(0x20),
+    WRAP_ALL_ON_NEW_LINE_EACH(0x30),
+    WRAP_ALL_INDENT_EXCEPT_FIRST(0x40),
+    WRAP_ALL_EXCEPT_FIRST(0x50);
+
+    public final int bits;
+
+    LineWrapPolicy(int value) { this.bits = value; }
+  }
+
+  int INDENT_POLICY_MASK = 0x06;
+
+  enum IndentationPolicy {
+    DEFAULT_INDENTATION(0x00),
+    INDENT_ON_COLUMN(0x02),
+    INDENT_BY_ONE(0x04);
+
+    public final int bits;
+
+    IndentationPolicy(int value) { this.bits = value; }
+  }
+
+  int FORCE_SPLIT_MASK = 0x01;
+
+  @NonNls
+  @NotNull
+  static String completeId(@NonNls @NotNull String postfix) {
+    return String.format("%s.%s", FORMATTER_OPTIONS_PREFIX, postfix);
+  }
 }

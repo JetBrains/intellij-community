@@ -1,2 +1,2 @@
 s = f'foo ' \
-    f'{"bar" + "baz"} '
+    f'{"bar" + "baz"}'

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class ConsoleTokenUtil {
+final class ConsoleTokenUtil {
   private static final char BACKSPACE = '\b';
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
@@ -125,18 +124,32 @@ class ConsoleTokenUtil {
                                           @NotNull Project project,
                                           @NotNull ConsoleViewContentType contentType,
                                           int startOffset,
-                                          int endOffset) {
+                                          int endOffset,
+                                          boolean mergeWithThePreviousSameTypeToken) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
     int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
+    if (mergeWithThePreviousSameTypeToken && startOffset > 0) {
+      RangeMarker prevMarker = findTokenMarker(editor, project, startOffset - 1);
+      ConsoleViewContentType prevMarkerType = prevMarker == null ? null : getTokenType(prevMarker);
+      int prevMarkerEndOffset = prevMarkerType == null ? -1 : prevMarker.getEndOffset();
+      if (contentType.equals(prevMarkerType) &&
+          prevMarkerEndOffset >= 0 &&
+          prevMarkerEndOffset < editor.getDocument().getTextLength() &&
+          // must not merge tokens with end line because user input should be separated by new lines
+          editor.getDocument().getCharsSequence().charAt(prevMarkerEndOffset - 1) != '\n') {
+        startOffset = prevMarker.getStartOffset();
+        prevMarker.dispose();
+      }
+    }
     model.addRangeHighlighterAndChangeAttributes(
       contentType.getAttributesKey(), startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
-      ex -> {
+      rm -> {
         // fallback for contentTypes which provide only attributes
-        if (ex.getTextAttributesKey() == null) {
-          ex.setTextAttributes(contentType.getAttributes());
+        if (rm.getTextAttributesKey() == null) {
+          rm.setTextAttributes(contentType.getAttributes());
         }
-        saveTokenType(ex, contentType);
+        saveTokenType(rm, contentType);
       });
   }
 
@@ -164,7 +177,7 @@ class ConsoleTokenUtil {
           break;
         }
         marker.putUserData(USER_INPUT_SENT, true);
-        textToSend.insert(0, marker.getDocument().getText(TextRange.create(marker)));
+        textToSend.insert(0, marker.getDocument().getText(marker.getTextRange()));
       }
     }
     return textToSend;
@@ -198,7 +211,7 @@ class ConsoleTokenUtil {
       if (info != null) {
         hyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
       }
-      createTokenRangeHighlighter(editor, project, token.contentType, start, offset);
+      createTokenRangeHighlighter(editor, project, token.contentType, start, offset, false);
       offset = start;
       tokenLength = 0;
     }

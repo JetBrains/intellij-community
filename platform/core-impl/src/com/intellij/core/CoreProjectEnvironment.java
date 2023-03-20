@@ -22,7 +22,6 @@ import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -33,7 +32,6 @@ public class CoreProjectEnvironment {
   protected final FileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
   protected final MockProject myProject;
-  protected final MessageBus myMessageBus;
 
   public CoreProjectEnvironment(@NotNull Disposable parentDisposable, @NotNull CoreApplicationEnvironment applicationEnvironment) {
     myParentDisposable = parentDisposable;
@@ -43,7 +41,6 @@ public class CoreProjectEnvironment {
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
-    myMessageBus = myProject.getMessageBus();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);

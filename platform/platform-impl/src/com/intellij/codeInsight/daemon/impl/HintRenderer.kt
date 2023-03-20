@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
@@ -34,7 +33,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
   var widthAdjustment: HintWidthAdjustment? = null
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    return calcWidthInPixels(inlay.editor, text, widthAdjustment)
+    return calcWidthInPixels(inlay.editor, text, widthAdjustment, useEditorFont())
   }
 
   protected open fun getTextAttributes(editor: Editor): TextAttributes? {
@@ -53,7 +52,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       getTextAttributes(editor)
     }
 
-    paintHint(g, editor, r, text, attributes, attributes ?: textAttributes, widthAdjustment)
+    paintHint(g, editor, r, text, attributes, attributes ?: textAttributes, widthAdjustment, useEditorFont())
   }
 
   /**
@@ -64,10 +63,17 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     return calcHintTextWidth(text, fontMetrics)
   }
 
+  protected open fun useEditorFont() = useEditorFontFromSettings()
+
   companion object {
     @JvmStatic
     fun calcWidthInPixels(editor: Editor, text: String?, widthAdjustment: HintWidthAdjustment?): Int {
-      val fontMetrics = getFontMetrics(editor).metrics
+      return calcWidthInPixels(editor, text, widthAdjustment, useEditorFontFromSettings())
+    }
+
+    @JvmStatic
+    fun calcWidthInPixels(editor: Editor, text: String?, widthAdjustment: HintWidthAdjustment?, useEditorFont: Boolean): Int {
+      val fontMetrics = getFontMetrics(editor, useEditorFont).metrics
       return calcHintTextWidth(text, fontMetrics) + calcWidthAdjustment(text, editor, fontMetrics, widthAdjustment)
     }
 
@@ -79,12 +85,24 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
                   attributes: TextAttributes?,
                   textAttributes: TextAttributes,
                   widthAdjustment: HintWidthAdjustment?) {
+      paintHint(g, editor, r, text, attributes, textAttributes, widthAdjustment, useEditorFontFromSettings())
+    }
+
+    @JvmStatic
+    fun paintHint(g: Graphics,
+                  editor: EditorImpl,
+                  r: Rectangle,
+                  text: String?,
+                  attributes: TextAttributes?,
+                  textAttributes: TextAttributes,
+                  widthAdjustment: HintWidthAdjustment?,
+                  useEditorFont: Boolean) {
       val ascent = editor.ascent
       val descent = editor.descent
       val g2d = g as Graphics2D
 
       if (text != null && attributes != null) {
-        val fontMetrics = getFontMetrics(editor)
+        val fontMetrics = getFontMetrics(editor, useEditorFont)
         val gap = if (r.height < fontMetrics.lineHeight + 2) 1 else 2
         val backgroundColor = attributes.backgroundColor
         if (backgroundColor != null) {
@@ -101,7 +119,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
           val savedClip = g.getClip()
 
           g.setColor(foregroundColor)
-          g.setFont(getFont(editor))
+          g.setFont(getFont(editor, useEditorFont))
           g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
           g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4)
           val metrics = fontMetrics.metrics
@@ -132,13 +150,13 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val xEnd = r.x + r.width
         val y = r.y + ascent
         val font = editor.getColorsScheme().getFont(EditorFontType.PLAIN)
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (effectType) {
           EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.STRIKEOUT -> EffectPainter.STRIKE_THROUGH.paint(g2d, xStart, y, xEnd - xStart, editor.charHeight, font)
           EffectType.WAVE_UNDERSCORE -> EffectPainter.WAVE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.BOLD_DOTTED_LINE -> EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
+          else -> {}
         }
       }
     }
@@ -178,7 +196,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
                          - calcHintTextWidth(text, fontMetrics))
     }
 
-    class MyFontMetrics internal constructor(editor: Editor, size: Int, @JdkConstants.FontStyle fontType: Int) {
+    class MyFontMetrics internal constructor(editor: Editor, size: Float, @JdkConstants.FontStyle fontType: Int, useEditorFont: Boolean) {
       val metrics: FontMetrics
       val lineHeight: Int
 
@@ -186,10 +204,9 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         get() = metrics.font
 
       init {
-        val useEditorFont = useEditorFont()
         val font = if (useEditorFont) {
           val editorFont = EditorUtil.getEditorFont()
-          editorFont.deriveFont(fontType, size.toFloat())
+          editorFont.deriveFont(fontType, size)
         } else {
           val familyName = UIManager.getFont("Label.font").family
           StartupUiUtil.getFontWithFallback(familyName, fontType, size)
@@ -200,9 +217,9 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         lineHeight = ceil(font.createGlyphVector(context, "Ap").visualBounds.height).toInt()
       }
 
-      fun isActual(editor: Editor, size: Int, fontType: Int, familyName: String): Boolean {
+      fun isActual(editor: Editor, size: Float, fontType: Int, familyName: String): Boolean {
         val font = metrics.font
-        if (familyName != font.family || size != font.size || fontType != font.style) return false
+        if (familyName != font.family || size != font.size2D || fontType != font.style) return false
         val currentContext = getCurrentContext(editor)
         return currentContext.equals(metrics.fontRenderContext)
       }
@@ -216,31 +233,32 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     @JvmStatic
-    protected fun getFontMetrics(editor: Editor): MyFontMetrics {
-      val size = max(1, editor.colorsScheme.editorFontSize - 1)
+    protected fun getFontMetrics(editor: Editor, useEditorFont: Boolean): MyFontMetrics {
+      val size = HintUtil.getSize(editor)
       var metrics = editor.getUserData(HINT_FONT_METRICS)
       val attributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       val fontType = attributes.fontType
-      val familyName = if (useEditorFont()) {
+      val familyName = if (useEditorFont) {
         EditorColorsManager.getInstance().globalScheme.editorFontName
       }
       else {
-        UIUtil.getLabelFont().family
+        StartupUiUtil.getLabelFont().family
       }
       if (metrics != null && !metrics.isActual(editor, size, fontType, familyName)) {
         metrics = null
       }
       if (metrics == null) {
-        metrics = MyFontMetrics(editor, size, fontType)
+        metrics = MyFontMetrics(editor, size, fontType, useEditorFont)
         editor.putUserData(HINT_FONT_METRICS, metrics)
       }
       return metrics
     }
 
-    private fun useEditorFont() = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
+    @JvmStatic
+    fun useEditorFontFromSettings() = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
 
-    private fun getFont(editor: Editor): Font {
-      return getFontMetrics(editor).font
+    private fun getFont(editor: Editor, useEditorFont: Boolean): Font {
+      return getFontMetrics(editor, useEditorFont).font
     }
 
     @JvmStatic
@@ -255,5 +273,5 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
   // workaround for KT-12063 "IllegalAccessError when accessing @JvmStatic protected member of a companion object from a subclass"
   @JvmSynthetic
   @JvmName("getFontMetrics$")
-  protected fun getFontMetrics(editor: Editor): MyFontMetrics = Companion.getFontMetrics(editor)
+  protected fun getFontMetrics(editor: Editor, useEditorFont: Boolean): MyFontMetrics = Companion.getFontMetrics(editor, useEditorFont)
 }

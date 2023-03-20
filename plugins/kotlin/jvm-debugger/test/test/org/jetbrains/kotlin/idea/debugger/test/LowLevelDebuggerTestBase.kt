@@ -1,52 +1,98 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.debugger.impl.OutputChecker
+import com.intellij.execution.ExecutionTestCase
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.ThrowableRunnable
 import com.jetbrains.jdi.SocketAttachingConnector
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.test.ConfigurationKind
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.addRoot
 import java.io.File
 import java.io.IOException
 import java.net.Socket
-import java.nio.file.Files
 import kotlin.properties.Delegates
 
-abstract class LowLevelDebuggerTestBase : CodegenTestCase() {
+abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
     private companion object {
+        private const val CLASSES_DIRECTORY_NAME = "classes"
         private const val DEBUG_ADDRESS = "127.0.0.1"
         private const val DEBUG_PORT = 5115
     }
 
-    override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
-        // TODO: KTIJ-147
-        return
+    private lateinit var classFileFactory: ClassFileFactory
 
-        createEnvironmentWithMockJdkAndIdeaAnnotations(ConfigurationKind.STDLIB_REFLECT, *listOfNotNull(writeJavaFiles(files)).toTypedArray())
+    private lateinit var testAppDirectory: File
+    private lateinit var jvmSourcesOutputDirectory: File
 
-        val options = wholeFile.readLines()
-            .asSequence()
-            .filter { it.matches("^// ?[\\w_]+(:.*)?$".toRegex()) }
-            .map { it.drop(2).trim() }
-            .filter { !it.startsWith("FILE:") }
-            .toSet()
+    override fun getTestAppPath(): String = testAppDirectory.absolutePath
 
+    override fun initOutputChecker(): OutputChecker = OutputChecker({ "" }, { "" })
+
+    override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
+        testAppDirectory = KotlinTestUtils.tmpDir("debuggerTestSources")
+        jvmSourcesOutputDirectory = File(testAppDirectory, SOURCES_DIRECTORY_NAME).apply { mkdirs() }
+        super.runBare(testRunnable)
+    }
+
+    override fun setUpModule() {
+        super.setUpModule()
+        attachStdlib()
+    }
+
+    private fun attachStdlib() =
+        runWriteAction {
+            val model = ModuleRootManager.getInstance(myModule).modifiableModel
+            try {
+                ConfigLibraryUtil.addLibrary(model, KOTLIN_LIBRARY_NAME) {
+                    addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+                    addRoot(KotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
+                }
+            } finally {
+                model.commit()
+            }
+        }
+
+    protected open fun createDebuggerTestCompilerFacility(
+        testFiles: TestFiles, jvmTarget: JvmTarget, useIrBackend: Boolean,
+        lambdasGenerationScheme: JvmClosureGenerationScheme,
+    ) =
+        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
+
+    fun doTest(testFilePath: String) {
+        val wholeFile = File(testFilePath)
+        val expectedText = KotlinTestUtils.doLoadFile(wholeFile)
+        val testFiles = createTestFiles(wholeFile, expectedText)
+
+        val options = parseOptions(wholeFile)
         val skipLoadingClasses = skipLoadingClasses(options)
 
-        loadMultiFiles(files)
+        val classesDir = File(testAppDirectory, CLASSES_DIRECTORY_NAME)
         val classBuilderFactory = OriginCollectingClassBuilderFactory(ClassBuilderMode.FULL)
-        val generationState = GenerationUtils.compileFiles(myFiles, myEnvironment, classBuilderFactory)
+        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, JvmTarget.JVM_1_8, useIrBackend = true,
+                                                                  JvmClosureGenerationScheme.CLASS)
+        val compilationResult = compilerFacility.compileTestSources(
+            project, jvmSourcesOutputDirectory, classesDir, classBuilderFactory
+        )
+        val generationState = compilationResult.generationState
         classFileFactory = generationState.factory
 
-        val tempDirForTest = Files.createTempDirectory("debuggerTest").toFile()
-
         try {
-            val classesDir = File(tempDirForTest, "classes").apply {
+            classesDir.apply {
                 writeMainClass(this)
                 for (classFile in classFileFactory.getClassFiles()) {
                     File(this, classFile.relativePath).mkdirAndWriteBytes(classFile.asByteArray())
@@ -61,13 +107,13 @@ abstract class LowLevelDebuggerTestBase : CodegenTestCase() {
             try {
                 val mainThread = virtualMachine.allThreads().single { it.name() == "main" }
                 waitUntil { areCompiledClassesLoaded(mainThread, classFileFactory, skipLoadingClasses) }
-                doTest(options, mainThread, classBuilderFactory, classFileFactory, generationState)
+                doTest(options, mainThread, classBuilderFactory, generationState)
             } finally {
                 virtualMachine.exit(0)
                 process.destroy()
             }
         } finally {
-            tempDirForTest.deleteRecursively()
+            classesDir.deleteRecursively()
         }
     }
 
@@ -75,7 +121,6 @@ abstract class LowLevelDebuggerTestBase : CodegenTestCase() {
         options: Set<String>,
         mainThread: ThreadReference,
         factory: OriginCollectingClassBuilderFactory,
-        classFileFactory: ClassFileFactory,
         state: GenerationState
     )
 
@@ -93,7 +138,6 @@ abstract class LowLevelDebuggerTestBase : CodegenTestCase() {
         classFileFactory: ClassFileFactory,
         skipLoadingClasses: Set<String>
     ): Boolean {
-
         for (outputFile in classFileFactory.getClassFiles()) {
             val fqName = outputFile.internalName.replace('/', '.')
             if (fqName in skipLoadingClasses) {
@@ -110,7 +154,7 @@ abstract class LowLevelDebuggerTestBase : CodegenTestCase() {
     }
 
     private fun startDebuggeeProcess(classesDir: File, skipLoadingClasses: Set<String>): Process {
-        val classesToLoad = this.classFileFactory.getClassFiles()
+        val classesToLoad = classFileFactory.getClassFiles()
             .map { it.qualifiedName }
             .filter { it !in skipLoadingClasses }
             .joinToString(",")
@@ -158,7 +202,7 @@ abstract class LowLevelDebuggerTestBase : CodegenTestCase() {
     internal val OutputFile.internalName
         get() = relativePath.substringBeforeLast(".class")
 
-    internal val OutputFile.qualifiedName
+    private val OutputFile.qualifiedName
         get() = internalName.replace('/', '.')
 }
 
@@ -189,3 +233,11 @@ private object DebuggerMain {
         }
     }
 }
+
+private fun parseOptions(file: File): Set<String> =
+    file.readLines()
+        .asSequence()
+        .filter { it.matches("^// ?[\\w_]+(:.*)?$".toRegex()) }
+        .map { it.drop(2).trim() }
+        .filter { !it.startsWith("FILE:") }
+        .toSet()

@@ -29,9 +29,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class MemoryDiskConflictResolver {
   private static final Logger LOG = Logger.getInstance(MemoryDiskConflictResolver.class);
 

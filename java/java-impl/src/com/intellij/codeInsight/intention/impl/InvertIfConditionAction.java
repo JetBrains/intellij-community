@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -247,8 +247,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       return ifStatement;
     }
 
-    if (element instanceof PsiReturnStatement) {
-      PsiReturnStatement returnStatement = (PsiReturnStatement) element;
+    if (element instanceof PsiReturnStatement returnStatement) {
       ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch, ct);
       ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), ct.markUnchanged(returnStatement).copy());
 
@@ -371,8 +370,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   static void addAfter(PsiIfStatement ifStatement, PsiStatement branch, CommentTracker ct) throws IncorrectOperationException {
-    if (branch instanceof PsiBlockStatement) {
-      PsiBlockStatement blockStatement = (PsiBlockStatement) branch;
+    if (branch instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock block = blockStatement.getCodeBlock();
       final PsiElement firstBodyElement = block.getFirstBodyElement();
       final PsiElement lastBodyElement = block.getLastBodyElement();
@@ -421,7 +419,10 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       endOffset = controlFlow.getSize();
     }
     while (endOffset < instructions.size() && instructions.get(endOffset) instanceof GoToInstruction &&
-           !((GoToInstruction) instructions.get(endOffset)).isReturn && !(controlFlow.getElement(endOffset) instanceof PsiBreakStatement) && !(controlFlow.getElement(endOffset) instanceof PsiContinueStatement)) {
+           !((GoToInstruction) instructions.get(endOffset)).isReturn &&
+           !(controlFlow.getElement(endOffset) instanceof PsiYieldStatement) &&
+           !(controlFlow.getElement(endOffset) instanceof PsiBreakStatement) &&
+           !(controlFlow.getElement(endOffset) instanceof PsiContinueStatement)) {
       endOffset = ((BranchingInstruction)instructions.get(endOffset)).offset;
     }
 

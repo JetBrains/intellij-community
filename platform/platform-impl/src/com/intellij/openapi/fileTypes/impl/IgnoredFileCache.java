@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 final class IgnoredFileCache {
   private final ConcurrentBitSet myNonIgnoredIds = ConcurrentBitSet.create();
   private final IgnoredPatternSet myIgnoredPatterns;

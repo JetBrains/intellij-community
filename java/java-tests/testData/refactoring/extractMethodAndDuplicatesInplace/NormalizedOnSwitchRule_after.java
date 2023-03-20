@@ -9,7 +9,7 @@ public class Test1 {
         }
     }
 
-    private void extracted() {
+    private static void extracted() {
         System.out.println("one");
         System.out.println("two");
     }

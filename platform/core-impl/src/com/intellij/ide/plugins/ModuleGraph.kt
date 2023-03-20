@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
 
+import com.intellij.util.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
-import com.intellij.util.lang.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -126,7 +126,8 @@ private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImp
   }
 }
 
-private fun getOrEmpty(map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>, descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
+private fun getOrEmpty(map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+                       descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
   return map.getOrDefault(descriptor, Collections.emptyList())
 }
 
@@ -165,8 +166,7 @@ private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
   }
 
   val pluginId = descriptor.pluginId
-  if (PluginManagerCore.CORE_ID == pluginId || PluginManagerCore.JAVA_PLUGIN_ID == pluginId ||
-      PluginManagerCore.hasModuleDependencies(descriptor)) {
+  if (PluginManagerCore.CORE_ID == pluginId || PluginManagerCore.JAVA_PLUGIN_ID == pluginId || hasModuleDependencies(descriptor)) {
     return null
   }
 
@@ -174,6 +174,13 @@ private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
   // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
   return idMap.get(PluginManagerCore.JAVA_MODULE_ID.idString)
 }
+
+val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
+  // Migration started with converting intellij.notebooks.visualization to a platform plugin, but adding a package prefix to Pythonid
+  // or com.jetbrains.pycharm.ds.customization is a difficult task that can't be done by a single shot.
+  "Pythonid",
+  "com.jetbrains.pycharm.ds.customization",
+)
 
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
                                                  idMap: Map<String, IdeaPluginDescriptorImpl>,
@@ -186,7 +193,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       // can be such requirements removed or not
       if (rootDescriptor === dep) {
         if (rootDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self")
+          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self (${dependency})")
         }
       }
       else {
@@ -195,6 +202,10 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
 
         result.add(dep)
       }
+    }
+
+    if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
+      idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(result) { it.requireDescriptor() }
     }
 
     dependency.subDescriptor?.let {

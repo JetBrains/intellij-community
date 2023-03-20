@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * in case of AndroidStudio).
  * <p/>
  * This interface defines api which allows extensions to control compiler options availability.
- * 
- * @author Denis Zhdanov
  */
 public interface CompilerOptionsFilter {
 

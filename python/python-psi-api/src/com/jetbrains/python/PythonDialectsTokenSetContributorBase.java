@@ -18,9 +18,6 @@ package com.jetbrains.python;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public abstract class PythonDialectsTokenSetContributorBase implements PythonDialectsTokenSetContributor {
   @NotNull
   @Override

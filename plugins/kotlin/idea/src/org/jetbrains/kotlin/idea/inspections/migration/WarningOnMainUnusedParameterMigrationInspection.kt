@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.MainFunctionDetector
-import org.jetbrains.kotlin.idea.configuration.MigrationInfo
-import org.jetbrains.kotlin.idea.configuration.isLanguageVersionUpdate
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.migration.MigrationInfo
+import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
 import org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -28,10 +29,10 @@ class WarningOnMainUnusedParameterMigrationInspection :
         return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_3, LanguageVersion.KOTLIN_1_4)
     }
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtParameter, *>
-        get() = Errors.UNUSED_PARAMETER
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtParameter, *> =
+        Errors.UNUSED_PARAMETER
 
-    override fun getCustomIntentionFactory(): ((Diagnostic) -> IntentionAction?)? = fun(diagnostic: Diagnostic): IntentionAction? {
+    override fun customIntentionFactory(): (Diagnostic) -> IntentionAction? = fun(diagnostic: Diagnostic): IntentionAction? {
         val parameter = diagnostic.psiElement as? KtParameter ?: return null
         val ownerFunction = parameter.ownerFunction as? KtNamedFunction ?: return null
         val mainFunctionDetector = MainFunctionDetector(parameter.languageVersionSettings) { it.descriptor as? FunctionDescriptor }

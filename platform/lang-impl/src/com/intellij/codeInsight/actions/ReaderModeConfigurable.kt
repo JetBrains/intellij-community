@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
@@ -12,16 +12,20 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.HyperlinkLabel
+import com.intellij.psi.codeStyle.CodeStyleScheme
+import com.intellij.psi.codeStyle.CodeStyleSchemes
+import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.UIUtil
-import javax.swing.event.HyperlinkListener
 
-internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
-  private val settings get() = ReaderModeSettings.instance(project)
+internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(
+  LangBundle.message("configurable.reader.mode"), "settings.reader.mode", "editor.reader.mode") {
+  private val settings get() = ReaderModeSettings.getInstance(project)
 
+  private val cdVisualFormatting
+    get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.show.visual.formatting.layer"), settings::enableVisualFormatting)
   private val cdInlays get() = CheckboxDescriptor(LangBundle.message("checkbox.inlays"), settings::showInlaysHints)
   private val cdRenderedDocs get() = CheckboxDescriptor(LangBundle.message("checkbox.rendered.docs"), settings::showRenderedDocs)
   private val cdLigatures get() = CheckboxDescriptor(LangBundle.message("checkbox.ligatures"), settings::showLigatures)
@@ -31,40 +35,73 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
 
   override fun createPanel(): DialogPanel {
     return panel {
-      lateinit var enabled: CellBuilder<JBCheckBox>
+      lateinit var enabled: Cell<JBCheckBox>
       row {
         enabled = checkBox(cdEnabled).comment("")
           .comment(LangBundle.message("checkbox.reader.mode.toggle.comment"))
-
-        row(LangBundle.message("titled.border.reader.mode.settings")) {
+      }
+      indent {
+        buttonsGroup(LangBundle.message("titled.border.reader.mode.settings")) {
           row {
             val renderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
-            checkBox(cdRenderedDocs).enableIf(enabled.selected).enabled(!renderedDocs)
+            checkBox(cdRenderedDocs).enabled(!renderedDocs)
 
             if (renderedDocs) {
-              component(createGoToGlobalSettings("editor.preferences.appearance")).withLargeLeftGap()
+              comment(LangBundle.message("checkbox.reader.mode.go.to.global.settings")) {
+                goToGlobalSettings("editor.preferences.appearance")
+              }
             }
           }
           row {
-            checkBox(cdWarnings).enableIf(enabled.selected)
+            checkBox(cdWarnings)
           }
           row {
             val useLigatures = EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures()
-            checkBox(cdLigatures).enableIf(enabled.selected).enabled(!useLigatures)
+            checkBox(cdLigatures).enabled(!useLigatures)
 
             if (useLigatures) {
-              component(createGoToGlobalSettings("editor.preferences.fonts.default")).withLargeLeftGap()
+              comment(LangBundle.message("checkbox.reader.mode.go.to.global.settings")) {
+                goToGlobalSettings("editor.preferences.fonts.default")
+              }
             }
           }
           row {
             checkBox(cdLineSpacing)
-            commentNoWrap(LangBundle.message("checkbox.reader.mode.line.height.comment")).withLargeLeftGap()
-          }.enableIf(enabled.selected)
+            comment(LangBundle.message("checkbox.reader.mode.line.height.comment"))
+          }.enabledIf(enabled.selected)
           row {
-            checkBox(cdInlays).enableIf(enabled.selected).visible(PlatformUtils.isIntelliJ())
+            checkBox(cdInlays).visible(PlatformUtils.isIntelliJ())
           }
-        }.enableIf(enabled.selected)
-      }
+        }
+        lateinit var visualFormattingEnabled: Cell<JBCheckBox>
+        row {
+          visualFormattingEnabled = checkBox(cdVisualFormatting)
+        }
+        buttonsGroup(indent = true) {
+          row {
+            radioButton("", true).apply {
+              onReset {
+                component.text = (LangBundle.message("radio.reader.mode.use.active.scheme.visual.formatting",
+                                                     getCurrentCodeStyleSchemeName(project)))
+              }
+            }
+            // ensure label is updated when active code style scheme changes
+            val listener = { e: CodeStyleSettingsChangeEvent -> if (e.virtualFile == null) reset() }
+            CodeStyleSettingsManager.getInstance(project).subscribe(listener, disposable!!)
+          }
+          row {
+            val radio = radioButton(LangBundle.message("radio.reader.mode.choose.visual.formatting.scheme"), false)
+              .gap(RightGap.SMALL)
+            val combo = VisualFormattingSchemesCombo(project)
+            cell(combo)
+              .onReset { combo.onReset(settings) }
+              .onIsModified { combo.onIsModified(settings) }
+              .onApply { combo.onApply(settings) }
+              .enabledIf(radio.selected)
+          }
+        }.bind(settings::useActiveSchemeForVisualFormatting)
+          .enabledIf(visualFormattingEnabled.selected)
+      }.enabledIf(enabled.selected)
     }
   }
 
@@ -73,22 +110,20 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
     project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
   }
 
-  companion object {
-    private fun createGoToGlobalSettings(configurableID: String) = HyperlinkLabel().apply {
-      setTextWithHyperlink(LangBundle.message("checkbox.reader.mode.go.to.global.settings"))
-      font = UIUtil.getFont(UIUtil.FontSize.SMALL, font)
-      foreground = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)
-      addHyperlinkListener(HyperlinkListener {
-        DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
-          context?.let { dataContext ->
-            Settings.KEY.getData(dataContext)?.let { settings ->
-              settings.select(settings.find(configurableID))
-              ReaderModeStatsCollector.logSeeAlsoNavigation()
-            }
-          }
+  private fun goToGlobalSettings(configurableID: String) {
+    DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+      context?.let { dataContext ->
+        Settings.KEY.getData(dataContext)?.let { settings ->
+          settings.select(settings.find(configurableID))
+          ReaderModeStatsCollector.logSeeAlsoNavigation()
         }
-      })
+      }
     }
-
   }
 }
+
+private fun getCurrentCodeStyleSchemeName(project: Project) =
+  CodeStyleSettingsManager.getInstance(project).run {
+    if (USE_PER_PROJECT_SETTINGS) CodeStyleScheme.PROJECT_SCHEME_NAME
+    else CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).displayName
+  }

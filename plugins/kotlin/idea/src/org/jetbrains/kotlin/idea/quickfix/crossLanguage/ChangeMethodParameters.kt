@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.ChangeParametersRequest
 import com.intellij.lang.jvm.actions.ExpectedParameter
@@ -10,17 +11,19 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.load.java.NOT_NULL_ANNOTATIONS
@@ -105,7 +108,7 @@ internal class ChangeMethodParameters(
         val helper = JvmPsiConversionHelper.getInstance(target.project)
 
         val theType = expectedHead.expectedTypes.firstOrNull()?.theType ?: return emptyList()
-        val kotlinType = helper.convertType(theType).resolveToKotlinType(target.getResolutionFacade()) ?: return emptyList()
+        val kotlinType = helper.convertType(theType).resolveToKotlinType(target.getResolutionFacade())
 
         return getParametersModifications(
             target,
@@ -129,10 +132,17 @@ internal class ChangeMethodParameters(
         get() = (existingParameter as? KtLightElement<*, *>)?.kotlinOrigin as? KtParameter
 
 
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+        doChangeParameter(project, PsiTreeUtil.findSameElementInCopy(element, file))
+        return IntentionPreviewInfo.DIFF
+    }
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         if (!request.isValid) return
+        doChangeParameter(project, element ?: return)
+    }
 
-        val target = element ?: return
+    private fun doChangeParameter(project: Project, target: KtNamedFunction) {
         val functionDescriptor = target.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return
 
         val parameterActions = getParametersModifications(target, target.valueParameters, request.expectedParameters)
@@ -184,6 +194,7 @@ internal class ChangeMethodParameters(
             initialize(
                 functionDescriptor.extensionReceiverParameter?.copy(this),
                 functionDescriptor.dispatchReceiverParameter,
+                functionDescriptor.contextReceiverParameters.map { it.copy(this) },
                 functionDescriptor.typeParameters,
                 paramsToAdd.mapIndexed { index, parameter ->
                     ValueParameterDescriptorImpl(
@@ -219,7 +230,7 @@ internal class ChangeMethodParameters(
     }
 
     companion object {
-        fun create(ktNamedFunction: KtNamedFunction, request: ChangeParametersRequest): ChangeMethodParameters? =
+        fun create(ktNamedFunction: KtNamedFunction, request: ChangeParametersRequest): ChangeMethodParameters =
             ChangeMethodParameters(ktNamedFunction, request)
 
         private val LOG = Logger.getInstance(ChangeMethodParameters::class.java)

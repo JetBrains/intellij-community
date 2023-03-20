@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
@@ -28,7 +28,7 @@ import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
-import git4idea.annotate.GitRepositoryForAnnotationsListener;
+import git4idea.annotate.GitAnnotationsListener;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
@@ -45,12 +45,16 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
+import git4idea.stash.ui.GitStashContentProviderKt;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.*;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -202,19 +206,18 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
-    myDisposable = Disposer.newDisposable();
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
 
-    BackgroundTaskUtil.executeOnPooledThread(myDisposable, ()
+    BackgroundTaskUtil.executeOnPooledThread(disposable, ()
       -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
-    if (myVFSListener == null) {
-      myVFSListener = GitVFSListener.createInstance(this);
-    }
+    myVFSListener = GitVFSListener.createInstance(this, disposable);
     // make sure to read the registry before opening commit dialog
     myProject.getService(VcsUserRegistry.class);
 
-    GitRepositoryForAnnotationsListener.registerListener(myProject, myDisposable);
-    GitAdvancedSettingsListener.registerListener(myProject, myDisposable);
+    GitAnnotationsListener.registerListener(myProject, disposable);
+    GitAdvancedSettingsListener.registerListener(myProject, disposable);
 
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
@@ -222,10 +225,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void deactivate() {
-    if (myVFSListener != null) {
-      Disposer.dispose(myVFSListener);
-      myVFSListener = null;
-    }
+    myVFSListener = null;
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
       myDisposable = null;
@@ -301,8 +301,7 @@ public final class GitVcs extends AbstractVcs {
   /**
    * @deprecated Use {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public GitExecutableValidator getExecutableValidator() {
     return new GitExecutableValidator(myProject);
@@ -311,12 +310,6 @@ public final class GitVcs extends AbstractVcs {
   @Override
   public boolean fileListenerIsSynchronous() {
     return false;
-  }
-
-  @Override
-  @RequiresEdt
-  public void enableIntegration() {
-    enableIntegration(null);
   }
 
   @Override
@@ -370,6 +363,11 @@ public final class GitVcs extends AbstractVcs {
   public boolean isWithCustomLocalChanges() {
     return GitVcsApplicationSettings.getInstance().isStagingAreaEnabled() &&
            GitStageManagerKt.canEnableStagingArea();
+  }
+
+  @Override
+  public boolean isWithCustomShelves() {
+    return GitStashContentProviderKt.stashToolWindowRegistryOption().asBoolean();
   }
 
   @Override

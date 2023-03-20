@@ -53,10 +53,9 @@ public class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression reference)) {
         return;
       }
-      final GrReferenceExpression reference = (GrReferenceExpression) methodExpression;
       final String name = reference.getReferenceName();
       if (!"notify".equals(name) && !"notifyAll".equals(name)) {
         return;

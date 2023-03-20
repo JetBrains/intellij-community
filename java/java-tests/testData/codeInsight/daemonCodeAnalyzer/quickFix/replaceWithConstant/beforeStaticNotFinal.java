@@ -1,4 +1,4 @@
-// "Replace with 'A.RADIUS'" "true"
+// "Replace with 'A.RADIUS'" "true-preview"
 
 class A {
   public static String RADIUS = "radius";

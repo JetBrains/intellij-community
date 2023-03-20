@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
@@ -33,7 +33,7 @@ class CommentLabel(@NlsContexts.Label text: String? = null) : JBLabel() {
 fun commentLabel(@NlsContexts.Label text: String, init: JBLabel.() -> Unit = {}) =
     CommentLabel(text).apply(init)
 
-fun componentWithCommentAtBottom(component: JComponent, label: String?, gap: Int = 4) = borderPanel {
+fun componentWithCommentAtBottom(component: JComponent, label: @NlsContexts.Label String?, gap: Int = 4) = borderPanel {
     addToTop(component)
     label?.let {
         addToCenter(commentLabel(it) {

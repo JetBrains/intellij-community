@@ -1,11 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -61,6 +59,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testOptionalArray() {
+    doTestAllFile();
+  }
+
   public void testSimpleFluentIterable() {
     doTest();
   }
@@ -109,7 +111,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void _testChainedFluentIterableWithOf() {
+  public void testChainedFluentIterableWithOf() {
     doTest();
   }
 
@@ -255,6 +257,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTestAllFile();
   }
 
+  public void testPredicates5() {
+    doTest();
+  }
+
   public void testFluentIterableElementTypeChanged() {
     doTest();
   }
@@ -324,11 +330,11 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.enableInspections(new GuavaInspection());
     for (HighlightInfo info : myFixture.doHighlighting())
       if (TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description").equals(info.getDescription())) {
-        final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker = info.quickFixActionRanges.get(0);
+        HighlightInfo.IntentionActionDescriptor desc = info.findRegisteredQuickFix((descriptor, range) -> descriptor);
         final PsiElement someElement = myFixture.getFile().findElementAt(0);
         assertNotNull(someElement);
         boolean doBreak = false;
-        for (IntentionAction option : marker.getFirst().getOptions(someElement, myFixture.getEditor())) {
+        for (IntentionAction option : desc.getOptions(someElement, myFixture.getEditor())) {
           if (option instanceof CleanupInspectionIntention) {
             myFixture.launchAction(option);
             doBreak = true;

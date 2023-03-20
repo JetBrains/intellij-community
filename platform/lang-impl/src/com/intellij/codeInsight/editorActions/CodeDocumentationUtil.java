@@ -52,7 +52,6 @@ public final class CodeDocumentationUtil {
    *
    * @param document    target document
    * @param offset      target offset that identifies line to check and max offset to use during scanning
-   * @return
    */
   @Nullable
   public static String getIndentInsideJavadoc(@NotNull Document document, int offset) {

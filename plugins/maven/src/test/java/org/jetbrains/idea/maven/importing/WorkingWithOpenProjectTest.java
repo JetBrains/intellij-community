@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.junit.Test;
 
 import java.io.File;
@@ -17,9 +17,11 @@ public class WorkingWithOpenProjectTest extends MavenMultiVersionImportingTestCa
   protected void setUp() throws Exception {
     super.setUp();
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
   }
 
   @Test
@@ -45,17 +47,18 @@ public class WorkingWithOpenProjectTest extends MavenMultiVersionImportingTestCa
 
     myProjectsManager.listenForExternalChanges();
     final Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
-    WriteCommandAction.runWriteCommandAction(null, () -> d.setText(createPomXml("<groupId>test</groupId>" +
-                                                                              "<artifactId>project</artifactId>" +
-                                                                              "<version>1</version>" +
-
-                                                                              "<dependencies>" +
-                                                                              "  <dependency>" +
-                                                                              "    <groupId>junit</groupId>" +
-                                                                              "    <artifactId>junit</artifactId>" +
-                                                                              "    <version>4.0</version>" +
-                                                                              "  </dependency>" +
-                                                                              "</dependencies>")));
+    WriteCommandAction.runWriteCommandAction(null, () -> d.setText(createPomXml("""
+                                                                                  <groupId>test</groupId>
+                                                                                  <artifactId>project</artifactId>
+                                                                                  <version>1</version>
+                                                                                  <dependencies>
+                                                                                    <dependency>
+                                                                                      <groupId>junit</groupId>
+                                                                                      <artifactId>junit</artifactId>
+                                                                                      <version>4.0</version>
+                                                                                    </dependency>
+                                                                                  </dependencies>
+                                                                                  """)));
 
     resolveDependenciesAndImport();
 

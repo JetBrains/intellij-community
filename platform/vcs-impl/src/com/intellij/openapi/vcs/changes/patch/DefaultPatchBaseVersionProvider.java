@@ -61,8 +61,7 @@ public final class DefaultPatchBaseVersionProvider {
 
       if (revision != null) {
         boolean loadedExactRevision = false;
-        if (historyProvider instanceof VcsBaseRevisionAdviser) {
-          VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
+        if (historyProvider instanceof VcsBaseRevisionAdviser revisionAdviser) {
           loadedExactRevision = revisionAdviser.getBaseVersionContent(pathBeforeRename, processor, revision.asString());
         }
         else {

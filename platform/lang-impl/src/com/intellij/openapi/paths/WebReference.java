@@ -23,9 +23,6 @@ import com.intellij.psi.impl.FakePsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class WebReference extends PsiReferenceBase<PsiElement> {
   @Nullable private final String myUrl;
   
@@ -45,6 +42,10 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
   public WebReference(@NotNull PsiElement element, TextRange textRange, @Nullable String url) {
     super(element, textRange, true);
     myUrl = url;
+  }
+
+  public boolean isHttpRequestTarget() {
+    return true;
   }
 
   @Override

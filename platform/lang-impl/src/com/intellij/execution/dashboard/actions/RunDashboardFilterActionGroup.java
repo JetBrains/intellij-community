@@ -1,17 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.dashboard.RunDashboardServiceViewContributor;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardManagerImpl;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
+import com.intellij.execution.dashboard.RunDashboardServiceViewContributor;
 import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.execution.services.ServiceViewContributor;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CheckedActionGroup;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -22,13 +19,14 @@ import java.util.Set;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 
-public class RunDashboardFilterActionGroup extends DefaultActionGroup implements CheckedActionGroup, DumbAware {
+final class RunDashboardFilterActionGroup extends DefaultActionGroup implements CheckedActionGroup, DumbAware {
+
   @SuppressWarnings("unused")
-  public RunDashboardFilterActionGroup() {
+  RunDashboardFilterActionGroup() {
     this(null, false);
   }
 
-  public RunDashboardFilterActionGroup(@Nullable @NlsActions.ActionText String shortName, boolean popup) {
+  RunDashboardFilterActionGroup(@Nullable @NlsActions.ActionText String shortName, boolean popup) {
     super(shortName, popup);
     RunDashboardRunConfigurationStatus[] statuses = new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED};
     for (RunDashboardRunConfigurationStatus status : statuses) {
@@ -37,17 +35,25 @@ public class RunDashboardFilterActionGroup extends DefaultActionGroup implements
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Set<ServiceViewContributor> contributors = e.getData(ServiceViewActionUtils.CONTRIBUTORS_KEY);
+
+    boolean isEnabled = false;
     if (contributors != null) {
       for (ServiceViewContributor contributor : contributors) {
         if (contributor instanceof RunDashboardServiceViewContributor) {
-          e.getPresentation().setEnabledAndVisible(true);
-          return;
+          isEnabled = true;
+          break;
         }
       }
     }
-    e.getPresentation().setEnabledAndVisible(false);
+
+    e.getPresentation().setEnabledAndVisible(isEnabled);
   }
 
   private static class RunDashboardStatusFilterToggleAction extends ToggleAction implements DumbAware {
@@ -65,6 +71,11 @@ public class RunDashboardFilterActionGroup extends DefaultActionGroup implements
 
       RunDashboardStatusFilter statusFilter = ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).getStatusFilter();
       return statusFilter.isVisible(myStatus);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

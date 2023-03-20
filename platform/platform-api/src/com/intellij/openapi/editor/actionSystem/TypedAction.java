@@ -196,8 +196,10 @@ public abstract class TypedAction {
 
   public final void actionPerformed(@NotNull final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    SlowOperations.allowSlowOperations(() -> FreezeLogger.getInstance().runUnderPerformanceMonitor(
-      project, () -> myRawHandler.execute(editor, charTyped, dataContext)
-    ));
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      FreezeLogger.getInstance().runUnderPerformanceMonitor(
+        project, () -> myRawHandler.execute(editor, charTyped, dataContext)
+      );
+    }
   }
 }

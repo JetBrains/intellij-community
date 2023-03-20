@@ -174,8 +174,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     if (owner == null) return NlsUnspecified.UNKNOWN;
     info = fromAnnotationOwner(owner.getModifierList());
     if (info != NlsUnspecified.UNKNOWN) return info;
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       if (parameter.isVarArgs() && context.getType() instanceof PsiEllipsisType) {
         info = fromType(((PsiEllipsisType)context.getType()).getComponentType());
       }
@@ -306,7 +305,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     return fromAnnotationInfo(annotation.getQualifiedName(), () -> annotation.findAttributeValue("capitalization"));
   }
 
-  private static @NotNull NlsInfo fromAnnotationInfo(String qualifiedName, Supplier<UExpression> capitalization) {
+  private static @NotNull NlsInfo fromAnnotationInfo(String qualifiedName, Supplier<? extends UExpression> capitalization) {
     if (qualifiedName == null) return NlsUnspecified.UNKNOWN;
     if (qualifiedName.equals(AnnotationUtil.NON_NLS) ||
         qualifiedName.equals(AnnotationUtil.PROPERTY_KEY)) {

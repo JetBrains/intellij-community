@@ -16,10 +16,10 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -32,9 +32,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   private static final Logger LOG = Logger.getInstance(GradleAutoImportAware.class);
 
@@ -118,6 +115,17 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
     files.add(new File(projectSettings == null ? projectPath : projectSettings.getExternalProjectPath(), "gradle.properties"));
 
+    //add version catalog toml files
+    var node = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath);
+    if (node != null) {
+      var versionCatalog = ExternalSystemApiUtil.find(node, BuildScriptClasspathData.VERSION_CATALOGS);
+      if (versionCatalog != null) {
+        for (String catalogFile : versionCatalog.getData().getCatalogsLocations().values()) {
+          files.add(new File(catalogFile));
+        }
+      }
+    }
+
     // add wrapper config file
     if (projectSettings != null && projectSettings.getDistributionType() == DistributionType.DEFAULT_WRAPPED) {
       files.add(new File(projectSettings.getExternalProjectPath(), "gradle/wrapper/gradle-wrapper.properties"));
@@ -126,7 +134,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     // add gradle scripts
     Set<String> subProjectPaths = projectSettings != null && /*!projectSettings.getModules().isEmpty() &&*/
                                   FileUtil.pathsEqual(projectSettings.getExternalProjectPath(), projectPath)
-                                  ? projectSettings.getModules() : ContainerUtil.set(projectPath);
+                                  ? projectSettings.getModules() : Set.of(projectPath);
     for (String path : subProjectPaths) {
       ProgressManager.checkCanceled();
 

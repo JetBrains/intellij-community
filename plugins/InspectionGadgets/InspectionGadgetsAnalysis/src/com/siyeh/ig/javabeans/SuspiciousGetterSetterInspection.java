@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javabeans;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiClass;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -47,10 +50,10 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
            : InspectionGadgetsBundle.message("suspicious.getter.problem.descriptor", infos[1]);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.suspicious.getter.setter.field.option"), this, "onlyWarnWhenFieldPresent");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnWhenFieldPresent", JavaAnalysisBundle.message("inspection.suspicious.getter.setter.field.option")));
   }
 
   @Override
@@ -61,7 +64,7 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
   private class SuspiciousGetterSetterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final String name = method.getName();
       final String fieldName;

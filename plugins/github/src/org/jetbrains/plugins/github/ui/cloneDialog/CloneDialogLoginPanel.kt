@@ -1,17 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.async.disposingMainScope
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
@@ -20,41 +21,50 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.layout.*
+import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.JBUI.emptyInsets
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingConstants.TOP
+import javax.swing.SwingConstants
 
 internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
-  JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)),
+  JBPanel<CloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
 
-  private val authenticationManager get() = GithubAuthenticationManager.getInstance()
+  private val cs = disposingMainScope()
 
-  private val errorPanel = JPanel(VerticalLayout(10))
+  private val accountManager get() = service<GHAccountManager>()
+
+  private val errorPanel = VerticalListPanel(10)
   private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
-    if (account == null) authenticationManager.isAccountUnique(name, server) else true
+    if (account == null) accountManager.accountsState.value.none {
+      it.name == name && it.server.equals(server, true)
+    }
+    else true
   }
   private val inlineCancelPanel = simplePanel()
   private val loginButton = JButton(message("button.login.mnemonic"))
-  private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply { verticalAlignment = TOP }
+  private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply {
+    verticalAlignment = SwingConstants.CENTER
+  }
 
   private var errors = emptyList<ValidationInfo>()
-  private var loginIndicator: ProgressIndicator? = null
+  private var loginJob: Job? = null
 
   var isCancelVisible: Boolean
     get() = backLink.isVisible
@@ -97,10 +107,12 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
 
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    cancelLogin()
+  }
 
   private fun buildLayout() {
-    add(JPanel(HorizontalLayout(0)).apply {
+    add(HorizontalListPanel().apply {
       add(loginPanel)
       add(inlineCancelPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { left = scale(6) }) })
     })
@@ -118,17 +130,14 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     clearErrors()
   }
 
-  private fun LayoutBuilder.buttonPanel() =
+  private fun Panel.buttonPanel() =
     row("") {
-      cell {
-        loginButton()
-        backLink().withLargeLeftGap()
-      }
+      cell(loginButton)
+      cell(backLink)
     }
 
   fun cancelLogin() {
-    loginIndicator?.cancel()
-    loginIndicator = null
+    loginJob?.cancel()
   }
 
   private fun login() {
@@ -138,24 +147,19 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     clearErrors()
     if (!doValidate()) return
 
-    val modalityState = ModalityState.stateForComponent(this)
-    val indicator = EmptyProgressIndicator(modalityState)
-
-    loginIndicator = indicator
-    loginPanel.acquireLoginAndToken(indicator)
-      .completionOnEdt(modalityState) {
-        loginIndicator = null
+    loginJob = cs.async(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
+      try {
+        val (login, token) = loginPanel.acquireLoginAndToken()
+        val acc = account ?: GHAccountManager.createAccount(login, loginPanel.getServer())
+        accountManager.updateAccount(acc, token)
         clearErrors()
       }
-      .errorOnEdt(modalityState) { doValidate() }
-      .successOnEdt(modalityState) { (login, token) ->
-        if (account != null) {
-          authenticationManager.updateAccountToken(account, token)
-        }
-        else {
-          authenticationManager.registerAccount(login, loginPanel.getServer(), token)
-        }
+      catch (e: Exception) {
+        if (e is CancellationException) throw e
+        clearErrors()
+        doValidate()
       }
+    }
   }
 
   private fun doValidate(): Boolean {
@@ -197,12 +201,15 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   private fun toErrorComponent(info: ValidationInfo): JComponent =
     SimpleColoredComponent().apply {
       myBorder = empty()
-      ipad = emptyInsets()
+      ipad = JBInsets.emptyInsets()
 
       append(info.message, ERROR_ATTRIBUTES)
     }
 
   private inner class LoginAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = e.getData(CONTEXT_COMPONENT) != backLink
     }

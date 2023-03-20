@@ -10,9 +10,6 @@ import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
-/**
- *  @author dsl
- */
 public class RootsTest extends JavaPsiTestCase {
   public void testTest1() {
     final String rootPath = PathManagerEx.getTestDataPath() + "/moduleRootManager/roots/" + "test1";

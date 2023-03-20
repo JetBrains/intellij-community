@@ -18,7 +18,7 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     VirtualFile f = Objects.requireNonNull(getFile(e));
-    VcsSelection sel = Objects.requireNonNull(VcsSelectionUtil.getSelection(e));
+    VcsSelection sel = Objects.requireNonNull(VcsSelectionUtil.getSelection(this, e));
 
     int from = sel.getSelectionStartLineNumber();
     int to = sel.getSelectionEndLineNumber();
@@ -30,7 +30,7 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    VcsSelection selection = VcsSelectionUtil.getSelection(e);
+    VcsSelection selection = VcsSelectionUtil.getSelection(this, e);
     if (selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }

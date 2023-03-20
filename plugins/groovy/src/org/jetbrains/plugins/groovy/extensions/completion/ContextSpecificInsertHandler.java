@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.extensions.completion;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 
-/**
- * @author ilyas
- */
 public interface ContextSpecificInsertHandler {
 
   boolean isAcceptable(InsertionContext context, int startOffset, LookupElement item);

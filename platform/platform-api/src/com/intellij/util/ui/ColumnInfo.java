@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts.ColumnName;
@@ -25,8 +25,7 @@ public abstract class ColumnInfo<Item, Aspect> {
     myName = name;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -34,15 +33,13 @@ public abstract class ColumnInfo<Item, Aspect> {
     return getName();
   }
 
-  @Nullable
-  public abstract Aspect valueOf(Item item);
+  public abstract @Nullable Aspect valueOf(Item item);
 
   public final boolean isSortable() {
     return getComparator() != null;
   }
 
-  @Nullable
-  public Comparator<Item> getComparator(){
+  public @Nullable Comparator<Item> getComparator(){
     return null;
   }
 
@@ -66,8 +63,7 @@ public abstract class ColumnInfo<Item, Aspect> {
    * @see com.intellij.util.ui.table.IconTableCellRenderer
    * @see com.intellij.util.ui.LocalPathCellEditor
    */
-  @Nullable
-  public TableCellRenderer getRenderer(Item item) {
+  public @Nullable TableCellRenderer getRenderer(Item item) {
     return null;
   }
 
@@ -75,18 +71,15 @@ public abstract class ColumnInfo<Item, Aspect> {
     return renderer;
   }
 
-  @Nullable
-  public TableCellEditor getEditor(Item item) {
+  public @Nullable TableCellEditor getEditor(Item item) {
     return null;
   }
 
-  @Nullable
-  public String getMaxStringValue() {
+  public @Nullable String getMaxStringValue() {
     return null;
   }
 
-  @Nullable
-  public String getPreferredStringValue() {
+  public @Nullable String getPreferredStringValue() {
     return null;
   }
 
@@ -102,9 +95,7 @@ public abstract class ColumnInfo<Item, Aspect> {
     myName = s;
   }
 
-  @Tooltip
-  @Nullable
-  public String getTooltipText() {
+  public @Tooltip @Nullable String getTooltipText() {
     return null;
   }
 

@@ -48,4 +48,9 @@ public class DummyChangesViewContentManager implements ChangesViewContentI {
   public List<Content> findContents(@NotNull Predicate<Content> predicate) {
     return Collections.emptyList();
   }
+
+  @Override
+  public @Nullable Content findContent(@NotNull String tabName) {
+    return null;
+  }
 }

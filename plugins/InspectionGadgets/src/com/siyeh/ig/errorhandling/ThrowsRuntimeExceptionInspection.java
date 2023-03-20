@@ -78,14 +78,13 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethod)) {
+      if (!(grandParent instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)grandParent;
       final PsiDocComment comment = method.getDocComment();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (comment != null) {
@@ -100,8 +99,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
         if (documentationProvider instanceof CodeDocumentationProvider) {
           codeDocumentationProvider = (CodeDocumentationProvider)documentationProvider;
         }
-        else if (documentationProvider instanceof CompositeDocumentationProvider) {
-          final CompositeDocumentationProvider compositeDocumentationProvider = (CompositeDocumentationProvider)documentationProvider;
+        else if (documentationProvider instanceof CompositeDocumentationProvider compositeDocumentationProvider) {
           codeDocumentationProvider = compositeDocumentationProvider.getFirstCodeDocumentationProvider();
           if (codeDocumentationProvider == null) {
             return;
@@ -120,10 +118,9 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     public static boolean isApplicable(@NotNull PsiJavaCodeReferenceElement reference) {
       final PsiElement parent = reference.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethod)) {
+      if (!(grandParent instanceof PsiMethod method)) {
         return false;
       }
-      final PsiMethod method = (PsiMethod)grandParent;
       final PsiDocComment docComment = method.getDocComment();
       if (docComment == null) {
         return true;
@@ -143,10 +140,9 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
           continue;
         }
         final PsiElement grandChild = child.getFirstChild();
-        if (!(grandChild instanceof PsiJavaCodeReferenceElement)) {
+        if (!(grandChild instanceof PsiJavaCodeReferenceElement referenceElement)) {
           continue;
         }
-        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)grandChild;
         final PsiElement target = referenceElement.resolve();
         if (throwsTarget.equals(target)) {
           return false;
@@ -177,7 +173,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       descriptor.getPsiElement().delete();
     }
   }
@@ -185,16 +181,15 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
   private static class ThrowsRuntimeExceptionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiReferenceList throwsList = method.getThrowsList();
       final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
       for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
         final PsiElement target = referenceElement.resolve();
-        if (!(target instanceof PsiClass)) {
+        if (!(target instanceof PsiClass aClass)) {
           continue;
         }
-        final PsiClass aClass = (PsiClass)target;
         if (!InheritanceUtil.isInheritor(aClass, "java.lang.RuntimeException")) {
           continue;
         }

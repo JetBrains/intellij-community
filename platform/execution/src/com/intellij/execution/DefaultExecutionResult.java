@@ -18,7 +18,6 @@ package com.intellij.execution;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,8 +73,7 @@ public class DefaultExecutionResult implements ExecutionResult {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public AnAction @NotNull [] getAdditionalStopActions() {
     return AnAction.EMPTY_ARRAY;
   }

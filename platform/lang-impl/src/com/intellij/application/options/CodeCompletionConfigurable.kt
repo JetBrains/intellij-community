@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
 
 import com.intellij.application.options.editor.EditorOptionsProvider
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.PowerSaveMode
-import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.ide.ui.UISettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundCompositeConfigurable
@@ -147,7 +148,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
 
       row {
         checkBox(ApplicationBundle.message("completion.option.sort.suggestions.alphabetically"))
-          .bindSelected(instance::sortLookupElementsLexicographically)
+          .bindSelected(UISettings.getInstance()::sortLookupElementsLexicographically)
       }
 
       lateinit var cbAutocompletion: Cell<JBCheckBox>
@@ -174,7 +175,16 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
           .columns(4)
           .enabledIf(cbAutopopupJavaDoc.selected)
           .gap(RightGap.SMALL)
+        @Suppress("DialogTitleCapitalization")
         label(ApplicationBundle.message("editbox.ms"))
+      }
+
+      if (OptionsApplicabilityFilter.isApplicable(OptionId.INSERT_PARENTHESES_AUTOMATICALLY)) {
+        row {
+          checkBox(ApplicationBundle.message("completion.option.insert.parentheses"))
+            .bindSelected(EditorSettingsExternalizable.getInstance()::isInsertParenthesesAutomatically,
+                          EditorSettingsExternalizable.getInstance()::setInsertParenthesesAutomatically)
+        }
       }
 
       addOptions()
@@ -196,6 +206,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
             .columns(4)
             .enabledIf(cbParameterInfoPopup.selected)
             .gap(RightGap.SMALL)
+          @Suppress("DialogTitleCapitalization")
           label(ApplicationBundle.message("editbox.ms"))
         }
 

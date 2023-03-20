@@ -151,8 +151,7 @@ public class TagNameReference implements PsiReference {
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiMetaData metaData = null;
 
-    if (element instanceof PsiMetaOwner){
-      final PsiMetaOwner owner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner owner){
       metaData = owner.getMetaData();
 
       if (metaData instanceof XmlElementDescriptor){

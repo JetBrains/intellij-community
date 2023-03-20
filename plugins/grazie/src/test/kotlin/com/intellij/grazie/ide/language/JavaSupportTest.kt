@@ -36,9 +36,23 @@ class JavaSupportTest : GrazieTestBase() {
     myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
   }
 
+  fun `test do not merge text with non-text`() {
+    runHighlightTestForFile("ide/language/java/AccidentalMerge.java")
+    myFixture.launchAction(myFixture.findSingleIntention("Remove"))
+    myFixture.checkResultByFile("ide/language/java/AccidentalMerge_after.java")
+  }
+
   fun `test long comment performance`() {
     PlatformTestUtil.startPerformanceTest("highlighting", 1000) {
       runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
+    }.setup { psiManager.dropPsiCaches() }.usesAllCPUCores().assertTiming()
+  }
+
+  fun `test performance with many line comments`() {
+    val text = "// this is a single line comment\n".repeat(5000)
+    myFixture.configureByText("a.java", text)
+    PlatformTestUtil.startPerformanceTest("highlighting", 2000) {
+      myFixture.checkHighlighting()
     }.setup { psiManager.dropPsiCaches() }.usesAllCPUCores().assertTiming()
   }
 }

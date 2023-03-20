@@ -55,14 +55,14 @@ public class IntLCSAutoTest extends TestCase {
     BitSet changes2 = new BitSet(sequence2.length);
 
     switch (type) {
-      case MyersLCS:
+      case MyersLCS -> {
         MyersLCS myersLCS = new MyersLCS(sequence1, sequence2, start1, count1, start2, count2, changes1, changes2);
         myersLCS.execute();
-        break;
-      case PatienceLCS:
+      }
+      case PatienceLCS -> {
         PatienceIntLCS patienceLCS = new PatienceIntLCS(sequence1, sequence2, start1, count1, start2, count2, changes1, changes2);
         patienceLCS.execute();
-        break;
+      }
     }
 
     verifyLCS(sequence1, sequence2, start1, count1, start2, count2, changes1, changes2);

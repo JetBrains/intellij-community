@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // PROBLEM: none
 class Foo<T>(val t: T)
 

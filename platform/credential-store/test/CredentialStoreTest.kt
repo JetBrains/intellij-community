@@ -133,7 +133,6 @@ internal class CredentialStoreTest {
     store.set(CredentialAttributes(serviceName, userName, isPasswordMemoryOnly = true), Credentials(userName, pass))
 
     val credentials = store.get(CredentialAttributes(serviceName, userName))
-    @Suppress("UsePropertyAccessSyntax")
     assertThat(credentials).isNotNull()
     assertThat(credentials!!.userName).isEqualTo(userName)
     assertThat(credentials.password).isNullOrEmpty()

@@ -40,6 +40,10 @@
       "mnemonicsBorderInsets": {
         "os.default": "0,8,1,6",
         "os.linux": "0,8,1,8"
+      },
+      "mnemonicsInsets": {
+        "os.default": "0,0,0,8",
+        "os.linux": "0,0,0,8"
       }
     },
 
@@ -80,6 +84,13 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "#5e6060",
+      "selectedEndBorderColor": "#5e6060",
+      "selectedButtonColor": "#4C5052",
+      "focusedSelectedButtonColor": "#3d4b5c"
+    },
+
     "CellEditor.border.width": 2,
 
     "CheckBox": {
@@ -105,7 +116,10 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
-    "ComboBoxButton.background": "#3c3f41",
+    "ComboBoxButton": {
+      "background": "#3c3f41",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
+    },
     "CompletionPopup.nonFocusedState": true,
 
     "Component": {
@@ -120,6 +134,12 @@
       "inactiveWarningFocusColor": "#6E5324",
       "infoForeground": "#787878",
       "warningFocusColor": "#AC7920"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "BookmarkMnemonicCurrent": {
@@ -145,7 +165,6 @@
     },
 
     "EditorTabs": {
-      "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "#4E5254"
     },
 
@@ -161,7 +180,6 @@
     "Group.separatorColor": "#515151",
 
     "HelpTooltip": {
-      "defaultTextBorderInsets": "8,10,10,13",
       "descriptionSizeDelta": {
         "os.linux": -2,
         "os.mac": -1
@@ -172,7 +190,6 @@
       "mouseCursorOffset": {
         "os.mac": 17
       },
-      "smallTextBorderInsets": "6,10,7,12",
       "xOffset": 1,
       "yOffset": 1
     },
@@ -303,10 +320,7 @@
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
       "borderInsets": "6,1,6,1",
-      "borderCornerRadiusX": 16,
-      "borderCornerRadiusY": 16,
-      "leftBorderWith": 10,
-      "rightBorderWith": 0,
+      "borderCornerRadius": 8,
       "translucentBackground": "#3c3f41",
       "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
@@ -451,6 +465,12 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI"
     },
 
+    "SearchFieldWithExtension": {
+      "background": "#45494A",
+      "border": "com.intellij.ui.components.DarculaSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
+    },
+
     "TitledBorder.titleColor": "#bbbbbb",
 
     "ToggleButton": {
@@ -503,9 +523,6 @@
     },
 
     "ToolbarComboWidget": {
-      "background": "#3C3F41",
-      "hoverBackground": "#4C5052",
-      "borderInsets": "3,5,3,5",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
@@ -521,7 +538,90 @@
     "text": "#bbbbbb",
     "textInactiveText" : "#808080",
     "textText": "#bbbbbb",
-    "window": "#3c3f41"
+    "window": "#3c3f41",
+
+    "Lesson": {
+      "shortcutBackground": "#333638",
+      "stepNumberForeground": "#FEFEFE",
+      "Badge.newLessonBackground": "#499C54",
+      "Badge.newLessonForeground": "#FEFEFE"
+    },
+
+    "Tooltip.Learning": {
+      "background": "#0E62CF",
+      "borderColor": "#0E62CF",
+      "spanBackground": "#0250B0",
+      "spanForeground": "#F5F5F5",
+      "foreground": "#F5F5F5",
+      "stepNumberForeground": "#6A9DDE"
+    },
+
+    "MainToolbar": {
+      "background": "#3c3f41",
+      "Icon": {
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
+      },
+      "Dropdown": {
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
+      }
+    },
+
+    "Plugins.borderColor": "#515151",
+
+    "TipOfTheDay": {
+      "Image.borderColor": "#323232"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#3f4749",
+        "hoverBackground": "#464a4d",
+        "PackageTag": {
+          "background": "#4e5658",
+          "foreground": "#8e8f8f",
+          "hoverBackground": "#55585b",
+          "selectedBackground": "#2f65ca",
+          "selectedForeground": "#bbbbbb"
+        }
+      },
+      "PackageTag": {
+        "background": "#4c4e50",
+        "foreground": "#9c9c9c",
+        "hoverBackground": "#55585b",
+        "selectedBackground": "#2f65ca",
+        "selectedForeground": "#bbbbbb"
+      },
+      "PackageTagSelected.background": "#78ade2",
+      "PackageTagSelected.foreground": "#bbbbbb"
+    },
+    "RunWidget" : {
+      "foreground": "#ffffff",
+      "runModeIconColor": "#5fad65",
+      "disabledForeground": "#FFFFFF66",
+      "background": "#3369d6",
+      "runningBackground": "#599e5e",
+      "stopBackground": "#c94f4f",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
+    },
+
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "#CED0D6",
+      "selectedBackground": "#3C3F41",
+      "selectedInactiveBackground": "#3C3F41",
+      "foreground": "#B4B8BF",
+      "background": "#131314",
+      "hoverForeground": "#CED0D6",
+      "hoverBackground": "#1A1A1B",
+      "separatorColor": "#2B2D30",
+      "borderColor": "#1E1F22"
+    }
   },
 
   "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
@@ -539,14 +639,5 @@
     "#b99bf899": "#977fca",
     "#9aa7b0cc": "#97acc6",
     "#9aa7b099": "#97acc6"
-  },
-
-  "MainToolbar": {
-    "icon": {
-      "borderInsets": "10,10,10,10"
-    },
-    "dropdown": {
-      "borderInsets": "12,6,12,6"
-    }
   }
 }

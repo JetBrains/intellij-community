@@ -19,7 +19,6 @@ public interface TestResultsViewer extends Disposable {
   /**
    * Selects test or suite in Tests tree and notify about selection changed
    *
-   * @param proxy
    */
   void selectAndNotify(@Nullable AbstractTestProxy proxy);
 

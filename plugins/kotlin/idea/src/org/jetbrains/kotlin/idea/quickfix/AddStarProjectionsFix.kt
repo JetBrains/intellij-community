@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -9,8 +9,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.*
@@ -52,7 +53,7 @@ class AddStarProjectionsFix(element: KtUserType, private val argumentCount: Int)
         assert(element.typeArguments.isEmpty())
 
         val typeString = TypeReconstructionUtil.getTypeNameAndStarProjectionsString(element.text, argumentCount)
-        val replacement = KtPsiFactory(file).createType(typeString).typeElement.sure { "No type element after parsing " + typeString }
+        val replacement = KtPsiFactory(project).createType(typeString).typeElement.sure { "No type element after parsing " + typeString }
         element.replace(replacement)
     }
 }
@@ -67,7 +68,7 @@ class AddStartProjectionsForInnerClass(element: KtTypeReference) : KotlinQuickFi
         val typeReference = element ?: return
         val targetClasses = getTargetClasses(typeReference) ?: return
         val replaceString = createReplaceString(targetClasses)
-        typeReference.replace(KtPsiFactory(file).createType(replaceString))
+        typeReference.replace(KtPsiFactory(project).createType(replaceString))
     }
 
     private fun getTargetClasses(typeReference: KtTypeReference): List<ClassDescriptor>? {

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -127,9 +128,8 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
         );
         final Process process = Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(cmdLine));
         final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmdLine, " "), null) {
-          @NotNull
           @Override
-          protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
+          public @NotNull Future<?> executeTask(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().submit(task);
           }
         };
@@ -145,11 +145,6 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
             else if (outputType == ProcessOutputTypes.STDERR) {
               stdErrParser.append(event.getText());
             }
-          }
-
-          @Override
-          public void processTerminated(@NotNull ProcessEvent event) {
-            super.processTerminated(event);
           }
         });
         handler.startNotify();
@@ -242,11 +237,9 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
     final JpsSdk<?> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
     if (sdk != null) {
       final String executable = JpsJavaSdkType.getJavaExecutable(sdk);
-      if (executable != null) {
-        final int idx = FileUtil.toSystemIndependentName(executable).lastIndexOf("/");
-        if (idx >= 0) {
-          return executable.substring(0, idx) + "/rmic";
-        }
+      final int idx = FileUtil.toSystemIndependentName(executable).lastIndexOf("/");
+      if (idx >= 0) {
+        return executable.substring(0, idx) + "/rmic";
       }
     }
     return SystemProperties.getJavaHome() + "/bin/rmic";
@@ -284,13 +277,8 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
   @Nullable
   private static RmicCompilerOptions getOptions(CompileContext context) {
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
-    if (config != null) {
-      final JpsJavaCompilerOptions options = config.getCompilerOptions("Rmic");
-      if (options instanceof RmicCompilerOptions) {
-        return (RmicCompilerOptions)options;
-      }
-    }
-    return null;
+    final JpsJavaCompilerOptions options = config.getCompilerOptions("Rmic");
+    return ObjectUtils.tryCast(options, RmicCompilerOptions.class);
   }
 
   private static final class ClassItem {

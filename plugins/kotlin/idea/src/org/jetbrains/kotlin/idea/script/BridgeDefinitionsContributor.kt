@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -12,13 +12,12 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.streams.asSequence
 
 class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionSourceAsContributor {
     override val id: String = "BridgeScriptDefinitionsContributor"
 
     override val definitions: Sequence<ScriptDefinition>
-        get() = ScriptDefinitionsProvider.EP_NAME.extensions(project).asSequence().flatMap { provider ->
+        get() = ScriptDefinitionsProvider.EP_NAME.getExtensionList(project).asSequence().flatMap { provider ->
             val explicitClasses = provider.getDefinitionClasses().toList()
             val classPath = provider.getDefinitionsClassPath().toList()
             val baseHostConfiguration = defaultJvmScriptingHostConfiguration
@@ -57,6 +56,7 @@ fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
         ScriptDiagnostic.Severity.ERROR -> log.error(message)
         ScriptDiagnostic.Severity.WARNING,
         ScriptDiagnostic.Severity.INFO -> log.info(message)
+        else -> {}
     }
 }
 

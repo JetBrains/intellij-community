@@ -7,8 +7,9 @@ import sys
 from _pytest.config import get_plugin_manager
 from pkg_resources import iter_entry_points
 
-from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, start_protocol, parse_arguments, \
-  set_parallel_mode
+from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, \
+    start_protocol, parse_arguments, \
+    set_parallel_mode, jb_finish_tests
 from teamcity import pytest_plugin
 import os
 
@@ -47,5 +48,8 @@ if __name__ == '__main__':
                 set_parallel_mode()
             start_protocol()
 
-    os.environ["_JB_REPR_DIFF"] = "1"
-    sys.exit(pytest.main(args, plugins_to_load + [Plugin]))
+    os.environ["_JB_PPRINT_PRIMITIVES"] = "1"
+    try:
+        sys.exit(pytest.main(args, plugins_to_load + [Plugin]))
+    finally:
+        jb_finish_tests()

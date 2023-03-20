@@ -14,9 +14,9 @@ import javax.swing.Icon
 /**
  * Intention action that is used as a variant of [IntentionActionWithChoice].
  *
- * Action should implement [invoke], requests to [applyFix] would proxied to [invoke].
+ * The action should implement [invoke], requests to [applyFix] would be proxied to [invoke].
  *
- * Actions requires [index] param so it can maintain order of variants in
+ * The action requires [index] param, so it can maintain order of variants in
  * quick-fix popup.
  */
 abstract class ChoiceVariantIntentionAction : IntentionAndQuickFixAction(), HighlightInfoType.Iconable, Iconable, CustomizableIntentionAction,
@@ -29,11 +29,7 @@ abstract class ChoiceVariantIntentionAction : IntentionAndQuickFixAction(), High
 
   abstract val index: Int
 
-  override fun isSelectable(): Boolean = true
-
   override fun isShowSubmenu(): Boolean = false
-
-  override fun isShowIcon(): Boolean = true
 
   override fun getIcon(): Icon = EMPTY_ICON
 

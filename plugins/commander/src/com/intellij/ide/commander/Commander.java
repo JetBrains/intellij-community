@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.commander;
 
 import com.intellij.diff.actions.CompareFilesAction;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.TwoPaneIdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
@@ -20,6 +22,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,11 +32,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -46,6 +51,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 
+import static com.intellij.ide.commander.CommanderPanel.getNodeElement;
 import static com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFocusedComponent;
 
 /**
@@ -264,6 +270,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     ActionUtil.copyFrom(backAction, IdeActions.ACTION_GOTO_BACK);
     group.add(backAction);
@@ -278,6 +289,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoForward());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     ActionUtil.copyFrom(forwardAction, IdeActions.ACTION_GOTO_FORWARD);
     group.add(forwardAction);
@@ -289,7 +305,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private CommanderPanel createPanel() {
-    final CommanderPanel panel = new CommanderPanel(project, true, false);
+    final CommanderPanel panel = new CommanderPluginPanel(project, true, false);
 
     panel.getList().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
 
@@ -424,26 +440,39 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     else if (CommonDataKeys.PROJECT.is(dataId)) {
       return project;
     }
-    else if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
-      final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentNode();
-      if (parentElement == null) return null;
-      final Object element = parentElement.getValue();
-      return element instanceof PsiElement && ((PsiElement)element).isValid()? element : null;
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      AbstractTreeNode<?> parent1 = getActivePanel().getBuilder().getParentNode();
+      AbstractTreeNode<?> selection1 = getActivePanel().getSelectedNode();
+      AbstractTreeNode<?> parent2 = getInactivePanel().getBuilder().getParentNode();
+      AbstractTreeNode<?> selection2 = getInactivePanel().getSelectedNode();
+      Couple<AbstractTreeNode<?>> activeSelection = Couple.of(parent1, selection1);
+      Couple<AbstractTreeNode<?>> inactiveSelection = Couple.of(parent2, selection2);
+
+      DataProvider panelProvider = (DataProvider)getActivePanel().getDataImpl(dataId);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, activeSelection, inactiveSelection), panelProvider);
+    }
+    else {
+      return getActivePanel().getDataImpl(dataId);
+    }
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId,
+                                              @NotNull Couple<AbstractTreeNode<?>> active,
+                                              @NotNull Couple<AbstractTreeNode<?>> inactive) {
+    if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
+      return getNodeElement(inactive.first);
     }
     else if (CompareFilesAction.DIFF_REQUEST.is(dataId)) {
-      PsiElement primary = getActivePanel().getSelectedElement();
-      PsiElement secondary = getInactivePanel().getSelectedElement();
+      PsiElement primary = getNodeElement(active.second);
+      PsiElement secondary = getNodeElement(inactive.second);
       if (primary != null && secondary != null &&
           primary.isValid() && secondary.isValid() &&
           !PsiTreeUtil.isAncestor(primary, secondary, false) &&
           !PsiTreeUtil.isAncestor(secondary, primary, false)) {
         return PsiDiffContentFactory.comparePsiElements(primary, secondary);
       }
-      return null;
     }
-    else {
-      return getActivePanel().getDataImpl(dataId);
-    }
+    return null;
   }
 
   @Override
@@ -477,8 +506,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
 
     final AbstractTreeNode parentNode = builder.getParentNode();
     final Object parentElement = parentNode != null? parentNode.getValue() : null;
-    if (parentElement instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory) parentElement;
+    if (parentElement instanceof PsiDirectory directory) {
       element.setAttribute(ATTRIBUTE_URL, directory.getVirtualFile().getUrl());
     }
     else if (parentElement instanceof PsiClass) {
@@ -537,5 +565,52 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   public void selectElement(PsiElement element, boolean selectInActivePanel) {
     CommanderPanel panel = selectInActivePanel ? getActivePanel() : getInactivePanel();
     panel.getBuilder().selectElement(element, PsiUtilCore.getVirtualFile(element));
+  }
+
+  private static class CommanderPluginPanel extends CommanderPanel {
+    @NotNull
+    private final CopyPasteDelegator myCopyPasteDelegator;
+
+    CommanderPluginPanel(Project project, boolean enablePopupMenu, boolean enableSearchHighlighting) {
+      super(project, enableSearchHighlighting);
+      myCopyPasteDelegator = new CopyPasteDelegator(project, myList);
+
+      myList.addMouseListener(new PopupHandler() {
+        @Override
+        public void invokePopup(final Component comp, final int x, final int y) {
+          CommanderPluginPanel.this.invokePopup(comp, x, y);
+        }
+      });
+    }
+
+    private void invokePopup(final Component c, final int x, final int y) {
+      if (myBuilder == null) return;
+
+      if (myList.getSelectedIndices().length <= 1) {
+        final int popupIndex = myList.locationToIndex(new Point(x, y));
+        if (popupIndex >= 0) {
+          myList.setSelectedIndex(popupIndex);
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
+        }
+      }
+
+      final ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_COMMANDER_POPUP);
+      final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMMANDER_POPUP, group);
+      popupMenu.getComponent().show(c, x, y);
+    }
+
+    @Override
+    public Object getDataImpl(String dataId) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getCopyProvider();
+      }
+      if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getCutProvider();
+      }
+      if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
+        return myCopyPasteDelegator.getPasteProvider();
+      }
+      return super.getDataImpl(dataId);
+    }
   }
 }

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
@@ -12,6 +13,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -19,21 +21,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public boolean mySuggestLiteralReplacement = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.text.block.migration.suggest.literal.replacement"),
-                                          this,
-                                          "mySuggestLiteralReplacement");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("mySuggestLiteralReplacement", JavaBundle.message("inspection.text.block.migration.suggest.literal.replacement")));
   }
 
   @NotNull
@@ -42,13 +41,12 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
-        if (!isConcatenation(expression)) return;
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+        if (!ExpressionUtils.hasStringType(expression)) return;
         int nNewLines = 0;
-        PsiExpression[] operands = expression.getOperands();
         TextRange firstNewLineTextRange = null;
         boolean hasEscapedQuotes = false;
-        for (PsiExpression operand : operands) {
+        for (PsiExpression operand : expression.getOperands()) {
           PsiLiteralExpression literal = getLiteralExpression(operand);
           if (literal == null) return;
           if (nNewLines > 1) continue;
@@ -65,14 +63,16 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
             newLineIdx = getNewLineIndex(text, newLineIdx + 1);
           }
         }
-        if (nNewLines > 1) {
+        boolean hasComments = ContainerUtil.exists(expression.getChildren(), child -> child instanceof PsiComment);
+        boolean reportWarning = nNewLines > 1 && !hasComments;
+        boolean reportInfo = isOnTheFly && (hasEscapedQuotes || hasComments);
+        if (reportWarning) {
           boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
           holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
                                  JavaBundle.message("inspection.text.block.migration.concatenation.message"),
                                  new ReplaceWithTextBlockFix());
-          return;
         }
-        if (isOnTheFly && hasEscapedQuotes) {
+        else if (reportInfo) {
           holder.registerProblem(expression,
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
@@ -80,7 +80,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
 
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiPolyadicExpression) return;
         boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
         if (!mySuggestLiteralReplacement && !quickFixOnly) return;
@@ -92,9 +92,8 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
           holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  new ReplaceWithTextBlockFix());
-          return;
         }
-        if (isOnTheFly && getQuoteIndex(text) != -1) {
+        else if (isOnTheFly && getQuoteIndex(text) != -1) {
           holder.registerProblem(expression, 
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
@@ -116,7 +115,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(tryCast(descriptor.getPsiElement(), PsiExpression.class));
       if (expression == null) return;
-      Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getContainingFile());
+      Document document = expression.getContainingFile().getViewProvider().getDocument();
       if (document == null) return;
       PsiLiteralExpression literalExpression = tryCast(expression, PsiLiteralExpression.class);
       if (literalExpression != null) {
@@ -124,42 +123,36 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         return;
       }
       PsiPolyadicExpression polyadicExpression = tryCast(expression, PsiPolyadicExpression.class);
-      if (polyadicExpression == null || !isConcatenation(polyadicExpression)) return;
+      if (polyadicExpression == null || !ExpressionUtils.hasStringType(polyadicExpression)) return;
       replaceWithTextBlock(polyadicExpression.getOperands(), polyadicExpression);
     }
 
     private static void replaceWithTextBlock(PsiExpression @NotNull [] operands, @NotNull PsiExpression toReplace) {
       String[] lines = getContentLines(operands);
       if (lines == null) return;
-      String textBlock = getTextBlock(lines);
       CommentTracker tracker = new CommentTracker();
-      tracker.replaceAndRestoreComments(toReplace, textBlock);
+      tracker.replaceAndRestoreComments(toReplace, getTextBlock(lines));
     }
 
     @NotNull
     private static String getTextBlock(String @NotNull [] lines) {
-      lines = getTextBlockLines(lines);
+      lines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, false).split("(?<=\n)");
       int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, true);
-      // we need additional indent call only when significant trailing line is missing
-      if (indent > 0 && lines.length > 0 && lines[lines.length - 1].endsWith("\n")) indent = 0;
-      return "\"\"\"\n" + concatenateTextBlockLines(lines, indent) + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
-    }
-
-    private static String @NotNull [] getTextBlockLines(String @NotNull [] lines) {
-      String blockLines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, true);
-      return blockLines.split("(?<=\n)");
-    }
-
-    private static String concatenateTextBlockLines(String @NotNull [] lines, int indent) {
-      if (indent <= 0) return StringUtil.join(lines);
-      return Arrays.stream(lines).map(line -> indent < line.length() ? line.substring(indent) : line).collect(Collectors.joining());
+      if (indent != 0 && lines.length > 0 && !lines[lines.length - 1].endsWith("\n")) {
+        // append \ + newline at the end of the last line, so we can use closing """ to indent
+        lines[lines.length - 1] += "\\\n";
+      }
+      String content = StringUtil.join(lines);
+      if (content.endsWith(" ")) {
+        content = content.substring(0, content.length() - 1) + "\\s";
+      }
+      return "\"\"\"\n" + content + "\"\"\"";
     }
 
     private static String @Nullable [] getContentLines(PsiExpression @NotNull [] operands) {
       String[] lines = new String[operands.length];
       for (int i = 0; i < operands.length; i++) {
-        PsiExpression operand = operands[i];
-        PsiLiteralExpression literal = getLiteralExpression(operand);
+        PsiLiteralExpression literal = getLiteralExpression(operands[i]);
         if (literal == null) return null;
         String line = getLiteralText(literal);
         if (line == null) return null;
@@ -199,15 +192,9 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     return -1;
   }
 
-  private static boolean isConcatenation(@NotNull PsiPolyadicExpression expression) {
-    PsiType type = expression.getType();
-    return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-  }
-
   @Nullable
   private static PsiLiteralExpression getLiteralExpression(@NotNull PsiExpression expression) {
     PsiLiteralExpression literal = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiLiteralExpression.class);
-    if (literal == null || literal.isTextBlock()) return null;
-    return literal;
+    return (literal == null || literal.isTextBlock()) ? null : literal;
   }
 }

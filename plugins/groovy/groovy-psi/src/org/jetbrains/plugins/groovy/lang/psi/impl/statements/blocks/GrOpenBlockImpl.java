@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-/**
- * @author ilyas
- */
 public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock, PsiModifiableCodeBlock {
 
   public GrOpenBlockImpl(@NotNull IElementType type, CharSequence buffer) {

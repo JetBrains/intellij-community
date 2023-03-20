@@ -8,87 +8,160 @@
 
 '''command to display statistics about repository history'''
 
-from mercurial.i18n import _
-from mercurial import patch, cmdutil, scmutil, util, templater, commands
+from __future__ import absolute_import, division
+
+import datetime
 import os
-import time, datetime
+import time
 
-testedwith = 'internal'
+from mercurial.i18n import _
+from mercurial.pycompat import open
+from mercurial import (
+    cmdutil,
+    encoding,
+    logcmdutil,
+    patch,
+    pycompat,
+    registrar,
+    scmutil,
+)
 
-def maketemplater(ui, repo, tmpl):
-    tmpl = templater.parsestring(tmpl, quoted=False)
-    try:
-        t = cmdutil.changeset_templater(ui, repo, False, None, None, False)
-    except SyntaxError, inst:
-        raise util.Abort(inst.args[0])
-    t.use_template(tmpl)
-    return t
+cmdtable = {}
+command = registrar.command(cmdtable)
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
 
-def changedlines(ui, repo, ctx1, ctx2, fns):
+
+def changedlines(ui, repo, ctx1, ctx2, fmatch):
     added, removed = 0, 0
-    fmatch = scmutil.matchfiles(repo, fns)
-    diff = ''.join(patch.diff(repo, ctx1.node(), ctx2.node(), fmatch))
-    for l in diff.split('\n'):
-        if l.startswith("+") and not l.startswith("+++ "):
+    diff = b''.join(patch.diff(repo, ctx1.node(), ctx2.node(), fmatch))
+    inhunk = False
+    for l in diff.split(b'\n'):
+        if inhunk and l.startswith(b"+"):
             added += 1
-        elif l.startswith("-") and not l.startswith("--- "):
+        elif inhunk and l.startswith(b"-"):
             removed += 1
+        elif l.startswith(b"@"):
+            inhunk = True
+        elif l.startswith(b"d"):
+            inhunk = False
     return (added, removed)
+
 
 def countrate(ui, repo, amap, *pats, **opts):
     """Calculate stats"""
-    if opts.get('dateformat'):
+    opts = pycompat.byteskwargs(opts)
+    if opts.get(b'dateformat'):
+
         def getkey(ctx):
             t, tz = ctx.date()
             date = datetime.datetime(*time.gmtime(float(t) - tz)[:6])
-            return date.strftime(opts['dateformat'])
+            return encoding.strtolocal(
+                date.strftime(encoding.strfromlocal(opts[b'dateformat']))
+            )
+
     else:
-        tmpl = opts.get('template', '{author|email}')
-        tmpl = maketemplater(ui, repo, tmpl)
+        tmpl = opts.get(b'oldtemplate') or opts.get(b'template')
+        tmpl = logcmdutil.maketemplater(ui, repo, tmpl)
+
         def getkey(ctx):
             ui.pushbuffer()
             tmpl.show(ctx)
             return ui.popbuffer()
 
-    state = {'count': 0}
+    progress = ui.makeprogress(
+        _(b'analyzing'), unit=_(b'revisions'), total=len(repo)
+    )
     rate = {}
-    df = False
-    if opts.get('date'):
-        df = util.matchdate(opts['date'])
 
-    m = scmutil.match(repo[None], pats, opts)
-    def prep(ctx, fns):
+    def prep(ctx, fmatch):
         rev = ctx.rev()
-        if df and not df(ctx.date()[0]): # doesn't match date format
-            return
-
         key = getkey(ctx).strip()
-        key = amap.get(key, key) # alias remap
-        if opts.get('changesets'):
+        key = amap.get(key, key)  # alias remap
+        if opts.get(b'changesets'):
             rate[key] = (rate.get(key, (0,))[0] + 1, 0)
         else:
             parents = ctx.parents()
             if len(parents) > 1:
-                ui.note(_('revision %d is a merge, ignoring...\n') % (rev,))
+                ui.note(_(b'revision %d is a merge, ignoring...\n') % (rev,))
                 return
 
             ctx1 = parents[0]
-            lines = changedlines(ui, repo, ctx1, ctx, fns)
+            lines = changedlines(ui, repo, ctx1, ctx, fmatch)
             rate[key] = [r + l for r, l in zip(rate.get(key, (0, 0)), lines)]
 
-        state['count'] += 1
-        ui.progress(_('analyzing'), state['count'], total=len(repo))
+        progress.increment()
 
-    for ctx in cmdutil.walkchangerevs(repo, m, opts, prep):
+    wopts = logcmdutil.walkopts(
+        pats=pats,
+        opts=opts,
+        revspec=opts[b'rev'],
+        date=opts[b'date'],
+        include_pats=opts[b'include'],
+        exclude_pats=opts[b'exclude'],
+    )
+    revs, makefilematcher = logcmdutil.makewalker(repo, wopts)
+    for ctx in scmutil.walkchangerevs(repo, revs, makefilematcher, prep):
         continue
 
-    ui.progress(_('analyzing'), None)
+    progress.complete()
 
     return rate
 
 
+@command(
+    b'churn',
+    [
+        (
+            b'r',
+            b'rev',
+            [],
+            _(b'count rate for the specified revision or revset'),
+            _(b'REV'),
+        ),
+        (
+            b'd',
+            b'date',
+            b'',
+            _(b'count rate for revisions matching date spec'),
+            _(b'DATE'),
+        ),
+        (
+            b't',
+            b'oldtemplate',
+            b'',
+            _(b'template to group changesets (DEPRECATED)'),
+            _(b'TEMPLATE'),
+        ),
+        (
+            b'T',
+            b'template',
+            b'{author|email}',
+            _(b'template to group changesets'),
+            _(b'TEMPLATE'),
+        ),
+        (
+            b'f',
+            b'dateformat',
+            b'',
+            _(b'strftime-compatible format for grouping by date'),
+            _(b'FORMAT'),
+        ),
+        (b'c', b'changesets', False, _(b'count rate by number of changesets')),
+        (b's', b'sort', False, _(b'sort by key (default: sort by count)')),
+        (b'', b'diffstat', False, _(b'display added/removed lines separately')),
+        (b'', b'aliases', b'', _(b'file with email aliases'), _(b'FILE')),
+    ]
+    + cmdutil.walkopts,
+    _(b"hg churn [-d DATE] [-r REV] [--aliases FILE] [FILE]"),
+    helpcategory=command.CATEGORY_MAINTENANCE,
+    inferrepo=True,
+)
 def churn(ui, repo, *pats, **opts):
-    '''histogram of changes to the repository
+    """histogram of changes to the repository
 
     This command will display a histogram representing the number
     of changed lines or revisions, grouped according to the given
@@ -103,16 +176,19 @@ def churn(ui, repo, *pats, **opts):
     Examples::
 
       # display count of changed lines for every committer
-      hg churn -t '{author|email}'
+      hg churn -T "{author|email}"
 
       # display daily activity graph
-      hg churn -f '%H' -s -c
+      hg churn -f "%H" -s -c
 
       # display activity of developers by month
-      hg churn -f '%Y-%m' -s -c
+      hg churn -f "%Y-%m" -s -c
 
       # display count of lines changed in every year
-      hg churn -f '%Y' -s
+      hg churn -f "%Y" -s
+
+      # display count of lines changed in a time range
+      hg churn -d "2020-04 to 2020-09"
 
     It is possible to map alternate email addresses to a main address
     by providing a file using the following format::
@@ -121,26 +197,28 @@ def churn(ui, repo, *pats, **opts):
 
     Such a file may be specified with the --aliases option, otherwise
     a .hgchurn file will be looked for in the working directory root.
-    '''
+    Aliases will be split from the rightmost "=".
+    """
+
     def pad(s, l):
-        return (s + " " * l)[:l]
+        return s + b" " * (l - encoding.colwidth(s))
 
     amap = {}
     aliases = opts.get('aliases')
-    if not aliases and os.path.exists(repo.wjoin('.hgchurn')):
-        aliases = repo.wjoin('.hgchurn')
+    if not aliases and os.path.exists(repo.wjoin(b'.hgchurn')):
+        aliases = repo.wjoin(b'.hgchurn')
     if aliases:
-        for l in open(aliases, "r"):
+        for l in open(aliases, b"rb"):
             try:
-                alias, actual = l.split('=' in l and '=' or None, 1)
+                alias, actual = l.rsplit(b'=' in l and b'=' or None, 1)
                 amap[alias.strip()] = actual.strip()
             except ValueError:
                 l = l.strip()
                 if l:
-                    ui.warn(_("skipping malformed alias: %s\n") % l)
+                    ui.warn(_(b"skipping malformed alias: %s\n") % l)
                 continue
 
-    rate = countrate(ui, repo, amap, *pats, **opts).items()
+    rate = list(countrate(ui, repo, amap, *pats, **opts).items())
     if not rate:
         return
 
@@ -154,50 +232,33 @@ def churn(ui, repo, *pats, **opts):
     maxname = max(len(k) for k, v in rate)
 
     ttywidth = ui.termwidth()
-    ui.debug("assuming %i character terminal\n" % ttywidth)
+    ui.debug(b"assuming %i character terminal\n" % ttywidth)
     width = ttywidth - maxname - 2 - 2 - 2
 
     if opts.get('diffstat'):
         width -= 15
+
         def format(name, diffstat):
             added, removed = diffstat
-            return "%s %15s %s%s\n" % (pad(name, maxname),
-                                       '+%d/-%d' % (added, removed),
-                                       ui.label('+' * charnum(added),
-                                                'diffstat.inserted'),
-                                       ui.label('-' * charnum(removed),
-                                                'diffstat.deleted'))
+            return b"%s %15s %s%s\n" % (
+                pad(name, maxname),
+                b'+%d/-%d' % (added, removed),
+                ui.label(b'+' * charnum(added), b'diffstat.inserted'),
+                ui.label(b'-' * charnum(removed), b'diffstat.deleted'),
+            )
+
     else:
         width -= 6
+
         def format(name, count):
-            return "%s %6d %s\n" % (pad(name, maxname), sum(count),
-                                    '*' * charnum(sum(count)))
+            return b"%s %6d %s\n" % (
+                pad(name, maxname),
+                sum(count),
+                b'*' * charnum(sum(count)),
+            )
 
     def charnum(count):
-        return int(round(count * width / maxcount))
+        return int(count * width // maxcount)
 
     for name, count in rate:
         ui.write(format(name, count))
-
-
-cmdtable = {
-    "churn":
-        (churn,
-         [('r', 'rev', [],
-           _('count rate for the specified revision or range'), _('REV')),
-          ('d', 'date', '',
-           _('count rate for revisions matching date spec'), _('DATE')),
-          ('t', 'template', '{author|email}',
-           _('template to group changesets'), _('TEMPLATE')),
-          ('f', 'dateformat', '',
-           _('strftime-compatible format for grouping by date'), _('FORMAT')),
-          ('c', 'changesets', False, _('count rate by number of changesets')),
-          ('s', 'sort', False, _('sort by key (default: sort by count)')),
-          ('', 'diffstat', False, _('display added/removed lines separately')),
-          ('', 'aliases', '',
-           _('file with email aliases'), _('FILE')),
-          ] + commands.walkopts,
-         _("hg churn [-d DATE] [-r REV] [--aliases FILE] [FILE]")),
-}
-
-commands.inferrepo += " churn"

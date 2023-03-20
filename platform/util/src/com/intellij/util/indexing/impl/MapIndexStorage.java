@@ -2,14 +2,13 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,20 +16,19 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
-public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
+public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
 
   protected ValueContainerMap<Key, Value> myMap;
-  protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
+
+  private MapIndexStorageCache<Key, Value> myCache;
+
   protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
 
-  protected final ReentrantLock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
@@ -72,37 +70,33 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
 
   protected void initMapAndCache() throws IOException {
     ValueContainerMap<Key, Value> map = createValueContainerMap();
-    myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/, myKeyDescriptor) {
-      @Override
-      @NotNull
-      public ChangeTrackingValueContainer<Value> createValue(final Key key) {
-        return map.getModifiableValueContainer(key);
-      }
+    myCache = MapIndexStorageCacheProvider.getActualProvider().createCache(
+      key -> map.getModifiableValueContainer(key),
+      (key, container) -> onDropFromCache(key, container),
+      myKeyDescriptor,
+      myCacheSize
+    );
+    myMap = map;
+  }
 
-      @Override
-      protected void onDropFromCache(final Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
-        assert l.isHeldByCurrentThread();
-        ChangeTrackingValueContainer<Value> storedContainer = valueContainer;
-        if (!myReadOnly && valueContainer.isDirty()) {
-          if (myKeyIsUniqueForIndexedFile) {
-            if (valueContainer.containsOnlyInvalidatedChange()) {
-              storedContainer = new ChangeTrackingValueContainer<>(null);
-            }
-            else if (storedContainer.containsCachedMergedData()) {
-              storedContainer.setNeedsCompacting(true);
-            }
+  private void onDropFromCache(Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
+    try {
+      if (!myReadOnly && valueContainer.isDirty()) {
+        if (myKeyIsUniqueForIndexedFile) {
+          if (valueContainer.containsOnlyInvalidatedChange()) {
+            myMap.remove(key);
+            return;
           }
-          try {
-            map.merge(key, storedContainer);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
+          else if (valueContainer.containsCachedMergedData()) {
+            valueContainer.setNeedsCompacting(true);
           }
         }
+        myMap.merge(key, valueContainer);
       }
-    };
-
-    myMap = map;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> createPersistentMap(
@@ -111,26 +105,20 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     boolean isReadOnly,
     boolean compactOnClose,
     boolean keyIsUniqueForIndexedFile) throws IOException {
-    PersistentMapImpl<Key, UpdatableValueContainer<Value>> persistentMap;
-    PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
+
+    CreationTimeOptions creationOptions = CreationTimeOptions.threadLocalOptions()
+        .setCompactChunksWithValueDeserialization();
     if (keyIsUniqueForIndexedFile) {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+      creationOptions = creationOptions.setHasNoChunks();
     }
-    try {
-      persistentMap = new PersistentMapImpl<>(PersistentMapBuilder
-                                                .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
-                                                .withWal(myEnableWal && ENABLE_WAL && !isReadOnly)
-                                                .setWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"))
-                                                .withReadonly(isReadOnly)
-                                                .withCompactOnClose(compactOnClose));
-    }
-    finally {
-      PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
-      if (myKeyIsUniqueForIndexedFile) {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
-    }
-    return persistentMap;
+    return creationOptions.with( () -> {
+      return  new PersistentMapImpl<>(PersistentMapBuilder
+                                        .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
+                                        .withWal(myEnableWal && ENABLE_WAL && !isReadOnly)
+                                        .withWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"))
+                                        .withReadonly(isReadOnly)
+                                        .withCompactOnClose(compactOnClose));
+    });
   }
 
   private @NotNull ValueContainerMap<Key, Value> createValueContainerMap() throws IOException {
@@ -215,12 +203,15 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
 
   @Override
   public void flush() throws IOException {
-    ConcurrencyUtil.withLock(l, () -> {
-      if (!myMap.isClosed()) {
-        myCache.clear();
-        if (myMap.isDirty()) myMap.force();
-      }
-    });
+    if (!myMap.isClosed()) {
+      clearCachedMappings();
+      if (myMap.isDirty()) myMap.force();
+    }
+  }
+
+  @Override
+  public int keysCountApproximately() {
+    return myMap.getStorageMap().keysCount();
   }
 
   protected boolean compactOnClose() {
@@ -261,14 +252,12 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
   @Override
   @NotNull
   public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
-    return ConcurrencyUtil.withLock(l, () -> {
-      try {
-        return myCache.get(key);
-      }
-      catch (RuntimeException e) {
-        return unwrapCauseAndRethrow(e);
-      }
-    });
+    try {
+      return myCache.read(key);
+    }
+    catch (RuntimeException e) {
+      return unwrapCauseAndRethrow(e);
+    }
   }
 
   private void removeSingleValueDirectly(Key key, int inputId) throws IOException {
@@ -280,7 +269,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
       return;
     }
 
-    myMap.merge(key, new ChangeTrackingValueContainer<>(null));
+    myMap.remove(key);
   }
 
   private void updateSingleValueDirectly(Key key, int inputId, Value newValue) throws IOException {
@@ -315,7 +304,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
 
   @Nullable
   private ChangeTrackingValueContainer<Value> readIfCached(Key key) {
-    return ConcurrencyUtil.withLock(l, () -> myCache.getIfCached(key));
+    return myCache.readIfCached(key);
   }
 
   private static void assertKeyInputIdConsistency(@NotNull Object key, int inputId) {
@@ -324,16 +313,12 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
 
   @Override
   public void clearCaches() {
-    ConcurrencyUtil.withLock(l, () -> {
-      for(Map.Entry<Key, ChangeTrackingValueContainer<Value>> entry:myCache.entrySet()) {
-        entry.getValue().dropMergedData();
-      }
-    });
+    myCache.processCachedValues(container -> container.dropMergedData());
   }
 
   @ApiStatus.Internal
-  public void clearCachedMappings() {
-    ConcurrencyUtil.withLock(l, () -> myCache.clear());
+  public final void clearCachedMappings() {
+    myCache.invalidateAll();
   }
 
   protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
@@ -349,19 +334,17 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
 
   @TestOnly
   public boolean processKeys(@NotNull Processor<? super Key> processor) throws StorageException {
-    return ConcurrencyUtil.withLock(l, () -> {
-      try {
-        myCache.clear(); // this will ensure that all new keys are made into the map
-        return doProcessKeys(processor);
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-      catch (RuntimeException e) {
-        unwrapCauseAndRethrow(e);
-        return false;
-      }
-    });
+    try {
+      clearCachedMappings(); // this will ensure that all new keys are made into the map
+      return doProcessKeys(processor);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+    catch (RuntimeException e) {
+      unwrapCauseAndRethrow(e);
+      return false;
+    }
   }
 
   protected boolean doProcessKeys(@NotNull Processor<? super Key> processor) throws IOException {

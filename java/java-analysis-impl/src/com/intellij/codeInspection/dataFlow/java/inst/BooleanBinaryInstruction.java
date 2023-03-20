@@ -90,15 +90,10 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction {
   }
 
   private static RelationType @NotNull [] splitRelation(RelationType relationType) {
-    switch (relationType) {
-      case LT:
-      case LE:
-      case GT:
-      case GE:
-        return new RelationType[]{RelationType.LT, RelationType.GT, RelationType.EQ};
-      default:
-        return new RelationType[]{relationType, relationType.getNegated()};
-    }
+    return switch (relationType) {
+      case LT, LE, GT, GE -> new RelationType[]{RelationType.LT, RelationType.GT, RelationType.EQ};
+      default -> new RelationType[]{relationType, relationType.getNegated()};
+    };
   }
 
   /**

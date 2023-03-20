@@ -1,4 +1,4 @@
-// "Surround with array initialization" "true"
+// "Surround with array initialization" "true-preview"
 class A {
   A(String[] s){}
 

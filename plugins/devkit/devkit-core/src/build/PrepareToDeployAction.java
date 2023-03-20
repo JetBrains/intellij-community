@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -56,7 +58,7 @@ public class PrepareToDeployAction extends AnAction {
   private static final @NonNls String TEMP_PREFIX = "temp";
 
   private static class Holder {
-    private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
+    private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Plugin DevKit Deployment");
   }
 
   @Override
@@ -152,8 +154,7 @@ public class PrepareToDeployAction extends AnAction {
     }, DevKitBundle.message("prepare.for.deployment.task", pluginName), true, module.getProject());
   }
 
-  @NotNull
-  private static Map<Module, String> collectJpsPluginModules(@NotNull Module module) {
+  private static @NotNull Map<Module, String> collectJpsPluginModules(@NotNull Module module) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml == null) return Collections.emptyMap();
 
@@ -161,8 +162,7 @@ public class PrepareToDeployAction extends AnAction {
     if (plugin == null) return Collections.emptyMap();
 
     Map<Module, String> jpsPluginToOutputPath = new HashMap<>();
-    List<Extensions> extensions = plugin.getExtensions();
-    for (Extensions extensionGroup : extensions) {
+    for (Extensions extensionGroup : plugin.getExtensions()) {
       XmlTag extensionsTag = extensionGroup.getXmlTag();
       String defaultExtensionNs = extensionsTag.getAttributeValue("defaultExtensionNs");
       for (XmlTag tag : extensionsTag.getSubTags()) {
@@ -351,4 +351,10 @@ public class PrepareToDeployAction extends AnAction {
       e.getPresentation().setText(DevKitBundle.messagePointer("prepare.for.deployment", module.getName()));
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
 }

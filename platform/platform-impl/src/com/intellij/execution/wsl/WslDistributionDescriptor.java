@@ -6,21 +6,26 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
 
@@ -44,8 +49,8 @@ final class WslDistributionDescriptor {
   @Tag("presentable-name")
   private @NlsSafe String myPresentableName;
 
-  private final NotNullLazyValue<String> myMntRootProvider =
-    NotNullLazyValue.atomicLazy(() -> executeOrRunTask(pi -> computeMntRoot(pi)));
+  private final ClearableLazyValue<String> myMntRootProvider =
+    createAtomicClearableLazyValue(() -> executeOrRunTask(pi -> computeMntRoot(pi)));
 
   /**
    * Necessary for serializer
@@ -130,29 +135,41 @@ final class WslDistributionDescriptor {
    * @see #getMntRoot()
    */
   private @NotNull @NlsSafe String computeMntRoot(@Nullable ProgressIndicator pi) {
-    String windowsCurrentDirectory = System.getProperty("user.dir");
+    long startNano = System.nanoTime();
+    String windowsWorkingDirectory = Path.of(".").toAbsolutePath().normalize().toString();
 
-    if (StringUtil.isEmpty(windowsCurrentDirectory) || windowsCurrentDirectory.length() < 3) {
-      LOG.warn("Could not obtain current directory from user.dir (or path is too short): " + windowsCurrentDirectory);
+    if (!OSAgnosticPathUtil.isAbsoluteDosPath(windowsWorkingDirectory)) {
+      LOG.warn("Failed to get WSL mount root for " + getMsId() + ": DOS working directory is expected, but got " + windowsWorkingDirectory);
       return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
     }
 
     WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
-    String wslCurrentDirectory = readWslOutputLine(options, List.of("pwd"), pi);
-    if (wslCurrentDirectory == null) return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
-
-    String currentPathSuffix = WSLDistribution.convertWindowsPath(windowsCurrentDirectory);
-    if (StringUtil.endsWithIgnoreCase(wslCurrentDirectory, currentPathSuffix)) {
-      return StringUtil.trimEnd(wslCurrentDirectory, currentPathSuffix, true);
+    GeneralCommandLine commandLine = new GeneralCommandLine("pwd");
+    // Use interoperability between Windows and Linux - the Linux process inherits the Windows working directory.
+    commandLine.setWorkDirectory(windowsWorkingDirectory);
+    String linuxWorkingDirectory = readWslOutputLine(options, commandLine, pi);
+    if (linuxWorkingDirectory == null) {
+      LOG.warn("Failed to get WSL mount root for " + getMsId() + ": empty output");
+      return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
     }
-    LOG.warn("Wsl current directory does not ends with windows converted suffix: " +
-             "[pwd=" + wslCurrentDirectory + "; " +
-             "suffix=" + currentPathSuffix + "]");
+
+    String linuxWorkingDirectorySuffix = WSLDistribution.convertWindowsPath(windowsWorkingDirectory);
+    if (StringUtil.endsWithIgnoreCase(linuxWorkingDirectory, linuxWorkingDirectorySuffix)) {
+      String mountRoot = StringUtil.trimEnd(linuxWorkingDirectory, linuxWorkingDirectorySuffix, true);
+      LOG.info("WSL mount root for " + getMsId() + " is " + mountRoot + " (done in " + TimeoutUtil.getDurationMillis(startNano) + " ms)");
+      return mountRoot;
+    }
+    LOG.warn("Failed to get WSL mount root for " + getMsId() + ": Linux working directory does not ends with Windows converted suffix. " +
+             String.join("; ", List.of("Windows pwd=" + windowsWorkingDirectory,
+                                       "Linux pwd=" + linuxWorkingDirectory,
+                                       "expected linux suffix=" + linuxWorkingDirectorySuffix)));
     return WSLDistribution.DEFAULT_WSL_MNT_ROOT;
   }
 
-  private @Nullable String readWslOutputLine(WSLCommandLineOptions options, List<String> command, @Nullable ProgressIndicator pi) {
-    List<String> pwdOutputLines = readWSLOutput(options, command, pi);
+  private @Nullable String readWslOutputLine(@NotNull WSLCommandLineOptions options,
+                                             @NotNull GeneralCommandLine commandLine,
+                                             @Nullable ProgressIndicator pi) {
+    List<String> pwdOutputLines = readWslOutput(options, commandLine, pi);
     if (pwdOutputLines == null) return null;
     if (pwdOutputLines.size() != 1) {
       LOG.warn("One line response expected: " +
@@ -164,12 +181,14 @@ final class WslDistributionDescriptor {
     return pwdOutputLines.get(0).trim();
   }
 
-  private @Nullable List<String> readWSLOutput(WSLCommandLineOptions options, List<String> command, @Nullable ProgressIndicator pi) {
+  private @Nullable List<String> readWslOutput(@NotNull WSLCommandLineOptions options,
+                                               @NotNull GeneralCommandLine commandLine,
+                                               @Nullable ProgressIndicator pi) {
     WSLDistribution distribution = WslDistributionManager.getInstance().getOrCreateDistributionByMsId(getId());
 
     final ProcessOutput output;
     try {
-      var commandLine = distribution.patchCommandLine(new GeneralCommandLine(command), null, options);
+      distribution.patchCommandLine(commandLine, null, options);
       var processHandler = new CapturingProcessHandler(commandLine);
       output = pi == null ? processHandler.runProcess(PROBE_TIMEOUT) : processHandler.runProcessWithProgressIndicator(pi, PROBE_TIMEOUT);
     }
@@ -189,7 +208,7 @@ final class WslDistributionDescriptor {
     return output.getStdoutLines();
   }
 
-  private static <T> T executeOrRunTask(@NotNull Function<@Nullable ProgressIndicator, @NotNull ? extends T> commandRunner) {
+  private static <T> T executeOrRunTask(@NotNull Function<? super @Nullable ProgressIndicator, ? extends T> commandRunner) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       return commandRunner.apply(null);
     }
@@ -199,5 +218,30 @@ final class WslDistributionDescriptor {
         return commandRunner.apply(indicator);
       }
     });
+  }
+
+  public static @NotNull <T> ClearableLazyValue<T> createAtomicClearableLazyValue(@NotNull Supplier<? extends T> computable) {
+    return new ClearableLazyValue<>() {
+      private long myExternalChangesCount = getCurrentExternalChangesCount();
+
+      @Override
+      protected @NotNull T compute() {
+        return computable.get();
+      }
+
+      @Override
+      public synchronized @NotNull T getValue() {
+        final long curExternalChangesCount = getCurrentExternalChangesCount();
+        if (curExternalChangesCount != myExternalChangesCount) {
+          myExternalChangesCount = curExternalChangesCount;
+          drop(); // drop cache
+        }
+        return super.getValue();
+      }
+
+      private long getCurrentExternalChangesCount() {
+        return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
+      }
+    };
   }
 }

@@ -12,18 +12,49 @@ import org.jetbrains.annotations.*;
 
 /**
  * Representation of Java type (primitive type, array or class type).
+ * <p/>
+ * <h3><a id="deprecated-constants">Deprecated constants</a></h3>
+ * All static fields in this class representing instances of {@link PsiPrimitiveType} are deprecated. It was done to avoid deadlocks 
+ * during initialization of the class. According to <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-5.html#jvms-5.5">section 5.5</a>
+ * of JVM specification, when a class is initialized, JVM firsly synchronizes on an initialization lock specific for that class, then
+ * initializes its super class and then computes initializers for its static fields. So because of these fields initialization of {@link PsiType}
+ * performs initialization of {@link PsiPrimitiveType}, and initialization of {@link PsiPrimitiveType} performs initialization of {@link PsiType}
+ * because its the super class of its super class. Therefore, if one thread starts initialization of {@link PsiType}, and another thread
+ * starts initialization of {@link PsiPrimitiveType} at the same time, it'll result in a deadlock. In order to avoid this, methods from
+ * {@link PsiTypes} must be used to get instances of the primitive types.
  */
+@SuppressWarnings("StaticInitializerReferencesSubClass")
 public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType {
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType BYTE = new PsiPrimitiveType(JvmPrimitiveTypeKind.BYTE);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType CHAR = new PsiPrimitiveType(JvmPrimitiveTypeKind.CHAR);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType(JvmPrimitiveTypeKind.DOUBLE);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType FLOAT = new PsiPrimitiveType(JvmPrimitiveTypeKind.FLOAT);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType INT = new PsiPrimitiveType(JvmPrimitiveTypeKind.INT);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType LONG = new PsiPrimitiveType(JvmPrimitiveTypeKind.LONG);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType SHORT = new PsiPrimitiveType(JvmPrimitiveTypeKind.SHORT);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType(JvmPrimitiveTypeKind.BOOLEAN);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType VOID = new PsiPrimitiveType(JvmPrimitiveTypeKind.VOID);
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType NULL = new PsiPrimitiveType(null);
+  /** @deprecated use {@link PsiTypes#byteType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType BYTE = new PsiPrimitiveType(JvmPrimitiveTypeKind.BYTE);
+  /** @deprecated use {@link PsiTypes#charType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType CHAR = new PsiPrimitiveType(JvmPrimitiveTypeKind.CHAR);
+  /** @deprecated use {@link PsiTypes#doubleType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType(JvmPrimitiveTypeKind.DOUBLE);
+  /** @deprecated use {@link PsiTypes#floatType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType FLOAT = new PsiPrimitiveType(JvmPrimitiveTypeKind.FLOAT);
+  /** @deprecated use {@link PsiTypes#intType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType INT = new PsiPrimitiveType(JvmPrimitiveTypeKind.INT);
+  /** @deprecated use {@link PsiTypes#longType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType LONG = new PsiPrimitiveType(JvmPrimitiveTypeKind.LONG);
+  /** @deprecated use {@link PsiTypes#shortType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType SHORT = new PsiPrimitiveType(JvmPrimitiveTypeKind.SHORT);
+  /** @deprecated use {@link PsiTypes#booleanType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType(JvmPrimitiveTypeKind.BOOLEAN);
+  /** @deprecated use {@link PsiTypes#voidType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType VOID = new PsiPrimitiveType(JvmPrimitiveTypeKind.VOID);
+  /** @deprecated use {@link PsiTypes#nullType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
+  @Deprecated @ApiStatus.ScheduledForRemoval
+  public static final PsiPrimitiveType NULL = new PsiPrimitiveType(null);
 
   public static final PsiType[] EMPTY_ARRAY = new PsiType[0];
   public static final ArrayFactory<PsiType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiType[count];
@@ -73,7 +104,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} */
   @Deprecated
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public PsiArrayType createArrayType(PsiAnnotation @NotNull ... annotations) {
     return new PsiArrayType(this, annotations);
   }

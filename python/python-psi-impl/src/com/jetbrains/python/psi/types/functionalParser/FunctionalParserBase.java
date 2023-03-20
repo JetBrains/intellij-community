@@ -26,9 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-* @author vlan
-*/
 public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, T> {
   @Nullable private String myName = null;
 

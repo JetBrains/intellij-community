@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,8 +157,7 @@ public abstract class JBPopupFactory {
   /**
    * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                          @NotNull DataContext dataContext,
@@ -174,8 +172,7 @@ public abstract class JBPopupFactory {
   /**
    * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                          @NotNull DataContext dataContext,
@@ -375,7 +372,7 @@ public abstract class JBPopupFactory {
   @NotNull
   public abstract ListPopup createListPopup(@NotNull Project project,
                                             @NotNull ListPopupStep step,
-                                            @NotNull Function<ListCellRenderer, ListCellRenderer> cellRendererProducer);
+                                            @NotNull Function<? super ListCellRenderer, ? extends ListCellRenderer> cellRendererProducer);
 
   @NotNull
   public abstract TreePopup createTree(JBPopup parent, @NotNull TreePopupStep step, Object parentValue);

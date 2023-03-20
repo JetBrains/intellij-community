@@ -1,11 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -14,11 +22,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
+import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.test.AndroidStudioTestUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
@@ -26,7 +37,12 @@ import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume
 import org.junit.runners.Parameterized
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.ObjectInputStream
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
@@ -41,12 +57,46 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         return File(baseDir, getTestName(true).substringBefore("_").substringBefore(" "))
     }
 
+    protected val importStatusCollector = ImportStatusCollector()
+
+    override fun findJdkPath(): String {
+        return System.getenv("JDK_11") ?: System.getenv("JAVA11_HOME") ?: run {
+            val message = "Missing JDK_11 or JAVA11_HOME environment variable"
+            if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
+            super.findJdkPath()
+        }
+    }
+
     override fun setUp() {
         Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
         super.setUp()
         GradleSystemSettings.getInstance().gradleVmOptions =
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
         GradleProcessOutputInterceptor.install(testRootDisposable)
+
+        setUpImportStatusCollector()
+    }
+
+    override fun tearDown() {
+        try {
+            tearDownImportStatusCollector()
+        } catch (e: Throwable) {
+            addSuppressedException(e)
+        } finally {
+            super.tearDown()
+        }
+    }
+
+    protected open fun setUpImportStatusCollector() {
+        ExternalSystemProgressNotificationManager
+            .getInstance()
+            .addNotificationListener(importStatusCollector)
+    }
+
+    protected open fun tearDownImportStatusCollector() {
+        ExternalSystemProgressNotificationManager
+            .getInstance()
+            .removeNotificationListener(importStatusCollector)
     }
 
     protected open fun configureKotlinVersionAndProperties(text: String, properties: Map<String, String>? = null): String {
@@ -87,6 +137,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         }.toList()
     }
 
+    @Deprecated("Use .setupAndroid() instead", level = DeprecationLevel.ERROR)
     protected fun createLocalPropertiesSubFileForAndroid() {
         createProjectSubFile(
             "local.properties",
@@ -126,6 +177,20 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         return files
     }
 
+    protected inline fun <reified T : Any> buildGradleModel(debuggerOptions: BuildGradleModelDebuggerOptions? = null): BuiltGradleModel<T> =
+        buildGradleModel(T::class, debuggerOptions)
+
+    protected fun <T : Any> buildGradleModel(
+        clazz: KClass<T>,
+        debuggerOptions: BuildGradleModelDebuggerOptions? = null
+    ): BuiltGradleModel<T> =
+        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), findJdkPath(), clazz, debuggerOptions)
+
+    protected fun buildKotlinMPPGradleModel(
+        debuggerOptions: BuildGradleModelDebuggerOptions? = null
+    ): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel<KotlinMPPGradleModelBinary>(debuggerOptions)
+        .map { model -> ObjectInputStream(ByteArrayInputStream(model.data)).readObject() as KotlinMPPGradleModel }
+
     protected fun getSourceRootInfos(moduleName: String): List<Pair<String, JpsModuleSourceRootType<*>>> {
         return ModuleRootManager.getInstance(getModule(moduleName)).contentEntries.flatMap { contentEntry ->
             contentEntry.sourceFolders.map { sourceFolder ->
@@ -160,6 +225,10 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         fail(failureMessage)
     }
 
+    protected open fun assertNoBuildErrorEventsReported() {
+        assertEmpty("No error events was expected to be reported", importStatusCollector.buildErrors)
+    }
+
     protected open fun assertNoModuleDepForModule(moduleName: String, depName: String) {
         assertEmpty("No dependency '$depName' was expected", collectModuleDeps<ModuleOrderEntry>(moduleName, depName))
     }
@@ -176,9 +245,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         val localFileSystem = LocalFileSystem.getInstance()
         val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
             ?: error("Failed to find projectFile: $projectFilePath")
+
+        val settings = createLinkSettings(projectFile.toNioPath(), myProject).apply {
+            gradleJvm = GRADLE_JDK_NAME
+        }
+
         ExternalSystemUtil.linkExternalProject(
             /* externalSystemId = */ GradleConstants.SYSTEM_ID,
-            /* projectSettings = */ createLinkSettings(projectFile.toNioPath(), myProject),
+            /* projectSettings = */ settings,
             /* project = */ myProject,
             /* importResultCallback = */ null,
             /* isPreviewMode = */ false,
@@ -186,17 +260,57 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         )
     }
 
+    protected fun runTaskAndGetErrorOutput(projectPath: String, taskName: String, scriptParameters: String = ""): String {
+        val taskErrOutput = StringBuilder()
+        val stdErrListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+            override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+                if (!stdOut) {
+                    taskErrOutput.append(text)
+                }
+            }
+        }
+        val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
+        notificationManager.addNotificationListener(stdErrListener)
+        try {
+            val settings = ExternalSystemTaskExecutionSettings()
+            settings.externalProjectPath = projectPath
+            settings.taskNames = listOf(taskName)
+            settings.scriptParameters = scriptParameters
+            settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
+
+            val future = CompletableFuture<String>()
+            ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID,
+                                       object : TaskCallback {
+                                           override fun onSuccess() {
+                                               future.complete(taskErrOutput.toString())
+                                           }
+
+                                           override fun onFailure() {
+                                               future.complete(taskErrOutput.toString())
+                                           }
+                                       }, ProgressExecutionMode.IN_BACKGROUND_ASYNC
+            )
+            return future.get(10, TimeUnit.SECONDS)
+        } finally {
+            notificationManager.removeNotificationListener(stdErrListener)
+        }
+    }
+
     companion object {
         const val AFTER_SUFFIX = ".after"
 
-        const val MINIMAL_SUPPORTED_GRADLE_PLUGIN_VERSION = "1.3.0"
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "1.3.70"
 
-        val SUPPORTED_GRADLE_VERSIONS: List<Array<Any>> = listOf(arrayOf("4.9"), arrayOf("5.6.4"), arrayOf("6.0.1"))
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("5.6.4", "6.0.1")
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-        fun data(): Collection<Array<Any>> = SUPPORTED_GRADLE_VERSIONS
+        fun data(): Collection<Array<Any>> = SUPPORTED_GRADLE_VERSIONS.map { arrayOf(it) }
     }
+}
+
+fun GradleImportingTestCase.enableExperimentalMPP(enable: Boolean) {
+    //enable experimental MPP features e.g. an import K/JS run tasks
+    (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", enable, testRootDisposable)
 }

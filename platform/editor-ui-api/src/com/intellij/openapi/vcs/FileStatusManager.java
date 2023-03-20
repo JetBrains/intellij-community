@@ -1,15 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 public abstract class FileStatusManager {
+  protected static final Logger LOG = Logger.getInstance(FileStatusManager.class);
+
   public static FileStatusManager getInstance(@NotNull Project project) {
+    if (project.isDefault()) {
+      LOG.error("Can't create FileStatusManager for default project");
+      return new DefaultFileStatusManager();
+    }
     return project.getService(FileStatusManager.class);
   }
 
@@ -22,24 +31,32 @@ public abstract class FileStatusManager {
    * @see com.intellij.openapi.vcs.changes.ChangeListManager#getStatus
    * @see FileStatusFactory
    * @see com.intellij.openapi.vcs.impl.FileStatusProvider
+   * @see FileStatusListener
    */
-  public abstract FileStatus getStatus(@NotNull VirtualFile file);
-
-  public abstract void fileStatusesChanged();
-
-  public abstract void fileStatusChanged(VirtualFile file);
+  @CalledInAny
+  public abstract @NotNull FileStatus getStatus(@NotNull VirtualFile file);
 
   /**
-   * @deprecated Please use overload with parent disposable
+   * Notify VCS that file statuses might have changed and need to be updated.
+   * <p>
+   * Not to be confused with {@link FileStatusListener#fileStatusChanged}.
+   * This method can be used by {@link com.intellij.openapi.vcs.impl.FileStatusProvider} implementations to notify VCS about the change
+   * in {@link com.intellij.openapi.vcs.impl.FileStatusProvider#getFileStatus(VirtualFile)} output.
+   * {@link FileStatusListener#fileStatusChanged} is used by VCS to notify {@link FileStatusManager#getStatus(VirtualFile)} users about the change.
    */
-  @Deprecated
-  public abstract void addFileStatusListener(@NotNull FileStatusListener listener);
+  @CalledInAny
+  public abstract void fileStatusesChanged();
 
-  public abstract void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable);
+  @CalledInAny
+  public abstract void fileStatusChanged(@Nullable VirtualFile file);
 
-  public abstract void removeFileStatusListener(@NotNull FileStatusListener listener);
+  public void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable) {
+  }
 
-  public abstract Color getNotChangedDirectoryColor(@NotNull VirtualFile file);
+  @Nullable
+  public Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
+    return getRecursiveStatus(file).getColor();
+  }
 
   /**
    * @see VcsConfiguration#SHOW_DIRTY_RECURSIVELY
@@ -47,8 +64,5 @@ public abstract class FileStatusManager {
    * @see FileStatus#NOT_CHANGED_RECURSIVE
    */
   @NotNull
-  public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
-    FileStatus status = getStatus(file);
-    return status != null ? status : FileStatus.NOT_CHANGED;
-  }
+  public abstract FileStatus getRecursiveStatus(@NotNull VirtualFile file);
 }

@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.JavaProjectModelModificationService;
-import com.intellij.openapi.roots.JavaProjectModelModifier;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -70,13 +72,29 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
   }
 
   @Override
-  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel) {
-    for (JavaProjectModelModifier modifier : getModelModifiers()) {
-      Promise<Void> promise = modifier.changeLanguageLevel(module, languageLevel);
-      if (promise != null) {
-        return promise;
+  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel, boolean modifySource) {
+    if (modifySource) {
+      for (JavaProjectModelModifier modifier : getModelModifiers()) {
+        Promise<Void> promise = modifier.changeLanguageLevel(module, languageLevel);
+        if (promise != null) {
+          return promise;
+        }
       }
     }
+    else {
+      final LanguageLevel moduleLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
+      if (moduleLevel != null && JavaSdkUtil.isLanguageLevelAcceptable(myProject, module, languageLevel)) {
+        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(languageLevel);
+        rootModel.commit();
+      }
+      else {
+        LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(languageLevel);
+        ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, RootsChangeRescanningInfo.TOTAL_RESCAN);
+      }
+      return Promises.resolvedPromise(null);
+    }
+
     return Promises.rejectedPromise();
   }
 

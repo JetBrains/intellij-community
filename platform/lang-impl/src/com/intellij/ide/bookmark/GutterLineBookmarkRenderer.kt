@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.BookmarkBundle.message
@@ -34,16 +34,16 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
   private val markup
     get() = document?.let { DocumentMarkupModel.forDocument(it, bookmark.provider.project, false) as? MarkupModelEx }
 
-  private val highlighter
+  internal val highlighter
     get() = reference?.get() ?: markup?.allHighlighters?.find { it.gutterIconRenderer == this }
 
   override fun getIcon() = type.gutterIcon
 
   override fun getAlignment() = Alignment.RIGHT
 
-  override fun getClickAction() = ActionUtil.getAction("EditBookmark")
+  override fun getClickAction() = ActionUtil.getAction("ToggleBookmark")
 
-  override fun getMiddleButtonClickAction() = ActionUtil.getAction("ToggleBookmark")
+  override fun getMiddleButtonClickAction() = ActionUtil.getAction("EditBookmark")
 
   override fun getPopupMenuActions() = ActionUtil.getActionGroup("popup@BookmarkContextMenu")
 
@@ -55,7 +55,8 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
     val mnemonic = type.let { if (it == BookmarkType.DEFAULT) null else it.mnemonic }
     mnemonic?.let { result.append(" ").append(it) }
 
-    val description = manager?.defaultGroup?.getDescription(bookmark)
+    val description = manager?.getGroups(bookmark)?.mapNotNull { group -> group.getDescription(bookmark) }?.singleOrNull()
+
     description?.let { if (it.isNotEmpty()) result.append(": ").append(escapeXmlEntities(it)) }
 
     val shortcut = mnemonic?.let { getShortcut(it) } ?: getShortcut()

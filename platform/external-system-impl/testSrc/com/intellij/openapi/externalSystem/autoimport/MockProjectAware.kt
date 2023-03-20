@@ -3,36 +3,41 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType.*
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
-import com.intellij.openapi.observable.operations.onceAfterOperation
-import com.intellij.openapi.observable.operations.subscribe
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
+import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.isOperationInProgress
+import com.intellij.openapi.observable.operation.core.traceRun
+import com.intellij.openapi.observable.operation.core.withCompletedOperation
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ConcurrencyUtil.once
-import com.intellij.util.EventDispatcher
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.vfs.VirtualFile
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.LinkedHashMap
 import kotlin.concurrent.thread
 
 class MockProjectAware(
   override val projectId: ExternalSystemProjectId,
-  private val project: Project,
   private val parentDisposable: Disposable
 ) : ExternalSystemProjectAware {
 
   val subscribeCounter = AtomicInteger(0)
   val unsubscribeCounter = AtomicInteger(0)
   val settingsAccessCounter = AtomicInteger(0)
-  val refreshCounter = AtomicInteger(0)
+  val reloadCounter = AtomicInteger(0)
 
-  val refreshCollisionPassType = AtomicReference(DUPLICATE)
-  val refreshStatus = AtomicReference(SUCCESS)
+  val reloadCollisionPassType = AtomicReference(DUPLICATE)
+  val reloadStatus = AtomicReference(SUCCESS)
 
-  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
-  private val refresh = AnonymousParallelOperationTrace(debugName = "$projectId MockProjectAware.refreshProject")
+  private val reloadProject = AtomicOperationTrace(name = "$projectId MockProjectAware.reloadProject")
+
+  val startReloadEventDispatcher = SingleEventDispatcher.create()
+  val reloadEventDispatcher = SingleEventDispatcher.create<ExternalSystemProjectReloadContext>()
+  val finishReloadEventDispatcher = SingleEventDispatcher.create<ExternalSystemRefreshStatus>()
+  private val settingsChangeEventDispatcher = SingleEventDispatcher.create()
 
   private val _settingsFiles = LinkedHashSet<String>()
   override val settingsFiles: Set<String>
@@ -40,19 +45,45 @@ class MockProjectAware(
       settingsAccessCounter.incrementAndGet()
     }
 
+  private val ignoredSettingsFiles = LinkedHashMap<String, (ExternalSystemSettingsFilesModificationContext) -> Boolean>()
+
   fun resetAssertionCounters() {
     settingsAccessCounter.set(0)
-    refreshCounter.set(0)
+    reloadCounter.set(0)
     subscribeCounter.set(0)
     unsubscribeCounter.set(0)
   }
 
-  fun registerSettingsFile(path: String) {
-    _settingsFiles.add(path)
+  fun registerSettingsFile(file: VirtualFile) {
+    registerSettingsFile(file.toNioPath())
+  }
+
+  fun registerSettingsFile(path: Path) {
+    _settingsFiles.add(path.toCanonicalPath())
+  }
+
+  fun ignoreSettingsFileWhen(file: VirtualFile, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) {
+    ignoreSettingsFileWhen(file.toNioPath(), condition)
+  }
+
+  fun ignoreSettingsFileWhen(path: Path, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) {
+    ignoredSettingsFiles[path.toCanonicalPath()] = condition
+  }
+
+  override fun isIgnoredSettingsFileEvent(path: String, context: ExternalSystemSettingsFilesModificationContext): Boolean {
+    val condition = ignoredSettingsFiles[path]
+    if (condition != null) {
+      return condition(context)
+    }
+    else {
+      return super.isIgnoredSettingsFileEvent(path, context)
+    }
   }
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
-    eventDispatcher.addListener(Listener.create(listener), parentDisposable)
+    startReloadEventDispatcher.whenEventHappened(parentDisposable, listener::onProjectReloadStart)
+    finishReloadEventDispatcher.whenEventHappened(parentDisposable, listener::onProjectReloadFinish)
+    settingsChangeEventDispatcher.whenEventHappened(parentDisposable, listener::onSettingsFilesListChange)
     subscribeCounter.incrementAndGet()
     Disposer.register(parentDisposable, Disposable { unsubscribeCounter.incrementAndGet() })
   }
@@ -66,41 +97,44 @@ class MockProjectAware(
     })
   }
 
-  fun notifySettingsFilesListChanged() = background { eventDispatcher.multicaster.onSettingsFilesListChange() }
+  fun fireSettingsFilesListChanged() {
+    background {
+      settingsChangeEventDispatcher.fireEvent()
+    }
+  }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
-    when (refreshCollisionPassType.get()!!) {
+    when (reloadCollisionPassType.get()!!) {
       DUPLICATE -> {
-        doRefreshProject(context)
+        reloadProjectImpl(context)
       }
       CANCEL -> {
-        val task = once { doRefreshProject(context) }
-        refresh.onceAfterOperation({ task.run() }, parentDisposable)
-        if (refresh.isOperationCompleted()) task.run()
+        reloadProject.withCompletedOperation(parentDisposable) {
+          reloadProjectImpl(context)
+        }
       }
       IGNORE -> {
-        if (refresh.isOperationCompleted()) {
-          doRefreshProject(context)
+        if (!reloadProject.isOperationInProgress()) {
+          reloadProjectImpl(context)
         }
       }
     }
   }
 
-  private fun doRefreshProject(context: ExternalSystemProjectReloadContext) {
+  private fun reloadProjectImpl(context: ExternalSystemProjectReloadContext) {
     background {
-      val refreshStatus = refreshStatus.get()
-      eventDispatcher.multicaster.onProjectReloadStart()
-      refresh.task {
-        refreshCounter.incrementAndGet()
-        eventDispatcher.multicaster.insideProjectRefresh(context)
+      val reloadStatus = reloadStatus.get()
+      startReloadEventDispatcher.fireEvent()
+      reloadProject.traceRun {
+        reloadCounter.incrementAndGet()
+        reloadEventDispatcher.fireEvent(context)
       }
-      eventDispatcher.multicaster.onProjectReloadFinish(refreshStatus)
+      finishReloadEventDispatcher.fireEvent(reloadStatus)
     }
   }
 
   private fun background(action: () -> Unit) {
-    val projectTracker = AutoImportProjectTracker.getInstance(project)
-    if (projectTracker.isAsyncChangesProcessing) {
+    if (AutoImportProjectTracker.isAsyncChangesProcessing) {
       thread(block = action)
     }
     else {
@@ -108,59 +142,5 @@ class MockProjectAware(
     }
   }
 
-  fun onceBeforeRefresh(action: () -> Unit) {
-    beforeRefresh(times = 1, action)
-  }
-
-  fun beforeRefresh(times: Int, action: () -> Unit) {
-    subscribe(times, action, ::beforeRefresh, parentDisposable)
-  }
-
-  fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) {
-    eventDispatcher.addListener(object : Listener {
-      override fun onProjectReloadStart() = action()
-    }, parentDisposable)
-  }
-
-  fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) {
-    duringRefresh(times = 1, action)
-  }
-
-  fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) {
-    subscribe(times, action, ::duringRefresh, parentDisposable)
-  }
-
-  fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) {
-    eventDispatcher.addListener(object : Listener {
-      override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = action(context)
-    }, parentDisposable)
-  }
-
-  fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) {
-    afterRefresh(times = 1, action)
-  }
-
-  fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) {
-    subscribe(times, action, ::afterRefresh, parentDisposable)
-  }
-
-  fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) {
-    eventDispatcher.addListener(object : Listener {
-      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = action(status)
-    }, parentDisposable)
-  }
-
-  interface Listener : ExternalSystemProjectListener, EventListener {
-    fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) {}
-
-    companion object {
-      fun create(listener: ExternalSystemProjectListener) = object : Listener {
-        override fun onProjectReloadStart() = listener.onProjectReloadStart()
-        override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = listener.onProjectReloadFinish(status)
-        override fun onSettingsFilesListChange() = listener.onSettingsFilesListChange()
-      }
-    }
-  }
-
-  enum class RefreshCollisionPassType { DUPLICATE, CANCEL, IGNORE }
+  enum class ReloadCollisionPassType { DUPLICATE, CANCEL, IGNORE }
 }

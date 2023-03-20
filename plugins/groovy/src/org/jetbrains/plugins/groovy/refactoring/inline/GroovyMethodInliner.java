@@ -52,9 +52,6 @@ import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * @author ilyas
- */
 public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   private final GrMethod myMethod;
@@ -68,12 +65,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     PsiElement element = reference.getElement();
-    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
+    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression call)) {
       final MultiMap<PsiElement, String> map = new MultiMap<>();
       map.putValue(element, GroovyRefactoringBundle.message("cannot.inline.reference.0", element.getText()));
       return map;
     }
-    GrCallExpression call = (GrCallExpression) element.getParent();
     Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(myMethod);
     return collectConflicts(call, infos);
   }
@@ -112,17 +108,16 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   public void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced) {
     PsiElement element=usage.getElement();
 
-    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) return;
+    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression call)) return;
 
     final Editor editor = getCurrentEditorIfApplicable(element);
 
-    GrCallExpression call = (GrCallExpression) element.getParent();
     RangeMarker marker = inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call), editor);
 
     // highlight replaced result
     if (marker != null) {
       Project project = referenced.getProject();
-      TextRange range = TextRange.create(marker);
+      TextRange range = marker.getTextRange();
       GroovyRefactoringUtil.highlightOccurrencesByRanges(project, editor, new TextRange[]{range});
 
       WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -159,10 +154,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       GrVariableDeclaration qualifierDeclaration = null;
       GrReferenceExpression innerQualifier = null;
       GrExpression qualifier = null;
-      if (call instanceof GrMethodCallExpression && ((GrMethodCallExpression) call).getInvokedExpression() != null) {
-        GrExpression invoked = ((GrMethodCallExpression) call).getInvokedExpression();
-        if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression) invoked).getQualifierExpression() != null) {
-          qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
+      if (call instanceof GrMethodCallExpression methodCall) {
+        GrExpression invoked = methodCall.getInvokedExpression();
+        if (invoked instanceof GrReferenceExpression ref && ref.getQualifierExpression() != null) {
+          qualifier = ref.getQualifierExpression();
           if (PsiUtil.isSuperReference(qualifier)) {
             qualifier = null;
           }
@@ -170,9 +165,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
             String qualName = generateQualifierName(call, method, project, qualifier);
             qualifier = (GrExpression)PsiUtil.skipParentheses(qualifier, false);
             qualifierDeclaration = factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, qualifier, null, qualName);
-            innerQualifier = (GrReferenceExpression) factory.createExpressionFromText(qualName);
-          } else {
-            innerQualifier = (GrReferenceExpression) qualifier;
+            innerQualifier = (GrReferenceExpression)factory.createExpressionFromText(qualName);
+          }
+          else {
+            innerQualifier = (GrReferenceExpression)qualifier;
           }
         }
       }
@@ -200,7 +196,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       GrExpression replaced;
       if (resultOfCallExplicitlyUsed && !isTailMethodCall) {
         GrExpression resultExpr = null;
-        if (PsiType.VOID.equals(methodType)) {
+        if (PsiTypes.voidType().equals(methodType)) {
           resultExpr = factory.createExpressionFromText("null");
         }
         else if (returnCount == 1) {
@@ -243,7 +239,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       }
 
       // Process method return statements
-      if (returnCount > 1 && !PsiType.VOID.equals(methodType) && !isTailMethodCall) {
+      if (returnCount > 1 && !PsiTypes.voidType().equals(methodType) && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : methodType;
         GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, "", type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
@@ -263,7 +259,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (!isTailMethodCall && resultOfCallExplicitlyUsed && returnCount == 1) {
         returnStatements.iterator().next().removeStatement();
       }
-      else if (!isTailMethodCall && (PsiType.VOID.equals(methodType) || returnCount == 1)) {
+      else if (!isTailMethodCall && (PsiTypes.voidType().equals(methodType) || returnCount == 1)) {
         for (GrStatement returnStatement : returnStatements) {
           if (returnStatement instanceof GrReturnStatement) {
             final GrExpression returnValue = ((GrReturnStatement)returnStatement).getReturnValue();
@@ -407,7 +403,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (statements[0] instanceof GrExpression) return (GrExpression) statements[0];
       if (statements[0] instanceof GrReturnStatement) {
         GrExpression value = ((GrReturnStatement) statements[0]).getReturnValue();
-        if (value == null && !PsiType.VOID.equals(PsiUtil.getSmartReturnType(method))) {
+        if (value == null && !PsiTypes.voidType().equals(PsiUtil.getSmartReturnType(method))) {
           return GroovyPsiElementFactory.getInstance(method.getProject()).createExpressionFromText("null");
         }
         return value;
@@ -423,12 +419,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   */
   private static boolean isOnExpressionOrReturnPlace(@NotNull GrCallExpression call) {
     PsiElement parent = call.getParent();
-    if (!(parent instanceof GrVariableDeclarationOwner)) {
+    if (!(parent instanceof GrVariableDeclarationOwner owner)) {
       return true;
     }
 
     // tail calls in methods and closures
-    GrVariableDeclarationOwner owner = (GrVariableDeclarationOwner) parent;
     if (owner instanceof GrClosableBlock ||
         owner instanceof GrOpenBlock && owner.getParent() instanceof GrMethod) {
       GrStatement[] statements = ((GrCodeBlock) owner).getStatements();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -49,7 +49,6 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class ExternalSystemKeymapExtension implements KeymapExtension {
-
   /**
    * Provides keymap group for keymap configuration dialog.
    * This group should contain actions to run external system tasks or other build system actions.
@@ -87,10 +86,9 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
       for (String eachId : actionManager.getActionIdList(getActionPrefix(project, null))) {
         AnAction eachAction = actionManager.getAction(eachId);
 
-        if (!(eachAction instanceof MyExternalSystemAction)) continue;
+        if (!(eachAction instanceof MyExternalSystemAction taskAction)) continue;
         if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
 
-        MyExternalSystemAction taskAction = (MyExternalSystemAction)eachAction;
         projectToActionsMapping.putValue(taskAction.getSystemId(), eachId);
       }
     }
@@ -173,8 +171,7 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
 
   private static boolean isGroupFiltered(Condition<? super AnAction> condition, KeymapGroup keymapGroup) {
     final EmptyAction emptyAction = new EmptyAction();
-    if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group) {
-      final Group group = (Group)keymapGroup;
+    if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group group) {
       return group.getSize() > 1 || condition.value(new EmptyAction(group.getName(), null, null));
     }
     return true;
@@ -339,9 +336,7 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ExternalSystemTaskAction)) return false;
-
-      ExternalSystemTaskAction action = (ExternalSystemTaskAction)o;
+      if (!(o instanceof ExternalSystemTaskAction action)) return false;
 
       if (myId != null ? !myId.equals(action.myId) : action.myId != null) return false;
       if (myGroup != null ? !myGroup.equals(action.myGroup) : action.myGroup != null) return false;

@@ -53,12 +53,6 @@ public class CustomFileTypeCompletionTest extends BasePlatformTestCase {
     myFixture.assertPreferredCompletionItems(0, "while", "whiwhiwhi");
   }
 
-  public void testErlang() {
-    myFixture.configureByFile("Erlang.erl");
-    myFixture.complete(CompletionType.BASIC);
-    myFixture.assertPreferredCompletionItems(0, "case", "catch");
-  }
-
   public void testComment() {
     myFixture.configureByFile("foo.cs");
     myFixture.complete(CompletionType.BASIC);

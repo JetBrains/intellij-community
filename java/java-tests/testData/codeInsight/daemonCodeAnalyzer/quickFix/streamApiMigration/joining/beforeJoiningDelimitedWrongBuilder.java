@@ -1,4 +1,4 @@
-// "Replace with collect" "false"
+// "Collapse loop with stream 'collect()'" "false"
 
 import java.util.Arrays;
 import java.util.List;

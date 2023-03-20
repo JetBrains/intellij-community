@@ -51,7 +51,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @NotNull
   @Override
-  public PsiClassStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
+  public PsiClassStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     boolean isDeprecatedByComment = false;
     boolean isInterface = false;
     boolean isEnum = false;
@@ -196,7 +196,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
-        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn.hashCode());
+        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn);
       }
     }
   }

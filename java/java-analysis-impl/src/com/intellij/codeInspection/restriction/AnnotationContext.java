@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.restriction;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -25,7 +25,8 @@ public final class AnnotationContext {
 
   private final @Nullable PsiModifierListOwner myOwner;
   private final @Nullable PsiType myType;
-  private final @Nullable Supplier<Stream<PsiModifierListOwner>> myNext;
+  @Nullable
+  private final Supplier<? extends Stream<PsiModifierListOwner>> myNext;
 
   private AnnotationContext(@Nullable PsiModifierListOwner owner, @Nullable PsiType type) {
     this(owner, type, null);
@@ -33,7 +34,7 @@ public final class AnnotationContext {
 
   private AnnotationContext(@Nullable PsiModifierListOwner owner,
                             @Nullable PsiType type,
-                            @Nullable Supplier<Stream<PsiModifierListOwner>> next) {
+                            @Nullable Supplier<? extends Stream<PsiModifierListOwner>> next) {
     myOwner = owner;
     myType = type;
     myNext = next;
@@ -84,8 +85,7 @@ public final class AnnotationContext {
           .append(StreamEx.ofTree(method, m -> StreamEx.of(m.findSuperMethods()).filter(visited::add)).skip(1));
       });
     }
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       PsiParameterList parameterList = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
       PsiMethod method = parameterList == null ? null : ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
       if (parameterList != null && method != null) {
@@ -110,6 +110,8 @@ public final class AnnotationContext {
     AnnotationContext context = fromMethodReturn(expression);
     if (context != EMPTY) return context;
     context = fromArgument(expression);
+    if (context != EMPTY) return context;
+    context = fromInfixMethod(expression);
     if (context != EMPTY) return context;
     return fromInitializer(expression);
   }
@@ -171,10 +173,14 @@ public final class AnnotationContext {
   }
 
   private static @Nullable PsiModifierListOwner getKotlinProperty(@NotNull PsiModifierListOwner owner) {
-    if (!(owner instanceof PsiMethod)) return null;
+    if (!(owner instanceof PsiMethod method)) return null;
     // Looks ugly but without this check, owner.getNavigationElement() may load PSI or even call decompiler
     if (!owner.getClass().getSimpleName().equals("KtUltraLightMethodForSourceDeclaration")) return null;
-    // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
+    String name = method.getName();
+    boolean maybeGetter = (name.startsWith("get") || name.startsWith("is")) && method.getParameterList().isEmpty();
+    boolean maybeSetter = name.startsWith("set") && method.getParameterList().getParametersCount() == 1;
+    if (!maybeGetter && !maybeSetter) return null;
+    // If assignment target is Kotlin property, it resolves to the getter or setter but annotation will be applied to the field
     // (unless @get:MyAnno is used), so we have to navigate to the corresponding field.
     UElement element = UastContextKt.toUElement(owner.getNavigationElement());
     if (element instanceof UField) {
@@ -217,6 +223,18 @@ public final class AnnotationContext {
     return fromModifierListOwner(parameter).withType(parameterType);
   }
 
+  private static @NotNull AnnotationContext fromInfixMethod(@NotNull UExpression expression) {
+    UBinaryExpression parent = ObjectUtils.tryCast(expression.getUastParent(), UBinaryExpression.class);
+    PsiMethod method = parent != null ? parent.resolveOperator() : null;
+    if (method == null) return EMPTY;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != 2) return EMPTY;
+    PsiParameter parameter = UastUtils.isPsiAncestor(expression, parent.getRightOperand()) ? parameters[1] : parameters[0];
+    if (parameter == null) return EMPTY;
+    PsiType parameterType = parameter.getType();
+    return fromModifierListOwner(parameter).withType(parameterType);
+  }
+
   @NotNull
   private static AnnotationContext fromInitializer(UExpression expression) {
     UElement parent = expression.getUastParent();
@@ -225,8 +243,7 @@ public final class AnnotationContext {
     if (parent instanceof UVariable) {
       var = ObjectUtils.tryCast(parent.getJavaPsi(), PsiModifierListOwner.class);
     }
-    else if (parent instanceof UBinaryExpression) {
-      UBinaryExpression binOp = (UBinaryExpression)parent;
+    else if (parent instanceof UBinaryExpression binOp) {
       UastBinaryOperator operator = binOp.getOperator();
       UExpression rightOperand = binOp.getRightOperand();
       if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&
@@ -250,7 +267,7 @@ public final class AnnotationContext {
         if (var != null &&
             var.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
             var instanceof PsiMethod &&
-            PsiType.VOID.equals(((PsiMethod)var).getReturnType())) {
+            PsiTypes.voidType().equals(((PsiMethod)var).getReturnType())) {
           // If assignment target is Java, it resolves to the setter
           PsiParameter[] parameters = ((PsiMethod)var).getParameterList().getParameters();
           if (parameters.length == 1) {

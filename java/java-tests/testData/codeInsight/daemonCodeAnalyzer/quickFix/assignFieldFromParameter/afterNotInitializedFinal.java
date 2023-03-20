@@ -1,4 +1,4 @@
-// "Assign parameter to field 'myStr'" "true"
+// "Assign parameter to field 'myStr'" "true-preview"
 
 
 class Foo1 {

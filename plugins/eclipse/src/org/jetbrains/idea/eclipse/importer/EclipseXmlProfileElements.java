@@ -1,26 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importer;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author Rustam Vishnyakov
- */
-@SuppressWarnings("UnusedDeclaration")
 public interface EclipseXmlProfileElements {
   @NonNls String PROFILES_TAG = "profiles";
   @NonNls String PROFILE_TAG = "profile";
@@ -28,4 +10,10 @@ public interface EclipseXmlProfileElements {
   @NonNls String SETTING_TAG = "setting";
   String ID_ATTR = "id";
   String VALUE_ATTR = "value";
+  String VERSION_ATTR = "version";
+  /* Exporting IDEA code style using an older profile is OK, as Eclipse maintains backwards compatibility.
+     Importing a different version may produce worse results, as unrecognized IDs from the profile will be ignored. */
+  String VERSION_VALUE = "21";
+  String PROFILE_KIND_ATTR = "kind";
+  String PROFILE_KIND_VALUE = "CodeFormatterProfile";
 }

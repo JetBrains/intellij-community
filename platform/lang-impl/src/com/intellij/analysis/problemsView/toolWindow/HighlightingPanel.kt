@@ -1,26 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
-import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.AnalyzingType
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 class HighlightingPanel(project: Project, state: ProblemsViewState)
   : ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
@@ -30,7 +29,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     const val ID = "CurrentFile"
   }
 
-  private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, stateForComponent(this), this)
+  private val statusUpdateAlarm = SingleAlarm({ updateStatus() }, 200, this, ThreadToUse.POOLED_THREAD)
+  @Volatile
   private var previousStatus: Status? = null
 
   init {
@@ -38,7 +38,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     updateCurrentFile()
     project.messageBus.connect(this)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
-    getApplication().messageBus.connect(this)
+    ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(PowerSaveMode.TOPIC, this)
   }
 
@@ -50,14 +50,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     return super.getData(dataId)
   }
 
-  override fun getToolWindowIcon(count: Int): Icon? {
-    if (ProblemsView.isProjectErrorsEnabled()) return null
-    val root = currentRoot ?: return Toolwindows.ToolWindowProblemsEmpty
-    val problem = root.getChildren(root.file).any {
-      val severity = (it as? ProblemNode)?.severity
-      severity != null && severity >= HighlightSeverity.ERROR.myVal
-    }
-    return if (problem) Toolwindows.ToolWindowProblems else Toolwindows.ToolWindowProblemsEmpty
+  override fun getSortBySeverity(): Option? {
+    return mySortBySeverity
   }
 
   override fun selectionChangedTo(selected: Boolean) {
@@ -116,23 +110,33 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   private fun findCurrentFile(): VirtualFile? {
     if (project.isDisposed) return null
     val fileEditor = FileEditorManager.getInstance(project)?.selectedEditor ?: return null
-    val file = fileEditor.file
+    val file = if (fileEditor is TextEditor) {
+      fileEditor.editor.virtualFile
+    } else {
+      fileEditor.file
+    }
     if (file != null) return file
     val textEditor = fileEditor as? TextEditor ?: return null
     return FileDocumentManager.getInstance().getFile(textEditor.editor.document)
   }
 
   private fun updateStatus() {
-    val status = ClientId.withClientId(myClientId) { getCurrentStatus() }
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val status = ClientId.withClientId(myClientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
     if (previousStatus != status) {
-      previousStatus = status
-      tree.emptyText.text = status.title
-      if (status.details.isNotEmpty()) tree.emptyText.appendLine(status.details)
+      ApplicationManager.getApplication().invokeLater {
+        if (!myDisposed) {
+          previousStatus = status
+          tree.emptyText.text = status.title
+          if (status.details.isNotEmpty()) tree.emptyText.appendLine(status.details)
+        }
+      }
     }
     if (status.request) statusUpdateAlarm.cancelAndRequest()
   }
 
   private fun getCurrentStatus(): Status {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     val file = currentFile ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
     if (PowerSaveMode.isEnabled()) return Status(ProblemsViewBundle.message("problems.view.highlighting.power.save.mode"))
     val document = ProblemsView.getDocument(project, file) ?: return statusAnalyzing(file)

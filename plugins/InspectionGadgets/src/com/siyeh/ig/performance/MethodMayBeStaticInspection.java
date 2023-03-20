@@ -19,15 +19,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
-import com.intellij.refactoring.makeStatic.Settings;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,7 +38,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MethodMayBeStaticInspection extends BaseInspection {
   @NonNls protected static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
@@ -61,10 +61,10 @@ public class MethodMayBeStaticInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new InspectionGadgetsFix() {
       @Override
-      public void doFix(Project project, ProblemDescriptor descriptor) {
+      public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiMethod element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
         if (element != null) {
-          new MakeMethodStaticProcessor(project, element, new Settings(m_replaceQualifier, null, null)).run();
+          JavaRefactoringFactory.getInstance(project).createMakeMethodStatic(element, m_replaceQualifier, null, PsiField.EMPTY_ARRAY, null).run();
         }
       }
 
@@ -91,13 +91,13 @@ public class MethodMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.only.option"), ONLY_PRIVATE_OR_FINAL_ATTR_NAME);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.empty.option"), IGNORE_EMPTY_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.ignore.default.methods.option"), IGNORE_DEFAULT_METHODS_ATTR_NAME);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("method.may.be.static.replaces.qualifiers.with.class.references.option"), REPLACE_QUALIFIER_ATTR_NAME);
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox(ONLY_PRIVATE_OR_FINAL_ATTR_NAME, InspectionGadgetsBundle.message("method.may.be.static.only.option")),
+      checkbox(IGNORE_EMPTY_METHODS_ATTR_NAME, InspectionGadgetsBundle.message("method.may.be.static.empty.option")),
+      checkbox(IGNORE_DEFAULT_METHODS_ATTR_NAME, InspectionGadgetsBundle.message("method.may.be.static.ignore.default.methods.option")),
+      checkbox(REPLACE_QUALIFIER_ATTR_NAME,
+               InspectionGadgetsBundle.message("method.may.be.static.replaces.qualifiers.with.class.references.option")));
   }
 
   @Override

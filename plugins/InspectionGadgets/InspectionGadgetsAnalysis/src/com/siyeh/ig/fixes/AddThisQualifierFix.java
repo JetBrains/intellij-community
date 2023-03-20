@@ -69,7 +69,7 @@ public final class AddThisQualifierFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiReferenceExpression expression = (PsiReferenceExpression)descriptor.getPsiElement();
     if (expression.getQualifierExpression() != null) {
       return;

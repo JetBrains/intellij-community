@@ -44,7 +44,7 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final Kind kind = ((Kind)infos[0]);
+    final Kind kind = (Kind)infos[0];
     return kind.toString();
   }
 
@@ -56,7 +56,7 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Kind kind = ((Kind)infos[0]);
+    final Kind kind = (Kind)infos[0];
     return new ArrayEqualsHashCodeFix(kind);
   }
 
@@ -81,12 +81,11 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent().getParent();
-      if (!(element instanceof PsiMethodCallExpression)) {
+      if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       CommentTracker commentTracker = new CommentTracker();
       String newExpression = "java.util.Arrays." + myKind.getNewMethodName() +
                              commentTracker.text(methodCallExpression.getArgumentList());

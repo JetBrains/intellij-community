@@ -213,9 +213,8 @@ public final class GitConfig {
   private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini) {
     Collection<Remote> remotes = new ArrayList<>();
     Collection<Url> urls = new ArrayList<>();
-    for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
-      String sectionName = stringSectionEntry.getKey();
-      Profile.Section section = stringSectionEntry.getValue();
+    for (String sectionName : ini.keySet()) {
+      Profile.Section section = ini.get(sectionName);
 
       Remote remote = parseRemoteSection(sectionName, section);
       if (remote != null) {

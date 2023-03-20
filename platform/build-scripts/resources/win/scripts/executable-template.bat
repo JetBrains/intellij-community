@@ -30,6 +30,7 @@ IF "%JRE%" == "" (
 
 IF "%JRE%" == "" (
   IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
+  IF "%PROCESSOR_ARCHITECTURE%" == "ARM64" IF EXIST "%IDE_HOME%\jbr" SET "JRE=%IDE_HOME%\jbr"
 )
 
 IF "%JRE%" == "" (
@@ -84,13 +85,13 @@ IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
 )
 IF NOT "%VM_OPTIONS_FILE%" == "" (
   IF "%USER_GC%" == "" (
-    FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL SET ACC=%%ACC%% "%%i"
+    FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL SET "ACC=%%ACC%% %%i"
   ) ELSE (
-    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /C:"-XX:\+Use.*GC" "%VM_OPTIONS_FILE%"`) DO CALL SET ACC=%%ACC%% "%%i"
+    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /C:"-XX:\+Use.*GC" "%VM_OPTIONS_FILE%"`) DO CALL SET "ACC=%%ACC%% %%i"
   )
 )
 IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
-  FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL SET ACC=%%ACC%% "%%i"
+  FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL SET "ACC=%%ACC%% %%i"
 )
 IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
   ECHO ERROR: cannot find a VM options file
@@ -103,10 +104,10 @@ IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
 :: ---------------------------------------------------------------------
 "%JAVA_EXE%" ^
   -cp "%CLASS_PATH%" ^
-  %ACC% ^
   "-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" ^
   "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
+  %ACC% ^
   %IDE_PROPERTIES_PROPERTY% ^
   @@ide_jvm_args@@ ^
-  com.intellij.idea.Main ^
+  @@main_class_name@@ ^
   %*

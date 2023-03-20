@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -46,7 +47,7 @@ public class XmlNsPrefixAnnotator implements Annotator {
       if (rangeInElement.isEmpty()) continue;
       TextRange range = rangeInElement.shiftRight(ref.getElement().getTextRange().getStartOffset());
       if (!range.intersects(elementRange)) continue;
-      holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(range).textAttributes(XmlHighlighterColors.XML_NS_PREFIX).create();
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(range).textAttributes(XmlHighlighterColors.XML_NS_PREFIX).create();
     }
   }
 }

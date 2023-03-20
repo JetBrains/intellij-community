@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -10,6 +10,7 @@ import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
@@ -31,11 +32,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -77,9 +78,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.IntUnaryOperator;
 
-import static com.intellij.diff.util.DiffUtil.getLinesContent;
-
-public class UnifiedDiffViewer extends ListenerDiffViewerBase {
+public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
   @NotNull private final UnifiedDiffPanel myPanel;
@@ -158,7 +157,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
     myContentPanel.setTitle(createTitles());
 
-    new UiNotifyConnector(getComponent(), new Activatable() {
+    UiNotifyConnector.installOn(getComponent(), new Activatable() {
       @Override
       public void showNotify() {
         myMarkupUpdater.scheduleUpdate();
@@ -169,8 +168,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @RequiresEdt
   protected void onDispose() {
-    myModel.clear();
-    myFoldingModel.destroy();
     super.onDispose();
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
@@ -491,8 +488,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   private static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator contentConvertor,
-                                                  @NotNull IntUnaryOperator unifiedConvertor,
-                                                  @NotNull IntUnaryOperator foldingConvertor) {
+                                                      @NotNull IntUnaryOperator unifiedConvertor,
+                                                      @NotNull IntUnaryOperator foldingConvertor) {
     return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
@@ -684,6 +681,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
         // consume shortcut even if there are nothing to do - avoid calling some other action
@@ -776,10 +778,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     LineFragment lineFragment = change.getLineFragment();
 
-    DiffUtil.applyModification(outputSide.select(document1, document2),
-                               outputSide.getStartLine(lineFragment), outputSide.getEndLine(lineFragment),
-                               sourceSide.select(document1, document2),
-                               sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
+    boolean isLastWithLocal = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, myContext);
+    boolean isLocalChangeRevert = sourceSide == Side.LEFT && isLastWithLocal;
+    TextDiffViewerUtil.applyModification(outputSide.select(document1, document2),
+                                         outputSide.getStartLine(lineFragment), outputSide.getEndLine(lineFragment),
+                                         sourceSide.select(document1, document2),
+                                         sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment),
+                                         isLocalChangeRevert);
 
     // no need to mark myStateIsOutOfDate - it will be made by DocumentListener
     // TODO: we can apply change manually, without marking state out-of-date. But we'll have to schedule rediff anyway.
@@ -854,30 +859,34 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @NotNull
-  protected List<? extends DocumentContent> getContents() {
-    //noinspection unchecked
+  public List<? extends DocumentContent> getContents() {
+    //noinspection unchecked,rawtypes
     return (List)myRequest.getContents();
   }
 
   @NotNull
-  protected DocumentContent getContent(@NotNull Side side) {
+  public DocumentContent getContent(@NotNull Side side) {
     return side.select(getContents());
   }
 
   @NotNull
-  protected DocumentContent getContent1() {
+  public DocumentContent getContent1() {
     return getContent(Side.LEFT);
   }
 
   @NotNull
-  protected DocumentContent getContent2() {
+  public DocumentContent getContent2() {
     return getContent(Side.RIGHT);
   }
 
-  @RequiresEdt
   @Nullable
   public List<UnifiedDiffChange> getDiffChanges() {
     return myModel.getDiffChanges();
+  }
+
+  @NotNull
+  private List<UnifiedDiffChange> getNonSkippedDiffChanges() {
+    return ContainerUtil.filter(ContainerUtil.notNullize(getDiffChanges()), it -> !it.isSkipped());
   }
 
   @NotNull
@@ -899,8 +908,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return myStatusPanel;
   }
 
-  public @Nullable String getStatusMessage() {
-    return myStatusPanel.getMessage();
+  @Override
+  public int getTotalDifferences() {
+    return getNonSkippedDiffChanges().size();
   }
 
   @RequiresEdt
@@ -915,7 +925,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return getContent(side).getDocument();
   }
 
-  protected boolean isStateIsOutOfDate() {
+  public boolean isStateIsOutOfDate() {
     return myStateIsOutOfDate;
   }
 
@@ -973,7 +983,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @NotNull
     @Override
     protected List<UnifiedDiffChange> getChanges() {
-      return ContainerUtil.notNullize(getDiffChanges());
+      return getNonSkippedDiffChanges();
     }
 
     @NotNull
@@ -1056,16 +1066,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       myIndex++;
 
       LineFragment lineFragment = change.getLineFragment();
-
       Document document = getContent2().getDocument();
-      CharSequence insertedText = getLinesContent(document, lineFragment.getStartLine2(), lineFragment.getEndLine2());
 
-      int lineNumber = lineFragment.getStartLine2();
-
-      LineTokenizer tokenizer = new LineTokenizer(insertedText.toString());
-      for (String line : tokenizer.execute()) {
+      for (int lineNumber = lineFragment.getStartLine2(); lineNumber < lineFragment.getEndLine2(); lineNumber++) {
+        int offset1 = document.getLineStartOffset(lineNumber);
+        int offset2 = document.getLineEndOffset(lineNumber);
+        CharSequence line = document.getImmutableCharSequence().subSequence(offset1, offset2);
         addLine(lineNumber, line);
-        lineNumber++;
       }
     }
   }
@@ -1305,6 +1312,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     private MarkupUpdater(@NotNull List<? extends DocumentContent> contents) {
       Disposer.register(UnifiedDiffViewer.this, this);
 
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(EditorColorsManager.TOPIC, scheme -> resetMarkup());
+
       MyMarkupModelListener markupListener = new MyMarkupModelListener();
       for (DocumentContent content : contents) {
         Document document = content.getDocument();
@@ -1329,6 +1339,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     public void resumeUpdate() {
       mySuspended = false;
       scheduleUpdate();
+    }
+
+    public void resetMarkup() {
+      // erase old highlighting to make sure text is readable if markup update is slow
+      myEditor.setHighlighter(DiffUtil.createEmptyEditorHighlighter());
+      UnifiedEditorRangeHighlighter.erase(myProject, myEditor.getDocument());
+
+      scheduleUpdate();
+
+      // NB: flush request might be overwritten by another 'scheduleUpdate()'
+      // Ex: if XLineBreakpointImpl is updating its markers after us, triggering our MarkupModelListener
+      // This will delay re-highlighting by 300ms causing blinking
+      myUpdateQueue.sendFlush();
     }
 
     @RequiresEdt

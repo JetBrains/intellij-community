@@ -1,20 +1,14 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
-import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
-import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * Base lombok processor class
@@ -42,7 +36,7 @@ public abstract class AbstractProcessor implements Processor {
    * @param supportedAnnotationClasses annotations this processor supports
    */
   protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                              @NotNull String... supportedAnnotationClasses) {
+                              @NotNull String @NotNull ... supportedAnnotationClasses) {
     this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
     this.supportedAnnotationClasses = supportedAnnotationClasses;
@@ -81,49 +75,6 @@ public abstract class AbstractProcessor implements Processor {
       result = declaredAnnotationValue;
     }
     return result;
-  }
-
-  protected static void copyOnXAnnotations(@Nullable PsiAnnotation processedAnnotation,
-                                           @NotNull PsiModifierList modifierList,
-                                           @NotNull String onXParameterName) {
-    if (processedAnnotation == null) {
-      return;
-    }
-
-    Iterable<String> annotationsToAdd = LombokProcessorUtil.getOnX(processedAnnotation, onXParameterName);
-    annotationsToAdd.forEach(modifierList::addAnnotation);
-  }
-
-  protected static @NotNull List<PsiAnnotation> copyableAnnotations(@NotNull PsiField psiField,
-                                                                    @NotNull LombokCopyableAnnotations copyableAnnotations) {
-    final PsiAnnotation[] fieldAnnotations = psiField.getAnnotations();
-    if (0 == fieldAnnotations.length) {
-      // nothing to copy if no annotations defined
-      return Collections.emptyList();
-    }
-
-    final Map<String, String> fullQualifiedToShortNames = new HashMap<>(copyableAnnotations.getFullQualifiedToShortNames());
-    final PsiClass containingClass = psiField.getContainingClass();
-    // append only for BASE_COPYABLE
-    if (LombokCopyableAnnotations.BASE_COPYABLE.equals(copyableAnnotations) && null != containingClass) {
-      Collection<String> configuredCopyableAnnotations =
-        ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
-
-      configuredCopyableAnnotations.forEach(fqn->fullQualifiedToShortNames.put(fqn, StringUtil.getShortName(fqn)));
-    }
-
-    final Collection<String> existedShortAnnotationNames = ContainerUtil.map(fieldAnnotations, PsiAnnotationSearchUtil::getShortNameOf);
-    // reduce copyableAnnotations to only matching existed annotations by shortName
-    fullQualifiedToShortNames.values().retainAll(existedShortAnnotationNames);
-    // collect existing annotations to copy
-    return PsiAnnotationSearchUtil.findAllAnnotations(psiField, fullQualifiedToShortNames.keySet());
-  }
-
-  protected static void copyCopyableAnnotations(@NotNull PsiField fromPsiElement,
-                                                @NotNull LombokLightModifierList toModifierList,
-                                                @NotNull LombokCopyableAnnotations copyableAnnotations) {
-    List<PsiAnnotation> annotationsToAdd = copyableAnnotations(fromPsiElement, copyableAnnotations);
-    annotationsToAdd.forEach(toModifierList::withAnnotation);
   }
 
   @Override

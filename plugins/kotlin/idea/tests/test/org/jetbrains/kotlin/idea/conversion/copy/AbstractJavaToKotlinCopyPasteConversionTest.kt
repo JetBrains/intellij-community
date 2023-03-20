@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
@@ -6,11 +6,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 import kotlin.test.assertEquals
 
@@ -20,7 +16,7 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopyPast
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("copyPaste/conversion")
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun setUp() {
         super.setUp()
@@ -37,30 +33,32 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopyPast
     }
 
     fun doTest(unused: String) {
-        val path = testPath()
-        val baseName = fileName().replace(".java", "")
-        myFixture.configureByFiles("$baseName.java")
+        val path = dataFilePath(fileName())
+        withCustomCompilerOptions(File(path).readText(), project, module) {
+            val baseName = fileName().replace(".java", "")
+            myFixture.configureByFiles("$baseName.java")
 
-        val fileText = myFixture.editor.document.text
-        val noConversionExpected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NO_CONVERSION_EXPECTED").isNotEmpty()
+            val fileText = myFixture.editor.document.text
+            val noConversionExpected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NO_CONVERSION_EXPECTED").isNotEmpty()
 
-        myFixture.performEditorAction(IdeActions.ACTION_COPY)
+            myFixture.performEditorAction(IdeActions.ACTION_COPY)
 
-        configureByDependencyIfExists("$baseName.dependency.kt")
-        configureByDependencyIfExists("$baseName.dependency.java")
+            configureByDependencyIfExists("$baseName.dependency.kt")
+            configureByDependencyIfExists("$baseName.dependency.java")
 
-        configureTargetFile("$baseName.to.kt")
+            configureTargetFile("$baseName.to.kt")
 
-        ConvertJavaCopyPasteProcessor.conversionPerformed = false
+            ConvertJavaCopyPasteProcessor.conversionPerformed = false
 
-        myFixture.performEditorAction(IdeActions.ACTION_PASTE)
-        UIUtil.dispatchAllInvocationEvents()
+            myFixture.performEditorAction(IdeActions.ACTION_PASTE)
+            UIUtil.dispatchAllInvocationEvents()
 
-        assertEquals(
-            noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
-            if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
-        )
+            assertEquals(
+                noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
+                if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
+            )
 
-        KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), myFixture.file.text)
+            KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), myFixture.file.text)
+        }
     }
 }

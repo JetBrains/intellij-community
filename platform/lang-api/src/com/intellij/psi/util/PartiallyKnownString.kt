@@ -179,14 +179,15 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
    *
    * NOTE: currently supports only single-segment [rangeInPks]
    */
-  fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
+  private fun mapRangeToHostRange(host: PsiElement, rangeInHost: TextRange, rangeInPks: TextRange): TextRange? {
 
     fun getHostRangeEscapeAware(segmentRange: TextRange, inSegmentStart: Int, inSegmentEnd: Int): TextRange {
       if (host is PsiLanguageInjectionHost) {
 
         fun mkAttachments(): Array<Attachment> = arrayOf(
           Attachment("host.txt", kotlin.runCatching { host.text ?: "<null>" }.getOrElse { it.stackTraceToString() }),
-          Attachment("file.txt", kotlin.runCatching { host.containingFile?.text ?: "<null>" }.getOrElse { it.stackTraceToString() })
+          Attachment(kotlin.runCatching { host.containingFile?.virtualFile?.name  }.getOrNull() ?: "file.txt", 
+                     kotlin.runCatching { host.containingFile?.text ?: "<null>" }.getOrElse { it.stackTraceToString() })
         )
 
         try {

@@ -25,7 +25,7 @@ interface MavenDistribution {
   }
 }
 
-internal class LocalMavenDistribution(override val mavenHome: Path, override val name: String) : MavenDistribution {
+class LocalMavenDistribution(override val mavenHome: Path, override val name: String) : MavenDistribution {
   override val version: String? by lazy {
     MavenUtil.getMavenVersion(mavenHome.toFile())
   }
@@ -41,8 +41,8 @@ internal class LocalMavenDistribution(override val mavenHome: Path, override val
 }
 
 internal class WslMavenDistribution(private val wslDistribution: WSLDistribution,
-                           val pathToMaven: String,
-                           override val name: String) : MavenDistribution {
+                                    private val pathToMaven: String,
+                                    override val name: String) : MavenDistribution {
   override val version: String? by lazy {
     MavenUtil.getMavenVersion(wslDistribution.getWindowsPath(pathToMaven))
   }
@@ -51,7 +51,7 @@ internal class WslMavenDistribution(private val wslDistribution: WSLDistribution
 
   override fun compatibleWith(mavenDistribution: MavenDistribution): Boolean {
     if (mavenDistribution == this) return true
-    val another = mavenDistribution as? WslMavenDistribution ?: return false;
+    val another = mavenDistribution as? WslMavenDistribution ?: return false
     return another.wslDistribution == wslDistribution && another.pathToMaven == pathToMaven
   }
 

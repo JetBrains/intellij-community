@@ -15,10 +15,9 @@ class ReplaceOperatorAssignmentWithPostfixExpressionPredicate implements PsiElem
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiAssignmentExpression)) {
+    if (!(element instanceof PsiAssignmentExpression assignmentExpression)) {
       return false;
     }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final IElementType tokenType = assignmentExpression.getOperationTokenType();
     if (!JavaTokenType.PLUSEQ.equals(tokenType) && !JavaTokenType.MINUSEQ.equals(tokenType)) {
       return false;

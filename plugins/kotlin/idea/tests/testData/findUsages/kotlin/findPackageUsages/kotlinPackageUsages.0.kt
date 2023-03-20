@@ -8,3 +8,4 @@ import foo.bar.X
 class X
 
 val x: foo.bar.X? = foo.bar.X()
+

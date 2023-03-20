@@ -14,12 +14,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.toml.lang.TomlLanguage
 import org.toml.lang.lexer.TomlLexer
-import org.toml.lang.psi.TomlElementTypes
+import org.toml.lang.psi.TOML_COMMENTS
 import org.toml.lang.psi.TomlFile
 
 class TomlParserDefinition : ParserDefinition {
@@ -32,9 +31,7 @@ class TomlParserDefinition : ParserDefinition {
 
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
 
-    override fun getWhitespaceTokens(): TokenSet = WHITE_SPACES
-
-    override fun getCommentTokens(): TokenSet = COMMENTS
+    override fun getCommentTokens(): TokenSet = TOML_COMMENTS
 
     override fun getFileNodeType(): IFileElementType = FILE
 
@@ -45,7 +42,5 @@ class TomlParserDefinition : ParserDefinition {
 
     companion object {
         val FILE: IFileElementType = IFileElementType(TomlLanguage)
-        val WHITE_SPACES: TokenSet = TokenSet.create(TokenType.WHITE_SPACE)
-        val COMMENTS: TokenSet = TokenSet.create(TomlElementTypes.COMMENT)
     }
 }

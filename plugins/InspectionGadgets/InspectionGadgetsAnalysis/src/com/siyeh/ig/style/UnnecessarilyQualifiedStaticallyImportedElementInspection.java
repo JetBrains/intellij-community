@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -52,7 +51,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       element.delete();
     }
@@ -66,19 +65,19 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
   private static class UnnecessarilyQualifiedStaticallyImportedElementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (PsiKeyword.YIELD.equals(reference.getReferenceName()) && reference.getParent() instanceof PsiMethodCallExpression) {
         // Qualifier might be required since Java 14, so don't warn
         return;
       }
       if (ImportUtils.isAlreadyStaticallyImported(reference)) {
-        registerError(Objects.requireNonNull(reference.getQualifier()), ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference.resolve());
+        registerError(Objects.requireNonNull(reference.getQualifier()), reference.resolve());
       }
     }
   }

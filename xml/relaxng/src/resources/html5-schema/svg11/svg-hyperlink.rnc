@@ -65,5 +65,6 @@ grammar {
         SVG.External.attrib,
         (common.attrs.aria.implicit.link | common.attrs.aria)?,
         attribute transform { TransformList.datatype }?,
-        attribute target { LinkTarget.datatype }?
+        attribute target { LinkTarget.datatype }?,
+        attribute rel { string }?
 }

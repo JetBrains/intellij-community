@@ -1,17 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
 import java.util.function.Consumer
 
-@Suppress("unused")
+@ApiStatus.NonExtendable
 interface ScriptElementBuilder {
 
   fun newLine(): NewLineElement
   fun ScriptElement?.ln(): NewLineElement?
 
+  fun int(value: Int): IntElement
+  fun boolean(value: Boolean): BooleanElement
   fun string(value: String): StringElement
 
   fun list(elements: List<Expression>) : ListElement
@@ -21,14 +24,26 @@ interface ScriptElementBuilder {
   fun code(text: List<String>): CodeElement
   fun code(vararg text: String): CodeElement
 
+  fun assign(left: Expression, right: Expression): AssignElement
+  fun assign(left: Expression, right: String): AssignElement
+  fun assign(left: Expression, right: Int): AssignElement
+  fun assign(left: Expression, right: Boolean): AssignElement
+
   fun assign(name: String, value: Expression): AssignElement
   fun assign(name: String, value: String): AssignElement
+  fun assign(name: String, value: Int): AssignElement
+  fun assign(name: String, value: Boolean): AssignElement
 
   fun assignIfNotNull(name: String, expression: Expression?): AssignElement?
   fun assignIfNotNull(name: String, value: String?): AssignElement?
 
   fun plusAssign(name: String, value: Expression): PlusAssignElement
   fun plusAssign(name: String, value: String): PlusAssignElement
+
+  fun property(name: String, value: Expression): PropertyElement
+  fun property(name: String, value: String): PropertyElement
+  fun property(name: String, value: Int): PropertyElement
+  fun property(name: String, value: Boolean): PropertyElement
 
   fun call(name: Expression, arguments: List<ArgumentElement>): CallElement
   fun call(name: String, arguments: List<ArgumentElement>): CallElement

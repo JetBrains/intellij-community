@@ -13,6 +13,13 @@ import java.util.*;
 public final class DefaultExternalProject implements ExternalProject, ExternalProjectPreview {
   @NotNull
   private String id;
+
+  @NotNull
+  private String path;
+
+  @NotNull
+  private String identityPath;
+
   @NotNull
   private String name;
   @NotNull
@@ -47,15 +54,17 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   private Map<String, Set<File>> artifactsByConfiguration;
 
   public DefaultExternalProject() {
-    childProjects = new TreeMap<String, DefaultExternalProject>();
-    tasks = new HashMap<String, DefaultExternalTask>(0);
-    sourceSets = new HashMap<String, DefaultExternalSourceSet>(0);
-    artifacts = new ArrayList<File>(0);
-    artifactsByConfiguration = new HashMap<String, Set<File>>(0);
+    childProjects = new TreeMap<>();
+    tasks = new HashMap<>(0);
+    sourceSets = new HashMap<>(0);
+    artifacts = new ArrayList<>(0);
+    artifactsByConfiguration = new HashMap<>(0);
   }
 
   public DefaultExternalProject(@NotNull ExternalProject externalProject) {
     id = externalProject.getId();
+    path = externalProject.getPath();
+    identityPath = externalProject.getIdentityPath();
     name = externalProject.getName();
     qName = externalProject.getQName();
     version = externalProject.getVersion();
@@ -69,25 +78,25 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     externalSystemId = externalProject.getExternalSystemId();
 
     Map<String, ? extends ExternalProject> externalProjectChildProjects = externalProject.getChildProjects();
-    childProjects = new TreeMap<String, DefaultExternalProject>();
+    childProjects = new TreeMap<>();
     for (Map.Entry<String, ? extends ExternalProject> entry : externalProjectChildProjects.entrySet()) {
       childProjects.put(entry.getKey(), new DefaultExternalProject(entry.getValue()));
     }
 
     Map<String, ? extends ExternalTask> externalProjectTasks = externalProject.getTasks();
-    tasks = new HashMap<String, DefaultExternalTask>(externalProjectTasks.size());
+    tasks = new HashMap<>(externalProjectTasks.size());
     for (Map.Entry<String, ? extends ExternalTask> entry : externalProjectTasks.entrySet()) {
       this.tasks.put(entry.getKey(), new DefaultExternalTask(entry.getValue()));
     }
 
     Map<String, ? extends ExternalSourceSet> externalProjectSourceSets = externalProject.getSourceSets();
-    sourceSets = new HashMap<String, DefaultExternalSourceSet>(externalProjectSourceSets.size());
+    sourceSets = new HashMap<>(externalProjectSourceSets.size());
     for (Map.Entry<String, ? extends ExternalSourceSet> entry : externalProjectSourceSets.entrySet()) {
       sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
     }
 
-    artifacts = new ArrayList<File>(externalProject.getArtifacts());
-    artifactsByConfiguration = new HashMap<String, Set<File>>(externalProject.getArtifactsByConfiguration());
+    artifacts = new ArrayList<>(externalProject.getArtifacts());
+    artifactsByConfiguration = new HashMap<>(externalProject.getArtifactsByConfiguration());
   }
 
   @NotNull
@@ -104,6 +113,26 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
 
   public void setId(@NotNull String id) {
     this.id = id;
+  }
+
+  @NotNull
+  @Override
+  public String getPath() {
+    return path;
+  }
+
+  public void setPath(@NotNull String path) {
+    this.path = path;
+  }
+
+  @NotNull
+  @Override
+  public String getIdentityPath() {
+    return identityPath;
+  }
+
+  public void setIdentityPath(@NotNull String path) {
+    this.identityPath = path;
   }
 
   public void setExternalSystemId(@NotNull String externalSystemId) {
@@ -191,7 +220,7 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
       this.childProjects = (TreeMap<String, DefaultExternalProject>)childProjects;
     }
     else {
-      this.childProjects = new TreeMap<String, DefaultExternalProject>(childProjects);
+      this.childProjects = new TreeMap<>(childProjects);
     }
   }
 

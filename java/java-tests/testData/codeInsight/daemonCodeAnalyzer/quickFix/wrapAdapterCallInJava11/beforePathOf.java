@@ -1,4 +1,4 @@
-// "Wrap argument using 'Path.of()'" "true"
+// "Adapt argument using 'Path.of()'" "true-preview"
 import java.nio.file.*;
 
 class Test {

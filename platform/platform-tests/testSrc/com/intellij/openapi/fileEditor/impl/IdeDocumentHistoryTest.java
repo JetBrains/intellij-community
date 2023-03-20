@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.Mock;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.util.Disposer;
@@ -13,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   private IdeDocumentHistoryImpl myHistory;
@@ -32,8 +30,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
 
     mySelectedEditor = new Mock.MyFileEditor() {
       @Override
-      @NotNull
-      public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+      public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
         return myEditorState;
       }
 
@@ -73,8 +70,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     myEditorState = new MyState(false, "start");
     myProvider = new Mock.MyFileEditorProvider() {
       @Override
-      @NotNull
-      public String getEditorTypeId() {
+      public @NotNull String getEditorTypeId() {
         return "EditorType";
       }
     };
@@ -204,16 +200,12 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     myEditorState = newState;
   }
 
-  private class EditorManager extends Mock.MyFileEditorManager {
+  private final class EditorManager extends Mock.MyFileEditorManager {
     @Override
-    public VirtualFile getFile(@NotNull FileEditor editor) {
-      return mySelectedFile;
-    }
-
-    @Override
-    @NotNull
-    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor, boolean searchForSplitter) {
-      return Pair.create(new FileEditor[]{mySelectedEditor}, new FileEditorProvider[]{myProvider});
+    public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file,
+                                                 @Nullable EditorWindow window,
+                                                 @NotNull FileEditorOpenOptions options) {
+      return FileEditorComposite.Companion.fromPair(new Pair<>(new FileEditor[]{mySelectedEditor}, new FileEditorProvider[]{myProvider}));
     }
 
     @Override
@@ -222,8 +214,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     }
   }
 
-  private static class MyState implements FileEditorState {
-
+  private static final class MyState implements FileEditorState {
     private final boolean myCanBeMerged;
     private final String myName;
 

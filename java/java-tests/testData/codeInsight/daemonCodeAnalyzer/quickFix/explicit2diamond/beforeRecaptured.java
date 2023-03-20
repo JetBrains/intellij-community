@@ -1,4 +1,4 @@
-// "Replace with <>" "true"
+// "Replace with <>" "true-preview"
 interface I<T> {
     I<T> then(T t);
 }

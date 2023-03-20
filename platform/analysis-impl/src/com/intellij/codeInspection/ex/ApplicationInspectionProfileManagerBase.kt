@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.BundledSchemeEP
@@ -6,6 +6,7 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -21,7 +22,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.serviceContainer.NonInjectable
 import org.jdom.JDOMException
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -29,8 +30,10 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Function
 
-open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
+open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
   BaseInspectionProfileManager(ApplicationManager.getApplication().messageBus) {
+
+  constructor() : this(SchemeManagerFactory.getInstance())
 
   init {
     val app = ApplicationManager.getApplication()
@@ -68,7 +71,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
         CommonDataKeys.PROJECT.getData(it)?.messageBus?.syncPublisher(ProfileChangeAdapter.TOPIC)?.profileActivated(oldScheme, newScheme)
       }
     }
-  })
+  }, settingsCategory = SettingsCategory.CODE)
 
   protected val profilesAreInitialized by lazy {
     val app = ApplicationManager.getApplication()
@@ -147,8 +150,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
   companion object {
     private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledInspectionProfile")
 
-
-      @JvmStatic
-      fun getInstanceBase() = service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
+    @JvmStatic
+    fun getInstanceBase() = service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
   }
 }

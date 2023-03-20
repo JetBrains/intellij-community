@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -48,9 +48,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author spleaner
- */
 public class FilePathCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(FilePathCompletionContributor.class);
 
@@ -88,8 +85,8 @@ public class FilePathCompletionContributor extends CompletionContributor {
           final FileReference first = fileReferencePair.getFirst();
           if (first == null) return;
           Boolean stopHere = fileReferencePair.getSecond();
-          Set<PsiFile> variants = stopHere 
-                                  ? Collections.emptySet() 
+          Set<PsiFile> variants = stopHere
+                                  ? Collections.emptySet()
                                   : Arrays.stream(first.getVariants()).map(v -> v instanceof LookupElement ? ((LookupElement)v).getObject() : null).filter(o -> o instanceof PsiFile).map(o -> (PsiFile)o).collect(Collectors.toSet());
 
           final FileReferenceSet set = first.getFileReferenceSet();
@@ -145,9 +142,6 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
                 final PsiFile[] files = FilenameIndex.getFilesByName(project, name, scope);
 
-                if (files.length <= 0) {
-                  continue;
-                }
                 for (final PsiFile file : files) {
                   ProgressManager.checkCanceled();
                   if (variants.contains(file) && file.getName().startsWith(finalPrefix)) {
@@ -212,31 +206,31 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
     return false;
   }
-  
+
   private static String getRelativePathPrefix(@NotNull String path) {
     if (!path.startsWith("./") && !path.startsWith("../")) return null;
-    
+
     int index = 0;
     char currentChar = path.charAt(index);
-    
+
     while (currentChar == '.' || currentChar == '/') {
       index++;
       if (index >= path.length()) break;
       currentChar = path.charAt(index);
     }
-    
+
     return path.substring(0, index);
   }
 
   private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file,
-                                               @Nullable VirtualFile stopParent, 
+                                               @Nullable VirtualFile stopParent,
                                                @NotNull final List<String> pathPrefix) {
     if (file == null) return false;
 
     final List<String> contextParts = new ArrayList<>();
     PsiFileSystemItem parentFile = file;
     PsiFileSystemItem parent;
-    while ((parent = parentFile.getParent()) != null && 
+    while ((parent = parentFile.getParent()) != null &&
            (stopParent == null || !Objects.equals(parent.getVirtualFile(), stopParent))) {
       if (parent.getName().length() > 0) contextParts.add(0, StringUtil.toLowerCase(parent.getName()));
       parentFile = parent;
@@ -277,8 +271,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       return null;
     }
 
-    if (original instanceof PsiMultiReference) {
-      final PsiMultiReference multiReference = (PsiMultiReference)original;
+    if (original instanceof PsiMultiReference multiReference) {
       for (PsiReference reference : multiReference.getReferences()) {
         if (reference instanceof FileReference) {
           if (((FileReference)reference).getFileReferenceSet().supportsExtendedCompletion()) {
@@ -345,13 +338,17 @@ public class FilePathCompletionContributor extends CompletionContributor {
         if (fileReferencePair != null) {
           FileReference ref = fileReferencePair.getFirst();
           context.setTailOffset(ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset());
-          ref.bindToElement(myFile);
+          if (ref instanceof FileReferenceWithExtendedCompletion) {
+            ((FileReferenceWithExtendedCompletion)ref).bindToExtendedElement(myFile);
+          } else {
+            ref.bindToElement(myFile);
+          }
         }
       }
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       final String relativePath = getRelativePath();
 
       final StringBuilder sb = new StringBuilder();

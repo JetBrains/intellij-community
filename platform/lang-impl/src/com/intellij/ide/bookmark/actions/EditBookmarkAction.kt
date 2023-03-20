@@ -2,12 +2,15 @@
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 
 internal class EditBookmarkAction : DumbAwareAction(BookmarkBundle.messagePointer("bookmark.edit.action.text")) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) = with(event.presentation) {
     isEnabledAndVisible = process(event, false) != null
@@ -18,6 +21,7 @@ internal class EditBookmarkAction : DumbAwareAction(BookmarkBundle.messagePointe
   }
 
   private fun process(event: AnActionEvent, perform: Boolean): String? {
+    if (event.contextBookmarks != null) return null
     val manager = event.bookmarksManager ?: return null
     val component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return null
     val bookmark = event.contextBookmark ?: return null

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +18,6 @@ import java.lang.ref.WeakReference;
 
 /**
  * Spies how focus goes in the component.
- *
- * @author Vladimir Kondratyev
  */
 public class FocusWatcher implements ContainerListener, FocusListener {
   private WeakReference<Component> myTopComponent;
@@ -43,8 +42,11 @@ public class FocusWatcher implements ContainerListener, FocusListener {
   }
 
   @Override
-  public final void componentAdded(final ContainerEvent e) {
-    installImpl(e.getChild());
+  public final void componentAdded(ContainerEvent e) {
+    Component component = e.getChild();
+    if (component != null) {
+      installImpl(component);
+    }
   }
 
   @Override
@@ -68,8 +70,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
       return;
     }
 
-    if (component instanceof Container) {
-      Container container = (Container)component;
+    if (component instanceof Container container) {
       int componentCount = container.getComponentCount();
       for (int i = 0; i < componentCount; i++) {
         deinstall(container.getComponent(i));
@@ -90,7 +91,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
       return;
     }
     if (component instanceof JTextComponent) {
-      UIUtil.addUndoRedoActions((JTextComponent)component);
+      SwingUndoUtil.addUndoRedoActions((JTextComponent)component);
     }
     setFocusedComponentImpl(component, e);
     setNearestFocusableComponent(component.getParent());
@@ -120,13 +121,15 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     installImpl(component);
   }
 
-  private void installImpl(Component component) {
-    if (component instanceof Container) {
-      Container container = (Container)component;
+  private void installImpl(@NotNull Component component) {
+    if (component instanceof Container container) {
       synchronized (container.getTreeLock()) {
         int componentCount = container.getComponentCount();
         for (int i = 0; i < componentCount; i++) {
-          installImpl(container.getComponent(i));
+          Component child = container.getComponent(i);
+          if (child != null) {
+            installImpl(child);
+          }
         }
         container.addContainerListener(this);
       }
@@ -147,7 +150,7 @@ public class FocusWatcher implements ContainerListener, FocusListener {
       return;
     }
 
-    if (UIUtil.isFocusProxy(component)) {
+    if (ComponentUtil.isFocusProxy(component)) {
       _setFocused(getFocusedComponent(), cause);
       return;
     }

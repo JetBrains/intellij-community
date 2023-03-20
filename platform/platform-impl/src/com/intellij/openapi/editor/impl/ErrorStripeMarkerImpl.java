@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import org.jetbrains.annotations.NotNull;
 
 class ErrorStripeMarkerImpl extends RangeMarkerImpl {
@@ -47,15 +48,13 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
       }
       else if (intervalStart() != myHighlighter.getStartOffset() || intervalEnd() != myHighlighter.getEndOffset()) {
         String extendedHighlighterInfo = "";
-        if (myHighlighter instanceof PersistentRangeHighlighterImpl) {
-          PersistentRangeHighlighterImpl h = (PersistentRangeHighlighterImpl)myHighlighter;
+        if (myHighlighter instanceof PersistentRangeHighlighterImpl h) {
           extendedHighlighterInfo = "(prev state: " + h.prevStartOffset + "-" + h.prevEndOffset + ", stamps match: " +
                                     (h.modificationStamp == (byte)e.getDocument().getModificationStamp()) + ")";
         }
         reportError("Mirror highlighter " + this + "(prev state: " + oldStart + "-" + oldEnd +
                     ") diverged from base one " + myHighlighter + extendedHighlighterInfo + " after " + e);
-        setIntervalStart(myHighlighter.getStartOffset());
-        setIntervalEnd(myHighlighter.getEndOffset());
+        setRange(TextRangeScalarUtil.toScalarRange(myHighlighter));
       }
     }
     else if (isValid()) {

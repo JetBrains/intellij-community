@@ -43,18 +43,16 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiParameter)) {
+    if (!(parent instanceof PsiParameter parameter)) {
       return;
     }
-    final PsiParameter parameter = (PsiParameter)parent;
     final PsiElement grandParent = parameter.getParent();
-    if (!(grandParent instanceof PsiCatchSection)) {
+    if (!(grandParent instanceof PsiCatchSection catchSection)) {
       return;
     }
-    final PsiCatchSection catchSection = (PsiCatchSection)grandParent;
     if (removeTryCatch) {
       BlockUtils.unwrapTryBlock(catchSection.getTryStatement());
     }

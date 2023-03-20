@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,8 @@ import java.util.stream.IntStream;
 
 public final class FormatDecode {
 
-  private static final Pattern fsPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d*)?([tT])?([a-zA-Z%])");
+  private static final Pattern fsPattern = Pattern.compile(
+    "%(?<posSpec>\\d+\\$)?(?<flags>[-#+ 0,(<]*)(?<width>\\d+)?(?<precision>\\.\\d+)?(?<dateSpec>[tT])?(?<conversion>[a-zA-Z%])");
 
   private FormatDecode() { }
 
@@ -53,17 +55,17 @@ public final class FormatDecode {
   private static final int PREVIOUS = 128; // '<'
 
   private static int flag(char c) {
-    switch (c) {
-      case '-': return LEFT_JUSTIFY;
-      case '#': return ALTERNATE;
-      case '+': return PLUS;
-      case ' ': return LEADING_SPACE;
-      case '0': return ZERO_PAD;
-      case ',': return GROUP;
-      case '(': return PARENTHESES;
-      case '<': return PREVIOUS;
-      default: return -1;
-    }
+    return switch (c) {
+      case '-' -> LEFT_JUSTIFY;
+      case '#' -> ALTERNATE;
+      case '+' -> PLUS;
+      case ' ' -> LEADING_SPACE;
+      case '0' -> ZERO_PAD;
+      case ',' -> GROUP;
+      case '(' -> PARENTHESES;
+      case '<' -> PREVIOUS;
+      default -> -1;
+    };
   }
 
   private static String flagString(int flags) {
@@ -103,7 +105,15 @@ public final class FormatDecode {
     }
   }
 
+  public static Validator[] decodePrefix(String prefix, int argumentCount) {
+    return decode(prefix, argumentCount, true);
+  }
+
   public static Validator @NotNull [] decode(String formatString, int argumentCount) {
+    return decode(formatString, argumentCount, false);
+  }
+
+  private static Validator @NotNull [] decode(String formatString, int argumentCount, boolean isPrefix) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 
     final Matcher matcher = fsPattern.matcher(formatString);
@@ -117,13 +127,19 @@ public final class FormatDecode {
         checkText(formatString.substring(i, start));
       }
       i = matcher.end();
+      boolean isAllVerifier = false;
+      //theoretically, it could be a correct specifier, divided into several parts, for example: "%1$t" + "Y"
+      //it is better to add ALL_VERIFIER
+      if (isPrefix && i == formatString.length()) {
+        isAllVerifier = true;
+      }
       final String specifier = matcher.group();
-      final String posSpec = matcher.group(1);
-      final String flags = matcher.group(2);
-      final String width = matcher.group(3);
-      final String precision = matcher.group(4);
-      final String dateSpec = matcher.group(5);
-      @NonNls final String conversion = matcher.group(6);
+      final String posSpec = matcher.group("posSpec");
+      final String flags = matcher.group("flags");
+      final String width = matcher.group("width");
+      final String precision = matcher.group("precision");
+      final String dateSpec = matcher.group("dateSpec");
+      @NonNls final String conversion = matcher.group("conversion");
 
       int flagBits = 0;
       for (int j = 0; j < flags.length(); j++) {
@@ -178,62 +194,59 @@ public final class FormatDecode {
       }
 
       final Validator allowed;
-      if (dateSpec != null) {  // a t or T
+      if (isAllVerifier) {
+        allowed = ALL_VALIDATOR;
+      }
+      else if (dateSpec != null) {  // a t or T
         checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
+        DateTimeConversionType dateTimeConversionType = getDateTimeConversionType(conversion.charAt(0));
+        if (dateTimeConversionType == DateTimeConversionType.UNKNOWN) {
+          throw new IllegalFormatException(
+            InspectionGadgetsBundle.message("format.string.error.unknown.conversion", dateSpec + conversion));
+        }
         checkNoPrecision(precision, specifier);
-        allowed = new DateValidator(specifier);
+        allowed = new DateValidator(specifier, dateTimeConversionType);
       }
       else {
         switch (conversion.charAt(0)) {
-          case 'b': // boolean (general)
-          case 'B':
-          case 'h': // Integer hex string (general
-          case 'H':
+          case 'b', 'B', 'h', 'H' -> { // boolean (general); Integer hex string (general)
             checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
             allowed = ALL_VALIDATOR;
-            break;
-          case 's': // formatted string (general)
-          case 'S':
+          }
+          case 's', 'S' -> { // formatted string (general)
             checkFlags(flagBits, LEFT_JUSTIFY | ALTERNATE | PREVIOUS, specifier);
             allowed = (flagBits & ALTERNATE) != 0 ? new FormattableValidator(specifier) : ALL_VALIDATOR;
-            break;
-          case 'c': // unicode character
-          case 'C':
+          }
+          case 'c', 'C' -> { // unicode character
             checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
             checkNoPrecision(precision, specifier);
             allowed = new CharValidator(specifier);
-            break;
-          case 'd': // decimal integer
+          }
+          case 'd' -> { // decimal integer
             checkFlags(flagBits, ~ALTERNATE, specifier);
+            checkNoPrecision(precision, specifier);
             allowed = new IntValidator(specifier);
-            break;
-          case 'o': // octal integer
-          case 'x': // hexadecimal integer
-          case 'X':
+          }
+          case 'o', 'x', 'X' -> { // octal integer, hexadecimal integer
             checkFlags(flagBits, ~(PLUS | LEADING_SPACE | GROUP), specifier);
             checkNoPrecision(precision, specifier);
             allowed = new IntValidator(specifier);
-            break;
-          case 'a': // hexadecimal floating-point number
-          case 'A':
+          }
+          case 'a', 'A' -> { // hexadecimal floating-point number
             checkFlags(flagBits, ~(PARENTHESES | GROUP), specifier);
             allowed = new FloatValidator(specifier);
-            break;
-          case 'e': // floating point -> decimal number in computerized scientific notation
-          case 'E':
+          }
+          case 'e', 'E' -> { // floating point -> decimal number in computerized scientific notation
             checkFlags(flagBits, ~GROUP, specifier);
             allowed = new FloatValidator(specifier);
-            break;
-          case 'g': // scientific notation
-          case 'G':
+          }
+          case 'g', 'G' -> { // scientific notation
             checkFlags(flagBits, ~ALTERNATE, specifier);
             allowed = new FloatValidator(specifier);
-            break;
-          case 'f': // floating point -> decimal number
+          }
+          case 'f' -> // floating point -> decimal number
             allowed = new FloatValidator(specifier);
-            break;
-          default:
-            throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.unknown.conversion", specifier));
+          default -> throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.unknown.conversion", specifier));
         }
       }
       if (precision != null && precision.length() < 2) {
@@ -256,10 +269,32 @@ public final class FormatDecode {
       storeValidator(allowed, pos, parameters, argumentCount);
     }
     if (i < formatString.length()) {
-      checkText(formatString.substring(i));
+      String endString = formatString.substring(i);
+      if (!isPrefix) {
+        checkText(endString);
+      }
+      else {
+        //only case, when fsPattern doesn't find a specifier, is when there is no any conversion.
+        //add "s" as a random reasonable conversion
+        String suggestedString = endString + "s";
+        Matcher endMatcher = fsPattern.matcher(suggestedString);
+        if (!endMatcher.find() || endMatcher.end() != suggestedString.length()) {
+          checkText(endString);
+        }
+      }
     }
 
     return parameters.toArray(new Validator[0]);
+  }
+
+  private static DateTimeConversionType getDateTimeConversionType(char conversion) {
+    return switch (conversion) {
+      case 'H', 'I', 'k', 'l', 'M', 'S', 'L', 'N', 'p', 'R', 'T', 'r' -> DateTimeConversionType.TIME;
+      case 'z', 'Z' -> DateTimeConversionType.ZONE;
+      case 's', 'Q', 'c' -> DateTimeConversionType.ZONED_DATE_TIME;
+      case 'B', 'b', 'h', 'A', 'a', 'C', 'Y', 'y', 'j', 'm', 'd', 'e', 'D', 'F' -> DateTimeConversionType.DATE;
+      default -> DateTimeConversionType.UNKNOWN;
+    };
   }
 
   private static void checkNoPrecision(String precision, String specifier) {
@@ -329,6 +364,10 @@ public final class FormatDecode {
       return false;
     }
 
+    if (validators.length == 0) {
+      return false;
+    }
+
     int idx = IntStream.range(0, arguments.length)
       .filter(i -> PsiTreeUtil.isAncestor(arguments[i], cast, false)).findFirst()
       .orElse(-1);
@@ -366,18 +405,34 @@ public final class FormatDecode {
 
   private static class DateValidator extends Validator {
 
-    DateValidator(String specifier) {
+    private final DateTimeConversionType dateTimeConversionType;
+
+    DateValidator(String specifier, DateTimeConversionType dateTimeConversionType) {
       super(specifier);
+      this.dateTimeConversionType = dateTimeConversionType;
     }
 
     @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
-      return PsiType.LONG.equals(type) ||
+      return PsiTypes.longType().equals(type) ||
              CommonClassNames.JAVA_LANG_LONG.equals(text) ||
              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_DATE) ||
              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_CALENDAR) ||
-             InheritanceUtil.isInheritor(type, "java.time.temporal.TemporalAccessor");
+             (InheritanceUtil.isInheritor(type, "java.time.temporal.TemporalAccessor") &&
+              isValidTemporalAccessor(text));
+    }
+
+    private boolean isValidTemporalAccessor(String text) {
+      return switch (text) {
+        case CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME -> dateTimeConversionType == DateTimeConversionType.TIME ||
+                                          dateTimeConversionType == DateTimeConversionType.DATE;
+        case CommonClassNames.JAVA_TIME_LOCAL_DATE -> dateTimeConversionType == DateTimeConversionType.DATE;
+        case CommonClassNames.JAVA_TIME_LOCAL_TIME -> dateTimeConversionType == DateTimeConversionType.TIME;
+        case CommonClassNames.JAVA_TIME_OFFSET_TIME -> dateTimeConversionType == DateTimeConversionType.TIME ||
+                                       dateTimeConversionType == DateTimeConversionType.ZONE;
+        default -> true;
+      };
     }
   }
 
@@ -389,7 +444,8 @@ public final class FormatDecode {
 
     @Override
     public boolean valid(PsiType type) {
-      if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) || PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+      if (PsiTypes.charType().equals(type) || PsiTypes.byteType().equals(type) || PsiTypes.shortType().equals(type) || PsiTypes.intType()
+        .equals(type)) {
         return true;
       }
       final String text = type.getCanonicalText();
@@ -409,13 +465,13 @@ public final class FormatDecode {
     @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
-      return PsiType.INT.equals(type) ||
+      return PsiTypes.intType().equals(type) ||
              CommonClassNames.JAVA_LANG_INTEGER.equals(text) ||
-             PsiType.LONG.equals(type) ||
+             PsiTypes.longType().equals(type) ||
              CommonClassNames.JAVA_LANG_LONG.equals(text) ||
-             PsiType.SHORT.equals(type) ||
+             PsiTypes.shortType().equals(type) ||
              CommonClassNames.JAVA_LANG_SHORT.equals(text) ||
-             PsiType.BYTE.equals(type) ||
+             PsiTypes.byteType().equals(type) ||
              CommonClassNames.JAVA_LANG_BYTE.equals(text) ||
              "java.math.BigInteger".equals(text);
     }
@@ -430,9 +486,9 @@ public final class FormatDecode {
     @Override
     public boolean valid(PsiType type) {
       final String text = type.getCanonicalText();
-      return PsiType.DOUBLE.equals(type) ||
+      return PsiTypes.doubleType().equals(type) ||
              CommonClassNames.JAVA_LANG_DOUBLE.equals(text) ||
-             PsiType.FLOAT.equals(type) ||
+             PsiTypes.floatType().equals(type) ||
              CommonClassNames.JAVA_LANG_FLOAT.equals(text) ||
              "java.math.BigDecimal".equals(text);
     }
@@ -472,7 +528,7 @@ public final class FormatDecode {
     }
   }
 
-  abstract static class Validator {
+  public abstract static class Validator {
 
     private final String mySpecifier;
 
@@ -503,19 +559,28 @@ public final class FormatDecode {
     public PsiExpression getExpression() {
       return myExpression;
     }
-    
-    public static FormatArgument extract(PsiMethodCallExpression expression, List<String> methodNames, List<String> classNames) {
+
+    public static FormatArgument extract(@NotNull PsiCallExpression expression, List<String> methodNames, List<String> classNames) {
+      return extract(expression, methodNames, classNames, false);
+    }
+
+    static FormatArgument extract(@NotNull PsiCallExpression expression,
+                                  List<String> methodNames,
+                                  List<String> classNames,
+                                  boolean allowNotConstant) {
       final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) return null;
       PsiExpression[] arguments = argumentList.getExpressions();
 
       final PsiExpression formatArgument;
       int formatArgumentIndex;
-      if (FormatUtils.STRING_FORMATTED.matches(expression)) {
-        formatArgument = expression.getMethodExpression().getQualifierExpression();
+      if (expression instanceof PsiMethodCallExpression && FormatUtils.STRING_FORMATTED.matches(expression)) {
+        formatArgument = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
         formatArgumentIndex = 0;
       }
       else {
-        if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
+        if (!(expression instanceof PsiMethodCallExpression) ||
+            !FormatUtils.isFormatCall((PsiMethodCallExpression)expression, methodNames, classNames)) {
           return fromPrintFormatAnnotation(expression);
         }
 
@@ -527,15 +592,15 @@ public final class FormatDecode {
         formatArgument = arguments[formatArgumentIndex];
         formatArgumentIndex++;
       }
-      if (!ExpressionUtils.hasStringType(formatArgument) || !PsiUtil.isConstantExpression(formatArgument)) {
+      if (!ExpressionUtils.hasStringType(formatArgument) || (!allowNotConstant && !PsiUtil.isConstantExpression(formatArgument))) {
         return null;
       }
       return new FormatArgument(formatArgumentIndex, formatArgument);
     }
 
-    private static FormatArgument fromPrintFormatAnnotation(@NotNull PsiMethodCallExpression call) {
+    private static FormatArgument fromPrintFormatAnnotation(@NotNull PsiCallExpression call) {
       PsiExpressionList argList = call.getArgumentList();
-      if (argList.isEmpty()) return null;
+      if (argList == null || argList.isEmpty()) return null;
       PsiMethod method = call.resolveMethod();
       if (method == null) return null;
       PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -555,11 +620,50 @@ public final class FormatDecode {
     }
 
     public String calculateValue() {
-       final PsiType formatType = myExpression.getType();
+      final PsiType formatType = myExpression.getType();
       if (formatType == null) {
         return null;
       }
       return (String)ConstantExpressionUtil.computeCastTo(myExpression, formatType);
     }
+
+    public String calculatePrefixValue() {
+      StringBuilder builder = new StringBuilder();
+      boolean hasText = false;
+      final PsiType formatType = myExpression.getType();
+      if (formatType == null || !formatType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return null;
+      }
+
+      PsiExpression psiExpression = myExpression;
+      if (myExpression instanceof PsiLocalVariable variable) {
+        if (VariableAccessUtils.variableIsAssigned(variable)) {
+          return null;
+        }
+        psiExpression = variable.getInitializer();
+      }
+
+      if (psiExpression instanceof PsiPolyadicExpression polyadicExpression) {
+        PsiExpression[] operands = polyadicExpression.getOperands();
+        for (int i = 0, length = operands.length; i < length; i++) {
+          PsiExpression operand = operands[i];
+          String stringPart = (String)ConstantExpressionUtil.computeCastTo(operand, formatType);
+          if (stringPart != null) {
+            if (i == 0) {
+              hasText = true;
+            }
+            builder.append(stringPart);
+          }
+          else {
+            return hasText ? builder.toString() : null;
+          }
+        }
+      }
+      return builder.toString();
+    }
+  }
+
+  private enum DateTimeConversionType {
+    UNKNOWN, TIME, ZONE, ZONED_DATE_TIME, DATE
   }
 }

@@ -18,11 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Actual serialized data of a decorator call.
- * User: dcheryasov
  */
 public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStub, PyDecorator> {
   public PyDecoratorCallElementType() {
@@ -47,8 +49,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     List<String> positionalArguments = new ArrayList<>();
     Map<String, String> namedArguments = new HashMap<>();
     for (PyExpression argument : arguments) {
-      if (argument instanceof PyKeywordArgument) {
-        PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
+      if (argument instanceof PyKeywordArgument keywordArgument) {
         String keyword = keywordArgument.getKeyword();
         String value = extractLiteralValue(keywordArgument.getValueExpression());
         if (keyword != null && value != null) {
@@ -65,8 +66,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   private static @Nullable String extractLiteralValue(PyExpression expression) {
-    if (expression instanceof PyLiteralExpression) {
-      PyLiteralExpression literal = (PyLiteralExpression)expression;
+    if (expression instanceof PyLiteralExpression literal) {
       String value;
       if (literal instanceof PyStringLiteralExpression) {
         value = ((PyStringLiteralExpression)literal).getStringValue();
@@ -98,7 +98,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     final QualifiedName qualifiedName = stub.getQualifiedName();
     if (qualifiedName != null) {
       sink.occurrence(PyDecoratorStubIndex.KEY, qualifiedName.toString());
-      PyCustomDecoratorIndexer.EP_NAME.extensions().forEach(extension -> {
+      PyCustomDecoratorIndexer.EP_NAME.getExtensionList().forEach(extension -> {
         String keyForStub = extension.getKeyForStub(stub);
         if (keyForStub != null) {
           sink.occurrence(extension.getKey(), keyForStub);

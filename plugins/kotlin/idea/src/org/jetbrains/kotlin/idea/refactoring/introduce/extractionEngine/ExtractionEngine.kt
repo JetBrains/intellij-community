@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -11,10 +12,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.ui.awt.RelativePoint
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
-import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.nonBlocking
@@ -51,9 +51,7 @@ class ExtractionEngine(
         val project = extractionData.project
 
         val adjustExtractionData = helper.adjustExtractionData(extractionData)
-        val analysisResult = ProgressIndicatorUtils.underModalProgress(project,
-                                                                       KotlinBundle.message("progress.title.analyze.extraction.data")
-        ) {
+        val analysisResult = ActionUtil.underModalProgress(project, KotlinBundle.message("progress.title.analyze.extraction.data")) {
             adjustExtractionData.performAnalysis()
         }
 

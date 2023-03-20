@@ -8,15 +8,17 @@ import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ui.LibraryDescriptionPanel
 import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.wizard.CommitStepException
+import com.intellij.ide.wizard.withVisualPadding
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Version
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.layout.*
-import com.intellij.util.containers.Convertor
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -36,7 +38,7 @@ import javax.swing.tree.TreeSelectionModel
 
 open class StarterLibrariesStep(contextProvider: StarterContextProvider) : ModuleWizardStep() {
   protected val starterContext = contextProvider.starterContext
-  protected val starterSettings: StarterWizardSettings = contextProvider.settings
+  private val starterSettings: StarterWizardSettings = contextProvider.settings
   protected val moduleBuilder: StarterModuleBuilder = contextProvider.moduleBuilder
 
   private val topLevelPanel: BorderLayoutPanel = BorderLayoutPanel()
@@ -44,7 +46,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
   private val libraryDescriptionPanel: LibraryDescriptionPanel by lazy { LibraryDescriptionPanel() }
   private val selectedLibrariesPanel: SelectedLibrariesPanel by lazy { createSelectedLibrariesPanel() }
 
-  private val dependencyConfig: Map<String, DependencyConfig> by lazy { loadDependencyConfig() }
+  private val dependencyConfig: Map<String, DependencyConfig> by lazy { moduleBuilder.loadDependencyConfigInternal() }
 
   private val selectedLibraryIds: MutableSet<String> = mutableSetOf()
   private var selectedStarterId: String? = null
@@ -69,27 +71,16 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
     return topLevelPanel
   }
 
-  private fun loadDependencyConfig(): Map<String, DependencyConfig> {
-    return starterContext.starterPack.starters.associate { starter ->
-      starter.id to starter.versionConfigUrl.openStream().use {
-        val dependencyConfigUpdates = starterContext.startersDependencyUpdates[starter.id]
-        val dependencyConfigUpdatesVersion = dependencyConfigUpdates?.version?.let { version -> Version.parseVersion(version) }
-                                             ?: Version(-1, -1, -1)
+  override fun _commit(finishChosen: Boolean) {
+    super._commit(finishChosen)
 
-        val starterDependencyConfig = JDOMUtil.load(it)
-        val starterDependencyConfigVersion = StarterUtils.parseDependencyConfigVersion(starterDependencyConfig,
-                                                                                       starter.versionConfigUrl.path)
-
-        val mergeDependencyUpdate = starterDependencyConfigVersion < dependencyConfigUpdatesVersion
-        if (mergeDependencyUpdate) {
-          StarterUtils.mergeDependencyConfigs(
-            StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path, false),
-            dependencyConfigUpdates)
-        }
-        else {
-          StarterUtils.parseDependencyConfig(starterDependencyConfig, starter.versionConfigUrl.path)
-        }
+    try {
+      if (finishChosen) {
+        updateDataModel()
+        moduleBuilder.validateConfigurationInternal()
       }
+    } catch (e: ConfigurationException) {
+      throw CommitStepException(e.message)
     }
   }
 
@@ -179,13 +170,13 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
       }
     }
 
-    TreeSpeedSearch(librariesList, Convertor { treePath: TreePath ->
+    TreeSpeedSearch.installOn(librariesList, false) { treePath: TreePath ->
       when (val dataObject = (treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
         is LibraryCategory -> dataObject.title
         is Library -> dataObject.title
         else -> ""
       }
-    })
+    }
 
     librariesList.selectionModel.addTreeSelectionListener(TreeSelectionListener { e ->
       val path = e.path
@@ -203,13 +194,9 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
 
     return panel {
       if (starterContext.starterPack.starters.size > 1) {
-        row {
-          cell(isFullWidth = true) {
-            label(messages?.frameworkVersionLabel ?: JavaStartersBundle.message("title.project.version.label"))
-
-            component(startersComboBox)
-          }
-        }.largeGapAfter()
+        row(messages?.frameworkVersionLabel ?: JavaStartersBundle.message("title.project.version.label")) {
+          cell(startersComboBox)
+        }.bottomGap(BottomGap.SMALL)
       }
 
       row {
@@ -217,7 +204,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
       }
 
       row {
-        component(JPanel(GridBagLayout()).apply {
+        cell(JPanel(GridBagLayout()).apply {
           add(ScrollPaneFactory.createScrollPane(librariesList).apply {
             preferredSize = Dimension(0, 0)
           }, gridConstraint(0, 0))
@@ -239,8 +226,8 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
               addToCenter(selectedLibrariesPanel)
             }, gridConstraint(0, 1))
           }, gridConstraint(1, 0))
-        }).constraints(push, grow)
-      }
+        }).align(Align.FILL)
+      }.resizableRow()
     }.withVisualPadding()
   }
 
@@ -291,7 +278,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
     val initial = selectedStarterId == null
 
     val selectedStarter = when (val previouslySelectedStarter = starterContext.starter?.id) {
-      null -> starterPack.starters.firstOrNull()
+      null -> starterPack.starters.find { it.id == starterPack.defaultStarterId } ?: starterPack.starters.firstOrNull()
       else -> starterPack.starters.find { it.id == previouslySelectedStarter }
     }
     if (selectedStarter != null) {

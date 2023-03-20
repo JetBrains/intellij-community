@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
@@ -10,14 +10,14 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.copied
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
@@ -27,12 +27,12 @@ import org.jetbrains.kotlin.psi.KtPsiUtil.isOrdinaryAssignment
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun generateLambda(inputVariable: KtCallableDeclaration, expression: KtExpression, reformat: Boolean): KtLambdaExpression {
-    val psiFactory = KtPsiFactory(expression)
+    val psiFactory = KtPsiFactory(expression.project)
 
     val lambdaExpression = psiFactory.createExpressionByPattern(
         "{ $0 -> $1 }", inputVariable.nameAsSafeName, expression,
@@ -95,12 +95,12 @@ fun removePlusPlus(indexPlusPlus: KtUnaryExpression, reformat: Boolean) {
     val replacement = if (indexPlusPlus is KtPostfixExpression) // index++
         operand
     else // ++index
-        KtPsiFactory(operand).createExpressionByPattern("$0 + 1", operand, reformat = reformat)
+        KtPsiFactory(operand.project).createExpressionByPattern("$0 + 1", operand, reformat = reformat)
     indexPlusPlus.replace(replacement)
 }
 
 fun generateLambda(expression: KtExpression, vararg inputVariables: KtCallableDeclaration, reformat: Boolean): KtLambdaExpression {
-    return KtPsiFactory(expression).buildExpression(reformat = reformat) {
+    return KtPsiFactory(expression.project).buildExpression(reformat = reformat) {
         appendFixedText("{")
 
         for ((index, variable) in inputVariables.withIndex()) {
@@ -216,8 +216,8 @@ fun KtExpression.isSimpleCollectionInstantiation(): CollectionKind? {
 }
 
 fun canChangeLocalVariableType(variable: KtProperty, newTypeText: String, loop: KtForExpression): Boolean {
-    return tryChangeAndCheckErrors(variable, loop) {
-        it.typeReference = KtPsiFactory(it).createType(newTypeText)
+    return tryChangeAndCheckErrors(variable, loop) { property ->
+        property.typeReference = KtPsiFactory(property.project).createType(newTypeText)
     }
 }
 

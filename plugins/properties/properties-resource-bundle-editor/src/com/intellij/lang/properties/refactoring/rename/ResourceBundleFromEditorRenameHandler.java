@@ -50,8 +50,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
     final Object selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
     if (selectedElement != null) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-        if (selectedElement instanceof PropertiesPrefixGroup) {
-          final PropertiesPrefixGroup group = (PropertiesPrefixGroup)selectedElement;
+        if (selectedElement instanceof PropertiesPrefixGroup group) {
           ResourceBundleRenameUtil.renameResourceBundleKeySection(getPsiElementsFromGroup(group),
                                                                   group.getPresentableName(),
                                                                   group.getPrefix().length() - group.getPresentableName().length());

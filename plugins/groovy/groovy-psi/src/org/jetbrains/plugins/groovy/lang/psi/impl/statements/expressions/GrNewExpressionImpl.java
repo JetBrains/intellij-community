@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.Gr
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
-/**
- * @author ilyas
- */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
   private final GroovyConstructorReference myConstructorReference = new GrNewExpressionReference(this);

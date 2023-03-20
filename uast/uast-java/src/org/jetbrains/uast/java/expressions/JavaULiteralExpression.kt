@@ -17,16 +17,17 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
+@ApiStatus.Internal
 class JavaULiteralExpression(
   override val sourcePsi: PsiLiteralExpressionImpl,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULiteralExpression, UInjectionHost {
   override fun evaluate(): Any? = sourcePsi.value
-  override val value: Any? by lz { evaluate() }
+  override val value: Any? by lazyPub { evaluate() }
 
   override val isString: Boolean
     get() = super<UInjectionHost>.isString
@@ -34,4 +35,11 @@ class JavaULiteralExpression(
   override val psiLanguageInjectionHost: PsiLanguageInjectionHost
     get() = sourcePsi
 
+  override fun getStringRoomExpression(): UExpression {
+    val uParent = this.uastParent ?: return this
+    if (uParent is UPolyadicExpression && uParent.operator == UastBinaryOperator.PLUS) {
+      return uParent
+    }
+    return super.getStringRoomExpression()
+  }
 }

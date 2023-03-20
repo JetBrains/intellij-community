@@ -9,16 +9,15 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
 public final class UpdateInfoStatsCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ide.update.dialog", 1);
+  private static final EventLogGroup GROUP = new EventLogGroup("ide.update.dialog", 2);
   private static final EventId1<String> CLICK =
-    GROUP.registerEvent("link.clicked", EventFields.StringValidatedByCustomRule("url", UrlValidationRule.ID));
+    GROUP.registerEvent("link.clicked", EventFields.StringValidatedByCustomRule("url", UrlValidationRule.class));
 
   @Override
   public EventLogGroup getGroup() {
@@ -33,9 +32,10 @@ public final class UpdateInfoStatsCollector extends CounterUsagesCollector {
     private static final String ID = "update_dialog_rule_id";
     private static final List<String> JB_DOMAINS = Arrays.asList("jetbrains.com", "intellij.net", "intellij.com", "kotlinlang.org", "jb.gg");
 
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return ID.equals(ruleId);
+    public String getRuleId() {
+      return ID;
     }
 
     @Override

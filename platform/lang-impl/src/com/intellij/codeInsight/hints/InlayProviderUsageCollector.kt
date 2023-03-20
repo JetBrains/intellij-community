@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
@@ -11,10 +13,13 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 
+private val LOG = logger<InlayProviderUsageCollector>()
+
 class InlayProviderUsageCollector : ProjectUsagesCollector() {
-  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 7)
+  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 20)
 
   private val GLOBAL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "global.inlays.settings",
@@ -34,7 +39,24 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
         val models = arrayListOf(ParameterInlayProviderSettingsModel.ID)
         models.add("oc.type.hints")
         models.add("tms.local.md.hints")
-        InlayHintsProviderExtension.findProviders().mapTo(models) { it.provider.key.id }
+
+        for (extension in InlayHintsProviderFactory.EP.extensionList) {
+          LOG.debug("JavaClass in InlayHintsProviderFactory is ${extension.javaClass.canonicalName}")
+          for (providersInfo in extension.getProvidersInfo()) {
+            LOG.debug("Value for 'model' in InlayHintsProviderFactory is ${providersInfo.provider.key.id}")
+            models.add(providersInfo.provider.key.id)
+          }
+        }
+
+        for (extension in CodeVisionProvider.providersExtensionPoint.extensionList) {
+          LOG.debug("Value for 'model' in CodeVisionProvider is ${extension.groupId}")
+          models.add(extension.groupId)
+        }
+
+        for (extension in DaemonBoundCodeVisionProvider.extensionPoint.extensionList) {
+          LOG.debug("Value for 'model' in DaemonBoundCodeVisionProvider is ${extension.groupId}")
+          models.add(extension.groupId)
+        }
         return models
       }
   }
@@ -44,21 +66,32 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
     override val validationRule: List<String>
       get() {
         val options = ArrayList<String>()
-        val languagesWithSupport = PARAMETER_NAME_HINTS_EP.extensions().map { it.language }
-        for (languageId in languagesWithSupport) {
+        for (languageId in PARAMETER_NAME_HINTS_EP.extensionList.map { it.language }) {
+          LOG.debug("LanguageId in PARAMETER_NAME_HINTS_EP is ${languageId}")
           val language = Language.findLanguageByID(languageId)
           if (language != null) {
+            LOG.debug("Language is ${language.displayName}")
             val providers = InlayParameterHintsExtension.allForLanguage(language)
             for (provider in providers) {
-              provider.supportedOptions.mapTo(options) { it.id }
+              LOG.debug("JavaClass of Provider is ${provider.javaClass.canonicalName}")
+              for (supportedOptions in provider.supportedOptions) {
+                LOG.debug("Value for 'option_id' is ${supportedOptions.id}")
+                options.add(supportedOptions.id)
+              }
             }
           }
         }
-        InlayHintsProviderExtension.findProviders().flatMapTo(options) {
-          @Suppress("UNCHECKED_CAST") val provider = it.provider as InlayHintsProvider<Any>
+
+        for (providers in InlayHintsProviderExtension.findProviders()) {
+          @Suppress("UNCHECKED_CAST") val provider = providers.provider as InlayHintsProvider<Any>
+          LOG.debug("JavaClass of InlayHintsProvider is ${provider.javaClass.canonicalName}")
           val configurable = provider.createConfigurable(provider.createSettings())
-          configurable.cases.map { case -> case.id }
+          for (case in configurable.cases) {
+            LOG.debug("Value for 'option_id' is ${case.id}")
+            options.add(case.id)
+          }
         }
+
         return options
       }
   }

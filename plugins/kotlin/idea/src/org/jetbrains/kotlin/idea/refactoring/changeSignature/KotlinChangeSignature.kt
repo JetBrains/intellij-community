@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -12,18 +12,19 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeProp
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog
 import org.jetbrains.kotlin.idea.refactoring.createJavaMethod
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -65,12 +65,12 @@ fun runChangeSignature(
 }
 
 class KotlinChangeSignature(
-    project: Project,
-    editor: Editor?,
-    callableDescriptor: CallableDescriptor,
-    val configuration: KotlinChangeSignatureConfiguration,
-    val defaultValueContext: PsiElement,
-    @NlsContexts.Command commandName: String?
+  project: Project,
+  editor: Editor?,
+  callableDescriptor: CallableDescriptor,
+  val configuration: KotlinChangeSignatureConfiguration,
+  private val defaultValueContext: PsiElement,
+  @NlsContexts.Command commandName: String?
 ) : CallableRefactoring<CallableDescriptor>(
     project,
     editor,
@@ -131,6 +131,7 @@ class KotlinChangeSignature(
         }
     }
 
+    @TestOnly
     fun createSilentRefactoringProcessor(methodDescriptor: KotlinMethodDescriptor): BaseRefactoringProcessor? = selectRefactoringProcessor(
         methodDescriptor,
         propertyProcessor = { KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, it) },
@@ -174,7 +175,7 @@ class KotlinChangeSignature(
                             visibility ?: VisibilityUtil.getVisibilityModifier(myMethod.method.modifierList),
                             javaChangeInfo.method,
                             methodName,
-                            returnType ?: CanonicalTypes.createTypeWrapper(PsiType.VOID),
+                            returnType ?: CanonicalTypes.createTypeWrapper(PsiTypes.voidType()),
                             parameters.toTypedArray(),
                             exceptions,
                             isGenerateDelegate,
@@ -214,7 +215,7 @@ class KotlinChangeSignature(
             append("class $previewClassName {\n").append(ktSignature).append("{}\n}")
             toString()
         }
-        val dummyFile = KtPsiFactory(project).createFileWithLightClassSupport("dummy.kt", dummyFileText, originalMethod)
+        val dummyFile = KtPsiFactory(originalMethod.project).createPhysicalFile("dummy.kt", dummyFileText)
         val dummyDeclaration = (dummyFile.declarations.first() as KtClass).body!!.declarations.first()
 
         // Convert to PsiMethod which can be used in Change Signature dialog
@@ -224,7 +225,7 @@ class KotlinChangeSignature(
         // Create JavaChangeInfo based on new signature
         // TODO: Support visibility change
         val visibility = VisibilityUtil.getVisibilityModifier(originalMethod.modifierList)
-        val returnType = CanonicalTypes.createTypeWrapper(preview.returnType ?: PsiType.VOID)
+        val returnType = CanonicalTypes.createTypeWrapper(preview.returnType ?: PsiTypes.voidType())
         val params = (preview.parameterList.parameters.zip(ktChangeInfo.newParameters)).map {
             val (param, paramInfo) = it
             // Keep original default value for proper update of Kotlin usages

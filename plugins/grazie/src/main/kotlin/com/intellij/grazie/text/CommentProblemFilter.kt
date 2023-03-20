@@ -1,15 +1,17 @@
 package com.intellij.grazie.text
 
-import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
+import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
-import com.intellij.grazie.utils.Text.looksLikeCode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
+import com.intellij.psi.util.CachedValuesManager
 
 internal class CommentProblemFilter : ProblemFilter() {
+  private val tokenizer
+    get() = StandardSentenceTokenizer.Default
 
   override fun shouldIgnore(problem: TextProblem): Boolean {
     val text = problem.text
@@ -21,16 +23,12 @@ internal class CommentProblemFilter : ProblemFilter() {
       if (problem.rule.globalId.startsWith("LanguageTool.") && isAboutIdentifierParts(problem, text)) {
         return true
       }
-    }
-
-    if (domain == DOCUMENTATION) {
-      return isInFirstSentence(problem) && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))
+      if (isInFirstSentence(problem) && problem.fitsGroup(RuleGroup(RuleGroup.INCOMPLETE_SENTENCE))) {
+        return true
+      }
     }
 
     if (domain == COMMENTS) {
-      if (textAround(text, problem.highlightRange).looksLikeCode()) {
-        return true
-      }
       if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
         return true
       }
@@ -46,16 +44,18 @@ internal class CommentProblemFilter : ProblemFilter() {
   }
 
   private fun isInFirstSentence(problem: TextProblem) =
-    SRXSentenceTokenizer.tokenize(problem.text.substring(0, problem.highlightRange.startOffset)).size <= 1
+    tokenizer.tokenize(problem.text.substring(0, problem.highlightRanges[0].startOffset)).size <= 1
 
   private fun isAboutIdentifierParts(problem: TextProblem, text: TextContent): Boolean {
-    val range = problem.highlightRange
-    return text.subSequence(0, range.startOffset).endsWith('_') ||
-           text.subSequence(range.endOffset, text.length).startsWith('_')
+    val ranges = problem.highlightRanges
+    return ranges.any { text.subSequence(0, it.startOffset).endsWith('_') || text.subSequence(it.endOffset, text.length).startsWith('_') }
   }
 
   // the _todo_ word spoils the grammar of what follows
-  private fun isTodoComment(file: PsiFile, text: TextContent) =
-    PsiTodoSearchHelper.SERVICE.getInstance(file.project).findTodoItems(file).any { text.intersectsRange(it.textRange) }
-
+  private fun isTodoComment(file: PsiFile, text: TextContent): Boolean {
+    val todos = CachedValuesManager.getProjectPsiDependentCache(file) {
+      PsiTodoSearchHelper.getInstance(it.project).findTodoItems(it)
+    }
+    return todos.any { text.intersectsRange(it.textRange) }
+  }
 }

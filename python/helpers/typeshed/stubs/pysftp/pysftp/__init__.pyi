@@ -1,7 +1,10 @@
+from _typeshed import Self
+from collections.abc import Callable, Sequence
+from contextlib import AbstractContextManager
 from stat import S_IMODE as S_IMODE
 from types import TracebackType
-from typing import IO, Any, Callable, ContextManager, Sequence, Text, Type, Union
-from typing_extensions import Literal
+from typing import IO
+from typing_extensions import Literal, TypeAlias
 
 import paramiko
 from paramiko import AuthenticationException as AuthenticationException
@@ -30,8 +33,8 @@ class CnOpts:
     def __init__(self, knownhosts: str | None = ...) -> None: ...
     def get_hostkey(self, host: str) -> paramiko.PKey: ...
 
-_Callback = Callable[[int, int], Any]
-_Path = Union[Text, bytes]
+_Callback: TypeAlias = Callable[[int, int], object]
+_Path: TypeAlias = str | bytes
 
 class Connection:
     def __init__(
@@ -74,7 +77,7 @@ class Connection:
         confirm: bool = ...,
     ) -> paramiko.SFTPAttributes: ...
     def execute(self, command: str) -> list[str]: ...
-    def cd(self, remotepath: _Path | None = ...) -> ContextManager[None]: ...  # noqa: F811
+    def cd(self, remotepath: _Path | None = ...) -> AbstractContextManager[None]: ...  # noqa: F811
     def chdir(self, remotepath: _Path) -> None: ...
     def cwd(self, remotepath: _Path) -> None: ...
     def chmod(self, remotepath: _Path, mode: int = ...) -> None: ...
@@ -120,7 +123,7 @@ class Connection:
     @property
     def remote_server_key(self) -> paramiko.PKey: ...
     def __del__(self) -> None: ...
-    def __enter__(self) -> "Connection": ...
+    def __enter__(self: Self) -> Self: ...
     def __exit__(
-        self, etype: Type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
+        self, etype: type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
     ) -> None: ...

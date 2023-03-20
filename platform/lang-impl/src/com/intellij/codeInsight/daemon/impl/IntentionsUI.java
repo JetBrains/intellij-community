@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -16,23 +15,20 @@ public abstract class IntentionsUI {
     return project.getService(IntentionsUI.class);
   }
 
-  public IntentionsUI(Project project) {
+  IntentionsUI(@NotNull Project project) {
     myProject = project;
   }
 
   private final AtomicReference<CachedIntentions> myCachedIntentions = new AtomicReference<>();
 
   @NotNull
-  public CachedIntentions getCachedIntentions(@Nullable Editor editor, @NotNull PsiFile file) {
+  public CachedIntentions getCachedIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     return myCachedIntentions.updateAndGet(cachedIntentions -> {
       if (cachedIntentions != null && editor == cachedIntentions.getEditor() && file == cachedIntentions.getFile()) {
         return cachedIntentions;
       }
-      else {
-        return new CachedIntentions(myProject, file, editor);
-      }
+      return new CachedIntentions(myProject, file, editor);
     });
-
   }
 
   public void invalidate() {
@@ -40,7 +36,21 @@ public abstract class IntentionsUI {
     hide();
   }
 
+  public void invalidateForEditor(@NotNull Editor editor) {
+    myCachedIntentions.updateAndGet(
+      cachedIntentions -> cachedIntentions != null && editor == cachedIntentions.getEditor() ? null : cachedIntentions);
+    hideForEditor(editor);
+  }
+
   public abstract void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged);
 
   public abstract void hide();
+
+  /**
+   * Hide intention UI for a particular editor
+   * @param editor editor where intention UI might be shown
+   */
+  public void hideForEditor(@NotNull Editor editor) {
+    hide();
+  }
 }

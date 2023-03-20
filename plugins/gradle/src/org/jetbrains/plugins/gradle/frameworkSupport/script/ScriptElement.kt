@@ -6,9 +6,12 @@ sealed class ScriptElement {
   data class ArgumentElement(val name: String?, val value: Statement.Expression) : ScriptElement()
   sealed class Statement : ScriptElement() {
     object NewLineElement : Statement()
-    data class AssignElement(val name: String, val value: Expression) : Statement()
+    data class PropertyElement(val name: String, val value: Expression) : Statement()
+    data class AssignElement(val left: Expression, val right: Expression) : Statement()
     data class PlusAssignElement(val name: String, val value: Expression) : Statement()
     sealed class Expression : Statement() {
+      data class IntElement(val value: Int) : Expression()
+      data class BooleanElement(val value: Boolean) : Expression()
       data class StringElement(val value: String) : Expression()
       data class ListElement(val elements: List<Expression>) : Expression()
       data class CodeElement(val text: List<String>) : Expression()

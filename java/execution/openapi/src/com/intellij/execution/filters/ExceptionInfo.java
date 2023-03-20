@@ -97,26 +97,20 @@ public class ExceptionInfo {
   }
 
   private static @NotNull ExceptionInfo createExceptionInfo(String message, String exceptionName, int startOffset) {
-    switch (exceptionName) {
-      case "java.lang.ArrayIndexOutOfBoundsException":
-        return new ArrayIndexOutOfBoundsExceptionInfo(startOffset, message);
-      case "java.lang.ArrayStoreException":
-        return new ArrayStoreExceptionInfo(startOffset, message);
-      case "java.lang.ClassCastException":
-        return new ClassCastExceptionInfo(startOffset, message);
-      case "java.lang.NullPointerException":
-        return new NullPointerExceptionInfo(startOffset, message);
-      case "java.lang.AssertionError":
-        return new AssertionErrorInfo(startOffset, message);
-      case "java.lang.ArithmeticException":
-        return new ArithmeticExceptionInfo(startOffset, message);
-      case "java.lang.NegativeArraySizeException":
-        return new NegativeArraySizeExceptionInfo(startOffset, message);
-      default:
+    return switch (exceptionName) {
+      case "java.lang.ArrayIndexOutOfBoundsException" -> new ArrayIndexOutOfBoundsExceptionInfo(startOffset, message);
+      case "java.lang.ArrayStoreException" -> new ArrayStoreExceptionInfo(startOffset, message);
+      case "java.lang.ClassCastException" -> new ClassCastExceptionInfo(startOffset, message);
+      case "java.lang.NullPointerException" -> new NullPointerExceptionInfo(startOffset, message);
+      case "java.lang.AssertionError" -> new AssertionErrorInfo(startOffset, message);
+      case "java.lang.ArithmeticException" -> new ArithmeticExceptionInfo(startOffset, message);
+      case "java.lang.NegativeArraySizeException" -> new NegativeArraySizeExceptionInfo(startOffset, message);
+      default -> {
         ExceptionInfo info =
           JetBrainsNotNullInstrumentationExceptionInfo.tryCreate(startOffset, exceptionName, message);
-        return info != null ? info : new ExceptionInfo(startOffset, exceptionName, message);
-    }
+        yield info != null ? info : new ExceptionInfo(startOffset, exceptionName, message);
+      }
+    };
   }
 
   private static int getLength(String line) {
@@ -129,7 +123,7 @@ public class ExceptionInfo {
 
   /**
    * Returns a substring of {@code line} from {@code from} to {@code to} position after heuristically checking that
-   * given substring could be an exception class name. Currently all names which are not very long, consist of
+   * given substring could be an exception class name. Currently, all names which are not very long, consist of
    * Java identifier symbols and have at least one dot are considered to be possible exception names by this method.
    *
    * @param line line to extract exception name from
@@ -154,7 +148,7 @@ public class ExceptionInfo {
   private static class AfterExceptionRefiner implements ExceptionLineRefiner {
     private final ExceptionInfo myInfo;
 
-    public AfterExceptionRefiner(ExceptionInfo info) {this.myInfo = info;}
+    private AfterExceptionRefiner(ExceptionInfo info) { this.myInfo = info;}
 
     @Override
     public PsiElement matchElement(@NotNull PsiElement element) {

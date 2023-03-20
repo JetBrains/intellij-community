@@ -37,19 +37,11 @@ public class ToggleProfileAction extends MavenAction {
 
     MavenProfileKind targetState = getTargetState(e);
     if(targetState == null) return;
-    String text;
-    switch (targetState) {
-      case NONE:
-        text = MavenProjectBundle.message("maven.profile.deactivate");
-        break;
-      case EXPLICIT:
-        text = MavenProjectBundle.message("maven.profile.activate");
-        break;
-      case IMPLICIT:
-      default:
-        text = MavenProjectBundle.message("maven.profile.default");
-        break;
-    }
+    String text = MavenProjectBundle.message(switch (targetState) {
+      case NONE -> "maven.profile.deactivate";
+      case EXPLICIT -> "maven.profile.activate";
+      case IMPLICIT -> "maven.profile.default";
+    });
     e.getPresentation().setText(text);
   }
 
@@ -126,22 +118,21 @@ public class ToggleProfileAction extends MavenAction {
 
     MavenExplicitProfiles newExplicitProfiles = manager.getExplicitProfiles().clone();
     switch (targetState) {
-      case NONE:
+      case NONE -> {
         // disable explicitly
         newExplicitProfiles.getEnabledProfiles().removeAll(selectedProfileIds);
         newExplicitProfiles.getDisabledProfiles().addAll(selectedProfileIds);
-        break;
-      case EXPLICIT:
+      }
+      case EXPLICIT -> {
         // enable explicitly
         newExplicitProfiles.getDisabledProfiles().removeAll(selectedProfileIds);
         newExplicitProfiles.getEnabledProfiles().addAll(selectedProfileIds);
-        break;
-      case IMPLICIT:
-      default:
+      }
+      case IMPLICIT -> {
         // reset to default state
         newExplicitProfiles.getEnabledProfiles().removeAll(selectedProfileIds);
         newExplicitProfiles.getDisabledProfiles().removeAll(selectedProfileIds);
-        break;
+      }
     }
     manager.setExplicitProfiles(newExplicitProfiles);
   }

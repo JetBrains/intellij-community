@@ -3,8 +3,6 @@ package com.intellij.ide.customize
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.internal.statistic.FeaturedPluginsInfoProvider
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptorWithFeaturedPlugins
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -15,7 +13,7 @@ object CustomizeIDEWizardInteractions {
   /**
    * Featured plugins group which are suggested in IDE Customization Wizard.
    */
-  val featuredPluginGroups = AtomicReference<PluginGroups>()
+  val featuredPluginGroups = AtomicReference<Set<PluginId>>()
 
   var skippedOnPage = -1
   val interactions = mutableListOf<CustomizeIDEWizardInteraction>()
@@ -52,32 +50,22 @@ internal class CustomizeIDEWizardCollectorActivity : ApplicationInitializedListe
 
     ForkJoinPool.commonPool().execute {
       if (CustomizeIDEWizardInteractions.skippedOnPage != -1) {
-        FUCounterUsageLogger.getInstance().logEvent("customize.wizard", "remaining.pages.skipped",
-                                                    FeatureUsageData().addData("page", CustomizeIDEWizardInteractions.skippedOnPage))
+        CustomizeWizardCollector.logRemainingPagesSkipped(CustomizeIDEWizardInteractions.skippedOnPage)
       }
 
       val featuredPluginsProvider = CustomizeIDEWizardFeaturedPluginsProvider(CustomizeIDEWizardInteractions.featuredPluginGroups.get())
       for (interaction in CustomizeIDEWizardInteractions.interactions) {
-        val data = FeatureUsageData()
-        data.addData("timestamp", interaction.timestamp)
-        interaction.pluginDescriptor?.let { data.addPluginInfo(getPluginInfoByDescriptorWithFeaturedPlugins(it, featuredPluginsProvider)) }
-        interaction.groupId?.let { data.addData("group", it) }
-        FUCounterUsageLogger.getInstance().logEvent("customize.wizard", interaction.type.toString(), data)
+        val pluginInfo = if (interaction.pluginDescriptor != null)
+          getPluginInfoByDescriptorWithFeaturedPlugins(interaction.pluginDescriptor, featuredPluginsProvider)
+        else
+          null
+
+        CustomizeWizardCollector.logEvent(interaction.type, interaction.timestamp, pluginInfo, interaction.groupId)
       }
     }
   }
 }
 
-private class CustomizeIDEWizardFeaturedPluginsProvider(private val pluginGroups: PluginGroups?) : FeaturedPluginsInfoProvider {
-  private val validatedPlugins: Set<PluginId> by lazy {
-    if (pluginGroups != null) {
-      val fromRepository = pluginGroups.pluginsFromRepository
-      if (fromRepository.isNotEmpty()) {
-        return@lazy fromRepository.map { it.pluginId }.toSet()
-      }
-    }
-    return@lazy emptySet()
-  }
-
-  override fun getFeaturedPluginsFromMarketplace(): Set<PluginId> = validatedPlugins
+private class CustomizeIDEWizardFeaturedPluginsProvider(private val pluginGroups: Set<PluginId>) : FeaturedPluginsInfoProvider {
+  override fun getFeaturedPluginsFromMarketplace(): Set<PluginId> = pluginGroups
 }

@@ -35,6 +35,6 @@ internal object MLFeaturesUtil {
 
   private const val INVALID_VERSION = "invalid.version"
 
-  fun getVersionSafe(featureValue: MLFeatureValue.VersionValue): String =
+  private fun getVersionSafe(featureValue: MLFeatureValue.VersionValue): String =
     Version.parseVersion(featureValue.value)?.toString() ?: INVALID_VERSION
 }

@@ -35,7 +35,7 @@ fun test3() {
 
 fun test4() {
     val abc = ArrayList<Int>().mapTo(
-            LinkedHashSet()
+        LinkedHashSet()
     ) {
         it * 2
     }

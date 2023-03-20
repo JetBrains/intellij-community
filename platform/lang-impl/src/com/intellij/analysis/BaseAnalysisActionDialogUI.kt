@@ -3,9 +3,9 @@ package com.intellij.analysis
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -25,18 +25,20 @@ internal class BaseAnalysisActionDialogUI {
 
     return panel {
       group(scopeTitle) {
-        for (item in viewItems) {
-          row {
-            buttons.add(item.button)
-            cell(item.button).apply {
-              if (item.additionalComponents.any()) gap(RightGap.SMALL)
-            }
-            for (component in item.additionalComponents) {
-              if (component is Disposable) {
-                Disposer.register(disposable, component)
+        buttonsGroup {
+          for (item in viewItems) {
+            row {
+              buttons.add(item.button)
+              cell(item.button).apply {
+                if (item.additionalComponents.any()) gap(RightGap.SMALL)
               }
-              cell(component)
-                .horizontalAlign(HorizontalAlign.FILL)
+              for (component in item.additionalComponents) {
+                if (component is Disposable) {
+                  Disposer.register(disposable, component)
+                }
+                cell(component)
+                  .align(AlignX.FILL)
+              }
             }
           }
         }
@@ -51,7 +53,7 @@ internal class BaseAnalysisActionDialogUI {
         panel {
           row {
             cell(additionalPanel)
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(AlignX.FILL)
           }
         }
       }

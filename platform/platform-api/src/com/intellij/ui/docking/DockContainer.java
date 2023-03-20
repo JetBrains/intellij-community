@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.docking;
 
 import com.intellij.openapi.Disposable;
@@ -30,17 +30,17 @@ public interface DockContainer {
   /**
    * This area is used when nothing was found with getAcceptArea
    */
-  @NotNull
-  default RelativeRectangle getAcceptAreaFallback() {
+  default @NotNull RelativeRectangle getAcceptAreaFallback() {
     return getAcceptArea();
   }
 
   @NotNull
   ContentResponse getContentResponse(@NotNull DockableContent<?> content, RelativePoint point);
 
+  @NotNull
   JComponent getContainerComponent();
 
-  void add(@NotNull DockableContent<?> content, RelativePoint dropTarget);
+  void add(@NotNull DockableContent<?> content, @Nullable RelativePoint dropTarget);
 
   /**
    * Closes all contained editors.
@@ -53,13 +53,11 @@ public interface DockContainer {
 
   boolean isEmpty();
 
-  @Nullable
-  default Image startDropOver(@SuppressWarnings("unused") @NotNull DockableContent<?> content, @SuppressWarnings("unused") RelativePoint point) {
+  default @Nullable Image startDropOver(@SuppressWarnings("unused") @NotNull DockableContent<?> content, @SuppressWarnings("unused") RelativePoint point) {
     return null;
   }
 
-  @Nullable
-  default Image processDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
+  default @Nullable Image processDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
     return null;
   }
 

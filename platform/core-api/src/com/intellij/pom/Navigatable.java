@@ -29,7 +29,7 @@ public interface Navigatable {
   @RequiresReadLock
   @RequiresBackgroundThread
   default @Nullable NavigationRequest navigationRequest() {
-    return NavigationService.instance().rawNavigationRequest(this);
+    return NavigationService.getInstance().rawNavigationRequest(this);
   }
 
   /**

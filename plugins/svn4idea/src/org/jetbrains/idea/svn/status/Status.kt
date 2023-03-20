@@ -29,7 +29,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
       return if (field.isValid || `is`(STATUS_NONE, STATUS_UNVERSIONED, STATUS_ADDED)) field else info?.revision ?: field
     }
 
-  val copyFromUrl get() = if (isCopied) info?.copyFromUrl else null
+  val copyFromUrl: Url? get() = if (isCopied) info?.copyFromUrl else null
   val treeConflict get() = if (isTreeConflicted) info?.treeConflict else null
   val repositoryRootUrl get() = info?.repositoryRootUrl
 
@@ -43,8 +43,8 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   val isCopied = builder.isCopied
   val movedFrom: File? = builder.movedFrom
   val isSwitched = builder.isSwitched
-  val remoteLock = builder.remoteLock?.build()
-  val localLock = builder.localLock?.build()
+  val remoteLock: Lock? = builder.remoteLock?.build()
+  val localLock: Lock? = builder.localLock?.build()
   val changeListName = builder.changeListName
   val isTreeConflicted = builder.isTreeConflicted
 

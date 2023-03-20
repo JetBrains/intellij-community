@@ -43,7 +43,7 @@ public class XmlResolve2Test extends JavaResolveTestCase {
       final StringBuffer myOutput = new StringBuffer();
 
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         myOutput
           .append("  Attribute: ").append(attribute.getName())
           .append("(")
@@ -53,7 +53,7 @@ public class XmlResolve2Test extends JavaResolveTestCase {
       }
 
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         myOutput.append("Tag: ").append(tag.getName())
           .append("(").append(tag.getNamespace().isEmpty() ? "default" : tag.getNamespace())
           .append(")\n");

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -15,8 +16,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * A base class for scopes that restricts their content based on text ranges (from VCS, selection, etc)
+ */
 public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
-  private static final Logger ourLogger = Logger.getInstance(RangeBasedLocalSearchScope.class);
+  private static final Logger LOG = Logger.getInstance(RangeBasedLocalSearchScope.class);
 
   protected final boolean myIgnoreInjectedPsi;
   @NotNull
@@ -24,34 +28,45 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
 
   private LocalSearchScope myLocalSearchScope;
 
-  public RangeBasedLocalSearchScope(
-    @NotNull final @Nls String displayName,
-    final boolean ignoreInjectedPsi) {
+  public RangeBasedLocalSearchScope(@NotNull final @Nls String displayName,
+                                    final boolean ignoreInjectedPsi) {
     super(PsiElement.EMPTY_ARRAY);
     myDisplayName = displayName;
     myIgnoreInjectedPsi = ignoreInjectedPsi;
   }
 
-  @NotNull
-  public abstract TextRange[] getRanges(@NotNull VirtualFile file);
+  public abstract @NotNull TextRange @NotNull [] getRanges(@NotNull VirtualFile file);
 
-  protected static void collectPsiElementsAtRange(PsiFile psiFile, List<PsiElement> elements, int start, int end) {
-    final PsiElement startElement = psiFile.findElementAt(start);
-    if (startElement == null) {
-      return;
-    }
+  protected static void collectPsiElementsAtRange(@NotNull PsiFile psiFile, @NotNull List<? super @NotNull PsiElement> elements, int start, int end) {
     int modifiedEnd = end;
     int length = psiFile.getTextLength();
-    if (end > length)
-      ourLogger.error("Range extends beyond the PSI file range. Maybe PSI file is not actual");
+    if (end > length) {
+      LOG.error("Range extends beyond the PSI file range. Maybe PSI file is not actual");
+    }
 
-    if (end == length)
+    if (end == length) {
       modifiedEnd--;
+    }
 
-    final PsiElement endElement = psiFile.findElementAt(modifiedEnd);
-    if (endElement == null) {
+    PsiElement startElement = psiFile.findElementAt(start);
+    PsiElement endElement = psiFile.findElementAt(modifiedEnd);
+
+    if (startElement == null || endElement == null) {
       return;
     }
+
+    // PsiFileImpl.findElementAt may return element from another language, for example, JS element when called for an HTML file.
+    // Such an element would belong to a sister psi file.
+    // If startElement and endElement belong to different files, then findCommonParent doesn't work correctly, so we have to use
+    // AbstractFileViewProvider.findElementAt which always returns psi elements from an original file.
+    if (startElement.getContainingFile() != endElement.getContainingFile()) {
+      startElement = AbstractFileViewProvider.findElementAt(psiFile, start);
+      endElement = AbstractFileViewProvider.findElementAt(psiFile, modifiedEnd);
+      if (startElement == null || endElement == null) {
+        return;
+      }
+    }
+
     final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
     if (parent == null) {
       return;
@@ -66,9 +81,11 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
     }
     else {
       for (PsiElement child : children) {
+        TextRange childRange = child.getTextRange();
         if (!(child instanceof PsiWhiteSpace) &&
             child.getContainingFile() != null &&
-            range.intersects(child.getTextRange())) {
+            childRange != null &&
+            range.intersects(childRange)) {
           elements.add(child);
         }
       }
@@ -86,7 +103,7 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
     return myDisplayName;
   }
 
-  protected abstract PsiElement[] getPsiElements();
+  protected abstract @NotNull PsiElement @NotNull [] getPsiElements();
 
   private void createIfNeeded() {
     if (myLocalSearchScope == null) {

@@ -21,6 +21,16 @@ public class ClsProvidesStatementImpl extends ClsRepositoryPsiElement<PsiProvide
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitProvidesStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
   public PsiJavaCodeReferenceElement getInterfaceReference() {
     return myClassReference;
   }

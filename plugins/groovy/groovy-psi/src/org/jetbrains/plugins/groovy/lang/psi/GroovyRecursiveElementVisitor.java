@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.psi.PsiRecursiveVisitor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public abstract class GroovyRecursiveElementVisitor extends GroovyElementVisitor implements PsiRecursiveVisitor {
 
   @Override

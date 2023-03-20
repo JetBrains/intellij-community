@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.comment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChangeToCStyleCommentIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("change.to.c.style.comment.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("change.to.c.style.comment.intention.name");
+  }
+
   @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {

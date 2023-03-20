@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.ProjectExtension;
-import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.testFramework.TemporaryDirectoryExtension;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ public class UsageViewManagerTest {
   public static final ProjectExtension projectRule = new ProjectExtension();
 
   @RegisterExtension
-  public final TemporaryDirectory temporaryDirectory = new TemporaryDirectory();
+  public final TemporaryDirectoryExtension temporaryDirectory = new TemporaryDirectoryExtension();
 
   @Test
   public void scopeCreatedForFindInDirectory() {
@@ -34,7 +34,7 @@ public class UsageViewManagerTest {
     UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectRule.getProject(), findModel);
     UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectRule.getProject());
     ApplicationManager.getApplication().runReadAction(() -> {
-      SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
+      SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
       assertThat(GlobalSearchScopesCore.directoryScope(projectRule.getProject(), dir, true)).isEqualTo(scope);
     });
   }
@@ -48,7 +48,7 @@ public class UsageViewManagerTest {
     findModel.setProjectScope(false);
     UsageTarget target = new FindInProjectUtil.StringUsageTarget(projectRule.getProject(), findModel);
     UsageViewManagerImpl manager = (UsageViewManagerImpl)UsageViewManager.getInstance(projectRule.getProject());
-    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target});
+    SearchScope scope = manager.getMaxSearchScopeToWarnOfFallingOutOf(new UsageTarget[]{target}).get();
     assertThat(module.getModuleContentScope()).isEqualTo(scope);
   }
 }

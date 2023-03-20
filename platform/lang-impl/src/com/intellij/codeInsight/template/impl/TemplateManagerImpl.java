@@ -28,7 +28,6 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -60,13 +59,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
-
-    TemplateContextType.EP_NAME.addChangeListener(
-      () -> {
-        for (TemplateContextType type : getAllContextTypes()) {
-          type.clearCachedBaseContextType();
-        }
-      }, this);
   }
 
   @Override
@@ -161,7 +153,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
     Runnable r = () -> {
       if (selectionString != null) {
-        ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.deleteSelectedText(editor));
+        templateState.performWrite(() -> EditorModificationUtilEx.deleteSelectedText(editor));
       }
       else {
         editor.getSelectionModel().removeSelection();
@@ -523,8 +515,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   /**
    * @deprecated use {@link #isApplicable(TemplateImpl, TemplateActionContext)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     return isApplicable(template, TemplateActionContext.expanding(file, offset));
   }

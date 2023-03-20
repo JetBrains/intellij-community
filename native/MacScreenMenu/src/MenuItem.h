@@ -14,6 +14,7 @@
 
 
 @interface MenuItem : MenuComponent {
+    bool isAttached;
 @public
     NSMenuItem * nsMenuItem;
 }

@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -83,27 +84,12 @@ public interface VcsDataKeys {
   DataKey<Change[]> CHANGES_WITH_MOVED_CHILDREN = DataKey.create("ChangeListView.ChangesWithDetails");
   DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
 
-  /**
-   * Fast check for {@link #CHANGES} non-emptiness.
-   */
-  DataKey<Boolean> HAVE_SELECTED_CHANGES = DataKey.create("ChangeListView.HaveSelectedChanges");
-  /**
-   * Fast check for {@link #MODIFIED_WITHOUT_EDITING_DATA_KEY} non-emptiness.
-   */
-  DataKey<Boolean> HAVE_MODIFIED_WITHOUT_EDITING = DataKey.create("ChangeListView.HaveModifiedWithoutEditing");
-  /**
-   * Fast check for {@link com.intellij.openapi.vcs.changes.ui.ChangesListView#MISSING_FILES_DATA_KEY} non-emptiness.
-   * <p>
-   * See 80ee021430c03deef9b4378d124e1b603e207955 for {@link com.intellij.openapi.vcs.changes.ui.ChangesListView#LOCALLY_DELETED_CHANGES}
-   * vs {@link com.intellij.openapi.vcs.changes.ui.ChangesListView#MISSING_FILES_DATA_KEY} origins.
-   */
-  DataKey<Boolean> HAVE_LOCALLY_DELETED = DataKey.create("ChangeListView.HaveLocallyDeleted");
-
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");
 
   DataKey<String> PRESET_COMMIT_MESSAGE = DataKey.create("PRESET_COMMIT_MESSAGE");
   DataKey<CommitMessageI> COMMIT_MESSAGE_CONTROL = DataKey.create("COMMIT_MESSAGE_CONTROL");
+  DataKey<Document> COMMIT_MESSAGE_DOCUMENT = DataKey.create("COMMIT_MESSAGE_DOCUMENT");
   DataKey<CommitWorkflowHandler> COMMIT_WORKFLOW_HANDLER = DataKey.create("Vcs.CommitWorkflowHandler");
 
   DataKey<VcsHistorySession> HISTORY_SESSION = DataKey.create("VCS_HISTORY_SESSION");

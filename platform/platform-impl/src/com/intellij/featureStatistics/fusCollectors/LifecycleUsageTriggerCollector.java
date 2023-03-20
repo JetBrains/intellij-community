@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
+import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
+import com.intellij.internal.statistic.collectors.fus.MethodNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
@@ -27,7 +27,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 60);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 66);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -39,22 +39,23 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final VarargEventId IDE_EVENT_START = LIFECYCLE.registerVarargEvent("ide.start", eapField, testField, commandLineField,
                                                                                      internalField, headlessField, debugAgentField);
   private static final EventId1<Boolean> IDE_CLOSE = LIFECYCLE.registerEvent("ide.close", EventFields.Boolean("restart"));
-  private static final EventId1<Long> PROJECT_OPENING_FINISHED =
-    LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"));
+  private static final EventId2<Long, Boolean> PROJECT_OPENING_FINISHED =
+    LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"));
   private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
   private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed");
   private static final EventId PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached");
+  private static final EventId PROTOCOL_OPEN_COMMAND_HANDLED = LIFECYCLE.registerEvent("protocol.open.command.handled");
   private static final EventId FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated");
   private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
-  private static final EventField<String> DURATION_GROUPED = new DurationEventField();
-  private static final EventId2<Long, String> IDE_FREEZE =
-    LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"), DURATION_GROUPED);
+  private static final EventId1<Long> IDE_FREEZE =
+    LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"));
 
-  private static final EventField<String> errorField = EventFields.StringValidatedByCustomRule("error", "class_name");
+  private static final EventField<String> errorField = EventFields.StringValidatedByCustomRule("error", ClassNameRuleValidator.class);
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
     EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, (kind) -> StringUtil.toLowerCase(kind.name()));
   private static final EventField<Integer> errorHashField = EventFields.Int("error_hash");
-  private static final StringListEventField errorFramesField = EventFields.StringListValidatedByCustomRule("error_frames", "method_name");
+  private static final StringListEventField errorFramesField =
+    EventFields.StringListValidatedByCustomRule("error_frames", MethodNameRuleValidator.class);
   private static final EventField<Integer> errorSizeField = EventFields.Int("error_size");
   private static final EventField<Boolean> tooManyErrorsField = EventFields.Boolean("too_many_errors");
   private static final VarargEventId IDE_ERROR = LIFECYCLE.registerVarargEvent("ide.error",
@@ -66,6 +67,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
                                                                                errorSizeField,
                                                                                tooManyErrorsField);
   private static final EventId IDE_CRASH_DETECTED = LIFECYCLE.registerEvent("ide.crash.detected");
+
+  private static final EventId IDE_DEADLOCK_DETECTED = LIFECYCLE.registerEvent("ide.deadlock.detected");
 
   private enum ProjectOpenMode { New, Same, Attach }
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
@@ -94,8 +97,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     IDE_CLOSE.log(restart);
   }
 
-  public static void onProjectOpenFinished(@NotNull Project project, long time) {
-    PROJECT_OPENING_FINISHED.log(project, time);
+  public static void onProjectOpenFinished(@NotNull Project project, long time, boolean isTab) {
+    PROJECT_OPENING_FINISHED.log(project, time, isTab);
   }
 
   public static void onProjectOpened(@NotNull Project project) {
@@ -110,6 +113,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     PROJECT_MODULE_ATTACHED.log(project);
   }
 
+  public static void onProtocolOpenCommandHandled(@Nullable Project project) {
+    PROTOCOL_OPEN_COMMAND_HANDLED.log(project);
+  }
+
   public static void onFrameActivated(@Nullable Project project) {
     FRAME_ACTIVATED.log(project);
   }
@@ -119,7 +126,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   }
 
   public static void onFreeze(long durationMs) {
-    IDE_FREEZE.log(durationMs, toLengthGroup((int)(durationMs / 1000)));
+    IDE_FREEZE.log(durationMs);
   }
 
   public static void onError(@Nullable PluginId pluginId,
@@ -162,57 +169,20 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     IDE_CRASH_DETECTED.log();
   }
 
-  @NotNull
-  private static String toLengthGroup(int seconds) {
-    if (seconds >= 60) {
-      return "60s+";
-    }
-    if (seconds > 10) {
-      seconds -= (seconds % 10);
-      return seconds + "s+";
-    }
-    return seconds + "s";
+  public static void onDeadlockDetected() {
+    IDE_DEADLOCK_DETECTED.log();
   }
 
   public static void onProjectFrameSelected(int option) {
     ProjectOpenMode optionValue;
     switch (option) {
-      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW:
-        optionValue = ProjectOpenMode.New;
-        break;
-
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW:
-        optionValue = ProjectOpenMode.Same;
-        break;
-
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH:
-        optionValue = ProjectOpenMode.Attach;
-        break;
-
-      default:
+      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW -> optionValue = ProjectOpenMode.New;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> optionValue = ProjectOpenMode.Same;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> optionValue = ProjectOpenMode.Attach;
+      default -> {
         return;
-    }
-    PROJECT_FRAME_SELECTED.log(optionValue);
-  }
-
-  private static class DurationEventField extends PrimitiveEventField<String> {
-    @NotNull
-    @Override
-    public List<String> getValidationRule() {
-      return Arrays.asList("{regexp#integer}s", "-{regexp#integer}s", "{regexp#integer}s+");
-    }
-
-    @Override
-    public void addData(@NotNull FeatureUsageData fuData, String value) {
-      if (value != null) {
-        fuData.addData(getName(), value);
       }
     }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "duration_grouped";
-    }
+    PROJECT_FRAME_SELECTED.log(optionValue);
   }
 }

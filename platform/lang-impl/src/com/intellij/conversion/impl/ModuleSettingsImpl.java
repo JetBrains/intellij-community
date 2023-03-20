@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
@@ -37,20 +37,17 @@ public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleS
   }
 
   @Override
-  @NotNull
-  public String getModuleName() {
+  public @NotNull String getModuleName() {
     return myModuleName;
   }
 
   @Override
-  @Nullable
-  public String getModuleType() {
+  public @Nullable String getModuleType() {
     return getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
   }
 
   @Override
-  @NotNull
-  public Collection<Element> getFacetElements(@NotNull String facetTypeId) {
+  public @NotNull Collection<Element> getFacetElements(@NotNull String facetTypeId) {
     Element facetManager = getComponentElement(JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME);
     ArrayList<Element> elements = new ArrayList<>();
     addFacetTypes(facetTypeId, facetManager, elements);
@@ -90,20 +87,17 @@ public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleS
   }
 
   @Override
-  @NotNull
-  public String expandPath(@NotNull String path) {
+  public @NotNull String expandPath(@NotNull String path) {
     return context.expandPath(path, this);
   }
 
-  @NotNull
   @Override
-  public String collapsePath(@NotNull String path) {
+  public @NotNull String collapsePath(@NotNull String path) {
     return ConversionContextImpl.collapsePath(path, this);
   }
 
   @Override
-  @NotNull
-  public Collection<File> getSourceRoots(boolean includeTests) {
+  public @NotNull Collection<File> getSourceRoots(boolean includeTests) {
     final List<File> result = new ArrayList<>();
     for (Element contentRoot : getContentRootElements()) {
       for (Element sourceFolder : JDOMUtil.getChildren(contentRoot, JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG)) {
@@ -121,8 +115,7 @@ public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleS
   }
 
   @Override
-  @NotNull
-  public Collection<File> getContentRoots() {
+  public @NotNull Collection<File> getContentRoots() {
     final List<File> result = new ArrayList<>();
     for (Element contentRoot : getContentRootElements()) {
       String path = VfsUtilCore.urlToPath(contentRoot.getAttributeValue(JpsModuleRootModelSerializer.URL_ATTRIBUTE));
@@ -132,8 +125,7 @@ public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleS
   }
 
   @Override
-  @Nullable
-  public String getProjectOutputUrl() {
+  public @Nullable String getProjectOutputUrl() {
     final ComponentManagerSettings rootManagerSettings = context.getProjectRootManagerSettings();
     final Element projectRootManager = rootManagerSettings == null ? null : rootManagerSettings.getComponentElement("ProjectRootManager");
     final Element outputElement = projectRootManager == null ? null : projectRootManager.getChild("output");
@@ -167,10 +159,9 @@ public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleS
   }
 
   @Override
-  @NotNull
-  public List<File> getModuleLibraryRoots(String libraryName) {
-    final Element library = findModuleLibraryElement(libraryName);
-    return library != null ? context.getClassRoots(library, this) : Collections.emptyList();
+  public @NotNull List<Path> getModuleLibraryRoots(String libraryName) {
+    Element library = findModuleLibraryElement(libraryName);
+    return library == null ? Collections.emptyList() : context.getClassRootPaths(library, this);
   }
 
   @Override
@@ -178,8 +169,7 @@ public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleS
     return findModuleLibraryElement(libraryName) != null;
   }
 
-  @Nullable
-  private Element findModuleLibraryElement(String libraryName) {
+  private @Nullable Element findModuleLibraryElement(String libraryName) {
     for (Element element : getOrderEntries()) {
       if (JpsModuleRootModelSerializer.MODULE_LIBRARY_TYPE.equals(element.getAttributeValue(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE))) {
         final Element library = element.getChild(JpsLibraryTableSerializer.LIBRARY_TAG);
@@ -198,8 +188,7 @@ public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleS
   }
 
   @Override
-  @NotNull
-  public Collection<ModuleSettings> getAllModuleDependencies() {
+  public @NotNull Collection<ModuleSettings> getAllModuleDependencies() {
     Set<ModuleSettings> dependencies = new HashSet<>();
     collectDependencies(dependencies);
     return dependencies;

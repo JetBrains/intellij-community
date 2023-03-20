@@ -7,4 +7,5 @@ interface FloatingToolbarComponent {
 
   fun scheduleShow()
 
+  fun hideImmediately()
 }

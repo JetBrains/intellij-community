@@ -57,8 +57,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   private void restoreNode(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo) {
-    if (treeNode instanceof RestorableStateNode) {
-      RestorableStateNode node = (RestorableStateNode)treeNode;
+    if (treeNode instanceof RestorableStateNode node) {
       if (node.isComputed()) {
         doRestoreNode(node, parentInfo.getChild(node));
       }

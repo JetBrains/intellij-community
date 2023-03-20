@@ -16,7 +16,6 @@
 package com.intellij.diff.contents;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -74,7 +73,7 @@ public class FileContentImpl extends DiffContentBase implements FileContent {
 
   @Override
   public void onAssigned(boolean isAssigned) {
-    if (isAssigned && GeneralSettings.getInstance().isSyncOnFrameActivation()) DiffUtil.markDirtyAndRefresh(true, false, false, myFile);
+    if (isAssigned) DiffUtil.refreshOnFrameActivation(myFile);
   }
 
   @Override

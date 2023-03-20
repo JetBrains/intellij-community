@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -12,9 +13,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,7 @@ public abstract class ContentLabel extends BaseLabel {
 
   private CurrentTooltip currentIconTooltip;
 
-  private final BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
+  private final BaseButtonBehavior behavior = new BaseButtonBehavior(this, (Void)null) {
     @Override
     protected void execute(@NotNull MouseEvent e) {
       handleMouseClick(e);
@@ -46,6 +45,7 @@ public abstract class ContentLabel extends BaseLabel {
   public ContentLabel(@NotNull ToolWindowContentUi ui, boolean bold) {
     super(ui, bold);
 
+    behavior.setupListeners();
     behavior.setActionTrigger(BaseButtonBehavior.MOUSE_PRESSED_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
   }
@@ -93,7 +93,7 @@ public abstract class ContentLabel extends BaseLabel {
 
   protected boolean handleActionsClick(@NotNull MouseEvent e) {
     for (AdditionalIcon icon : myAdditionalIcons) {
-      if (mouseOverIcon(icon)) {
+      if (mouseOverIcon(e, icon)) {
         icon.runAction();
         e.consume();
         return true;
@@ -103,11 +103,29 @@ public abstract class ContentLabel extends BaseLabel {
   }
 
   final boolean mouseOverIcon(AdditionalIcon icon) {
+    return mouseOverIcon(null, icon);
+  }
+
+  final boolean mouseOverIcon(@Nullable MouseEvent e, AdditionalIcon icon) {
     if (!isHovered() || !icon.getAvailable()) return false;
 
-    PointerInfo info = MouseInfo.getPointerInfo();
-    if (info == null) return false;
-    Point point = info.getLocation();
+    Point point = null;
+    if (e != null) {
+      point = e.getLocationOnScreen();
+    }
+    else {
+      PointerInfo info = MouseInfo.getPointerInfo();
+      if (info != null) {
+        point = info.getLocation();
+      }
+      else {
+        AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+        if (event instanceof MouseEvent) {
+          point = ((MouseEvent)event).getLocationOnScreen();
+        }
+      }
+    }
+    if (point == null) return false;
     SwingUtilities.convertPointFromScreen(point, this);
     return icon.contains(point);
   }
@@ -215,9 +233,11 @@ public abstract class ContentLabel extends BaseLabel {
     setBorder(new EmptyBorder(0, left, 0, right));
     myIconWithInsetsWidth = rightIconWidth + right + left;
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
-      setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));
-      myIconWithInsetsWidth = rightIconWidth;
+    if (ExperimentalUI.isNewUI()) {
+      JBInsets insets = JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets();
+      insets.left = Math.max(left, insets.left);
+      setBorder(new JBEmptyBorder(insets));
+      myIconWithInsetsWidth = rightIconWidth + right + left;
     }
 
     return new Dimension(rightIconWidth + size.width, size.height);

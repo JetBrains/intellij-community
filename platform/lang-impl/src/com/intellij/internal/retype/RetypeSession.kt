@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Alarm
@@ -46,6 +47,8 @@ import org.intellij.lang.annotations.Language
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
+import java.util.function.Function
+import javax.swing.JComponent
 
 fun String.toReadable() = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
 
@@ -593,13 +596,13 @@ class RetypeSession(
 }
 
 val RETYPE_SESSION_KEY = Key.create<RetypeSession>("com.intellij.internal.retype.RetypeSession")
-val RETYPE_SESSION_NOTIFICATION_KEY = Key.create<EditorNotificationPanel>("com.intellij.internal.retype.RetypeSessionNotification")
 
+class RetypeEditorNotificationProvider : EditorNotificationProvider {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    return Function { createNotificationPanel(it) }
+  }
 
-class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
-  override fun getKey(): Key<EditorNotificationPanel> = RETYPE_SESSION_NOTIFICATION_KEY
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  private fun createNotificationPanel(fileEditor: FileEditor): EditorNotificationPanel? {
     if (fileEditor !is PsiAwareTextEditorImpl) return null
 
     val retypeSession = fileEditor.editor.getUserData(RETYPE_SESSION_KEY)
@@ -608,11 +611,11 @@ class RetypeEditorNotificationProvider : EditorNotifications.Provider<EditorNoti
     val panel: EditorNotificationPanel
 
     if (retypeSession.retypePaused) {
-      panel = EditorNotificationPanel(fileEditor)
+      panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
       panel.setText("Pause retyping. Click on editor to resume")
     }
     else {
-      panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
+      panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
       panel.setText("Retyping")
     }
     panel.createActionLabel("Stop without report") {

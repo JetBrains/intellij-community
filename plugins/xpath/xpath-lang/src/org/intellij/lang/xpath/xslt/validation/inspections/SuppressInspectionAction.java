@@ -79,9 +79,8 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
                 prevSibling = PsiTreeUtil.getPrevSiblingOfType(prevSibling, XmlComment.class);
             }
         }
-        if (prevSibling instanceof XmlComment) {
-            final XmlComment comment = (XmlComment)prevSibling;
-            final String text = comment.getCommentText();
+        if (prevSibling instanceof XmlComment comment) {
+          final String text = comment.getCommentText();
             if (InspectionUtil.SUPPRESSION_PATTERN.matcher(text).matches()) {
                 final String s = text.trim() + ", " + myToolId;
                 final XmlComment newComment = createComment(project, s);

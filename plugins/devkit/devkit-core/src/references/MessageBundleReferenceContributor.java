@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -53,7 +53,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESCRIPTION = ".description";
   @NonNls private static final String TRAILING_LABEL = ".trailingLabel";
-  @NonNls private static final String ADVANCED_SETTING = "advanced.setting.";
+  @NonNls public static final String ADVANCED_SETTING = "advanced.setting.";
   @NonNls public static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
   @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
@@ -94,6 +94,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
 
           final int dotBeforeSuffix = text.lastIndexOf('.');
           if (dotBeforeSuffix == -1) return null;
+          if (dotBeforeSuffix <= prefixEndIdx) return null;
 
           String id = text.substring(prefixEndIdx, dotBeforeSuffix);
           String prefix = text.substring(0, prefixEndIdx);
@@ -132,7 +133,8 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
           String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));
           String id = s.endsWith(DESCRIPTION) ? StringUtil.trimEnd(s, DESCRIPTION) :
                       (s.endsWith(TRAILING_LABEL) ? StringUtil.trimEnd(s, TRAILING_LABEL) : s);
-          return new AdvancedSettingReference(element, id);
+          TextRange range = TextRange.allOf(id).shiftRight(ADVANCED_SETTING.length());
+          return new AdvancedSettingsIdContributor.AdvancedSettingReference(element, range);
         }
       });
   }
@@ -268,7 +270,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   }
 
 
-  private static class ToolwindowIdReference extends ExtensionPointReferenceBase {
+  private static class ToolwindowIdReference extends ExtensionReferenceBase {
 
     private ToolwindowIdReference(@NotNull PsiElement element, String id) {
       super(element, TextRange.allOf(id).shiftRight(TOOLWINDOW_STRIPE_PREFIX.length()));
@@ -301,40 +303,6 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), value.replace(' ', '_'))
                        .withTypeText(getAttributeValue(extension, "factoryClass")));
-        return true;
-      });
-      return variants.toArray(LookupElement.EMPTY_ARRAY);
-    }
-  }
-
-
-  private static class AdvancedSettingReference extends ExtensionPointReferenceBase {
-
-    private AdvancedSettingReference(PsiElement element, String id) {
-      super(element, TextRange.allOf(id).shiftRight(ADVANCED_SETTING.length()));
-    }
-
-    @Override
-    protected String getExtensionPointFqn() {
-      return "com.intellij.advancedSetting";
-    }
-
-    @Override
-    public @NotNull String getUnresolvedMessagePattern() {
-      return DevKitBundle.message("message.bundle.convert.advanced.setting.id.cannot.resolve", getValue());
-    }
-
-    @Override
-    public Object @NotNull [] getVariants() {
-      final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
-      processCandidates(extension -> {
-        final GenericAttributeValue<String> id = extension.getId();
-        if (id == null || extension.getXmlElement() == null) return true;
-
-        final String value = id.getStringValue();
-        if (value == null) return true;
-
-        variants.add(LookupElementBuilder.create(extension.getXmlElement(), value));
         return true;
       });
       return variants.toArray(LookupElement.EMPTY_ARRAY);

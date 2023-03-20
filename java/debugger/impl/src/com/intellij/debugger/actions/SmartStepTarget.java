@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
-* @author Eugene Zhuravlev
-*/
+ * @author Eugene Zhuravlev
+ */
 public abstract class SmartStepTarget {
   private final PsiElement myHighlightElement;
   private final String myLabel;
@@ -52,6 +52,11 @@ public abstract class SmartStepTarget {
 
   @Nullable
   public Icon getIcon() {
+    return null;
+  }
+
+  @Nullable
+  public String getClassName() {
     return null;
   }
 

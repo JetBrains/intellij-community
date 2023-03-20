@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlElementArrangementEntry extends DefaultArrangementEntry
   implements TypeAwareArrangementEntry, NameAwareArrangementEntry, NamespaceAwareArrangementEntry {
 
@@ -44,9 +41,8 @@ public class XmlElementArrangementEntry extends DefaultArrangementEntry
     return myNamespace;
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getTypes() {
+  public @NotNull Set<? extends ArrangementSettingsToken> getTypes() {
     return Collections.singleton(myType);
   }
 }

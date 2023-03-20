@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Irina.Chernushina on 7/29/2016.
- */
 public class UnknownCredentialsHolder {
   private @NotNull String mySdkId;
 

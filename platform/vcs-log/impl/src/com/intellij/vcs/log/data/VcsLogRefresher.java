@@ -26,11 +26,17 @@ import java.util.Collection;
 public interface VcsLogRefresher {
 
   /**
+   * Returns the {@link DataPack} currently stored in this refresher.
+   *
+   * @return current {@link DataPack}
+   */
+  @NotNull DataPack getCurrentDataPack();
+
+  /**
    * Synchronously loads some recent commits from the VCS, builds the DataPack and queues to refresh everything. <br/>
    * This is called on log initialization and on the full refresh.
    */
-  @NotNull
-  DataPack readFirstBlock();
+  void readFirstBlock();
 
   /**
    * Refreshes the log and builds the actual data pack.

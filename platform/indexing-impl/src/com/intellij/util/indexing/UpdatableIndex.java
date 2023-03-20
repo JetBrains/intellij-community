@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
@@ -13,10 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-/**
- * @author Eugene Zhuravlev
- */
-public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Value, Input> {
+public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends InvertedIndex<Key, Value, Input>{
 
   boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws
                                                                                                                                    StorageException;
@@ -27,8 +24,18 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
   @NotNull
   Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
+  /**
+   * Goal of {@code getFileIndexMetaData()} is to allow
+   * saving important data to a cache to use later without read lock in analog of {@link UpdatableIndex#setIndexedStateForFile(int, IndexedFile)}
+   */
+  @Nullable FileIndexMetaData getFileIndexMetaData(@NotNull IndexedFile file);
+
+  void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data);
+
   void setIndexedStateForFile(int fileId, @NotNull IndexedFile file);
+
   void invalidateIndexedStateForFile(int fileId);
+
   void setUnindexedStateForFile(int fileId);
 
   @NotNull

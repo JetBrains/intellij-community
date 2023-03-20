@@ -24,8 +24,8 @@ public final class AnnotationProcessorProfileSerializer {
 
   public static void readExternal(ProcessorConfigProfile profile, Element element) {
     profile.setName(element.getAttributeValue(NAME, ""));
-    profile.setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
-    profile.setProcOnly(Boolean.valueOf(element.getAttributeValue(PROC_ONLY, "false")));
+    profile.setEnabled(Boolean.parseBoolean(element.getAttributeValue(ENABLED, "false")));
+    profile.setProcOnly(Boolean.parseBoolean(element.getAttributeValue(PROC_ONLY, "false")));
 
     final Element srcOutput = element.getChild("sourceOutputDir");
     final String out = srcOutput != null ? srcOutput.getAttributeValue(NAME) : null;

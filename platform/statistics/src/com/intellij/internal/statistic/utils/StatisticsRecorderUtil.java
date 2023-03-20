@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class StatisticsRecorderUtil {
+public final class StatisticsRecorderUtil {
   private static final String[] BUILT_IN_RECORDERS = new String[] {"FUS", "MLSE"};
   private static final String IDEA_FUS_RECORDER_INTERNAL_MODE = "fus.internal.test.mode";
   private static final String IDEA_RECORDER_INTERNAL_MODE = "fus.recorder.internal.test.mode";

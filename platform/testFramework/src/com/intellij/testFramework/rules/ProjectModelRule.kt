@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -6,6 +6,7 @@ import com.intellij.facet.FacetConfiguration
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
 import com.intellij.facet.impl.FacetUtil
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
@@ -17,6 +18,7 @@ import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -28,10 +30,10 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
@@ -40,25 +42,20 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
 
-class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule, BeforeEachCallback, AfterEachCallback {
+open class ProjectModelRule : TestRule {
   val baseProjectDir = TempDirectory()
-  private val disposableRule = DisposableRule()
+  val disposableRule = DisposableRule()
 
   lateinit var project: Project
   lateinit var projectRootDir: Path
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
-  private val projectResource = object : ExternalResource() {
+  private val projectResource = ProjectResource()
+
+  inner class ProjectResource : ExternalResource() {
     public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
-      if (forceEnableWorkspaceModel) {
-        WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
-          project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
-        }
-      }
-      else {
-        project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
-      }
+      project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
       filePointerTracker = VirtualFilePointerTracker()
     }
 
@@ -74,17 +71,6 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     return ruleChain.apply(base, description)
   }
 
-  override fun beforeEach(context: ExtensionContext) {
-    baseProjectDir.beforeEach(context)
-    projectResource.before()
-  }
-
-  override fun afterEach(context: ExtensionContext) {
-    baseProjectDir.after()
-    projectResource.after()
-    disposableRule.after()
-  }
-  
   fun createModule(name: String = "module"): Module {
     val imlFile = generateImlPath(name)
     val manager = moduleManager
@@ -110,22 +96,32 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")
 
-  fun createSdk(name: String = "sdk"): Sdk {
-    return ProjectJdkTable.getInstance().createSdk(name, sdkType)
+  fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
+    val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
+    modifySdk(sdk, setup)
+    return sdk
   }
 
-  fun addSdk(sdk: Sdk, setup: (SdkModificator) -> Unit = {}): Sdk {
+  fun modifySdk(sdk: Sdk, setup: (SdkModificator) -> Unit) {
+    val sdkModificator = sdk.sdkModificator
+    try {
+      setup(sdkModificator)
+    }
+    finally {
+      sdkModificator.commitChanges()
+    }
+  }
+
+  fun addSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
+    val sdk = createSdk(name, setup)
+    addSdk(sdk)
+    return sdk
+  }
+  
+  fun addSdk(sdk: Sdk) {
     runWriteActionAndWait {
       ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
-      val sdkModificator = sdk.sdkModificator
-      try {
-        setup(sdkModificator)
-      }
-      finally {
-        sdkModificator.commitChanges()
-      }
     }
-    return sdk
   }
 
   fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
@@ -149,14 +145,15 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
       libraryModel.commit()
       model.commit()
     }
+    if (libraryTable.tableLevel !in setOf(LibraryTableImplUtil.MODULE_LEVEL, LibraryTablesRegistrar.PROJECT_LEVEL)) {
+      disposeOnTearDown(library)
+    }
     return library
   }
 
   fun addApplicationLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = addLibrary(name, libraryTable, setup)
-    disposeOnTearDown(library)
-    return library
+    return addLibrary(name, libraryTable, setup)
   }
 
   private fun disposeOnTearDown(library: LibraryEx) {
@@ -176,19 +173,31 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
   }
 
   fun renameLibrary(library: Library, newName: String) {
-    val model = library.modifiableModel
-    model.name = newName
+    modifyLibrary(library) {
+      it.name = newName
+    }
+  }
+  
+  fun modifyLibrary(library: Library, action: (LibraryEx.ModifiableModelEx) -> Unit) {
+    val model = library.modifiableModel as LibraryEx.ModifiableModelEx
+    action(model)
     runWriteActionAndWait { model.commit() }
   }
 
   fun renameModule(module: Module, newName: String) {
-    val model = runReadAction { moduleManager.modifiableModel }
+    val model = runReadAction { moduleManager.getModifiableModel() }
     model.renameModule(module, newName)
     runWriteActionAndWait { model.commit() }
   }
 
   fun removeModule(module: Module) {
     runWriteActionAndWait { moduleManager.disposeModule(module) }
+  }
+
+  fun setUnloadedModules(vararg moduleName: String) {
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(moduleName.toList())
+    }
   }
 
   fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C = type.createDefaultConfiguration()): F {
@@ -204,6 +213,17 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     FacetUtil.deleteFacet(facet)
   }
 
+  protected fun setUp(methodName: String) {
+    baseProjectDir.before(methodName)
+    projectResource.before()
+  }
+
+  protected fun tearDown() {
+    disposableRule.after()
+    projectResource.after()
+    baseProjectDir.after()
+  }
+
   val sdkType: SdkTypeId
     get() = SimpleJavaSdkType.getInstance()
 
@@ -215,4 +235,24 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   val projectLibraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+}
+
+class ProjectModelExtension : ProjectModelRule(), BeforeEachCallback, AfterEachCallback {
+  override fun beforeEach(context: ExtensionContext) {
+    setUp(context.displayName)
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    tearDown()
+  }
+}
+
+class ClassLevelProjectModelExtension : ProjectModelRule(), BeforeAllCallback, AfterAllCallback {
+  override fun beforeAll(context: ExtensionContext) {
+    setUp(context.displayName)
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    tearDown()
+  }
 }

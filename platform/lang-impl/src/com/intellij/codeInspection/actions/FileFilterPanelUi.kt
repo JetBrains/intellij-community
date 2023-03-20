@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.actions
 
 import com.intellij.find.FindBundle
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
 
@@ -13,7 +13,7 @@ internal class FileFilterPanelUi {
       row {
         useFileMask.text = FindBundle.message("find.filter.file.mask.checkbox")
         cell(useFileMask)
-        cell(fileMask).horizontalAlign(HorizontalAlign.FILL)
+        cell(fileMask).align(AlignX.FILL)
       }
     }
   }

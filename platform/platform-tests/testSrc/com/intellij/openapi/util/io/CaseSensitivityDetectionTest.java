@@ -1,17 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.SuperUserStatus;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.junit.Assert.*;
@@ -40,14 +38,7 @@ public class CaseSensitivityDetectionTest {
 
   @Test
   public void wslRootsMustBeCaseSensitive() {
-    assumeWindows();
-
-    List<@NotNull String> distributions = enumerateWslDistributions();
-    assumeTrue("No WSL distributions found", !distributions.isEmpty());
-
-    String name = distributions.get(0);
-    assumeTrue("WSL distribution " + name + " doesn't seem to be alive", reanimateWslDistribution(name));
-
+    String name = assumeWorkingWslDistribution();
     String root = "\\\\wsl$\\" + name;
     assertEquals(root, CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(new File(root)));
   }

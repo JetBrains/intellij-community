@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -15,4 +16,6 @@ internal class ToggleAutoUpdateAction : ToggleAction(), DumbAware {
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     DocumentationToolWindowManager.autoUpdate = state
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }

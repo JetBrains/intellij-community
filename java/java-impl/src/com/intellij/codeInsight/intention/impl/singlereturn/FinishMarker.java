@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.Nullability;
@@ -87,8 +87,7 @@ public final class FinishMarker {
       }
       return parent != block;
     }
-    if (!(parent instanceof PsiStatement)) return true;
-    PsiStatement currentContext = (PsiStatement)parent;
+    if (!(parent instanceof PsiStatement currentContext)) return true;
     PsiStatement loopOrSwitch = PsiTreeUtil.getNonStrictParentOfType(currentContext, PsiLoopStatement.class, PsiSwitchStatement.class);
     if (loopOrSwitch != null && PsiTreeUtil.isAncestor(block, loopOrSwitch, true)) {
       currentContext = loopOrSwitch;
@@ -135,7 +134,7 @@ public final class FinishMarker {
 
   private static FinishMarker defineFinishMarker(PsiCodeBlock block, List<? extends PsiReturnStatement> returns, PsiType returnType,
                                                  boolean mayNeedMarker, PsiElementFactory factory) {
-    if (PsiType.VOID.equals(returnType)) {
+    if (PsiTypes.voidType().equals(returnType)) {
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
     }
     PsiReturnStatement terminalReturn = tryCast(ArrayUtil.getLastElement(block.getStatements()), PsiReturnStatement.class);
@@ -155,7 +154,7 @@ public final class FinishMarker {
       }
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, initValue);
     }
-    if (PsiType.BOOLEAN.equals(returnType)) {
+    if (PsiTypes.booleanType().equals(returnType)) {
       if (nonTerminalReturnValues.size() == 1) {
         Object value = nonTerminalReturnValues.iterator().next();
         if (value instanceof Boolean) {
@@ -165,7 +164,7 @@ public final class FinishMarker {
         }
       }
     }
-    if (PsiType.INT.equals(returnType) || PsiType.LONG.equals(returnType)) {
+    if (PsiTypes.intType().equals(returnType) || PsiTypes.longType().equals(returnType)) {
       return getMarkerForIntegral(nonTerminalReturns, terminalReturn, returnType, factory);
     }
     if (!(returnType instanceof PsiPrimitiveType)) {
@@ -210,7 +209,7 @@ public final class FinishMarker {
   private static FinishMarker getMarkerForIntegral(List<PsiExpression> nonTerminalReturns,
                                                    PsiReturnStatement terminalReturn,
                                                    PsiType returnType, PsiElementFactory factory) {
-    boolean isLong = PsiType.LONG.equals(returnType);
+    boolean isLong = PsiTypes.longType().equals(returnType);
     LongRangeSet fullSet = requireNonNull(JvmPsiRangeSetUtil.typeRange(returnType));
     LongRangeSet set = nonTerminalReturns.stream()
       .map(CommonDataflow::getExpressionRange)

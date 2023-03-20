@@ -2,20 +2,10 @@
 
 package com.intellij.facet;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 public final class FacetTypeId<F extends Facet> {
   private final String myDebugName;
-
-  /**
-   * @deprecated use {@link FacetTypeId#FacetTypeId(String)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public FacetTypeId() {
-    this("unknown");
-  }
 
   public FacetTypeId(@NonNls String debugName) {
     myDebugName = debugName;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -18,9 +18,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   // to avoid java modules deps the same pattern was copied at org.jetbrains.plugins.gradle.service.GradleInstallationManager.GROOVY_ALL_JAR_PATTERN
@@ -72,6 +69,15 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isAtLeastGroovy40(@NotNull PsiElement element) {
     return getInstance().isVersionAtLeast(element, GROOVY4_0);
+  }
+
+  public static @NlsSafe String getMavenSdkRepository(@NotNull String groovyVersion) {
+    if (compareSdkVersions(groovyVersion, GROOVY4_0) >= 0) {
+      return "org.apache.groovy";
+    }
+    else {
+      return "org.codehaus.groovy";
+    }
   }
 
   @Override
@@ -139,19 +145,20 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   private static int getVersionPart(String[] parts, int index) {
     String part = index < parts.length ? parts[index] : "-4";
-    if (part.equals(SNAPSHOT)) {
-      return 999;
-    } else if (part.equals(ALPHA)) {
-      return -3;
-    } else if (part.equals(BETA)) {
-      return -2;
-    } else if (part.equals(RC)) {
-      return -1;
-    } else try {
-      return Integer.parseInt(part);
-    } catch (NumberFormatException __) {
-      return -4;
-    }
+    return switch (part) {
+      case SNAPSHOT -> 999;
+      case ALPHA -> -3;
+      case BETA -> -2;
+      case RC -> -1;
+      default -> {
+        try {
+          yield Integer.parseInt(part);
+        }
+        catch (NumberFormatException __) {
+          yield -4;
+        }
+      }
+    };
   }
 
   @NotNull
@@ -170,22 +177,13 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public boolean isSDKHome(VirtualFile file) {
     if (file != null && file.isDirectory()) {
       final String path = file.getPath();
-      if (LibrariesUtil.getFilesInDirectoryByPattern(path + LIB, GROOVY_JAR_PATTERN).length > 0 ||
-          LibrariesUtil.getFilesInDirectoryByPattern(path + EMBEDDABLE, GROOVY_ALL_JAR_PATTERN).length > 0 ||
-          LibrariesUtil.getFilesInDirectoryByPattern(path, GROOVY_JAR_PATTERN).length > 0) {
-        return true;
-      }
+      GroovyHomeKind kind = GroovyHomeKind.fromString(path);
+      return kind != null;
     }
     return false;
   }
 
-
-  @NotNull
-  public String getSDKLibVersion(Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
-  }
-
   public Collection<String> getSDKVersions(Library[] libraries) {
-    return ContainerUtil.map2List(libraries, library -> getSDKLibVersion(library));
+    return ContainerUtil.map(libraries, library -> getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library)));
   }
 }

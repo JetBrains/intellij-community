@@ -4,7 +4,6 @@ package com.intellij.openapi.application
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -15,8 +14,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.*
 import kotlin.io.path.createDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.moveTo
 import kotlin.io.path.name
 
 @ApiStatus.Internal

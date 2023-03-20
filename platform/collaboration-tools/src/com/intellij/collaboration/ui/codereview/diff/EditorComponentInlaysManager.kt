@@ -1,24 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff
 
-import com.intellij.diff.tools.simple.SimpleAlignedDiffModel.Companion.ALIGNED_CHANGE_INLAY_PRIORITY
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Dimension
-import java.awt.Font
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
-import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
@@ -36,24 +35,25 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     EditorUtil.disposeWithEditor(editor, this)
   }
 
+
+  /**
+   * @param priority impacts the visual order in which inlays are displayed. Components with higher priority will be shown higher
+   */
   @RequiresEdt
-  fun insertAfter(lineIndex: Int, component: JComponent): Disposable? {
+  fun insertAfter(lineIndex: Int, component: JComponent, priority: Int = 0, rendererFactory: RendererFactory? = null): Inlay<*>? {
     if (Disposer.isDisposed(this)) return null
 
-    // Inlays added inside diff with aligned changes mode on, should conform the following rules to not break changes aligning:
-    // 1. Inlays should be added "above" line, except the last line.
-    // 2. The priority should be greater than ALIGNED_CHANGE_INLAY_PRIORITY or less in case of last line.
+    // TODO: rework diff mode with aligned changes.
+    //  This mode uses Inlays and some comments may look bad with this mode enabled because of the positioning
     val wrappedComponent = ComponentWrapper(component)
-    val isLastLine = lineIndex == editor.document.lineCount - 1
-    val offset = editor.document.getLineEndOffset(if (isLastLine) lineIndex else lineIndex + 1)
-    val priority = if (isLastLine) ALIGNED_CHANGE_INLAY_PRIORITY + 1 else ALIGNED_CHANGE_INLAY_PRIORITY - 1
+    val offset = editor.document.getLineEndOffset(lineIndex)
 
     return EditorEmbeddedComponentManager.getInstance()
       .addComponent(editor, wrappedComponent,
                     EditorEmbeddedComponentManager.Properties(EditorEmbeddedComponentManager.ResizePolicy.none(),
-                                                              null,
-                                                              isLastLine,
-                                                              !isLastLine,
+                                                              rendererFactory,
+                                                              false,
+                                                              false,
                                                               priority,
                                                               offset))?.also {
         managedInlays[wrappedComponent] = it
@@ -86,17 +86,14 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
 
     var editorTextWidth: Int = 0
 
-    private val maximumEditorTextWidth: Int
     private val verticalScrollbarFlipped: Boolean
 
     init {
-      val metrics = editor.getFontMetrics(Font.PLAIN)
-      val spaceWidth = FontLayoutService.getInstance().charWidth2D(metrics, ' '.toInt())
-      // -4 to create some space
-      maximumEditorTextWidth = ceil(spaceWidth * (editor.settings.getRightMargin(editor.project)) - 4).toInt()
-
       val scrollbarFlip = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
       verticalScrollbarFlipped = scrollbarFlip == JBScrollPane.Flip.HORIZONTAL || scrollbarFlip == JBScrollPane.Flip.BOTH
+
+      // calculate initial [editorTextWidth] if editor is already shown
+      updateWidthForAllInlays()
     }
 
     override fun componentResized(e: ComponentEvent) = updateWidthForAllInlays()
@@ -116,7 +113,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
 
     private fun calcWidth(): Int {
       val visibleEditorTextWidth = editor.scrollPane.viewport.width - getVerticalScrollbarWidth() - getGutterTextGap()
-      return min(max(visibleEditorTextWidth, 0), max(maximumEditorTextWidth, MINIMAL_TEXT_WIDTH))
+      return min(max(visibleEditorTextWidth, 0), JBUI.scale(PREFERRED_INLAY_WIDTH))
     }
 
     private fun getVerticalScrollbarWidth(): Int {
@@ -134,6 +131,6 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
   }
 
   companion object {
-    private const val MINIMAL_TEXT_WIDTH = 300
+    private val PREFERRED_INLAY_WIDTH = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH + 52
   }
 }

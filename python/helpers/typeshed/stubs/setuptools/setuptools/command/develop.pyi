@@ -9,7 +9,7 @@ class develop(namespaces.DevelopInstaller, easy_install):
     boolean_options: Any
     command_consumes_arguments: bool
     multi_version: bool
-    def run(self) -> None: ...  # type: ignore
+    def run(self) -> None: ...  # type: ignore[override]
     uninstall: Any
     egg_path: Any
     setup_path: Any

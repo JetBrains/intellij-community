@@ -44,9 +44,10 @@ public class JavaSourceRootDetectionUtilTest {
     assertPackageDetected("@Generated(\"text\") package p.q;", "p.q");
     assertPackageDetected("@Generated( (\"text\") ) package p.q;", "p.q");
     assertPackageDetected("@Generated((\"text\"), (\"text\")) package p.q;", "p.q");
-    assertPackageDetected("@Generated(\"text\")\n" +
-                          "@Deprecated\n" +
-                          "package p.q;", "p.q");
+    assertPackageDetected("""
+                            @Generated("text")
+                            @Deprecated
+                            package p.q;""", "p.q");
     assertPackageDetected("@Deprecated/*aa*/ package p.q;", "p.q");
   }
 

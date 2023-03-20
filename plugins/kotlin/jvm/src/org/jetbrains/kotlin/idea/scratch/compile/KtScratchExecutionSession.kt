@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.compile
 
@@ -8,6 +8,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.compile.KtScratchSourceFileProcessor.Result
 import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import java.io.File
@@ -71,7 +71,7 @@ class KtScratchExecutionSession(
     }
 
     private fun createFileWithLightClassSupport(result: Result.OK, psiFile: KtFile): KtFile =
-        runReadAction { KtPsiFactory(file.project).createFileWithLightClassSupport("tmp.kt", result.code, psiFile) }
+        runReadAction { KtPsiFactory.contextual(psiFile).createPhysicalFile("tmp.kt", result.code) }
 
     private fun tryRunCommandLine(modifiedScratchSourceFile: KtFile, psiFile: KtFile, result: Result.OK, callback: () -> Unit) {
         assert(backgroundProcessIndicator != null)
@@ -86,7 +86,7 @@ class KtScratchExecutionSession(
         }
     }
 
-    fun reportError(result: Result.OK, e: Throwable, psiFile: KtFile) {
+    private fun reportError(result: Result.OK, e: Throwable, psiFile: KtFile) {
         LOG.printDebugMessage(result.code)
         executor.errorOccurs(e.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name), e, isFatal = true)
     }

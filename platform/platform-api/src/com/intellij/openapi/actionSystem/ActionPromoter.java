@@ -17,17 +17,33 @@ import java.util.List;
  * <p/>
  * The current extension point allows specifying custom action sorter to use, if any. I.e., every component can define its custom
  * sorting rule to define priorities for target actions (classes of actions).
- *
+ * <p/>
  * If {@link AnAction} implements {@link ActionPromoter}, promoter would be used to rearrange this action (no need to register additionally as extension point)
+ *
  * @author Konstantin Bulenkov
  */
 public interface ActionPromoter {
   ExtensionPointName<ActionPromoter> EP_NAME = ExtensionPointName.create("com.intellij.actionPromoter");
 
+  /**
+   * Override and return the list of actions to try first.
+   * <p/>
+   * The method must be fast, must not do reference resolution, reparsing, etc.
+   * To ensure that the provided {@code context} returns only the already cached UI data.
+   * <p/>
+   * For example, {@link PlatformCoreDataKeys.CONTEXT_COMPONENT}
+   * and {@link PlatformCoreDataKeys.FILE_EDITOR} keys are available,
+   * but {@link CommonDataKeys.PSI_FILE} is not.
+   */
   default @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }
 
+  /**
+   * Override and return the list of actions to remove from processing.
+   * <p/>
+   * See {@link #promote(List, DataContext)} javadoc notes on performance and the provided {@link DataContext}.
+   */
   default @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }

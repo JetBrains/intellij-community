@@ -1,0 +1,701 @@
+{
+  "expui": {
+    "actions": {
+      "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
+      "deploy.svg": "nodes/deploy.svg",
+      "filterdups.svg": "toolbar/filterdups.svg",
+      "generated.svg": "actions/generatedFolder.svg",
+      "groupByMethod.svg": "actions/groupByMethod.svg",
+      "install.svg": "actions/install.svg",
+      "playFirst.svg": "actions/play_first.svg",
+      "playBack.svg": "actions/play_back.svg",
+      "playForward.svg": "actions/play_forward.svg",
+      "playLast.svg": "actions/play_last.svg",
+      "showWriteAccess.svg": "actions/showWriteAccess.svg",
+      "showReadAccess.svg": "actions/showReadAccess.svg",
+      "showImportStatements.svg": "actions/showImportStatements.svg",
+      "toggleVisibility.svg": "actions/toggleVisibility.svg",
+      "undeploy.svg": "nodes/undeploy.svg"
+    },
+    "bookmarks": {
+      "addBookmarksList.svg": "actions/addList.svg",
+      "bookmark.svg": "nodes/bookmark.svg",
+      "bookmarksList.svg": "nodes/bookmarkGroup.svg",
+      "mnemonic.svg": "nodes/mnemonic.svg"
+    },
+    "breakpoints": {
+      "breakpoint.svg": "debugger/db_set_breakpoint.svg",
+      "breakpointDependent.svg": "debugger/db_dep_line_breakpoint.svg",
+      "breakpointDisabled.svg": "debugger/db_disabled_breakpoint.svg",
+      "breakpointException.svg": "debugger/db_exception_breakpoint.svg",
+      "breakpointExceptionDisabled.svg": "debugger/db_disabled_exception_breakpoint.svg",
+      "breakpointField.svg": "debugger/db_field_breakpoint.svg",
+      "breakpointFieldDependent.svg": "debugger/db_dep_field_breakpoint.svg",
+      "breakpointFieldDisabled.svg": "debugger/db_disabled_field_breakpoint.svg",
+      "breakpointFieldMuted.svg": "debugger/db_muted_field_breakpoint.svg",
+      "breakpointFieldMutedDependent.svg": "debugger/db_muted_dep_field_breakpoint.svg",
+      "breakpointFieldMutedDisabled.svg": "debugger/db_muted_disabled_field_breakpoint.svg",
+      "breakpointFieldUnsuspendent.svg": "debugger/db_no_suspend_field_breakpoint.svg",
+      "breakpointFieldUnsuspendentValid.svg": "debugger/db_verified_no_suspend_field_breakpoint.svg",
+      "breakpointFieldValid.svg": "debugger/db_verified_field_breakpoint.svg",
+      "breakpointInvalid.svg": "debugger/db_invalid_breakpoint.svg",
+      "breakpointLambda.svg": "debugger/LambdaBreakpoint.svg",
+      "breakpointMethod.svg": "debugger/db_method_breakpoint.svg",
+      "breakpointMethodDependent.svg": "debugger/db_dep_method_breakpoint.svg",
+      "breakpointMethodDisabled.svg": "debugger/db_disabled_method_breakpoint.svg",
+      "breakpointMethodMuted.svg": "debugger/db_muted_method_breakpoint.svg",
+      "breakpointMethodMutedDependent.svg": "debugger/db_muted_dep_method_breakpoint.svg",
+      "breakpointMethodMutedDisabled.svg": "debugger/db_muted_disabled_method_breakpoint.svg",
+      "breakpointMethodUnsuspendent.svg": "debugger/db_no_suspend_method_breakpoint.svg",
+      "breakpointMethodUnsuspendentValid.svg": "debugger/db_verified_no_suspend_method_breakpoint.svg",
+      "breakpointMethodValid.svg": "debugger/db_verified_method_breakpoint.svg",
+      "breakpointMuted.svg": "debugger/db_muted_breakpoint.svg",
+      "breakpointMutedDependent.svg": "debugger/db_muted_dep_line_breakpoint.svg",
+      "breakpointMutedDisabled.svg": "debugger/db_muted_disabled_breakpoint.svg",
+      "breakpointObsolete.svg": "debugger/db_obsolete.svg",
+      "breakpointUnsuspendent.svg": "debugger/db_no_suspend_breakpoint.svg",
+      "breakpointUnsuspendentValid.svg": "debugger/db_verified_no_suspend_breakpoint.svg",
+      "breakpointValid.svg": "debugger/db_verified_breakpoint.svg",
+      "multipleBreakpoints.svg": "debugger/MultipleBreakpoints.svg",
+      "questionBadge.svg": "debugger/question_badge.svg"
+    },
+    "build": {
+      "build.svg": "actions/compile.svg",
+      "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
+      "gradleLoadChanges.svg": "icons/gradleLoadChanges.svg",
+      "gradleNavigate.svg": "icons/gradleNavigate.svg",
+      "task.svg": "icons/task.svg",
+      "taskGroup.svg": "nodes/configFolder.svg",
+      "toggleOfflineMode.svg": "actions/offlineMode.svg"
+    },
+    "diff": {
+      "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
+      "applyNotConflictsLeft.svg": "diff/applyNotConflictsLeft.svg",
+      "applyNotConflictsRight.svg": "diff/applyNotConflictsRight.svg",
+      "arrow@14x14.svg": "diff/arrow.svg",
+      "arrowLeftDown@14x14.svg": "diff/arrowLeftDown.svg",
+      "arrowLeftRight.svg": "diff/arrowLeftRight.svg",
+      "arrowRight@14x14.svg": "diff/arrowRight.svg",
+      "arrowRightDown@14x14.svg": "diff/arrowRightDown.svg",
+      "compare3LeftMiddle.svg": "diff/compare3LeftMiddle.svg",
+      "compare3LeftRight.svg": "diff/compare3LeftRight.svg",
+      "compare3MiddleRight.svg": "diff/compare3MiddleRight.svg",
+      "compare4LeftBottom.svg": "diff/compare4LeftBottom.svg",
+      "compare4LeftMiddle.svg": "diff/compare4LeftMiddle.svg",
+      "compare4LeftRight.svg": "diff/compare4LeftRight.svg",
+      "compare4MiddleBottom.svg": "diff/compare4MiddleBottom.svg",
+      "compare4MiddleRight.svg": "diff/compare4MiddleRight.svg",
+      "compare4RightBottom.svg": "diff/compare4RightBottom.svg",
+      "disableEditing.svg": "diff/lock.svg",
+      "gutterCheckBox@14x14.svg": "diff/gutterCheckBox.svg",
+      "gutterCheckBoxIndeterminate@14x14.svg": "diff/gutterCheckBoxIndeterminate.svg",
+      "gutterCheckBoxSelected@14x14.svg": "diff/gutterCheckBoxSelected.svg",
+      "magicResolve@14x14.svg": "diff/magicResolve.svg",
+      "magicResolveToolbar.svg": "diff/magicResolveToolbar.svg",
+      "remove@14x14.svg": "diff/remove.svg",
+      "revert@14x14.svg": "diff/revert.svg"
+    },
+    "editor": {
+      "inlayGlobe.svg": "actions/inlayGlobe.svg",
+      "inlaySecuredShield.svg": "actions/inlaySecuredShield.svg",
+      "inlayRenameInComments.svg": "actions/inlayRenameInComments.svg",
+      "inlayRenameInCommentsActive.svg": "actions/inlayRenameInCommentsActive.svg",
+      "inlayRenameInNoCodeFiles.svg": "actions/inlayRenameInNoCodeFiles.svg",
+      "inlayRenameInNoCodeFilesActive.svg": "actions/inlayRenameInNoCodeFilesActive.svg",
+      "inlaySettings.svg": "general/gear.svg",
+      "intentionBulb.svg": "actions/intentionBulb.svg",
+      "intentionBulbGrey.svg": "actions/intentionBulbGrey.svg",
+      "quickfixBulb.svg": "actions/quickfixBulb.svg",
+      "quickfixOffBulb.svg": "actions/quickfixOffBulb.svg"
+    },
+    "empty.svg": [
+      "nodes/finalMark.svg",
+      "nodes/junitTestMark.svg",
+      "nodes/locked.svg",
+      "nodes/runnableMark.svg",
+      "nodes/shared.svg",
+      "nodes/staticMark.svg",
+      "nodes/symlink.svg",
+      "nodes/tabAlert.svg"
+    ],
+    "fileTypes": {
+      "actionScript.svg": "fileTypes/as.svg",
+      "angularJS.svg": "icons/AngularJS.svg",
+      "archive.svg": [
+        "fileTypes/archive.svg",
+        "nodes/ppJar.svg"
+      ],
+      "aspectJ.svg": "fileTypes/aspectj.svg",
+      "css.svg": "fileTypes/css.svg",
+      "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
+      "docker.svg": [
+        "icons/Docker.svg",
+        "icons/DockerFile_1.svg"
+      ],
+      "eclipse.svg": "providers/eclipse.svg",
+      "editorConfig.svg": "nodes/editorconfig.svg",
+      "diagram.svg": "fileTypes/diagram.svg",
+      "freemaker.svg": "icons/freemarker-icon.svg",
+      "gradle.svg": [
+        "icons/gradle.svg",
+        "icons/gradleFile.svg"
+      ],
+      "html.svg": "fileTypes/html.svg",
+      "ideaModule.svg": "nodes/ideaModule.svg",
+      "idl.svg": "fileTypes/idl.svg",
+      "ignored.svg": "vcs/ignore_file.svg",
+      "java.svg": "fileTypes/java.svg",
+      "javascript.svg": [
+        "fileTypes/javaScript.svg",
+        "icons/JavaScript_debug_configuration.svg"
+      ],
+      "jest.svg": "icons/fileTypes/jestSnapshot.svg",
+      "jfr.svg": "fileTypes/jfr.svg",
+      "jshint.svg": "icons/fileTypes/jsHint.svg",
+      "json.svg": "fileTypes/json.svg",
+      "jsp.svg": "fileTypes/jsp.svg",
+      "jspx.svg": "fileTypes/jspx.svg",
+      "less.svg": "icons/less.svg",
+      "lombok.svg": "icons/lombok.svg",
+      "lombokConfig.svg": "icons/config.svg",
+      "manifest.svg": "fileTypes/manifest.svg",
+      "maven.svg": "icons/repositoryLibraryLogo.svg",
+      "modified.svg": "general/modified.svg",
+      "patch.svg": "vcs/patch_file.svg",
+      "php.svg": "icons/php-icon.svg",
+      "properties.svg": "fileTypes/properties.svg",
+      "protobuf.svg": "protoFile.png",
+      "python.svg": "icons/com/jetbrains/python/pythonFile.svg",
+      "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
+      "ruby.svg": [
+        "icons/ruby/ruby.svg",
+        "icons/ruby/ruby_file.svg"
+      ],
+      "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
+      "scratch.svg": "actions/scratch.svg",
+      "scratches.svg": "scope/scratches.svg",
+      "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
+      "shell.svg": [
+        "icons/shFile.svg",
+        "nodes/console.svg",
+        "debugger/console.svg"
+      ],
+      "sql.svg": "icons/sql.svg",
+      "text.svg": [
+        "fileTypes/custom.svg",
+        "fileTypes/text.svg"
+      ],
+      "typescript.svg": "icons/fileTypes/TypeScriptFile.svg",
+      "unknown.svg": "fileTypes/unknown.svg",
+      "velocity.svg": "icons/velocity.svg",
+      "vueJs.svg": "icons/vue.svg",
+      "wsdl.svg": "fileTypes/wsdlFile.svg",
+      "xhtml.svg": "fileTypes/xhtml.svg",
+      "xml.svg": [
+        "fileTypes/dtd.svg",
+        "fileTypes/xml.svg"
+      ],
+      "xsd.svg": "fileTypes/xsdFile.svg",
+      "yaml.svg": "fileTypes/yaml.svg",
+      "yarn.svg": "icons/nodejs/yarn.svg"
+    },
+    "general": {
+      "inspections": {
+        "inspectionsError.svg": "icons/general/inspectionsError.svg",
+        "inspectionsErrorEmpty.svg": "icons/general/inspectionsErrorEmpty.svg",
+        "inspectionsEye.svg": "icons/general/inspectionsEye.svg",
+        "inspectionsMixed.svg": "icons/general/inspectionsMixed.svg",
+        "inspectionsOK.svg": "icons/general/inspectionsOK.svg",
+        "inspectionsOKEmpty.svg": "icons/general/inspectionsOKEmpty.svg",
+        "inspectionsPause.svg": "icons/general/inspectionsPause.svg",
+        "inspectionsPowerSaveMode.svg": "icons/general/inspectionsPowerSaveMode.svg",
+        "inspectionsTrafficOff.svg": "icons/general/inspectionsTrafficOff.svg",
+        "inspectionsTypos.svg": "icons/general/inspectionsTypos.svg",
+        "inspectionsWarning.svg": "icons/general/inspectionsWarning.svg",
+        "inspectionsWarningEmpty.svg": "icons/general/inspectionsWarningEmpty.svg"
+      },
+      "add.svg": [
+        "general/add.svg",
+        "actions/AddMulticaret.svg"
+      ],
+      "addAccount.svg": "codeWithMe/cwmAccess.svg",
+      "user.svg": "general/user.svg",
+      "chevronDown.svg": [
+        "actions/findAndShowNextMatches.svg",
+        "actions/findAndShowNextMatchesSmall.svg",
+        "general/arrowDown.svg",
+        "general/chevron-down.svg",
+        "general/linkDropTriangle.svg",
+        "ide/notification/expand.svg",
+        "ide/notification/expandHover.svg"
+      ],
+      "chevronDownLarge.svg": "toolbar/expand.svg",
+      "chevronLeft.svg": [
+        "general/arrowLeft.svg",
+        "general/chevron-left.svg",
+        "actions/arrowCollapse.svg"
+      ],
+      "chevronRight.svg": [
+        "general/arrowRight.svg",
+        "general/chevron-right.svg",
+        "icons/ide/menuArrow.svg",
+        "icons/ide/menuArrowSelected.svg",
+        "ide/link.svg",
+        "actions/arrowExpand.svg"
+      ],
+      "chevronUp.svg": [
+        "actions/findAndShowPrevMatches.svg",
+        "actions/findAndShowPrevMatchesSmall.svg",
+        "general/arrowUp.svg",
+        "general/chevron-up.svg",
+        "ide/notification/collapse.svg",
+        "ide/notification/collapseHover.svg"
+      ],
+      "chevronUpLarge.svg": "toolbar/collapse.svg",
+      "close.svg": [
+        "actions/cancel.svg",
+        "codeWithMe/cwmTerminate.svg",
+        "ide/notification/close.svg",
+        "ide/notification/closeHover.svg"
+      ],
+      "closeSmall.svg": "actions/close.svg",
+      "closeSmallHovered.svg": "actions/closeHovered.svg",
+      "collapseAll.svg": "actions/collapseall.svg",
+      "copy.svg": "actions/copy.svg",
+      "cut.svg": "actions/menu-cut.svg",
+      "delete.svg": "actions/gc.svg",
+      "down.svg": "actions/nextOccurence.svg",
+      "download.svg": "actions/download.svg",
+      "dropdown.svg": "general/dropdown.svg",
+      "dropdownGutter.svg": "general/dropdownGutter.svg",
+      "edit.svg": [
+        "actions/edit.svg",
+        "actions/editSource.svg"
+      ],
+      "editorOnly.svg": "general/layoutEditorOnly.svg",
+      "editorPreview.svg": "general/layoutEditorPreview.svg",
+      "errorDialog.svg": "general/errorDialog.svg",
+      "exit.svg": "actions/exit.svg",
+      "expandAll.svg": "actions/expandall.svg",
+      "export.svg": "toolbarDecorator/export.svg",
+      "filter.svg": "general/filter.svg",
+      "help.svg": "actions/help.svg",
+      "hide.svg": "general/hideToolWindow.svg",
+      "history.svg": "vcs/history.svg",
+      "ideUpdate.svg": "ide/notification/ideUpdate.svg",
+      "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
+      "import.svg": "toolbarDecorator/import.svg",
+      "informationDialog.svg": "general/informationDialog.svg",
+      "layout.svg": "debugger/restoreLayout.svg",
+      "left.svg": "actions/back.svg",
+      "listFiles.svg": "actions/listFiles.svg",
+      "locate.svg": "general/locate.svg",
+      "locked.svg": "ide/readonly.svg",
+      "moreHorizontal.svg": "actions/moreHorizontal.svg",
+      "moreVertical.svg": [
+        "actions/more.svg",
+        "ide/notification/gear.svg",
+        "ide/notification/gearHover.svg"
+      ],
+      "moveDown.svg": "actions/moveDown.svg",
+      "moveUp.svg": "actions/moveUp.svg",
+      "open.svg": "actions/menu-open.svg",
+      "openNewTab.svg": "actions/openNewTab.svg",
+      "paste.svg": "actions/menu-paste.svg",
+      "pin.svg": [
+        "actions/pinTab.svg",
+        "general/pin_tab.svg"
+      ],
+      "previewHorizontally.svg": "actions/previewDetailsVertically.svg",
+      "previewOnly.svg": "general/layoutPreviewOnly.svg",
+      "previewVertically.svg": "actions/previewDetails.svg",
+      "refresh.svg": "actions/refresh.svg",
+      "reset.svg": "general/reset.svg",
+      "remove.svg": [
+        "general/remove.svg",
+        "actions/RemoveMulticaret.svg"
+      ],
+      "right.svg": "actions/forward.svg",
+      "runAnything.svg": "actions/run_anything.svg",
+      "search.svg": "actions/find.svg",
+      "settings.svg": [
+        "general/gearPlain.svg",
+        "general/settings.svg"
+      ],
+      "show.svg": [
+        "actions/groupBy.svg",
+        "actions/show.svg"
+      ],
+      "showAsTree.svg": "actions/showAsTree.svg",
+      "splitHorizontally.svg": "actions/splitHorizontally.svg",
+      "splitVertically.svg": "actions/splitVertically.svg",
+      "unlocked.svg": "ide/readwrite.svg",
+      "up.svg": "actions/previousOccurence.svg",
+      "upload.svg": "actions/upload.svg",
+      "redo.svg": "actions/redo.svg",
+      "undo.svg": "actions/undo.svg",
+      "save.svg": "actions/menu-saveall.svg",
+      "print.svg": "general/print.svg",
+      "projectWideAnalysisOff.svg": "actions/projectWideAnalysisOff.svg",
+      "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
+      "softWrap.svg": "actions/toggleSoftWrap.svg",
+      "scrollDown.svg": "runConfigurations/scroll_down.svg",
+      "projectStructure.svg": "general/projectStructure.svg",
+      "successDialog.svg": "general/successDialog.svg",
+      "successLogin.svg": "general/successLogin.svg",
+      "questionDialog.svg": "general/questionDialog.svg",
+      "warningDialog.svg": "general/warningDialog.svg"
+    },
+    "gutter": {
+      "bookmark.svg": "gutter/bookmark.svg",
+      "colors.svg": "gutter/colors.svg",
+      "dataSchema.svg": "gutter/dataSchema.svg",
+      "extAnnotation.svg": "gutter/extAnnotation.svg",
+      "javadocEdit.svg": "gutter/javadocEdit.svg",
+      "javadocRead.svg": "gutter/javadocRead.svg",
+      "mnemonic.svg": "gutter/mnemonic.svg",
+      "readAccess.svg": "gutter/readAccess.svg",
+      "rerun.svg": "runConfigurations/testState/run_run.svg",
+      "run.svg": "runConfigurations/testState/run.svg",
+      "runError.svg": "runConfigurations/testState/red2.svg",
+      "runFailed.svg": "runConfigurations/testState/yellow2.svg",
+      "runSuccess.svg": "runConfigurations/testState/green2.svg",
+      "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
+      "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
+      "writeAccess.svg": "gutter/writeAccess.svg"
+    },
+    "ide": {
+      "feedbackRating.svg": "ide/feedbackRating.svg",
+      "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
+      "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
+      "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg"
+    },
+    "image": {
+      "colorPicker_dark.svg": "ide/pipette.svg",
+      "actualZoom.svg": "graph/actualZoom.svg",
+      "colorPicker.svg": "ide/pipette.svg",
+      "grid.svg": "graph/grid.svg",
+      "zoomIn.svg": "graph/zoomIn.svg",
+      "zoomOut.svg": "graph/zoomOut.svg",
+      "fitContent.svg": "general/fitContent.svg"
+    },
+    "inline": {
+      "browse.svg": [
+        "general/openDisk.svg",
+        "general/openDiskHover.svg"
+      ],
+      "collapse.svg": [
+        "general/collapseComponent.svg",
+        "general/collapseComponentHover.svg"
+      ],
+      "copy.svg": [
+        "general/inlineCopy.svg",
+        "general/inlineCopyHover.svg"
+      ],
+      "exactWords.svg": [
+        "actions/words.svg",
+        "actions/wordsHovered.svg",
+        "actions/wordsSelected.svg"
+      ],
+      "expand.svg": [
+        "general/expandComponent.svg",
+        "general/expandComponentHover.svg"
+      ],
+      "searchHistory.svg": "actions/searchWithHistory.svg",
+      "inlineAdd.svg": [
+        "general/inlineAdd.svg",
+        "general/inlineAddHover.svg"
+      ],
+      "inlineEdit.svg": [
+        "general/inline_edit.svg",
+        "general/inline_edit_hovered.svg"
+      ],
+      "inlineSettings.svg": [
+        "general/gear.svg",
+        "general/gearHover.svg"
+      ],
+      "matchCase.svg": [
+        "actions/matchCase.svg",
+        "actions/matchCaseHovered.svg",
+        "actions/matchCaseSelected.svg"
+      ],
+      "newLine.svg": [
+        "actions/searchNewLine.svg",
+        "actions/searchNewLineHover.svg"
+      ],
+      "preserveCase.svg": [
+        "actions/preserveCase.svg",
+        "actions/preserveCaseHover.svg",
+        "actions/preserveCaseSelected.svg"
+      ],
+      "refresh.svg": [
+        "general/inlineRefresh.svg",
+        "general/inlineRefreshHover.svg"
+      ],
+      "regex.svg": [
+        "actions/regex.svg",
+        "actions/regexHovered.svg",
+        "actions/regexSelected.svg"
+      ],
+      "variables.svg": [
+        "general/inlineVariables.svg",
+        "general/inlineVariablesHover.svg"
+      ]
+    },
+    "nodes": {
+      "abstractException.svg": "nodes/abstractException.svg",
+      "alias.svg": "nodes/alias.svg",
+      "annotation.svg": "nodes/annotationtype.svg",
+      "annotationFolder.svg": "modules/annotation.svg",
+      "class.svg": "nodes/class.svg",
+      "classAbstract.svg": "nodes/abstractClass.svg",
+      "classAnonymous.svg": "nodes/anonymousClass.svg",
+      "classInitializer.svg": "nodes/classInitializer.svg",
+      "constant.svg": "nodes/constant.svg",
+      "controller.svg": "nodes/controller.svg",
+      "dataColumn.svg": "nodes/dataColumn.svg",
+      "dataSchema.svg": "nodes/dataSchema.svg",
+      "editFolder.svg": "modules/editFolder.svg",
+      "enum.svg": "nodes/enum.svg",
+      "errorIntroduction.svg": "nodes/errorIntroduction.svg",
+      "exception.svg": "nodes/exceptionClass.svg",
+      "excludeRoot.svg": "modules/excludeRoot.svg",
+      "excludedGenerated.svg": "modules/excludedGeneratedRoot.svg",
+      "field.svg": "nodes/field.svg",
+      "folder.svg": "nodes/folder.svg",
+      "function.svg": "nodes/function.svg",
+      "generated.svg": "modules/generatedFolder.svg",
+      "generatedSource.svg": "modules/generatedSourceRoot.svg",
+      "generatedTestRoot.svg": "modules/generatedTestRoot.svg",
+      "gvariable.svg": "nodes/gvariable.svg",
+      "interface.svg": "nodes/interface.svg",
+      "jdk.svg": "nodes/ppJdk.svg",
+      "lambda.svg": "nodes/lambda.svg",
+      "library.svg": "nodes/ppLib.svg",
+      "libraryFolder.svg": "nodes/ppLibFolder.svg",
+      "method.svg": "nodes/method.svg",
+      "methodAbstract.svg": "nodes/abstractMethod.svg",
+      "methodReference.svg": "nodes/methodReference.svg",
+      "modelClass.svg": "nodes/modelClass.svg",
+      "module.svg": "nodes/Module.svg",
+      "moduleGroup.svg": "nodes/moduleGroup.svg",
+      "package.svg": "nodes/package.svg",
+      "parameter.svg": [
+        "nodes/newParameter.svg",
+        "nodes/parameter.svg"
+      ],
+      "plugin.svg": "nodes/plugin.svg",
+      "property.svg": [
+        "nodes/property.svg",
+        "nodes/propertyRead.svg",
+        "nodes/propertyReadStatic.svg",
+        "nodes/propertyReadWrite.svg",
+        "nodes/propertyReadWriteStatic.svg",
+        "nodes/propertyWrite.svg",
+        "nodes/propertyWriteStatic.svg"
+      ],
+      "record.svg": "nodes/record.svg",
+      "resourcesRoot.svg": "modules/resourcesRoot.svg",
+      "sourceRoot.svg": "modules/sourceRoot.svg",
+      "star.svg": "nodes/favorite.svg",
+      "starEmpty.svg": "nodes/notFavoriteOnHover.svg",
+      "static.svg": "nodes/static.svg",
+      "test.svg": "nodes/test.svg",
+      "testIgnored.svg": "nodes/testIgnored.svg",
+      "testResources.svg": "nodes/testSourceFolder.svg",
+      "testResourcesRoot.svg": "modules/testResourcesRoot.svg",
+      "testRoot.svg": "modules/testRoot.svg",
+      "testSourceFolder.svg": "nodes/testSourceFolder.svg",
+      "type.svg": "nodes/type.svg",
+      "unloadedModule.svg": "modules/unloadedModule.svg",
+      "variable.svg": "nodes/variable.svg",
+      "warningIntroduction.svg": "nodes/warningIntroduction.svg"
+    },
+    "php": {
+      "phpHttpRequest.svg": "icons/run_http_request.svg",
+      "phpLocal.svg": "icons/php-local.svg",
+      "phpRemote.svg": [
+        "icons/php-remote.svg",
+        "icons/run_remote_debug.svg"
+      ],
+      "phpWeb.svg": "icons/run_web_app.svg"
+    },
+    "profiler": {
+      "collapseNode.svg": "profiler/collapseNode.svg",
+      "expandNode.svg": "profiler/expandNode.svg"
+    },
+    "progress": {
+      "pause.svg": [
+        "process/progressPause.svg",
+        "process/progressPauseSmall.svg"
+      ],
+      "pauseHovered.svg": [
+        "process/progressPauseHover.svg",
+        "process/progressPauseSmallHover.svg"
+      ],
+      "resume.svg": [
+        "process/progressResume.svg",
+        "process/progressResumeSmall.svg"
+      ],
+      "resumeHovered.svg": [
+        "process/progressResumeHover.svg",
+        "process/progressResumeSmallHover.svg"
+      ],
+      "stop.svg": [
+        "process/stop.svg",
+        "process/stopSmall.svg"
+      ],
+      "stopHovered.svg": [
+        "process/stopHovered.svg",
+        "process/stopSmallHovered.svg"
+      ]
+    },
+    "run": {
+      "attachToProcess.svg": "debugger/attachToProcess.svg",
+      "debug.svg": "actions/startDebugger.svg",
+      "dumpThreads.svg": "actions/dump.svg",
+      "evaluateExpression.svg": "debugger/evaluateExpression.svg",
+      "forceRunToCursor.svg": "icons/actions/force_run_to_cursor.svg",
+      "forceStepInto.svg": "icons/actions/force_step_into.svg",
+      "forceStepOver.svg": "icons/actions/force_step_over.svg",
+      "killProcess.svg": "debugger/killProcess.svg",
+      "muteBreakpoints.svg": "debugger/muteBreakpoints.svg",
+      "pause.svg": "actions/pause.svg",
+      "profile.svg": "actions/profile.svg",
+      "rerun.svg": "actions/rerun.svg",
+      "restart.svg": "actions/restart.svg",
+      "restartDebug.svg": "actions/restartDebugger.svg",
+      "restartFailedTests.svg": "runConfigurations/rerunFailedTests.svg",
+      "restartFrame.svg": "actions/restartFrame.svg",
+      "resume.svg": "actions/resume.svg",
+      "run.svg": "actions/execute.svg",
+      "runToCursor.svg": "actions/runToCursor.svg",
+      "runWithCoverage.svg": "general/runWithCoverage.svg",
+      "showCurrentFrame.svg": "debugger/showCurrentFrame.svg",
+      "showIgnored.svg": "runConfigurations/showIgnored.svg",
+      "showPassed.svg": "runConfigurations/showPassed.svg",
+      "smartStepInto.svg": "debugger/smartStepInto.svg",
+      "stepInto.svg": "actions/traceInto.svg",
+      "stepOut.svg": "actions/stepOut.svg",
+      "stepOutCodeBlock.svg": "actions/stepOutCodeBlock.svg",
+      "stepOver.svg": "actions/traceOver.svg",
+      "stop.svg": "actions/suspend.svg",
+      "testCustom.svg": "runConfigurations/testCustom.svg",
+      "testError.svg": "runConfigurations/testError.svg",
+      "testFailed.svg": "runConfigurations/testFailed.svg",
+      "testIgnored.svg": "runConfigurations/testIgnored.svg",
+      "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
+      "testPassed.svg": "runConfigurations/testPassed.svg",
+      "testPassedIgnored.svg": [
+        "runConfigurations/testPassedIgnored.svg",
+        "runConfigurations/toolbarPassedIgnored.svg"
+      ],
+      "testPaused.svg": "runConfigurations/testPaused.svg",
+      "testSkipped.svg": "runConfigurations/testSkipped.svg",
+      "testTerminated.svg": "runConfigurations/testTerminated.svg",
+      "testUnknown.svg": "runConfigurations/testUnknown.svg",
+      "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
+    },
+    "runConfigurations": {
+      "application.svg": "runConfigurations/application.svg",
+      "applicationRemote.svg": "runConfigurations/remote.svg",
+      "compound.svg": "runConfigurations/compound.svg",
+      "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
+      "javaScriptRemote.svg": "icons/JavaScript_remote_debug_configuration.svg",
+      "junit.svg": "runConfigurations/junit.svg",
+      "junitTestMark.svg": "runConfigurations/testMark.svg",
+      "webApp.svg": "runConfigurations/web_app.svg"
+    },
+    "status": {
+      "error.svg": [
+        "general/balloonError.svg",
+        "ide/fatalError.svg"
+      ],
+      "errorOutline.svg": "ide/fatalError-read.svg",
+      "failedInProgress.svg": "status/failedInProgress.svg",
+      "info.svg": "general/balloonInformation.svg",
+      "infoOutline.svg": "general/showInfos.svg",
+      "warning.svg": "general/balloonWarning.svg",
+      "warningOutline.svg": "general/showWarning.svg"
+    },
+    "table": {
+      "pagination.svg": "table/pagination.svg"
+    },
+    "toolbar": {
+      "unknown.svg": "toolbar/unknown.svg"
+    },
+    "toolwindow": {
+      "ant.svg": [
+        "toolwindows/toolWindowAnt.svg",
+        "icons/build.svg"
+      ],
+      "bookmarks.svg": "toolwindows/toolWindowBookmarks.svg",
+      "build.svg": "toolwindows/toolWindowBuild.svg",
+      "commit.svg": "toolwindows/toolWindowCommit.svg",
+      "debug.svg": "toolwindows/toolWindowDebugger.svg",
+      "dependencies.svg": [
+        "icons/artifact.svg",
+        "icons/artifactSmall.svg",
+        "icons/com/jetbrains/python/pythonPackages.svg"
+      ],
+      "documentation.svg": "toolwindows/documentation.svg",
+      "find.svg": "toolwindows/toolWindowFind.svg",
+      "gradle.svg": "icons/toolWindowGradle.svg",
+      "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
+      "messages.svg": "toolwindows/toolWindowMessages.svg",
+      "notifications.svg": "toolwindows/notifications.svg",
+      "problems.svg": [
+        "toolwindows/toolWindowProblems.svg",
+        "toolwindows/toolWindowProblemsEmpty.svg"
+      ],
+      "profiler.svg": "toolwindows/toolWindowProfiler.svg",
+      "project.svg": "toolwindows/toolWindowProject.svg",
+      "run.svg": "toolwindows/toolWindowRun.svg",
+      "services.svg": "toolwindows/toolWindowServices.svg",
+      "settingSync.svg": "toolwindows/settingSync.svg",
+      "structure.svg": "toolwindows/toolWindowStructure.svg",
+      "todo.svg": "toolwindows/toolWindowTodo.svg",
+      "vcs.svg": [
+        "toolwindows/toolWindowChanges.svg",
+        "vcs/branch.svg"
+      ],
+      "web.svg": "toolwindows/webToolWindow.svg"
+    },
+    "vcs": {
+      "changelist.svg": "vcs/changelist.svg",
+      "changes.svg": "actions/listChanges.svg",
+      "changesPush@12x12.svg": "icons/outgoing.svg",
+      "changesUpdate@12x12.svg": "icons/incoming.svg",
+      "cherryPick.svg": "icons/cherryPick.svg",
+      "commit.svg": "actions/commit.svg",
+      "currentBranch.svg": "icons/currentBranchLabel.svg",
+      "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
+      "diff.svg": "actions/diff.svg",
+      "fetch.svg": "vcs/fetch.svg",
+      "intelliSort.svg": "icons/IntelliSort.svg",
+      "merge.svg": "vcs/merge.svg",
+      "patch.svg": "vcs/patch.svg",
+      "push.svg": "vcs/push.svg",
+      "revert.svg": "actions/rollback.svg",
+      "stash.svg": [
+        "vcs/Shelve.svg",
+        "vcs/shelveSilent.svg",
+        "vcs/Stash.svg"
+      ],
+      "unshelve.svg": [
+        "vcs/Unshelve.svg",
+        "vcs/unshelveSilent.svg"
+      ],
+      "update.svg": "actions/checkOut.svg",
+      "vcs.svg": [
+        "vcs/branch.svg",
+        "vcs/branchNode.svg"
+      ]
+    },
+    "welcome": {
+      "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",
+      "fromVCSTab.svg": "welcome/fromVCSTab.svg",
+      "open.svg": "welcome/open.svg"
+    }
+  }
+}

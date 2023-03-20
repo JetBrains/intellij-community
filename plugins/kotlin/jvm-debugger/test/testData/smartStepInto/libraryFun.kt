@@ -5,3 +5,4 @@ fun foo() {
 fun <T> List<T>.count(): Int = size
 
 // EXISTS: arrayListOf(vararg Int), count()
+// IGNORE_K2

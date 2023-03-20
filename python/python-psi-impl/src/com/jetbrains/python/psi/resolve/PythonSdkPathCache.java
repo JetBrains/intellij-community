@@ -24,7 +24,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -32,6 +31,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -42,7 +42,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     synchronized (KEY) {
       Map<Project, PythonSdkPathCache> cacheMap = sdk.getUserData(KEY);
       if (cacheMap == null) {
-        cacheMap = ContainerUtil.createWeakMap();
+        cacheMap = new WeakHashMap<>();
         sdk.putUserData(KEY, cacheMap);
       }
       PythonSdkPathCache cache = cacheMap.get(project);

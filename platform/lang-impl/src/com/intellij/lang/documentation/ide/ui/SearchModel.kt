@@ -1,22 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode") // extracted from org.jetbrains.r.rendering.toolwindow.RDocumentationComponent
 
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.LightColors
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.addPropertyChangeListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -24,13 +31,12 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.SwingConstants
 import javax.swing.event.DocumentEvent
-import javax.swing.text.Highlighter
 import kotlin.math.abs
 
 internal class SearchModel(ui: DocumentationUI) : Disposable {
 
   private val editorPane: JEditorPane = ui.editorPane
-  private val highlighter: Highlighter = editorPane.highlighter
+  private val cs = CoroutineScope(Dispatchers.EDT)
 
   val searchField = SearchTextField()
 
@@ -58,18 +64,24 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
         }
       }
     })
-    Disposer.register(this, ui.addContentListener {
-      updateIndices()
+    cs.launch {
+      ui.contentUpdates.collect {
+        updateIndices()
+        updateHighlighting()
+      }
+    }
+    editorPane.addPropertyChangeListener(parent = this, "highlighter") {
       updateHighlighting()
-    })
+    }
   }
 
   private var pattern: String = ""
   private val indices = ArrayList<Int>()
   private var currentSelection = 0
-  private val tags = ArrayList<Any>()
+  private val tagHandles = ArrayList<() -> Unit>()
 
   override fun dispose() {
+    cs.cancel("SearchModel disposal")
     pattern = ""
     indices.clear()
     currentSelection = -1
@@ -86,6 +98,8 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
         e.presentation.isEnabled = hasPrev
       }
 
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
       override fun actionPerformed(e: AnActionEvent) = prev()
     },
     object : DumbAwareAction() {
@@ -98,6 +112,8 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = hasNext
       }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     },
   )
 
@@ -177,24 +193,28 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
     }
     else {
       searchField.textEditor.background = LightColors.RED
-      matchLabel.foreground = UIUtil.getErrorForeground()
+      matchLabel.foreground = NamedColorUtil.getErrorForeground()
       matchLabel.text = ApplicationBundle.message("editorsearch.matches", matches)
     }
   }
 
   private fun removeHighlights() {
-    for (it in tags) {
-      highlighter.removeHighlight(it)
+    for (tagHandle in tagHandles) {
+      tagHandle()
     }
-    tags.clear()
+    tagHandles.clear()
   }
 
   private fun updateHighlighting() {
     removeHighlights()
+    val highlighter = editorPane.highlighter ?: return
     editorPane.invalidate()
     editorPane.repaint()
     for (index in indices) {
-      tags.add(highlighter.addHighlight(index, index + pattern.length, SearchHighlighterPainter(indices[currentSelection] == index)))
+      val tag = highlighter.addHighlight(index, index + pattern.length, SearchHighlighterPainter(indices[currentSelection] == index))
+      tagHandles.add {
+        highlighter.removeHighlight(tag)
+      }
     }
   }
 }

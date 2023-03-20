@@ -42,9 +42,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 
-/**
- * @author peter
- */
 public final class GotoActionItemProvider implements ChooseByNameWeightedItemProvider {
   private static final int BONUS_FOR_SPACE_IN_PATTERN = 100;
   private static final int SETTINGS_PENALTY = 100;
@@ -344,7 +341,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   @Nullable
   @Nls
-  private static String getAnActionText(AnAction value) {
+  public static String getAnActionText(AnAction value) {
     Presentation presentation = value.getTemplatePresentation().clone();
     value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     return presentation.getText();

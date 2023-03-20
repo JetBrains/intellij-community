@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.detect;
 
 import com.intellij.ide.ProjectGroup;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -28,10 +29,10 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
-class EclipseProjectDetector extends ProjectDetector {
+final class EclipseProjectDetector extends ProjectDetector {
   private final static Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
-  protected void collectProjectPaths(List<String> projects) {
+  void collectProjectPaths(List<String> projects) {
     String home = System.getProperty("user.home");
     Path path = Path.of(home, ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
     File file = path.toFile();
@@ -54,7 +55,7 @@ class EclipseProjectDetector extends ProjectDetector {
     }
   }
 
-  protected String[] getStandardAppLocations() {
+  String[] getStandardAppLocations() {
     if (SystemInfo.isMac) {
       return new String[] { "/Applications/Eclipse.app/Contents/Eclipse/configuration/.settings/org.eclipse.ui.ide.prefs" };
     }
@@ -68,8 +69,8 @@ class EclipseProjectDetector extends ProjectDetector {
   }
 
   @Override
-  public void detectProjects(Consumer<List<String>> onFinish) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+  public void detectProjects(Consumer<? super List<String>> onFinish) {
+    AppJavaExecutorUtil.executeOnPooledIoThread(() -> {
       try {
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
         @Nls String groupName = EclipseBundle.message("eclipse.projects");
@@ -130,7 +131,12 @@ class EclipseProjectDetector extends ProjectDetector {
 
   static String[] getWorkspaces(String prefs) throws IOException {
     Properties properties = new Properties();
-    properties.load(new StringReader(prefs));
+    try {
+      properties.load(new StringReader(prefs));
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn(e);
+    }
     String workspaces = properties.getProperty("RECENT_WORKSPACES");
     return workspaces == null ? ArrayUtil.EMPTY_STRING_ARRAY : workspaces.split("\\n");
   }

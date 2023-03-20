@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class ZenCodingGenerator {
   private static final ExtensionPointName<ZenCodingGenerator> EP_NAME = new ExtensionPointName<>("com.intellij.xml.zenCodingGenerator");
 
@@ -109,7 +106,7 @@ public abstract class ZenCodingGenerator {
         }
       }
     }
-    return groupCount == 0 && textCount == 0 && bracketCount == 0 && currentOffset >= 0 && currentOffset < text.length()
+    return groupCount == 0 && textCount == 0 && bracketCount == 0 && currentOffset < text.length()
            ? text.subSequence(currentOffset, text.length()).toString().replaceFirst("^[*+>^]+", "")
            : null;
   }

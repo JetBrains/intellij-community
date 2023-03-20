@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
@@ -33,15 +33,15 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
@@ -71,39 +72,38 @@ import java.util.zip.ZipInputStream;
 * @author Dmitry Avdeev
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
-  private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
+  private static final Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 
-  private final ModuleType<?> myType;
-  private final List<WizardInputField<?>> myAdditionalFields;
+  private final NotNullLazyValue<ModuleType<?>> myType;
+  private final NotNullLazyValue<List<WizardInputField<?>>> myAdditionalFields;
   private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, @NotNull List<WizardInputField<?>> additionalFields) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, List<WizardInputField<?>> additionalFields) {
     myTemplate = template;
-    myType = moduleType;
-    myAdditionalFields = additionalFields;
+    myType = moduleType != null ? NotNullLazyValue.createConstantValue(moduleType) : NotNullLazyValue.lazy(() -> template.getModuleType());
+    myAdditionalFields = additionalFields != null ? NotNullLazyValue.createConstantValue(additionalFields) :  NotNullLazyValue.lazy(() -> template.getInputFields());
   }
 
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    ModuleBuilder builder = myType.createModuleBuilder();
+    ModuleBuilder builder = myType.getValue().createModuleBuilder();
     return builder.createWizardSteps(wizardContext, modulesProvider);
   }
 
   @Override
   public ModuleWizardStep[] createFinishingSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    ModuleBuilder builder = myType.createModuleBuilder();
+    ModuleBuilder builder = myType.getValue().createModuleBuilder();
     return builder.createFinishingSteps(wizardContext, modulesProvider);
   }
 
-  @NotNull
   @Override
-  protected List<WizardInputField<?>> getAdditionalFields() {
-    return myAdditionalFields;
+  protected @NotNull List<WizardInputField<?>> getAdditionalFields() {
+    return myAdditionalFields.getValue();
   }
 
   @Override
-  public Module commitModule(@NotNull final Project project, ModifiableModuleModel model) {
+  public Module commitModule(final @NotNull Project project, ModifiableModuleModel model) {
     if (myProjectMode) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length > 0) {
@@ -141,15 +141,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  @NotNull
   @Override
-  public @NonNls String getBuilderId() {
+  public @NotNull @NonNls String getBuilderId() {
     return myTemplate.getName();
   }
 
   @Override
   public ModuleType<?> getModuleType() {
-    return myType;
+    return myTemplate.getModuleType();
   }
 
   @Override
@@ -162,9 +161,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return true;
   }
 
-  @NotNull
   @Override
-  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
     final ExistingModuleLoader loader = ExistingModuleLoader.setUpLoader(getModuleFilePath());
@@ -179,7 +177,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   private void fixModuleName(@NotNull Module module) {
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    for (WizardInputField<?> field : myAdditionalFields) {
+    for (WizardInputField<?> field : getAdditionalFields()) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
       if (factory != null) {
         factory.applyResult(field.getValue(), model);
@@ -215,8 +213,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
   }
 
-  @Nullable
-  private WizardInputField<?> getBasePackageField() {
+  private @Nullable WizardInputField<?> getBasePackageField() {
     for (WizardInputField<?> field : getAdditionalFields()) {
       if (ProjectTemplateParameterFactory.IJ_BASE_PACKAGE.equals(field.getId())) {
         return field;
@@ -239,7 +236,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         private final SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
 
         @Override
-        public void consume(VelocityException e) {
+        public void accept(VelocityException e) {
           myFailures.add(Trinity.create(myPath, myText, e));
         }
 
@@ -341,23 +338,21 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  @NotNull
-  private static String getPathFragment(@NotNull String value) {
+  private static @NotNull String getPathFragment(@NotNull String value) {
     return "/" + value.replace('.', '/') + "/";
   }
 
-  @SuppressWarnings("UseOfPropertiesAsHashtable")
   private byte @Nullable [] processTemplates(@Nullable String projectName, String content, File file, Consumer<? super VelocityException> exceptionConsumer)
     throws IOException {
     String patchedContent = content;
     if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {
-      for (WizardInputField<?> field : myAdditionalFields) {
+      for (WizardInputField<?> field : getAdditionalFields()) {
         if (!field.acceptFile(file)) {
           return null;
         }
       }
       Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
-      for (WizardInputField<?> field : myAdditionalFields) {
+      for (WizardInputField<?> field : getAdditionalFields()) {
         properties.putAll(field.getValues());
       }
       if (projectName != null) {
@@ -384,13 +379,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @Override
   public boolean isSuitableSdkType(SdkTypeId sdkType) {
-    return myType.createModuleBuilder().isSuitableSdkType(sdkType);
+    return myTemplate.getModuleType().createModuleBuilder().isSuitableSdkType(sdkType);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, @NotNull String path) {
-    Path baseDir = Paths.get(path);
+  public @Nullable Project createProject(String name, @NotNull String path) {
+    Path baseDir = Path.of(path);
     LOG.assertTrue(Files.isDirectory(baseDir));
 
     List<Path> children;
@@ -415,7 +409,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           cleanup();
           if (indicator.isCanceled() && !isSomehowOverwriting) {
             try {
-              FileUtil.delete(baseDir);
+              NioFiles.deleteRecursively(baseDir);
             }
             catch (IOException e) {
               LOG.error(e);

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * Simple value wrapper.
  *
  * @param <T> Value type.
- * @author ven
  */
 public class Ref<T> {
   private T myValue;
@@ -55,11 +54,11 @@ public class Ref<T> {
 
   @NotNull
   public static <T> Ref<T> create() {
-    return new Ref<T>();
+    return new Ref<>();
   }
 
   public static <T> Ref<T> create(@Nullable T value) {
-    return new Ref<T>(value);
+    return new Ref<>(value);
   }
 
   @Nullable

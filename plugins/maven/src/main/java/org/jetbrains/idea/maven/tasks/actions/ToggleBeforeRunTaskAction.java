@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.tasks.actions;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,12 @@ import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 import java.util.List;
 
 public class ToggleBeforeRunTaskAction extends MavenToggleAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && getTaskDesc(e.getDataContext()) != null;

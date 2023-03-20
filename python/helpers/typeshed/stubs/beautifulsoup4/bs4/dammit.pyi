@@ -1,9 +1,7 @@
 from collections.abc import Iterable, Iterator
 from logging import Logger
-from typing import Any, Tuple
+from typing import Any
 from typing_extensions import Literal
-
-chardet_type: Any
 
 def chardet_dammit(s): ...
 
@@ -77,7 +75,7 @@ class UnicodeDammit:
     @property
     def declared_html_encoding(self) -> str | None: ...
     def find_codec(self, charset: str) -> str | None: ...
-    MS_CHARS: dict[bytes, str | Tuple[str, ...]]
+    MS_CHARS: dict[bytes, str | tuple[str, ...]]
     MS_CHARS_TO_ASCII: dict[bytes, str]
     WINDOWS_1252_TO_UTF8: dict[int, bytes]
     MULTIBYTE_MARKERS_AND_SIZES: list[tuple[int, int, int]]

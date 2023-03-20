@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.details
 
 import com.intellij.openapi.Disposable
@@ -9,10 +9,11 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
@@ -41,7 +42,7 @@ abstract class FullCommitDetailsListPanel(
 
   private val changesBrowserWithLoadingPanel = ChangesBrowserWithLoadingPanel(project, parent)
   private val changesLoadingController = ChangesLoadingController(project, parent, modalityState, changesBrowserWithLoadingPanel,
-    ::loadChanges)
+                                                                  ::loadChanges)
   private val commitDetails = CommitDetailsListPanel(project, parent).apply {
     border = JBUI.Borders.empty()
   }
@@ -64,8 +65,11 @@ abstract class FullCommitDetailsListPanel(
 }
 
 private class ChangesBrowserWithLoadingPanel(project: Project, disposable: Disposable) : JPanel(BorderLayout()) {
-  private val changesBrowser = SimpleChangesBrowser(project, false, false)
-    .also { it.hideViewerBorder() }
+  private val changesBrowser = SimpleAsyncChangesBrowser(project, false, false)
+    .also {
+      it.hideViewerBorder()
+      Disposer.register(disposable) { it.shutdown() }
+    }
 
   private val changesBrowserLoadingPanel =
     JBLoadingPanel(BorderLayout(), disposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {

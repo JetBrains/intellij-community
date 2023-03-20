@@ -1,15 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
@@ -17,12 +21,13 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal abstract class ReplacementPerformer<TElement : KtElement>(
     protected val codeToInline: MutableCodeToInline,
     protected var elementToBeReplaced: TElement
 ) {
-    protected val psiFactory = KtPsiFactory(elementToBeReplaced)
+    protected val psiFactory = KtPsiFactory(elementToBeReplaced.project)
 
     abstract fun doIt(postProcessing: (PsiChildRange) -> PsiChildRange): TElement?
 }
@@ -62,6 +67,7 @@ internal class AnnotationEntryReplacementPerformer(
     override fun createDummyElement(mainExpression: KtExpression): KtAnnotationEntry =
         createByPattern("@Dummy($0)", mainExpression) { psiFactory.createAnnotationEntry(it) }
 
+    @Suppress("KotlinConstantConditions") // KTIJ-23767
     override fun rangeToElement(range: PsiChildRange): KtAnnotationEntry {
         val useSiteTargetText = useSiteTarget?.renderName?.let { "$it:" } ?: ""
         val isFileUseSiteTarget = useSiteTarget == AnnotationUseSiteTarget.FILE
@@ -121,15 +127,11 @@ internal class ExpressionReplacementPerformer(
             val entriesToAdd = templateExpression.entries
             val grandParentTemplateExpression = parent.parent as KtStringTemplateExpression
             val result = if (entriesToAdd.isNotEmpty()) {
+                val lastEntry = parent.prevSibling
                 grandParentTemplateExpression.addRangeBefore(entriesToAdd.first(), entriesToAdd.last(), parent)
                 val lastNewEntry = parent.prevSibling
-                val nextElement = parent.nextSibling
-                if (lastNewEntry is KtSimpleNameStringTemplateEntry &&
-                    lastNewEntry.expression != null &&
-                    !canPlaceAfterSimpleNameEntry(nextElement)
-                ) {
-                    lastNewEntry.replace(KtPsiFactory(this).createBlockStringTemplateEntry(lastNewEntry.expression!!))
-                }
+                lastEntry.safeAs<KtSimpleNameStringTemplateEntry>()?.addBracesIfNeeded(lastNewEntry)
+                lastNewEntry.safeAs<KtSimpleNameStringTemplateEntry>()?.addBracesIfNeeded(parent.nextSibling)
                 grandParentTemplateExpression
             } else null
 
@@ -138,6 +140,12 @@ internal class ExpressionReplacementPerformer(
         } else {
             replaced(templateExpression)
         }
+    }
+
+    private fun KtSimpleNameStringTemplateEntry.addBracesIfNeeded(nextElement: PsiElement) {
+        if (canPlaceAfterSimpleNameEntry(nextElement)) return
+        val expression = this.expression ?: return
+        replace(KtPsiFactory(project).createBlockStringTemplateEntry(expression))
     }
 
     override fun doIt(postProcessing: (PsiChildRange) -> PsiChildRange): KtExpression? {
@@ -201,8 +209,8 @@ internal class ExpressionReplacementPerformer(
 
         // simplify "${x}" to "$x"
         val templateEntry = resultExpression?.parent as? KtBlockStringTemplateEntry
-        if (templateEntry?.canDropBraces() == true) {
-            return templateEntry.dropBraces().expression
+        if (templateEntry != null && templateEntry.canDropCurlyBrackets()) {
+            return templateEntry.dropCurlyBrackets().expression
         }
 
         return resultExpression ?: range.last as? KtExpression
@@ -257,7 +265,7 @@ internal class ExpressionReplacementPerformer(
     }
 
     private fun KtExpression.replaceWithBlock(): KtExpression = withElementToBeReplacedPreserved {
-        replaced(KtPsiFactory(this).createSingleStatementBlock(this))
+        replaced(KtPsiFactory(project).createSingleStatementBlock(this))
     }.statements.single()
 
     private fun <TElement : KtElement> withElementToBeReplacedPreserved(action: () -> TElement): TElement {

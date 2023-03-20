@@ -31,7 +31,8 @@ fun main() {
       println("Packing stdlib of $sdkHome")
     }
 
-    val process = ProcessBuilder(executable.absolutePath, PythonHelper.GENERATOR3.asParamString(), "-u", baseDir).start()
+    val arg = PythonHelper.GENERATOR3.asParamString()
+    val process = ProcessBuilder(executable.absolutePath, arg, "-u", baseDir).start()
 
     BufferedReader(InputStreamReader(process.inputStream)).use {
       it.lines().forEach(::println)
@@ -39,6 +40,11 @@ fun main() {
 
     BufferedReader(InputStreamReader(process.errorStream)).use {
       it.lines().forEach(::println)
+    }
+
+    val rc = process.waitFor()
+    if (rc != 0) {
+      error("Process '${executable.absolutePath} $arg' exited with error code $rc")
     }
   }
 }

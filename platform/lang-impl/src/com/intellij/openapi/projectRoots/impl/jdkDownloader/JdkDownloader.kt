@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslDistributionManager
@@ -34,13 +34,10 @@ internal val JDK_DOWNLOADER_EXT = DataKey.create<JdkDownloaderDialogHostExtensio
 internal interface JdkDownloaderDialogHostExtension {
   fun allowWsl() : Boolean = true
 
-  @JvmDefault
   fun createMainPredicate() : JdkPredicate? = null
 
-  @JvmDefault
   fun createWslPredicate() : JdkPredicate? = null
 
-  @JvmDefault
   fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem) : Boolean = true
 }
 
@@ -55,7 +52,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
                               sdkModel: SdkModel,
                               parentComponent: JComponent,
                               selectedSdk: Sdk?,
-                              sdkCreatedCallback: Consumer<SdkDownloadTask>) {
+                              sdkCreatedCallback: Consumer<in SdkDownloadTask>) {
     val dataContext = DataManager.getInstance().getDataContext(parentComponent)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     if (project?.isDisposed == true) return

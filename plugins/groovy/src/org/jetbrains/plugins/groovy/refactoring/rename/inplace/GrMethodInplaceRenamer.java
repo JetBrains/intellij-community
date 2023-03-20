@@ -62,8 +62,7 @@ public class GrMethodInplaceRenamer extends MemberInplaceRenamer {
 
   @Nullable
   private static TextRange getReferenceNameRange(PsiElement element) {
-    if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression referenceExpression = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression referenceExpression) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       TextRange stringContentRange = GrStringUtil.getStringContentRange(nameElement);
       if (stringContentRange != null) return stringContentRange.shiftRight(nameElement.getStartOffsetInParent());

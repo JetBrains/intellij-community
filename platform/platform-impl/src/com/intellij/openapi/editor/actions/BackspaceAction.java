@@ -60,7 +60,10 @@ public class BackspaceAction extends TextComponentEditorAction implements Latenc
           editor.getCaretModel().moveToOffset(region.getStartOffset());
         }
         else {
-          document.deleteString(DocumentUtil.getPreviousCodePointOffset(document, offset), offset);
+          int prevOffset = DocumentUtil.getPreviousCodePointOffset(document, offset);
+          if (prevOffset >= 0) {
+            document.deleteString(prevOffset, offset);
+          }
         }
       }
     }

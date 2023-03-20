@@ -21,9 +21,15 @@ public class LombokConfigOperationImpl extends ASTWrapperPsiElement implements L
     visitor.visitOperation(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof LombokConfigVisitor) accept((LombokConfigVisitor)visitor);
     else super.accept(visitor);
+  }
+
+  @Override
+  public String getSign() {
+    return LombokConfigPsiUtil.getSign(this);
   }
 
 }

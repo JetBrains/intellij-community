@@ -1,39 +1,47 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupEx
+import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
-import com.intellij.ide.BrowserUtil
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.util.propComponentProperty
-import com.intellij.lang.documentation.InlineDocumentation
-import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
-import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.lang.documentation.impl.documentationRequest
-import com.intellij.lang.documentation.impl.resolveLink
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.InternalResolveLinkResult
+import com.intellij.platform.backend.documentation.impl.documentationRequest
+import com.intellij.platform.backend.documentation.impl.resolveLink
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.lang.ref.WeakReference
 
+@ApiStatus.Internal
 @Service
-internal class DocumentationManager(private val project: Project) : Disposable {
+class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
 
   companion object {
 
@@ -43,7 +51,8 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     var skipPopup: Boolean by propComponentProperty(name = "documentation.skip.popup", defaultValue = false)
   }
 
-  private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
+  // separate scope is needed for the ability to cancel its children
+  private val popupScope: CoroutineScope = cs.childScope()
 
   override fun dispose() {
     cs.cancel()
@@ -51,7 +60,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   private val toolWindowManager: DocumentationToolWindowManager get() = DocumentationToolWindowManager.instance(project)
 
-  fun actionPerformed(dataContext: DataContext) {
+  fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null) {
     EDT.assertIsEdt()
 
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -59,14 +68,13 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (currentPopup != null) {
       // focused popup would eat the shortcut itself
       // => at this point there is an unfocused documentation popup near lookup or search component
-      currentPopup.focusPreferredComponent()
+      DocumentationPopupFocusService.instance(project).focusExistingPopup(currentPopup)
       return
     }
 
-    val lookup = LookupManager.getActiveLookup(editor)
-    val quickSearchComponent = quickSearchComponent(project)
-
-    if (lookup == null && quickSearchComponent == null) {
+    val secondaryPopupContext = lookupPopupContext(editor)
+                                ?: quickSearchPopupContext(project)
+    if (secondaryPopupContext == null) {
       // no popups
       if (toolWindowManager.focusVisibleReusableTab()) {
         // Explicit invocation moves focus to a visible preview tab.
@@ -81,23 +89,24 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       }
     }
 
-    val targets = documentationTargets(dataContext)
-    val target = targets.firstOrNull() ?: return // TODO multiple targets
+    val targets = dataContext.getData(DOCUMENTATION_TARGETS)
+    val target = targets?.firstOrNull() ?: return // TODO multiple targets
 
     // This happens in the UI thread because IntelliJ action system returns `DocumentationTarget` instance from the `DataContext`,
     // and it's not possible to guarantee that it will still be valid when sent to another thread,
     // so we create pointer and presentation right in the UI thread.
     val request = target.documentationRequest()
-
-    val popupContext = when {
-      lookup != null -> LookupPopupContext(lookup)
-      quickSearchComponent != null -> QuickSearchPopupContext(project, quickSearchComponent)
-      else -> DefaultPopupContext(project, editor)
-    }
-    cs.showDocumentation(request, popupContext)
+    val popupContext = secondaryPopupContext ?: DefaultPopupContext(project, editor)
+    showDocumentation(request, popupContext, popupDependencies)
   }
 
   private var popup: WeakReference<AbstractPopup>? = null
+
+  val isPopupVisible: Boolean
+    get() {
+      EDT.assertIsEdt()
+      return popup?.get()?.isVisible == true
+    }
 
   private fun getPopup(): AbstractPopup? {
     EDT.assertIsEdt()
@@ -115,16 +124,17 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     return popup
   }
 
-  private fun setPopup(popup: AbstractPopup) {
+  private fun setPopup(popup: AbstractPopup, popupDependencies: Disposable?) {
     EDT.assertIsEdt()
     this.popup = WeakReference(popup)
     Disposer.register(popup) {
       EDT.assertIsEdt()
       this.popup = null
     }
+    popupDependencies?.let { Disposer.register(popup, it) }
   }
 
-  private fun CoroutineScope.showDocumentation(request: DocumentationRequest, popupContext: PopupContext) {
+  private fun showDocumentation(request: DocumentationRequest, popupContext: PopupContext, popupDependencies: Disposable? = null) {
     if (skipPopup) {
       toolWindowManager.showInToolWindow(request)
       return
@@ -136,11 +146,11 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (getPopup() != null) {
       return
     }
-    val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
-    val popup = createDocumentationPopup(project, browser, popupContext)
-    setPopup(popup)
-
-    showPopupLater(popup, browseJob, popupContext)
+    popupScope.coroutineContext.job.cancelChildren()
+    popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+      val popup = showDocumentationPopup(project, request, popupContext)
+      setPopup(popup, popupDependencies)
+    }
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
@@ -196,24 +206,20 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     if (request == null) {
       return
     }
-    coroutineScope {
-      showDocumentation(request, LookupPopupContext(lookup))
-    }
+    showDocumentation(request, LookupPopupContext(lookup))
   }
 
   fun navigateInlineLink(
     url: String,
-    documentation: () -> InlineDocumentation?
+    targetSupplier: () -> DocumentationTarget?
   ) {
     EDT.assertIsEdt()
-    cs.launch(ModalityState.current().asContextElement()) {
-      val navigatable = readAction {
-        val ownerTarget = documentation()?.ownerTarget
-                          ?: return@readAction null
-        val linkResult = resolveLink(ownerTarget, url)
-        linkResult?.target?.navigatable
+    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+      val result = withContext(Dispatchers.IO + ClientId.current.asContextElement()) {
+        resolveLink(targetSupplier, url, DocumentationTarget::navigatable)
       }
-      withContext(Dispatchers.EDT) { // will use context modality state
+      if (result is InternalResolveLinkResult.Value) {
+        val navigatable = result.value
         if (navigatable != null && navigatable.canNavigate()) {
           navigatable.navigate(true)
         }
@@ -223,31 +229,43 @@ internal class DocumentationManager(private val project: Project) : Disposable {
 
   fun activateInlineLink(
     url: String,
-    documentation: () -> InlineDocumentation?,
+    targetSupplier: () -> DocumentationTarget?,
     editor: Editor,
     popupPosition: Point
   ) {
     EDT.assertIsEdt()
-    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
-      val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
-      try {
-        val request = withContext(Dispatchers.Default) {
-          readAction {
-            val ownerTarget = documentation()?.ownerTarget
-                              ?: return@readAction null
-            val linkResult = resolveLink(ownerTarget, url)
-            linkResult?.target?.documentationRequest()
-          }
-        }
-        if (request == null) {
-          BrowserUtil.browseAbsolute(url)
-          return@launch
-        }
-        showDocumentation(request, InlinePopupContext(project, editor, popupPosition))
+    cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
+      activateInlineLinkS(targetSupplier, url, editor, popupPosition)
+    }
+  }
+
+  /**
+   * @return `true` if the request was handled,
+   * or `false` if nothing happened (e.g. [url] was not resolved, or [targetSupplier] returned `null`)
+   */
+  suspend fun activateInlineLinkS(
+    targetSupplier: () -> DocumentationTarget?,
+    url: String,
+    editor: Editor,
+    popupPosition: Point,
+  ): Boolean = coroutineScope {
+    val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
+    try {
+      val result = withContext(Dispatchers.Default) {
+        resolveLink(targetSupplier, url)
       }
-      finally {
-        pauseAutoUpdateHandle?.let(Disposer::dispose)
+      if (result !is InternalResolveLinkResult.Value) {
+        browseAbsolute(project, url)
       }
+      else {
+        showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))
+        true
+      }
+    }
+    finally {
+      pauseAutoUpdateHandle?.let(Disposer::dispose)
     }
   }
 }
+
+fun isDocumentationPopupVisible(project: Project) = DocumentationManager.instance(project).isPopupVisible

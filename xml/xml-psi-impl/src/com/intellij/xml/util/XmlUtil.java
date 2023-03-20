@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -12,7 +12,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -53,7 +52,6 @@ import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.psi.XmlPsiBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 
 public final class XmlUtil {
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
@@ -88,12 +87,26 @@ public final class XmlUtil {
   @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3, JSTL_CORE_URI_JAVAEE_7};
   @NonNls public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
   @NonNls public static final String JSF_HTML_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/html";
-  @NonNls public static final String[] JSF_HTML_URIS = {JSF_HTML_URI, JSF_HTML_URI_JAVAEE_7};
+
+  @NonNls public static final String JSF_HTML_URI_JAKARTA_10 = "jakarta.faces.html";
+  @NonNls public static final String[] JSF_HTML_URIS = {JSF_HTML_URI, JSF_HTML_URI_JAVAEE_7, JSF_HTML_URI_JAKARTA_10};
   @NonNls public static final String JSF_CORE_URI = "http://java.sun.com/jsf/core";
   @NonNls public static final String JSF_CORE_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/core";
-  @NonNls public static final String[] JSF_CORE_URIS = {JSF_CORE_URI, JSF_CORE_URI_JAVAEE_7};
+
+  @NonNls public static final String JSF_CORE_URI_JAKARTA_10 = "jakarta.faces.core";
+  @NonNls public static final String[] JSF_CORE_URIS = {JSF_CORE_URI, JSF_CORE_URI_JAVAEE_7, JSF_CORE_URI_JAKARTA_10};
   @NonNls public static final String JSF_PASS_THROUGH_ATTR_URI_JAVAEE7 = "http://xmlns.jcp.org/jsf";
   @NonNls public static final String JSF_PASSTHROUGH_URI = "http://xmlns.jcp.org/jsf/passthrough";
+
+  @NonNls public static final String JSF_PASSTHROUGH_URI_JAKARTA_10 = "jakarta.faces.passthrough";
+
+  @NonNls public static final String JSF_JAKARTA_TAGLIB_10 = "jakarta.faces";
+
+  @NonNls public static final String JSF_JAKARTA_FACELETS_10 = "jakarta.faces.facelets";
+
+  @NonNls public static final String JSF_JAKARTA_TAGS_TAGLIB_10 = "jakarta.tags.core";
+  @NonNls public static final String JSF_JAKARTA_FUNCTIONS_TAGLIB_10 = "jakarta.tags.functions";
+  @NonNls public static final String JSF_PASSTHROUGH_ATTR_URI_JAKARTA_10 = "jakarta.faces.passthrough";
   @NonNls public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
   @NonNls public static final String JSTL_FORMAT_URI2 = "http://java.sun.com/jstl/fmt";
   @NonNls public static final String SPRING_URI = "http://www.springframework.org/tags";
@@ -110,11 +123,13 @@ public final class XmlUtil {
   @NonNls public static final String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   @NonNls public static final String SCHEMA_LOCATION_ATT = "schemaLocation";
   @NonNls public static final String[] WEB_XML_URIS =
-    {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://xmlns.jcp.org/xml/ns/javaee", "http://java.sun.com/dtd/web-app_2_3.dtd",
+    {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee", "http://xmlns.jcp.org/xml/ns/javaee",
+      "http://java.sun.com/dtd/web-app_2_3.dtd",
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   @NonNls public static final String FACELETS_URI_JAVAEE_7 = "http://xmlns.jcp.org/jsf/facelets";
-  @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7};
+
+  @NonNls public static final String[] FACELETS_URIS = {FACELETS_URI, FACELETS_URI_JAVAEE_7, JSF_JAKARTA_FACELETS_10};
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_URI2 = "http://java.sun.com/jstl/functions";
   @NonNls public static final String JSTL_FUNCTIONS_JAVAEE_7 = "http://xmlns.jcp.org/jsp/jstl/functions";
@@ -138,13 +153,15 @@ public final class XmlUtil {
   @NonNls private static final String FILE = "file:";
   @NonNls private static final String CLASSPATH = "classpath:/";
   @NonNls private static final String URN = "urn:";
-  private final static Set<String> doNotVisitTags = ContainerUtil.set("annotation", "element", "attribute");
+  private final static Set<String> doNotVisitTags = Set.of("annotation", "element", "attribute");
 
   private XmlUtil() {
   }
+
   static {
     final URL xhtml4SchemaLocationUrl = XmlUtil.class.getResource(ExternalResourceManagerEx.STANDARD_SCHEMAS + "xhtml1-transitional.xsd");
-    XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.toIdeaUrl(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm()), false));
+    XHTML4_SCHEMA_LOCATION =
+      VfsUtilCore.urlToPath(VfsUtilCore.toIdeaUrl(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm()), false));
   }
 
   @NotNull
@@ -249,8 +266,7 @@ public final class XmlUtil {
     PsiElement[] children = element.getChildren();
 
     for (PsiElement child : children) {
-      if (child instanceof XmlToken) {
-        XmlToken token = (XmlToken)child;
+      if (child instanceof XmlToken token) {
 
         if (token.getTokenType() == type) {
           return token;
@@ -261,11 +277,16 @@ public final class XmlUtil {
     return null;
   }
 
-  public static boolean processXmlElements(@NotNull XmlElement element, @NotNull PsiElementProcessor<? super PsiElement> processor, boolean deepFlag) {
+  public static boolean processXmlElements(@NotNull XmlElement element,
+                                           @NotNull PsiElementProcessor<? super PsiElement> processor,
+                                           boolean deepFlag) {
     return XmlPsiUtil.processXmlElements(element, processor, deepFlag);
   }
 
-  public static boolean processXmlElements(@NotNull XmlElement element, @NotNull PsiElementProcessor<? super PsiElement> processor, boolean deepFlag, boolean wideFlag) {
+  public static boolean processXmlElements(@NotNull XmlElement element,
+                                           @NotNull PsiElementProcessor<? super PsiElement> processor,
+                                           boolean deepFlag,
+                                           boolean wideFlag) {
     return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag);
   }
 
@@ -286,7 +307,9 @@ public final class XmlUtil {
     return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag, baseFile, processIncludes);
   }
 
-  public static boolean processXmlElementChildren(@NotNull XmlElement element, @NotNull PsiElementProcessor<? super PsiElement> processor, final boolean deepFlag) {
+  public static boolean processXmlElementChildren(@NotNull XmlElement element,
+                                                  @NotNull PsiElementProcessor<? super PsiElement> processor,
+                                                  final boolean deepFlag) {
     return XmlPsiUtil.processXmlElementChildren(element, processor, deepFlag);
   }
 
@@ -354,8 +377,7 @@ public final class XmlUtil {
         final XmlTag[] simpleContent = new XmlTag[1];
 
         processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), element -> {
-          if (element instanceof XmlTag) {
-            final XmlTag tag1 = (XmlTag)element;
+          if (element instanceof XmlTag tag1) {
             @NonNls final String s = ((XmlTag)element).getLocalName();
 
             if ((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
@@ -404,8 +426,7 @@ public final class XmlUtil {
   }
 
   public static boolean isAntFile(final PsiFile file) {
-    if (file instanceof XmlFile) {
-      final XmlFile xmlFile = (XmlFile)file;
+    if (file instanceof XmlFile xmlFile) {
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag tag = document.getRootTag();
@@ -434,30 +455,18 @@ public final class XmlUtil {
 
   @Nullable
   public static PsiFile findRelativeFile(String uri, PsiElement base) {
-    if (base instanceof PsiFile) {
-      PsiFile baseFile = (PsiFile)base;
+    if (base instanceof PsiFile baseFile) {
       VirtualFile file = UriUtil.findRelative(uri, baseFile.getOriginalFile());
       if (file == null) return null;
       return base.getManager().findFile(file);
     }
-    else if (base instanceof PsiDirectory) {
-      PsiDirectory baseDir = (PsiDirectory)base;
+    else if (base instanceof PsiDirectory baseDir) {
       VirtualFile file = UriUtil.findRelative(uri, baseDir);
       if (file == null) return null;
       return base.getManager().findFile(file);
     }
 
     return null;
-  }
-
-  /**
-   * @deprecated use {@link XmlComment#getCommentText()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  public static String getCommentText(XmlComment comment) {
-    return comment.getCommentText();
   }
 
   public static void reformatTagStart(XmlTag tag) {
@@ -474,8 +483,7 @@ public final class XmlUtil {
   @Nullable
   public static XmlElementDescriptor getDescriptorFromContext(@NotNull XmlTag tag) {
     PsiElement parent = tag.getParent();
-    if (parent instanceof XmlTag) {
-      XmlTag parentTag = (XmlTag)parent;
+    if (parent instanceof XmlTag parentTag) {
       final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
 
       if (parentDescriptor != null) {
@@ -489,8 +497,7 @@ public final class XmlUtil {
     XmlTag newTag = XmlElementFactory.getInstance(tag.getProject()).createTagFromText('<' + tag.getName() + "></" + tag.getName() + '>');
 
     ASTNode node = tag.getNode();
-    if (!(node instanceof CompositeElement)) return;
-    CompositeElement compositeElement = (CompositeElement)node;
+    if (!(node instanceof CompositeElement compositeElement)) return;
 
     final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(compositeElement);
     if (emptyTagEnd == null) return;
@@ -654,16 +661,20 @@ public final class XmlUtil {
           return "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd";
         }
         return "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd";
-      } else {
+      }
+      else {
         if (id.contains("Strict")) {
           return "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
-        } else if (id.contains("Frameset")) {
+        }
+        else if (id.contains("Frameset")) {
           return "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd";
-        } else if (id.contains("Transitional")) {
+        }
+        else if (id.contains("Transitional")) {
           return "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
         }
       }
-    } else if (id.contains("HTML")) {
+    }
+    else if (id.contains("HTML")) {
       if (id.contains("Strict")) {
         return "http://www.w3.org/TR/html4/strict.dtd";
       }
@@ -694,7 +705,7 @@ public final class XmlUtil {
     }
     else {
       final XmlAttribute[] attributes = tag.getAttributes().clone();
-      ContainerUtil.sort(list);
+      list.sort(null);
       Arrays.sort(attributes, Comparator.comparing(XmlAttribute::getName));
 
       final Iterator<MyAttributeInfo> iter = list.iterator();
@@ -787,8 +798,7 @@ public final class XmlUtil {
         }
       }
 
-      if (typeDecr instanceof XmlNSDescriptorImpl) {
-        final XmlNSDescriptorImpl schemaDescriptor = (XmlNSDescriptorImpl)typeDecr;
+      if (typeDecr instanceof XmlNSDescriptorImpl schemaDescriptor) {
         elementDescriptor = schemaDescriptor.getDescriptorByType(type, xmlTag);
       }
     }
@@ -853,13 +863,14 @@ public final class XmlUtil {
   }
 
   /**
-   * @param bodyText              pass null to create collapsed tag, empty string means creating expanded one
+   * @param bodyText pass null to create collapsed tag, empty string means creating expanded one
    */
-  public static XmlTag createChildTag(final XmlTag xmlTag,
-                                      String localName,
-                                      String namespace,
+  public static XmlTag createChildTag(@NotNull XmlTag xmlTag,
+                                      @NotNull String localName,
+                                      @Nullable String namespace,
                                       @Nullable String bodyText,
-                                      boolean enforceNamespacesDeep) {
+                                      boolean enforceNamespacesDeep,
+                                      @NotNull Function<String, XmlTag> tagFromTextFactory) {
     String qname;
     final String prefix = xmlTag.getPrefixByNamespace(namespace);
     if (prefix != null && !prefix.isEmpty()) {
@@ -873,16 +884,13 @@ public final class XmlUtil {
                                  !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))
                                  ? " xmlns=\"" + namespace + "\""
                                  : "");
-      Language language = xmlTag.getLanguage();
-      if (!(language instanceof HTMLLanguage)) language = XMLLanguage.INSTANCE;
       XmlTag retTag;
       if (bodyText != null) {
-        retTag = XmlElementFactory.getInstance(xmlTag.getProject())
-          .createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">", language);
+        retTag = tagFromTextFactory.apply("<" + tagStart + ">" + bodyText + "</" + qname + ">");
         if (enforceNamespacesDeep) {
           retTag.acceptChildren(new XmlRecursiveElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               final String namespacePrefix = tag.getNamespacePrefix();
               if (namespacePrefix.isEmpty()) {
                 String qname;
@@ -905,7 +913,7 @@ public final class XmlUtil {
         }
       }
       else {
-        retTag = XmlElementFactory.getInstance(xmlTag.getProject()).createTagFromText("<" + tagStart + "/>", language);
+        retTag = tagFromTextFactory.apply("<" + tagStart + "/>");
       }
       return retTag;
     }
@@ -1033,8 +1041,8 @@ public final class XmlUtil {
     final boolean surelyUrl = HtmlUtil.hasHtmlPrefix(s) || s.startsWith(URN);
     if (surelyUrl) return true;
     int protocolIndex = s.indexOf(":/");
-    if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
-    return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
+    if (protocolIndex > 1 && !s.regionMatches(0, "classpath", 0, protocolIndex)) return true;
+    return !s.equals(ExternalResourceManager.getInstance().getResourceLocation(s, project));
   }
 
   public static String generateDocumentDTD(XmlDocument doc, boolean full) {
@@ -1236,7 +1244,7 @@ public final class XmlUtil {
   public static XmlComment findPreviousComment(final PsiElement element) {
     PsiElement curElement = element;
 
-    while(curElement!=null && !(curElement instanceof XmlComment)) {
+    while (curElement != null && !(curElement instanceof XmlComment)) {
       curElement = curElement.getPrevSibling();
       if (curElement instanceof XmlText && StringUtil.isEmptyOrSpaces(curElement.getText())) {
         continue;
@@ -1244,7 +1252,7 @@ public final class XmlUtil {
       if (!(curElement instanceof PsiWhiteSpace) &&
           !(curElement instanceof XmlProlog) &&
           !(curElement instanceof XmlComment)
-         ) {
+      ) {
         curElement = null; // finding comment fails, we found another similar declaration
         break;
       }

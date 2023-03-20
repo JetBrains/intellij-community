@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.preview;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -12,9 +11,12 @@ import javax.swing.*;
 /**
  * Provides the possibility to display a preview component when holding the Shift key and hovering over a PSI element in the text editor.
  * These preview components are currently used primarily for displaying color values.
+ *
+ * @deprecated This interface is unused.
+ * Implement gutter icons and/or show the image in the documentation instead.
  */
+@Deprecated(forRemoval = true)
 public interface PreviewHintProvider {
-  ExtensionPointName<PreviewHintProvider> EP_NAME = ExtensionPointName.create("com.intellij.previewHintProvider");
 
   /**
    * Returns true if Shift-hover preview is supported for the given file.

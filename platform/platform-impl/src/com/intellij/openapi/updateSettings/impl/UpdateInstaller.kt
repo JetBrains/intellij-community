@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
 import com.intellij.util.system.CpuArch
@@ -43,7 +44,7 @@ internal object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = getJdkSuffix()
+    val jdk = getRuntimeSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
@@ -76,6 +77,7 @@ internal object UpdateInstaller {
   }
 
   @JvmStatic
+  @RequiresBackgroundThread
   fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
@@ -101,6 +103,7 @@ internal object UpdateInstaller {
   }
 
   @JvmStatic
+  @RequiresBackgroundThread
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
     if (downloadedPluginUpdates.isEmpty()) {
@@ -192,9 +195,9 @@ internal object UpdateInstaller {
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
-  private fun getJdkSuffix(): String = when {
-    SystemInfo.isMac && CpuArch.isArm64() -> "-jbr11-aarch64"
-    Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-jbr11"
-    else -> "-no-jbr"
+  private fun getRuntimeSuffix(): String = when {
+    SystemInfo.isUnix && !SystemInfo.isMac && !Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-no-jbr"
+    (SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows) && CpuArch.isArm64() -> "-aarch64"
+    else -> ""
   }
 }

@@ -57,6 +57,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private static final String LOCAL_VERSION = "0.1";
   public static final String TEMP_VAR_PREFIX = "__py_debug_temp_var_";
+  public static final String TYPE_RENDERERS_TEMP_VAR_PREFIX = "__py_debug_user_type_renderers_temp_var_";
 
   private static final SecureRandom ourRandom = new SecureRandom();
 
@@ -172,8 +173,8 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public XValueChildrenList loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
-    return executeCommand(new GetFrameCommand(this, threadId, frameId)).getVariables();
+  public XValueChildrenList loadFrame(final String threadId, final String frameId, GROUP_TYPE groupType) throws PyDebuggerException {
+    return executeCommand(new GetFrameCommand(this, threadId, frameId, groupType)).getVariables();
   }
 
   @Override
@@ -281,10 +282,14 @@ public class RemoteDebugger implements ProcessDebugger {
       LOG.error("Top parent is null");
       return;
     }
+    String tempName = topVar.getTempName();
+    if (tempName != null) {
+      return;
+    }
     if (!myDebugProcess.canSaveToTemp(topVar.getName())) {
       return;
     }
-    if (myTempVars.contains(threadId, frameId, topVar.getTempName())) {
+    if (myTempVars.contains(threadId, frameId, tempName)) {
       return;
     }
 
@@ -403,8 +408,7 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     });
     if (command.isResponseExpected()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(),
-                     "This operation is time consuming and must not be called on EDT");
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
 
       // Note: do not wait for result from UI thread
       try {
@@ -520,6 +524,12 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers) {
+    final SetUserTypeRenderersCommand command = new SetUserTypeRenderersCommand(this, renderers);
+    execute(command);
+  }
+
+  @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
     final ShowReturnValuesCommand command = new ShowReturnValuesCommand(this, isShowReturnValues);
     execute(command);
@@ -583,7 +593,7 @@ public class RemoteDebugger implements ProcessDebugger {
   // todo: extract response processing
   private void processThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
     switch (frame.getCommand()) {
-      case AbstractCommand.CREATE_THREAD: {
+      case AbstractCommand.CREATE_THREAD -> {
         final PyThreadInfo thread = parseThreadEvent(frame);
         if (!thread.isPydevThread()) {  // ignore pydevd threads
           myThreads.put(thread.getId(), thread);
@@ -593,9 +603,8 @@ public class RemoteDebugger implements ProcessDebugger {
             suspendThread(thread.getId());
           }
         }
-        break;
       }
-      case AbstractCommand.SUSPEND_THREAD: {
+      case AbstractCommand.SUSPEND_THREAD -> {
         final PyThreadInfo event = parseThreadEvent(frame);
         PyThreadInfo thread = myThreads.get(event.getId());
         if (thread == null) {
@@ -613,18 +622,16 @@ public class RemoteDebugger implements ProcessDebugger {
           updateSourcePosition = !myDebugProcess.getSession().isSuspended();
         }
         myDebugProcess.threadSuspended(thread, updateSourcePosition);
-        break;
       }
-      case AbstractCommand.RESUME_THREAD: {
+      case AbstractCommand.RESUME_THREAD -> {
         final String id = ProtocolParser.getThreadId(frame.getPayload());
         final PyThreadInfo thread = myThreads.get(id);
         if (thread != null) {
           thread.updateState(PyThreadInfo.State.RUNNING, null);
           myDebugProcess.threadResumed(thread);
         }
-        break;
       }
-      case AbstractCommand.KILL_THREAD: {
+      case AbstractCommand.KILL_THREAD -> {
         final String id = frame.getPayload();
         final PyThreadInfo thread = myThreads.get(id);
         if (thread != null) {
@@ -640,9 +647,8 @@ public class RemoteDebugger implements ProcessDebugger {
             }
           }
         }
-        break;
       }
-      case AbstractCommand.SHOW_CONSOLE: {
+      case AbstractCommand.SHOW_CONSOLE -> {
         final PyThreadInfo event = parseThreadEvent(frame);
         PyThreadInfo thread = myThreads.get(event.getId());
         if (thread == null) {
@@ -653,7 +659,6 @@ public class RemoteDebugger implements ProcessDebugger {
         thread.setStopReason(event.getStopReason());
         thread.setMessage(event.getMessage());
         myDebugProcess.showConsole(thread);
-        break;
       }
     }
   }
@@ -776,7 +781,6 @@ public class RemoteDebugger implements ProcessDebugger {
    * "connected" state then the exception is rethrown. If the debugger is not
    * connected at this moment then the exception is ignored.
    *
-   * @param command
    */
   private <T extends AbstractCommand<?>> T executeCommand(@NotNull T command) throws PyDebuggerException {
     try {
@@ -798,7 +802,6 @@ public class RemoteDebugger implements ProcessDebugger {
    * "connected" state then the error is logged. If the debugger is not
    * connected at this moment then the exception is ignored.
    *
-   * @param command
    */
   private <T extends AbstractCommand<?>> void executeCommandSafely(@NotNull T command) {
     try {
@@ -806,7 +809,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
     catch (PyDebuggerException e) {
       if (isConnected()) {
-        LOG.error(command);
+        LOG.error("Command " + command + " failed", e);
       }
     }
   }

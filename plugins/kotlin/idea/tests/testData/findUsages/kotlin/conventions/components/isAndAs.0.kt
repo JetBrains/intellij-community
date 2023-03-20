@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "x: Int"
 
 data class A(val <caret>x: Int, val y: Int)
 
@@ -14,4 +15,6 @@ fun y(o: Any) {
     val list = o as List<A>
     val (x, y) = list[0]
 }
-// FIR_IGNORE
+
+
+// IGNORE_FIR_LOG

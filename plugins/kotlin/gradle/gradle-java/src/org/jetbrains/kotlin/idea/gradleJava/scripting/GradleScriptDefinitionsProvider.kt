@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
@@ -58,7 +58,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
                 return null
             }
             if (gradleHome == null) {
-                scriptingInfoLog(KotlinIdeaGradleBundle.message("error.text.unable.to.get.gradle.home.directory") + ": workingDir=$workingDir gradleHome=$gradleHome")
+                scriptingInfoLog(KotlinIdeaGradleBundle.message("error.text.unable.to.get.gradle.home.directory") + ": workingDir=$workingDir")
                 return null
             }
 

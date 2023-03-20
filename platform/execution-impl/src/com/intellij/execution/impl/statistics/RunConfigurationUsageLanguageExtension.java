@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.internal.statistic.eventLog.events.EventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension;
 
-import java.util.Collections;
 import java.util.List;
 
 public class RunConfigurationUsageLanguageExtension implements FeatureUsageCollectorExtension {
@@ -21,6 +20,6 @@ public class RunConfigurationUsageLanguageExtension implements FeatureUsageColle
 
   @Override
   public List<EventField> getExtensionFields() {
-    return Collections.singletonList(EventFields.Language);
+    return List.of(EventFields.Language, RunConfigurationUsageTriggerCollector.ALTERNATIVE_JRE_VERSION);
   }
 }

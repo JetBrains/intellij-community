@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.projectView;
 
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,20 +33,22 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
   }
 
   public void testStandardProviders() {
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject),
                                            new FormMergerTreeStructureProvider(myProject));
 
-    assertStructureEqual(getPackageDirectory(), "PsiDirectory: package1\n" +
-                                                " PsiClass:Class1\n" +
-                                                " PsiJavaFile:Class2.java\n" +
-                                                "  PsiClass:Class2\n" +
-                                                "  PsiClass:Class3\n" +
-                                                " PsiJavaFile:Class4.java\n" +
-                                                " PsiFile(plain text):Form2.form\n" +
-                                                " Form:Form1\n" +
-                                                "  PsiClass:Form1\n" +
-                                                "  PsiFile(plain text):Form1.form\n");
+    assertStructureEqual(getPackageDirectory(), """
+      PsiDirectory: package1
+       PsiClass:Class1
+       PsiJavaFile:Class2.java
+        PsiClass:Class2
+        PsiClass:Class3
+       PsiJavaFile:Class4.java
+       PsiFile(plain text):Form2.form
+       Form:Form1
+        PsiClass:Form1
+        PsiFile(plain text):Form1.form
+      """);
 
     PsiClass psiClass = ((PsiJavaFile)getPackageDirectory().findFile("Form1.java")).getClasses()[0];
     myStructure.checkNavigateFromSourceBehaviour(psiClass, psiClass.getContainingFile().getVirtualFile(), pane);
@@ -59,20 +61,22 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
   }
 
   public void testStandardProvidersForm1() {
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject),
                                            new FormMergerTreeStructureProvider(myProject));
 
-    assertStructureEqual(getPackageDirectory(), "PsiDirectory: package1\n" +
-                                                " PsiClass:Class1\n" +
-                                                " PsiJavaFile:Class2.java\n" +
-                                                "  PsiClass:Class2\n" +
-                                                "  PsiClass:Class3\n" +
-                                                " PsiJavaFile:Class4.java\n" +
-                                                " PsiFile(plain text):Form2.form\n" +
-                                                " Form:Form1\n" +
-                                                "  PsiClass:Form1\n" +
-                                                "  PsiFile(plain text):Form1.form\n");
+    assertStructureEqual(getPackageDirectory(), """
+      PsiDirectory: package1
+       PsiClass:Class1
+       PsiJavaFile:Class2.java
+        PsiClass:Class2
+        PsiClass:Class3
+       PsiJavaFile:Class4.java
+       PsiFile(plain text):Form2.form
+       Form:Form1
+        PsiClass:Form1
+        PsiFile(plain text):Form1.form
+      """);
 
     PsiFile psiFile = getPackageDirectory().findFile("Form1.form");
     VirtualFile virtualFile = psiFile.getContainingFile().getVirtualFile();

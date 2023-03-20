@@ -15,6 +15,6 @@ public final class IndexPatternUtil {
     for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
       result.addAll(Arrays.asList(provider.getIndexPatterns()));
     }
-    return result.toArray(new IndexPattern[0]);
+    return result.toArray(IndexPattern.EMPTY_ARRAY);
   }
 }

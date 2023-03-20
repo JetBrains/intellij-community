@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
@@ -9,18 +11,18 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 
 object TargetConfigurationGroups {
-    val JS = FinalTargetConfiguratorGroup(
+    private val JS = FinalTargetConfiguratorGroup(
         ModuleType.js.projectTypeName,
         ModuleType.js,
         KotlinIcons.Wizard.JS,
         listOf(
-          JsBrowserTargetConfigurator,
-          JsNodeTargetConfigurator
+            JsBrowserTargetConfigurator,
+            JsNodeTargetConfigurator
         )
     )
 
     object NATIVE {
-        val LINUX = FinalTargetConfiguratorGroup(
+        private val LINUX = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.linux"),
             ModuleType.native,
             KotlinIcons.Wizard.LINUX,
@@ -32,7 +34,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val WINDOWS = FinalTargetConfiguratorGroup(
+        private val WINDOWS = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.windows.mingw"),
             ModuleType.native,
             KotlinIcons.Wizard.WINDOWS,
@@ -42,7 +44,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val MAC = FinalTargetConfiguratorGroup(
+        private val MAC = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.macos"),
             ModuleType.native,
             KotlinIcons.Wizard.MAC_OS,
@@ -51,7 +53,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val IOS = FinalTargetConfiguratorGroup(
+        private val IOS = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.ios"),
             ModuleType.native,
             KotlinIcons.Wizard.IOS,
@@ -62,7 +64,7 @@ object TargetConfigurationGroups {
             )
         )
 
-        val ANDROID_NATIVE = FinalTargetConfiguratorGroup(
+        private val ANDROID_NATIVE = FinalTargetConfiguratorGroup(
             KotlinNewProjectWizardBundle.message("module.configuration.group.android.native"),
             ModuleType.native,
             KotlinIcons.Wizard.ANDROID,
@@ -87,12 +89,14 @@ object TargetConfigurationGroups {
     }
 
     val FIRST = FirstStepTargetConfiguratorGroup(
-        listOf(
-            CommonTargetConfigurator,
-            JvmTargetConfigurator,
-            NATIVE.ALL,
-            JS,
-            AndroidTargetConfigurator
-        )
+        buildList {
+            +CommonTargetConfigurator
+            +JvmTargetConfigurator
+            +NATIVE.ALL
+            if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
+                +JS
+            }
+            +AndroidTargetConfigurator
+        }
     )
 }

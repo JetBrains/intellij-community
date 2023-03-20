@@ -16,19 +16,19 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.rmi.RemoteProcessSupport;
+import com.intellij.maven.testFramework.MavenTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.WaitFor;
-import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,7 +64,7 @@ public class MavenServerManagerTest extends MavenTestCase {
       }
     }
     if (!ok) {
-      printThreadDump();
+      ThreadUtil.printThreadDump();
       fail();
     }
     result.cancel(true);
@@ -98,16 +98,16 @@ public class MavenServerManagerTest extends MavenTestCase {
   public void testShouldStopPullingIfConnectorIsFailing() {
     MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
     ensureConnected(connector);
-    ScheduledFuture loggerFuture =
-      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, ScheduledFuture.class, "myLoggerFuture");
+    ScheduledExecutorService executor =
+      ReflectionUtil.getField(MavenServerConnectorImpl.class, connector, ScheduledExecutorService.class, "myExecutor");
     kill(connector);
     new WaitFor(1_000) {
       @Override
       protected boolean condition() {
-        return loggerFuture.isCancelled();
+        return executor.isShutdown();
       }
     };
-    assertTrue(loggerFuture.isCancelled());
+    assertTrue(executor.isShutdown());
   }
 
   public void testShouldDropConnectorForMultiplyDirs() {
@@ -120,9 +120,8 @@ public class MavenServerManagerTest extends MavenTestCase {
     ensureConnected(connectorFirst);
     MavenServerConnector connectorSecond = MavenServerManager.getInstance().getConnector(myProject, second.getAbsolutePath());
     assertSame(connectorFirst, connectorSecond);
-    MavenServerManager.getInstance().cleanUp(connectorFirst);
+    MavenServerManager.getInstance().shutdownConnector(connectorFirst, true);
     assertEmpty(MavenServerManager.getInstance().getAllConnectors());
-    connectorFirst.shutdown(true);
   }
 
   private static void kill(MavenServerConnector connector) {

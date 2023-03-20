@@ -1,14 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-@ApiStatus.Internal
 public interface HashingStrategy<T> {
   int hashCode(T object);
 
@@ -28,21 +26,30 @@ public interface HashingStrategy<T> {
     return CaseInsensitiveStringHashingStrategy.INSTANCE;
   }
   static @NotNull HashingStrategy<CharSequence> caseInsensitiveCharSequence() {
-    return CaseInsensitiveCharSequenceHashingStrategy.INSTANCE;
+    return CharSequenceHashingStrategy.CASE_INSENSITIVE_INSTANCE;
+  }
+  static @NotNull HashingStrategy<CharSequence> caseSensitiveCharSequence() {
+    return CharSequenceHashingStrategy.CASE_SENSITIVE_INSTANCE;
   }
 }
 
-class CaseInsensitiveCharSequenceHashingStrategy implements HashingStrategy<CharSequence> {
-  static final CaseInsensitiveCharSequenceHashingStrategy INSTANCE = new CaseInsensitiveCharSequenceHashingStrategy();
+final class CharSequenceHashingStrategy implements HashingStrategy<CharSequence> {
+  private final boolean myCaseSensitive;
+  static final CharSequenceHashingStrategy CASE_SENSITIVE_INSTANCE = new CharSequenceHashingStrategy(true);
+  static final CharSequenceHashingStrategy CASE_INSENSITIVE_INSTANCE = new CharSequenceHashingStrategy(false);
+
+  CharSequenceHashingStrategy(boolean sensitive) {
+    myCaseSensitive = sensitive;
+  }
 
   @Override
   public int hashCode(CharSequence object) {
-    return Strings.stringHashCodeInsensitive(object);
+    return myCaseSensitive ? Strings.stringHashCode(object) : Strings.stringHashCodeInsensitive(object);
   }
 
   @Override
   public boolean equals(CharSequence s1, CharSequence s2) {
-    return StringUtilRt.equal(s1, s2, false);
+    return StringUtilRt.equal(s1, s2, myCaseSensitive);
   }
 }
 

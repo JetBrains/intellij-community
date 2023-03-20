@@ -92,8 +92,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     element = element.getParent();
 
     while (element != null) {
-      if (element instanceof XmlTag) {
-        XmlTag tag = (XmlTag)element;
+      if (element instanceof XmlTag tag) {
 
         final PsiElement[] children = tag.getChildren();
 
@@ -103,8 +102,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
           final TextRange range = child.getTextRange();
           if (range.getStartOffset() <= offset && range.getEndOffset() > offset) return tag;
 
-          if (child instanceof XmlToken) {
-            XmlToken token = (XmlToken)child;
+          if (child instanceof XmlToken token) {
             if (token.getTokenType() == XmlTokenType.XML_TAG_END) return null;
           }
         }

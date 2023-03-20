@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -38,12 +39,7 @@ abstract public class TransferableList<T> implements Transferable {
 
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
-    for (DataFlavor supported : getTransferDataFlavors()) {
-      if (supported.equals(flavor)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(flavor, getTransferDataFlavors());
   }
 
   @Override

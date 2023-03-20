@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -14,7 +14,7 @@ public abstract class RefJavaUtil {
   /**
    * @deprecated use {@link RefJavaUtil#addReferencesTo} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addReferences(@NotNull PsiModifierListOwner psiFrom, @NotNull RefJavaElement ref, @Nullable PsiElement findIn);
 
   public void addReferencesTo(@NotNull UElement elem, @NotNull RefJavaElement ref, UElement @Nullable ... findIn) {
@@ -39,7 +39,7 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
     throw new UnsupportedOperationException();
@@ -63,7 +63,7 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isMethodOnlyCallsSuper(PsiMethod derivedMethod) {
     throw new UnsupportedOperationException();
   }
@@ -72,7 +72,7 @@ public abstract class RefJavaUtil {
   public static RefPackage getPackage(RefEntity refEntity) {
     while (refEntity != null && !(refEntity instanceof RefPackage)) {
       if (refEntity instanceof RefElement) {
-        ((RefElement)refEntity).waitForInitialized();
+        ((RefElement)refEntity).initializeIfNeeded();
       }
       refEntity = refEntity.getOwner();
     }
@@ -96,12 +96,12 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCallToSuperMethod(PsiExpression expression, PsiMethod method) {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager) {
     throw new UnsupportedOperationException();
   }

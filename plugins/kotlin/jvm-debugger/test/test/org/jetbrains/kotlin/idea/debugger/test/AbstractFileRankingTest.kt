@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.ThreadReference
-import org.jetbrains.kotlin.codegen.ClassFileFactory
 import org.jetbrains.kotlin.codegen.OriginCollectingClassBuilderFactory
 import org.jetbrains.kotlin.codegen.getClassFiles
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -18,16 +18,14 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
         options: Set<String>,
         mainThread: ThreadReference,
         factory: OriginCollectingClassBuilderFactory,
-        classFileFactory: ClassFileFactory,
         state: GenerationState
     ) {
-        val allKtFiles = classFileFactory.inputFiles.distinct()
-        fun getKtFiles(name: String) = allKtFiles.filter { it.name == name }
-
         val doNotCheckClassFqName = "DO_NOT_CHECK_CLASS_FQNAME" in options
         val strictMode = "DISABLE_STRICT_MODE" !in options
 
-        val expectedRanks: Map<Pair<KtFile, Int>, Int> = allKtFiles.asSequence().flatMap { ktFile ->
+        val classNameToKtFile = factory.collectClassNamesToKtFiles()
+        val files = classNameToKtFile.values.distinct()
+        val expectedRanks: Map<Pair<KtFile, Int>, Int> = files.asSequence().flatMap { ktFile ->
             ktFile.text.lines()
                 .asSequence()
                 .withIndex()
@@ -52,18 +50,8 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
 
         val problems = mutableListOf<String>()
 
-        val classNameToKtFile = factory.origins.asSequence()
-            .filter { it.key is ClassNode }
-            .map {
-                val ktFile = (it.value.element?.containingFile as? KtFile) ?: return@map null
-                val name = (it.key as ClassNode).name.replace('/', '.')
-
-                name to ktFile
-            }
-            .filterNotNull()
-            .toMap()
-
         val skipClasses = skipLoadingClasses(options)
+        val classFileFactory = state.factory
         for (outputFile in classFileFactory.getClassFiles()) {
             val className = outputFile.internalName.replace('/', '.')
             if (className in skipClasses) {
@@ -78,12 +66,13 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
             val locations = jdiClass.allLineLocations()
             assert(locations.isNotEmpty()) { "There are no locations for class $className" }
 
-            val allFilesWithSameName = getKtFiles(expectedFile.name)
-
+            val allFilesWithSameName = files.filter { it.name == expectedFile.name }
             for (location in locations) {
                 if (location.method().isBridge || location.method().isSynthetic) continue
 
-                val fileWithRankings: Map<KtFile, Int> = calculator.rankFiles(allFilesWithSameName, location)
+                val fileWithRankings: Map<KtFile, Int> = runReadAction {
+                    calculator.rankFiles(allFilesWithSameName, location)
+                }
 
                 for ((ktFile, rank) in fileWithRankings) {
                     val expectedRank = expectedRanks[ktFile to (location.lineNumber())]
@@ -126,3 +115,17 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
         return skipClasses
     }
 }
+
+private fun OriginCollectingClassBuilderFactory.collectClassNamesToKtFiles(): Map<String, KtFile> =
+    runReadAction {
+        origins.asSequence()
+            .filter { it.key is ClassNode }
+            .map {
+                val ktFile = (it.value.element?.containingFile as? KtFile) ?: return@map null
+                val name = (it.key as ClassNode).name.replace('/', '.')
+
+                name to ktFile
+            }
+            .filterNotNull()
+            .toMap()
+    }

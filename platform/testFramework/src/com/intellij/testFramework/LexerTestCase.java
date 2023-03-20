@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.lang.TokenWrapper;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.RestartableLexer;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,9 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public abstract class LexerTestCase extends UsefulTestCase {
   protected void doTest(String text) {
     doTest(text, null);
@@ -77,15 +75,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return printTokens(text, start, createLexer());
   }
 
-  protected void checkCorrectRestart(String text) {
-    checkCorrectRestart(text, false);
-  }
-
-  protected void checkCorrectRestartOnEveryToken(@NotNull String text) {
-    checkCorrectRestart(text, true);
-  }
-
-  private void checkCorrectRestart(@NotNull String text, boolean everyToken) {
+  protected void checkCorrectRestart(@NotNull String text) {
     Lexer mainLexer = createLexer();
     List<Trinity<IElementType, Integer, Integer>> allTokens = tokenize(text, 0, 0, mainLexer);
     Lexer auxLexer = createLexer();
@@ -97,7 +87,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
         break;
       }
       int state = auxLexer.getState();
-      if (everyToken || state == 0) {
+      if (state == 0 || (auxLexer instanceof RestartableLexer && ((RestartableLexer)auxLexer).isRestartableState(state))) {
         int tokenStart = auxLexer.getTokenStart();
         List<Trinity<IElementType, Integer, Integer>> expectedTokens = allTokens.subList(index, allTokens.size());
         List<Trinity<IElementType, Integer, Integer>> restartedTokens = tokenize(text, tokenStart, state, mainLexer);

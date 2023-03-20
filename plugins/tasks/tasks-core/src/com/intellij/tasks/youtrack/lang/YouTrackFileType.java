@@ -38,7 +38,7 @@ public final class YouTrackFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return TasksCoreIcons.Youtrack;
   }
 }

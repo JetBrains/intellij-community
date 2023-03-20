@@ -18,9 +18,6 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface  MavenDomSoftAwareConverter {
 
   boolean isSoft(@NotNull DomElement element);

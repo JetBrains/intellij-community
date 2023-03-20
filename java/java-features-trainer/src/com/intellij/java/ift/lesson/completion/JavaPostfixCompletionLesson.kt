@@ -19,7 +19,7 @@ class JavaPostfixCompletionLesson : PostfixCompletionLesson() {
   override val result: String = parseLessonSample("""
     class PostfixCompletionDemo {
         public void demonstrate(int show_times) {
-            if ((show_times == 10)) {
+            if (show_times == 10) {
                 
             }
         }

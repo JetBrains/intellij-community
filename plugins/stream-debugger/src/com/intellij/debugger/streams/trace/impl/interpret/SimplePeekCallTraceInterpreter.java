@@ -24,8 +24,7 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
   @NotNull
   @Override
   public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
-    if (value instanceof ArrayReference) {
-      final ArrayReference trace = (ArrayReference)value;
+    if (value instanceof ArrayReference trace) {
       final Value before = trace.getValue(0);
       final Value after = trace.getValue(1);
       if (before instanceof ArrayReference && after instanceof ArrayReference) {

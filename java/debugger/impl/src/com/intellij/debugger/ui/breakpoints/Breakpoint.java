@@ -102,8 +102,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   @Nullable
   public abstract PsiClass getPsiClass();
+
   /**
    * Request for creating all needed JPDA requests in the specified VM
+   *
    * @param debugProcess the requesting process
    */
   public abstract void createRequest(DebugProcessImpl debugProcess);
@@ -128,6 +130,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   /**
    * Request for creating all needed JPDA requests in the specified VM
+   *
    * @param debuggerProcess the requesting process
    */
   @Override
@@ -235,7 +238,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   /**
    * Associates breakpoint with class.
-   *    Create requests for loaded class and registers callback for loading classes
+   * Create requests for loaded class and registers callback for loading classes
+   *
    * @param debugProcess the requesting process
    */
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
@@ -259,9 +263,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     ThreadReferenceProxyImpl thread = context.getThread();
-    if(thread != null) {
+    if (thread != null) {
       StackFrameProxyImpl stackFrameProxy = context.getFrameProxy();
-      if(stackFrameProxy != null) {
+      if (stackFrameProxy != null) {
         return stackFrameProxy.thisObject();
       }
     }
@@ -572,12 +576,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     FilteredRequestorImpl requestor = new FilteredRequestorImpl(myProject);
     requestor.readTo(parentNode, this);
     try {
-      setEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
+      setEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
     }
     catch (Exception ignored) {
     }
     try {
-      setLogEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
+      setLogEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
     }
     catch (Exception ignored) {
     }
@@ -587,13 +591,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         XExpressionImpl expression = XExpressionImpl.fromText(logMessage);
         XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(XBreakpointActionsPanel.LOG_EXPRESSION_HISTORY_ID, expression);
         myXBreakpoint.setLogExpressionObject(expression);
-        ((XBreakpointBase<?, ?, ?>)myXBreakpoint).setLogExpressionEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
+        ((XBreakpointBase<?, ?, ?>)myXBreakpoint).setLogExpressionEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
       }
     }
     catch (Exception ignored) {
     }
     try {
-      setRemoveAfterHit(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
+      setRemoveAfterHit(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
     }
     catch (Exception ignored) {
     }
@@ -643,6 +647,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public boolean isCountFilterEnabled() {
     return getProperties().isCOUNT_FILTER_ENABLED() && getCountFilter() > 0;
   }
+
   public void setCountFilterEnabled(boolean enabled) {
     if (getProperties().setCOUNT_FILTER_ENABLED(enabled)) {
       fireBreakpointChanged();
@@ -716,27 +721,24 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   private static String getSuspendPolicy(XBreakpoint<?> breakpoint) {
-    switch (breakpoint.getSuspendPolicy()) {
-      case ALL:
-        return DebuggerSettings.SUSPEND_ALL;
-      case THREAD:
-        return DebuggerSettings.SUSPEND_THREAD;
-      case NONE:
-        return DebuggerSettings.SUSPEND_NONE;
-
-      default:
-        throw new IllegalArgumentException("unknown suspend policy");
-    }
+    return switch (breakpoint.getSuspendPolicy()) {
+      case ALL -> DebuggerSettings.SUSPEND_ALL;
+      case THREAD -> DebuggerSettings.SUSPEND_THREAD;
+      case NONE -> DebuggerSettings.SUSPEND_NONE;
+    };
   }
 
   static SuspendPolicy transformSuspendPolicy(String policy) {
     if (DebuggerSettings.SUSPEND_ALL.equals(policy)) {
       return SuspendPolicy.ALL;
-    } else if (DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
+    }
+    else if (DebuggerSettings.SUSPEND_THREAD.equals(policy)) {
       return SuspendPolicy.THREAD;
-    } else if (DebuggerSettings.SUSPEND_NONE.equals(policy)) {
+    }
+    else if (DebuggerSettings.SUSPEND_NONE.equals(policy)) {
       return SuspendPolicy.NONE;
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("unknown suspend policy");
     }
   }

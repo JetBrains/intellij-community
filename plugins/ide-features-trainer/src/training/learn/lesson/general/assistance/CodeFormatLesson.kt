@@ -24,7 +24,7 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
     }
 
     actionTask("ReformatCode") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("code.format.reformat.selection", action(it))
     }
 
@@ -68,8 +68,6 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
       }
     }
   }
-
-  override val suitableTips = listOf("LayoutCode")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("code.format.help.link"),

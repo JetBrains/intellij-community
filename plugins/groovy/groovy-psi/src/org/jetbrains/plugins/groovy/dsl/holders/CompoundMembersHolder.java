@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * @author ilyas
- */
 class CompoundMembersHolder implements CustomMembersHolder {
 
   private final List<CustomMembersHolder> myHolders;

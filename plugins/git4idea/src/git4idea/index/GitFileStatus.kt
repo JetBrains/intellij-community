@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.vcs.FilePath
@@ -12,7 +12,8 @@ data class GitFileStatus(val index: StatusCode,
                          val origPath: FilePath? = null) {
 
   constructor(root: VirtualFile, record: LightFileStatus.StatusRecord) :
-    this(record.index, record.workTree, GitContentRevision.createPath(root, record.path), record.origPath?.let { GitContentRevision.createPath(root, it) })
+    this(record.index, record.workTree, GitContentRevision.createPath(root, record.path),
+         record.origPath?.let { GitContentRevision.createPath(root, it) })
 
   fun isConflicted(): Boolean = isConflicted(index, workTree)
 

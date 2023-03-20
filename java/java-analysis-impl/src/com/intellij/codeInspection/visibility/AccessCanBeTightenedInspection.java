@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -17,17 +17,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
-import gnu.trove.TObjectIntHashMap;
+import com.siyeh.ig.visibility.ClassEscapesItsScopeInspection;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,20 +73,20 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       myHolder = holder;
       myDeadCodeInspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
     }
-    private final TObjectIntHashMap<PsiClass> maxSuggestedLevelForChildMembers = new TObjectIntHashMap<>();
+    private final Object2IntMap<PsiClass> maxSuggestedLevelForChildMembers = new Object2IntOpenHashMap<>();
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       checkMember(aClass);
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       checkMember(method);
     }
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       checkMember(field);
     }
 
@@ -103,7 +102,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       int suggestedLevel = suggestLevel(member, memberClass, currentLevel);
       if (memberClass != null) {
         synchronized (maxSuggestedLevelForChildMembers) {
-          int prevMax = maxSuggestedLevelForChildMembers.get(memberClass);
+          int prevMax = maxSuggestedLevelForChildMembers.getInt(memberClass);
           maxSuggestedLevelForChildMembers.put(memberClass, Math.max(prevMax, suggestedLevel));
         }
       }
@@ -116,7 +115,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         if (member instanceof PsiClass) {
           int memberMaxLevel;
           synchronized (maxSuggestedLevelForChildMembers) {
-            memberMaxLevel = maxSuggestedLevelForChildMembers.get((PsiClass)member);
+            memberMaxLevel = maxSuggestedLevelForChildMembers.getInt(member);
           }
           if (memberMaxLevel > suggestedLevel) {
             // a class can't have visibility less than its members
@@ -129,8 +128,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         // can be null in some strange cases of malbuilt PSI, like in EA-95877
         if (toHighlight != null) {
           String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
-          myHolder.registerProblem(toHighlight,
-                                   JavaAnalysisBundle.message("access.can.be.0", VisibilityUtil.toPresentableText(suggestedModifier)), new ChangeModifierFix(suggestedModifier));
+          String message = PsiModifier.PACKAGE_LOCAL.equals(suggestedModifier)
+                           ? JavaAnalysisBundle.message("access.can.be.package.private")
+                           : JavaAnalysisBundle.message("access.can.be.0", suggestedModifier);
+          myHolder.registerProblem(toHighlight, message, new ChangeModifierFix(suggestedModifier));
         }
       }
     }
@@ -140,8 +141,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       if (member.hasModifierProperty(PsiModifier.PRIVATE) || member.hasModifierProperty(PsiModifier.NATIVE)) return currentLevel;
       if (member instanceof PsiMethod && member instanceof SyntheticElement || !member.isPhysical()) return currentLevel;
 
-      if (member instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)member;
+      if (member instanceof PsiMethod method) {
         if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug(member.getName() + " overrides");
@@ -154,6 +154,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
           }
           return currentLevel;
         }
+        if (FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method) != null ||
+            JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+          return currentLevel;
+        }
       }
       if (member instanceof PsiEnumConstant) return currentLevel;
       if (member instanceof PsiClass && (member instanceof PsiAnonymousClass ||
@@ -162,11 +166,16 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
                                          PsiUtil.isLocalClass((PsiClass)member))) {
         return currentLevel;
       }
-      if (memberClass != null && (memberClass.isInterface() || memberClass.isEnum() || memberClass.isAnnotationType() || PsiUtil.isLocalClass(memberClass) && member instanceof PsiClass)) {
+      if (memberClass != null && (memberClass.isInterface() || PsiUtil.isLocalClass(memberClass) && member instanceof PsiClass)) {
         return currentLevel;
       }
 
       if (memberClass != null && member instanceof PsiMethod) {
+        if (memberClass.isRecord() && ((PsiMethod)member).isConstructor()) {
+          final PsiModifierList modifierList = memberClass.getModifierList();
+          assert modifierList != null; // anonymous records don't exist
+          return PsiUtil.getAccessLevel(modifierList);
+        }
         // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
         // so we just skip it here (IDEA-182709, IDEA-160602)
         for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
@@ -238,7 +247,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       return suggestedLevel;
     }
 
-
     private boolean handleUsage(@NotNull PsiMember member,
                                 @Nullable PsiClass memberClass,
                                 @NotNull AtomicInteger maxLevel,
@@ -270,23 +278,30 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
                                   @NotNull PsiMember member,
                                   PsiClass memberClass,
                                   PsiPackage memberPackage) {
+      if (member instanceof PsiClass && element instanceof PsiJavaCodeReferenceElement) {
+        PsiMember exportingMember = ClassEscapesItsScopeInspection.getExportingMember((PsiJavaCodeReferenceElement)element);
+        if (exportingMember != null) {
+          final PsiModifierList modifierList = exportingMember.getModifierList();
+          assert modifierList != null;
+          return PsiUtil.getAccessLevel(modifierList);
+        }
+      }
       PsiClass innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      boolean isAbstractMember = member.hasModifierProperty(PsiModifier.ABSTRACT);
       if (memberClass != null && PsiTreeUtil.isAncestor(innerClass, memberClass, false) ||
           innerClass != null && PsiTreeUtil.isAncestor(memberClass, innerClass, false)) {
         // access from the same file can be via private
         // except when used in annotation:
         // @Ann(value = C.VAL) class C { public static final String VAL = "xx"; }
         // or in implements/extends clauses
-        if (isInReferenceList(innerClass.getModifierList(), member) ||
-            isInReferenceList(innerClass.getImplementsList(), member) ||
-            isInReferenceList(innerClass.getExtendsList(), member)) {
+        if (VisibilityInspection.containsReferenceTo(innerClass.getModifierList(), member) ||
+            VisibilityInspection.containsReferenceTo(innerClass.getImplementsList(), member) ||
+            VisibilityInspection.containsReferenceTo(innerClass.getExtendsList(), member)) {
           return suggestPackageLocal(member);
         }
 
-        return !isAbstractMember &&
+        return !member.hasModifierProperty(PsiModifier.ABSTRACT) &&
                (myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS || !isInnerClass(memberClass)) &&
-               !calledOnInheritor(element, memberClass)
+               (member.hasModifierProperty(PsiModifier.STATIC) || !calledOnInheritor(element, memberClass))
                ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
 
@@ -320,7 +335,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
 
-    private boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
+    private static boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
       PsiExpression qualifier = getQualifier(element);
       if (qualifier == null) {
         PsiClass enclosingInstance = InheritanceUtil.findEnclosingInstanceInScope(memberClass, element, Conditions.alwaysTrue(), true);
@@ -380,23 +395,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
            member.hasModifierProperty(PsiModifier.STATIC) &&
            member.hasModifierProperty(PsiModifier.FINAL) &&
            ((PsiField)member).hasInitializer();
-  }
-
-  private static boolean isInReferenceList(@Nullable PsiElement list, @NotNull final PsiMember member) {
-    if (list == null) return false;
-    final PsiManager psiManager = member.getManager();
-    final boolean[] result = new boolean[1];
-    list.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        if (psiManager.areElementsEquivalent(reference.resolve(), member)) {
-          result[0] = true;
-          stopWalking();
-        }
-      }
-    });
-    return result[0];
   }
 
   @PsiUtil.AccessLevel

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,8 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CallToStringConcatCanBeReplacedByOperatorInspection
-  extends BaseInspection {
+public class CallToStringConcatCanBeReplacedByOperatorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -61,22 +61,20 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (!(parent instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
       final PsiExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
       final PsiElement grandParent = referenceExpression.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
@@ -94,7 +92,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final Project project = expression.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

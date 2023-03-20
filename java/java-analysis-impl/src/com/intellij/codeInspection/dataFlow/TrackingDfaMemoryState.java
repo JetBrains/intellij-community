@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -174,7 +174,6 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
    * {@code always_true_condition} explanation.
    *
    * @param instruction instruction which
-   * @param bridgeStates
    */
   void addBridge(Instruction instruction, List<TrackingDfaMemoryState> bridgeStates) {
     Map<DfaVariableValue, Change> changeMap = null;
@@ -331,7 +330,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
       }, false);
     }
 
-    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<Relation> relationPredicate, boolean startFromSelf) {
+    MemoryStateChange findRelation(DfaVariableValue value, @NotNull Predicate<? super Relation> relationPredicate, boolean startFromSelf) {
       return findChange(change -> {
         if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value) return true;
         Change varChange = change.myChanges.get(value);
@@ -358,8 +357,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
         }
         return new FactDefinition<>(null, extractor.extract(((DfaVariableValue)value).getInherentType()), null);
       }
-      if (value instanceof DfaBinOpValue) {
-        DfaBinOpValue binOp = (DfaBinOpValue)value;
+      if (value instanceof DfaBinOpValue binOp) {
         FactDefinition<T> left = findFact(binOp.getLeft(), extractor);
         FactDefinition<T> right = findFact(binOp.getRight(), extractor);
         if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {
@@ -405,7 +403,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
     }
 
     @Nullable
-    private MemoryStateChange findChange(@NotNull Predicate<MemoryStateChange> predicate, boolean startFromSelf) {
+    private MemoryStateChange findChange(@NotNull Predicate<? super MemoryStateChange> predicate, boolean startFromSelf) {
       for (MemoryStateChange change = startFromSelf ? this : getPrevious(); change != null; change = change.getPrevious()) {
         if (predicate.test(change)) {
           return change;

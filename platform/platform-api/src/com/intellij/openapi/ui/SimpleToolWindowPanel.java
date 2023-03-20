@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -16,28 +18,32 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 import java.util.Collections;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, DataProvider {
+  public static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
+
+  private final List<DataProvider> myDataProviders = new SmartList<>();
+
   private JComponent myToolbar;
   private JComponent myContent;
 
   private final boolean myBorderless;
   protected boolean myVertical;
-  private boolean myProvideQuickActions;
+  private boolean myProvideQuickActions = true;
 
   public SimpleToolWindowPanel(boolean vertical) {
     this(vertical, false);
   }
 
   public SimpleToolWindowPanel(boolean vertical, boolean borderless) {
-    setLayout(new BorderLayout(vertical ? 0 : 1, vertical ? 1 : 0));
     myBorderless = borderless;
     myVertical = vertical;
-    setProvideQuickActions(true);
+    updateLayout();
 
     addContainerListener(new ContainerAdapter() {
       @Override
@@ -71,6 +77,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     if (myVertical == vertical) return;
     removeAll();
     myVertical = vertical;
+    updateLayout();
     setContent(myContent);
     setToolbar(myToolbar);
   }
@@ -81,6 +88,10 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
   public @Nullable JComponent getToolbar() {
     return myToolbar;
+  }
+
+  private void updateLayout() {
+    setLayout(new BorderLayout(myVertical ? 0 : 1, myVertical ? 1 : 0));
   }
 
   public void setToolbar(@Nullable JComponent c) {
@@ -105,9 +116,31 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     repaint();
   }
 
+  /** @deprecated Use other regular ways to add data providers */
+  @Deprecated(forRemoval = true)
+  public void addDataProvider(@NotNull DataProvider provider) {
+    myDataProviders.add(provider);
+  }
+
   @Override
   public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    return QuickActionProvider.KEY.is(dataId) && myProvideQuickActions ? this : null;
+    if (QuickActionProvider.KEY.is(dataId) && myProvideQuickActions) {
+      return this;
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      List<DataProvider> providers = JBIterable.from(myDataProviders).filterMap(
+        o -> PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(o)).toList();
+      return providers.isEmpty() ? null : CompositeDataProvider.compose(providers);
+    }
+
+    for (DataProvider dataProvider : myDataProviders) {
+      Object data = dataProvider.getData(dataId);
+      if (data != null) {
+        return data;
+      }
+    }
+
+    return null;
   }
 
   public SimpleToolWindowPanel setProvideQuickActions(boolean provide) {
@@ -135,6 +168,20 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     }
 
     myContent = c;
+
+    if (ExperimentalUI.isNewUI()) {
+      JScrollPane scrollPane = UIUtil.findComponentOfType(myContent, JScrollPane.class);
+      AdjustmentListener listener = event -> {
+        ClientProperty.put(myContent, SCROLLED_STATE, event.getAdjustable().getValue() != 0);
+        repaint();
+      };
+
+      if (scrollPane != null) {
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(listener);
+        scrollPane.getHorizontalScrollBar().addAdjustmentListener(listener);
+      }
+    }
+
     add(c, BorderLayout.CENTER);
 
     if (myBorderless) {
@@ -151,6 +198,13 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
       g.setColor(JBColor.border());
+
+      if (ExperimentalUI.isNewUI()) {
+        //don't draw line for scrolled content
+        if (Boolean.FALSE.equals(ClientProperty.get(myContent, SCROLLED_STATE))) {
+          return;
+        }
+      }
       if (myVertical) {
         int y = (int)myToolbar.getBounds().getMaxY();
         LinePainter2D.paint((Graphics2D)g, 0, y, getWidth(), y);

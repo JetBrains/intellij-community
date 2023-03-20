@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.openapi.util.text.StringUtil
@@ -8,45 +8,42 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
+import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : DependencySearchProvider {
+internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : DependencySearchProvider {
 
-  override fun fulltextSearch(searchString: String,
-                              consumer: Consumer<RepositoryArtifactData>) {
-    val mavenId = MavenId(searchString)
-    search(consumer, mavenId)
-  }
+  override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> =
+    search(MavenId(searchString))
 
-  override fun suggestPrefix(groupId: String?,
-                             artifactId: String?,
-                             consumer: Consumer<RepositoryArtifactData>) {
-    search(consumer, MavenId(groupId, artifactId, null))
-  }
+  override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> =
+    search(MavenId(groupId, artifactId, null))
 
-  private fun search(consumer: Consumer<RepositoryArtifactData>, mavenId: MavenId) {
-    for (groupId in myIndex.groupIds) {
-      if (groupId == null) continue;
-      if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
-        continue
-      }
-      for (artifactId in myIndex.getArtifactIds(groupId)) {
-        if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
+  private fun search(mavenId: MavenId): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
+    buildList {
+      for (groupId in myIndex.groupIds) {
+        if (groupId == null) continue
+        if (!mavenId.groupId.isNullOrEmpty() && !nonExactMatches(groupId, mavenId.groupId!!)) {
           continue
         }
-        if (artifactId == null) continue;
-        val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
-        consumer.accept(info)
+        for (artifactId in myIndex.getArtifactIds(groupId)) {
+          if (!mavenId.artifactId.isNullOrEmpty() && !nonExactMatches(artifactId, mavenId.artifactId!!)) {
+            continue
+          }
+          if (artifactId == null) continue
+          val info = MavenRepositoryArtifactInfo(groupId, artifactId, myIndex.getVersions(groupId, artifactId))
+          add(info)
+        }
       }
     }
   }
 
   private fun nonExactMatches(template: String, real: String): Boolean {
-    val splittedTemplate = template.split(delimiters = *charArrayOf('-', '.'))
-    val splittedReal = real.split(delimiters = *charArrayOf('-', '.'))
+    val splittedTemplate = template.split(delimiters = charArrayOf('-', '.'))
+    val splittedReal = real.split(delimiters = charArrayOf('-', '.'))
     if (splittedTemplate.size == 1 || splittedReal.size == 1) {
       return StringUtil.startsWith(template, real) || StringUtil.startsWith(
         real, template)
@@ -66,6 +63,4 @@ class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : Dependency
 
   val index: MavenSearchIndex
     get() = myIndex
-
-
 }

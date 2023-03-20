@@ -15,32 +15,29 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import org.junit.Test;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenSpellcheckerTest extends MavenDomTestCase {
 
   @Test
   public void testSpell() {
     myFixture.enableInspections(SpellCheckingInspection.class);
 
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-
-                     "<description><TYPO>xxxxx</TYPO></description>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>\n" +
-                     "    <groupId>xxxxx</groupId>\n" +
-                     "    <artifactId>xxxxx</artifactId>\n" +
-                     "    <version>4.0</version>\n" +
-                     "    <type>pom</type>\n" +
-                     "  </dependency>\n" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <description><TYPO>xxxxx</TYPO></description>
+                       <dependencies>
+                         <dependency>
+                           <groupId>xxxxx</groupId>
+                           <artifactId>xxxxx</artifactId>
+                           <version>4.0</version>
+                           <type>pom</type>
+                         </dependency>
+                       </dependencies>""");
 
     checkHighlighting();
   }

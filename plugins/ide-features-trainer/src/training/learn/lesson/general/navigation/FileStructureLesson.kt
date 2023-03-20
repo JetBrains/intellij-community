@@ -6,10 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import training.dsl.LessonContext
-import training.dsl.LessonUtil
-import training.dsl.TaskRuntimeContext
-import training.dsl.restoreAfterStateBecomeFalse
+import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType
@@ -17,7 +14,7 @@ import training.util.isToStringContains
 
 abstract class FileStructureLesson
   : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name")) {
-  abstract override val existedFile: String
+  abstract override val sampleFilePath: String
   abstract val methodToFindPosition: LogicalPosition
 
   private val searchSubstring: String = "hosa"
@@ -28,6 +25,8 @@ abstract class FileStructureLesson
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
+      sdkConfigurationTasks()
+
       caret(0)
 
       actionTask("FileStructurePopup") {
@@ -68,8 +67,6 @@ abstract class FileStructureLesson
     }
     return false
   }
-
-  override val suitableTips = listOf("FileStructurePopup")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("file.structure.help.link"),

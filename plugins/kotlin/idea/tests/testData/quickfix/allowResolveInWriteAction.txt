@@ -2,10 +2,11 @@
 # Please consider rewriting a quick-fix and remove resolve from it before adding a new entry to this list.
 
 org.jetbrains.kotlin.idea.core.overrideImplement.ImplementAsConstructorParameter
+org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix
 org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 org.jetbrains.kotlin.idea.inspections.ConflictingExtensionPropertyInspection$DeleteRedundantExtensionAction
-org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection$HighPriorityIntentionBasedQuickFix
-org.jetbrains.kotlin.idea.inspections.KotlinUnusedImportInspection$OptimizeImportsQuickFix
+org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection$HighPriorityIntentionBasedQuickFix
+org.jetbrains.kotlin.idea.inspections.KotlinOptimizeImportsQuickFix
 org.jetbrains.kotlin.idea.inspections.migration.ObsoleteCoroutinesDelegateQuickFix
 org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
 org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix
@@ -22,9 +23,7 @@ org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention
 org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
 org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix
-org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 org.jetbrains.kotlin.idea.quickfix.AddFunctionToSupertypeFix
-org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 org.jetbrains.kotlin.idea.quickfix.AddNameToArgumentFix
 org.jetbrains.kotlin.idea.quickfix.AddPropertyToSupertypeFix
 org.jetbrains.kotlin.idea.quickfix.AddStartProjectionsForInnerClass
@@ -68,7 +67,6 @@ org.jetbrains.kotlin.idea.quickfix.RemoveUnusedValueFix
 org.jetbrains.kotlin.idea.quickfix.RenameModToRemFix
 org.jetbrains.kotlin.idea.quickfix.RenameParameterToMatchOverriddenMethodFix
 org.jetbrains.kotlin.idea.quickfix.RenameUnresolvedReferenceFix
-org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix
 org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
 org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix
 org.jetbrains.kotlin.idea.quickfix.RestrictedRetentionForExpressionAnnotationFactory$AddSourceRetentionFix
@@ -78,5 +76,9 @@ org.jetbrains.kotlin.idea.quickfix.SpecifyOverrideExplicitlyFix
 org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix
 org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParenthesisFix
 org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix
-com.intellij.spring.model.highlighting.autowire.SpringUastInjectionPointsAutowiringInspection$AddSpringBeanQualifierFix
+com.intellij.spring.model.highlighting.autowire.SpringUastInjectionPointsAutowiringChecker$AddSpringBeanQualifierFix
 org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelMigrateToParcelizeQuickFix
+org.jetbrains.kotlin.idea.quickfix.AddConversionCallFix
+org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix
+org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix
+org.jetbrains.kotlin.idea.quickfix.AddFunModifierFix

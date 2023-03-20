@@ -2,11 +2,13 @@
 package git4idea.actions
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitSelectRootDialog
 import git4idea.repo.GitRepository
@@ -21,9 +23,14 @@ abstract class GitOperationActionBase(
     e.presentation.isEnabledAndVisible = !getAffectedRepositories(e.project).isEmpty()
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val repository = chooseRepository(project, getAffectedRepositories(project))
+    val defaultRepo = GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)
+    val repository = chooseRepository(project, getAffectedRepositories(project), defaultRepo)
 
     if (repository != null) {
       performInBackground(repository)
@@ -38,13 +45,13 @@ abstract class GitOperationActionBase(
     return GitUtil.getRepositoriesInState(project, repositoryState)
   }
 
-  private fun chooseRepository(project: Project, repositories: Collection<GitRepository>): GitRepository? {
+  private fun chooseRepository(project: Project, repositories: Collection<GitRepository>, defaultRepo: GitRepository?): GitRepository? {
     if (repositories.size == 1) return repositories.single()
     return GitSelectRootDialog(project,
                                templatePresentation.text!!,
                                GitBundle.message("operation.action.message", operationName),
                                repositories,
-                               null)
+                               defaultRepo)
       .selectRoot()
   }
 }

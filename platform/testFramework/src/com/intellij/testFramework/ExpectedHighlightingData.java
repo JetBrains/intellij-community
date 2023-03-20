@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.AbstractBundle;
@@ -51,14 +51,23 @@ import static com.intellij.openapi.util.Pair.pair;
 import static java.util.Comparator.comparingInt;
 import static org.junit.Assert.*;
 
+/**
+ * Extracts the markers for the expected highlighting ranges, such as {@code <error descr="..."/>},
+ * and removes them from the document.
+ * <p>
+ * Whether warnings, weak warnings and info are checked depends on the constructor.
+ * In particular, if the document contains markers whose type is disabled,
+ * these markers are not checked.
+ */
 public class ExpectedHighlightingData {
-  public static final String EXPECTED_DUPLICATION_MESSAGE =
-    "Expected duplication problem. Please remove this wrapper, if there is no such problem any more";
+  static final String EXPECTED_DUPLICATION_MESSAGE =
+    "Expected duplication problem. Please remove `ExpectedHighlightingData.expectedDuplicatedHighlighting()` surrounding call, if there is no such problem any more";
 
   private static final String ERROR_MARKER = CodeInsightTestFixture.ERROR_MARKER;
   private static final String WARNING_MARKER = CodeInsightTestFixture.WARNING_MARKER;
   private static final String WEAK_WARNING_MARKER = CodeInsightTestFixture.WEAK_WARNING_MARKER;
   private static final String INFO_MARKER = CodeInsightTestFixture.INFO_MARKER;
+  private static final String TEXT_ATTRIBUTES_MARKER = CodeInsightTestFixture.TEXT_ATTRIBUTES_MARKER;
   private static final String END_LINE_HIGHLIGHT_MARKER = CodeInsightTestFixture.END_LINE_HIGHLIGHT_MARKER;
   private static final String END_LINE_WARNING_MARKER = CodeInsightTestFixture.END_LINE_WARNING_MARKER;
   private static final String INJECT_MARKER = "inject";
@@ -128,6 +137,7 @@ public class ExpectedHighlightingData {
     registerHighlightingType(HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY, false, false));
     registerHighlightingType(INJECTED_SYNTAX_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SYNTAX_SEVERITY, false, false));
     registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, false));
+    registerHighlightingType(TEXT_ATTRIBUTES_MARKER, new ExpectedHighlightingSet(HighlightSeverity.TEXT_ATTRIBUTES, false, false));
     registerHighlightingType(SYMBOL_NAME_MARKER, new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
     for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
@@ -164,6 +174,7 @@ public class ExpectedHighlightingData {
 
   public void checkInfos() {
     registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, true));
+    registerHighlightingType(TEXT_ATTRIBUTES_MARKER, new ExpectedHighlightingSet(HighlightSeverity.TEXT_ATTRIBUTES, false, true));
     registerHighlightingType(INJECT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
     registerHighlightingType(HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY, false, true));
   }
@@ -239,17 +250,17 @@ public class ExpectedHighlightingData {
     Set<String> markers = myHighlightingTypes.keySet();
     String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
     String openingTagRx = "<(" + typesRx + ")" +
-                                "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                                "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
-                                "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+background=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
-                                "(?:\\s+effecttype=\"([A-Z]+)\")?" +
-                                "(?:\\s+fonttype=\"([0-9]+)\")?" +
-                                "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                                "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
-                                "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
-                                "(/)?>";
+                          "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
+                          "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
+                          "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
+                          "(?:\\s+background=\"([0-9xa-f]+)\")?" +
+                          "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
+                          "(?:\\s+effecttype=\"([A-Z]+)\")?" +
+                          "(?:\\s+fonttype=\"([0-9]+)\")?" +
+                          "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
+                          "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
+                          "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
+                          "(/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
     Ref<Integer> textOffset = Ref.create(0);
@@ -316,7 +327,8 @@ public class ExpectedHighlightingData {
     if (foregroundColor != null) {
       @JdkConstants.FontStyle int ft = fontType != null ? Integer.parseInt(fontType) : 0;
       forcedAttributes = new TextAttributes(
-        Color.decode(foregroundColor), backgroundColor != null ? Color.decode(backgroundColor) : null, effectColor != null ? Color.decode(effectColor) : null, 
+        Color.decode(foregroundColor), backgroundColor != null ? Color.decode(backgroundColor) : null,
+        effectColor != null ? Color.decode(effectColor) : null,
         effectType != null ? EffectType.valueOf(effectType) : null, ft);
     }
 
@@ -414,7 +426,7 @@ public class ExpectedHighlightingData {
         if (failMessage.length() > 0) failMessage.append('\n');
         failMessage.append(fileName).append("extra ")
           .append(rangeString(text, info.startOffset, info.endOffset))
-          .append(": '").append(info.getLineMarkerTooltip()).append('\'');
+          .append(": '").append(sanitizedLineMarkerTooltip(info)).append('\'');
         Icon icon = info.getIcon();
         if (icon != null && !icon.toString().equals(ANY_TEXT)) {
           failMessage.append(" icon='").append(icon).append('\'');
@@ -427,7 +439,7 @@ public class ExpectedHighlightingData {
         if (failMessage.length() > 0) failMessage.append('\n');
         failMessage.append(fileName).append("missing ")
           .append(rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset))
-          .append(": '").append(expectedLineMarker.getLineMarkerTooltip()).append('\'');
+          .append(": '").append(sanitizedLineMarkerTooltip(expectedLineMarker)).append('\'');
         Icon icon = expectedLineMarker.getIcon();
         if (icon != null && !icon.toString().equals(ANY_TEXT)) {
           failMessage.append(" icon='").append(icon).append('\'');
@@ -447,6 +459,10 @@ public class ExpectedHighlightingData {
     }
   }
 
+  protected String sanitizedLineMarkerTooltip(@NotNull LineMarkerInfo info) {
+    return info.getLineMarkerTooltip();
+  }
+
   @NotNull
   private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
     StringBuilder result = new StringBuilder();
@@ -463,7 +479,7 @@ public class ExpectedHighlightingData {
       if (info.second == expectedLineMarker.startOffset) {
         result
           .append("<lineMarker descr=\"")
-          .append(expectedLineMarker.getLineMarkerTooltip())
+          .append(sanitizedLineMarkerTooltip(expectedLineMarker))
           .append("\">");
       }
       else {
@@ -475,13 +491,12 @@ public class ExpectedHighlightingData {
     return result.toString();
   }
 
-  private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
-    String infoTooltip = info.getLineMarkerTooltip();
+  protected boolean containsLineMarker(@NotNull LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
     Icon icon = info.getIcon();
     for (LineMarkerInfo markerInfo : where) {
       if (markerInfo.startOffset == info.startOffset &&
           markerInfo.endOffset == info.endOffset &&
-          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip()) &&
+          matchLineMarkersTooltip(info, markerInfo) &&
           matchIcons(icon, markerInfo.getIcon())) {
         return true;
       }
@@ -490,7 +505,11 @@ public class ExpectedHighlightingData {
     return false;
   }
 
-  private static boolean matchIcons(Icon icon1, Icon icon2) {
+  protected boolean matchLineMarkersTooltip(@NotNull LineMarkerInfo info, @NotNull LineMarkerInfo markerInfo) {
+    return matchDescriptions(false, info.getLineMarkerTooltip(), markerInfo.getLineMarkerTooltip());
+  }
+
+  protected static boolean matchIcons(Icon icon1, Icon icon2) {
     String s1 = String.valueOf(icon1);
     String s2 = String.valueOf(icon2);
     if (Comparing.strEqual(s1, s2)) return true;
@@ -654,7 +673,7 @@ public class ExpectedHighlightingData {
         if (byStarts != 0) return byStarts;
       }
       else {
-        int byEOL = Comparing.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
+        int byEOL = Boolean.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
         if (byEOL != 0) return byEOL;
       }
 
@@ -816,7 +835,7 @@ public class ExpectedHighlightingData {
            matchTooltips(strictMatch, info1.getToolTip(), info2.getToolTip());
   }
 
-  private static boolean matchDescriptions(boolean strictMatch, String d1, String d2) {
+  protected static boolean matchDescriptions(boolean strictMatch, String d1, String d2) {
     if (Comparing.strEqual(d1, d2)) return true;
     if (strictMatch) return false;
     if (Comparing.strEqual(ANY_TEXT, d1) || Comparing.strEqual(ANY_TEXT, d2)) return true;
@@ -886,6 +905,7 @@ public class ExpectedHighlightingData {
       return null;
     }
   };
+
   private static class PathIcon implements Icon {
     private final String path;
 
@@ -914,7 +934,7 @@ public class ExpectedHighlightingData {
 
     @Override
     public boolean equals(Object obj) {
-      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path == path);
+      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path.equals(path));
     }
 
     @Override
@@ -922,6 +942,7 @@ public class ExpectedHighlightingData {
       return path;
     }
   }
+
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 

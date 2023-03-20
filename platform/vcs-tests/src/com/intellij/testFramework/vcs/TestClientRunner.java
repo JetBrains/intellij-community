@@ -20,9 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina
- */
 public final class TestClientRunner {
   private static final Logger LOG = Logger.getInstance(TestClientRunner.class);
   private final boolean myTraceClient;

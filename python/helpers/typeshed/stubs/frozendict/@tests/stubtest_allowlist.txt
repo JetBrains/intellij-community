@@ -1,5 +1,0 @@
-frozendict.FrozenOrderedDict
-frozendict.frozendict.__hash__
-frozendict.frozendict.__new__
-frozendict.frozendict.__repr__
-frozendict.frozendict.copy

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -15,7 +15,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.MapDataContext;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
@@ -56,7 +55,7 @@ public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
 
   public void testUnloaded() {
     createModule("a");
-    getModuleManager().setUnloadedModules(Arrays.asList("a"));
+    getModuleManager().setUnloadedModulesSync(List.of("a"));
     assertNotNull(getModuleManager().getUnloadedModuleDescription("a"));
     deleteModules("a");
     assertNull(getModuleManager().getUnloadedModuleDescription("a"));
@@ -66,7 +65,7 @@ public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
     Module a = createModule("a");
     Module b = createModule("b");
     ModuleRootModificationUtil.addDependency(a, b);
-    getModuleManager().setUnloadedModules(Arrays.asList("b"));
+    getModuleManager().setUnloadedModulesSync(List.of("b"));
     assertSameElements(ModuleRootManager.getInstance(a).getDependencyModuleNames(), "b");
     deleteModules("b");
     assertEmpty(ModuleRootManager.getInstance(a).getDependencyModuleNames());
@@ -78,7 +77,7 @@ public class ModuleDeleteProviderTest extends HeavyPlatformTestCase {
     ModuleRootModificationUtil.addDependency(a, b);
     ModuleRootModificationUtil.addDependency(myModule, a);
     ModuleRootModificationUtil.addDependency(myModule, b);
-    getModuleManager().setUnloadedModules(Arrays.asList("a"));
+    getModuleManager().setUnloadedModulesSync(List.of("a"));
     assertSameElements(ModuleRootManager.getInstance(myModule).getDependencyModuleNames(), "a", "b");
     deleteModules("a", "b");
     assertNull(getModuleManager().findModuleByName("a"));

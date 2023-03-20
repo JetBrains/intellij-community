@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 data class UnattendedHostPerProjectStatus(
   val projectName: String,
   val projectPath: String,
+  val projectPathLink: String?,
   var dateLastOpened: Long? = null,
 
   val joinLink: String,
@@ -27,12 +28,29 @@ data class UnattendedHostStatus(
   val appVersion: String,
   val runtimeVersion: String,
   val unattendedMode: Boolean,
+  val backendUnresponsive: Boolean,
+  val modalDialogIsOpened: Boolean,
   val idePath: String,
+
+  // join links at app level are available since 2023.1
+  val joinLink: String?,
+  val httpLink: String?,
+  val gatewayLink: String?,
+
   val projects: List<UnattendedHostPerProjectStatus>? = null
 ) {
 
   fun toJson(): String {
     return gson.toJson(this)
+  }
+
+  fun productCode(): String? {
+    val productAndVersion = appVersion.split("-")
+    return if (productAndVersion.size != 2) {
+      null
+    } else {
+      productAndVersion[0]
+    }
   }
 
   companion object {
@@ -44,7 +62,6 @@ data class UnattendedHostStatus(
   }
 }
 
-@Suppress("MemberVisibilityCanBePrivate")
 @ApiStatus.Experimental
 object UnattendedHostConstants {
   val LOG = logger<UnattendedHostConstants>()

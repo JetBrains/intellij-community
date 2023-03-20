@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests.targets.java
 
 import com.intellij.execution.junit.JUnitConfiguration
@@ -35,7 +35,7 @@ abstract class JavaTargetMultiModuleTestBase(executionMode: ExecutionMode) : Com
   fun `test junit tests - run all in two modules`() {
     val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_PACKAGE)
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"3\" />\n" +

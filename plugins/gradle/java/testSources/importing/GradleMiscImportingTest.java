@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -96,11 +97,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testLanguageLevel() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "sourceCompatibility = 1.5\n" +
-      "compileTestJava {\n" +
-      "  sourceCompatibility = 1.8\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        sourceCompatibility = 1.5
+        compileTestJava {
+          sourceCompatibility = 1.8
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -132,11 +135,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testTargetLevel() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "targetCompatibility = 1.8\n" +
-      "compileJava {\n" +
-      "  targetCompatibility = 1.5\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        targetCompatibility = 1.8
+        compileJava {
+          targetCompatibility = 1.5
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -148,16 +153,18 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   @TargetVersions("3.4+")
   public void testJdkName() throws Exception {
-    Sdk myJdk = createJdk("MyJDK");
+    Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
     importProject(
-      "apply plugin: 'java'\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    jdkName = 'MyJDK'\n" +
-      "  }\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        apply plugin: 'idea'
+        idea {
+          module {
+            jdkName = 'MyJDK'
+          }
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -172,7 +179,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     );
     assertModules("project", "project.main", "project.test");
 
-    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModules(Collections.singletonList("project.main")));
+    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModulesSync(Collections.singletonList("project.main")));
     assertModules("project", "project.test");
 
     importProject();
@@ -182,10 +189,11 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testESLinkedProjectIds() throws Exception {
     // main build
-    createSettingsFile("rootProject.name = 'multiproject'\n" +
-                       "include ':app'\n" +
-                       "include ':util'\n" +
-                       "includeBuild 'included-build'");
+    createSettingsFile("""
+                         rootProject.name = 'multiproject'
+                         include ':app'
+                         include ':util'
+                         includeBuild 'included-build'""");
     createProjectSubFile("build.gradle", "allprojects { apply plugin: 'java' }");
 
     // main buildSrc
@@ -237,17 +245,17 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertExternalProjectId("multiproject.main", "multiproject:main");
     assertExternalProjectId("multiproject.test", "multiproject:test");
 
-    assertExternalProjectId("multiproject.buildSrc", "multiproject:buildSrc");
-    assertExternalProjectId("multiproject.buildSrc.main", "multiproject:buildSrc:main");
-    assertExternalProjectId("multiproject.buildSrc.test", "multiproject:buildSrc:test");
+    assertExternalProjectId("multiproject.buildSrc", ":buildSrc");
+    assertExternalProjectId("multiproject.buildSrc.main", ":buildSrc:main");
+    assertExternalProjectId("multiproject.buildSrc.test", ":buildSrc:test");
 
-    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject", "multiproject:buildSrc:buildSrcSubProject");
-    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.main", "multiproject:buildSrc:buildSrcSubProject:main");
-    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.test", "multiproject:buildSrc:buildSrcSubProject:test");
+    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject", ":buildSrc:buildSrcSubProject");
+    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.main", ":buildSrc:buildSrcSubProject:main");
+    assertExternalProjectId("multiproject.buildSrc.buildSrcSubProject.test", ":buildSrc:buildSrcSubProject:test");
 
-    assertExternalProjectId("multiproject.buildSrc.util", "multiproject:buildSrc:util");
-    assertExternalProjectId("multiproject.buildSrc.util.main", "multiproject:buildSrc:util:main");
-    assertExternalProjectId("multiproject.buildSrc.util.test", "multiproject:buildSrc:util:test");
+    assertExternalProjectId("multiproject.buildSrc.util", ":buildSrc:util");
+    assertExternalProjectId("multiproject.buildSrc.util.main", ":buildSrc:util:main");
+    assertExternalProjectId("multiproject.buildSrc.util.test", ":buildSrc:util:test");
 
     assertExternalProjectId("multiproject.app", ":app");
     assertExternalProjectId("multiproject.app.main", ":app:main");
@@ -257,20 +265,20 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertExternalProjectId("multiproject.util.main", ":util:main");
     assertExternalProjectId("multiproject.util.test", ":util:test");
 
-    assertExternalProjectId("inc-build", "inc-build");
-    assertExternalProjectId("inc-build.util", "inc-build:util");
+    assertExternalProjectId("inc-build", ":included-build");
+    assertExternalProjectId("inc-build.util", ":included-build:util");
 
-    assertExternalProjectId("inc-build.buildSrc", "inc-build:buildSrc");
-    assertExternalProjectId("inc-build.buildSrc.util", "inc-build:buildSrc:util");
-    assertExternalProjectId("inc-build.buildSrc.main", "inc-build:buildSrc:main");
-    assertExternalProjectId("inc-build.buildSrc.test", "inc-build:buildSrc:test");
+    assertExternalProjectId("inc-build.buildSrc", ":included-build:buildSrc");
+    assertExternalProjectId("inc-build.buildSrc.util", ":included-build:buildSrc:util");
+    assertExternalProjectId("inc-build.buildSrc.main", ":included-build:buildSrc:main");
+    assertExternalProjectId("inc-build.buildSrc.test", ":included-build:buildSrc:test");
 
     Map<String, ExternalProject> projectMap = getExternalProjectsMap();
     assertExternalProjectIds(projectMap, "multiproject", "multiproject:main", "multiproject:test");
     assertExternalProjectIds(projectMap, ":app", ":app:main", ":app:test");
     assertExternalProjectIds(projectMap, ":util", ":util:main", ":util:test");
-    assertExternalProjectIds(projectMap, "inc-build", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    assertExternalProjectIds(projectMap, "inc-build:util", ArrayUtilRt.EMPTY_STRING_ARRAY);
+    assertExternalProjectIds(projectMap, ":included-build", ArrayUtilRt.EMPTY_STRING_ARRAY);
+    assertExternalProjectIds(projectMap, ":included-build:util", ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     // Note, currently ExternalProject models are not exposed for "buildSrc" projects
   }
@@ -328,6 +336,19 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     Module moduleAfter = ModuleManager.getInstance(myProject).findModuleByName("project");
     assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter));
+  }
+
+
+  @Test
+  public void testProjectLibraryCoordinatesAreSet() throws Exception {
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .withMavenCentral()
+                    .addImplementationDependency("junit:junit:4.0")
+                    .generate());
+
+    assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
+                                    "junit", "junit", "4.0");
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {

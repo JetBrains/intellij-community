@@ -23,9 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class SimplifyToAssignmentFix implements LocalQuickFix {
   @NotNull
   @Override

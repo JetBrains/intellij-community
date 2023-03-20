@@ -19,7 +19,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +28,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author spleaner
- */
 public final class JavaExecutionUtil {
   private static final Logger LOG = Logger.getInstance(JavaExecutionUtil.class);
 
@@ -133,8 +129,7 @@ public final class JavaExecutionUtil {
   }
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void showExecutionErrorMessage(ExecutionException e, @NlsContexts.DialogTitle String title, Project project) {
     ExecutionErrorDialog.show(e, title, project);
   }

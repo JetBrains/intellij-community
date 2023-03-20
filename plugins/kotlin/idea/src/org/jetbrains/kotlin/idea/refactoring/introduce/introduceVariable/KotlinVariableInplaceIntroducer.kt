@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
@@ -13,12 +14,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.ui.NonFocusableCheckBox
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducer
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -31,17 +31,17 @@ import org.jetbrains.kotlin.types.KotlinType
 import javax.swing.JCheckBox
 
 class KotlinVariableInplaceIntroducer(
-    addedVariable: KtProperty,
-    originalExpression: KtExpression?,
-    occurrencesToReplace: Array<KtExpression>,
-    suggestedNames: Collection<String>,
-    val isVar: Boolean,
-    val doNotChangeVar: Boolean,
-    val expressionType: KotlinType?,
-    val noTypeInference: Boolean,
-    project: Project,
-    editor: Editor,
-    private val postProcess: (KtDeclaration) -> Unit
+  addedVariable: KtProperty,
+  originalExpression: KtExpression?,
+  occurrencesToReplace: Array<KtExpression>,
+  suggestedNames: Collection<String>,
+  val isVar: Boolean,
+  private val doNotChangeVar: Boolean,
+  val expressionType: KotlinType?,
+  private val noTypeInference: Boolean,
+  project: Project,
+  editor: Editor,
+  private val postProcess: (KtDeclaration) -> Unit
 ) : AbstractKotlinInplaceIntroducer<KtProperty>(
     localVariable = addedVariable.takeIf { it.isLocal },
     expression = originalExpression,
@@ -109,10 +109,10 @@ class KotlinVariableInplaceIntroducer(
     }
 
     override fun buildTemplateAndStart(
-        refs: Collection<PsiReference>,
-        stringUsages: Collection<Pair<PsiElement, TextRange>>,
-        scope: PsiElement,
-        containingFile: PsiFile
+      refs: Collection<PsiReference>,
+      stringUsages: Collection<Pair<PsiElement, TextRange>>,
+      scope: PsiElement,
+      containingFile: PsiFile
     ): Boolean {
         myNameSuggestions = myNameSuggestions.mapTo(LinkedHashSet(), String::quoteIfNeeded)
 

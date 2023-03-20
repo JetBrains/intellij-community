@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.template.Template;
@@ -23,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.*;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.shouldCreateStaticMember;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate;
 
 public final class CreateMethodFromUsageFix {
   private static final Logger LOG = Logger.getInstance(CreateMethodFromUsageFix.class);
@@ -43,7 +45,7 @@ public final class CreateMethodFromUsageFix {
     PsiExpressionList argumentList = call.getArgumentList();
     for (PsiExpression expression : argumentList.getExpressions()) {
       PsiType type = expression.getType();
-      if (type == null || PsiType.VOID.equals(type)) return true;
+      if (type == null || PsiTypes.voidType().equals(type)) return true;
     }
     return false;
   }
@@ -57,7 +59,7 @@ public final class CreateMethodFromUsageFix {
       return null;
     }
 
-    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
+    PsiMethod method = factory.createMethod(methodName, PsiTypes.voidType());
 
     if (targetClass.equals(parentClass)) {
       method = (PsiMethod)targetClass.addAfter(method, enclosingContext);
@@ -115,7 +117,7 @@ public final class CreateMethodFromUsageFix {
     if (method == null) return;
 
     RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-    final Editor newEditor = positionCursor(project, targetFile, method);
+    final Editor newEditor = CodeInsightUtil.positionCursor(project, targetFile, method);
     if (newEditor == null) return;
     Template template = builder.buildTemplate();
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());

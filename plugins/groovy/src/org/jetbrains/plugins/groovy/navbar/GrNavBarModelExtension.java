@@ -30,8 +30,7 @@ public class GrNavBarModelExtension extends AbstractNavBarModelExtension {
     if (containingFile instanceof GroovyFileBase) {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibrary(file))) {
-        if (psiElement instanceof GroovyFileBase) {
-          final GroovyFileBase grFile = (GroovyFileBase)psiElement;
+        if (psiElement instanceof GroovyFileBase grFile) {
           if (grFile.getViewProvider().getBaseLanguage().equals(GroovyLanguage.INSTANCE)) {
             final PsiClass[] psiClasses = grFile.getClasses();
             if (psiClasses.length == 1 && !grFile.isScript()) {

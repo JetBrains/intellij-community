@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,11 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractIncrementIntention extends MutablyNamedIntention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("extract.increment.intention.family.name");
+  }
 
   @Override
   public String getTextForElement(PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.core.entity.properties
 
@@ -8,10 +8,10 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValuedEntityContext
 
 class PropertyContext : ValuedEntityContext<Property<Any>>() {
     @Suppress("UNCHECKED_CAST")
-    operator fun <V : Any> get(entity: PropertyReference<V>) =
+    operator fun <V : Any> get(entity: PropertyEntityReference<V>) =
         values[entity.path] as? V
 
-    operator fun <V : Any> set(entity: PropertyReference<V>, value: Any) {
+    operator fun <V : Any> set(entity: PropertyEntityReference<V>, value: Any) {
         values[entity.path] = value
     }
 }

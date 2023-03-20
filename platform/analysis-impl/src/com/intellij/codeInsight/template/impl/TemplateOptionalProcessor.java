@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,16 +54,6 @@ public interface TemplateOptionalProcessor {
    * @return whether a checkbox for this template should be shown in the configuration dialog, with the given template context.
    */
   default boolean isVisible(@NotNull Template template, @NotNull TemplateContext context) {
-    //noinspection deprecation
-    return isVisible(template);
-  }
-
-  /**
-   * @deprecated Please override {@link #isVisible(Template, TemplateContext)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default boolean isVisible(final Template template) {
     return true;
   }
 }

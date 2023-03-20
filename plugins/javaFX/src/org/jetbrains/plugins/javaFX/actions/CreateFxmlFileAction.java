@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,12 +55,17 @@ import static org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames.JAVAFX_APPLICA
 /**
  * @author pdolgov
  */
-public final class CreateFxmlFileAction extends CreateFromTemplateActionBase implements UpdateInBackground {
+public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
 
   public CreateFxmlFileAction() {
     super(JavaFXBundle.message("javafx.create.new.fxml.file.title"), JavaFXBundle.message("javafx.create.new.fxml.file.description"),
           AllIcons.FileTypes.Xml);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -75,7 +81,7 @@ public final class CreateFxmlFileAction extends CreateFromTemplateActionBase imp
         VirtualFile vDirectory = psiDirectory.getVirtualFile();
         ProjectFileIndex index = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
         if (index.isInSourceContent(vDirectory)) {
-          return index.getPackageNameByDirectory(vDirectory);
+          return PackageIndex.getInstance(file.getProject()).getPackageNameByDirectory(vDirectory);
         }
       }
       return null;

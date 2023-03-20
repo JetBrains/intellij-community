@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.framework;
 
@@ -33,10 +33,13 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
+import org.jetbrains.kotlin.idea.projectConfiguration.CustomLibraryDescriptionWithDeferredConfig;
+import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription;
+import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription;
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle;
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter;
+import org.jetbrains.kotlin.platform.JsPlatformKt;
 import org.jetbrains.kotlin.platform.TargetPlatform;
-import org.jetbrains.kotlin.platform.js.JsPlatformKt;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatformKt;
 
 import javax.swing.*;
@@ -99,8 +102,8 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
                 if (libraryCompositionSettings != null) {
                     libraryCompositionSettings.addLibraries(rootModel, new ArrayList<Library>(), librariesContainer);
 
-                    if (customLibraryDescription instanceof CustomLibraryDescriptorWithDeferredConfig) {
-                        ((CustomLibraryDescriptorWithDeferredConfig) customLibraryDescription).finishLibConfiguration(module, rootModel, isNewProject);
+                    if (customLibraryDescription instanceof CustomLibraryDescriptionWithDeferredConfig) {
+                        ((CustomLibraryDescriptionWithDeferredConfig) customLibraryDescription).finishLibConfiguration(module, rootModel, isNewProject);
                     }
                 }
 

@@ -1,4 +1,13 @@
 // WITH_STDLIB
+enum class MyEnum {A, B}
+
+fun enumName(x: MyEnum, s: String) {
+    if (x.name == "A") {
+        if (x.name == s) {
+            if (<warning descr="Condition 's == \"A\"' is always true">s == "A"</warning>) {}
+        }
+    }
+}
 fun concat(x : Int) {
     val data = "Value = " + x
     if (<warning descr="Condition 'data.length > 5' is always true">data.length > 5</warning>) { }

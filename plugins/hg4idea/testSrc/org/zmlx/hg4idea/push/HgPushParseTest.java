@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +23,7 @@ import org.junit.runners.Parameterized;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -41,27 +41,31 @@ public class HgPushParseTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> createData() {
-    return ContainerUtil.newArrayList(new Object[][]{
-      {"DEFAULT_1", "pushing to /Users/user/TTT/AHG\n" +
-                    "searching for changes\n" +
-                    "adding changesets\n" +
-                    "adding manifests\n" +
-                    "adding file changes\n" +
-                    "added 1 changesets with 1 changes to 1 files", 1},
-      {"DEFAULT_2", "pushing to /Users/user/TTT/AHG\n" +
-                    "searching for changes\n" +
-                    "adding changesets\n" +
-                    "adding manifests\n" +
-                    "adding file changes\n" +
-                    "added 2 changesets with 3 changes to 1 files", 2},
-      {"EXTENSION_KILN_ONE", "hg push http://<my repo>\n" +
-                             "pushing to http://<my repo>\n" +
-                             "searching for changes\n" +
-                             "              \"remote: kiln: successfully pushed one changeset", 1},
-      {"EXTENSION_KILN_4", "hg push http://<my repo>\n" +
-                           "pushing to http://<my repo>\n" +
-                           "searching for changes\n" +
-                           "remote: kiln: successfully pushed 4 changesets", 4}
+    return List.of(new Object[][]{
+      {"DEFAULT_1", """
+pushing to /Users/user/TTT/AHG
+searching for changes
+adding changesets
+adding manifests
+adding file changes
+added 1 changesets with 1 changes to 1 files""", 1},
+      {"DEFAULT_2", """
+pushing to /Users/user/TTT/AHG
+searching for changes
+adding changesets
+adding manifests
+adding file changes
+added 2 changesets with 3 changes to 1 files""", 2},
+      {"EXTENSION_KILN_ONE", """
+hg push http://<my repo>
+pushing to http://<my repo>
+searching for changes
+              "remote: kiln: successfully pushed one changeset""", 1},
+      {"EXTENSION_KILN_4", """
+hg push http://<my repo>
+pushing to http://<my repo>
+searching for changes
+remote: kiln: successfully pushed 4 changesets""", 4}
     });
   }
 

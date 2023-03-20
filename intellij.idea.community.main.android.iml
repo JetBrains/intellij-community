@@ -10,5 +10,9 @@
     <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.layoutlib" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.compose-designer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.compose-ide-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.design-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.navigator" scope="RUNTIME" />
   </component>
 </module>

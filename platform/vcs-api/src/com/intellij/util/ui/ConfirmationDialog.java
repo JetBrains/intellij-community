@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
@@ -38,12 +39,7 @@ public class ConfirmationDialog extends OptionsMessageDialog {
                                                @Nullable @ActionText String cancelActionName) {
     if (option.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return false;
     final ConfirmationDialog dialog = new ConfirmationDialog(project, message, title, icon, option, okActionName, cancelActionName);
-    if (!option.isPersistent()) {
-      dialog.setDoNotAskOption(null);
-    }
-    else {
-      dialog.setDoNotShowAgainMessage(IdeCoreBundle.message("dialog.options.do.not.ask"));
-    }
+    dialog.setDoNotShowAgainMessage(IdeCoreBundle.message("dialog.options.do.not.ask"));
     return dialog.showAndGet();
   }
 
@@ -96,15 +92,22 @@ public class ConfirmationDialog extends OptionsMessageDialog {
   }
 
   @Override
+  protected boolean canBeHidden() {
+    return myOption.isPersistent();
+  }
+
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     final VcsShowConfirmationOption.Value optionValue;
 
     if (value) {
       optionValue = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
-    } else {
+    }
+    else {
       if (onOk) {
         optionValue = VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
-      } else {
+      }
+      else {
         optionValue = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
       }
     }

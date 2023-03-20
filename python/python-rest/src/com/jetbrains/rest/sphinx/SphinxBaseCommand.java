@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -94,6 +95,7 @@ public class SphinxBaseCommand {
     try {
       if (!setWorkDir(module)) return;
       final ProcessHandler process = createProcess(module);
+      process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
       new RunContentExecutor(project, process)
         .withFilter(new PythonTracebackFilter(project))
         .withTitle("reStructuredText")

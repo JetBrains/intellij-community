@@ -2,9 +2,11 @@
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.spellchecker.inspections.Splitter;
-
 
 public abstract class TokenConsumer {
   public void consumeToken(PsiElement element, Splitter splitter) {
@@ -12,8 +14,17 @@ public abstract class TokenConsumer {
   }
 
   public void consumeToken(PsiElement element, boolean useRename, Splitter splitter) {
-    String text = element.getText();
-    consumeToken(element, text, useRename, 0, TextRange.allOf(text), splitter);
+    if (element instanceof PsiLanguageInjectionHost && !(element instanceof PsiComment)) {
+      // remove quotes from text analysis
+      TextRange range = ElementManipulators.getValueTextRange(element);
+      if (!range.isEmpty()) {
+        String text = ElementManipulators.getValueText(element);
+        consumeToken(element, text, useRename, range.getStartOffset(), TextRange.allOf(text), splitter);
+      }
+    } else {
+      String text = element.getText();
+      consumeToken(element, text, useRename, 0, TextRange.allOf(text), splitter);
+    }
   }
 
   /**
@@ -22,7 +33,6 @@ public abstract class TokenConsumer {
    * @param useRename    whether rename quick fix should be suggested instead of "change to"
    * @param offset       offset inside element that serves as an anchor point for {@code rangeToCheck}
    * @param rangeToCheck range text value corresponds to
-   * @param splitter
    */
   public abstract void consumeToken(PsiElement element,
                                     String text,

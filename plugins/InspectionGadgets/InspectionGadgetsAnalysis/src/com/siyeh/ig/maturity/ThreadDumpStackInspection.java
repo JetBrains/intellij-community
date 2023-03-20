@@ -60,10 +60,9 @@ public class ThreadDumpStackInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
       final PsiElement element = methodExpression.resolve();
-      if (!(element instanceof PsiMethod)) {
+      if (!(element instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)element;
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
         return;

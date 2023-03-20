@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -10,7 +10,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -61,11 +63,11 @@ public class VarDefinitionHelper {
           varindex++;
         }
         else {
-          varindex += md.params[i - 1].stackSize;
+          varindex += md.params[i - 1].getStackSize();
         }
       }
       else {
-        varindex += md.params[i].stackSize;
+        varindex += md.params[i].getStackSize();
       }
     }
 
@@ -85,10 +87,10 @@ public class VarDefinitionHelper {
       Statement st = stack.removeFirst();
 
       List<VarExprent> lstVars = null;
-      if (st.type == Statement.TYPE_CATCHALL) {
+      if (st.type == StatementType.CATCH_ALL) {
         lstVars = ((CatchAllStatement)st).getVars();
       }
-      else if (st.type == Statement.TYPE_TRYCATCH) {
+      else if (st.type == StatementType.TRY_CATCH) {
         lstVars = ((CatchStatement)st).getVars();
       }
 
@@ -122,9 +124,9 @@ public class VarDefinitionHelper {
       varproc.setVarName(new VarVersionPair(index.intValue(), 0), vc.getFreeName(index));
 
       // special case for
-      if (stat.type == Statement.TYPE_DO) {
+      if (stat.type == StatementType.DO) {
         DoStatement dstat = (DoStatement)stat;
-        if (dstat.getLooptype() == DoStatement.LOOP_FOR) {
+        if (dstat.getLoopType() == LoopType.FOR) {
 
           if (dstat.getInitExprent() != null && setDefinition(dstat.getInitExprent(), index)) {
             continue;
@@ -215,17 +217,11 @@ public class VarDefinitionHelper {
           stack.clear();
 
           switch (st.type) {
-            case Statement.TYPE_SEQUENCE:
-              stack.addAll(0, st.getStats());
-              break;
-            case Statement.TYPE_IF:
-            case Statement.TYPE_ROOT:
-            case Statement.TYPE_SWITCH:
-            case Statement.TYPE_SYNCRONIZED:
-              stack.add(st.getFirst());
-              break;
-            default:
+            case SEQUENCE -> stack.addAll(0, st.getStats());
+            case IF, ROOT, SWITCH, SYNCHRONIZED -> stack.add(st.getFirst());
+            default -> {
               return st;
+            }
           }
         }
       }
@@ -247,18 +243,17 @@ public class VarDefinitionHelper {
       List<Exprent> currVars = new ArrayList<>();
 
       for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          Statement st = (Statement)obj;
+        if (obj instanceof Statement st) {
           childVars.addAll(initStatement(st));
 
-          if (st.type == DoStatement.TYPE_DO) {
+          if (st.type == StatementType.DO) {
             DoStatement dost = (DoStatement)st;
-            if (dost.getLooptype() != DoStatement.LOOP_FOR &&
-                dost.getLooptype() != DoStatement.LOOP_DO) {
+            if (dost.getLoopType() != LoopType.FOR &&
+                dost.getLoopType() != LoopType.DO) {
               currVars.add(dost.getConditionExprent());
             }
           }
-          else if (st.type == DoStatement.TYPE_CATCHALL) {
+          else if (st.type == StatementType.CATCH_ALL) {
             CatchAllStatement fin = (CatchAllStatement)st;
             if (fin.isFinally() && fin.getMonitor() != null) {
               currVars.add(fin.getMonitor());

@@ -29,8 +29,8 @@ public class ClassFileUnderSourceRootTest extends JavaProjectTestCase {
     assertSize(2, root.getChildren());
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      PsiTestUtil.addSourceRoot(myModule, root);
       ModuleRootModificationUtil.addModuleLibrary(myModule, root.getUrl());
+      PsiTestUtil.addSourceRoot(myModule, root);
     });
   }
 

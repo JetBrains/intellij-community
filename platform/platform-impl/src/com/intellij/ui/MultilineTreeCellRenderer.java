@@ -326,8 +326,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   private int getChildIndent(JTree tree) {
     TreeUI newUI = tree.getUI();
-    if (newUI instanceof BasicTreeUI) {
-      BasicTreeUI btreeui = (BasicTreeUI)newUI;
+    if (newUI instanceof BasicTreeUI btreeui) {
       return btreeui.getLeftChildIndent() + btreeui.getRightChildIndent();
     }
     else {
@@ -386,7 +385,6 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   /**
    * Returns {@code true} if icon should be vertically centered. Otherwise, icon will be placed on top
-   * @return
    */
   protected boolean isIconVerticallyCentered() {
     return false;

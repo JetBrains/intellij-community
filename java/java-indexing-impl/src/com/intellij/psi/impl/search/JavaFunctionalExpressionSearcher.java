@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.concurrency.JobLauncher;
@@ -40,6 +39,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ThreeState;
@@ -50,8 +50,10 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
@@ -72,28 +74,28 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @NotNull
   private static List<SamDescriptor> calcDescriptors(@NotNull Session session) {
-    List<SamDescriptor> descriptors = new ArrayList<>();
-    Project project = PsiUtilCore.getProjectInReadAction(session.elementToSearch);
+    PsiClass aClass = session.elementToSearch;
+    Project project = PsiUtilCore.getProjectInReadAction(aClass);
 
-    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-      PsiClass aClass = session.elementToSearch;
+    Callable<List<SamDescriptor>> runnable = () -> {
       if (!aClass.isValid() || !aClass.isInterface()) {
-        return;
+        return List.of();
       }
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasJava8Modules(project)) {
-        return;
+        return List.of();
       }
       PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(project);
 
       Set<PsiClass> visited = new HashSet<>();
       processSubInterfaces(aClass, visited);
+      List<SamDescriptor> descriptors = new ArrayList<>();
       for (PsiClass samClass : visited) {
         if (LambdaUtil.isFunctionalClass(samClass)) {
           PsiMethod saMethod = Objects.requireNonNull(LambdaUtil.getFunctionalInterfaceMethod(samClass));
           PsiType samType = saMethod.getReturnType();
           if (samType == null) continue;
-          if (session.method != null && 
-              !saMethod.equals(session.method) && 
+          if (session.method != null &&
+              !saMethod.equals(session.method) &&
               !MethodSignatureUtil.isSuperMethod(saMethod, session.method)) {
             continue;
           }
@@ -102,15 +104,16 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
         }
       }
-    });
-    return descriptors;
+      return descriptors;
+    };
+    return ReadAction.nonBlocking(runnable).inSmartMode(project).executeSynchronously();
   }
 
   @NotNull
   private static Set<VirtualFile> getLikelyFiles(@NotNull List<? extends SamDescriptor> descriptors,
                                                  @NotNull Collection<? extends VirtualFile> candidateFiles,
                                                  @NotNull Project project) {
-    final GlobalSearchScope candidateFilesScope = GlobalSearchScope.filesScope(project, candidateFiles);
+    final GlobalSearchScope candidateFilesScope = ReadAction.compute(() -> GlobalSearchScope.filesScope(project, candidateFiles));
     return JBIterable.from(descriptors).flatMap(descriptor -> ((SamDescriptor)descriptor).getMostLikelyFiles(candidateFilesScope)).toSet();
   }
 
@@ -144,6 +147,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
     Set<VirtualFile> filesFirst = getLikelyFiles(descriptors, allFiles, session.project);
     Processor<VirtualFile> vFileProcessor = vFile -> {
+      if (vFile.isDirectory()) return true;
       Collection<FunExprOccurrence> occurrences = allCandidates.get(vFile);
       session.contextsConsidered.addAndGet(occurrences.size());
       Map<FunExprOccurrence, Confidence> toLoad = filterInapplicable(samClasses, vFile, occurrences, session.project);
@@ -165,19 +169,20 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @NotNull
   private static Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
-                                                           @NotNull VirtualFile vFile,
-                                                           @NotNull Collection<? extends FunExprOccurrence> occurrences,
-                                                           @NotNull Project project) {
-    Map<FunExprOccurrence, Confidence> map = new HashMap<>();
-    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+                                                                       @NotNull VirtualFile vFile,
+                                                                       @NotNull Collection<? extends FunExprOccurrence> occurrences,
+                                                                       @NotNull Project project) {
+    return ReadAction.nonBlocking(() -> {
+      Map<FunExprOccurrence, Confidence> map = new HashMap<>();
       for (FunExprOccurrence occurrence : occurrences) {
-        ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile);
+        ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile, project);
         if (result != ThreeState.NO) {
           map.put(occurrence, result == ThreeState.YES ? Confidence.sure : Confidence.needsCheck);
         }
       }
-    });
-    return map;
+      return map;
+    }).inSmartMode(project)
+      .executeSynchronously();
   }
 
   private enum Confidence { sure, needsCheck}
@@ -260,14 +265,21 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     FileViewProvider viewProvider = file.getViewProvider();
     try {
       PsiMember member = Objects.requireNonNull(PsiTreeUtil.getStubOrPsiParentOfType(expression, PsiMember.class));
-      PsiFile fragment = fragmentCache.computeIfAbsent(TextRange.create(entry.contextStart, entry.contextEnd),
-                                                       range -> createMemberCopyFromText(member, range));
-      PsiFunctionalExpression psi = findPsiByAST(fragment, entry.exprStart - entry.contextStart);
+      PsiFunctionalExpression psi = null;
+      Exception ex = null;
+      try {
+        PsiFile fragment = fragmentCache.computeIfAbsent(TextRange.create(entry.contextStart, entry.contextEnd),
+                                                         range -> createMemberCopyFromText(member, range));
+        psi = findPsiByAST(fragment, entry.exprStart - entry.contextStart);
+      }
+      catch (IncorrectOperationException e) {
+        ex = e;
+      }
       if (psi == null) {
         StubTextInconsistencyException.checkStubTextConsistency(file);
         throw new RuntimeExceptionWithAttachments(
           "No functional expression at " + entry + ", file will be reindexed",
-          new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
+          ex, new Attachment(viewProvider.getVirtualFile().getPath(), viewProvider.getContents().toString()));
       }
       return psi;
     }
@@ -365,7 +377,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       effectiveUseScope = useScope;
       samParamCount = samMethod.getParameterList().getParametersCount();
       booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
-      isVoid = PsiType.VOID.equals(samType);
+      isVoid = PsiTypes.voidType().equals(samType);
       dumbService = DumbService.getInstance(samClass.getProject());
       keys = generateKeys();
     }

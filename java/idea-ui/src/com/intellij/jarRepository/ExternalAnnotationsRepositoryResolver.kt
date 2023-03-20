@@ -38,7 +38,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
                              null)
       as MutableList<OrderRoot>?
 
-    if (roots == null || roots.isEmpty()) {
+    if (roots.isNullOrEmpty()) {
       mavenLibDescriptor = extractDescriptor(mavenId, library, true) ?: return false
       roots = JarRepositoryManager
         .loadDependenciesSync(project,
@@ -53,7 +53,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       updateLibrary(roots, mavenLibDescriptor, library)
     }
 
-    return roots != null && roots.isNotEmpty()
+    return !roots.isNullOrEmpty()
   }
 
   override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Boolean {
@@ -71,8 +71,8 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     val roots = JarRepositoryManager
                   .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
 
-    if (roots == null || roots.isEmpty()) {
-      return false;
+    if (roots.isNullOrEmpty()) {
+      return false
     }
 
     ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, descriptor, library) }
@@ -114,7 +114,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
                     mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
                     library: Library) {
     if (library !is LibraryEx || library.isDisposed) return
-    if (roots == null || roots.isEmpty()) {
+    if (roots.isNullOrEmpty()) {
       LOG.info("No annotations found for [$mavenLibDescriptor]")
     } else {
       runWriteAction {

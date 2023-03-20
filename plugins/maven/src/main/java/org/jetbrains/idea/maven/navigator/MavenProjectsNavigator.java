@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerListener;
@@ -13,6 +13,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -20,8 +21,10 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.AppUIUtil;
@@ -31,12 +34,16 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsNavigatorPanel;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -52,11 +59,13 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-public final class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
+public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
+  implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
   public static final String TOOL_WINDOW_ID = "Maven";
   public static final String TOOL_WINDOW_PLACE_ID = "Maven tool window";
 
@@ -71,6 +80,15 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   public MavenProjectsNavigator(@NotNull Project project) {
     super(project);
+    project.getMessageBus()
+      .connect(MavenDisposable.getInstance(project))
+      .subscribe(MavenImportListener.TOPIC, new MavenImportListener() {
+
+        @Override
+        public void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<Module> newModules) {
+          scheduleStructureUpdate();
+        }
+      });
   }
 
   @Override
@@ -151,8 +169,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   @Override
   public void initializeComponent() {
-    if (!isNormalProject()) return;
-    doInit();
+    if (isNormalProject()) {
+      doInit();
+    }
   }
 
   @TestOnly
@@ -262,6 +281,11 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   void initToolWindow() {
     initTree();
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    toolWindowManager.invokeLater(() -> initializeToolWindow(toolWindowManager));
+  }
+
+  private void initializeToolWindow(ToolWindowManager toolWindowManager) {
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     AnAction removeAction = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration"));
@@ -269,19 +293,25 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
-      RegisterToolWindowTask.lazyAndNotClosable(TOOL_WINDOW_ID, new ToolWindowFactory() {
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
+      builder.icon = MavenIcons.ToolWindowMaven;
+      builder.anchor = ToolWindowAnchor.RIGHT;
+      builder.canCloseContent = false;
+      builder.contentFactory = new ToolWindowFactory() {
         @Override
         public void createToolWindowContent(@NotNull Project project,
                                             @NotNull ToolWindow toolWindow) {
         }
-      }, MavenIcons.ToolWindowMaven, ToolWindowAnchor.RIGHT));
+      };
+      return Unit.INSTANCE;
+    });
 
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {
-      // fire content removed events, so subscribers could cleanup caches
-      contentManager.removeAllContents(true);
+      // fire content removed events, so subscribers could clean up caches
+      if (!myProject.isDisposed()) {
+        contentManager.removeAllContents(true);
+      }
       Disposer.dispose(contentManager);
       if (!myProject.isDisposed()) {
         toolWindow.remove();
@@ -297,7 +327,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (toolWindow.isDisposed()) return;
+        if (toolWindow.isDisposed()) {
+          return;
+        }
+
         boolean visible = ((ToolWindowManagerEx)toolWindowManager).shouldUpdateToolWindowContent(toolWindow);
         if (!visible || wasVisible) {
           return;
@@ -316,7 +349,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
     group.add(actionManager.getAction("Maven.ShowVersions"));
 
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
+    toolWindow.setAdditionalGearActions(group);
   }
 
   private void initTree() {
@@ -413,7 +446,13 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   }
 
   private void initStructure() {
-    myStructure = new MavenProjectsStructure(myProject, MavenProjectsManager.getInstance(myProject), MavenTasksManager.getInstance(myProject), MavenShortcutsManager.getInstance(myProject), this, myTree);
+    myStructure = new MavenProjectsStructure(myProject,
+                                             MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL,
+                                             MavenProjectsManager.getInstance(myProject),
+                                             MavenTasksManager.getInstance(myProject),
+                                             MavenShortcutsManager.getInstance(myProject),
+                                             this,
+                                             myTree);
   }
 
   @ApiStatus.Internal
@@ -423,7 +462,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   private final class MyProjectsListener implements MavenProjectsTree.Listener {
     @Override
-    public void projectsIgnoredStateChanged(@NotNull final List<MavenProject> ignored, @NotNull final List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(@NotNull final List<MavenProject> ignored,
+                                            @NotNull final List<MavenProject> unignored,
+                                            boolean fromImport) {
       scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
 

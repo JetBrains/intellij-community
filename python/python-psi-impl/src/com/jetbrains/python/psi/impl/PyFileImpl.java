@@ -25,8 +25,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IndexingDataKeys;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
@@ -40,12 +38,15 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable protected volatile PyType myType;
@@ -69,17 +70,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
       final StubElement stub = getStub();
       processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, stub), element -> {
-        if (element instanceof PsiNamedElement &&
+        if (element instanceof PsiNamedElement namedElement &&
             !(element instanceof PyKeywordArgument) &&
             !(stub == null && element.getParent() instanceof PyImportElement)) {
-          final PsiNamedElement namedElement = (PsiNamedElement)element;
           myNamedElements.computeIfAbsent(namedElement.getName(), __ -> new ArrayList<>()).add(namedElement);
         }
         if (element instanceof PyImportedNameDefiner) {
           myImportedNameDefiners.add((PyImportedNameDefiner)element);
         }
-        if (element instanceof PyFromImportStatement) {
-          final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
+        if (element instanceof PyFromImportStatement fromImportStatement) {
           final PyStarImportElement starImportElement = fromImportStatement.getStarImportElement();
           if (starImportElement != null) {
             myImportedNameDefiners.add(starImportElement);
@@ -88,15 +87,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             Collections.addAll(myImportedNameDefiners, fromImportStatement.getImportElements());
           }
         }
-        else if (element instanceof PyImportStatement) {
-          final PyImportStatement importStatement = (PyImportStatement)element;
+        else if (element instanceof PyImportStatement importStatement) {
           Collections.addAll(myImportedNameDefiners, importStatement.getImportElements());
         }
         return true;
       });
+      TypeEvalContext typeEvalContext = TypeEvalContext.codeInsightFallback(getProject());
       for (List<PsiNamedElement> elements : myNamedElements.values()) {
-        Collections.reverse(elements);
+        prioritizeNameRedefinitions(elements, typeEvalContext);
       }
+
       Collections.reverse(myImportedNameDefiners);
     }
 
@@ -105,8 +105,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (!processor.process(child)) {
           return false;
         }
-        if (child instanceof PyExceptPart) {
-          final PyExceptPart part = (PyExceptPart)child;
+        if (child instanceof PyExceptPart part) {
           if (!processDeclarations(PyPsiUtils.collectAllStubChildren(part, part.getStub()), processor)) {
             return false;
           }
@@ -179,6 +178,17 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
   }
 
+  protected void prioritizeNameRedefinitions(@NotNull List<PsiNamedElement> definitions, @NotNull TypeEvalContext typeEvalContext) {
+    // Group overloads with their respective implementations
+    List<List<PsiNamedElement>> grouped = StreamEx.of(definitions)
+      .groupRuns((e1, e2) -> PyiUtil.isOverload(e1, typeEvalContext) && e2 instanceof PyFunction)
+      .toList();
+    definitions.clear();
+    StreamEx.ofReversed(grouped)
+      .flatCollection(Function.identity())
+      .into(definitions);
+  }
+
   public PyFileImpl(FileViewProvider viewProvider) {
     this(viewProvider, PythonLanguage.getInstance());
   }
@@ -186,7 +196,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public PyFileImpl(FileViewProvider viewProvider, Language language) {
     super(viewProvider, language);
     myFutureFeatures = new HashMap<>();
-    myModificationTracker = PsiModificationTracker.SERVICE.getInstance(getProject());
+    myModificationTracker = PsiModificationTracker.getInstance(getProject());
   }
 
   @Override
@@ -345,8 +355,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public List<PyStatement> getStatements() {
     List<PyStatement> stmts = new ArrayList<>();
     for (PsiElement child : getChildren()) {
-      if (child instanceof PyStatement) {
-        PyStatement statement = (PyStatement)child;
+      if (child instanceof PyStatement statement) {
         stmts.add(statement);
       }
     }
@@ -356,18 +365,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyClass> getTopLevelClasses() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.CLASS_DECLARATION);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyClass.class);
   }
 
   @NotNull
   @Override
   public List<PyFunction> getTopLevelFunctions() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FUNCTION_DECLARATION);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyFunction.class);
   }
 
   @Override
   public List<PyTargetExpression> getTopLevelAttributes() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.TARGET_EXPRESSION);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyTargetExpression.class);
   }
 
   @Override
@@ -476,7 +485,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   public List<PyImportElement> getImportTargets() {
     final List<PyImportElement> ret = new ArrayList<>();
-    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.IMPORT_STATEMENT);
+    final List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, getGreenStub(), PyImportStatement.class);
     for (PyImportStatement one : imports) {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
@@ -486,15 +495,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   @NotNull
   public List<PyFromImportStatement> getFromImports() {
-    return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT);
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyFromImportStatement.class);
   }
 
   @Nullable
   @Override
   public List<String> getDunderAll() {
-    final StubElement stubElement = getStub();
-    if (stubElement instanceof PyFileStub) {
-      return ((PyFileStub)stubElement).getDunderAll();
+    if (getGreenStub() instanceof PyFileStub stubElement) {
+      return stubElement.getDunderAll();
     }
     if (!myDunderAllCalculated) {
       final List<String> dunderAll = calculateDunderAll();
@@ -536,8 +544,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (PyNames.ALL.equals(node.getName())) {
         myFoundDunderAll = true;
         final PyExpression value = node.findAssignedValue();
-        if (value instanceof PyBinaryExpression) {
-          final PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+        if (value instanceof PyBinaryExpression binaryExpression) {
           if (binaryExpression.isOperator("+")) {
             processSubList(getStringListFromValue(binaryExpression.getLeftExpression()));
             processSubList(getStringListFromValue(binaryExpression.getRightExpression()));
@@ -624,9 +631,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public boolean hasImportFromFuture(FutureFeature feature) {
-    final StubElement stub = getStub();
-    if (stub instanceof PyFileStub) {
-      return ((PyFileStub)stub).getFutureFeatures().get(feature.ordinal());
+    if (getGreenStub() instanceof PyFileStub stub) {
+      return stub.getFutureFeatures().get(feature.ordinal());
     }
     Boolean enabled = myFutureFeatures.get(feature);
     if (enabled == null) {
@@ -639,9 +645,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public String getDeprecationMessage() {
-    final StubElement stub = getStub();
-    if (stub instanceof PyFileStub) {
-      return ((PyFileStub)stub).getDeprecationMessage();
+    if (getGreenStub() instanceof PyFileStub stub) {
+      return stub.getDeprecationMessage();
     }
     return extractDeprecationMessage();
   }
@@ -826,7 +831,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (psiDirectory != null) {
           final VirtualFile virtualFile = getVirtualFile();
           if (virtualFile != null) {
-            final VirtualFile root = ProjectFileIndex.SERVICE.getInstance(getProject()).getContentRootForFile(virtualFile);
+            final VirtualFile root = ProjectFileIndex.getInstance(getProject()).getContentRootForFile(virtualFile);
             if (root != null) {
               final VirtualFile parent = virtualFile.getParent();
               final VirtualFile rootParent = root.getParent();

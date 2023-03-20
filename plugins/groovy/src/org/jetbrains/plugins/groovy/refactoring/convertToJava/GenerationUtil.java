@@ -406,14 +406,13 @@ public final class GenerationUtil {
     if (initializer instanceof GrLiteral) {
       Object value = ((GrLiteral)initializer).getValue();
       if (value instanceof BigDecimal && Double.isFinite(((BigDecimal)value).doubleValue())) {
-        return !TypeConversionUtil.isAssignable(target, PsiType.DOUBLE);
+        return !TypeConversionUtil.isAssignable(target, PsiTypes.doubleType());
       }
       else if (value instanceof String && ((String)value).length() == 1) {
-        return !PsiType.CHAR.equals(PsiPrimitiveType.getOptionallyUnboxedType(target));
+        return !PsiTypes.charType().equals(PsiPrimitiveType.getOptionallyUnboxedType(target));
       }
     }
-    else if (initializer instanceof GrListOrMap && target instanceof PsiArrayType) {
-      GrListOrMap listOrMap = (GrListOrMap)initializer;
+    else if (initializer instanceof GrListOrMap listOrMap && target instanceof PsiArrayType) {
       return listOrMap.isMap();
     }
     return true;

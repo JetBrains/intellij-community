@@ -69,10 +69,9 @@ public final class DelegationUtils {
   }
 
   private static boolean isDelegationCall(PsiExpression expression, PsiField field, PsiMethod method) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression call)) {
       return false;
     }
-    final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (!(qualifier instanceof PsiReferenceExpression)) {

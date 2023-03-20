@@ -133,7 +133,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
   public String getRestApiUrl(Object @NotNull ... parts) {
     StringBuilder builder = new StringBuilder(getUrl());
     builder.append(getRestApiPathPrefix());
-    if (builder.charAt(builder.length() - 1) == '/') {
+    if (!builder.isEmpty() && builder.charAt(builder.length() - 1) == '/') {
       builder.deleteCharAt(builder.length() - 1);
     }
     for (Object part : parts) {

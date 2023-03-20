@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem
 
 import org.jetbrains.annotations.NonNls
@@ -25,6 +25,7 @@ enum class ModuleKind(val isSinglePlatform: Boolean) : DisplayableSettingItem {
     singlePlatformAndroid(isSinglePlatform = true),
     singlePlatformJsBrowser(isSinglePlatform = true),
     singlePlatformJsNode(isSinglePlatform = true),
+    ios(isSinglePlatform = true),
     ;
 
     override val text: String
@@ -47,7 +48,8 @@ class Module(
     subModules: List<Module> = emptyList(),
     val dependencies: MutableList<ModuleReference> = mutableListOf(),
     var parent: Module? = null,
-    override val identificator: Identificator = GeneratedIdentificator(name)
+    override val identificator: Identificator = GeneratedIdentificator(name),
+    val canBeRemoved: Boolean = true
 ) : DisplayableSettingItem, Validatable<Module>, IdentificatorOwner {
 
     val kind: ModuleKind
@@ -76,8 +78,9 @@ class Module(
     override val greyText: String
         get() = when {
             kind == ModuleKind.target -> configurator.text + " " + KotlinNewProjectWizardBundle.message("module.kind.target")
+            kind == ModuleKind.ios -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
             configurator == MppModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.mpp.module")
-            configurator == AndroidSinglePlatformModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
+            configurator is AndroidSinglePlatformModuleConfiguratorBase -> KotlinNewProjectWizardBundle.message("module.kind.android.module")
             configurator == IOSSinglePlatformModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.ios.module")
             configurator == BrowserJsSinglePlatformModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.js.browser.module")
             configurator == NodeJsSinglePlatformModuleConfigurator -> KotlinNewProjectWizardBundle.message("module.kind.js.node.module")
@@ -195,9 +198,10 @@ fun MultiplatformModule(
     @NonNls name: String,
     template: Template? = null,
     targets: List<Module> = emptyList(),
-    permittedTemplateIds: Set<String>? = null
+    permittedTemplateIds: Set<String>? = null,
+    canBeRemoved: Boolean = true
 ) =
-    Module(name, MppModuleConfigurator, template = template, permittedTemplateIds = permittedTemplateIds, subModules = targets)
+    Module(name, MppModuleConfigurator, template = template, permittedTemplateIds = permittedTemplateIds, subModules = targets, canBeRemoved = canBeRemoved)
 
 @Suppress("FunctionName")
 fun SinglePlatformModule(@NonNls name: String, sourceSets: List<Sourceset>, permittedTemplateIds: Set<String>? = null) =

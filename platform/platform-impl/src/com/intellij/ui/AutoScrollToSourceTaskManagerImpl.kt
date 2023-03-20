@@ -1,0 +1,49 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui
+
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.util.await
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.OpenSourceUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Experimental
+private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
+  @RequiresEdt
+  override fun scheduleScrollToSource(handler: AutoScrollToSourceHandler, dataContext: DataContext) {
+    val asyncDataContext = wrapToAsyncDataContext(dataContext)
+    val project = dataContext.getData(PlatformDataKeys.PROJECT)
+
+    // task must be cancelled if the project is closed
+    @Suppress("DEPRECATION")
+    (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope).launch(Dispatchers.EDT) {
+      PlatformDataKeys.TOOL_WINDOW.getData(asyncDataContext)
+        ?.getReady(handler)
+        ?.await()
+
+      val navigatable = readAction {
+        if (handler.canAutoScrollTo(CommonDataKeys.VIRTUAL_FILE.getData(asyncDataContext))) {
+          CommonDataKeys.NAVIGATABLE_ARRAY.getData(asyncDataContext)?.singleOrNull()
+        }
+        else {
+          null
+        }
+      }
+
+      if (navigatable != null) {
+        OpenSourceUtil.navigateToSource(false, true, navigatable)
+      }
+    }
+  }
+}
+
+private fun AutoScrollToSourceHandler.canAutoScrollTo(file: VirtualFile?) = file == null || isAutoScrollEnabledFor(file)

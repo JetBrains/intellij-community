@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
@@ -27,6 +28,11 @@ public class DownloadActionGroup extends DefaultActionGroup implements DumbAware
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(isEnabled(e));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static boolean isEnabled(AnActionEvent e) {

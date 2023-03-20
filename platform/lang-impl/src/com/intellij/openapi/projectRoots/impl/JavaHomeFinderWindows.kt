@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ConvertSecondaryConstructorToPrimary", "UnnecessaryVariable")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConvertSecondaryConstructorToPrimary")
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.io.WindowsRegistryUtil
-import com.intellij.util.io.exists
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.text.RegexOption.IGNORE_CASE
 import kotlin.text.RegexOption.MULTILINE
 
@@ -35,11 +36,9 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
   }
 
-  constructor(checkDefaultLocations: Boolean,
-              forceEmbeddedJava: Boolean,
-              registeredJdks: Boolean,
+  constructor(registeredJdks: Boolean,
               wslJdks: Boolean,
-              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider) {
+              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(systemInfoProvider) {
     if (registeredJdks) {
       /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
       val os64bit = !systemInfoProvider.getEnvironmentVariable("ProgramFiles(x86)").isNullOrBlank()
@@ -100,6 +99,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     val fsRoots = systemInfo.fsRoots
     val roots: MutableSet<Path> = HashSet()
     for (root in fsRoots) {
+      ProgressManager.checkCanceled()
       if (!root.exists()) {
         continue
       }

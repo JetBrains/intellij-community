@@ -15,20 +15,28 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiForeachStatement
 import com.intellij.psi.impl.source.tree.ChildRole
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUForEachExpression(
   override val sourcePsi: PsiForeachStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UForEachExpression {
+  @Deprecated("property may throw exception if foreach doesn't have variable", replaceWith = ReplaceWith("parameter"))
   override val variable: UParameter
-    get() = JavaUParameter(sourcePsi.iterationParameter, this)
+    get() = JavaUParameter(sourcePsi.iterationParameter ?: error("Migrate code to $parameter"), this)
 
-  override val iteratedValue: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.iteratedValue, this) }
-  override val body: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
+  override val parameter: UParameter?
+    get() {
+      val psiParameter = sourcePsi.iterationParameter ?: return null
+      return JavaUParameter(psiParameter, this)
+    }
+
+  override val iteratedValue: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.iteratedValue, this) }
+  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.body, this) }
 
   override val forIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.getChildByRole(ChildRole.FOR_KEYWORD), this)

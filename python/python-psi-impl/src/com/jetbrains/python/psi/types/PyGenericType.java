@@ -6,22 +6,28 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
- * @author vlan
+ * @deprecated Use {@link PyTypeVarType} and {@link PyTypeVarTypeImpl}  instead.
+ * See <a href="https://youtrack.jetbrains.com/issue/PY-59241">PY-59241</a> for the reasoning and transition plan.
  */
-public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> {
+@Deprecated
+public class PyGenericType implements PyTypeVarType {
   @NotNull private final String myName;
   @Nullable private final PyType myBound;
   private final boolean myIsDefinition;
   @Nullable private final PyTargetExpression myTargetExpression;
+  @Nullable private PyQualifiedNameOwner myScopeOwner;
 
   public PyGenericType(@NotNull String name, @Nullable PyType bound) {
     this(name, bound, false);
@@ -31,11 +37,20 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
     this(name, bound, isDefinition, null);
   }
 
-  public PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition, @Nullable PyTargetExpression target) {
+  private PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition, @Nullable PyTargetExpression target) {
+    this(name, bound, isDefinition, target, null);
+  }
+
+  private PyGenericType(@NotNull String name,
+                       @Nullable PyType bound,
+                       boolean isDefinition,
+                       @Nullable PyTargetExpression target,
+                       @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
     myBound = bound;
     myIsDefinition = isDefinition;
     myTargetExpression = target;
+    myScopeOwner = scopeOwner;
   }
 
   @Nullable
@@ -100,7 +115,7 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
       return false;
     }
     final PyGenericType type = (PyGenericType)o;
-    return myName.equals(type.myName) && myIsDefinition == type.isDefinition();
+    return myName.equals(type.myName) && myIsDefinition == type.isDefinition() && Objects.equals(myScopeOwner, type.myScopeOwner);
   }
 
   @Override
@@ -111,11 +126,13 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
   @NotNull
   @Override
   public String toString() {
-    return "PyGenericType: " + getName();
+    // A qualified name can be null e.g. for a local function
+    String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
+    return "PyGenericType: " + (scopeName != null ? scopeName + ":" : "") + getName();
   }
 
-  @Nullable
-  public PyType getBound() {
+  @Override
+  public @Nullable PyType getBound() {
     return myBound;
   }
 
@@ -124,15 +141,38 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
     return myIsDefinition;
   }
 
+  @Override
+  public @Nullable PyQualifiedNameOwner getScopeOwner() {
+    return myScopeOwner;
+  }
+
+  @NotNull
+  public PyGenericType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
+    return new PyGenericType(getName(), getBound(), isDefinition(), getDeclarationElement(), scopeOwner);
+  }
+
+  @NotNull
+  public PyGenericType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
+    return new PyGenericType(getName(), getBound(), isDefinition(), targetExpression, getScopeOwner());
+  }
+
+  @ApiStatus.Internal
+  public void setScopeOwner(@NotNull PyQualifiedNameOwner scopeOwner) {
+    if (myScopeOwner != null && myScopeOwner != scopeOwner) {
+      throw new IllegalStateException("Cannot override the existing scope owner");
+    }
+    myScopeOwner = scopeOwner;
+  }
+
   @NotNull
   @Override
   public PyGenericType toInstance() {
-    return myIsDefinition ? new PyGenericType(myName, myBound, false, myTargetExpression) : this;
+    return myIsDefinition ? new PyGenericType(myName, myBound, false, myTargetExpression, myScopeOwner) : this;
   }
 
   @NotNull
   @Override
   public PyGenericType toClass() {
-    return myIsDefinition ? this : new PyGenericType(myName, myBound, true, myTargetExpression);
+    return myIsDefinition ? this : new PyGenericType(myName, myBound, true, myTargetExpression, myScopeOwner);
   }
 }

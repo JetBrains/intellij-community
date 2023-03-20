@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral", "ReplaceGetOrSet")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.builtInWebServer
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.*
 import com.intellij.util.io.DigestUtil.randomToken
@@ -50,6 +51,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
+import kotlin.io.path.exists
 
 internal val LOG = logger<BuiltInWebServer>()
 
@@ -218,10 +220,10 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
       isCandidateFromReferer = true
     }
     return false
-  }) ?: candidateByDirectoryName ?: return false
+  }) ?: candidateByDirectoryName
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project)
+    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project) { }
     return false
   }
 
@@ -267,6 +269,8 @@ fun HttpRequest.isSignedRequest(): Boolean {
   return token != null && tokens.getIfPresent(token) != null
 }
 
+private val KNOWN_ICON_PATHS = listOf("favicon.ico", "apple-touch-icon.png", "apple-touch-icon-precomposed.png")
+
 fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
     return EmptyHttpHeaders.INSTANCE
@@ -288,13 +292,14 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
   }
 
   val urlDecoder = QueryStringDecoder(request.uri())
-  if (!urlDecoder.path().endsWith("/favicon.ico")) {
+  if (KNOWN_ICON_PATHS.none { urlDecoder.path().endsWith("/$it") || !urlDecoder.path().endsWith("/$it/") }) {
     val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
     SwingUtilities.invokeAndWait {
       ProjectUtil.focusProjectWindow(null, true)
 
       if (MessageDialogBuilder
-          .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
+          // escape - see https://youtrack.jetbrains.com/issue/IDEA-287428
+          .yesNo("", Strings.escapeXmlEntities(BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50))))
           .icon(Messages.getWarningIcon())
           .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
           .guessWindowAndAsk()) {
@@ -323,7 +328,7 @@ fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolea
 
 fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   val children = basedir.children
-  if (children == null || children.isEmpty()) {
+  if (children.isNullOrEmpty()) {
     return null
   }
 

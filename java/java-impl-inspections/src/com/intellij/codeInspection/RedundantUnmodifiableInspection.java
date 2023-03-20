@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -29,7 +29,7 @@ public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspec
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (ExpressionUtils.isVoidContext(call)) return;
         if (COLLECTIONS_UNMODIFIABLE.test(call)) {
           PsiExpression arg = call.getArgumentList().getExpressions()[0];
@@ -41,7 +41,7 @@ public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspec
 
           holder.registerProblem(call,
                                  JavaBundle.message("inspection.redundant.unmodifiable.call.display.name", methodName),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new TextRange(0, call.getArgumentList().getStartOffsetInParent()),
                                  new UnwrapUnmodifiableFix());
         }

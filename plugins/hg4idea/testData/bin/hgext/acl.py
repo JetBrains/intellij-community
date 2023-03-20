@@ -57,6 +57,28 @@ access control. Keys in these sections accept a subtree pattern (with
 a glob syntax by default). The corresponding values follow the same
 syntax as the other sections above.
 
+Bookmark-based Access Control
+-----------------------------
+Use the ``acl.deny.bookmarks`` and ``acl.allow.bookmarks`` sections to
+have bookmark-based access control. Keys in these sections can be
+either:
+
+- a bookmark name, or
+- an asterisk, to match any bookmark;
+
+The corresponding values can be either:
+
+- a comma-separated list containing users and groups, or
+- an asterisk, to match anyone;
+
+You can add the "!" prefix to a user or group name to invert the sense
+of the match.
+
+Note: for interactions between clients and servers using Mercurial 3.6+
+a rejection will generally reject the entire push, for interactions
+involving older clients, the commit transactions will already be accepted,
+and only the bookmark movement will be rejected.
+
 Groups
 ------
 
@@ -191,126 +213,278 @@ In the examples below, we will:
 
 '''
 
-from mercurial.i18n import _
-from mercurial import util, match
-import getpass, urllib
+from __future__ import absolute_import
 
-testedwith = 'internal'
+from mercurial.i18n import _
+from mercurial import (
+    error,
+    extensions,
+    match,
+    pycompat,
+    registrar,
+    util,
+)
+from mercurial.utils import procutil
+
+urlreq = util.urlreq
+
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
+
+configtable = {}
+configitem = registrar.configitem(configtable)
+
+# deprecated config: acl.config
+configitem(
+    b'acl',
+    b'config',
+    default=None,
+)
+configitem(
+    b'acl.groups',
+    b'.*',
+    default=None,
+    generic=True,
+)
+configitem(
+    b'acl.deny.branches',
+    b'.*',
+    default=None,
+    generic=True,
+)
+configitem(
+    b'acl.allow.branches',
+    b'.*',
+    default=None,
+    generic=True,
+)
+configitem(
+    b'acl.deny',
+    b'.*',
+    default=None,
+    generic=True,
+)
+configitem(
+    b'acl.allow',
+    b'.*',
+    default=None,
+    generic=True,
+)
+configitem(
+    b'acl',
+    b'sources',
+    default=lambda: [b'serve'],
+)
+
 
 def _getusers(ui, group):
 
     # First, try to use group definition from section [acl.groups]
-    hgrcusers = ui.configlist('acl.groups', group)
+    hgrcusers = ui.configlist(b'acl.groups', group)
     if hgrcusers:
         return hgrcusers
 
-    ui.debug('acl: "%s" not defined in [acl.groups]\n' % group)
+    ui.debug(b'acl: "%s" not defined in [acl.groups]\n' % group)
     # If no users found in group definition, get users from OS-level group
     try:
         return util.groupmembers(group)
     except KeyError:
-        raise util.Abort(_("group '%s' is undefined") % group)
+        raise error.Abort(_(b"group '%s' is undefined") % group)
+
 
 def _usermatch(ui, user, usersorgroups):
 
-    if usersorgroups == '*':
+    if usersorgroups == b'*':
         return True
 
-    for ug in usersorgroups.replace(',', ' ').split():
+    for ug in usersorgroups.replace(b',', b' ').split():
 
-        if ug.startswith('!'):
+        if ug.startswith(b'!'):
             # Test for excluded user or group. Format:
             # if ug is a user  name: !username
             # if ug is a group name: !@groupname
             ug = ug[1:]
-            if not ug.startswith('@') and user != ug \
-                or ug.startswith('@') and user not in _getusers(ui, ug[1:]):
+            if (
+                not ug.startswith(b'@')
+                and user != ug
+                or ug.startswith(b'@')
+                and user not in _getusers(ui, ug[1:])
+            ):
                 return True
 
         # Test for user or group. Format:
         # if ug is a user  name: username
         # if ug is a group name: @groupname
-        elif user == ug \
-             or ug.startswith('@') and user in _getusers(ui, ug[1:]):
+        elif (
+            user == ug or ug.startswith(b'@') and user in _getusers(ui, ug[1:])
+        ):
             return True
 
     return False
 
+
 def buildmatch(ui, repo, user, key):
     '''return tuple of (match function, list enabled).'''
     if not ui.has_section(key):
-        ui.debug('acl: %s not enabled\n' % key)
+        ui.debug(b'acl: %s not enabled\n' % key)
         return None
 
-    pats = [pat for pat, users in ui.configitems(key)
-            if _usermatch(ui, user, users)]
-    ui.debug('acl: %s enabled, %d entries for user %s\n' %
-             (key, len(pats), user))
+    pats = [
+        pat for pat, users in ui.configitems(key) if _usermatch(ui, user, users)
+    ]
+    ui.debug(
+        b'acl: %s enabled, %d entries for user %s\n' % (key, len(pats), user)
+    )
 
     # Branch-based ACL
     if not repo:
         if pats:
             # If there's an asterisk (meaning "any branch"), always return True;
             # Otherwise, test if b is in pats
-            if '*' in pats:
+            if b'*' in pats:
                 return util.always
             return lambda b: b in pats
         return util.never
 
     # Path-based ACL
     if pats:
-        return match.match(repo.root, '', pats)
+        return match.match(repo.root, b'', pats)
     return util.never
 
+
+def ensureenabled(ui):
+    """make sure the extension is enabled when used as hook
+
+    When acl is used through hooks, the extension is never formally loaded and
+    enabled. This has some side effect, for example the config declaration is
+    never loaded. This function ensure the extension is enabled when running
+    hooks.
+    """
+    if b'acl' in ui._knownconfig:
+        return
+    ui.setconfig(b'extensions', b'acl', b'', source=b'internal')
+    extensions.loadall(ui, [b'acl'])
+
+
 def hook(ui, repo, hooktype, node=None, source=None, **kwargs):
-    if hooktype not in ['pretxnchangegroup', 'pretxncommit']:
-        raise util.Abort(_('config error - hook type "%s" cannot stop '
-                           'incoming changesets nor commits') % hooktype)
-    if (hooktype == 'pretxnchangegroup' and
-        source not in ui.config('acl', 'sources', 'serve').split()):
-        ui.debug('acl: changes have source "%s" - skipping\n' % source)
+
+    ensureenabled(ui)
+
+    if hooktype not in [b'pretxnchangegroup', b'pretxncommit', b'prepushkey']:
+        raise error.Abort(
+            _(
+                b'config error - hook type "%s" cannot stop '
+                b'incoming changesets, commits, nor bookmarks'
+            )
+            % hooktype
+        )
+    if hooktype == b'pretxnchangegroup' and source not in ui.configlist(
+        b'acl', b'sources'
+    ):
+        ui.debug(b'acl: changes have source "%s" - skipping\n' % source)
         return
 
     user = None
-    if source == 'serve' and 'url' in kwargs:
-        url = kwargs['url'].split(':')
-        if url[0] == 'remote' and url[1].startswith('http'):
-            user = urllib.unquote(url[3])
+    if source == b'serve' and 'url' in kwargs:
+        url = kwargs['url'].split(b':')
+        if url[0] == b'remote' and url[1].startswith(b'http'):
+            user = urlreq.unquote(url[3])
 
     if user is None:
-        user = getpass.getuser()
+        user = procutil.getuser()
 
-    ui.debug('acl: checking access for user "%s"\n' % user)
+    ui.debug(b'acl: checking access for user "%s"\n' % user)
 
-    cfg = ui.config('acl', 'config')
+    if hooktype == b'prepushkey':
+        _pkhook(ui, repo, hooktype, node, source, user, **kwargs)
+    else:
+        _txnhook(ui, repo, hooktype, node, source, user, **kwargs)
+
+
+def _pkhook(ui, repo, hooktype, node, source, user, **kwargs):
+    if kwargs['namespace'] == b'bookmarks':
+        bookmark = kwargs['key']
+        ctx = kwargs['new']
+        allowbookmarks = buildmatch(ui, None, user, b'acl.allow.bookmarks')
+        denybookmarks = buildmatch(ui, None, user, b'acl.deny.bookmarks')
+
+        if denybookmarks and denybookmarks(bookmark):
+            raise error.Abort(
+                _(
+                    b'acl: user "%s" denied on bookmark "%s"'
+                    b' (changeset "%s")'
+                )
+                % (user, bookmark, ctx)
+            )
+        if allowbookmarks and not allowbookmarks(bookmark):
+            raise error.Abort(
+                _(
+                    b'acl: user "%s" not allowed on bookmark "%s"'
+                    b' (changeset "%s")'
+                )
+                % (user, bookmark, ctx)
+            )
+        ui.debug(
+            b'acl: bookmark access granted: "%s" on bookmark "%s"\n'
+            % (ctx, bookmark)
+        )
+
+
+def _txnhook(ui, repo, hooktype, node, source, user, **kwargs):
+    # deprecated config: acl.config
+    cfg = ui.config(b'acl', b'config')
     if cfg:
-        ui.readconfig(cfg, sections = ['acl.groups', 'acl.allow.branches',
-        'acl.deny.branches', 'acl.allow', 'acl.deny'])
+        ui.readconfig(
+            cfg,
+            sections=[
+                b'acl.groups',
+                b'acl.allow.branches',
+                b'acl.deny.branches',
+                b'acl.allow',
+                b'acl.deny',
+            ],
+        )
 
-    allowbranches = buildmatch(ui, None, user, 'acl.allow.branches')
-    denybranches = buildmatch(ui, None, user, 'acl.deny.branches')
-    allow = buildmatch(ui, repo, user, 'acl.allow')
-    deny = buildmatch(ui, repo, user, 'acl.deny')
+    allowbranches = buildmatch(ui, None, user, b'acl.allow.branches')
+    denybranches = buildmatch(ui, None, user, b'acl.deny.branches')
+    allow = buildmatch(ui, repo, user, b'acl.allow')
+    deny = buildmatch(ui, repo, user, b'acl.deny')
 
-    for rev in xrange(repo[node], len(repo)):
+    for rev in pycompat.xrange(repo[node].rev(), len(repo)):
         ctx = repo[rev]
         branch = ctx.branch()
         if denybranches and denybranches(branch):
-            raise util.Abort(_('acl: user "%s" denied on branch "%s"'
-                               ' (changeset "%s")')
-                               % (user, branch, ctx))
+            raise error.Abort(
+                _(b'acl: user "%s" denied on branch "%s" (changeset "%s")')
+                % (user, branch, ctx)
+            )
         if allowbranches and not allowbranches(branch):
-            raise util.Abort(_('acl: user "%s" not allowed on branch "%s"'
-                               ' (changeset "%s")')
-                               % (user, branch, ctx))
-        ui.debug('acl: branch access granted: "%s" on branch "%s"\n'
-        % (ctx, branch))
+            raise error.Abort(
+                _(
+                    b'acl: user "%s" not allowed on branch "%s"'
+                    b' (changeset "%s")'
+                )
+                % (user, branch, ctx)
+            )
+        ui.debug(
+            b'acl: branch access granted: "%s" on branch "%s"\n' % (ctx, branch)
+        )
 
         for f in ctx.files():
             if deny and deny(f):
-                raise util.Abort(_('acl: user "%s" denied on "%s"'
-                ' (changeset "%s")') % (user, f, ctx))
+                raise error.Abort(
+                    _(b'acl: user "%s" denied on "%s" (changeset "%s")')
+                    % (user, f, ctx)
+                )
             if allow and not allow(f):
-                raise util.Abort(_('acl: user "%s" not allowed on "%s"'
-                ' (changeset "%s")') % (user, f, ctx))
-        ui.debug('acl: path access granted: "%s"\n' % ctx)
+                raise error.Abort(
+                    _(
+                        b'acl: user "%s" not allowed on "%s"'
+                        b' (changeset "%s")'
+                    )
+                    % (user, f, ctx)
+                )
+        ui.debug(b'acl: path access granted: "%s"\n' % ctx)

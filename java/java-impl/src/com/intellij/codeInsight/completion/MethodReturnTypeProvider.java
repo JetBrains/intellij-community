@@ -17,9 +17,6 @@ import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 final class MethodReturnTypeProvider {
   static final ElementPattern<PsiElement> IN_METHOD_RETURN_TYPE =
     psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMethod.class)
@@ -66,7 +63,7 @@ final class MethodReturnTypeProvider {
       }
     }
     if (hasVoid && lub == null) {
-      lub = PsiType.VOID;
+      lub = PsiTypes.voidType();
     }
     if (lub instanceof PsiIntersectionType) {
       return ((PsiIntersectionType)lub).getConjuncts();

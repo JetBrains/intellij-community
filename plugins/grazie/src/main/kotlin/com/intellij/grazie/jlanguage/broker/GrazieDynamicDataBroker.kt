@@ -44,7 +44,7 @@ internal object GrazieDynamicDataBroker : ResourceDataBroker {
   }
 
   override fun getRulesDir(): String {
-    return ResourceDataBroker.RULES_DIR;
+    return ResourceDataBroker.RULES_DIR
   }
 
   override fun getFromResourceDirAsUrls(path: String): MutableList<URL> {
@@ -88,6 +88,6 @@ internal object GrazieDynamicDataBroker : ResourceDataBroker {
   override fun ruleFileExists(path: String) = getAsURL(getCompleteRulesUrl(path)) != null
 
   override fun getResourceDir(): String {
-    return ResourceDataBroker.RESOURCE_DIR;
+    return ResourceDataBroker.RESOURCE_DIR
   }
 }

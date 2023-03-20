@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.Objects;
 
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
@@ -99,11 +98,10 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     public boolean equals(Object object) {
-      if (!(object instanceof MethodUsageGroup)) {
+      if (!(object instanceof MethodUsageGroup group)) {
         return false;
       }
-      MethodUsageGroup group = (MethodUsageGroup) object;
-      return Objects.equals(myName, ((MethodUsageGroup)object).myName)
+      return Objects.equals(myName, group.myName)
              && SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, group.myMethodPointer);
     }
 
@@ -175,8 +173,8 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-        return List.of((DataProvider)this::getSlowData);
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)this::getSlowData;
       }
       return null;
     }

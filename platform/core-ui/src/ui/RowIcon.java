@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
@@ -52,6 +54,16 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     myScaledIcons = null;
   }
 
+  @NotNull
+  @Override
+  public RowIcon replaceBy(@NotNull IconReplacer replacer) {
+    RowIcon icon = new RowIcon(this);
+    for (int i = 0; i < icon.myIcons.length; i++) {
+      icon.myIcons[i] = replacer.replaceIcon(icon.myIcons[i]);
+    }
+    return icon;
+  }
+
   @Override
   public @NotNull RowIcon copy() {
     return new RowIcon(this);
@@ -85,14 +97,14 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   }
 
   @Override
-  public Icon @NotNull [] getAllIcons() {
+  public @NotNull List<Icon> getAllIcons() {
     List<Icon> list = new ArrayList<>(myIcons.length);
     for (Icon element : myIcons) {
       if (element != null) {
         list.add(element);
       }
     }
-    return list.toArray(new Icon[0]);
+    return list;
   }
 
   public int hashCode() {
@@ -124,17 +136,14 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   public void paintIcon(Component c, Graphics g, int x, int y) {
     getScaleContext().update();
     int _x = x;
-    int _y = y;
+    int _y;
     for (Icon icon : myScaledIcons()) {
       if (icon == null) continue;
-      switch (myAlignment) {
-        case TOP: _y = y;
-          break;
-        case CENTER: _y = y + (myHeight - icon.getIconHeight())/2;
-          break;
-        case BOTTOM: _y = y + (myHeight - icon.getIconHeight());
-          break;
-      }
+      _y = switch (myAlignment) {
+        case TOP -> y;
+        case CENTER -> y + (myHeight - icon.getIconHeight()) / 2;
+        case BOTTOM -> y + (myHeight - icon.getIconHeight());
+      };
       icon.paintIcon(c, g, _x, _y);
       _x += icon.getIconWidth();
       //_y += icon.getIconHeight();
@@ -177,7 +186,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
 
   @Override
   public String toString() {
-    return "Row icon. myIcons=" + Arrays.asList(myIcons);
+    return "RowIcon(icons=" + Arrays.asList(myIcons) + ")";
   }
 
   @Override

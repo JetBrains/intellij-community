@@ -39,9 +39,6 @@ import java.util.function.Function;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
-/**
- * @author lambdamix
- */
 public class ProjectBytecodeAnalysis {
   /**
    * Setting this to {@code true} will disable persistent index and disable hashing which could be really useful for debugging

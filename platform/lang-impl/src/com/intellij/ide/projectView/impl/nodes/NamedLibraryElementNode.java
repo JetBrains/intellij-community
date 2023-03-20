@@ -83,8 +83,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     Icon icon = AllIcons.Nodes.PpLibFolder;
     String tooltip = null;
     String location = null;
-    if (orderEntry instanceof JdkOrderEntry) {
-      JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+    if (orderEntry instanceof JdkOrderEntry jdkOrderEntry) {
       icon = getJdkIcon(jdkOrderEntry);
       Sdk projectJdk = jdkOrderEntry.getJdk();
       if (projectJdk != null) { //jdk not specified
@@ -102,8 +101,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
         }
       }
     }
-    else if (orderEntry instanceof LibraryOrderEntry) {
-      LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+    else if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
       tooltip = StringUtil.capitalize(IdeBundle.message("node.projectview.library", libraryOrderEntry.getLibraryLevel()));
     }
     presentation.setIcon(icon);

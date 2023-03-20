@@ -16,8 +16,5 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
-/**
- * @author ilyas
- */
 public interface GrDocFieldReference extends GrDocMemberReference{
 }

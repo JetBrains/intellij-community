@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -22,7 +22,7 @@ import java.util.Set;
  * </p>
  * <p>
  * If you need to customize behavior of a plugin depending on the IDE it's installed, it's better to use optional dependency on a corresponding
- * plugin or IDE module. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules
+ * plugin or IDE module. See <a href="https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules">SDK Docs</a>.
  * </p>
  * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
@@ -35,6 +35,7 @@ public final class PlatformUtils {
   public static final String IDEA_CE_PREFIX = "Idea";
   public static final String IDEA_EDU_PREFIX = "IdeaEdu";
   public static final String APPCODE_PREFIX = "AppCode";
+  public static final String AQUA_PREFIX = "Aqua";
   public static final String CLION_PREFIX = "CLion";
   public static final String MOBILE_IDE_PREFIX = "MobileIDE";
   public static final String PYCHARM_PREFIX = "Python";
@@ -56,6 +57,7 @@ public final class PlatformUtils {
   public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
+  public static final String QODANA_PREFIX = "Qodana";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
     IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
@@ -82,7 +84,7 @@ public final class PlatformUtils {
 
   /**
    * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
-   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
    */
   public static boolean isIntelliJ() {
     return isIdeaUltimate() || isIdeaCommunity() || is(IDEA_EDU_PREFIX);
@@ -94,7 +96,7 @@ public final class PlatformUtils {
 
   /**
    * If you're enabling some behavior in IntelliJ IDEA, it's quite probable that it makes sense to enable it in Android Studio as well,
-   * so consider adding {@code || getPlatformPrefix().equals("AndroidStudio")} condition.
+   * so consider adding {@code || IdeInfo.isAndroidStudio()} condition.
    */
   public static boolean isIdeaCommunity() {
     return is(IDEA_CE_PREFIX);
@@ -112,10 +114,22 @@ public final class PlatformUtils {
     return is(RUBY_PREFIX);
   }
 
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
+  @Deprecated
   public static boolean isAppCode() {
     return is(APPCODE_PREFIX);
   }
 
+  public static boolean isAqua() {
+    return is(AQUA_PREFIX);
+  }
+
+  /**
+   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
+  @Deprecated
   public static boolean isCLion() {
     return is(CLION_PREFIX);
   }
@@ -175,6 +189,7 @@ public final class PlatformUtils {
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isCodeWithMeGuest() { return is(CWM_GUEST_PREFIX); }
 

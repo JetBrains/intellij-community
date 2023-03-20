@@ -49,20 +49,18 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiType castType = castTypeElement.getType();
-      if (!(castType instanceof PsiClassType)) {
+      if (!(castType instanceof PsiClassType castClassType)) {
         return;
       }
-      final PsiClassType castClassType = (PsiClassType)castType;
 
       final PsiExpression operand = expression.getOperand();
       if (operand == null) {
         return;
       }
       final PsiType operandType = operand.getType();
-      if (!(operandType instanceof PsiClassType)) {
+      if (!(operandType instanceof PsiClassType operandClassType)) {
         return;
       }
-      final PsiClassType operandClassType = (PsiClassType)operandType;
       if (!castClassType.isConvertibleFrom(operandClassType)) {
         // don't warn on red code
         return;

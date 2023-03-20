@@ -26,7 +26,6 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.UriUtil
 import com.intellij.util.Url
-import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
 import org.jetbrains.io.JsonReaderEx
 import java.io.IOException
@@ -149,6 +148,10 @@ private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
         file = reader.nextNullableString()
       }
       "sourcesContent" -> {
+        if (reader.peek() == JsonToken.NULL) {
+          reader.nextNull()
+          continue
+        }
         reader.beginArray()
         if (reader.peek() != JsonToken.END_ARRAY) {
           sourcesContent = SmartList<String>()
@@ -184,7 +187,7 @@ private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
     return null
   }
 
-  if (Registry.`is`("js.debugger.fix.jspm.source.maps", false) && encodedMappings!!.startsWith(";") && file != null && file.endsWith(".ts!transpiled")) {
+  if (Registry.`is`("js.debugger.fix.jspm.source.maps", false) && encodedMappings.startsWith(";") && file != null && file.endsWith(".ts!transpiled")) {
     encodedMappings = encodedMappings.substring(1)
   }
 

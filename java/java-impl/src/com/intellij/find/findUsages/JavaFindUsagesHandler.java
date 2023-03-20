@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class JavaFindUsagesHandler extends FindUsagesHandler {
   private static final Logger LOG = Logger.getInstance(JavaFindUsagesHandler.class);
 
@@ -108,24 +105,21 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   @Override
   public PsiElement @NotNull [] getPrimaryElements() {
     final PsiElement element = getPsiElement();
-    if (element instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)element;
-      final PsiElement scope = parameter.getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)scope;
-        if (PsiUtil.canBeOverridden(method)) {
-          final PsiClass aClass = method.getContainingClass();
-          LOG.assertTrue(aClass != null); //Otherwise can not be overridden
+    if (element instanceof PsiParameter parameter) {
+      if (parameter.getDeclarationScope() instanceof PsiMethod method && PsiUtil.canBeOverridden(method)) {
+        final PsiClass aClass = method.getContainingClass();
+        LOG.assertTrue(aClass != null); //Otherwise can not be overridden
 
-          ProgressManager pm = ProgressManager.getInstance();
-          boolean hasOverriden = pm.runProcessWithProgressSynchronously(() ->
-              OverridingMethodsSearch.search(method).findFirst() != null || FunctionalExpressionSearch.search(method).findFirst() != null,
-            JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject()) == Boolean.TRUE;
+        ProgressManager pm = ProgressManager.getInstance();
+        boolean hasOverriden = pm.runProcessWithProgressSynchronously(() ->
+                                                                        OverridingMethodsSearch.search(method).findFirst() != null ||
+                                                                        FunctionalExpressionSearch.search(method).findFirst() != null,
+                                                                      JavaBundle.message("progress.title.detect.overridden.methods"), true,
+                                                                      getProject()) == Boolean.TRUE;
 
-          if (hasOverriden && myFactory.getFindVariableOptions().isSearchInOverridingMethods) {
-            return pm.runProcessWithProgressSynchronously(() -> getParameterElementsToSearch(parameter, method),
-                       JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject());
-          }
+        if (hasOverriden && myFactory.getFindVariableOptions().isSearchInOverridingMethods) {
+          return pm.runProcessWithProgressSynchronously(() -> getParameterElementsToSearch(parameter, method),
+                                                        JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject());
         }
       }
     }

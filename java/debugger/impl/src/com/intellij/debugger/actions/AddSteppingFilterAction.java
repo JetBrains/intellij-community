@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +28,7 @@ public class AddSteppingFilterAction extends DebuggerAction {
     if (process == null) {
       return;
     }
-    final StackFrameProxyImpl proxy = PopFrameAction.getStackFrameProxy(e);
+    StackFrameProxyImpl proxy = getStackFrameProxy(e);
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() {
@@ -50,7 +51,12 @@ public class AddSteppingFilterAction extends DebuggerAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(PopFrameAction.getStackFrameProxy(e) != null);
+    e.getPresentation().setEnabledAndVisible(getStackFrameProxy(e) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static String getClassName(StackFrameProxyImpl stackFrameProxy) {

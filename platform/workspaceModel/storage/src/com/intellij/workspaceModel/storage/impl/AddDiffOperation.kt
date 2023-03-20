@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of target source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
@@ -6,15 +6,26 @@ import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
-import java.io.File
+import java.nio.file.Path
+import java.util.*
 
-internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
+internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
   private val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
   private val diffLog = diff.changeLog.changeLog
 
   // Initial storage is required in case something will fail and we need to send a report
-  private val initialStorage = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) target.toStorage() else null
+  private val initialStorage = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) target.toSnapshot() else null
+
+  var shaker = -1L
+
+  private fun ChangeLog.shake(): Collection<MutableMap.MutableEntry<EntityId, ChangeEntry>> {
+    return if (shaker != -1L && this.entries.size > 1) {
+      this.entries.shuffled(Random(shaker))
+    } else {
+      this.entries
+    }
+  }
 
   fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
@@ -25,12 +36,12 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       LOG.trace("Before starting addDiff no consistency issues were found")
     }
 
-    for ((_, change) in diffLog) {
+    for ((entityId, change) in diffLog.shake()) {
       when (change) {
         is ChangeEntry.AddEntity -> {
           LOG.trace { "addDiff: newEntity" }
 
-          checkPersistentId(change.entityData, null)
+          checkSymbolicId(change.entityData, null)
 
           val sourceEntityId = change.entityData.createEntityId().notThis()
 
@@ -71,13 +82,13 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           if (!replaceMap.containsValue(sourceEntityId)) {
             target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
-              target.removeEntity(sourceEntityId.id)
+              target.removeEntityByEntityId(sourceEntityId.id)
             }
           }
         }
         is ChangeEntry.ReplaceEntity -> {
           LOG.trace { "addDiff: replace entity" }
-          replaceOperation(change)
+          replaceOperation(entityId, change)
         }
         is ChangeEntry.ChangeEntitySource -> {
           LOG.trace { "addDiff: change entity source" }
@@ -85,7 +96,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         }
         is ChangeEntry.ReplaceAndChangeSource -> {
           LOG.trace { "addDiff: replace and change source" }
-          replaceOperation(change.dataChange)
+          replaceOperation(entityId, change.dataChange)
           replaceSourceOperation(change.sourceChange.newData, change.sourceChange.originalSource)
         }
       }
@@ -106,7 +117,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId.id.asThis())
 
     // We don't modify entity that isn't exist in target version of storage
-    val existingEntityData = target.entityDataById(usedPid.id)
+    val existingEntityData = target.entitiesByType.getEntityDataForModificationOrNull(usedPid.id)
     if (existingEntityData != null) {
       val newEntitySource = data.entitySource
       existingEntityData.entitySource = newEntitySource
@@ -180,20 +191,23 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     }
   }
 
-  private fun replaceOperation(change: ChangeEntry.ReplaceEntity) {
-    val sourceEntityId = change.newData.createEntityId().notThis()
+  private fun replaceOperation(entityId: EntityId, change: ChangeEntry.ReplaceEntity) {
+    val sourceEntityId = entityId.notThis()
 
     val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId.id.asParent()).flatMap { (key, value) -> value.map { key to it } }
     val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId.id.asChild())
 
     val targetEntityId = replaceMap.getOrDefault(sourceEntityId, sourceEntityId.id.asThis())
-    val newTargetEntityData = change.newData.clone()
-    newTargetEntityData.id = targetEntityId.id.arrayId
-
-    checkPersistentId(change.newData, newTargetEntityData.createEntityId())
 
     // We don't modify entity that doesn't exist in target version of storage
     val existingTargetEntityData = target.entityDataById(targetEntityId.id) ?: return
+    val newTargetEntityData = change.data?.newData?.clone() ?: existingTargetEntityData.clone()
+    newTargetEntityData.id = targetEntityId.id.arrayId
+
+    if (change.data != null) {
+      checkSymbolicId(change.data.newData, newTargetEntityData.createEntityId())
+    }
+
     val originalEntityData = target.getOriginalEntityData(targetEntityId.id)
     val originalParents = target.getOriginalParents(targetEntityId.id.asChild())
 
@@ -203,27 +217,27 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     target.indexes.updateIndices(sourceEntityId.id, newTargetEntityData, diff)
 
     val newEntityId = newTargetEntityData.createEntityId()
-    val oldPersistentId = target.entityDataById(newEntityId)?.persistentId()
+    val oldSymbolicId = target.entityDataById(newEntityId)?.symbolicId()
 
     /// Replace entity data. id should not be changed
     target.entitiesByType.replaceById(newTargetEntityData, sourceEntityId.id.clazz)
 
     // Restore soft references
-    target.indexes.updatePersistentIdIndexes(target, newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
+    target.indexes.updateSymbolicIdIndexes(target, newTargetEntityData.createEntity(target), oldSymbolicId, newTargetEntityData)
 
 
     val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.newChildren.forEach { addedChildrenMap.put(it.first, it.second) }
+    change.references?.newChildren?.forEach { addedChildrenMap.put(it.first, it.second) }
 
     val removedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
+    change.references?.removedChildren?.forEach { removedChildrenMap.put(it.first, it.second) }
 
     replaceRestoreChildren(sourceEntityId.id.asParent(), newEntityId.asParent(), addedChildrenMap, removedChildrenMap)
 
     replaceRestoreParents(change, newEntityId)
 
-    WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
-      originalEntityData, originalParents)
+    MutableEntityStorageImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
+                                             originalEntityData, originalParents)
   }
 
   private fun replaceRestoreChildren(
@@ -244,20 +258,26 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       }
       else {
         // Take current children....
-        val mutableChildren = children.toMutableList()
+        val mutableChildren = children.toMutableSet()
 
         val addedChildrenSet = addedChildrenMap[connectionId] ?: emptySet()
         val updatedAddedChildren = addedChildrenSet.mapNotNull { childrenMapper(it) }
-        mutableChildren.addAll(updatedAddedChildren)
+        if (connectionId.isOneToOne && updatedAddedChildren.isNotEmpty()) {
+          mutableChildren.clear()
+          mutableChildren.add(updatedAddedChildren.single())
+        }
+        else {
+          mutableChildren.addAll(updatedAddedChildren)
+        }
 
         val removedChildrenSet = removedChildrenMap[connectionId] ?: emptySet()
         for (removedChild in removedChildrenSet) {
           // This method may return false if this child is already removed
-          mutableChildren.remove(removedChild)
+          mutableChildren.remove(childrenMapper(removedChild))
         }
 
         // .... Update if something changed
-        if (children != mutableChildren) {
+        if (children.toSet() != mutableChildren) {
           target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
         }
       }
@@ -269,12 +289,9 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     // Do we have more children to add? Add them
     for ((connectionId, children) in addedChildrenMap.asMap()) {
-      val mutableChildren = children.toMutableList()
-
       val updatedChildren = children.mapNotNull { childrenMapper(it) }
-      mutableChildren.addAll(updatedChildren)
 
-      target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
+      target.refs.updateChildrenOfParent(connectionId, newEntityId, updatedChildren)
     }
   }
 
@@ -291,7 +308,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       }
     }
     else {
-      if (target.entityDataById(child.id) != null) {
+      if (replaceMap.inverse()[child.id.asThis()] == null && target.entityDataById(child.id) != null) {
         child
       }
       else null
@@ -302,7 +319,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     change: ChangeEntry.ReplaceEntity,
     newEntityId: EntityId,
   ) {
-    val updatedModifiedParents = change.modifiedParents.mapValues { it.value }
+    val updatedModifiedParents = change.references?.modifiedParents?.mapValues { it.value } ?: emptyMap()
 
     val modifiedParentsMap = updatedModifiedParents.toMutableMap()
     val newChildEntityId = newEntityId.asChild()
@@ -359,21 +376,21 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     }
   }
 
-  private fun checkPersistentId(entityData: WorkspaceEntityData<out WorkspaceEntity>, newEntityId: EntityId?) {
-    val newPersistentId = entityData.persistentId()
-    if (newPersistentId != null) {
-      val existingIds = target.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
+  private fun checkSymbolicId(entityData: WorkspaceEntityData<out WorkspaceEntity>, newEntityId: EntityId?) {
+    val newSymbolicId = entityData.symbolicId()
+    if (newSymbolicId != null) {
+      val existingIds = target.indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId)
       if (existingIds != null) {
         val existingIdCheck = if (newEntityId != null) existingIds != newEntityId else true
         if (existingIdCheck) {
-          // target persistent id exists already.
+          // target symbolic id exists already.
           val existingEntityData = target.entityDataByIdOrDie(existingIds)
           LOG.debug("Removing existing entity... $existingIds")
           target.removeEntity(existingEntityData.createEntity(target))
           target.addDiffAndReport(
             """
-                        Persistent ID already exists. Removing old entity
-                        Persistent ID: $newPersistentId
+                        Symbolic ID already exists. Removing old entity
+                        Symbolic ID: $newSymbolicId
                         Existing entity data: $existingEntityData
                         New entity data: $entityData
                         """.trimIndent(), initialStorage, diff)
@@ -385,10 +402,10 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   // For serializing current model during the debug process
   @Suppress("unused")
   private fun serialize(path: String) {
-    val folder = File(path)
-    target.serializeTo(folder.resolve("Instant_Save_Target").outputStream())
-    diff.serializeTo(folder.resolve("Instant_Save_Source").outputStream())
-    diff.serializeDiff(folder.resolve("Instant_Save_Diff").outputStream())
+    val folder = Path.of(path)
+    target.serializeTo(folder.resolve("Instant_Save_Target"))
+    diff.serializeTo(folder.resolve("Instant_Save_Source"))
+    diff.serializeDiff(folder.resolve("Instant_Save_Diff"))
   }
 
   companion object {

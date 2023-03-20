@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightClassTypeReference;
+import com.intellij.psi.infos.PatternCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -111,7 +112,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   @Override
-  public @NotNull PsiClassType setLanguageLevel(final @NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
     return new PsiClassReferenceType(getReference(), languageLevel, getAnnotationProvider());
   }
@@ -160,8 +161,13 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
     @Override
     public PsiClass getElement() {
-      final PsiElement element = myDelegate.getElement();
+      PsiElement element = myDelegate.getElement();
       return element instanceof PsiClass ? (PsiClass)element : null;
+    }
+
+    @Override
+    public @Nullable String getInferenceError() {
+      return myDelegate instanceof PatternCandidateInfo ? ((PatternCandidateInfo)myDelegate).getInferenceError() : null;
     }
   }
 
@@ -174,7 +180,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       }
       throw new PsiInvalidElementAccessException(reference, myReference.toString() + "; augmenters=" + PsiAugmentProvider.EP_NAME.getExtensionList());
     }
-    final JavaResolveResult result = reference.advancedResolve(false);
+    JavaResolveResult result = reference.advancedResolve(false);
     return result.getElement() == null ? ClassResolveResult.EMPTY : new DelegatingClassResolveResult(result);
   }
 
@@ -186,8 +192,8 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       PsiClass aClass = (PsiClass)resolved;
       if (!PsiUtil.typeParametersIterable(aClass).iterator().hasNext()) return this;
       PsiManager manager = reference.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-      final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+      PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
       return new PsiImmediateClassType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotationProvider());
     }
     String qualifiedName = reference.getQualifiedName();
@@ -204,12 +210,32 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public PsiType @NotNull [] getParameters() {
-    return getReference().getTypeParameters();
+    PsiJavaCodeReferenceElement reference = getReference();
+    if (reference.getTypeParameterCount() == 0 &&
+        reference.getParent() instanceof PsiTypeElement &&
+        reference.getParent().getParent() instanceof PsiDeconstructionPattern) {
+      ClassResolveResult result = resolveGenerics();
+      PsiClass cls = result.getElement();
+      if (cls != null && result.getInferenceError() == null) {
+        return ContainerUtil.map2Array(cls.getTypeParameters(), PsiType.EMPTY_ARRAY, result.getSubstitutor().getSubstitutionMap()::get);
+      }
+    }
+    return reference.getTypeParameters();
   }
 
   @Override
   public int getParameterCount() {
-    return getReference().getTypeParameterCount();
+    PsiJavaCodeReferenceElement reference = getReference();
+    if (reference.getTypeParameterCount() == 0 &&
+        reference.getParent() instanceof PsiTypeElement &&
+        reference.getParent().getParent() instanceof PsiDeconstructionPattern) {
+      ClassResolveResult result = resolveGenerics();
+      PsiClass cls = result.getElement();
+      if (cls != null && result.getInferenceError() == null) {
+        return cls.getTypeParameters().length;
+      }
+    }
+    return reference.getTypeParameterCount();
   }
 
   @Override

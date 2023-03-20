@@ -11,3 +11,5 @@ fun test(x: Int, y: Int): String {
         else -> return "big"
     }
 }
+
+// IGNORE_FIR

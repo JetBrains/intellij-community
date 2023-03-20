@@ -64,7 +64,7 @@ public class JavaFxTagNameReference extends TagNameReference{
       if (element != null) {
         registrar.register(new JavaFxImportClassFix(ref, element) {
           @Override
-          protected XmlTag getTagElement(JavaFxTagNameReference ref) {
+          XmlTag getTagElement(@NotNull JavaFxTagNameReference ref) {
             return ref.getTagElement();
           }
         });

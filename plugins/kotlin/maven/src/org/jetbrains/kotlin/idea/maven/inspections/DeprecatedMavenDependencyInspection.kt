@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven.inspections
 
@@ -19,9 +19,7 @@ import org.jetbrains.kotlin.idea.versions.DEPRECATED_LIBRARIES_INFORMATION
 class DeprecatedMavenDependencyInspection :
     DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java), CleanupLocalInspectionTool {
 
-    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>?, holder: DomElementAnnotationHolder?) {
-        if (domFileElement == null || holder == null) return
-
+    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val file = domFileElement.file
         val module = domFileElement.module ?: return
         val manager = MavenProjectsManager.getInstance(module.project) ?: return

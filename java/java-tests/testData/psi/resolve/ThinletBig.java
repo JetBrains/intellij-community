@@ -2952,8 +2952,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress2(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -3316,8 +3316,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress3(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -3680,8 +3680,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress4(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -4044,8 +4044,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress5(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -4408,8 +4408,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress6(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -4772,8 +4772,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress7(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -5136,8 +5136,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress8(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -5500,8 +5500,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress9(Object component,
+                                   boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -5864,8 +5864,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress11(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -6228,8 +6228,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress12(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -6592,8 +6592,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress13(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -6956,8 +6956,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress14(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -7320,8 +7320,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress15(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -7684,8 +7684,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress16(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -8048,8 +8048,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress17(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -8412,8 +8412,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress18(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -8776,8 +8776,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress19(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -9140,8 +9140,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress21(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -9504,8 +9504,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress22(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -9868,8 +9868,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress23(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -10232,8 +10232,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress24(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -10596,8 +10596,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress25(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -10960,8 +10960,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress26(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -11324,8 +11324,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress27(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -11688,8 +11688,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress28(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -12052,8 +12052,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress29(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -12416,8 +12416,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress31(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -12780,8 +12780,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress32(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -13144,8 +13144,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress33(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -13508,8 +13508,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress34(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -13872,8 +13872,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress35(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -14236,8 +14236,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress36(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -14600,8 +14600,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress37(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -14964,8 +14964,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress38(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -15328,8 +15328,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress39(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -15692,8 +15692,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress41(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -16056,8 +16056,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress42(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -16420,8 +16420,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress43(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -16784,8 +16784,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress44(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -17148,8 +17148,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress45(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -17512,8 +17512,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress46(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -17876,8 +17876,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress47(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||
@@ -18240,8 +18240,8 @@ class Thinlet extends Container //java
   /**
    *
    */
-  private boolean processKeyPress(Object component,
-                                  boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
+  private boolean processKeyPress48(Object component,
+                                    boolean shiftdown, boolean controldown, int modifiers, int keychar, int keycode) {
     String classname = getClass(component);
     if ("button" == classname) {
       if (keychar == KeyEvent.VK_SPACE ||

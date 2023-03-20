@@ -172,13 +172,6 @@ public final class NestingTreeStructureProvider implements TreeStructureProvider
     return result;
   }
 
-  public static class ChildFileInfo {
-    @NotNull public final VirtualFile file;
-    @NotNull public final String namePartCommonWithParentFile;
-
-    public ChildFileInfo(@NotNull final VirtualFile file, @NotNull final String namePartCommonWithParentFile) {
-      this.file = file;
-      this.namePartCommonWithParentFile = namePartCommonWithParentFile;
-    }
+  public record ChildFileInfo(@NotNull VirtualFile file, @NotNull String namePartCommonWithParentFile) {
   }
 }

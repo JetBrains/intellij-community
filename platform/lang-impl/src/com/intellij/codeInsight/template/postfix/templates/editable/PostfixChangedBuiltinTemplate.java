@@ -32,9 +32,8 @@ public class PostfixChangedBuiltinTemplate extends PostfixTemplateWrapper {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PostfixChangedBuiltinTemplate)) return false;
+    if (!(o instanceof PostfixChangedBuiltinTemplate template)) return false;
     if (!super.equals(o)) return false;
-    PostfixChangedBuiltinTemplate template = (PostfixChangedBuiltinTemplate)o;
     return Objects.equals(myBuiltinTemplate, template.myBuiltinTemplate);
   }
 

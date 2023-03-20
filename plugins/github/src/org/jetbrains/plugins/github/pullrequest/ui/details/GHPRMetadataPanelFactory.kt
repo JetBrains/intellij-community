@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
@@ -12,10 +13,10 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelHandle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -54,10 +55,9 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
     override fun getItemComponent(item: GHPullRequestRequestedReviewer) = createUserLabel(item)
 
-    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>>? {
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>> {
       return GHUIUtil
-        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), parentComponent,
-                          GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
+        .showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
                           model.reviewers, model.loadPotentialReviewers())
     }
 
@@ -75,9 +75,8 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
-    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>>? = GHUIUtil
-      .showChooserPopup(GithubBundle.message("pull.request.assignees"), parentComponent,
-                        GHUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider),
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>> = GHUIUtil
+      .showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider),
                         model.assignees, model.loadPotentialAssignees())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
@@ -85,7 +84,8 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
   }
 
   private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
-                                                                             avatarIconsProvider.getIcon(user.avatarUrl),
+                                                                             avatarIconsProvider.getIcon(user.avatarUrl,
+                                                                                                         GHUIUtil.AVATAR_SIZE),
                                                                              SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }
@@ -99,9 +99,8 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
     override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
-    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>>? =
-      GHUIUtil.showChooserPopup(GithubBundle.message("pull.request.labels"), parentComponent,
-                                GHUIUtil.SelectionListCellRenderer.Labels(),
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>> =
+      GHUIUtil.showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.Labels(),
                                 model.labels, model.loadAssignableLabels())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =
@@ -114,7 +113,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
   companion object {
     private fun addListPanel(panel: JPanel, handle: LabeledListPanelHandle<*>) {
-      panel.add(handle.label, CC().alignY("top").width(":${handle.preferredLabelWidth}:"))
+      panel.add(handle.label, CC().alignY("top").width(":${handle.preferredLabelWidth}px:"))
       panel.add(handle.panel, CC().minWidth("0").growX().pushX().wrap())
     }
   }

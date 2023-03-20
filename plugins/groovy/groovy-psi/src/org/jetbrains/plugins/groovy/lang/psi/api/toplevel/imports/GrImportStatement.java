@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport;
 
-/**
- * @author ilyas
- */
 public interface GrImportStatement extends GrTopStatement {
   GrImportStatement[] EMPTY_ARRAY = new GrImportStatement[0];
 

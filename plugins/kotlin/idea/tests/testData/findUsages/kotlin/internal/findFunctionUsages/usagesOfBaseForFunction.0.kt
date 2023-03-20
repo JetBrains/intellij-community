@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages, skipImports
+// PSI_ELEMENT_AS_TITLE: "fun foo(): Unit"
 
 interface A {
     @Suppress("WRONG_MODIFIER_CONTAINING_DECLARATION")
@@ -15,4 +16,4 @@ fun main(a: A) {
 }
 
 // for KT-3769 Find usages gives no result for overrides
-// FIR_COMPARISON
+

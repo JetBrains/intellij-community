@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #import "Launcher.h"
 #import "VMOptionsReader.h"
 #import "PropertyFileReader.h"
 #import "utils.h"
-#import "rosetta.h"
 #import <AppKit/AppKit.h>
 #import <dlfcn.h>
 
+#ifdef __arm64__
+#import "rosetta.h"
+#endif
 
 NSBundle *vm;
 NSString *const JVMOptions = @"JVMOptions";
@@ -64,19 +66,19 @@ NSString* minRequiredJavaVersion = @"1.8";
     return self;
 }
 
-void showWarning(NSString* messageText){
-   NSAlert* alert = [[NSAlert alloc] init];
-   [alert addButtonWithTitle:@"OK"];
-   NSString* message_description = [NSString stringWithFormat:@"Java 1.8 or later is required."];
-   NSString* informativeText =[NSString stringWithFormat:@"%@",message_description];
-   [alert setMessageText:messageText];
-   [alert setInformativeText:informativeText ];
-   [alert setAlertStyle:NSAlertStyleWarning];
-   [alert runModal];
-   [alert release];
+void showWarning(NSString *messageText) {
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert addButtonWithTitle:@"OK"];
+    NSString *message_description = [NSString stringWithFormat:@"Java 1.8 or later is required."];
+    NSString *informativeText = [NSString stringWithFormat:@"%@", message_description];
+    [alert setMessageText:messageText];
+    [alert setInformativeText:informativeText];
+    [alert setAlertStyle:NSAlertStyleWarning];
+    [alert runModal];
+    [alert release];
 }
 
-BOOL appendBundle(NSString *path, NSMutableArray *sink) {
+bool appendBundle(NSString *path, NSMutableArray *sink) {
     if (! [[NSFileManager defaultManager] fileExistsAtPath:path]) {
         NSLog(@"Can't find bundled java.The folder doesn't exist: %@", path);
     }
@@ -92,11 +94,11 @@ BOOL appendBundle(NSString *path, NSMutableArray *sink) {
     return false;
 }
 
-BOOL appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
+bool appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
     NSError *error = nil;
     NSArray *names = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
 
-    BOOL res = false;
+    bool res = false;
     if (names != nil) {
         for (NSString *name in names) {
             res |= appendBundle([path stringByAppendingPathComponent:name], sink);
@@ -105,7 +107,7 @@ BOOL appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
     return res;
 }
 
-NSArray *allVms() {
+NSArray *allVms(void) {
     // search java info in user's idea.properties
     NSString* ideaProperty = getPropertiesFilePath();
     if ([[NSFileManager defaultManager] fileExistsAtPath:ideaProperty]) {
@@ -142,16 +144,16 @@ NSString *jvmVersion(NSBundle *bundle) {
     return javaVersion;
 }
 
-NSString *requiredJvmVersions() {
+NSString *requiredJvmVersions(void) {
     return (JVMVersion != NULL) ? JVMVersion : [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.8*"];
 }
 
-BOOL meetMinRequirements (NSString *vmVersion) {
+bool meetMinRequirements (NSString *vmVersion) {
     return [minRequiredJavaVersion compare:vmVersion options:NSNumericSearch] <= 0;
 }
 
-BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
-    BOOL meetRequirement = meetMinRequirements(vmVersion);
+bool satisfies(NSString *vmVersion, NSString *requiredVersion) {
+    bool meetRequirement = meetMinRequirements(vmVersion);
     if (! meetRequirement) {
         return meetRequirement;
     }
@@ -186,7 +188,7 @@ NSBundle *getJDKBundle(NSString* jdkVersion, NSString* source) {
     return nil;
 }
 
-NSBundle *findMatchingVm() {
+NSBundle *findMatchingVm(void) {
     // boot jdk action
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
@@ -228,8 +230,8 @@ NSBundle *findMatchingVm() {
 
     if (isDebugEnabled()) {
         debugLog(@"Found Java Virtual Machines:");
-        for (NSBundle *vm in vmBundles) {
-            debugLog([vm bundlePath]);
+        for (NSBundle *vmBundle in vmBundles) {
+            debugLog([vmBundle bundlePath]);
         }
     }
 
@@ -239,11 +241,11 @@ NSBundle *findMatchingVm() {
     if (requiredList != nil) {
         NSArray *array = [requiredList componentsSeparatedByString:@","];
         for (NSString* required in array) {
-            for (NSBundle *vm in vmBundles) {
-                if (satisfies(jvmVersion(vm), required)) {
+            for (NSBundle *vmBundle in vmBundles) {
+                if (satisfies(jvmVersion(vmBundle), required)) {
                     debugLog(@"Chosen VM:");
-                    debugLog([vm bundlePath]);
-                    return vm;
+                    debugLog([vmBundle bundlePath]);
+                    return vmBundle;
                  }
             }
         }
@@ -293,19 +295,19 @@ NSString *getJVMProperty(NSString *property) {
     return properties != nil ? properties[property] : nil;
 }
 
-NSString *getSelector() {
+NSString *getSelector(void) {
     return getJVMProperty(@"idea.paths.selector");
 }
 
-NSString *getExecutable() {
+NSString *getExecutable(void) {
     return getJVMProperty(@"idea.executable");
 }
 
-NSString *getPropertiesFilePath() {
+NSString *getPropertiesFilePath(void) {
     return [getPreferencesFolderPath() stringByAppendingString:@"/idea.properties"];
 }
 
-NSString *getPreferencesFolderPath() {
+NSString *getPreferencesFolderPath(void) {
     return [NSString stringWithFormat:@"%@/Library/Application Support/%@/%@", NSHomeDirectory(), getJVMProperty(@"idea.vendor.name"), getSelector()];
 }
 
@@ -322,7 +324,7 @@ NSString *getDefaultFilePath(NSString *fileName) {
     return fullFileName;
 }
 
-NSArray *parseVMOptions() {
+NSArray *parseVMOptions(void) {
     NSString *vmOptionsFile = nil;
     NSMutableArray *vmOptions = nil, *userVmOptions = nil;
 
@@ -388,17 +390,12 @@ NSArray *parseVMOptions() {
         return vmOptions;
     }
     else {
-        NSAlert *alert = [[NSAlert alloc] init];
-        [alert addButtonWithTitle:@"OK"];
-        [alert setMessageText:@"Cannot find VM options file"];
-        [alert setAlertStyle:NSAlertStyleWarning];
-        [alert runModal];
-        [alert release];
+        NSLog(@"parseVMOptions: cannot find VM options file");
         return nil;
     }
 }
 
-NSString *getOverridePropertiesPath() {
+NSString *getOverridePropertiesPath(void) {
     NSString *variable = [[getExecutable() uppercaseString] stringByAppendingString:@"_PROPERTIES"];
     return [[NSProcessInfo processInfo] environment][variable];
 }
@@ -423,6 +420,15 @@ NSString *getOverridePropertiesPath() {
     NSMutableArray *args_array = [NSMutableArray array];
 
     [args_array addObject:classpathOption];
+
+    NSString *errorFileOption = jvmInfo[@"ErrorFile"];
+    if (errorFileOption != nil) {
+        [args_array addObject:errorFileOption];
+    }
+    NSString *heapDumpOption = jvmInfo[@"HeapDump"];
+    if (heapDumpOption != nil) {
+        [args_array addObject:heapDumpOption];
+    }
 
     NSArray *vmOptions = parseVMOptions();
     if (vmOptions != nil) {
@@ -459,17 +465,7 @@ NSString *getOverridePropertiesPath() {
         exit(-1);
     }
 
-    char *answer = strdup([jvmInfo[@"MainClass"] UTF8String]);
-
-    char *cur = answer;
-    while (*cur) {
-        if (*cur == '.') {
-            *cur = '/';
-        }
-        cur++;
-    }
-
-    return answer;
+    return [jvmInfo[@"MainClass"] UTF8String];
 }
 
 - (void)process_cwd {
@@ -485,7 +481,7 @@ NSString *getOverridePropertiesPath() {
     NSLog(@"Current Directory: %@", dir);
 }
 
-BOOL validationJavaVersion(){
+bool validationJavaVersion(void) {
     vm = findMatchingVm();
     if (vm == nil) {
         return false;

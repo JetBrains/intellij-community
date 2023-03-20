@@ -99,7 +99,7 @@ public final class PackageUtil {
   }
 
   @NotNull
-  static Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
+  public static Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
                                                                        @NotNull Project project,
                                                                        @NotNull ViewSettings settings,
                                                                        @Nullable Module module,

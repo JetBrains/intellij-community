@@ -1,5 +1,5 @@
 public class MoveMethodTest {
-    void foo() {
+    void foo () {
       foo();
       foo();
     }

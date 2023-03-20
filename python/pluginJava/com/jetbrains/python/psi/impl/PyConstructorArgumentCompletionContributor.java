@@ -51,7 +51,7 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
         final String propName = PropertyUtilBase.getPropertyName(method);
         result.addElement(PyUtil.createNamedParameterLookup(propName, origin));
       }
-      else if (method.getName().startsWith("add") && method.getName().endsWith("Listener") && PsiType.VOID.equals(method.getReturnType())) {
+      else if (method.getName().startsWith("add") && method.getName().endsWith("Listener") && PsiTypes.voidType().equals(method.getReturnType())) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length == 1) {
           final PsiType type = parameters[0].getType();

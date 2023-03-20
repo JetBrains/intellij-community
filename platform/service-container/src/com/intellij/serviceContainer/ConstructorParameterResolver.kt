@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
@@ -42,7 +42,7 @@ internal class ConstructorParameterResolver {
 
     if (isLightService(expectedType)) {
       throw PluginException(
-        "Do not use constructor injection for light services (requestorClass=$requestorClass, requestedService=$expectedType)", pluginId
+        "Constructor injection for light services is not supported (requestorClass=$requestorClass, requestedService=$expectedType)", pluginId
       )
     }
 
@@ -53,14 +53,14 @@ internal class ConstructorParameterResolver {
         // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
         adapter.getInstance(adapter.componentManager, null)
       }
-      componentManager.parent == null -> adapter.getComponentInstance(componentManager)
+      componentManager.parent == null -> adapter.componentInstance
       else -> componentManager.getComponentInstance(adapter.componentKey)
     }
   }
 
   private fun handleUnsatisfiedDependency(componentManager: ComponentManagerImpl, requestorClass: Class<*>, expectedType: Class<*>, pluginId: PluginId): Any? {
     val extension = componentManager.extensionArea.findExtensionByClass(expectedType) ?: return null
-    val message = "Do not use constructor injection to get extension instance (requestorClass=${requestorClass.name}, extensionClass=${expectedType.name})"
+    val message = doNotUseConstructorInjectionsMessage("requestorClass=${requestorClass.name}, extensionClass=${expectedType.name}")
     val app = componentManager.getApplication()
     @Suppress("SpellCheckingInspection")
     if (app != null && app.isUnitTestMode && pluginId.idString != "org.jetbrains.kotlin" && pluginId.idString != "Lombook Plugin") {
@@ -78,7 +78,7 @@ private fun findTargetAdapter(componentManager: ComponentManagerImpl,
                               requestorKey: Any,
                               requestorClass: Class<*>,
                               requestorConstructor: Constructor<*>,
-                              @Suppress("UNUSED_PARAMETER") pluginId: PluginId): ComponentAdapter? {
+                              pluginId: PluginId): ComponentAdapter? {
   val byKey = componentManager.getComponentAdapter(expectedType)
   if (byKey != null && requestorKey != byKey.componentKey) {
     return byKey

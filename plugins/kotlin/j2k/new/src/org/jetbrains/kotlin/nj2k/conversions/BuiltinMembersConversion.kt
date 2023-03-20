@@ -1,13 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.nj2k.*
-import org.jetbrains.kotlin.nj2k.symbols.*
+import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
+import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
+import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.STRING
 import org.jetbrains.kotlin.nj2k.types.isArrayType
+import org.jetbrains.kotlin.nj2k.types.isNull
 import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -29,7 +33,6 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
         if (this is JKQualifiedExpression && conversion.replaceType == ReplaceType.REPLACE_WITH_QUALIFIER) {
             newSelector.leadingComments += receiver.trailingComments
-            newSelector.leadingComments += receiver.trailingComments
             newSelector.leadingComments += receiver.leadingComments
             newSelector.leadingComments += selector.trailingComments
             newSelector.leadingComments += selector.leadingComments
@@ -42,6 +45,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     this
                 } else newSelector
             }
+
             ReplaceType.REPLACE_WITH_QUALIFIER -> newSelector
         }.let { expression ->
             conversion.actionAfter?.invoke(expression.copyTreeAndDetach()) ?: expression
@@ -56,6 +60,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 if (conversion.byArgumentsFilter?.invoke(arguments.arguments.map { it.value }) == false) return@firstOrNull false
                 true
             }
+
         is JKFieldAccessExpression ->
             conversions[identifier.deepestFqName()]?.firstOrNull { conversion ->
                 if (conversion.from !is Field) return@firstOrNull false
@@ -75,8 +80,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             conversions[classSymbol.deepestFqName()]?.firstOrNull { conversion ->
                 if (conversion.from !is NewExpression) return@firstOrNull false
                 if (conversion.filter?.invoke(this) == false) return@firstOrNull false
+                if (conversion.byArgumentsFilter?.invoke(arguments.arguments.map { it.value }) == false) return@firstOrNull false
                 true
             }
+
         else -> null
     }?.takeIf { conversion ->
         conversion.sinceKotlin?.let { it <= moduleApiVersion } ?: true
@@ -89,32 +96,42 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private inner class MethodBuilder(
         private val fqName: String,
+        private val parameterTypesFqNames: List<String>?,
         private val argumentsProvider: (JKArgumentList) -> JKArgumentList
     ) : ResultBuilder {
-        override fun build(from: JKExpression): JKExpression =
-            when (from) {
-                is JKCallExpression ->
+        override fun build(from: JKExpression): JKExpression {
+            val methodSymbol = if (parameterTypesFqNames == null) {
+                symbolProvider.provideMethodSymbol(fqName)
+            } else {
+                symbolProvider.provideMethodSymbolWithExactSignature(fqName, parameterTypesFqNames)
+            }
+            return when (from) {
+                is JKCallExpression -> {
                     JKCallExpressionImpl(
-                        symbolProvider.provideMethodSymbol(fqName),
+                        methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         from::typeArgumentList.detached()
                     )
+                }
+
                 is JKFieldAccessExpression ->
                     JKCallExpressionImpl(
-                        symbolProvider.provideMethodSymbol(fqName),
+                        methodSymbol,
                         JKArgumentList(),
                         JKTypeArgumentList()
                     )
-                is JKMethodAccessExpression ->
-                    JKMethodAccessExpression(symbolProvider.provideMethodSymbol(fqName))
+
+                is JKMethodAccessExpression -> JKMethodAccessExpression(methodSymbol)
                 is JKNewExpression ->
                     JKCallExpressionImpl(
-                        symbolProvider.provideMethodSymbol(fqName),
+                        methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         JKTypeArgumentList()
                     )
+
                 else -> error("Bad conversion")
             }.withFormattingFrom(from)
+        }
     }
 
     private inner class FieldBuilder(
@@ -126,10 +143,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     JKFieldAccessExpression(
                         symbolProvider.provideFieldSymbol(fqName)
                     ).withFormattingFrom(from)
+
                 is JKFieldAccessExpression ->
                     JKFieldAccessExpression(
                         symbolProvider.provideFieldSymbol(fqName)
                     ).withFormattingFrom(from)
+
                 else -> error("Bad conversion")
             }
     }
@@ -142,7 +161,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 is JKCallExpression -> {
                     val arguments = from.arguments::arguments.detached()
                     JKQualifiedExpression(
-                        arguments.first()::value.detached().parenthesizeIfBinaryExpression(),
+                        arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
                         JKCallExpressionImpl(
                             symbolProvider.provideMethodSymbol(fqName),
                             JKArgumentList(arguments.drop(1)),
@@ -150,6 +169,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         )
                     ).withFormattingFrom(from)
                 }
+
                 else -> error("Bad conversion")
             }
     }
@@ -162,7 +182,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private fun Conversion.createBuilder(): ResultBuilder =
         when (to) {
-            is Method -> MethodBuilder(to.fqName, argumentsProvider ?: { it })
+            is Method -> MethodBuilder(to.fqName, to.parameterTypesFqNames, argumentsProvider ?: { it })
             is Field -> FieldBuilder(to.fqName)
             is ExtensionMethod -> ExtensionMethodBuilder(to.fqName)
             is CustomExpression -> CustomExpressionBuilder(to.expressionBuilder)
@@ -180,7 +200,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         val fqName: String
     }
 
-    private data class Method(override val fqName: String) : SymbolInfo
+    private data class Method(override val fqName: String, val parameterTypesFqNames: List<String>? = null) : SymbolInfo
     private data class NewExpression(override val fqName: String) : SymbolInfo
     private data class Field(override val fqName: String) : SymbolInfo
     private data class ExtensionMethod(override val fqName: String) : SymbolInfo
@@ -220,7 +240,17 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private val conversions: Map<String, List<Conversion>> =
         listOf(
-            Method("java.lang.Short.valueOf") convertTo ExtensionMethod("kotlin.Short.toShort")
+            Method("java.lang.Byte.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Short.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Integer.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Long.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Float.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Double.valueOf") convertTo numericValueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
             Method("java.lang.Byte.parseByte") convertTo ExtensionMethod("kotlin.text.toByte")
@@ -228,9 +258,11 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             Method("java.lang.Short.parseShort") convertTo ExtensionMethod("kotlin.text.toShort")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Integer.parseInt") convertTo ExtensionMethod("kotlin.text.toInt")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withByArgumentsFilter { it.size <= 2 },
             Method("java.lang.Long.parseLong") convertTo ExtensionMethod("kotlin.text.toLong")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withByArgumentsFilter { it.size <= 2 },
             Method("java.lang.Float.parseFloat") convertTo ExtensionMethod("kotlin.text.toFloat")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Double.parseDouble") convertTo ExtensionMethod("kotlin.text.toDouble")
@@ -312,14 +344,6 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     sinceKotlin ApiVersion.KOTLIN_1_5
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
-            Method("java.io.PrintStream.println") convertTo Method("kotlin.io.println")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
-                    withFilter ::isSystemOutCall,
-
-            Method("java.io.PrintStream.print") convertTo Method("kotlin.io.print")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
-                    withFilter ::isSystemOutCall,
-
             Method("java.lang.Object.getClass") convertTo Field("kotlin.jvm.javaClass"),
 
             Method("java.util.Map.entrySet") convertTo Field("kotlin.collections.Map.entries"),
@@ -345,6 +369,19 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
             Method("java.lang.Enum.name") convertTo Field("kotlin.Enum.name"),
             Method("java.lang.Enum.ordinal") convertTo Field("kotlin.Enum.ordinal"),
+            Method("java.lang.Enum.valueOf") convertTo CustomExpression { expression ->
+                val arguments = (expression as JKCallExpression).arguments.arguments
+                if (arguments.size != 2) return@CustomExpression expression
+                val classLiteral = arguments[0]::value.detached() as? JKClassLiteralExpression ?: return@CustomExpression expression
+                val enumEntryName = arguments[1]::value.detached()
+                val typeElement = classLiteral::classType.detached()
+                JKCallExpressionImpl(
+                    symbolProvider.provideMethodSymbol("kotlin.enumValueOf"),
+                    JKArgumentList(enumEntryName),
+                    JKTypeArgumentList(typeElement),
+                    typeElement.type
+                )
+            } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
             Method("java.lang.Throwable.getCause") convertTo Field("kotlin.Throwable.cause"),
             Method("java.lang.Throwable.getMessage") convertTo Field("kotlin.Throwable.message"),
@@ -392,25 +429,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
             Method("java.lang.String.replaceAll")
                     convertTo Method("kotlin.text.replace")
-                    withArgumentsProvider { arguments ->
-                val detachedArguments = arguments::arguments.detached()
-                val first =
-                    detachedArguments.first()::value.detached().callOn(
-                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
-                    )
-                JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
-            },
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
+
             Method("java.lang.String.replaceFirst")
                     convertTo Method("kotlin.text.replaceFirst")
-                    withArgumentsProvider { arguments ->
-                val detachedArguments = arguments::arguments.detached()
-                val first =
-                    detachedArguments.first()::value.detached().callOn(
-                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
 
-                    )
-                JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
-            },
             Method("java.lang.String.equalsIgnoreCase")
                     convertTo Method("kotlin.text.equals")
                     withArgumentsProvider { arguments ->
@@ -424,10 +448,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
             Method("java.lang.String.toUpperCase") convertTo Method("kotlin.text.uppercase")
                     sinceKotlin ApiVersion.KOTLIN_1_5
-                    withArgumentsProvider(::stringConversionArgumentsProvider),
+                    withArgumentsProvider (::stringConversionArgumentsProvider),
             Method("java.lang.String.toLowerCase") convertTo Method("kotlin.text.lowercase")
                     sinceKotlin ApiVersion.KOTLIN_1_5
-                    withArgumentsProvider(::stringConversionArgumentsProvider),
+                    withArgumentsProvider (::stringConversionArgumentsProvider),
 
             Method("java.lang.String.compareToIgnoreCase")
                     convertTo Method("kotlin.text.compareTo")
@@ -439,7 +463,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     )
                 )
             },
-            Method("java.lang.String.matches") convertTo Method("kotlin.text.matches"),
+            Method("java.lang.String.matches")
+                    convertTo Method("kotlin.text.matches")
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
+
             Method("java.lang.String.regionMatches")
                     convertTo Method("kotlin.text.regionMatches")
                     withByArgumentsFilter { it.size == 5 }
@@ -467,52 +494,74 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         )
                     } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
+            // We request the `split` function with the exact signature `split(regex: Regex, limit: Int = 0)`
+            // (see `JKSymbolProvider.provideMethodSymbolWithExactSignature`).
+            // Otherwise, `JKSymbolProvider` might choose a `split` overload with different parameters
+            // and `ImplicitCastsConversion` downstream will try to insert a nonsensical cast
+            // of the `limit` argument to Boolean.
             Method("java.lang.String.split")
-                    convertTo Method("kotlin.text.split")
-                    withByArgumentsFilter { it.size == 2 }
+                    convertTo Method("kotlin.text.split", listOf("kotlin.text.Regex", "kotlin.Int"))
                     andAfter { expression ->
                 val arguments =
                     expression.cast<JKQualifiedExpression>()
                         .selector.cast<JKCallExpression>()
                         .arguments
-                val limitArgument = arguments.arguments[1].value
-                val limit = limitArgument.asLiteralTextWithPrefix()?.toIntOrNull()
-                when {
-                    limit != null -> {
-                        if (limit > 0) expression
-                        else expression
-                            .also {
-                                arguments.arguments = arguments.arguments.dropLast(1)
-                            }.callOn(
-                                symbolProvider.provideMethodSymbol("kotlin.collections.dropLastWhile"),
-                                listOf(
-                                    JKLambdaExpression(
-                                        JKFieldAccessExpression(
-                                            JKUnresolvedField(//TODO replace with `it` parameter
-                                                "it",
-                                                typeFactory
-                                            )
-                                        ).callOn(symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")).asStatement(),
-                                        emptyList()
-                                    )
+
+                val patternArgument =
+                    arguments.arguments.first()::value.detached().callOn(
+                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+                    )
+
+                val limit: Int? = if (arguments.arguments.size == 2) {
+                    arguments.arguments.last().value.asLiteralTextWithPrefix()?.toIntOrNull()
+                } else {
+                    0
+                }
+
+                arguments.arguments = when {
+                    limit == null -> {
+                        // limit is not a constant, need to make it non-negative
+                        val limitArgument = arguments.arguments.last()::value.detached().callOn(
+                            symbolProvider.provideMethodSymbol("kotlin.ranges.coerceAtLeast"),
+                            listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT))
+                        )
+                        listOf(JKArgumentImpl(patternArgument), JKArgumentImpl(limitArgument))
+                    }
+
+                    limit <= 0 -> {
+                        // negative: same behavior as split(regex) in Kotlin
+                        // zero or absent limit: cases are equivalent in Kotlin
+                        listOf(JKArgumentImpl(patternArgument))
+                    }
+
+                    else -> {
+                        // positive: same behavior as split(regex, limit) in Kotlin
+                        val limitArgument = arguments.arguments.last()::value.detached()
+                        listOf(
+                            JKArgumentImpl(patternArgument),
+                            JKNamedArgument(limitArgument, JKNameIdentifier("limit"))
+                        )
+                    }
+                }
+
+                return@andAfter if (limit == 0) {
+                    // zero or absent limit: discard trailing empty strings to match Java behavior
+                    expression
+                        .callOn(
+                            symbolProvider.provideMethodSymbol("kotlin.collections.dropLastWhile"),
+                            listOf(
+                                JKLambdaExpression(
+                                    JKKtItExpression(typeFactory.types.string).callOn(
+                                        symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
+                                    ).asStatement(),
+                                    emptyList()
                                 )
                             )
-                    }
-                    else -> expression.also {
-                        val lastArgument = arguments.arguments.last().value.copyTreeAndDetach()
-                            .callOn(
-                                symbolProvider.provideMethodSymbol("kotlin.ranges.coerceAtLeast"),
-                                listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT))
-                            )
-                        arguments.arguments = arguments.arguments.dropLast(1) + JKArgumentImpl(lastArgument)
-                    }
+                        )
+                } else {
+                    expression
                 }.castToTypedArray()
             },
-
-
-            Method("java.lang.String.split")
-                    convertTo Method("kotlin.text.split")
-                    andAfter { it.castToTypedArray() },
 
             Method("java.lang.String.trim")
                     convertTo Method("kotlin.text.trim")
@@ -522,7 +571,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         JKExpressionStatement(
                             JKBinaryExpression(
                                 JKFieldAccessExpression(
-                                    JKUnresolvedField(//TODO replace with `it` parameter
+                                    JKUnresolvedField( //TODO replace with `it` parameter
                                         "it",
                                         typeFactory
                                     )
@@ -547,25 +596,131 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 )
             } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
-            NewExpression("java.lang.String") convertTo Method("kotlin.text.String"),
-            NewExpression("kotlin.String") convertTo Method("kotlin.text.String"),
+            // It is the constructor of "kotlin.String" and not "java.lang.String" because
+            // java.lang.String was already converted to kotlin.String in a previous TypeMappingConversion
+            NewExpression("kotlin.String") convertTo CustomExpression { newExpression ->
+                if (newExpression !is JKNewExpression) throw IllegalStateException()
 
-            Method("java.util.Collections.singletonList") convertTo Method("kotlin.collections.listOf")
+                fun stringFactoryFunctionCall(newArguments: List<JKArgument> = newExpression.arguments::arguments.detached()) =
+                    JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.text.String"), JKArgumentList(newArguments))
+
+                val arguments = newExpression.arguments.arguments
+                return@CustomExpression when (arguments.size) {
+                    // `new String()` is the same as a literal empty string ""
+                    0 -> JKLiteralExpression("\"\"", type = STRING)
+
+                    1 -> {
+                        val first = arguments.first().value
+                        if (first.calculateType(typeFactory)?.isStringType() == true) {
+                            first.detach(arguments.first())
+                            if (first is JKLiteralExpression) {
+                                // `new String("str")` is the same a literal string "str"
+                                first
+                            } else {
+                                // Explicit String copy constructor call may be needed to optimize memory consumption
+                                // See https://stackoverflow.com/a/1803312/992380
+                                JKTypeCastExpression(
+                                    JKNewExpression(symbolProvider.provideClassSymbol("java.lang.String"), JKArgumentList(first)),
+                                    JKTypeElement(typeFactory.types.string)
+                                ).parenthesize()
+                            }
+                        } else {
+                            stringFactoryFunctionCall()
+                        }
+                    }
+
+                    else -> {
+                        val last = arguments.last().value
+                        if ((arguments.size == 2 || arguments.size == 4) && last.calculateType(typeFactory)?.isStringType() == true) {
+                            // the last argument is a charset in a string form, we need to convert it to a Charset object
+                            val detachedArguments = newExpression.arguments::arguments.detached()
+                            last.detach(arguments.last())
+                            val charsetCall = JKCallExpressionImpl(
+                                symbolProvider.provideMethodSymbol("kotlin.text.charset"),
+                                JKArgumentList(last)
+                            )
+                            val newArguments = detachedArguments.dropLast(1) + listOf(JKArgumentImpl(charsetCall))
+                            stringFactoryFunctionCall(newArguments)
+                        } else {
+                            stringFactoryFunctionCall()
+                        }
+                    }
+                }
+            },
+
+            Method("java.util.Arrays.asList")
+                    convertTo Method("kotlin.collections.mutableListOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && (it.size > 1 || !containsNull(it.cast())) }
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            Method("java.util.Collections.singleton") convertTo Method("kotlin.collections.setOf")
+            Method("java.util.Set.of")
+                    convertTo Method("kotlin.collections.setOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && containsOnlyUnique(it.cast()) && !containsNull(it.cast()) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.util.List.of")
+                    convertTo Method("kotlin.collections.listOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && !containsNull(it.cast()) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.util.Collections.singletonList")
+                    convertTo Method("kotlin.collections.listOf")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.util.Collections.singleton")
+                    convertTo Method("kotlin.collections.setOf")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptyList")
-                    convertTo Method("kotlin.collections.emptyList") withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    convertTo Method("kotlin.collections.emptyList")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptySet")
-                    convertTo Method("kotlin.collections.emptySet") withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    convertTo Method("kotlin.collections.emptySet")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptyMap")
-                    convertTo Method("kotlin.collections.emptyMap") withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    convertTo Method("kotlin.collections.emptyMap")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.io.PrintStream.println")
+                    convertTo Method("kotlin.io.println")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::isSystemOutCall,
+            Method("java.io.PrintStream.print")
+                    convertTo Method("kotlin.io.print")
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withFilter ::isSystemOutCall
         ).groupBy { it.from.fqName }
+
+    private fun numericValueOfReplacement() = CustomExpression { expression ->
+        val arguments = (expression as JKCallExpression).arguments
+        if (arguments.arguments.isEmpty()) return@CustomExpression expression
+        val detachedArguments = arguments::arguments.detached()
+
+        val firstArgument = detachedArguments[0]::value.detached()
+        // Extract simple name of numeric class (for example, "Short" from "java.lang.Short.valueOf")
+        val typeName = expression.identifier.fqName.split(".").dropLast(1).lastOrNull()?.let {
+            if (it == "Integer") "Int" else it
+        }
+        val result = if (firstArgument.calculateType(typeFactory)?.isStringType() == true) {
+            firstArgument.callOn(
+                symbolProvider.provideMethodSymbol("kotlin.text.String.to$typeName"),
+                detachedArguments.drop(1)
+            )
+        } else {
+            // this is a call like `Short.valueOf(short)`, which can be converted to just `short`
+            firstArgument
+        }
+
+        result.withFormattingFrom(expression)
+    }
+
+    private fun convertFirstArgumentToRegex(arguments: JKArgumentList): JKArgumentList {
+        val detachedArguments = arguments::arguments.detached()
+        val first =
+            detachedArguments.first()::value.detached().callOn(
+                symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+            )
+        return JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
+    }
 
 
     private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =
         JKQualifiedExpression(
-            this.parenthesizeIfBinaryExpression(),
+            this.parenthesizeIfCompoundExpression(),
             JKCallExpressionImpl(
                 symbol,
                 JKArgumentList(arguments),
@@ -608,6 +763,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         if (expression.selector.identifier?.fqName in neutralLocaleFQNames) return JKArgumentList()
         return arguments
     }
+
+    private fun containsOnlyLiterals(list: List<JKExpression>): Boolean = list.all { it is JKLiteralExpression }
+    private fun containsOnlyUnique(list: List<JKLiteralExpression>): Boolean = list.size == list.distinctBy { it.literal }.size
+    private fun containsNull(list: List<JKLiteralExpression>): Boolean = list.any { it.isNull() }
 
     private val neutralLocaleFQNames = listOf(
         "java.util.Locale.ROOT",

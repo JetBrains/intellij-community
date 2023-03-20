@@ -15,6 +15,6 @@ public interface JavaLanguageRuntimeUIFactory {
   @NotNull
   Configurable create(@NotNull JavaLanguageRuntimeConfiguration config,
                       @NotNull TargetEnvironmentType<? extends TargetEnvironmentConfiguration> targetType,
-                      @NotNull Supplier<TargetEnvironmentConfiguration> targetSupplier,
+                      @NotNull Supplier<? extends TargetEnvironmentConfiguration> targetSupplier,
                       @NotNull Project project);
 }

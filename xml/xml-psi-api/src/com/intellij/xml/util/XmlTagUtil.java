@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class XmlTagUtil {
   private static final ObjectIntMap<String> ourCharacterEntities = new ObjectIntHashMap<>(6);
 
@@ -36,7 +33,6 @@ public final class XmlTagUtil {
   /**
    * if text contains XML-sensitive characters (<,>), quote text with ![CDATA[ ... ]]
    *
-   * @param text
    * @return quoted text
    */
   public static String getCDATAQuote(String text) {

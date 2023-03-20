@@ -9,11 +9,9 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.function.Consumer
 import kotlin.concurrent.thread
 
-internal class Context(private val errorHandler: Consumer<String> = Consumer { error(it) },
-                       private val devIconsVerifier: Consumer<Collection<Path>>? = null) {
+internal class Context {
   companion object {
     const val iconsCommitHashesToSyncArg = "sync.icons.commits"
     private const val iconsRepoArg = "icons.repo"
@@ -83,10 +81,10 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                ?.mapTo(mutableSetOf(), String::trim) ?: mutableSetOf()
     }
 
-    devRepoDir = findDirectoryIgnoringCase(System.getProperty(devRepoArg)) ?: {
+    devRepoDir = findDirectoryIgnoringCase(System.getProperty(devRepoArg)) ?: run {
       warn("$devRepoArg not found")
       Paths.get(System.getProperty("user.dir"))
-    }()
+    }
     val iconsRepoRelativePath = System.getProperty(iconsRepoPathArg) ?: ""
     val iconsRepoRootDir = findDirectoryIgnoringCase(System.getProperty(iconsRepoArg)) ?: cloneIconsRepoToTempDir()
     iconRepoDir = iconsRepoRootDir.resolve(iconsRepoRelativePath)
@@ -133,7 +131,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   }
 
   private fun cloneIconsRepoToTempDir(): Path {
-    val uri = "ssh://git@git.jetbrains.team/IntelliJIcons.git"
+    val uri = "ssh://git@git.jetbrains.team/ij/IntelliJIcons.git"
     log("Please clone $uri to the same folder where IntelliJ root is. Cloning to temporary directory..")
     val tmp = Files.createTempDirectory("icons-sync")
     Runtime.getRuntime().addShutdownHook(thread(start = false) {
@@ -160,19 +158,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun verifyDevIcons(repos: Collection<Path>) {
-    try {
-      devIconsVerifier?.accept(repos)
-    }
-    catch (e: Exception) {
-      e.printStackTrace(System.err)
-      doFail("Test failures detected")
-    }
-  }
-
   fun doFail(report: String) {
     log(report)
-    errorHandler.accept(report)
+    error(report)
   }
 
   fun isFail() = notifySlack && failIfSyncDevIconsRequired && devSyncRequired()

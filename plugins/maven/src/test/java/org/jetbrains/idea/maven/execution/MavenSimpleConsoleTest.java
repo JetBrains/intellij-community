@@ -2,7 +2,11 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MavenSimpleConsoleTest extends UsefulTestCase {
 
@@ -13,9 +17,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "second\n",
              "third\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -26,9 +32,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "second\n",
              "third\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -40,9 +48,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "third",
              "\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -55,9 +65,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "third",
              "\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -130,14 +142,31 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "[IJ]-spy-output-3\n",
              "end\n"
            },
-           "first\n" +
-           "second\n" +
-           "[IJ]-spy-output-1\n" +
-           "[IJ]-spy-output-2\n" +
-           "third\n" +
-           "[IJ]-spy-output-3\n" +
-           "end\n"
+           """
+             first
+             second
+             [IJ]-spy-output-1
+             [IJ]-spy-output-2
+             third
+             [IJ]-spy-output-3
+             end
+             """
     );
+  }
+
+  public void testAnsiColors() {
+    List<Pair<String, Key<String>>> expected = List.of(
+      new Pair<>("[", Key.create("color1")),
+      new Pair<>("INFO", Key.create("color2")),
+      new Pair<>("]\n", Key.create("color1"))
+    );
+    List<Pair<String, Key<String>>> actual = new ArrayList<>();
+    MavenSimpleConsoleEventsBuffer buffer =
+      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.add(new Pair<>(l, k)), false);
+    for (var item : expected) {
+      buffer.addText(item.first, item.second);
+    }
+    assertEquals(expected, actual);
   }
 
   private static void doTest(boolean showSpyOutput, String[] text, String expected) {

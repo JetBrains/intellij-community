@@ -20,9 +20,6 @@ import java.io.File;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author ven
- */
 public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(BaseCoverageSuite.class.getName());
 

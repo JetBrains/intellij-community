@@ -18,8 +18,6 @@ import java.util.function.Supplier;
  * The main (and single) purpose of this class is to provide lazy initialization
  * of the actions.
  * ClassLoader eats up a lot of time on startup to load the actions' classes.
- *
- * @author Vladimir Kondratyev
  */
 public final class ActionStub extends AnAction implements ActionStubBase {
   private static final Logger LOG = Logger.getInstance(ActionStub.class);
@@ -29,7 +27,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final @NotNull PluginDescriptor myPlugin;
   private final @Nullable String myIconPath;
   private final @Nullable ProjectType myProjectType;
-  private final @NotNull Supplier<Presentation> myTemplatePresentation;
+  private final @NotNull Supplier<? extends Presentation> myTemplatePresentation;
   private List<Supplier<String>> mySynonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
@@ -37,7 +35,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
                     @NotNull PluginDescriptor plugin,
                     @Nullable String iconPath,
                     @Nullable ProjectType projectType,
-                    @NotNull Supplier<Presentation> templatePresentation) {
+                    @NotNull Supplier<? extends Presentation> templatePresentation) {
     myClassName = actionClass;
     LOG.assertTrue(!id.isEmpty());
     myId = id;
@@ -100,6 +98,10 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     copyActionTextOverrides(targetAction);
     for (Supplier<String> synonym : mySynonyms) {
       targetAction.addSynonym(synonym);
+    }
+    if (targetAction instanceof ActionGroup) {
+      LOG.warn(String.format("ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
+                             myId, targetAction.getClass().getName()));
     }
   }
 

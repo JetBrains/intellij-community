@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem<T> extends MutableLookupElement implements Comparable {
+public class LookupItem<T> extends MutableLookupElement implements Comparable<LookupItem<?>> {
   public static final ClassConditionKey<LookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(LookupItem.class);
 
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
@@ -62,8 +62,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
 
   public boolean equals(Object o){
     if (o == this) return true;
-    if (o instanceof LookupItem){
-      LookupItem item = (LookupItem)o;
+    if (o instanceof LookupItem item){
       return Comparing.equal(myObject, item.myObject)
              && Objects.equals(myLookupString, item.myLookupString)
              && Comparing.equal(myAllLookupStrings, item.myAllLookupStrings)
@@ -92,8 +91,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   /**
-   * Returns a string which will be inserted to the editor when this item is
-   * choosen.
+   * Returns a string which will be inserted to the editor when this item is chosen.
    */
   @Override
   @NotNull
@@ -170,15 +168,15 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
 
   @Nullable
   public static TailType getDefaultTailType(final char completionChar) {
-    switch(completionChar){
-      case '.': return new CharTailType('.', false);
-      case ',': return CommaTailType.INSTANCE;
-      case ';': return TailType.SEMICOLON;
-      case '=': return EqTailType.INSTANCE;
-      case ' ': return TailType.SPACE;
-      case ':': return TailType.CASE_COLON; //?
-    }
-    return null;
+    return switch (completionChar) {
+      case '.' -> new CharTailType('.', false);
+      case ',' -> CommaTailType.INSTANCE;
+      case ';' -> TailType.SEMICOLON;
+      case '=' -> EqTailType.INSTANCE;
+      case ' ' -> TailType.SPACE;
+      case ':' -> TailType.CASE_COLON; //?
+      default -> null;
+    };
   }
 
   @NotNull
@@ -212,14 +210,8 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   @Override
-  public int compareTo(@NotNull Object o){
-    if(o instanceof String){
-      return getLookupString().compareTo((String)o);
-    }
-    if(!(o instanceof LookupItem)){
-      throw new RuntimeException("Trying to compare LookupItem with " + o.getClass() + "!!!");
-    }
-    return getLookupString().compareTo(((LookupItem<?>)o).getLookupString());
+  public int compareTo(@NotNull LookupItem<?> o){
+    return getLookupString().compareTo(o.getLookupString());
   }
 
   public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {
@@ -228,7 +220,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     for (ElementLookupRenderer renderer : ElementLookupRenderer.EP_NAME.getExtensionList()) {
       T object = getObject();
       if (renderer.handlesItem(object)) {

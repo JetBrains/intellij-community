@@ -24,4 +24,24 @@ import java.util.List;
  */
 public interface IntentionActionWithOptions extends IntentionAction {
   @NotNull List<IntentionAction> getOptions();
+
+  /**
+   * If this intention is used as an inspection quick fix, control what should be displayed in the popup.
+   * By default, the default inspection submenu is used.
+   */
+  default @NotNull CombiningPolicy getCombiningPolicy() {
+    return CombiningPolicy.InspectionOptionsOnly;
+  }
+
+  /**
+   * The policy controlling the submenu contents if an inspection returns an {@link IntentionActionWithOptions} as one of its quick fixes
+   */
+  enum CombiningPolicy {
+
+    /** Show only the default inspection options (Suppress, Fix All, Disable, Open Settings, etc) */
+    InspectionOptionsOnly,
+
+    /** Show only the result of {@link com.intellij.codeInsight.intention.IntentionActionWithOptions#getOptions()} */
+    IntentionOptionsOnly
+  }
 }

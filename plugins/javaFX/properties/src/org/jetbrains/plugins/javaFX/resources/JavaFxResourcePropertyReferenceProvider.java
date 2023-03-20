@@ -10,16 +10,13 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaFxResourcePropertyReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    if (element instanceof XmlAttributeValue) {
-      final String value = ((XmlAttributeValue)element).getValue();
-      if (value != null && value.startsWith("%") && value.length() > 1) {
-        return new PsiReference[]{new JavaFxResourcePropertyReference(value.substring(1), (XmlAttributeValue)element)};
+    if (element instanceof XmlAttributeValue attr) {
+      final String value = attr.getValue();
+      if (value.startsWith("%") && value.length() > 1) {
+        return new PsiReference[]{new JavaFxResourcePropertyReference(value.substring(1), attr)};
       }
     }
     return PsiReference.EMPTY_ARRAY;

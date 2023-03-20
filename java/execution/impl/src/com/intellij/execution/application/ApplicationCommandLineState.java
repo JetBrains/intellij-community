@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -37,7 +37,7 @@ public abstract class ApplicationCommandLineState<T extends
     final JavaParameters params = new JavaParameters();
     T configuration = getConfiguration();
 
-    params.setMainClass(myConfiguration.getRunClass());
+    params.setMainClass(ReadAction.compute(() -> myConfiguration.getRunClass()));
     setupJavaParameters(params);
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
@@ -79,7 +79,7 @@ public abstract class ApplicationCommandLineState<T extends
         () -> JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.getMainClass()))));
       if (mainModule != null) {
         boolean inLibrary = mainModule instanceof PsiCompiledElement || mainModule instanceof LightJavaModule;
-        if (!inLibrary || ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(module.getModule(), false)) != null) {
+        if (!inLibrary || ReadAction.compute(() -> JavaModuleGraphUtil.findNonAutomaticDescriptorByModule(module.getModule(), false)) != null) {
           params.setModuleName(ReadAction.compute(() -> mainModule.getName()));
           dumbService.runReadActionInSmartMode(() -> JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false));
         }

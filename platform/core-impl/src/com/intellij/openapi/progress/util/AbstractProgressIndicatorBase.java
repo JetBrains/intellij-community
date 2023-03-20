@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -132,7 +133,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void cancel() {
     myCanceled = true;
     stopSystemActivity();
-    if (ApplicationManager.getApplication() != null) {
+    if (ApplicationManager.getApplication() != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       ProgressManager.canceled(this);
     }
   }
@@ -145,7 +146,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void checkCanceled() {
     throwIfCanceled();
-    if (CoreProgressManager.runCheckCanceledHooks(this)) {
+    ProgressManager progressManager = ProgressManager.getInstanceOrNull();
+    if (progressManager != null && ((CoreProgressManager)progressManager).runCheckCanceledHooks(this)) {
       throwIfCanceled();
     }
   }
@@ -190,7 +192,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void setFraction(final double fraction) {
     synchronized (getLock()) {
       if (isIndeterminate()) {
-        String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+        String message = "This progress indicator (" + this+") is indeterminate, this may lead to visual inconsistency. " +
                          "Please call setIndeterminate(false) before you start progress. " + getClass();
         LOG.info(message, new IllegalStateException());
         setIndeterminate(false);
@@ -228,14 +230,12 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void startNonCancelableSection() {
     PluginException.reportDeprecatedUsage("ProgressIndicator#startNonCancelableSection", "Use `ProgressManager.executeNonCancelableSection()` instead");
     myNonCancelableSectionCount++;
   }
 
   @Override
-  @SuppressWarnings({"deprecation", "NonAtomicOperationOnVolatileField"})
   public void finishNonCancelableSection() {
     myNonCancelableSectionCount--;
   }

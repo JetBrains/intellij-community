@@ -21,14 +21,15 @@ import java.util.stream.Collectors;
 
 import static com.intellij.psi.xml.XmlTokenType.*;
 
-public abstract class BaseHtmlLexer extends DelegateLexer {
+public abstract class BaseHtmlLexer extends DelegateLexer implements RestartableLexer {
   protected static final int BASE_STATE_MASK = 0x3F;
   private static final int CONTENT_PROVIDER_HAS_STATE = 0x40;
   private static final int IS_WITHIN_TAG_STATE = 0x80;
   protected static final int BASE_STATE_SHIFT = 9;
 
 
-  protected static final TokenSet ATTRIBUTE_EMBEDMENT_TOKENS = TokenSet.create(XML_ATTRIBUTE_VALUE_TOKEN, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF);
+  protected static final TokenSet ATTRIBUTE_EMBEDMENT_TOKENS =
+    TokenSet.create(XML_ATTRIBUTE_VALUE_TOKEN, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF);
   protected static final TokenSet TAG_EMBEDMENT_START_TOKENS = TokenSet.create(
     XML_DATA_CHARACTERS, XML_CDATA_START, XML_COMMENT_START, XML_START_TAG_START, XML_REAL_WHITE_SPACE, XML_END_TAG_START,
     TokenType.WHITE_SPACE, XML_ENTITY_REF_TOKEN, XML_CHAR_ENTITY_REF
@@ -55,7 +56,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       .map(factory -> factory.createEmbeddedContentProviders(this))
       .flatMap(Collection::stream)
       .filter(this::acceptEmbeddedContentProvider)
-      .collect(Collectors.toUnmodifiableList());
+      .toList();
     myTagEmbedmentStartTokens = createTagEmbedmentStartTokenSet();
     myAttributeEmbedmentTokens = createAttributeEmbedmentTokenSet();
   }
@@ -78,6 +79,21 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   @Override
+  public boolean isRestartableState(int state) {
+    return (state & CONTENT_PROVIDER_HAS_STATE) == 0;
+  }
+
+  @Override
+  public int getStartState() {
+    return 0;
+  }
+
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState, TokenIterator tokenIterator) {
+    start(buffer, startOffset, endOffset, initialState);
+  }
+
+  @Override
   public void advance() {
     if (myHtmlEmbedmentInfo != null) {
       myDelegate.start(myDelegate.getBufferSequence(), myHtmlEmbedmentInfo.getRange().getEndOffset(),
@@ -96,6 +112,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
   protected @NotNull TokenSet createAttributeEmbedmentTokenSet() {
     return ATTRIBUTE_EMBEDMENT_TOKENS;
+  }
+
+  public int getStateForRestartDuringEmbedmentScan() {
+    return 0;
   }
 
   private void broadcastToken() {

@@ -91,12 +91,12 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
   }
 
   @Nullable
-  protected ServiceViewItem findItem(@NotNull ServiceViewItem item) {
+  protected ServiceViewItem findItemSafe(@NotNull ServiceViewItem item) {
     ServiceViewItem updatedItem = findItem(item, myModel.getRoots());
     if (updatedItem != null) {
       return updatedItem;
     }
-    return myModel.findItem(item.getValue(), item.getRootContributor().getClass());
+    return myModel.findItemSafe(item.getValue(), item.getRootContributor().getClass());
   }
 
   void addModelListener(@NotNull ServiceViewModelListener listener) {
@@ -210,8 +210,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
   }
 
   private static boolean isSingleService(ServiceViewItem item) {
-    if (item instanceof ServiceNode) {
-      ServiceNode node = (ServiceNode)item;
+    if (item instanceof ServiceNode node) {
       if (!node.isChildrenInitialized() || !node.isLoaded()) {
         return false;
       }
@@ -483,7 +482,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
       ServiceViewItem service = myServiceRef.get();
       if (service == null || !e.contributorClass.isInstance(service.getRootContributor())) return;
 
-      myServiceRef.set(findItem(service));
+      myServiceRef.set(findItemSafe(service));
       notifyListeners(e);
     }
 
@@ -530,7 +529,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
         ServiceViewItem node = myRoots.get(i);
         if (!e.contributorClass.isInstance(node.getRootContributor())) continue;
 
-        ServiceViewItem updatedNode = findItem(node);
+        ServiceViewItem updatedNode = findItemSafe(node);
         if (updatedNode != null) {
           //noinspection SuspiciousListRemoveInLoop
           myRoots.remove(i);

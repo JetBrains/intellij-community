@@ -362,6 +362,14 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   }
 
   @Test
+  fun `test configurations not from context do not force test run`() {
+    generateAndImportTemplateProject()
+    createAndAddRunConfiguration("test verify").let { configuration ->
+      TestCase.assertFalse(configuration.isForceTestExecution)
+    }
+  }
+
+  @Test
   fun `test cannot create configurationFromContext when no test sources are available`() {
     val projectData = generateAndImportTemplateProject()
 
@@ -383,6 +391,31 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
       // Verify that there is a configurationFromContext available when checking from /src/test/ as it contains test sources.
       val fromTestContext = contextFromTest.configurationsFromContext?.firstOrNull()
       TestCase.assertTrue(fromTestContext != null)
+    }
+  }
+
+  @Test
+  fun `test class and method producers require different contexts`() {
+    val projectData = generateAndImportTemplateProject()
+
+    runReadActionAndWait {
+      val classContext = getContextByLocation(projectData["project"]["TestCase"].element)
+      val methodContext = getContextByLocation(projectData["project"]["TestCase"]["test1"].element)
+
+      val classConfigProducer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+      val methodConfigProducer = getConfigurationProducer<TestMethodGradleConfigurationProducer>()
+
+      val classConfiguration = classConfigProducer.createConfigurationFromContext(classContext)?.configuration as GradleRunConfiguration
+      val methodConfiguration = methodConfigProducer.createConfigurationFromContext(methodContext)?.configuration as GradleRunConfiguration
+
+      assertTrue(classConfigProducer.isConfigurationFromContext(classConfiguration, classContext))
+      assertTrue(methodConfigProducer.isConfigurationFromContext(methodConfiguration, methodContext))
+
+      assertNull(classConfigProducer.createConfigurationFromContext(methodContext))
+      assertNull(methodConfigProducer.createConfigurationFromContext(classContext))
+
+      assertFalse(classConfigProducer.isConfigurationFromContext(classConfiguration, methodContext))
+      assertFalse(methodConfigProducer.isConfigurationFromContext(methodConfiguration, classContext))
     }
   }
 }

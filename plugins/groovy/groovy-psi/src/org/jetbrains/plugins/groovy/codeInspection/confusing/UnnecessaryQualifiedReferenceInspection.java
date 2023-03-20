@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.psi.*;
@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -57,6 +58,12 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
     final PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiMember)) return false;
     if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return false;
+    if (GroovyConfigUtils.isAtLeastGroovy40(ref)) {
+      PsiClass container = ((PsiMember)resolved).getContainingClass();
+      if (container != null && container.isInterface()) {
+        return false;
+      }
+    }
 
     PsiElement copyResolved;
     final PsiElement parent = ref.getParent();
@@ -100,7 +107,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       return false;
     }
 
-    final GrReferenceElement ref = (GrReferenceElement)element;
+    final GrReferenceElement<?> ref = (GrReferenceElement<?>)element;
     if (ref.getQualifier() == null) return false;
     if (!(ref.getContainingFile() instanceof GroovyFileBase)) return false;
 

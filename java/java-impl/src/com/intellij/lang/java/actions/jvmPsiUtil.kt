@@ -86,7 +86,7 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
 internal fun PsiType.toExpectedType() = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailType.NONE)
 
 internal fun List<ExpectedTypeInfo>.orObject(context: PsiElement): List<ExpectedTypeInfo> {
-  if (isEmpty() || get(0).type == PsiType.VOID) {
+  if (isEmpty() || get(0).type == PsiTypes.voidType()) {
     return listOf(PsiType.getJavaLangObject(context.manager, context.resolveScope).toExpectedType())
   }
   return this

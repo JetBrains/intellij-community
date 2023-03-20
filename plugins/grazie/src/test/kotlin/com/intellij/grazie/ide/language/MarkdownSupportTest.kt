@@ -5,7 +5,16 @@ import com.intellij.grazie.GrazieTestBase
 
 
 class MarkdownSupportTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+
   fun `test grammar check in file`() {
     runHighlightTestForFile("ide/language/markdown/Example.md")
+  }
+
+  fun `test replacement with markup inside`() {
+    myFixture.configureByText("a.md", "Please, <caret><warning>gather </warning>[<warning>up</warning> the](url) documentation.")
+    myFixture.checkHighlighting()
+    myFixture.launchAction(myFixture.findSingleIntention("gather"))
+    myFixture.checkResult("Please, gather[ the](url) documentation.") // the result could be different, but the markup should still be preserved
   }
 }

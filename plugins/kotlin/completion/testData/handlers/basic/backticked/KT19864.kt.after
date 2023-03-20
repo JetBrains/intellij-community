@@ -1,0 +1,11 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+package test
+
+fun `backticked~name`() {}
+
+fun test() {
+    `backticked~name`()<caret>
+}
+
+// ELEMENT: backticked~name

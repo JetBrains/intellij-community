@@ -1,83 +1,133 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
-import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenImportingTestCase
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
-import org.jetbrains.idea.maven.MavenTestCase
-import org.jetbrains.idea.maven.importing.xml.MavenBuildFileBuilder
-import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
-import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
-import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
-import org.junit.Test
+import com.intellij.testFramework.openProjectAsync
+import com.intellij.testFramework.useProjectAsync
+import kotlinx.coroutines.runBlocking
 
-class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTestCase() {
-  override fun getSystemId(): ProjectSystemId = SYSTEM_ID
 
-  override fun assertModules(project: Project, vararg projectInfo: ExternalSystemSetupProjectTestCase.ProjectInfo) {
-    waitForImportCompletion(project)
-    super<ExternalSystemSetupProjectTest>.assertModules(project, *projectInfo)
-  }
+class MavenSetupProjectTest : MavenSetupProjectTestCase() {
 
-  @Test
   fun `test settings are not reset`() {
-    val projectInfo = generateProject("A")
-    val linkedProjectInfo = generateProject("L")
-    waitForImport {
-      openProjectFrom(projectInfo.projectFile)
-    }.use {
-      assertModules(it, projectInfo)
-      MavenWorkspaceSettingsComponent.getInstance(it).settings.getGeneralSettings().isWorkOffline = true
+    runBlocking {
+      val projectInfo = generateProject("A")
+      val linkedProjectInfo = generateProject("L")
       waitForImport {
-        attachProject(it, linkedProjectInfo.projectFile)
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync {
+        assertProjectState(it, projectInfo)
+        getGeneralSettings(it).isWorkOffline = true
+        waitForImport {
+          attachProjectAsync(it, linkedProjectInfo.projectFile)
+        }
+        assertProjectState(it, projectInfo, linkedProjectInfo)
+        assertTrue(getGeneralSettings(it).isWorkOffline)
       }
-      assertModules(it, projectInfo, linkedProjectInfo)
-      TestCase.assertTrue(MavenWorkspaceSettingsComponent.getInstance (it).settings.getGeneralSettings().isWorkOffline)
     }
   }
 
-  override fun generateProject(id: String): ExternalSystemSetupProjectTestCase.ProjectInfo {
-    val name = "${System.currentTimeMillis()}-$id"
-    createProjectSubFile("$name-external-module/pom.xml", MavenBuildFileBuilder("$name-external-module").generate())
-    createProjectSubFile("$name-project/$name-module/pom.xml", MavenBuildFileBuilder("$name-module").generate())
-    val buildScript = MavenBuildFileBuilder("$name-project")
-      .withPomPackaging()
-      .withModule("$name-module")
-      .withModule("../$name-external-module")
-      .generate()
-    val projectFile = createProjectSubFile("$name-project/pom.xml", buildScript)
-    return ExternalSystemSetupProjectTestCase.ProjectInfo(projectFile, "$name-project", "$name-module", "$name-external-module")
+  fun `test project open`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync {
+        assertProjectState(it, projectInfo)
+      }
+    }
   }
 
-  override fun attachProject(project: Project, projectFile: VirtualFile) {
-    AddManagedFilesAction().perform(project, selectedFile = projectFile)
-    waitForImportCompletion(project)
+  fun `test project import`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      waitForImport {
+        importProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync {
+        assertProjectState(it, projectInfo)
+      }
+    }
   }
 
-  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
-    AddFileAsMavenProjectAction().perform(project, selectedFile = projectFile)
-    waitForImportCompletion(project)
+  fun `test project attach`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      openPlatformProjectAsync(projectInfo.projectFile.parent)
+        .useProjectAsync {
+          waitForImport {
+            attachProjectAsync(it, projectInfo.projectFile)
+          }
+          assertProjectState(it, projectInfo)
+        }
+    }
   }
 
-  override fun <R> waitForImport(action: () -> R): R = action()
+  fun `test project import from script`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      openPlatformProjectAsync(projectInfo.projectFile.parent)
+        .useProjectAsync {
+          waitForImport {
+            attachProjectFromScriptAsync(it, projectInfo.projectFile)
+          }
+          assertProjectState(it, projectInfo)
+        }
+    }
+  }
 
-  private fun waitForImportCompletion(project: Project) {
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    val projectManager = MavenProjectsManager.getInstance(project)
-    projectManager.initForTests()
-    ApplicationManager.getApplication().invokeAndWait {
-      projectManager.waitForResolvingCompletion()
-      projectManager.performScheduledImportInTests()
+  fun `test module attach`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      val linkedProjectInfo = generateProject("L")
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync {
+        assertProjectState(it, projectInfo)
+        waitForImport {
+          attachProjectAsync(it, linkedProjectInfo.projectFile)
+        }
+        assertProjectState(it, projectInfo, linkedProjectInfo)
+      }
+    }
+  }
+
+  fun `test project re-open`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      val linkedProjectInfo = generateProject("L")
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync(save = true) {
+        assertProjectState(it, projectInfo)
+        waitForImport {
+          attachProjectAsync(it, linkedProjectInfo.projectFile)
+        }
+        assertProjectState(it, projectInfo, linkedProjectInfo)
+      }
+      openProjectAsync(projectInfo.projectFile)
+        .useProjectAsync {
+          assertProjectState(it, projectInfo, linkedProjectInfo)
+        }
+    }
+  }
+
+  fun `test project re-import deprecation`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      val linkedProjectInfo = generateProject("L")
+
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync(save = true) {
+        assertProjectState(it, projectInfo)
+        waitForImport {
+          attachProjectAsync(it, linkedProjectInfo.projectFile)
+        }
+        assertProjectState(it, projectInfo, linkedProjectInfo)
+      }
+      importProjectAsync(projectInfo.projectFile)
+        .useProjectAsync {
+          assertProjectState(it, projectInfo, linkedProjectInfo)
+        }
     }
   }
 }

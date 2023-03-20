@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.CommonBundle;
@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,16 +55,14 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   /**
    * @deprecated use {@link #JavaLineMarkerProvider()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) { }
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
-    if (element instanceof PsiIdentifier && parent instanceof PsiMethod) {
+    if (element instanceof PsiIdentifier && parent instanceof PsiMethod method) {
       if (!myOverridingOption.isEnabled() && !myImplementingOption.isEnabled()) return null;
-      PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superSignature != null) {
         boolean overrides =
@@ -168,8 +165,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       ProgressManager.checkCanceled();
       if (!(element instanceof PsiIdentifier)) continue;
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)parent;
+      if (parent instanceof PsiMethod method) {
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && PsiUtil.canBeOverridden(method)) {
           canBeOverridden.putValue(containingClass, method);
@@ -185,11 +181,10 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         tasks.add(() -> collectInheritingClasses((PsiClass)parent));
         tasks.add(() -> JavaServiceUtil.collectServiceImplementationClass((PsiClass)parent));
       }
-      else if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression grandParent = (PsiMethodCallExpression)parent.getParent();
-        if (JavaServiceUtil.SERVICE_LOADER_LOAD.test(grandParent)) {
-          tasks.add(() -> JavaServiceUtil.collectServiceLoaderLoadCall((PsiIdentifier)element, grandParent));
-        }
+      else if (parent instanceof PsiReferenceExpression &&
+               parent.getParent() instanceof PsiMethodCallExpression parentCall &&
+               JavaServiceUtil.SERVICE_LOADER_LOAD.test(parentCall)) {
+        tasks.add(() -> JavaServiceUtil.collectServiceLoaderLoadCall((PsiIdentifier)element, parentCall));
       }
     }
 

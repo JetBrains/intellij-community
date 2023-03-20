@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectJdkImpl.class);
@@ -274,7 +276,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     myAdditionalData = additionalDataElement != null ? mySdkType.loadAdditionalData(this, additionalDataElement) : null;
   }
 
-  private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
+  private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener, Supplier<Sdk> {
     @Override
     public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
       return myRoots.getUrls(rootType);
@@ -290,6 +292,11 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
       if (myDispatcher.hasListeners()) {
         ApplicationManager.getApplication().runWriteAction(this::fireRootSetChanged);
       }
+    }
+
+    @Override
+    public Sdk get() {
+      return ProjectJdkImpl.this;
     }
   }
 

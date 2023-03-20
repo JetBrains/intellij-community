@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -58,11 +57,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   private volatile ModifierCache myModifierCache;
 
-  public PsiModifierListImpl(final PsiModifierListStub stub) {
+  public PsiModifierListImpl(PsiModifierListStub stub) {
     super(stub, JavaStubElementTypes.MODIFIER_LIST);
   }
 
-  public PsiModifierListImpl(final ASTNode node) {
+  public PsiModifierListImpl(ASTNode node) {
     super(node);
   }
 
@@ -187,9 +186,6 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     else if (parent instanceof PsiResourceVariable) {
       Collections.addAll(implicitModifiers, FINAL);
     }
-    else if (parent instanceof PsiPatternVariable && !PsiUtil.isLanguageLevel16OrHigher(parent)) {
-      Collections.addAll(implicitModifiers, FINAL);
-    }
     return implicitModifiers;
   }
 
@@ -200,8 +196,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       return BitUtil.isSet(stub.getModifiersMask(), ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.getInt(name));
     }
 
-    final CompositeElement tree = (CompositeElement)getNode();
-    final IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
+    CompositeElement tree = (CompositeElement)getNode();
+    IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
     return type != null && tree.findChildByType(type) != null;
   }
 
@@ -297,7 +293,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @Override
   public PsiAnnotation @NotNull [] getApplicableAnnotations() {
-    final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(this);
+    PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), annotation -> {
       PsiAnnotation.TargetType target = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
       return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
@@ -340,8 +336,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
     ModifierCache(@NotNull PsiFile file, @NotNull Set<String> modifiers) {
       this.file = file;
-      List<String> modifierList = new ArrayList<>(modifiers);
-      Collections.sort(modifierList);
+      List<String> modifierList = ContainerUtil.sorted(modifiers);
       this.modifiers = ourInterner.intern(modifierList);
       this.modCount = getModCount();
     }

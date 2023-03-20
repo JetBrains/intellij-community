@@ -34,7 +34,6 @@ public class SuiteInProgressState extends TestInProgressState {
 
   /**
    * If any of child failed proxy also is defect
-   * @return
    */
   @Override
   public boolean isDefect() {

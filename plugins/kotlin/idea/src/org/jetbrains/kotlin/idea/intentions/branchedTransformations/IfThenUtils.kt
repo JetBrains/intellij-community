@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
@@ -10,24 +11,22 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
 import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.idea.intentions.getLeftMostReceiverExpression
-import org.jetbrains.kotlin.idea.intentions.replaceFirstReceiver
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.util.application.invokeLater
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -36,11 +35,11 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getExplicitReceiverValue
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
+import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.TypeUtils
@@ -113,20 +112,19 @@ fun KtExpression.convertToIfNotNullExpression(
     thenClause: KtExpression,
     elseClause: KtExpression?
 ): KtIfExpression {
-    val condition = KtPsiFactory(this).createExpressionByPattern("$0 != null", conditionLhs)
+    val condition = KtPsiFactory(project).createExpressionByPattern("$0 != null", conditionLhs)
     return this.convertToIfStatement(condition, thenClause, elseClause)
 }
 
 fun KtExpression.convertToIfNullExpression(conditionLhs: KtExpression, thenClause: KtExpression): KtIfExpression {
-    val condition = KtPsiFactory(this).createExpressionByPattern("$0 == null", conditionLhs)
+    val condition = KtPsiFactory(project).createExpressionByPattern("$0 == null", conditionLhs)
     return this.convertToIfStatement(condition, thenClause)
 }
 
 fun KtExpression.convertToIfStatement(condition: KtExpression, thenClause: KtExpression, elseClause: KtExpression? = null): KtIfExpression =
-    replaced(KtPsiFactory(this).createIf(condition, thenClause, elseClause))
+    replaced(KtPsiFactory(project).createIf(condition, thenClause, elseClause))
 
 fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpression, editor: Editor?) {
-    val project = this.project
     val occurrenceInConditional = when (val condition = condition) {
         is KtBinaryExpression -> condition.left
         is KtIsExpression -> condition.leftHandSide
@@ -182,14 +180,14 @@ fun KtPostfixExpression.inlineBaseExpressionIfApplicable(editor: Editor?, withPr
 
 // I.e. stable val/var/receiver
 // We exclude stable complex expressions here, because we don't do smartcasts on them (even though they are stable)
-fun KtExpression.isStableSimpleExpression(context: BindingContext = this.analyze()): Boolean {
+fun KtExpression.isStableSimpleExpression(context: BindingContext = this.safeAnalyzeNonSourceRootCode()): Boolean {
     val dataFlowValue = this.toDataFlowValue(context)
     return dataFlowValue?.isStable == true &&
             dataFlowValue.kind != DataFlowValue.Kind.STABLE_COMPLEX_EXPRESSION
 
 }
 
-fun KtExpression.isStableVal(context: BindingContext = this.analyze()): Boolean {
+fun KtExpression.isStableVal(context: BindingContext = this.safeAnalyzeNonSourceRootCode()): Boolean {
     return this.toDataFlowValue(context)?.kind == DataFlowValue.Kind.STABLE_VALUE
 }
 
@@ -197,7 +195,7 @@ fun elvisPattern(newLine: Boolean): String = if (newLine) "$0\n?: $1" else "$0 ?
 
 private fun KtExpression.toDataFlowValue(context: BindingContext): DataFlowValue? {
     val expressionType = this.getType(context) ?: return null
-    val dataFlowValueFactory = this.getResolutionFacade().getDataFlowValueFactory()
+    val dataFlowValueFactory = this.getResolutionFacade().dataFlowValueFactory
     return dataFlowValueFactory.createDataFlowValue(this, expressionType, context, findModuleDescriptor())
 }
 
@@ -292,7 +290,7 @@ data class IfThenToSelectData(
         val needExplicitParameter = valueArguments.any { it.getArgumentExpression()?.text == "it" }
         val parameterName = if (needExplicitParameter) {
             val scope = getResolutionScope()
-            KotlinNameSuggester.suggestNameByName("it") { scope.findVariable(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
+            Fe10KotlinNameSuggester.suggestNameByName("it") { scope.findVariable(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
         } else {
             "it"
         }
@@ -321,7 +319,7 @@ data class IfThenToSelectData(
 }
 
 internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData? {
-    val context = analyze()
+    val context = safeAnalyzeNonSourceRootCode()
 
     val condition = condition?.unwrapBlockOrParenthesis() as? KtOperationExpression ?: return null
     val thenClause = then?.unwrapBlockOrParenthesis()

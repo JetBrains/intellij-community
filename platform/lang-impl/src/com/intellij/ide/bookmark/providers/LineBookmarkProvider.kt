@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.providers
 
 import com.intellij.ide.bookmark.*
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.util.Alarm.ThreadToUse.POOLED_THREAD
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
@@ -102,6 +103,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     // above // migrate old bookmarks and favorites
     is PsiElement -> createBookmark(context)
     is VirtualFile -> createBookmark(context, -1)
+    is ProjectFileNode -> createBookmark(context.virtualFile)
     is TreePath -> createBookmark(context)
     else -> null
   }
@@ -144,7 +146,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
-  private val MouseEvent.isUnexpected
+  private val MouseEvent.isUnexpected // see MouseEvent.isUnexpected in ToggleBookmarkAction
     get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
 
   private val EditorMouseEvent.isUnexpected
@@ -152,6 +154,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
 
   override fun mouseClicked(event: EditorMouseEvent) {
     if (event.isUnexpected) return
+    event.editor.project?.let { if (it != project) return }
     val manager = BookmarksManager.getInstance(project) ?: return
     val bookmark = createBookmark(event.editor, event.logicalPosition.line) ?: return
     manager.getType(bookmark)?.let { manager.remove(bookmark) } ?: manager.add(bookmark, BookmarkType.DEFAULT)
@@ -166,7 +169,8 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     val set = mutableSetOf<Int>()
     for (bookmark in manager.bookmarks) {
       if (bookmark is LineBookmarkImpl && bookmark.file == file) {
-        val line = bookmark.descriptor.rangeMarker?.let { if (it.isValid) it.document.getLineNumber(it.startOffset) else null } ?: -1
+        val rangeMarker = (manager as? BookmarksManagerImpl)?.findLineHighlighter(bookmark) ?: bookmark.descriptor.rangeMarker
+        val line = rangeMarker?.let { if (it.isValid) it.document.getLineNumber(it.startOffset) else null } ?: -1
         when (bookmark.line) {
           line -> set.add(line)
           else -> map[bookmark] = line
@@ -232,7 +236,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
 
     fun readLineText(bookmark: LineBookmark?) = bookmark?.let { readLineText(it.file, it.line) }
 
-    fun readLineText(file: VirtualFile, line: Int): String? {
+    private fun readLineText(file: VirtualFile, line: Int): String? {
       val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
       if (line < 0 || document.lineCount <= line) return null
       val start = document.getLineStartOffset(line)

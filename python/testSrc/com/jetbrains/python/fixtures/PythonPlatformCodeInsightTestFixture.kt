@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.fixtures
 
 import com.intellij.codeInsight.completion.CompletionType
@@ -42,6 +42,8 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
     get() = requireNotNull(myDelegateFixture.tempDirFixture.getFile("."))
   override val testRootDisposable: Disposable
     get() = myDelegateFixture.testRootDisposable
+  override val caretOffset: Int
+    get() = myDelegateFixture.caretOffset
 
   override fun setUp() {
     super.setUp()
@@ -72,7 +74,7 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
 
   override fun configureByText(fileName: String, text: String): PsiFile? = myDelegateFixture.configureByText(fileName, text)
 
-  override fun copyDirectoryToProject(sourceFilePath: String, targetPath: String): VirtualFile? =
+  override fun copyDirectoryToProject(sourceFilePath: String, targetPath: String): VirtualFile =
     myDelegateFixture.copyDirectoryToProject(sourceFilePath, targetPath)
 
   override fun addFileToProject(relativePath: String, fileText: String): PsiFile? =
@@ -82,7 +84,7 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
 
   override fun configureFromTempProjectFile(filePath: String): PsiFile? = myDelegateFixture.configureFromTempProjectFile(filePath)
 
-  override fun copyFileToProject(sourceFilePath: String): VirtualFile? = myDelegateFixture.copyFileToProject(sourceFilePath)
+  override fun copyFileToProject(sourceFilePath: String): VirtualFile = myDelegateFixture.copyFileToProject(sourceFilePath)
 
   override fun findFileInTempDir(filePath: String): VirtualFile? = myDelegateFixture.findFileInTempDir(filePath)
 

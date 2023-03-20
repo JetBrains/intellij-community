@@ -35,7 +35,7 @@ public abstract class CloudServerRuntimeInstance
 
   public CloudServerRuntimeInstance(SC configuration,
                                     ServerTaskExecutor tasksExecutor,
-                                    List<File> libraries,
+                                    List<? extends File> libraries,
                                     List<Class<?>> commonJarClasses,
                                     String specificsModuleName,
                                     String specificJarPath,
@@ -48,7 +48,7 @@ public abstract class CloudServerRuntimeInstance
   public CloudServerRuntimeInstance(@Nullable RemoteAgentProxyFactory proxyFactory,
                                     SC configuration,
                                     ServerTaskExecutor tasksExecutor,
-                                    List<File> libraries,
+                                    List<? extends File> libraries,
                                     List<Class<?>> commonJarClasses,
                                     String specificsModuleName,
                                     String specificJarPath,

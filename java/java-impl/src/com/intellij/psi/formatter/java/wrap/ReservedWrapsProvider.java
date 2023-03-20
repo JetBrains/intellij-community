@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * <b>Note:</b> this interface is introduced for encapsulating legacy {@link AbstractJavaBlock#getReservedWrap(IElementType)}
  * method and most probably will be removed as soon as formatting stuff is refactored.
- *
- * @author Denis Zhdanov
  */
 public interface ReservedWrapsProvider {
 

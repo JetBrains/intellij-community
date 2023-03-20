@@ -16,9 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class CheckerFrameworkSupport implements AnnotationPackageSupport {
   private static final String DEFAULT_QUALIFIER = "org.checkerframework.framework.qual.DefaultQualifier";
   private static final String DEFAULT_QUALIFIERS = "org.checkerframework.framework.qual.DefaultQualifiers";
@@ -29,10 +26,19 @@ class CheckerFrameworkSupport implements AnnotationPackageSupport {
                                                                        @NotNull PsiElement context,
                                                                        PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
+    if (context instanceof PsiTypeParameter) {
+      // DefaultQualifier is not applicable to type parameter declarations
+      return null;
+    }
     if (anno.hasQualifiedName(DEFAULT_QUALIFIER)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiClassObjectAccessExpression &&
           hasAppropriateTarget(types, anno.findAttributeValue("locations"))) {
+        PsiType type = PsiUtil.getTypeByPsiElement(context);
+        if (type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeParameter) {
+          // DefaultQualifier is not applicable to type parameter uses
+          return null;
+        }
         PsiClass valueClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
         if (valueClass != null) {
           NullableNotNullManager instance = NullableNotNullManager.getInstance(value.getProject());
@@ -78,17 +84,14 @@ class CheckerFrameworkSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Arrays.asList("org.checkerframework.checker.nullness.qual.NonNull",
-                             "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
-                             "org.checkerframework.checker.nullness.compatqual.NonNullType");
-      case NULLABLE:
-        return Arrays.asList("org.checkerframework.checker.nullness.qual.Nullable",
-                             "org.checkerframework.checker.nullness.compatqual.NullableDecl",
-                             "org.checkerframework.checker.nullness.compatqual.NullableType");
-      default:
-        return Collections.singletonList("org.checkerframework.checker.nullness.qual.MonotonicNonNull");
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Arrays.asList("org.checkerframework.checker.nullness.qual.NonNull",
+                                     "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
+                                     "org.checkerframework.checker.nullness.compatqual.NonNullType");
+      case NULLABLE -> Arrays.asList("org.checkerframework.checker.nullness.qual.Nullable",
+                                     "org.checkerframework.checker.nullness.compatqual.NullableDecl",
+                                     "org.checkerframework.checker.nullness.compatqual.NullableType");
+      default -> Collections.singletonList("org.checkerframework.checker.nullness.qual.MonotonicNonNull");
+    };
   }
 }

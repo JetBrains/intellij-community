@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
@@ -136,7 +136,12 @@ public final class DnDManagerImpl extends DnDManager {
   @Override
   public void registerTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, target);
+    //noinspection ResultOfObjectAllocationIgnored
     new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+  }
+
+  public DropTargetListener getDropTargetListener() {
+    return myDropTargetListener;
   }
 
   @Override
@@ -157,13 +162,22 @@ public final class DnDManagerImpl extends DnDManager {
     cleanup(target, component);
   }
 
+  public void updateCurrentEvent() {
+    if (myCurrentEvent == null) return;
+    updateCurrentEvent(
+      myCurrentEvent.getCurrentOverComponent(),
+      myCurrentEvent.getPoint(),
+      myCurrentEvent.getAction().getActionId(),
+      myCurrentEvent.getTransferDataFlavors(),
+      myCurrentEvent
+    );
+  }
   private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, DataFlavor @Nullable [] flavors, @Nullable Transferable transferable) {
-    LOG.debug("updateCurrentEvent: " + aComponentOverDragging);
+    LOG.debug("updateCurrentEvent: ", aComponentOverDragging);
 
     DnDEventImpl currentEvent = myCurrentEvent;
 
-    if (myCurrentEvent == null && aComponentOverDragging instanceof JComponent) {
-      JComponent jComp = (JComponent)aComponentOverDragging;
+    if (myCurrentEvent == null && aComponentOverDragging instanceof JComponent jComp) {
       DnDTarget target = getTarget(jComp);
       if (target instanceof DnDNativeTarget) {
         DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
@@ -191,10 +205,10 @@ public final class DnDManagerImpl extends DnDManager {
     boolean sameComponent = currentEvent.getCurrentOverComponent().equals(component);
     boolean sameAction = nativeAction == myLastProcessedAction;
 
-    LOG.debug("updateCurrentEvent: point:" + aPoint);
-    LOG.debug("updateCurrentEvent: action:" + nativeAction);
+    LOG.debug("updateCurrentEvent: point:", aPoint);
+    LOG.debug("updateCurrentEvent: action:", nativeAction);
 
-    if (samePoint && sameComponent && sameAction) {
+    if (samePoint && sameComponent && sameAction && transferable != myCurrentEvent) {
       return currentEvent;
     }
 
@@ -379,8 +393,7 @@ public final class DnDManagerImpl extends DnDManager {
     // update selected row bounds according to the visible rectangle
     RelativePoint point = rectangle.getPoint();
     Component component = point == null ? null : point.getOriginalComponent();
-    if (component instanceof JTree) {
-      JTree tree = (JTree)component;
+    if (component instanceof JTree tree) {
       Rectangle visible = tree.getVisibleRect();
       int dx = point.getOriginalPoint().x - visible.x;
       if (aType == DnDEvent.DropTargetHighlightingType.RECTANGLE || dx < 0) {
@@ -391,8 +404,7 @@ public final class DnDManagerImpl extends DnDManager {
         bounds.width = visible.width - dx;
       }
     }
-    else if (component instanceof JList) {
-      JList<?> list = (JList<?>)component;
+    else if (component instanceof JList<?> list) {
       if (JList.VERTICAL == list.getLayoutOrientation()) {
         Rectangle visible = list.getVisibleRect();
         int dx = point.getOriginalPoint().x - visible.x;
@@ -585,23 +597,14 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   private static DnDAction getDnDActionForPlatformAction(int platformAction) {
-    DnDAction action = null;
     boolean altOnly = UISettings.getInstance().getDndWithPressedAltOnly();
-    switch (platformAction) {
-      case DnDConstants.ACTION_COPY:
-        action = altOnly ? DnDAction.MOVE : DnDAction.COPY;
-        break;
-      case DnDConstants.ACTION_MOVE:
-        action = altOnly? DnDAction.COPY : DnDAction.MOVE;
-        break;
-      case DnDConstants.ACTION_LINK:
-        action = DnDAction.LINK;
-        break;
-      default:
-        break;
-    }
 
-    return action;
+    return switch (platformAction) {
+      case DnDConstants.ACTION_COPY -> altOnly ? DnDAction.MOVE : DnDAction.COPY;
+      case DnDConstants.ACTION_MOVE -> altOnly ? DnDAction.COPY : DnDAction.MOVE;
+      case DnDConstants.ACTION_LINK -> DnDAction.LINK;
+      default -> null;
+    };
   }
 
   private class MyDragSourceListener implements DragSourceListener {

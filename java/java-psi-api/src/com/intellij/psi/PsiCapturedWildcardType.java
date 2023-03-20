@@ -9,9 +9,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public final class PsiCapturedWildcardType extends PsiType.Stub {
   @NotNull private final PsiWildcardType myExistential;
   @NotNull private final PsiElement myContext;
@@ -173,7 +170,7 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   }
 
   public PsiType getLowerBound () {
-    return myExistential.isSuper() ? myExistential.getBound() : NULL;
+    return myExistential.isSuper() ? myExistential.getBound() : (PsiPrimitiveType)PsiTypes.nullType();
   }
 
   @NotNull

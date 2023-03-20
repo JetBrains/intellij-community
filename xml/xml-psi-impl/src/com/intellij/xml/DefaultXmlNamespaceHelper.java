@@ -149,10 +149,9 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   @Override
   @NotNull
   public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, @NotNull XmlFile file) {
-    if (!(element instanceof XmlTag)) {
+    if (!(element instanceof XmlTag tag)) {
       return Collections.emptySet();
     }
-    final XmlTag tag = (XmlTag)element;
     final String name = tag.getLocalName();
     final Set<String> byTagName = getNamespacesByTagName(name, file);
     if (!byTagName.isEmpty()) {

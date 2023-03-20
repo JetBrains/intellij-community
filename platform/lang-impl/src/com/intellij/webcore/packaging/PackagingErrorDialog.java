@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author vlan
- */
 public class PackagingErrorDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JTextArea myCommandOutput;

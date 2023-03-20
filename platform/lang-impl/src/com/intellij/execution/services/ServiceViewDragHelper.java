@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -52,7 +52,7 @@ final class ServiceViewDragHelper {
         @Override
         public boolean update(DnDEvent event) {
           Object o = event.getAttachedObject();
-          boolean dropPossible = o instanceof ServiceViewDragBean && event.getPoint().y < decorator.getHeaderHeight();
+          boolean dropPossible = o instanceof ServiceViewDragBean && event.getPointOn(decorator).y < decorator.getHeaderHeight();
           event.setDropPossible(dropPossible, "");
           if (dropPossible) {
             if (contentManager.getIndexOfContent(dropTargetContent) < 0) {
@@ -123,7 +123,7 @@ final class ServiceViewDragHelper {
   }
 
   @Nullable
-  static ServiceViewContributor getTheOnlyRootContributor(List<ServiceViewItem> items) {
+  static ServiceViewContributor getTheOnlyRootContributor(List<? extends ServiceViewItem> items) {
     ServiceViewContributor result = null;
     for (ServiceViewItem node : items) {
       if (result == null) {
@@ -137,7 +137,7 @@ final class ServiceViewDragHelper {
   }
 
   private static Content createDropTargetContent() {
-    Content content = ContentFactory.SERVICE.getInstance().createContent(new JPanel(), null, false);
+    Content content = ContentFactory.getInstance().createContent(new JPanel(), null, false);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     content.setCloseable(true);
     return content;
@@ -183,6 +183,10 @@ final class ServiceViewDragHelper {
     public Object getData(@NotNull String dataId) {
       if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         return ContainerUtil.map2Array(myItems, ServiceViewItem::getValue);
+      }
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+        ServiceViewItem item = ContainerUtil.getOnlyItem(myItems);
+        return item != null ? item.getValue() : null;
       }
       return null;
     }
@@ -299,12 +303,11 @@ final class ServiceViewDragHelper {
 
     private EventContext getEventContext(Point point) {
       TreePath path = myTree.getPathForLocation(point.x, point.y);
-      if (path == null || !(path.getLastPathComponent() instanceof ServiceViewItem)) return null;
+      if (path == null || !(path.getLastPathComponent() instanceof ServiceViewItem item)) return null;
 
       Rectangle cellBounds = myTree.getPathBounds(path);
       if (cellBounds == null) return null;
 
-      ServiceViewItem item = (ServiceViewItem)path.getLastPathComponent();
       ServiceViewDescriptor viewDescriptor = item.getViewDescriptor();
       if (!(viewDescriptor instanceof ServiceViewDnDDescriptor)) return null;
 

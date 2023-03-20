@@ -19,6 +19,10 @@ if the result of the expression can be reused.
   Use the <b>Expression complexity threshold</b> option to specify the minimal expression complexity threshold. Specifying bigger
   numbers will remove reports on short expressions.
 </p>
+<p>
+  <code>Path.of</code> and <code>Paths.get</code> calls are treated as equivalent calls if they have the same arguments. These calls
+  are always reported no matter how complex their arguments are. This behaviour can be tweaked using different complexity threshold.
+</p>
 <p><small>New in 2018.3</small></p>
 </body>
 </html>

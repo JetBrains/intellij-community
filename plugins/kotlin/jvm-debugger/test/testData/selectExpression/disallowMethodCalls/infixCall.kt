@@ -4,4 +4,5 @@ fun foo() {
 
 fun Int.foo(i: Int) = 1
 
+// DISALLOW_METHOD_CALLS
 // EXPECTED: null

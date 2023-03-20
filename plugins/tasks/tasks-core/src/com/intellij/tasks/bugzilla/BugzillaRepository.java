@@ -259,8 +259,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
                             task.getLastPost(), task.getTimeSpentFromLastPost(), timeSpent));
     Matcher matcher = TIME_SPENT_PATTERN.matcher(timeSpent);
     if (matcher.find()) {
-      int hours = Integer.valueOf(matcher.group(1));
-      int minutes = Integer.valueOf(matcher.group(2));
+      int hours = Integer.parseInt(matcher.group(1));
+      int minutes = Integer.parseInt(matcher.group(2));
       BugzillaXmlRpcRequest request = new BugzillaXmlRpcRequest("Bug.update")
         .requireAuthentication(true)
         .withParameter("ids", newVector(task.getId()))
@@ -435,8 +435,7 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    if (!(o instanceof BugzillaRepository)) return false;
-    BugzillaRepository repository = (BugzillaRepository)o;
+    if (!(o instanceof BugzillaRepository repository)) return false;
 
     if (!Objects.equals(myProductName, repository.getProductName())) return false;
     if (!Objects.equals(myComponentName, repository.getComponentName())) return false;

@@ -44,7 +44,7 @@ class JdkUpdaterNotifications : Disposable {
     scheduleUpdate()
   }
 
-  fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem): JdkUpdateNotification? {
+  fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem, showVendorVersion: Boolean = false): JdkUpdateNotification? {
     val newNotification = lock.withLock {
       val newNotification = JdkUpdateNotification(
         jdk = jdk,
@@ -55,7 +55,8 @@ class JdkUpdaterNotifications : Disposable {
             pendingNotifications.remove(jdk, it)
           }
           scheduleUpdate()
-        }
+        },
+        showVendorVersion = showVendorVersion,
       )
 
       val currentNotification = pendingNotifications[jdk]

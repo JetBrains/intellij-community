@@ -1,23 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,7 +26,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorInlayFoldingMapper;
 import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -41,7 +38,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -54,7 +50,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
 
 public final class EditorUtil {
@@ -82,8 +80,7 @@ public final class EditorUtil {
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
-    if (editor instanceof EditorImpl) {
-      EditorImpl editorImpl = (EditorImpl)editor;
+    if (editor instanceof EditorImpl editorImpl) {
       int lineEndOffset = line >= editorImpl.getVisibleLineCount()
                           ? editor.getDocument().getTextLength() : new VisualLinesIterator(editorImpl, line).getVisualLineEndOffset();
       return editor.offsetToVisualPosition(lineEndOffset, true, true).column;
@@ -400,12 +397,15 @@ public final class EditorUtil {
       char c = text.charAt(i);
       int prevX = x;
       switch (c) {
-        case '\t':
+        case '\t' -> {
           x = nextTabStop(x, editor);
           result += columnsNumber(x - prevX, spaceSize);
-          break;
-        case '\n': x = result = 0; break;
-        default: x += charWidth(c, Font.PLAIN, editor); result++;
+        }
+        case '\n' -> x = result = 0;
+        default -> {
+          x += charWidth(c, Font.PLAIN, editor);
+          result++;
+        }
       }
     }
 
@@ -468,49 +468,83 @@ public final class EditorUtil {
   }
 
   /**
-   * Delegates to the {@link #calcSurroundingRange(Editor, VisualPosition, VisualPosition)} with the
-   * {@link CaretModel#getVisualPosition() caret visual position} as an argument.
-   *
-   * @param editor  target editor
-   * @return        surrounding logical positions
-   * @see #calcSurroundingRange(Editor, VisualPosition, VisualPosition)
+   * Calculates the text range of the line under the current caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
    */
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Editor editor) {
-    return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
-  }
-
-  public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Caret caret) {
-    return calcSurroundingRange(caret.getEditor(), caret.getVisualPosition(), caret.getVisualPosition());
+  public static @NotNull TextRange calcCaretLineTextRange(@NotNull Editor editor) {
+    return logicalPairToTextRange(editor, calcCaretLineRange(editor));
   }
 
   /**
-   * Calculates logical positions that surround given visual positions and conform to the following criteria:
-   * <pre>
+   * Calculates the boundaries of the line under the current caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
+   */
+  public static @NotNull Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Editor editor) {
+    VisualPosition caretPosition = editor.getCaretModel().getCurrentCaret().getVisualPosition();
+    return calcSurroundingRange(editor, caretPosition, caretPosition);
+  }
+
+  /**
+   * Calculates the text range of the line under the specified caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
+   */
+  public static @NotNull TextRange calcCaretLineTextRange(@NotNull Caret caret) {
+    return logicalPairToTextRange(caret.getEditor(), calcCaretLineRange(caret));
+  }
+
+  /**
+   * Calculates the boundaries of the line under the specified caret.
+   * Note: it's neither visual, nor logical line; refer to {@link #calcSurroundingRange} for more info.
+   */
+  public static @NotNull Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Caret caret) {
+    VisualPosition caretPosition = caret.getVisualPosition();
+    return calcSurroundingRange(caret.getEditor(), caretPosition, caretPosition);
+  }
+
+  public static @NotNull TextRange calcSurroundingTextRange(@NotNull Editor editor,
+                                                            @NotNull VisualPosition start,
+                                                            @NotNull VisualPosition end) {
+    return logicalPairToTextRange(editor, calcSurroundingRange(editor, start, end));
+  }
+
+  /**
+   * Calculates the range covering line(s) between the specified visual positions.
+   * The "line" in question is neither visual, nor logical; it rather has traits of both:
+   * <ul>
+   *   <li>the "line" may span across several logical lines if there are folded regions;</li>
+   *   <li>the "line" may also span across several soft-wrapped visual lines.</li>
+   * </ul>
+   *
+   * Ultimately, this is the most intuitive definition of a line for user-facing actions
+   * like "Duplicate Line", "Extend Line Selection", and Copy/Cut with no selection.
+   *
+   * <p>
+   * Here's a more strict definition: this method calculates logical positions
+   * that surround the given visual positions and conform to the following criteria:
    * <ul>
    *   <li>located at the start or the end of the visual line;</li>
    *   <li>doesn't have soft wrap at the target offset;</li>
    * </ul>
-   * </pre>
-   * Example:
+   *
+   * Here's an example of a line that would be covered in its entirety
+   * (the very first and the very last positions are returned here):
    * <pre>
-   *   first line [soft-wrap] some [start-position] text [end-position] [fold-start] fold line 1
-   *   fold line 2
-   *   fold line 3[fold-end] [soft-wrap] end text
+   *
+   *   first line [soft-wrap->
+   *     ->] some [start]text[end] [fold-start]fold line 1
+   *                                           fold line 2
+   *                                           fold line 3[fold-end] [soft-wrap->
+   *     ->] end text
    * </pre>
-   * The very first and the last positions will be returned here.
    *
-   * @param editor    target editor to use
-   * @param start     target start coordinate
-   * @param end       target end coordinate
-   * @return          pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
-   *
+   * @return pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
    * @see #getNotFoldedLineStartOffset(Editor, int)
    * @see #getNotFoldedLineEndOffset(Editor, int)
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
-  public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
-                                                                            @NotNull VisualPosition start,
-                                                                            @NotNull VisualPosition end) {
+  public static @NotNull Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
+                                                                                     @NotNull VisualPosition start,
+                                                                                     @NotNull VisualPosition end) {
     final Document document = editor.getDocument();
     final FoldingModel foldingModel = editor.getFoldingModel();
 
@@ -557,6 +591,12 @@ public final class EditorUtil {
     return Pair.create(first, second);
   }
 
+  private static @NotNull TextRange logicalPairToTextRange(@NotNull Editor editor,
+                                                           @NotNull Pair<LogicalPosition, LogicalPosition> logicalPair) {
+    return TextRange.create(editor.logicalPositionToOffset(logicalPair.first),
+                            editor.logicalPositionToOffset(logicalPair.second));
+  }
+
   /**
    * Finds the start offset of visual line at which given offset is located, not taking soft wraps into account.
    */
@@ -565,7 +605,7 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset, boolean stopAtInvisibleFoldRegions) {
-    while(true) {
+    while (true) {
       offset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
       if (foldRegion == null ||
@@ -661,12 +701,8 @@ public final class EditorUtil {
 
   @NotNull
   public static TextRange getSelectionInAnyMode(Editor editor) {
-    SelectionModel selection = editor.getSelectionModel();
-    int[] starts = selection.getBlockSelectionStarts();
-    int[] ends = selection.getBlockSelectionEnds();
-    int start = starts.length > 0 ? starts[0] : selection.getSelectionStart();
-    int end = ends.length > 0 ? ends[ends.length - 1] : selection.getSelectionEnd();
-    return TextRange.create(start, end);
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    return carets.get(0).getSelectionRange().union(carets.get(carets.size() - 1).getSelectionRange());
   }
 
   public static int logicalToVisualLine(@NotNull Editor editor, int logicalLine) {
@@ -704,27 +740,11 @@ public final class EditorUtil {
       int lineStartOffset = document.getLineStartOffset(logicalLine);
       int lineEndOffset = document.getLineEndOffset(logicalLine);
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
-      if (foldRegion != null) {
-        if (foldRegion instanceof CustomFoldRegion) {
-          int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
-          OurInterval interval = new OurInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
-          return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
-                                       foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
-        }
-        Inlay<?> inlay = EditorInlayFoldingMapper.getInstance().getAssociatedInlay(foldRegion);
-        if (inlay != null) {
-          // special case of rendered doc comment
-          Rectangle bounds = inlay.getBounds();
-          if (bounds != null) {
-            OurInterval interval = new OurInterval(bounds.y, bounds.y + bounds.height);
-            return Pair.create(interval,
-                               foldRegion.getStartOffset() == lineStartOffset &&
-                               foldRegion.getEndOffset() == (logicalLine + 1 < document.getLineCount()
-                                                             ? document.getLineStartOffset(logicalLine + 1)
-                                                             : document.getTextLength())
-                               ? interval : null);
-          }
-        }
+      if (foldRegion instanceof CustomFoldRegion) {
+        int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
+        Interval interval = new TextRangeInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
+        return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
+                                     foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
       }
       startVisualLine = editor.offsetToVisualLine(lineStartOffset, false);
       endVisualLine = startVisualLine + editor.getSoftWrapModel().getSoftWrapsForRange(lineStartOffset + 1, lineEndOffset - 1).size();
@@ -737,7 +757,7 @@ public final class EditorUtil {
     int endY = (endVisualLine == startVisualLine ? startY : editor.visualLineToY(endVisualLine)) + lineHeight;
     int startYEx = topOverlapped ? startY + lineHeight : startY;
     int endYEx = bottomOverlapped ? endY - lineHeight : endY;
-    return Pair.create(new OurInterval(startY, endY), startYEx < endYEx ? new OurInterval(startYEx, endYEx) : null);
+    return Pair.create(new TextRangeInterval(startY, endY), startYEx < endYEx ? new TextRangeInterval(startYEx, endYEx) : null);
   }
 
   /**
@@ -752,50 +772,15 @@ public final class EditorUtil {
   @NotNull
   public static Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
     int visualLine = editor.yToVisualLine(y);
-    int[] visualLineYRange = editor.visualLineToYRange(visualLine);
-    Inlay<?> blockInlay = null;
-    if (y < visualLineYRange[0]) {
-      List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, true);
-      int yDiff = visualLineYRange[0] - y;
-      for (int i = inlays.size() - 1; i >= 0; i--) {
-        Inlay<?> inlay = inlays.get(i);
-        int height = inlay.getHeightInPixels();
-        if (yDiff <= height) {
-          blockInlay = inlay;
-          break;
-        }
-        yDiff -= height;
-      }
-    }
-    else if (y >= visualLineYRange[1]) {
-      List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, false);
-      int yDiff = y - visualLineYRange[1];
-      for (Inlay<?> inlay : inlays) {
-        int height = inlay.getHeightInPixels();
-        if (yDiff < height) {
-          blockInlay = inlay;
-          break;
-        }
-        yDiff -= height;
-      }
-    }
-    if (blockInlay != null) {
-      FoldRegion foldRegion = EditorInlayFoldingMapper.getInstance().getAssociatedFoldRegion(blockInlay);
-      if (foldRegion != null) {
-        // special case of rendered doc comment
-        Document document = editor.getDocument();
-        return new OurInterval(document.getLineNumber(foldRegion.getStartOffset()), document.getLineNumber(foldRegion.getEndOffset() - 1));
-      }
-    }
     if (editor instanceof EditorImpl) {
       VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
       if (!iterator.atEnd()) {
-        return new OurInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
+        return new TextRangeInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
       }
     }
     int startLogicalLine = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0, false)).line;
     int endLogicalLine= editor.visualToLogicalPosition(new VisualPosition(visualLine, Integer.MAX_VALUE, true)).line;
-    return new OurInterval(startLogicalLine, endLogicalLine);
+    return new TextRangeInterval(startLogicalLine, endLogicalLine);
   }
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
@@ -874,10 +859,15 @@ public final class EditorUtil {
    * editor.
    */
   public static Font getEditorFont() {
+    float fontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
+    if (UISettings.getInstance().getPresentationMode()) {
+      fontSize -= 4f;
+    }
+
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Font editorFont = scheme.getFont(EditorFontType.PLAIN);
-    if (UISettings.getInstance().getPresentationMode()) {
-      editorFont = editorFont.deriveFont(UISettings.getInstance().getPresentationModeFontSize() - 4f);
+    if (editorFont.getSize() != fontSize) {
+      editorFont = editorFont.deriveFont(fontSize);
     }
     return UIUtil.getFontWithFallback(editorFont);
   }
@@ -931,7 +921,9 @@ public final class EditorUtil {
     if (hostEditor instanceof EditorImpl) {
       Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
     }
-    else LOG.warn("Cannot watch for disposal of " + editor);
+    else {
+      LOG.warn("Cannot watch for disposal of " + editor);
+    }
   }
 
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
@@ -970,10 +962,6 @@ public final class EditorUtil {
 
   @NotNull
   public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
-    if (!Character.isValidCodePoint(c)) {
-      return fallback;
-    }
-
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
     int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
@@ -1156,7 +1144,7 @@ public final class EditorUtil {
     long currentTimeStamp = System.currentTimeMillis();
     if (lastTimeStamp != null && (currentTimeStamp - lastTimeStamp) < EditorNotification.MAX_CARETS_NOTIFY_INTERVAL_MS) return;
     editor.putUserData(EditorNotification.LAST_MAX_CARETS_NOTIFY_TIMESTAMP, currentTimeStamp);
-    NotificationGroupManager.getInstance().getNotificationGroup("Editor notifications")
+    NotificationGroupManager.getInstance().getNotificationGroup("too.many.carets")
             .createNotification(
                     EditorBundle.message("editor.max.carets.hint", editor.getCaretModel().getMaxCaretCount()),
                     NotificationType.INFORMATION)
@@ -1165,7 +1153,6 @@ public final class EditorUtil {
 
   /**
    * Tells whether maximum allowed number of carets is reached in editor. If it's the case, notification is shown
-   * ({@link #checkMaxCarets(Editor)}).
    */
   public static boolean checkMaxCarets(@NotNull Editor editor) {
     CaretModel caretModel = editor.getCaretModel();
@@ -1184,7 +1171,7 @@ public final class EditorUtil {
   }
 
   public static boolean contextMenuInvokedOutsideOfSelection(@NotNull AnActionEvent e) {
-    if (!PlatformUtils.isDataGrip() || e.getPlace() != ActionPlaces.EDITOR_POPUP) return false;
+    if (!ActionPlaces.EDITOR_POPUP.equals(e.getPlace())) return false;
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor != null && editor.getSelectionModel().hasSelection() &&
            !isCaretInsideSelection(e.getData(CommonDataKeys.CARET));
@@ -1193,39 +1180,27 @@ public final class EditorUtil {
   @NotNull
   public static DataContext getEditorDataContext(@NotNull Editor editor) {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
-    if (CommonDataKeys.PROJECT.getData(context) == editor.getProject()) {
+    if (PROJECT.getData(context) == editor.getProject()) {
       return context;
     }
-    return dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return editor.getProject();
+    return new CustomizedDataContext() {
+      @Override
+      public @NotNull DataContext getParent() {
+        return context;
       }
-      return context.getData(dataId);
+
+      @Override
+      public @Nullable Object getRawCustomData(@NotNull String dataId) {
+        if (PROJECT.is(dataId)) {
+          return Objects.requireNonNullElse(editor.getProject(), EXPLICIT_NULL);
+        }
+        return null;
+      }
     };
   }
 
   private static class EditorNotification {
     private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
     private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
-  }
-
-  private static class OurInterval implements Interval {
-    private final int intervalStart;
-    private final int intervalEnd;
-
-    private OurInterval(int intervalStart, int intervalEnd) {
-      this.intervalStart = intervalStart;
-      this.intervalEnd = intervalEnd;
-    }
-
-    @Override
-    public int intervalStart() {
-      return intervalStart;
-    }
-
-    @Override
-    public int intervalEnd() {
-      return intervalEnd;
-    }
   }
 }

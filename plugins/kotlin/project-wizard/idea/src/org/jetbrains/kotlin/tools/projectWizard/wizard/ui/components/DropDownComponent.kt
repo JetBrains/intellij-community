@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
@@ -22,9 +23,9 @@ import javax.swing.JList
 class DropDownComponent<T : DisplayableSettingItem>(
     context: Context,
     private val initialValues: List<T> = emptyList(),
-    description: String? = null,
+    description: @NlsContexts.Label String? = null,
     initiallySelectedValue: T? = null,
-    labelText: String? = null,
+    labelText: @NlsContexts.Label String? = null,
     private val filter: (T) -> Boolean = { true },
     private val validator: SettingValidator<T> = settingValidator { ValidationResult.OK },
     private val iconProvider: (T) -> Icon? = { null },
@@ -75,7 +76,7 @@ class DropDownComponent<T : DisplayableSettingItem>(
         }
     }
 
-    override val alignTarget: JComponent? get() = combobox
+    override val alignTarget: JComponent get() = combobox
 
     override val uiComponent = componentWithCommentAtBottom(combobox, description)
 

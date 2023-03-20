@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>
   extends AbstractProjectDataService<E, I> {
@@ -104,7 +101,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           // do not remove recently created library w/o name
           if (entry instanceof LibraryOrderEntry &&
               ((LibraryOrderEntry)entry).getLibraryName() == null &&
-              entry.getUrls(OrderRootType.CLASSES).length == 0) {
+              ((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES).length == 0) {
             continue;
           }
           if (getOrderEntryType().isInstance(entry)) {

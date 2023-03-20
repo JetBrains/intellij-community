@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author peter
  * @see ProcessingContext
  */
 public final class SharedProcessingContext {

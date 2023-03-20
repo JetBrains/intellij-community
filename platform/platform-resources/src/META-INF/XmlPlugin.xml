@@ -11,11 +11,6 @@
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
-    </component>
-  </project-components>
   <xi:include href="/META-INF/XmlActions.xml"/>
   <xi:include href="/META-INF/DomPlugin.xml">
     <xi:fallback/>
@@ -103,11 +98,15 @@
       <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="xml.xmlAttributeRenameProvider"
+                    interface="com.intellij.codeInspection.htmlInspections.XmlAttributeRenameProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <highlightingPassFactory order="last" implementation="com.intellij.xml.XmlCustomTagHighlightingPassFactory" />
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory"/>
-
     <fileType name="HTML" implementationClass="com.intellij.ide.highlighter.HtmlFileType" fieldName="INSTANCE" language="HTML" extensions="htm;html;sht;shtm;shtml"/>
     <fileType name="XHTML" implementationClass="com.intellij.ide.highlighter.XHtmlFileType" fieldName="INSTANCE" language="XHTML" extensions="xhtml"/>
     <fileType name="DTD" implementationClass="com.intellij.ide.highlighter.DTDFileType" fieldName="INSTANCE" language="DTD" extensions="dtd;elt;ent;mod"/>
@@ -336,12 +335,12 @@
     <declarationRangeHandler key="com.intellij.psi.xml.XmlTag"
                              implementationClass="com.intellij.codeInsight.hint.TagDeclarationRangeHandler"/>
 
-    <liveTemplateContext implementation="com.intellij.codeInsight.template.HtmlTextContextType"/>
-    <liveTemplateContext implementation="com.intellij.codeInsight.template.HtmlContextType"/>
-    <liveTemplateContext implementation="com.intellij.codeInsight.template.XslTextContextType"/>
-    <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlContextType"/>
-    <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
-    <liveTemplateContext implementation="com.intellij.codeInsight.template.XmlElementContextType"/>
+    <liveTemplateContext contextId="HTML_TEXT" baseContextId="HTML" implementation="com.intellij.codeInsight.template.HtmlTextContextType"/>
+    <liveTemplateContext contextId="HTML" implementation="com.intellij.codeInsight.template.HtmlContextType"/>
+    <liveTemplateContext contextId="XSL_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XslTextContextType"/>
+    <liveTemplateContext contextId="XML" implementation="com.intellij.codeInsight.template.XmlContextType"/>
+    <liveTemplateContext contextId="XML_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
+    <liveTemplateContext contextId="XML_TAG" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlElementContextType"/>
 
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.XmlErrorQuickFixProvider"/>
 
@@ -451,6 +450,10 @@
                      bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
+    <localInspection language="HtmlCompatible" shortName="HtmlWrongAttributeValue" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.wrong.attribute.value"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlWrongAttributeValueInspection"/>
     <localInspection language="HTML" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.XmlBundle" key="html.inspections.missing.closing.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
@@ -489,68 +492,81 @@
                         overrides="true"/>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.xml.util.CollapseTagIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveTagAndPromoteChildrenIntentionAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.CDataToTextIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.TextToCDataIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RearrangeAttributesIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction</className>
     </intentionAction>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.ConvertSchemaPrefixToDefaultIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction</className>
@@ -608,7 +624,7 @@
     <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension" id="html"/>
 
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
-    <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.XmlAnchorProvider"/>
+    <smartPointer.anchorProvider implementation="com.intellij.psi.impl.source.xml.XmlAnchorProvider"/>
 
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyEditorFactoryListener"/>
@@ -620,5 +636,50 @@
 
     <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy"/>
     <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
+
+
+    <multiHostInjector implementation="com.intellij.html.webSymbols.WebSymbolsHtmlTextInjector"
+                       order="before JSConfigurationInjector, after TemporaryPlacesInjector"
+                       id="WebSymbolsHtmlText"/>
+
+    <webSymbols.highlightInLanguage language="HtmlCompatible"/>
+
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
+                                      toolShortName="HtmlUnknownAttribute"/>
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="UnknownSymbol"
+                                      toolShortName="HtmlUnknownTag"/>
+
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="DeprecatedSymbol"
+                                      toolShortName="HtmlDeprecatedAttribute"/>
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
+                                      toolShortName="HtmlDeprecatedTag"/>
+
+    <webSymbols.queryConfigurator
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator"/>
+    <webSymbols.codeCompletionItemCustomizer
+      id="html"
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
+    <xml.attributeDescriptorsProvider
+      implementation="com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptorsProvider"/>
+    <xml.elementDescriptorProvider
+      implementation="com.intellij.html.webSymbols.elements.WebSymbolElementDescriptorsProvider"/>
+    <completion.contributor language="HtmlCompatible"
+                            implementationClass="com.intellij.html.webSymbols.WebSymbolsHtmlCompletionContributor"/>
+
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
+                                 hostLanguage="HtmlCompatible"
+                                 implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"
+                                 anyReferenceClass="true"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
+                                 hostLanguage="HtmlCompatible"
+                                 implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"
+                                 anyReferenceClass="true"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
+    <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
+                      order="before html, after react"/>
+
+    <postStartupActivity implementation="com.intellij.javaee.PsiExternalResourceNotifier" />
   </extensions>
 </idea-plugin>

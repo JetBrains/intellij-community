@@ -104,7 +104,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     Condition<ExternalSystemViewContributor> contributorPredicate =
       c -> ProjectSystemId.IDE.equals(c.getSystemId()) || myExternalSystemId.equals(c.getSystemId());
-    myViewContributors = ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate);
+    myViewContributors = new ArrayList<>(ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate));
     ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -134,9 +134,6 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
-    if (Location.DATA_KEY.is(dataId)) {
-      return extractLocation();
-    }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
     if (ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.is(dataId)) return myExternalSystemId;
@@ -146,7 +143,19 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     if (ExternalSystemDataKeys.PROJECTS_TREE.is(dataId)) return myTree;
     if (ExternalSystemDataKeys.NOTIFICATION_GROUP.is(dataId)) return myNotificationGroup;
 
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)this::getSlowData;
+    }
+
     return super.getData(dataId);
+  }
+
+  @Nullable
+  private Object getSlowData(@NotNull @NonNls String dataId) {
+    if (Location.DATA_KEY.is(dataId)) {
+      return extractLocation();
+    }
+    return null;
   }
 
   @Override
@@ -429,7 +438,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   @Nullable
   public ExternalProjectsViewState getState() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (myStructure != null) {
       try {
         myState.treeState = new Element("root");
@@ -504,11 +513,13 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   @Nullable
   public String getDisplayName(@Nullable DataNode node) {
     if (node == null) return null;
-    return myViewContributors.stream()
-                             .map(contributor -> contributor.getDisplayName(node))
-                             .filter(Objects::nonNull)
-                             .findFirst()
-                             .orElse(null);
+    for (ExternalSystemViewContributor contributor : myViewContributors) {
+      String name = contributor.getDisplayName(node);
+      if (name != null) {
+        return name;
+      }
+    }
+    return null;
   }
 
   private <T extends ExternalSystemNode> void scheduleNodesRebuild(@NotNull Class<T> nodeClass) {
@@ -574,8 +585,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     for (ExternalSystemNode node : selectedNodes) {
       final Object data = node.getData();
-      if (data instanceof TaskData) {
-        final TaskData taskData = (TaskData)data;
+      if (data instanceof TaskData taskData) {
         if (projectPath == null) {
           projectPath = taskData.getLinkedExternalProjectPath();
         }

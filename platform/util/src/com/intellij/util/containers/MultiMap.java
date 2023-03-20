@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -157,7 +158,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated use {@link #remove(Object, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public final void removeValue(K key, V value) {
     remove(key, value);
   }
@@ -286,7 +287,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Use {@link #MultiMap()}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<>();
   }
@@ -343,7 +344,7 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   public static @NotNull <K, V> MultiMap<@NotNull K, V> createWeakKey() {
-    return new MultiMap<>(ContainerUtil.createWeakMap());
+    return new MultiMap<>(new WeakHashMap<>());
   }
 
   public static <K, V> MultiMap<K, V> create(int initialCapacity, float loadFactor) {

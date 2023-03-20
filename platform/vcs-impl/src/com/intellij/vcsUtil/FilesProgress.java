@@ -20,9 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 
-/**
- * @author irengrig
- */
 public class FilesProgress {
   private final double myTotal;
   private final @Nls String myPrefix;

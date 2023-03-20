@@ -4,7 +4,6 @@ package com.intellij.ide.actions.cache
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.InvalidateCacheService
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 
 internal class InvalidateCachesAndRestartAction : RecoveryAction {
@@ -15,8 +14,10 @@ internal class InvalidateCachesAndRestartAction : RecoveryAction {
   override val actionKey: String
     get() = "hammer"
 
-  override fun performSync(project: Project): List<CacheInconsistencyProblem> = invokeAndWaitIfNeeded {
-    InvalidateCacheService.invalidateCachesAndRestart(project)
+  override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> = invokeAndWaitIfNeeded {
+    InvalidateCacheService.invalidateCachesAndRestart(recoveryScope.project)
     emptyList()
   }
+
+  override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = recoveryScope is ProjectRecoveryScope
 }

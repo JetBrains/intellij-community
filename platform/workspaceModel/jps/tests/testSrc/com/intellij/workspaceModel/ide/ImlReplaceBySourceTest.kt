@@ -1,22 +1,25 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.*
 import java.io.File
@@ -24,7 +27,7 @@ import java.io.File
 class ImlReplaceBySourceTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
@@ -44,7 +47,6 @@ class ImlReplaceBySourceTest {
     replaceBySourceFullReplace(projectDir)
   }
 
-  @Suppress("UNCHECKED_CAST")
   @Test
   fun addSourceRootToModule() {
     val moduleFile = temp.newFile("a.iml")
@@ -66,8 +68,9 @@ class ImlReplaceBySourceTest {
     val projectDir = temp.root.toVirtualFileUrl(virtualFileManager)
     val configLocation = JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
 
-    var builder = WorkspaceEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, TestErrorReporter, virtualFileManager)
+    var builder = MutableEntityStorage.create()
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, TestErrorReporter,
+                                        SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation)))
 
     moduleFile.writeText("""
       <module type="JAVA_MODULE" version="4">
@@ -84,14 +87,15 @@ class ImlReplaceBySourceTest {
       </module>
     """.trimIndent())
 
-    val replaceWith = WorkspaceEntityStorageBuilder.create()
-    val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
-    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, TestErrorReporter, virtualFileManager)
+    val replaceWith = MutableEntityStorage.create()
+    val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsProjectFileEntitySource.FileInDirectory
+    JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, replaceWith, replaceWith, TestErrorReporter,
+                                        SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation)))
 
-    val before = builder.toStorage()
+    val before = builder.toSnapshot()
 
     builder = before.toBuilder()
-    builder.replaceBySource({ true }, replaceWith.toStorage())
+    builder.replaceBySource({ true }, replaceWith.toSnapshot())
 
     val changes = builder.collectChanges(before).values.flatten()
     Assert.assertEquals(5, changes.size)
@@ -104,24 +108,27 @@ class ImlReplaceBySourceTest {
     @Suppress("USELESS_IS_CHECK")
     val sourceRootChange = changes.filterIsInstance<EntityChange.Added<SourceRootEntity>>().single { it.entity is SourceRootEntity }
     @Suppress("USELESS_IS_CHECK")
-    val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootEntity>>().single { it.entity is JavaSourceRootEntity }
+    val javaSourceRootChange = changes.filterIsInstance<EntityChange.Added<JavaSourceRootPropertiesEntity>>().single { it.entity is JavaSourceRootPropertiesEntity }
     Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl(virtualFileManager).url, sourceRootChange.entity.url.url)
     Assert.assertEquals(true, javaSourceRootChange.entity.generated)
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {
-    var storageBuilder1 = WorkspaceEntityStorageBuilder.create()
+    var storageBuilder1 = MutableEntityStorage.create()
     val data = com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject(projectFile.asConfigLocation(virtualFileManager),
-                                                                                  storageBuilder1, virtualFileManager)
+                                                                                  storageBuilder1, storageBuilder1, virtualFileManager)
 
-    val storageBuilder2 = WorkspaceEntityStorageBuilder.create()
-    val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager).baseDirectoryUrlString)
-    data.loadAll(reader, storageBuilder2, TestErrorReporter, null)
+    val storageBuilder2 = MutableEntityStorage.create()
+    val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
+    runBlocking {
+      val builder = MutableEntityStorage.create()
+      data.loadAll(reader, storageBuilder2, builder, builder, UnloadedModulesNameHolder.DUMMY, TestErrorReporter)
+    }
 
-    val before = storageBuilder1.toStorage()
+    val before = storageBuilder1.toSnapshot()
     storageBuilder1 = before.toBuilder()
     storageBuilder1.checkConsistency()
-    storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toStorage())
+    storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toSnapshot())
     storageBuilder1.checkConsistency()
 
     val changes = storageBuilder1.collectChanges(before)

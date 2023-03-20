@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class NoAccessDuringPsiEvents {
   private static final Logger LOG = Logger.getInstance(NoAccessDuringPsiEvents.class);
   private static final Set<String> ourReportedTraces = new HashSet<>();

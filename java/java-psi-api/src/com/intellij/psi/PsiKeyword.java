@@ -81,4 +81,5 @@ public interface PsiKeyword extends PsiJavaToken {
   @NlsSafe String SEALED = "sealed";
   @NlsSafe String PERMITS = "permits";
   @NlsSafe String NON_SEALED = "non-sealed";
+  @NlsSafe String WHEN = "when";
 }

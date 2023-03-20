@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -8,10 +8,9 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -25,12 +24,12 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   public boolean IGNORE_IN_SAME_OUTERMOST_CLASS = true;
@@ -48,8 +47,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
                                      boolean ignoreMethodsOfDeprecated,
                                      boolean ignoreInSameOutermostClass,
                                      @NotNull ProblemsHolder holder,
-                                     boolean forRemoval,
-                                     @NotNull ProblemHighlightType highlightType) {
+                                     boolean forRemoval) {
     if (PsiImplUtil.isDeprecated(element)) {
       if (forRemoval != isForRemovalAttributeSet(element)) {
         return;
@@ -60,7 +58,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
         PsiClass containingClass = element instanceof PsiMember ? ((PsiMember)element).getContainingClass() : null;
         if (containingClass != null) {
           checkDeprecated(containingClass, elementToHighlight, rangeInElement, ignoreInsideDeprecated, ignoreImportStatements,
-                          false, ignoreInSameOutermostClass, holder, forRemoval, highlightType);
+                          false, ignoreInSameOutermostClass, holder, forRemoval);
         }
       }
       return;
@@ -77,8 +75,8 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
 
     LocalQuickFix replacementQuickFix = getReplacementQuickFix(element, elementToHighlight);
 
-    holder.registerProblem(elementToHighlight, getDescription(description, forRemoval, highlightType), highlightType, rangeInElement,
-                           replacementQuickFix);
+    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement,
+                           LocalQuickFix.notNullElements(replacementQuickFix));
   }
 
   private static boolean isElementInsideImportStatement(@NotNull PsiElement elementToHighlight) {
@@ -96,18 +94,19 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   }
 
   @Nullable
-  private static LocalQuickFix getReplacementQuickFix(@NotNull PsiElement refElement, @NotNull PsiElement elementToHighlight) {
+  public static LocalQuickFix getReplacementQuickFix(@NotNull PsiModifierListOwner deprecatedElement, 
+                                                      @NotNull PsiElement elementToHighlight) {
     PsiMethodCallExpression methodCall = getMethodCall(elementToHighlight);
-    if (refElement instanceof PsiMethod && methodCall != null) {
-      PsiMethod replacement = findReplacementInJavaDoc((PsiMethod)refElement, methodCall);
+    if (deprecatedElement instanceof PsiMethod method && methodCall != null) {
+      PsiMethod replacement = findReplacementInJavaDoc(method, methodCall);
       if (replacement != null) {
         return new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
       }
     }
-    if (refElement instanceof PsiField) {
+    if (deprecatedElement instanceof PsiField field) {
       PsiReferenceExpression referenceExpression = getFieldReferenceExpression(elementToHighlight);
       if (referenceExpression != null) {
-        PsiField replacement = findReplacementInJavaDoc((PsiField)refElement, referenceExpression);
+        PsiMember replacement = findReplacementInJavaDoc(field, referenceExpression);
         if (replacement != null) {
           return new ReplaceFieldReferenceFix(referenceExpression, replacement);
         }
@@ -151,23 +150,17 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     return outermostClass != null && outermostClass == PsiUtil.getTopLevelClass(elementToHighlight);
   }
 
-  static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
-    panel.addCheckbox(JavaAnalysisBundle.message("ignore.in.the.same.outermost.class"), "IGNORE_IN_SAME_OUTERMOST_CLASS");
+  static OptCheckbox getSameOutermostClassCheckBox() {
+    return OptPane.checkbox("IGNORE_IN_SAME_OUTERMOST_CLASS", JavaAnalysisBundle.message("ignore.in.the.same.outermost.class"));
   }
 
-  protected static @InspectionMessage String getDescription(@NotNull @InspectionMessage String description, boolean forRemoval, ProblemHighlightType highlightType) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ProblemHighlightType defaultType = forRemoval ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL : ProblemHighlightType.LIKE_DEPRECATED;
-      if (highlightType != defaultType) {
-        return description + "(" + highlightType + ")";
-      }
-    }
-    return description;
-  }
-
-  private static PsiField findReplacementInJavaDoc(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
-    return getReplacementCandidatesFromJavadoc(field, PsiField.class, field, RefactoringChangeUtil.getQualifierClass(referenceExpression))
+  private static PsiMember findReplacementInJavaDoc(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
+    PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceExpression);
+    return getReplacementCandidatesFromJavadoc(field, PsiField.class, field, qualifierClass)
       .filter(tagField -> areReplaceable(tagField, referenceExpression))
+      .select(PsiMember.class)
+      .append(getReplacementCandidatesFromJavadoc(field, PsiMethod.class, field, qualifierClass)
+                .filter(tagMethod -> areReplaceable(tagMethod, referenceExpression)))
       .collect(MoreCollectors.onlyOne())
       .orElse(null);
   }
@@ -187,28 +180,26 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
   }
 
   @NotNull
-  private static <T extends PsiDocCommentOwner> Stream<? extends T> getReplacementCandidatesFromJavadoc(T member, Class<T> clazz, PsiElement context, PsiClass qualifierClass) {
+  private static <T extends PsiDocCommentOwner> StreamEx<? extends T> getReplacementCandidatesFromJavadoc(PsiDocCommentOwner member, Class<T> clazz, PsiElement context, PsiClass qualifierClass) {
     PsiDocComment doc = member.getDocComment();
-    if (doc == null) return Stream.empty();
+    if (doc == null) return StreamEx.empty();
 
     Collection<PsiDocTag> docTags = PsiTreeUtil.findChildrenOfType(doc, PsiDocTag.class);
-    if (docTags.isEmpty()) return Stream.empty();
-    return docTags
-      .stream()
+    if (docTags.isEmpty()) return StreamEx.empty();
+    return StreamEx.of(docTags)
       .filter(t -> {
         String name = t.getName();
         return "link".equals(name) || "see".equals(name);
       })
       .map(tag -> tag.getValueElement())
-      .filter(Objects::nonNull)
+      .nonNull()
       .map(value -> value.getReference())
-      .filter(Objects::nonNull)
+      .nonNull()
       .map(reference -> reference.resolve())
+      .select(clazz)
       .distinct()
-      .map(resolved -> ObjectUtils.tryCast(resolved, clazz))
-      .filter(Objects::nonNull)
       .filter(tagMethod -> !tagMethod.isDeprecated()) // not deprecated
-      .filter(tagMethod -> PsiResolveHelper.SERVICE.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
+      .filter(tagMethod -> PsiResolveHelper.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
       .filter(tagMethod -> !member.getManager().areElementsEquivalent(tagMethod, member)); // not the same
   }
 
@@ -218,6 +209,15 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     if (expectedType == null) return true;
     PsiType suggestedType = suggested.getType();
     return TypeConversionUtil.isAssignable(expectedType, suggestedType);
+  }
+
+  private static boolean areReplaceable(PsiMethod suggested, PsiReferenceExpression expression) {
+    if (!suggested.getParameterList().isEmpty()) return false;
+    if (ExpressionUtils.isVoidContext(expression)) return true;
+    PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
+    if (expectedType == null) return true;
+    PsiType suggestedType = suggested.getReturnType();
+    return suggestedType != null && TypeConversionUtil.isAssignable(expectedType, suggestedType);
   }
 
   private static boolean areReplaceable(@NotNull PsiMethod initial,
@@ -247,7 +247,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       .createExpressionFromText(qualifierText + suggestedReplacement.getName() + arguments.getText(), call);
 
     PsiType type = ExpectedTypeUtils.findExpectedType(call, true);
-    if (type != null && !type.equals(PsiType.VOID)) {
+    if (type != null && !type.equals(PsiTypes.voidType())) {
       PsiType suggestedCallType = suggestedCall.getType();
       if (!ExpressionUtils.isVoidContext(call) && suggestedCallType != null && !TypeConversionUtil.isAssignable(type, suggestedCallType)) {
         return false;

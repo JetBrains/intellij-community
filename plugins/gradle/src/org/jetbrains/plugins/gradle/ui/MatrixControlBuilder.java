@@ -26,8 +26,6 @@ import java.util.Arrays;
  * </pre>
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class MatrixControlBuilder {
   

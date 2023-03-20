@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -7,10 +7,7 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider;
-import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -27,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.FontUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,15 +40,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final AtomicBoolean ALT_IS_PRESSED = new AtomicBoolean(false);
 
   private static boolean ourDoubleCtrlRegistered;
-
-  private static class Holder {
-    private static final boolean IS_ACTION_ENABLED = ContainerUtil.exists(
-      RunAnythingProvider.EP_NAME.getExtensions(), provider ->
-        !(provider instanceof RunAnythingRunConfigurationProvider ||
-          provider instanceof RunAnythingRecentProjectProvider ||
-          provider instanceof RunAnythingRecentCommandProvider ||
-          provider instanceof RunAnythingCommandExecutionProvider));
-  }
 
   static class ShortcutTracker implements ActionConfigurationCustomizer {
     @Override
@@ -96,16 +83,18 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean isEnabled = Holder.IS_ACTION_ENABLED;
+    boolean isEnabled = !RunAnythingProvider.EP_NAME.getExtensionList().isEmpty();
     e.getPresentation().setEnabledAndVisible(isEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static void updateShortcut() {
     if (getActiveKeymapShortcuts(RUN_ANYTHING_ACTION_ID).getShortcuts().length == 0) {
-      if (!ourDoubleCtrlRegistered) {
-        ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
-        ourDoubleCtrlRegistered = true;
-      }
+      registerDblCtrlClick();
     }
     else {
       if (ourDoubleCtrlRegistered) {
@@ -115,12 +104,24 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
   }
 
+  private static void registerDblCtrlClick() {
+    if (!ourDoubleCtrlRegistered) {
+      ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
+      ourDoubleCtrlRegistered = true;
+    }
+  }
+
   private static void initShortcutTracker() {
     updateShortcut();
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
-        updateShortcut();
+        if (keymap == null) {
+          registerDblCtrlClick();
+        }
+        else {
+          updateShortcut();
+        }
       }
 
       @Override

@@ -1,0 +1,13 @@
+<idea-plugin>
+  <name>Monokai Color Scheme</name>
+  <id>com.intellij.plugins.monokai.colorscheme</id>
+  <vendor>JetBrains</vendor>
+  <category>UI</category>
+  <depends>com.intellij.modules.lang</depends>
+  <description>
+    Monokai editor color scheme for all IntelliJ-based IDEs.
+  </description>
+  <extensions defaultExtensionNs="com.intellij">
+    <bundledColorScheme path="/colorSchemes/monokai"/>
+  </extensions>
+</idea-plugin>

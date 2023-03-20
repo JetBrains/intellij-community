@@ -16,7 +16,6 @@ import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -85,7 +84,8 @@ public final class BuildProgress {
       expectedTotalTime += myExpectedBuildTimeForTarget.getLong(targetType) * totalAffectedTargets.getInt(targetType);
     }
     myExpectedTotalTime = Math.max(expectedTotalTime, 1);
-    myFreezeDetector = new FreezeDetector(SharedThreadPool.getInstance());
+    myFreezeDetector = new FreezeDetector();
+    myFreezeDetector.start();
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected total time is " + myExpectedTotalTime);
       for (BuildTargetType<?> type : targetTypes) {

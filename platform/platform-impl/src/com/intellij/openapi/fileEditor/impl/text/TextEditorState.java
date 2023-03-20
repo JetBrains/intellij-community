@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,9 +12,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class TextEditorState implements FileEditorState {
   @NotNull CaretState @NotNull [] CARETS = new CaretState[0];
 
@@ -65,11 +63,9 @@ public final class TextEditorState implements FileEditorState {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof TextEditorState)) {
+    if (!(o instanceof TextEditorState textEditorState)) {
       return false;
     }
-
-    final TextEditorState textEditorState = (TextEditorState)o;
 
     if (!Arrays.equals(CARETS, textEditorState.CARETS)) return false;
     if (RELATIVE_CARET_POSITION != textEditorState.RELATIVE_CARET_POSITION) return false;
@@ -85,12 +81,9 @@ public final class TextEditorState implements FileEditorState {
 
   @Override
   public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
-    if (!(otherState instanceof TextEditorState)) return false;
-    TextEditorState other = (TextEditorState)otherState;
+    if (!(otherState instanceof TextEditorState other)) return false;
     return level == FileEditorStateLevel.NAVIGATION &&
-           CARETS.length == 1 &&
-           other.CARETS.length == 1 &&
-           Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
+           ArrayUtil.areEqual(CARETS, other.CARETS, (a, b) -> Math.abs(a.LINE - b.LINE) < MIN_CHANGE_DISTANCE);
   }
 
   @Override
@@ -110,11 +103,9 @@ public final class TextEditorState implements FileEditorState {
 
     @Override
     public boolean equals(Object o) {
-      if (!(o instanceof CaretState)) {
+      if (!(o instanceof CaretState caretState)) {
         return false;
       }
-
-      final CaretState caretState = (CaretState)o;
 
       if (COLUMN != caretState.COLUMN) return false;
       if (LINE != caretState.LINE) return false;

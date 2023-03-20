@@ -1,6 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // CHECK_SUPER_METHODS_YES_NO_DIALOG: no
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "infix fun equals(Any?): Boolean"
 // FIND_BY_REF
 
 class A(val n: Int) {

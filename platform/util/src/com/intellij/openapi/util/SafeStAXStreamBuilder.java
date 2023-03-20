@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.codehaus.stax2.XMLStreamReader2;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.Namespace;
-import org.jdom.Verifier;
+import org.jdom.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +49,7 @@ public final class SafeStAXStreamBuilder {
           if (!Verifier.isAllXMLWhitespace(badTxt)) {
             throw new XMLStreamException("Unexpected XMLStream event at Document level: CHARACTERS (" + badTxt + ")");
           }
-          // otherwise ignore the chars.
+          // otherwise, ignore the chars
           break;
 
         default:
@@ -138,13 +135,13 @@ public final class SafeStAXStreamBuilder {
 
         case SPACE:
           if (!isIgnoreBoundaryWhitespace) {
-            current.addContent(factory.text(reader.getText(), current));
+            current.addContent(factory.text(reader.getText()));
           }
           break;
 
         case CHARACTERS:
           if (!isIgnoreBoundaryWhitespace || !reader.isWhiteSpace()) {
-            current.addContent(factory.text(reader.getText(), current));
+            current.addContent(factory.text(reader.getText()));
           }
           break;
 
@@ -168,12 +165,16 @@ public final class SafeStAXStreamBuilder {
                                                              ? Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI())
                                                              : Namespace.NO_NAMESPACE);
     // handle attributes
-    for (int i = 0, len = reader.getAttributeCount(); i < len; i++) {
-      element.setAttribute(factory.attribute(
-        reader.getAttributeLocalName(i),
-        reader.getAttributeValue(i),
-        isNsSupported ? Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) : Namespace.NO_NAMESPACE
-      ));
+    int attributeCount = reader.getAttributeCount();
+    if (attributeCount != 0) {
+      AttributeList list = element.initAttributeList(attributeCount);
+      for (int i = 0; i < attributeCount; i++) {
+        list.doAdd(factory.attribute(
+          reader.getAttributeLocalName(i),
+          reader.getAttributeValue(i),
+          isNsSupported ? Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) : Namespace.NO_NAMESPACE
+        ));
+      }
     }
 
     if (isNsSupported) {

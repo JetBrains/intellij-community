@@ -15,6 +15,7 @@ public interface MethodBreakpointBase extends FilteredRequestor {
   XBreakpoint<JavaMethodBreakpointProperties> getXBreakpoint();
 
   boolean isWatchEntry();
+
   boolean isWatchExit();
 
   StreamEx<Method> matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess);

@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -25,23 +26,22 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.add.target.ValidationRequest
+import com.jetbrains.python.sdk.add.target.validateEmptyDir
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import icons.PythonIcons
 import java.awt.Component
-import java.io.File
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-/**
- * @author vlan
- */
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
     get() = mapOf(OK.enabled())
@@ -77,17 +77,16 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   companion object {
     @JvmStatic
-    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
-      val text = field.text
-      val file = File(text)
-      val message = when {
-        StringUtil.isEmptyOrSpaces(text) -> PySdkBundle.message("python.venv.location.field.empty")
-        file.exists() && !file.isDirectory -> PySdkBundle.message("python.venv.location.field.not.directory")
-        file.isNotEmptyDirectory -> PySdkBundle.message("python.venv.location.directory.not.empty")
-        else -> return null
-      }
-      return ValidationInfo(message, field)
-    }
+    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton, pathInfoProvider: TargetConfigurationReadableFs? = null): ValidationInfo? =
+      validateEmptyDir(
+        ValidationRequest(
+          path = field.text,
+          fieldIsEmpty = PySdkBundle.message("python.venv.location.field.empty"),
+          pathInfoProvider = pathInfoProvider
+        ),
+        notADirectory = PySdkBundle.message("python.venv.location.field.not.directory"),
+        directoryNotEmpty = PySdkBundle.message("python.venv.location.directory.not.empty")
+      )
 
     /** Should be protected. Please, don't use outside the class. KT-48508 */
     @JvmStatic
@@ -103,6 +102,9 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
         is PySdkToInstall -> {
           val message = sdk.getInstallationWarning(defaultButtonName)
           ValidationInfo(message).asWarning().withOKEnabled()
+        }
+        is PyDetectedSdk -> {
+          if (SystemInfo.isMac) MacPythonSdkFlavor.checkDetectedPython(sdk) else null
         }
         else -> null
       }

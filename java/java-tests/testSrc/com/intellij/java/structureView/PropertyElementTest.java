@@ -25,38 +25,41 @@ import static org.junit.Assert.assertArrayEquals;
 
 public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
   @Language("JAVA")
-  public static final String INTERFACE = "interface Interface {" + "\n" +
-                                         " void setII(int ii);" + "\n" +
-                                         " int getII();" + "\n" +
-                                         " void setI(int i);" + "\n" +
-                                         " int getI();" + "\n" +
-                                         "}";
+  public static final String INTERFACE = """
+    interface Interface {
+     void setII(int ii);
+     int getII();
+     void setI(int i);
+     int getI();
+    }""";
 
   @Language("JAVA")
-  public static final String BASE = "class Base {" + "\n" +
-                                    " public void setO(int o) {}" + "\n" +
-                                    " public int getO() {return 0;}" + "\n" +
-                                    " public void setB(int b) {}" + "\n" +
-                                    " public int getB() {return 0;}" + "\n" +
-                                    "}";
+  public static final String BASE = """
+    class Base {
+     public void setO(int o) {}
+     public int getO() {return 0;}
+     public void setB(int b) {}
+     public int getB() {return 0;}
+    }""";
 
   @Language("JAVA")
-  public static final String SAMPLE = "abstract class Sample extends Base implements Interface {" + "\n" +
-                                      " public void setII(int ii) {}" + "\n" +
-                                      " public int getII() {return 0;}" + "\n" +
-                                      " public void setO(int o) {}" + "\n" +
-                                      " public int getO() {return 0;}" + "\n" +
-                                      " protected void setRW(int x) {}" + "\n" +
-                                      " public int getRW() {return 0;}" + "\n" +
-                                      " public void setW(int w) {}" + "\n" +
-                                      " public int getR() {return 0;}" + "\n" +
-                                      " protected static void setSRW(int i) {}" + "\n" +
-                                      " private static int getSRW() {return 0;}" + "\n" +
-                                      " public static void setSW(int sw) {}" + "\n" +
-                                      " public static int getSR() {return 0;}" + "\n" +
-                                      " private int RW;" + "\n" +
-                                      " private static int SRW;" + "\n" +
-                                      "}";
+  public static final String SAMPLE = """
+    abstract class Sample extends Base implements Interface {
+     public void setII(int ii) {}
+     public int getII() {return 0;}
+     public void setO(int o) {}
+     public int getO() {return 0;}
+     protected void setRW(int x) {}
+     public int getRW() {return 0;}
+     public void setW(int w) {}
+     public int getR() {return 0;}
+     protected static void setSRW(int i) {}
+     private static int getSRW() {return 0;}
+     public static void setSW(int sw) {}
+     public static int getSR() {return 0;}
+     private int RW;
+     private static int SRW;
+    }""";
   @Language("JAVA")
   public static final String NOT_STATIC_GETTERS = "class A {" +
                                                   " private static int aaa;" +
@@ -81,16 +84,17 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
       component.setActionActive(Sorter.ALPHA_SORTER_ID, true);
 
       PlatformTestUtil.assertTreeEqual(component.getTree(),
-                                       "-Sample.java\n" +
-                                       " -Sample\n" +
-                                       "  +II: int\n" +
-                                       "  +o: int\n" +
-                                       "  +r: int\n" +
-                                       "  +RW: int\n" +
-                                       "  +SR: int\n" +
-                                       "  +SRW: int\n" +
-                                       "  +SW: int\n" +
-                                       "  +w: int");
+                                       """
+                                         -Sample.java
+                                          -Sample
+                                           +II: int
+                                           +o: int
+                                           +r: int
+                                           +RW: int
+                                           +SR: int
+                                           +SRW: int
+                                           +SW: int
+                                           +w: int""");
 
       List<PropertyGroup> properties = getFeatures(component);
 
@@ -129,30 +133,31 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
       JTree tree = component.getTree();
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree,
-                                       "-Sample.java\n" +
-                                       " -Sample\n" +
-                                       "  -II: int\n" +
-                                       "   getII(): int\n" +
-                                       "   setII(int): void\n" +
-                                       "  -o: int\n" +
-                                       "   getO(): int\n" +
-                                       "   setO(int): void\n" +
-                                       "  -r: int\n" +
-                                       "   getR(): int\n" +
-                                       "  -RW: int\n" +
-                                       "   getRW(): int\n" +
-                                       "   setRW(int): void\n" +
-                                       "   RW: int\n" +
-                                       "  -SR: int\n" +
-                                       "   getSR(): int\n" +
-                                       "  -SRW: int\n" +
-                                       "   getSRW(): int\n" +
-                                       "   setSRW(int): void\n" +
-                                       "   SRW: int\n" +
-                                       "  -SW: int\n" +
-                                       "   setSW(int): void\n" +
-                                       "  -w: int\n" +
-                                       "   setW(int): void");
+                                       """
+                                         -Sample.java
+                                          -Sample
+                                           -II: int
+                                            getII(): int
+                                            setII(int): void
+                                           -o: int
+                                            getO(): int
+                                            setO(int): void
+                                           -r: int
+                                            getR(): int
+                                           -RW: int
+                                            getRW(): int
+                                            setRW(int): void
+                                            RW: int
+                                           -SR: int
+                                            getSR(): int
+                                           -SRW: int
+                                            getSRW(): int
+                                            setSRW(int): void
+                                            SRW: int
+                                           -SW: int
+                                            setSW(int): void
+                                           -w: int
+                                            setW(int): void""");
     });
   }
 
@@ -163,11 +168,12 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
       component.setActionActive(FieldsFilter.ID, false);
       component.setActionActive(PropertiesGrouper.ID, true);
       PlatformTestUtil.assertTreeEqual(component.getTree(),
-                                       "-Derived.java\n" +
-                                       " -Base\n" +
-                                       "  x: int\n" +
-                                       " -Derived\n" +
-                                       "  +x: int");
+                                       """
+                                         -Derived.java
+                                          -Base
+                                           x: int
+                                          -Derived
+                                           +x: int""");
     });
   }
 
@@ -183,12 +189,13 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
       JTree tree = component.getTree();
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree,
-                                       "-A.java\n" +
-                                       " -A\n" +
-                                       "  -aaa: int\n" +
-                                       "   getAaa(): int\n" +
-                                       "   setAaa(int): void\n" +
-                                       "   aaa: int");
+                                       """
+                                         -A.java
+                                          -A
+                                           -aaa: int
+                                            getAaa(): int
+                                            setAaa(int): void
+                                            aaa: int""");
     });
   }
 

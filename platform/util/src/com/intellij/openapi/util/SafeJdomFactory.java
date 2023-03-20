@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jdom.*;
@@ -8,22 +8,17 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public interface SafeJdomFactory {
-  @NotNull
-  Element element(@NotNull String name, @Nullable Namespace namespace);
+  @NotNull Element element(@NotNull String name, @Nullable Namespace namespace);
 
-  @NotNull
-  Attribute attribute(@NotNull String name, @NotNull String value, @Nullable Namespace namespace);
+  @NotNull Attribute attribute(@NotNull String name, @NotNull String value, @Nullable Namespace namespace);
 
-  @NotNull
-  Text text(@NotNull String text, @NotNull Element parentElement);
+  @NotNull Text text(@NotNull String text);
 
-  @NotNull
-  CDATA cdata(@NotNull String text);
+  @NotNull CDATA cdata(@NotNull String text);
 
-  class BaseSafeJdomFactory implements SafeJdomFactory {
-    @NotNull
+  final class BaseSafeJdomFactory implements SafeJdomFactory {
     @Override
-    public Element element(@NotNull String name, @Nullable Namespace namespace) {
+    public @NotNull Element element(@NotNull String name, @Nullable Namespace namespace) {
       Element element = new Element(name, namespace);
       if (namespace != null) {
         element.setNamespace(namespace);
@@ -31,21 +26,18 @@ public interface SafeJdomFactory {
       return element;
     }
 
-    @NotNull
     @Override
-    public Attribute attribute(@NotNull String name, @NotNull String value, @Nullable Namespace namespace) {
+    public @NotNull Attribute attribute(@NotNull String name, @NotNull String value, @Nullable Namespace namespace) {
       return new Attribute(name, value, AttributeType.UNDECLARED, namespace);
     }
 
-    @NotNull
     @Override
-    public Text text(@NotNull String text, @NotNull Element parentElement) {
+    public @NotNull Text text(@NotNull String text) {
       return new Text(text);
     }
 
-    @NotNull
     @Override
-    public CDATA cdata(@NotNull String text) {
+    public @NotNull CDATA cdata(@NotNull String text) {
       return new CDATA(text);
     }
   }

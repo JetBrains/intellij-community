@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// PROBLEM: "Redundant lambda arrow"
 
 fun println(s: String) {}
 

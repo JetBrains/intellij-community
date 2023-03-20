@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -10,10 +10,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -43,7 +43,7 @@ class ChangeFunctionLiteralSignatureFix private constructor(
                         val validator = CollectingNameValidator()
                         descriptor.clearNonReceiverParameters()
                         for (type in parameterTypes) {
-                            val name = KotlinNameSuggester.suggestNamesByType(type, validator, "param")[0]
+                            val name = Fe10KotlinNameSuggester.suggestNamesByType(type, validator, "param")[0]
                             descriptor.addParameter(KotlinParameterInfo(functionDescriptor, -1, name, KotlinTypeInfo(false, type)))
                         }
                     }
@@ -71,7 +71,7 @@ class ChangeFunctionLiteralSignatureFix private constructor(
             return Data(descriptor, parameterTypes)
         }
 
-        override fun createFix(originalElement: KtFunctionLiteral, data: Data): IntentionAction? =
+        override fun createFix(originalElement: KtFunctionLiteral, data: Data): IntentionAction =
             ChangeFunctionLiteralSignatureFix(originalElement, data.descriptor, data.parameterTypes)
     }
 }

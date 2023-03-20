@@ -24,7 +24,7 @@ def do_list_available_packages():
     major_version = int(version_splitted[0])
     minor_version = int(version_splitted[1])
 
-    if major_version >= 4 and minor_version >= 4:
+    if major_version >= 22 or (major_version >= 4 and minor_version >= 4):
         init_context()
         from conda.core.index import get_index
         index = get_index()

@@ -1,4 +1,4 @@
-// "Create constructor" "true"
+// "Create constructor" "true-preview"
 class MyTest {
     <T> T id(T t) {
         return t;

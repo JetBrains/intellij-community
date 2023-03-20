@@ -1,12 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -14,6 +18,7 @@ import java.util.Set;
  */
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
+  public static final String NEW_PROJECT_WIZARD = "NewProjectWizard";
   public static final String TOOLBAR = "toolbar";
   public static final String POPUP = "popup";
 
@@ -31,6 +36,7 @@ public abstract class ActionPlaces {
   public static final String TABS_MORE_TOOLBAR = "TabsMoreToolbar";
   public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
   public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
+  public static final String EDITOR_ANNOTATIONS_AREA_POPUP = "EditorAnnotationsAreaPopup";
   public static final String EDITOR_INLAY = "EditorInlay";
   public static final String RIGHT_EDITOR_GUTTER_POPUP = "RightEditorGutterPopup";
   public static final String COMMANDER_POPUP = "CommanderPopup";
@@ -40,13 +46,18 @@ public abstract class ActionPlaces {
   public static final String TOOLWINDOW_TITLE = "ToolwindowTitle";
   public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
   public static final String EDITOR_INSPECTIONS_TOOLBAR = "EditorInspectionsToolbar";
+  public static final String EDITOR_HINT = "EditorHint";
   public static final String LEARN_TOOLWINDOW = "LearnToolwindow";
   public static final String TOOLWINDOW_GRADLE = "Gradle tool window";
+  public static final String NEW_UI_RUN_TOOLBAR = "NewUiRunToolbar";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
 
+  /** @deprecated replaced by {@link #BOOKMARKS_VIEW_POPUP} */
+  @Deprecated(forRemoval = true)
   public static final String FAVORITES_VIEW_POPUP = "FavoritesPopup";
+  public static final String BOOKMARKS_VIEW_POPUP = "BookmarksPopup";
 
   public static final String STATUS_BAR_PLACE = "StatusBarPlace";
 
@@ -55,7 +66,6 @@ public abstract class ActionPlaces {
 
   public static final String TESTTREE_VIEW_POPUP = "TestTreeViewPopup";
   public static final String TESTTREE_VIEW_TOOLBAR = "TestTreeViewToolbar";
-  private static final String TESTSTATISTICS_VIEW_POPUP = "TestStatisticsViewPopup";
 
   public static final String TYPE_HIERARCHY_VIEW_POPUP = "TypeHierarchyViewPopup";
   public static final String TYPE_HIERARCHY_VIEW_TOOLBAR = "TypeHierarchyViewToolbar";
@@ -63,11 +73,13 @@ public abstract class ActionPlaces {
   public static final String METHOD_HIERARCHY_VIEW_TOOLBAR = "MethodHierarchyViewToolbar";
   public static final String CALL_HIERARCHY_VIEW_POPUP = "CallHierarchyViewPopup";
   public static final String CALL_HIERARCHY_VIEW_TOOLBAR = "CallHierarchyViewToolbar";
+  public static final String SIMILAR_USAGES_PREVIEW_TOOLBAR = "SimilarUsagesPreviewToolbar";
   public static final String J2EE_ATTRIBUTES_VIEW_POPUP = "J2EEAttributesViewPopup";
   public static final String J2EE_VIEW_POPUP = "J2EEViewPopup";
   public static final String RUNNER_TOOLBAR = "RunnerToolbar";
   public static final String RUNNER_LAYOUT_BUTTON_TOOLBAR = "RunnerLayoutButtonToolbar";
   public static final String DEBUGGER_TOOLBAR = "DebuggerToolbar";
+  public static final String ATTACH_DIALOG_TOOLBAR = "AttachDialogToolbar";
   public static final String USAGE_VIEW_POPUP = "UsageViewPopup";
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
   public static final String SHOW_USAGES_POPUP_TOOLBAR = "ShowUsagesPopupToolbar";
@@ -80,6 +92,8 @@ public abstract class ActionPlaces {
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
   public static final String TODO_VIEW_TOOLBAR = "TodoViewToolbar";
+
+  public static final String COPY_REFERENCE_POPUP = "CopyReferencePopup";
 
   public static final String COMPILER_MESSAGES_POPUP = "CompilerMessagesPopup";
   public static final String COMPILER_MESSAGES_TOOLBAR = "CompilerMessagesToolbar";
@@ -107,8 +121,8 @@ public abstract class ActionPlaces {
 
   public static final String RUN_ANYTHING_POPUP = "RunAnythingPopup";
 
-  public static final String CREATE_EJB_POPUP = "CreateEjbPopup";
   public static final String WELCOME_SCREEN = "WelcomeScreen";
+  public static final String WELCOME_SCREEN_QUICK_PANEL = "WelcomeScreen.QuickPanel";
 
   public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
   public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";
@@ -131,6 +145,7 @@ public abstract class ActionPlaces {
   public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL = "ComposerEditorNotificationPanel";
   public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA = "ComposerEditorNotificationPanel.ExtraActions";
   public static final String COMPOSER_LOG_RERUN = "ComposerLogRerun";
+  public static final String PHP_TEST_RUN_CONFIGURATION = "PhpTestRunConfiguration";
 
   public static final String DIFF_TOOLBAR = "DiffToolbar";
   public static final String DIFF_RIGHT_TOOLBAR = "DiffRightToolbar";
@@ -163,12 +178,17 @@ public abstract class ActionPlaces {
 
   public static final String SETTINGS_HISTORY = "SettingsHistory";
 
+  public static final String PROJECT_WIDGET_POPUP = "ProjectWidgetPopup";
+
   // Vcs Log
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
   public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
   public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
   public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "Vcs.Log.Toolbar.Popup";
+  public static final String VCS_LOG_BRANCHES_PLACE = "Vcs.Log.Branches.Tree";
+
+  public static final String VCS_TOOLBAR_WIDGET = "Vcs.Toolbar.Widget";
 
   public static final String CHANGES_VIEW_EMPTY_STATE = "ChangesView.EmptyState";
   public static final String COMMIT_VIEW_EMPTY_STATE = "CommitView.EmptyState";
@@ -182,45 +202,45 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
   public static boolean isMainMenuOrActionSearch(String place) {
-    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place);
+    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
+           place != null && place.startsWith(POPUP_PREFIX) && isMainMenuOrActionSearch(place.substring(POPUP_PREFIX.length()));
   }
 
   public static boolean isShortcutPlace(String place) {
     return KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
   }
 
-  private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
-    UNKNOWN, KEYBOARD_SHORTCUT, MOUSE_SHORTCUT, FORCE_TOUCH,
-    TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, TABS_MORE_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
-    LEARN_TOOLWINDOW, PROJECT_VIEW_TOOLBAR, STATUS_BAR_PLACE, ACTION_SEARCH, TESTTREE_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR,
-    METHOD_HIERARCHY_VIEW_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, RUNNER_TOOLBAR, DEBUGGER_TOOLBAR, USAGE_VIEW_TOOLBAR,
-    SHOW_USAGES_POPUP_TOOLBAR,
-    STRUCTURE_VIEW_TOOLBAR, NAVIGATION_BAR_TOOLBAR, TODO_VIEW_TOOLBAR, COMPILER_MESSAGES_TOOLBAR,
-    ANT_MESSAGES_TOOLBAR, ANT_EXPLORER_TOOLBAR, CODE_INSPECTION, JAVADOC_TOOLBAR, JAVADOC_INPLACE_SETTINGS,
-    FILEHISTORY_VIEW_TOOLBAR, RUN_CONFIGURATIONS_COMBOBOX, WELCOME_SCREEN, CHANGES_VIEW_TOOLBAR, DATABASE_VIEW_TOOLBAR,
-    PHING_EXPLORER_TOOLBAR, DOCK_MENU, PHING_MESSAGES_TOOLBAR, DIFF_TOOLBAR,
-    ANALYZE_STACKTRACE_PANEL_TOOLBAR, TOUCHBAR_GENERAL, COMPOSER_EDITOR_NOTIFICATION_PANEL, COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA,
-    COMPOSER_LOG_RERUN, EDITOR_GUTTER, EDITOR_INLAY, TOOLWINDOW_CONTENT, SERVICES_TOOLBAR, REFACTORING_QUICKLIST, INTENTION_MENU,
-    TEXT_EDITOR_WITH_PREVIEW, NOTIFICATION, FILE_STRUCTURE_POPUP,
-    RIDER_UNIT_TESTS_LEFT_TOOLBAR, RIDER_UNIT_TESTS_TOP_TOOLBAR, RIDER_UNIT_TESTS_SESSION_POPUP, RIDER_UNIT_TESTS_EXPLORER_POPUP,
-    RIDER_UNIT_TESTS_PROGRESSBAR_POPUP, RIDER_UNIT_TESTS_QUICKLIST, RUN_TOOLBAR_LEFT_SIDE,
-    QUICK_SWITCH_SCHEME_POPUP, RUN_CONFIGURATION_EDITOR, TOOLWINDOW_GRADLE, SETTINGS_HISTORY,
-    VCS_LOG_TOOLBAR_PLACE, VCS_HISTORY_TOOLBAR_PLACE, CHANGES_VIEW_EMPTY_STATE, COMMIT_VIEW_EMPTY_STATE
-  );
+  public static boolean isMainToolbar(String place) {
+    return MAIN_TOOLBAR.equals(place);
+  }
+
+  private static final Set<String> ourCommonPlaces;
+  static {
+    Set<String> set = new HashSet<>();
+    for (Field field : ActionPlaces.class.getDeclaredFields()) {
+      if (!Modifier.isStatic(field.getModifiers()) || !Modifier.isPublic(field.getModifiers())) continue;
+      Object value = ReflectionUtil.getFieldValue(field, null);
+      if (value instanceof String) set.add((String)value);
+    }
+    ourCommonPlaces = set;
+  }
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
     POPUP, EDITOR_POPUP, EDITOR_TAB_POPUP, QUICK_SWITCH_SCHEME_POPUP, COMMANDER_POPUP, INTENTION_MENU,
-    PROJECT_VIEW_POPUP, FAVORITES_VIEW_POPUP, SCOPE_VIEW_POPUP, TESTTREE_VIEW_POPUP, TESTSTATISTICS_VIEW_POPUP, TYPE_HIERARCHY_VIEW_POPUP,
+    PROJECT_VIEW_POPUP, BOOKMARKS_VIEW_POPUP, SCOPE_VIEW_POPUP, TESTTREE_VIEW_POPUP, TYPE_HIERARCHY_VIEW_POPUP,
     METHOD_HIERARCHY_VIEW_POPUP, CALL_HIERARCHY_VIEW_POPUP, J2EE_ATTRIBUTES_VIEW_POPUP, J2EE_VIEW_POPUP, USAGE_VIEW_POPUP,
-    STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
+    STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, COPY_REFERENCE_POPUP,
+    ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
     GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, TOOLWINDOW_POPUP, WELCOME_SCREEN,
     ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ACTION_PLACE_QUICK_LIST_POPUP_ACTION, REFACTORING_QUICKLIST,
-    CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
+    CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP,
+    EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
-    VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE
+    VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
+    PROJECT_WIDGET_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
@@ -230,7 +250,8 @@ public abstract class ActionPlaces {
   }
 
   public static boolean isCommonPlace(@NotNull String place) {
-    return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place);
+    return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place) ||
+           place.startsWith(POPUP_PREFIX) && isCommonPlace(place.substring(POPUP_PREFIX.length()));
   }
 
   public static @NotNull String getActionGroupPopupPlace(@Nullable String actionId) {

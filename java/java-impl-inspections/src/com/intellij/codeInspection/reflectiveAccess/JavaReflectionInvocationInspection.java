@@ -1,14 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +22,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final String JAVA_LANG_REFLECT_METHOD = "java.lang.reflect.Method";
@@ -35,7 +34,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
         super.visitMethodCallExpression(methodCall);
 
         if (isCallToMethod(methodCall, JAVA_LANG_REFLECT_METHOD, INVOKE)) {
@@ -88,7 +87,13 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
           if (requiredType != null) {
             final PsiExpression argument = actualArguments.expressions[i];
             if (argument != null) {
-              final PsiType actualType = argument.getType();
+              PsiType actualType = argument.getType();
+              if (TypeUtils.isJavaLangObject(actualType) && !requiredType.isAssignableFrom(actualType) &&
+                  PsiPolyExpressionUtil.isPolyExpression(argument)) {
+                // We make a copy here to avoid surrounding call affecting the inferred type,
+                // as sometimes in complex expressions it causes the final type to be inferred to Object
+                actualType = ((PsiExpression)argument.copy()).getType();
+              }
               if (actualType != null && !requiredType.isAssignableFrom(actualType)) {
                 if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
                   // either varargs or in-place arguments array
@@ -118,11 +123,8 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
                                                                 int argumentOffset,
                                                                 @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
     final PsiExpression definition = findDefinition(PsiUtil.skipParenthesizedExprDown(qualifier));
-    if (definition instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression definitionCall = (PsiMethodCallExpression)definition;
-      if (methodPredicate.test(definitionCall)) {
-        return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
-      }
+    if (definition instanceof PsiMethodCallExpression definitionCall && methodPredicate.test(definitionCall)) {
+      return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
     }
     return null;
   }
@@ -151,8 +153,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
 
   @Nullable
   private static PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
-    if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCast = (PsiTypeCastExpression)expression;
+    if (expression instanceof PsiTypeCastExpression typeCast) {
       final PsiTypeElement castElement = typeCast.getCastType();
       if (castElement != null && castElement.getType().equalsToText(JAVA_LANG_OBJECT)) {
         return typeCast.getOperand();
@@ -161,13 +162,6 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  static class Arguments {
-    final PsiExpression[] expressions;
-    final boolean varargAsArray;
-
-    Arguments(PsiExpression[] expressions, boolean varargAsArray) {
-      this.expressions = expressions;
-      this.varargAsArray = varargAsArray;
-    }
+  record Arguments(PsiExpression[] expressions, boolean varargAsArray) {
   }
 }

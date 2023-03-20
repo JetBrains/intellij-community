@@ -25,9 +25,6 @@ import java.lang.ref.WeakReference;
 import java.util.EventObject;
 import java.util.List;
 
-/**
- * @author spleaner
- */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
   private final TableCellState myCellState = new TableCellState();
   private final T[] myValues;

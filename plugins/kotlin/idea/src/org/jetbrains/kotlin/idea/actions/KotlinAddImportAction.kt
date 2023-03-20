@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions
 
@@ -8,45 +8,48 @@ import com.intellij.codeInsight.daemon.impl.actions.AddImportAction
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.WeighingService
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.PsiProximityComparator
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
-import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.name.parentOrNull
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.ImportPath
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -59,15 +62,11 @@ internal fun createSingleImportAction(
     fqNames: Collection<FqName>
 ): KotlinAddImportAction {
     val file = element.containingKtFile
-    val prioritizer = Prioritizer(file)
+    val prioritizer = Prioritizer(file, element)
     val variants = fqNames.asSequence().mapNotNull { fqName ->
         val sameFqNameDescriptors = file.resolveImportReference(fqName)
-        val priority = sameFqNameDescriptors.minOfOrNull {
-            prioritizer.priority(it, file.languageVersionSettings)
-        } ?: return@mapNotNull null
-
-        VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
-    }
+        createVariantWithPriority(fqName, sameFqNameDescriptors, file, prioritizer, project)
+    }.sortedWith(compareBy({ it.priority }, { it.variant.hint }))
 
     return KotlinAddImportAction(project, editor, element, variants)
 }
@@ -84,15 +83,24 @@ internal fun createSingleImportActionForConstructor(
         val sameFqNameDescriptors = file.resolveImportReference(fqName.parent())
             .filterIsInstance<ClassDescriptor>()
             .flatMap { it.constructors }
-
-        val priority = sameFqNameDescriptors.minOfOrNull {
-            prioritizer.priority(it, file.languageVersionSettings)
-        } ?: return@mapNotNull null
-
-        VariantWithPriority(SingleImportVariant(fqName, sameFqNameDescriptors, project), priority)
+        createVariantWithPriority(fqName, sameFqNameDescriptors, file, prioritizer, project)
     }
 
     return KotlinAddImportAction(project, editor, element, variants)
+}
+
+private fun createVariantWithPriority(
+    fqName: FqName,
+    sameFqNameDescriptors: Collection<DeclarationDescriptor>,
+    file: KtFile,
+    prioritizer: Prioritizer,
+    project: Project
+): VariantWithPriority? {
+    val descriptorsWithPriority =
+        sameFqNameDescriptors.map { it to prioritizer.priority(it, file.languageVersionSettings) }.sortedBy { it.second }
+    val priority = descriptorsWithPriority.firstOrNull()?.second ?: return null
+
+    return VariantWithPriority(SingleImportVariant(fqName, descriptorsWithPriority.map { it.first }, project), priority)
 }
 
 internal fun createGroupedImportsAction(
@@ -135,11 +143,18 @@ class KotlinAddImportAction internal constructor(
     private fun variantsList(): List<AutoImportVariant> {
         if (singleImportVariant != null && !isUnitTestMode()) return listOf(singleImportVariant!!)
 
-        return project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
+        val variantsList = {
             runReadAction {
                 variants.sortedBy { it.priority }.map { it.variant }.toList()
             }
-        }.orEmpty()
+        }
+        return if (isUnitTestMode()) {
+            variantsList()
+        } else {
+            project.runSynchronouslyWithProgress(KotlinBundle.message("import.progress.text.resolve.imports"), true) {
+                variantsList()
+            }.orEmpty()
+        }
     }
 
     fun showHint(): Boolean {
@@ -160,21 +175,13 @@ class KotlinAddImportAction internal constructor(
         return true
     }
 
-    fun isUnambiguous(): Boolean {
-        singleImportVariant = variants.singleOrNull()?.variant?.takeIf { variant ->
-            variant.descriptorsToImport.all { it is ClassDescriptor } ||
-                    variant.descriptorsToImport.all { it is FunctionDescriptor } ||
-                    variant.descriptorsToImport.all { it is PropertyDescriptor }
-        }
-
-        return singleImportVariant != null
-    }
-
     override fun execute(): Boolean {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         if (!element.isValid) return false
 
         val variantsList = variantsList()
+        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList.map { it.descriptorsToImport.toList() })
+
         if (variantsList.isEmpty()) return false
 
         if (variantsList.size == 1 || isUnitTestMode()) {
@@ -271,10 +278,11 @@ class KotlinAddImportAction internal constructor(
                             }
                         }
 
-                        importableFqName?.let {
-                            element.mainReference.bindToFqName(
-                                it,
-                                KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                        if (importableFqName != null) {
+                            underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(
+                                project,
+                                progressTitle = KotlinBundle.message("add.import.for.0", importableFqName.asString()),
+                                computable = { element.mainReference.bindToFqName(importableFqName, ShorteningMode.FORCED_SHORTENING) }
                             )
                         }
                     }
@@ -290,10 +298,18 @@ internal interface ComparablePriority : Comparable<ComparablePriority>
 
 internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
 
-private class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
-    private val classifier = ImportableFqNameClassifier(file)
+
+internal class Prioritizer(
+    private val file: KtFile,
+    element: PsiElement? = null,
+    private val compareNames: Boolean = true
+) {
+    private val classifier = ImportableFqNameClassifier(file) {
+        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
+    }
     private val statsManager = StatisticsManager.getInstance()
     private val proximityLocation = ProximityLocation(file, file.module)
+    private val expressionWeigher = ExpressionWeigher.createWeigher(element)
 
     inner class Priority(descriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) : ComparablePriority {
         private val isDeprecated = isDeprecatedAtCallSite(descriptor) { languageVersionSettings }
@@ -302,6 +318,7 @@ private class Prioritizer(private val file: KtFile, private val compareNames: Bo
         private val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(file.project, descriptor)
         private val lastUseRecency = statsManager.getLastUseRecency(KotlinStatisticsInfo.forDescriptor(descriptor))
         private val proximityWeight = WeighingService.weigh(PsiProximityComparator.WEIGHER_KEY, declaration, proximityLocation)
+        private val callExpressionWeigh = expressionWeigher.weigh(descriptor)
 
         override fun compareTo(other: ComparablePriority): Int {
             other as Priority
@@ -310,20 +327,27 @@ private class Prioritizer(private val file: KtFile, private val compareNames: Bo
                 return if (isDeprecated) +1 else -1
             }
 
-            val c1 = classification.compareTo(other.classification)
-            if (c1 != 0) return c1
-
-            val c2 = lastUseRecency.compareTo(other.lastUseRecency)
-            if (c2 != 0) return c2
-
-            val c3 = proximityWeight.compareTo(other.proximityWeight)
-            if (c3 != 0) return -c3 // n.b. reversed
-
-            if (compareNames) {
-                return fqName.asString().compareTo(other.fqName.asString())
+            val c1 = callExpressionWeigh.compareTo(other.callExpressionWeigh)
+            if (c1 != 0) {
+                // callExpressionWeigh is non-negative number
+                // Comparator contract says that if `a.compareTo(b)` returns -1 then `a` appears earlier than `b`
+                return -c1
             }
 
-            return 0
+            val c2 = classification.compareTo(other.classification)
+            if (c2 != 0) return c2
+
+            val c3 = lastUseRecency.compareTo(other.lastUseRecency)
+            if (c3 != 0) return c3
+
+            val c4 = proximityWeight.compareTo(other.proximityWeight)
+            if (c4 != 0) return -c4 // n.b. reversed
+
+            return if (compareNames) {
+                fqName.asString().compareTo(other.fqName.asString())
+            } else {
+                0
+            }
         }
     }
 
@@ -334,7 +358,7 @@ private class Prioritizer(private val file: KtFile, private val compareNames: Bo
 }
 
 private class DescriptorGroupPrioritizer(file: KtFile) {
-    private val prioritizer = Prioritizer(file, false)
+    private val prioritizer = Prioritizer(file, compareNames = false)
 
     inner class Priority(
         val descriptors: List<DeclarationDescriptor>,
@@ -394,4 +418,21 @@ private class SingleImportVariant(
     project = project,
 ) {
     override val hint: String get() = excludeFqNameCheck.asString()
+}
+
+/** Test hooks allowing inspection of data used for KotlinAddImportAction. **/
+object KotlinAddImportActionInfo {
+    interface ExecuteListener {
+        fun onExecute(variants: List<List<DeclarationDescriptor>>)
+    }
+
+    @Volatile
+    internal var executeListener: ExecuteListener? = null
+
+    @TestOnly
+    fun setExecuteListener(disposable: Disposable, listener: ExecuteListener) {
+        assert(executeListener == null)
+        executeListener = listener
+        Disposer.register(disposable) { executeListener = null }
+    }
 }

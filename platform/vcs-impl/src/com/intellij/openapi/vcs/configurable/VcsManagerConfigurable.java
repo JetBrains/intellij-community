@@ -5,9 +5,11 @@ import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfig
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.SortedConfigurableGroup;
+import com.intellij.openapi.options.ex.Weighted;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -27,19 +29,41 @@ import java.util.List;
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
-public final class VcsManagerConfigurable extends SortedConfigurableGroup implements Configurable.WithEpDependencies {
+public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
+  implements Weighted, ConfigurableGroup, Configurable.NoScroll, Configurable.WithEpDependencies {
+
   private static final String ID = "project.propVCSSupport.Mappings";
   private static final int GROUP_WEIGHT = 45;
 
   @NotNull private final Project myProject;
 
   public VcsManagerConfigurable(@NotNull Project project) {
-    super(ID,
-          VcsBundle.message("version.control.main.configurable.name"),
-          VcsBundle.message("version.control.main.configurable.description"),
-          VcsMappingConfigurable.HELP_ID,
-          GROUP_WEIGHT);
     myProject = project;
+  }
+
+  @Override
+  public @NonNls @NotNull String getId() {
+    return ID;
+  }
+
+  @Override
+  public @NonNls String getHelpTopic() {
+    return VcsMappingConfigurable.HELP_ID;
+  }
+
+  @Override
+  public int getWeight() {
+    return GROUP_WEIGHT;
+  }
+
+  @Override
+  public @NlsContexts.ConfigurableName String getDisplayName() {
+    return VcsBundle.message("version.control.main.configurable.name");
+  }
+
+  @Override
+  public @NlsContexts.DetailedDescription String getDescription() {
+    return VcsBundle.message("version.control.main.configurable.description");
   }
 
   @Override

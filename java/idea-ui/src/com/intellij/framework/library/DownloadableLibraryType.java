@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +38,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @deprecated The constructor is meant to maintain the binary compatibility with external plugins.
    * Please use the constructors with a messagePointer for {@link DownloadableLibraryType#myLibraryCategoryName}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
                                     @NotNull String libraryTypeId,
                                     @NotNull String groupId,

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
-import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiResourceList;
 import com.intellij.util.containers.FList;
@@ -62,12 +61,6 @@ public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
 
   public int getJumpOffset() {
     return myJumpOffset.getInstructionOffset();
-  }
-
-  public static class TryFinally extends EnterFinallyTrap {
-    public TryFinally(@NotNull PsiCodeBlock finallyBlock, ControlFlow.@NotNull ControlFlowOffset offset) {
-      super(finallyBlock, offset);
-    }
   }
 
   public static class TwrFinally extends EnterFinallyTrap {

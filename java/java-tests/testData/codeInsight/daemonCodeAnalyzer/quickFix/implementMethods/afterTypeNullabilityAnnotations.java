@@ -1,4 +1,4 @@
-// "Implement methods" "true"
+// "Implement methods" "true-preview"
 package org.jetbrains.annotations;
 
 import java.lang.annotation.*;

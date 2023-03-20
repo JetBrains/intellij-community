@@ -64,6 +64,13 @@ public class VersionMatcherTest {
 
     assertTrue(isMatching("1.1", Not_1_0.class));
     assertFalse(isMatching("1.0", Not_1_0.class));
+
+    assertTrue(isMatching("4.6", v_atLeast_4_6_and_not_6_9.class));
+    assertTrue(isMatching("4.7", v_atLeast_4_6_and_not_6_9.class));
+    assertTrue(isMatching("7.0", v_atLeast_4_6_and_not_6_9.class));
+    assertFalse(isMatching("4.5", v_atLeast_4_6_and_not_6_9.class));
+    assertFalse(isMatching("1.0", v_atLeast_4_6_and_not_6_9.class));
+    assertFalse(isMatching("6.9", v_atLeast_4_6_and_not_6_9.class));
   }
 
   @TargetVersions("1.8")
@@ -144,6 +151,10 @@ public class VersionMatcherTest {
 
   @TargetVersions("!1.0")
   public static class Not_1_0 {
+  }
+
+  @TargetVersions({"4.6+", "!6.9"})
+  public static class v_atLeast_4_6_and_not_6_9 {
   }
 
   private static boolean isMatching(String version, Class<?> aClass) {

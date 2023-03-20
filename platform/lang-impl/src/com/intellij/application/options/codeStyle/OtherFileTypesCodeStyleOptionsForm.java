@@ -33,8 +33,6 @@ import java.awt.*;
 
 /**
  * Used for non-language settings (if file type is not supported by Intellij IDEA), for example, plain text.
- *
- * @author Rustam Vishnyakov.
  */
 public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   private final IndentOptionsEditorWithSmartTabs myIndentOptionsEditor;
@@ -55,7 +53,7 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
 
   @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
@@ -72,7 +70,7 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
@@ -88,7 +86,7 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
   }
 }

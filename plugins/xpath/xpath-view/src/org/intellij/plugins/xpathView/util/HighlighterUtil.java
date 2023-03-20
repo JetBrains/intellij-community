@@ -125,9 +125,8 @@ public final class HighlighterUtil {
     public static RangeHighlighter highlightNode(Editor editor, final PsiElement node, TextAttributes attrs, Config cfg) {
         TextRange range;
         final PsiElement realElement;
-        if ((node instanceof XmlTag) && cfg.isHighlightStartTagOnly()) {
-            XmlTag tag = (XmlTag)node;
-            realElement = MyPsiUtil.getNameElement(tag);
+        if ((node instanceof XmlTag tag) && cfg.isHighlightStartTagOnly()) {
+          realElement = MyPsiUtil.getNameElement(tag);
             range = realElement.getTextRange();
         } else {
             range = node.getTextRange();

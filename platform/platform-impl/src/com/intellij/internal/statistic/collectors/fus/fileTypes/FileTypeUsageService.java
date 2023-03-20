@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.openapi.components.Service;
@@ -25,17 +25,15 @@ public final class FileTypeUsageService {
     myStartOpenTime.put(getKey(file), System.nanoTime());
   }
 
-  @Nullable
-  private Long getAndRemoveStartOpenTime(@NotNull VirtualFile file) {
+  private @Nullable Long getAndRemoveStartOpenTime(@NotNull VirtualFile file) {
     return myStartOpenTime.remove(getKey(file));
   }
 
-  @NotNull
-  private static String getKey(@NotNull VirtualFile file) {
+  private static @NotNull String getKey(@NotNull VirtualFile file) {
     return file.getUrl();
   }
 
-  public static class MyBeforeFileEditorManagerListener implements FileEditorManagerListener.Before {
+  static final class MyBeforeFileEditorManagerListener implements FileEditorManagerListener.Before {
     @Override
     public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       FileTypeUsageService service = getInstance(source.getProject());
@@ -45,11 +43,11 @@ public final class FileTypeUsageService {
     }
   }
 
-  public static class MyFileEditorManagerListener implements FileEditorManagerListener {
+  static final class MyFileEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       FileTypeUsageService service = getInstance(source.getProject());
-      Long startOpen = service != null ? service.getAndRemoveStartOpenTime(file) : null;
+      Long startOpen = service == null ? null : service.getAndRemoveStartOpenTime(file);
       FileTypeUsageCounterCollector.triggerOpen(source.getProject(), source, file, startOpen);
     }
 

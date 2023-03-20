@@ -26,9 +26,6 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public interface CustomDomChildrenDescription extends AbstractDomChildrenDescription {
   @Nullable
   TagNameDescriptor getTagNameDescriptor();

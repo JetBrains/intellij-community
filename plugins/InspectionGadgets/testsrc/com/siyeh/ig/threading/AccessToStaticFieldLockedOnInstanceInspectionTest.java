@@ -30,15 +30,16 @@ public class AccessToStaticFieldLockedOnInstanceInspectionTest extends LightJava
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package javax.annotation.concurrent;\n" +
-      "import java.lang.annotation.ElementType;\n" +
-      "import java.lang.annotation.Retention;\n" +
-      "import java.lang.annotation.RetentionPolicy;\n" +
-      "import java.lang.annotation.Target;\n" +
-      "@Target(ElementType.TYPE)\n" +
-      "@Retention(RetentionPolicy.CLASS)\n" +
-      "public @interface ThreadSafe {\n" +
-      "}"
+      """
+package javax.annotation.concurrent;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.CLASS)
+public @interface ThreadSafe {
+}"""
     };
   }
 }

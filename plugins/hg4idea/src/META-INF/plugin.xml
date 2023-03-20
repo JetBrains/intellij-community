@@ -3,7 +3,7 @@
   <name>Mercurial</name>
   <description>
     <![CDATA[
-      Allows working with <a href="http://www.mercurial-scm.org/">Mercurial version control system</a>.
+      Allows working with <a href="https://www.mercurial-scm.org/">Mercurial version control system</a>.
       The following features are available:
         <ul>
         <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
@@ -57,12 +57,12 @@
     <!--END HG ignore lang-->
     <vcs.actions.ScheduleForAdditionActionExtension implementation="org.zmlx.hg4idea.action.HgAdd"/>
 
-    <statusBarWidgetFactory id="hgWidget"
+    <statusBarWidgetFactory id="hg"
                             implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory"
-                            order="after codeStyleWidget,before readOnlyWidget"/>
+                            order="after CodeStyleStatusBarWidget,before ReadOnlyAttribute"/>
     <statusBarWidgetFactory id="InHgIncomingOutgoingWidget"
                             implementation="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$IncomingFactory"
-                            order="after hgWidget"/>
+                            order="after hg"/>
     <statusBarWidgetFactory id="OutHgIncomingOutgoingWidget"
                             implementation="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$OutgoingFactory"
                             order="after InHgIncomingOutgoingWidget"/>

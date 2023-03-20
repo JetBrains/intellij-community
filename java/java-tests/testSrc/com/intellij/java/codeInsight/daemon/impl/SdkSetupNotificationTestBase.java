@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
@@ -7,9 +7,8 @@ import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -18,19 +17,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-/**
- * @author Pavel.Dolgov
- */
 
 @TestFor(classes = SdkSetupNotificationProvider.class)
 public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtureTestCase {
@@ -41,12 +38,12 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     setProjectSdk(IdeaTestUtil.getMockJdk17());
   }
 
-  @Nullable
-  protected EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,
-                                                          boolean isModuleSdk,
-                                                          @NotNull String name,
-                                                          @NotNull String text) {
+  protected @Nullable EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,
+                                                                    boolean isModuleSdk,
+                                                                    @NotNull String name,
+                                                                    @NotNull String text) {
     if (isModuleSdk) {
+      registerSdkIfNeeded(sdk);
       ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
     }
     else {
@@ -57,24 +54,26 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     return runOnText(myFixture, name, text);
   }
 
-  public static EditorNotificationPanel runOnText(@NotNull JavaCodeInsightTestFixture fixture,
-                                                  @NotNull String fileName,
-                                                  @NotNull String fileText) {
+  static @Nullable EditorNotificationPanel runOnText(@NotNull JavaCodeInsightTestFixture fixture,
+                                                     @NotNull String fileName,
+                                                     @NotNull String fileText) {
     FileEditor editor = openTextInEditor(fixture, fileName, fileText);
-    return editor.getUserData(SdkSetupNotificationProvider.KEY);
+    EditorNotificationsImpl editorNotifications = (EditorNotificationsImpl)EditorNotifications.getInstance(fixture.getProject());
+    return (EditorNotificationPanel)(editorNotifications.getNotificationPanels(editor).get(SdkSetupNotificationProvider.class));
   }
 
-  @NotNull
-  public static FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,
-                                            @NotNull String fileName,
-                                            @NotNull String fileText) {
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    UIUtil.dispatchAllInvocationEvents();
+  static @NotNull FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,
+                                              @NotNull String fileName,
+                                              @NotNull String fileText) {
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    EditorNotificationsImpl editorNotifications = (EditorNotificationsImpl)EditorNotifications.getInstance(fixture.getProject());
+    editorNotifications.completeAsyncTasks();
 
-    final PsiFile psiFile = fixture.configureByText(fileName, fileText);
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(fixture.getProject());
+    PsiFile psiFile = fixture.configureByText(fileName, fileText);
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(fixture.getProject());
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    final FileEditor[] editors = fileEditorManager.openFile(virtualFile, true);
+
+    FileEditor[] editors = fileEditorManager.openFile(virtualFile, true);
     Disposer.register(fixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
@@ -83,20 +82,24 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     });
     assertThat(editors).hasSize(1);
 
-    UIUtil.dispatchAllInvocationEvents();
-    EditorNotificationsImpl.completeAsyncTasks();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    editorNotifications.completeAsyncTasks();
 
     return editors[0];
   }
 
   protected void setProjectSdk(@Nullable Sdk sdk) {
+    registerSdkIfNeeded(sdk);
+    WriteAction.run(() -> ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk));
+  }
+
+  private void registerSdkIfNeeded(@Nullable Sdk sdk) {
     if (sdk != null) {
       final Sdk foundJdk = ReadAction.compute(() -> ProjectJdkTable.getInstance().findJdk(sdk.getName()));
       if (foundJdk == null) {
         WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, myFixture.getProjectDisposable()));
       }
     }
-    WriteAction.run(() -> ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk));
   }
 
   protected static void assertSdkSetupPanelShown(EditorNotificationPanel panel, @NotNull String expectedMessagePrefix) {

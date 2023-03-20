@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.service;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.formatting.FormattingContext;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -46,6 +48,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * block EDT. If it succeeds (doesn't return null), further formatting is started using the created runnable on a separate thread.
  */
 public abstract class AsyncDocumentFormattingService extends AbstractDocumentFormattingService {
+  public static final Key<Boolean> FORMAT_DOCUMENT_SYNCHRONOUSLY =
+    Key.create("com.intellij.formatting.service.AsyncDocumentFormattingService.FORMAT_DOCUMENT_SYNCHRONOUSLY");
+
   private final static Logger LOG = Logger.getInstance(AsyncDocumentFormattingService.class);
 
   private final List<AsyncFormattingRequest> myPendingRequests = Collections.synchronizedList(new ArrayList<>());
@@ -60,6 +65,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
                                                 boolean canChangeWhiteSpaceOnly,
                                                 boolean quickFormat) {
     AsyncFormattingRequest currRequest = findPendingRequest(document);
+    boolean forceSync = Boolean.TRUE.equals(document.getUserData(FORMAT_DOCUMENT_SYNCHRONOUSLY));
     if (currRequest != null) {
       if (!((FormattingRequestImpl)currRequest).cancel()) {
         LOG.warn("Pending request can't be cancelled");
@@ -72,7 +78,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     if (formattingTask != null) {
       formattingRequest.setTask(formattingTask);
       myPendingRequests.add(formattingRequest);
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (forceSync || ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest, null);
       }
       else {
@@ -165,9 +171,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       myDocument = document;
       myRanges = ranges;
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
-      myInitialModificationStamp = document.getModificationStamp();
       myQuickFormat = quickFormat;
       FileDocumentManager.getInstance().saveDocument(myDocument);
+      myInitialModificationStamp = document.getModificationStamp();
     }
 
     @Override
@@ -260,7 +266,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
           if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
             FormattingNotificationService.getInstance(myContext.getProject()).reportError(
               getNotificationGroupId(), getName(),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())));
+              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())), getTimeoutActions(myContext));
           }
           else if (myResult != null) {
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -330,6 +336,10 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
                                      .reportErrorAndNavigate(getNotificationGroupId(), title, message, myContext, offset);
       }
     }
+  }
+
+  protected AnAction[] getTimeoutActions(@NotNull FormattingContext context) {
+    return AnAction.EMPTY_ARRAY;
   }
 
 

@@ -1,51 +1,87 @@
-@file:Suppress("FunctionName")
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.CoroutineSuspender
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
+import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import com.intellij.util.flow.throttle
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.data.LoadingContainer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.math.max
+import kotlin.properties.ReadOnlyProperty
 import kotlin.time.Duration
-import kotlin.time.TimedValue
-import kotlin.time.measureTimedValue
+import kotlin.time.Duration.Companion.milliseconds
+
+private val ProgressSuspender.isSuspendedFLow: Flow<Boolean>
+    get() = flow {
+        emit(isSuspended)
+        while (currentCoroutineContext().isActive) {
+            delay(50.milliseconds)
+            emit(isSuspended)
+        }
+    }
+
+private suspend fun ProgressIndicator.awaitCancellation() {
+    while (currentCoroutineContext().isActive) {
+        if (isCanceled) return
+        delay(50.milliseconds)
+    }
+}
 
 internal fun <T> Flow<T>.onEach(context: CoroutineContext, action: suspend (T) -> Unit) =
     onEach { withContext(context) { action(it) } }
@@ -53,90 +89,16 @@ internal fun <T> Flow<T>.onEach(context: CoroutineContext, action: suspend (T) -
 internal fun <T, R> Flow<T>.map(context: CoroutineContext, action: suspend (T) -> R) =
     map { withContext(context) { action(it) } }
 
-internal fun <T> Flow<T>.replayOnSignals(vararg signals: Flow<Any>) = channelFlow {
-    var lastValue: T? = null
-    onEach { send(it) }
-        .onEach { lastValue = it }
-        .launchIn(this)
+@ExperimentalStdlibApi
+private suspend fun currentCoroutineDispatcher() =
+    currentCoroutineContext()[CoroutineDispatcher] ?: error("Current coroutine has no dispatcher.")
 
-    merge(*signals).mapNotNull { lastValue }
-        .onEach { send(it) }
-        .launchIn(this)
-}
-
-@Suppress("UNCHECKED_CAST")
-fun <T1, T2, T3, T4, T5, T6, T7, R> combineTyped(
-    flow: Flow<T1>,
-    flow2: Flow<T2>,
-    flow3: Flow<T3>,
-    flow4: Flow<T4>,
-    flow5: Flow<T5>,
-    flow6: Flow<T6>,
-    flow7: Flow<T7>,
-    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7) { args: Array<Any?> ->
-    transform(
-        args[0] as T1,
-        args[1] as T2,
-        args[2] as T3,
-        args[3] as T4,
-        args[4] as T5,
-        args[5] as T6,
-        args[6] as T7
-    )
-}
-
-@Suppress("UNCHECKED_CAST")
-fun <T1, T2, T3, T4, T5, T6, T7, T8, R> combineTyped(
-    flow: Flow<T1>,
-    flow2: Flow<T2>,
-    flow3: Flow<T3>,
-    flow4: Flow<T4>,
-    flow5: Flow<T5>,
-    flow6: Flow<T6>,
-    flow7: Flow<T7>,
-    flow8: Flow<T8>,
-    transform: suspend (T1, T2, T3, T4, T5, T6, T7, T8) -> R
-): Flow<R> = combine(flow, flow2, flow3, flow4, flow5, flow6, flow7, flow8) { args: Array<Any?> ->
-    transform(
-        args[0] as T1,
-        args[1] as T2,
-        args[2] as T3,
-        args[3] as T4,
-        args[4] as T5,
-        args[5] as T6,
-        args[6] as T7,
-        args[7] as T8
-    )
-}
-
-internal suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend (T) -> R) = coroutineScope {
-    map { async { transform(it) } }.awaitAll()
-}
-
-internal suspend fun <T> Iterable<T>.parallelFilterNot(transform: suspend (T) -> Boolean) =
-    channelFlow { parallelForEach { if (!transform(it)) send(it) } }.toList()
-
-internal suspend fun <T, R> Iterable<T>.parallelMapNotNull(transform: suspend (T) -> R?) =
-    channelFlow { parallelForEach { transform(it)?.let { send(it) } } }.toList()
-
-internal suspend fun <T> Iterable<T>.parallelForEach(action: suspend (T) -> Unit) = coroutineScope {
-    forEach { launch { action(it) } }
-}
-
-internal suspend fun <T, R, K> Map<T, R>.parallelMap(transform: suspend (Map.Entry<T, R>) -> K) = coroutineScope {
-    map { async { transform(it) } }.awaitAll()
-}
-
-internal suspend fun <T, R> Iterable<T>.parallelFlatMap(transform: suspend (T) -> Iterable<R>) = coroutineScope {
-    map { async { transform(it) } }.flatMap { it.await() }
-}
-
-internal suspend inline fun <K, V> Map<K, V>.parallelUpdatedKeys(keys: Iterable<K>, crossinline action: suspend (K) -> V): Map<K, V> {
-    val map = toMutableMap()
-    keys.parallelForEach { map[it] = action(it) }
-    return map
-}
+suspend fun <T, R> Iterable<T>.parallelMap(
+    maxConcurrency: Int = Runtime.getRuntime().availableProcessors(),
+    transform: suspend CoroutineScope.(T) -> R
+) =  withContext(currentCoroutineDispatcher().limitedParallelism(maxConcurrency)) {
+    map { async { transform(it) } }
+}.awaitAll()
 
 internal fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
     if (emitAtStartup) emit(Unit)
@@ -146,185 +108,222 @@ internal fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
     }
 }
 
-internal fun <T> Flow<T>.throttle(time: Duration, debounce: Boolean = true) =
-    throttle(time.inWholeMilliseconds, debounce)
+internal fun <T> Flow<T>.throttle(time: Duration) =
+    throttle(time.inWholeMilliseconds)
 
-internal fun <T> Flow<T>.throttle(timeMillis: Int, debounce: Boolean = true) =
-    throttle(timeMillis.toLong(), debounce)
-
-internal fun <T> Flow<T>.throttle(timeMillis: Long, debounce: Boolean = true) = channelFlow {
-    var last = System.currentTimeMillis() - timeMillis * 2
-    var refireJob: Job? = null
-    collect {
-        val elapsedTime = System.currentTimeMillis() - last
-        refireJob?.cancel()
-        when {
-            elapsedTime > timeMillis -> {
-                send(it)
-                last = System.currentTimeMillis()
-            }
-            debounce -> refireJob = launch {
-                delay(max(timeMillis - elapsedTime, 0))
-                send(it)
-            }
-        }
-    }
-}
-
-internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
+internal fun <T, R> Flow<T>.modifiedBy(
     modifierFlow: Flow<R>,
-    crossinline transform: suspend (T, R) -> T
-): Flow<T> = flow {
-    coroutineScope {
-        val queue = Channel<Any?>()
-
-        // wait for first main element using stateIn()
-        stateIn(this).onEach { queue.send(it) }.launchIn(this)
-        modifierFlow.onEach { queue.send(it) }.launchIn(this)
-
-        var currentState: T = queue.receive() as T
-        emit(currentState)
-
-        for (e in queue) {
-            when (e) {
-                is T -> currentState = e
-                is R -> currentState = transform(currentState, e)
-                else -> continue
-            }
-            emit(currentState)
-        }
-    }
+    loadingContainer: LoadingContainer? = null,
+    transform: suspend (T, R) -> T
+): Flow<T> {
+    val loadingFlow = loadingContainer?.addLoadingState()
+    return flatMapLatest { modifierFlow.scan(it) { a, b -> loadingFlow?.whileLoading { transform(a, b) } ?: transform(a, b) } }
 }
 
-internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
-    loggingContext: String,
-    loadingFlow: MutableStateFlow<Boolean>,
-    transform: suspend CoroutineScope.(T) -> R
-) =
-    mapLatest {
-        measureTimedValue {
-            loadingFlow.emit(true)
-            val result = try {
-                coroutineScope { transform(it) }
-            } finally {
-                loadingFlow.emit(false)
-            }
-            result
-        }
-    }.map {
-        logTrace(loggingContext) { "Took ${it.duration.absoluteValue} to elaborate" }
-        it.value
-    }
+internal fun <T, R> Flow<T>.map(loadingContainer: LoadingContainer, transform: suspend (value: T) -> R): Flow<R> {
+    val loadingFlow = loadingContainer.addLoadingState()
+    return map { loadingFlow.whileLoading { transform(it) } }
+}
 
-internal fun <T> Flow<T>.catchAndLog(context: String, message: String, fallbackValue: T, retryChannel: SendChannel<Unit>? = null) =
+internal fun <T> Flow<T>.catchAndLog(message: String? = null): ReadOnlyProperty<Any, Flow<T>> = ReadOnlyProperty { thisRef, property ->
     catch {
-        logWarn(context, it) { message }
-        retryChannel?.send(Unit)
-        emit(fallbackValue)
-    }
-
-internal suspend inline fun <R> MutableStateFlow<Boolean>.whileLoading(action: () -> R): TimedValue<R> {
-    emit(true)
-    val r = measureTimedValue { action() }
-    emit(false)
-    return r
-}
-
-internal inline fun <reified T> Flow<T>.batchAtIntervals(duration: Duration) = channelFlow {
-    val mutex = Mutex()
-    val buffer = mutableListOf<T>()
-    var job: Job? = null
-    collect {
-        mutex.withLock { buffer.add(it) }
-        if (job == null || job?.isCompleted == true) {
-            job = launch {
-                delay(duration)
-                mutex.withLock {
-                    send(buffer.toTypedArray())
-                    buffer.clear()
-                }
-            }
-        }
+        logDebug("${thisRef::class.simpleName}#${property.name}", it, message)
     }
 }
 
-internal inline fun <reified T> Flow<T>.batchUntil(duration: Duration) = channelFlow {
-    val mutex = Mutex()
-    val buffer = mutableListOf<T>()
-    var job: Job? = null
-    collect {
-        job?.cancel()
-        mutex.withLock { buffer.add(it) }
-        job = launch {
-            delay(duration)
-            mutex.withLock {
-                send(buffer.toTypedArray())
-                buffer.clear()
-            }
-        }
+internal fun <T> Flow<T>.shareInAndCatchAndLog(
+    scope: CoroutineScope,
+    started: SharingStarted,
+    reply: Int = 0,
+    message: String? = null
+): ReadOnlyProperty<Any, SharedFlow<T>> = ReadOnlyProperty { thisRef, property ->
+    catch { logDebug("${thisRef::class.simpleName}#${property.name}", it, message)  }
+        .shareIn(scope, started, reply)
+}
+
+internal fun <T> Flow<T>.stateInAndCatchAndLog(
+    scope: CoroutineScope,
+    started: SharingStarted,
+    initialValue: T,
+    message: String? = null
+): ReadOnlyProperty<Any, StateFlow<T>> = ReadOnlyProperty { thisRef, property ->
+    catch { logDebug("${thisRef::class.simpleName}#${property.name}", it, message) }
+        .stateIn(scope, started, initialValue)
+}
+
+internal suspend fun <R> MutableStateFlow<LoadingContainer.LoadingState>.whileLoading(action: suspend () -> R): R {
+    emit(LoadingContainer.LoadingState.LOADING)
+    return try {
+        action()
+    } finally {
+        emit(LoadingContainer.LoadingState.IDLE)
+    }
+}
+
+internal suspend inline fun <T> withBackgroundLoadingBar(
+    project: Project,
+    @Nls title: String,
+    @Nls upperMessage: String? = null,
+    cancellable: Boolean = false,
+    isSafe: Boolean = true,
+    isIndeterminate: Boolean = true,
+    isPausable: Boolean = false,
+    action: suspend BackgroundLoadingBarController.() -> T
+): T {
+    val controller = showBackgroundLoadingBar(
+        project = project,
+        title = title,
+        upperMessage = upperMessage,
+        cancellable = cancellable,
+        isSafe = isSafe,
+        isIndeterminate = isIndeterminate,
+        isPausable = isPausable
+    )
+    return try {
+        controller.action()
+    } finally {
+        controller.clear()
     }
 }
 
 internal suspend fun showBackgroundLoadingBar(
     project: Project,
     @Nls title: String,
-    @Nls upperMessage: String,
+    @Nls upperMessage: String? = null,
     cancellable: Boolean = false,
-    isSafe: Boolean = true
+    isSafe: Boolean = true,
+    isIndeterminate: Boolean = true,
+    isPausable: Boolean = false
 ): BackgroundLoadingBarController {
     val syncSignal = Mutex(true)
-    val upperMessageChannel = Channel<String>()
-    val lowerMessageChannel = Channel<String>()
-    val cancellationRequested = Channel<Unit>()
     val externalScopeJob = coroutineContext.job
     val progressManager = ProgressManager.getInstance()
-
+    val progressChannel = Channel<Double>()
+    val messageChannel = Channel<String>()
+    val isSuspendedChannel = Channel<Boolean>()
+    val channels = listOf(progressChannel, messageChannel, isSuspendedChannel)
+    val progressController = BackgroundLoadingBarController(syncSignal, progressChannel, messageChannel, isSuspendedChannel.consumeAsFlow())
     progressManager.run(object : Task.Backgroundable(project, title, cancellable) {
         override fun run(indicator: ProgressIndicator) {
             if (isSafe && progressManager is ProgressManagerImpl && indicator is UserDataHolder) {
                 progressManager.markProgressSafe(indicator)
             }
-            indicator.text = upperMessage // ??? why does it work?
+            indicator.isIndeterminate = isIndeterminate
+            if (upperMessage != null) indicator.text = upperMessage // ??? why does it work?
             runBlocking {
-                upperMessageChannel.consumeAsFlow().onEach { indicator.text = it }.launchIn(this)
-                lowerMessageChannel.consumeAsFlow().onEach { indicator.text2 = it }.launchIn(this)
-                indicator.text = upperMessage // ??? why does it work?
-                val indicatorCancelledPollingJob = launch {
-                    while (true) {
-                        if (indicator.isCanceled) {
-                            cancellationRequested.send(Unit)
-                            break
-                        }
-                        delay(50)
+                @Suppress("HardCodedStringLiteral")
+                val channelsJob = launch {
+                    if (isPausable) {
+                        ProgressSuspender.markSuspendable(indicator, PackageSearchBundle.message("packagesearch.ui.resume"))
+                            .isSuspendedFLow
+                            .collectIn(this, isSuspendedChannel)
+                    }
+                    progressChannel.consumeAsFlow()
+                        .onEach { indicator.fraction = it }
+                        .launchIn(this)
+                    messageChannel.consumeAsFlow()
+                        .onEach { indicator.text = it }
+                        .launchIn(this)
+                }
+                val userCancelledJob = launch { indicator.awaitCancellation() }
+                val proceduralCancellationJob = launch { syncSignal.lock() }
+                select {
+                    proceduralCancellationJob.onJoin {
+                        userCancelledJob.cancel()
+                    }
+                    externalScopeJob.onJoin {
+                        proceduralCancellationJob.cancel()
+                        userCancelledJob.cancel()
+                    }
+                    userCancelledJob.onJoin {
+                        proceduralCancellationJob.cancel()
+                        syncSignal.unlock()
+                        progressController.triggerCallbacks()
                     }
                 }
-                val internalJob = launch {
-                    syncSignal.lock()
-                }
-                select<Unit> {
-                    internalJob.onJoin { }
-                    externalScopeJob.onJoin { internalJob.cancel() }
-                }
-                indicatorCancelledPollingJob.cancel()
-                upperMessageChannel.close()
-                lowerMessageChannel.close()
+                channelsJob.cancel()
+                channels.closeAll()
             }
         }
     })
-    return BackgroundLoadingBarController(
-        syncSignal,
-        upperMessageChannel,
-        lowerMessageChannel,
-        cancellationRequested.consumeAsFlow()
-    )
+    return progressController
 }
 
+private fun Iterable<Channel<*>>.closeAll() = forEach { it.close() }
+
 internal class BackgroundLoadingBarController(
-    private val syncMutex: Mutex,
-    val upperMessageChannel: SendChannel<String>,
-    val lowerMessageChannel: SendChannel<String>,
-    val cancellationFlow: Flow<Unit>
+  private val syncMutex: Mutex,
+  val progressChannel: SendChannel<Double>,
+  val messageChannel: SendChannel<String>,
+  private val isSuspendedFLow: Flow<Boolean>
 ) {
 
-    fun clear() = runCatching { syncMutex.unlock() }.getOrElse { }
+    private val callbacks = mutableSetOf<() -> Unit>()
+
+    fun addOnComputationInterruptedCallback(callback: () -> Unit) {
+        callbacks.add(callback)
+    }
+
+    fun attachSuspender(coroutineScope: CoroutineScope, coroutineSuspender: CoroutineSuspender) =
+        isSuspendedFLow.onEach { if (it) coroutineSuspender.pause() else coroutineSuspender.resume() }
+            .launchIn(coroutineScope)
+
+    internal fun triggerCallbacks() = callbacks.forEach { it.invoke() }
+
+    fun clear() {
+        runCatching { syncMutex.unlock() }
+    }
+}
+
+@Deprecated("", ReplaceWith("com.intellij.openapi.application.writeAction(action)"))
+suspend fun <R> writeAction(action: () -> R): R = com.intellij.openapi.application.writeAction { action() }
+
+internal fun AsyncModuleTransformer.asCoroutine() = object : ModuleTransformer {
+    override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<PackageSearchModule> =
+        this@asCoroutine.transformModules(project, nativeModules).await()
+}
+
+internal fun ModuleChangesSignalProvider.asCoroutine() = object : FlowModuleChangesSignalProvider {
+    override fun registerModuleChangesListener(project: Project) = callbackFlow {
+        val sub = registerModuleChangesListener(project) { trySend() }
+        awaitClose { sub.unsubscribe() }
+    }
+}
+
+fun ProducerScope<Unit>.trySend() = trySend(Unit)
+fun SendChannel<Unit>.trySend() = trySend(Unit)
+
+suspend fun SendChannel<Unit>.send() = send(Unit)
+suspend fun ProducerScope<Unit>.send() = send(Unit)
+
+internal fun <T> Flow<T>.collectIn(coroutineScope: CoroutineScope, sendChannel: SendChannel<T>) =
+    onEach { sendChannel.send(it) }.launchIn(coroutineScope)
+
+internal fun <T> Flow<T>.replayOn(vararg replayFlows: Flow<*>) = channelFlow {
+    val mutex = Mutex()
+    var last: T? = null
+    onEach { mutex.withLock { last = it } }.collectIn(this, this)
+    merge(*replayFlows).collect { mutex.withLock { last?.let { send(it) } } }
+}
+
+internal fun <T1, T2, T3, T4, T5, T6, R> combine(
+    flow: Flow<T1>,
+    flow2: Flow<T2>,
+    flow3: Flow<T3>,
+    flow4: Flow<T4>,
+    flow5: Flow<T5>,
+    flow6: Flow<T6>,
+    transform: suspend (T1, T2, T3, T4, T5, T6) -> R
+): Flow<R> = combine(
+    combine(flow, flow2, flow3, ::Triple),
+    combine(flow4, flow5, flow6, ::Triple)
+) { t1, t2 ->
+    transform(
+        t1.first,
+        t1.second,
+        t1.third,
+        t2.first,
+        t2.second,
+        t2.third
+    )
 }

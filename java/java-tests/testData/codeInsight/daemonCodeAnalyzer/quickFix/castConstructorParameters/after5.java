@@ -1,4 +1,4 @@
-// "Cast argument to 'B'" "true"
+// "Cast argument to 'B'" "true-preview"
 import java.util.*;
 class GeneralTest {
     static class B {

@@ -34,9 +34,6 @@ import java.nio.charset.UnsupportedCharsetException;
 
 import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyByteLiteralInspection extends PyInspection {
 
   @NotNull
@@ -59,8 +56,7 @@ public class PyByteLiteralInspection extends PyInspection {
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
       if (file == null) return;
       boolean default_bytes = false;
-      if (file instanceof PyFile) {
-        PyFile pyfile = (PyFile)file;
+      if (file instanceof PyFile pyfile) {
         default_bytes = (!UNICODE_LITERALS.requiredAt(pyfile.getLanguageLevel()) &&
                          !pyfile.hasImportFromFuture(UNICODE_LITERALS)
         );

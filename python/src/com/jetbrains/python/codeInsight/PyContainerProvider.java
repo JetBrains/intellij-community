@@ -23,9 +23,6 @@ import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyContainerProvider implements ContainerProvider {
   @Nullable
   @Override

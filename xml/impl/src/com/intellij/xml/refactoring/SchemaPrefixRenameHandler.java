@@ -61,7 +61,7 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
       if (prefix instanceof SchemaPrefix) {
         return new VariableInplaceRenamer((PsiNamedElement)prefix, editor) {
           @Override
-          protected void addReferenceAtCaret(Collection<PsiReference> refs) {}
+          protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {}
 
           @Override
           protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {

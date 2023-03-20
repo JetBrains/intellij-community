@@ -3,6 +3,7 @@ package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,9 +33,14 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    Document document = getCommitMessage(e);
+    Document document = e.getData(VcsDataKeys.COMMIT_MESSAGE_DOCUMENT);
 
     e.getPresentation().setEnabled(project != null &&
                                    document != null &&
@@ -44,7 +50,7 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getProject());
-    Document document = Objects.requireNonNull(getCommitMessage(e));
+    Document document = e.getRequiredData(VcsDataKeys.COMMIT_MESSAGE_DOCUMENT);
 
     CommandProcessor.getInstance().executeCommand(project, () ->
       WriteAction.run(() -> reformat(project, document)), VcsBundle.message("commit.message.intention.family.name.reformat.commit.message"), null);
@@ -52,17 +58,9 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
 
   @RequiresWriteLock
   public static void reformat(@NotNull Project project, @NotNull Document document) {
-    List<BaseCommitMessageInspection> inspections = getEnabledInspections(project).collect(toList());
+    List<BaseCommitMessageInspection> inspections = getEnabledInspections(project).toList();
 
     inspections.forEach(inspection -> inspection.reformat(project, document));
-  }
-
-  @Nullable
-  private static Document getCommitMessage(@NotNull AnActionEvent e) {
-    CommitMessage commitMessage = tryCast(e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL), CommitMessage.class);
-    Editor editor = commitMessage != null ? commitMessage.getEditorField().getEditor() : null;
-
-    return editor != null ? editor.getDocument() : null;
   }
 
   @NotNull

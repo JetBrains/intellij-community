@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -15,14 +16,15 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
+import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,9 +38,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @NotNull
   private final GlobalCompilingVisitor myCompilingVisitor;
@@ -67,39 +66,52 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private class JavaWordOptimizer extends JavaRecursiveElementWalkingVisitor implements WordOptimizer {
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       final String word = reference.getReferenceName();
-      if (!handleWord(word, CODE, myCompilingVisitor.getContext())) return;
-      if (reference.isQualified() && isClassFromJavaLangPackage(reference.resolve())) return;
-      super.visitReferenceElement(reference);
+      final PsiElement target = reference.resolve();
+      if (target == null && Strings.isCapitalized(word)) {
+        return;
+      }
+      if (handleWord(word, CODE, myCompilingVisitor.getContext())) {
+        if (!isStaticAccessibleFromSubclass(target) && (!reference.isQualified() || !isClassFromJavaLangPackage(target))) {
+          super.visitReferenceElement(reference);
+        }
+      }
     }
 
-    private boolean isClassFromJavaLangPackage(PsiElement target) {
-      if (!(target instanceof PsiClass)) {
+    private static boolean isStaticAccessibleFromSubclass(PsiElement element) {
+      if (!(element instanceof PsiMember member) || !member.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
-      final PsiFile file = target.getContainingFile();
-      if (!(file instanceof PsiJavaFile)) {
-        return false;
-      }
-      final PsiJavaFile javaFile = (PsiJavaFile)file;
-      return "java.lang".equals(javaFile.getPackageName());
+      final PsiClass aClass = member.getContainingClass();
+      return aClass == null || (!aClass.isInterface() && !aClass.hasModifierProperty(PsiModifier.FINAL));
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
+    }
+
+    private static boolean isClassFromJavaLangPackage(PsiElement target) {
+      return target instanceof PsiClass &&
+             target.getContainingFile() instanceof PsiJavaFile javaFile &&
+             "java.lang".equals(javaFile.getPackageName());
+    }
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
       if (!handleWord(method.getName(), CODE, myCompilingVisitor.getContext())) return;
       super.visitMethod(method);
     }
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       if (!handleWord(variable.getName(), CODE, myCompilingVisitor.getContext())) return;
       super.visitVariable(variable);
     }
 
     @Override
-    public void visitCatchSection(PsiCatchSection section) {
+    public void visitCatchSection(@NotNull PsiCatchSection section) {
       // check parameter first and skip catch section if count is zero
       final PsiParameter parameter = section.getParameter();
       if (parameter != null && !handleWord(parameter.getName(), CODE, myCompilingVisitor.getContext())) return;
@@ -107,7 +119,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       final CompileContext context = myCompilingVisitor.getContext();
       if (!handleWord(aClass.getName(), CODE, context)) return;
       if (aClass.isInterface()) {
@@ -116,18 +128,22 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       else if (aClass.isEnum()) {
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, true, CODE, context);
       }
+      else if (aClass.isRecord()) {
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, true, CODE, context);
+      }
       else {
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, false, CODE, context);
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.RECORD, false, CODE, context);
         GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.CLASS, true, CODE, context);
       }
       super.visitClass(aClass);
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       final PsiType type = expression.getType();
-      if (PsiType.BOOLEAN.equals(type) || PsiType.NULL.equals(type)) {
+      if (PsiTypes.booleanType().equals(type) || PsiTypes.nullType().equals(type)) {
         // don't search index for literals of other types, as they can be written in many many kinds of ways for the same value.
         if (!handleWord(expression.getText(), CODE, myCompilingVisitor.getContext())) return;
       }
@@ -179,7 +195,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitDocTag(PsiDocTag psiDocTag) {
+  public void visitDocTag(@NotNull PsiDocTag psiDocTag) {
     super.visitDocTag(psiDocTag);
 
     final NodeIterator nodes = new DocValuesIterator(psiDocTag.getFirstChild());
@@ -203,7 +219,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
 
       comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
-      final RegExpPredicate predicate = handler.findRegExpPredicate();
+      final RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
       if (GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
         myCompilingVisitor.processTokenizedName(predicate.getRegExp(), COMMENT);
       }
@@ -222,7 +238,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitExpression(PsiExpression expression) {
+  public void visitExpression(@NotNull PsiExpression expression) {
     super.visitExpression(expression);
     if (!(expression.getParent() instanceof PsiExpressionStatement) && !(expression instanceof PsiParenthesizedExpression)) {
       final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(expression);
@@ -234,13 +250,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitLiteralExpression(PsiLiteralExpression expression) {
+  public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
     final String text = expression.getText();
 
     if (StringUtil.isQuotedString(text)) {
       @Nullable final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, LITERAL);
 
-      if (PsiType.CHAR.equals(expression.getType()) &&
+      if (PsiTypes.charType().equals(expression.getType()) &&
           (handler instanceof LiteralWithSubstitutionHandler || handler == null && expression.getValue() == null)) {
         throw new MalformedPatternException(SSRBundle.message("error.bad.character.literal"));
       }
@@ -249,7 +265,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
     }
     else {
-      if (!PsiType.NULL.equals(expression.getType()) && expression.getValue() == null) {
+      if (!PsiTypes.nullType().equals(expression.getType()) && expression.getValue() == null) {
         throw new MalformedPatternException(SSRBundle.message("error.bad.literal"));
       }
     }
@@ -257,7 +273,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitField(PsiField psiField) {
+  public void visitField(@NotNull PsiField psiField) {
     super.visitField(psiField);
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final MatchingHandler handler = pattern.getHandler(psiField);
@@ -269,7 +285,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitMethod(PsiMethod psiMethod) {
+  public void visitMethod(@NotNull PsiMethod psiMethod) {
     super.visitMethod(psiMethod);
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final MatchingHandler handler = pattern.getHandler(psiMethod);
@@ -283,7 +299,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression reference) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {
     visitElement(reference);
     final PsiElement referenceParent = reference.getParent();
 
@@ -294,7 +310,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
                              !(referenceParent instanceof PsiExpressionStatement);
 
     final MatchingHandler handler = pattern.getHandler(reference);
-    GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
+    if (reference.getParent() instanceof PsiLambdaExpression) {
+      GlobalCompilingVisitor.setFilter(handler, element -> true);
+    }
+    else {
+      GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
+    }
 
     // We want to merge qname related to class to find it in any form
     final String referencedName = reference.getReferenceName();
@@ -335,37 +356,37 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitBlockStatement(PsiBlockStatement statement) {
+  public void visitBlockStatement(@NotNull PsiBlockStatement statement) {
     super.visitBlockStatement(statement);
     myCompilingVisitor.setFilterSimple(statement, BlockFilter.getInstance());
   }
 
   @Override
-  public void visitSwitchStatement(PsiSwitchStatement statement) {
+  public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
     myCompilingVisitor.setFilterSimple(statement, e -> e instanceof PsiSwitchBlock);
   }
 
   @Override
-  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+  public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
     super.visitSwitchLabelStatement(statement);
     myCompilingVisitor.setFilterSimple(statement, e -> e instanceof PsiSwitchLabelStatementBase);
   }
 
   @Override
-  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+  public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
     super.visitSwitchLabeledRuleStatement(statement);
     myCompilingVisitor.setFilterSimple(statement, e -> e instanceof PsiSwitchLabelStatementBase);
   }
 
   @Override
-  public void visitVariable(PsiVariable variable) {
+  public void visitVariable(@NotNull PsiVariable variable) {
     super.visitVariable(variable);
     myCompilingVisitor.setFilterSimple(variable, e -> e instanceof PsiVariable);
   }
 
   @Override
-  public void visitParameter(PsiParameter parameter) {
+  public void visitParameter(@NotNull PsiParameter parameter) {
     super.visitParameter(parameter);
     final PsiElement parent = parameter.getParent();
     if (!(parent instanceof PsiCatchSection)) {
@@ -375,8 +396,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final MatchingHandler handler = pattern.getHandlerSimple(parameter);
     @NonNls final String name = "__catch_" + parent.getTextOffset();
     final SubstitutionHandler substitutionHandler;
-    if (handler instanceof SubstitutionHandler) {
-      final SubstitutionHandler parameterHandler = (SubstitutionHandler)handler;
+    if (handler instanceof SubstitutionHandler parameterHandler) {
       substitutionHandler =
         new SubstitutionHandler(name, false, parameterHandler.getMinOccurs(),
                                 parameterHandler.isTarget() ? Integer.MAX_VALUE : parameterHandler.getMaxOccurs(), true);
@@ -388,7 +408,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitDeclarationStatement(PsiDeclarationStatement psiDeclarationStatement) {
+  public void visitDeclarationStatement(@NotNull PsiDeclarationStatement psiDeclarationStatement) {
     super.visitDeclarationStatement(psiDeclarationStatement);
 
     final PsiElement firstChild = psiDeclarationStatement.getFirstChild();
@@ -418,8 +438,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         }
       }
     }
-    else if (firstChild instanceof PsiModifierList) {
-      final PsiModifierList modifierList = (PsiModifierList)firstChild;
+    else if (firstChild instanceof PsiModifierList modifierList) {
       final PsiAnnotation[] annotations = modifierList.getAnnotations();
       if (annotations.length != 1) {
         throw new MalformedPatternException();
@@ -448,13 +467,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitDocComment(PsiDocComment psiDocComment) {
+  public void visitDocComment(@NotNull PsiDocComment psiDocComment) {
     super.visitDocComment(psiDocComment);
     myCompilingVisitor.setFilterSimple(psiDocComment, JavaDocFilter.getInstance());
   }
 
   @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
 
     final PsiElement parent = reference.getParent();
@@ -462,8 +481,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (parent != null && parent.getParent() instanceof PsiClass) {
       GlobalCompilingVisitor.setFilter(handler, TypeFilter.getInstance());
     }
-    else if (parent instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)parent;
+    else if (parent instanceof PsiNewExpression newExpression) {
       if (newExpression.isArrayCreation()) {
         GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
       }
@@ -474,7 +492,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitTypeElement(PsiTypeElement type) {
+  public void visitTypeElement(@NotNull PsiTypeElement type) {
     super.visitTypeElement(type);
 
     final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(type);
@@ -482,7 +500,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitClass(PsiClass psiClass) {
+  public void visitClass(@NotNull PsiClass psiClass) {
     super.visitClass(psiClass);
 
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
@@ -498,14 +516,15 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private void createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText, boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
       new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, true);
+    if (classQualifier) substitutionHandler.setSubtype(true);
     final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
-    substitutionHandler.setPredicate(new RegExpPredicate(StructuralSearchUtil.shieldRegExpMetaChars(referenceText),
+    substitutionHandler.setPredicate(new RegExpPredicate(MatchUtil.shieldRegExpMetaChars(referenceText),
                                                          caseSensitive, null, false, false));
     myCompilingVisitor.getContext().getPattern().setHandler(expr, substitutionHandler);
   }
 
   @Override
-  public void visitExpressionStatement(PsiExpressionStatement expressionStatement) {
+  public void visitExpressionStatement(@NotNull PsiExpressionStatement expressionStatement) {
     super.visitExpressionStatement(expressionStatement);
 
     final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
@@ -516,12 +535,14 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final PsiElement reference = expressionStatement.getFirstChild();
       final MatchingHandler referenceHandler = pattern.getHandler(reference);
 
-      if (referenceHandler instanceof SubstitutionHandler && (reference instanceof PsiReferenceExpression)) {
+      if (referenceHandler instanceof SubstitutionHandler substitutionHandler &&
+          substitutionHandler.findPredicate(ExprTypePredicate.class) == null &&
+          reference instanceof PsiReferenceExpression) {
         // symbol
         pattern.setHandler(expressionStatement, referenceHandler);
         referenceHandler.setFilter(SymbolNodeFilter.getInstance());
 
-        myCompilingVisitor.setHandler(expressionStatement, new SymbolHandler((SubstitutionHandler)referenceHandler));
+        myCompilingVisitor.setHandler(expressionStatement, new SymbolHandler(substitutionHandler));
       }
       else if (reference instanceof PsiLiteralExpression) {
         final MatchingHandler handler = new ExpressionHandler();
@@ -540,11 +561,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       if (expressionStatement.getExpression() instanceof PsiReferenceExpression && pattern.isRealTypedVar(expressionStatement)) {
         // search for statement
         final MatchingHandler handler = pattern.getHandler(expressionStatement);
-        if (handler instanceof SubstitutionHandler) {
-          final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-          if (parent instanceof PsiForStatement &&
-              (((PsiForStatement)parent).getInitialization() == expressionStatement ||
-               ((PsiForStatement)parent).getUpdate() == expressionStatement)) {
+        if (handler instanceof SubstitutionHandler substitutionHandler) {
+          if (parent instanceof PsiForStatement forStatement &&
+              (forStatement.getInitialization() == expressionStatement ||
+               forStatement.getUpdate() == expressionStatement)) {
             substitutionHandler.setFilter(e -> e instanceof PsiExpression || e instanceof PsiExpressionListStatement ||
                                                e instanceof PsiDeclarationStatement || e instanceof PsiEmptyStatement);
           }
@@ -564,7 +584,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitCodeBlock(PsiCodeBlock block) {
+  public void visitCodeBlock(@NotNull PsiCodeBlock block) {
     for (PsiElement el = block.getFirstChild(); el != null; el = el.getNextSibling()) {
       if (GlobalCompilingVisitor.getFilter().accepts(el)) {
         if (el instanceof PsiWhiteSpace) {
@@ -578,9 +598,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static boolean needsSupers(final PsiElement element, final MatchingHandler handler) {
-    if (element.getParent() instanceof PsiClass && handler instanceof SubstitutionHandler) {
-      final SubstitutionHandler handler2 = (SubstitutionHandler)handler;
-
+    if (element.getParent() instanceof PsiClass && handler instanceof SubstitutionHandler handler2) {
       return handler2.isStrictSubtype() || handler2.isSubtype();
     }
     return false;

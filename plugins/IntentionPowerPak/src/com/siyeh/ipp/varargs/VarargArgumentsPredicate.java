@@ -26,22 +26,20 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof PsiExpressionList)) {
+    if (!(element instanceof PsiExpressionList argumentList)) {
       return false;
     }
-    final PsiExpressionList argumentList = (PsiExpressionList)element;
     final PsiElement parent = argumentList.getParent();
-    if (!(parent instanceof PsiCall)) {
+    if (!(parent instanceof PsiCall call)) {
       return false;
     }
-    final PsiCall call = (PsiCall)parent;
     final JavaResolveResult resolveResult = call.resolveMethodGenerics();
-    if (!resolveResult.isValidResult() || !(resolveResult instanceof MethodCandidateInfo) ||
-        ((MethodCandidateInfo)resolveResult).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+    if (!resolveResult.isValidResult() || !(resolveResult instanceof MethodCandidateInfo candidateInfo) ||
+        candidateInfo.getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
       return false;
     }
-    final PsiMethod method = (PsiMethod)resolveResult.getElement();
-    if (method == null || !method.isVarArgs()) {
+    final PsiMethod method = candidateInfo.getElement();
+    if (!method.isVarArgs()) {
       return false;
     }
     final PsiParameterList parameterList = method.getParameterList();
@@ -50,8 +48,7 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     final PsiType lastParameterType = PsiTypesUtil.getParameterType(parameters, parameters.length - 1, true);
     final PsiType substitutedType = substitutor.substitute(lastParameterType);
-    if (substitutedType instanceof PsiCapturedWildcardType) {
-      final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitutedType;
+    if (substitutedType instanceof PsiCapturedWildcardType capturedWildcardType) {
       if (!capturedWildcardType.getWildcard().isSuper()) {
         // red code
         return false;
@@ -68,10 +65,9 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiType lastArgumentType = lastExpression.getType();
-    if (!(lastArgumentType instanceof PsiArrayType)) {
+    if (!(lastArgumentType instanceof PsiArrayType arrayType)) {
       return true;
     }
-    final PsiArrayType arrayType = (PsiArrayType)lastArgumentType;
     final PsiType type = arrayType.getComponentType();
     return !substitutedType.isAssignableFrom(type);
   }

@@ -6,9 +6,6 @@ import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- */
 public class LightIndexPatternSearcher extends IndexPatternSearcher {
 
   @Override

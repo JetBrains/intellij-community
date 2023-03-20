@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'H.foo'" "true"
 // ERROR: Unresolved reference: foo
 
 package h
@@ -10,3 +10,4 @@ interface H
 fun f(h: H) {
     h foo h
 }
+/* IGNORE_FIR */

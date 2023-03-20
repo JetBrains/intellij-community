@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.google.gson.annotations.SerializedName
@@ -11,9 +11,9 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -50,13 +50,20 @@ import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
-import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.IndicatedProcessOutputListener
+import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.*
+import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
+import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.add.target.ValidationRequest
+import com.jetbrains.python.sdk.add.target.validateExecutableFile
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
 import icons.PythonIcons
 import org.apache.tuweni.toml.Toml
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemDependent
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -137,21 +144,13 @@ fun detectPoetryExecutable(): File? {
 fun getPoetryExecutable(): File? =
   PropertiesComponent.getInstance().poetryPath?.let { File(it) }?.takeIf { it.exists() } ?: detectPoetryExecutable()
 
-fun validatePoetryExecutable(poetryExecutable: @SystemDependent String?): ValidationInfo? {
-  val message = if (poetryExecutable.isNullOrBlank()) {
-    PyBundle.message("python.sdk.poetry.executable.not.found")
-  }
-  else {
-    val file = File(poetryExecutable)
-    when {
-      !file.exists() -> "File ${file.absolutePath} is not found"
-      !file.canExecute() || !file.isFile -> "Cannot execute ${file.absolutePath}"
-      else -> null
-    }
-  }
+fun validatePoetryExecutable(poetryExecutable: @SystemDependent String?): ValidationInfo? =
+  validateExecutableFile(ValidationRequest(
+    path = poetryExecutable,
+    fieldIsEmpty = PyBundle.message("python.sdk.poetry.executable.not.found"),
+    pathInfoProvider = PathInfo.localPathInfoProvider // TODO: pass real converter from targets when we support poetry @ targets
 
-  return message?.let { ValidationInfo(it) }
-}
+  ))
 
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath)})"
 
@@ -175,7 +174,9 @@ fun setupPoetrySdkUnderProgress(project: Project?,
                                 installPackages: Boolean,
                                 poetryPath: String? = null): Sdk? {
   val projectPath = newProjectPath ?: module?.basePath ?: project?.basePath ?: return null
-  val task = object : Task.WithResult<String, ExecutionException>(project, "Setting Up Poetry Environment", true) {
+  val task = object : Task.WithResult<String, ExecutionException>(
+    project, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
+
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
       val poetry = when (poetryPath) {
@@ -258,7 +259,7 @@ var Sdk.isPoetry: Boolean
 fun runPoetry(sdk: Sdk, vararg args: String): String {
   val projectPath = sdk.associatedModulePath
                     ?: throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.project.message"),
-                      "Poetry", emptyList(), ProcessOutput())
+                                                  "Poetry", emptyList(), ProcessOutput())
   runPoetry(projectPath, "env", "use", sdk.homePath!!)
   return runPoetry(projectPath, *args)
 }
@@ -269,10 +270,10 @@ fun runPoetry(sdk: Sdk, vararg args: String): String {
 fun runPoetry(projectPath: @SystemDependent String?, vararg args: String): String {
   val executable = getPoetryExecutable()?.path
                    ?: throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"), "poetry",
-                     emptyList(), ProcessOutput())
+                                                 emptyList(), ProcessOutput())
 
   val command = listOf(executable) + args
-  @Suppress("DialogTitleCapitalization") val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
+  val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
   val handler = CapturingProcessHandler(commandLine)
   val indicator = ProgressManager.getInstance().progressIndicator
   val result = with(handler) {
@@ -292,8 +293,8 @@ fun runPoetry(projectPath: @SystemDependent String?, vararg args: String): Strin
         throw RunCanceledByUserException()
       exitCode != 0 ->
         throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"), executable,
-          args.asList(),
-          stdout, stderr, exitCode, emptyList())
+                                   args.asList(),
+                                   stdout, stderr, exitCode, emptyList())
       else -> stdout.trim()
     }
   }
@@ -313,8 +314,8 @@ fun runCommand(projectPath: @SystemDependent String, command: String, vararg arg
         throw RunCanceledByUserException()
       exitCode != 0 ->
         throw PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.error.running.poetry.message"), command,
-          args.asList(),
-          stdout, stderr, exitCode, emptyList())
+                                   args.asList(),
+                                   stdout, stderr, exitCode, emptyList())
       else -> stdout
     }
   }
@@ -391,7 +392,7 @@ class PoetryInstallQuickFix : LocalQuickFix {
     }
   }
 
-  override fun getFamilyName() = "Install requirements from poetry.lock"
+  override fun getFamilyName() = PyBundle.message("python.sdk.intention.family.name.install.requirements.from.poetry.lock")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
@@ -406,7 +407,7 @@ class PoetryInstallQuickFix : LocalQuickFix {
 class PyProjectTomlWatcher : EditorFactoryListener {
   private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
   private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
-  private val content: String = if (poetryVersion?.let { it < "1.1.1" } == true) {
+  private val content: @Nls String = if (poetryVersion?.let { it < "1.1.1" } == true) {
     PyBundle.message("python.sdk.poetry.pip.file.notification.content")
   }
   else {
@@ -464,7 +465,7 @@ class PyProjectTomlWatcher : EditorFactoryListener {
             runPoetryInBackground(module, listOf("lock"), PyBundle.message("python.sdk.poetry.pip.file.notification.locking"))
           "#noupdate" ->
             runPoetryInBackground(module, listOf("lock", "--no-update"),
-              PyBundle.message("python.sdk.poetry.pip.file.notification.locking.without.updating"))
+                                  PyBundle.message("python.sdk.poetry.pip.file.notification.locking.without.updating"))
           "#update" ->
             runPoetryInBackground(module, listOf("update"), PyBundle.message("python.sdk.poetry.pip.file.notification.updating"))
         }
@@ -495,13 +496,12 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message("python.sdk.poetry.pip.file.watcher"),
-  NotificationDisplayType.STICKY_BALLOON, false)
+private val LOCK_NOTIFICATION_GROUP by lazy { NotificationGroupManager.getInstance().getNotificationGroup("pyproject.toml Watcher") }
 
 private val Module.poetryLock: VirtualFile?
   get() = baseDir?.findChild(POETRY_LOCK)
 
-fun runPoetryInBackground(module: Module, args: List<String>, description: String) {
+fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe description: String) {
   val task = object : Task.Backgroundable(module.project, StringUtil.toTitleCase(description), true) {
     override fun run(indicator: ProgressIndicator) {
       val sdk = module.pythonSdk ?: return
@@ -547,7 +547,7 @@ fun createPoetryPanel(project: Project?,
     else -> existingPoetryPanel
   }
   return PyAddSdkGroupPanel(Supplier { "Poetry environment" },
-    POETRY_ICON, panels, defaultPanel)
+                            POETRY_ICON, panels, defaultPanel)
 }
 
 
@@ -576,8 +576,13 @@ fun getPoetryEnvs(projectPath: String): List<String> =
 
 
 fun isVirtualEnvsInProject(projectPath: String): Boolean? =
-  syncRunPoetry(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
-    it.trim() == "true"
+  if (FileUtil.exists(projectPath)) {
+    syncRunPoetry(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
+      it.trim() == "true"
+    }
+  }
+  else {
+    false
   }
 
 val poetryVersion: String?

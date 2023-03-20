@@ -21,9 +21,6 @@ import org.codehaus.groovy.control.CompilationUnit;
 
 import java.io.File;
 
-/**
- * @author peter
- */
 public abstract class CompilationUnitPatcher {
 
   public abstract void patchCompilationUnit(CompilationUnit compilationUnit, GroovyResourceLoader resourceLoader, File[] srcFiles);

@@ -16,6 +16,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
   @Override
   public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
-    PsiElement element = infos == null ? null : getElementToSliceOn(infos);
+    PsiElement element = ContainerUtil.isEmpty(infos) ? null : getElementToSliceOn(infos);
     if (myBrowser instanceof Disposable) {
       Disposer.dispose((Disposable)myBrowser);
       myBrowser = null;
@@ -110,8 +111,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
     if (providerTarget == null) return null;
 
     HierarchyBrowser browser = provider.createHierarchyBrowser(providerTarget);
-    if (browser instanceof HierarchyBrowserBaseEx) {
-      HierarchyBrowserBaseEx browserEx = (HierarchyBrowserBaseEx)browser;
+    if (browser instanceof HierarchyBrowserBaseEx browserEx) {
       // do not steal focus when scrolling through nodes
       browserEx.changeView(CallHierarchyBrowserBase.getCallerType(), false);
     }

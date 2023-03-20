@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,12 +24,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -37,12 +37,10 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
 
   public boolean mySuggestSetAll = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.explicit.array.filling.suggest.set.all"),
-                                          this,
-                                          "mySuggestSetAll");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("mySuggestSetAll", JavaBundle.message("inspection.explicit.array.filling.suggest.set.all")));
   }
 
   @NotNull
@@ -50,15 +48,15 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitForStatement(PsiForStatement statement) {
+      public void visitForStatement(@NotNull PsiForStatement statement) {
         super.visitForStatement(statement);
         CountingLoop loop = CountingLoop.from(statement);
         if (loop == null || loop.isIncluding() || loop.isDescending()) return;
         if (!ExpressionUtils.isZero(loop.getInitializer())) return;
-        IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
-        if (container == null || !(container.getQualifier().getType() instanceof PsiArrayType)) return;
         PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(ControlFlowUtils.stripBraces(statement.getBody()));
         if (assignment == null) return;
+        IndexedContainer container = getContainer(loop, assignment);
+        if (container == null || !(container.getQualifier().getType() instanceof PsiArrayType)) return;
         PsiExpression index = container.extractIndexFromGetExpression(assignment.getLExpression());
         if (!ExpressionUtils.isReferenceTo(index, loop.getCounter())) return;
         PsiExpression rValue = assignment.getRExpression();
@@ -82,7 +80,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         registerProblem(statement, true);
       }
 
-      private boolean isChangedInLoop(@NotNull CountingLoop loop, @NotNull PsiExpression rValue) {
+      private static boolean isChangedInLoop(@NotNull CountingLoop loop, @NotNull PsiExpression rValue) {
         if (VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) ||
             SideEffectChecker.mayHaveSideEffects(rValue)) {
           return true;
@@ -92,7 +90,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           .anyMatch(call -> !ClassUtils.isImmutable(call.getType()) && !ConstructionUtils.isEmptyArrayInitializer(call));
       }
 
-      private boolean isDefaultValue(@NotNull PsiExpression expression, @Nullable Object defaultValue, @Nullable PsiType lType) {
+      private static boolean isDefaultValue(@NotNull PsiExpression expression, @Nullable Object defaultValue, @Nullable PsiType lType) {
         if (ExpressionUtils.isNullLiteral(expression) && defaultValue == null) return true;
         Object constantValue = ExpressionUtils.computeConstantExpression(expression);
         PsiType rType = expression.getType();
@@ -104,9 +102,9 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         return constantValue != null && constantValue.equals(defaultValue);
       }
 
-      private boolean isFilledWithDefaultValues(@NotNull PsiExpression expression,
-                                                @NotNull PsiForStatement statement,
-                                                @Nullable Object defaultValue) {
+      private static boolean isFilledWithDefaultValues(@NotNull PsiExpression expression,
+                                                       @NotNull PsiForStatement statement,
+                                                       @Nullable Object defaultValue) {
         PsiReferenceExpression arrayRef = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
         if (arrayRef == null) return false;
         PsiVariable arrayVar = tryCast(arrayRef.resolve(), PsiVariable.class);
@@ -131,7 +129,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Nullable
-      private ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
+      private static ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
         try {
           return ControlFlowFactory.getInstance(block.getProject())
             .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
@@ -141,10 +139,10 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         }
       }
 
-      private PsiElement @Nullable [] getDefs(@NotNull PsiCodeBlock block,
-                                              @NotNull PsiVariable arrayVar,
-                                              @NotNull PsiReferenceExpression arrayRef,
-                                              @Nullable Object defaultValue) {
+      private static PsiElement @Nullable [] getDefs(@NotNull PsiCodeBlock block,
+                                                     @NotNull PsiVariable arrayVar,
+                                                     @NotNull PsiReferenceExpression arrayRef,
+                                                     @Nullable Object defaultValue) {
         PsiElement[] defs = DefUseUtil.getDefs(block, arrayVar, arrayRef);
         PsiExpression[] expressions = new PsiExpression[defs.length];
         for (int i = 0; i < defs.length; i++) {
@@ -167,7 +165,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         return expressions;
       }
 
-      private boolean isNewArrayCreation(@Nullable PsiExpression expression, @Nullable Object defaultValue) {
+      private static boolean isNewArrayCreation(@Nullable PsiExpression expression, @Nullable Object defaultValue) {
         PsiExpression arrInitExpr = PsiUtil.skipParenthesizedExprDown(expression);
         PsiNewExpression newExpression = tryCast(arrInitExpr, PsiNewExpression.class);
         PsiArrayInitializerExpression initializer;
@@ -183,7 +181,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Nullable
-      private Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, PsiElement @NotNull [] defs) {
+      private static Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, PsiElement @NotNull [] defs) {
         Set<Integer> set = new HashSet<>();
         for (PsiElement def : defs) {
           int start = flow.getStartOffset(def);
@@ -258,10 +256,10 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       if (statement == null) return;
       CountingLoop loop = CountingLoop.from(statement);
       if (loop == null) return;
-      IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
-      if (container == null) return;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(ControlFlowUtils.stripBraces(statement.getBody()));
       if (assignment == null) return;
+      IndexedContainer container = getContainer(loop, assignment);
+      if (container == null) return;
       PsiExpression rValue = assignment.getRExpression();
       if (rValue == null) return;
       CommentTracker ct = new CommentTracker();
@@ -289,5 +287,17 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       if (assignTo == null) assignTo = TypeUtils.getObjectType(context);
       return TypeConversionUtil.isAssignable(assignTo, rType) ? "" : "(" + elementType.getCanonicalText() + ")";
     }
+  }
+
+  @Nullable
+  private static IndexedContainer getContainer(CountingLoop loop, PsiAssignmentExpression assignment) {
+    IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
+    if (container == null) {
+      if (!(assignment.getLExpression() instanceof PsiArrayAccessExpression arrayAccessExpression)) {
+        return null;
+      }
+      container = IndexedContainer.arrayContainerWithBound(arrayAccessExpression, loop.getBound());
+    }
+    return container;
   }
 }

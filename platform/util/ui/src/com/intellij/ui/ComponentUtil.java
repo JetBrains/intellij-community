@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,36 +14,29 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class ComponentUtil {
+  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
+
   /**
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
     return ClientProperty.get(component, key);
   }
 
   /**
-   * @deprecated use {@link JComponent#putClientProperty(Object, Object)}
-   * or {@link ClientProperty#put(JComponent, Key, Object)} instead
+   * @deprecated use {@link JComponent#putClientProperty(Object, Object)} or {@link ClientProperty#put(JComponent, Key, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
     component.putClientProperty(key, value);
   }
 
-  public static boolean isDisableAutoRequestFocus() {
-    return Registry.is("suppress.focus.stealing.disable.auto.request.focus", true)
-           && !(SystemInfo.isXfce || SystemInfo.isI3);
-  }
-
   public static boolean isMinimized(@Nullable Window window) {
-    if (!(window instanceof Frame)) {
+    if (!(window instanceof Frame frame)) {
       return false;
     }
 
-    Frame frame = (Frame)window;
     return frame.getExtendedState() == Frame.ICONIFIED;
   }
 
@@ -70,18 +61,14 @@ public final class ComponentUtil {
   }
 
   /**
-   * Returns the first window ancestor of the component.
+   * Returns the first window ancestor of the component,
+   * or {@code null} the component is not a window and is not contained inside a window.
    * Note that this method returns the component itself if it is a window.
-   *
-   * @param component the component used to find corresponding window
-   * @return the first window ancestor of the component; or {@code null}
-   * if the component is not a window and is not contained inside a window
    */
   public static @Nullable Window getWindow(@Nullable Component component) {
-    if (component == null) {
-      return null;
-    }
-    return component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+    return component == null ? null :
+           component instanceof Window ? (Window)component :
+           SwingUtilities.getWindowAncestor(component);
   }
 
   public static @Nullable Component findParentByCondition(@Nullable Component c, @NotNull Predicate<? super Component> condition) {
@@ -172,5 +159,16 @@ public final class ComponentUtil {
         findComponentsOfType((JComponent)c, cls, result);
       }
     }
+  }
+
+  public static boolean isFocusProxy(@Nullable Component c) {
+    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
+  }
+
+  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
+    if (c == null || !c.isShowing()) {
+      return true;
+    }
+    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 }

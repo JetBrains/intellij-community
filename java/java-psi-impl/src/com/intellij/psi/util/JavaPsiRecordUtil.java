@@ -42,6 +42,21 @@ public final class JavaPsiRecordUtil {
 
   /**
    * @param component record component
+   * @return an accessor method for corresponding record component, or null if not found.
+   * Note that if accessor is not well-formed (e.g. has wrong return type), it will still be returned.
+   */
+  @Nullable
+  public static PsiMethod getAccessorForRecordComponent(@NotNull PsiRecordComponent component) {
+    PsiClass aClass = component.getContainingClass();
+    if (aClass == null || !aClass.isRecord()) return null;
+    for (PsiMethod method : aClass.findMethodsByName(component.getName(), false)) {
+      if (method.getParameterList().isEmpty()) return method;
+    }
+    return null;
+  }
+
+  /**
+   * @param component record component
    * @return synthetic field that corresponds to given component, or null if not found (e.g. if this component doesn't belong to a class)
    */
   @Nullable

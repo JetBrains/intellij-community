@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.reporter
 
 import com.intellij.diagnostic.ReportMessages
 import com.intellij.ide.DataManager
+import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,13 +17,11 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
-import org.jetbrains.kotlin.idea.PluginUpdateStatus
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.isEap
 import java.awt.Component
 import java.io.IOException
 import java.time.LocalDate
@@ -52,11 +51,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
             // Disabled in released version of IDEA and Android Studio
             // Enabled in EAPs, Canary and Beta
             val isReleaseLikeIdea = DISABLED_VALUE == System.getProperty(IDEA_FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE)
-
-            val isKotlinRelease =
-                !(KotlinPluginUtil.isSnapshotVersion() || KotlinPluginUtil.isDevVersion() || isEap(KotlinPluginUtil.getPluginVersion()))
-
-            isReleaseLikeIdea && isKotlinRelease
+            isReleaseLikeIdea && KotlinIdePlugin.isRelease
         }
 
         private const val NUMBER_OF_REPORTING_DAYS_FROM_RELEASE = 7
@@ -80,11 +75,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
             ApplicationManager.getApplication().executeOnPooledThread {
                 val releaseDate =
                     try {
-                        KotlinPluginUpdater.fetchPluginReleaseDate(
-                            KotlinPluginUtil.KOTLIN_PLUGIN_ID,
-                            KotlinPluginUtil.getPluginVersion(),
-                            null
-                        )
+                        KotlinPluginUpdater.fetchPluginReleaseDate(KotlinIdePlugin.id, KotlinIdePlugin.version, null)
                     } catch (e: IOException) {
                         LOG.warn(e)
                         null
@@ -140,7 +131,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
                 }
 
                 val pluginVersion = parts[0]
-                if (pluginVersion != KotlinPluginUtil.getPluginVersion()) {
+                if (pluginVersion != KotlinIdePlugin.version) {
                     // Stored for some other plugin version
                     return null
                 }
@@ -161,7 +152,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         }
 
         private fun writePluginReleaseValue(date: LocalDate) {
-            val currentKotlinVersion = KotlinPluginUtil.getPluginVersion()
+            val currentKotlinVersion = KotlinIdePlugin.version
             val dateStr = RELEASE_DATE_FORMATTER.format(date)
             PropertiesComponent.getInstance().setValue(KOTLIN_PLUGIN_RELEASE_DATE, "$currentKotlinVersion:$dateStr")
         }
@@ -231,7 +222,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         }
 
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
-        if (KotlinPluginUtil.isPatched()) {
+        if (KotlinIdePlugin.hasPatchedVersion) {
             ReportMessages.GROUP
                 .createNotification(KotlinBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
                 .setImportant(false)
@@ -251,7 +242,7 @@ class KotlinReportSubmitter : ITNReporterCompat() {
                     parentComponent,
                     KotlinBundle.message(
                         "reporter.message.text.you.re.running.kotlin.plugin.version",
-                        KotlinPluginUtil.getPluginVersion(),
+                        KotlinIdePlugin.version,
                         status.pluginDescriptor.version
                     ),
                     KotlinBundle.message("reporter.title.update.kotlin.plugin"),

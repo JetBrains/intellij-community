@@ -103,10 +103,11 @@ class BuildActionRunner(
     val aClass = if (resolverCtx.isPreviewMode) BasicIdeaProject::class.java else IdeaProject::class.java
     val modelBuilder = helper.getModelBuilder(
       aClass,
+      resolverCtx.connection,
       resolverCtx.externalSystemTaskId,
       settings,
-      resolverCtx.connection,
-      resolverCtx.listener)
+      resolverCtx.listener
+    )
 
     buildFinishedCallBack.accept(null)
 
@@ -160,8 +161,16 @@ class BuildActionRunner(
     return executer
   }
 
-  private fun BuildActionExecuter<*>.prepare() = GradleExecutionHelper.prepare(this, resolverCtx.externalSystemTaskId, settings,
-                                                                               resolverCtx.listener, resolverCtx.connection)
+  private fun BuildActionExecuter<*>.prepare() {
+    GradleExecutionHelper.prepare(
+      resolverCtx.connection,
+      this,
+      resolverCtx.externalSystemTaskId,
+      settings,
+      resolverCtx.listener
+    )
+    GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe { it.prepareForSync(this, resolverCtx) }
+  }
 
   private inner class BuildActionResultHandler(
     val buildFinishedCallBack: Consumer<GradleConnectionException?>

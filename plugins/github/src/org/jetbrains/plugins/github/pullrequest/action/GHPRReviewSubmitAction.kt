@@ -3,10 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.codereview.InlineIconButton
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -18,17 +21,15 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
-import com.intellij.ui.components.panels.HorizontalBox
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JButtonAction
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.*
 import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -39,12 +40,14 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.component.GHSimpleErrorPanelModel
-import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.event.ActionListener
+import java.util.concurrent.CompletableFuture
 import javax.swing.*
 
 class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.message("pull.request.review.submit.action.description")) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
@@ -91,13 +94,6 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     val details = dataProvider.detailsData.loadedDetails ?: return
     val reviewDataProvider = dataProvider.reviewData
     val pendingReviewFuture = reviewDataProvider.loadPendingReview()
-    if (!pendingReviewFuture.isDone) return
-    val pendingReview = try {
-      pendingReviewFuture.getNow(null)
-    }
-    catch (e: Exception) {
-      null
-    }
     val parentComponent = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
 
     var cancelRunnable: (() -> Unit)? = null
@@ -105,9 +101,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       cancelRunnable?.invoke()
     }
 
-    val container = createPopupComponent(reviewDataProvider, reviewDataProvider.submitReviewCommentDocument,
-                                         cancelActionListener, pendingReview,
-                                         details.viewerDidAuthor)
+    val container = createPopupComponent(
+      reviewDataProvider,
+      reviewDataProvider.submitReviewCommentDocument,
+      cancelActionListener,
+      pendingReviewFuture,
+      details.viewerDidAuthor
+    )
     val popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
       .setFocusable(true)
@@ -120,38 +120,100 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     popup.showUnderneathOf(parentComponent)
   }
 
-  private fun createPopupComponent(reviewDataProvider: GHPRReviewDataProvider,
-                                   document: Document,
-                                   cancelActionListener: ActionListener,
-                                   pendingReview: GHPullRequestPendingReview?,
-                                   viewerIsAuthor: Boolean): ComponentContainer {
+  private fun createPopupComponent(
+    reviewDataProvider: GHPRReviewDataProvider,
+    document: Document,
+    cancelActionListener: ActionListener,
+    pendingReviewFuture: CompletableFuture<GHPullRequestPendingReview?>,
+    viewerIsAuthor: Boolean
+  ): ComponentContainer {
     return object : ComponentContainer {
-
+      private val wrapper = Wrapper().apply {
+        isOpaque = true
+        background = JBUI.CurrentTheme.List.BACKGROUND
+        preferredSize = JBDimension(500, 200)
+      }
       private val editor = createEditor(document)
       private val errorModel = GHSimpleErrorPanelModel(GithubBundle.message("pull.request.review.submit.error"))
 
-      private val approveButton = if (!viewerIsAuthor) JButton(GithubBundle.message("pull.request.review.submit.approve.button")).apply {
-        addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.APPROVE))
+      private val approveButton = object : InstallButton(GithubBundle.message("pull.request.review.submit.approve.button"), true) {
+        override fun setTextAndSize() {}
       }
-      else null
-
-      private val rejectButton = if (!viewerIsAuthor) JButton(GithubBundle.message("pull.request.review.submit.request.changes")).apply {
-        addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.REQUEST_CHANGES))
+      private val rejectButton = JButton(GithubBundle.message("pull.request.review.submit.request.changes")).apply {
+        isOpaque = false
       }
-      else null
-
       private val commentButton = JButton(GithubBundle.message("pull.request.review.submit.comment.button")).apply {
+        isOpaque = false
         toolTipText = GithubBundle.message("pull.request.review.submit.comment.description")
-        addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.COMMENT))
+      }
+      private val discardButton = InlineIconButton(
+        icon = CollaborationToolsIcons.Delete,
+        hoveredIcon = CollaborationToolsIcons.DeleteHovered,
+        tooltip = GithubBundle.message("pull.request.discard.pending.comments")
+      ).apply {
+        border = JBUI.Borders.empty(5)
+      }
+      private val closeButton = InlineIconButton(
+        icon = AllIcons.Actions.Close,
+        hoveredIcon = AllIcons.Actions.CloseHovered
+      ).apply {
+        border = JBUI.Borders.empty(5)
+        actionListener = cancelActionListener
       }
 
-      private fun createSubmitButtonActionListener(event: GHPullRequestReviewEvent): ActionListener = ActionListener { e ->
-        editor.isEnabled = false
-        approveButton?.isEnabled = false
-        rejectButton?.isEnabled = false
-        commentButton.isEnabled = false
-        discardButton?.isEnabled = false
+      private val loadingLabel = JLabel(AnimatedIcon.Default())
 
+      init {
+        approveButton.isVisible = false
+        rejectButton.isVisible = false
+        discardButton.isVisible = false
+
+        wrapper.setContent(loadingLabel)
+        wrapper.repaint()
+        pendingReviewFuture.thenAccept { pendingReview ->
+          approveButton.apply {
+            isVisible = !viewerIsAuthor
+            addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.APPROVE, pendingReview))
+          }
+          rejectButton.apply {
+            isVisible = !viewerIsAuthor
+            addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.REQUEST_CHANGES, pendingReview))
+          }
+          commentButton.apply {
+            addActionListener(createSubmitButtonActionListener(GHPullRequestReviewEvent.COMMENT, pendingReview))
+          }
+
+          if (pendingReview != null) {
+            discardButton.isVisible = true
+            discardButton.actionListener = ActionListener {
+              val discardButtonMessageDialog = MessageDialogBuilder.yesNo(
+                GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
+                GithubBundle.message("pull.request.discard.pending.comments.dialog.msg")
+              )
+              if (discardButtonMessageDialog.ask(discardButton)) {
+                reviewDataProvider.deleteReview(EmptyProgressIndicator(), pendingReview.id)
+              }
+            }
+          }
+
+          val submitActionComponent = createSubmitActionComponent(pendingReview)
+          wrapper.setContent(submitActionComponent)
+          wrapper.repaint()
+          CollaborationToolsUIUtil.focusPanel(editor)
+        }
+      }
+
+      override fun getComponent(): JComponent = wrapper
+
+      override fun getPreferredFocusableComponent(): EditorTextField = editor
+
+      override fun dispose() {}
+
+      private fun createSubmitButtonActionListener(
+        event: GHPullRequestReviewEvent,
+        pendingReview: GHPullRequestPendingReview?
+      ): ActionListener = ActionListener { e ->
+        disableUI()
         val reviewId = pendingReview?.id
         if (reviewId == null) {
           reviewDataProvider.createReview(EmptyProgressIndicator(), event, editor.text)
@@ -163,107 +225,86 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
           runWriteAction { document.setText("") }
         }.errorOnEdt {
           errorModel.error = it
-          editor.isEnabled = true
-          approveButton?.isEnabled = true
-          rejectButton?.isEnabled = true
-          commentButton.isEnabled = true
-          discardButton?.isEnabled = true
+          enableUI()
         }
       }
 
-      private val discardButton: InlineIconButton?
-
-      init {
-        discardButton = pendingReview?.let { review ->
-          val button = InlineIconButton(icon = CollaborationToolsIcons.Delete, hoveredIcon = CollaborationToolsIcons.DeleteHovered,
-                                        tooltip = GithubBundle.message("pull.request.discard.pending.comments"))
-          button.actionListener = ActionListener {
-            if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
-                                           GithubBundle.message("pull.request.discard.pending.comments.dialog.msg")).ask(button)) {
-              reviewDataProvider.deleteReview(EmptyProgressIndicator(), review.id)
-            }
-          }
-          button
-        }
-      }
-
-      override fun getComponent(): JComponent {
+      private fun createSubmitActionComponent(pendingReview: GHPullRequestPendingReview?): JComponent {
         val titleLabel = JLabel(GithubBundle.message("pull.request.review.submit.review")).apply {
           font = font.deriveFont(font.style or Font.BOLD)
         }
-        val titlePanel = HorizontalBox().apply {
-          border = JBUI.Borders.empty(4, 4, 4, 4)
-
-          add(titleLabel)
+        val titlePanel = JPanel(HorizontalLayout(0)).apply {
+          isOpaque = false
+          add(titleLabel, HorizontalLayout.LEFT)
           if (pendingReview != null) {
             val commentsCount = pendingReview.comments.totalCount!!
-            add(Box.createRigidArea(JBDimension(5, 0)))
-            add(JLabel(GithubBundle.message("pull.request.review.pending.comments.count", commentsCount))).apply {
+            add(Box.createRigidArea(JBDimension(5, 0)), HorizontalLayout.LEFT)
+            val pendingCommentsLabel = JLabel(GithubBundle.message("pull.request.review.pending.comments.count", commentsCount)).apply {
               foreground = UIUtil.getContextHelpForeground()
             }
+            add(pendingCommentsLabel, HorizontalLayout.LEFT)
           }
-          add(Box.createHorizontalGlue())
-          discardButton?.let { add(it) }
-          add(InlineIconButton(AllIcons.Actions.Close, AllIcons.Actions.CloseHovered).apply {
-            actionListener = cancelActionListener
-          })
+          add(discardButton, HorizontalLayout.RIGHT)
+          add(closeButton, HorizontalLayout.RIGHT)
         }
 
         val errorPanel = GHHtmlErrorPanel.create(errorModel, SwingConstants.LEFT).apply {
           border = JBUI.Borders.empty(4)
         }
 
-        val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-          border = JBUI.Borders.empty(4)
-
-          if (!viewerIsAuthor) add(approveButton)
-          if (!viewerIsAuthor) add(rejectButton)
+        val buttonsPanel = HorizontalListPanel(12).apply {
+          add(approveButton)
+          add(rejectButton)
           add(commentButton)
         }
 
-        return JPanel(MigLayout(LC().gridGap("0", "0")
-                                  .insets("0", "0", "0", "0")
-                                  .fill().flowY().noGrid())).apply {
+        return JPanel(MigLayout(LC().insets("12").fill().flowY().noGrid().hideMode(3))).apply {
           isOpaque = false
-          preferredSize = JBDimension(450, 165)
-
           add(titlePanel, CC().growX())
-          add(editor, CC().growX().growY()
-            .gap("0", "0", "0", "0"))
-          add(errorPanel, CC().minHeight("${JBUIScale.scale(32)}").growY().growPrioY(0).hideMode(3)
-            .gap("0", "0", "0", "0"))
-          add(buttonsPanel, CC().alignX("right"))
+          add(editor, CC().growX().growY())
+          add(errorPanel, CC().minHeight("32").growY().growPrioY(0))
+          add(buttonsPanel, CC())
         }
       }
 
-      private fun createEditor(document: Document) = EditorTextField(document, null, FileTypes.PLAIN_TEXT).apply {
+      private fun createEditor(document: Document): EditorTextField = EditorTextField(document, null, FileTypes.PLAIN_TEXT).apply {
         setOneLineMode(false)
         putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
         setPlaceholder(GithubBundle.message("pull.request.review.comment.empty.text"))
         addSettingsProvider {
           it.settings.isUseSoftWraps = true
           it.setVerticalScrollbarVisible(true)
-          it.scrollPane.border = IdeBorderFactory.createBorder(SideBorder.TOP or SideBorder.BOTTOM)
           it.scrollPane.viewportBorder = JBUI.Borders.emptyLeft(4)
           it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
         }
       }
 
+      private fun disableUI() {
+        editor.isEnabled = false
+        approveButton.isEnabled = false
+        rejectButton.isEnabled = false
+        commentButton.isEnabled = false
+        discardButton.isEnabled = false
+      }
 
-      override fun getPreferredFocusableComponent() = editor
-
-      override fun dispose() {}
+      private fun enableUI() {
+        editor.isEnabled = true
+        approveButton.isEnabled = true
+        rejectButton.isEnabled = true
+        commentButton.isEnabled = true
+        discardButton.isEnabled = true
+      }
     }
   }
 
   override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     super.updateButtonFromPresentation(button, presentation)
-    val prefix = presentation.getClientProperty(PROP_PREFIX) as? String ?: GithubBundle.message("pull.request.review.submit.review")
+    val prefix = presentation.getClientProperty(PROP_PREFIX) ?: GithubBundle.message("pull.request.review.submit.review")
     button.text = prefix + presentation.text
-    UIUtil.putClientProperty(button, DarculaButtonUI.DEFAULT_STYLE_KEY, presentation.getClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY))
+    ClientProperty.put(button, DarculaButtonUI.DEFAULT_STYLE_KEY, presentation.getClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY))
   }
 
   companion object {
-    private const val PROP_PREFIX = "PREFIX"
+    private val PROP_PREFIX: Key<String> = Key("PREFIX")
   }
 }

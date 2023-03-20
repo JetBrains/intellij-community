@@ -29,7 +29,8 @@ class DslLabelTest {
     val dslLabel = DslLabel(DslLabelType.LABEL)
 
     fun getDslLabelBody(text: String): String {
-      dslLabel.setHtmlText(text, MAX_LINE_LENGTH_NO_WRAP)
+      dslLabel.maxLineLength = MAX_LINE_LENGTH_NO_WRAP
+      dslLabel.text = text
       return bodyRegex.find(dslLabel.text)!!.groups[1]!!
         .value.trim()
         .replace(newLineRegex, " ") // Remove new lines with indents
@@ -53,7 +54,8 @@ class DslLabelTest {
     val dslLabel = DslLabel(DslLabelType.LABEL)
     for (text in testValues) {
       assertThrows<UiDslException>(text) {
-        dslLabel.setHtmlText(text, MAX_LINE_LENGTH_NO_WRAP)
+        dslLabel.maxLineLength = MAX_LINE_LENGTH_NO_WRAP
+        dslLabel.text = text
       }
     }
   }

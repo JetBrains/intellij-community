@@ -22,7 +22,6 @@ import com.siyeh.ig.style.SingleStatementInBlockInspection;
 
 /**
  * @author Bas Leijdekkers
- * @author Pavel.Dolgov
  */
 public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
 

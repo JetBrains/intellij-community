@@ -3,105 +3,89 @@ package org.intellij.plugins.markdown.formatter
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 
-open class MarkdownFormatterTest : LightPlatformCodeInsightTestCase() {
+class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
+  fun `test smoke`() = doTest()
+
+  fun `test headers`() = doTest()
+
+  fun `test paragraphs`() = doTest()
+
+  fun `test lists`() = doTest()
+
+  //For now alignment of fence parts is not supported
+  fun `test fences`() = doTest()
+
+  fun `test blockquotes`() = doTest()
+
+  fun `test codeblocks`() = doTest()
+
+  fun `test tables`() = doTest()
+
+  fun `test reflow`() = doTest()
+
+  fun `test long table`() = doTest()
+
+  fun `test punctuation`() = doTest()
+
+  fun `test emphasis`() = doTest()
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
 
-  private var myOldWrap = false
-  private var myOldMargin = 0
-  private var myOldWrapTextBlocksIfLong = false
-  private var myOldKeepLineBreaks = true
-
-  override fun setUp() {
-    super.setUp()
-
-    val settings = CodeStyle.getSettings(project)
-    val common = settings.getCommonSettings(MarkdownLanguage.INSTANCE)
-    val custom = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
-
-    myOldWrap = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
-    myOldMargin = common.RIGHT_MARGIN
-    myOldWrapTextBlocksIfLong = custom.WRAP_TEXT_IF_LONG
-    myOldKeepLineBreaks = custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS
-
-    custom.WRAP_TEXT_IF_LONG = true
-    custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = false
-    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
-    common.RIGHT_MARGIN = 40
-  }
-
-  override fun tearDown() {
-    val settings = CodeStyle.getSettings(project)
-    val common = settings.getCommonSettings(MarkdownLanguage.INSTANCE)
-    val custom = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
-
-    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap
-    common.RIGHT_MARGIN = myOldMargin
-    custom.WRAP_TEXT_IF_LONG = myOldWrapTextBlocksIfLong
-    custom.KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = myOldKeepLineBreaks
-
-    super.tearDown()
-  }
-
-  fun testSmoke() {
-    doTest()
-  }
-
-  fun testHeaders() {
-    doTest()
-  }
-
-  fun testParagraphs() {
-    doTest()
-  }
-
-  fun testLists() {
-    doTest()
-  }
-
-  //For now alignment of fence parts is not supported
-  fun testFences() {
-    doTest()
-  }
-
-  fun testBlockquotes() {
-    doTest()
-  }
-
-  fun testCodeblocks() {
-    doTest()
-  }
-
-  fun testTables() {
-    doTest()
-  }
-
-  fun testReflow() {
-    doTest()
+  override fun getTestName(lowercaseFirstLetter: Boolean): String {
+    val name = super.getTestName(lowercaseFirstLetter)
+    return name.trimStart().replace(' ', '_')
   }
 
   private fun doTest() {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"
-
-    doReformatTest(before, after)
-
-    //check idempotence of formatter
-    doReformatTest(after, after)
+    runWithTemporaryStyleSettings(project) { settings ->
+      settings.apply {
+        WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
+        getCommonSettings(MarkdownLanguage.INSTANCE).apply {
+          RIGHT_MARGIN = 40
+        }
+        getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
+          WRAP_TEXT_IF_LONG = true
+          KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = false
+          // These tests are not aware of the fact that tables can be reformatted now by TablePostFormatProcessor
+          // and wrapping block quotes can be fixed be BlockQuotePostFormatProcessor
+          FORMAT_TABLES = false
+          INSERT_QUOTE_ARROWS_ON_WRAP = false
+        }
+      }
+      configureByFile(before)
+      performReformatting(project, file)
+      checkResultByFile(after)
+      //check idempotence of formatter
+      performReformatting(project, file)
+      checkResultByFile(after)
+    }
   }
 
-  private fun doReformatTest(before: String, after: String) {
-    configureByFile(before)
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformat(file)
+  companion object {
+    internal fun runWithTemporaryStyleSettings(project: Project, block: (CodeStyleSettings) -> Unit) {
+      val settings = CodeStyle.getSettings(project)
+      CodeStyle.doWithTemporarySettings(project, settings, block)
     }
-    checkResultByFile(after)
+
+    internal fun performReformatting(project: Project, file: PsiFile) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+      }
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    }
   }
 }

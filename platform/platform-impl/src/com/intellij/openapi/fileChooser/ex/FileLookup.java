@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -15,6 +15,10 @@ public interface FileLookup {
     String normalize(@NotNull String path);
 
     @NlsSafe String getSeparator();
+
+    default @NotNull List<String> split(@NotNull String path) {
+      return List.of(normalize(path).split(getSeparator().replaceAll("\\\\", "\\\\\\\\")));
+    }
   }
 
   interface LookupFile {

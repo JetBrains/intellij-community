@@ -49,13 +49,11 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     setTitle(message("dialog.title.select.target.for.external"));
     setOKButtonText(message("button.select"));
     getRepositoryBrowser().addChangeListener(e -> {
-      if (getOKAction() != null) {
-        final String selectedURL = getRepositoryBrowser().getSelectedURL();
-        if (myFollowRemoteTarget && selectedURL != null) {
-          myFolderName.setText(Url.tail(selectedURL));
-        }
-        checkEnabled();
+      final String selectedURL = getRepositoryBrowser().getSelectedURL();
+      if (myFollowRemoteTarget && selectedURL != null) {
+        myFolderName.setText(Url.tail(selectedURL));
       }
+      checkEnabled();
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }
@@ -99,7 +97,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     group.addSeparator();
     group.add(new RefreshAction(browser));
     group.add(new DiscardLocationAction(browser));
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("SelectCreateExternalTargetDialog", group);
     return menu.getComponent();
   }
 

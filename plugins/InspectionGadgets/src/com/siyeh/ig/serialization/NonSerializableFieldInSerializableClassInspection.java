@@ -16,7 +16,8 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,16 +29,17 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
 
   @Override
-  protected JComponent @NotNull [] createAdditionalOptions() {
-    return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
+  protected @NotNull OptPane getAdditionalOptions() {
+    return pane(stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                           new JavaClassValidator().annotationsOnly()));
   }
 
   @Override
@@ -76,7 +78,7 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
     }
 
     @Override
-    public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
       visitVariable(recordComponent, recordComponent.getContainingClass());
     }
 

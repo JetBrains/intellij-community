@@ -1,6 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-@file:Suppress("ClassName")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test.preference
 
@@ -32,6 +30,7 @@ internal object DebuggerPreferenceKeys {
     val DESCRIPTOR_VIEW_OPTIONS by debuggerPreferenceKey("FULL")
 
     val ATTACH_LIBRARY by debuggerPreferenceKey(emptyList<String>())
+    val ENABLED_LANGUAGE_FEATURE by debuggerPreferenceKey(emptyList<String>())
 
     val SKIP by debuggerPreferenceKey(emptyList<String>())
     val WATCH_FIELD_ACCESS by debuggerPreferenceKey(true)

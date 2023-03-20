@@ -114,7 +114,7 @@ open class CommonInjectedFileChangesHandler(
       if (host == null) continue
       val hostRange = host.textRange
       val hostOffset = hostRange.startOffset
-      var currentHost = host;
+      var currentHost = host
       val hostMarkers = map[host].orEmpty().reversed()
       for ((hostMarker, fragmentMarker, _) in hostMarkers) {
         val localInsideHost = ProperTextRange(hostMarker.startOffset - hostOffset, hostMarker.endOffset - hostOffset)
@@ -122,7 +122,7 @@ open class CommonInjectedFileChangesHandler(
         currentHost!! // should never happen
 
         // fixme we could optimize here and check if host text has been changed and update only really changed fragments, not all of them
-        if (localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
+        if (localInsideFile.endOffset <= text.length) {
           val decodedText = localInsideFile.substring(text)
           currentHost = updateHostOrFail(currentHost, localInsideHost, decodedText, e)
         }
@@ -162,7 +162,7 @@ open class CommonInjectedFileChangesHandler(
   }
 
   @Deprecated("use updateHostElement", ReplaceWith("updateHostElement"))
-  @ApiStatus.ScheduledForRemoval(inVersion =  "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost,
                                            insideHost: ProperTextRange,
                                            content: String): PsiLanguageInjectionHost? {
@@ -205,9 +205,9 @@ open class CommonInjectedFileChangesHandler(
   protected fun failAndReport(@NonNls message: String, e: DocumentEvent? = null, exception: Exception? = null): Nothing =
     throw getReportException(message, e, exception)
 
-  protected fun getReportException(@NonNls message: String,
-                                   e: DocumentEvent?,
-                                   exception: Exception?): RuntimeExceptionWithAttachments =
+  private fun getReportException(@NonNls message: String,
+                                 e: DocumentEvent?,
+                                 exception: Exception?): RuntimeExceptionWithAttachments =
     RuntimeExceptionWithAttachments("${this.javaClass.simpleName}: $message (event = $e)," +
                                     " myInjectedFile.isValid = ${myInjectedFile.isValid}, isValid = $isValid",
                                     *listOfNotNull(
@@ -221,7 +221,7 @@ open class CommonInjectedFileChangesHandler(
 
   protected fun String.esclbr(): String = StringUtil.escapeLineBreak(this)
 
-  protected val RangeMarker.debugText: String
+  private val RangeMarker.debugText: String
     get() = "$range'${
       try {
         document.getText(range)
@@ -240,9 +240,9 @@ open class CommonInjectedFileChangesHandler(
     return "${hostMarker.debugText}\t<-\t${fragmentMarker.debugText}"
   }
 
-  protected fun Iterable<MarkersMapping>.logMarkersRanges(): String = joinToString("\n", transform = ::markerString)
+  private fun Iterable<MarkersMapping>.logMarkersRanges(): String = joinToString("\n", transform = ::markerString)
 
-  protected fun String.substringVerbose(start: Int, cursor: Int): String = try {
+  private fun String.substringVerbose(start: Int, cursor: Int): String = try {
     substring(start, cursor)
   }
   catch (e: StringIndexOutOfBoundsException) {
@@ -291,6 +291,7 @@ open class CommonInjectedFileChangesHandler(
 
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use platform API", ReplaceWith("debug", "com.intellij.openapi.diagnostic"))
 inline fun Logger.debug(message: () -> String) {
   this.debug(null, message)

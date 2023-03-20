@@ -5,10 +5,6 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class MoveSelectionToDownAction extends AbstractMoveSelectionAction{
   public MoveSelectionToDownAction(final GuiEditor editor, boolean extend, final boolean moveToLast) {
     super(editor, extend, moveToLast);

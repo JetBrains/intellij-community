@@ -1,2 +1,2 @@
 class KotlinClass
-interface KotlinTrait
+interface KotlinInterface

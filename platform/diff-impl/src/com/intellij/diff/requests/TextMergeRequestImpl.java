@@ -22,6 +22,7 @@ import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.util.Consumer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -87,22 +88,17 @@ public class TextMergeRequestImpl extends TextMergeRequest {
   public void applyResult(@NotNull MergeResult result) {
     final CharSequence applyContent;
     switch (result) {
-      case CANCEL:
-        applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
-        break;
-      case LEFT:
+      case CANCEL -> applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
+      case LEFT -> {
         CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
         applyContent = StringUtil.convertLineSeparators(leftContent.toString());
-        break;
-      case RIGHT:
+      }
+      case RIGHT -> {
         CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
         applyContent = StringUtil.convertLineSeparators(rightContent.toString());
-        break;
-      case RESOLVED:
-        applyContent = null;
-        break;
-      default:
-        throw new IllegalArgumentException(result.toString());
+      }
+      case RESOLVED -> applyContent = null;
+      default -> throw new IllegalArgumentException(result.toString());
     }
 
     if (applyContent != null) {

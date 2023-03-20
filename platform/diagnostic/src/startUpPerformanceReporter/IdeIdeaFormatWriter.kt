@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -10,12 +10,13 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.tree.IElementType
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2LongMap
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.lang.invoke.MethodHandles
@@ -28,8 +29,9 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityImpl>>,
-                                   private val pluginCostMap: MutableMap<String, Object2LongOpenHashMap<String>>,
-                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager, StartUpPerformanceReporter.VERSION) {
+                                   private val pluginCostMap: MutableMap<String, Object2LongMap<String>>,
+                                   threadNameManager: ThreadNameManager) : IdeaFormatWriter(activities, threadNameManager,
+                                                                                            StartUpPerformanceReporter.VERSION) {
   val publicStatMetrics = Object2IntOpenHashMap<String>()
 
   init {
@@ -71,6 +73,10 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
     writer.obj("resourceLoading") {
       writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
       writer.writeNumberField("count", stats.getValue("resourceRequests"))
+    }
+    writer.obj("langLoading") {
+      val allTypes = IElementType.enumerate(IElementType.TRUE)
+      writer.writeNumberField("elementTypeCount", allTypes.size)
     }
 
     writeServiceStats(writer)
@@ -114,7 +120,6 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       when (val itemName = item.name) {
         "splash initialization" -> {
           publicStatMetrics["splash"] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
-          publicStatMetrics["splashShown"] = TimeUnit.NANOSECONDS.toMillis(item.end - StartUpMeasurer.getStartTime()).toInt()
         }
         "bootstrap", "app initialization" -> {
           publicStatMetrics[itemName] = TimeUnit.NANOSECONDS.toMillis(ownOrTotalDuration).toInt()
@@ -129,11 +134,11 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
 
 private fun writeIcons(writer: JsonGenerator) {
   writer.array("icons") {
-    for (stat in IconLoadMeasurer.getStats()) {
+    for (stat in IconLoadMeasurer.stats) {
       writer.obj {
         writer.writeStringField("name", stat.name)
         writer.writeNumberField("count", stat.count)
-        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.totalDuration))
+        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stat.getTotalDuration()))
       }
     }
   }
@@ -155,7 +160,8 @@ private fun writeServiceStats(writer: JsonGenerator) {
     var module = 0
   }
 
-  // components can be inferred from data, but to verify that items reported correctly (and because for items threshold is applied (not all are reported))
+  // components can be inferred from data,
+  // but to verify that item reported correctly (and because for an item threshold is applied (not all are reported))
   val component = StatItem("component")
   val service = StatItem("service")
 
@@ -184,6 +190,10 @@ private fun writeServiceStats(writer: JsonGenerator) {
   writer.array("plugins") {
     for (plugin in pluginSet.enabledPlugins) {
       val classLoader = plugin.pluginClassLoader as? PluginAwareClassLoader ?: continue
+      if (classLoader.loadedClassCount == 0L) {
+        continue
+      }
+
       writer.obj {
         writer.writeStringField("id", plugin.pluginId.idString)
         writer.writeNumberField("classCount", classLoader.loadedClassCount)

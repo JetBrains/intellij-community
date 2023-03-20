@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -40,4 +42,9 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
     return true;
   }
 
+  @Experimental
+  @Override
+  public @NotNull Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
+    return new ExecutorsQuery<>(myParameters, ContainerUtil.map(myExecutors, e -> e.wrap(wrapper)));
+  }
 }

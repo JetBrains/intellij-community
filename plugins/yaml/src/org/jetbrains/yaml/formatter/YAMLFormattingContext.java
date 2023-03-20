@@ -22,10 +22,7 @@ import kotlin.text.StringsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.YAMLElementTypes;
-import org.jetbrains.yaml.YAMLFileType;
-import org.jetbrains.yaml.YAMLLanguage;
-import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
@@ -254,7 +251,8 @@ class YAMLFormattingContext {
     IElementType nodeType = PsiUtilCore.getElementType(node);
     IElementType parentType = PsiUtilCore.getElementType(node.getTreeParent());
     IElementType grandParentType = parentType == null ? null : PsiUtilCore.getElementType(node.getTreeParent().getTreeParent());
-    boolean grandParentIsDocument = grandParentType == YAMLElementTypes.DOCUMENT;
+    IElementType grand2ParentType = grandParentType == null ? null :
+                                    PsiUtilCore.getElementType(node.getTreeParent().getTreeParent().getTreeParent());
 
     assert nodeType != YAMLElementTypes.SEQUENCE : "Sequence should be inlined!";
     assert nodeType != YAMLElementTypes.MAPPING : "Mapping should be inlined!";
@@ -266,10 +264,16 @@ class YAMLFormattingContext {
     else if (YAMLElementTypes.BRACKETS.contains(nodeType)) {
       return SAME_AS_INDENTED_ANCESTOR_INDENT;
     }
-    else if (nodeType == YAMLTokenTypes.TEXT) {
-      return grandParentIsDocument ? SAME_AS_PARENT_INDENT : DIRECT_NORMAL_INDENT;
+    else if (YAMLElementTypes.TEXT_SCALAR_ITEMS.contains(nodeType)) {
+      if (grandParentType == YAMLElementTypes.DOCUMENT) {
+        return SAME_AS_PARENT_INDENT;
+      }
+      if (grand2ParentType == YAMLElementTypes.ARRAY || grand2ParentType == YAMLElementTypes.HASH) {
+        return Indent.getContinuationWithoutFirstIndent();
+      }
+      return DIRECT_NORMAL_INDENT;
     }
-    else if (nodeType == YAMLElementTypes.FILE) {
+    else if (nodeType == YAMLParserDefinition.FILE) {
       return SAME_AS_PARENT_INDENT;
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(nodeType)) {
@@ -361,7 +365,7 @@ class YAMLFormattingContext {
       //   a: x,
       //   b: y
       // ]
-      return Indent.getNormalIndent();
+      return Indent.getNoneIndent();
     } else {
       // - - a: x
       //     b: y
@@ -408,12 +412,11 @@ class YAMLFormattingContext {
 
   @Nullable
   private static ASTNode getPreviousNonBlankNode(ASTNode node) {
-    do {
+    while (true) {
       node = TreeUtil.prevLeaf(node);
-      if (!YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node))) {
+      if (node == null || !YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node))) {
         return node;
       }
-    } while (node != null);
-    return null;
+    }
   }
 }

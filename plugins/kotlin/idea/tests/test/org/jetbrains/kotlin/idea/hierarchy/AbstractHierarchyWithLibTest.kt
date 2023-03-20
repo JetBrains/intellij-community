@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.hierarchy
 
@@ -10,8 +10,8 @@ import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 
 abstract class AbstractHierarchyWithLibTest : AbstractHierarchyTest() {
     protected fun doTest(folderName: String) {
@@ -38,10 +38,10 @@ abstract class AbstractHierarchyWithLibTest : AbstractHierarchyTest() {
     }
 
     private fun findTargetJavaClass(targetClass: String): PsiClass {
-        return JavaFullClassNameIndex.getInstance().get(targetClass.hashCode(), project, GlobalSearchScope.allScope(project)).find {
+        return JavaFullClassNameIndex.getInstance().get(targetClass, project, GlobalSearchScope.allScope(project)).find {
             it.qualifiedName == targetClass
         } ?: error("Could not find java class: $targetClass")
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 }

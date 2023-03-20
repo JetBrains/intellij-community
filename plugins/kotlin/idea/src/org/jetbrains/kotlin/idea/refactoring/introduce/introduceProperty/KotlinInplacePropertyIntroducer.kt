@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty
 
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.NonFocusableCheckBox
 import com.intellij.ui.PopupMenuListenerAdapter
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionResult
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.generateDeclaration
@@ -140,7 +140,7 @@ class KotlinInplacePropertyIntroducer(
         super.addTypeReferenceVariable(builder)
     }
 
-    override fun checkLocalScope(): PsiElement? {
+    override fun checkLocalScope(): PsiElement {
         return myElementToRename.parentsWithSelf.first { it is KtClassOrObject || it is KtFile }
     }
 

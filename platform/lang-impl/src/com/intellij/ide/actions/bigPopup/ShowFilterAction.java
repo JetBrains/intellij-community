@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.bigPopup;
 
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
@@ -15,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.ui.BadgeIconSupplier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,10 +27,11 @@ import java.awt.event.HierarchyListener;
 
 public abstract class ShowFilterAction extends ToggleAction implements DumbAware {
   private JBPopup myFilterPopup;
+  private static final BadgeIconSupplier FILTER_ICON = new BadgeIconSupplier(AllIcons.General.Filter);
 
   public ShowFilterAction() {
     super(IdeBundle.messagePointer("action.ToggleAction.show.filter.text.filter"),
-          IdeBundle.messagePointer("action.ToggleAction.show.filter.description.show.filters.popup"), AllIcons.General.Filter);
+          IdeBundle.messagePointer("action.ToggleAction.show.filter.description.show.filters.popup"), FILTER_ICON.getOriginalIcon());
   }
 
   @Override
@@ -52,8 +53,7 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Icon icon = getTemplatePresentation().getIcon();
-    e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+    e.getPresentation().setIcon(FILTER_ICON.getLiveIndicatorIcon(isActive()));
     e.getPresentation().setEnabled(isEnabled());
     Toggleable.setSelected(e.getPresentation(), isSelected(e));
   }

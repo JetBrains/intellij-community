@@ -31,7 +31,7 @@ public class IterationStateTest extends AbstractEditorTest {
     DEFAULT_BACKGROUND = colorsScheme.getDefaultBackground();
     CARET_ROW_BACKGROUND = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     SELECTION_BACKGROUND = colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
-    assertEquals(3, ContainerUtil.set(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND).size());
+    assertEquals(3, ContainerUtil.immutableSet(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND).size());
   }
 
   public void testBlockSelection() {
@@ -48,9 +48,10 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelection() {
-    init("a\n" +
-         "bbb\n" +
-         "ccccc");
+    init("""
+           a
+           bbb
+           ccccc""");
     setColumnModeOn();
     mouse().pressAt(0, 2).dragTo(2, 4).release();
     verifySplitting(false,
@@ -65,9 +66,10 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelectionAtLastNonEmptyLine() {
-    init("a\n" +
-         "bbb\n" +
-         "ccccc");
+    init("""
+           a
+           bbb
+           ccccc""");
     setColumnModeOn();
     mouse().pressAt(0, 2).dragTo(2, 6).release();
     verifySplitting(false,
@@ -81,8 +83,7 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelectionAtLastEmptyLine() {
-    init("a\n" +
-         "");
+    init("a\n");
     setColumnModeOn();
     mouse().pressAt(1, 1).dragTo(1, 2).release();
     verifySplitting(false,

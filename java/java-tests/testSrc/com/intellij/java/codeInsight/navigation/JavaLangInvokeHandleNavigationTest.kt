@@ -10,9 +10,6 @@ import org.intellij.lang.annotations.Language
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.NonNls
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaLangInvokeHandleNavigationTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testVirtual1() = doTest("m1", VIRTUAL)

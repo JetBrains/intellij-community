@@ -11,7 +11,7 @@ class NGramModelRunnerManager {
   private val myModelRunners: MutableMap<String, ModelRunnerWithCache> = mutableMapOf()
 
   fun processFile(psiFile: PsiFile, language: Language) {
-    myModelRunners.getOrPut(language.id) { ModelRunnerWithCache() }.processFile(psiFile)
+    myModelRunners.getOrPut(language.id) { ModelRunnerWithCache() }.processFile(psiFile, psiFile.virtualFile?.path ?: return)
   }
 
   fun getModelRunnerForLanguage(language: Language): ModelRunner? {

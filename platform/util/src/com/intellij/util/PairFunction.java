@@ -15,11 +15,14 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Deprecated. Please use {@link java.util.function.BiFunction} instead
  * @author max
  */
 @FunctionalInterface
+@ApiStatus.Obsolete
 public interface PairFunction<Arg1, Arg2, ResultType> {
 
   ResultType fun(Arg1 t, Arg2 v);

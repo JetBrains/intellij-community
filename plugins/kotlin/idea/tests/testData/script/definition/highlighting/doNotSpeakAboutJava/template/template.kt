@@ -35,7 +35,7 @@ class TestDependenciesResolver : DependenciesResolver {
 
         return DependenciesResolver.ResolveResult.Success(
                 ScriptDependencies(
-                        classpath = listOf(environment["template-classes"] as File)
+                        classpath = environment["template-classes"] as List<File>
                 ),
                 reports
         )

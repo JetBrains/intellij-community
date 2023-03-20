@@ -109,7 +109,7 @@ public final class LibraryScopeCache {
 
     Comparator<Module> comparator = Comparator.comparing(Module::getName);
     modulesLibraryUsedIn.sort(comparator);
-    List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
+    List<? extends Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
 
     GlobalSearchScope allCandidates = uniquesList.isEmpty() ? myLibrariesOnlyScope : getScopeForLibraryUsedIn(uniquesList);
     if (lib != null) {

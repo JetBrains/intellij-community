@@ -17,16 +17,13 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DoNotAskOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * author: lesya
- */
-public abstract class OptionsDialog extends DialogWrapper  {
+/** A dialog that includes a "Do not ask again" checkbox. */
+public abstract class OptionsDialog extends DialogWrapper {
   protected final Project myProject;
 
   private class MyDoNotAsk implements DoNotAskOption {

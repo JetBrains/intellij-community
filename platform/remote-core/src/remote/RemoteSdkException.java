@@ -3,6 +3,7 @@ package com.intellij.remote;
 
 import com.intellij.execution.ExecutionExceptionWithAttachments;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.NoRouteToHostException;
@@ -66,10 +67,12 @@ public class RemoteSdkException extends ExecutionExceptionWithAttachments {
     }
   }
 
-  public static RemoteSdkException cantObtainRemoteCredentials(Throwable e) {
-    // TODO needs review
+  public static @NotNull RemoteSdkException cantObtainRemoteCredentials(@NotNull Throwable e) {
     if (e.getCause() instanceof RemoteCredentialException) {
       return new RemoteSdkException(RemoteBundle.message("remote.sdk.exception.cant.obtain.remote.credentials"), e);
+    }
+    else if (e instanceof RemoteSdkException) {
+      return (RemoteSdkException)e;
     }
     else {
       return new RemoteSdkException(e.getMessage(), e);

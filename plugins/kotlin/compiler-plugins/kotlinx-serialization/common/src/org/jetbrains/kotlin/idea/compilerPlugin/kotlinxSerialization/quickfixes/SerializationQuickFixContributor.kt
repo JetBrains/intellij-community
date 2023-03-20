@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.quickfixes
 
@@ -9,5 +9,7 @@ import org.jetbrains.kotlinx.serialization.compiler.diagnostic.SerializationErro
 class SerializationQuickFixContributor : QuickFixContributor {
     override fun registerQuickFixes(quickFixes: QuickFixes) {
         quickFixes.register(SerializationErrors.INCORRECT_TRANSIENT, AddKotlinxSerializationTransientImportQuickFix.Factory)
+        quickFixes.register(SerializationErrors.JSON_FORMAT_REDUNDANT_DEFAULT, JsonRedundantDefaultQuickFix.Factory)
+        quickFixes.register(SerializationErrors.JSON_FORMAT_REDUNDANT, JsonRedundantQuickFix.Factory)
     }
 }

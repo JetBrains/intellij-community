@@ -28,29 +28,29 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
     }
   }
 
-  private val myRestoreButton: JButton = createButton("Restore", myRestoreAction)
-  private val myMaximizeButton: JButton = createButton("Maximize", myMaximizeAction)
-  private val myMinimizeButton: JButton = createButton("Iconify", myIconifyAction)
+  val restoreButton: JButton = createButton("Restore", myRestoreAction)
+  val maximizeButton: JButton = createButton("Maximize", myMaximizeAction)
+  val minimizeButton: JButton = createButton("Iconify", myIconifyAction)
 
   override fun fillButtonPane() {
     super.fillButtonPane()
-    addComponent(myMinimizeButton)
-    addComponent(myMaximizeButton)
-    addComponent(myRestoreButton)
+    addComponent(minimizeButton)
+    addComponent(maximizeButton)
+    addComponent(restoreButton)
   }
 
   override fun updateVisibility() {
     super.updateVisibility()
-    myMinimizeButton.isVisible = myIconifyAction.isEnabled
-    myRestoreButton.isVisible = myRestoreAction.isEnabled
-    myMaximizeButton.isVisible = myMaximizeAction.isEnabled
+    minimizeButton.isVisible = myIconifyAction.isEnabled
+    restoreButton.isVisible = myRestoreAction.isEnabled
+    maximizeButton.isVisible = myMaximizeAction.isEnabled
   }
 
   override fun updateStyles() {
     super.updateStyles()
-    StyleManager.applyStyle(myRestoreButton, getStyle(if(isSelected) restoreIcon else restoreInactiveIcon, restoreIcon))
-    StyleManager.applyStyle(myMaximizeButton, getStyle(if(isSelected) maximizeIcon else maximizeInactiveIcon, maximizeIcon))
-    StyleManager.applyStyle(myMinimizeButton, getStyle(if(isSelected) minimizeIcon else minimizeInactiveIcon, minimizeIcon))
+    StyleManager.applyStyle(restoreButton, getStyle(if(isSelected) restoreIcon else restoreInactiveIcon, restoreIcon))
+    StyleManager.applyStyle(maximizeButton, getStyle(if(isSelected) maximizeIcon else maximizeInactiveIcon, maximizeIcon))
+    StyleManager.applyStyle(minimizeButton, getStyle(if(isSelected) minimizeIcon else minimizeInactiveIcon, minimizeIcon))
   }
 
 

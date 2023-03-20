@@ -1,11 +1,12 @@
+from collections.abc import Callable
 from threading import Event
-from typing import Callable, List, Tuple
+from typing_extensions import TypeAlias
 
 from paramiko.pkey import PKey
 from paramiko.ssh_gss import _SSH_GSSAuth
 from paramiko.transport import Transport
 
-_InteractiveCallback = Callable[[str, str, List[Tuple[str, bool]]], List[str]]
+_InteractiveCallback: TypeAlias = Callable[[str, str, list[tuple[str, bool]]], list[str]]
 
 class AuthHandler:
     transport: Transport

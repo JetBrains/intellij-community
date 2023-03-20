@@ -18,9 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.psi.statistics.StatisticsInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class StatisticsComparable implements Comparable<StatisticsComparable> {
   private final int myScalar;
   private final StatisticsInfo myStatisticsInfo;

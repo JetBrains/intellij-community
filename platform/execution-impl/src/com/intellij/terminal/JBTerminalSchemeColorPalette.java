@@ -5,10 +5,10 @@ import com.intellij.execution.process.ColoredOutputTypeRegistryImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.jediterm.core.Color;
 import com.jediterm.terminal.emulator.ColorPalette;
+import com.jediterm.terminal.ui.AwtTransformers;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 public class JBTerminalSchemeColorPalette extends ColorPalette {
 
@@ -23,34 +23,34 @@ public class JBTerminalSchemeColorPalette extends ColorPalette {
   @Override
   protected @NotNull Color getForegroundByColorIndex(int colorIndex) {
     TextAttributes attributes = myColorsScheme.getAttributes(ColoredOutputTypeRegistryImpl.getAnsiColorKey(colorIndex));
-    Color foregroundColor = attributes.getForegroundColor();
+    java.awt.Color foregroundColor = attributes.getForegroundColor();
     if (foregroundColor != null) {
-      return foregroundColor;
+      return AwtTransformers.fromAwtColor(foregroundColor);
     }
-    Color backgroundColor = attributes.getBackgroundColor();
+    java.awt.Color backgroundColor = attributes.getBackgroundColor();
     if (backgroundColor != null) {
-      return backgroundColor;
+      return AwtTransformers.fromAwtColor(backgroundColor);
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Default foreground color will be used for ANSI color index #" + colorIndex);
     }
-    return myColorsScheme.getDefaultForeground();
+    return AwtTransformers.fromAwtColor(myColorsScheme.getDefaultForeground());
   }
 
   @Override
   protected @NotNull Color getBackgroundByColorIndex(int colorIndex) {
     TextAttributes attributes = myColorsScheme.getAttributes(ColoredOutputTypeRegistryImpl.getAnsiColorKey(colorIndex));
-    Color backgroundColor = attributes.getBackgroundColor();
+    java.awt.Color backgroundColor = attributes.getBackgroundColor();
     if (backgroundColor != null) {
-      return backgroundColor;
+      return AwtTransformers.fromAwtColor(backgroundColor);
     }
-    Color foregroundColor = attributes.getForegroundColor();
+    java.awt.Color foregroundColor = attributes.getForegroundColor();
     if (foregroundColor != null) {
-      return foregroundColor;
+      return AwtTransformers.fromAwtColor(foregroundColor);
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Default background color will be used for ANSI color index #" + colorIndex);
     }
-    return myColorsScheme.getDefaultBackground();
+    return AwtTransformers.fromAwtColor(myColorsScheme.getDefaultBackground());
   }
 }

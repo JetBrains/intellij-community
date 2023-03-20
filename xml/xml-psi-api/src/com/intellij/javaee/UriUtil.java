@@ -14,7 +14,7 @@ public final class UriUtil {
   /**
    * @deprecated use {@link #findRelative(String, PsiFileSystemItem)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static VirtualFile findRelativeFile(String uri, VirtualFile base) {
     return VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(uri), base);

@@ -15,17 +15,19 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.rmi.IdeaWatchdog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer {
+  private volatile IdeaWatchdog myWatchdog;
 
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
@@ -36,7 +38,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -54,7 +56,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -66,7 +68,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven30ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -77,7 +79,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven30ServerEmbedderImpl.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -91,7 +93,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return Maven30ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -104,7 +106,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -117,12 +119,24 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
+  }
+
+  @Override
+  public boolean ping(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    if (null == myWatchdog) return false;
+    return myWatchdog.ping();
   }
 
   @Override
   public synchronized void unreferenced() {
     System.exit(0);
+  }
+
+  @Override
+  public void setWatchdog(@NotNull IdeaWatchdog watchdog) {
+    myWatchdog = watchdog;
   }
 }

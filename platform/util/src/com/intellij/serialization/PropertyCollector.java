@@ -25,7 +25,7 @@ public class PropertyCollector {
    */
   public static final byte COLLECT_PRIVATE_FIELDS = 0x02;
   /**
-   * Annotated field, or if type is Collection or Map, is collected regardless of this flag.
+   * Annotated field, or if a type is Collection or Map, is collected regardless of this flag.
    */
   public static final byte COLLECT_FINAL_FIELDS = 0x04;
 
@@ -43,7 +43,7 @@ public class PropertyCollector {
   }
 
   /**
-   * Result is not cached because caller should cache it if needed.
+   * Result is not cached because callers should cache it if needed.
    */
   public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
     return doCollect(aClass, configuration, classToOwnFields);
@@ -55,7 +55,7 @@ public class PropertyCollector {
     List<MutableAccessor> accessors = new ArrayList<>();
 
     Map<String, Pair<Method, Method>> nameToAccessors;
-    // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
+    // special case for Rectangle.class to avoid infinite recursion during serialization due to `bounds()` method
     if (!configuration.collectAccessors || aClass == Rectangle.class) {
       nameToAccessors = Collections.emptyMap();
     }
@@ -65,8 +65,7 @@ public class PropertyCollector {
 
     int propertyAccessorCount = accessors.size();
     Class<?> currentClass = aClass;
-    // AtomicReference is a superclass of UserDataHolderBase
-    // which is a superclass of many serializable objects
+    // AtomicReference is a superclass of UserDataHolderBase which is a superclass of many serializable objects,
     // and we mustn't consider AtomicReference.getOpaque etc. as serializable properties
     do {
       accessors.addAll(classToOwnFields == null ? doCollectOwnFields(currentClass, configuration) : classToOwnFields.get(currentClass));
@@ -187,7 +186,8 @@ public class PropertyCollector {
     }
 
     if (setter == null) {
-      // check hasStoreAnnotations to ensure that this addition will not lead to regression (since there is a chance that there is some existing not-annotated list getters without setter)
+      // check hasStoreAnnotations to ensure that this addition will not lead to regression
+      // (since there is a chance that there are some existing not-annotated list getters without setter)
       return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) &&
              configuration.hasStoreAnnotations(getter);
     }

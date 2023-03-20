@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtilRt;
@@ -37,14 +38,14 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private volatile boolean myDumb;
   private EditorColorsScheme myColorsScheme;
 
-  protected TextEditorHighlightingPass(@NotNull final Project project, @NotNull final Document document, boolean runIntentionPassAfter) {
+  protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document, boolean runIntentionPassAfter) {
     myDocument = document;
     myProject = project;
     myRunIntentionPassAfter = runIntentionPassAfter;
     myInitialDocStamp = document.getModificationStamp();
-    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
+    myInitialPsiStamp = PsiModificationTracker.getInstance(project).getModificationCount();
   }
-  protected TextEditorHighlightingPass(@NotNull final Project project, @NotNull Document document) {
+  protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document) {
     this(project, document, true);
   }
 
@@ -74,6 +75,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return (Condition<Object>)o -> ReadAction.compute(() -> !isValid());
   }
 
+  /**
+   * @return true if the file being highlighted hasn't changed since the pass instantiation and the highlighting results can be applied safely.
+   */
   protected boolean isValid() {
     if (myProject.isDisposed()) {
       return false;
@@ -82,18 +86,23 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
       return false;
     }
 
-    if (PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myInitialPsiStamp) {
+    if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myInitialPsiStamp) {
       return false;
     }
 
     if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    return file != null && file.isValid();
+    PsiElement context;
+    return file != null
+           && file.isValid()
+           && ((context = file.getContext()) == null || context == file || context.isValid());
   }
 
   @Override
   public final void applyInformationToEditor() {
-    if (!isValid()) return; // Document has changed.
+    if (!isValid()) {
+      return; // Document has changed.
+    }
     if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
       Document document = getDocument();
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -112,7 +121,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return myId;
   }
 
-  public final void setId(final int id) {
+  public final void setId(int id) {
     myId = id;
   }
 
@@ -138,7 +147,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return myStartingPredecessorIds;
   }
 
-  public final void setStartingPredecessorIds(final int @NotNull [] startingPredecessorIds) {
+  public final void setStartingPredecessorIds(int @NotNull [] startingPredecessorIds) {
     myStartingPredecessorIds = startingPredecessorIds;
   }
 

@@ -22,8 +22,6 @@ import java.util.Set;
 /**
  * {@link ArrangementSettingsSerializer} which knows how to handle {@link StdArrangementSettings built-in arrangement tokens}
  * and {@link Mixin can be used as a base for custom serializer implementation}.
- *
- * @author Denis Zhdanov
  */
 public class DefaultArrangementSettingsSerializer implements ArrangementSettingsSerializer {
   private static final Logger LOG = Logger.getInstance(DefaultArrangementSettingsSerializer.class);
@@ -59,11 +57,10 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
 
   @Override
   public void serialize(@NotNull ArrangementSettings s, @NotNull Element holder) {
-    if (!(s instanceof StdArrangementSettings)) {
+    if (!(s instanceof StdArrangementSettings settings)) {
       return;
     }
 
-    StdArrangementSettings settings = (StdArrangementSettings)s;
     if (settings instanceof ArrangementExtendableSettings && myDefaultSettings instanceof ArrangementExtendableSettings) {
       final Set<StdArrangementRuleAliasToken> tokensDefinition = ((ArrangementExtendableSettings)settings).getRuleAliases();
       final boolean isDefault = tokensDefinition.equals(((ArrangementExtendableSettings)myDefaultSettings).getRuleAliases());

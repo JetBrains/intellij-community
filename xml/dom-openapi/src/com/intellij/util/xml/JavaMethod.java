@@ -11,9 +11,6 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class JavaMethod implements AnnotatedElement {
   public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
   private static final Object NONE = new Object();
@@ -110,9 +107,7 @@ public final class JavaMethod implements AnnotatedElement {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof JavaMethod)) return false;
-
-    final JavaMethod that = (JavaMethod)o;
+    if (!(o instanceof JavaMethod that)) return false;
 
     if (!myDeclaringClass.equals(that.myDeclaringClass)) return false;
     if (!mySignature.equals(that.mySignature)) return false;

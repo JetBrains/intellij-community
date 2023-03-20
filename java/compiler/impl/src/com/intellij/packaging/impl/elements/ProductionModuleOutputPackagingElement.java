@@ -13,8 +13,8 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleOutputPackagingElementEntity;
 import org.jetbrains.annotations.NonNls;
@@ -55,7 +55,7 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -64,10 +64,10 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     String moduleName = this.getModuleName();
     ModuleOutputPackagingElementEntity addedEntity;
     if (moduleName != null) {
-      addedEntity = BridgeModelModifiableEntitiesKt.addModuleOutputPackagingElementEntity(diff, new ModuleId(moduleName), source);
+      addedEntity = ExtensionsKt.addModuleOutputPackagingElementEntity(diff, new ModuleId(moduleName), source);
     }
     else {
-      addedEntity = BridgeModelModifiableEntitiesKt.addModuleOutputPackagingElementEntity(diff, null, source);
+      addedEntity = ExtensionsKt.addModuleOutputPackagingElementEntity(diff, null, source);
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

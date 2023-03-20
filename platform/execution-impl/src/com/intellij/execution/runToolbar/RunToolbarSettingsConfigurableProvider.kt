@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
@@ -15,7 +16,7 @@ class RunToolbarSettingsConfigurableProvider(val project: Project) : Configurabl
   }
 
   override fun canCreateConfigurable(): Boolean {
-    return RunToolbarProcess.isSettingsAvailable
+    return ToolbarSettings.getInstance().isAvailable
   }
 }
 

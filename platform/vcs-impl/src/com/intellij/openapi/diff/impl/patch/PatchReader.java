@@ -368,16 +368,12 @@ public final class PatchReader {
           break;
         }
         switch (lastLine.getType()) {
-          case CONTEXT:
+          case CONTEXT -> {
             before++;
             after++;
-            break;
-          case ADD:
-            after++;
-            break;
-          case REMOVE:
-            before++;
-            break;
+          }
+          case ADD -> after++;
+          case REMOVE -> before++;
         }
         hunk.addLine(lastLine);
       }

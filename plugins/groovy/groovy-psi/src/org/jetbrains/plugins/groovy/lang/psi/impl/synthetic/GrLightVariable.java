@@ -18,9 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
-* @author sergey.evdokimov
-*/
 public class GrLightVariable extends GrImplicitVariableImpl implements NavigatablePsiElement {
 
   private final List<PsiElement> myDeclarations;

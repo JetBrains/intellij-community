@@ -33,18 +33,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testBasic() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${project<caret>.version}abc");
@@ -56,18 +57,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testTestResourceProperties() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <testResources>" +
-                  "    <testResource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </testResource>" +
-                  "  </testResources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <testResources>
+                        <testResource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </testResource>
+                      </testResources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${project<caret>.version}abc");
@@ -79,18 +81,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testBasicAt() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc@project<caret>.version@abc");
@@ -102,18 +105,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testCorrectlyCalculatingBaseDir() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${basedir<caret>}abc");
@@ -126,35 +130,36 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testResolvingToNonManagedParentProperties() throws Exception {
     createProjectSubDir("res");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <relativePath>parent/pom.xml</relativePath>" +
-                     "</parent>" +
-
-                     "<build>" +
-                     "  <resources>" +
-                     "    <resource>" +
-                     "      <directory>res</directory>" +
-                     "      <filtering>true</filtering>" +
-                     "    </resource>" +
-                     "  </resources>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>parent/pom.xml</relativePath>
+                       </parent>
+                       <build>
+                         <resources>
+                           <resource>
+                             <directory>res</directory>
+                             <filtering>true</filtering>
+                           </resource>
+                         </resources>
+                       </build>
+                       """);
 
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<version>1</version>" +
-                                         "<packaging>pom</packaging>" +
-
-                                         "<properties>" +
-                                         "  <parentProp>value</parentProp>" +
-                                         "</properties>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <packaging>pom</packaging>
+                                           <properties>
+                                             <parentProp>value</parentProp>
+                                           </properties>
+                                           """);
 
     importProject();
 
@@ -168,27 +173,27 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testResolvingToProfileProperties() throws Exception {
     createProjectSubDir("res");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <properties>" +
-                     "      <profileProp>value</profileProp>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>" +
-
-                     "<build>" +
-                     "  <resources>" +
-                     "    <resource>" +
-                     "      <directory>res</directory>" +
-                     "      <filtering>true</filtering>" +
-                     "    </resource>" +
-                     "  </resources>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <profileProp>value</profileProp>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       <build>
+                         <resources>
+                           <resource>
+                             <directory>res</directory>
+                             <filtering>true</filtering>
+                           </resource>
+                         </resources>
+                       </build>
+                       """);
 
     importProjectWithProfiles("one");
 
@@ -202,18 +207,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testDoNotResolveOutsideResources() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("foo.properties",
                                          "foo=abc${project<caret>.version}abc");
@@ -224,18 +230,19 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testDoNotResolveNonFilteredResources() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>false</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>false</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${project<caret>.version}abc");
@@ -246,21 +253,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testUsingFilters() throws Exception {
     VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <filters>" +
-                  "    <filter>filters/filter.properties</filter>" +
-                  "  </filters>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <filters>
+                        <filter>filters/filter.properties</filter>
+                      </filters>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${xx<caret>x}abc");
@@ -278,22 +286,23 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     createProjectSubFile("filters/filter1.properties", "xxx=1");
     createProjectSubFile("filters/filter2.properties", "yyy=1");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <filters>" +
-                  "    <filter>filters/filter1.properties</filter>" +
-                  "    <filter>filters/filter2.properties</filter>" +
-                  "  </filters>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <filters>
+                        <filter>filters/filter1.properties</filter>
+                        <filter>filters/filter2.properties</filter>
+                      </filters>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties", "foo=abc${<caret>}abc");
     assertCompletionVariantsInclude(f, "xxx", "yyy");
@@ -306,21 +315,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testSearchingFromFilters() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=1");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <filters>" +
-                  "    <filter>filters/filter.properties</filter>" +
-                  "  </filters>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <filters>
+                        <filter>filters/filter.properties</filter>
+                      </filters>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=${xxx}\n" +
@@ -334,21 +344,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testCompletionAfterOpenBrace() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "foo=abc${<caret>");
+                                         "foo=abc${<caret>\n");
 
     assertCompletionVariantsInclude(f, "project.version");
   }
@@ -357,21 +368,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testCompletionAfterOpenBraceInTheBeginningOfFile() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.txt",
-                                         "${<caret>");
+                                         "${<caret>\n");
 
     assertCompletionVariantsInclude(f, "project.version");
   }
@@ -382,21 +394,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "${<caret>");
+                                         "${<caret>\n");
 
     assertCompletionVariantsInclude(f, "project.version");
   }
@@ -405,21 +418,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testCompletionInEmptyFile() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
-                                         "<caret>");
+                                         "<caret>\n");
 
     assertCompletionVariantsDoNotInclude(f, "project.version");
   }
@@ -428,22 +442,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testRenaming() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<properties>" +
-                  "  <foo>value</foo>" +
-                  "</properties>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <foo>value</foo>
+                    </properties>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${f<caret>oo}abc");
@@ -452,22 +466,22 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     doRename(f, "bar");
 
-    assertEquals(createPomXml("<groupId>test</groupId>" +
-                              "<artifactId>project</artifactId>" +
-                              "<version>1</version>" +
-
-                              "<properties>" +
-                              "  <bar>value</bar>" +
-                              "</properties>" +
-
-                              "<build>" +
-                              "  <resources>" +
-                              "    <resource>" +
-                              "      <directory>res</directory>" +
-                              "      <filtering>true</filtering>" +
-                              "    </resource>" +
-                              "  </resources>" +
-                              "</build>"),
+    assertEquals(createPomXml("""
+                                <groupId>test</groupId>
+                                <artifactId>project</artifactId>
+                                <version>1</version>
+                                <properties>
+                                  <bar>value</bar>
+                                </properties>
+                                <build>
+                                  <resources>
+                                    <resource>
+                                      <directory>res</directory>
+                                      <filtering>true</filtering>
+                                    </resource>
+                                  </resources>
+                                </build>
+                                """),
                  findPsiFile(myProjectPom).getText());
 
     assertEquals("foo=abc${bar}abc", findPsiFile(f).getText());
@@ -478,26 +492,27 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <filters>" +
-                  "    <filter>filters/filter.properties</filter>" +
-                  "  </filters>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <filters>
+                        <filter>filters/filter.properties</filter>
+                      </filters>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.properties",
                                          "foo=abc${x<caret>xx}abc");
     assertResolved(f, findPropertyPsiElement(filter, "xxx"));
-
+    myFixture.configureFromExistingVirtualFile(filter);
     doInlineRename(f, "bar");
 
     assertEquals("foo=abc${bar}abc", findPsiFile(f).getText());
@@ -508,35 +523,38 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testCustomDelimiters() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-resources-plugin</artifactId>" +
-                  "      <version>2.5</version>" +
-                  "      <configuration>" +
-                  "        <delimiters>" +
-                  "          <delimiter>|</delimiter>" +
-                  "          <delimiter>(*]</delimiter>" +
-                  "        </delimiters>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-resources-plugin</artifactId>
+                          <version>2.5</version>
+                          <configuration>
+                            <delimiters>
+                              <delimiter>|</delimiter>
+                              <delimiter>(*]</delimiter>
+                            </delimiters>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
-                                         "foo1=${basedir}\n" +
-                                         "foo2=|pom.baseUri|\n" +
-                                         "foo3=a(ve|rsion]");
+                                         """
+                                           foo1=${basedir}
+                                           foo2=|pom.baseUri|
+                                           foo3=a(ve|rsion]""");
 
     assertNotNull(resolveReference(f, "basedir"));
     assertNotNull(resolveReference(f, "pom.baseUri"));
@@ -549,30 +567,32 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testDontUseDefaultDelimiter1() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-resources-plugin</artifactId>" +
-                  "      <version>2.5</version>" +
-                  "      <configuration>" +
-                  "        <delimiters>" +
-                  "          <delimiter>|</delimiter>" +
-                  "        </delimiters>" +
-                  "        <useDefaultDelimiters>false</useDefaultDelimiters>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-resources-plugin</artifactId>
+                          <version>2.5</version>
+                          <configuration>
+                            <delimiters>
+                              <delimiter>|</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo1.properties",
                                          "foo1=${basedir}\n" +
@@ -584,45 +604,43 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
   @Test
   public void testDoNotAddReferenceToDelimiterDefinition() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-                  "<properties>\n" +
-                  "  <aaa>${zzz}</aaa>\n" +
-                  "</properties>\n" +
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <aaa>${zzz}</aaa>
+                    </properties>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-resources-plugin</artifactId>
+                          <configuration>
+                            <delimiters>
+                              <delimiter>${*}</delimiter>
+                            </delimiters>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>""");
 
-                  "<build>\n" +
-                  "  <plugins>\n" +
-                  "    <plugin>\n" +
-                  "      <artifactId>maven-resources-plugin</artifactId>\n" +
-                  "      <configuration>\n" +
-                  "        <delimiters>\n" +
-                  "          <delimiter>${*}</delimiter>\n" +
-                  "        </delimiters>\n" +
-                  "      </configuration>\n" +
-                  "    </plugin>\n" +
-                  "  </plugins>\n" +
-                  "</build>");
-
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<properties>\n" +
-                     "  <aaa>${<error descr=\"Cannot resolve symbol 'zzz'\">zzz</error>}</aaa>" +
-                     "</properties>\n" +
-
-                     "<build>\n" +
-                     "  <plugins>\n" +
-                     "    <plugin>\n" +
-                     "      <artifactId><error descr=\"Plugin 'maven-resources-plugin:' not found\">maven-resources-plugin</error></artifactId>" +
-                     "      <configuration>\n" +
-                     "        <delimiters>\n" +
-                     "          <delimiter>${*}</delimiter>\n" +
-                     "        </delimiters>\n" +
-                     "      </configuration>\n" +
-                     "    </plugin>\n" +
-                     "  </plugins>\n" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <aaa>${<error descr="Cannot resolve symbol 'zzz'">zzz</error>}</aaa></properties>
+                       <build>
+                         <plugins>
+                           <plugin>
+                             <artifactId>maven-resources-plugin</artifactId>      <configuration>
+                               <delimiters>
+                                 <delimiter>${*}</delimiter>
+                               </delimiters>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                       </build>""");
 
     checkHighlighting();
   }
@@ -631,22 +649,25 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
   public void testReferencesInXml() throws Exception {
     createProjectSubDir("res");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     VirtualFile f = createProjectSubFile("res/foo.xml",
-                                         "<root attr='${based<caret>ir}'>" +
-                                         "</root>");
+                                         """
+                                           <root attr='${based<caret>ir}'>
+                                           </root>
+                                           """);
 
     myFixture.configureFromExistingVirtualFile(f);
 

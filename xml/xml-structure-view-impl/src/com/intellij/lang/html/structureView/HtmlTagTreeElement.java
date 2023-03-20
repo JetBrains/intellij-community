@@ -41,7 +41,7 @@ public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements Lo
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final XmlTag tag = getElement();
     if (tag == null || !tag.isValid()) return Collections.emptyList();
-    return ContainerUtil.map2List(tag.getSubTags(), HtmlTagTreeElement::new);
+    return ContainerUtil.map(tag.getSubTags(), HtmlTagTreeElement::new);
   }
 
   @Override

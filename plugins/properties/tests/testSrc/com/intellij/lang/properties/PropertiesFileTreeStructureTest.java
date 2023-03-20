@@ -11,71 +11,79 @@ import javax.swing.*;
 
 public class PropertiesFileTreeStructureTest extends BasePlatformTestCase {
   public void testGrouping() {
-    doTest("a.b.c=dddd\n" +
-           "a.b.d=dddd\n" +
-           "a.x=i\n" +
-           "b.n.p=ooo",
+    doTest("""
+             a.b.c=dddd
+             a.b.d=dddd
+             a.x=i
+             b.n.p=ooo""",
 
-           "-Test.properties\n" +
-           " -a\n" +
-           "  -b\n" +
-           "   c\n" +
-           "   d\n" +
-           "  x\n" +
-           " b.n.p");
+           """
+             -Test.properties
+              -a
+               -b
+                c
+                d
+               x
+              b.n.p""");
   }
 
   public void testNesting() {
-    doTest("a=dddd\n" +
-           "a.b=dddd\n" +
-           "a.b.c=i\n" +
-           "a.b.c.d=ooo",
+    doTest("""
+             a=dddd
+             a.b=dddd
+             a.b.c=i
+             a.b.c.d=ooo""",
 
-           "-Test.properties\n" +
-           " -a\n" +
-           "  <property>\n" +
-           "  -b\n" +
-           "   <property>\n" +
-           "   -c\n" +
-           "    <property>\n" +
-           "    d");
+           """
+             -Test.properties
+              -a
+               <property>
+               -b
+                <property>
+                -c
+                 <property>
+                 d""");
   }
 
   public void testGroupSort() {
-    doTest("log4j.category.x=dd\n" +
-           "log4j.category.xdo=dd\n" +
-           "log4j.category.middlegen.swing.ss=dd\n" +
-           "log4j.category.middlegen.plugins.ss=dd\n" +
-           "log4j.appender.middlegen.plugins.ss=dd",
+    doTest("""
+             log4j.category.x=dd
+             log4j.category.xdo=dd
+             log4j.category.middlegen.swing.ss=dd
+             log4j.category.middlegen.plugins.ss=dd
+             log4j.appender.middlegen.plugins.ss=dd""",
 
-           "-Test.properties\n" +
-           " -log4j\n" +
-           "  appender.middlegen.plugins.ss\n" +
-           "  -category\n" +
-           "   -middlegen\n" +
-           "    plugins.ss\n" +
-           "    swing.ss\n" +
-           "   x\n" +
-           "   xdo");
+           """
+             -Test.properties
+              -log4j
+               appender.middlegen.plugins.ss
+               -category
+                -middlegen
+                 plugins.ss
+                 swing.ss
+                x
+                xdo""");
   }
 
   public void testFunkyGroups() {
-    doTest("errors.byte={0} must be a BYTE type \n" +
-           "errors.short={0} must be a SHORT type \n" +
-           "error.date={0} must be a DATE types \n" +
-           "error.range={0} is not between {1} and {2} \n" +
-           "errors.email={0} is not a valid Email Address \n" +
-           "errors.ipaddress={0} is not a valid IP address",
+    doTest("""
+             errors.byte={0} must be a BYTE type\s
+             errors.short={0} must be a SHORT type\s
+             error.date={0} must be a DATE types\s
+             error.range={0} is not between {1} and {2}\s
+             errors.email={0} is not a valid Email Address\s
+             errors.ipaddress={0} is not a valid IP address""",
 
-           "-Test.properties\n" +
-           " -error\n" +
-           "  date\n" +
-           "  range\n" +
-           " -errors\n" +
-           "  byte\n" +
-           "  email\n" +
-           "  ipaddress\n" +
-           "  short");
+           """
+             -Test.properties
+              -error
+               date
+               range
+              -errors
+               byte
+               email
+               ipaddress
+               short""");
   }
 
   private void doTest(String classText, String expected) {

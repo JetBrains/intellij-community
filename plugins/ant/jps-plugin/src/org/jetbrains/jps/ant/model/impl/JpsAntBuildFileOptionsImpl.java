@@ -22,7 +22,7 @@ import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
+public final class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
   private int myMaxStackSize = 2;
   private String myAntCommandLineParameters = "";
   private int myMaxHeapSize = 128;

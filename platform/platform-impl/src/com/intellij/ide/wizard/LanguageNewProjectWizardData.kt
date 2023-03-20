@@ -11,11 +11,11 @@ interface LanguageNewProjectWizardData : NewProjectWizardBaseData {
   var language: String
 
   companion object {
-    @JvmStatic val KEY = Key.create<LanguageNewProjectWizardData>(LanguageNewProjectWizardData::class.java.name)
 
-    @JvmStatic val NewProjectWizardStep.languageData get() = data.getUserData(KEY)!!
+    val KEY = Key.create<LanguageNewProjectWizardData>(LanguageNewProjectWizardData::class.java.name)
 
-    @JvmStatic val NewProjectWizardStep.languageProperty get() = languageData.languageProperty
-    @JvmStatic var NewProjectWizardStep.language get() = languageData.language; set(it) { languageData.language = it }
+    @JvmStatic
+    val NewProjectWizardStep.languageData: LanguageNewProjectWizardData?
+      get() = data.getUserData(KEY)
   }
 }

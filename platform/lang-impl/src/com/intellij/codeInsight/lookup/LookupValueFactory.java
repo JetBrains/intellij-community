@@ -12,7 +12,7 @@ import javax.swing.*;
  * @deprecated use {@link LookupElementBuilder}
  * @author Dmitry Avdeev
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class LookupValueFactory {
 
   private LookupValueFactory() {

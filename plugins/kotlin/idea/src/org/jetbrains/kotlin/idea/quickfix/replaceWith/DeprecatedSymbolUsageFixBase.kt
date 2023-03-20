@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
@@ -8,6 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.base.fe10.analysis.getAnnotationValue
+import org.jetbrains.kotlin.base.fe10.analysis.getArrayValue
+import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
@@ -15,7 +18,8 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -24,11 +28,10 @@ import org.jetbrains.kotlin.idea.codeInliner.ClassUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
-import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.replaceOrCreateTypeArgumentList
 import org.jetbrains.kotlin.ir.expressions.typeParametersCount
@@ -38,31 +41,29 @@ import org.jetbrains.kotlin.psi.psiUtil.isCallee
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.annotations.argumentValue
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
-import org.jetbrains.kotlin.resolve.constants.AnnotationValue
-import org.jetbrains.kotlin.resolve.constants.ArrayValue
+import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForTypeAliasObject
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.constructors
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.util.mapAll
 
 //TODO: different replacements for property accessors
 
 abstract class DeprecatedSymbolUsageFixBase(
     element: KtReferenceExpression,
-    val replaceWith: ReplaceWith
+    val replaceWith: ReplaceWithData
 ) : KotlinQuickFixAction<KtReferenceExpression>(element) {
 
-    internal val available: Boolean
+    internal val isAvailable: Boolean
 
     init {
         assert(!isDispatchThread()) {
             "${javaClass.name} should not be created on EDT"
         }
-        available = buildUsageReplacementStrategy(
+        isAvailable = buildUsageReplacementStrategy(
             element,
             replaceWith,
             recheckAnnotation = true,
@@ -70,7 +71,10 @@ abstract class DeprecatedSymbolUsageFixBase(
         )?.let { it.createReplacer(element) != null } == true
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null && available
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element != null && isAvailable
+
+    // TODO: it has to be fixed as it runs ReferencesSearch under writeAction
+    override fun startInWriteAction(): Boolean = true
 
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
@@ -88,15 +92,11 @@ abstract class DeprecatedSymbolUsageFixBase(
             project: Project,
             contextElement: KtReferenceExpression?,
             replaceInWholeProject: Boolean
-        ): ReplaceWith? {
-            val annotation = descriptor.annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
-            val replaceWithValue =
-                annotation.argumentValue(Deprecated::replaceWith.name)?.safeAs<AnnotationValue>()?.value ?: return null
-            val pattern = replaceWithValue.argumentValue(kotlin.ReplaceWith::expression.name)?.safeAs<StringValue>()?.value ?: return null
-            if (pattern.isEmpty()) return null
-            val importValues = replaceWithValue.argumentValue(kotlin.ReplaceWith::imports.name)?.safeAs<ArrayValue>()?.value ?: return null
-            if (importValues.any { it !is StringValue }) return null
-            val imports = importValues.map { (it as StringValue).value }
+        ): ReplaceWithData? {
+            val annotation = descriptor.unwrapTypealiasIfNeeded().annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: return null
+            val replaceWithValue = annotation.getAnnotationValue(Deprecated::replaceWith) ?: return null
+            val pattern = replaceWithValue.getStringValue(ReplaceWith::expression)?.takeIf { it.isNotEmpty() } ?: return null
+            val imports = replaceWithValue.getArrayValue(ReplaceWith::imports)?.mapAll { (it as? StringValue)?.value } ?: return null
 
             // should not be available for descriptors with optional parameters if we cannot fetch default values for them (currently for library with no sources)
             if (descriptor is CallableDescriptor && descriptor.valueParameters.any {
@@ -105,9 +105,9 @@ abstract class DeprecatedSymbolUsageFixBase(
             ) return null
 
             return if (replaceInWholeProject) {
-                ReplaceWith(pattern, imports, true)
+                ReplaceWithData(pattern, imports, true)
             } else {
-                ReplaceWith(pattern.applyContextElement(contextElement, descriptor), imports, false)
+                ReplaceWithData(pattern.applyContextElement(contextElement, descriptor), imports, false)
             }
         }
 
@@ -116,7 +116,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             descriptor: DeclarationDescriptor
         ): String {
             if (element == null) return this
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val expressionFromPattern = psiFactory.createExpressionIfPossible(this) ?: return this
 
             val classLiteral = when (expressionFromPattern) {
@@ -166,7 +166,7 @@ abstract class DeprecatedSymbolUsageFixBase(
 
         data class Data(
             val referenceExpression: KtReferenceExpression,
-            val replaceWith: ReplaceWith,
+            val replaceWith: ReplaceWithData,
             val descriptor: DeclarationDescriptor
         )
 
@@ -195,7 +195,7 @@ abstract class DeprecatedSymbolUsageFixBase(
 
         private fun buildUsageReplacementStrategy(
             element: KtReferenceExpression,
-            replaceWith: ReplaceWith,
+            replaceWith: ReplaceWithData,
             recheckAnnotation: Boolean,
             reformat: Boolean,
             editor: Editor? = null
@@ -204,7 +204,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             val bindingContext = resolutionFacade.analyze(element, BodyResolveMode.PARTIAL)
             val resolvedCall = element.getResolvedCall(bindingContext)
             var target = resolvedCall?.resultingDescriptor?.takeIf { it.isInvokeOperator }
-                ?: element.mainReference.resolveToDescriptors(bindingContext).singleOrNull()
+                ?: element.mainReference.resolveToDescriptors(bindingContext).singleOrNull()?.unwrapTypealiasIfNeeded()
                 ?: return null
 
             var replacePatternFromSymbol =
@@ -278,6 +278,9 @@ abstract class DeprecatedSymbolUsageFixBase(
                 else -> return null
             }
         }
+
+        private fun DeclarationDescriptor.unwrapTypealiasIfNeeded(): DeclarationDescriptor =
+            if (this is FakeCallableDescriptorForTypeAliasObject) typeAliasDescriptor else this
 
         private fun usedConstructorsWithOwnReplaceWith(
             project: Project,

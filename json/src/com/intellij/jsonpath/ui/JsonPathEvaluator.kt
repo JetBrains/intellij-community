@@ -6,10 +6,12 @@ import com.intellij.json.psi.JsonFile
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.ClassUtil
 import com.jayway.jsonpath.*
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 
 class JsonPathEvaluator(val jsonFile: JsonFile?,
                         val expression: String,
-                        val evalOptions: Set<Option>) {
+                        private val evalOptions: Set<Option>) {
 
   fun evaluate(): EvaluateResult? {
     val jsonPath: JsonPath = try {
@@ -21,6 +23,8 @@ class JsonPathEvaluator(val jsonFile: JsonFile?,
     }
 
     val config = Configuration.ConfigurationBuilder()
+      .jsonProvider(JacksonJsonProvider())
+      .mappingProvider(JacksonMappingProvider())
       .options(evalOptions)
       .build()
 

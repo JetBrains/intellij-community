@@ -19,10 +19,14 @@ public class RenameClassActionTest extends AbstractLombokLightCodeInsightTestCas
     PsiElement psiClass = PsiTreeUtil.getContextOfType(psiElement, PsiClass.class, true);
     myFixture.renameElement(psiClass, newName);
 
-    checkResultByFile("/after" + getTestName(false) + ".java");
+    myFixture.checkResultByFile("/after" + getTestName(false) + ".java", true);
   }
 
   public void testLogClassRenamed() throws Exception {
     doTest("CakeCooked");
+  }
+
+  public void testConstructors() throws Exception {
+    doTest("MyBaseClass1");
   }
 }

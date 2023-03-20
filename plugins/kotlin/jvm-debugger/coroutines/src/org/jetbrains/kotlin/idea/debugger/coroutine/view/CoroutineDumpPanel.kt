@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.codeInsight.highlighting.HighlightManager
+import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -115,7 +116,7 @@ class CoroutineDumpPanel(
         }
         add(splitter, BorderLayout.CENTER)
 
-        ListSpeedSearch(coroutinesList).comparator = SpeedSearchComparator(false, true)
+        ListSpeedSearch.installOn(coroutinesList).comparator = SpeedSearchComparator(false, true)
 
         updateCoroutinesList()
 
@@ -140,7 +141,7 @@ class CoroutineDumpPanel(
         model.clear()
         var selectedIndex = 0
         var index = 0
-        val states = if (UISettings.instance.state.mergeEqualStackTraces) mergedDump else dump
+        val states = if (UISettings.getInstance().state.mergeEqualStackTraces) mergedDump else dump
         for (state in states) {
             if (StringUtil.containsIgnoreCase(stringStackTrace(state), text) ||
                 StringUtil.containsIgnoreCase(state.descriptor.name, text)) {
@@ -224,6 +225,8 @@ class CoroutineDumpPanel(
             }
             updateCoroutinesList()
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private inner class MergeStackTracesAction : ToggleAction(
@@ -233,13 +236,15 @@ class CoroutineDumpPanel(
     ), DumbAware {
 
         override fun isSelected(e: AnActionEvent): Boolean {
-            return UISettings.instance.state.mergeEqualStackTraces
+            return UISettings.getInstance().state.mergeEqualStackTraces
         }
 
         override fun setSelected(e: AnActionEvent, state: Boolean) {
-            UISettings.instance.state.mergeEqualStackTraces = state
+            UISettings.getInstance().state.mergeEqualStackTraces = state
             updateCoroutinesList()
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private class CopyToClipboardAction(private val myCoroutinesDump: List<CompleteCoroutineInfoData>, private val myProject: Project) :
@@ -288,7 +293,9 @@ private fun stringStackTrace(info: CompleteCoroutineInfoData) =
     buildString {
         appendLine("\"${info.descriptor.name}\", state: ${info.descriptor.state}")
         info.stackTrace.forEach {
-            appendLine("\t$it")
+            append("\t")
+            append(ThreadDumpAction.renderLocation(it.location))
+            append("\n")
         }
     }
 

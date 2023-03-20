@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
 
-class GradleInspectionTest : KotlinGradleImportingTestCase() {
+class GradleInspectionTest4 : KotlinGradleImportingTestCase() {
     @Test
     fun testDifferentStdlibGradleVersion() {
         val problems = getInspectionResultFromTestDataProject()
@@ -51,7 +51,10 @@ class GradleInspectionTest : KotlinGradleImportingTestCase() {
         val problems = getInspectionResultFromTestDataProject()
 
         assertEquals(1, problems.size)
-        assertEquals("Plugin version ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) is not the same as library version (1.3.30)", problems.single())
+        assertEquals(
+            "Plugin version ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) is not the same as library version (1.3.30)",
+            problems.single()
+        )
     }
 
     @Test
@@ -60,11 +63,7 @@ class GradleInspectionTest : KotlinGradleImportingTestCase() {
         tool.testVersionMessage = "\$PLUGIN_VERSION"
         val problems = getInspectionResultFromTestDataProject(tool)
 
-        assertEquals(1, problems.size)
-        assertEquals(
-            "Kotlin version that is used for building with Gradle ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) differs from the one bundled into the IDE plugin (\$PLUGIN_VERSION)",
-            problems.single()
-        )
+        assertEquals(problems.joinToString(separator = "\n"), "Kotlin version that is used for building with Gradle (1.3.70) is not properly supported in the IDE plugin (\$PLUGIN_VERSION)", problems.single())
     }
 
     @Test
@@ -161,12 +160,11 @@ class GradleInspectionTest : KotlinGradleImportingTestCase() {
                 resultRef.set(foundProblems)
             }
         }
+
         return resultRef.get()
     }
 
-    override fun testDataDirName(): String {
-        return "inspections"
-    }
+    override fun testDataDirName(): String = "inspections"
 
     companion object {
         private const val TOOL = "// TOOL: "

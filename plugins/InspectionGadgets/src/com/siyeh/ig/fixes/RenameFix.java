@@ -15,16 +15,17 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.usageView.UsageViewUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (m_targetName == null) {
       super.doFix(project, descriptor);
     }
@@ -97,5 +98,20 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
         factory.createRename(elementToRename, m_targetName, m_searchInStrings, m_searchInNonJavaFiles);
       renameRefactoring.run();
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiElement element = getElementToRefactor(previewDescriptor.getPsiElement());
+    if (element instanceof PsiNamedElement namedElement) {
+      if (m_targetName == null) {
+        String what = UsageViewUtil.getType(element) + " '" + namedElement.getName() + "'";
+        String message = RefactoringBundle.message("rename.0.and.its.usages.preview.text", what);
+        return new IntentionPreviewInfo.Html(HtmlChunk.text(message));
+      }
+      ((PsiNamedElement)element).setName(m_targetName);
+      return IntentionPreviewInfo.DIFF;
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 }

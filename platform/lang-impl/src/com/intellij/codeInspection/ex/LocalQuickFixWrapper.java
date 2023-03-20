@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -11,7 +10,9 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -27,9 +28,9 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix<?> myFix;
 
   public LocalQuickFixWrapper(@NotNull QuickFix<?> fix, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
-    super(fix.getName(), toolWrapper);
+    super(StringUtil.escapeMnemonics(fix.getName()),
+          fix instanceof Iconable ? ((Iconable)fix).getIcon(0) : null, null, toolWrapper);
     myFix = fix;
-    setText(StringUtil.escapeMnemonics(myFix.getName()));
   }
 
   public void setText(@NotNull @NlsActions.ActionText String text) {
@@ -82,8 +83,15 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
         removeElements(refElements, project, myToolWrapper);
       };
+      Runnable fixApplicator = () -> ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
+      if (myFix.startInWriteAction()) {
+        WriteCommandAction.writeCommandAction(project).run(() -> {
+          fixApplicator.run();
+        });
+      } else {
+        fixApplicator.run();
+      }
 
-      ((BatchQuickFix)myFix).applyFix(project, descriptors, collectedElementsToIgnore, refreshViews);
       return;
     }
 

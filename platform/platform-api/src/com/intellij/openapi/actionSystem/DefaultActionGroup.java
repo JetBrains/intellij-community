@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -11,25 +12,24 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * A default implementation of {@link ActionGroup}. Provides the ability
- * to add children actions and separators between them. In most of the
- * cases you will be using this implementation but note that there are
- * cases (for example "Recent files" dialog) where children are determined
- * on rules different from just positional constraints, that's when you need
- * to implement your own {@code ActionGroup}.
+ * A default implementation of {@link ActionGroup}.
+ * Provides the ability to add child actions with first/last/before/after constraints,
+ * as well as separators between them.
+ * <p>
+ * In most of the cases, you will be using this implementation,
+ * but note that there are cases like the "Recent files" dialog
+ * where children are determined on rules different from just positional constraints,
+ * that's when you need to implement your own {@code ActionGroup}.
  *
  * @see Constraints
- *
- * @see com.intellij.openapi.actionSystem.ComputableActionGroup
- *
  * @see com.intellij.ide.actions.NonEmptyActionGroup
  * @see com.intellij.ide.actions.NonTrivialActionGroup
  * @see com.intellij.ide.actions.SmartPopupActionGroup
- *
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
@@ -73,8 +73,20 @@ public class DefaultActionGroup extends ActionGroup {
     this(() -> shortName, popup);
   }
 
-  protected DefaultActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
+  public DefaultActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName, popup);
+  }
+
+  public DefaultActionGroup(@Nullable @ActionText String text,
+                            @Nullable @NlsActions.ActionDescription String description,
+                            @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
+  public DefaultActionGroup(@NotNull Supplier<@ActionText String> dynamicText,
+                            @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                            @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   public static DefaultActionGroup createPopupGroup(@NotNull Supplier<@ActionText String> shortName) {
@@ -127,9 +139,6 @@ public class DefaultActionGroup extends ActionGroup {
 
   /**
    * Adds the specified action to the tail.
-   *
-   * @param action        Action to be added
-   * @param actionManager ActionManager instance
    */
   public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager) {
     add(action, Constraints.LAST, actionManager);
@@ -153,8 +162,7 @@ public class DefaultActionGroup extends ActionGroup {
   /**
    * Adds the specified action with the specified constraint.
    *
-   * @param action     Action to be added; cannot be null
-   * @param constraint Constraint to be used for determining action's position; cannot be null
+   * @param constraint determines the action's position
    * @throws IllegalArgumentException in case when:
    *                                  <li>action is null
    *                                  <li>constraint is null
@@ -173,8 +181,8 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
-                                                              @NotNull Constraints constraint,
-                                                              @NotNull ActionManager actionManager) {
+                                                             @NotNull Constraints constraint,
+                                                             @NotNull ActionManager actionManager) {
     if (action == this) {
       throw newThisGroupToItselfAddedException();
     }
@@ -255,9 +263,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Removes specified action from group.
-   *
-   * @param action Action to be removed
+   * Removes the specified action from the group.
    */
   public final void remove(@NotNull AnAction action) {
     remove(action, ActionManager.getInstance());
@@ -279,7 +285,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Removes all children actions (separators as well) from the group.
+   * Removes all child actions (separators as well) from the group.
    */
   public final synchronized void removeAll() {
     mySortedChildren.clear();
@@ -311,8 +317,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Copies content from {@code group}.
-   * @param other group to copy from
+   * Copies content from {@code other}.
    */
   public synchronized void copyFromGroup(@NotNull DefaultActionGroup other) {
     copyFrom(other);
@@ -332,17 +337,17 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Returns group's children in the order determined by constraints.
+   * Returns the group's actions in the order determined by the constraints.
    *
    * @param e not used
-   * @return An array of children actions
    */
   @Override
   public final synchronized AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     boolean hasNulls = false;
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
-    AnAction[] children = new AnAction[sortedSize + myPairs.size()];
+    int pairsSize = myPairs.size();
+    AnAction[] children = new AnAction[sortedSize + pairsSize];
     for (int i = 0; i < sortedSize; i++) {
       AnAction action = mySortedChildren.get(i);
       if (action == null) {
@@ -350,35 +355,39 @@ public class DefaultActionGroup extends ActionGroup {
       }
       if (action instanceof ActionStubBase) {
         action = unStub(actionManager, (ActionStubBase)action);
-        if (action == null) {
-          LOG.error("Can't unstub " + mySortedChildren.get(i));
-        }
-        else {
+        if (action != null) {
           mySortedChildren.set(i, action);
         }
       }
 
       hasNulls |= action == null;
       children[i] = action;
+      if (action == null && sortedSize == mySortedChildren.size() + 1) {
+        sortedSize--;
+        //noinspection AssignmentToForLoopParameter
+        i--;
+      }
     }
-    for (int i = 0; i < myPairs.size(); i++) {
-      final Pair<AnAction, Constraints> pair = myPairs.get(i);
+    for (int i = 0; i < pairsSize; i++) {
+      Pair<AnAction, Constraints> pair = myPairs.get(i);
       AnAction action = pair.first;
       if (action == null) {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
       }
       else if (action instanceof ActionStubBase) {
         action = unStub(actionManager, (ActionStubBase)action);
-        if (action == null) {
-          LOG.error("Can't unstub " + pair);
-        }
-        else {
+        if (action != null) {
           myPairs.set(i, Pair.create(action, pair.second));
         }
       }
 
       hasNulls |= action == null;
       children[i + sortedSize] = action;
+      if (action == null && pairsSize == myPairs.size() + 1) {
+        pairsSize--;
+        //noinspection AssignmentToForLoopParameter
+        i--;
+      }
     }
 
     if (hasNulls) {
@@ -391,7 +400,9 @@ public class DefaultActionGroup extends ActionGroup {
     try {
       AnAction action = actionManager.getAction(stub.getId());
       if (action == null) {
-        LOG.error("Null child action in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+        if (containsAction((AnAction)stub)) {
+          LOG.error("Null action returned for stub in group " + this + " of class " + getClass() + ", id=" + stub.getId());
+        }
         return null;
       }
       replace((AnAction)stub, action);
@@ -408,8 +419,6 @@ public class DefaultActionGroup extends ActionGroup {
 
   /**
    * Returns the number of contained children (including separators).
-   *
-   * @return number of children in the group
    */
   public final synchronized int getChildrenCount() {
     return mySortedChildren.size() + myPairs.size();
@@ -462,11 +471,12 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Creates an action group with specified template text.
-   * It is necessary to redefine template text if the group contains
+   * Creates an action group with the specified template text.
+   * <p>
+   * It is necessary to redefine the template text if the group contains
    * user-specific data such as Project name, file name, etc.
-   * @param templateText template text which will be used in statistics
-   * @return action group
+   *
+   * @param templateText the template text that is used in statistics
    */
   public static DefaultActionGroup createUserDataAwareGroup(@ActionText String templateText) {
     return new DefaultActionGroup() {

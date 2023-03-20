@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -7,11 +7,11 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -19,9 +19,10 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.types.typeUtil.isEnum
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 private val hashMapCreationFqNames = setOf(
     "java.util.HashMap.<init>",
@@ -33,7 +34,7 @@ class ReplaceWithEnumMapInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return callExpressionVisitor(fun(element: KtCallExpression) {
             if (!element.platform.isJvm()) return
-            val context = element.analyze()
+            val context = element.safeAnalyzeNonSourceRootCode()
             val fqName = element.getResolvedCall(context)?.resultingDescriptor?.fqNameUnsafe?.asString() ?: return
             if (!hashMapCreationFqNames.contains(fqName)) return
             if (element.valueArguments.isNotEmpty()) return
@@ -55,7 +56,7 @@ class ReplaceWithEnumMapInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val call = descriptor.psiElement as? KtCallExpression ?: return
-            val factory = KtPsiFactory(call)
+            val factory = KtPsiFactory(project)
             val file = call.containingKtFile
             val enumMapDescriptor = file.resolveImportReference(FqName("java.util.EnumMap")).firstOrNull() ?: return
             ImportInsertHelper.getInstance(project).importDescriptor(call.containingKtFile, enumMapDescriptor)

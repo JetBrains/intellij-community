@@ -18,7 +18,6 @@ public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
 
 
   /**
-   * @param eventParser
    * @param processText to be removed after IDEA-216278
    */
   public BuildToolConsoleProcessAdapter(MavenBuildEventProcessor eventParser, @Deprecated boolean processText) {

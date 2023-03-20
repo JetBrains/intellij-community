@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.ModifiableGradleProjectModel
@@ -19,9 +20,17 @@ class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
 
     override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
         return ClassSetImportModelProvider(
-                emptySet(),
-                setOf(KotlinDslScriptAdditionalTask::class.java)
+            emptySet(),
+            setOf(KotlinDslScriptAdditionalTask::class.java)
         )
+    }
+
+    override fun getExtraProjectModelClasses(): Set<Class<out Any>> {
+        return mutableSetOf<Class<out Any>>(KotlinToolingVersion::class.java).also { it.addAll(super.getExtraProjectModelClasses())}
+    }
+
+    override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
+        return mutableSetOf<Class<out Any>>(KotlinToolingVersion::class.java).also { it.addAll(super.getToolingExtensionsClasses())}
     }
 }
 

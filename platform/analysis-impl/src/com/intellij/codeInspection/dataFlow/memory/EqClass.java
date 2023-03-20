@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
   private final DfaValueFactory myFactory;
 

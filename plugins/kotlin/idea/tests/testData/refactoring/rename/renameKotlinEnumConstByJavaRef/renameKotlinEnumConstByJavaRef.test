@@ -2,5 +2,6 @@
   "type": "MARKED_ELEMENT",
   "mainFile": "EnumJavaRef.java",
   "newName": "YELLOW",
-  "byRef": "true"
+  "byRef": "true",
+  "enabledInK2": true
 }

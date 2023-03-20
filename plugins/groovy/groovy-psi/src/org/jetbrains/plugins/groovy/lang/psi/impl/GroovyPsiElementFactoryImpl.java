@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -64,9 +64,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-/**
- * @author ven
- */
 @SuppressWarnings("ConstantConditions")
 public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static final Logger LOG = Logger.getInstance(GroovyPsiElementFactoryImpl.class);
@@ -249,7 +246,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                          String... identifiers) {
     @NlsSafe StringBuilder text = writeModifiers(modifiers);
 
-    if (type != null && type != PsiType.NULL) {
+    if (type != null && type != PsiTypes.nullType()) {
       final PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(type);
       final String typeText = getTypeText(unboxed);
       text.append(typeText).append(" ");
@@ -275,11 +272,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
       topStatements = createGroovyFileChecked("def " + text).getTopStatements();
     }
-    if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
+    if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration statement)) {
       throw new RuntimeException("Invalid arguments, text = " + text);
     }
 
-    final GrVariableDeclaration statement = (GrVariableDeclaration)topStatements[0];
     //todo switch-case formatting should work without this hack
     CodeEditUtil.markToReformatBefore(statement.getNode().findLeafElementAt(0), true);
     return statement;
@@ -545,7 +541,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrSignature signature) {
     StringBuilder builder = new StringBuilder(PsiKeyword.PUBLIC);
     final PsiType returnType = signature.getReturnType();
-    if (returnType != null && returnType != PsiType.NULL) {
+    if (returnType != null && returnType != PsiTypes.nullType()) {
       builder.append(' ');
       builder.append(returnType.getCanonicalText());
     }
@@ -992,6 +988,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrTraitTypeDefinition createTrait(@NotNull String name) {
     return (GrTraitTypeDefinition)createTypeDefinition("trait " + name + "{}");
+  }
+
+  @NotNull
+  @Override
+  public GrTraitTypeDefinition createRecord(@NotNull String name) {
+    return (GrTraitTypeDefinition)createTypeDefinition("record " + name + "() {}");
   }
 
   @NotNull

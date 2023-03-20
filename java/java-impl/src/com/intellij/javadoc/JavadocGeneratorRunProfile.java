@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -15,14 +15,12 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -35,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -247,6 +246,17 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
           .map(m -> "'" + m.getName() + "'").collect(Collectors.joining(","))));
       }
 
+      if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11)) {
+        for (Module module : modules) {
+          LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+          if (languageLevel.isPreview()) {
+            parameters.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+            parameters.add("--source", String.valueOf(languageLevel.toJavaVersion().feature));
+            break;
+          }
+        }
+      }
+      
       File argsFile = createTempArgsFile();
       List<VirtualFile> sourceRoots = findSourceRoots(modules);
       List<VirtualFile> classRoots = findClassRoots(modules, jdk);
@@ -282,6 +292,13 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
             String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
             writer.println("-classpath");
             writer.println(StringUtil.wrapWithDoubleQuote(path));
+
+            if (!sourceRoots.isEmpty() && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_18)) {
+              //is needed for javadoc snippets only
+              String sourcePath = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
+              writer.println("--source-path");
+              writer.println(StringUtil.wrapWithDoubleQuote(sourcePath));
+            }
           }
         }
 

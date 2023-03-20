@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -76,6 +77,11 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
       .getInstance()
       .createListPopup(new IntentionListStep(null, null, file, project, CachedIntentions.create(project, file, null, intentions)))
       .showInBestPositionFor(e.getDataContext());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

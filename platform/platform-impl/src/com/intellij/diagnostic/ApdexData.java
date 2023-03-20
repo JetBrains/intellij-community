@@ -4,7 +4,6 @@ package com.intellij.diagnostic;
 /**
  * Collects performance data as in Apdex: http://www.apdex.org/overview.html.
  * Prints this raw data instead of Apdex index, because the index loses too much valuable information: http://www.coscale.com/blog/web-application-performance-what-apdex-doesnt-tell-you.
- * @author peter
  */
 final class ApdexData {
   public static final ApdexData EMPTY = new ApdexData(0, 0, 0);

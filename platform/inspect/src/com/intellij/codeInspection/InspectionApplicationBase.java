@@ -1,8 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.google.common.base.Predicates;
-import com.google.common.collect.Lists;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
@@ -18,7 +16,6 @@ import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -28,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -36,6 +34,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -47,6 +46,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.*;
+import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -59,9 +59,9 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.future.FutureKt;
 import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -79,9 +79,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
-  static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
+  private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
+
+  public static final String PROJECT_STRUCTURE_DIR = "projectStructure";
 
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
   public String myProjectPath;
@@ -91,9 +92,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public String myProfileName;
   public String myProfilePath;
   public boolean myRunWithEditorSettings;
-  public boolean myRunGlobalToolsOnly;
+  boolean myRunGlobalToolsOnly;
   public boolean myAnalyzeChanges;
-  public boolean myPathProfiling;
+  private boolean myPathProfiling;
   private int myVerboseLevel;
   private final Map<String, List<Range>> diffMap = new ConcurrentHashMap<>();
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
@@ -101,20 +102,19 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public String myOutputFormat;
   public InspectionProfileImpl myInspectionProfile;
 
-  public String myTargets;
+  String myTargets;
   public boolean myErrorCodeRequired = true;
-  public String myScopePattern;
-  Map<Path, Long> myCompleteProfile;
+  String myScopePattern;
 
   public void startup() {
     if (myProjectPath == null) {
       reportError("Project to inspect is not defined");
-      printHelp();
+      printHelpAndExit();
     }
 
     if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
       reportError("Profile to inspect with is not defined");
-      printHelp();
+      printHelpAndExit();
     }
 
     ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
@@ -139,14 +139,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     myPathProfiling = true;
   }
 
-  public void header(){}
-
-  public Map<Path, Long> getPathProfile() {
-    return myCompleteProfile;
-  }
+  public void header() { }
 
   public void execute() throws Exception {
-    final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
                                                           appInfo.getFullApplicationName() +
                                                           " (build " +
@@ -163,9 +159,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  private void printHelp() {
-    assert myHelpProvider != null;
-
+  private void printHelpAndExit() {
     myHelpProvider.printHelpAndExit();
   }
 
@@ -176,11 +170,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       @Override
       public @NotNull ProgressIndicator getProgressIndicator() {
         return new ProgressIndicatorBase();
-      }
-
-      @Override
-      public @Nullable AnalysisScope getAnalyzerScope() {
-        return scope;
       }
 
       @Override
@@ -195,18 +184,18 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public @NotNull Predicate<Path> getFilesFilter() {
-        return Predicates.alwaysTrue();
+        return __ -> true;
       }
 
       @Override
       public @NotNull Predicate<VirtualFile> getVirtualFilesFilter() {
-        return Predicates.alwaysTrue();
+        return __ -> true;
       }
     };
   }
 
   protected void run(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
-    throws IOException, JDOMException, InterruptedException, ExecutionException {
+    throws IOException, InterruptedException, ExecutionException {
     Project project = openProject(projectPath, parentDisposable);
     if (project == null) return;
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
@@ -224,10 +213,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   @Nullable
   protected Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
-    VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
+    VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+      FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
-      printHelp();
+      printHelpAndExit();
     }
 
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.opening.project"));
@@ -238,7 +228,6 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       onFailure(convertErrorBuffer.toString());
       return null;
     }
-
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, null);
       if (configurator.isApplicable(context)) {
@@ -255,10 +244,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     AtomicReference<Project> projectRef = new AtomicReference<>();
     ProgressManager.getInstance().runProcess(
-      () -> {
-        projectRef.set(ProjectUtil.openOrImport(projectPath));
-      },
-      createProcessIndicator()
+      () -> projectRef.set(ProjectUtil.openOrImport(projectPath)),
+      createProgressIndicator()
     );
     Project project = projectRef.get();
     if (project == null) {
@@ -273,15 +260,13 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
 
-    ApplicationManager.getApplication().invokeAndWait(() -> PatchProjectUtil.patchProject(project));
-
     reportMessage(1, InspectionsBundle.message("inspection.done"));
     return project;
   }
 
   @Nullable
   @VisibleForTesting
-  public AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public final AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
@@ -289,42 +274,47 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   @Nullable
   protected SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
-    SearchScope scope;
 
     if (myAnalyzeChanges) {
-      List<VirtualFile> files = getChangedFiles(project);
-      scope = GlobalSearchScope.filesWithoutLibrariesScope(project, files);
+      return getSearchScopeFromChangedFiles(project);
     }
-    else {
-      if (myScopePattern != null) {
-        try {
-          PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
-          NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
-          scope = GlobalSearchScopesCore.filterScope(project, namedScope);
-        }
-        catch (ParsingException e) {
-          LOG.error("Error of scope parsing", e);
-          gracefulExit();
-          return null;
-        }
-      }
-      else if (mySourceDirectory == null) {
-        final String scopeName = System.getProperty("idea.analyze.scope");
-        final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
-        scope = namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
-      }
-      else {
-        mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
 
-        VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
-        if (vfsDir == null) {
-          reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
-          printHelp();
-        }
-        scope = GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
+    if (myScopePattern != null) {
+      try {
+        PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
+        NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
+        return GlobalSearchScopesCore.filterScope(project, namedScope);
+      }
+      catch (ParsingException e) {
+        LOG.error("Error of scope parsing", e);
+        gracefulExit();
+        throw new IllegalStateException("unreachable");
       }
     }
-    return scope;
+
+    if (mySourceDirectory != null) {
+      if (!new File(mySourceDirectory).isAbsolute()) {
+        mySourceDirectory = new File(myProjectPath, mySourceDirectory).getPath();
+      }
+      mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
+
+      VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
+      if (vfsDir == null) {
+        reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
+        printHelpAndExit();
+      }
+      return GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
+    }
+
+    String scopeName = System.getProperty("idea.analyze.scope");
+    NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
+    return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
+  }
+
+  @NotNull
+  public SearchScope getSearchScopeFromChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
+    List<VirtualFile> files = getChangedFiles(project);
+    return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
   }
 
   private static void addRootChangesListener(Disposable parentDisposable, InspectionsReportConverter reportConverter) {
@@ -352,15 +342,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
-                         new AdditionalLibraryRootsListener() {
-                           @Override
-                           public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
-                                                           @NotNull Collection<? extends VirtualFile> oldRoots,
-                                                           @NotNull Collection<? extends VirtualFile> newRoots,
-                                                           @NotNull String libraryNameForDebug) {
-                             updateProjectStructure(counter, reportConverter, project, rootLogDir);
-                           }
-                         });
+                         (__, __1, __2, __3) -> updateProjectStructure(counter, reportConverter, project, rootLogDir));
   }
 
   private static void updateProjectStructure(AtomicInteger counter,
@@ -379,7 +361,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       try {
         List<VirtualFile> files = changeListManager.getAffectedFiles();
         for (VirtualFile file : files) {
-          reportMessage(0, "modified file" + file.getPath());
+          reportMessage(0, "modified file: " + file.getPath());
         }
         future.complete(files);
       }
@@ -392,11 +374,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private static void waitAllStartupActivitiesPassed(@NotNull Project project) throws InterruptedException, ExecutionException {
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     LOG.info("Waiting for startup activities");
     int timeout = Registry.intValue("batch.inspections.startup.activities.timeout", 180);
     try {
-      StartupManagerEx.getInstanceEx(project).getAllActivitiesPassedFuture().get(timeout, TimeUnit.MINUTES);
+      FutureKt.asCompletableFuture(StartupManager.getInstance(project).getAllActivitiesPassedFuture()).get(timeout, TimeUnit.MINUTES);
       LOG.info("Startup activities finished");
     }
     catch (TimeoutException e) {
@@ -407,8 +389,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  public @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
-    final InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
+  @NotNull
+  private GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
+    InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
     GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
     context.setExternalProfile(myInspectionProfile);
     if (myPathProfiling) {
@@ -418,10 +401,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return context;
   }
 
-  public void runAnalysisOnScope(Path projectPath,
-                                 @NotNull Disposable parentDisposable,
-                                 Project project,
-                                 InspectionProfileImpl inspectionProfile, AnalysisScope scope)
+  private void runAnalysisOnScope(Path projectPath,
+                                  @NotNull Disposable parentDisposable,
+                                  Project project,
+                                  InspectionProfileImpl inspectionProfile, AnalysisScope scope)
     throws IOException {
     reportMessage(1, InspectionsBundle.message("inspection.done"));
 
@@ -435,7 +418,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       reportConverter = new XSLTReportConverter(myOutputFormat);
     }
 
-    final Path resultsDataPath;
+    Path resultsDataPath;
     try {
       resultsDataPath = ReportConverterUtil.getResultsDataPath(parentDisposable, reportConverter, myOutPath);
     }
@@ -453,7 +436,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
-      configurator.preConfigureProject(project,context);
+      configurator.preConfigureProject(project, context);
     }
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
@@ -462,11 +445,15 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         configurator.configureProject(project, context);
       }
     }
+    ApplicationManager.getApplication().invokeAndWait(() -> PatchProjectUtil.patchProject(project));
     waitForInvokeLaterActivities();
   }
 
   private static void waitForInvokeLaterActivities() {
-    ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> {
+      },
+      ModalityState.any());
   }
 
   private void runAnalysis(Project project,
@@ -500,36 +487,22 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       throw new IOException(e);
     }
     inspectionsResults.add(descriptionsFile);
-    saveProfile(context);
     // convert report
     if (reportConverter != null) {
       try {
-        List<File> results = ContainerUtil.map2List(inspectionsResults, path -> path.toFile());
+        List<File> results = ContainerUtil.map(inspectionsResults, Path::toFile);
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
                                 results);
         InspectResultsConsumer.runConsumers(context.getTools(), results, project);
         if (myOutPath != null) {
-          reportConverter.projectData(project, Paths.get(myOutPath).resolve("projectStructure"));
+          reportConverter.projectData(project, Paths.get(myOutPath).resolve(PROJECT_STRUCTURE_DIR));
         }
       }
       catch (InspectionsReportConverter.ConversionException e) {
         reportError("\n" + e.getMessage());
-        printHelp();
+        printHelpAndExit();
       }
     }
-  }
-
-  private void saveProfile(GlobalInspectionContextEx context) {
-    if (!myPathProfiling) return;
-    Map<Path, Long> profile = context.getPathProfile();
-    Map<Path, Long> completeProfile = new HashMap<>();
-    profile.forEach((path, millis) -> {
-      while (path != null) {
-        completeProfile.merge(path, millis, Long::sum);
-        path = path.getParent();
-      }
-    });
-    myCompleteProfile = completeProfile;
   }
 
   public @NotNull AnalysisScope runAnalysisOnCodeWithoutChanges(Project project,
@@ -552,7 +525,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysisAfterShelvingSync(
       project,
       ChangeListManager.getInstance(project).getAffectedFiles(),
-      createProcessIndicator(),
+      createProgressIndicator(),
       () -> {
         syncProject(project, changes);
 
@@ -576,9 +549,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private void setupFirstAnalysisHandler(GlobalInspectionContextEx context) {
-    if (myVerboseLevel > 0) {
-      reportMessage(1, "Running first analysis stage...");
-    }
+    reportMessage(1, "Running first analysis stage...");
     context.setGlobalReportedProblemFilter(
       (entity, description) -> {
         if (!(entity instanceof RefElement)) return false;
@@ -590,7 +561,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     context.setReportedProblemFilter(
       (element, descriptors) -> {
-        List<ProblemDescriptorBase> problemDescriptors = StreamEx.of(descriptors).select(ProblemDescriptorBase.class).toList();
+        List<ProblemDescriptorBase> problemDescriptors = ContainerUtil.filterIsInstance(descriptors, ProblemDescriptorBase.class);
         if (!problemDescriptors.isEmpty()) {
           ProblemDescriptorBase problemDescriptor = problemDescriptors.get(0);
           VirtualFile file = problemDescriptor.getContainingFile();
@@ -606,9 +577,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public void setupSecondAnalysisHandler(Project project, GlobalInspectionContextEx context) {
-    if (myVerboseLevel > 0) {
-      reportMessage(1, "Running second analysis stage...");
-    }
+    reportMessage(1, "Running second analysis stage...");
     printBeforeSecondStageProblems();
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     context.setGlobalReportedProblemFilter(
@@ -621,7 +590,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     );
     context.setReportedProblemFilter(
       (element, descriptors) -> {
-        List<ProblemDescriptorBase> any = StreamEx.of(descriptors).select(ProblemDescriptorBase.class).toList();
+        List<ProblemDescriptorBase> any = ContainerUtil.filterIsInstance(descriptors, ProblemDescriptorBase.class);
         if (!any.isEmpty()) {
           ProblemDescriptorBase problemDescriptor = any.get(0);
           String text = problemDescriptor.toString();
@@ -667,7 +636,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   private void logNotFiltered(String text, VirtualFile file, int line, int position) {
     // unused asks shouldReport not only for warnings.
     if (text.contains("unused")) return;
-    reportMessage(3, "Not filtered: ");
+    reportMessage(3, "Not filtered:");
     reportMessage(3, file.getPath() + ":" + (line + 1) + " Original: " + (position + 1));
     reportMessage(3, "\t\t" + text);
   }
@@ -706,55 +675,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       if (!myErrorCodeRequired) {
         closeProject(project);
       }
-    }, createProcessIndicator());
+    }, createProgressIndicator());
   }
 
-  private @NotNull ProgressIndicatorBase createProcessIndicator() {
-    return new ProgressIndicatorBase() {
-      private String lastPrefix = "";
-      private int myLastPercent = -1;
-
-      {
-        setText("");
-      }
-
-      @Override
-      public void setText(String text) {
-        if (myVerboseLevel == 0) return;
-
-        if (myVerboseLevel == 1) {
-          if (text == null) {
-            return;
-          }
-          String prefix = getPrefix(text);
-          if (prefix.equals(lastPrefix)) {
-            reportMessageNoLineBreak(1, ".");
-            return;
-          }
-          lastPrefix = prefix;
-          reportMessage(1, "");
-          reportMessage(1, prefix);
-          return;
-        }
-
-        if (myVerboseLevel == 3) {
-          if (text == null) {
-            return;
-          }
-          if (!isIndeterminate() && getFraction() > 0) {
-            final int percent = (int)(getFraction() * 100);
-            if (myLastPercent == percent) return;
-            String prefix = getPrefix(text);
-            myLastPercent = percent;
-            String msg = prefix + " " + percent + "%";
-            reportMessage(2, msg);
-          }
-          return;
-        }
-
-        reportMessage(2, text);
-      }
-    };
+  private @NotNull ProgressIndicatorBase createProgressIndicator() {
+    return new InspectionProgressIndicator();
   }
 
   private static void runAnalysisAfterShelvingSync(Project project, List<? extends VirtualFile> files,
@@ -785,16 +710,18 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     });
   }
 
-  public @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
-    InspectionProfileImpl profile = loadInspectionProfile(project, myProfileName, myProfilePath, "command line");
+  private @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) {
+    var profileLoader = getInspectionProfileLoader(project);
+    InspectionProfileImpl profile = profileLoader.tryLoadProfileByNameOrPath(myProfileName, myProfilePath, "command line",
+                                                                             (msg) -> onFailure(msg));
     if (profile != null) return profile;
 
     if (myStubProfile != null) {
       if (!myRunWithEditorSettings) {
-        profile = loadProfileByName(project, myStubProfile);
+        profile = profileLoader.loadProfileByName(myStubProfile);
         if (profile != null) return profile;
 
-        profile = loadProfileByPath(myStubProfile);
+        profile = profileLoader.loadProfileByPath(myStubProfile);
         if (profile != null) return profile;
       }
     }
@@ -805,58 +732,52 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return profile;
   }
 
-  public @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project,
-                                                               @Nullable String profileName,
-                                                               @Nullable String profilePath,
-                                                               @NotNull String configSource) throws IOException, JDOMException {
-    //fetch profile by name from project file (project profiles can be disabled)
-    if (profileName != null && !profileName.isEmpty()) {
-      InspectionProfileImpl inspectionProfile = loadProfileByName(project, profileName);
-      if (inspectionProfile == null) {
-        onFailure(InspectionsBundle.message("inspection.application.profile.was.not.found.by.name.0.1", profileName, configSource));
-      }
-      return inspectionProfile;
-    }
-
-    if (profilePath != null && !profilePath.isEmpty()) {
-      InspectionProfileImpl inspectionProfile = loadProfileByPath(profilePath);
-      if (inspectionProfile == null) {
-        onFailure(InspectionsBundle.message("inspection.application.profile.failed.configure.by.path.0.1", profilePath, configSource));
-      }
-      return inspectionProfile;
-    }
-    return null;
+  public InspectionProfileManager getProfileManager(@NotNull Project project) {
+    return InspectionProjectProfileManager.getInstance(project);
   }
 
-  public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
-    InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
-    if (inspectionProfile != null) {
-      reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
-    }
-    return inspectionProfile;
-  }
+  public @NotNull InspectionProfileLoader<? extends InspectionProfileImpl> getInspectionProfileLoader(@NotNull Project project) {
+    return new InspectionProfileLoaderBase<>(project) {
+      @Override
+      public @Nullable InspectionProfileImpl loadProfileByName(@NotNull String profileName) {
+        InspectionProfileManager.getInstance().getProfiles(); //  force init provided profiles
+        InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+        InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
+        if (inspectionProfile == null) {  // check if the IDE profile is used for the project
+          for (InspectionProfileImpl profile : profileManager.getProfiles()) {
+            if (Comparing.strEqual(profile.getName(), profileName)) {
+              inspectionProfile = profile;
+              break;
+            }
+          }
+        }
 
-  public @Nullable InspectionProfileImpl loadProfileByName(@NotNull Project project, @NotNull String profileName) {
-    InspectionProfileManager.getInstance().getProfiles(); //force init provided profiles
-    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
-    if (inspectionProfile != null) {
-      reportMessage(1, "Loaded the '" + profileName +"' shared project profile");
-    }
-    else {
-      //check if ide profile is used for project
-      for (InspectionProfileImpl profile : profileManager.getProfiles()) {
-        if (Comparing.strEqual(profile.getName(), profileName)) {
-          inspectionProfile = profile;
-          reportMessage(1, "Loaded the '" + profileName + "' local profile");
-          break;
+        return inspectionProfile;
+      }
+
+      @Override
+      public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) {
+        InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath,
+                                                                                 InspectionToolRegistrar.getInstance(),
+                                                                                 (BaseInspectionProfileManager)InspectionProjectProfileManager.getInstance(project));
+        if (inspectionProfileFromYaml != null) return inspectionProfileFromYaml;
+
+        try {
+          InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
+          if (inspectionProfile != null) {
+            reportMessage(1, "Loaded the '" + inspectionProfile.getName() + "' profile from the file '" + profilePath + "'");
+          }
+          return inspectionProfile;
+        }
+        catch (IOException e) {
+          throw new InspectionApplicationException("Failed to read inspection profile file '" + profilePath + "': " + e);
+        }
+        catch (JDOMException e) {
+          throw new InspectionApplicationException("Invalid xml structure of inspection profile file '" + profilePath + "': " + e);
         }
       }
-    }
-
-    return inspectionProfile;
+    };
   }
-
 
   private ConversionListener createConversionListener(StringBuilder errorBuffer) {
     return new ConversionListener() {
@@ -892,7 +813,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     };
   }
 
-  public static @NotNull String getPrefix(final @NotNull String text) {
+  public static @NotNull String getPrefix(@NotNull String text) {
     int idx = text.indexOf(" in ");
     if (idx == -1) {
       idx = text.indexOf(" of ");
@@ -948,13 +869,77 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       String oldContent = revision.getContent();
       if (oldContent == null) return Collections.emptyList();
       String newContent = VfsUtilCore.loadText(virtualFile);
-      return Lists.newArrayList(
+      return ContainerUtil.newArrayList(
         RangesBuilder.compareLines(newContent, oldContent, LineOffsetsUtil.create(newContent), LineOffsetsUtil.create(oldContent))
           .iterateUnchanged());
     }
     catch (VcsException | IOException e) {
       LOG.error("Couldn't load content", e);
       return Collections.emptyList();
+    }
+  }
+
+  private class InspectionProgressIndicator extends ProgressIndicatorBase implements ProgressIndicatorWithDelayedPresentation {
+    private String lastPrefix = "";
+    private int myLastPercent = -1;
+    private int nestingLevel;
+
+    private InspectionProgressIndicator() {
+      setText("");
+    }
+
+    @Override
+    public void pushState() {
+      super.pushState();
+      nestingLevel++;
+    }
+
+    @Override
+    public void popState() {
+      super.popState();
+      nestingLevel--;
+    }
+
+    @Override
+    public void setText(String text) {
+      if (Objects.equals(text, getText())) {
+        return;
+      }
+      super.setText(text);
+      if (text == null) return;
+      switch (myVerboseLevel) {
+        case 0:
+          break;
+        case 1:
+          String prefix = getPrefix(text);
+          if (prefix.equals(lastPrefix)) {
+            reportMessageNoLineBreak(1, ".");
+          }
+          else {
+            lastPrefix = prefix;
+            reportMessage(1, "");
+            reportMessage(1, prefix);
+          }
+          break;
+        case 2:
+          reportMessage(2, text);
+          break;
+        case 3:
+          int percent = (int)(getFraction() * 100);
+          if (!isIndeterminate() && getFraction() > 0 && myLastPercent != percent && nestingLevel == 0) {
+            // do not print duplicate "processing xx%"
+            // do not print nested excessively verbose "Searching for this symbol.... done"
+            myLastPercent = percent;
+            String msg = getPrefix(text) + " " + percent + "%";
+            reportMessage(2, msg);
+          }
+          break;
+      }
+    }
+
+    @Override
+    public void setDelayInMillis(int delayInMillis) {
+
     }
   }
 }

@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -62,16 +63,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       }
     }
     catch (IOException e) {
-      if ("Invalid execution data file.".equals(e.getMessage())) {
-        final String path = sessionDataFile.getAbsolutePath();
-        Notifications.Bus.notify(new Notification("Coverage",
-                                                  CoverageBundle.message("coverage.error.loading.report"),
-                                                  JavaCoverageBundle.message("coverage.error.jacoco.report.format", path),
-                                                  NotificationType.ERROR));
-        LOG.info(e);
-        return data;
-      }
-      LOG.error(e);
+      processError(sessionDataFile, e);
       return data;
     }
     catch (Exception e) {
@@ -79,6 +71,27 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       return data;
     }
     return data;
+  }
+
+  private static void processError(@NotNull File sessionDataFile, IOException e) {
+    final String path = sessionDataFile.getAbsolutePath();
+    if ("Invalid execution data file.".equals(e.getMessage())) {
+      Notifications.Bus.notify(new Notification("Coverage",
+                                                CoverageBundle.message("coverage.error.loading.report"),
+                                                JavaCoverageBundle.message("coverage.error.jacoco.report.format", path),
+                                                NotificationType.ERROR));
+      LOG.info(e);
+    }
+    else if (e.getMessage() != null && e.getMessage().startsWith("Unknown block type")) {
+      Notifications.Bus.notify(new Notification("Coverage",
+                                                CoverageBundle.message("coverage.error.loading.report"),
+                                                JavaCoverageBundle.message("coverage.error.jacoco.report.corrupted", path),
+                                                NotificationType.ERROR));
+      LOG.info(e);
+    }
+    else {
+      LOG.error(e);
+    }
   }
 
   private static void loadExecutionData(@NotNull final File sessionDataFile,
@@ -117,13 +130,16 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
           lineData.setHits(methodLineStatus == ICounter.FULLY_COVERED || methodLineStatus == ICounter.PARTLY_COVERED ? 1 : 0);
           ICounter branchCounter = methodLine.getBranchCounter();
-          int coveredCount = branchCounter.getCoveredCount();
-          for (int b = 0; b < branchCounter.getTotalCount(); b++) {
-            JumpData jump = lineData.addJump(b);
-            if (coveredCount-- > 0) {
-              jump.setTrueHits(1);
-              jump.setFalseHits(1);
+          if (branchCounter.getTotalCount() > 0) {
+            final int[] keys = new int[branchCounter.getTotalCount()];
+            for (int key = 0; key < keys.length; key++) {
+              keys[key] = key;
             }
+            final SwitchData switchData = lineData.addSwitch(0, keys);
+            final int[] hits = switchData.getHits();
+            Arrays.fill(hits, 0, branchCounter.getCoveredCount(), 1);
+            switchData.setKeysAndHits(keys, hits);
+            switchData.setDefaultHits(1);
           }
 
           classData.registerMethodSignature(lineData);
@@ -154,11 +170,12 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
           Path rootPath = Paths.get(new File(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(root.getUrl()))).toURI());
           Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
               String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
               vmClassName = StringUtil.trimEnd(vmClassName, ".class");
               if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
-                  !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
+                  (!suite.isClassFiltered(vmClassName) &&
+                   !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName)))) {
                 return FileVisitResult.CONTINUE;
               }
               File file = path.toFile();
@@ -196,9 +213,9 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void appendCoverageArgument(String sessionDataFilePath,
                                      String @Nullable [] patterns,
                                      SimpleJavaParameters parameters,
-                                     boolean collectLineInfo,
-                                     boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null, null);
+                                     boolean testTracking,
+                                     boolean branchCoverage) {
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, testTracking, branchCoverage, null, null);
   }
 
   @Override
@@ -206,8 +223,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      String @Nullable [] patterns,
                                      String[] excludePatterns,
                                      SimpleJavaParameters javaParameters,
-                                     boolean collectLineInfo,
-                                     boolean isSampling,
+                                     boolean testTracking,
+                                     boolean branchCoverage,
                                      String sourceMapPath,
                                      @Nullable Project project) {
     String path;
@@ -256,7 +273,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   }
 
   @Override
-  public boolean isBranchInfoAvailable(boolean sampling) {
+  public boolean isBranchInfoAvailable(boolean branchCoverage) {
     return true;
   }
 
@@ -273,7 +290,11 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     CoverageBuilder coverageBuilder = new CoverageBuilder();
     for (CoverageSuite aSuite : suite.getSuites()) {
       File coverageFile = new File(aSuite.getCoverageDataFileName());
-      loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+      try {
+        loadReportToCoverageBuilder(coverageBuilder, coverageFile, module, project, loader, (JavaCoverageSuite)suite.getSuites()[0]);
+      } catch (IOException e) {
+        processError(coverageFile, e);
+      }
     }
 
     final IBundleCoverage bundleCoverage = coverageBuilder.getBundle(suite.getPresentableName());
@@ -311,5 +332,11 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   @NotNull
   public String getDataFileExtension() {
     return "exec";
+  }
+
+  @Override
+  public boolean shouldProcessUnloadedClasses() {
+    // All classes are already processed in JaCoCoCoverageRunner.loadReportToCoverageBuilder
+    return false;
   }
 }

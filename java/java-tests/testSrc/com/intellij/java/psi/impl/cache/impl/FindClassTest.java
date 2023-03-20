@@ -87,20 +87,20 @@ public class FindClassTest extends JavaPsiTestCase {
   }
 
   public void testClassUnderExcludedFolder() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.run(() -> {
       PsiTestUtil.addExcludedRoot(myModule, myPackDir);
 
-      PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
-      assertNull(psiClass);
+      assertNull(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
 
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
       final ContentEntry content = rootModel.getContentEntries()[0];
       content.removeExcludeFolder(content.getExcludeFolders()[0]);
       rootModel.commit();
-
-      psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
-      assertEquals("p.A", psiClass.getQualifiedName());
     });
+
+    PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+    assertEquals("p.A", psiClass.getQualifiedName());
   }
 
   public void testClassUnderIgnoredFolder() {

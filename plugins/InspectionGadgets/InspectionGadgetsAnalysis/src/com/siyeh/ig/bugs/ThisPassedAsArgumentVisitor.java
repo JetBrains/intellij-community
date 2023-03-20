@@ -64,8 +64,7 @@ class ThisPassedAsArgumentVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static boolean isThisExpression(PsiExpression expression) {
-    if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       return isThisExpression(parenthesizedExpression.getExpression());
     }
     return expression instanceof PsiThisExpression;

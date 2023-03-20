@@ -13,8 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @TestDataPath("/testData/codeInspection/overrideOnly")
 class OverrideOnlyInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-
-  private val projectDescriptor = object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
+  private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       PsiTestUtil.addProjectLibrary(model, "annotations", listOf(PathUtil.getJarPathForClass(ApiStatus.OverrideOnly::class.java)))
@@ -36,7 +35,11 @@ class OverrideOnlyInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   override fun tearDown() {
     try {
       myFixture.disableInspections(inspection)
-    } finally {
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
       super.tearDown()
     }
   }

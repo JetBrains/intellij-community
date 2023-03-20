@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiVariable
+import com.intellij.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.values.*
 import org.jetbrains.uast.values.UNothingValue.JumpKind.BREAK
@@ -327,26 +324,21 @@ class TreeBasedEvaluator(
     private fun evaluateTypeCast(operandInfo: UEvaluationInfo, type: PsiType): UEvaluationInfo {
       val constant = operandInfo.value.toConstant() ?: return UUndeterminedValue to operandInfo.state
       val resultConstant = when (type) {
-                             PsiType.BOOLEAN -> {
+                             PsiTypes.booleanType() -> {
                                constant as? UBooleanConstant
                              }
-                             PsiType.CHAR -> when (constant) {
-                               // Join the following three in UNumericConstant
-                               // when https://youtrack.jetbrains.com/issue/KT-14868 is fixed
-                               is UIntConstant -> UCharConstant(constant.value.toChar())
-                               is ULongConstant -> UCharConstant(constant.value.toChar())
-                               is UFloatConstant -> UCharConstant(constant.value.toChar())
-
+                             PsiTypes.charType() -> when (constant) {
+                               is UNumericConstant -> UCharConstant(constant.value.toInt().toChar())
                                is UCharConstant -> constant
                                else -> null
                              }
-                             PsiType.LONG -> {
+                             PsiTypes.longType() -> {
                                (constant as? UNumericConstant)?.value?.toLong()?.let { value -> ULongConstant(value) }
                              }
-                             PsiType.BYTE, PsiType.SHORT, PsiType.INT -> {
+                             PsiTypes.byteType(), PsiTypes.shortType(), PsiTypes.intType() -> {
                                (constant as? UNumericConstant)?.value?.toInt()?.let { UIntConstant(it, type) }
                              }
-                             PsiType.FLOAT, PsiType.DOUBLE -> {
+                             PsiTypes.floatType(), PsiTypes.doubleType() -> {
                                (constant as? UNumericConstant)?.value?.toDouble()?.let { UFloatConstant.create(it, type) }
                              }
                              else -> when (type.name) {
@@ -365,10 +357,10 @@ class TreeBasedEvaluator(
     private fun evaluateTypeCheck(operandInfo: UEvaluationInfo, type: PsiType): UEvaluationInfo {
       val constant = operandInfo.value.toConstant() ?: return UUndeterminedValue to operandInfo.state
       val valid = when (type) {
-        PsiType.BOOLEAN -> constant is UBooleanConstant
-        PsiType.LONG -> constant is ULongConstant
-        PsiType.BYTE, PsiType.SHORT, PsiType.INT, PsiType.CHAR -> constant is UIntConstant
-        PsiType.FLOAT, PsiType.DOUBLE -> constant is UFloatConstant
+        PsiTypes.booleanType() -> constant is UBooleanConstant
+        PsiTypes.longType() -> constant is ULongConstant
+        PsiTypes.byteType(), PsiTypes.shortType(), PsiTypes.intType(), PsiTypes.charType() -> constant is UIntConstant
+        PsiTypes.floatType(), PsiTypes.doubleType() -> constant is UFloatConstant
         else -> when (type.name) {
           "java.lang.String" -> constant is UStringConstant
           else -> false
@@ -484,9 +476,8 @@ class TreeBasedEvaluator(
       val elseInfo = node.elseExpression?.accept(chain, conditionInfo.state)
       val conditionValue = conditionInfo.value
       val defaultInfo = UUndeterminedValue to conditionInfo.state
-      val constantConditionValue = conditionValue.toConstant()
 
-      return when (constantConditionValue) {
+      return when (val constantConditionValue = conditionValue.toConstant()) {
         is UBooleanConstant -> {
           if (constantConditionValue.value) thenInfo ?: defaultInfo
           else elseInfo ?: defaultInfo
@@ -560,8 +551,7 @@ class TreeBasedEvaluator(
     }
 
     private fun getBreakResult(clauseInfo: UEvaluationInfo): UEvaluationInfo {
-      val clauseValue = clauseInfo.value
-      return when (clauseValue) {
+      return when (val clauseValue = clauseInfo.value) {
         is UYieldResult -> clauseValue.value to clauseInfo.state
         is UPhiValue -> UPhiValue.create(clauseValue.values.map {
           when (it) {

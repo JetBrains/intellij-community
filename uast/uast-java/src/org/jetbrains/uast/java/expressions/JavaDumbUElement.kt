@@ -16,9 +16,11 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.internal.log
 
+@ApiStatus.Internal
 class JavaDumbUElement(
   override val sourcePsi: PsiElement,
   givenParent: UElement?,

@@ -7,7 +7,8 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.*;
@@ -18,6 +19,7 @@ import org.junit.Assert;
 
 import java.util.List;
 
+@SuppressWarnings("SameParameterValue")
 public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
 
   @NotNull
@@ -60,7 +62,7 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getFile());
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getVFile(), getEditor().getDocument());
     Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
   }
 
@@ -69,7 +71,7 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getFile());
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getVFile(), getEditor().getDocument());
     Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
     Assert.assertEquals("Indent mismatch", expectedIndent, options.INDENT_SIZE);
   }
@@ -97,8 +99,8 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
   }
 
   @NotNull
-  public static CommonCodeStyleSettings.IndentOptions detectIndentOptions(PsiFile file) {
-    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(file);
+  public CommonCodeStyleSettings.IndentOptions detectIndentOptions(@NotNull VirtualFile file, @NotNull Document document) {
+    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(getProject(), file, document, new EmptyProgressIndicator());
     return detector.getIndentOptions();
   }
 }

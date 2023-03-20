@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.hierarchy.calls;
 
@@ -59,9 +59,8 @@ public abstract class CalleeReferenceProcessor extends ReadActionProcessor<PsiRe
         if (kotlinOnly && !(element instanceof KtNamedDeclaration)) return true;
 
         // If reference belongs to property initializer, show enclosing declaration instead
-        if (element instanceof KtProperty) {
-            KtProperty property = (KtProperty) element;
-            if (PsiTreeUtil.isAncestor(property.getInitializer(), refElement, false)) {
+        if (element instanceof KtProperty property) {
+          if (PsiTreeUtil.isAncestor(property.getInitializer(), refElement, false)) {
                 element = CallHierarchyUtilsKt.getCallHierarchyElement(element.getParent());
             }
         }

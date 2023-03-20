@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.notification.*;
@@ -17,8 +18,7 @@ import java.util.List;
 
 public class BranchContextTracker implements BranchChangeListener {
 
-  public static final NotificationGroup NOTIFICATION = new NotificationGroup(
-    "Branch Context group", NotificationDisplayType.BALLOON, true);
+  public static final NotificationGroup NOTIFICATION = NotificationGroupManager.getInstance().getNotificationGroup("Branch Context group");
 
   private final Project myProject;
   private String myLastBranch;

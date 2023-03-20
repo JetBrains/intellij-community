@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,7 +28,7 @@ public class SemicolonFixer implements Fixer {
   private static boolean fixReturn(@NotNull Editor editor, @Nullable PsiElement psiElement) {
     if (psiElement instanceof PsiReturnStatement) {
       PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class, true, PsiLambdaExpression.class);
-      if (method != null && PsiType.VOID.equals(method.getReturnType())) {
+      if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
         PsiReturnStatement stmt = (PsiReturnStatement)psiElement;
         if (stmt.getReturnValue() != null) {
           Document doc = editor.getDocument();
@@ -41,11 +41,10 @@ public class SemicolonFixer implements Fixer {
   }
 
   private static boolean fixForUpdate(@NotNull Editor editor, @Nullable PsiElement psiElement) {
-    if (!(psiElement instanceof PsiForStatement)) {
+    if (!(psiElement instanceof PsiForStatement forStatement)) {
       return false;
     }
 
-    PsiForStatement forStatement = (PsiForStatement)psiElement;
     PsiExpression condition = forStatement.getCondition();
     if (forStatement.getUpdate() != null || condition == null) {
       return false;
@@ -108,6 +107,25 @@ public class SemicolonFixer implements Fixer {
         // abstract rarely seem to be field. It is rather incomplete method.
         doc.insertString(insertionOffset, "()");
         insertionOffset += "()".length();
+      }
+
+      // Like:
+      // assert x instanceof Type
+      // String s = "hello";
+      // Here, String is parsed as name of the pattern variable, and we have an assignment, instead of declaration 
+      if (psiElement.getLastChild() instanceof PsiErrorElement error &&
+          error.getPrevSibling() instanceof PsiInstanceOfExpression instanceOf &&
+          instanceOf.getLastChild() instanceof PsiTypeTestPattern typePattern &&
+          typePattern.getPatternVariable() != null &&
+          PsiTreeUtil.skipWhitespacesForward(psiElement) instanceof PsiExpressionStatement exprStmt &&
+          exprStmt.getExpression() instanceof PsiAssignmentExpression assignment &&
+          assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+        PsiPatternVariable variable = typePattern.getPatternVariable();
+        PsiIdentifier identifier = variable.getNameIdentifier();
+        if (identifier.getPrevSibling() instanceof PsiWhiteSpace ws && ws.getText().contains("\n") &&
+            editor.getCaretModel().getOffset() < identifier.getTextRange().getStartOffset()) {
+          insertionOffset = ws.getTextRange().getStartOffset();
+        }
       }
 
       if (!StringUtil.endsWithChar(text, ';')) {

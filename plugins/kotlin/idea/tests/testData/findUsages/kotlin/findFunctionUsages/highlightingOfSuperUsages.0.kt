@@ -1,6 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // CHECK_SUPER_METHODS_YES_NO_DIALOG: no
 // OPTIONS: usages, skipImports
+// PSI_ELEMENT_AS_TITLE: "fun foo(): Unit"
 // HIGHLIGHTING
 
 open class A : I {
@@ -16,3 +17,4 @@ fun test(i: I) {
     A().foo()
     B().foo()
 }
+

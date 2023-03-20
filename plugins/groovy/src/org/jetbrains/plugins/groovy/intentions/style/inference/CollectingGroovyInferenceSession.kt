@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.openapi.util.RecursionManager
@@ -40,7 +40,7 @@ class CollectingGroovyInferenceSession(
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
                               nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
       val collectingSession = CollectingGroovyInferenceSession(nearestCall.parentOfType<GrMethod>()!!.typeParameters, nearestCall)
-      findExpression(nearestCall)?.let(collectingSession::addExpression)
+      findExpression(nearestCall, false)?.let { collectingSession.addExpression(it, false) }
       collectingSession.inferSubst(resolveResult)
     } ?: PsiSubstitutor.EMPTY
   }

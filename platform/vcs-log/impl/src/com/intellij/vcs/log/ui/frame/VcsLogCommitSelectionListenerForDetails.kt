@@ -71,7 +71,7 @@ class VcsLogCommitSelectionListenerForDetails private constructor(graphTable: Vc
       val commit = commitIds[idx]
       val root = commit.root
       if (colorManager.hasMultiplePaths()) {
-        panel.setRoot(RootColor(root, VcsLogGraphTable.getRootBackgroundColor(root, colorManager)))
+        panel.setRoot(RootColor(root, colorManager.getRootColor(root)))
       }
       else {
         panel.setRoot(null)

@@ -76,11 +76,9 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
         if (lockExpression instanceof GrReferenceExpression && PsiUtil.isThisReference(lockExpression)) {
           isLockedOnInstance = true;
         }
-        else if (lockExpression instanceof GrReferenceExpression) {
-          final GrReferenceExpression reference = (GrReferenceExpression) lockExpression;
+        else if (lockExpression instanceof GrReferenceExpression reference) {
           final PsiElement referent = reference.resolve();
-          if (referent instanceof PsiField) {
-            final PsiField referentField = (PsiField) referent;
+          if (referent instanceof PsiField referentField) {
             if (referentField.hasModifierProperty(PsiModifier.STATIC)) {
               isLockedOnClass = true;
             } else {
@@ -94,10 +92,9 @@ public class GroovyAccessToStaticFieldLockedOnInstanceInspection
         return;
       }
       final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField referredField)) {
         return;
       }
-      final PsiField referredField = (PsiField) referent;
       if (!referredField.hasModifierProperty(PsiModifier.STATIC) ||
           isConstant(referredField)) {
         return;

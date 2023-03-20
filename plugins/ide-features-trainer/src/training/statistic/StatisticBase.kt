@@ -3,6 +3,7 @@ package training.statistic
 
 import com.intellij.ide.TipsOfTheDayUsagesCollector.TipInfoValidationRule
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -29,6 +30,7 @@ import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_HAS_BEEN_SENT
 import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_LIKENESS_ANSWER
 import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_OPENED_VIA_NOTIFICATION
 import training.statistic.FeatureUsageStatisticConsts.HELP_LINK_CLICKED
+import training.statistic.FeatureUsageStatisticConsts.INTERNAL_PROBLEM
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
 import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
@@ -45,6 +47,7 @@ import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENE
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_DIALOG_RESULT
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.PASSED
+import training.statistic.FeatureUsageStatisticConsts.PROBLEM
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
 import training.statistic.FeatureUsageStatisticConsts.REASON
 import training.statistic.FeatureUsageStatisticConsts.RESTORE
@@ -55,14 +58,13 @@ import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.STOPPED
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
-import training.statistic.FeatureUsageStatisticConsts.TIP_FILENAME
-import training.util.KeymapUtil
+import training.statistic.FeatureUsageStatisticConsts.TIP_ID
 import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
 
 enum class LessonStartingWay {
-  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER
+  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER, NO_SDK_RESTART
 }
 
 internal enum class FeedbackEntryPlace {
@@ -71,6 +73,10 @@ internal enum class FeedbackEntryPlace {
 
 internal enum class FeedbackLikenessAnswer {
   NO_ANSWER, LIKE, DISLIKE
+}
+
+enum class LearningInternalProblems {
+  NO_SDK_CONFIGURED, // Before learning start we are trying to autoconfigure SDK or at least ask about location
 }
 
 internal class StatisticBase : CounterUsagesCollector() {
@@ -90,32 +96,33 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 16)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 19)
 
     var isLearnProjectCloseLogged = false
 
     // FIELDS
-    private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, LESSON_ID)
-    private val languageField = EventFields.StringValidatedByCustomRule(LANGUAGE, LANGUAGE)
+    private val lessonIdField = EventFields.StringValidatedByCustomRule(LESSON_ID, IdeFeaturesTrainerRuleValidator::class.java)
+    private val languageField = EventFields.StringValidatedByCustomRule(LANGUAGE, SupportedLanguageRuleValidator::class.java)
     private val completedCountField = EventFields.Int(COMPLETED_COUNT)
     private val courseSizeField = EventFields.Int(COURSE_SIZE)
-    private val moduleNameField = EventFields.StringValidatedByCustomRule(MODULE_NAME, MODULE_NAME)
-    private val taskIdField = EventFields.StringValidatedByCustomRule(TASK_ID, TASK_ID)
-    private val actionIdField = EventFields.StringValidatedByCustomRule(ACTION_ID, ACTION_ID)
-    private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KEYMAP_SCHEME)
+    private val moduleNameField = EventFields.StringValidatedByCustomRule(MODULE_NAME, IdeFeaturesTrainerModuleRuleValidator::class.java)
+    private val taskIdField = EventFields.StringValidatedByCustomRule(TASK_ID, TaskIdRuleValidator::class.java)
+    private val actionIdField = EventFields.StringValidatedByCustomRule(ACTION_ID, ActionIdRuleValidator::class.java)
+    private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KeymapSchemeRuleValidator::class.java)
     private val versionField = EventFields.Version
     private val inputEventField = EventFields.InputEvent
     private val learnProjectOpeningWayField = EventFields.Enum<LearnProjectOpeningWay>(LEARN_PROJECT_OPENING_WAY)
     private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
     private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
     private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
-    private val tipFilenameField = EventFields.StringValidatedByCustomRule(TIP_FILENAME, TipInfoValidationRule.RULE_ID)
+    private val tipIdField = EventFields.StringValidatedByCustomRule(TIP_ID, TipInfoValidationRule::class.java)
     private val lessonStartingWayField = EventFields.Enum<LessonStartingWay>(LESSON_STARTING_WAY)
     private val feedbackEntryPlace = EventFields.Enum<FeedbackEntryPlace>(FEEDBACK_ENTRY_PLACE)
     private val feedbackHasBeenSent = EventFields.Boolean(FEEDBACK_HAS_BEEN_SENT)
     private val feedbackOpenedViaNotification = EventFields.Boolean(FEEDBACK_OPENED_VIA_NOTIFICATION)
     private val feedbackLikenessAnswer = EventFields.Enum<FeedbackLikenessAnswer>(FEEDBACK_LIKENESS_ANSWER)
     private val feedbackExperiencedUser = EventFields.Boolean(FEEDBACK_EXPERIENCED_USER)
+    private val internalProblemField = EventFields.Enum<LearningInternalProblems>(PROBLEM)
 
     private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
       override val name: String = LAST_BUILD_LEARNING_OPENED
@@ -154,7 +161,10 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val needShowNewLessonsNotifications =
       GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
 
-    private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
+    private val internalProblem =
+      GROUP.registerEvent(INTERNAL_PROBLEM, internalProblemField, lessonIdField, languageField)
+
+    private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipIdField)
     private val helpLinkClicked = GROUP.registerEvent(HELP_LINK_CLICKED, lessonIdField, languageField)
 
     private val onboardingFeedbackNotificationShown = GROUP.registerEvent(ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN,
@@ -238,8 +248,8 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logLearnProjectOpenedForTheFirstTime(way: LearnProjectOpeningWay) {
       val langManager = LangManager.getInstance()
-      val langSupport = langManager.getLangSupport() ?: return
-      if (langManager.getLearningProjectPath(langSupport) == null) {
+      val languageId = langManager.getLanguageId() ?: return
+      if (langManager.getLearningProjectPath(languageId) == null) {
         LearnProjectState.instance.firstTimeOpenedWay = way
         learnProjectOpenedFirstTimeEvent.log(way, courseLanguage())
       }
@@ -261,8 +271,8 @@ internal class StatisticBase : CounterUsagesCollector() {
       needShowNewLessonsNotifications.log(newLessonsCount, previousOpenedVersion?.asString(), showNewLessons)
     }
 
-    fun logLessonLinkClickedFromTip(lessonId: String, tipFilename: String) {
-      lessonLinkClickedFromTip.log(lessonId, courseLanguage(), tipFilename)
+    fun logLessonLinkClickedFromTip(lessonId: String, tipId: String) {
+      lessonLinkClickedFromTip.log(lessonId, courseLanguage(), tipId)
     }
 
     fun logHelpLinkClicked(lessonId: String) {
@@ -287,12 +297,16 @@ internal class StatisticBase : CounterUsagesCollector() {
       )
     }
 
+    fun logLearningProblem(problem: LearningInternalProblems, lesson: Lesson) {
+      internalProblem.log(problem, lesson.id, courseLanguage())
+    }
+
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
 
     private fun completedCount(): Int = CourseManager.instance.lessonsForModules.count { it.passed }
 
     private fun createInputEvent(actionId: String): FusInputEvent? {
-      val keyStroke = KeymapUtil.getShortcutByActionId(actionId) ?: return null
+      val keyStroke = ShortcutsRenderingUtil.getShortcutByActionId(actionId)?.firstKeyStroke ?: return null
       val inputEvent = KeyEvent(JOptionPane.getRootFrame(),
                                 KeyEvent.KEY_PRESSED,
                                 System.currentTimeMillis(),

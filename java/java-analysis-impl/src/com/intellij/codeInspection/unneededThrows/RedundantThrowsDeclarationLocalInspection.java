@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -22,8 +22,10 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,8 +128,8 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
           final PsiClassType exceptionType = throwRefType.myType;
 
           final String description = JavaErrorBundle.message("exception.is.never.thrown", JavaHighlightUtil.formatType(exceptionType));
-          final RedundantThrowsQuickFix fix = new RedundantThrowsQuickFix(exceptionType.getCanonicalText(), method.getName());
-          myHolder.registerProblem(reference, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+          final RedundantThrowsQuickFix fix = new RedundantThrowsQuickFix(exceptionType.getCanonicalText(), PsiFormatUtil.formatSimple(method));
+          myHolder.registerProblem(reference, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
         });
     }
 
@@ -157,9 +159,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         if (!(elem instanceof PsiJavaCodeReferenceElement)) return;
 
         final PsiElement maybeMethod = PsiTreeUtil.skipParentsOfType(elem, PsiReferenceList.class);
-        if (!(maybeMethod instanceof PsiMethod)) return;
-
-        final PsiMethod method = (PsiMethod)maybeMethod;
+        if (!(maybeMethod instanceof PsiMethod method)) return;
 
         getRelatedJavadocThrows((PsiJavaCodeReferenceElement)elem, method.getDocComment())
           .forEach(e -> e.delete());
@@ -186,9 +186,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         if (comment == null) return Stream.empty();
 
         final PsiElement maybeThrowsList = currentThrowsRef.getParent();
-        if (!(maybeThrowsList instanceof PsiReferenceList)) return Stream.empty();
-
-        final PsiReferenceList throwsList = (PsiReferenceList)maybeThrowsList;
+        if (!(maybeThrowsList instanceof PsiReferenceList throwsList)) return Stream.empty();
 
         // return all @throws declarations from javadoc if the last throws declaration in the throws list is getting eliminated.
         if (throwsList.getReferenceElements().length == 1) {
@@ -197,9 +195,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         }
 
         final PsiElement maybeClass = currentThrowsRef.resolve();
-        if (!(maybeClass instanceof PsiClass)) return Stream.empty();
-
-        final PsiClass reference = (PsiClass)maybeClass;
+        if (!(maybeClass instanceof PsiClass reference)) return Stream.empty();
 
         final List<PsiClassType> throwsListWithoutCurrent = getThrowsListWithoutCurrent(throwsList, currentThrowsRef);
 
@@ -231,8 +227,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       private static boolean isParentInThrowsListPresent(@NotNull final PsiClass clazz,
                                                          @NotNull final List<PsiClassType> throwsList) {
         final PsiClassType type = PsiTypesUtil.getClassType(clazz);
-        return throwsList.stream()
-          .anyMatch(e -> e.isAssignableFrom(type));
+        return ContainerUtil.exists(throwsList, e -> e.isAssignableFrom(type));
       }
 
       /**
@@ -240,7 +235,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        *
        * @param throwsList throws list of a method
        * @param currentRef the currently eliminated throws declaration in the throws list
-       * @return the set of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
+       * @return the list of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
        */
       private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
                                                                     @NotNull final PsiJavaCodeReferenceElement currentRef) {
@@ -288,7 +283,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
     @Contract(pure = true)
     private boolean isInOverriddenOf(@NotNull final PsiMethod method) {
-      if (!isMethodPossiblyOverridden(method)) return false;
+      if (!PsiUtil.canBeOverridden(method)) return false;
 
       final Predicate<PsiMethod> methodContainsThrownExceptions = m -> !ArrayUtil.isEmpty(m.getThrowsList().getReferencedTypes());
 
@@ -312,7 +307,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
       final Set<PsiClassType> unhandled = RedundantThrowsGraphAnnotator.getUnhandledExceptions(body, method, containingClass);
 
-      return unhandled.stream().anyMatch(myType::isAssignableFrom);
+      return ContainerUtil.exists(unhandled, myType::isAssignableFrom);
     }
 
     @Contract(pure = true)
@@ -320,7 +315,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       return ContainerUtil.exists(method.getThrowsList().getReferencedTypes(), myType::isAssignableFrom);
     }
 
-    public boolean isCaught(@NotNull final PsiMethod method) {
+    boolean isCaught(@NotNull final PsiMethod method) {
       if (method.getUseScope() instanceof GlobalSearchScope) {
         final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
         final PsiSearchHelper.SearchCostResult search = searchHelper.isCheapEnoughToSearch(method.getName(),
@@ -333,28 +328,12 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
       final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
       for (PsiReference reference : references) {
-        if (!(reference instanceof PsiElement)) continue;
-        final PsiElement element = (PsiElement)reference;
+        if (!(reference instanceof PsiElement element)) continue;
         final PsiClass clazz = PsiTreeUtil.getParentOfType(element, PsiClass.class);
         final boolean catchSectionAbsent = PsiTreeUtil.treeWalkUp(element, clazz, new TryBlockCatchTypeProcessor(myType));
         if (!catchSectionAbsent) return true;
       }
       return false;
-    }
-
-    @Contract(pure = true)
-    private static boolean isMethodPossiblyOverridden(@NotNull final PsiMethod method) {
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) return false;
-
-      final PsiModifierList modifierList = method.getModifierList();
-
-      return !(modifierList.hasModifierProperty(PsiModifier.PRIVATE) ||
-               modifierList.hasModifierProperty(PsiModifier.STATIC) ||
-               modifierList.hasModifierProperty(PsiModifier.FINAL) ||
-               method.isConstructor() ||
-               containingClass instanceof PsiAnonymousClass ||
-               containingClass.hasModifierProperty(PsiModifier.FINAL));
     }
 
     @NotNull PsiJavaCodeReferenceElement getReference() {
@@ -375,9 +354,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
       @Override
       public boolean process(PsiElement curr, PsiElement prev) {
-        if (!(curr instanceof PsiTryStatement)) return true;
-
-        final PsiTryStatement tryStatement = (PsiTryStatement)curr;
+        if (!(curr instanceof PsiTryStatement tryStatement)) return true;
 
         return Arrays.stream(tryStatement.getCatchSections())
           .map(PsiCatchSection::getCatchType)
@@ -390,7 +367,6 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
   /**
    * See {@link #checkInconsistency(PsiReferenceList, String)}
-   * @param throwsList
    */
   private static void checkInconsistency(@NotNull PsiReferenceList throwsList) {
     checkInconsistency(throwsList, null);

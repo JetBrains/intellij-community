@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.configurationStore.saveComponentManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.configurationStore.saveSettings
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
@@ -34,11 +34,14 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
 
   override fun setUpProject() {
     super.setUpProject()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
+    // will create .idea directory
+    runBlockingMaybeCancellable {
+      saveSettings(project)
+    }
   }
 
   override fun setUpModule() {
-    runWriteAction {
+    ApplicationManager.getApplication().runWriteAction {
       myModule = createMainModule()
       moduleContentRoot = getOrCreateProjectBaseDir()
       myModule.addContentRoot(moduleContentRoot)

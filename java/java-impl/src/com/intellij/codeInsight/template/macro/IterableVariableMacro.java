@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class IterableVariableMacro extends VariableTypeMacroBase {
   private static final Logger LOG = Logger.getInstance(IterableVariableMacro.class);
 

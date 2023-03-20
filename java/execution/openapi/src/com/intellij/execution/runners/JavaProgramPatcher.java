@@ -18,8 +18,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Patch Java command line before running/debugging
- *
- * @author peter
  */
 public abstract class JavaProgramPatcher {
   protected static final ExtensionPointName<JavaProgramPatcher> EP_NAME = ExtensionPointName.create("com.intellij.java.programPatcher");

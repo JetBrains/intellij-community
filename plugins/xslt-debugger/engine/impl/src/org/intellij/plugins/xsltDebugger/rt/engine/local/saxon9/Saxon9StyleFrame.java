@@ -58,13 +58,11 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
     Saxon9TraceListener.MUTED = true;
     try {
       return createValue(new ExpressionFacade(myElement));
-    } catch (AssertionError e) {
+    } catch (AssertionError | Exception e) {
       debug(e);
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
-    } catch (Exception e) {
-      debug(e);
-      throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
-    } finally {
+    }
+    finally {
       Saxon9TraceListener.MUTED = false;
     }
   }

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows plugins to cancel hotswap after a particular compilation session.
+ *
  * @see HotSwapUI#addListener(HotSwapVetoableListener)
  */
 public interface HotSwapVetoableListener {

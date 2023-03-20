@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.scale.paint.ImageComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -14,6 +14,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.util.function.BiFunction;
 
 import static com.intellij.ui.scale.ScaleType.*;
@@ -51,10 +52,10 @@ public abstract class CompositeIconPaintTestHelper {
     String[] cellIconsPaths = getCellIconsPaths();
     int count = cellIconsPaths.length;
 
-    IconLoader.CachedImageIcon[] cellIcons = new IconLoader.CachedImageIcon[count];
+    CachedImageIcon[] cellIcons = new CachedImageIcon[count];
     for (int i = 0; i < count; i++) {
       try {
-        cellIcons[i] = new IconLoader.CachedImageIcon(new File(cellIconsPaths[i]).toURI().toURL(), false);
+        cellIcons[i] = new CachedImageIcon(new File(cellIconsPaths[i]).toURI().toURL(), false);
       }
       catch (MalformedURLException e) {
         throw new RuntimeException(e);
@@ -75,7 +76,7 @@ public abstract class CompositeIconPaintTestHelper {
 
     if (shouldSaveGoldImage()) saveImage(iconImage, getGoldImagePath(ctx));
 
-    BufferedImage goldImage = loadImage(getGoldImagePath(ctx));
+    BufferedImage goldImage = loadImage(Path.of(getGoldImagePath(ctx)));
 
     ImageComparator.compareAndAssert(
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), goldImage, iconImage, null);

@@ -182,9 +182,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	figure.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.figure
-			|	common.attrs.aria.role.figure
-			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.group
+			|	common.attrs.aria?
 			)?
 		)
 	figure.inner =

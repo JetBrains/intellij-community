@@ -18,9 +18,6 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 
 import java.io.File;
 
-/**
- * @author spleaner
- */
 public abstract class XmlRenameTestCase extends JavaCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {

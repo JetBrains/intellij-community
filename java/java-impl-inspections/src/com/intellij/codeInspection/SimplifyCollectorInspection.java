@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -28,7 +28,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
 
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null || !isCollectorMethod(call, "groupingBy", "groupingByConcurrent")) return;
@@ -80,8 +80,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
     }
 
     CombinedCollector tryUnwrap() {
-      if (myDownstream instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)myDownstream;
+      if (myDownstream instanceof PsiMethodCallExpression call) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         if (myFinisher == null && isCollectorMethod(call, "collectingAndThen")) {
           return new CombinedCollector(args[0], args[1], myMapper);
@@ -141,15 +140,12 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
       String valueTypeArg = valueType == null ? "" : "<" + valueType.getCanonicalText() + ">";
       String merger;
       switch (downstreamName) {
-        case "minBy":
-        case "maxBy":
+        case "minBy", "maxBy" ->
           merger = "java.util.function.BinaryOperator." + valueTypeArg + downstreamName + "(" + ct.text(downstreamArg) + ")";
-          break;
-        case "reducing":
-          merger = ct.text(downstreamArg);
-          break;
-        default:
+        case "reducing" -> merger = ct.text(downstreamArg);
+        default -> {
           return;
+        }
       }
       String keyMapper = ct.text(args[0]);
       String mapSupplier = args.length == 3 ? ct.text(args[1]) : null;

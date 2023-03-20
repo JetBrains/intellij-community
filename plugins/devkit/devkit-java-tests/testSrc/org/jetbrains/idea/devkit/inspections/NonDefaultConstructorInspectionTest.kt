@@ -48,4 +48,12 @@ class NonDefaultConstructorInspectionTest : LightJavaCodeInsightFixtureTestCase(
     myFixture.addClass("package com.intellij.util.messages; public class MessageBus {}")
     myFixture.testHighlighting("CustomConstructorMessageBus.java")
   }
+
+  fun `test allow CoroutineScope`() {
+    myFixture.addClass("package com.intellij.openapi.components; public @interface Service {}")
+    myFixture.addClass("package com.intellij.openapi.project; public class Project {}")
+    myFixture.addClass("package kotlinx.coroutines; public interface CoroutineScope {}")
+
+    myFixture.testHighlighting("ServiceWithCoroutineScope.java")
+  }
 }

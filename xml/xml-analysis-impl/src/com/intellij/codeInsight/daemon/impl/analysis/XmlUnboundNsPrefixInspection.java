@@ -42,7 +42,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       }
 
       @Override
-      public void visitXmlToken(final XmlToken token) {
+      public void visitXmlToken(final @NotNull XmlToken token) {
         if (isXmlFile(token) && token.getTokenType() == XmlTokenType.XML_NAME) {
           PsiElement element = token.getPrevSibling();
           while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
@@ -50,8 +50,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
           if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
             PsiElement parent = element.getParent();
 
-            if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
-              XmlTag tag = (XmlTag)parent;
+            if (parent instanceof XmlTag tag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
               checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix(), token, holder, isOnTheFly);
             }
           }
@@ -59,7 +58,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       }
 
       @Override
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         if (!isXmlFile(attribute)) {
           return;
         }
@@ -83,7 +82,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       }
 
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         PsiReference[] references = value.getReferences();
         for (PsiReference reference : references) {
           if (reference instanceof SchemaPrefixReference) {
@@ -111,8 +110,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       return;
     }
     PsiFile psiFile = context.getContainingFile();
-    if (!(psiFile instanceof XmlFile)) return;
-    final XmlFile containingFile = (XmlFile)psiFile;
+    if (!(psiFile instanceof XmlFile containingFile)) return;
     if (!HighlightingLevelManager.getInstance(containingFile.getProject()).shouldInspect(containingFile)) return;
 
     final XmlExtension extension = XmlExtension.getExtension(containingFile);
@@ -144,10 +142,9 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
         isOnTheFly ? XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(context, namespacePrefix, token) : null;
       reportTagProblem(element, localizedMessage, range, highlightType, fix, holder);
     }
-    else if (element instanceof XmlAttribute) {
+    else if (element instanceof XmlAttribute attribute) {
       LocalQuickFix fix =
         isOnTheFly ? XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(element, namespacePrefix, token) : null;
-      XmlAttribute attribute = (XmlAttribute)element;
       holder.registerProblem(attribute.getNameElement(), localizedMessage, highlightType, range, fix);
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.CommonBundle;
@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
@@ -62,7 +63,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -136,7 +136,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myFile = file;
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
-    
+
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
@@ -169,7 +169,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
           revision = myList.getItems().get(myList.getSelectedRow());
-          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, Objects.requireNonNull(revision.getCommitMessage()));
+          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, StringUtil.notNullize(revision.getCommitMessage()));
           myComments.setText(message);
           myComments.setCaretPosition(0);
         }
@@ -186,6 +186,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myList.getSelectionModel().addListSelectionListener(selectionListener);
 
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+    myChangesOnlyCheckBox.setBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP));
     myChangesOnlyCheckBox.setSelected(configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF);
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -260,7 +261,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
         ColumnInfo[] additionalColumns = components.getColumns();
         myListModel = new ListTableModel<>(ArrayUtil.mergeArrays(myDefaultColumns, additionalColumns, ColumnInfo[]::new));
         myListModel.setSortable(false);
-        myList.setModel(myListModel);
+        myList.setModelAndUpdateColumns(myListModel);
 
         mySelectedRevisionListener = components.getRevisionListener();
         myDetailsPanel.setContent(components.getDetailsComponent());
@@ -442,6 +443,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     separatorPanel.add(statusPanel, BorderLayout.EAST);
 
     tablePanel.add(separatorPanel, BorderLayout.NORTH);
+    tablePanel.setBorder(JBUI.Borders.empty(0, 16, UIUtil.DEFAULT_VGAP, 16));
 
     splitter.setFirstComponent(tablePanel);
     splitter.setSecondComponent(createComments());
@@ -451,6 +453,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   private JComponent createComments() {
     JPanel panel = new JPanel(new BorderLayout(4, 4));
+    panel.setBorder(JBUI.Borders.empty(0, 16, 16, 16));
     panel.add(new JLabel(VcsBundle.message("selection.history.commit.message.label")), BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
 
@@ -605,8 +608,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     private String loadContents(@NotNull VcsFileRevision revision) throws VcsException {
       try {
         byte[] bytes = revision.loadContent();
-        if (bytes == null) throw new VcsException(
-          VcsBundle.message("history.failed.to.load.content.for.revision.0", revision.getRevisionNumber().asString()));
+        if (bytes == null) {
+          throw new VcsException(VcsBundle.message("history.failed.to.load.content.for.revision.0",
+                                                   revision.getRevisionNumber().asString()));
+        }
         return new String(bytes, myFile.getCharset());
       }
       catch (IOException e) {
@@ -670,6 +675,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   public static class MyDiffAction implements AnActionExtensionProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isActive(@NotNull AnActionEvent e) {
       return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;
     }
@@ -711,6 +721,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   }
 
   public static class MyDiffAfterWithLocalAction implements AnActionExtensionProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public boolean isActive(@NotNull AnActionEvent e) {
       return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;

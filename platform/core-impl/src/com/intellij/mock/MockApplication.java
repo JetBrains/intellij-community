@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -81,12 +83,17 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public CoroutineScope getCoroutineScope() {
+    return GlobalScope.INSTANCE;
+  }
+
+  @Override
   public boolean isDispatchThread() {
     return SwingUtilities.isEventDispatchThread();
   }
 
   @Override
-  public boolean isWriteThread() {
+  public boolean isWriteIntentLockAcquired() {
     return true;
   }
 
@@ -116,7 +123,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void assertIsWriteThread() {
+  public void assertWriteIntentLockAcquired() {
   }
 
   @Override
@@ -267,6 +274,7 @@ public class MockApplication extends MockComponentManager implements Application
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
   }
 
+  @Deprecated
   @Override
   @NotNull
   public ModalityInvokator getInvokator() {
@@ -331,10 +339,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void load() {
-  }
-
-  @Override
   public void restart(boolean exitConfirmed) {
   }
 
@@ -365,6 +369,11 @@ public class MockApplication extends MockComponentManager implements Application
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     runReadAction(runnable);
     return true;
+  }
+
+  @Override
+  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

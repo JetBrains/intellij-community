@@ -87,16 +87,11 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       myOriginalRange = postFormatProcessorHelper.getResultTextRange();
       myDocumentManager = PsiDocumentManager.getInstance(project);
       myDocument = file.getViewProvider().getDocument();
-      switch (style) {
-        case Single:
-          myNewQuote = "'";
-          break;
-        case Double:
-          myNewQuote = "\"";
-          break;
-        default:
-          myNewQuote = String.valueOf(0);
-      }
+      myNewQuote = switch (style) {
+        case Single -> "'";
+        case Double -> "\"";
+        default -> String.valueOf(0);
+      };
     }
 
     public Document getDocument() {
@@ -104,7 +99,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     @Override
-    public void visitXmlAttributeValue(XmlAttributeValue value) {
+    public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
       //use original range to check because while we are modifying document, element ranges returned from getTextRange() are not updated.
       if (myOriginalRange.contains(value.getTextRange())) {
         PsiElement child = value.getFirstChild();

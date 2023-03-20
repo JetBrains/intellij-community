@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
@@ -19,7 +18,7 @@ import java.lang.management.MemoryType;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-public final class LowMemoryWatcherManager implements Disposable {
+public final class LowMemoryWatcherManager {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(LowMemoryWatcherManager.class);
   }
@@ -107,8 +106,7 @@ public final class LowMemoryWatcherManager implements Disposable {
     return SystemProperties.getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
   }
 
-  @Override
-  public void dispose() {
+  public void shutdown() {
     try {
       myMemoryPoolMXBeansFuture.get();
       ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(myLowMemoryListener);

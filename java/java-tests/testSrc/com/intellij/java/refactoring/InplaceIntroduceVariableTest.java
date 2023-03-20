@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -6,10 +6,12 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
@@ -17,10 +19,11 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -37,7 +40,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   protected PsiExpression getExpressionFromEditor() {
     SelectionModel selectionModel = getEditor().getSelectionModel();
     if (selectionModel.hasSelection()) {
-      return IntroduceVariableBase.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      return IntroduceVariableUtil.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     }
     final PsiExpression expression = super.getExpressionFromEditor();
     if (expression != null) {
@@ -99,6 +102,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
 
   public void testPlaceInsideLambdaBody() {
     doTestReplaceChoice("Runnable: () -> {...}", introducer -> type("expr"));
+  }
+
+  public void testPlaceInsideLambdaBody1() {
+    doTestReplaceChoice("Predicate<String>: s -> {...}", introducer -> type("first"));
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
@@ -284,6 +291,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  public void testTernaryInstanceOfVar() {
+    // Java 17 suggests pattern replacement which is undesired in this test
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, () -> doTest(null));
+  }
 
   public void testAnnotationArgument() {
     assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class,
@@ -309,6 +320,14 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   public void testWhilePolyadicWholeConditionParens() {
     doTest(null);
   }
+
+  public void testPatternUsedInSubsequentCondition() {
+    doTest(null);
+  }
+  
+  public void testSplitMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
+  
+  public void testDontSplitNotMutuallyExclusiveIf() { doTestReplaceChoice("Replace all 0 occurrences"); }
 
   private void doTestStopEditing(Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
@@ -379,6 +398,7 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
         UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(secondChoiceText)));
       }
       final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       if (pass != null) {
         pass.accept(introducer);
       }
@@ -417,11 +437,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     @Override
     public boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
       return super.invokeImpl(project, localVariable, editor);
-    }
-
-    @Override
-    protected boolean isInplaceAvailableInTestMode() {
-      return true;
     }
   }
 }

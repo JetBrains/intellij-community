@@ -11,7 +11,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -30,16 +29,12 @@ import java.util.regex.Matcher;
 
 import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
 
-/**
- * @author peter
- */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
 
   /**
    * @deprecated don't extend this class, extend {@link LocalInspectionTool} instead
    */
-  @ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GroovySuppressableInspectionTool() {}
 
   public static SuppressQuickFix @NotNull [] getSuppressActions(@NotNull String toolId) {

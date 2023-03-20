@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.openapi.project.Project;
@@ -6,23 +6,26 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public interface TodoCacheManager {
-  final class SERVICE {
-    private SERVICE() {
-    }
 
+  /**
+   * @deprecated please use {@link TodoCacheManager#getInstance} instead
+   */
+  @Deprecated(forRemoval = true)
+  final class SERVICE {
     public static TodoCacheManager getInstance(Project project) {
-      return project.getService(TodoCacheManager.class);
+      return TodoCacheManager.getInstance(project);
     }
   }
 
+  static TodoCacheManager getInstance(Project project) {
+    return project.getService(TodoCacheManager.class);
+  }
 
-  /**
-   * @return all VirtualFile's that contain todoItems under project roots
-   */
-  PsiFile @NotNull [] getFilesWithTodoItems();
+  boolean processFilesWithTodoItems(@NotNull Processor<? super @NotNull PsiFile> processor);
 
   /**
    * @return -1 if it's not known

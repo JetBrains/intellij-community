@@ -5,7 +5,10 @@ import com.intellij.execution.target.*
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
 import org.jetbrains.idea.maven.execution.RunnerBundle.message
 import java.util.function.Supplier
 
@@ -18,20 +21,25 @@ class MavenRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val confi
   override fun createPanel(): DialogPanel {
     return panel {
       row(message("maven.target.configurable.home.path.label")) {
-        val cellBuilder: CellBuilder<*>
         if (targetType is BrowsableTargetEnvironmentType) {
-          cellBuilder = textFieldWithBrowseTargetButton(this, targetType, targetSupplier,
-                                                        project,
-                                                        message("maven.target.configurable.home.path.title"),
-                                                        config::homePath.toBinding())
+          textFieldWithBrowseTargetButton(targetType, targetSupplier,
+                                          project,
+                                          message("maven.target.configurable.home.path.title"),
+                                          config::homePath.toMutableProperty())
+            .align(AlignX.FILL)
+            .comment(message("maven.target.configurable.home.path.comment"))
         }
         else {
-          cellBuilder = textField(config::homePath)
+          textField()
+            .bindText(config::homePath)
+            .align(AlignX.FILL)
+            .comment(message("maven.target.configurable.home.path.comment"))
         }
-        cellBuilder.comment(message("maven.target.configurable.home.path.comment"))
       }
       row(message("maven.target.configurable.version.label")) {
-        textField(config::versionString)
+        textField()
+          .bindText(config::versionString)
+          .align(AlignX.FILL)
       }
     }
   }

@@ -2,17 +2,24 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import java.util.Locale.ROOT
+
+class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
+}
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
 private val GROUP = EventLogGroup(
   FUS_GROUP_ID,
-  1,
+  6,
 )
 
 private val SOURCE_FIELD = EventFields.Enum(
@@ -27,7 +34,12 @@ private val CONFIGURE_PLUGINS_EVENT = GROUP.registerEvent(
 
 private val PLUGINS_FIELD = EventFields.StringListValidatedByCustomRule(
   "plugins",
-  "plugin",
+  PluginIdRuleValidator::class.java,
+)
+
+private val PLUGIN_FIELD = EventFields.StringValidatedByCustomRule(
+  "pluginId",  // "plugin" is reserved platform key in FeatureUsageData.platformDataKeys
+  PluginIdRuleValidator::class.java,
 )
 
 private val ENABLE_PLUGINS_EVENT = GROUP.registerEvent(
@@ -50,6 +62,7 @@ private val IGNORE_ULTIMATE_EVENT = GROUP.registerEvent(
 private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
   "open.download.page",
   SOURCE_FIELD,
+  PLUGIN_FIELD
 )
 
 private val LEARN_MORE_EVENT = GROUP.registerEvent(
@@ -69,7 +82,8 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
 
 enum class FUSEventSource {
   EDITOR,
-  NOTIFICATION;
+  NOTIFICATION,
+  SEARCH;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true
@@ -92,9 +106,9 @@ enum class FUSEventSource {
   ) = INSTALL_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
-  fun openDownloadPageAndLog(project: Project? = null, url: String) {
+  fun openDownloadPageAndLog(project: Project? = null, url: String, pluginId: PluginId? = null) {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
-    OPEN_DOWNLOAD_PAGE_EVENT.log(project, this)
+    OPEN_DOWNLOAD_PAGE_EVENT.log(project, this, pluginId?.idString)
   }
 
   @JvmOverloads

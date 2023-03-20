@@ -4,6 +4,7 @@ package com.intellij.grazie.grammar.strategy
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.*
 import com.intellij.psi.PsiElement
 
+@JvmDefaultWithCompatibility
 interface BaseGrammarCheckingStrategy : GrammarCheckingStrategy {
 
   /**
@@ -16,7 +17,6 @@ interface BaseGrammarCheckingStrategy : GrammarCheckingStrategy {
    */
   fun isStealth(element: PsiElement) = false
 
-  @JvmDefault
   override fun getElementBehavior(root: PsiElement, child: PsiElement) = when {
     isAbsorb(child) -> ABSORB
     isStealth(child) -> STEALTH

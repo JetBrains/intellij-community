@@ -24,16 +24,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author ilyas
- */
 public class PsiClassCategory implements PsiEnhancerCategory {
 
   /**
    * Adds property `methods' into PsiClass
    *
-   * @param clazz
-   * @return
    */
   public static Collection<PsiMethod> getMethods(PsiClass clazz) {
     return Arrays.asList(clazz.getAllMethods());

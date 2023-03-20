@@ -1,11 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.shared;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.starters.JavaStartersBundle;
 import com.intellij.openapi.observable.properties.GraphProperty;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.impl.PsiNameHelperImpl;
 
@@ -113,28 +110,21 @@ public final class ValidationFunctions {
     }
   };
 
-  public static final TextValidationFunction CHECK_LOCATION_FOR_WARNING = fieldText -> {
-    File file = Paths.get(FileUtil.expandUserHome(fieldText)).toFile();
-    if (file.exists()) {
-      String[] children = file.list();
-      if (children != null && children.length > 0) {
-        return JavaStartersBundle.message("message.directory.not.empty.warning");
-      }
-    }
-    return null;
-  };
-
   /**
    * Validates Name property using additional location field value, checks if the resulting directory does not exist or empty.
    */
   public static TextValidationFunction createLocationWarningValidator(GraphProperty<String> locationProperty) {
     return fieldText -> {
-      File file = Paths.get(FileUtil.expandUserHome(FileUtil.join(locationProperty.get(), fieldText))).toFile();
-      if (file.exists()) {
-        String[] children = file.list();
-        if (children != null && children.length > 0) {
-          return JavaStartersBundle.message("message.directory.0.not.empty.warning", file.getAbsolutePath());
+      try {
+        File file = Paths.get(FileUtil.expandUserHome(FileUtil.join(locationProperty.get(), fieldText))).toFile();
+        if (file.exists()) {
+          String[] children = file.list();
+          if (children != null && children.length > 0) {
+            return JavaStartersBundle.message("message.directory.0.not.empty.warning", file.getAbsolutePath());
+          }
         }
+      } catch (InvalidPathException ipe) {
+        return null;
       }
       return null;
     };
@@ -143,15 +133,9 @@ public final class ValidationFunctions {
   public static final TextValidationFunction CHECK_LOCATION_FOR_ERROR = fieldText -> {
     Path locationPath;
     try {
-      locationPath = Paths.get(fieldText);
+      locationPath = Paths.get(FileUtil.expandUserHome(fieldText));
     } catch (InvalidPathException e) {
       return JavaStartersBundle.message("message.specified.path.is.illegal");
-    }
-
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectUtil.isSameProject(locationPath, project)) {
-        return JavaStartersBundle.message("message.directory.already.taken.error", project.getName());
-      }
     }
 
     File file = locationPath.toFile();

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -26,27 +27,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@NonNls
-public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
+public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.data", 5);
   private static final EventId DATA_INITIALIZED = GROUP.registerEvent("dataInitialized");
   private static final EventId1<Integer> COMMIT_COUNT = GROUP.registerEvent("commit.count", EventFields.Count);
   private static final EventId1<Integer> BRANCHES_COUNT = GROUP.registerEvent("branches.count", EventFields.Count);
   private static final EventId1<Integer> USERS_COUNT = GROUP.registerEvent("users.count", EventFields.Count);
   public static final StringEventField VCS_FIELD = new StringEventField("vcs") {
-    @NotNull
     @Override
-    public List<String> getValidationRule() {
+    public @NotNull List<String> getValidationRule() {
       return List.of("{enum#vcs}", "{enum:third.party}");
     }
   };
   private static final EventId2<Integer, String>
     ROOT_COUNT = GROUP.registerEvent("root.count", EventFields.Count, VCS_FIELD);
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+  public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
+    if (!TrustedProjects.isTrusted(project)) return Collections.emptySet();
+
+    VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
+    if (projectLog == null) return Collections.emptySet();
+
     VcsLogData logData = projectLog.getDataManager();
     if (logData != null) {
       DataPack dataPack = logData.getDataPack();
@@ -69,16 +71,14 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
     return Collections.emptySet();
   }
 
-  @NotNull
-  private static String getVcsKeySafe(@NotNull VcsKey vcs) {
+  private static @NotNull String getVcsKeySafe(@NotNull VcsKey vcs) {
     if (PluginInfoDetectorKt.getPluginInfo(vcs.getClass()).isDevelopedByJetBrains()) {
       return UsageDescriptorKeyValidator.ensureProperKey(StringUtil.toLowerCase(vcs.getName()));
     }
     return "third.party";
   }
 
-  @NotNull
-  private static MultiMap<VcsKey, VirtualFile> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  private static @NotNull MultiMap<VcsKey, VirtualFile> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     MultiMap<VcsKey, VirtualFile> result = MultiMap.create();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();

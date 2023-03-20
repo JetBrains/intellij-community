@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -51,7 +51,7 @@ class GrInspectionTest extends GrHighlightingTestBase {
   void testOctalInspection() { doTest(new GroovyOctalIntegerInspection()) }
 
   void testClashingGetters() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Foo {
 
   boolean <warning descr="Clash occurred: 'Getter getX' with 'Getter isX'">getX</warning>() { true }
@@ -69,7 +69,7 @@ def result = new Foo().x''', true, false, false, ClashingGettersInspection)
   }
 
   void testDeprecated() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 /**
  @deprecated
 */
@@ -84,7 +84,7 @@ class X {
   }
 
   void testDeprecated2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class X {
   @Deprecated
   def X(){}
@@ -95,8 +95,40 @@ class X {
 }''', true, false, false, GrDeprecatedAPIUsageInspection)
   }
 
+  void testDeprecated3() {
+    doTestHighlighting('''\
+class TestService {
+
+    @Deprecated
+    static void test() {}
+
+    static void test(String s) {}
+
+    static void main(String[] args) {
+        test("")
+        <warning>test</warning>()
+    }
+}''', true, false, false, GrDeprecatedAPIUsageInspection)
+  }
+
+  void testDeprecated4() {
+    doTestHighlighting('''\
+class TestService {
+
+    static void test() {}
+    
+    @Deprecated
+    static void test(String s) {}
+
+    static void main(String[] args) {
+        <warning>test</warning>("")
+        test()
+    }
+}''', true, false, false, GrDeprecatedAPIUsageInspection)
+  }
+
   void testSuppressedErrorInGroovyDoc() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Class2 {
 
 
@@ -110,7 +142,7 @@ class Class2 {
   }
 
   void testMissingReturnInBinaryOr() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 private boolean onWinOrMacOS_() {
     OperatingSystem.isWindows() || OperatingSystem.isMacOsX()
 }
@@ -124,7 +156,7 @@ private boolean onWinOrMacOS() {
   }
 
   void testMissingReturnInUnary() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 boolean foo(def list) {
   !list
 }
@@ -136,7 +168,7 @@ boolean bar(def list) {
   }
 
   void testMissingReturnInBinary() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 boolean foo(def list) {
   !list && list
 }
@@ -171,7 +203,7 @@ print 2
   void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()) }
 
   void testMethodMayBeStaticForCategoryClasses() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Cat{
   def <warning descr="Method may be static">foo</warning>() {
       print 2
@@ -188,7 +220,7 @@ class I{
   }
 
   void testDelegatesTo() {
-    testHighlighting('''
+    doTestHighlighting('''
 
 def with1(@DelegatesTo.Target() Object target, @DelegatesTo() Closure arg) { //unused
     arg.delegate = target
@@ -224,7 +256,7 @@ def with6(@<warning descr="@Target is unused">DelegatesTo.Target</warning>() Obj
   }
 
   void testUnnecessaryContinue() {
-    testHighlighting('''
+    doTestHighlighting('''
 for(i in []) {
   print 2
   <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
@@ -275,7 +307,7 @@ for (i in []) {
   }
 
   void testEmptyCatchBlock1() {
-    testHighlighting('''
+    doTestHighlighting('''
 try{} <warning descr="Empty 'catch' block">catch</warning>(IOException e) {}
 try{} catch(IOException ignored) {}
 try{} catch(IOException ignore) {}
@@ -287,21 +319,21 @@ try{} catch(IOException e) {/*comment*/}
     GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
     inspection.myIgnore = false
     myFixture.enableInspections(inspection)
-    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+    doTestHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
   }
 
   void testEmptyCatchBlock3() {
     GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
     inspection.myIgnore = false
     myFixture.enableInspections(inspection)
-    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+    doTestHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
   }
 
   void testEmptyCatchBlock4() {
     GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
     inspection.myCountCommentsAsContent = false
     myFixture.enableInspections(inspection)
-    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException e) {/*comment*/}')
+    doTestHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException e) {/*comment*/}')
   }
 
   void testInvokingMethodReferenceWithDefaultParameters() { doTest(new GroovyAssignabilityCheckInspection()) }

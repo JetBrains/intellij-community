@@ -19,7 +19,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -119,7 +118,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression arg = tryUnwrapRedundantConversion(call);
@@ -137,10 +136,10 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
   private static class UnnecessaryCallToStringValueOfVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       final PsiExpression argument = tryUnwrapRedundantConversion(call);
       if (argument == null) return;
-      registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+      registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(),
                     calculateReplacementText(call, argument));
     }
   }

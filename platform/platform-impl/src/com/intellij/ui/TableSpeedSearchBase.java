@@ -20,6 +20,20 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
 
   private boolean myFilteringMode;
 
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TableSpeedSearchBase(Comp component, Void sig) {
+    super(component, sig);
+  }
+
+  /**
+   * @deprecated For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link SpeedSearchBase#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TableSpeedSearchBase(Comp component) {
     super(component);
   }
@@ -75,8 +89,9 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
       // keep selection as is
     }
     else if (prev != null && prev.row > -1 && prev.row < myComponent.getRowCount()) {
+      int col = Math.min(prev.column, myComponent.getColumnCount());
       myComponent.setRowSelectionInterval(prev.row, prev.row);
-      myComponent.setColumnSelectionInterval(prev.column, prev.column);
+      myComponent.setColumnSelectionInterval(col, col);
     }
     else if (myComponent.getRowCount() > 0) {
       myComponent.setRowSelectionInterval(0, 0);

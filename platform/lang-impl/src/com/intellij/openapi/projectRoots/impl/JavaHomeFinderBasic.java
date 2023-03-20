@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,8 +9,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,39 +27,67 @@ import java.util.stream.Stream;
 
 public class JavaHomeFinderBasic {
   @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
-  private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
+  private final List<Supplier<? extends Set<String>>> myFinders = new ArrayList<>();
   private final JavaHomeFinder.SystemInfoProvider mySystemInfo;
 
-  public JavaHomeFinderBasic(boolean checkDefaultLocations,
-                             boolean forceEmbeddedJava,
-                             @NotNull JavaHomeFinder.SystemInfoProvider systemInfo,
-                             String... paths) {
-    mySystemInfo = systemInfo;
-    if (checkDefaultLocations) {
-      myFinders.add(this::checkDefaultLocations);
-    }
+  private boolean myCheckDefaultInstallDir = true;
+  private boolean myCheckUsedInstallDirs = true;
+  private boolean myCheckConfiguredJdks = true;
 
+  private boolean myCheckEmbeddedJava = false;
+
+  private @NotNull String @NotNull[] mySpecifiedPaths = ArrayUtil.EMPTY_STRING_ARRAY;
+
+  public JavaHomeFinderBasic(@NotNull JavaHomeFinder.SystemInfoProvider systemInfo) {
+    mySystemInfo = systemInfo;
+
+    myFinders.add(this::checkDefaultLocations);
     myFinders.add(this::findInPATH);
     myFinders.add(this::findInJavaHome);
-    myFinders.add(() -> findInSpecifiedPaths(paths));
+    myFinders.add(this::findInSpecifiedPaths);
     myFinders.add(this::findJavaInstalledBySdkMan);
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
 
-    if (!(this instanceof JavaHomeFinderWsl) && (forceEmbeddedJava || Registry.is("java.detector.include.embedded", false))) {
-      myFinders.add(() -> scanAll(getJavaHome(), false));
-    }
+    myFinders.add(
+      () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
+    );
+  }
+
+  public @NotNull JavaHomeFinderBasic checkDefaultInstallDir(boolean value) {
+    myCheckDefaultInstallDir = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkUsedInstallDirs(boolean value) {
+    myCheckUsedInstallDirs = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkConfiguredJdks(boolean value) {
+    myCheckConfiguredJdks = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkEmbeddedJava(boolean value) {
+    myCheckEmbeddedJava = value;
+    return this;
+  }
+
+  public @NotNull JavaHomeFinderBasic checkSpecifiedPaths(String @NotNull ... paths) {
+    mySpecifiedPaths = paths;
+    return this;
   }
 
   protected JavaHomeFinder.SystemInfoProvider getSystemInfo() {
     return mySystemInfo;
   }
 
-  private @NotNull Set<String> findInSpecifiedPaths(String[] paths) {
-    return scanAll(ContainerUtil.map(paths, Paths::get), true);
+  private @NotNull Set<String> findInSpecifiedPaths() {
+    return scanAll(ContainerUtil.map(mySpecifiedPaths, Paths::get), true);
   }
 
-  protected void registerFinder(@NotNull Supplier<Set<String>> finder) {
+  protected void registerFinder(@NotNull Supplier<? extends Set<String>> finder) {
     myFinders.add(finder);
   }
 
@@ -67,7 +95,7 @@ public class JavaHomeFinderBasic {
   public final Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
-    for (Supplier<Set<String>> action : myFinders) {
+    for (Supplier<? extends Set<String>> action : myFinders) {
       try {
         result.addAll(action.get());
       }
@@ -120,20 +148,28 @@ public class JavaHomeFinderBasic {
     }
 
     Set<Path> paths = new HashSet<>();
-    paths.add(JdkInstaller.getInstance().defaultInstallDir());
-    paths.addAll(JdkInstallerStore.getInstance().listJdkInstallHomes());
 
-    for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
-        continue;
+    if (myCheckDefaultInstallDir) {
+      paths.add(JdkInstaller.getInstance().defaultInstallDir());
+    }
+
+    if (myCheckUsedInstallDirs) {
+      paths.addAll(JdkInstallerStore.getInstance().listJdkInstallHomes());
+    }
+
+    if (myCheckConfiguredJdks) {
+      for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
+        if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
+          continue;
+        }
+
+        String homePath = jdk.getHomePath();
+        if (homePath == null) {
+          continue;
+        }
+
+        paths.addAll(listPossibleJdkInstallRootsFromHomes(mySystemInfo.getPath(homePath)));
       }
-
-      String homePath = jdk.getHomePath();
-      if (homePath == null) {
-        continue;
-      }
-
-      paths.addAll(listPossibleJdkInstallRootsFromHomes(mySystemInfo.getPath(homePath)));
     }
 
     return scanAll(paths, true);
@@ -252,7 +288,7 @@ public class JavaHomeFinderBasic {
     var result = new HashSet<@NotNull String>();
 
     try (Stream<Path> stream = Files.list(javasDir)) {
-      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).collect(Collectors.toList());
+      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).toList();
       for (Path innerDir : innerDirectories) {
         var home = innerDir;
         var releaseFile = home.resolve("release");
@@ -331,7 +367,7 @@ public class JavaHomeFinderBasic {
 
     // finally, try the usual location in Unix or MacOS
     if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
-      Path installsDir = getPathInUserHome("asdf/installs");
+      Path installsDir = getPathInUserHome(".asdf/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
 

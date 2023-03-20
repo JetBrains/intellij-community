@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-class CtxDialogs {
+final class CtxDialogs {
   private static final Logger LOG = Logger.getInstance(CtxDialogs.class);
 
   private static final int BUTTON_MIN_WIDTH_DLG = 107;
@@ -78,9 +78,8 @@ class CtxDialogs {
       final TouchbarActionCustomizations ac = TouchbarActionCustomizations.getCustomizations(button.getAnAction());
       if (ac != null) {
         isDefault = ac.isDefault();
-        if (!isDefault && ac.getComponent() instanceof JButton) {
+        if (!isDefault && ac.getComponent() instanceof JButton jb) {
           // also check properties of JButton
-          final JButton jb = (JButton)ac.getComponent();
           isDefault = jb.getAction() != null ? jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null : jb.isDefaultButton();
         }
 

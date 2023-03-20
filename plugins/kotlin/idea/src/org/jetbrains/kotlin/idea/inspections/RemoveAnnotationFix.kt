@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -34,6 +34,13 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
         override fun createAction(diagnostic: Diagnostic): RemoveAnnotationFix? {
             val annotationEntry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
             return RemoveAnnotationFix(KotlinBundle.message("remove.jvmfield.annotation"), annotationEntry)
+        }
+    }
+
+    object ExtensionFunctionType : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic): RemoveAnnotationFix? {
+            val annotationEntry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
+            return RemoveAnnotationFix(KotlinBundle.message("remove.extension.function.type.annotation"), annotationEntry)
         }
     }
 

@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @autor: ilyas
- */
 public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfStatement {
   public GrIfStatementImpl(@NotNull ASTNode node) {
     super(node);

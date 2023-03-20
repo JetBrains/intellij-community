@@ -1,4 +1,4 @@
-// "Create local variable 'lf'" "true"
+// "Create local variable 'lf'" "true-preview"
 import java.util.function.Function;
 
 class Main2 {

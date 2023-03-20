@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class ModuleRepr extends ClassFileRepr{
+public final class ModuleRepr extends ClassFileRepr {
   private final int myVersion;
   private final Set<ModuleRequiresRepr> myRequires; // module names
   private final Set<ModulePackageRepr> myExports; // package names

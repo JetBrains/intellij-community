@@ -4,7 +4,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-@SomeQueue
 public final class ZipperUpdater {
   private final Alarm myAlarm;
   private boolean myRaised;

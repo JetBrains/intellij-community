@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class UnifiedDiffModel {
@@ -52,7 +53,7 @@ public class UnifiedDiffModel {
 
   public void setChanges(@NotNull List<UnifiedDiffChange> changes,
                          boolean isContentsEqual,
-                         @NotNull List<RangeMarker> guardedBlocks,
+                         @NotNull List<? extends RangeMarker> guardedBlocks,
                          @NotNull LineNumberConvertor convertor1,
                          @NotNull LineNumberConvertor convertor2,
                          @NotNull List<HighlightRange> ranges) {
@@ -102,10 +103,10 @@ public class UnifiedDiffModel {
                      @NotNull LineNumberConvertor lineNumberConvertor1,
                      @NotNull LineNumberConvertor lineNumberConvertor2,
                      @NotNull List<HighlightRange> ranges) {
-      myDiffChanges = diffChanges;
+      myDiffChanges = Collections.unmodifiableList(diffChanges);
       myLineNumberConvertor1 = lineNumberConvertor1;
       myLineNumberConvertor2 = lineNumberConvertor2;
-      myRanges = ranges;
+      myRanges = Collections.unmodifiableList(ranges);
     }
 
     @NotNull

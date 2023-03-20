@@ -1,20 +1,31 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
+import java.lang.reflect.*;
+import java.util.*;
 
 public final class ClassUtil {
   private ClassUtil() {
+  }
+
+  public static @NotNull Class<?> getRawType(@NotNull Type type) {
+    if (type instanceof Class) {
+      return (Class<?>)type;
+    }
+    if (type instanceof ParameterizedType) {
+      return getRawType(((ParameterizedType)type).getRawType());
+    }
+    if (type instanceof GenericArrayType) {
+      //todo[peter] don't create new instance each time
+      return Array.newInstance(getRawType(((GenericArrayType)type).getGenericComponentType()), 0).getClass();
+    }
+    assert false : type;
+    return null;
   }
 
   public static @NotNull Class<?> typeToClass(@NotNull Type type) {
@@ -81,7 +92,9 @@ public final class ClassUtil {
     }
   }
 
-  public static @Nullable Object stringToEnum(@NotNull String value, @NotNull Class<? extends Enum<?>> valueClass, boolean isAlwaysIgnoreCase) {
+  public static @Nullable Object stringToEnum(@NotNull String value,
+                                              @NotNull Class<? extends Enum<?>> valueClass,
+                                              boolean isAlwaysIgnoreCase) {
     Enum<?>[] enumConstants = valueClass.getEnumConstants();
     if (!isAlwaysIgnoreCase) {
       for (Object enumConstant : enumConstants) {
@@ -96,5 +109,74 @@ public final class ClassUtil {
       }
     }
     return null;
+  }
+
+  public static Type resolveVariableInHierarchy(@NotNull TypeVariable<?> variable, @NotNull Class<?> aClass) {
+    Type type;
+    Class<?> current = aClass;
+    while ((type = resolveVariable(variable, current, false)) == null) {
+      current = current.getSuperclass();
+      if (current == null) {
+        return null;
+      }
+    }
+    if (type instanceof TypeVariable) {
+      return resolveVariableInHierarchy((TypeVariable<?>)type, aClass);
+    }
+    return type;
+  }
+
+  public static @Nullable Type resolveVariable(@NotNull TypeVariable<?> variable,
+                                               @NotNull Class<?> classType,
+                                               boolean resolveInInterfacesOnly) {
+    Class<?> aClass = getRawType(classType);
+    int index = ArrayUtilRt.find(aClass.getTypeParameters(), variable);
+    if (index >= 0) {
+      return variable;
+    }
+
+    final Class<?>[] classes = aClass.getInterfaces();
+    final Type[] genericInterfaces = aClass.getGenericInterfaces();
+    for (int i = 0; i <= classes.length; i++) {
+      Class<?> anInterface;
+      if (i < classes.length) {
+        anInterface = classes[i];
+      }
+      else {
+        anInterface = aClass.getSuperclass();
+        if (resolveInInterfacesOnly || anInterface == null) {
+          continue;
+        }
+      }
+      final Type resolved = resolveVariable(variable, anInterface, true);
+      if (resolved instanceof Class || resolved instanceof ParameterizedType) {
+        return resolved;
+      }
+      if (resolved instanceof TypeVariable) {
+        final TypeVariable<?> typeVariable = (TypeVariable<?>)resolved;
+        index = ArrayUtilRt.find(anInterface.getTypeParameters(), typeVariable);
+        if (index < 0) {
+          Logger.getInstance(ClassUtil.class)
+            .error("Cannot resolve type variable:\n" + "typeVariable = " + typeVariable + "\n" + "genericDeclaration = " +
+                   declarationToString(typeVariable.getGenericDeclaration()) + "\n" + "searching in " + declarationToString(anInterface));
+        }
+        final Type type = i < genericInterfaces.length ? genericInterfaces[i] : aClass.getGenericSuperclass();
+        if (type instanceof Class) {
+          return Object.class;
+        }
+        if (type instanceof ParameterizedType) {
+          return ((ParameterizedType)type).getActualTypeArguments()[index];
+        }
+        throw new AssertionError("Invalid type: " + type);
+      }
+    }
+    return null;
+  }
+
+  private static @NotNull String declarationToString(@NotNull GenericDeclaration anInterface) {
+    return anInterface.toString() +
+           Arrays.asList(anInterface.getTypeParameters()) +
+           " loaded by " +
+           ((Class<?>)anInterface).getClassLoader();
   }
 }

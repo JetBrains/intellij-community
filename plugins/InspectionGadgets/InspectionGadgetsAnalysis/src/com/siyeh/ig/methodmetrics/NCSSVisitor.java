@@ -22,7 +22,7 @@ class NCSSVisitor extends JavaRecursiveElementWalkingVisitor {
   private int m_statementCount;
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
     // no call to super, to keep this from drilling down
   }
 
@@ -34,8 +34,7 @@ class NCSSVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     final PsiElement parent = statement.getParent();
-    if (parent instanceof PsiForStatement) {
-      final PsiForStatement forStatement = (PsiForStatement)parent;
+    if (parent instanceof PsiForStatement forStatement) {
       if (forStatement.getInitialization() == statement || forStatement.getUpdate() == statement) {
         return;
       }

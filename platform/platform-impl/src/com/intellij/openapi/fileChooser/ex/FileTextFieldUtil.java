@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,10 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,38 +25,71 @@ import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 public final class FileTextFieldUtil {
-
   private static final Logger LOG = Logger.getInstance(FileTextFieldUtil.class);
 
-  public static void processCompletion(final FileTextFieldImpl.CompletionResult result,
-                                       @NotNull Finder finder,
-                                       @NotNull FileLookup.LookupFilter filter,
-                                       @NotNull String fileSpitRegExp,
-                                       @NotNull Map<String, String> macroMap) {
-    result.myToComplete = new ArrayList<>();
-    result.mySiblings = new ArrayList<>();
-    result.myKidsAfterSeparator = new ArrayList<>();
-    final String typed = result.myCompletionBase;
+  public static final class CompletionResult {
+    public final List<FileLookup.LookupFile> variants;
+    public final List<FileLookup.LookupFile> macros;
+    public final List<FileLookup.LookupFile> siblings;
+    public final List<FileLookup.LookupFile> kidsAfterSeparator;
+    public final @Nullable FileLookup.LookupFile preselected;
 
-    if (typed == null) return;
+    private CompletionResult(List<FileLookup.LookupFile> variants,
+                             List<FileLookup.LookupFile> macros,
+                             List<FileLookup.LookupFile> siblings,
+                             List<FileLookup.LookupFile> kidsAfterSeparator,
+                             @Nullable FileLookup.LookupFile preselected) {
+      this.variants = variants;
+      this.macros = macros;
+      this.siblings = siblings;
+      this.kidsAfterSeparator = kidsAfterSeparator;
+      this.preselected = preselected;
+    }
+  }
 
-    FileTextFieldImpl.addMacroPaths(result, typed, finder, macroMap);
+  public static CompletionResult processCompletion(@NotNull String typed,
+                                                   @NotNull Finder finder,
+                                                   @NotNull FileLookup.LookupFilter filter,
+                                                   @NotNull Map<String, String> macroMap,
+                                                   @Nullable FileLookup.LookupFile preselected) {
+    List<FileLookup.LookupFile> macros = new ArrayList<>();
+    List<FileLookup.LookupFile> variants = new ArrayList<>();
 
-    final String typedText = finder.normalize(typed);
+    MinusculeMatcher matcher = createMatcher(typed);
+    for (String eachMacro : macroMap.keySet()) {
+      if (matcher.matches(eachMacro)) {
+        String eachPath = macroMap.get(eachMacro);
+        if (eachPath != null) {
+          FileLookup.LookupFile macroFile = finder.find(eachPath);
+          if (macroFile != null && macroFile.exists()) {
+            macros.add(macroFile);
+            variants.add(macroFile);
+            macroFile.setMacro(eachMacro);
+          }
+        }
+      }
+    }
 
+    String typedText = finder.normalize(typed);
 
-    result.current = getClosestParent(typed, finder, fileSpitRegExp);
-    result.myClosestParent = result.current;
+    FileLookup.LookupFile current = getClosestParent(typed, finder);
+    boolean currentParentMatch;
+    boolean closedPath;
+    String effectivePrefix;
+    FileLookup.LookupFile currentGrandparent;
+    String grandparentPrefix;
 
-    if (result.current != null) {
-      result.currentParentMatch = SystemInfo.isFileSystemCaseSensitive
-                                  ? typedText.equals(result.current.getAbsolutePath())
-                                  : typedText.equalsIgnoreCase(result.current.getAbsolutePath());
+    if (current != null) {
+      currentParentMatch = SystemInfo.isFileSystemCaseSensitive
+                           ? typedText.equals(current.getAbsolutePath())
+                           : typedText.equalsIgnoreCase(current.getAbsolutePath());
 
-      result.closedPath = typed.endsWith(finder.getSeparator()) && typedText.length() > finder.getSeparator().length();
-      final String currentParentText = result.current.getAbsolutePath();
+      closedPath = typed.endsWith(finder.getSeparator()) && typedText.length() > finder.getSeparator().length();
+      String currentParentText = current.getAbsolutePath();
 
-      if (!StringUtil.toUpperCase(typedText).startsWith(StringUtil.toUpperCase(currentParentText))) return;
+      if (!StringUtil.startsWithIgnoreCase(typedText, currentParentText)) {
+        return new CompletionResult(variants, macros, List.of(), List.of(), null);
+      }
 
       String prefix = typedText.substring(currentParentText.length());
       if (prefix.startsWith(finder.getSeparator())) {
@@ -66,46 +99,55 @@ public final class FileTextFieldUtil {
         prefix = "";
       }
 
-      result.effectivePrefix = prefix;
+      effectivePrefix = prefix;
 
-      result.currentGrandparent = result.current.getParent();
-      if (result.currentGrandparent != null && result.currentParentMatch && !result.closedPath) {
-        final String currentGrandparentText = result.currentGrandparent.getAbsolutePath();
+      currentGrandparent = current.getParent();
+
+      String gpPrefix = null;
+      if (currentGrandparent != null && currentParentMatch && !closedPath) {
+        String currentGrandparentText = currentGrandparent.getAbsolutePath();
         if (StringUtil.startsWithConcatenation(typedText, currentGrandparentText, finder.getSeparator())) {
-          result.grandparentPrefix = currentParentText.substring(currentGrandparentText.length() + finder.getSeparator().length());
+          gpPrefix = currentParentText.substring(currentGrandparentText.length() + finder.getSeparator().length());
         }
       }
+      grandparentPrefix = gpPrefix;
     }
     else {
-      result.effectivePrefix = typedText;
+      currentParentMatch = false;
+      closedPath = false;
+      effectivePrefix = typedText;
+      currentGrandparent = null;
+      grandparentPrefix = null;
     }
 
-
-    ReadAction.run(new ThrowableRunnable<>() {
+    return ReadAction.compute(new ThrowableComputable<>() {
       @Override
-      public void run() {
-        if (result.current != null) {
-          result.myToComplete.addAll(getMatchingChildren(result.effectivePrefix, result.current));
+      public CompletionResult compute() throws RuntimeException {
+        List<FileLookup.LookupFile> siblings = new ArrayList<>();
+        List<FileLookup.LookupFile> kidsAfterSeparator = new ArrayList<>();
 
-          if (result.currentParentMatch && !result.closedPath && !typed.isEmpty()) {
-            result.myKidsAfterSeparator.addAll(result.myToComplete);
+        if (current != null) {
+          variants.addAll(getMatchingChildren(effectivePrefix, current));
+
+          if (currentParentMatch && !closedPath && !typed.isEmpty()) {
+            kidsAfterSeparator.addAll(variants);
           }
 
-          if (result.grandparentPrefix != null) {
-            final List<FileLookup.LookupFile> siblings = getMatchingChildren(result.grandparentPrefix, result.currentGrandparent);
-            result.myToComplete.addAll(0, siblings);
-            result.mySiblings.addAll(siblings);
+          if (grandparentPrefix != null) {
+            List<FileLookup.LookupFile> children = getMatchingChildren(grandparentPrefix, currentGrandparent);
+            variants.addAll(0, children);
+            siblings.addAll(children);
           }
         }
 
-        FileLookup.LookupFile toPreselect = result.myPreselected;
+        FileLookup.LookupFile toPreselect = preselected;
 
-        if (toPreselect == null || !result.myToComplete.contains(toPreselect)) {
+        if (toPreselect == null || !variants.contains(toPreselect)) {
           boolean toPreselectFixed = false;
-          if (result.effectivePrefix.length() > 0) {
-            for (FileLookup.LookupFile each : result.myToComplete) {
+          if (effectivePrefix.length() > 0) {
+            for (FileLookup.LookupFile each : variants) {
               String eachName = StringUtil.toUpperCase(each.getName());
-              if (!eachName.startsWith(result.effectivePrefix)) continue;
+              if (!eachName.startsWith(effectivePrefix)) continue;
               toPreselect = each;
               toPreselectFixed = true;
               break;
@@ -120,46 +162,40 @@ public final class FileTextFieldUtil {
           }
 
           if (toPreselect == null) {
-            if (result.myToComplete.size() == 1) {
-              toPreselect = result.myToComplete.get(0);
+            if (variants.size() == 1) {
+              toPreselect = variants.get(0);
             }
-            else if (result.effectivePrefix.length() == 0) {
-              if (result.mySiblings.size() > 0) {
-                toPreselect = result.mySiblings.get(0);
+            else if (effectivePrefix.length() == 0) {
+              if (siblings.size() > 0) {
+                toPreselect = siblings.get(0);
               }
             }
 
-            if (toPreselect == null && !result.myToComplete.contains(null) && result.myToComplete.size() > 0) {
-              toPreselect = result.myToComplete.get(0);
+            if (toPreselect == null && !variants.contains(null) && variants.size() > 0) {
+              toPreselect = variants.get(0);
             }
           }
         }
 
-        if (result.currentParentMatch && result.mySiblings.size() > 0) {
+        if (currentParentMatch && siblings.size() > 0) {
           toPreselect = null;
         }
 
-        result.myPreselected = toPreselect;
+        return new CompletionResult(variants, macros, siblings, kidsAfterSeparator, toPreselect);
       }
 
       private List<FileLookup.LookupFile> getMatchingChildren(String prefix, FileLookup.LookupFile parent) {
-        final MinusculeMatcher matcher = createMatcher(prefix);
-        return parent.getChildren(new FileLookup.LookupFilter() {
-          @Override
-          public boolean isAccepted(final FileLookup.LookupFile file) {
-            return !file.equals(result.current) && filter.isAccepted(file) && matcher.matches(file.getName());
-          }
-        });
+        MinusculeMatcher matcher = createMatcher(prefix);
+        return parent.getChildren(file -> !file.equals(current) && filter.isAccepted(file) && matcher.matches(file.getName()));
       }
     });
   }
 
-  static MinusculeMatcher createMatcher(String prefix) {
+  private static MinusculeMatcher createMatcher(String prefix) {
     return NameUtil.buildMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  @Nullable
-  private static FileLookup.LookupFile getClosestParent(final String typed, Finder finder, String fileSpitRegExp) {
+  private static @Nullable FileLookup.LookupFile getClosestParent(String typed, Finder finder) {
     if (typed == null) return null;
     FileLookup.LookupFile lastFound = finder.find(typed);
     if (lastFound == null) return null;
@@ -169,15 +205,15 @@ public final class FileTextFieldUtil {
       return lastFound;
     }
 
-    final String[] splits = finder.normalize(typed).split(fileSpitRegExp);
+    List<String> splits = finder.split(typed);
     StringBuilder fullPath = new StringBuilder();
-    for (int i = 0; i < splits.length; i++) {
-      String each = splits[i];
+    for (int i = 0; i < splits.size(); i++) {
+      String each = splits.get(i);
       fullPath.append(each);
-      if (i < splits.length - 1) {
+      if (i < splits.size() - 1) {
         fullPath.append(finder.getSeparator());
       }
-      final FileLookup.LookupFile file = finder.find(fullPath.toString());
+      FileLookup.LookupFile file = finder.find(fullPath.toString());
       if (file == null || !file.exists()) return lastFound;
       lastFound = file;
     }
@@ -187,10 +223,10 @@ public final class FileTextFieldUtil {
 
   public static @NlsSafe @NotNull String getLookupString(@NotNull FileLookup.LookupFile file,
                                                          @NotNull Finder finder,
-                                                         @Nullable FileTextFieldImpl.CompletionResult result) {
+                                                         @Nullable CompletionResult result) {
     String macro = file.getMacro();
     if (macro != null) return macro;
-    String prefix = result != null && result.myKidsAfterSeparator.contains(file) ? finder.getSeparator() : "";
+    String prefix = result != null && result.kidsAfterSeparator.contains(file) ? finder.getSeparator() : "";
     return prefix + file.getName();
   }
 
@@ -215,7 +251,6 @@ public final class FileTextFieldUtil {
   }
 
   public static class TextFieldDocumentOwner implements DocumentOwner {
-
     private final JTextField myField;
     private final Document myDocument;
     private final @NotNull Consumer<? super FileLookup.LookupFile> mySetText;
@@ -277,10 +312,8 @@ public final class FileTextFieldUtil {
    * Replace the path component under the caret with the file selected from the completion list.
    *
    * @param file     the selected file.
-   * @param caretPos
    * @param start    the start offset of the path component under the caret.
    * @param end      the end offset of the path component under the caret.
-   * @throws BadLocationException
    */
   private static void replacePathComponent(@NotNull FileLookup.LookupFile file,
                                            @NotNull DocumentOwner doc,
@@ -291,7 +324,7 @@ public final class FileTextFieldUtil {
 
     doc.removeSelection();
 
-    final String name = file.getName();
+    String name = file.getName();
     boolean toRemoveExistingName;
 
     if (caretPos >= start) {
@@ -336,9 +369,9 @@ public final class FileTextFieldUtil {
     doc.setCaretPosition(newPos);
   }
 
-  public static void processChosenFromCompletion(FileLookup.LookupFile file,
-                                                 DocumentOwner doc,
-                                                 Finder finder,
+  public static void processChosenFromCompletion(@Nullable FileLookup.LookupFile file,
+                                                 @NotNull DocumentOwner doc,
+                                                 @NotNull Finder finder,
                                                  boolean nameOnly) {
     if (file == null) return;
 
@@ -347,14 +380,14 @@ public final class FileTextFieldUtil {
         int caretPos = doc.getCaretPosition();
         if (finder.getSeparator().equals(doc.getText(caretPos, 1))) {
           for (; caretPos < doc.getLength(); caretPos++) {
-            final String eachChar = doc.getText(caretPos, 1);
+            String eachChar = doc.getText(caretPos, 1);
             if (!finder.getSeparator().equals(eachChar)) break;
           }
         }
 
         int start = caretPos > 0 ? caretPos - 1 : caretPos;
         while (start >= 0) {
-          final String each = doc.getText(start, 1);
+          String each = doc.getText(start, 1);
           if (finder.getSeparator().equals(each)) {
             start++;
             break;
@@ -364,7 +397,7 @@ public final class FileTextFieldUtil {
 
         int end = Math.max(start, caretPos);
         while (end <= doc.getLength()) {
-          final String each = doc.getText(end, 1);
+          String each = doc.getText(end, 1);
           if (finder.getSeparator().equals(each)) {
             break;
           }

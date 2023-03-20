@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
@@ -14,12 +14,7 @@ import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
 import java.nio.file.Path
 
 object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
-    override fun Writer.runArbitraryTask(
-        configurationData: ModulesToIrConversionData,
-        module: Module,
-        modulePath: Path
-    ): TaskResult<Unit> =
-        GradlePlugin.gradleProperties.addValues("xcodeproj" to "./${module.name}")
+    override val moduleTemplatePath: String get() = "singleplatformProject"
 
     override fun ListBuilder<FileTemplate>.additionalTemplates(fileTemplate: (Path) -> FileTemplate) {
         +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
@@ -29,6 +24,49 @@ object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfigurator
 
         +fileTemplate("${DEFAULT_APP_NAME}UITests" / "Info.plist")
         +fileTemplate("${DEFAULT_APP_NAME}UITests" / "${DEFAULT_APP_NAME}UITests.swift")
+    }
+}
+
+object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
+    override val moduleTemplatePath: String get() = "singleplatformCocoaPodsProject"
+    override val canContainSubModules: Boolean
+        get() = false
+
+    override fun doRunArbitraryTask(
+        writer: Writer,
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> = compute {
+        super.doRunArbitraryTask(writer, configurationData, module, modulePath)
+        with(writer) {
+            GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
+        }
+    }
+
+    override fun Reader.createTemplates(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): List<FileTemplate> {
+        val settings = createTemplatesSettingValues(module)
+
+        fun fileTemplate(path: Path) = FileTemplate(descriptor(path, module.name), modulePath, settings)
+
+        return buildList {
+            +fileTemplate(DEFAULT_APP_NAME / "$DEFAULT_APP_NAME.swift.vm")
+            +fileTemplate(DEFAULT_APP_NAME / "ContentView.swift.vm")
+
+            +fileTemplate(DEFAULT_APP_NAME / "Assets.xcassets" / "Contents.json")
+            +fileTemplate(DEFAULT_APP_NAME / "Assets.xcassets" / "AppIcon.appiconset" / "Contents.json")
+            +fileTemplate(DEFAULT_APP_NAME / "Assets.xcassets" / "AccentColor.colorset" / "Contents.json")
+            +fileTemplate(DEFAULT_APP_NAME / "Preview Content" / "Preview Assets.xcassets" / "Contents.json")
+
+            +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
+            +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
+
+            +fileTemplate("Podfile.vm".asPath())
+        }
     }
 }
 
@@ -43,10 +81,11 @@ abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleCon
     @NonNls
     override val suggestedModuleName = "ios"
 
-    override val moduleKind: ModuleKind = ModuleKind.singlePlatformJvm
+    override val moduleKind: ModuleKind = ModuleKind.ios
     override val greyText = KotlinNewProjectWizardBundle.message("module.configurator.ios.requires.xcode")
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.ios")
 
+    abstract val moduleTemplatePath: String?
 
     override val needCreateBuildFile: Boolean = false
     override val requiresRootBuildFile: Boolean = true
@@ -79,7 +118,7 @@ abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleCon
 
     open fun ListBuilder<FileTemplate>.additionalTemplates(fileTemplate: (Path) -> FileTemplate) { }
 
-    private fun Reader.createTemplatesSettingValues(module: Module): Map<String, Any?> {
+    protected fun Reader.createTemplatesSettingValues(module: Module): Map<String, Any?> {
         val dependentModule = inContextOfModuleConfigurator(module) {
             dependentModule.reference.propertyValue.module
         }
@@ -90,9 +129,26 @@ abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleCon
         )
     }
 
+    final override fun Writer.runArbitraryTask(
+        configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> = doRunArbitraryTask(this, configurationData, module, modulePath)
+
+    protected open fun doRunArbitraryTask(
+        writer: Writer, configurationData: ModulesToIrConversionData,
+        module: Module,
+        modulePath: Path
+    ): TaskResult<Unit> = compute {
+        with(writer) {
+            GradlePlugin.gradleProperties.addValues("org.gradle.jvmargs" to "-Xmx2048M -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options\\=\"-Xmx2048M\"")
+            GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableCInteropCommonization" to true)
+        }
+    }
+
     protected open fun descriptor(path: Path, moduleName: String) =
         FileTemplateDescriptor(
-            "ios/singleplatformProject/$path",
+            "ios/$moduleTemplatePath/$path",
             path.toString()
                 .removeSuffix(".vm")
                 .replace(DEFAULT_APP_NAME, moduleName)

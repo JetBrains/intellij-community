@@ -2,15 +2,21 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.compiler.CompilerConfiguration
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.UsefulTestCase
+import junit.framework.AssertionFailedError
 
 abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
 
@@ -97,5 +103,27 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
   fun assertModuleTargetBytecodeVersion(moduleName: String, version: String) {
     val targetBytecodeVersion = getBytecodeTargetLevelForModule(moduleName)
     assertEquals(version, targetBytecodeVersion)
+  }
+
+  open fun assertProjectLibraryCoordinates(libraryName: String,
+                                           groupId: String?,
+                                           artifactId: String?,
+                                           version: String?) {
+    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName)
+    assertNotNull("Library [$libraryName] not found", lib)
+    val libraryProperties = (lib as? LibraryEx?)?.properties
+    UsefulTestCase.assertInstanceOf(libraryProperties, LibraryWithMavenCoordinatesProperties::class.java)
+    val coords = (libraryProperties as LibraryWithMavenCoordinatesProperties).mavenCoordinates
+    assertNotNull("Expected non-empty maven coordinates", coords)
+    coords!!
+    assertEquals("Unexpected groupId", groupId, coords.groupId)
+    assertEquals("Unexpected artifactId", artifactId, coords.artifactId)
+    assertEquals("Unexpected version", version, coords.version)
+  }
+
+  fun assertModuleSdk(moduleName: String, expectedLevel: JavaSdkVersion) {
+    val module = getModule(moduleName)
+    val sdk: Sdk = ModuleRootManager.getInstance(module).sdk ?: throw AssertionFailedError("SDK should be configured")
+    assertEquals(expectedLevel, JavaSdkVersionUtil.getJavaSdkVersion(sdk))
   }
 }

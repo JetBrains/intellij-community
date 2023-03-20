@@ -28,15 +28,6 @@ public abstract class TemplateKindProvider {
   public abstract boolean isAvailable(Class<? extends AnAction> actionClass);
   public abstract Kind[] getAdditionalKinds(PsiDirectory dir);
 
-  public static class Kind {
-    public final @NlsContexts.ListItem String name;
-    public final String templateName;
-    public final Icon icon;
-
-    public Kind(@NlsContexts.ListItem String name, String templateName, Icon icon) {
-      this.name = name;
-      this.templateName = templateName;
-      this.icon = icon;
-    }
+  public record Kind(@NlsContexts.ListItem String name, String templateName, Icon icon) {
   }
 }

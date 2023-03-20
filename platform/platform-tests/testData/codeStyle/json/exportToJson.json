@@ -7,7 +7,7 @@
       "formatter_off_tag": "@formatter:off",
       "formatter_on_tag": "@formatter:on",
       "formatter_tags_accept_regexp": false,
-      "formatter_tags_enabled": false,
+      "formatter_tags_enabled": true,
       "indent_size": 4,
       "indent_style": "space",
       "max_line_length": 120,

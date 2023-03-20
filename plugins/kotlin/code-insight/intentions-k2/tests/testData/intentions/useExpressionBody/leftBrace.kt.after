@@ -1,0 +1,4 @@
+// IS_APPLICABLE: true
+
+fun simple(): Int = 1 *
+       (2 + 3)

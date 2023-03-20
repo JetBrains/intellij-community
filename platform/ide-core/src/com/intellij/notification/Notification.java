@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.ide.DataManager;
@@ -15,10 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
@@ -43,18 +40,17 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * @see NotificationAction
  * @see com.intellij.notification.SingletonNotificationManager
  *
- * @author spleaner
  * @author Alexander Lobas
  */
 public class Notification {
   /**
-   * Tells which actions to keep (i.e. do not put under the "Actions" dropdown) when actions do not fit horizontally
-   * into the width of the notification.
+   * Tells which actions to keep when actions do not fit horizontally into the width of the notification
+   * (i.e. do not put under the "Actions" dropdown).
    */
   public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}
 
   private static final Logger LOG = Logger.getInstance(Notification.class);
-  private static final DataKey<Notification> KEY = DataKey.create("Notification");
+  public static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final @NotNull String id;
 
@@ -68,21 +64,21 @@ public class Notification {
   private @NotNull @NotificationContent String myContent;
   private @Nullable NotificationListener myListener;
   private @Nullable @LinkLabel String myDropDownText;
-  private @Nullable List<AnAction> myActions;
-  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
+  private @Nullable List<@NotNull AnAction> myActions;
+  private @NotNull CollapseActionsDirection myCollapseDirection = CollapseActionsDirection.KEEP_LEFTMOST;
   private @Nullable AnAction myContextHelpAction;
-  private @Nullable List<Runnable> myWhenExpired;
+  private @Nullable List<@NotNull Runnable> myWhenExpired;
   private @Nullable Boolean myImportant;
-
-  private final AtomicBoolean myExpired = new AtomicBoolean(false);
-  private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
-  private final long myTimestamp = System.currentTimeMillis();
-
   private boolean mySuggestionType;
   private boolean myImportantSuggestion;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
   private String myRemindLaterHandlerId;
+  private @Nullable String myToolWindowId;
+
+  private final AtomicBoolean myExpired = new AtomicBoolean(false);
+  private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
+  private final long myTimestamp = System.currentTimeMillis();
 
   /** See {@link #Notification(String, String, String, NotificationType)} */
   public Notification(@NotNull String groupId, @NotNull @NotificationContent String content, @NotNull NotificationType type) {
@@ -108,16 +104,18 @@ public class Notification {
     return mySuggestionType;
   }
 
-  public void setSuggestionType(boolean suggestionType) {
+  public @NotNull Notification setSuggestionType(boolean suggestionType) {
     mySuggestionType = suggestionType;
+    return this;
   }
 
   public boolean isImportantSuggestion() {
     return myImportantSuggestion;
   }
 
-  public void setImportantSuggestion(boolean importantSuggestion) {
+  public @NotNull Notification setImportantSuggestion(boolean importantSuggestion) {
     myImportantSuggestion = importantSuggestion;
+    return this;
   }
 
   /**
@@ -152,45 +150,60 @@ public class Notification {
     return myGroupId;
   }
 
+  /**
+   * Unique ID for "Don’t show again" action for a specific notification. By default, used group ID and they title.
+   * Only for suggestion notifications.
+   *
+   * @param displayName tile for UI in Preferences | Appearance & Behavior | Notifications
+   */
   public void configureDoNotAskOption(@NotNull String id, @NotNull @Nls String displayName) {
     myDoNotAskId = id;
     myDoNotAskDisplayName = displayName;
   }
 
+  @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
-    if (mySuggestionType) {
-      if (myDoNotAskId == null) {
-        @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
-        if (title == null) {
-          title = myGroupId;
-        }
-        myDoNotAskDisplayName = title;
-        myDoNotAskId = myGroupId;
+    if (myDoNotAskId == null) {
+      @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
+      if (title == null) {
+        title = myGroupId;
       }
-      String id = "Notification.DoNotAsk-" + myDoNotAskId;
-      boolean doNotAsk = PropertiesComponent.getInstance().getBoolean(id, false);
-      if (doNotAsk) {
-        return false;
-      }
-      if (project != null) {
-        return !PropertiesComponent.getInstance(project).getBoolean(id, false);
-      }
+      myDoNotAskDisplayName = title;
+      myDoNotAskId = myGroupId;
+    }
+    String id = "Notification.DoNotAsk-" + myDoNotAskId;
+    boolean doNotAsk = PropertiesComponent.getInstance().getBoolean(id, false);
+    if (doNotAsk) {
+      return false;
+    }
+    if (project != null) {
+      return !PropertiesComponent.getInstance(project).getBoolean(id, false);
     }
     return true;
   }
 
-  public void setDoNotAsFor(@Nullable Project project) {
+  @ApiStatus.Internal
+  public Notification setDoNotAskFor(@Nullable Project project) {
     PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
     manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+    return this;
   }
 
+  @ApiStatus.Internal
   public @Nullable String getRemindLaterHandlerId() {
     return myRemindLaterHandlerId;
   }
 
-  public void setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
+  /**
+   * Unique ID for "Remind me tomorrow" action for a specific notification.
+   * Only for suggestion notifications.
+   *
+   * @see NotificationRemindLaterHandler
+   */
+  public Notification setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
     myRemindLaterHandlerId = remindLaterHandlerId;
+    return this;
   }
 
   public boolean hasTitle() {
@@ -241,6 +254,8 @@ public class Notification {
     return myListener;
   }
 
+  /** @deprecated please use {@link #addAction(AnAction)} instead */
+  @Deprecated
   public @NotNull Notification setListener(@NotNull NotificationListener listener) {
     myListener = listener;
     return this;
@@ -250,13 +265,10 @@ public class Notification {
     return Objects.requireNonNull(e.getData(KEY));
   }
 
-  public static void fire(final @NotNull Notification notification, @NotNull AnAction action) {
-    fire(notification, action, null);
-  }
-
-  public static void fire(final @NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    DataContext contextWrapper = dataId -> KEY.is(dataId) ? notification : context != null ? context.getData(dataId) : null;
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, contextWrapper);
+  public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
+    DataContext dataContext = context != null ? context :
+                              CustomizedDataContext.create(DataContext.EMPTY_CONTEXT, dataId -> KEY.is(dataId) ? notification : null);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, dataContext);
     IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
   }
 
@@ -292,15 +304,13 @@ public class Notification {
     return myActions != null ? myActions : Collections.emptyList();
   }
 
-  /**
-   * @see NotificationAction
-   */
+  /** @see NotificationAction */
   public @NotNull Notification addAction(@NotNull AnAction action) {
     (myActions != null ? myActions : (myActions = new ArrayList<>())).add(action);
     return this;
   }
 
-  public @NotNull Notification addActions(@NotNull Collection<? extends AnAction> actions) {
+  public @NotNull Notification addActions(@NotNull Collection<? extends @NotNull AnAction> actions) {
     (myActions != null ? myActions : (myActions = new ArrayList<>())).addAll(actions);
     return this;
   }
@@ -335,11 +345,8 @@ public class Notification {
     }
   }
 
-  public Notification whenExpired(@Nullable Runnable whenExpired) {
-    if (myWhenExpired == null) {
-      myWhenExpired = new ArrayList<>();
-    }
-    myWhenExpired.add(whenExpired);
+  public Notification whenExpired(@NotNull Runnable whenExpired) {
+    (myWhenExpired != null ? myWhenExpired : (myWhenExpired = new ArrayList<>())).add(whenExpired);
     return this;
   }
 
@@ -380,6 +387,18 @@ public class Notification {
 
   public boolean isImportant() {
     return myImportant != null ? myImportant : getListener() != null || myActions != null && !myActions.isEmpty();
+  }
+
+  /**
+   * Sets the tool window ID, overriding the ID specified in the notification group registration.
+   */
+  public @NotNull Notification setToolWindowId(@Nullable String toolWindowId) {
+    myToolWindowId = toolWindowId;
+    return this;
+  }
+
+  public @Nullable String getToolWindowId() {
+    return myToolWindowId;
   }
 
   public final void assertHasTitleOrContent() {
@@ -427,19 +446,13 @@ public class Notification {
   }
 
   /** @deprecated use {@link #addActions(Collection)} or {@link #addAction} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final void addActions(@NotNull List<? extends AnAction> actions) {
     addActions((Collection<? extends AnAction>)actions);
   }
 
-  /** @deprecated use {@link #getCollapseDirection} */
-  @Deprecated
-  public CollapseActionsDirection getCollapseActionsDirection() {
-    return myCollapseDirection;
-  }
-
   /** @deprecated use {@link #setCollapseDirection} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setCollapseActionsDirection(CollapseActionsDirection collapseDirection) {
     myCollapseDirection = collapseDirection;
   }

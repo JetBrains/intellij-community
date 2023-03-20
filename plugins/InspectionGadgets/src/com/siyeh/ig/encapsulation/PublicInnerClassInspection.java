@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class PublicInnerClassInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
@@ -48,12 +51,10 @@ public class PublicInnerClassInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("public.inner.class.ignore.enum.option"), "ignoreEnums");
-    panel.addCheckbox(InspectionGadgetsBundle.message("public.inner.class.ignore.interface.option"), "ignoreInterfaces");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreEnums", InspectionGadgetsBundle.message("public.inner.class.ignore.enum.option")),
+      checkbox("ignoreInterfaces", InspectionGadgetsBundle.message("public.inner.class.ignore.interface.option")));
   }
 
   @Override

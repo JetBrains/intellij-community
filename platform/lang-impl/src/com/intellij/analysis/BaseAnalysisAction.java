@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.function.Supplier;
 
-public abstract class BaseAnalysisAction extends AnAction implements UpdateInBackground {
+public abstract class BaseAnalysisAction extends AnAction {
   private final Supplier<@DialogTitle String> myTitle;
   private final Supplier<String> myAnalysisNoun;
 
@@ -33,6 +33,11 @@ public abstract class BaseAnalysisAction extends AnAction implements UpdateInBac
   protected BaseAnalysisAction(Supplier<String> title, Supplier<String> analysisNoun) {
     myTitle = title;
     myAnalysisNoun = analysisNoun;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -79,10 +84,10 @@ public abstract class BaseAnalysisAction extends AnAction implements UpdateInBac
                                                     @NlsSafe String scopeTitle,
                                                     boolean rememberScope,
                                                     AnalysisUIOptions uiOptions,
-                                                    List<ModelScopeItem> items) {
+                                                    List<? extends ModelScopeItem> items) {
     return new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
       @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
+      protected JComponent getAdditionalActionSettings(@NotNull Project project) {
         return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
       }
 
@@ -115,7 +120,7 @@ public abstract class BaseAnalysisAction extends AnAction implements UpdateInBac
   }
 
   @Nullable
-  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
     return null;
   }
 

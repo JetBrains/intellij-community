@@ -44,7 +44,9 @@ public interface ImportSpec {
 
   boolean shouldCreateDirectoriesForEmptyContentRoots();
 
-  boolean isReportRefreshError();
+  boolean isActivateBuildToolWindowOnStart();
+
+  boolean isActivateBuildToolWindowOnFailure();
 
   @NotNull ThreeState isNavigateToError();
 

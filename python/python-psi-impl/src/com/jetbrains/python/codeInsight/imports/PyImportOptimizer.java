@@ -6,8 +6,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +31,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -41,6 +39,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
+  private static final Set<JavaResourceRootType> TEST_RESOURCE_ROOT_TYPES = Set.of(JavaResourceRootType.TEST_RESOURCE);
 
   private boolean mySortImports = true;
 
@@ -93,10 +92,7 @@ public class PyImportOptimizer implements ImportOptimizer {
   }
 
   private static boolean isInsideTestResourceRoot(@NotNull PsiFile file) {
-    final DirectoryIndex directoryIndex = DirectoryIndex.getInstance(file.getProject());
-    final DirectoryInfo directoryInfo = directoryIndex.getInfoForFile(file.getVirtualFile());
-    final JpsModuleSourceRootType<?> sourceRootType = directoryIndex.getSourceRootType(directoryInfo);
-    return JavaResourceRootType.TEST_RESOURCE.equals(sourceRootType);
+    return ProjectFileIndex.getInstance(file.getProject()).isUnderSourceRootOfType(file.getVirtualFile(), TEST_RESOURCE_ROOT_TYPES);
   }
 
   private static final class ImportSorter {

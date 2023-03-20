@@ -23,9 +23,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementGroupingRulesControl extends JBTable {
 
   @NotNull public static final DataKey<ArrangementGroupingRulesControl> KEY = DataKey.create("Arrangement.Rule.Group.Control");
@@ -119,8 +116,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
   private static class MyRenderer implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (value instanceof ArrangementGroupingComponent) {
-        ArrangementGroupingComponent component = (ArrangementGroupingComponent)value;
+      if (value instanceof ArrangementGroupingComponent component) {
         component.setRowIndex(row + 1);
         component.setHighlight(TableHoverListener.getHoveredRow(table) == row || table.isRowSelected(row));
         component.revalidate();

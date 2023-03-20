@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -45,7 +45,7 @@ private val ANNOTATIONS = TokenSet.create(ANNOTATION_ENTRY, ANNOTATION)
 
 typealias WrappingStrategy = (childElement: ASTNode) -> Wrap?
 
-fun noWrapping(childElement: ASTNode): Wrap? = null
+fun noWrapping(@Suppress("UNUSED_PARAMETER") childElement: ASTNode): Wrap? = null
 
 abstract class KotlinCommonBlock(
     private val node: ASTNode,
@@ -174,8 +174,8 @@ abstract class KotlinCommonBlock(
     private fun createWrapForQualifierExpression(node: ASTNode): Wrap? =
         if (node.wrapForFirstCallInChainIsAllowed && node.receiverIsCall())
             Wrap.createWrap(
-                settings.kotlinCommonSettings.METHOD_CALL_CHAIN_WRAP,
-                true, /* wrapFirstElement */
+                /* type = */ settings.kotlinCommonSettings.METHOD_CALL_CHAIN_WRAP,
+                /* wrapFirstElement = */ true,
             )
         else
             null
@@ -221,6 +221,7 @@ abstract class KotlinCommonBlock(
                 createSyntheticSpacingNodeBlock(skipOperationNodeParent)
             }
         }
+
         val operationSyntheticBlock = SyntheticKotlinBlock(
             anchor ?: operationBlock.requireNode(),
             subList(index, size),
@@ -245,6 +246,7 @@ abstract class KotlinCommonBlock(
                 null,
             )
         }
+
         return nodeSubBlocks
     }
 
@@ -354,6 +356,7 @@ abstract class KotlinCommonBlock(
                         } else {
                             Indent.getContinuationIndent()
                         }
+
                     ChildAttributes(indent, null)
                 }
             }
@@ -395,14 +398,16 @@ abstract class KotlinCommonBlock(
         return when {
             parentType === VALUE_PARAMETER_LIST ->
                 getAlignmentForChildInParenthesis(
-                    kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS, VALUE_PARAMETER, COMMA,
-                    kotlinCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS, LPAR, RPAR,
+                    kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS,
+                    VALUE_PARAMETER,
+                    kotlinCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,
                 )
 
             parentType === VALUE_ARGUMENT_LIST ->
                 getAlignmentForChildInParenthesis(
-                    kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS, VALUE_ARGUMENT, COMMA,
-                    kotlinCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS, LPAR, RPAR,
+                    kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,
+                    VALUE_ARGUMENT,
+                    kotlinCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,
                 )
 
             parentType === WHEN ->
@@ -479,7 +484,7 @@ abstract class KotlinCommonBlock(
         val wrappingStrategy = getWrappingStrategy()
 
         val childNodes = when {
-            overrideChildren != null -> overrideChildren.asSequence()
+            overrideChildren != null -> overrideChildren
             node.elementType == BINARY_EXPRESSION -> {
                 val binaryExpression = node.psi as? KtBinaryExpression
                 if (binaryExpression != null && ALL_ASSIGNMENTS.contains(binaryExpression.operationToken)) {
@@ -490,6 +495,7 @@ abstract class KotlinCommonBlock(
                     binaryExpressionChildren.asSequence()
                 }
             }
+
             else -> node.children()
         }
 
@@ -549,6 +555,7 @@ abstract class KotlinCommonBlock(
                 ) {
                     return ::noWrapping
                 }
+
                 return getWrappingStrategyForItemList(
                     wrapSetting,
                     VALUE_ARGUMENT,
@@ -565,9 +572,10 @@ abstract class KotlinCommonBlock(
                         node.addTrailingComma,
                         additionalWrap = trailingCommaWrappingStrategyWithMultiLineCheck(LPAR, RPAR),
                     )
+
                     FUNCTION_TYPE -> return defaultTrailingCommaWrappingStrategy(LPAR, RPAR)
                     FUNCTION_LITERAL -> if (trailingCommaExistsOrCanExist(nodePsi.parent, settings)) {
-                        val check = thisOrPrevIsMultiLineElement(COMMA, LBRACE /* not necessary */, ARROW /* not necessary */)
+                        val check = thisOrPrevIsMultiLineElement(LBRACE /* not necessary */, ARROW /* not necessary */)
                         return { childElement ->
                             createWrapAlwaysIf(getSiblingWithoutWhitespaceAndComments(childElement) == null || check(childElement))
                         }
@@ -581,7 +589,7 @@ abstract class KotlinCommonBlock(
 
             // with argument
             elementType === WHEN_ENTRY -> if (trailingCommaExistsOrCanExist(nodePsi, settings)) {
-                val check = thisOrPrevIsMultiLineElement(COMMA, LBRACE /* not necessary */, ARROW /* not necessary */)
+                val check = thisOrPrevIsMultiLineElement(LBRACE /* not necessary */, ARROW /* not necessary */)
                 return trailingCommaWrappingStrategy(rightAnchor = ARROW) {
                     getSiblingWithoutWhitespaceAndComments(it, true) != null && check(it)
                 }
@@ -590,8 +598,8 @@ abstract class KotlinCommonBlock(
             elementType === DESTRUCTURING_DECLARATION -> {
                 nodePsi as KtDestructuringDeclaration
                 if (nodePsi.valOrVarKeyword == null) return defaultTrailingCommaWrappingStrategy(LPAR, RPAR)
-                else if (trailingCommaExistsOrCanExist(nodePsi, settings)) {
-                    val check = thisOrPrevIsMultiLineElement(COMMA, LPAR, RPAR)
+                if (trailingCommaExistsOrCanExist(nodePsi, settings)) {
+                    val check = thisOrPrevIsMultiLineElement(LPAR, RPAR)
                     return trailingCommaWrappingStrategy(leftAnchor = LPAR, rightAnchor = RPAR, filter = { it.elementType !== EQ }) {
                         getSiblingWithoutWhitespaceAndComments(it, true) != null && check(it)
                     }
@@ -621,6 +629,7 @@ abstract class KotlinCommonBlock(
                             ANNOTATIONS,
                             !node.treeParent.isFirstParameter(),
                         )
+
                     is KtClassOrObject, is KtTypeAlias ->
                         return getWrappingStrategyForItemList(
                             commonSettings.CLASS_ANNOTATION_WRAP,
@@ -655,10 +664,12 @@ abstract class KotlinCommonBlock(
                     getWrapAfterAnnotation(childElement, commonSettings.METHOD_ANNOTATION_WRAP)?.let {
                         return@wrap it
                     }
+
                     if (getSiblingWithoutWhitespaceAndComments(childElement)?.elementType == EQ) {
-                        return@wrap Wrap.createWrap(settings.kotlinCustomSettings.WRAP_EXPRESSION_BODY_FUNCTIONS, true)
+                        Wrap.createWrap(settings.kotlinCustomSettings.WRAP_EXPRESSION_BODY_FUNCTIONS, true)
+                    } else {
+                        null
                     }
-                    null
                 }
 
             nodePsi is KtProperty ->
@@ -667,10 +678,12 @@ abstract class KotlinCommonBlock(
                     getWrapAfterAnnotation(childElement, wrapSetting)?.let {
                         return@wrap it
                     }
+
                     if (getSiblingWithoutWhitespaceAndComments(childElement)?.elementType == EQ) {
-                        return@wrap Wrap.createWrap(settings.kotlinCommonSettings.ASSIGNMENT_WRAP, true)
+                        Wrap.createWrap(settings.kotlinCommonSettings.ASSIGNMENT_WRAP, true)
+                    } else {
+                        null
                     }
-                    null
                 }
 
             nodePsi is KtBinaryExpression -> {
@@ -683,6 +696,7 @@ abstract class KotlinCommonBlock(
                         }
                     }
                 }
+
                 if (nodePsi.operationToken == ELVIS && nodePsi.getStrictParentOfType<KtStringTemplateExpression>() == null) {
                     return { childElement ->
                         if (childElement.elementType == OPERATION_REFERENCE && (childElement.psi as? KtOperationReferenceExpression)?.operationSignTokenType == ELVIS) {
@@ -692,6 +706,7 @@ abstract class KotlinCommonBlock(
                         }
                     }
                 }
+
                 return ::noWrapping
             }
         }
@@ -718,9 +733,9 @@ abstract class KotlinCommonBlock(
             val elementType = element.elementType
             if (!forward) {
                 sibling = element
-                if (elementType != delimiterType && elementType !in COMMENTS) break
+                if (elementType != delimiterType && elementType != EOL_COMMENT) break
             } else {
-                if (elementType !in COMMENTS) break
+                if (elementType != EOL_COMMENT) break
                 sibling = element
             }
         }
@@ -729,15 +744,16 @@ abstract class KotlinCommonBlock(
     }
 
     private fun thisOrPrevIsMultiLineElement(
-        delimiterType: IElementType,
         typeOfFirstElement: IElementType,
         typeOfLastElement: IElementType,
     ) = fun(childElement: ASTNode): Boolean {
+        val delimiterType = COMMA
         when (childElement.elementType) {
             typeOfFirstElement,
             typeOfLastElement,
             delimiterType,
-            in WHITE_SPACE_OR_COMMENT_BIT_SET,
+            EOL_COMMENT,
+            in WHITESPACES,
             -> return false
         }
 
@@ -748,6 +764,7 @@ abstract class KotlinCommonBlock(
             ?: psi.startOffset
         val endOffset = childElement.notDelimiterSiblingNodeInSequence(true, delimiterType, typeOfLastElement)?.psi?.endOffset
             ?: psi.endOffset
+
         return psi.parent.containsLineBreakInChild(startOffset, endOffset)
     }
 
@@ -758,7 +775,7 @@ abstract class KotlinCommonBlock(
         leftAnchor = leftAnchor,
         rightAnchor = rightAnchor,
         checkTrailingComma = true,
-        additionalCheck = thisOrPrevIsMultiLineElement(COMMA, leftAnchor, rightAnchor),
+        additionalCheck = thisOrPrevIsMultiLineElement(leftAnchor, rightAnchor),
     )
 
     private fun trailingCommaWrappingStrategy(
@@ -773,7 +790,7 @@ abstract class KotlinCommonBlock(
         return createWrapAlwaysIf(
             (!checkTrailingComma || childElement.treeParent.addTrailingComma) && (
                     rightAnchor != null && rightAnchor === childElementType ||
-                            leftAnchor != null && leftAnchor === getSiblingWithoutWhitespaceAndComments(childElement)?.elementType ||
+                            leftAnchor != null && leftAnchor === getPrevWithoutWhitespace(childElement)?.elementType ||
                             additionalCheck(childElement)
                     ),
         )
@@ -841,9 +858,7 @@ private fun anyCallInCallChainIsWrapped(node: ASTNode): Boolean {
 
 private fun ASTNode.isFirstParameter(): Boolean = treePrev?.elementType == LPAR
 
-private fun wrapAfterAnnotation(wrapType: Int): WrappingStrategy {
-    return { childElement -> getWrapAfterAnnotation(childElement, wrapType) }
-}
+private fun wrapAfterAnnotation(wrapType: Int): WrappingStrategy = { childElement -> getWrapAfterAnnotation(childElement, wrapType) }
 
 private fun getWrapAfterAnnotation(childElement: ASTNode, wrapType: Int): Wrap? {
     if (childElement.elementType in COMMENTS) return null
@@ -851,11 +866,13 @@ private fun getWrapAfterAnnotation(childElement: ASTNode, wrapType: Int): Wrap? 
     while (prevLeaf?.elementType == TokenType.WHITE_SPACE) {
         prevLeaf = prevLeaf.treePrev
     }
+
     if (prevLeaf?.elementType == MODIFIER_LIST) {
         if (prevLeaf?.lastChildNode?.elementType in ANNOTATIONS) {
             return Wrap.createWrap(wrapType, true)
         }
     }
+
     return null
 }
 
@@ -868,6 +885,7 @@ private fun hasLineBreakBefore(node: ASTNode): Boolean {
     val prevSibling = node.leaves(false)
         .dropWhile { it.psi is PsiComment }
         .firstOrNull()
+
     return prevSibling?.elementType == TokenType.WHITE_SPACE && prevSibling?.textContains('\n') == true
 }
 
@@ -880,16 +898,14 @@ private fun hasDoubleLineBreakBefore(node: ASTNode): Boolean {
 fun NodeIndentStrategy.PositionStrategy.continuationIf(
     option: (KotlinCodeStyleSettings) -> Boolean,
     indentFirst: Boolean = false,
-): NodeIndentStrategy {
-    return set { settings ->
-        if (option(settings.kotlinCustomSettings)) {
-            if (indentFirst)
-                Indent.getContinuationIndent()
-            else
-                Indent.getContinuationWithoutFirstIndent()
-        } else
-            Indent.getNormalIndent()
-    }
+): NodeIndentStrategy = set { settings ->
+    if (option(settings.kotlinCustomSettings)) {
+        if (indentFirst)
+            Indent.getContinuationIndent()
+        else
+            Indent.getContinuationWithoutFirstIndent()
+    } else
+        Indent.getNormalIndent()
 }
 
 private val INDENT_RULES = arrayOf(
@@ -951,6 +967,7 @@ private val INDENT_RULES = arrayOf(
                 Indent.Type.CONTINUATION
             else
                 Indent.Type.NORMAL
+
             Indent.getIndent(indentType, false, true)
         },
 
@@ -978,10 +995,8 @@ private val INDENT_RULES = arrayOf(
     strategy("Assignment expressions")
         .within(BINARY_EXPRESSION)
         .within {
-            val binaryExpression = it.psi as? KtBinaryExpression
-                ?: return@within false
-
-            return@within ALL_ASSIGNMENTS.contains(binaryExpression.operationToken)
+            val binaryExpression = it.psi as? KtBinaryExpression ?: return@within false
+            ALL_ASSIGNMENTS.contains(binaryExpression.operationToken)
         }
         .forElement {
             val psi = it.psi
@@ -992,10 +1007,7 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Indent for parts")
         .within(PROPERTY, FUN, DESTRUCTURING_DECLARATION, SECONDARY_CONSTRUCTOR)
-        .notForType(
-            BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RPAR,
-            EOL_COMMENT,
-        )
+        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RPAR, EOL_COMMENT, CONTEXT_RECEIVER_LIST, MODIFIER_LIST)
         .set(Indent.getContinuationWithoutFirstIndent()),
 
     strategy("Chained calls")
@@ -1015,13 +1027,11 @@ private val INDENT_RULES = arrayOf(
     strategy("Indices")
         .within(INDICES)
         .notForType(RBRACKET)
-        .set(Indent.getContinuationIndent(false)),
+        .continuationIf(KotlinCodeStyleSettings::CONTINUATION_INDENT_IN_ARGUMENT_LISTS),
 
     strategy("Binary expressions")
         .within(BINARY_EXPRESSIONS)
-        .forElement { node ->
-            !node.suppressBinaryExpressionIndent()
-        }
+        .forElement { node -> !node.suppressBinaryExpressionIndent() }
         .set(Indent.getContinuationWithoutFirstIndent(false)),
 
     strategy("Parenthesized expression")
@@ -1057,14 +1067,7 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Block in when entry")
         .within(WHEN_ENTRY)
-        .notForType(
-            BLOCK,
-            WHEN_CONDITION_EXPRESSION,
-            WHEN_CONDITION_IN_RANGE,
-            WHEN_CONDITION_IS_PATTERN,
-            ELSE_KEYWORD,
-            ARROW,
-        )
+        .notForType(BLOCK, WHEN_CONDITION_EXPRESSION, WHEN_CONDITION_IN_RANGE, WHEN_CONDITION_IS_PATTERN, ELSE_KEYWORD, ARROW)
         .set(Indent.getNormalIndent()),
 
     strategy("Parameter list")
@@ -1084,10 +1087,7 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Type aliases")
         .within(TYPEALIAS)
-        .notForType(
-            TYPE_ALIAS_KEYWORD, EOL_COMMENT, MODIFIER_LIST, BLOCK_COMMENT,
-            DOC_COMMENT,
-        )
+        .notForType(TYPE_ALIAS_KEYWORD, EOL_COMMENT, MODIFIER_LIST, BLOCK_COMMENT, DOC_COMMENT)
         .set(Indent.getContinuationIndent()),
 
     strategy("Default parameter values")
@@ -1097,8 +1097,7 @@ private val INDENT_RULES = arrayOf(
 )
 
 
-private fun getOperationType(node: ASTNode): IElementType? =
-    node.findChildByType(OPERATION_REFERENCE)?.firstChildNode?.elementType
+private fun getOperationType(node: ASTNode): IElementType? = node.findChildByType(OPERATION_REFERENCE)?.firstChildNode?.elementType
 
 fun hasErrorElementBefore(node: ASTNode): Boolean {
     val prevSibling = getPrevWithoutWhitespace(node) ?: return false
@@ -1116,13 +1115,18 @@ private fun ASTNode.suppressBinaryExpressionIndent(): Boolean {
     while (psi.parent is KtBinaryExpression) {
         psi = psi.parent as KtBinaryExpression
     }
+
     return psi.parent?.node?.elementType == CONDITION || psi.operationToken == ELVIS
 }
 
 private fun getAlignmentForChildInParenthesis(
-    shouldAlignChild: Boolean, parameter: IElementType, delimiter: IElementType,
-    shouldAlignParenthesis: Boolean, openBracket: IElementType, closeBracket: IElementType,
+    shouldAlignChild: Boolean,
+    parameter: IElementType,
+    shouldAlignParenthesis: Boolean,
 ): CommonAlignmentStrategy {
+    val delimiter = COMMA
+    val openBracket = LPAR
+    val closeBracket = RPAR
     val parameterAlignment = if (shouldAlignChild) Alignment.createAlignment() else null
     val bracketsAlignment = if (shouldAlignParenthesis) Alignment.createAlignment() else null
 
@@ -1142,7 +1146,11 @@ private fun getAlignmentForChildInParenthesis(
                 return bracketsAlignment
             }
 
-            if (childNodeType === parameter || childNodeType === delimiter) {
+            if (childNodeType === parameter ||
+                childNodeType === delimiter ||
+                childNodeType === BLOCK_COMMENT ||
+                childNodeType === DOC_COMMENT
+            ) {
                 return parameterAlignment
             }
 
@@ -1178,9 +1186,7 @@ private fun getWrappingStrategyForItemList(wrapType: Int, itemTypes: TokenSet, w
     return { childElement ->
         val thisType = childElement.elementType
         val prevType = getPrevWithoutWhitespace(childElement)?.elementType
-        if (thisType in itemTypes || prevType in itemTypes &&
-            thisType != EOL_COMMENT && prevType != EOL_COMMENT
-        )
+        if (thisType in itemTypes || prevType in itemTypes && thisType != EOL_COMMENT && prevType != EOL_COMMENT)
             itemWrap
         else
             null
@@ -1192,19 +1198,16 @@ private fun ASTNode.prev(): ASTNode? {
     while (prev != null && prev.elementType == TokenType.WHITE_SPACE) {
         prev = prev.treePrev
     }
+
     if (prev != null) return prev
     return if (treeParent != null) treeParent.prev() else null
 }
 
-private fun List<ASTBlock>.indexOfBlockWithType(tokenSet: TokenSet): Int {
-    return indexOfFirst { block -> block.node?.elementType in tokenSet }
-}
+private fun List<ASTBlock>.indexOfBlockWithType(tokenSet: TokenSet): Int = indexOfFirst { block -> block.node?.elementType in tokenSet }
 
 private fun extractIndent(node: ASTNode): String {
     val prevNode = node.treePrev
-    if (prevNode?.elementType != TokenType.WHITE_SPACE)
-        return ""
-    return prevNode.text.substringAfterLast("\n", prevNode.text)
+    return if (prevNode?.elementType != TokenType.WHITE_SPACE) "" else prevNode.text.substringAfterLast("\n", prevNode.text)
 }
 
 private fun createWrapAlwaysIf(option: Boolean): Wrap? = if (option) Wrap.createWrap(WrapType.ALWAYS, true) else null

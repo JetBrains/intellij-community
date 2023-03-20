@@ -243,58 +243,63 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
   public void testWriteToOldStyleClass() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON27,
-      () -> doTestByText("class A:\n" +
-                         "    __slots__ = ['bar']\n" +
-                         "    \n" +
-                         "A().baz = 1\n" +
-                         "\n" +
-                         "\n" +
-                         "class B:\n" +
-                         "    __slots__ = ['bar']\n" +
-                         "    \n" +
-                         "class C(B):\n" +
-                         "    __slots__ = ['baz']\n" +
-                         "    \n" +
-                         "C().foo = 1")
+      () -> doTestByText("""
+                           class A:
+                               __slots__ = ['bar']
+                              \s
+                           A().baz = 1
+
+
+                           class B:
+                               __slots__ = ['bar']
+                              \s
+                           class C(B):
+                               __slots__ = ['baz']
+                              \s
+                           C().foo = 1""")
     );
   }
 
   // PY-29234
   public void testSlotAndAnnotatedClassVar() {
-    doTestByText("class MyClass:\n" +
-                 "    __slots__ = ['a']\n" +
-                 "    a: int");
+    doTestByText("""
+                   class MyClass:
+                       __slots__ = ['a']
+                       a: int""");
   }
 
   // PY-29268
   public void testWriteToNewStyleInheritedFromOldStyle() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
-      doTestByText("class A:\n" +
-                   "    __slots__ = ['a']\n" +
-                   "\n" +
-                   "class B(A, object):\n" +
-                   "    __slots__ = ['b']\n" +
-                   "\n" +
-                   "B().c = 1");
+      doTestByText("""
+                     class A:
+                         __slots__ = ['a']
+
+                     class B(A, object):
+                         __slots__ = ['b']
+
+                     B().c = 1""");
     });
   }
 
   // PY-29268
   public void testWriteToNewStyleInheritedFromUnknown() {
-    doTestByText("class B(A, object):\n" +
-                 "    __slots__ = ['b']\n" +
-                 "\n" +
-                 "B().c = 1");
+    doTestByText("""
+                   class B(A, object):
+                       __slots__ = ['b']
+
+                   B().c = 1""");
   }
 
   // PY-31066
   public void testWriteToSlotAndAnnotatedClassVar() {
-    doTestByText("class A:\n" +
-                 "    __slots__ = ['a']\n" +
-                 "    a: int\n" +
-                 "\n" +
-                 "    def __init__(self, a: int) -> None:\n" +
-                 "        self.a = a");
+    doTestByText("""
+                   class A:
+                       __slots__ = ['a']
+                       a: int
+
+                       def __init__(self, a: int) -> None:
+                           self.a = a""");
   }
 
   private void doTestPy2() {

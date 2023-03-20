@@ -3,10 +3,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.GlobalInspectionContextUtil;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -33,14 +31,12 @@ public final class GlobalInspectionUtil {
                                    @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    @NotNull GlobalInspectionContext globalContext) {
     List<LocalQuickFix> fixes = new ArrayList<>();
-    if (info.quickFixActionRanges != null) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : info.quickFixActionRanges) {
-        final IntentionAction action = actionRange.getFirst().getAction();
-        if (action instanceof LocalQuickFix) {
-          fixes.add((LocalQuickFix)action);
-        }
+    info.findRegisteredQuickFix((descriptor, fixRange) -> {
+      if (descriptor.getAction() instanceof LocalQuickFix) {
+        fixes.add((LocalQuickFix)descriptor.getAction());
       }
-    }
+      return null;
+    });
     ProblemDescriptor descriptor = manager.createProblemDescriptor(elt, range, createInspectionMessage(StringUtil.notNullize(info.getDescription())),
                                                                    HighlightInfo.convertType(info.type), false,
                                                                    fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY));

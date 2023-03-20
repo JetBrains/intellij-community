@@ -90,8 +90,8 @@ object JavaCompletionFeatures {
     companion object {
       fun getValue(type: PsiType): JavaType {
         return when {
-          type == PsiType.VOID -> VOID
-          type == PsiType.CHAR -> CHAR
+          type == PsiTypes.voidType() -> VOID
+          type == PsiTypes.charType() -> CHAR
           type.equalsToText(JAVA_LANG_STRING) -> STRING
           TypeConversionUtil.isBooleanType(type) -> BOOLEAN
           TypeConversionUtil.isNumericType(type) -> NUMERIC
@@ -182,7 +182,7 @@ object JavaCompletionFeatures {
   fun getPackageMatchingFeatures(contextFeatures: ContextFeatures, psiClass: PsiClass): Map<String, MLFeatureValue> {
     val packagesInfo = contextFeatures.getUserData(PACKAGES_KEY) ?: return emptyMap()
     val packageName = PsiUtil.getPackageName(psiClass)
-    if (packageName == null || packageName.isEmpty()) return emptyMap()
+    if (packageName.isNullOrEmpty()) return emptyMap()
     val packagePartsCount = packageName.split(".").size
     val result = mutableMapOf<String, MLFeatureValue>()
     val packageMatchedParts = packagesInfo.packageName.matchedParts(packageName)

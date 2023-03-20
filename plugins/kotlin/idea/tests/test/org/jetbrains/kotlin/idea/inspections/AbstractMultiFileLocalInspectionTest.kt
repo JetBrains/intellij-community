@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -15,6 +15,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -26,7 +27,7 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
         val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         return if (withRuntime)
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         else
             KotlinLightProjectDescriptor.INSTANCE
     }
@@ -49,7 +50,7 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
             ?.let { (SAXBuilder().build(it) as Document).rootElement }
 
 
-        doTest(path) test@{ _ ->
+        doTest(path) test@{
             myFixture.configureFromTempProjectFile(mainFilePath)
 
             runInspectionWithFixesAndCheck(inspection, problemExpectedString, null, localFixTextString, inspectionSettings)

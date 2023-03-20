@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.HeadCommitsComparator;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
-import com.intellij.vcs.log.util.StopWatch;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
@@ -19,11 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
+
 public class DataPack extends DataPackBase {
   public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY),
                                                     EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
 
-  @NotNull private final PermanentGraph<Integer> myPermanentGraph;
+  private final @NotNull PermanentGraph<Integer> myPermanentGraph;
 
   DataPack(@NotNull RefsModel refsModel,
            @NotNull PermanentGraph<Integer> permanentGraph,
@@ -33,12 +34,11 @@ public class DataPack extends DataPackBase {
     myPermanentGraph = permanentGraph;
   }
 
-  @NotNull
-  public static DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
-                               @NotNull Map<VirtualFile, CompressedRefs> refs,
-                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                               @NotNull VcsLogStorage storage,
-                               boolean full) {
+  public static @NotNull DataPack build(@NotNull List<? extends GraphCommit<Integer>> commits,
+                                        @NotNull Map<VirtualFile, CompressedRefs> refs,
+                                        @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                        @NotNull VcsLogStorage storage,
+                                        boolean full) {
     RefsModel refsModel;
     PermanentGraph<Integer> permanentGraph;
     if (commits.isEmpty()) {
@@ -47,20 +47,19 @@ public class DataPack extends DataPackBase {
     }
     else {
       refsModel = new RefsModel(refs, getHeads(commits), storage, providers);
-      Function<Integer, Hash> hashGetter = VcsLogStorageImpl.createHashGetter(storage);
-      GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
+      Comparator<Integer> headCommitdComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers),
+                                                                            VcsLogStorageImpl.createHashGetter(storage));
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
-      StopWatch sw = StopWatch.start("building graph");
-      permanentGraph = PermanentGraphImpl.newInstance(commits, colorManager, branches);
-      sw.report();
+      permanentGraph = computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "building graph", (span) -> {
+        return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
+      });
     }
 
     return new DataPack(refsModel, permanentGraph, providers, full);
   }
 
-  @NotNull
-  private static Set<Integer> getHeads(@NotNull List<? extends GraphCommit<Integer>> commits) {
+  private static @NotNull Set<Integer> getHeads(@NotNull List<? extends GraphCommit<Integer>> commits) {
     IntSet parents = new IntOpenHashSet();
     for (GraphCommit<Integer> commit : commits) {
       for (int parent : commit.getParents()) {
@@ -77,8 +76,8 @@ public class DataPack extends DataPackBase {
     return heads;
   }
 
-  @NotNull
-  private static Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<? extends VcsRef> branches, @NotNull VcsLogStorage storage) {
+  private static @NotNull Set<Integer> getBranchCommitHashIndexes(@NotNull Collection<? extends VcsRef> branches,
+                                                                  @NotNull VcsLogStorage storage) {
     Set<Integer> result = new HashSet<>();
     for (VcsRef vcsRef : branches) {
       result.add(storage.getCommitIndex(vcsRef.getCommitHash(), vcsRef.getRoot()));
@@ -86,8 +85,7 @@ public class DataPack extends DataPackBase {
     return result;
   }
 
-  @NotNull
-  public static Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  public static @NotNull Map<VirtualFile, VcsLogRefManager> getRefManagerMap(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     Map<VirtualFile, VcsLogRefManager> map = new HashMap<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
       map.put(entry.getKey(), entry.getValue().getReferenceManager());
@@ -95,27 +93,24 @@ public class DataPack extends DataPackBase {
     return map;
   }
 
-  @NotNull
-  public PermanentGraph<Integer> getPermanentGraph() {
+  public @NotNull PermanentGraph<Integer> getPermanentGraph() {
     return myPermanentGraph;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}";
   }
 
   public static class ErrorDataPack extends DataPack {
-    @NotNull private final Throwable myError;
+    private final @NotNull Throwable myError;
 
     public ErrorDataPack(@NotNull Throwable error) {
       super(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY), EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
       myError = error;
     }
 
-    @NotNull
-    public Throwable getError() {
+    public @NotNull Throwable getError() {
       return myError;
     }
   }

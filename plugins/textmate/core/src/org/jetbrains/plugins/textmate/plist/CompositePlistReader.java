@@ -2,16 +2,12 @@ package org.jetbrains.plugins.textmate.plist;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class CompositePlistReader implements PlistReader {
   private final PlistReader myJsonReader = new JsonPlistReader();
   private final PlistReader myXmlReader = new XmlPlistReader();
-
-  @Override
-  public Plist read(@NotNull File file) throws IOException {
-    return read(new BufferedInputStream(new FileInputStream(file)));
-  }
 
   @Override
   public Plist read(@NotNull InputStream inputStream) throws IOException {

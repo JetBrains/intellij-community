@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal
 
 import com.intellij.application.options.editor.EditorOptionsListener
@@ -6,6 +6,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -24,7 +25,7 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
   var editorColorsScheme: EditorColorsScheme
     private set
   private var cachedColorPalette: JBTerminalSchemeColorPalette? = null
-  private var fontSize = -1
+  private var fontSize = -1f
   private val terminalPanels: MutableList<JBTerminalPanel> = CopyOnWriteArrayList()
   private var state = State()
 
@@ -90,7 +91,11 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     }
   }
 
-  fun getFontSize() : Int {
+  fun getFontSize(): Int {
+    return (getFontSize2D() + 0.5).toInt()
+  }
+
+  fun getFontSize2D(): Float {
     if (fontSize <= 0) {
       fontSize = detectFontSize()
     }
@@ -98,6 +103,10 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
   }
 
   fun setFontSize(newFontSize: Int) {
+    setFontSize(newFontSize.toFloat())
+  }
+
+  fun setFontSize(newFontSize: Float) {
     val prevFontSize = fontSize
     fontSize = newFontSize
     if (prevFontSize != fontSize) {
@@ -105,11 +114,11 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     }
   }
 
-  private fun detectFontSize(): Int {
-    return if (UISettings.instance.presentationMode) {
-      UISettings.instance.presentationModeFontSize
+  private fun detectFontSize(): Float {
+    return if (UISettings.getInstance().presentationMode) {
+      UISettingsUtils.instance.presentationModeFontSize
     }
-    else editorColorsScheme.consoleFontSize
+    else UISettingsUtils.instance.scaledConsoleFontSize
   }
 
   fun resetFontSize() {

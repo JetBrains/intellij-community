@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages, skipRead
-// FIR_IGNORE
+// PSI_ELEMENT_AS_TITLE: "foo: T"
 
 package server
 
@@ -17,3 +17,4 @@ open class B : A<String>("") {
             super<A>.foo = value
         }
 }
+

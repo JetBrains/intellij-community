@@ -10,10 +10,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -27,7 +24,9 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -56,21 +55,6 @@ public final class PluginInstallOperation {
   private boolean myRestartRequired = false;
   private boolean myShownErrors;
   private MarketplacePluginDownloadService myDownloadService;
-
-  /**
-   * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
-                                @NotNull List<? extends IdeaPluginDescriptor> customReposPlugins,
-                                @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
-                                @NotNull ProgressIndicator indicator) {
-    this(pluginsToInstall,
-         (Collection<PluginNode>)ContainerUtil.filterIsInstance(customReposPlugins, PluginNode.class),
-         pluginEnabler,
-         indicator);
-  }
 
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 @NotNull Collection<PluginNode> customReposPlugins,
@@ -157,7 +141,7 @@ public final class PluginInstallOperation {
   private void updateUrls() {
     boolean unknownNodes = false;
     for (PluginNode node : myPluginsToInstall) {
-      if (node.getRepositoryName() == PluginInstaller.UNKNOWN_HOST_MARKER) {
+      if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         unknownNodes = true;
         break;
       }
@@ -179,7 +163,7 @@ public final class PluginInstallOperation {
     }
 
     for (PluginNode node : myPluginsToInstall) {
-      if (node.getRepositoryName() == PluginInstaller.UNKNOWN_HOST_MARKER) {
+      if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         PluginNode descriptor = allPlugins.get(node.getPluginId());
         node.setRepositoryName(descriptor != null ? descriptor.getRepositoryName() : null);
         if (descriptor != null) {
@@ -203,9 +187,9 @@ public final class PluginInstallOperation {
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
-        Notifications.Bus.notify(
-          new Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, pluginNode.getName() + ": " + e.getMessage(),
-                           NotificationType.ERROR));
+        LOG.warn(e);
+        NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error");
+        Notifications.Bus.notify(group.createNotification(title, pluginNode.getName() + ": " + e.getMessage(), NotificationType.ERROR));
         return false;
       }
     }
@@ -238,6 +222,7 @@ public final class PluginInstallOperation {
     }
   }
 
+  @RequiresBackgroundThread
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;

@@ -2,12 +2,14 @@
 package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
@@ -16,10 +18,10 @@ import com.intellij.vcs.log.runInEdt
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NotNull
 import java.beans.PropertyChangeEvent
 
 abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val tabName: String) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private var branches = emptySet<BranchData>()
     set(value) {
       if (field == value) return
@@ -32,7 +34,8 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
     UiNotifyConnector.doWhenFirstShown(tree, Runnable { refresh() })
     tree.addGroupingChangeListener(groupingListener)
     tree.project.messageBus.connect(this).subscribe(GitRepository.GIT_REPO_CHANGE,
-                                                    GitRepositoryChangeListener { runInEdt(this) { refresh() } })
+                                                    GitRepositoryChangeListener { runInEdt(disposableFlag) { refresh() } })
+    Disposer.register(this, disposableFlag)
   }
 
   abstract fun getRoots(): Collection<VirtualFile>
@@ -48,7 +51,12 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
     tab.description = BranchPresentation.getTooltip(branches)
   }
 
-  private fun getDisplayName(): @NotNull @Nls String {
+  private fun getDisplayName(): @Nls String? {
+    if (ExperimentalUI.isNewUI()) {
+      val contentsCount = ChangesViewContentManager.getToolWindowFor(tree.project, tabName)?.contentManager?.contentCount ?: 0
+      if (contentsCount == 1) return null else return VcsBundle.message("tab.title.commit")
+    }
+
     val branchesText = BranchPresentation.getText(branches)
     if (branchesText.isBlank()) return VcsBundle.message("tab.title.commit")
 
@@ -69,7 +77,7 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
   }
 
   private fun getTab(): Content? {
-    return ChangesViewContentManager.getInstance(tree.project).findContents { it.tabName == tabName }.firstOrNull()
+    return ChangesViewContentManager.getInstance(tree.project).findContent(tabName)
   }
 
   override fun dispose() {

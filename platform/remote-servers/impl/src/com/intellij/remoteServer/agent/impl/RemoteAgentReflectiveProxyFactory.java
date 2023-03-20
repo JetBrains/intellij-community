@@ -1,10 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -114,9 +118,8 @@ public class RemoteAgentReflectiveProxyFactory extends RemoteAgentProxyFactoryBa
       else if (type.isInterface()) {
         myMirrorType = mirrorClassLoader.loadClass(type.getName());
         myMirrorValue = value == null ? null
-                                      : Proxy.newProxyInstance(mirrorClassLoader,
-                                                               new Class[]{myMirrorType},
-                                                               new ReflectiveInvocationHandler(value, classLoader, mirrorClassLoader));
+                                      : ReflectionUtil.proxy(myMirrorType,
+                                                             new ReflectiveInvocationHandler(value, classLoader, mirrorClassLoader));
       }
       else {
         myMirrorType = type;

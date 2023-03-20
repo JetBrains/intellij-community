@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 
 public class FlipComparisonIntention extends MutablyNamedIntention {
   @Override
-  protected @IntentionName String getTextForElement(PsiElement element) {
+  protected @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression) element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     final String comparison = ComparisonUtils.getStringForComparison(tokenType);

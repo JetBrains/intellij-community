@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import ast
 import sys
 from itertools import chain
 from pathlib import Path
 
 
-def check_new_syntax(tree: ast.AST, path: Path) -> list[str]:
+def check_new_syntax(tree: ast.AST, path: Path, stub: str) -> list[str]:
     errors = []
+    sourcelines = stub.splitlines()
 
-    def unparse_without_tuple_parens(node: ast.AST) -> str:
-        if isinstance(node, ast.Tuple) and node.elts:
-            return ast.unparse(node)[1:-1]
-        return ast.unparse(node)
-
-    def is_dotdotdot(node: ast.AST) -> bool:
-        return isinstance(node, ast.Constant) and node.s is Ellipsis
-
-    class OldSyntaxFinder(ast.NodeVisitor):
+    class AnnotationUnionFinder(ast.NodeVisitor):
         def visit_Subscript(self, node: ast.Subscript) -> None:
             if isinstance(node.value, ast.Name):
                 if node.value.id == "Union" and isinstance(node.slice, ast.Tuple):
@@ -26,46 +21,75 @@ def check_new_syntax(tree: ast.AST, path: Path) -> list[str]:
                 if node.value.id == "Optional":
                     new_syntax = f"{ast.unparse(node.slice)} | None"
                     errors.append(f"{path}:{node.lineno}: Use PEP 604 syntax for Optional, e.g. `{new_syntax}`")
-                if node.value.id == "List":
-                    new_syntax = f"list[{ast.unparse(node.slice)}]"
-                    errors.append(f"{path}:{node.lineno}: Use built-in generics, e.g. `{new_syntax}`")
-                if node.value.id == "Dict":
-                    new_syntax = f"dict[{unparse_without_tuple_parens(node.slice)}]"
-                    errors.append(f"{path}:{node.lineno}: Use built-in generics, e.g. `{new_syntax}`")
-                # Tuple[Foo, ...] must be allowed because of mypy bugs
-                if node.value.id == "Tuple" and not (
-                    isinstance(node.slice, ast.Tuple)
-                    and len(node.slice.elts) == 2
-                    and is_dotdotdot(node.slice.elts[1])
-                ):
-                    new_syntax = f"tuple[{unparse_without_tuple_parens(node.slice)}]"
-                    errors.append(f"{path}:{node.lineno}: Use built-in generics, e.g. `{new_syntax}`")
 
             self.generic_visit(node)
 
-    # This doesn't check type aliases (or type var bounds, etc), since those are not
-    # currently supported
-    #
-    # TODO: can use built-in generics in type aliases
-    class AnnotationFinder(ast.NodeVisitor):
+    class NonAnnotationUnionFinder(ast.NodeVisitor):
+        def visit_Subscript(self, node: ast.Subscript) -> None:
+            if isinstance(node.value, ast.Name):
+                nodelines = sourcelines[(node.lineno - 1) : node.end_lineno]
+                for line in nodelines:
+                    # A hack to workaround various PEP 604 bugs in mypy
+                    if any(x in line for x in {"tuple[", "Callable[", "type["}):
+                        return None
+                if node.value.id == "Union" and isinstance(node.slice, ast.Tuple):
+                    new_syntax = " | ".join(ast.unparse(x) for x in node.slice.elts)
+                    errors.append(f"{path}:{node.lineno}: Use PEP 604 syntax for Union, e.g. `{new_syntax}`")
+                elif node.value.id == "Optional":
+                    new_syntax = f"{ast.unparse(node.slice)} | None"
+                    errors.append(f"{path}:{node.lineno}: Use PEP 604 syntax for Optional, e.g. `{new_syntax}`")
+
+            self.generic_visit(node)
+
+    class OldSyntaxFinder(ast.NodeVisitor):
         def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
-            OldSyntaxFinder().visit(node.annotation)
+            AnnotationUnionFinder().visit(node.annotation)
+            if node.value is not None:
+                NonAnnotationUnionFinder().visit(node.value)
+            self.generic_visit(node)
 
         def visit_arg(self, node: ast.arg) -> None:
             if node.annotation is not None:
-                OldSyntaxFinder().visit(node.annotation)
+                AnnotationUnionFinder().visit(node.annotation)
+            self.generic_visit(node)
+
+        def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+            if node.returns is not None:
+                AnnotationUnionFinder().visit(node.returns)
+            self.generic_visit(node)
 
         def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-            if node.returns is not None:
-                OldSyntaxFinder().visit(node.returns)
-            self.generic_visit(node)
+            self._visit_function(node)
 
         def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-            if node.returns is not None:
-                OldSyntaxFinder().visit(node.returns)
+            self._visit_function(node)
+
+        def visit_Assign(self, node: ast.Assign) -> None:
+            NonAnnotationUnionFinder().visit(node.value)
             self.generic_visit(node)
 
-    AnnotationFinder().visit(tree)
+        def visit_ClassDef(self, node: ast.ClassDef) -> None:
+            for base in node.bases:
+                NonAnnotationUnionFinder().visit(base)
+            self.generic_visit(node)
+
+    class IfFinder(ast.NodeVisitor):
+        def visit_If(self, node: ast.If) -> None:
+            if (
+                isinstance(node.test, ast.Compare)
+                and ast.unparse(node.test).startswith("sys.version_info < ")
+                and node.orelse
+                and not (len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If))  # elif statement (#6728)
+            ):
+                new_syntax = "if " + ast.unparse(node.test).replace("<", ">=", 1)
+                errors.append(
+                    f"{path}:{node.lineno}: When using if/else with sys.version_info, "
+                    f"put the code for new Python versions first, e.g. `{new_syntax}`"
+                )
+            self.generic_visit(node)
+
+    OldSyntaxFinder().visit(tree)
+    IfFinder().visit(tree)
     return errors
 
 
@@ -78,8 +102,9 @@ def main() -> None:
             continue
 
         with open(path) as f:
-            tree = ast.parse(f.read())
-        errors.extend(check_new_syntax(tree, path))
+            stub = f.read()
+            tree = ast.parse(stub)
+        errors.extend(check_new_syntax(tree, path, stub))
 
     if errors:
         print("\n".join(errors))

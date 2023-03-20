@@ -2,49 +2,73 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLocationChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logNameChanged
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.shortenTextWithEllipsis
+import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
-import java.io.File
-import java.nio.file.InvalidPathException
+import com.intellij.ui.util.getTextWidth
+import com.intellij.util.applyIf
 import java.nio.file.Path
+import kotlin.io.path.name
 
-
-class NewProjectWizardBaseStep(override val context: WizardContext) : NewProjectWizardStep, NewProjectWizardBaseData {
-
-  override val data = UserDataHolderBase()
-
-  override val propertyGraph = PropertyGraph("New project wizard")
-
-  override val nameProperty = propertyGraph.graphProperty { suggestName() }
-  override val pathProperty = propertyGraph.graphProperty { context.projectFileDirectory }
+class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
+  override val nameProperty = propertyGraph.lazyProperty(::suggestName)
+  override val pathProperty = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
 
   override var name by nameProperty
   override var path by pathProperty
 
-  override val projectPath: Path get() = Path.of(path, name)
+  internal var bottomGap: Boolean = true
+
+  private fun suggestLocation(): Path {
+    val location = context.projectDirectory
+    if (context.isCreatingNewProject) {
+      return location
+    }
+    if (isModuleDirectory(location)) {
+      return location
+    }
+    val parentLocation = location.parent
+    if (parentLocation == null) {
+      return location
+    }
+    return parentLocation
+  }
 
   private fun suggestName(): String {
+    val location = context.projectDirectory
+    if (path == location.parent?.toCanonicalPath()) {
+      return location.name
+    }
+    return suggestUniqueName()
+  }
+
+  private fun suggestUniqueName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
-    return FileUtil.createSequentFileName(File(path), "untitled", "") {
+    val path = path.toNioPathOrNull() ?: return "untitled"
+    return FileUtil.createSequentFileName(path.toFile(), "untitled", "") {
       !it.exists() && it.name !in moduleNames
     }
   }
@@ -55,32 +79,80 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
     return moduleManager.modules.toList()
   }
 
+  private fun isModuleDirectory(path: Path): Boolean {
+    return findAllModules().asSequence()
+      .flatMap { it.rootManager.contentRoots.asSequence() }
+      .any { it.isDirectory && it.toNioPathOrNull() == path }
+  }
+
+  init {
+    nameProperty.dependsOn(pathProperty, ::suggestUniqueName)
+  }
+
   override fun setupUI(builder: Panel) {
+    val locationProperty = pathProperty.joinCanonicalPath(nameProperty)
     with(builder) {
       row(UIBundle.message("label.project.wizard.new.project.name")) {
         textField()
-          .bindText(nameProperty)
+          .bindText(nameProperty.trim())
           .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateName() }
-          .validationOnInput { validateName() }
+          .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_MODULE_NAME(context.project))
+          .applyIf(context.isCreatingNewProject) { validation(CHECK_PROJECT_PATH(context.project, locationProperty)) }
+          .applyIf(!context.isCreatingNewProject) { validation(CHECK_MODULE_PATH(context.project, locationProperty)) }
           .focused()
+          .gap(RightGap.SMALL)
+          .whenTextChangedFromUi { logNameChanged() }
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
-      row(UIBundle.message("label.project.wizard.new.project.location")) {
-        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-        val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+
+      val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
+        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+          .withFileFilter { it.isDirectory }
+          .withPathToTextConvertor(::getPresentablePath)
+          .withTextToPathConvertor(::getCanonicalPath)
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        val uiPathProperty = pathProperty.transform(::getPresentablePath, ::getCanonicalPath)
-        textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
-          .bindText(uiPathProperty)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .validationOnApply { validateLocation() }
-          .validationOnInput { validateLocation() }
-      }.bottomGap(BottomGap.SMALL)
+        textFieldWithBrowseButton(title, context.project, fileChooserDescriptor)
+          .bindText(pathProperty.toUiPathProperty())
+          .align(AlignX.FILL)
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+          .whenTextChangedFromUi { logLocationChanged() }
+          .comment("", MAX_LINE_LENGTH_NO_WRAP)
+          .also { textField ->
+            val comment = textField.comment!!
+            val widthProperty = textField.component.widthProperty
+            val commentProperty = operation(locationProperty, widthProperty) { path, width ->
+              val emptyText = UIBundle.message("label.project.wizard.new.project.path.description", context.isCreatingNewProjectInt, "")
+              val maxPathWidth = ((LOCATION_COMMENT_RATIO * width).toInt() - comment.getTextWidth(emptyText))
+              val shortPath = shortenTextWithEllipsis(
+                text = getPresentablePath(path),
+                maxTextWidth = maxPathWidth,
+                getTextWidth = comment::getTextWidth,
+              )
+              UIBundle.message("label.project.wizard.new.project.path.description", context.isCreatingNewProjectInt, shortPath)
+            }
+            comment.bind(commentProperty)
+          }
+      }
+
+      if (bottomGap) {
+        locationRow.bottomGap(BottomGap.SMALL)
+      }
 
       onApply {
         context.projectName = name
-        context.setProjectFileDirectory(projectPath, false)
+        context.setProjectFileDirectory(path.toNioPath().resolve(name), false)
+      }
+    }
+  }
+
+  override fun setupProject(project: Project) {
+    if (context.isCreatingNewProject) {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          val projectManager = ProjectRootManager.getInstance(project)
+          projectManager.projectSdk = context.projectJdk
+        }
       }
     }
   }
@@ -93,54 +165,24 @@ class NewProjectWizardBaseStep(override val context: WizardContext) : NewProject
     return null
   }
 
-  private fun ValidationInfoBuilder.validateName(): ValidationInfo? {
-    if (name.isEmpty()) {
-      return error(UIBundle.message("label.project.wizard.new.project.missing.name.error", if (context.isCreatingNewProject) 1 else 0))
-    }
-    if (name in findAllModules().map { it.name }.toSet()) {
-      return error(UIBundle.message("label.project.wizard.new.project.name.exists.error", if (context.isCreatingNewProject) 1 else 0, name))
-    }
-    return null
-  }
-
-  private fun ValidationInfoBuilder.validateLocation(): ValidationInfo? {
-    if (path.isEmpty()) {
-      return error(UIBundle.message("label.project.wizard.new.project.missing.path.error", if (context.isCreatingNewProject) 1 else 0))
-    }
-
-    val projectPath = try {
-      projectPath
-    }
-    catch (ex: InvalidPathException) {
-      return error(UIBundle.message("label.project.wizard.new.project.directory.invalid", ex.reason))
-    }
-    for (project in ProjectManager.getInstance().openProjects) {
-      if (ProjectUtil.isSameProject(projectPath, project)) {
-        return error(UIBundle.message("label.project.wizard.new.project.directory.already.taken.error", project.name))
-      }
-    }
-
-    val file = projectPath.toFile()
-    if (file.exists()) {
-      if (!file.canWrite()) {
-        return error(UIBundle.message("label.project.wizard.new.project.directory.not.writable.error"))
-      }
-      val children = file.list()
-      if (children == null) {
-        return error(UIBundle.message("label.project.wizard.new.project.file.not.directory.error"))
-      }
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        if (children.isNotEmpty()) {
-          return warning(UIBundle.message("label.project.wizard.new.project.directory.not.empty.warning"))
-        }
-      }
-    }
-    return null
-  }
-
-  override fun setupProject(project: Project) {}
-
   init {
     data.putUserData(NewProjectWizardBaseData.KEY, this)
   }
+
+  companion object {
+
+    /**
+     * Defines ration between location text field width and location comment width.
+     * Cannot be 1.0 or more because:
+     *  1. Comment width is dependent on location text field width;
+     *  2. Minimum location text field width cannot be less comment width.
+     * So this ratio makes gap between minimum widths of comment and location.
+     * It allows to smooth resize components (location and comment) when NPW dialog is resized.
+     */
+    private const val LOCATION_COMMENT_RATIO = 0.9f
+  }
+}
+
+fun newProjectWizardBaseStepWithoutGap(parent: NewProjectWizardStep): NewProjectWizardBaseStep {
+  return NewProjectWizardBaseStep(parent).apply { bottomGap = false }
 }

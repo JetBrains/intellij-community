@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.ThemesListProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -24,19 +25,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
-  private UIManager.LookAndFeelInfo initialLaf;
   private final Alarm switchAlarm = new Alarm();
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    LafManager lafMan = LafManager.getInstance();
-    UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
-    initialLaf = lafMan.getCurrentLookAndFeel();
+    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentLookAndFeel();
 
-    for (UIManager.LookAndFeelInfo lf : lfs) {
-      group.add(new LafChangeAction(lf, initialLaf == lf));
+    for (List<UIManager.LookAndFeelInfo> list : ThemesListProvider.getInstance().getShownThemes()) {
+      if (group.getChildrenCount() > 0) group.addSeparator();
+      for (UIManager.LookAndFeelInfo lf : list) group.add(new LafChangeAction(lf, initialLaf == lf));
     }
 
     group.addSeparator();
@@ -51,6 +51,8 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
+    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentLookAndFeel();
+
     switchAlarm.cancelAllRequests();
     if (Registry.is("ide.instant.theme.switch")) {
       popup.addListSelectionListener(event -> {
@@ -71,6 +73,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
+        switchAlarm.cancelAllRequests();
         if (Registry.is("ide.instant.theme.switch") && !event.isOk()) {
           switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
         }
@@ -84,12 +87,16 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   @Nullable
   protected Condition<? super AnAction> preselectAction() {
     LafManager lafMan = LafManager.getInstance();
-    return (a) -> ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
+    return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
   }
 
   public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
+    switchLafAndUpdateUI(lafMan, lf, async, false);
+  }
+
+  public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async, boolean force) {
     UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
-    if (cur == lf) return;
+    if (!force && cur == lf) return;
     ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
 
     final boolean wasDarcula = StartupUiUtil.isUnderDarcula();
@@ -145,9 +152,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!Registry.is("ide.instant.theme.switch")) {
-        switchLafAndUpdateUI(LafManager.getInstance(), myLookAndFeelInfo, false);
-      }
+      switchLafAndUpdateUI(LafManager.getInstance(), myLookAndFeelInfo, false);
     }
 
     @Nullable

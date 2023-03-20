@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
@@ -121,7 +120,7 @@ public final class EditorActionUtil {
    * Unless 'resetToSingleLineAtCaret' is set, and because the resulting selection always includes the line ending character,
    * repeated invocations of this method extend the selection to include each next line one by one.
    *
-   * @param resetToSingleLineAtCaret discard the the current selection, if any,
+   * @param resetToSingleLineAtCaret discard the current selection, if any,
    *                                 and select just a single line at the caret position.
    */
   public static void selectEntireLines(@NotNull Caret caret, boolean resetToSingleLineAtCaret) {
@@ -131,19 +130,12 @@ public final class EditorActionUtil {
     if (lineNumber >= document.getLineCount()) {
       return;
     }
-
-    Pair<LogicalPosition, LogicalPosition> lines =
-      EditorUtil.calcSurroundingRange(editor,
-                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
-                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-
+    TextRange range =
+      EditorUtil.calcSurroundingTextRange(editor,
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    caret.setSelection(start, end);
+    caret.setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
   @NotNull
@@ -185,7 +177,7 @@ public final class EditorActionUtil {
 
     final int newOffset = getNextWordStopOffset(text, wordStop, tokenIterator, offset, maxOffset, isCamel);
     if (newOffset < maxOffset &&
-        handleQuoted && tokenIterator != null &&
+        handleQuoted && !tokenIterator.atEnd() &&
         isTokenStart(tokenIterator, newOffset - 1) &&
         isQuotedToken(tokenIterator, text)) {
       // now at the end of an opening quote: | "word" -> "|word"
@@ -214,7 +206,7 @@ public final class EditorActionUtil {
 
     final int newOffset = getPreviousWordStopOffset(text, wordStop, tokenIterator, offset, minOffset, isCamel);
     if (newOffset > minOffset &&
-        handleQuoted && tokenIterator != null &&
+        handleQuoted && !tokenIterator.atEnd() &&
         isTokenEnd(tokenIterator, newOffset + 1) &&
         isQuotedToken(tokenIterator, text)) {
       // at the start of a closing quote:  "word|" <- "word" |
@@ -228,22 +220,22 @@ public final class EditorActionUtil {
   }
 
   private static int getNextWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
-                                           @Nullable HighlighterIterator tokenIterator,
+                                           @NotNull HighlighterIterator tokenIterator,
                                            int offset, int maxOffset, boolean isCamel) {
     int newOffset = offset + 1;
     for (; newOffset < maxOffset; newOffset++) {
-      final boolean isTokenBoundary = tokenIterator != null && advanceTokenOnBoundary(tokenIterator, text, newOffset);
+      final boolean isTokenBoundary = advanceTokenOnBoundary(tokenIterator, text, newOffset);
       if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary)) break;
     }
     return newOffset;
   }
 
   private static int getPreviousWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
-                                               @Nullable HighlighterIterator tokenIterator,
+                                               @NotNull HighlighterIterator tokenIterator,
                                                int offset, int minOffset, boolean isCamel) {
     int newOffset = offset - 1;
     for (; newOffset > minOffset; newOffset--) {
-      final boolean isTokenBoundary = tokenIterator != null && retreatTokenOnBoundary(tokenIterator, text, newOffset);
+      final boolean isTokenBoundary = retreatTokenOnBoundary(tokenIterator, text, newOffset);
       if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary)) break;
     }
     return newOffset;
@@ -262,22 +254,28 @@ public final class EditorActionUtil {
   }
 
   private static boolean advanceTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (tokenIterator.atEnd()) return false;
     if (isTokenEnd(tokenIterator, offset)) {
       final IElementType leftToken = tokenIterator.getTokenType();
       final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
       tokenIterator.advance();
-      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+      if (wasQuotedToken) return true;
+      if (tokenIterator.atEnd()) return false;
+      return isQuotedToken(tokenIterator, text) ||
              !isBetweenWhitespaces(text, offset) && isLexemeBoundary(leftToken, tokenIterator.getTokenType());
     }
     return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
   }
 
   private static boolean retreatTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (tokenIterator.atEnd()) return false;
     if (isTokenStart(tokenIterator, offset)) {
       final IElementType rightToken = tokenIterator.getTokenType();
       final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
       tokenIterator.retreat();
-      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+      if (wasQuotedToken) return true;
+      if (tokenIterator.atEnd()) return false;
+      return isQuotedToken(tokenIterator, text) ||
              !isBetweenWhitespaces(text, offset) && isLexemeBoundary(tokenIterator.getTokenType(), rightToken);
     }
     return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
@@ -312,8 +310,7 @@ public final class EditorActionUtil {
     return (ch == '\'' || ch == '\"') ? ch : 0;
   }
 
-  @Nullable
-  private static HighlighterIterator createHighlighterIteratorAtOffset(@NotNull Editor editor, int offset) {
+  private static @NotNull HighlighterIterator createHighlighterIteratorAtOffset(@NotNull Editor editor, int offset) {
     return editor.getHighlighter().createIterator(offset);
   }
 
@@ -525,12 +522,8 @@ public final class EditorActionUtil {
   }
 
   /**
-   * Tries to find visual column that points to the first non-white space symbol at the visual line at the given editor.
-   *
-   * @param editor              target editor
-   * @param visualLineNumber    target visual line
-   * @return                    visual column that points to the first non-white space symbol at the target visual line if the one exists;
-   *                            {@code '-1'} otherwise
+   * Returns the visual column that points to the first non-whitespace symbol at the visual line in the given editor,
+   * or -1 if there is no such column.
    */
   public static int findFirstNonSpaceColumnOnTheLine(@NotNull Editor editor, int visualLineNumber) {
     int startOffset = editor.visualPositionToOffset(new VisualPosition(visualLineNumber, 0));

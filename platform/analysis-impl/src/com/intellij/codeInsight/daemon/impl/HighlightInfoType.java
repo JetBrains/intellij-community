@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +35,7 @@ public interface HighlightInfoType {
   @Deprecated HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
   HighlightInfoType WEAK_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WEAK_WARNING, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
   HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  HighlightInfoType TEXT_ATTRIBUTES = new HighlightInfoTypeImpl(HighlightSeverity.TEXT_ATTRIBUTES, CodeInsightColors.CONSIDERATION_ATTRIBUTES);
 
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 
@@ -80,7 +80,7 @@ public interface HighlightInfoType {
   /**
    * @see com.intellij.openapi.editor.impl.RangeHighlighterImpl#VISIBLE_IF_FOLDED
    */
-  Set<HighlightInfoType> VISIBLE_IF_FOLDED = ContainerUtil.immutableSet(
+  Set<HighlightInfoType> VISIBLE_IF_FOLDED = Set.of(
     ELEMENT_UNDER_CARET_READ, 
     ELEMENT_UNDER_CARET_WRITE,
     WARNING,
@@ -116,6 +116,11 @@ public interface HighlightInfoType {
       myNeedsUpdateOnTyping = needsUpdateOnTyping;
     }
 
+    /** Whether the corresponding severity should be available for choosing and editing in inspection settings */
+    public boolean isApplicableToInspections() {
+      return true;
+    }
+
     @Override
     @NotNull
     public HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {
@@ -146,9 +151,7 @@ public interface HighlightInfoType {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof HighlightInfoTypeImpl)) return false;
-
-      HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
+      if (!(o instanceof HighlightInfoTypeImpl that)) return false;
 
       if (!Comparing.equal(myAttributesKey, that.myAttributesKey)) return false;
       if (!mySeverity.equals(that.mySeverity)) return false;

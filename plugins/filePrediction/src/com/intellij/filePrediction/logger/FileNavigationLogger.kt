@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 
 internal class FileNavigationLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("file.prediction", 13)
+    private val GROUP = EventLogGroup("file.prediction", 14)
 
     private var session: IntEventField = EventFields.Int("session")
     private var performance: LongListEventField = EventFields.LongList("performance")
@@ -21,7 +21,7 @@ internal class FileNavigationLogger : CounterUsagesCollector() {
 
     private var probability: EncodedDoubleEventField = EncodedDoubleEventField("prob")
 
-    private var features: StringEventField = EventFields.StringValidatedByCustomRule("features", "file_features")
+    private var features: StringEventField = EventFields.StringValidatedByCustomRule("features", FilePredictionFeaturesValidator::class.java)
 
     private var candidates: ObjectListEventField = ObjectListEventField(
       "candidates",

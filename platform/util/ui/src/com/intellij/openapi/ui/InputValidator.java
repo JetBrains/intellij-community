@@ -8,10 +8,10 @@ import javax.swing.*;
 /**
  * The validator for input dialogs.
  *
- * @see Messages#showInputDialog(String, String, javax.swing.Icon, String, InputValidator)
- * @see Messages#showInputDialog(java.awt.Component, String, String, javax.swing.Icon, String, InputValidator)
+ * @see Messages#showInputDialog(String, String, Icon, String, InputValidator)
+ * @see Messages#showInputDialog(java.awt.Component, String, String, Icon, String, InputValidator)
  * @see Messages#showInputDialog(com.intellij.openapi.project.Project, String, String, Icon, String, InputValidator)
- * @see Messages#showEditableChooseDialog(String, String, javax.swing.Icon, String[], String, InputValidator)
+ * @see Messages#showEditableChooseDialog(String, String, Icon, String[], String, InputValidator)
  */
 public interface InputValidator {
   /**

@@ -1,4 +1,4 @@
-// "Replace 'collect(counting())' with 'count()'" "true"
+// "Replace 'collect(counting())' with 'count()'" "true-preview"
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,35 +1,58 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinOverlayProgress;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author peter
- */
-public class TestWriteActionUnderProgress extends DumbAwareAction {
+final class TestWriteActionUnderProgress extends DumbAwareAction {
+
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> runProgresses(), 2, TimeUnit.SECONDS);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
-  private static void runProgresses() {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> runProgresses(project, component), 2, TimeUnit.SECONDS);
+  }
+
+  private static void runProgresses(@Nullable Project project, @Nullable Component component) {
+    JComponent comp = ObjectUtils.tryCast(component, JComponent.class);
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
     boolean success = app.runWriteActionWithNonCancellableProgressInDispatchThread(
-      "Progress", null, null, TestWriteActionUnderProgress::runIndeterminateProgress);
+      "Progress", project, comp, TestWriteActionUnderProgress::runIndeterminateProgress);
     assert success;
 
     app.runWriteActionWithCancellableProgressInDispatchThread(
-      "Cancellable progress", null, null, TestWriteActionUnderProgress::runDeterminateProgress);
+      "Cancellable progress", project, comp, TestWriteActionUnderProgress::runDeterminateProgress);
+
+    app.runWriteAction(() -> {
+      Window window = ProgressWindow.calcParentWindow(component, project);
+      PotemkinOverlayProgress progress = new PotemkinOverlayProgress(window);
+      progress.setDelayInMillis(0);
+      ProgressManager.getInstance().runProcess(() -> runIndeterminateProgress(progress), progress);
+    });
   }
 
   private static void runDeterminateProgress(ProgressIndicator indicator) {

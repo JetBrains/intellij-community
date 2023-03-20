@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,14 +25,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
 
-/**
- * @author ven
- */
 public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase {
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    JavaCodeStyleSettings.getInstance(getProject()).VISIBILITY = VisibilityUtil.ESCALATE_VISIBILITY;
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override

@@ -20,7 +20,7 @@ class JavaExtractMethodCocktailSortLesson
       showWarningIfInplaceRefactoringsDisabled()
 
       actionTask("ExtractMethod") {
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(javaSortSample)
         LessonsBundle.message("extract.method.invoke.action", action(it))
       }
 
@@ -35,7 +35,7 @@ class JavaExtractMethodCocktailSortLesson
       task {
         text(JavaLessonsBundle.message("java.extract.method.edit.method.name", rawEnter()))
 
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
+        triggerUI().component { dialog: JDialog ->
           dialog.title == processDuplicatesTitle
         }
 
@@ -65,8 +65,6 @@ class JavaExtractMethodCocktailSortLesson
 
       restoreRefactoringOptionsInformer()
     }
-
-  override val suitableTips = listOf("ExtractMethod")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("extract.method.help.link"),

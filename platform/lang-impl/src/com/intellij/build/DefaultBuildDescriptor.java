@@ -42,6 +42,8 @@ import java.util.function.Supplier;
 public class DefaultBuildDescriptor implements BuildDescriptor {
 
   private final Object myId;
+
+  private final Object myGroupId;
   private final @BuildEventsNls.Title String myTitle;
   private final String myWorkingDir;
   private final long myStartTime;
@@ -65,16 +67,24 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
                                 @NotNull @BuildEventsNls.Title String title,
                                 @NotNull String workingDir,
                                 long startTime) {
+    this(id, null, title, workingDir, startTime);
+  }
+
+  public DefaultBuildDescriptor(@NotNull Object id,
+                                @Nullable Object groupId,
+                                @NotNull @BuildEventsNls.Title String title,
+                                @NotNull String workingDir,
+                                long startTime) {
     myId = id;
+    myGroupId = groupId;
     myTitle = title;
     myWorkingDir = workingDir;
     myStartTime = startTime;
   }
 
-  public DefaultBuildDescriptor(@Nullable @NotNull BuildDescriptor descriptor) {
-    this(descriptor.getId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
-    if (descriptor instanceof DefaultBuildDescriptor) {
-      DefaultBuildDescriptor defaultBuildDescriptor = (DefaultBuildDescriptor)descriptor;
+  public DefaultBuildDescriptor(@NotNull BuildDescriptor descriptor) {
+    this(descriptor.getId(), descriptor.getGroupId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
+    if (descriptor instanceof DefaultBuildDescriptor defaultBuildDescriptor) {
       myActivateToolWindowWhenAdded = defaultBuildDescriptor.myActivateToolWindowWhenAdded;
       myActivateToolWindowWhenFailed = defaultBuildDescriptor.myActivateToolWindowWhenFailed;
       myAutoFocusContent = defaultBuildDescriptor.myAutoFocusContent;
@@ -95,6 +105,11 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   @Override
   public Object getId() {
     return myId;
+  }
+
+  @Override
+  public Object getGroupId() {
+    return myGroupId;
   }
 
   @NotNull

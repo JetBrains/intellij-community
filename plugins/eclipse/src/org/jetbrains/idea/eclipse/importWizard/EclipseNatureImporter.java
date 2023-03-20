@@ -12,9 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class EclipseNatureImporter {
   public static final ExtensionPointName<EclipseNatureImporter> EP_NAME =
     ExtensionPointName.create("org.jetbrains.idea.eclipse.natureImporter");

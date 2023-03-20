@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert to local" "true-preview"
 class Outer {
 
   void test() {

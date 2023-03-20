@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class MavenParamLanguageProvider {
 
   @Nullable

@@ -8,19 +8,22 @@ import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.*
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.ide.wizard.getCanonicalPath
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
 import com.intellij.openapi.externalSystem.service.ui.getSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesFiled
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesInfo
+import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.SettingsFragmentInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.isOperationCompleted
+import com.intellij.openapi.observable.operation.core.traceRun
+import com.intellij.openapi.observable.operation.core.whenOperationFinished
+import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
@@ -28,12 +31,13 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
-import com.intellij.util.lockOrSkip
+import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -62,16 +66,16 @@ class MavenRunConfigurationSettingsEditor(
   runConfiguration,
   runConfiguration.extensionsManager
 ) {
-  private val resetOperation = AnonymousParallelOperationTrace()
+  private val resetOperation = AtomicOperationTrace()
 
   override fun resetEditorFrom(s: RunnerAndConfigurationSettingsImpl) {
-    resetOperation.task {
+    resetOperation.traceRun {
       super.resetEditorFrom(s)
     }
   }
 
   override fun resetEditorFrom(settings: MavenRunConfiguration) {
-    resetOperation.task {
+    resetOperation.traceRun {
       super.resetEditorFrom(settings)
     }
   }
@@ -117,6 +121,7 @@ class MavenRunConfigurationSettingsEditor(
       addWorkOfflineTag()
       addCheckSumPolicyTag()
       addMultiProjectBuildPolicyTag()
+      addEmulateTerminalTag()
     }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
@@ -148,7 +153,7 @@ class MavenRunConfigurationSettingsEditor(
     configure: SettingsFragmentsContainer<S>.() -> Unit
   ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
 
-    private val separator = CollapsibleTitledSeparator(group)
+    private val separator = CollapsibleTitledSeparatorImpl(group)
     private val checkBox: JCheckBox
     private val checkBoxWithLink: JComponent
 
@@ -206,7 +211,7 @@ class MavenRunConfigurationSettingsEditor(
 
       init {
         children.forEach { bind(separator, it) }
-        resetOperation.afterOperation {
+        resetOperation.whenOperationFinished {
           separator.expanded = !checkBox.isSelected
         }
       }
@@ -227,7 +232,7 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  private fun bind(separator: CollapsibleTitledSeparator, fragment: SettingsEditorFragment<*, *>) {
+  private fun bind(separator: CollapsibleTitledSeparatorImpl, fragment: SettingsEditorFragment<*, *>) {
     val mutex = AtomicBoolean()
     separator.onAction {
       mutex.lockOrSkip {
@@ -358,6 +363,19 @@ class MavenRunConfigurationSettingsEditor(
     )
   }
 
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addEmulateTerminalTag() {
+    if (!SystemInfo.isWindows) {
+      addTag(
+        "maven.emulate.terminal",
+        MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.name"),
+        MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
+        MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.hint"),
+        { generalSettingsOrDefault.isEmulateTerminal },
+        { generalSettingsOrDefault.isEmulateTerminal = it }
+      )
+    }
+  }
+
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addDistributionFragment() =
     addDistributionFragment(
       project,
@@ -456,7 +474,7 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsHint: String? = null
         override val settingsActionHint: String? = null
       },
-      { it, c -> c.properties = it.runnerSettingsOrDefault.mavenProperties.map { PropertiesFiled.Property(it.key, it.value) } },
+      { it, c -> c.properties = it.runnerSettingsOrDefault.mavenProperties.map { PropertiesTable.Property(it.key, it.value) } },
       { it, c -> it.runnerSettingsOrDefault.mavenProperties = c.properties.associate { it.name to it.value } },
       { it.runnerSettingsOrDefault.mavenProperties.isNotEmpty() }
     )
@@ -523,7 +541,7 @@ class MavenRunConfigurationSettingsEditor(
       val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
       val distributionInfo = distributionComponent.selectedDistribution
       val distribution = distributionInfo?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3
-      val userSettingsPath = getCanonicalPath(userSettingsComponent.text.trim())
+      val userSettingsPath = getCanonicalPath(userSettingsComponent.text)
       val userSettingsFile = MavenWslUtil.getUserSettings(project, userSettingsPath, mavenConfig)
       val userSettings = getCanonicalPath(userSettingsFile.path)
       val localRepository = MavenWslUtil.getLocalRepo(project, "", distribution, userSettings, mavenConfig)

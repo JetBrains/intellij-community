@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.imports
 
@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
     override fun doTest(file: KtFile): String {
@@ -32,8 +32,8 @@ abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
 
 abstract class AbstractJvmOptimizeImportsTest : AbstractOptimizeImportsTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        if (fileName().endsWith(".kts")) KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_SCRIPT_RUNTIME
-        else KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+        if (fileName().endsWith(".kts")) KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
+        else KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 }
 
 abstract class AbstractJsOptimizeImportsTest : AbstractOptimizeImportsTest() {

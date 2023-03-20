@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.execution.Executor
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunConfigurationExecutorUtilValidator
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -22,9 +23,10 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.tools.actions", 6)
+    private val GROUP = EventLogGroup("build.tools.actions", 7)
     val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
-    private val ACTION_EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
+    private val ACTION_EXECUTOR_FIELD =
+      EventFields.StringValidatedByCustomRule("executor", RunConfigurationExecutorUtilValidator::class.java)
     private val DELEGATE_ACTION_ID = EventFields.Enum<ActionId>("action_id")
 
     private val ACTION_INVOKED = ActionsEventLogGroup.registerActionEvent(GROUP, "action.invoked", EXTERNAL_SYSTEM_ID)
@@ -58,7 +60,9 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
                 systemId: ProjectSystemId?,
                 action: AnAction,
                 event: AnActionEvent) {
-      ActionsCollectorImpl.record(ACTION_INVOKED, project, action, event, listOf(EXTERNAL_SYSTEM_ID with anonymizeSystemId(systemId)))
+      ActionsCollectorImpl.record(ACTION_INVOKED, project, action, event) { eventPairs ->
+        eventPairs.add(EXTERNAL_SYSTEM_ID with anonymizeSystemId(systemId))
+      }
     }
 
     @JvmStatic

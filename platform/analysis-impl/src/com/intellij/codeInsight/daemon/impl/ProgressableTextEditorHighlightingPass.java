@@ -22,7 +22,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -36,7 +35,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile boolean myFinished;
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
-  private volatile long myNextChunkThreshold; // the value myProgressCount should exceed to generate next fireProgressAdvanced event
+  private final AtomicLong myNextChunkThreshold = new AtomicLong(); // the value myProgressCount should exceed to generate next fireProgressAdvanced event
+  @NotNull
   private final @Nls String myPresentableName;
   protected final PsiFile myFile;
   @Nullable private final Editor myEditor;
@@ -58,8 +58,22 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myEditor = editor;
     myRestrictRange = restrictRange;
     myHighlightInfoProcessor = highlightInfoProcessor;
-    if (file != null && InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
-      throw new IllegalArgumentException("File must be top-level but " + file + " is an injected fragment");
+    if (file != null) {
+      if (file.getProject() != project) {
+        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is from an alien project (" + file.getProject()+") but expected: "+project);
+      }
+      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is an injected fragment but expected top-level");
+      }
+    }
+    if (editor != null) {
+      if (editor.getProject() != null && editor.getProject() != project) {
+        throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") " +
+                                           "belongs to an alien project '" + editor.getProject() + "' but expected: '" + project + "'");
+      }
+      if (editor.getDocument() != document) {
+        throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") has document " +editor.getDocument()+" but expected: "+document);
+      }
     }
   }
 
@@ -77,8 +91,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     myFinished = false;
     if (myFile != null) {
-      DaemonProgressIndicator daemonProgressIndicator = (DaemonProgressIndicator)ProgressWrapper.unwrapAll(progress);
-      myHighlightingSession = HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, daemonProgressIndicator, getColorsScheme());
+      myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(myFile);
     }
     try {
       collectInformationWithProgress(progress);
@@ -137,17 +150,16 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   public void setProgressLimit(long limit) {
     myProgressLimit = limit;
-    myNextChunkThreshold = Math.max(1, limit / 100); // 1% precision
+    myNextChunkThreshold.set(Math.max(1, limit / 100)); // 1% precision
   }
 
   public void advanceProgress(long delta) {
+    // session can be null in e.g., inspection batch mode
     if (myHighlightingSession != null) {
-      // session can be null in e.g. inspection batch mode
       long current = myProgressCount.addAndGet(delta);
-      if (current >= myNextChunkThreshold) {
-        double progress = getProgress();
-        myNextChunkThreshold += Math.max(1, myProgressLimit / 100);
-        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), progress);
+      if (current >= myNextChunkThreshold.get() &&
+          current >= myNextChunkThreshold.updateAndGet(old -> current >= old ? old+Math.max(1, myProgressLimit / 100) : old)) {
+        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
       }
     }
   }

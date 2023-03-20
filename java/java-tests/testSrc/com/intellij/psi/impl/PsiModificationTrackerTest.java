@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
-import com.intellij.configurationStore.StateStorageManagerKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ModificationTracker;
@@ -89,28 +90,29 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   }
 
   public void testRemoveAnnotatedMethod() {
-    doReplaceTest("public class Foo {\n" +
-                  "  <selection>  " +
-                  "   @SuppressWarnings(\"\")\n" +
-                  "    public void method() {}\n" +
-                  "</selection>" +
-                  "}",
+    doReplaceTest("""
+                    public class Foo {
+                      <selection>     @SuppressWarnings("")
+                        public void method() {}
+                    </selection>}""",
                   "");
   }
 
   public void testRenameAnnotatedMethod() {
-    doReplaceTest("public class Foo {\n" +
-                  "   @SuppressWarnings(\"\")\n" +
-                  "    public void me<selection>th</selection>od() {}\n" +
-                  "}",
+    doReplaceTest("""
+                    public class Foo {
+                       @SuppressWarnings("")
+                        public void me<selection>th</selection>od() {}
+                    }""",
                   "zzz");
   }
 
   public void testRenameAnnotatedClass() {
-    doReplaceTest("   @SuppressWarnings(\"\")\n" +
-                  "public class F<selection>o</selection>o {\n" +
-                  "    public void method() {}\n" +
-                  "}",
+    doReplaceTest("""
+                       @SuppressWarnings("")
+                    public class F<selection>o</selection>o {
+                        public void method() {}
+                    }""",
                   "zzz");
   }
 
@@ -141,7 +143,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void doTest(@NonNls String text, Processor<? super PsiFile> run) {
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
-    PsiModificationTracker tracker = PsiModificationTracker.SERVICE.getInstance(getProject());
+    PsiModificationTracker tracker = PsiModificationTracker.getInstance(getProject());
     long count = tracker.getModificationCount();
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       run.process(file);
@@ -408,7 +410,8 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     long js = getJavaTracker().getModificationCount();
     long ocb = tracker.getModificationCount();
 
-    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.INSTANCE, false, true));
+    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.INSTANCE,
+                                                                                           RootsChangeRescanningInfo.NO_RESCAN_NEEDED));
 
     assertTrue(mc != tracker.getModificationCount());
     assertTrue(js != getJavaTracker().getModificationCount());
@@ -417,7 +420,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   public void testNoIncrementOnWorkspaceFileChange() {
     FixtureRuleKt.runInLoadComponentStateMode(myProject, () -> {
-      StateStorageManagerKt.saveComponentManager(getProject(), true);
+      StoreUtil.saveSettings(getProject(), true);
 
       ModificationTracker tracker = getTracker();
       long mc = tracker.getModificationCount();
@@ -452,12 +455,13 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   }
 
   public void testChangeBothInsideAnonymousAndOutsideShouldAdvanceJavaModStructureAndClearCaches() {
-    PsiFile file = configureByText(JavaFileType.INSTANCE, "class A{ void bar() {\n" +
-                                                          "int a = foo().goo();\n" +
-                                                          "Object r = new Object() {\n" +
-                                                          "  void foo() {}\n" +
-                                                          "};\n" +
-                                                          "}}");
+    PsiFile file = configureByText(JavaFileType.INSTANCE, """
+      class A{ void bar() {
+      int a = foo().goo();
+      Object r = new Object() {
+        void foo() {}
+      };
+      }}""");
 
     PsiAnonymousClass anon = SyntaxTraverser.psiTraverser(file).filter(PsiAnonymousClass.class).first();
     Arrays.stream(anon.getAllMethods()).forEach(PsiUtilCore::ensureValid);
@@ -479,15 +483,14 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
   }
 
   public void testDeleteLocalClass() {
-    PsiFile file = configureByText(JavaFileType.INSTANCE, "class A{ void bar() {\n" +
-                                                          "abstract class Local { abstract void foo(); }\n" +
-                                                          "int a = 1;" +
-                                                          "while (true) {\n" +
-                                                          "Local r = new Local() {\n" +
-                                                          "  public void foo() {}\n" +
-                                                          "}" +
-                                                          "};\n" +
-                                                          "}}");
+    PsiFile file = configureByText(JavaFileType.INSTANCE, """
+      class A{ void bar() {
+      abstract class Local { abstract void foo(); }
+      int a = 1;while (true) {
+      Local r = new Local() {
+        public void foo() {}
+      }};
+      }}""");
 
     PsiAnonymousClass anon = SyntaxTraverser.psiTraverser(file).filter(PsiAnonymousClass.class).first();
     PsiMethod method = anon.getMethods()[0];
@@ -512,19 +515,19 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   @NotNull
   private ModificationTracker getTracker() {
-    return PsiModificationTracker.SERVICE.getInstance(getProject());
+    return PsiModificationTracker.getInstance(getProject());
   }
 
   @NotNull
   ModificationTracker getJavaTracker() {
-    return PsiModificationTracker.SERVICE.getInstance(getProject());
+    return PsiModificationTracker.getInstance(getProject());
   }
 
   public static class JavaLanguageTrackerTest extends PsiModificationTrackerTest {
     @Override
     @NotNull
     ModificationTracker getJavaTracker() {
-      return PsiModificationTracker.SERVICE.getInstance(getProject())
+      return PsiModificationTracker.getInstance(getProject())
         .forLanguage(JavaLanguage.INSTANCE);
     }
   }

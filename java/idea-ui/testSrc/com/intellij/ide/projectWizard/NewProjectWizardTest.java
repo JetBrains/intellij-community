@@ -5,16 +5,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.SystemProperties;
+
+import static com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.getJavaData;
+import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
 
 /**
  * @author Dmitry Avdeev
@@ -34,12 +37,49 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     assertEquals(version.getMaxLanguageLevel(), LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
   }
 
-  public void testDefaultModule() throws Exception {
+  public void testModuleJdk() throws Exception {
+    configureJdk();
+
     Project project = createProject(step -> {});
     final var manager = ModuleManager.getInstance(project);
+
+    // Default module should have null JDK
     assertSize(1, manager.getModules());
     final var module = manager.getModules()[0];
     assertTrue(ModuleRootManager.getInstance(module).isSdkInherited());
+  }
+
+  public void testNewModuleJdk() throws Exception {
+    final Sdk otherSdk = new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome());
+    final Sdk defaultSdk = ProjectJdkTable.getInstance().findJdk(DEFAULT_SDK);
+    final String moduleName = "new_module";
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      addSdk(defaultSdk);
+      addSdk(otherSdk);
+    });
+
+    // Project with default JDK
+    Project project = createProjectFromTemplate(step -> {
+      getJavaData(step).setSdk(defaultSdk);
+    });
+    assertEquals(ProjectRootManager.getInstance(project).getProjectSdk().getName(), defaultSdk.getName());
+
+    // Module with custom JDK
+    createModuleFromTemplate(project, step -> {
+      getLanguageData(step).setLanguage("Java");
+      getJavaData(step).setSdk(otherSdk);
+      getJavaData(step).setModuleName(moduleName);
+    });
+
+    final var manager = ModuleManager.getInstance(project);
+    assertSize(2, manager.getModules());
+
+    // Module JDK should be _other
+    final var module = manager.findModuleByName(moduleName);
+    assertNotNull(module);
+    assertFalse(ModuleRootManager.getInstance(module).isSdkInherited());
+    assertEquals(ModuleRootManager.getInstance(module).getSdk().getName(), otherSdk.getName());
   }
 
   public void testDefaultLanguageLevel13() throws Exception {
@@ -89,6 +129,14 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
     assertEquals(version.getMaxLanguageLevel(), extension.getLanguageLevel());
+  }
+
+  public void testSampleCode() throws Exception {
+    Project project = createProjectFromTemplate(step -> {
+      getJavaData(step).setAddSampleCode(true);
+    });
+    final var mainSearch = FilenameIndex.getVirtualFilesByName("Main.java", GlobalSearchScope.projectScope(project));
+    assertFalse(mainSearch.isEmpty());
   }
 
   private static void setProjectSdk(final Project project, final Sdk jdk17) {

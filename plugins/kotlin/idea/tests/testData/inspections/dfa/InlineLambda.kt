@@ -92,7 +92,7 @@ fun atLeastOnce() {
     if (<warning descr="Condition 'x == 2' is always true">x == 2</warning>) {}
 }
 
-@<warning descr="[EXPERIMENTAL_IS_NOT_ENABLED] This class can only be used with the compiler argument '-Xopt-in=kotlin.RequiresOptIn'">OptIn</warning>(kotlin.contracts.ExperimentalContracts::class)
+@OptIn(kotlin.contracts.ExperimentalContracts::class)
 inline fun runAtLeastOnce(lambda: () -> Unit) {
     contract {
         callsInPlace(lambda, InvocationKind.AT_LEAST_ONCE)
@@ -108,4 +108,16 @@ class NestedLetWithDivision {
     fun test() {
         x?.let { ratio -> y = z?.let { (it / ratio).toInt() } }
     }
+}
+fun flushThisInRun() {
+    // KTIJ-23772
+    var x = false
+    var y = false
+
+    for(line in 1..2) {
+        line.run {
+            if (this == 1) x = true else y = true
+        }
+    }
+    println(x && y)
 }

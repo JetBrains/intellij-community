@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'ext'" "true"
 package p
 
 open class A {

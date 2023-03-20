@@ -7,10 +7,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.CompressionUtil
 import com.intellij.util.ConcurrencyUtil
-import it.unimi.dsi.fastutil.Hash
+import com.intellij.util.indexing.impl.IndexStorageUtil
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import org.apache.commons.compress.utils.IOUtils
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -300,16 +300,7 @@ private fun <K, V> tryCompact(walFile: Path,
     return null
   }
 
-  val keyToLastEvent = Object2ObjectOpenCustomHashMap<K, IntSet>(object : Hash.Strategy<K> {
-    override fun equals(a: K?, b: K?): Boolean {
-      if (a == b) return true
-      if (a == null) return false
-      if (b == null) return false
-      return keyDescriptor.isEqual(a, b)
-    }
-
-    override fun hashCode(o: K?): Int = keyDescriptor.getHashCode(o)
-  })
+  val keyToLastEvent = IndexStorageUtil.createKeyDescriptorHashedMap<K, IntSet>(keyDescriptor)
 
   val shouldCompact = PersistentMapWalPlayer(keyDescriptor, valueExternalizer, walFile).use {
     var eventCount = 0
@@ -404,7 +395,7 @@ private class WalRecord(val opCode: WalOpCode,
       val checksum = DataInputOutputUtil.readLONG(input)
       val payloadLength = DataInputOutputUtil.readINT(input)
       val cis = ChecksumInputStream(input, checksumGen)
-      val data = cis.readNBytes(payloadLength)
+      val data = IOUtils.readRange(cis, payloadLength)
       val actualChecksum = cis.checksum()
       if (actualChecksum != checksum) {
         throw CorruptionException("checksum is wrong for log record: expected = $checksum but actual = $actualChecksum")

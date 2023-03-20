@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
@@ -29,6 +28,7 @@ public interface LombokClassNames {
   @NonNls String FIELD_NAME_CONSTANTS_INCLUDE = "lombok.experimental.FieldNameConstants.Include";
   @NonNls String FLOGGER = "lombok.extern.flogger.Flogger";
   @NonNls String GETTER = "lombok.Getter";
+  @NonNls String JACKSONIZED = "lombok.extern.jackson.Jacksonized";
   @NonNls String JAVA_LOG = "lombok.extern.java.Log";
   @NonNls String JBOSS_LOG = "lombok.extern.jbosslog.JBossLog";
   @NonNls String LOG_4_J = "lombok.extern.log4j.Log4j";
@@ -57,11 +57,11 @@ public interface LombokClassNames {
   @NonNls String WITHER = "lombok.experimental.Wither";
   @NonNls String XSLF_4_J = "lombok.extern.slf4j.XSlf4j";
 
-  List<String> MAIN_LOMBOK_CLASSES = ContainerUtil.immutableList(ALL_ARGS_CONSTRUCTOR, REQUIRED_ARGS_CONSTRUCTOR, NO_ARGS_CONSTRUCTOR,
-                                                                 DATA, GETTER, SETTER, EQUALS_AND_HASHCODE, TO_STRING,
-                                                                 LOG_4_J, LOG_4_J_2, SLF_4_J, JAVA_LOG, JBOSS_LOG, FLOGGER, COMMONS_LOG,
-                                                                 CUSTOM_LOG,
-                                                                 BUILDER, SUPER_BUILDER, FIELD_DEFAULTS, VALUE,
-                                                                 UTILITY_CLASS, WITH, WITHER, EXPERIMENTAL_DELEGATE,
-                                                                 SNEAKY_THROWS, CLEANUP, SYNCHRONIZED, EXTENSION_METHOD);
+  List<String> MAIN_LOMBOK_CLASSES = List.of(ALL_ARGS_CONSTRUCTOR, REQUIRED_ARGS_CONSTRUCTOR, NO_ARGS_CONSTRUCTOR,
+                                             DATA, GETTER, SETTER, EQUALS_AND_HASHCODE, TO_STRING,
+                                             LOG_4_J, LOG_4_J_2, SLF_4_J, JAVA_LOG, JBOSS_LOG, FLOGGER, COMMONS_LOG,
+                                             CUSTOM_LOG,
+                                             BUILDER, SUPER_BUILDER, FIELD_DEFAULTS, VALUE,
+                                             UTILITY_CLASS, WITH, WITHER, EXPERIMENTAL_DELEGATE,
+                                             SNEAKY_THROWS, CLEANUP, SYNCHRONIZED, EXTENSION_METHOD);
 }

@@ -1,0 +1,28 @@
+<html>
+<body>
+Reports links specified as plain text in Javadoc comments.
+<p>
+  The quick-fix suggests to wrap the link in &lt;a&gt; tag.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Main {
+   /**
+    * https://en.wikipedia.org/
+    */
+    void foo() {}
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Main {
+   /**
+    * &lt;a href="https://en.wikipedia.org/"&gt;https://en.wikipedia.org/&lt;/a&gt;
+    */
+    void foo() {}
+  }
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2022.1</small></p>
+</body>
+</html>

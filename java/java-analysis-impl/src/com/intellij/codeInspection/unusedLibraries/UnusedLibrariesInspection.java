@@ -3,10 +3,10 @@ package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,10 +33,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class UnusedLibrariesInspection extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UnusedLibrariesInspection.class);
@@ -44,8 +46,9 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
   public boolean IGNORE_LIBRARY_PARTS = true;
 
   @Override
-  public @NotNull JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("don.t.report.unused.jars.inside.used.library"), this, "IGNORE_LIBRARY_PARTS");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_LIBRARY_PARTS", JavaAnalysisBundle.message("don.t.report.unused.jars.inside.used.library")));
   }
 
   @Override
@@ -65,7 +68,7 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     RefManager refManager = globalContext.getRefManager();
     for (Module module : ModuleManager.getInstance(globalContext.getProject()).getModules()) {
-      if (scope.containsModule(module)) {
+      if (ReadAction.compute(() -> scope.containsModule(module))) {
         RefModule refModule = refManager.getRefModule(module);
         if (refModule != null) {
           CommonProblemDescriptor[] descriptors = getDescriptors(manager, refModule, module);
@@ -102,7 +105,7 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
         if (entry instanceof LibraryOrderEntry &&
             !((LibraryOrderEntry)entry).isExported() &&
             ((LibraryOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
-          final Set<VirtualFile> files = ContainerUtil.set(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
+          final Set<VirtualFile> files = ContainerUtil.newHashSet(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
           boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
           if (allRootsUnused) {
             String message = JavaAnalysisBundle.message("unused.library.problem.descriptor", entry.getPresentableName());

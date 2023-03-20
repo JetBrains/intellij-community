@@ -1,0 +1,11 @@
+mutation ($projectId: ID!, $mergeRequestId: String!, $state: MergeRequestNewState) {
+  mergeRequestUpdate(input: {
+    projectPath: $projectId,
+    iid: $mergeRequestId,
+    state: $state
+  }) {
+    mergeRequest {
+      ...mergeRequest
+    }
+  }
+}

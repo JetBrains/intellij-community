@@ -15,7 +15,9 @@ import com.intellij.externalSystem.ExternalDependencyModificator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
+private val LOG = logger<GradleDependencyModificator>()
 // Note: this code assumes that UnifiedCoordinates are never code references, only "hardcoded" values.
 // If you ever wanted to support code references here, you'd need to make UnifiedCoordinates aware of
 // the difference.
@@ -146,7 +149,9 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
   }
 
   override fun declaredDependencies(module: Module): List<DeclaredDependency> {
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module)
+                ?: return emptyList<DeclaredDependency>().also { logMissingModel(module) }
+
     return model.dependencies().artifacts().map {
       val dataContext = DataContext { dataId ->
         if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) it.psiElement else null
@@ -158,7 +163,9 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
   }
 
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
-    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
+    val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module)
+                ?: return emptyList<UnifiedDependencyRepository>().also { logMissingModel(module) }
+
     return model.repositories().repositories()
       .mapNotNull { it as? UrlBasedRepositoryModelImpl }
       .mapNotNull { m ->
@@ -172,6 +179,10 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
 
   private fun throwFailToModify(module: Module): Nothing {
     throw IllegalStateException(GradleBundle.message("gradle.dsl.model.fail.to.build", module.name))
+  }
+
+  private fun logMissingModel(module: Module) {
+    LOG.debug { GradleBundle.message("gradle.dsl.model.fail.to.build", module.name) }
   }
 
   private fun applyChanges(model: @Nullable GradleBuildModel) {

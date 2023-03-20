@@ -60,7 +60,7 @@ public class GenericPatchApplier {
   }
 
   @Nullable
-  public static AppliedPatch apply(CharSequence text, List<? extends PatchHunk> hunks) {
+  public static AppliedPatch apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedPatch(patchedText, SUCCESS);

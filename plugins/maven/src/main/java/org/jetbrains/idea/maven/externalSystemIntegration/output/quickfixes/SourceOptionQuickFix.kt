@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.google.common.primitives.Bytes
@@ -67,7 +67,7 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
       messageConsumer.accept(
         BuildIssueEventImpl(parentId,
                             SourceLevelBuildIssue(logLine.line, logLine.line, mavenProject, moduleJdk),
-                            MessageEvent.Kind.ERROR));
+                            MessageEvent.Kind.ERROR))
       return true
     }
 
@@ -91,7 +91,7 @@ class SourceLevelBuildIssue(private val message: String,
   }.joinToString("\n<br/>")
 
 
-  override fun getNavigatable(project: Project): Navigatable? {
+  override fun getNavigatable(project: Project): Navigatable {
     return mavenProject.file.let { OpenFileDescriptor(project, it) }
   }
 }
@@ -109,7 +109,7 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
                                 kind: MessageEvent.Kind,
                                 virtualFile: VirtualFile?,
                                 navigatable: Navigatable?): BuildIssue? {
-    val manager = MavenProjectsManager.getInstance(project);
+    val manager = MavenProjectsManager.getInstance(project)
     if (!manager.isMavenizedProject) return null
 
     if (moduleNames.size != 1) {
@@ -117,7 +117,7 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     }
     val moduleName = moduleNames.firstOrNull() ?: return null
     val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName)
-    val failedId = extractFailedMavenId(project, moduleName) ?: return null;
+    val failedId = extractFailedMavenId(project, moduleName) ?: return null
     val mavenProject = manager.findProject(failedId) ?: return null
     val moduleJdk = MavenUtil.getModuleJdk(manager, mavenProject) ?: return null
 
@@ -125,7 +125,7 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     return null
   }
 
-  fun extractFailedMavenId(project: Project, moduleName: String): MavenId? {
+  private fun extractFailedMavenId(project: Project, moduleName: String): MavenId? {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
     return MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
   }
@@ -188,15 +188,15 @@ object CacheForCompilerErrorMessages {
   }
 
   fun getPredicatesToCheck(project: Project, moduleName: String): List<MessagePredicate> {
-    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return DEFAULT_CHECK;
-    val sdk = ModuleRootManager.getInstance(module).sdk ?: return DEFAULT_CHECK;
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return DEFAULT_CHECK
+    val sdk = ModuleRootManager.getInstance(module).sdk ?: return DEFAULT_CHECK
     return synchronized(map) { map.getOrPut(sdk.name) { readFrom(sdk) } }
   }
 
   private fun readFrom(sdk: Sdk): List<MessagePredicate> {
-    val version = JavaSdk.getInstance().getVersion(sdk);
+    val version = JavaSdk.getInstance().getVersion(sdk)
     if (version == null || !version.isAtLeast(JavaSdkVersion.JDK_1_9)) {
-      return DEFAULT_CHECK;
+      return DEFAULT_CHECK
     }
 
     try {
@@ -211,8 +211,8 @@ object CacheForCompilerErrorMessages {
 
     }
     catch (e: Throwable) {
-      MavenLog.LOG.warn(e);
-      return DEFAULT_CHECK;
+      MavenLog.LOG.warn(e)
+      return DEFAULT_CHECK
     }
   }
 
@@ -222,19 +222,19 @@ object CacheForCompilerErrorMessages {
       val allBytes = VfsUtil.loadBytes(file)
       val indexKey = Bytes.indexOf(allBytes, key)
       if (indexKey == -1) return null
-      val startFrom = indexKey + key.size + 3;
+      val startFrom = indexKey + key.size + 3
       val endIndex = allBytes.findNextSOH(startFrom)
       if (endIndex == -1 || startFrom == endIndex) return null
       val message = String(allBytes, startFrom, endIndex - startFrom, StandardCharsets.UTF_8)
-      return toMessagePredicate(message);
+      return toMessagePredicate(message)
     }
     catch (e: Throwable) {
-      MavenLog.LOG.warn(e);
+      MavenLog.LOG.warn(e)
       return null
     }
   }
 
-  private fun toMessagePredicate(message: String): MessagePredicate? {
+  private fun toMessagePredicate(message: String): MessagePredicate {
     val first = message.substringBefore("{0}")
     val second = message.substringAfter("{0}")
     return { it.contains(first) && it.contains(second) }
@@ -245,7 +245,7 @@ object CacheForCompilerErrorMessages {
     var i = startFrom
     while (i < this.size - 1) {
       if (this[i] == delimiter[0] && this[i + 1] == delimiter[1]) {
-        return i;
+        return i
       }
       i++
     }

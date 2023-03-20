@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test.mock
 
@@ -94,7 +94,7 @@ class SmartMockReferenceType(val classNode: ClassNode, private val context: Smar
     override fun visibleMethods() = TODO()
     override fun locationsOfLine(lineNumber: Int) = TODO()
     override fun locationsOfLine(stratum: String, sourceName: String, lineNumber: Int) = TODO()
-    override fun getValues(p0: MutableList<out Field>?) = TODO()
+    override fun getValues(p0: List<Field>?) = TODO()
     override fun minorVersion() = TODO()
     override fun classObject() = TODO()
     override fun methodsByName(p0: String?) = TODO()

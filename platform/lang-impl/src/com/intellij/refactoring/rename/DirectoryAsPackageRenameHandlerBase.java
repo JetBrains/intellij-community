@@ -168,7 +168,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     return presentableUrl;
   }
 
-  private static void appendRoots(StringBuffer message, List<PsiDirectory> source, Function<PsiDirectory, String> directoryPresentation) {
+  private static void appendRoots(StringBuffer message, List<? extends PsiDirectory> source, Function<? super PsiDirectory, String> directoryPresentation) {
     int limit = Math.min(source.size(), 10);
     message.append(StringUtil.join(source.subList(0, limit), directoryPresentation, "\n"));
     if (limit < source.size()) {

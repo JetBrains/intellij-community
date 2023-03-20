@@ -22,12 +22,15 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeUtils
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
+import java.util.function.Function
+import javax.swing.JComponent
 import javax.swing.JFrame
 
 object MergeConflictResolveUtil {
@@ -133,14 +136,14 @@ object MergeConflictResolveUtil {
   }
 
 
-  class NotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
-    private val KEY = Key.create<EditorNotificationPanel>("MergeConflictResolveUtil.NotificationProvider")
+  class NotificationProvider : EditorNotificationProvider {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+      return Function { createNotificationPanel(file) }
+    }
 
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+    private fun createNotificationPanel(file: VirtualFile): EditorNotificationPanel? {
       val wrapper = file.getUserData(ACTIVE_MERGE_WINDOW) ?: return null
-      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
+      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
       panel.setText(GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress"))
       panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) { UIUtil.toFront(wrapper.window) }
       panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.cancel.resolve")) { wrapper.close() }

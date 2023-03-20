@@ -64,7 +64,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
   private static class TypeParameterHidesVisibleTypeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeParameter(PsiTypeParameter parameter) {
+    public void visitTypeParameter(@NotNull PsiTypeParameter parameter) {
       super.visitTypeParameter(parameter);
       final String unqualifiedClassName = parameter.getName();
       PsiTypeParameterListOwner context = parameter.getOwner();
@@ -81,8 +81,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
           return;
         }
         final PsiClass aClass = resolveHelper.resolveReferencedClass(unqualifiedClassName, context);
-        if (aClass instanceof PsiTypeParameter) {
-          final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+        if (aClass instanceof PsiTypeParameter typeParameter) {
           final PsiTypeParameterListOwner owner = typeParameter.getOwner();
           if (owner == null) {
             return;

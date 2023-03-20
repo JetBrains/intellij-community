@@ -124,10 +124,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     }
     boolean oldUpdateEnabled = getConfig().updateEnabled;
     super.apply();
-    TaskManager manager = TaskManager.getManager(myProject);
-    if (getConfig().updateEnabled && !oldUpdateEnabled) {
-      manager.updateIssues(null);
-    }
     TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = myAlwaysDisplayTaskCombo.isSelected();
     int oldConnectionTimeout = TaskSettings.getInstance().CONNECTION_TIMEOUT;
     int connectionTimeout = Integer.parseInt(myConnectionTimeout.getText());
@@ -135,6 +131,11 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     TaskSettings.getInstance().LOWER_CASE_BRANCH = myLowerCase.isSelected();
     TaskSettings.getInstance().REPLACE_SPACES = myReplaceSpaces.getText();
 
+    if (myProject.isDefault()) return;
+    TaskManager manager = TaskManager.getManager(myProject);
+    if (getConfig().updateEnabled && !oldUpdateEnabled) {
+      manager.updateIssues(null);
+    }
     if (connectionTimeout != oldConnectionTimeout) {
       for (TaskRepository repository : manager.getAllRepositories()) {
         if (repository instanceof BaseRepositoryImpl) {
@@ -148,7 +149,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   public boolean isModified() {
     return super.isModified() ||
            TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
-           TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText()) ||
+           TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.parseInt(myConnectionTimeout.getText()) ||
            TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected() ||
            !Objects.equals(TaskSettings.getInstance().REPLACE_SPACES, myReplaceSpaces.getText());
   }

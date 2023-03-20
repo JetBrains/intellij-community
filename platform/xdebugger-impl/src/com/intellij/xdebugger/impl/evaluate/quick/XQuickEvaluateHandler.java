@@ -1,11 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -40,22 +43,26 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
 
   @NotNull
   @Override
-  public Promise<AbstractValueHint> createValueHintAsync(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
+  public CancellableHint createValueHintAsync(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) {
-      return Promises.resolvedPromise(null);
+      return CancellableHint.resolved(null);
     }
 
     final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
     if (evaluator == null) {
-      return Promises.resolvedPromise(null);
+      return CancellableHint.resolved(null);
     }
     int offset = AbstractValueHint.calculateOffset(editor, point);
-    return getExpressionInfo(evaluator, project, type, editor, offset)
+    Document document = editor.getDocument();
+    // adjust offset to match with other actions, like go to declaration
+    offset = TargetElementUtil.adjustOffset(PsiDocumentManager.getInstance(project).getPsiFile(document), document, offset);
+    Promise<ExpressionInfo> infoPromise = getExpressionInfo(evaluator, project, type, editor, offset);
+    Promise<AbstractValueHint> hintPromise = infoPromise
       .thenAsync(expressionInfo -> {
         AsyncPromise<AbstractValueHint> resultPromise = new AsyncPromise<>();
         UIUtil.invokeLaterIfNeeded(() -> {
-          int textLength = editor.getDocument().getTextLength();
+          int textLength = document.getTextLength();
           if (expressionInfo == null) {
             resultPromise.setResult(null);
             return;
@@ -70,6 +77,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
         });
         return resultPromise;
       });
+    return new CancellableHint(hintPromise, infoPromise);
   }
 
 

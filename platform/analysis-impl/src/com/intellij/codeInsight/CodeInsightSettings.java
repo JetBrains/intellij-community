@@ -22,7 +22,6 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +88,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   /**
    * @deprecated use accessors instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
 
   public boolean isSelectAutopopupSuggestionsByChars() {
@@ -129,6 +128,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SMART_INDENT_ON_ENTER = true;
   public boolean INSERT_BRACE_ON_ENTER = true;
   public boolean INSERT_SCRIPTLET_END_ON_ENTER = true;
+  public boolean CLOSE_COMMENT_ON_ENTER = true;
   public boolean JAVADOC_STUB_ON_ENTER = true;
   public boolean SMART_END_ACTION = true;
   public boolean JAVADOC_GENERATE_CLOSING_TAG = true;

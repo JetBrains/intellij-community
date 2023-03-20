@@ -21,12 +21,10 @@ public class NestedConditionalExpressionInspectionTest extends LightJavaInspecti
   }
   
   public void testLambda() {
-    doTest("import java.util.function.IntFunction;" +
-           "class X {" +
-           "   private IntFunction<String> nullIfEmpty(String str) {\n" +
-           "     return str == null ? null : (a) -> (str.isEmpty() ? null : str);\n" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.util.function.IntFunction;class X {   private IntFunction<String> nullIfEmpty(String str) {
+                  return str == null ? null : (a) -> (str.isEmpty() ? null : str);
+               }}""");
   }
 
   @Nullable

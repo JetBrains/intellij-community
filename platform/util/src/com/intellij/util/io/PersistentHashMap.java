@@ -1,14 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.*;
-import org.jetbrains.annotations.*;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
 
@@ -22,12 +29,11 @@ import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
  *   <li>factory adapter for backward compatibility - constructors delegates to {@link PersistentMapBuilder} to create the best implementation</li>
  * </ul>
  *
- * @implNote Please to not override this class, it is not final to preserve backward compatibility.
  * @see PersistentMapBuilder
  **/
-public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value> {
+public final class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value>, MeasurableIndexStore {
   @NonNls
-  static String DATA_FILE_EXTENSION = ".values";
+  static final String DATA_FILE_EXTENSION = ".values";
 
   @NotNull private final PersistentMapBase<Key, Value> myImpl;
 
@@ -36,6 +42,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
       builder.withReadonly(false);
       builder.inlineValues(false);
     }
+    //noinspection resource
     myImpl = builder.build().myImpl;
   }
 
@@ -44,10 +51,14 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   @Override
-  public final void closeAndClean() throws IOException {
+  public void closeAndClean() throws IOException {
     myImpl.closeAndDelete();
   }
 
+  /**
+   * @deprecated Use {@link PersistentHashMap#PersistentHashMap(Path, KeyDescriptor, DataExternalizer)}
+   */
+  @Deprecated
   public PersistentHashMap(@NotNull File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,
                            @NotNull DataExternalizer<Value> valueExternalizer) throws IOException {
@@ -81,31 +92,27 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
                            int initialSize,
                            int version,
                            @Nullable StorageLockContext lockContext) throws IOException {
-    this(newBuilder(file, keyDescriptor, valueExternalizer).withInitialSize(initialSize).withVersion(version).withStorageLockContext(lockContext), true);
+    this(newBuilder(file, keyDescriptor, valueExternalizer).withInitialSize(initialSize).withVersion(version)
+           .withStorageLockContext(lockContext), true);
   }
 
-  public final void dropMemoryCaches() {
+  public void dropMemoryCaches() {
     force();
   }
 
-  /**
-   * @deprecated Please use an utility function directly, not this method
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    IOUtil.deleteAllFilesStartingWith(prefixFile);
+  @Override
+  public void put(Key key, Value value) throws IOException {
+    myImpl.put(key, value);
   }
 
-  @Override
-  public final void put(Key key, Value value) throws IOException {
-    myImpl.put(key, value);
+  public @NotNull PersistentMapBase<Key, Value> getImpl() {
+    return myImpl;
   }
 
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
@@ -114,10 +121,10 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender} as the second parameter
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
+  public void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     myImpl.appendData(key, appender);
   }
 
@@ -129,7 +136,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * be eventually called for the key, deserializer will read all bytes retrieving Strings and collecting them into Set
    */
   @Override
-  public final void appendData(Key key, @NotNull AppendablePersistentMap.ValueDataAppender appender) throws IOException {
+  public void appendData(Key key, @NotNull AppendablePersistentMap.ValueDataAppender appender) throws IOException {
     myImpl.appendData(key, appender);
   }
 
@@ -139,57 +146,69 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * {@link #processKeysWithExistingMapping(Processor)} to process only keys with existing mappings
    */
   @Override
-  public final boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
+  public boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
     return myImpl.processKeys(processor);
   }
 
   @Override
-  public final boolean isClosed() {
+  public boolean isClosed() {
     return myImpl.isClosed();
   }
 
   @Override
-  public final boolean isDirty() {
+  public boolean isDirty() {
     return myImpl.isDirty();
   }
 
   @Override
-  public final void markDirty() throws IOException {
+  public void markDirty() throws IOException {
     myImpl.markDirty();
+  }
+
+  public void markCorrupted() {
+    myImpl.markCorrupted();
   }
 
   /**
    * @deprecated use {@link PersistentHashMap#processKeysWithExistingMapping(Processor)} instead.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @NotNull
-  public final Collection<Key> getAllKeysWithExistingMapping() throws IOException {
+  public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
     List<Key> result = new ArrayList<>();
     myImpl.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
     return result;
   }
 
-  public final boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
+  public void consumeKeysWithExistingMapping(@NotNull Consumer<? super Key> consumer) throws IOException {
+    myImpl.processExistingKeys(key -> {
+      consumer.accept(key);
+      return true;
+    });
+  }
+
+  public boolean processKeysWithExistingMapping(@NotNull Processor<? super Key> processor) throws IOException {
     return myImpl.processExistingKeys(processor);
   }
 
   @Override
-  public final Value get(Key key) throws IOException {
+  public Value get(Key key) throws IOException {
     return myImpl.get(key);
   }
 
   @Override
-  public final boolean containsMapping(Key key) throws IOException {
+  public boolean containsMapping(Key key) throws IOException {
     return myImpl.containsKey(key);
   }
 
   @Override
-  public final void remove(Key key) throws IOException {
+  public void remove(Key key) throws IOException {
     myImpl.remove(key);
   }
 
   @Override
-  public final void force() {
+  public void force() {
     try {
       myImpl.force();
     }
@@ -199,12 +218,46 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   }
 
   @Override
-  public final void close() throws IOException {
+  public int keysCountApproximately() {
+    return myImpl.keysCount();
+  }
+
+  @Override
+  public void close() throws IOException {
     myImpl.close();
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return myImpl.toString();
+  }
+
+  /**
+   * Method creates 'canonical' PHMap by copying the content of originalMap into canonicalMap (which assumed to be
+   * empty).
+   * <br/>
+   * PHMap binary (on-disk) representation could be different even for the same key-value content because
+   * of different order of inserts/deletes/updates. This method tries to generate PHMap with 'canonical'
+   * binary content. It is done by copying entries to canonicalMap in some stable order, defined by
+   * stableKeysSorter, which guarantees canonicalMap to have a fixed binary representation on disk.
+   *
+   * @param stableKeysSorter   function to sort a List of keys.
+   *                           Must provide stable sort -- i.e. a same set
+   *                           of keys must always come out sorted in the same order, regardless of their
+   *                           original order
+   * @param targetCanonicalMap out-parameter: empty map of the same type as originalMap (i.e. suitable as
+   *                           receiver of keys-values from originalMap)
+   */
+  public static <K, V> PersistentHashMap<K, V> canonicalize(final @NotNull PersistentHashMap<K, V> originalMap,
+                                                            final @NotNull /* @OutParam */ PersistentHashMap<K, V> targetCanonicalMap,
+                                                            final @NotNull Function<? super List<K>, ? extends List<K>> stableKeysSorter,
+                                                            final @NotNull Function<? super V, ? extends V> valueCanonicalizer) throws IOException {
+    PersistentMapBase.canonicalize(
+      originalMap.myImpl,
+      targetCanonicalMap.myImpl,
+      stableKeysSorter,
+      valueCanonicalizer
+    );
+    return targetCanonicalMap;
   }
 }

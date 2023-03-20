@@ -26,7 +26,6 @@ import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,10 +77,6 @@ public final class IdeaTestUtil {
   }
 
   public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
-    return createMockJdk(name, path, false);
-  }
-
-  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path, boolean isJre) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
@@ -113,30 +108,45 @@ public final class IdeaTestUtil {
       }
     };
 
-    Path jdkHomeFile = Path.of(path);
-    JavaSdkImpl.addClasses(jdkHomeFile, sdkModificator, isJre);
-    JavaSdkImpl.addSources(jdkHomeFile, sdkModificator);
+    File[] jars = new File(path, "jre/lib").listFiles(f -> f.getName().endsWith(".jar"));
+    if (jars != null) {
+      for (File jar : jars) {
+        sdkModificator.addRoot("jar://"+PathUtil.toSystemIndependentName(jar.getPath())+"!/", OrderRootType.CLASSES);
+      }
+    }
+    // only Mock JDKs 1.4/1.7 have src.zip
+    if (path.endsWith("mockJDK-1.7") || path.endsWith("mockJDK-1.4")) {
+      if (new File(path, "src.zip").exists()) {
+        sdkModificator.addRoot("jar://"+PathUtil.toSystemIndependentName(path)+"/src.zip!/", OrderRootType.SOURCES);
+      }
+    }
+
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
 
     return new MockSdk(name, PathUtil.toSystemIndependentName(path), name, roots, () -> JavaSdk.getInstance());
   }
 
+  // it's JDK 1.4, not 14
   public static @NotNull Sdk getMockJdk14() {
     return getMockJdk(JavaVersion.compose(4));
   }
 
+  // it's JDK 1.6, not 16
   public static @NotNull Sdk getMockJdk16() {
     return getMockJdk(JavaVersion.compose(6));
   }
 
+  // it's JDK 1.7, not 17
   public static @NotNull Sdk getMockJdk17() {
     return getMockJdk(JavaVersion.compose(7));
   }
 
+  // it's JDK 1.7, not 17
   public static @NotNull Sdk getMockJdk17(@NotNull String name) {
     return createMockJdk(name, getMockJdk17Path().getPath());
   }
 
+  // it's JDK 1.8, not 18
   public static @NotNull Sdk getMockJdk18() {
     return getMockJdk(JavaVersion.compose(8));
   }
@@ -159,10 +169,6 @@ public final class IdeaTestUtil {
 
   public static @NotNull File getMockJdk18Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.8");
-  }
-
-  public static @NotNull File getMockJdk9Path() {
-    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.9");
   }
 
   public static String getMockJdkVersion(@NotNull String path) {

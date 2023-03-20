@@ -7,32 +7,32 @@ class Test {
 
   public void javaAssertionPositive1() {
     try {
-      <warning descr="'assert' cannot fail as it's masked via 'catch'">assert 1 == 1;</warning>
+      <warning descr="'assert' cannot fail as it's suppressed by a surrounding 'catch'">assert 1 == 1;</warning>
     } catch (AssertionError e) {}
   }
 
   public void javaAssertionPositive2() {
     try {
       int a = 1;
-      <warning descr="'assert' cannot fail as it's masked via 'catch'">assert 1 == 1;</warning>
+      <warning descr="'assert' cannot fail as it's suppressed by a surrounding 'catch'">assert 1 == 1;</warning>
     } catch (AssertionError e) {}
   }
 
   public void javaAssertionPositive3() {
     try {
-      <warning descr="'assert' cannot fail as it's masked via 'catch'">assert 1 == 1;</warning>
+      <warning descr="'assert' cannot fail as it's suppressed by a surrounding 'catch'">assert 1 == 1;</warning>
     } catch (Error e) {}
   }
 
   public void javaAssertionPositive4() {
     try {
-      <warning descr="'assert' cannot fail as it's masked via 'catch'">assert 1 == 1;</warning>
+      <warning descr="'assert' cannot fail as it's suppressed by a surrounding 'catch'">assert 1 == 1;</warning>
     } catch (Throwable e) {}
   }
 
   public void javaAssertionPositive5() {
     try {
-      <warning descr="'assert' cannot fail as it's masked via 'catch'">assert 1 == 1;</warning>
+      <warning descr="'assert' cannot fail as it's suppressed by a surrounding 'catch'">assert 1 == 1;</warning>
     } catch (AssertionFailedError e) {
     } catch (AssertionError e) {
     }
@@ -63,14 +63,14 @@ class Test {
 
   public void assertSamePositive1() {
     try {
-      <warning descr="'assertSame()' cannot fail as it's masked via 'catch'">assertSame(1, 1)</warning>;
+      <warning descr="'assertSame()' cannot fail as it's suppressed by a surrounding 'catch'">assertSame(1, 1)</warning>;
     } catch (AssertionError e) {}
   }
 
   public void assertSamePositive2() {
     try {
       int a = 1;
-      <warning descr="'assertSame()' cannot fail as it's masked via 'catch'">assertSame(1, 1)</warning>;
+      <warning descr="'assertSame()' cannot fail as it's suppressed by a surrounding 'catch'">assertSame(1, 1)</warning>;
     } catch (AssertionError e) {}
   }
 
@@ -98,27 +98,27 @@ class Test {
 
   public void failPositive1() {
     try {
-      <warning descr="'fail()' cannot fail as it's masked via 'catch'">fail()</warning>;
+      <warning descr="'fail()' cannot fail as it's suppressed by a surrounding 'catch'">fail()</warning>;
     } catch (AssertionError e) {}
   }
 
   public void failPositive2() {
     try {
       int a = 1;
-      <warning descr="'fail()' cannot fail as it's masked via 'catch'">fail()</warning>;
+      <warning descr="'fail()' cannot fail as it's suppressed by a surrounding 'catch'">fail()</warning>;
     } catch (AssertionError e) {}
   }
 
   public void failPositive3() {
     try {
-      <warning descr="'fail()' cannot fail as it's masked via 'catch'">fail()</warning>;
+      <warning descr="'fail()' cannot fail as it's suppressed by a surrounding 'catch'">fail()</warning>;
     } catch (Exception e1) {
     } catch (AssertionError e2) {}
   }
 
   public void failPositive4() {
     try {
-      <warning descr="'fail()' cannot fail as it's masked via 'catch'">fail()</warning>;
+      <warning descr="'fail()' cannot fail as it's suppressed by a surrounding 'catch'">fail()</warning>;
     } catch (AssertionFailedError e) {
     } catch (AssertionError e) {
     }
@@ -126,7 +126,7 @@ class Test {
 
   public void failPositive5() {
     try {
-      <warning descr="'fail()' cannot fail as it's masked via 'catch'">fail()</warning>;
+      <warning descr="'fail()' cannot fail as it's suppressed by a surrounding 'catch'">fail()</warning>;
     } catch (NullPointerException | AssertionError e) {
     } catch (Throwable e) {
       System.out.println();

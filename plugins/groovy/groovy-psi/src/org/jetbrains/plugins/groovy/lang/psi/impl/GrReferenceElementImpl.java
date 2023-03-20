@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -14,12 +15,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-/**
- * @author ven
- */
 public abstract class GrReferenceElementImpl<Q extends PsiElement> extends GroovyPsiElementImpl implements GrReferenceElement<Q> {
 
-  private static final String DUMMY_FQN = "05ab655a-0e15-4f35-909d-9dff5e757f63";
+  private static final String DUMMY_FQN = new String("05ab655a-0e15-4f35-909d-9dff5e757f63");
 
   private volatile String myQualifiedReferenceName = DUMMY_FQN;
 
@@ -46,7 +44,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   @Override
   public String getQualifiedReferenceName() {
     String qualifiedReferenceName = myQualifiedReferenceName;
-    if (qualifiedReferenceName == DUMMY_FQN) {
+    if (Strings.areSameInstance(qualifiedReferenceName, DUMMY_FQN)) {
       qualifiedReferenceName = PsiImplUtilKt.getQualifiedReferenceName(this);
       myQualifiedReferenceName = qualifiedReferenceName;
     }
@@ -114,8 +112,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       }
       return qualifiedRef;
     }
-    else if (element instanceof PsiMember) {
-      PsiMember member = (PsiMember)element;
+    else if (element instanceof PsiMember member) {
       final PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();
 

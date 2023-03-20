@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link SoftWrap} implementation that is built around {@link TextChangeImpl}.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapImpl implements SoftWrap {
 

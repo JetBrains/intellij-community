@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.ide.actions.SplitAction
@@ -17,7 +17,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.util.runWhenVcsAndLogIsReady
+import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -38,17 +38,17 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
-    runWhenVcsAndLogIsReady(project) { logManager ->
+    VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       val projectLog = VcsProjectLog.getInstance(project)
       val tabsManager = projectLog.tabsManager
 
       try {
-        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogManager.LogWindowKind.EDITOR, filters)
-        val ui = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
+        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogTabLocation.EDITOR, filters)
+        val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
         tabName = VcsLogTabsManager.generateDisplayName(ui)
         ui.filterUi.addFilterListener {
           tabName = VcsLogTabsManager.generateDisplayName(ui)
-          updateTabName(project, ui)
+          VcsLogEditorUtil.updateTabName(project, ui)
         }
         if (filters != null) filters = null
         panel.add(VcsLogPanel(logManager, ui), BorderLayout.CENTER)
@@ -113,7 +113,7 @@ class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabN
     state.pathToTabName.remove(path)
     state.pathToTabName[path] = tabName // to put recently changed paths at the end of the linked map
 
-    val limit = UISettings.instance.recentFilesLimit
+    val limit = UISettings.getInstance().recentFilesLimit
     while (state.pathToTabName.size > limit) {
       val (firstPath, _) = state.pathToTabName.asIterable().first()
       state.pathToTabName.remove(firstPath)

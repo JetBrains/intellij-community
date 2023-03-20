@@ -19,87 +19,95 @@ public class YAMLParserTest extends ParsingTestCase {
   }
 
   public void test2docs() throws Throwable {
-    doCodeTest("# Ranking of 1998 home runs\n" +
-           "---\n" +
-           "- Mark McGwire\n" +
-           "- Sammy Sosa\n" +
-           "- Ken Griffey\n" +
-           "\n" +
-           "# Team ranking\n" +
-           "---\n" +
-           "- Chicago Cubs\n" +
-           "- St Louis Cardinals");
+    doCodeTest("""
+                 # Ranking of 1998 home runs
+                 ---
+                 - Mark McGwire
+                 - Sammy Sosa
+                 - Ken Griffey
+
+                 # Team ranking
+                 ---
+                 - Chicago Cubs
+                 - St Louis Cardinals""");
   }
 
   public void testIndentation() throws Throwable {
-    doCodeTest("name: Mark McGwire\n" +
-           "accomplishment: >\n" +
-           "  Mark set a major league\n" +
-           "  home run record in 1998.\n" +
-           "stats: |\n" +
-           "  65 Home Runs\n" +
-           "  0.278 Batting Average");
+    doCodeTest("""
+                 name: Mark McGwire
+                 accomplishment: >
+                   Mark set a major league
+                   home run record in 1998.
+                 stats: |
+                   65 Home Runs
+                   0.278 Batting Average""");
   }
 
   public void testMap_between_seq() throws Throwable {
-    doCodeTest("?\n" +
-           "  - Detroit Tigers\n" +
-           "  - Chicago cubs\n" +
-           ":\n" +
-           "  - 2001-07-23\n" +
-           "\n" +
-           "? [ New York Yankees,\n" +
-           "    Atlanta Braves ]\n" +
-           ": [ 2001-07-02, 2001-08-12,\n" +
-           "    2001-08-14 ]");
+    doCodeTest("""
+                 ?
+                   - Detroit Tigers
+                   - Chicago cubs
+                 :
+                   - 2001-07-23
+
+                 ? [ New York Yankees,
+                     Atlanta Braves ]
+                 : [ 2001-07-02, 2001-08-12,
+                     2001-08-14 ]""");
   }
 
   public void testMap_map() throws Throwable {
-    doCodeTest("Mark McGwire: {hr: 65, avg: 0.278}\n" +
-           "Sammy Sosa: {\n" +
-           "    hr: 63,\n" +
-           "    avg: 0.288\n" +
-           "  }");
+    doCodeTest("""
+                 Mark McGwire: {hr: 65, avg: 0.278}
+                 Sammy Sosa: {
+                     hr: 63,
+                     avg: 0.288
+                   }""");
   }
 
   public void testSample_log() throws Throwable {
-    doCodeTest("Stack:\n" +
-           "  - file: TopClass.py\n" +
-           "    line: 23\n" +
-           "    code: |\n" +
-           "      x = MoreObject(\"345\\n\")\n" +
-           "  - file: MoreClass.py\n" +
-           "    line: 58\n" +
-           "    code: |-\n" +
-           "      foo = bar");
+    doCodeTest("""
+                 Stack:
+                   - file: TopClass.py
+                     line: 23
+                     code: |
+                       x = MoreObject("345\\n")
+                   - file: MoreClass.py
+                     line: 58
+                     code: |-
+                       foo = bar""");
   }
 
   public void testSeq_seq() throws Throwable {
-    doCodeTest("- [name        , hr, avg  ]\n" +
-           "- [Mark McGwire, 65, 0.278]\n" +
-           "- [Sammy Sosa  , 63, 0.288]");
+    doCodeTest("""
+                 - [name        , hr, avg  ]
+                 - [Mark McGwire, 65, 0.278]
+                 - [Sammy Sosa  , 63, 0.288]""");
   }
 
   public void testSequence_mappings() throws Throwable {
-    doCodeTest("-\n" +
-           "  name: Mark McGwire\n" +
-           "  hr:   65\n" +
-           "  avg:  0.278\n" +
-           "-\n" +
-           "  name: Sammy Sosa\n" +
-           "  hr:   63\n" +
-           "  avg:  0.288");
+    doCodeTest("""
+                 -
+                   name: Mark McGwire
+                   hr:   65
+                   avg:  0.278
+                 -
+                   name: Sammy Sosa
+                   hr:   63
+                   avg:  0.288""");
   }
 
   public void testBalance() throws Throwable {
-    doCodeTest("runningTime: 150000\n" +
-           "scenarios:\n" +
-           "    voice_bundle_change: {\n" +
-           "        dataCycling: true\n" +
-           "    }\n" +
-           "    smart_overview: {\n" +
-           "        dataCycling: true\n" +
-           "    }");
+    doCodeTest("""
+                 runningTime: 150000
+                 scenarios:
+                     voice_bundle_change: {
+                         dataCycling: true
+                     }
+                     smart_overview: {
+                         dataCycling: true
+                     }""");
   }
 
   public void testInterpolation() throws Throwable {
@@ -107,76 +115,88 @@ public class YAMLParserTest extends ParsingTestCase {
   }
 
   public void testValue_injection() throws Throwable {
-    doCodeTest("key:\n" + "    one: 1 text\n" + "    other: some {{count}} text");
+    doCodeTest("""
+                 key:
+                     one: 1 text
+                     other: some {{count}} text""");
   }
 
   public void testSequence_idea76804() throws Throwable {
-    doCodeTest("server:\n" +
-           "- a\n" +
-           "- b\n" +
-           "\n" +
-           "server:\n" +
-           "  - a\n" +
-           "  - b");
+    doCodeTest("""
+                 server:
+                 - a
+                 - b
+
+                 server:
+                   - a
+                   - b""");
   }
 
   public void testMultiline_ruby16796() throws Throwable {
-    doCodeTest("code:\n" +
-               "  src=\"keys/{{item}}\"\n" +
-               "  mode=0600\n" +
-               "with_items:\n" +
-               "  - \"id_rsa.pub\"\n");
+    doCodeTest("""
+                 code:
+                   src="keys/{{item}}"
+                   mode=0600
+                 with_items:
+                   - "id_rsa.pub"
+                 """);
   }
 
   public void testRuby17389() throws Throwable {
-    doCodeTest("---\n" +
-               "foo: {}\n" +
-               "bar: \"baz\"");
+    doCodeTest("""
+                 ---
+                 foo: {}
+                 bar: "baz\"""");
   }
 
   public void testRuby19105() throws Throwable {
-    doCodeTest("'Fn::Join':\n" +
-               "  - ''\n" +
-               "  - - Ref: hostedZoneName\n" +
-               "    - a");
+    doCodeTest("""
+                 'Fn::Join':
+                   - ''
+                   - - Ref: hostedZoneName
+                     - a""");
   }
 
   public void testRuby15345() throws IOException {
-    doCodeTest("- !qualified.class.name\n" +
-               "    propertyOne: bla bla\n" +
-               "    propertyWithOneSequence:\n" +
-               "        - first value\n" +
-               "    nextPropertyWithOneSequence:\n" +
-               "        - first value of another sequence");
+    doCodeTest("""
+                 - !qualified.class.name
+                     propertyOne: bla bla
+                     propertyWithOneSequence:
+                         - first value
+                     nextPropertyWithOneSequence:
+                         - first value of another sequence""");
   }
 
   public void testHonestMultiline() throws Throwable {
-    doCodeTest("---\n" +
-               "foo: >\n" +
-               "  first text line\n" +
-               "  second text line\n" +
-               "\n" +
-               "  baz: clazz\n" +
-               "  - this is text\n" +
-               "  - but looks like a list\n" +
-               "  - indent tells.\n" +
-               "bar: zoo");
+    doCodeTest("""
+                 ---
+                 foo: >
+                   first text line
+                   second text line
+
+                   baz: clazz
+                   - this is text
+                   - but looks like a list
+                   - indent tells.
+                 bar: zoo""");
   }
 
   public void testEmptyMultiline() throws Throwable {
-    doCodeTest("---\n" +
-               "foo: >\n" +
-               "bar:\n" +
-               "  abc: def\n" +
-               "  ghi: >\n" +
-               "  jkl: mno\n" +
-               "baz: qwe");
+    doCodeTest("""
+                 ---
+                 foo: >
+                 bar:
+                   abc: def
+                   ghi: >
+                   jkl: mno
+                 baz: qwe""");
   }
 
   public void testIncompleteKey() throws Throwable {
-    doCodeTest("logging:\n" +
-               "  config: bla\n" +
-               "  index");
+    doCodeTest("""
+                 logging:
+                   config: bla
+                   index""");
   }
 
   public void testStringWithTag() throws IOException {
@@ -184,12 +204,14 @@ public class YAMLParserTest extends ParsingTestCase {
   }
 
   public void testIncompleteKeyWithWhitespace() throws IOException {
-    doCodeTest("logging:\n" +
-               "  config:\n" +
-               "  \n" +
-               "  \n" +
-               "  \n" +
-               "  \n");
+    doCodeTest("""
+                 logging:
+                   config:
+                  \s
+                  \s
+                  \s
+                  \s
+                 """);
   }
 
   public void testShiftedMap() throws IOException {

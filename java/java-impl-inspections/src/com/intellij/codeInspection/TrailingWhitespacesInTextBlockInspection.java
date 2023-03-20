@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -23,8 +24,8 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
-          String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
         if (lines == null) return;
         int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, false);
         if (indent == -1) return;
@@ -58,40 +59,56 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
 
   private static LocalQuickFix @NotNull [] createFixes() {
     return new LocalQuickFix[]{
-      new ReplaceTrailingWhiteSpacesFix("inspection.trailing.whitespaces.in.text.block.remove.whitespaces", l -> removeWhitespaces(l)),
+      new ReplaceTrailingWhiteSpacesFix("inspection.trailing.whitespaces.in.text.block.remove.whitespaces", c -> removeWhitespaces(c)),
       new ReplaceTrailingWhiteSpacesFix("inspection.trailing.whitespaces.in.text.block.replaces.whitespaces.with.escapes",
-                                        l -> replaceWhitespacesWithEscapes(l))
+                                        c -> replaceWhitespacesWithEscapes(c))
     };
   }
 
-  private static @NotNull String replaceWhitespacesWithEscapes(@NotNull String contentLine) {
-    int j;
+  private static @NotNull String replaceWhitespacesWithEscapes(@NotNull TransformationContext context) {
+    String contentLine = context.text();
     int len = contentLine.length();
-    for (j = len - 2; j >= 0; j--) {
-      char c = contentLine.charAt(j);
-      if (c != ' ' && c != '\t') break;
-    }
-    j++;
-    StringBuilder transformed = new StringBuilder(j + (len - j) * 4);
-    transformed.append(contentLine, 0, j);
-    for (; j < len; j++) {
-      if (contentLine.charAt(j) == ' ') {
-        transformed.append("\\040");
-      }
-      else {
-        transformed.append("\\t");
-      }
-    }
-    return transformed.toString();
+    char c = contentLine.charAt(len - 1);
+    return switch (c) {
+      case ' ' -> contentLine.substring(0, len - 1) + "\\s";
+      case '\t' -> contentLine.substring(0, len - 1) + "\\t";
+      default -> contentLine;
+    };
   }
 
-  private static @NotNull String removeWhitespaces(@NotNull String contentLine) {
+  private static @NotNull String removeWhitespaces(@NotNull TransformationContext context) {
+    String contentLine = context.text();
     int j;
     for (j = contentLine.length() - 2; j >= 0; j--) {
       char c = contentLine.charAt(j);
       if (c != ' ' && c != '\t') break;
     }
-    return contentLine.substring(0, j + 1);
+    String result = contentLine.substring(0, j + 1);
+    if (context.isEnd() && hasUnescapedLastQuote(result)) {
+      result = result.substring(0, result.length() - 1) + "\\\"";
+    }
+    return result;
+  }
+
+  public static boolean hasUnescapedLastQuote(String text) {
+    if (!text.endsWith("\"")) {
+      return false;
+    }
+    int i = 0;
+    int countBackSlash = 0;
+    int length = text.length();
+    while (i < length - 1) {
+      int nextIdx = PsiLiteralUtil.parseBackSlash(text, i);
+      if (nextIdx != -1) {
+        countBackSlash++;
+        i = nextIdx;
+      }
+      else {
+        countBackSlash = 0;
+        i++;
+      }
+    }
+    return countBackSlash % 2 == 0;
   }
 
   static void replaceTextBlock(@NotNull Project project, @NotNull PsiLiteralExpression toReplace, @NotNull String newTextBlock) {
@@ -103,12 +120,19 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
 
   private static class ReplaceTrailingWhiteSpacesFix implements LocalQuickFix {
     private final String myMessage;
-    private final @NotNull Function<? super @NotNull String, ? extends @Nullable CharSequence> myTransformation;
+    @SafeFieldForPreview
+    private final @NotNull Function<@NotNull TransformationContext, ? extends @Nullable CharSequence> myTransformation;
 
     private ReplaceTrailingWhiteSpacesFix(@NotNull String message,
-                                          @NotNull Function<? super @NotNull String, ? extends @Nullable CharSequence> transformation) {
+                                          @NotNull Function<@NotNull TransformationContext, ? extends @Nullable CharSequence> transformation) {
       myMessage = message;
       myTransformation = transformation;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      IntentionPreviewInfo info = LocalQuickFix.super.generatePreview(project, previewDescriptor);
+      return info == IntentionPreviewInfo.DIFF ? IntentionPreviewInfo.DIFF_NO_TRIM : info;
     }
 
     @Override
@@ -128,7 +152,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     }
 
     private static @Nullable String transformTextBlockLines(String @NotNull [] lines,
-                                                            @NotNull Function<? super String, ? extends @Nullable CharSequence> lineTransformation) {
+                                                            @NotNull Function<TransformationContext, ? extends @Nullable CharSequence> lineTransformation) {
       StringBuilder newTextBlock = new StringBuilder();
       newTextBlock.append("\"\"\"\n");
       for (int i = 0; i < lines.length; i++) {
@@ -138,7 +162,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
           newTextBlock.append(line);
           continue;
         }
-        CharSequence transformed = lineTransformation.apply(line);
+        CharSequence transformed = lineTransformation.apply(new TransformationContext(line, i == lines.length - 1));
         if (transformed == null) return null;
         newTextBlock.append(transformed);
       }
@@ -153,4 +177,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
       return lastChar == ' ' || lastChar == '\t';
     }
   }
+}
+
+record TransformationContext(@NotNull String text, boolean isEnd) {
 }

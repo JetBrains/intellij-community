@@ -3,3 +3,5 @@
 fun foo() {
     fun local(): String?<caret>? = null
 }
+
+// IGNORE_FIR

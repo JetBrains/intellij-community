@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -27,14 +28,14 @@ public final class JUnit4TestRunnerUtil {
     if (suiteClassNames.length == 0) {
       return null;
     }
-    ArrayList<Class<?>> result = new ArrayList<Class<?>>();
+    ArrayList<Class<?>> result = new ArrayList<>();
     for (String suiteClassName : suiteClassNames) {
       if (suiteClassName.charAt(0) == '@') {
         // all tests in the package specified
         try {
-          final Map<String, Set<String>> classMethods = new HashMap<String, Set<String>>();
-          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)), "UTF-8"));
-          try {
+          final Map<String, Set<String>> classMethods = new HashMap<>();
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)),
+                                                                                StandardCharsets.UTF_8))) {
             final String packageName = reader.readLine();
             if (packageName == null) return null;
 
@@ -51,7 +52,7 @@ public final class JUnit4TestRunnerUtil {
                 className = line.substring(0, idx);
                 Set<String> methodNames = classMethods.get(className);
                 if (methodNames == null) {
-                  methodNames = new HashSet<String>();
+                  methodNames = new HashSet<>();
                   classMethods.put(className, methodNames);
                 }
                 methodNames.add(line.substring(idx + 1));
@@ -69,10 +70,7 @@ public final class JUnit4TestRunnerUtil {
               Class.forName("org.junit.runner.Computer");
               allClasses = JUnit46ClassesRequestBuilder.getClassesRequest(suiteName, classes, classMethods, category);
             }
-            catch (ClassNotFoundException e) {
-              allClasses = getClassRequestsUsing44API(suiteName, classes);
-            }
-            catch (NoSuchMethodError e) {
+            catch (ClassNotFoundException | NoSuchMethodError e) {
               allClasses = getClassRequestsUsing44API(suiteName, classes);
             }
 
@@ -114,9 +112,6 @@ public final class JUnit4TestRunnerUtil {
               }
             });
           }
-          finally {
-            reader.close();
-          }
         }
         catch (IOException e) {
           e.printStackTrace();
@@ -133,9 +128,7 @@ public final class JUnit4TestRunnerUtil {
           if (clazzAnnotation == null) { //do not override external runners
             try {
               final Method method = clazz.getMethod(methodName);
-              if (method != null &&
-                  notForked &&
-                  (method.getAnnotation(Ignore.class) != null || clazz.getAnnotation(Ignore.class) != null)) { //override ignored case only
+              if (notForked && (method.getAnnotation(Ignore.class) != null || clazz.getAnnotation(Ignore.class) != null)) { //override ignored case only
                 final Request classRequest = JUnit45ClassesRequestBuilder.createIgnoreIgnoredClassRequest(clazz, true);
                 final Filter ignoredTestFilter = Filter.matchMethodDescription(testMethodDescription);
                 return classRequest.filterWith(new Filter() {
@@ -162,7 +155,8 @@ public final class JUnit4TestRunnerUtil {
             }
           }
           try {
-            if (clazz.getMethod("suite") != null && !methodName.equals("suite")) {
+            if (!methodName.equals("suite")) {
+              clazz.getMethod("suite"); // check method existence
               return Request.classWithoutSuiteMethod(clazz).filterWith(testMethodDescription);
             }
           }
@@ -254,7 +248,7 @@ public final class JUnit4TestRunnerUtil {
         if (methodName != null) {
           try {
             final Method method = clazz.getMethod(methodName);
-            if (method != null && !method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
+            if (!method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
               return Request.runner(JUnit45ClassesRequestBuilder.createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
             }
           }

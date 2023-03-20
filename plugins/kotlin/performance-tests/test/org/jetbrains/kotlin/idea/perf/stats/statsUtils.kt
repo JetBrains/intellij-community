@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.perf.stats
 
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
@@ -22,9 +22,11 @@ fun compareBenchmarkWithSample(benchmark: Benchmark): Collection<String>? {
         buildId = null
         val statsFile = statsFile()
         buildId = id
+
         statsFile.name
     }
-    val sampleStatFile = File((Benchmark::class as Any).javaClass.getResource("/stats-samples/$statsFileName").path)
+    val resource = (Benchmark::class as Any).javaClass.getResource("/stats-samples/$statsFileName") ?: error("no sample for ${statsFileName}")
+    val sampleStatFile = File(resource.path)
     val sampleBenchmark = sampleStatFile.loadBenchmark()
     return compare(sampleBenchmark, benchmark).takeIf { it.isNotEmpty() }
 }

@@ -15,7 +15,7 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
   }
 
   @Override
-  public Data read(int addr) throws IOException {
+  public Data read(int addr, boolean checkAccess) throws IOException {
     return myDescriptor.fromInt(addr);
   }
 
@@ -61,7 +61,7 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
 
   @Override
   public int getCurrentLength() {
-    throw new UnsupportedOperationException();
+    return -1;
   }
 
   @Override

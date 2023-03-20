@@ -20,21 +20,23 @@ public class FileTemplatesProcessingTest extends BasePlatformTestCase {
   }
 
   public void testExtractTemplate() {
-    doTest(true, "/** Special Velocity symbols # and $ should be escaped */\n" +
-                 "\n" +
-                 "/**\n" +
-                 " * Created by Dmitry.Avdeev on 1/22/13.\n" +
-                 " */\n" +
-                 "public class Bar {\n" +
-                 "}",
-           "/** Special Velocity symbols \\# and #[[\\$]]# should be escaped */\n" +
-           "\n" +
-           "/**\n" +
-           " * Created by ${USER} on ${DATE}.\n" +
-           " */\n" +
-           "\n" +
-           "public class Bar {\n" +
-           "}");
+    doTest(true, """
+             /** Special Velocity symbols # and $ should be escaped */
+
+             /**
+              * Created by Dmitry.Avdeev on 1/22/13.
+              */
+             public class Bar {
+             }""",
+           """
+             /** Special Velocity symbols \\# and #[[\\$]]# should be escaped */
+
+             /**
+              * Created by ${USER} on ${DATE}.
+              */
+
+             public class Bar {
+             }""");
   }
 
   private void doTest(boolean shouldEscape, String input, String expected) {
@@ -47,17 +49,19 @@ public class FileTemplatesProcessingTest extends BasePlatformTestCase {
   }
 
   public void testExtractTemplateUnescaped() {
-    doTest(false, "/** Special Velocity symbols # and $ should not be escaped */\n" +
-                  "\n" +
-                  "/**\n" +
-                  " * Created by Dmitry.Avdeev on 1/22/13.\n" +
-                  " */\n" +
-                  "public class Bar {\n" +
-                  "}",
-           "/** Special Velocity symbols # and $ should not be escaped */\n" +
-           "\n" +
-           "<IntelliJ_File_Header>\n" +
-           "public class Bar {\n" +
-           "}");
+    doTest(false, """
+             /** Special Velocity symbols # and $ should not be escaped */
+
+             /**
+              * Created by Dmitry.Avdeev on 1/22/13.
+              */
+             public class Bar {
+             }""",
+           """
+             /** Special Velocity symbols # and $ should not be escaped */
+
+             <IntelliJ_File_Header>
+             public class Bar {
+             }""");
   }
 }

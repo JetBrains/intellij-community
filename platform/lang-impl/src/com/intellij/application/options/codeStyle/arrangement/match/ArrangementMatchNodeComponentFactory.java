@@ -36,9 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementMatchNodeComponentFactory {
 
   private static final Logger LOG = Logger.getInstance(ArrangementMatchNodeComponentFactory.class);

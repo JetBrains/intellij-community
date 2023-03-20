@@ -17,6 +17,7 @@ private fun i(a: Int, b: Int): Int {
         a > 0 -> {
             b1 = b1 + 1
         }
+
         a < 0 -> {
             b1 = b1 - 1
         }

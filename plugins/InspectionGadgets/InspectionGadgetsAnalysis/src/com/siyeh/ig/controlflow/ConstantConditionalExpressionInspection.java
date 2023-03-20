@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.project.Project;
@@ -33,8 +34,7 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantConditionalExpressionInspection
-  extends BaseInspection {
+public class ConstantConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -74,7 +74,7 @@ public class ConstantConditionalExpressionInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
       CommentTracker ct = new CommentTracker();
       final PsiExpression replacement = calculateReplacementExpression(expression);
@@ -107,7 +107,7 @@ public class ConstantConditionalExpressionInspection
 
     @Override
     public void visitConditionalExpression(
-      PsiConditionalExpression expression) {
+      @NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression condition = expression.getCondition();
       final PsiExpression thenExpression = expression.getThenExpression();

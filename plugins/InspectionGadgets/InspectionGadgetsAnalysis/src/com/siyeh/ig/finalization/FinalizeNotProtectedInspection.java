@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.finalization;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class FinalizeNotProtectedInspection extends BaseInspection {
+public class FinalizeNotProtectedInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -58,7 +59,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodName.getParent();
       Objects.requireNonNull(method).getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);

@@ -34,10 +34,6 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class RadComponent implements IComponent {
   private static final Logger LOG = Logger.getInstance(RadComponent.class);
 
@@ -718,8 +714,7 @@ public abstract class RadComponent implements IComponent {
       }
     }
 
-    if (this instanceof RadContainer) {
-      RadContainer container = (RadContainer)this;
+    if (this instanceof RadContainer container) {
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
         if (descriptor.getResolvedValue() == null) {
@@ -729,8 +724,7 @@ public abstract class RadComponent implements IComponent {
       }
     }
 
-    if (getParent() instanceof RadTabbedPane) {
-      RadTabbedPane parentTabbedPane = (RadTabbedPane)getParent();
+    if (getParent() instanceof RadTabbedPane parentTabbedPane) {
       final StringDescriptor descriptor = parentTabbedPane.getChildTitle(this);
       if (descriptor != null) {
         if (descriptor.getResolvedValue() == null) {

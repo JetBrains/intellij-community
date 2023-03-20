@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ModalityState
@@ -28,10 +29,12 @@ import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import javax.swing.JWindow
 import kotlin.math.max
 import kotlin.math.min
 
@@ -40,17 +43,24 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                                            private val originalEditor: Editor) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
   private var show = false
+  private var hideForIndex = NO_PREVIEW
   private var originalPopup : JBPopup? = null
   private val editorsToRelease = mutableListOf<EditorEx>()
 
   private lateinit var popup: JBPopup
   private lateinit var component: IntentionPreviewComponent
+  private var justActivated: Boolean = false
+  private val popupWindow: JWindow?
+    get() = UIUtil.getParentOfType(JWindow::class.java, popup.content)
 
   override fun updatePopup(intentionAction: Any?) {
-    if (!show) return
+    if (!show || index == hideForIndex) return
+    hideForIndex = NO_PREVIEW
 
     if (!::popup.isInitialized || popup.isDisposed) {
-      component = IntentionPreviewComponent(project)
+      val origPopup = originalPopup
+      if (origPopup == null || origPopup.isDisposed) return
+      component = IntentionPreviewComponent(origPopup)
 
       component.multiPanel.select(LOADING_PREVIEW, true)
 
@@ -94,6 +104,16 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
+  /**
+   * Hide preview until another action is selected.
+   * Useful to hide it when submenu is displayed
+   */
+  fun hideTemporarily() {
+    if (!show) return
+    hideForIndex = index
+    selectNoPreview()
+  }
+
   private fun adjustPosition(originalPopup: JBPopup?) {
     if (originalPopup != null && originalPopup.content.isShowing) {
       PositionAdjuster(originalPopup.content).adjust(popup, RIGHT, LEFT)
@@ -105,19 +125,28 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       is IntentionPreviewDiffResult -> {
         val editors = IntentionPreviewModel.createEditors(project, result)
         if (editors.isEmpty()) {
-          select(NO_PREVIEW)
+          selectNoPreview()
           return
         }
 
         editorsToRelease.addAll(editors)
         select(index, editors)
       }
-      is IntentionPreviewInfo.Html -> {
+      is Html -> {
         select(index, html = result)
       }
       else -> {
-        select(NO_PREVIEW)
+        selectNoPreview()
       }
+    }
+  }
+
+  private fun selectNoPreview() {
+    if (justActivated) {
+      select(NO_PREVIEW)
+    }
+    else {
+      popupWindow?.isVisible = false
     }
   }
 
@@ -126,7 +155,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     originalPopup = popup
   }
 
-  fun isShown() = show
+  fun isShown() = show && popupWindow?.isVisible != false
 
   fun hide() {
     if (::popup.isInitialized && !popup.isDisposed) {
@@ -139,14 +168,16 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun cancel(): Boolean {
-    editorsToRelease.forEach { EditorFactory.getInstance().releaseEditor(it) }
+    editorsToRelease.forEach { editor -> EditorFactory.getInstance().releaseEditor(editor) }
     editorsToRelease.clear()
     component.removeAll()
     show = false
     return true
   }
 
-  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: IntentionPreviewInfo.Html? = null) {
+  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: Html? = null) {
+    justActivated = false
+    popupWindow?.isVisible = true
     component.stopLoading()
     component.editors = editors
     component.html = html
@@ -157,10 +188,14 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     val screen = ScreenUtil.getScreenRectangle(location)
 
     if (screen != null) {
-      val delta = screen.width + screen.x - location.x
-      if (size.width > delta) {
-        size.width = delta
+      var delta = screen.width + screen.x - location.x
+      val content = originalPopup?.content
+      val origLocation = if (content?.isShowing == true) content.locationOnScreen else null
+      // On the left side of the original popup: avoid overlap
+      if (origLocation != null && location.x < origLocation.x) {
+        delta = delta.coerceAtMost(origLocation.x - screen.x - PositionAdjuster.DEFAULT_GAP)
       }
+      size.width = size.width.coerceAtMost(delta)
     }
 
     component.editors.forEach {
@@ -181,6 +216,13 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     popup.pack(true, true)
   }
 
+  /**
+   * Call when process is just activated via hotkey
+   */
+  fun activate() {
+    justActivated = true
+  }
+
   companion object {
     internal const val MAX_HEIGHT = 300
     internal const val MIN_WIDTH = 300
@@ -195,6 +237,24 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        originalFile: PsiFile,
                        originalEditor: Editor): String? {
       return (getPreviewInfo(project, action, originalFile, originalEditor) as? IntentionPreviewDiffResult)?.psiFile?.text
+    }
+
+    /**
+     * Returns content of preview:
+     * if it's diff then new content is returned
+     * if it's HTML then text representation is returned
+     */
+    @TestOnly
+    @JvmStatic
+    fun getPreviewContent(project: Project,
+                          action: IntentionAction,
+                          originalFile: PsiFile,
+                          originalEditor: Editor): String {
+      return when(val info = getPreviewInfo(project, action, originalFile, originalEditor)) {
+        is IntentionPreviewDiffResult -> info.psiFile.text
+        is Html -> info.content().toString()
+        else -> ""
+      }
     }
 
     @TestOnly

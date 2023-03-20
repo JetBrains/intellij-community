@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 
@@ -22,7 +22,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class LanguageLevelUtil {
+public final class LanguageLevelUtil {
   /**
    * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level
    */
@@ -77,7 +77,10 @@ public class LanguageLevelUtil {
     ourPresentableShortMessage.put(LanguageLevel.JDK_14, "15");
     ourPresentableShortMessage.put(LanguageLevel.JDK_15, "16");
     ourPresentableShortMessage.put(LanguageLevel.JDK_16, "17");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_16_PREVIEW, "17");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_17, "18");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_17_PREVIEW, "18");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_18, "19");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_18_PREVIEW, "19");
   }
 
   @Nullable
@@ -85,13 +88,24 @@ public class LanguageLevelUtil {
     return ourPresentableShortMessage.get(languageLevel);
   }
 
+  /**
+   * For performance reasons the forbidden API is pre-generated.
+   * @see com.intellij.codeInspection.tests.JavaApiUsageGenerator
+   */
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
     if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
     Set<String> result = SoftReference.dereference(ref);
     if (result == null) {
-      result = loadSignatureList(LanguageLevelUtil.class.getResource("api" + getShortMessage(languageLevel) + ".txt"));
+      String fileName = "api" + getShortMessage(languageLevel) + ".txt";
+      URL resource = LanguageLevelUtil.class.getResource(fileName);
+      if (resource != null) {
+        result = loadSignatureList(resource);
+      } else {
+        Logger.getInstance(LanguageLevelUtil.class).warn("File not found: " + fileName);
+        result = Collections.emptySet();
+      }
       ourForbiddenAPI.put(languageLevel, new SoftReference<>(result));
     }
     return result;
@@ -100,41 +114,45 @@ public class LanguageLevelUtil {
   /**
    * @param member The {@link PsiMember} to get the language level from
    * @param languageLevel The effective language level
-   * @return The last compatible language level for a {@link PsiMember} as annotated by the @since javadoc
+   * @return The last incompatible language level for a {@link PsiMember} as annotated by the @since javadoc or null if it is unknown.
+   * For example, if a method is annotated as @since 9 this method will return {@link LanguageLevel#JDK_1_8}.
    */
-  public static LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
+  public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
     if (member instanceof PsiAnonymousClass) return null;
     PsiClass containingClass = member.getContainingClass();
     if (containingClass instanceof PsiAnonymousClass) return null;
     if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return null;
-
-    Set<String> forbiddenApi = getForbiddenApi(languageLevel);
-    if (forbiddenApi == null) return null;
     String signature = getSignature(member);
     if (signature == null) return null;
-    LanguageLevel lastIncompatibleLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel, forbiddenApi);
-    if (lastIncompatibleLanguageLevel != null) return lastIncompatibleLanguageLevel;
-    return null;
+    LanguageLevel lastLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel);
+    if (lastLanguageLevel != null) {
+      if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor()) {
+        LanguageLevel lowestSuperLanguageLevel = lastLanguageLevel;
+        for (PsiMethod method : ((PsiMethod)member).findSuperMethods()) {
+          String superSignature = getSignature(method);
+          if (superSignature == null) return null;
+          LanguageLevel lastSuperLanguageLevel = getLastIncompatibleLanguageLevelForSignature(superSignature, languageLevel);
+          if (lastSuperLanguageLevel == null) return null;
+          if (lastSuperLanguageLevel.isLessThan(lowestSuperLanguageLevel)) {
+            lowestSuperLanguageLevel = lastSuperLanguageLevel;
+          }
+        }
+        return lowestSuperLanguageLevel;
+      }
+    }
+    return lastLanguageLevel;
   }
 
-  private static LanguageLevel getLastIncompatibleLanguageLevelForSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel, @NotNull Set<String> forbiddenApi) {
-    if (forbiddenApi.contains(signature)) {
-      return languageLevel;
-    }
-    if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) {
-      return null;
-    }
+  private static LanguageLevel getLastIncompatibleLanguageLevelForSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel) {
+    Set<String> forbiddenApi = getForbiddenApi(languageLevel);
+    if (forbiddenApi == null) return null;
+    if (forbiddenApi.contains(signature)) return languageLevel;
+    if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) return null;
     LanguageLevel nextLanguageLevel = LanguageLevel.values()[languageLevel.ordinal() + 1];
-    Set<String> nextForbiddenApi = getForbiddenApi(nextLanguageLevel);
-    return nextForbiddenApi != null ? getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel, nextForbiddenApi) : null;
+    return getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel);
   }
 
-  public static Set<String> loadSignatureList(URL resource) {
-    if (resource == null) {
-      Logger.getInstance(LanguageLevelUtil.class).warn("not found: " + resource.getFile());
-      return Collections.emptySet();
-    }
-
+  public static Set<String> loadSignatureList(@NotNull URL resource) {
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
       return new HashSet<>(FileUtil.loadLines(reader));
     }
@@ -156,8 +174,7 @@ public class LanguageLevelUtil {
       String containingClass = getSignature(member.getContainingClass());
       return containingClass == null ? null : containingClass + "#" + member.getName();
     }
-    if (member instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)member;
+    if (member instanceof PsiMethod method) {
       String containingClass = getSignature(member.getContainingClass());
       if (containingClass == null) return null;
 

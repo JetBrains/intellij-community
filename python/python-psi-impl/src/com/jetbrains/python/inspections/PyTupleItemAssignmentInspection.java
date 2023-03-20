@@ -30,9 +30,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyTupleItemAssignmentInspection extends PyInspection {
 
   @NotNull
@@ -50,13 +47,10 @@ public class PyTupleItemAssignmentInspection extends PyInspection {
     @Override
     public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       PyExpression[] targets = node.getTargets();
-      if (targets.length == 1 && targets[0] instanceof PySubscriptionExpression) {
-        PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targets[0];
-        if (subscriptionExpression.getOperand() instanceof PyReferenceExpression) {
-          PyReferenceExpression referenceExpression = (PyReferenceExpression)subscriptionExpression.getOperand();
+      if (targets.length == 1 && targets[0] instanceof PySubscriptionExpression subscriptionExpression) {
+        if (subscriptionExpression.getOperand() instanceof PyReferenceExpression referenceExpression) {
           PsiElement element = referenceExpression.followAssignmentsChain(getResolveContext()).getElement();
-          if (element instanceof PyExpression) {
-            PyExpression expression = (PyExpression)element;
+          if (element instanceof PyExpression expression) {
             PyType type = myTypeEvalContext.getType(expression);
             if (type instanceof PyTupleType) {
               registerProblem(node, PyPsiBundle.message("INSP.tuples.never.assign.items"), new PyReplaceTupleWithListQuickFix());

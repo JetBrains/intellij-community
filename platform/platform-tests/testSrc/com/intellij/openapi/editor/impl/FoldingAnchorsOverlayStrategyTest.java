@@ -29,13 +29,14 @@ import static com.intellij.openapi.editor.impl.DisplayedFoldingAnchor.Type;
 
 public class FoldingAnchorsOverlayStrategyTest extends BasePlatformTestCase {
   public void testExpanded() {
-    prepareEditor("<body><div>\n" +
-                  "</div><div>\n" +
-                  "some text\n" +
-                  "some text\n" +
-                  "some text\n" +
-                  "</div><div>\n" +
-                  "</div></body>");
+    prepareEditor("""
+                    <body><div>
+                    </div><div>
+                    some text
+                    some text
+                    some text
+                    </div><div>
+                    </div></body>""");
     verifyAnchors(null,
                   0, Type.EXPANDED_TOP,
                   1, Type.EXPANDED_BOTTOM,
@@ -44,13 +45,14 @@ public class FoldingAnchorsOverlayStrategyTest extends BasePlatformTestCase {
   }
 
   public void testCollapsed() {
-    prepareEditor("<body><div>\n" +
-                  "</div><div>\n" +
-                  "some text\n" +
-                  "some text\n" +
-                  "some text\n" +
-                  "</div><div>\n" +
-                  "</div></body>");
+    prepareEditor("""
+                    <body><div>
+                    </div><div>
+                    some text
+                    some text
+                    some text
+                    </div><div>
+                    </div></body>""");
     collapseFoldingRegion(2);
     verifyAnchors(null,
                   0, Type.EXPANDED_TOP,
@@ -59,13 +61,14 @@ public class FoldingAnchorsOverlayStrategyTest extends BasePlatformTestCase {
   }
 
   public void testWithActiveRegion() {
-    prepareEditor("<body><div>\n" +
-                  "</div><div>\n" +
-                  "some text\n" +
-                  "some text\n" +
-                  "some text\n" +
-                  "</div><div>\n" +
-                  "</div></body>");
+    prepareEditor("""
+                    <body><div>
+                    </div><div>
+                    some text
+                    some text
+                    some text
+                    </div><div>
+                    </div></body>""");
     collapseFoldingRegion(2);
     verifyAnchors(myFixture.getEditor().getFoldingModel().getAllFoldRegions()[1],
                   0, Type.EXPANDED_TOP,

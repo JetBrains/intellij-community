@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
@@ -23,8 +23,9 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
 
   private val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
 
-  fun scroll(index: Int, block: CombinedDiffBlock, scrollPolicy: ScrollPolicy){
-    if (scrollPolicy == ScrollPolicy.DIFF_BLOCK || !block.content.viewer.isEditorBased) {
+  fun scroll(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy){
+    val isEditorBased = viewer.diffViewers[block.id]?.isEditorBased ?: false
+    if (scrollPolicy == ScrollPolicy.DIFF_BLOCK || !isEditorBased) {
       scrollToDiffBlock(index)
     }
     else if (scrollPolicy == ScrollPolicy.DIFF_CHANGE) {
@@ -39,7 +40,7 @@ internal class CombinedDiffScrollSupport(project: Project?, private val viewer: 
   }
 
   private fun scrollToDiffBlock(index: Int) {
-    if (index in viewer.diffBlocks.indices) {
+    if (viewer.diffBlocksPositions.values.contains(index)) {
       viewer.contentPanel.components.getOrNull(index)?.bounds?.let(viewer.contentPanel::scrollRectToVisible)
     }
   }

@@ -26,7 +26,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,11 +59,11 @@ public final class HighlightUtils {
    * Please use {@link #highlightElements(Collection, Editor)} instead.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {
     if (elementCollection.isEmpty()) {
       return;
     }
+    if (!elementCollection.iterator().next().isPhysical()) return;
 
     Editor selectedTextEditor =
       FileEditorManager.getInstance(ContainerUtil.getFirstItem(elementCollection).getProject()).getSelectedTextEditor();
@@ -114,7 +113,6 @@ public final class HighlightUtils {
   public static void showRenameTemplate(PsiElement context,
                                         PsiNameIdentifierOwner element,
                                         PsiReference... references) {
-    if (!element.isPhysical()) return;
     context = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(
       context);
     final Project project = context.getProject();

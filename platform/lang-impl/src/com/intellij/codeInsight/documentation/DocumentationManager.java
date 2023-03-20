@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -34,7 +34,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -51,12 +50,10 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -108,6 +105,10 @@ import java.util.regex.Pattern;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
+/**
+ * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
+ */
+@Deprecated
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
@@ -331,7 +332,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     });
 
-    new UiNotifyConnector(component, new Activatable() {
+    UiNotifyConnector.installOn(component, new Activatable() {
       @Override
       public void showNotify() {
         restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));
@@ -353,7 +354,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     toolWindow.setTitleActions(component.getNavigationActions());
     DefaultActionGroup group = new DefaultActionGroup(createActions());
     group.add(component.getFontSizeAction());
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
+    toolWindow.setAdditionalGearActions(group);
     component.removeCornerMenu();
   }
 
@@ -637,12 +638,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return findTargetElement(editor, file, getContextElement(editor, file));
   }
 
-  private static @Nullable PsiElement getContextElement(Editor editor, PsiFile file) {
+  @Internal
+  public static @Nullable PsiElement getContextElement(Editor editor, PsiFile file) {
     return getContextElement(file, editor.getCaretModel().getOffset());
   }
 
   private static @Nullable PsiElement getContextElement(@Nullable PsiFile file, int offset) {
-    return file != null ? file.findElementAt(offset) : null;
+    if (file == null) return null;
+    if (offset == file.getTextLength()) {
+      offset = Math.max(0, offset - 1);
+    }
+    return file.findElementAt(offset);
   }
 
   protected void doShowJavaDocInfo(@NotNull PsiElement element,
@@ -1408,9 +1414,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       boolean processed = false;
       if (provider instanceof CompositeDocumentationProvider) {
         for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
-          if (!(p instanceof ExternalDocumentationHandler)) continue;
+          if (!(p instanceof ExternalDocumentationHandler externalHandler)) continue;
 
-          ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
             String ref = externalHandler.extractRefFromLink(url);
             cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, ref, p, false) {
@@ -1768,23 +1773,27 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       getScope(psiFile.getProject(), file),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.size.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(StringUtil.formatFileSize(attr.size()))
       ),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.type.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")"))
       ),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.modification.datetime.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()))
       ),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.creation.datetime.label")),
+        HtmlChunk.nbsp(),
         HtmlChunk.text(DateFormatUtil.formatDateTime(attr.creationTime().toMillis()))
       )
     );
     var result = !withUrl
-                 ? content
+                 ? List.of(CONTENT_ELEMENT.children(content))
                  : List.of(
                    DEFINITION_ELEMENT.children(HtmlChunk.tag("pre").addText(file.getPresentableUrl())),
                    CONTENT_ELEMENT.children(content)
@@ -1810,6 +1819,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             colorManager.getScopeColor(name) == color) {
           return HtmlChunk.p().children(
             GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.scope.label")),
+            HtmlChunk.nbsp(),
             HtmlChunk.span().attr("bgcolor", ColorUtil.toHex(color)).addText(scope.getPresentableName())
           );
         }
@@ -1827,6 +1837,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     Color color = status.getColor();
     return HtmlChunk.p().children(
       GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.vcs.status.label")),
+      HtmlChunk.nbsp(),
       color == null ? vcsText : vcsText.wrapWith(HtmlChunk.span().attr("color", ColorUtil.toHex(color)))
     );
   }
@@ -1852,49 +1863,43 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @NlsSafe @Nullable String externalUrl,
     @Nullable DocumentationProvider provider
   ) {
-    return decorate(text, getLocationText(element), getExternalText(element, externalUrl, provider));
+    HtmlChunk locationInfo = getDefaultLocationInfo(element);
+    return decorate(text, locationInfo, getExternalText(element, externalUrl, provider));
   }
 
   @RequiresReadLock
   @RequiresBackgroundThread
-  private static @Nullable HtmlChunk getLocationText(@Nullable PsiElement element) {
-    if (element != null) {
-      PsiFile file = element.getContainingFile();
-      VirtualFile vfile = file == null ? null : file.getVirtualFile();
+  private static @Nullable HtmlChunk getDefaultLocationInfo(@Nullable PsiElement element) {
+    if (element == null) return null;
 
-      if (vfile == null) return null;
+    PsiFile file = element.getContainingFile();
+    VirtualFile vfile = file == null ? null : file.getVirtualFile();
+    if (vfile == null) return null;
 
-      SearchScope scope = element.getUseScope();
-      if (scope instanceof LocalSearchScope) {
-        return null;
-      }
+    if (element.getUseScope() instanceof LocalSearchScope) return null;
 
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-      Module module = fileIndex.getModuleForFile(vfile);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+    Module module = fileIndex.getModuleForFile(vfile);
 
-      if (module != null && !ModuleType.isInternal(module)) {
-        if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
-        return HtmlChunk.fragment(
-          HtmlChunk.tag("icon").attr("src", ModuleType.get(module).getId()),
-          HtmlChunk.nbsp(),
-          HtmlChunk.text(module.getName())
-        );
-      }
-      else {
-        List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
-        for (OrderEntry order : entries) {
-          if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-            return HtmlChunk.fragment(
-              HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
-              HtmlChunk.nbsp(),
-              HtmlChunk.text(order.getPresentableName())
-            );
-          }
-        }
-      }
+    if (module != null) {
+      if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
+      return HtmlChunk.fragment(
+        HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.Module"),
+        HtmlChunk.nbsp(),
+        HtmlChunk.text(module.getName())
+      );
     }
-
-    return null;
+    else {
+      return fileIndex.getOrderEntriesForFile(vfile).stream()
+        .filter(it -> it instanceof LibraryOrderEntry || it instanceof JdkOrderEntry)
+        .findFirst()
+        .map(it -> HtmlChunk.fragment(
+          HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
+          HtmlChunk.nbsp(),
+          HtmlChunk.text(it.getPresentableName())
+        ))
+        .orElse(null);
+    }
   }
 
   @Internal
@@ -1902,11 +1907,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public static @Nls String decorate(@Nls @NotNull String text, @Nullable HtmlChunk location, @Nullable HtmlChunk links) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
-    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + SECTIONS_END, "");
-    text = StringUtil.replaceIgnoreCase(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
-    boolean hasContent = text.contains(CONTENT_START);
+    text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
+    text = replaceIgnoreQuotesType(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
+    boolean hasContent = containsIgnoreQuotesType(text, CONTENT_START);
     if (!hasContent) {
-      if (!text.contains(DEFINITION_START)) {
+      if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
         int bodyStart = findContentStart(text);
         if (bodyStart > 0) {
           text = text.substring(0, bodyStart) +
@@ -1919,13 +1924,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
         hasContent = true;
       }
-      else if (!text.contains(SECTIONS_START)) {
-        //noinspection HardCodedStringLiteral
-        text = StringUtil.replaceIgnoreCase(text, DEFINITION_START, "<div class='definition-only'><pre>");
+      else if (!containsIgnoreQuotesType(text, SECTIONS_START)) {
+        text = replaceIgnoreQuotesType(text, DEFINITION_START, "<div class='definition-only'><pre>");
       }
     }
-    if (!text.contains(DEFINITION_START)) {
-      text = text.replace("class='content'", "class='content-only'");
+    if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
+      text = replaceIgnoreQuotesType(text, "class='content'", "class='content-only'");
     }
     if (location != null) {
       text += getBottom(hasContent).child(location);
@@ -1937,6 +1941,30 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p))", "$1");
     text = addExternalLinksIcon(text);
     return text;
+  }
+
+  private static boolean containsIgnoreQuotesType(@NotNull String text, @NotNull String substring) {
+    return text.contains(substring)
+           || text.contains(substring.replace("\"", "'"))
+           || text.contains(substring.replace("'", "\""));
+  }
+
+  private static @NlsSafe @NotNull String replaceIgnoreQuotesType(@NotNull String text,
+                                                                  @NotNull String oldString,
+                                                                  @NotNull String newString) {
+    String replaced;
+    if (!text.contains(oldString)) {
+      if (oldString.contains("\"")) {
+        replaced = oldString.replace("\"", "'");
+      }
+      else {
+        replaced = oldString.replace("'", "\"");
+      }
+    }
+    else {
+      replaced = oldString;
+    }
+    return StringUtil.replaceIgnoreCase(text, replaced, newString);
   }
 
   @RequiresReadLock
@@ -1956,22 +1984,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     String title = getTitle(element);
     if (externalUrl == null) {
       List<String> urls = provider.getUrlFor(element, originalElement);
-      if (urls != null) {
-        boolean hasBadUrl = false;
-        var result = new HtmlBuilder();
-        for (String url : urls) {
-          HtmlChunk link = getLink(title, url);
-          if (link == null) {
-            hasBadUrl = true;
-            break;
-          }
-          if (!result.isEmpty()) result.append(HtmlChunk.p());
-          result.append(link);
-        }
-        if (!hasBadUrl) return result.toFragment();
-      }
-      else {
+      if (urls == null) {
         return null;
+      }
+      HtmlChunk links = getExternalLinks(title, urls);
+      if (links != null) {
+        return links;
       }
     }
     else {
@@ -1979,6 +1997,26 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       if (link != null) return link;
     }
 
+    return getGenericExternalDocumentationLink(title);
+  }
+
+  public static @Nullable HtmlChunk getExternalLinks(@Nls String title, @NotNull List<String> urls) {
+    List<HtmlChunk> result = new SmartList<>();
+    for (String url : urls) {
+      HtmlChunk link = getLink(title, url);
+      if (link == null) {
+        return null;
+      }
+      else {
+        result.add(link);
+      }
+    }
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.appendWithSeparators(HtmlChunk.p(), result);
+    return builder.toFragment();
+  }
+
+  public static @NotNull HtmlChunk getGenericExternalDocumentationLink(@Nullable String title) {
     String linkText = CodeInsightBundle.message("html.external.documentation.component.header", title, title == null ? 0 : 1);
     return HtmlChunk.link("external_doc", linkText).child(EXTERNAL_LINK_ICON);
   }

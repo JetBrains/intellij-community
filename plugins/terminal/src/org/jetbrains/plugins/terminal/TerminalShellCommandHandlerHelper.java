@@ -31,7 +31,6 @@ import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
@@ -40,9 +39,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalDebugSmartCommandAction;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalExecutorAction;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,6 +47,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelper.class);
@@ -196,7 +194,7 @@ public final class TerminalShellCommandHandlerHelper {
   private String getWorkingDirectory() {
     String workingDirectory = myWorkingDirectory;
     if (workingDirectory == null) {
-      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget, null));
+      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget.asNewWidget()));
       myWorkingDirectory = workingDirectory;
     }
     return StringUtil.nullize(workingDirectory);
@@ -242,7 +240,7 @@ public final class TerminalShellCommandHandlerHelper {
     if (attributes == null) {
       return null;
     }
-    return new TextStyle(TerminalColor.awt(attributes.getForegroundColor()), TerminalColor.awt(attributes.getBackgroundColor()));
+    return new TextStyle(fromAwtToTerminalColor(attributes.getForegroundColor()), fromAwtToTerminalColor(attributes.getBackgroundColor()));
   }
 
   public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {
@@ -314,42 +312,26 @@ public final class TerminalShellCommandHandlerHelper {
     }
   }
 
-  @Nullable
-  static Executor matchedExecutor(@NotNull KeyEvent e) {
-    if (matchedRunAction(e) != null) {
+  static @Nullable Executor matchedExecutor(@NotNull KeyEvent e) {
+    if (matchAction(e, getRunAction())) {
       return DefaultRunExecutor.getRunExecutorInstance();
-    } else if (matchedDebugAction(e) != null) {
-      return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-    } else {
-      return null;
     }
+    if (matchAction(e, getDebugAction())) {
+      return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    }
+    return null;
   }
 
-  private static TerminalExecutorAction matchedRunAction(@NotNull KeyEvent e) {
-    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-    AnAction action = getRunAction();
-    return action instanceof TerminalRunSmartCommandAction
-           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
-           ? ((TerminalRunSmartCommandAction)action)
-           : null;
+  private static boolean matchAction(@NotNull KeyEvent e, @NotNull AnAction action) {
+    KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
+    return ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut));
   }
 
-  private static TerminalExecutorAction matchedDebugAction(@NotNull KeyEvent e) {
-    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-    AnAction action = getDebugAction();
-    return action instanceof TerminalDebugSmartCommandAction
-           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
-           ? ((TerminalDebugSmartCommandAction)action)
-           : null;
-  }
-
-  @NotNull
-  private static AnAction getRunAction() {
+  private static @NotNull AnAction getRunAction() {
     return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Run"));
   }
 
-  @NotNull
-  private static AnAction getDebugAction() {
+  private static @NotNull AnAction getDebugAction() {
     return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Debug"));
   }
 }

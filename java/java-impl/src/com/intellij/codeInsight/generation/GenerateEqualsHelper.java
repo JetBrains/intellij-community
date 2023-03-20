@@ -22,9 +22,6 @@ import org.jetbrains.java.generate.template.TemplateResource;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 
@@ -141,18 +138,18 @@ public class GenerateEqualsHelper implements Runnable {
   public static Map<String, PsiType> getEqualsImplicitVars(Project project) {
     final Map<String, PsiType> map = new LinkedHashMap<>();
     final PsiType stringType = project != null ? PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project))
-                                               : PsiType.NULL;
+                                               : (PsiPrimitiveType)PsiTypes.nullType();
     map.put(INSTANCE_NAME, stringType);
     map.put(BASE_PARAM_NAME, stringType);
     map.put(SUPER_PARAM_NAME, stringType);
-    map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiType.BOOLEAN);
-    map.put(SUPER_HAS_EQUALS, PsiType.BOOLEAN);
+    map.put(CHECK_PARAMETER_WITH_INSTANCEOF, PsiTypes.booleanType());
+    map.put(SUPER_HAS_EQUALS, PsiTypes.booleanType());
     return map;
   }
 
   public static Map<String, PsiType> getHashCodeImplicitVars() {
     final Map<String, PsiType> map = new LinkedHashMap<>();
-    map.put(SUPER_HAS_HASH_CODE, PsiType.BOOLEAN);
+    map.put(SUPER_HAS_HASH_CODE, PsiTypes.booleanType());
     return map;
   }
 
@@ -277,7 +274,7 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
-  static class EqualsFieldsComparator implements Comparator<PsiField> {
+  private static class EqualsFieldsComparator implements Comparator<PsiField> {
     public static final EqualsFieldsComparator INSTANCE = new EqualsFieldsComparator();
 
     @Override

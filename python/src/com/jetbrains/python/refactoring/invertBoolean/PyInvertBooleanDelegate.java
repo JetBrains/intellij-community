@@ -75,7 +75,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   public void collectRefElements(PsiElement psiElement,
                                  @Nullable RenameProcessor renameProcessor,
                                  @NotNull String newName,
-                                 Collection<PsiElement> elementsToInvert) {
+                                 Collection<? super PsiElement> elementsToInvert) {
     final Collection<PsiReference> refs = ReferencesSearch.search(psiElement).findAll();
 
     for (PsiReference ref : refs) {
@@ -88,8 +88,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
-    if (element instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)element;
+    if (element instanceof PyTargetExpression target) {
       final PyAssignmentStatement parent = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
       if (parent != null && parent.getTargets().length == 1) {
         final PyExpression value = parent.getAssignedValue();

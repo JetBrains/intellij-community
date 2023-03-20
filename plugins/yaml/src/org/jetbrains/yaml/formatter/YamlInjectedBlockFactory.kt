@@ -15,7 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.util.SmartList
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.text.TextRangeUtil
 import com.intellij.util.text.escLBr
 import org.jetbrains.yaml.YAMLFileType
@@ -133,8 +133,8 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
                                                blockRange,
                                                outerNodes,
                                                replaceAbsoluteIndent(block),
-                                               block.castSafelyTo<BlockEx>()?.language ?: injectionLanguage)
-            
+                                               block.asSafely<BlockEx>()?.language ?: injectionLanguage)
+
             result.addAll(outerBlocksQueue.popWhile { it.textRange.endOffset <= blockRangeInHost.startOffset })
             if (block.subBlocks.isNotEmpty()) {
               result.add(createInnerWrapper(
@@ -155,7 +155,7 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
       }
     }
 
-    private fun replaceAbsoluteIndent(block: Block): Indent? = block.indent.castSafelyTo<IndentImpl>()?.takeIf { it.isAbsolute }
+    private fun replaceAbsoluteIndent(block: Block): Indent? = block.indent.asSafely<IndentImpl>()?.takeIf { it.isAbsolute }
       ?.run { IndentImpl(type, false, spaces, isRelativeToDirectParent, isEnforceIndentToChildren) } ?:block.indent
 
     override fun getSubBlocks(): List<Block> = myBlocks
@@ -163,19 +163,21 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
     override fun getWrap(): Wrap? = original.wrap
     override fun getIndent(): Indent? = indent
     override fun getAlignment(): Alignment? = original.alignment
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = original.getSpacing(child1, child2)
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? = original.getSpacing(child1?.unwrap(), child2.unwrap())
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes = original.getChildAttributes(newChildIndex)
     override fun isIncomplete(): Boolean = original.isIncomplete
     override fun isLeaf(): Boolean = original.isLeaf
     override fun getLanguage(): Language? = language
   }
 
+  private fun Block.unwrap() = this.asSafely<YamlInjectedLanguageBlockWrapper>()?.original ?: this
+
   private fun <T> ArrayDeque<T>.popWhile(pred: (T) -> Boolean): List<T> {
     if (this.isEmpty()) return emptyList()
     val result = SmartList<T>()
     while (this.isNotEmpty() && pred(this.first()))
       result.add(this.removeFirst())
-    return result;
+    return result
   }
 
 }

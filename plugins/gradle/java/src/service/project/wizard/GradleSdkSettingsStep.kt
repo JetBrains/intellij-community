@@ -6,6 +6,7 @@ import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.util.*
 
 class GradleSdkSettingsStep(
@@ -17,30 +18,19 @@ class GradleSdkSettingsStep(
   private val jdk get() = myJdkComboBox.selectedJdk
   private val javaVersion get() = JavaVersion.tryParse(jdk?.versionString)
 
-  private fun getPreferredGradleVersion(): GradleVersion {
-    val project = context.project ?: return GradleVersion.current()
-    return findGradleVersion(project) ?: GradleVersion.current()
-  }
-
-  private fun getGradleVersion(): GradleVersion? {
-    val preferredGradleVersion = getPreferredGradleVersion()
-    val javaVersion = javaVersion ?: return preferredGradleVersion
-    return when (isSupported(preferredGradleVersion, javaVersion)) {
-      true -> preferredGradleVersion
-      else -> suggestGradleVersion(javaVersion)
-    }
-  }
-
   override fun validate(): Boolean {
     return super.validate() && validateGradleVersion()
   }
 
   private fun validateGradleVersion(): Boolean {
     val javaVersion = javaVersion ?: return true
-    if (getGradleVersion() != null) {
+    val gradleVersion = suggestGradleVersion {
+      withProject(context.project)
+      withJavaVersionFilter(javaVersion)
+    }
+    if (gradleVersion != null) {
       return true
     }
-    val preferredGradleVersion = getPreferredGradleVersion()
     return MessageDialogBuilder.yesNo(
       title = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.title",
@@ -48,16 +38,23 @@ class GradleSdkSettingsStep(
       ),
       message = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.message",
+        suggestOldestCompatibleJavaVersion(GradleVersion.current()),
+        suggestLatestJavaVersion(GradleVersion.current()),
         javaVersion.toFeatureString(),
-        MINIMUM_SUPPORTED_JAVA,
-        MAXIMUM_SUPPORTED_JAVA,
-        preferredGradleVersion.version))
+        GradleVersion.current().version
+      )
+    )
       .asWarning()
       .ask(component)
   }
 
   override fun updateDataModel() {
     super.updateDataModel()
-    builder.gradleVersion = getGradleVersion() ?: getPreferredGradleVersion()
+    builder.setGradleVersion(suggestGradleVersion {
+      withProject(context.project)
+      withJavaVersionFilter(javaVersion)
+    } ?: GradleVersion.current())
+    builder.setGradleDistributionType(DistributionType.DEFAULT_WRAPPED)
+    builder.setGradleHome(null)
   }
 }

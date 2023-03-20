@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -42,6 +42,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -105,7 +106,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    * Debug output of this classes will be captured and reported in case of test failure
    */
   @NotNull
-  public Iterable<Class<?>> getClassesToEnableDebug() {
+  public Collection<Class<?>> getClassesToEnableDebug() {
     return Collections.emptyList();
   }
 
@@ -296,7 +297,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
-    final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
+    final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule(), myFixture.getTestRootDisposable());
     // We use gradle script to create environment. This script utilizes Conda.
     // Conda supports 2 types of package installation: conda native and pip. We use pip.
     // PyCharm Conda support ignores packages installed via pip ("conda list -e" does it, see PyCondaPackageManagerImpl)

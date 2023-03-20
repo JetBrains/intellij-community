@@ -1,5 +1,12 @@
 // WITH_STDLIB
 class JavaMethods {
+    // KTIJ-23730
+    fun bug(condition: Boolean) {
+        val list: List<Int> = if (condition) java.util.Collections.emptyList() else listOf()
+        println(condition)
+        println(list)
+    }
+
     var f : Int = 0
 
     fun testAbs(x : Int) {

@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.function.BiPredicate;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -26,10 +32,10 @@ import java.util.zip.ZipOutputStream;
 
 public abstract class Compressor implements Closeable {
   public static class Tar extends Compressor {
-    public enum Compression { GZIP, BZIP2, NONE }
+    public enum Compression {GZIP, BZIP2, NONE}
 
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
-      this(new FileOutputStream(file), compression);
+      this(Files.newOutputStream(file.toPath()), compression);
     }
 
     //<editor-fold desc="Implementation">
@@ -55,8 +61,16 @@ public abstract class Compressor implements Closeable {
     }
 
     @Override
-    protected void writeFileEntry(String name, InputStream source, long length, long timestamp) throws IOException {
-      TarArchiveEntry e = new TarArchiveEntry(name);
+    protected void writeFileEntry(String name, InputStream source, long length, long timestamp, int mode, @Nullable String symlinkTarget) throws IOException {
+      TarArchiveEntry e;
+      if (symlinkTarget == null) {
+        e = new TarArchiveEntry(name);
+      }
+      else {
+        e = new TarArchiveEntry(name, TarConstants.LF_SYMLINK);
+        e.setLinkName(symlinkTarget);
+        length = 0;
+      }
       if (length < 0) {
         if (source instanceof ByteArrayInputStream || source instanceof UnsyncByteArrayInputStream) {
           length = source.available();
@@ -70,6 +84,9 @@ public abstract class Compressor implements Closeable {
       }
       e.setSize(length);
       e.setModTime(timestamp);
+      if (mode != 0) {
+        e.setMode(mode);
+      }
       myStream.putArchiveEntry(e);
       if (length > 0) {
         StreamUtil.copy(source, myStream);
@@ -84,9 +101,16 @@ public abstract class Compressor implements Closeable {
     //</editor-fold>
   }
 
+  /**
+   * ZIP extensions (file modes, symlinks, etc.) are not supported.
+   */
   public static class Zip extends Compressor {
-    public Zip(@NotNull File file) throws FileNotFoundException {
-      this(new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
+    public Zip(@NotNull File file) throws IOException {
+      this(file.toPath());
+    }
+
+    public Zip(@NotNull Path file) throws IOException {
+      this(new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(file))));
     }
 
     public Zip(@NotNull OutputStream stream) {
@@ -117,7 +141,7 @@ public abstract class Compressor implements Closeable {
     }
 
     @Override
-    protected void writeFileEntry(String name, InputStream source, long length, long timestamp) throws IOException {
+    protected void writeFileEntry(String name, InputStream source, long length, long timestamp, int mode, @Nullable String symlinkTarget) throws IOException {
       ZipEntry e = new ZipEntry(name);
       if (length == 0) {
         e.setMethod(ZipEntry.STORED);
@@ -141,7 +165,11 @@ public abstract class Compressor implements Closeable {
 
   public static class Jar extends Zip {
     public Jar(@NotNull File file) throws IOException {
-      super(new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
+      this(file.toPath());
+    }
+
+    public Jar(@NotNull Path file) throws IOException {
+      super(new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(file))));
     }
 
     public final void addManifest(@NotNull Manifest manifest) throws IOException {
@@ -154,7 +182,7 @@ public abstract class Compressor implements Closeable {
   private @Nullable BiPredicate<? super String, ? super @Nullable Path> myFilter;
 
   /**
-   * Allows filtering entries being added to the archive.
+   * Filtering entries being added to the archive.
    * Please note that the second parameter of a filter ({@code Path}) <b>might be {@code null}</b> when it is applied
    * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
    */
@@ -168,12 +196,13 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addFile(@NotNull String entryName, @NotNull Path file) throws IOException {
+    addFile(entryName, file, -1);
+  }
+
+  public final void addFile(@NotNull String entryName, @NotNull Path file, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accept(entryName, file)) {
-      try (InputStream source = Files.newInputStream(file)) {
-        BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
-        writeFileEntry(entryName, source, attributes.size(), attributes.lastModifiedTime().toMillis());
-      }
+      addFile(file, Files.readAttributes(file, BasicFileAttributes.class), entryName, timestamp);
     }
   }
 
@@ -184,7 +213,7 @@ public abstract class Compressor implements Closeable {
   public final void addFile(@NotNull String entryName, byte @NotNull [] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accept(entryName, null)) {
-      writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));
+      writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp), 0, null);
     }
   }
 
@@ -195,7 +224,7 @@ public abstract class Compressor implements Closeable {
   public final void addFile(@NotNull String entryName, @NotNull InputStream content, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accept(entryName, null)) {
-      writeFileEntry(entryName, content, -1, timestamp(timestamp));
+      writeFileEntry(entryName, content, -1, timestamp(timestamp), 0, null);
     }
   }
 
@@ -215,7 +244,7 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull Path directory) throws IOException {
-    addRecursively("", directory);
+    addDirectory("", directory);
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
@@ -223,10 +252,17 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull Path directory) throws IOException {
-    addRecursively(entryName(prefix), directory);
+    addDirectory(prefix, directory, -1);
+  }
+
+  public final void addDirectory(@NotNull String prefix, @NotNull Path directory, long timestampInMillis) throws IOException {
+    String entryName = prefix.isEmpty() ? "" : entryName(prefix);
+    addRecursively(entryName, directory, timestampInMillis);
   }
 
   //<editor-fold desc="Internal interface">
+  private static final Logger LOG = Logger.getInstance(Compressor.class);
+
   protected Compressor() { }
 
   private static String entryName(String name) {
@@ -243,7 +279,38 @@ public abstract class Compressor implements Closeable {
     return myFilter == null || myFilter.test(entryName, file);
   }
 
-  private void addRecursively(String prefix, Path root) throws IOException {
+  private void addFile(Path file, BasicFileAttributes attrs, String name, long explicitTimestamp) throws IOException {
+    try (InputStream source = Files.newInputStream(file)) {
+      long timestamp = explicitTimestamp == -1 ? attrs.lastModifiedTime().toMillis() : explicitTimestamp;
+      String symlinkTarget = attrs.isSymbolicLink() ? Files.readSymbolicLink(file).toString() : null;
+      writeFileEntry(name, source, attrs.size(), timestamp, mode(file), symlinkTarget);
+    }
+  }
+
+  private static int mode(Path file) throws IOException {
+    if (SystemInfo.isWindows) {
+      DosFileAttributeView attrs = Files.getFileAttributeView(file, DosFileAttributeView.class);
+      if (attrs != null) {
+        DosFileAttributes dosAttrs = attrs.readAttributes();
+        int mode = 0;
+        if (dosAttrs.isReadOnly()) mode |= Decompressor.Entry.DOS_READ_ONLY;
+        if (dosAttrs.isHidden()) mode |= Decompressor.Entry.DOS_HIDDEN;
+        return mode;
+      }
+    }
+    else {
+      PosixFileAttributeView attrs = Files.getFileAttributeView(file, PosixFileAttributeView.class);
+      if (attrs != null) {
+        return PosixFilePermissionsUtil.toUnixMode(attrs.readAttributes().permissions());
+      }
+    }
+    return 0;
+  }
+
+  private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {
+    boolean traceEnabled = LOG.isTraceEnabled();
+    if (traceEnabled) LOG.trace("dir=" + root + " prefix=" + prefix);
+
     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -252,7 +319,8 @@ public abstract class Compressor implements Closeable {
           return FileVisitResult.CONTINUE;
         }
         else if (accept(name, dir)) {
-          writeDirectoryEntry(name, attrs.lastModifiedTime().toMillis());
+          if (traceEnabled) LOG.trace("  " + dir + " -> " + name + '/');
+          writeDirectoryEntry(name, timestampMs == -1 ? attrs.lastModifiedTime().toMillis() : timestampMs);
           return FileVisitResult.CONTINUE;
         }
         else {
@@ -264,9 +332,8 @@ public abstract class Compressor implements Closeable {
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         String name = entryName(file);
         if (accept(name, file)) {
-          try (InputStream source = Files.newInputStream(file)) {
-            writeFileEntry(name, source, attrs.size(), attrs.lastModifiedTime().toMillis());
-          }
+          if (traceEnabled) LOG.trace("  " + file + " -> " + name + (attrs.isSymbolicLink() ? " symlink" : " size=" + attrs.size()));
+          addFile(file, attrs, name, timestampMs);
         }
         return FileVisitResult.CONTINUE;
       }
@@ -276,9 +343,11 @@ public abstract class Compressor implements Closeable {
         return prefix.isEmpty() ? relativeName : prefix + '/' + relativeName;
       }
     });
+
+    LOG.trace(".");
   }
 
   protected abstract void writeDirectoryEntry(String name, long timestamp) throws IOException;
-  protected abstract void writeFileEntry(String name, InputStream source, long length, long timestamp) throws IOException;
+  protected abstract void writeFileEntry(String name, InputStream source, long length, long timestamp, int mode, @Nullable String symlinkTarget) throws IOException;
   //</editor-fold>
 }

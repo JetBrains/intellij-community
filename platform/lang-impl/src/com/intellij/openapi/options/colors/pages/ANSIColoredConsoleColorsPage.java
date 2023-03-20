@@ -30,39 +30,40 @@ import java.util.Map;
 public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   @SuppressWarnings("SpellCheckingInspection")
   private static final String DEMO_TEXT =
-    "<stdsys>C:\\command.com</stdsys>\n" +
-    "-<stdout> C:></stdout>\n" +
-    "-<stdin> help</stdin>\n" +
-    "<stderr>Bad command or file name</stderr>\n" +
-    "\n" +
-    "<logError>Log error</logError>\n" +
-    "<logWarning>Log warning</logWarning>\n" +
-    "<logInfo>Log info</logInfo>\n" +
-    "<logVerbose>Log verbose</logVerbose>\n" +
-    "<logDebug>Log debug</logDebug>\n" +
-    "<logExpired>An expired log entry</logExpired>\n" +
-    "\n" +
-    "# Process output highlighted using ANSI colors codes\n" +
-    "<black>ANSI: black</black>\n" +
-    "<red>ANSI: red</red>\n" +
-    "<green>ANSI: green</green>\n" +
-    "<yellow>ANSI: yellow</yellow>\n" +
-    "<blue>ANSI: blue</blue>\n" +
-    "<magenta>ANSI: magenta</magenta>\n" +
-    "<cyan>ANSI: cyan</cyan>\n" +
-    "<gray>ANSI: gray</gray>\n" +
-    "<darkGray>ANSI: dark gray</darkGray>\n" +
-    "<redBright>ANSI: bright red</redBright>\n" +
-    "<greenBright>ANSI: bright green</greenBright>\n" +
-    "<yellowBright>ANSI: bright yellow</yellowBright>\n" +
-    "<blueBright>ANSI: bright blue</blueBright>\n" +
-    "<magentaBright>ANSI: bright magenta</magentaBright>\n" +
-    "<cyanBright>ANSI: bright cyan</cyanBright>\n" +
-    "<white>ANSI: white</white>\n" +
-    "\n" +
-    "<terminalCommandToRunUsingIDE>git log</terminalCommandToRunUsingIDE>" +
-    "\n" +
-    "<stdsys>Process finished with exit code 1</stdsys>\n";
+    """
+      <stdsys>C:\\command.com</stdsys>
+      -<stdout> C:></stdout>
+      -<stdin> help</stdin>
+      <stderr>Bad command or file name</stderr>
+
+      <logError>Log error</logError>
+      <logWarning>Log warning</logWarning>
+      <logInfo>Log info</logInfo>
+      <logVerbose>Log verbose</logVerbose>
+      <logDebug>Log debug</logDebug>
+      <logExpired>An expired log entry</logExpired>
+
+      # Process output highlighted using ANSI colors codes
+      <black>ANSI: black</black>
+      <red>ANSI: red</red>
+      <green>ANSI: green</green>
+      <yellow>ANSI: yellow</yellow>
+      <blue>ANSI: blue</blue>
+      <magenta>ANSI: magenta</magenta>
+      <cyan>ANSI: cyan</cyan>
+      <gray>ANSI: gray</gray>
+      <darkGray>ANSI: dark gray</darkGray>
+      <redBright>ANSI: bright red</redBright>
+      <greenBright>ANSI: bright green</greenBright>
+      <yellowBright>ANSI: bright yellow</yellowBright>
+      <blueBright>ANSI: bright blue</blueBright>
+      <magentaBright>ANSI: bright magenta</magentaBright>
+      <cyanBright>ANSI: bright cyan</cyanBright>
+      <white>ANSI: white</white>
+
+      <terminalCommandToRunUsingIDE>git log</terminalCommandToRunUsingIDE>
+      <stdsys>Process finished with exit code 1</stdsys>
+      """;
 
   private static final AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),

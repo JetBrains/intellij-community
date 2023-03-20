@@ -1,10 +1,7 @@
-fun numbers(): String {
-    val numbers = StringBuilder()
-    return with(numbers) {
-        // the implicit receiver is "numbers" (StringBuilder)
-        for (letter in '0'..'9') {
-            append(letter)
-        }
-        toString()
+fun printString(str: String) {
+    str.run {
+        println(length)
     }
 }
+
+fun <R> run(block: () -> R): R = TODO()

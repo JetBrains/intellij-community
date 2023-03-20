@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.idea.gradle.configuration.CachedArgumentsRestoring
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.junit.Assert
@@ -107,14 +107,14 @@ class CompilerArgumentsCachingTest {
 
     private fun ExtractedCompilerArgumentsBucket.cacheAndCheckConsistency() {
         val mapper = CompilerArgumentsCacheMapperImpl()
-        val cachedBucket = CompilerArgumentsCachingTool.cacheCompilerArguments(this, mapper)
+        val cachedBucket = CompilerArgumentsCachingManager.cacheCompilerArguments(this, mapper)
         singleArguments.entries.forEach { (key, value) ->
             assertTrue(mapper.checkCached(key))
             val rawValue = value ?: return@forEach
             assertTrue(mapper.checkCached(rawValue))
             val keyCacheId = mapper.cacheArgument(key)
             val matchingCachedEntry = cachedBucket.singleArguments.entries.singleOrNull { (cachedKey, _) ->
-                cachedKey is KotlinCachedRegularCompilerArgument && cachedKey.data == keyCacheId
+                cachedKey.data == keyCacheId
             }
             assertTrue(matchingCachedEntry != null)
             val valueCacheId = mapper.cacheArgument(rawValue)
@@ -129,18 +129,11 @@ class CompilerArgumentsCachingTest {
         )
         flagArguments.entries.forEach { (key, value) ->
             assertTrue(mapper.checkCached(key))
-            val rawValue = value.toString()
-            assertTrue(mapper.checkCached(rawValue))
             val keyCacheId = mapper.cacheArgument(key)
             val matchingCachedEntry = cachedBucket.flagArguments.entries.singleOrNull { (cachedKey, _) ->
-                cachedKey is KotlinCachedRegularCompilerArgument && cachedKey.data == keyCacheId
+                cachedKey.data == keyCacheId
             }
             assertTrue(matchingCachedEntry != null)
-            val valueCacheId = mapper.cacheArgument(rawValue)
-            assertEquals(
-                (matchingCachedEntry.value as KotlinCachedBooleanCompilerArgument).data,
-                valueCacheId
-            )
         }
         multipleArguments.entries.forEach { (key, value) ->
             assertTrue(mapper.checkCached(key))
@@ -150,7 +143,7 @@ class CompilerArgumentsCachingTest {
             }
             val keyCacheId = mapper.cacheArgument(key)
             val matchingCachedEntry = cachedBucket.multipleArguments.entries.singleOrNull { (cachedKey, _) ->
-                cachedKey is KotlinCachedRegularCompilerArgument && cachedKey.data == keyCacheId
+                true && cachedKey.data == keyCacheId
             }
             assertTrue(matchingCachedEntry != null)
             val valueCacheIds = rawValues.map { mapper.cacheArgument(it) }
@@ -184,13 +177,11 @@ class CompilerArgumentsCachingTest {
         noInline = Random.nextBoolean()
         skipMetadataVersionCheck = Random.nextBoolean()
         skipPrereleaseCheck = Random.nextBoolean()
-        newInference = Random.nextBoolean()
         allowKotlinPackage = Random.nextBoolean()
         reportOutputFiles = Random.nextBoolean()
         multiPlatform = Random.nextBoolean()
         noCheckActual = Random.nextBoolean()
         inlineClasses = Random.nextBoolean()
-        polymorphicSignature = Random.nextBoolean()
         legacySmartCastAfterTry = Random.nextBoolean()
         effectSystem = Random.nextBoolean()
         readDeserializedContracts = Random.nextBoolean()
@@ -201,7 +192,7 @@ class CompilerArgumentsCachingTest {
         profilePhases = Random.nextBoolean()
         checkPhaseConditions = Random.nextBoolean()
         checkStickyPhaseConditions = Random.nextBoolean()
-        useFir = Random.nextBoolean()
+        useK2 = Random.nextBoolean()
         useFirExtendedCheckers = Random.nextBoolean()
         disableUltraLightClasses = Random.nextBoolean()
         useMixedNamedArguments = Random.nextBoolean()
@@ -224,8 +215,6 @@ class CompilerArgumentsCachingTest {
 
         pluginOptions = generateRandomStringArray(20)
         pluginClasspaths = generateRandomStringArray(20)
-        experimental = generateRandomStringArray(20)
-        useExperimental = generateRandomStringArray(20)
         optIn = generateRandomStringArray(20)
         commonSources = generateRandomStringArray(20)
         disablePhases = generateRandomStringArray(20)
@@ -233,7 +222,6 @@ class CompilerArgumentsCachingTest {
         phasesToDumpBefore = generateRandomStringArray(20)
         phasesToDumpAfter = generateRandomStringArray(20)
         phasesToDump = generateRandomStringArray(20)
-        namesExcludedFromDumping = generateRandomStringArray(20)
         phasesToValidateBefore = generateRandomStringArray(20)
         phasesToValidateAfter = generateRandomStringArray(20)
         phasesToValidate = generateRandomStringArray(20)
@@ -266,17 +254,13 @@ class CompilerArgumentsCachingTest {
         noCallAssertions = Random.nextBoolean()
         noReceiverAssertions = Random.nextBoolean()
         noParamAssertions = Random.nextBoolean()
-        strictJavaNullabilityAssertions = Random.nextBoolean()
         noOptimize = Random.nextBoolean()
         inheritMultifileParts = Random.nextBoolean()
         useTypeTable = Random.nextBoolean()
-        skipRuntimeVersionCheck = Random.nextBoolean()
         useOldClassFilesReading = Random.nextBoolean()
-        singleModule = Random.nextBoolean()
         suppressMissingBuiltinsError = Random.nextBoolean()
         useJavac = Random.nextBoolean()
         compileJava = Random.nextBoolean()
-        noExceptionOnExplicitEqualsForBoxedNull = Random.nextBoolean()
         disableStandardScript = Random.nextBoolean()
         strictMetadataVersionSemantics = Random.nextBoolean()
         sanitizeParentheses = Random.nextBoolean()
@@ -286,7 +270,6 @@ class CompilerArgumentsCachingTest {
         noKotlinNothingValueException = Random.nextBoolean()
         noResetJarTimestamps = Random.nextBoolean()
         noUnifiedNullChecks = Random.nextBoolean()
-        useOldSpilledVarTypeAnalysis = Random.nextBoolean()
         useOldInlineClassesManglingScheme = Random.nextBoolean()
         enableJvmPreview = Random.nextBoolean()
         suppressDeprecatedJvmTargetWarning = Random.nextBoolean()
@@ -299,7 +282,6 @@ class CompilerArgumentsCachingTest {
         jvmTarget = generateRandomString(20)
         abiStability = generateRandomString(20)
         javaModulePath = generateRandomString(20)
-        constructorCallNormalizationMode = generateRandomString(20)
         assertionsMode = generateRandomString(20)
         buildFile = generateRandomString(20)
         declarationsOutputPath = generateRandomString(20)
@@ -335,7 +317,6 @@ class CompilerArgumentsCachingTest {
         irProduceKlibFile = Random.nextBoolean()
         irProduceJs = Random.nextBoolean()
         irDce = Random.nextBoolean()
-        irDceDriven = Random.nextBoolean()
         irDcePrintReachabilityInfo = Random.nextBoolean()
         irPropertyLazyInitialization = Random.nextBoolean()
         irOnly = Random.nextBoolean()
@@ -344,7 +325,6 @@ class CompilerArgumentsCachingTest {
         typedArrays = Random.nextBoolean()
         friendModulesDisabled = Random.nextBoolean()
         metadataOnly = Random.nextBoolean()
-        enableJsScripting = Random.nextBoolean()
         fakeOverrideValidator = Random.nextBoolean()
         wasm = Random.nextBoolean()
 
@@ -418,7 +398,7 @@ class CompilerArgumentsCachingTest {
         compilerArguments.modify()
         val extractedBucket = CompilerArgumentsExtractor.prepareCompilerArgumentsBucket(compilerArguments)
         val mapper = CompilerArgumentsCacheMapperImpl()
-        val cachedArgsBucket = CompilerArgumentsCachingTool.cacheCompilerArguments(extractedBucket, mapper)
+        val cachedArgsBucket = CompilerArgumentsCachingManager.cacheCompilerArguments(extractedBucket, mapper)
         val restoreCompilerArguments = CachedArgumentsRestoring::class.java.declaredMethods
             .find { it.name == "restoreCachedCompilerArguments" }!!.apply { isAccessible = true }
         val restoredCompilerArguments = restoreCompilerArguments.invoke(
@@ -462,7 +442,6 @@ class CompilerArgumentsCachingTest {
             "noInline",
             "skipMetadataVersionCheck",
             "skipPrereleaseCheck",
-            "newInference",
             "allowKotlinPackage",
             "reportOutputFiles",
             "multiPlatform",
@@ -479,7 +458,7 @@ class CompilerArgumentsCachingTest {
             "profilePhases",
             "checkPhaseConditions",
             "checkStickyPhaseConditions",
-            "useFir",
+            "useK2",
             "useFirExtendedCheckers",
             "disableUltraLightClasses",
             "useMixedNamedArguments",
@@ -513,7 +492,6 @@ class CompilerArgumentsCachingTest {
             "phasesToDumpBefore",
             "phasesToDumpAfter",
             "phasesToDump",
-            "namesExcludedFromDumping",
             "phasesToValidateBefore",
             "phasesToValidateAfter",
             "phasesToValidate"
@@ -551,7 +529,6 @@ class CompilerArgumentsCachingTest {
             "useTypeTable",
             "skipRuntimeVersionCheck",
             "useOldClassFilesReading",
-            "singleModule",
             "suppressMissingBuiltinsError",
             "useJavac",
             "compileJava",
@@ -624,7 +601,6 @@ class CompilerArgumentsCachingTest {
             "typedArrays",
             "friendModulesDisabled",
             "metadataOnly",
-            "enableJsScripting",
             "fakeOverrideValidator",
             "wasm"
         )

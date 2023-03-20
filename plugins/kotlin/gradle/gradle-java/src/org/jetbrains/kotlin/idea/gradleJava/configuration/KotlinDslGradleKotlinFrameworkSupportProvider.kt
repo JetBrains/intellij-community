@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -13,18 +13,23 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
+import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
+import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
+import org.jetbrains.kotlin.idea.configuration.toKotlinRepositorySnippet
+import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinGradlePluginClassPathSnippet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
-import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
-import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
-import org.jetbrains.kotlin.idea.gradle.configuration.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.util.isSnapshot
-import org.jetbrains.kotlin.idea.versions.*
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider
 import javax.swing.Icon
@@ -49,9 +54,9 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
         modifiableModelsProvider: ModifiableModelsProvider,
         buildScriptData: BuildScriptDataBuilder
     ) {
-        var kotlinVersion = kotlinCompilerVersionShort()
+        var kotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
-        if (isSnapshot(bundledRuntimeVersion())) {
+        if (KotlinPluginLayout.standaloneCompilerVersion.isSnapshot) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
         }
 
@@ -71,7 +76,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
             }
 
             buildScriptData
-                .addPluginDefinitionInPluginsGroup(getPluginDefinition() + " version \"$kotlinVersion\"")
+                .addPluginDefinitionInPluginsGroup(getPluginDefinition() + " version \"${kotlinVersion.artifactVersion}\"")
         } else {
             if (additionalRepository != null) {
                 val repository = additionalRepository.toKotlinRepositorySnippet()
@@ -85,7 +90,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
                 .addPluginDefinition(getOldSyntaxPluginDefinition())
                 .addBuildscriptRepositoriesDefinition("mavenCentral()")
                 // TODO: in gradle > 4.1 this could be single declaration e.g. 'val kotlin_version: String by extra { "1.1.11" }'
-                .addBuildscriptPropertyDefinition("var $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra\n    $GSK_KOTLIN_VERSION_PROPERTY_NAME = \"$kotlinVersion\"")
+                .addBuildscriptPropertyDefinition("var $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra\n    $GSK_KOTLIN_VERSION_PROPERTY_NAME = \"${kotlinVersion.artifactVersion}\"")
                 .addBuildscriptDependencyNotation(getKotlinGradlePluginClassPathSnippet())
         }
 
@@ -130,12 +135,12 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
         buildScriptData: BuildScriptDataBuilder
     ) {
         super.addSupport(projectId, module, rootModel, modifiableModelsProvider, buildScriptData)
-        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, bundledRuntimeVersion())
+        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, KotlinPluginLayout.standaloneCompilerVersion)
         if (jvmTarget != null) {
             addJvmTargetTask(buildScriptData)
         }
 
-        val artifactId = getStdlibArtifactId(rootModel.sdk, bundledRuntimeVersion())
+        val artifactId = getJvmStdlibArtifactId(rootModel.sdk, KotlinPluginLayout.standaloneCompilerVersion)
         buildScriptData.addDependencyNotation(composeDependency(buildScriptData, artifactId))
     }
 
@@ -211,7 +216,7 @@ abstract class AbstractKotlinDslGradleKotlinJSFrameworkSupportProvider(
 
     abstract fun additionalSubTargetSettings(): String?
 
-    override fun getOldSyntaxPluginDefinition(): String = "plugin(\"${KotlinJsGradleModuleConfigurator.KOTLIN_JS}\")"
+    override fun getOldSyntaxPluginDefinition(): String = "plugin(\"kotlin2js\")"
     override fun getPluginDefinition(): String = "id(\"org.jetbrains.kotlin.js\")"
 
 }
@@ -235,8 +240,8 @@ class KotlinDslGradleKotlinJSBrowserFrameworkSupportProvider :
         addBrowserSupport(module)
     }
 
-    override fun additionalSubTargetSettings(): String? =
-        browserConfiguration()
+    override fun additionalSubTargetSettings(): String =
+        browserConfiguration(kotlinDsl = true)
 }
 
 class KotlinDslGradleKotlinJSNodeFrameworkSupportProvider :

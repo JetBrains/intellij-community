@@ -38,7 +38,7 @@ public class CaretStateTransferableData implements TextBlockTransferableData {
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return FLAVOR;
   }
 
@@ -48,14 +48,14 @@ public class CaretStateTransferableData implements TextBlockTransferableData {
   }
 
   @Override
-  public int getOffsets(int[] offsets, int index) {
+  public int getOffsets(int @NotNull [] offsets, int index) {
     System.arraycopy(startOffsets, 0, offsets, index, startOffsets.length);
     System.arraycopy(endOffsets, 0, offsets, index + startOffsets.length, endOffsets.length);
     return index + getOffsetCount();
   }
 
   @Override
-  public int setOffsets(int[] offsets, int index) {
+  public int setOffsets(int @NotNull [] offsets, int index) {
     System.arraycopy(offsets, index, startOffsets, 0, startOffsets.length);
     System.arraycopy(offsets, index + startOffsets.length, endOffsets, 0, endOffsets.length);
     return index + getOffsetCount();

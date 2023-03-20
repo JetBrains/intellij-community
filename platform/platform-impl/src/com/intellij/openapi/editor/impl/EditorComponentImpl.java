@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -7,11 +7,13 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.ui.UISettingsUtils;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
@@ -30,6 +32,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -48,8 +51,9 @@ import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -71,7 +75,8 @@ import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
+public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
+                                                                   UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl myEditor;
@@ -94,9 +99,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       public Point magnify(double scale, Point at) {
         if (myEditor.isDisposed()) return at;
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
-        double currentSize = myEditor.getColorsScheme().getEditorFontSize();
-        int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        myEditor.setFontSize(Math.max((int)(currentSize * scale), defaultFontSize));
+        float currentSize = myEditor.getColorsScheme().getEditorFontSize2D();
+        float defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+        float size = Math.max((float)(currentSize * scale), defaultFontSize);
+        myEditor.setFontSize(size);
+        if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+          myEditor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
+        }
 
         return myEditor.visualPositionToXY(magnificationPosition);
       }
@@ -115,6 +124,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // Remove JTextComponent's mouse/focus listeners added in its ctor.
     for (MouseListener l : getMouseListeners()) removeMouseListener(l);
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
+  }
+
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    UISettingsUtils settingsUtils = UISettingsUtils.with(uiSettings);
+    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != settingsUtils.getPresentationModeFontSize()) {
+      myEditor.setFontSize(settingsUtils.getPresentationModeFontSize());
+    }
   }
 
   @DirtyUI
@@ -163,6 +180,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         location = myEditor.getCaretModel().getLogicalPosition();
       }
       return EditorCoreUtil.inVirtualSpace(myEditor, location);
+    }
+    if (PlatformDataKeys.EDITOR_CLICK_OVER_TEXT.is(dataId)) {
+      Point point = myEditor.myLastMousePressedPoint;
+      if (point != null) {
+        return EditorUtil.isPointOverText(myEditor, point);
+      }
     }
     return null;
   }
@@ -220,9 +243,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public ActionCallback type(final String text) {
-    final ActionCallback result = new ActionCallback();
-    UIUtil.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
+  public ActionCallback type(String text) {
+    ActionCallback result = new ActionCallback();
+    EdtInvocationManager.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
     return result;
   }
 
@@ -257,7 +280,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     Project project = myEditor.getProject();
     if (project != null) {
-      EditorsSplitters.stopOpenFilesActivity(project);
+      EditorsSplitters.Companion.stopOpenFilesActivity(project);
     }
   }
 
@@ -355,7 +378,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
-      accessibleContext = new AccessibleEditorComponentImpl();
+      accessibleContext = new EditorAccessibleContextDelegate();
     }
     return accessibleContext;
   }
@@ -832,6 +855,23 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
+  @Override
+  public @Nullable UiInspectorPreciseContextProvider.UiInspectorInfo getUiInspectorContext(@NotNull MouseEvent event) {
+    Point point = event.getPoint();
+    Inlay<?> inlay = myEditor.getInlayModel().getElementAt(point);
+    if (inlay != null) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer(), true));
+      result.add(new PropertyBean("Inlay Renderer Class", UiInspectorUtil.getClassPresentation(inlay.getRenderer()), true));
+      if (inlay.getGutterIconRenderer() != null) {
+        result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer(), true));
+      }
+      result.add(new PropertyBean("Inlay Properties", inlay.getProperties()));
+      return new UiInspectorInfo("EditorInlay", result, null);
+    }
+    return null;
+  }
+
   /**
    * Specialized TextUI intended *only* for accessibility usage. Not all the methods are called; only viewToModel, not modelToView.
    */
@@ -1169,6 +1209,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public void selectText(int startIndex, int endIndex) {
       myEditor.getSelectionModel().setSelection(startIndex, endIndex);
+      myEditor.getCaretModel().moveToOffset(endIndex);
     }
 
     @Override
@@ -1317,18 +1358,17 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
 
       switch (type) {
-        case AccessibleText.CHARACTER:
+        case AccessibleText.CHARACTER -> {
           AccessibleTextSequence charSequence = null;
           if (offset + direction < document.getTextLength() &&
               offset + direction >= 0) {
             int startOffset = offset + direction;
             charSequence = new AccessibleTextSequence(startOffset, startOffset + 1,
-                                         document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
+                                                      document.getCharsSequence().subSequence(startOffset, startOffset + 1).toString());
           }
           return charSequence;
-
-        case AccessibleExtendedText.ATTRIBUTE_RUN:
-        case AccessibleText.WORD: {
+        }
+        case AccessibleExtendedText.ATTRIBUTE_RUN, AccessibleText.WORD -> {
           int wordStart = getWordAtOffsetStart(offset, direction);
           int wordEnd = getWordAtOffsetEnd(offset, direction);
           if (wordStart == -1 || wordEnd == -1) {
@@ -1337,9 +1377,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           return new AccessibleTextSequence(wordStart, wordEnd,
                                             document.getCharsSequence().subSequence(wordStart, wordEnd).toString());
         }
-
-        case AccessibleExtendedText.LINE:
-        case AccessibleText.SENTENCE: {
+        case AccessibleExtendedText.LINE, AccessibleText.SENTENCE -> {
           int lineStart = getLineAtOffsetStart(offset, direction);
           int lineEnd = getLineAtOffsetEnd(offset, direction);
           if (lineStart == -1 || lineEnd == -1) {
@@ -1520,6 +1558,75 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
 
       return newOffset;
+    }
+  }
+
+  private class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
+    public EditorAccessibleContextDelegate() { super(new AccessibleEditorComponentImpl()); }
+
+    @Override
+    protected void doShowContextMenu() {
+      ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, EditorComponentImpl.this.getEditor().getContentComponent(), null, true);
+    }
+
+    @Override
+    protected Container getDelegateParent() {
+      return getParent();
+    }
+
+    @Override
+    public int getIndexAtPoint(Point point) {
+      return ((AccessibleText) getDelegate()).getIndexAtPoint(point);
+    }
+
+    @Override
+    public Rectangle getCharacterBounds(int i) {
+      return ((AccessibleText) getDelegate()).getCharacterBounds(i);
+    }
+
+    @Override
+    public int getCharCount() {
+      return ((AccessibleText) getDelegate()).getCharCount();
+    }
+
+    @Override
+    public int getCaretPosition() {
+      return ((AccessibleText) getDelegate()).getCaretPosition();
+    }
+
+    @Override
+    public String getAtIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getAtIndex(part, index);
+    }
+
+    @Override
+    public String getAfterIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getAfterIndex(part, index);
+    }
+
+    @Override
+    public String getBeforeIndex(int part, int index) {
+      return ((AccessibleText) getDelegate()).getBeforeIndex(part, index);
+    }
+
+    @Override
+    public AttributeSet getCharacterAttribute(int i) {
+      return ((AccessibleText) getDelegate()).getCharacterAttribute(i);
+    }
+
+    @Override
+    public int getSelectionStart() {
+      return ((AccessibleText) getDelegate()).getSelectionStart();
+    }
+
+    @Override
+    public int getSelectionEnd() {
+      return ((AccessibleText) getDelegate()).getSelectionEnd();
+    }
+
+    @Override
+    public String getSelectedText() {
+      return ((AccessibleText) getDelegate()).getSelectedText();
     }
   }
 }

@@ -4,7 +4,7 @@ package com.intellij.filePrediction
 import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.references.ExternalReferencesResult
 
-open class FilePredictionComputationResult<T>(val value: T, val start: Long) {
+open class FilePredictionComputationResult<T>(val value: T, private val start: Long) {
   val duration: Long = System.currentTimeMillis() - start
 }
 

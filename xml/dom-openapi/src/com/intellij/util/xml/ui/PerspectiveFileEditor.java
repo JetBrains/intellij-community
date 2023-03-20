@@ -1,8 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ScrollType;
@@ -161,7 +159,7 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   @Override
-  public final Document @NotNull [] getDocuments() {
+  public final @NotNull Document @NotNull [] getDocuments() {
     return myUndoHelper.getDocuments();
   }
 
@@ -221,11 +219,6 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Override
   public FileEditorLocation getCurrentLocation() {
     return new FileEditorLocation() {
       @Override
@@ -238,11 +231,6 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
         return 0;
       }
     };
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
   }
 
   @Override

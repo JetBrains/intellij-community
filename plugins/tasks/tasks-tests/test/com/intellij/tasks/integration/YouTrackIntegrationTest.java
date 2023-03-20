@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.integration;
 
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.RequestFailedException;
@@ -13,16 +15,27 @@ import com.intellij.tasks.youtrack.YouTrackIntellisense.CompletionItem;
 import com.intellij.tasks.youtrack.YouTrackIntellisense.HighlightRange;
 import com.intellij.tasks.youtrack.YouTrackRepository;
 import com.intellij.tasks.youtrack.YouTrackRepositoryType;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Level;
+import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class YouTrackIntegrationTest extends TaskManagerTestCase {
   private static final String APPLICATION_PASSWORD = System.getProperty("tasks.tests.youtrack.application.password");
   private static final String SERVER_URL = "https://yt-ij-integration-tests.myjetbrains.com/youtrack";
 
-  private static class Issues {
+  private static final class Issues {
     static final String ASSIGNED_OPEN_BUG = "TEST-1";
     static final String ASSIGNED_CLOSED_BUG = "TEST-2";
     static final String UNASSIGNED_OPEN_BUG = "TEST-3";
@@ -41,8 +54,8 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     myRepository.setUsername("root");
     myRepository.setPassword(APPLICATION_PASSWORD);
 
-    Logger.getInstance(TaskResponseUtil.class).setLevel(Level.DEBUG);
-    Logger.getInstance("org.apache.http").setLevel(Level.DEBUG);
+    Logger.getInstance(TaskResponseUtil.class).setLevel(LogLevel.DEBUG);
+    Logger.getInstance("org.apache.http").setLevel(LogLevel.DEBUG);
   }
 
   public void testDefaultQueryResults() throws Exception {
@@ -157,7 +170,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
       assertEquals(TaskState.RESOLVED, task.getState());
     }
     finally {
-      myRepository.setTaskState(task, new CustomTaskState("Open", "Open"));
+      setIssueStateViaRestApi(Issues.FOR_STATE_UPDATING, "Open");
     }
   }
 
@@ -224,8 +237,46 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     YouTrackIntellisense intellisense = new YouTrackIntellisense(myRepository);
     List<CompletionItem> completionItems = intellisense.fetchCompletion("type: ", 6);
     List<String> variants = ContainerUtil.map(completionItems, item -> item.getOption());
-    assertContainsElements(variants,"Bug", "Task", "Feature");
+    assertContainsElements(variants, "Bug", "Task", "Feature");
     CompletionItem bugState = ContainerUtil.find(completionItems, item -> item.getOption().equals("Bug"));
     assertTrue(bugState.getDescription().contains("Type in"));
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static void setIssueStateViaRestApi(@NotNull String issueId, @NotNull String stateName) throws Exception {
+    // Don't use Authenticator.getPasswordAuthentication() because it doesn't allow to send credentials
+    // preemptively without incoming "WWW-Authenticate" header (YouTrack doesn't send that).
+    String encodedCredentials = Base64.getEncoder().encodeToString(("root:" + APPLICATION_PASSWORD).getBytes(StandardCharsets.UTF_8));
+    HttpRequest request = HttpRequest.newBuilder(URI.create(SERVER_URL + "/api/commands"))
+      .header("Content-Type", "application/json")
+      .header("Authorization", "Basic " + encodedCredentials)
+      // language=json
+      .POST(HttpRequest.BodyPublishers.ofString("{\n" +
+                                                "  \"query\": \"state " + stateName + "\",\n" +
+                                                "  \"issues\": [\n" +
+                                                "    {\n" +
+                                                "      \"idReadable\": \"" + issueId + "\"\n" +
+                                                "    }\n" +
+                                                "  ]\n" +
+                                                "}"))
+      .build();
+    HttpResponse<String> response = HttpClient.newHttpClient()
+      .send(request, HttpResponse.BodyHandlers.ofString());
+    if (response.statusCode() != 200) {
+      throw new RuntimeException("Setting " + issueId + " state to " + stateName + " failed with response:" + response.body());
+    }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    try {
+      super.runTestRunnable(testRunnable);
+    }
+    catch (Throwable e) {
+      if (ExceptionUtil.causedBy(e, IOException.class)) {
+        ExternalResourcesChecker.reportUnavailability(SERVER_URL, e);
+      }
+      throw e;
+    }
   }
 }

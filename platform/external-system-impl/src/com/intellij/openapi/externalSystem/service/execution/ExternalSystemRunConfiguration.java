@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -34,13 +35,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -63,7 +65,6 @@ import java.io.InputStream;
 import java.util.Collections;
 
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
-
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
 
@@ -130,8 +131,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   }
 
   private void initializeSettings() {
-    if (StringUtil.isEmptyOrSpaces(mySettings.getExternalProjectPath())) {
-      ObjectUtils.consumeIfNotNull(getRootProjectPath(), mySettings::setExternalProjectPath);
+    if (Strings.isEmptyOrSpaces(mySettings.getExternalProjectPath())) {
+      String path = getRootProjectPath();
+      if (path != null) {
+        mySettings.setExternalProjectPath(path);
+      }
     }
   }
 
@@ -151,11 +155,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       final Element debugServerProcess = element.getChild(DEBUG_SERVER_PROCESS_NAME);
       if (debugServerProcess != null) {
-        isDebugServerProcess = Boolean.valueOf(debugServerProcess.getText());
+        isDebugServerProcess = Boolean.parseBoolean(debugServerProcess.getText());
       }
       final Element reattachProcess = element.getChild(REATTACH_DEBUG_PROCESS_NAME);
       if (reattachProcess != null) {
-        isReattachDebugProcess = Boolean.valueOf(reattachProcess.getText());
+        isReattachDebugProcess = Boolean.parseBoolean(reattachProcess.getText());
       }
     }
     ExternalSystemRunConfigurationExtensionManager.readExternal(this, element);
@@ -168,14 +172,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         // only these fields due to backward compatibility
-        switch (accessor.getName()) {
-          case "passParentEnvs":
-            return !mySettings.isPassParentEnvs();
-          case "env":
-            return !mySettings.getEnv().isEmpty();
-          default:
-            return true;
-        }
+        return switch (accessor.getName()) {
+          case "passParentEnvs" -> !mySettings.isPassParentEnvs();
+          case "env" -> !mySettings.getEnv().isEmpty();
+          default -> true;
+        };
       }
     }));
 
@@ -231,7 +232,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (scope == null) {
       VirtualFile file = VfsUtil.findFileByIoFile(new File(mySettings.getExternalProjectPath()), false);
       if (file != null) {
-        Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
+        Module module = ProjectFileIndex.getInstance(getProject()).getModuleForFile(file, false);
         if (module != null) {
           scope = ExecutionSearchScopes.executionScope(Collections.singleton(module));
         }
@@ -249,8 +250,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (consoleView instanceof ConsoleViewImpl) {
       consoleViewImpl = (ConsoleViewImpl)consoleView;
     }
-    else if (consoleView instanceof DuplexConsoleView) {
-      DuplexConsoleView duplexConsoleView = (DuplexConsoleView)consoleView;
+    else if (consoleView instanceof DuplexConsoleView duplexConsoleView) {
       if (duplexConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl) {
         consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getPrimaryConsoleView();
       }
@@ -284,6 +284,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           }
         });
       });
+    }
+  }
+
+  @Override
+  public void createAdditionalTabComponents(AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
+    RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(this);
+    if (runProfile instanceof RunConfigurationBase<?>) {
+      ((RunConfigurationBase<?>)runProfile).createAdditionalTabComponents(manager, startedProcess);
     }
   }
 

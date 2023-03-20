@@ -56,8 +56,7 @@ public class XmlTagSelectioner extends ExtendWordSelectionHandlerBase {
     PsiElement first = null;
     PsiElement last = null;
     for (PsiElement child : children) {
-      if (child instanceof XmlToken) {
-        XmlToken token = (XmlToken)child;
+      if (child instanceof XmlToken token) {
         if (token.getTokenType() == XmlTokenType.XML_TAG_END) {
           first = token.getNextSibling();
         }

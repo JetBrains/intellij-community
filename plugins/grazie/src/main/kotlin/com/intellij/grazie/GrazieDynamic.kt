@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.delete
 import com.intellij.util.io.isFile
 import com.intellij.util.lang.UrlClassLoader
@@ -35,8 +36,26 @@ internal object GrazieDynamic : DynamicPluginListener {
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
-        .files(GrazieRemote.allAvailableLocally().map { it.remote.file }).get()
+        .files(collectValidLocalBundles()).get()
     )
+  }
+
+  private fun collectValidLocalBundles(): List<Path> {
+    val languages = GrazieRemote.allAvailableLocally()
+    val bundles = buildSet {
+      for (language in languages) {
+        val path = language.remote.file
+        if (language.isEnglish() || GrazieRemote.isValidBundleForLanguage(language, path)) {
+          add(path)
+        } else {
+          thisLogger().error("""
+          Skipping local bundle $path for language ${language.nativeName}. 
+          Failed to verify integrity of local language bundle before adding it to class loader.
+          """.trimIndent())
+        }
+      }
+    }
+    return bundles.toList()
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
@@ -50,9 +69,17 @@ internal object GrazieDynamic : DynamicPluginListener {
   private val dynClassLoaders: Set<ClassLoader>
     get() = myDynClassLoaders.toSet()
 
+  private fun getDynamicFolderPath(): Path {
+    val customFolder = System.getProperty("grazie.dynamic.customJarDirectory")
+    if (customFolder != null) {
+      return Path.of(customFolder)
+    }
+    return Paths.get(PathManager.getSystemPath(), "grazie")
+  }
+
   val dynamicFolder: Path
     get() {
-      val result = Paths.get(PathManager.getSystemPath(), "grazie")
+      val result = getDynamicFolderPath()
       Files.createDirectories(result)
       return result
     }

@@ -5,7 +5,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.colorSchemes" />
     <orderEntry type="module" module-name="intellij.vcs.hg" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.svn" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
@@ -35,5 +34,12 @@
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.color.scheme.monokai" />
+    <orderEntry type="module" module-name="intellij.color.scheme.twilight" />
+    <orderEntry type="module" module-name="intellij.color.scheme.warmNeon" />
+    <orderEntry type="module" module-name="intellij.color.scheme.github" />
+    <orderEntry type="module" module-name="intellij.dev" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.python" scope="RUNTIME" />
   </component>
 </module>

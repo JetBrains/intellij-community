@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -71,6 +72,6 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
   @Override
   protected Set<Class<?>> getModels() {
-    return ContainerUtil.<Class<?>>set(WebConfiguration.class);
+    return Collections.<Class<?>>singleton(WebConfiguration.class);
   }
 }

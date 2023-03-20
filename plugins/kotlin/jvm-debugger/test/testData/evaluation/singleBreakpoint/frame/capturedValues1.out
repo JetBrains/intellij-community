@@ -1,14 +1,13 @@
-// IGNORE_BACKEND: JVM_IR_WITH_OLD_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
 LineBreakpoint created at capturedValues1.kt:17
 Run Java
 Connected to the target VM
 capturedValues1.kt:17
 KotlinStackFrame (capturedValues1.kt:17)
     JavaValue this (@place1) = x
-    JavaValue c2 = 3
-    JavaValue b = 2
+    JavaValue[field] c2 = 3
+    JavaValue[field] b = 2
     JavaValue this (@foo) = 1000
-    JavaValue args: String[0]@uniqueID = []
+    JavaValue[field] args: String[0]@uniqueID = [...]
     JavaValue[local] this: java.lang.String = y
 Disconnected from the target VM
 

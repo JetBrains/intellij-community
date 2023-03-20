@@ -32,9 +32,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dcheryasov
- */
 public abstract class PyInspectionVisitor extends PyElementVisitor {
   @Nullable private final ProblemsHolder myHolder;
   protected final TypeEvalContext myTypeEvalContext;
@@ -43,7 +40,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
 
   /**
-   * @deprecated use {@link PyInspectionVisitor#PyInspectionVisitor(com.intellij.codeInspection.ProblemsHolder, com.jetbrains.python.psi.types.TypeEvalContext)} instead
+   * @deprecated use {@link PyInspectionVisitor#PyInspectionVisitor(ProblemsHolder, TypeEvalContext)} instead
    */
   @Deprecated
   public PyInspectionVisitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
@@ -125,7 +122,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     @NotNull @InspectionMessage String descriptionTemplate,
     @NotNull ProblemHighlightType highlightType,
     @Nullable HintAction hintAction,
-    LocalQuickFix @NotNull... fixes) {
+    @NotNull LocalQuickFix @NotNull... fixes) {
     registerProblem(psiElement, descriptionTemplate, highlightType, hintAction, null, fixes);
   }
 
@@ -140,7 +137,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     @NotNull ProblemHighlightType highlightType,
     @Nullable HintAction hintAction,
     @Nullable TextRange rangeInElement,
-    LocalQuickFix @NotNull... fixes) {
+    @NotNull LocalQuickFix @NotNull... fixes) {
     if (myHolder != null && !(psiElement instanceof PsiErrorElement)) {
       myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
                                                          rangeInElement, hintAction, myHolder.isOnTheFly()));

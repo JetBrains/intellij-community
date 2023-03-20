@@ -44,7 +44,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
   private static class SerialAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (field.hasAnnotation(JAVA_IO_SERIAL)) return;
 
@@ -66,7 +66,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (method.hasAnnotation(JAVA_IO_SERIAL)) return;
 

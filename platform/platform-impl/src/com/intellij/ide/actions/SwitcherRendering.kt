@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
@@ -16,9 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.ToolWindowEventSource
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.problems.WolfTheProblemSolver
+import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.ui.*
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
@@ -26,6 +28,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
 import javax.swing.JLabel
 import javax.swing.JList
@@ -34,7 +37,6 @@ import javax.swing.ListCellRenderer
 private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyboardShortcut(actionId)?.let { getShortcutText(it) }
 
 private val mainTextComparator by lazy { Comparator.comparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE) }
-
 
 internal interface SwitcherListItem {
   val mnemonic: String? get() = null
@@ -105,13 +107,14 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
 
   override fun close(switcher: Switcher.SwitcherPanel) {
     val manager = ToolWindowManager.getInstance(switcher.project) as? ToolWindowManagerImpl
-    manager?.hideToolWindow(window.id, false, false, ToolWindowEventSource.CloseFromSwitcher) ?: window.hide()
+    manager?.hideToolWindow(id = window.id, moveFocus = false, source = ToolWindowEventSource.CloseFromSwitcher) ?: window.hide()
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
     val defaultIcon = if (ExperimentalUI.isNewUI()) EmptyIcon.ICON_16 else EmptyIcon.ICON_13
     component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
-    component.icon = IconUtil.scaleByIconWidth(RenderingUtil.getIcon(window.icon, selected), null, defaultIcon)
+    val icon = if (ExperimentalUI.isNewUI()) window.icon else RenderingUtil.getIcon(window.icon, selected)
+    component.icon = IconUtil.scaleByIconWidth(icon, null, defaultIcon)
     component.append(mainText)
   }
 }
@@ -154,7 +157,9 @@ internal class SwitcherVirtualFile(
     component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
   }
 
-  override fun getElementBackground(row: Int) = getFileBackgroundColor(project, file)
+  override fun getElementBackground(row: Int) : Color? {
+    return runReadAction { getFileBackgroundColor(project, file) }
+  }
 }
 
 
@@ -204,9 +209,8 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
   }
 
   val toolWindows: List<SwitcherToolWindow> = if (toolWindowsAllowed) {
-    val manager = ToolWindowManager.getInstance(switcher.project)
-    val windows = manager.toolWindowIds
-      .mapNotNull { manager.getToolWindow(it) }
+    val manager = ToolWindowManagerEx.getInstanceEx(switcher.project)
+    val windows = manager.toolWindows
       .filter { it.isAvailable && it.isShowStripeButton }
       .map { SwitcherToolWindow(it, switcher.pinned) }
       .sortedWith(mainTextComparator)

@@ -40,9 +40,6 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (node1, node2) -> {
     final Object o1 = node1.getUserObject();
@@ -80,7 +77,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
-    new TreeSpeedSearch(myTree, o -> {
+    TreeSpeedSearch.installOn(myTree, true, o -> {
       final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (userObject instanceof Module) {
         return ((Module)userObject).getName();
@@ -89,7 +86,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         if (userObject == null) return "";
         return userObject.toString();
       }
-    }, true);
+    });
   }
 
   @Override
@@ -208,21 +205,18 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object nodeValue, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final Object value = ((DefaultMutableTreeNode)nodeValue).getUserObject();
-      if (value instanceof DirectoryChooser.ItemWrapper) {
-        DirectoryChooser.ItemWrapper wrapper = (DirectoryChooser.ItemWrapper)value;
+      if (value instanceof DirectoryChooser.ItemWrapper wrapper) {
         DirectoryChooser.PathFragment[] fragments = wrapper.getFragments();
         for (DirectoryChooser.PathFragment fragment : fragments) {
           append(fragment.getText(),
                  fragment.isCommon() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-        setIcon(wrapper.getIcon(myFileIndex));
+        setIcon(wrapper.getIcon());
       }
-      else if (value instanceof Module) {
-        final Module module = (Module)value;
+      else if (value instanceof Module module) {
         append(myModuleGrouper.getShortenedName(module), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(ModuleType.get(module).getIcon());
-      } else if (value instanceof ModuleGroup) {
-        ModuleGroup moduleGroup = (ModuleGroup)value;
+      } else if (value instanceof ModuleGroup moduleGroup) {
         append(moduleGroup.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
       }

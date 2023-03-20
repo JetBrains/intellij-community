@@ -1,0 +1,10 @@
+// "Replace with 'bar()'" "true"
+class A
+
+@Deprecated("", ReplaceWith("bar()"))
+fun A.foo() = 1
+fun A.bar() = 2
+
+fun test(a: A) {
+    a::bar
+}

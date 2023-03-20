@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -9,7 +9,6 @@ import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,12 +44,15 @@ public final class MemoryAgentUtil {
     );
   }
 
-  @NotNull
-  static AgentExtractor.AgentLibraryType detectAgentKindByBitness(@NotNull Bitness bitness) {
+  static AgentExtractor.@NotNull AgentLibraryType detectAgentKindByArch(CpuArch arch) {
     LOG.assertTrue(isPlatformSupported());
-    if (SystemInfo.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
+    if (SystemInfo.isLinux && arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.LINUX_X64;
+    if (SystemInfo.isLinux && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.LINUX_AARCH64;
     if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
-    return bitness.equals(Bitness.x32) ? AgentExtractor.AgentLibraryType.WINDOWS32 : AgentExtractor.AgentLibraryType.WINDOWS64;
+    if (SystemInfo.isWindows && arch == CpuArch.ARM64) return AgentExtractor.AgentLibraryType.WINDOWS_ARM64;
+    if (SystemInfo.isWindows && arch == CpuArch.X86_64) return AgentExtractor.AgentLibraryType.WINDOWS64;
+    if (SystemInfo.isWindows && arch == CpuArch.X86) return AgentExtractor.AgentLibraryType.WINDOWS32;
+    throw new IllegalStateException("Unsupported OS and arch: " + SystemInfo.getOsNameAndVersion() + " " + arch);
   }
 
   @NotNull
@@ -82,9 +84,9 @@ public final class MemoryAgentUtil {
   }
 
   public static boolean isPlatformSupported() {
-    return SystemInfo.isWindows && (CpuArch.isIntel32() || CpuArch.isIntel64()) ||
-           SystemInfo.isMac && CpuArch.isIntel64() ||
-           SystemInfo.isLinux && CpuArch.isIntel64();
+    return SystemInfo.isWindows && (CpuArch.isIntel32() || CpuArch.isIntel64() || CpuArch.isArm64()) ||
+           SystemInfo.isMac && (CpuArch.isIntel64() || CpuArch.isArm64()) ||
+           SystemInfo.isLinux && (CpuArch.isIntel64() || CpuArch.isArm64());
   }
 
   @NotNull

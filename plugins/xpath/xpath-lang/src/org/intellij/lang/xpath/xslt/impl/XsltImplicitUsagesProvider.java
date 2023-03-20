@@ -19,11 +19,10 @@ import org.jetbrains.annotations.NotNull;
 public final class XsltImplicitUsagesProvider implements ImplicitUsageProvider {
     @Override
     public boolean isImplicitUsage(@NotNull PsiElement element) {
-        if (!(element instanceof XmlAttribute)) {
+        if (!(element instanceof XmlAttribute attr)) {
             return false;
         }
-        final XmlAttribute attr = (XmlAttribute)element;
-        if (!attr.isNamespaceDeclaration()) {
+      if (!attr.isNamespaceDeclaration()) {
             return false;
         }
         final PsiFile file = attr.getContainingFile();

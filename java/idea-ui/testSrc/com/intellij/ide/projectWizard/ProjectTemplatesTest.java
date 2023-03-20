@@ -16,11 +16,13 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectTemplatesTest extends TestCase {
 
   public void testArtifact() throws Exception {
-    Artifact artifact = XmlSerializer.deserialize(JDOMUtil.load("  <artifact version=\"2.2.3\" name=\"Spring Batch\"\n" +
-                                                                "            urlPrefix=\"http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/\">\n" +
-                                                                "    <item name=\"spring-batch-core-2.2.3.RELEASE.jar\"/>\n" +
-                                                                "    <item name=\"spring-batch-infrastructure-2.2.3.RELEASE.jar\"/>\n" +
-                                                                "  </artifact>"), Artifact.class);
+    Artifact artifact = XmlSerializer.deserialize(JDOMUtil.load("""
+                                                                    <artifact version="2.2.3" name="Spring Batch"
+                                                                              urlPrefix="http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/">
+                                                                      <item name="spring-batch-core-2.2.3.RELEASE.jar"/>
+                                                                      <item name="spring-batch-infrastructure-2.2.3.RELEASE.jar"/>
+                                                                    </artifact>\
+                                                                  """), Artifact.class);
     assertNotNull(artifact);
     assertEquals(2, artifact.getItems().length);
 
@@ -45,22 +47,23 @@ public class ProjectTemplatesTest extends TestCase {
       }
     };
 
-    XmlSerializer.deserializeInto(JDOMUtil.load("<template>\n" +
-                                                     "  <input-field default=\"com.springapp.batch\">IJ_BASE_PACKAGE</input-field>\n" +
-                                                     "    <icon-path>/icons/spring.png</icon-path>\n" +
-                                                     "  <framework>facet:Spring</framework>\n" +
-                                                     "  <framework>spring-batch</framework>\n" +
-                                                     "  <artifact version=\"2.2.3\" name=\"Spring Batch\"\n" +
-                                                     "            urlPrefix=\"http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/\">\n" +
-                                                     "    <item name=\"spring-batch-core-2.2.3.RELEASE.jar\"/>\n" +
-                                                     "    <item name=\"spring-batch-infrastructure-2.2.3.RELEASE.jar\"/>\n" +
-                                                     "  </artifact>\n" +
-                                                     "  <artifact version=\"2.2.4\" name=\"Spring Batch\"\n" +
-                                                     "            urlPrefix=\"http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/\">\n" +
-                                                     "    <item name=\"spring-batch-core-2.2.3.RELEASE.jar\"/>\n" +
-                                                     "    <item name=\"spring-batch-infrastructure-2.2.3.RELEASE.jar\"/>\n" +
-                                                     "  </artifact>\n" +
-                                                     "</template>"), template);
+    XmlSerializer.deserializeInto(JDOMUtil.load("""
+                                                  <template>
+                                                    <input-field default="com.springapp.batch">IJ_BASE_PACKAGE</input-field>
+                                                      <icon-path>/icons/spring.png</icon-path>
+                                                    <framework>facet:Spring</framework>
+                                                    <framework>spring-batch</framework>
+                                                    <artifact version="2.2.3" name="Spring Batch"
+                                                              urlPrefix="http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/">
+                                                      <item name="spring-batch-core-2.2.3.RELEASE.jar"/>
+                                                      <item name="spring-batch-infrastructure-2.2.3.RELEASE.jar"/>
+                                                    </artifact>
+                                                    <artifact version="2.2.4" name="Spring Batch"
+                                                              urlPrefix="http://download.jetbrains.com/idea/j2ee_libs/spring/batch/2.2.3/">
+                                                      <item name="spring-batch-core-2.2.3.RELEASE.jar"/>
+                                                      <item name="spring-batch-infrastructure-2.2.3.RELEASE.jar"/>
+                                                    </artifact>
+                                                  </template>"""), template);
     assertEquals(2, template.getArtifacts().size());
     assertEquals(2, template.getFrameworks().size());
   }

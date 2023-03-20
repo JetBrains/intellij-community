@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
-import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -44,6 +43,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -62,8 +63,8 @@ object UpdateChecker {
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
   private const val PRODUCT_DATA_TTL_MIN = 5L
-  private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
-  private const val MACHINE_ID_PARAMETER = "mid"
+  const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
+  const val MACHINE_ID_PARAMETER = "mid"
 
   private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -77,10 +78,9 @@ object UpdateChecker {
   private var machineIdInitialized = false
 
   /**
-   * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
+   * Adding a plugin ID to this collection allows excluding a plugin from a regular update check.
    * Has no effect on non-bundled plugins.
    */
-  @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   init {
@@ -101,8 +101,12 @@ object UpdateChecker {
     NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
   @JvmStatic
-  fun getNotificationGroupForUpdateResults(): NotificationGroup =
+  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup =
     NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
+
+  @JvmStatic
+  fun getNotificationGroupForIdeUpdateResults(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE Update Results")
 
   /**
    * For scheduled update checks.
@@ -248,7 +252,7 @@ object UpdateChecker {
     try {
       indicator?.text = IdeBundle.message("updates.checking.platform")
       val productData = loadProductData(indicator)
-      if (ExternalUpdateManager.ACTUAL != null || productData == null) {
+      if (productData == null || !settings.isCheckNeeded || ExternalUpdateManager.ACTUAL != null) {
         PlatformUpdates.Empty
       }
       else {
@@ -258,7 +262,7 @@ object UpdateChecker {
     catch (e: Exception) {
       LOG.infoWithDebug(e)
       when (e) {
-        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling user
+        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling users
         else -> PlatformUpdates.ConnectionError(e)
       }
     }
@@ -293,7 +297,7 @@ object UpdateChecker {
     }
 
   private fun clearProductDataCache() {
-    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing
+    if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // a longer time means loading now, no much sense in clearing
       productDataCache = null
       productDataLock.unlock()
     }
@@ -325,7 +329,7 @@ object UpdateChecker {
     indicator: ProgressIndicator? = null,
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
-    if (System.getProperty("idea.ignore.disabled.plugins") == null) {
+    if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
       val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
         PluginManagerCore.updateBrokenPlugins(brokenPlugins)
@@ -372,10 +376,12 @@ object UpdateChecker {
 
     val incompatible = if (buildNumber == null) emptyList() else {
       // collecting plugins that aren't going to be updated and are incompatible with the new build
-      // (the map may contain updateable bundled plugins - those are expected to have a compatible version in IDE)
+      // (the map may contain updateable and already-updated bundled plugins - those are expected to have a compatible version in IDE)
       updateable.values.asSequence()
         .filterNotNull()
-        .filter { it.isEnabled && !it.isBundled && !PluginManagerCore.isCompatible(it, buildNumber) }
+        .filter { it.isEnabled }
+        .filterNot { it.isBundled || it.allowBundledUpdate() }
+        .filterNot { PluginManagerCore.isCompatible(it, buildNumber) }
         .toSet()
     }
 
@@ -407,7 +413,7 @@ object UpdateChecker {
       onceInstalled.toFile().deleteOnExit()
     }
 
-    // excluding plugins that take care about their own updates
+    // excluding plugins that take care of their own updates
     if (excludedFromUpdateCheckPlugins.isNotEmpty() && !ApplicationManager.getApplication().isInternal) {
       excludedFromUpdateCheckPlugins.forEach {
         val id = PluginId.getId(it)
@@ -432,19 +438,31 @@ object UpdateChecker {
     val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
-    updateable.forEach { (id, descriptor) ->
+    for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
       if (lastUpdate != null &&
           (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor,
                                                                                            buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
-          .onFailure { if (it !is HttpRequests.HttpStatusException || it.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw it }
+          .onFailure {
+            if (!isNetworkError(it)) throw it
+
+            LOG.warn("Unable to read update metadata for plugin: $id, ${it::class.java} ${it.message}")
+          }
+          .onSuccess { it.externalPluginIdForScreenShots = lastUpdate.externalPluginId }
           .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, indicator, null) }
       }
     }
     (toUpdate.keys.asSequence() + toUpdateDisabled.keys.asSequence()).forEach { updateable.remove(it) }
   }
 
+  private fun isNetworkError(it: Throwable): Boolean {
+    return it is SocketTimeoutException
+           || it is UnknownHostException
+           || it is HttpRequests.HttpStatusException && it.statusCode == HttpURLConnection.HTTP_NOT_FOUND
+  }
+
+  @RequiresBackgroundThread
   private fun prepareDownloader(state: InstalledPluginsState,
                                 descriptor: PluginNode,
                                 buildNumber: BuildNumber?,
@@ -488,6 +506,7 @@ object UpdateChecker {
   @Throws(IOException::class)
   @JvmOverloads
   @JvmStatic
+  @RequiresBackgroundThread
   fun checkAndPrepareToInstall(
     originalDownloader: PluginDownloader,
     state: InstalledPluginsState,
@@ -658,8 +677,9 @@ object UpdateChecker {
   }
 
   private fun notificationsEnabled(): Boolean =
-    NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS &&
-    NotificationsConfigurationImpl.getSettings(getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
+    NotificationsConfiguration.getNotificationsConfiguration().let {
+      it.areNotificationsEnabled() && it.getDisplayType(getNotificationGroup().displayId) != NotificationDisplayType.NONE
+    }
 
   private fun showNotification(project: Project?,
                                kind: NotificationKind,
@@ -682,8 +702,14 @@ object UpdateChecker {
 
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
-    runCatching { DisabledPluginsState.savePluginsList(disabledToUpdate, Path.of(PathManager.getConfigPath(), DISABLED_UPDATE)) }
-      .onFailure { LOG.error(it) }
+    runCatching {
+      PluginManagerCore.writePluginIdsToFile(
+        /* path = */ PathManager.getConfigDir().resolve(DISABLED_UPDATE),
+        /* pluginIds = */ disabledToUpdate,
+      )
+    }.onFailure {
+      LOG.error(it)
+    }
   }
 
   @JvmStatic
@@ -776,21 +802,21 @@ object UpdateChecker {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
-  @Suppress("DEPRECATION")
+  @Suppress("DEPRECATION", "unused")
   @JvmField
-  val NOTIFICATIONS =
-    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
+  val NOTIFICATIONS = NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
   @Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
+  @Suppress("unused")
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>
     get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use checkForPluginUpdates", replaceWith = ReplaceWith(""))
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =

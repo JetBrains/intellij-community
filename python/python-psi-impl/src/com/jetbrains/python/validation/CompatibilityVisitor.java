@@ -7,8 +7,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,14 +25,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -42,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -93,6 +90,12 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                        node,
                                        new ReplaceExceptPartQuickFix());
       }
+    }
+    PsiElement star = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.MULT);
+    if (star != null) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.starred.except.part"),
+                                     star);
     }
   }
 
@@ -155,7 +158,30 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                          PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.without.parentheses.in.yield.statements"),
                                          node);
         }
+
+        if (tupleParent instanceof PySubscriptionExpression) {
+          registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                  level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                                  registerForLanguageLevel(level),
+                                         PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
+                                         node);
+        }
       }
+      if (node.getParent() instanceof PySubscriptionExpression || node.getParent() instanceof PySliceItem) {
+        registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                                registerForLanguageLevel(level),
+                                       PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
+                                       node);
+      }
+    }
+
+    PsiElement parent = node.getParent();
+    if (parent instanceof PyAnnotation && StarAnnotator.isVariadicArg(parent.getParent())) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                              registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.type.annotations"),
+                                     node);
     }
   }
 
@@ -320,7 +346,31 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyWithStatement(@NotNull PyWithStatement node) {
     super.visitPyWithStatement(node);
+    checkParenthesizedWithItems(node);
     checkAsyncKeyword(node);
+  }
+
+  private void checkParenthesizedWithItems(@NotNull PyWithStatement node) {
+    final PsiElement lpar = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.LPAR);
+    final PsiElement rpar = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.RPAR);
+    if (lpar == null && rpar == null) {
+      return;
+    }
+    // Context expressions such as "(foo(), bar())" or "(foo(),)" are valid in Python < 3.9, but most likely indicate an error anyway
+    PyWithItem[] withItems = node.getWithItems();
+    boolean canBeParsedAsSingleParenthesizedExpression = (
+      withItems.length == 1 &&
+      PyPsiUtils.getFirstChildOfType(withItems[0], PyTokenTypes.AS_KEYWORD) == null &&
+      PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.COMMA) == null
+    );
+    if (canBeParsedAsSingleParenthesizedExpression) {
+      return;
+    }
+    for (PsiElement parenthesis : ContainerUtil.packNullables(lpar, rpar)) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.parenthesized.context.expressions"),
+                                     parenthesis);
+    }
   }
 
   @Override
@@ -334,10 +384,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyPrintStatement(node);
 
     final PsiElement[] arguments = node.getChildren();
-    final Predicate<PsiElement> nonParenthesesPredicate =
+    final Condition<PsiElement> nonParenthesesPredicate =
       element -> !(element instanceof PyParenthesizedExpression || element instanceof PyTupleExpression);
 
-    if (arguments.length == 0 || Arrays.stream(arguments).anyMatch(nonParenthesesPredicate)) {
+    if (arguments.length == 0 || ContainerUtil.exists(arguments, nonParenthesesPredicate)) {
       registerForAllMatchingVersions(level -> level.isPy3K() && registerForLanguageLevel(level),
                                      PyPsiBundle.message("INSP.compatibility.feature.support.print.statement"),
                                      node,
@@ -556,8 +606,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         seenKeywordArgument = true;
         keywordArgumentNames.add(keyword);
       }
-      else if (argument instanceof PyStarArgument) {
-        final PyStarArgument starArgument = (PyStarArgument)argument;
+      else if (argument instanceof PyStarArgument starArgument) {
         if (starArgument.isKeyword()) {
           if (seenKeywordContainer) {
             registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
@@ -693,8 +742,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
-    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310), 
-                                   PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"), 
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310),
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"),
                                    matchStatement.getFirstChild());
   }
 
@@ -711,16 +760,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
 
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(node.getProject(), node.getContainingFile());
-
-    final List<PsiElement> resolvedVariants = PyUtil.multiResolveTopPriority(node.getReference(PyResolveContext.defaultContext(context)));
-    for (PsiElement resolved : resolvedVariants) {
-      if (resolved instanceof PyFunction) {
-        final PyClass containingClass = ((PyFunction)resolved).getContainingClass();
-        if (containingClass == null) return;
-        final String classQualifiedName = containingClass.getQualifiedName();
-        if (!PyNames.TYPE.equals(classQualifiedName) && !"types.UnionType".equals(classQualifiedName)) return;
-      }
-    }
 
     // Consider only full expression not parts to have only one registered problem
     if (PsiTreeUtil.getParentOfType(node, PyBinaryExpression.class, true, PyStatement.class) != null) return;
@@ -752,8 +791,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (file == null) return;
 
       final PsiElement descriptorElement = descriptor.getPsiElement();
-      if (!(descriptorElement instanceof PyBinaryExpression)) return;
-      final PyBinaryExpression expression = (PyBinaryExpression)descriptorElement;
+      if (!(descriptorElement instanceof PyBinaryExpression expression)) return;
 
       final List<String> types = collectUnionTypes(expression);
       final LanguageLevel languageLevel = LanguageLevel.forElement(file);

@@ -11,8 +11,8 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
-    <orderEntry type="library" scope="TEST" name="easymock" level="project" />
-    <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
+    <orderEntry type="library" scope="TEST" name="jmock.junit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="jmock.legacy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
@@ -25,30 +25,28 @@
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
-    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="library" scope="TEST" name="org.codehaus.groovy:groovy" level="project" />
+    <orderEntry type="library" scope="TEST" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
-    <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="easymock" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="library" scope="TEST" name="assertj-swing" level="project" />
     <orderEntry type="library" scope="TEST" name="snakeyaml" level="project" />
-    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" scope="TEST" name="jna" level="project" />
     <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.tests" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="batik-transcoder" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
+    <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="TEST" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="netty-buffer" level="project" />
@@ -62,10 +60,20 @@
     <orderEntry type="library" scope="TEST" name="ap-validation" level="project" />
     <orderEntry type="library" scope="TEST" name="aalto-xml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
-    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt.java8" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.wsl.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.impl" scope="TEST" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="library" scope="TEST" name="HdrHistogram" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
   </component>
 </module>

@@ -15,18 +15,18 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_E
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.EditedCommitNode
-import one.util.streamex.StreamEx
 import java.util.*
-import java.util.stream.Stream
 
-private fun wrap(project: Project, changesNodes: Stream<ChangesBrowserNode<*>>, unversioned: Stream<FilePath>): Stream<Wrapper> =
-  Stream.concat(
-    changesNodes.map { wrapNode(project, it) }.filter(Objects::nonNull),
-    unversioned.map { UnversionedFileWrapper(it) }
-  )
+private fun wrap(project: Project,
+                 changesNodes: Iterable<ChangesBrowserNode<*>>,
+                 unversioned: Iterable<FilePath>): Iterable<Wrapper> =
+  JBIterable.empty<Wrapper>()
+    .append(JBIterable.from(changesNodes).map { wrapNode(project, it) }.filter(Objects::nonNull))
+    .append(JBIterable.from(unversioned).map { UnversionedFileWrapper(it) })
 
 private fun wrapNode(project: Project, node: ChangesBrowserNode<*>): Wrapper? {
   return when (val nodeObject = node.userObject) {
@@ -75,21 +75,18 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper> =
-    wrap(project, StreamEx.of(changesView.selectedChangesNodes.iterator()), StreamEx.of(changesView.selectedUnversionedFiles.iterator()))
+  override fun iterateSelectedChanges(): Iterable<Wrapper> =
+    wrap(project, changesView.selectedChangesNodes, changesView.selectedUnversionedFiles)
 
-  override fun getAllChanges(): Stream<Wrapper> = wrap(project, StreamEx.of(changesView.changesNodes.iterator()), changesView.unversionedFiles)
+  override fun iterateAllChanges(): Iterable<Wrapper> =
+    wrap(project, changesView.changesNodes, changesView.unversionedFiles)
 
   override fun showAllChangesForEmptySelection(): Boolean = false
 
   override fun selectChange(change: Wrapper) {
-    changesView.findNodePathInTree(change.userObject, (change.tag as? ChangesViewUserObjectTag)?.userObject)
-      ?.let {
-        TreeUtil.selectPath(changesView, it, false)
-        // Explicit refresh needed, since TreeUtil.selectPath will trigger refresh based on the current focused editor component.
-        // This will fail in case if selection comes from "Go to Change" popup.
-        refresh(false)
-      }
+    val tag = (change.tag as? ChangesViewUserObjectTag)?.userObject
+    val treePath = changesView.findNodePathInTree(change.userObject, tag) ?: return
+    TreeUtil.selectPath(changesView, treePath, false)
   }
 
   fun setAllowExcludeFromCommit(value: Boolean) {

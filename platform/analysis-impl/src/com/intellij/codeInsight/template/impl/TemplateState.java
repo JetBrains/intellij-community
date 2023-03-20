@@ -4,7 +4,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.macro.TemplateCompletionProcessor;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,6 +81,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private final TemplateManagerListener myEventPublisher;
 
   public static final Key<Boolean> TEMPLATE_RANGE_HIGHLIGHTER_KEY = Key.create("TemplateState.rangeHighlighterKey");
+
+  public static final Key<Boolean> FORCE_TEMPLATE_RUNNING = Key.create("TemplateState.forTemplateRunning");
 
   TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
@@ -382,22 +384,19 @@ public final class TemplateState extends TemplateStateBase implements Disposable
           initTabStopHighlighters();
           initListeners();
         }
-        focusCurrentExpression();
-        fireCurrentVariableChanged(-1);
-
         if (requiresWriteAction()) {
           myEventPublisher.templateStarted(this);
         }
+
+        focusCurrentExpression();
+        fireCurrentVariableChanged(-1);
+
         if (!isInteractiveModeSupported()) {
           finishTemplate(false);
         }
       }
     };
-    if (requiresWriteAction()) {
-      ApplicationManager.getApplication().runWriteAction(action);
-    } else {
-      action.run();
-    }
+    performWrite(action);
   }
 
   private String getRangesDebugInfo() {
@@ -411,12 +410,16 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       getSegments().setSegmentsGreedy(false);
       LOG.assertTrue(myTemplateRange.isValid(),
                      "template key: " + getTemplate().getKey() + "; " +
-                     "template text" + getTemplate().getTemplateText() + "; " +
+                     "template text: " + getTemplate().getTemplateText() + "; " +
                      "variable number: " + getCurrentVariableNumber());
       reformat();
       getSegments().setSegmentsGreedy(true);
       restoreEmptyVariables(indices);
     };
+    performWrite(action);
+  }
+
+  void performWrite(Runnable action) {
     if (requiresWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(action);
     } else {
@@ -436,7 +439,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   private void shortenReferences() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    performWrite(() -> {
       final PsiFile file = getPsiFile();
       if (file != null) {
         IntList indices = initEmptyVariables();
@@ -497,7 +500,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     if (segmentNumber < 0) {
       Throwable trace = getTemplate().getBuildingTemplateTrace();
       LOG.error("No segment for variable: var=" + varNumber + "; name=" + variableName + "; " + presentTemplate(getTemplate()) +
-                "; offset: " + getEditor().getCaretModel().getOffset(), AttachmentFactory.createAttachment(getDocument()),
+                "; offset: " + getEditor().getCaretModel().getOffset(), CoreAttachmentFactory.createAttachment(getDocument()),
                 new Attachment("trace.txt", trace != null ? ExceptionUtil.getThrowableText(trace) : "<empty>"));
     }
     return segmentNumber;
@@ -553,7 +556,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   boolean requiresWriteAction() {
     PsiFile file = getPsiFile();
-    return file == null || file.isPhysical();
+    return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.isIn(file);
   }
 
   private LookupElement @NotNull [] getCurrentExpressionLookupItems() {
@@ -668,18 +671,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  private static final class TemplateDocumentChange {
-    public final String newValue;
-    public final int startOffset;
-    public final int endOffset;
-    public final int segmentNumber;
-
-    private TemplateDocumentChange(String newValue, int startOffset, int endOffset, int segmentNumber) {
-      this.newValue = newValue;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      this.segmentNumber = segmentNumber;
-    }
+  private record TemplateDocumentChange(String newValue, int startOffset, int endOffset, int segmentNumber) {
   }
 
   private void executeChanges(@NotNull List<TemplateDocumentChange> changes) {
@@ -785,7 +777,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     TextRange range = TextRange.create(start, end);
     if (!TextRange.from(0, getDocument().getCharsSequence().length()).contains(range)) {
       LOG.error("Diagnostic for EA-54980. Can't extract " + range + " range. " + presentTemplate(getTemplate()),
-                AttachmentFactory.createAttachment(getDocument()));
+                CoreAttachmentFactory.createAttachment(getDocument()));
     }
     String oldText = range.subSequence(getDocument().getCharsSequence()).toString();
 
@@ -824,6 +816,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public void nextTab() {
     if (isFinished()) {
+      return;
+    }
+    if (getTemplate() == null) {
+      LOG.error("Template disposed: " + myPrevTemplate);
       return;
     }
 
@@ -922,12 +918,13 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         int templateStartOffset = getTemplateStartOffset();
         int offset = templateStartOffset > 0 ? getTemplateStartOffset() - 1 : getTemplateStartOffset();
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-
         Editor editor = getEditor();
         if (editor == null) {
           return null;
         }
+
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         return file == null ? null : file.findElementAt(offset);
       }

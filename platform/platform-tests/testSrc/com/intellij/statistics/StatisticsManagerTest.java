@@ -10,9 +10,6 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public class StatisticsManagerTest extends LightPlatformTestCase {
   @NonNls private static final String TEST_CONTEXT = "testContext";
 

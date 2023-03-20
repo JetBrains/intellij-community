@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Default {@link TextChange} implementation with mutable state.
- *
- * @author Denis Zhdanov
  */
 public class TextChangeImpl implements TextChange {
 

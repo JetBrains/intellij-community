@@ -1,13 +1,13 @@
-from collections.abc import Container
-from typing import Any, Sequence, Tuple, Union, overload
-from typing_extensions import Literal
+from collections.abc import Container, Sequence
+from typing import Any, overload
+from typing_extensions import Literal, TypeAlias
 
 from .Image import Image
 from .ImageColor import _Ink
 from .ImageFont import _Font
 
-_XY = Sequence[Union[float, Tuple[float, float]]]
-_Outline = Any
+_XY: TypeAlias = Sequence[float | tuple[float, float]]
+_Outline: TypeAlias = Any
 
 class ImageDraw:
     def __init__(self, im: Image, mode: str | None = ...) -> None: ...
@@ -30,7 +30,7 @@ class ImageDraw:
         width: float = ...,
     ) -> None: ...
     def point(self, xy: _XY, fill: _Ink | None = ...) -> None: ...
-    def polygon(self, xy: _XY, fill: _Ink | None = ..., outline: _Ink | None = ...) -> None: ...
+    def polygon(self, xy: _XY, fill: _Ink | None = ..., outline: _Ink | None = ..., width: float = ...) -> None: ...
     def regular_polygon(
         self,
         bounding_circle: tuple[float, float] | tuple[float, float, float] | list[int],

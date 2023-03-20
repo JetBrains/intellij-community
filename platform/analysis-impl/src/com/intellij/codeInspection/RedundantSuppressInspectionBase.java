@@ -16,6 +16,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +54,10 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    InspectionSuppressor extension = LanguageInspectionSuppressors.INSTANCE.forLanguage(file.getLanguage());
-    if (!(extension instanceof RedundantSuppressionDetector)) return;
+    InspectionSuppressor extension = ContainerUtil.find(LanguageInspectionSuppressors.INSTANCE.allForLanguage(file.getLanguage()), s -> s instanceof RedundantSuppressionDetector);
+    if (!(extension instanceof RedundantSuppressionDetector redundantSuppressionDetector)) return;
     InspectionProfileImpl profile = getProfile(manager, globalContext);
-    final CommonProblemDescriptor[] descriptors = checkElement(file, (RedundantSuppressionDetector)extension, manager, profile);
+    final CommonProblemDescriptor[] descriptors = checkElement(file, redundantSuppressionDetector, manager, profile);
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor instanceof ProblemDescriptor) {
         final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
@@ -121,8 +122,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
           String toolId = suppressedTools.get(toolWrapper);
           toolWrapper.initialize(globalContext);
           final Collection<CommonProblemDescriptor> descriptors;
-          if (toolWrapper instanceof LocalInspectionToolWrapper) {
-            LocalInspectionToolWrapper local = (LocalInspectionToolWrapper)toolWrapper;
+          if (toolWrapper instanceof LocalInspectionToolWrapper local) {
             if (local.isUnfair()) {
               continue; // can't work with passes other than LocalInspectionPass
             }
@@ -135,8 +135,7 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
                                        (wrapper, descriptor) -> found.add(descriptor));
             descriptors = new ArrayList<>(found);
           }
-          else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-            final GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)toolWrapper;
+          else if (toolWrapper instanceof GlobalInspectionToolWrapper global) {
             GlobalInspectionTool globalTool = global.getTool();
             //when graph is needed, results probably depend on outer files so absence of results on one file (in current context) doesn't guarantee anything
             if (globalTool.isGraphNeeded()) continue;
@@ -312,9 +311,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     String[] toolAndLang = key.split(";");
     Language language = toolAndLang.length < 2 ? null : Language.findLanguageByID(toolAndLang[1]);
     if (language == null) return null;
-    InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(language);
-    return suppressor instanceof RedundantSuppressionDetector
-           ? ((RedundantSuppressionDetector)suppressor).createRemoveRedundantSuppressionFix(toolAndLang[0]) : null;
+    InspectionSuppressor suppressor = ContainerUtil.find(LanguageInspectionSuppressors.INSTANCE.allForLanguage(language), s -> s instanceof RedundantSuppressionDetector);
+    return (suppressor instanceof RedundantSuppressionDetector redundantSuppressionDetector)
+           ? redundantSuppressionDetector.createRemoveRedundantSuppressionFix(toolAndLang[0]) : null;
   }
 
   private final class LocalRedundantSuppressionInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {

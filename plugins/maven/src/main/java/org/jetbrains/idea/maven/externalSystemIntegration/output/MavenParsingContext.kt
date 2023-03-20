@@ -66,7 +66,7 @@ class MavenParsingContext(val runConfiguration : MavenRunConfiguration,
     return getMojo(threadId, parameters, parameters["goal"], create)
   }
 
-  fun getMojo(threadId: Int, parameters: Map<String, String>, name: String?, create: Boolean): MojoExecutionEntry? {
+  private fun getMojo(threadId: Int, parameters: Map<String, String>, name: String?, create: Boolean): MojoExecutionEntry? {
     if (name == null) {
       return null
     }

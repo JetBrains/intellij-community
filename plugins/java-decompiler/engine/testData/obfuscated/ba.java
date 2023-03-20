@@ -83,21 +83,21 @@ class ba extends TimerTask {
 
          while(true) {
             var10007 = var4[var10006];
-            switch(var1 % 5) {
-            case 0:
-               var10008 = 77;
-               break;
-            case 1:
-               var10008 = 45;
-               break;
-            case 2:
-               var10008 = 99;
-               break;
-            case 3:
-               var10008 = 111;
-               break;
-            default:
-               var10008 = 98;
+            switch (var1 % 5) {
+               case 0:
+                  var10008 = 77;
+                  break;
+               case 1:
+                  var10008 = 45;
+                  break;
+               case 2:
+                  var10008 = 99;
+                  break;
+               case 3:
+                  var10008 = 111;
+                  break;
+               default:
+                  var10008 = 98;
             }
 
             var4[var10006] = (char)(var10007 ^ var10008);
@@ -140,21 +140,21 @@ class ba extends TimerTask {
 
       while(true) {
          var10007 = var4[var10006];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 77;
-            break;
-         case 1:
-            var10008 = 45;
-            break;
-         case 2:
-            var10008 = 99;
-            break;
-         case 3:
-            var10008 = 111;
-            break;
-         default:
-            var10008 = 98;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 77;
+               break;
+            case 1:
+               var10008 = 45;
+               break;
+            case 2:
+               var10008 = 99;
+               break;
+            case 3:
+               var10008 = 111;
+               break;
+            default:
+               var10008 = 98;
          }
 
          var4[var10006] = (char)(var10007 ^ var10008);

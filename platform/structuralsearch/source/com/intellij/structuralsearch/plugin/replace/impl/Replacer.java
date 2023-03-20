@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
@@ -10,6 +11,8 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -154,44 +157,49 @@ public class Replacer {
     for (ReplacementInfo info : infos) {
       replaceHandler.prepare(info);
     }
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      doReplaceAll(infos, new EmptyProgressIndicator());
+    } else {
+      ((ApplicationEx)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+        SSRBundle.message("structural.replace.title"),
+        project,
+        null,
+        indicator -> doReplaceAll(infos, indicator)
+      );
+    }
+  }
 
-    ((ApplicationEx)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
-      SSRBundle.message("structural.replace.title"),
-      project,
-      null,
-      indicator -> {
-        indicator.setIndeterminate(false);
-        try {
-          final int size = infos.size();
-          VirtualFile lastFile = null;
-          for (int i = 0; i < size; i++) {
-            indicator.checkCanceled();
-            indicator.setFraction((float)(i + 1) / size);
+  private void doReplaceAll(@NotNull List<? extends ReplacementInfo> infos, @NotNull ProgressIndicator indicator) {
+     indicator.setIndeterminate(false);
+    try {
+      final int size = infos.size();
+      VirtualFile lastFile = null;
+      for (int i = 0; i < size; i++) {
+        indicator.checkCanceled();
+        indicator.setFraction((float)(i + 1) / size);
 
-            final ReplacementInfo info = infos.get(i);
-            final PsiElement element = info.getMatch(0);
-            if (element == null) {
-              continue;
-            }
-            final VirtualFile vFile = element.getContainingFile().getVirtualFile();
-            if (vFile != null && !vFile.equals(lastFile)) {
-              indicator.setText2(vFile.getPresentableUrl());
-              lastFile = vFile;
-            }
-
-            ProgressManager.getInstance().executeNonCancelableSection(() -> {
-              final PsiElement affectedElement = doReplace(info);
-              if (affectedElement != lastAffectedElement) {
-                if (lastAffectedElement != null) reformatAndPostProcess(lastAffectedElement);
-                lastAffectedElement = affectedElement;
-              }
-            });
-          }
-        } finally {
-          ProgressManager.getInstance().executeNonCancelableSection(() -> reformatAndPostProcess(lastAffectedElement));
+        final ReplacementInfo info = infos.get(i);
+        final PsiElement element = info.getMatch(0);
+        if (element == null) {
+          continue;
         }
+        final VirtualFile vFile = element.getContainingFile().getVirtualFile();
+        if (vFile != null && !vFile.equals(lastFile)) {
+          indicator.setText2(vFile.getPresentableUrl());
+          lastFile = vFile;
+        }
+
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          final PsiElement affectedElement = doReplace(info);
+          if (affectedElement != lastAffectedElement) {
+            if (lastAffectedElement != null) reformatAndPostProcess(lastAffectedElement);
+            lastAffectedElement = affectedElement;
+          }
+        });
       }
-    );
+    } finally {
+      ProgressManager.getInstance().executeNonCancelableSection(() -> reformatAndPostProcess(lastAffectedElement));
+    }
   }
 
   public void replace(@NotNull ReplacementInfo info) {
@@ -222,6 +230,7 @@ public class Replacer {
     if (elementParent == null || !elementParent.isValid()) return;
     final PsiFile containingFile = elementParent.getContainingFile();
 
+    replaceHandler.postProcess(elementParent, options);
     if (containingFile != null && options.isToReformatAccordingToStyle()) {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null) {
@@ -234,7 +243,6 @@ public class Replacer {
       final int parentOffset = elementParent.getTextRange().getStartOffset();
       CodeStyleManager.getInstance(project).reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
     }
-    replaceHandler.postProcess(elementParent, options);
   }
 
   public static void handleComments(final PsiElement el, final PsiElement replacement, ReplacementInfo replacementInfo) {
@@ -297,10 +305,13 @@ public class Replacer {
           if (definition == null || definition.getScriptCodeConstraint().length() <= 2 /*empty quotes*/) {
             throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName));
           } else {
-            final String message = ScriptSupport.checkValidScript(StringUtil.unquoteString(definition.getScriptCodeConstraint()),
-                                                                  options.getMatchOptions());
-            if (message != null) {
-              throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, message));
+            final String scriptText = StringUtil.unquoteString(definition.getScriptCodeConstraint());
+            try {
+              ScriptSupport.buildScript(definition.getName(), scriptText, options.getMatchOptions());
+            } catch (MalformedPatternException e) {
+              throw new MalformedPatternException(
+                SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, e.getLocalizedMessage())
+              );
             }
           }
         }

@@ -6,6 +6,7 @@
 package org.toml.ide.intentions
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -41,7 +42,7 @@ abstract class TomlElementBaseIntentionAction<Ctx> : BaseElementAtCaretIntention
     final override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val ctx = findApplicableContext(project, editor, element) ?: return
 
-        if (startInWriteAction()) {
+        if (startInWriteAction() && !IntentionPreviewUtils.isPreviewElement(element)) {
             checkWriteAccessAllowed()
         }
 

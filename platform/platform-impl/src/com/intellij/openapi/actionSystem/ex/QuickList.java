@@ -65,11 +65,10 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     if (this == o) {
       return true;
     }
-    if (!(o instanceof QuickList)) {
+    if (!(o instanceof QuickList quickList)) {
       return false;
     }
 
-    QuickList quickList = (QuickList)o;
     return Arrays.equals(myActionIds, quickList.myActionIds) && Comparing.strEqual(myDescription, quickList.myDescription) && getName().equals(quickList.getName());
   }
 

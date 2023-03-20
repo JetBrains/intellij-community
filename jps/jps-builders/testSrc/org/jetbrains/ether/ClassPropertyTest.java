@@ -15,9 +15,6 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
 public class ClassPropertyTest extends IncrementalTestCase {
   public ClassPropertyTest() {
     super("classProperties");

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateDirectoryOrPackageHandler;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
@@ -9,10 +10,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -24,7 +22,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.EmptyConsumer;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
@@ -142,7 +139,7 @@ public final class CreatePackageAction extends DumbAwareAction {
 
   private static void createNewPackage(@NotNull String name,
                                        @NotNull CreateDirectoryOrPackageHandler createHandler,
-                                       @NotNull Consumer<PsiFileSystemItem> consumer) {
+                                       @NotNull Consumer<? super PsiFileSystemItem> consumer) {
     if (createHandler.checkInput(name) && createHandler.canClose(name)) {
       consumer.accept(createHandler.getCreatedElement());
     }
@@ -157,10 +154,10 @@ public final class CreatePackageAction extends DumbAwareAction {
     CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
     builder
       .setTitle(PyBundle.message("dialog.title.new.python.package"))
-      .addKind(PyBundle.message("new.package.list.item.ordinary.package"), PlatformIcons.PACKAGE_ICON, ORDINARY_PACKAGE_TYPE);
+      .addKind(PyBundle.message("new.package.list.item.ordinary.package"), AllIcons.Nodes.Package, ORDINARY_PACKAGE_TYPE);
 
     if (PyNamespacePackagesService.isEnabled() && RegistryManager.getInstance().is("python.create.namespace.package.action")) {
-      builder.addKind(PyBundle.message("new.package.list.item.namespace.package"), PlatformIcons.PACKAGE_ICON, NAMESPACE_PACKAGE_TYPE);
+      builder.addKind(PyBundle.message("new.package.list.item.namespace.package"), AllIcons.Nodes.Package, NAMESPACE_PACKAGE_TYPE);
     }
 
     return builder;
@@ -192,6 +189,11 @@ public final class CreatePackageAction extends DumbAwareAction {
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

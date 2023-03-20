@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.actions.InvalidateCachesDialog;
@@ -9,7 +9,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public class InvalidateCacheService {
+import java.util.function.Predicate;
+
+public final class InvalidateCacheService {
   private static final Logger LOG = Logger.getInstance(InvalidateCacheService.class);
 
   public static void invalidateCachesAndRestart(@Nullable Project project) {
@@ -25,18 +27,23 @@ public class InvalidateCacheService {
 
     var invalidators = dialog.getSelectedInvalidators();
     if (dialog.isOK()) {
-      for (CachesInvalidator invalidator : invalidators) {
-        try {
-          invalidator.invalidateCaches();
-        }
-        catch (Throwable t) {
-          LOG.warn("Failed to invalidate caches with " + invalidator.getClass().getName() + ". " + t.getMessage(), t);
-        }
-      }
+      invalidateCaches(invalidators::contains);
     }
 
     if (dialog.isOK() || dialog.isRestartOnly()) {
       app.restart(true);
     }
   }
+
+  public static void invalidateCaches(Predicate<? super CachesInvalidator> isAllowedInvalidator) {
+    CachesInvalidator.EP_NAME.getExtensionList().stream().filter(isAllowedInvalidator).forEach(invalidator -> {
+      try {
+        invalidator.invalidateCaches();
+      }
+      catch (Throwable t) {
+        LOG.warn("Failed to invalidate caches with " + invalidator.getClass().getName() + ". " + t.getMessage(), t);
+      }
+    });
+  }
 }
+

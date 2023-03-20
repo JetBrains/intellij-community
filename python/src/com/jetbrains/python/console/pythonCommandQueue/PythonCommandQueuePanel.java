@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.icons.AllIcons;
@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Main panel for PopupWindow (CommandQueue)
  */
-public class PythonCommandQueuePanel extends JPanel {
+public final class PythonCommandQueuePanel extends JPanel {
   private final JPanel myPanel = new JPanel();
   private final JBSplitter mySplitter;
   private final PythonConsoleView myConsole;
@@ -112,7 +112,9 @@ public class PythonCommandQueuePanel extends JPanel {
         repaintAll();
         return;
       }
-      tooltip.show(getActionButton(), GotItTooltip.BOTTOM_MIDDLE);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        tooltip.show(getActionButton(), GotItTooltip.BOTTOM_MIDDLE);
+      }
     }
     repaintAll();
   }
@@ -174,9 +176,9 @@ public class PythonCommandQueuePanel extends JPanel {
     this.communication = communication;
   }
 
-  protected void commandSelected(@NotNull QueueElementPanel elementPanel) {
+  void commandSelected(@NotNull QueueElementPanel elementPanel) {
     if (selectedCommand != null) {
-      selectedCommand.getQueuePanel().setBackground(new JBColor(UIUtil::getListBackground));
+      selectedCommand.getQueuePanel().setBackground(JBColor.lazy(UIUtil::getListBackground));
       selectedCommand.setTextColor();
       selectedCommand.setButtonColor();
     }

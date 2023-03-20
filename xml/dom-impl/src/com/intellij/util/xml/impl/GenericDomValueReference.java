@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider, ResolvingHint {
   private final GenericDomValue<T> myGenericValue;
 
@@ -44,8 +41,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   protected TextRange createTextRange() {
-    if (myGenericValue instanceof GenericAttributeValue) {
-      final GenericAttributeValue genericAttributeValue = (GenericAttributeValue)myGenericValue;
+    if (myGenericValue instanceof GenericAttributeValue genericAttributeValue) {
       final XmlAttributeValue attributeValue = genericAttributeValue.getXmlAttributeValue();
       if (attributeValue == null) {
         return TextRange.from(0, genericAttributeValue.getXmlAttribute().getTextLength());
@@ -181,8 +177,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
       if (DomCompletionContributor.isSchemaEnumerated(getElement())) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    if (converter instanceof ResolvingConverter) {
-      final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
+    if (converter instanceof ResolvingConverter<T> resolvingConverter) {
       ArrayList<Object> result = new ArrayList<>();
       final ConvertContext convertContext = getConvertContext();
       for (T variant: resolvingConverter.getVariants(convertContext)) {

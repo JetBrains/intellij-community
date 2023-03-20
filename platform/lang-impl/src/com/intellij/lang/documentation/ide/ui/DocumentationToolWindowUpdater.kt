@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
-import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,6 +14,8 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.backend.documentation.impl.documentationRequest
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.Activatable
 import kotlinx.coroutines.*
@@ -84,7 +84,7 @@ internal class DocumentationToolWindowUpdater(
       return
     }
     val request = readAction {
-      documentationTargets(dataContext).singleOrNull()?.documentationRequest()
+      dataContext.getData(DOCUMENTATION_TARGETS)?.singleOrNull()?.documentationRequest()
     }
     if (request != null) {
       browser.resetBrowser(request)
@@ -92,6 +92,7 @@ internal class DocumentationToolWindowUpdater(
   }
 
   private suspend fun focusDataContext(): DataContext = suspendCancellableCoroutine {
+    // @formatter:off
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown({
       @Suppress("DEPRECATION")
       val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
@@ -99,5 +100,6 @@ internal class DocumentationToolWindowUpdater(
       val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
       it.resume(asyncDataContext)
     }, ModalityState.any())
+    // @formatter:on
   }
 }

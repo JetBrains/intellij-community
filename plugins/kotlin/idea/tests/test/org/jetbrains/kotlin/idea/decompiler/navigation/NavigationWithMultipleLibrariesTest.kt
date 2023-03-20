@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
@@ -13,14 +13,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.JavaModuleTestCase
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
-import org.jetbrains.kotlin.idea.caches.project.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.decompiler.navigation.NavigationChecker.Companion.checkAnnotatedCode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
@@ -62,16 +62,17 @@ class NavigationWithMultipleRuntimesTest : AbstractNavigationToSourceOrDecompile
     }
 
     override fun createProjectLib(libraryName: String, withSources: Boolean): Library {
-        val libraryJar = KotlinArtifacts.instance.kotlinStdlib.copyTo(File(createTempDirectory(), "$libraryName.jar"))
+        val libraryJar = TestKotlinArtifacts.kotlinStdlib.copyTo(File(createTempDirectory(), "$libraryName.jar"))
         val jarUrl = libraryJar.jarRoot
         return runWriteAction {
             val library = ProjectLibraryTable.getInstance(project).createLibrary(libraryName)
             val modifiableModel = library.modifiableModel
             modifiableModel.addRoot(jarUrl, OrderRootType.CLASSES)
             if (withSources) {
-                val sourcesJar =
-                    KotlinArtifacts.instance.kotlinStdlibSources.copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
+                val sourcesJar = TestKotlinArtifacts.kotlinStdlibSources.copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
+                val commonSourcesJar = TestKotlinArtifacts.kotlinStdlibCommonSources.copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
                 modifiableModel.addRoot(sourcesJar.jarRoot, OrderRootType.SOURCES)
+                modifiableModel.addRoot(commonSourcesJar.jarRoot, OrderRootType.SOURCES)
             }
             modifiableModel.commit()
             library
@@ -136,7 +137,7 @@ abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase(
 
 private fun checkLibraryName(referenceTarget: PsiElement, expectedName: String) {
     val navigationFile = referenceTarget.navigationElement.containingFile ?: return
-    val libraryName = when (val libraryInfo = navigationFile.getNullableModuleInfo()) {
+    val libraryName = when (val libraryInfo = navigationFile.moduleInfoOrNull) {
         is LibraryInfo -> libraryInfo.library.name
         is LibrarySourceInfo -> libraryInfo.library.name
         else -> error("Couldn't get library name")

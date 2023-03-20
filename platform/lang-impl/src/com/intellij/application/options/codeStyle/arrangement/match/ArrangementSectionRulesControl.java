@@ -24,9 +24,6 @@ import java.util.*;
 
 import static com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRuleManager.ArrangementSectionRuleData;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
   @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
   @NotNull private static final Logger LOG = Logger.getInstance(ArrangementSectionRulesControl.class);

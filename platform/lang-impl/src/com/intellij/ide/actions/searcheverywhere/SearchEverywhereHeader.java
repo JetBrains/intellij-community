@@ -1,12 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
-import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -15,12 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -30,13 +25,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.ContributorFilterCollector;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
@@ -50,24 +47,25 @@ public class SearchEverywhereHeader {
   private SETab mySelectedTab;
 
   private final @Nullable Project myProject;
-  private final @NotNull JPanel myTabsPanel;
-  private final @NotNull JPanel myToolbarPanel;
+  private final @NotNull JComponent header;
+  @Nullable
+  private SENewUIHeaderView newUIHeaderView;
   private final @NotNull ActionToolbar myToolbar;
   private boolean myEverywhereAutoSet = true;
 
   public SearchEverywhereHeader(@Nullable Project project,
-                                Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
-                                @NotNull Runnable scopeChangedCallback, Function<? super String, String> shortcutSupplier,
-                                @Nullable AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
+                                List<SearchEverywhereContributor<?>> contributors,
+                                @NotNull Runnable scopeChangedCallback,
+                                Function<? super String, String> shortcutSupplier,
+                                @Nullable AnAction showInFindToolWindowAction,
+                                SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
     myTabs = createTabs(contributors);
     mySelectedTab = myTabs.get(0);
-    myTabsPanel = createTabsPanel(myTabs);
     myToolbar = createToolbar(showInFindToolWindowAction);
-    myToolbar.setTargetComponent(myTabsPanel);
-    myToolbarPanel = (JPanel)myToolbar.getComponent();
+    header = ExperimentalUI.isNewUI() ? createNewUITabs() : createHeader();
 
     MessageBusConnection busConnection = myProject != null
                                          ? myProject.getMessageBus().connect(ui)
@@ -84,12 +82,9 @@ public class SearchEverywhereHeader {
     scopeChangedCallback.run();
   }
 
-  public @NotNull JPanel getTabsPanel() {
-    return myTabsPanel;
-  }
-
-  public @NotNull JPanel getToolbarPanel() {
-    return myToolbarPanel;
+  @NotNull
+  public JComponent getComponent() {
+    return header;
   }
 
   public void toggleEverywhere() {
@@ -124,116 +119,74 @@ public class SearchEverywhereHeader {
   }
 
   @NotNull
-  private static JPanel createTabsPanel(List<? extends SETab> tabs) {
+  private JComponent createHeader() {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     contributorsPanel.setOpaque(false);
-    tabs.forEach(tab -> contributorsPanel.add(tab));
-    return contributorsPanel;
-  }
+    for (SETab tab : myTabs) {
+      SETabLabel tabLabel = new SETabLabel(tab);
+      @NlsSafe String shortcut = myShortcutSupplier.apply(tab.getID());
+      if (shortcut != null) {
+        tabLabel.setToolTipText(shortcut);
+      }
 
-  private List<SETab> createTabs(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
-    if (Registry.is("search.everywhere.group.contributors.by.type")) {
-      return createGroupedTabs(contributors);
-    } else {
-      ArrayList<SearchEverywhereContributor<?>> contributorsList = new ArrayList<>(contributors.keySet());
-      contributorsList.sort(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
-      return createSeparateTabs(contributorsList);
+      tabLabel.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          switchToTab(tab);
+          SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
+                                                                 SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(
+                                                                   tab.getReportableID()),
+                                                                 EventFields.InputEventByMouseEvent.with(e));
+        }
+      });
+      contributorsPanel.add(tabLabel);
     }
+    myToolbar.setTargetComponent(contributorsPanel);
+
+    JPanel result = new JPanel(new BorderLayout());
+    result.add(contributorsPanel, BorderLayout.WEST);
+    result.add(myToolbar.getComponent(), BorderLayout.EAST);
+
+    return result;
   }
 
-  private List<SETab> createGroupedTabs(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
-    List<SearchEverywhereContributor<?>> projectContributors = new ArrayList<>();
-    List<SearchEverywhereContributor<?>> ideContributors = new ArrayList<>();
-    contributors.forEach((contributor, tab) -> {
-      if (tab == SearchEverywhereTabDescriptor.PROJECT) projectContributors.add(contributor);
-      else if (tab == SearchEverywhereTabDescriptor.IDE) ideContributors.add(contributor);
-      else throw new IllegalArgumentException("Unsupported tab - " + tab.getId());
+  @NotNull
+  private JComponent createNewUITabs() {
+    newUIHeaderView = new SENewUIHeaderView(myTabs, myShortcutSupplier, myToolbar.getComponent());
+    newUIHeaderView.tabbedPane.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        SETab selectedTab = myTabs.get(newUIHeaderView.tabbedPane.getSelectedIndex());
+        switchToTab(selectedTab);
+        SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(
+          myProject, SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()));
+      }
     });
-    List<SETab> res = new ArrayList<>();
-
-    ElementsChooser.StatisticsCollector<String> filterStatisticsCollector = new ContributorFilterCollector();
-    if (myProject != null && !projectContributors.isEmpty()) {
-      PersistentSearchEverywhereContributorFilter<String> projectContributorsFilter = createContributorsFilter(projectContributors);
-      List<AnAction> projectActions = Arrays.asList(
-        new MyScopeChooserAction(myProject, projectContributors, myScopeChangedCallback),
-        new SearchEverywhereFiltersAction<>(projectContributorsFilter, myScopeChangedCallback, filterStatisticsCollector)
-      );
-      res.add(createTab(SearchEverywhereTabDescriptor.PROJECT.getId(), IdeBundle.message("searcheverywhere.project.search.tab.name"),
-                        projectContributors, projectActions, projectContributorsFilter));
-
-    }
-
-    if (!ideContributors.isEmpty()) {
-      PersistentSearchEverywhereContributorFilter<String> ideContributorsFilter = createContributorsFilter(ideContributors);
-      List<AnAction> ideActions = Arrays.asList(
-        new CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")) {
-          private boolean everywhere;
-
-          @Override
-          public boolean isEverywhere() {
-            return everywhere;
-          }
-
-          @Override
-          public void setEverywhere(boolean val) {
-            everywhere = val;
-            ideContributors.stream()
-              .flatMap(contributor -> contributor.getActions(myScopeChangedCallback).stream())
-              .filter(action -> action instanceof SearchEverywhereToggleAction)
-              .forEach(action -> ((SearchEverywhereToggleAction)action).setEverywhere(val));
-            myScopeChangedCallback.run();
-          }
-        },
-        new SearchEverywhereFiltersAction<>(ideContributorsFilter, myScopeChangedCallback, filterStatisticsCollector)
-      );
-      res.add(createTab(SearchEverywhereTabDescriptor.IDE.getId(), IdeBundle.message("searcheverywhere.ide.search.tab.name"),
-                        ideContributors, ideActions, ideContributorsFilter));
-    }
-
-    return res;
+    myToolbar.setTargetComponent(newUIHeaderView.panel);
+    return newUIHeaderView.panel;
   }
 
-  private List<SETab> createSeparateTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
+  private List<SETab> createTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
     List<SETab> res = new ArrayList<>();
+
+    contributors = contributors.stream()
+      .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
+      .collect(Collectors.toList());
+
+    final Runnable onChanged = () -> {
+      myToolbar.updateActionsImmediately();
+      myScopeChangedCallback.run();
+    };
 
     if (contributors.size() > 1) {
-      Runnable onChanged = () -> {
-        myToolbar.updateActionsImmediately();
-        myScopeChangedCallback.run();
-      };
-      String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
-      PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
-      List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
-        final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
-        @Override
-        public boolean isEverywhere() {
-          return seManager.isEverywhere();
-        }
-
-        @Override
-        public void setEverywhere(boolean state) {
-          if (isEverywhere() == state) return;
-          seManager.setEverywhere(state);
-
-          myTabs.forEach(tab -> {
-            if (tab.everywhereAction != null) tab.everywhereAction.setEverywhere(state);
-          });
-          onChanged.run();
-        }
-      }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
-      SETab allTab = createTab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
-                               IdeBundle.message("searcheverywhere.allelements.tab.name"),
-                               contributors, actions, filter);
+      SETab allTab = createAllTab(contributors, onChanged);
       res.add(allTab);
     }
 
-    contributors.stream()
-      .filter(SearchEverywhereContributor::isShownInSeparateTab)
+    TabsCustomizationStrategy.getInstance()
+      .getSeparateTabContributors(contributors)
       .forEach(contributor -> {
-        SETab tab = createTab(contributor, () -> {
-          myToolbar.updateActionsImmediately();
-          myScopeChangedCallback.run();
-        });
+        SETab tab = createTab(contributor, onChanged);
         res.add(tab);
       });
 
@@ -259,22 +212,25 @@ public class SearchEverywhereHeader {
   }
 
   public void switchToTab(SETab tab) {
-    if (!myTabs.contains(tab))
+    if (!myTabs.contains(tab)) {
       throw new IllegalArgumentException(String.format("Tab %s is not found in tabs list", tab.toString()));
+    }
 
     mySelectedTab.setSelected(false);
     mySelectedTab = tab;
     mySelectedTab.setSelected(true);
 
+    if (newUIHeaderView != null) {
+      newUIHeaderView.tabbedPane.setSelectedIndex(myTabs.indexOf(tab));
+    }
+
     if (myEverywhereAutoSet && isEverywhere() && canToggleEverywhere()) {
       autoSetEverywhere(false);
     }
 
-    if (myToolbar != null) {
-      myToolbar.updateActionsImmediately();
-    }
+    myToolbar.updateActionsImmediately();
 
-    myTabsPanel.repaint();
+    header.repaint();
     myScopeChangedCallback.run();
   }
 
@@ -310,7 +266,9 @@ public class SearchEverywhereHeader {
   }
 
   public void resetScope() {
-    ObjectUtils.consumeIfNotNull(mySelectedTab.everywhereAction, action -> action.setEverywhere(true));
+    if (mySelectedTab.everywhereAction != null) {
+      mySelectedTab.everywhereAction.setEverywhere(true);
+    }
   }
 
   public boolean isEverywhere() {
@@ -323,38 +281,41 @@ public class SearchEverywhereHeader {
     return mySelectedTab.everywhereAction.canToggleEverywhere();
   }
 
-  private SETab createTab(@NonNls @NotNull String id, @NlsContexts.Label @NotNull String name,
-                          @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
-                          List<AnAction> actions,
-                          @Nullable PersistentSearchEverywhereContributorFilter<String> filter) {
-    SETab tab = new SETab(id, name, contributors, actions, filter);
-
-    @NlsSafe String shortcut = myShortcutSupplier.apply(tab.getID());
-    if (shortcut != null) {
-      tab.setToolTipText(shortcut);
-    }
-
-    tab.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        switchToTab(tab);
-        SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
-                                                               SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(tab.getReportableID()),
-                                                               EventFields.InputEventByMouseEvent.with(e));
-
-      }
-    });
-
-    return tab;
-  }
-
-  private SETab createTab(@NotNull SearchEverywhereContributor<?> contributor, Runnable onChanged) {
-    return createTab(contributor.getSearchProviderId(), contributor.getGroupName(), Collections.singletonList(contributor),
+  private static SETab createTab(@NotNull SearchEverywhereContributor<?> contributor, Runnable onChanged) {
+    return new SETab(contributor.getSearchProviderId(), contributor.getGroupName(), Collections.singletonList(contributor),
                      contributor.getActions(onChanged), null);
   }
 
-  public static class SETab extends JLabel {
+  @NotNull
+  private SETab createAllTab(List<? extends SearchEverywhereContributor<?>> contributors, @NotNull Runnable onChanged) {
+    String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
+    PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
+    List<AnAction> actions = Arrays.asList(new CheckBoxSearchEverywhereToggleAction(actionText) {
+      final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
+      @Override
+      public boolean isEverywhere() {
+        return seManager.isEverywhere();
+      }
+
+      @Override
+      public void setEverywhere(boolean state) {
+        if (isEverywhere() == state) return;
+        seManager.setEverywhere(state);
+
+        myTabs.forEach(tab -> {
+          if (tab.everywhereAction != null) tab.everywhereAction.setEverywhere(state);
+        });
+        onChanged.run();
+      }
+    }, new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
+    return new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
+                     IdeBundle.message("searcheverywhere.allelements.tab.name"),
+                     contributors, actions, filter);
+  }
+
+  public static class SETab {
     private final @NotNull @NonNls String id;
+    private final @NlsContexts.Label @NotNull String name;
     private final @NotNull List<SearchEverywhereContributor<?>> contributors;
     private final List<AnAction> actions;
     private final @Nullable SearchEverywhereToggleAction everywhereAction;
@@ -368,10 +329,8 @@ public class SearchEverywhereHeader {
                  @NotNull List<? extends SearchEverywhereContributor<?>> contributors,
                  List<AnAction> actions,
                  @Nullable PersistentSearchEverywhereContributorFilter<String> filter) {
-      super(name);
+      this.name = name;
       myContributorsFilter = filter;
-      Insets insets = JBUI.CurrentTheme.BigPopup.tabInsets();
-      setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
 
       assert contributors.size() > 0 : "Contributors list cannot be empty";
       this.id = id;
@@ -389,8 +348,12 @@ public class SearchEverywhereHeader {
       isSelected = selected;
     }
 
-    public String getID() {
+    public @NotNull @NonNls String getID() {
       return id;
+    }
+
+    public @NlsContexts.Label @NotNull String getName() {
+      return name;
     }
 
     public String getReportableID() {
@@ -415,7 +378,7 @@ public class SearchEverywhereHeader {
     }
 
     private static <T> boolean canClearFilter(@NotNull PersistentSearchEverywhereContributorFilter<T> filter) {
-      return filter.getAllElements().stream().anyMatch(o -> !filter.isSelected(o));
+      return ContainerUtil.exists(filter.getAllElements(), o -> !filter.isSelected(o));
     }
 
     public void clearFilter() {
@@ -424,6 +387,22 @@ public class SearchEverywhereHeader {
 
     private static <T> void doClearFilter(@NotNull PersistentSearchEverywhereContributorFilter<T> filter) {
       filter.getAllElements().forEach(s -> filter.setSelected(s, true));
+    }
+  }
+
+  private static class SETabLabel extends JLabel {
+
+    /**
+     * Can be null while initialization
+     */
+    private final SETab seTab;
+
+    private SETabLabel(@NotNull SETab tab) {
+      super(tab.getName());
+      seTab = tab;
+
+      Insets insets = JBUI.CurrentTheme.BigPopup.tabInsets();
+      setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
     }
 
     @Override
@@ -435,104 +414,21 @@ public class SearchEverywhereHeader {
 
     @Override
     public boolean isOpaque() {
-      return isSelected;
+      return seTab != null && seTab.isSelected;
     }
 
     @Override
     public Color getBackground() {
-      return isSelected
+      return seTab != null && seTab.isSelected
              ? JBUI.CurrentTheme.BigPopup.selectedTabColor()
              : super.getBackground();
     }
 
     @Override
     public Color getForeground() {
-      return isSelected
+      return seTab != null && seTab.isSelected
              ? JBUI.CurrentTheme.BigPopup.selectedTabTextColor()
              : super.getForeground();
-    }
-  }
-
-  private static class MyScopeChooserAction extends AbstractGotoSEContributor.ScopeChooserAction {
-    private ScopeDescriptor myScope;
-    private final Collection<SearchEverywhereContributor<?>> myContributors;
-    private final Runnable onChange;
-
-    private final GlobalSearchScope myEverywhereScope;
-    private final GlobalSearchScope myProjectScope;
-
-    private MyScopeChooserAction(@NotNull Project project,
-                                 Collection<SearchEverywhereContributor<?>> contributors,
-                                 Runnable onChange) {
-      myContributors = contributors;
-      this.onChange = onChange;
-
-      myEverywhereScope = GlobalSearchScope.everythingScope(project);
-      myProjectScope = GlobalSearchScope.projectScope(project);
-      myScope = new ScopeDescriptor(myProjectScope);
-
-      doSetScope(myScope);
-    }
-
-    private void doSetScope(@NotNull ScopeDescriptor sd) {
-      myScope = sd;
-      myContributors.stream()
-        .filter(c -> c instanceof ScopeSupporting)
-        .forEach(c -> ((ScopeSupporting)c).setScope(sd));
-    }
-
-    @Override
-    void onScopeSelected(@NotNull ScopeDescriptor sd) {
-      doSetScope(sd);
-      onChange.run();
-    }
-
-    @Override
-    @NotNull ScopeDescriptor getSelectedScope() {
-      return myScope;
-    }
-
-    @Override
-    void onProjectScopeToggled() {
-      setEverywhere(!myScope.scopeEquals(myEverywhereScope));
-    }
-
-    @Override
-    boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
-      return ContainerUtil.process(extractScopes(), processor);
-    }
-
-    @Override
-    public boolean isEverywhere() {
-      return myScope.scopeEquals(myEverywhereScope);
-    }
-
-    @Override
-    public void setEverywhere(boolean everywhere) {
-      doSetScope(new ScopeDescriptor(everywhere ? myEverywhereScope : myProjectScope));
-      onChange.run();
-    }
-
-    @Override
-    public boolean canToggleEverywhere() {
-      return myScope.scopeEquals(myEverywhereScope) || myScope.scopeEquals(myProjectScope);
-    }
-
-    private List<ScopeDescriptor> extractScopes() {
-      BinaryOperator<List<ScopeDescriptor>> intersection = (descriptors1, descriptors2) -> {
-        ArrayList<ScopeDescriptor> res = new ArrayList<>(descriptors1);
-        List<String> scopes = Lists.transform(res, descriptor -> descriptor.getDisplayName());
-        scopes.retainAll(Lists.transform(descriptors2, descriptor -> descriptor.getDisplayName()));
-
-        return res;
-      };
-
-      Optional<List<ScopeDescriptor>> maybeScopes = myContributors.stream()
-        .filter(c -> c instanceof ScopeSupporting)
-        .map(c -> ((ScopeSupporting)c).getSupportedScopes())
-        .reduce(intersection);
-
-      return maybeScopes.orElse(Collections.emptyList());
     }
   }
 }

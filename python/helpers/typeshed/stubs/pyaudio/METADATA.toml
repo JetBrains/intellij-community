@@ -1,2 +1,4 @@
 version = "0.2.*"
-python2 = true
+
+[tool.stubtest]
+apt_dependencies = ["portaudio19-dev"]

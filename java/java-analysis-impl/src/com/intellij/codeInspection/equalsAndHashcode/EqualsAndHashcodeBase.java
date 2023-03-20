@@ -52,7 +52,7 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
     if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new JavaElementVisitor() {
-      @Override public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(@NotNull PsiClass aClass) {
         super.visitClass(aClass);
         boolean [] hasEquals = {false};
         boolean [] hasHashCode = {false};

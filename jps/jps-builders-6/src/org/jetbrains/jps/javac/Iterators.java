@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
-import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class Iterators {
-
+public final class Iterators {
   @SuppressWarnings("rawtypes")
   private static final BooleanFunction NOT_NULL_FILTER = new BooleanFunction() {
     @Override
@@ -157,7 +155,18 @@ public class Iterators {
   }
 
   public static <I> Iterator<I> asIterator(final Iterable<? extends I> from) {
-    return map(from.iterator(), Functions.<I, I>identity());
+    final Iterator<? extends I> it = from.iterator();
+    return new BaseIterator<I>() {
+      @Override
+      public boolean hasNext() {
+        return it.hasNext();
+      }
+
+      @Override
+      public I next() {
+        return it.next();
+      }
+    };
   }
 
   public static <T> Iterable<T> asIterable(final T elem) {
@@ -281,7 +290,7 @@ public class Iterators {
 
   public static <T> Iterator<T> filterWithOrder(final Iterator<? extends T> from, final Iterator<? extends BooleanFunction<? super T>> predicates) {
     return flat(map(predicates, new Function<BooleanFunction<? super T>, Iterator<T>>() {
-      final List<T> buffer = new LinkedList<T>();
+      final List<T> buffer = new LinkedList<>();
       @Override
       public Iterator<T> fun(BooleanFunction<? super T> pred) {
         if (!buffer.isEmpty()) {
@@ -301,7 +310,7 @@ public class Iterators {
           buffer.add(elem);
         }
         buffer.clear();
-        return Collections.<T>emptyList().iterator();
+        return Collections.emptyIterator();
       }
     }));
   }

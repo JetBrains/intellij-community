@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The 'try/except/else/finally' statement.
  */
-public interface PyTryExceptStatement extends PyStatementWithElse {
+public interface PyTryExceptStatement extends PyCompoundStatement, PyStatementWithElse {
   @NotNull
   PyTryPart getTryPart();
 

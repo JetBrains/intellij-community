@@ -8,7 +8,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -25,18 +25,18 @@ public final class SchemeImportUtil {
                                                @NotNull Component parent,
                                                @Nullable VirtualFile preselect,
                                                @Nullable @NlsContexts.Label String description) {
-    final Set<String> extensions = ContainerUtil.set(sourceExtensions);
+    final Set<String> extensions = Set.of(sourceExtensions);
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return
-          (file.isDirectory() || extensions.contains(file.getExtension())) &&
+          (file.isDirectory() || isFileSelectable(file)) &&
           (showHiddenFiles || !FileElement.isFileHidden(file));
       }
 
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && !file.isDirectory() && extensions.contains(file.getExtension());
+        return file != null && !file.isDirectory() && file.getExtension() != null && extensions.contains(file.getExtension());
       }
     };
     if (description != null) {
@@ -59,10 +59,7 @@ public final class SchemeImportUtil {
   }
 
   private static boolean canSelectJarFile(String @NotNull [] sourceExtensions) {
-    for (String ext : sourceExtensions) {
-      if ("jar".equals(ext)) return true;
-    }
-    return false;
+    return ArrayUtil.contains("jar", sourceExtensions);
   }
 
   @NotNull

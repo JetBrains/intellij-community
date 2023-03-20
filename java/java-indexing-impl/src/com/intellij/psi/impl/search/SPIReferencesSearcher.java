@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.spi.SPILanguage;
@@ -26,8 +26,7 @@ public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, Refer
     final SearchScope scope = p.getEffectiveSearchScope();
     if (!(scope instanceof GlobalSearchScope)) return;
 
-    if (element instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)element;
+    if (element instanceof PsiClass aClass) {
       final String jvmClassName = ClassUtil.getJVMClassName(aClass);
 
       if (jvmClassName == null) return;

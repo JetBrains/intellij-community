@@ -4,7 +4,7 @@ class Test {
         extracted();
     }
 
-    private void extracted() {
+    private static void extracted() {
         System.out.println();
     }
 }

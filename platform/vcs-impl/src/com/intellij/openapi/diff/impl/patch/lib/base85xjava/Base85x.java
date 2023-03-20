@@ -27,7 +27,7 @@ import java.util.Arrays;
 /**
  * The main Base85x-java program
  *
- * @author Simon Warta, Kullo, Nadya Zabrodina
+ * @author Simon Warta, Kullo
  * @version 0.2
  */
 public final class Base85x {

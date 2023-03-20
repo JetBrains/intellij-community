@@ -52,5 +52,15 @@ public abstract class JavaProjectModelModificationService {
                                               @NotNull ExternalLibraryDescriptor libraryDescriptor,
                                               @NotNull DependencyScope scope);
 
-  public abstract Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel);
+  /**
+   * Changes a language level for specified module. Also, if modifySource = true changes underneath external build system files
+   * (such as pom.xml for Maven, build.gradle/build.gradle.kts for Gradle, etc)
+   * * @param module Intellij Java Module to change
+   * * @param languageLevel new level
+   * @param modifySource if true, also, external build system files from underneath build system (if any) to be changed. When false
+   *                     only language level for module in Intellij project structure will be changed, and build system files remain untouched.
+   *                     This parameter do not affect JPS based projects, as files allways to be chanded.
+   * @return completed promise, when changes are complete. Rejected promise if no changes were done.
+   */
+  public abstract Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel, boolean modifySource);
 }

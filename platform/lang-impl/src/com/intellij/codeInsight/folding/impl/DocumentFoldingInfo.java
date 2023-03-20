@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class DocumentFoldingInfo implements CodeFoldingState {
+final class DocumentFoldingInfo implements CodeFoldingState {
   private static final Logger LOG = Logger.getInstance(DocumentFoldingInfo.class);
   private static final Key<FoldingInfo> FOLDING_INFO_KEY = Key.create("FOLDING_INFO");
 
@@ -63,10 +64,10 @@ class DocumentFoldingInfo implements CodeFoldingState {
       if (!region.isValid() || region.shouldNeverExpand()) continue;
       boolean expanded = region.isExpanded();
       String signature = region.getUserData(UpdateFoldRegionsOperation.SIGNATURE);
-      if (signature == UpdateFoldRegionsOperation.NO_SIGNATURE) continue;
+      if (Strings.areSameInstance(signature, UpdateFoldRegionsOperation.NO_SIGNATURE)) continue;
       Boolean storedCollapseByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
       boolean collapseByDefault = storedCollapseByDefault != null && storedCollapseByDefault &&
-                                  !FoldingUtil.caretInsideRange(editor, TextRange.create(region));
+                                  !FoldingUtil.caretInsideRange(editor, region.getTextRange());
       if (collapseByDefault == expanded || signature == null) {
         if (signature != null) {
           myInfos.add(new Info(signature, expanded));
@@ -293,61 +294,9 @@ class DocumentFoldingInfo implements CodeFoldingState {
     return true;
   }
 
-  private static class Info {
-    private final String signature;
-    private final boolean expanded;
-
-    Info(@NotNull String signature, boolean expanded) {
-      this.signature = signature;
-      this.expanded = expanded;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Info info = (Info)o;
-      return expanded == info.expanded && Objects.equals(signature, info.signature);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(signature, expanded);
-    }
+  private record Info(@NotNull String signature, boolean expanded) {
   }
 
-  private static final class FoldingInfo {
-    private final String placeHolder;
-    private final boolean expanded;
-
-    private FoldingInfo(@NotNull String placeHolder, boolean expanded) {
-      this.placeHolder = placeHolder;
-      this.expanded = expanded;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      FoldingInfo info = (FoldingInfo)o;
-
-      return expanded == info.expanded && placeHolder.equals(info.placeHolder);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = placeHolder.hashCode();
-      result = 31 * result + (expanded ? 1 : 0);
-      return result;
-    }
-
-    public boolean getExpanded() {
-      return expanded;
-    }
+  private record FoldingInfo(@NotNull String placeHolder, boolean expanded) {
   }
 }

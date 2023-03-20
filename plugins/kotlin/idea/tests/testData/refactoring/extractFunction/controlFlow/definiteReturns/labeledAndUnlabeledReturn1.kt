@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// PARAM_DESCRIPTOR: value-parameter it: kotlin.Int defined in foo.<anonymous>
+// PARAM_DESCRIPTOR: value-parameter it: kotlin.Int defined in foo.`<anonymous>`
 // PARAM_TYPES: kotlin.Int
 fun foo(a: Int): Int {
     a.let {

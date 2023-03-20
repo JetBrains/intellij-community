@@ -35,7 +35,7 @@ public final class DfaControlTransferValue extends DfaValue {
 
   @Override
   public DfaControlTransferValue bindToFactory(DfaValueFactory factory) {
-    return factory.controlTransfer(target, traps);
+    return factory.controlTransfer(target.bindToFactory(factory), traps);
   }
 
   public @NotNull TransferTarget getTarget() {
@@ -71,11 +71,10 @@ public final class DfaControlTransferValue extends DfaValue {
 
   /**
    * Represents the target location.
-   * TransferTarget should be reusable in another factory
    */
   public interface TransferTarget {
     /**
-     * @return list of possible instruction offsets for given target
+     * @return array of possible instruction offsets for given target
      */
     default int @NotNull [] getPossibleTargets() {
       return ArrayUtil.EMPTY_INT_ARRAY;
@@ -86,6 +85,14 @@ public final class DfaControlTransferValue extends DfaValue {
      */
     default @NotNull List<@NotNull DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {
       return Collections.emptyList();
+    }
+
+    /**
+     * @param factory to bind this target to
+     * @return transfer target bound to another factory. By default, its assumed that TransferTarget is factory-agnostic
+     */
+    default @NotNull TransferTarget bindToFactory(@NotNull DfaValueFactory factory) {
+      return this;
     }
   }
 

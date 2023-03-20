@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
@@ -17,7 +18,7 @@ import java.awt.event.InputEvent;
  * @author Konstantin Bulenkov
  */
 public class ToolbarClicksCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("toolbar", 60);
+  private static final EventLogGroup GROUP = new EventLogGroup("toolbar", 61);
   private static final VarargEventId CLICKED = ActionsEventLogGroup.registerActionEvent(GROUP, "clicked");
 
   @Override
@@ -28,6 +29,6 @@ public class ToolbarClicksCollector extends CounterUsagesCollector {
   public static void record(@NotNull AnAction action, String place, @NotNull InputEvent inputEvent, @NotNull DataContext dataContext) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       inputEvent, place, null, dataContext, false, true);
-    ActionsCollectorImpl.record(CLICKED, event.getProject(), action, event, null);
+    ActionsCollectorImpl.record(CLICKED, event.getProject(), action, event, (list) -> Unit.INSTANCE);
   }
 }

@@ -2,8 +2,7 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
-import org.junit.Assert
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.junit.Assume
 import org.junit.Test
 
@@ -11,7 +10,7 @@ class MavenProjectsManagerNewFlowTest : MavenMultiVersionImportingTestCase() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    Assume.assumeTrue(Registry.`is`("maven.new.import"))
+    Assume.assumeTrue(Registry.`is`("maven.linear.import"))
   }
 
   @Test

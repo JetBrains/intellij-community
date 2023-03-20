@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.relaxNG.model.resolve;
 
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
@@ -25,7 +24,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -38,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class DefinitionResolver extends CommonElement.Visitor implements
-        CachedValueProvider<Map<String, Set<Define>>>, Factory<Set<Define>> {
+        CachedValueProvider<Map<String, Set<Define>>> {
 
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");
 
@@ -86,7 +84,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public void visitDefine(Define def) {
-    ContainerUtil.getOrCreate(myDefines.get(), def.getName(), this).add(def);
+    myDefines.get().computeIfAbsent(def.getName(), __ -> new HashSet<>()).add(def);
   }
 
   @Override
@@ -99,12 +97,6 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public void visitRef(Ref ref) {
-  }
-
-
-  @Override
-  public Set<Define> create() {
-    return new HashSet<>();
   }
 
   @Override

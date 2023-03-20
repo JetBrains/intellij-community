@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -45,7 +46,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected C myComponent;
   private final BiConsumer<? super Settings, ? super C> myReset;
   private final BiConsumer<? super Settings, ? super C> myApply;
-  private List<Function<Settings, List<ValidationInfo>>> myValidation = new ArrayList<>();
+  private final List<Function<? super Settings, List<ValidationInfo>>> myValidation = new ArrayList<>();
   private final @NotNull SettingsEditorFragmentType myType;
   private final int myPriority;
   private final Predicate<? super Settings> myInitialSelection;
@@ -227,14 +228,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myRemovable = removable;
   }
 
-  public void setValidation(@Nullable Function<Settings, List<ValidationInfo>> validation) {
+  public void setValidation(@Nullable Function<? super Settings, List<ValidationInfo>> validation) {
     myValidation.clear();
     if (validation != null) {
       myValidation.add(validation);
     }
   }
 
-  private @NotNull SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<Settings, ValidationInfo> validation) {
+  private @NotNull SettingsEditorFragment<Settings, C> addValidation(@NotNull Function<? super Settings, ValidationInfo> validation) {
     myValidation.add(it -> Collections.singletonList(validation.apply(it)));
     return this;
   }
@@ -256,7 +257,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   protected void validate(Settings s) {
     if (myValidation.isEmpty()) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<ValidationInfo> infos = ContainerUtil.flatMap(myValidation, it -> it.apply(s));
+      List<ValidationInfo> infos = ContainerUtil.flatMap(myValidation, it -> ReadAction.nonBlocking(() -> it.apply(s)).executeSynchronously());
       if (infos.isEmpty()) return;
       UIUtil.invokeLaterIfNeeded(() -> {
         if (Disposer.isDisposed(this)) return;
@@ -373,7 +374,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   @Override
   protected void applyEditorTo(@NotNull Settings s) {
     myApply.accept(s, myComponent);
-    validate(s);
   }
 
   @Override

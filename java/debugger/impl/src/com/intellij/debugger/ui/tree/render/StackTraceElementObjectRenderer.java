@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -11,6 +11,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -53,12 +54,13 @@ class StackTraceElementObjectRenderer extends CompoundRendererProvider {
               callback.evaluated("");
               final String line = ((StringReference)res).value();
               ApplicationManager.getApplication().runReadAction(() -> {
-                ExceptionFilter filter = new ExceptionFilter(evaluationContext.getDebugProcess().getSession().getSearchScope());
+                Project project = valueDescriptor.getProject();
+                ExceptionFilter filter = new ExceptionFilter(project, evaluationContext.getDebugProcess().getSession().getSearchScope());
                 Filter.Result result = filter.applyFilter(line, line.length());
                 if (result != null) {
                   final HyperlinkInfo info = result.getFirstHyperlinkInfo();
                   if (info != null) {
-                    DebuggerUIUtil.invokeLater(() -> info.navigate(valueDescriptor.getProject()));
+                    DebuggerUIUtil.invokeLater(() -> info.navigate(project));
                   }
                 }
               });

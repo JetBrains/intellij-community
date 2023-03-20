@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,7 +26,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class RedundantImplementsInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
@@ -45,19 +45,14 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "redundant.implements.problem.descriptor");
+    return InspectionGadgetsBundle.message("redundant.implements.problem.descriptor");
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel checkboxOptionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "ignore.serializable.option"), "ignoreSerializable");
-    checkboxOptionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "ignore.cloneable.option"), "ignoreCloneable");
-    return checkboxOptionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSerializable", InspectionGadgetsBundle.message("ignore.serializable.option")),
+      checkbox("ignoreCloneable", InspectionGadgetsBundle.message("ignore.cloneable.option")));
   }
 
   @Override
@@ -70,14 +65,12 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "redundant.implements.remove.quickfix");
+      return InspectionGadgetsBundle.message("redundant.implements.remove.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement implementReference = descriptor.getPsiElement();
-      deleteElement(implementReference);
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      deleteElement(descriptor.getPsiElement());
     }
   }
 
@@ -107,7 +100,7 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         return;
       }
       final PsiJavaCodeReferenceElement[] extendsElements = extendsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement extendsElement : extendsElements) {
+      for (PsiJavaCodeReferenceElement extendsElement : extendsElements) {
         checkExtendedInterface(extendsElement, extendsElements);
       }
     }
@@ -133,89 +126,58 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         extendsElement = extendsElements[0];
       }
       final PsiJavaCodeReferenceElement[] implementsElements = implementsList.getReferenceElements();
-      for (final PsiJavaCodeReferenceElement implementsElement : implementsElements) {
+      for (PsiJavaCodeReferenceElement implementsElement : implementsElements) {
         checkImplementedClass(implementsElement, extendsElement, implementsElements);
       }
     }
 
-    private void checkImplementedClass(
-      PsiJavaCodeReferenceElement implementsElement,
-      PsiJavaCodeReferenceElement extendsElement,
-      PsiJavaCodeReferenceElement[] implementsElements) {
+    private void checkImplementedClass(PsiJavaCodeReferenceElement implementsElement,
+                                       PsiJavaCodeReferenceElement extendsElement,
+                                       PsiJavaCodeReferenceElement[] implementsElements) {
       final PsiElement target = implementsElement.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass implementedClass)) {
         return;
       }
-      final PsiClass implementedClass = (PsiClass)target;
       if (!implementedClass.isInterface()) {
         return;
       }
       final String qualifiedName = implementedClass.getQualifiedName();
-      if (ignoreSerializable &&
-          CommonClassNames.JAVA_IO_SERIALIZABLE.equals(
-            qualifiedName)) {
+      if (ignoreSerializable && CommonClassNames.JAVA_IO_SERIALIZABLE.equals(qualifiedName)) {
         return;
       }
-      else if (ignoreCloneable &&
-               CommonClassNames.JAVA_LANG_CLONEABLE.equals(
-                 qualifiedName)) {
+      else if (ignoreCloneable && CommonClassNames.JAVA_LANG_CLONEABLE.equals(qualifiedName)) {
         return;
       }
       if (extendsElement != null) {
         final PsiElement extendsReferent = extendsElement.resolve();
-        if (!(extendsReferent instanceof PsiClass)) {
+        if (!(extendsReferent instanceof PsiClass extendedClass)) {
           return;
         }
-        final PsiClass extendedClass = (PsiClass)extendsReferent;
         if (extendedClass.isInheritor(implementedClass, true)) {
-          register(implementsElement);
+          registerError(implementsElement);
           return;
         }
       }
-      for (final PsiJavaCodeReferenceElement testImplementElement : implementsElements) {
-        if (testImplementElement.equals(implementsElement)) {
-          continue;
-        }
-        final PsiElement implementsReferent =
-          testImplementElement.resolve();
-        if (!(implementsReferent instanceof PsiClass)) {
-          continue;
-        }
-        final PsiClass testImplementedClass =
-          (PsiClass)implementsReferent;
-        if (testImplementedClass.isInheritor(implementedClass, true)) {
-          register(implementsElement);
-          return;
-        }
-      }
-    }
-
-    private void register(PsiJavaCodeReferenceElement implementsElement) {
-      registerError(implementsElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      check(implementsElement, implementedClass, implementsElements);
     }
 
     private void checkExtendedInterface(PsiJavaCodeReferenceElement extendsElement, PsiJavaCodeReferenceElement[] extendsElements) {
       final PsiElement target = extendsElement.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass extendedInterface) || !extendedInterface.isInterface()) {
         return;
       }
-      final PsiClass extendedInterface = (PsiClass)target;
-      if (!extendedInterface.isInterface()) {
-        return;
-      }
-      for (final PsiJavaCodeReferenceElement testExtendsElement : extendsElements) {
-        if (testExtendsElement.equals(extendsElement)) {
+      check(extendsElement, extendedInterface, extendsElements);
+    }
+
+    private void check(PsiJavaCodeReferenceElement implementsElement,
+                       PsiClass implementedClass,
+                       PsiJavaCodeReferenceElement[] implementsElements) {
+      for (PsiJavaCodeReferenceElement testImplementElement : implementsElements) {
+        if (testImplementElement.equals(implementsElement) || !(testImplementElement.resolve() instanceof PsiClass testImplementedClass)) {
           continue;
         }
-        final PsiElement implementsReferent =
-          testExtendsElement.resolve();
-        if (!(implementsReferent instanceof PsiClass)) {
-          continue;
-        }
-        final PsiClass testExtendedInterface =
-          (PsiClass)implementsReferent;
-        if (testExtendedInterface.isInheritor(extendedInterface, true)) {
-          register(extendsElement);
+        if (testImplementedClass.isInheritor(implementedClass, true)) {
+          registerError(implementsElement);
           return;
         }
       }

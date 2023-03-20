@@ -1,8 +1,10 @@
+from collections.abc import Callable, Iterable, Sequence
 from logging import Logger
 from socket import socket
 from threading import Condition, Event, Lock, Thread
 from types import ModuleType
-from typing import Any, Callable, Iterable, Protocol, Sequence, Tuple, Type
+from typing import Any, Protocol
+from typing_extensions import TypeAlias
 
 from paramiko.auth_handler import AuthHandler, _InteractiveCallback
 from paramiko.channel import Channel
@@ -14,7 +16,8 @@ from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_gss import _SSH_GSSAuth
 from paramiko.util import ClosingContextManager
 
-_Addr = Tuple[str, int]
+_Addr: TypeAlias = tuple[str, int]
+_SocketLike: TypeAlias = str | _Addr | socket | Channel
 
 class _KexEngine(Protocol):
     def start_kex(self) -> None: ...
@@ -23,7 +26,7 @@ class _KexEngine(Protocol):
 class Transport(Thread, ClosingContextManager):
     active: bool
     hostname: str | None
-    sock: socket
+    sock: socket | Channel
     packetizer: Packetizer
     local_version: str
     remote_version: str
@@ -67,16 +70,17 @@ class Transport(Thread, ClosingContextManager):
     server_key_dict: dict[str, PKey]
     server_accepts: list[Channel]
     server_accept_cv: Condition
-    subsystem_table: dict[str, tuple[Type[SubsystemHandler], Tuple[Any, ...], dict[str, Any]]]
+    subsystem_table: dict[str, tuple[type[SubsystemHandler], tuple[Any, ...], dict[str, Any]]]
     sys: ModuleType
     def __init__(
         self,
-        sock: str | tuple[str, int] | socket,
+        sock: _SocketLike,
         default_window_size: int = ...,
         default_max_packet_size: int = ...,
         gss_kex: bool = ...,
         gss_deleg_creds: bool = ...,
         disabled_algorithms: dict[str, Iterable[str]] | None = ...,
+        server_sig_algs: bool = ...,
     ) -> None: ...
     @property
     def preferred_ciphers(self) -> Sequence[str]: ...
@@ -116,7 +120,7 @@ class Transport(Thread, ClosingContextManager):
         timeout: float | None = ...,
     ) -> Channel: ...
     def request_port_forward(
-        self, address: str, port: int, handler: Callable[[Channel, _Addr, _Addr], None] | None = ...
+        self, address: str, port: int, handler: Callable[[Channel, _Addr, _Addr], object] | None = ...
     ) -> int: ...
     def cancel_port_forward(self, address: str, port: int) -> None: ...
     def open_sftp_client(self) -> SFTPClient | None: ...
@@ -138,7 +142,7 @@ class Transport(Thread, ClosingContextManager):
         gss_trust_dns: bool = ...,
     ) -> None: ...
     def get_exception(self) -> Exception | None: ...
-    def set_subsystem_handler(self, name: str, handler: Type[SubsystemHandler], *larg: Any, **kwarg: Any) -> None: ...
+    def set_subsystem_handler(self, name: str, handler: type[SubsystemHandler], *larg: Any, **kwarg: Any) -> None: ...
     def is_authenticated(self) -> bool: ...
     def get_username(self) -> str | None: ...
     def get_banner(self) -> bytes | None: ...

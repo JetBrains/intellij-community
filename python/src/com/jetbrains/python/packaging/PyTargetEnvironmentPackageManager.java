@@ -14,7 +14,6 @@ import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -22,8 +21,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
@@ -61,16 +60,8 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     getPythonProcessResult(pythonExecution, true, true, helpersAwareTargetRequest.getTargetEnvironmentRequest());
   }
 
-  @NotNull
-  protected String toSystemDependentName(@NotNull final String dirName) {
-    return FileUtil.toSystemDependentName(dirName);
-  }
-
-  protected PyTargetEnvironmentPackageManager(@NotNull final Sdk sdk) {
+  PyTargetEnvironmentPackageManager(@NotNull final Sdk sdk) {
     super(sdk);
-    subscribeToLocalChanges();
-    Disposable parentDisposable = sdk instanceof Disposable ? (Disposable)sdk : PyPackageManagers.getInstance();
-    Disposer.register(parentDisposable, this);
   }
 
   @Override
@@ -181,13 +172,17 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
   @Nullable
   @Override
   public List<PyPackage> getPackages() {
+    if (!Registry.is("python.use.targets.api")) {
+      return Collections.emptyList();
+    }
     final List<PyPackage> packages = myPackagesCache;
     return packages != null ? Collections.unmodifiableList(packages) : null;
   }
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
-    if (mySdk instanceof PyLazySdk) {
+    assertUseTargetsAPIFlagEnabled();
+    if (getSdk() instanceof PyLazySdk) {
       return List.of();
     }
 
@@ -195,7 +190,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     final String output;
     try {
-      LOG.debug("Collecting installed packages for the SDK " + mySdk.getName(), new Throwable());
+      LOG.debug("Collecting installed packages for the SDK " + getSdk().getName(), new Throwable());
       PythonScriptExecution pythonExecution =
         PythonScripts.prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareRequest);
       pythonExecution.addParameter("list");
@@ -215,6 +210,12 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     return parsePackagingToolOutput(output);
   }
 
+  private static void assertUseTargetsAPIFlagEnabled() throws ExecutionException {
+    if (!Registry.is("python.use.targets.api")) {
+      throw new ExecutionException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
+    }
+  }
+
   @Override
   @NotNull
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
@@ -229,8 +230,9 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
 
-    PythonScriptExecution pythonExecution =
-      PythonScripts.prepareHelperScriptExecution(PythonHelper.VIRTUALENV_ZIPAPP, helpersAwareTargetRequest);
+    PythonScriptExecution pythonExecution = PythonScripts.prepareHelperScriptExecution(
+      languageLevel.isPython2() ? PythonHelper.PY2_VIRTUALENV_ZIPAPP : PythonHelper.VIRTUALENV_ZIPAPP,
+      helpersAwareTargetRequest);
     if (useGlobalSite) {
       pythonExecution.addParameter("--system-site-packages");
     }
@@ -289,29 +291,16 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     TargetedCommandLine targetedCommandLine = PythonScripts.buildTargetedCommandLine(pythonExecution,
                                                                                      targetEnvironment,
                                                                                      getSdk(),
-                                                                                     Collections.emptyList());
+                                                                                     Collections.emptyList()
+    );
     // TODO [targets] Set parent directory of interpreter as the working directory
 
     LOG.info("Running packaging tool");
 
     // TODO [targets] Apply environment variables: setPythonUnbuffered(...), setPythonDontWriteBytecode(...), resetHomePathChanges(...)
     // TODO [targets] Apply flavor from PythonSdkFlavor.getFlavor(mySdk)
-    final boolean useSudo = askForSudo && PySdkExtKt.adminPermissionsNeeded(mySdk);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    Process process;
-    if (useSudo && targetEnvironment instanceof LocalTargetEnvironment) {
-      // This is hack to process sudo flag in the local environment
-      GeneralCommandLine localCommandLine = ((LocalTargetEnvironment)targetEnvironment).createGeneralCommandLine(targetedCommandLine);
-      process = executeOnLocalMachineWithSudo(localCommandLine);
-    }
-    else {
-      if (useSudo) {
-        // TODO [targets] Execute process on non-local target using sudo
-        LOG.warn("Sudo flag is ignored");
-      }
-      // TODO [targets] Pass meaningful progress indicator
-      process = targetEnvironment.createProcess(targetedCommandLine, Objects.requireNonNullElseGet(indicator, EmptyProgressIndicator::new));
-    }
+    Process process = createProcess(targetEnvironment, targetedCommandLine, askForSudo, indicator);
     List<String> commandLine = targetedCommandLine.collectCommandsSynchronously();
     String commandLineString = StringUtil.join(commandLine, " ");
     final CapturingProcessHandler handler =
@@ -342,6 +331,26 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
   }
 
   @NotNull
+  private Process createProcess(@NotNull TargetEnvironment targetEnvironment,
+                                @NotNull TargetedCommandLine targetedCommandLine,
+                                boolean askForSudo,
+                                @Nullable ProgressIndicator indicator) throws ExecutionException {
+    if (askForSudo) {
+      if (!(targetEnvironment instanceof LocalTargetEnvironment)) {
+        // TODO [targets] Execute process on non-local target using sudo
+        LOG.warn("Sudo flag is ignored");
+      }
+      else if (PySdkExtKt.adminPermissionsNeeded(getSdk())) {
+        // This is hack to process sudo flag in the local environment
+        GeneralCommandLine localCommandLine = ((LocalTargetEnvironment)targetEnvironment).createGeneralCommandLine(targetedCommandLine);
+        return executeOnLocalMachineWithSudo(localCommandLine);
+      }
+    }
+    // TODO [targets] Pass meaningful progress indicator
+    return targetEnvironment.createProcess(targetedCommandLine, Objects.requireNonNullElseGet(indicator, EmptyProgressIndicator::new));
+  }
+
+  @NotNull
   private static Process executeOnLocalMachineWithSudo(@NotNull GeneralCommandLine localCommandLine) throws ExecutionException {
     try {
       return ExecUtil.sudo(localCommandLine, PySdkBundle.message("python.sdk.packaging.enter.your.password.to.make.changes"));
@@ -355,10 +364,6 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
   @NotNull
   private HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
-    String homePath = getSdk().getHomePath();
-    if (homePath == null) {
-      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.find.python.interpreter", mySdk.getName()));
-    }
     HelpersAwareTargetEnvironmentRequest request = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(getSdk(),
                                                                                                                          ProjectManager.getInstance()
                                                                                                                            .getDefaultProject());

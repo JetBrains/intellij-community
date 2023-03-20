@@ -2,15 +2,19 @@
 package com.jetbrains.python.sdk.add.target
 
 import com.intellij.CommonBundle
+import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
+import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
@@ -18,18 +22,23 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.add.CreateSdkInterrupted
 import com.jetbrains.python.sdk.add.PyAddSdkView
 import com.jetbrains.python.sdk.add.PyAddSystemWideInterpreterPanel
 import com.jetbrains.python.sdk.add.showProcessExecutionErrorDialog
+import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelModel
+import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelView
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
+import com.jetbrains.python.sdk.poetry.createPoetryPanel
+import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.CardLayout
+import java.awt.Component
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -41,7 +50,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                private val module: Module?,
                                private val existingSdks: List<Sdk>,
                                private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
-                               private val config: PythonLanguageRuntimeConfiguration) {
+                               private val config: PythonLanguageRuntimeConfiguration,
+                               private val introspectable: LanguageRuntimeType.Introspectable?) {
   private val mainPanel: JPanel = JPanel(JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
@@ -56,17 +66,19 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
 
   fun createCenterPanel(): JComponent {
     val sdks = existingSdks
-      .filter { it.sdkType is PythonSdkType && !PythonSdkUtil.isInvalid(it) }
+      .filter { it.sdkType is PythonSdkType && it.sdkSeemsValid }
       .sortedWith(PreferredSdkComparator())
-    val panels = createPanels(sdks).toMutableList()
-    mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
+    val (panels, initiallySelectedPanel) = createPanels(sdks)
+    mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels, initiallySelectedPanel))
     return mainPanel
   }
 
   /**
    * Note that creating or using existing Pipenv environments on non-local targets are not yet supported.
+   *
+   * @return the pair containing the list of panels and the initially selected panel
    */
-  private fun createPanels(sdks: List<Sdk>): List<PyAddSdkView> {
+  private fun createPanels(sdks: List<Sdk>): Pair<List<PyAddSdkView>, PyAddSdkView> {
     val venvPanel = PyAddVirtualEnvPanel(project = project,
                                          module = module,
                                          existingSdks = sdks,
@@ -74,15 +86,31 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                          context = context,
                                          targetSupplier = targetSupplier,
                                          config = config)
-    val condaPanel = if (targetEnvironmentConfiguration.isMutableTarget) createAnacondaPanel() else null
-    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetEnvironmentConfiguration, config)
-    val newProjectPath = null
-    val pipEnvPanel = if (isUnderLocalTarget) createPipEnvPanel(newProjectPath) else null
-    return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
-      listOfNotNull(condaPanel, venvPanel, systemWidePanel, pipEnvPanel)
-    }
-    else {
-      listOfNotNull(venvPanel, condaPanel, systemWidePanel, pipEnvPanel)
+    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetSupplier, config)
+    val condaPanel = createAnacondaPanel()
+    return when {
+      isUnderLocalTarget -> {
+        val newProjectPath = null
+        val pipEnvPanel = createPipEnvPanel(newProjectPath)
+        val poetryPanel = createPoetryPanel(project, module, existingSdks, newProjectPath, context)
+        if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
+          listOf(condaPanel, venvPanel, systemWidePanel, pipEnvPanel, poetryPanel) to condaPanel
+        }
+        else {
+          listOf(venvPanel, condaPanel, systemWidePanel, pipEnvPanel, poetryPanel) to venvPanel
+        }
+      }
+      targetEnvironmentConfiguration.isMutableTarget -> buildList {
+        add(venvPanel)
+        add(systemWidePanel)
+        // Enable Conda for SSH in DataSpell while keeping it disabled in PyCharm and other IDEs.
+        // SSH target configuration at this wizard stage is characterized by implementing `IncompleteTargetEnvironmentConfiguration` marker
+        // interface.
+        if (Registry.`is`("enable.conda.on.targets") || targetEnvironmentConfiguration !is IncompleteTargetEnvironmentConfiguration) {
+          add(condaPanel)
+        }
+      } to venvPanel
+      else -> listOf(venvPanel, systemWidePanel, condaPanel) to systemWidePanel
     }
   }
 
@@ -98,14 +126,14 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
   fun getOrCreateSdk(configuration: TargetEnvironmentConfiguration): Sdk? =
     (selectedPanel as? PyAddTargetBasedSdkView)?.getOrCreateSdk(configuration)
 
-  private fun createCardSplitter(panels: List<PyAddSdkView>): Splitter {
+  private fun createCardSplitter(panels: List<PyAddSdkView>, initiallySelectedPanel: PyAddSdkView): Splitter {
     this.panels = panels
     return Splitter(false, 0.25f).apply {
       val cardLayout = CardLayout()
       val cardPanel = JPanel(cardLayout).apply {
         preferredSize = JBUI.size(640, 480)
         for (panel in panels) {
-          add(panel.component, panel.panelName)
+          add(panel.component.applyDefaultInsets(), panel.panelName)
         }
       }
       val cardsList = JBList(panels).apply {
@@ -119,13 +147,15 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
           }
         }
         addListSelectionListener {
+          // Only last even must be processed. Other events may leave UI in inconsistent state
+          if (it.valueIsAdjusting) return@addListSelectionListener
           selectedPanel = selectedValue
           cardLayout.show(cardPanel, selectedValue.panelName)
 
           selectedValue.onSelected()
         }
-        selectedPanel = panels.getOrNull(0)
-        selectedIndex = 0
+        selectedPanel = initiallySelectedPanel
+        selectedIndex = panels.indexOf(initiallySelectedPanel)
       }
 
       firstComponent = cardsList
@@ -133,8 +163,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
     }
   }
 
-  private fun createAnacondaPanel(): PyAddSdkPanel = PyAddCondaEnvPanel(project, module, existingSdks, null, context, targetSupplier,
-                                                                        config)
+  private fun createAnacondaPanel(): PyAddSdkView =
+    PyAddCondaPanelView(PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!, introspectable = introspectable))
 
   private fun createPipEnvPanel(newProjectPath: String?) = PyAddPipEnvPanel(project, module, existingSdks, newProjectPath, context)
 
@@ -167,5 +197,22 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
       project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
 
     private const val SPLITTER_COMPONENT_CARD_PANE = "Splitter"
+
+    /**
+     * Applies the empty border (i.e. adds insets) to the nearest [DialogPanel].
+     *
+     * [com.intellij.ui.dsl.gridLayout.impl.GridImpl] adds extra gaps "to guarantee no visual clippings (like focus rings)" are present.
+     * This results in an additional offset if checkboxes or radio buttons are added to the panel. We compensate this by adding the proper
+     * border directly to the [DialogPanel].
+     *
+     * @see com.intellij.ui.dsl.gridLayout.impl.LayoutData.outsideGaps
+     * @see com.intellij.ui.dsl.gridLayout.impl.GridImpl.getPreferredSizeData
+     */
+    private fun <T : Component> T.applyDefaultInsets(): T = apply {
+      if (this is JComponent) {
+        val dialogPanel = UIUtil.findComponentOfType(this, DialogPanel::class.java)
+        (dialogPanel ?: this).border = JBUI.Borders.empty(4, 9, 4, 15)
+      }
+    }
   }
 }

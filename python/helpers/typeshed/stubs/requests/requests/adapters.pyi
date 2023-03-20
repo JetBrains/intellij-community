@@ -1,10 +1,11 @@
-from typing import Any, Container, Mapping, Text
+from collections.abc import Mapping
+from typing import Any
+
+from urllib3 import exceptions as urllib3_exceptions, poolmanager, response
+from urllib3.util import retry
 
 from . import cookies, exceptions, models, structures, utils
-from .packages.urllib3 import exceptions as urllib3_exceptions, poolmanager, response
-from .packages.urllib3.util import retry
 
-PreparedRequest = models.PreparedRequest
 Response = models.Response
 PoolManager = poolmanager.PoolManager
 proxy_from_url = poolmanager.proxy_from_url
@@ -38,11 +39,11 @@ class BaseAdapter:
     def __init__(self) -> None: ...
     def send(
         self,
-        request: PreparedRequest,
+        request: models.PreparedRequest,
         stream: bool = ...,
         timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
         verify: bool | str = ...,
-        cert: None | bytes | Text | Container[bytes | Text] = ...,
+        cert: None | bytes | str | tuple[bytes | str, bytes | str] = ...,
         proxies: Mapping[str, str] | None = ...,
     ) -> Response: ...
     def close(self) -> None: ...
@@ -67,10 +68,10 @@ class HTTPAdapter(BaseAdapter):
     def proxy_headers(self, proxy): ...
     def send(
         self,
-        request: PreparedRequest,
+        request: models.PreparedRequest,
         stream: bool = ...,
         timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
         verify: bool | str = ...,
-        cert: None | bytes | Text | Container[bytes | Text] = ...,
+        cert: None | bytes | str | tuple[bytes | str, bytes | str] = ...,
         proxies: Mapping[str, str] | None = ...,
     ) -> Response: ...

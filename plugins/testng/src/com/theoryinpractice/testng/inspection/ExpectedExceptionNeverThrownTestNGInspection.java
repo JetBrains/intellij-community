@@ -32,7 +32,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "org.testng.annotations.Test");
       if (annotation == null) {
@@ -50,8 +50,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
       if (value instanceof PsiClassObjectAccessExpression) {
         checkAnnotationMemberValue(value, method, exceptionsThrown);
       }
-      else if (value instanceof PsiArrayInitializerMemberValue) {
-        final PsiArrayInitializerMemberValue arrayInitializerMemberValue = (PsiArrayInitializerMemberValue)value;
+      else if (value instanceof PsiArrayInitializerMemberValue arrayInitializerMemberValue) {
         for (PsiAnnotationMemberValue memberValue : arrayInitializerMemberValue.getInitializers()) {
           checkAnnotationMemberValue(memberValue, method, exceptionsThrown);
         }
@@ -60,16 +59,14 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends AbstractBaseJa
 
     private void checkAnnotationMemberValue(PsiAnnotationMemberValue annotationMemberValue, PsiMethod method,
                                             List<PsiClassType> exceptionsThrown) {
-      if (!(annotationMemberValue instanceof PsiClassObjectAccessExpression))  {
+      if (!(annotationMemberValue instanceof PsiClassObjectAccessExpression classObjectAccessExpression))  {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)annotationMemberValue;
       final PsiTypeElement operand = classObjectAccessExpression.getOperand();
       final PsiType type = operand.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType expectedType)) {
         return;
       }
-      final PsiClassType expectedType = (PsiClassType)type;
       if (InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
         return;
       }

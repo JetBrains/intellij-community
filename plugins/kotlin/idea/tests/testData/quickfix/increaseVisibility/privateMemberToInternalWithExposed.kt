@@ -1,7 +1,6 @@
 // "Make bar internal" "false"
-// ACTION: Convert to lazy property
-// ACTION: Convert property initializer to getter
 // ACTION: Add names to call arguments
+// ACTION: Convert to lazy property
 // ACTION: Move to constructor
 // ERROR: Cannot access 'bar': it is private in 'First'
 

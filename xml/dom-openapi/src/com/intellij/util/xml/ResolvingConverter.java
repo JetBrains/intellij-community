@@ -33,8 +33,6 @@ import java.util.Set;
 /**
  * If converter extends this class, the corresponding XML {@link com.intellij.psi.PsiReference}
  * will take completion variants from {@link #getVariants(ConvertContext)} method.
- *
- * @author peter
  */
 public abstract class ResolvingConverter<T> extends Converter<T> implements ResolvingHint {
 

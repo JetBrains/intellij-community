@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
+import junit.framework.TestCase
 
 class PyNavigationTest : PyTestCase() {
 
@@ -45,7 +46,7 @@ class PyNavigationTest : PyTestCase() {
 
   fun testGoToClassField() {
     myFixture.configureByFile("${getTestName(true)}.py")
-    val model = GotoSymbolModel2(myFixture.project)
+    val model = GotoSymbolModel2(myFixture.project, myFixture.testRootDisposable)
     val elements = model.getElementsByName("some_field", false, "")
     assertSize(1, elements)
     assertInstanceOf(elements.first(), PyTargetExpression::class.java)
@@ -187,9 +188,39 @@ class PyNavigationTest : PyTestCase() {
     assertFalse(PyiUtil.isOverload(foo, context))
   }
 
+  // PY-38636
+  fun testClassInPyiAssignedToFunctionInPy() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    TestCase.assertNotNull(target)
+    assertInstanceOf(target, PyTargetExpression::class.java)
+    checkPyNotPyi(target?.containingFile)
+  }
+
+  // PY-38636
+  fun testStubInUserCode() {
+    myFixture.copyDirectoryToProject("importFile", "")
+    myFixture.configureByFile("test.py")
+    runWithAdditionalClassEntryInSdkRoots(myFixture.findFileInTempDir("addRoots")) {
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+      checkPyNotPyi(target?.containingFile)
+    }
+  }
+
+  // PY-38636
+  fun testClassInPyiClassInPy() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    TestCase.assertNotNull(target)
+    assertInstanceOf(target, PyFunction::class.java)
+    checkPyNotPyi(target?.containingFile)
+  }
+
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
     myFixture.configureByText("a.py", text)
-    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcome(myFixture.editor, myFixture.file, myFixture.caretOffset)
+    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(myFixture.editor, myFixture.file, myFixture.caretOffset)
     assertEquals(expectedOutcome, actualOutcome)
   }
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
@@ -50,7 +51,7 @@ import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
 public class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
 
-  private final Editor myEditor;
+  private final @NotNull Editor myEditor;
 
   private boolean myNoChangesDetected;
   private final boolean myProcessChangesTextOnly;
@@ -58,20 +59,20 @@ public class FileInEditorProcessor {
   private final boolean myProcessSelectedText;
   private final LayoutCodeOptions myOptions;
 
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
-  private final PsiFile myFile;
+  private final @NotNull PsiFile myFile;
   private AbstractLayoutCodeProcessor myProcessor;
 
-  public FileInEditorProcessor(PsiFile file,
-                               Editor editor,
-                               LayoutCodeOptions runOptions) {
+  public FileInEditorProcessor(@NotNull PsiFile file,
+                               @NotNull Editor editor,
+                               @NotNull LayoutCodeOptions runOptions) {
     myFile = file;
     myProject = file.getProject();
     myEditor = editor;
 
     myOptions = runOptions;
-    myProcessSelectedText = myEditor != null && runOptions.getTextRangeType() == SELECTED_TEXT;
+    myProcessSelectedText = runOptions.getTextRangeType() == SELECTED_TEXT;
     myProcessChangesTextOnly = runOptions.getTextRangeType() == VCS_CHANGED_TEXT;
   }
 
@@ -83,7 +84,7 @@ public class FileInEditorProcessor {
       return;
     }
 
-    if (myOptions.isOptimizeImports()) {
+    if (myOptions.isOptimizeImports() && myOptions.getTextRangeType() == VCS_CHANGED_TEXT) {
       myProcessor = new OptimizeImportsProcessor(myProject, myFile);
     }
 
@@ -115,8 +116,13 @@ public class FileInEditorProcessor {
 
     myProcessor.run();
 
-    if (myEditor != null && myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
+    if (myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
       CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
+      if (myOptions.isOptimizeImports()) {
+        CodeStyleCachingService.getInstance(myProject).scheduleWhenSettingsComputed(myFile, () -> {
+          new OptimizeImportsProcessor(myProject, myFile).run();
+        });
+      }
     }
   }
 
@@ -227,10 +233,10 @@ public class FileInEditorProcessor {
     return caretY < area.y;
   }
 
-  private boolean shouldNotify() {
+  private static boolean shouldNotify() {
     if (isInHeadlessMode()) return false;
     EditorSettingsExternalizable es = EditorSettingsExternalizable.getInstance();
-    return es.isShowNotificationAfterReformat() && myEditor != null;
+    return es.isShowNotificationAfterReformat();
   }
 
   private static boolean isInHeadlessMode() {
@@ -347,7 +353,7 @@ public class FileInEditorProcessor {
     public final HyperlinkListener createHyperlinkListener() {
       return new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           getHyperlinkRunnable().run();
         }
       };

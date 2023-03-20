@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -10,12 +10,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.highlighter.markers.LineMarkerInfos
 import org.jetbrains.kotlin.idea.inspections.RecursivePropertyAccessorInspection
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -30,7 +32,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement) = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: LineMarkerInfos) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         val markedLineNumbers = HashSet<Int>()
 
         for (element in elements) {
@@ -67,7 +69,7 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     }
 
     private fun isRecursiveCall(element: KtElement): Boolean {
-        if (RecursivePropertyAccessorInspection.isRecursivePropertyAccess(element)) return true
+        if (RecursivePropertyAccessorInspection.isRecursivePropertyAccess(element, anyRecursionTypes = true)) return true
         if (RecursivePropertyAccessorInspection.isRecursiveSyntheticPropertyAccess(element)) return true
         // Fast check for names without resolve
         val resolveName = getCallNameFromPsi(element) ?: return false
@@ -81,7 +83,7 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         // Check that there were no not-inlined lambdas on the way to enclosing function
         if (enclosingFunction != getEnclosingFunction(element, true)) return false
 
-        val bindingContext = element.analyze()
+        val bindingContext = element.safeAnalyzeNonSourceRootCode()
         val enclosingFunctionDescriptor = bindingContext[BindingContext.FUNCTION, enclosingFunction] ?: return false
 
         val call = bindingContext[BindingContext.CALL, element] ?: return false
@@ -97,12 +99,12 @@ class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
             return when (receiverOwner) {
                 is SimpleFunctionDescriptor -> receiverOwner != enclosingFunctionDescriptor
                 is ClassDescriptor -> receiverOwner != enclosingFunctionDescriptor.containingDeclaration
+                is PropertyDescriptor -> receiverOwner.containingDeclaration != enclosingFunctionDescriptor.containingDeclaration
                 else -> return true
             }
         }
 
-        if (isDifferentReceiver(resolvedCall.dispatchReceiver)) return false
-        return true
+        return !isDifferentReceiver(resolvedCall.dispatchReceiver)
     }
 
     private class RecursiveMethodCallMarkerInfo(callElement: PsiElement) : LineMarkerInfo<PsiElement>(

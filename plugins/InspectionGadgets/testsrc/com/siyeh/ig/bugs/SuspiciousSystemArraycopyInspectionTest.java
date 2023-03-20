@@ -38,85 +38,95 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
 
 
   public void testLengthAlwaysGreater() {
-    doMemberTest("public int[] hardCase() {\n" +
-                 "        int[] src = new int[] { 1, 2, 3 };\n" +
-                 "        int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };\n" +
-                 "        System.arraycopy(src, 2, dest, 2, /*Length is always bigger than 'src.length - srcPos' {2}*/2/**/);\n" +
-                 "        return dest;\n" +
-                 "    }");
+    doMemberTest("""
+                   public int[] hardCase() {
+                           int[] src = new int[] { 1, 2, 3 };
+                           int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };
+                           System.arraycopy(src, 2, dest, 2, /*Length is always bigger than 'src.length - srcPos' {2}*/2/**/);
+                           return dest;
+                       }""");
   }
 
   public void testLengthNotAlwaysGreater() {
-    doMemberTest("public int[] hardCase(boolean outer) {\n" +
-                 "        int[] src = new int[] { 1, 2, 3};\n" +
-                 "        int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };\n" +
-                 "        int length;\n" +
-                 "        if (outer) {\n" +
-                 "            length = 3; // maybe this branch is never reached due to outer condition\n" +
-                 "        } else {\n" +
-                 "            length = 1;\n" +
-                 "        }\n" +
-                 "        System.arraycopy(src, 2, dest, 2, length);\n" +
-                 "        return dest;\n" +
-                 "    }");
+    doMemberTest("""
+                   public int[] hardCase(boolean outer) {
+                           int[] src = new int[] { 1, 2, 3};
+                           int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };
+                           int length;
+                           if (outer) {
+                               length = 3; // maybe this branch is never reached due to outer condition
+                           } else {
+                               length = 1;
+                           }
+                           System.arraycopy(src, 2, dest, 2, length);
+                           return dest;
+                       }""");
   }
 
   public void testRangesNotIntersect() {
-    doMemberTest("public void process() {\n" +
-                 "        int[] src = new int[] { 1, 2, 3, 4 };\n" +
-                 "        System.arraycopy(src, 0, src, 2, 2);\n" +
-                 "    }");
+    doMemberTest("""
+                   public void process() {
+                           int[] src = new int[] { 1, 2, 3, 4 };
+                           System.arraycopy(src, 0, src, 2, 2);
+                       }""");
   }
 
   public void testRangesIntersect() {
-    doMemberTest("    public void rangesIntersects() {\n" +
-                 "        int[] src = new int[] { 1, 2, 3, 4 };\n" +
-                 "        System./*Copying to the same array with intersecting ranges*/arraycopy/**/(src, 0, src, 1, 2);\n" +
-                 "    }");
+    doMemberTest("""
+                       public void rangesIntersects() {
+                           int[] src = new int[] { 1, 2, 3, 4 };
+                           System./*Copying to the same array with intersecting ranges*/arraycopy/**/(src, 0, src, 1, 2);
+                       }\
+                   """);
   }
 
   public void testRangesIntersectSometimes() {
-    doMemberTest("public void rangesIntersects(boolean outer) {\n" +
-                 "        int[] src = new int[] { 1, 2, 3, 4, 5 };\n" +
-                 "        int srcPos;\n" +
-                 "        if (outer) {\n" +
-                 "            srcPos = 0;\n" +
-                 "        } else {\n" +
-                 "            srcPos = 1; // maybe this branch never reached due to outer condition\n" +
-                 "        }\n" +
-                 "        System.arraycopy(src, srcPos, src, 2, 2);\n" +
-                 "    }");
+    doMemberTest("""
+                   public void rangesIntersects(boolean outer) {
+                           int[] src = new int[] { 1, 2, 3, 4, 5 };
+                           int srcPos;
+                           if (outer) {
+                               srcPos = 0;
+                           } else {
+                               srcPos = 1; // maybe this branch never reached due to outer condition
+                           }
+                           System.arraycopy(src, srcPos, src, 2, 2);
+                       }""");
   }
 
   public void testRangeEndMayBeBiggerStart() {
-    doMemberTest("public void hardCase(boolean outer) {\n" +
-                 "        int[] src = new int[] { 1, 2, 3, 4, 5, 6, 7 };\n" +
-                 "        int length = outer ? 1 : 3;\n" +
-                 "        int srcPos = outer ? 0 : 3;\n" +
-                 "        int destPos = outer ? 1 : 4;\n" +
-                 "        System.arraycopy(src, srcPos, src, destPos, length);\n" +
-                 "    }");
+    doMemberTest("""
+                   public void hardCase(boolean outer) {
+                           int[] src = new int[] { 1, 2, 3, 4, 5, 6, 7 };
+                           int length = outer ? 1 : 3;
+                           int srcPos = outer ? 0 : 3;
+                           int destPos = outer ? 1 : 4;
+                           System.arraycopy(src, srcPos, src, destPos, length);
+                       }""");
   }
 
 
   public void testCopyFull() {
-    doMemberTest("    public static void copyFull(byte[] a2, byte[] a1) {\n" +
-                 "        assert (a1.length == 4);\n" +
-                 "        assert (a2.length == 8);\n" +
-                 "        System.arraycopy(a1, 0, a2, 4, a1.length);\n" +
-                 "    }");
+    doMemberTest("""
+                       public static void copyFull(byte[] a2, byte[] a1) {
+                           assert (a1.length == 4);
+                           assert (a2.length == 8);
+                           System.arraycopy(a1, 0, a2, 4, a1.length);
+                       }\
+                   """);
   }
 
   public void test248060() {
-    doMemberTest("public class ArrayCopyExample {\n" +
-                 "    private double[] margins = new double[4];\n" +
-                 "\n" +
-                 "    public ArrayCopyExample() {}\n" +
-                 "\n" +
-                 "    public ArrayCopyExample(ArrayCopyExample original) {\n" +
-                 "        System.arraycopy(original.margins, 0, margins, 0, 4);\n" +
-                 "    }\n" +
-                 "}");
+    doMemberTest("""
+                   public class ArrayCopyExample {
+                       private double[] margins = new double[4];
+
+                       public ArrayCopyExample() {}
+
+                       public ArrayCopyExample(ArrayCopyExample original) {
+                           System.arraycopy(original.margins, 0, margins, 0, 4);
+                       }
+                   }""");
   }
 
   @Nullable

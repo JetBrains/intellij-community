@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author spleaner
- */
 public interface ModuleRunProfile extends RunProfileWithCompileBeforeLaunchOption, SearchScopeProvidingRunProfile {
 
   @Nullable

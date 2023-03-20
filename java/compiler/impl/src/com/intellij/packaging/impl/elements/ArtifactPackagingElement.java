@@ -15,10 +15,10 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId;
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactOutputPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +108,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -118,7 +118,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     if (this.myArtifactPointer != null) {
       id = new ArtifactId(this.myArtifactPointer.getArtifactName());
     }
-    ArtifactOutputPackagingElementEntity entity = BridgeModelModifiableEntitiesKt.addArtifactOutputPackagingElementEntity(diff, id, source);
+    ArtifactOutputPackagingElementEntity entity = ExtensionsKt.addArtifactOutputPackagingElementEntity(diff, id, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

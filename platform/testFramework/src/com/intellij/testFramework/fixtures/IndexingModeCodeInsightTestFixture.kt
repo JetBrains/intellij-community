@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestIndexingModeSupporter
 
 open class IndexingModeCodeInsightTestFixture<T : CodeInsightTestFixture> protected constructor(
-  protected val delegate: T, protected val indexingMode: TestIndexingModeSupporter.IndexingMode
+  protected val delegate: T, private val indexingMode: TestIndexingModeSupporter.IndexingMode
 ) : CodeInsightTestFixture by delegate {
 
   companion object {

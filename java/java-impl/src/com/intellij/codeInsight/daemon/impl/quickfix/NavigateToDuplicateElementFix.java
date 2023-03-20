@@ -3,7 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -54,6 +56,13 @@ public class NavigateToDuplicateElementFix extends LocalQuickFixAndIntentionActi
                      @NotNull PsiElement endElement) {
     if (!(startElement instanceof NavigatablePsiElement)) return;
     ((NavigatablePsiElement)startElement).navigate(true);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    NavigatablePsiElement element = ObjectUtils.tryCast(getStartElement(), NavigatablePsiElement.class);
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    return IntentionPreviewInfo.navigate(element);
   }
 
   @Override

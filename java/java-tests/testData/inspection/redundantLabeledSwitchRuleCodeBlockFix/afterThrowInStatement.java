@@ -1,4 +1,4 @@
-// "Unwrap code block of labeled rule" "LIKE_UNUSED_SYMBOL"
+// "Unwrap code block of labeled rule" "GENERIC_ERROR_OR_WARNING"
 class C {
     String foo(int n) {
         switch (n) {

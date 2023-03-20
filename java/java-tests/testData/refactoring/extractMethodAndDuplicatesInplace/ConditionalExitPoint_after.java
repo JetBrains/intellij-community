@@ -7,7 +7,7 @@ public class Test {
         return i;
     }
 
-    private boolean extracted(int i) {
+    private static boolean extracted(int i) {
         if (i == 42) {
             return true;
         } else if (i == 17) {

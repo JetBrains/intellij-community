@@ -13,9 +13,6 @@ import java.awt.*;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
-/**
- * @author ibessonov
- */
 public class RunAnythingMavenItem extends RunAnythingItemBase {
 
   public RunAnythingMavenItem(@NotNull String command, @Nullable Icon icon) {

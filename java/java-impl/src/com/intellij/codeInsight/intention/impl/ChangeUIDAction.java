@@ -7,11 +7,8 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -21,7 +18,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Random;
 
 
@@ -59,7 +55,7 @@ public class ChangeUIDAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return false;
-    if (!field.getType().equals(PsiType.LONG)) return false;
+    if (!field.getType().equals(PsiTypes.longType())) return false;
     if (field.hasModifierProperty(PsiModifier.FINAL)) {
       PsiClass aClass = field.getContainingClass();
       if (aClass == null) return false;

@@ -3,9 +3,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -39,8 +37,8 @@ public final class TaskSearchSupport {
     tasks.addAll(myManager.getLocalTasks(withClosed));
     tasks.addAll(ContainerUtil.filter(myManager.getCachedIssues(withClosed),
                                                      task -> myManager.findTask(task.getId()) == null));
-    List<Task> filteredTasks = filterTasks(pattern, tasks);
-    ContainerUtil.sort(filteredTasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
+    List<Task> filteredTasks = ContainerUtil.sorted(filterTasks(pattern, tasks),
+    TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return filteredTasks;
   }
 
@@ -79,7 +77,6 @@ public final class TaskSearchSupport {
   private static void notifyAboutConnectionFailure(RequestFailedException e, Project project) {
     String details = e.getMessage();
     TaskRepository repository = e.getRepository();
-    Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
     String content = TaskBundle.message("notification.content.p.href.configure.server.p");
     if (!StringUtil.isEmpty(details)) {
       content = "<p>" + details + "</p>" + content; //NON-NLS

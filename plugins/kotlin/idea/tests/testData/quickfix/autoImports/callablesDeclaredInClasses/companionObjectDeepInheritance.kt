@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'Companion.foobar'" "true"
 package p
 
 open class T1 {

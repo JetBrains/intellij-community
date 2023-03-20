@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -34,8 +35,6 @@ import java.util.*;
  * {@link com.intellij.openapi.application.NonBlockingReadAction#inSmartMode}.
  * <p>
  * More information about dumb mode could be found here: {@link IndexNotReadyException}
- *
- * @author peter
  */
 public abstract class DumbService {
   @Topic.ProjectLevel
@@ -70,7 +69,7 @@ public abstract class DumbService {
     }
 
     List<T> result = new ArrayList<>(size);
-    for (T element : ((ExtensionPointImpl<T>)point)) {
+    for (T element : (ExtensionPointImpl<T>)point) {
       if (isDumbAware(element)) {
         result.add(element);
       }
@@ -170,6 +169,7 @@ public abstract class DumbService {
    * @deprecated This method provides no guarantees and should be avoided, please use {@link #runReadActionInSmartMode} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public void repeatUntilPassesInSmartMode(final @NotNull Runnable r) {
     while (true) {
       waitForSmartMode();
@@ -230,7 +230,7 @@ public abstract class DumbService {
    * Queues a task to be executed in "dumb mode", where access to indices is forbidden. Tasks are executed sequentially
    * in background unless {@link #completeJustSubmittedTasks()} is called in the same dispatch thread activity.
    * <p>
-   * Tasks can specify custom "equality" policy via their constructor.
+   * Tasks can specify custom "equality" policy via @{link {@link DumbModeTask#tryMergeWith(DumbModeTask)}}.
    * Calling this method has no effect if an "equal" task is already enqueued (but not yet running).
    *
    * Alternatively one may call a short-cut {@link DumbModeTask#queue(Project)} instead.
@@ -343,47 +343,50 @@ public abstract class DumbService {
   public abstract void setAlternativeResolveEnabled(boolean enabled);
 
   /**
-   * Invokes the given runnable with alternative resolve set to true.
+   * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
    */
   public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
-    setAlternativeResolveEnabled(true);
+    boolean isDumb = isDumb();
+    if (isDumb) setAlternativeResolveEnabled(true);
     try {
       runnable.run();
     }
     finally {
-      setAlternativeResolveEnabled(false);
+      if (isDumb) setAlternativeResolveEnabled(false);
     }
   }
 
   /**
-   * Invokes the given computable with alternative resolve set to true.
+   * Invokes the given computable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
    */
   public <T, E extends Throwable> T computeWithAlternativeResolveEnabled(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    setAlternativeResolveEnabled(true);
+    boolean isDumb = isDumb();
+    if (isDumb) setAlternativeResolveEnabled(true);
     try {
       return runnable.compute();
     }
     finally {
-      setAlternativeResolveEnabled(false);
+      if (isDumb) setAlternativeResolveEnabled(false);
     }
   }
 
   /**
-   * Invokes the given runnable with alternative resolve set to true.
+   * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
    */
   public <E extends Throwable> void runWithAlternativeResolveEnabled(@NotNull ThrowableRunnable<E> runnable) throws E {
-    setAlternativeResolveEnabled(true);
+    boolean isDumb = isDumb();
+    if (isDumb) setAlternativeResolveEnabled(true);
     try {
       runnable.run();
     }
     finally {
-      setAlternativeResolveEnabled(false);
+      if (isDumb) setAlternativeResolveEnabled(false);
     }
   }
 
@@ -398,7 +401,7 @@ public abstract class DumbService {
    * @deprecated Obsolete, does nothing, just executes the passed runnable.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     runnable.run();
   }
@@ -411,15 +414,8 @@ public abstract class DumbService {
    */
   public abstract void suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName, @NotNull Runnable activity);
 
-  /**
-   * Checks whether {@link #isDumb()} is true for the current project and if it's currently suspended by user or a {@link #suspendIndexingAndRun} call.
-   * This should be called inside read action. The momentary system state is returned: there are no guarantees that the result won't change
-   * in the next line of the calling code.
-   */
-  public abstract boolean isSuspendedDumbMode();
-
   @ApiStatus.Internal
-  public abstract void runWithWaitForSmartModeDisabled(@NotNull Runnable runnable);
+  public abstract AccessToken runWithWaitForSmartModeDisabled();
 
   /**
    * @see #DUMB_MODE

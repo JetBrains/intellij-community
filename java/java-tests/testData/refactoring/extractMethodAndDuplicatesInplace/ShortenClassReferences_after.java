@@ -7,7 +7,7 @@ class Test {
         extracted(s);
     }
 
-    private void extracted(Stream<Object> s) {
+    private static void extracted(Stream<Object> s) {
         System.out.println(s);
     }
 }

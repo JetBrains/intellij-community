@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.project.Project;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.Nls;
@@ -19,7 +17,8 @@ public final class EditorConfigNotifier {
       return;
     }
 
-    Notifications.Bus.notify(new Notification(GROUP_DISPLAY_ID, EditorConfigBundle.message("editorconfig"), message, NotificationType.ERROR),
+    NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup(GROUP_DISPLAY_ID);
+    Notifications.Bus.notify(group.createNotification(EditorConfigBundle.message("editorconfig"), message, NotificationType.ERROR),
                              project);
     PropertiesComponent.getInstance(project).setValue(LAST_NOTIFICATION_STATUS, id);
   }

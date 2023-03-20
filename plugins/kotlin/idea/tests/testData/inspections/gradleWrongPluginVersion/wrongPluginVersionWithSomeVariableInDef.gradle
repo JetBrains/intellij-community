@@ -1,5 +1,5 @@
 buildscript {
-  def defVar = '0.0.1'
+  def defVar = '1.1.10'
 
   repositories {
     mavenCentral()

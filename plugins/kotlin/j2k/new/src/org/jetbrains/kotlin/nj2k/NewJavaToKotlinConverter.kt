@@ -1,20 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.conversions.JKResolver
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -49,7 +48,6 @@ class NewJavaToKotlinConverter(
         progress: ProgressIndicator,
         bodyFilter: ((PsiElement) -> Boolean)?,
     ): FilesResult {
-        progress.isIndeterminate = false
         val withProgressProcessor = NewJ2kWithProgressProcessor(progress, files, postProcessor.phasesCount + phasesCount)
         return withProgressProcessor.process {
             val (results, externalCodeProcessing, context) =
@@ -65,13 +63,8 @@ class NewJavaToKotlinConverter(
                         phase = J2KConversionPhase.CREATE_FILES,
                         description = "Creating files..."
                     )
-                    KtPsiFactory(project).createFileWithLightClassSupport(
-                        javaFile.name.replace(".java", ".kt"),
-                        result!!.text,
-                        files[i]
-                    ).apply {
-                        addImports(result.importsToAdd)
-                    }
+                    KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                        .also { it.addImports(result.importsToAdd) }
                 }
 
             }
@@ -86,7 +79,11 @@ class NewJavaToKotlinConverter(
         }
     }
 
-    fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor, bodyFilter: ((PsiElement) -> Boolean)?): Result {
+    fun elementsToKotlin(
+        inputElements: List<PsiElement>,
+        processor: WithProgressProcessor,
+        bodyFilter: ((PsiElement) -> Boolean)?
+    ): Result {
         val phaseDescription = KotlinNJ2KBundle.message("phase.converting.j2k")
         val contextElement = inputElements.firstOrNull() ?: return Result(emptyList(), null, null)
         val resolver = JKResolver(project, targetModule, contextElement)
@@ -177,11 +174,11 @@ class NewJavaToKotlinConverter(
 
     companion object {
         fun KtFile.addImports(imports: Collection<FqName>) {
-            val factory = KtPsiFactory(this)
+            val psiFactory = KtPsiFactory(project)
 
 
             if (imports.isEmpty()) return
-            val importPsi = factory.createImportDirectives(
+            val importPsi = psiFactory.createImportDirectives(
                 imports.map { ImportPath(it, isAllUnder = false) }
             )
             val createdImportList = importPsi.first().parent as KtImportList
@@ -220,9 +217,13 @@ class NewJ2kWithProgressProcessor(
         val DEFAULT = NewJ2kWithProgressProcessor(null, null, 0)
     }
 
+    init {
+        progress?.isIndeterminate = false
+    }
+
     override fun updateState(fileIndex: Int?, phase: Int, description: String) {
         if (fileIndex == null)
-            updateState(phase, 1, 1, fileIndex, description)
+            updateState(phase, 1, 1, null, description)
         else
             updateState(phase, 0, 1, fileIndex, description)
     }
@@ -234,6 +235,7 @@ class NewJ2kWithProgressProcessor(
         fileIndex: Int?,
         description: String
     ) {
+        ProgressManager.checkCanceled()
         progress?.checkCanceled()
         val singlePhaseFraction = 1.0 / phasesCount.toDouble()
         val singleSubPhaseFraction = singlePhaseFraction / subPhaseCount.toDouble()
@@ -258,7 +260,7 @@ class NewJ2kWithProgressProcessor(
             progress?.text = KotlinNJ2KBundle.message("progress.text", description, phase + 1, phasesCount)
         }
         progress?.text2 = when {
-            files != null && files.isNotEmpty() && fileIndex != null -> files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
+            !files.isNullOrEmpty() && fileIndex != null -> files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
             else -> ""
         }
     }

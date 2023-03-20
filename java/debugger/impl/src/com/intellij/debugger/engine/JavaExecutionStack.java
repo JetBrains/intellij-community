@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -89,10 +90,9 @@ public class JavaExecutionStack extends XExecutionStack {
 
   private static CompletableFuture<Icon> calcIconAsync(ThreadReferenceProxyImpl threadProxy, boolean current) {
     ThreadReference ref = threadProxy.getThreadReference();
-    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl)) {
+    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl threadReference)) {
       return CompletableFuture.completedFuture(calcIcon(threadProxy, current));
     }
-    ThreadReferenceImpl threadReference = ((ThreadReferenceImpl)ref);
     if (current) {
       return calcThreadIconAsync(threadReference, true);
     }
@@ -229,7 +229,7 @@ public class JavaExecutionStack extends XExecutionStack {
                 added++;
               }
               myDebugProcess.getManagerThread().schedule(
-                new AppendFrameCommand(suspendContext, iterator, container, added, firstFrameIndex, null));
+                new AppendFrameCommand(suspendContext, iterator, container, added, firstFrameIndex, null, 0, true));
             }
             catch (EvaluateException e) {
               container.errorOccurred(e.getMessage());
@@ -249,19 +249,25 @@ public class JavaExecutionStack extends XExecutionStack {
     private int myAdded;
     private final int mySkip;
     private final List<? extends StackFrameItem> myAsyncStack;
+    private int myAddedAsync;
+    private boolean mySeparator;
 
     AppendFrameCommand(SuspendContextImpl suspendContext,
-                       Iterator<StackFrameProxyImpl> stackFramesIterator,
+                       @Nullable Iterator<StackFrameProxyImpl> stackFramesIterator,
                        XStackFrameContainer container,
                        int added,
                        int skip,
-                       List<? extends StackFrameItem> asyncStack) {
+                       @Nullable List<? extends StackFrameItem> asyncStack,
+                       int addedAsync,
+                       boolean separator) {
       super(suspendContext);
       myStackFramesIterator = stackFramesIterator;
       myContainer = container;
       myAdded = added;
       mySkip = skip;
       myAsyncStack = asyncStack;
+      myAddedAsync = addedAsync;
+      mySeparator = separator;
     }
 
     @Override
@@ -269,16 +275,21 @@ public class JavaExecutionStack extends XExecutionStack {
       return myAdded <= StackFrameProxyImpl.FRAMES_BATCH_MAX ? Priority.NORMAL : Priority.LOW;
     }
 
-    private void addFrameIfNeeded(XStackFrame frame, boolean last) {
+    private boolean addFrameIfNeeded(XStackFrame frame, boolean last) {
       if (++myAdded > mySkip) {
         myContainer.addStackFrames(Collections.singletonList(frame), last);
+        return true;
       }
+      if (last) {
+        myContainer.addStackFrames(Collections.emptyList(), true);
+      }
+      return false;
     }
 
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       if (myContainer.isObsolete()) return;
-      if (myStackFramesIterator.hasNext()) {
+      if (myStackFramesIterator != null && myStackFramesIterator.hasNext()) {
         StackFrameProxyImpl frameProxy;
         CompletableFuture<List<XStackFrame>> framesAsync;
         boolean first = myAdded == 0;
@@ -297,7 +308,7 @@ public class JavaExecutionStack extends XExecutionStack {
         }
 
         framesAsync.thenAccept(frames -> {
-          for (XStackFrame frame : frames) {
+          for (XStackFrame frame : ContainerUtil.notNullize(frames)) {
             if (first || showFrame(frame)) {
               if (frame instanceof JavaStackFrame) {
                 ((JavaStackFrame)frame).getDescriptor().updateRepresentationNoNotify(null, () -> {
@@ -311,7 +322,7 @@ public class JavaExecutionStack extends XExecutionStack {
 
           // replace the rest with the related stack (if available)
           if (myAsyncStack != null) {
-            appendRelatedStack(myAsyncStack);
+            schedule(suspendContext, null, myAsyncStack, true);
             return;
           }
 
@@ -320,31 +331,39 @@ public class JavaExecutionStack extends XExecutionStack {
           if (AsyncStacksToggleAction.isAsyncStacksEnabled(
             (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
               topFrame instanceof JavaStackFrame) {
-            relatedStack =
-              AsyncStackTraceProvider.EP.computeSafeIfAny(p -> p.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext));
+            relatedStack = DebuggerUtilsImpl.computeSafeIfAny(AsyncStackTraceProvider.EP,
+                                                              p -> p.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext));
             if (relatedStack != null) {
-              appendRelatedStack(relatedStack);
+              schedule(suspendContext, null, relatedStack, true);
               return;
             }
             // append agent stack after the next frame
             relatedStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
           }
 
-          myDebugProcess.getManagerThread().schedule(
-            new AppendFrameCommand(suspendContext, myStackFramesIterator, myContainer, myAdded, mySkip, relatedStack));
+          schedule(suspendContext, myStackFramesIterator, relatedStack, false);
         }).exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
+      }
+      else if (myAsyncStack != null && myAddedAsync < myAsyncStack.size()) {
+        appendRelatedStack(suspendContext, myAsyncStack.subList(myAddedAsync, myAsyncStack.size()));
       }
       else {
         myContainer.addStackFrames(Collections.emptyList(), true);
       }
     }
 
-    void appendRelatedStack(@NotNull List<? extends StackFrameItem> asyncStack) {
-      int i = 0;
-      boolean separator = true;
+    private void schedule(@NotNull SuspendContextImpl suspendContext,
+                          @Nullable Iterator<StackFrameProxyImpl> stackFramesIterator,
+                          @Nullable List<? extends StackFrameItem> asyncStackFrames,
+                          boolean separator) {
+      myDebugProcess.getManagerThread().schedule(
+        new AppendFrameCommand(suspendContext, stackFramesIterator, myContainer,
+                               myAdded, mySkip, asyncStackFrames, myAddedAsync, separator));
+    }
+
+    void appendRelatedStack(@NotNull SuspendContextImpl suspendContext, List<? extends StackFrameItem> asyncStack) {
       for (StackFrameItem stackFrame : asyncStack) {
-        if (myContainer.isObsolete()) return;
-        if (i > AsyncStacksUtils.getMaxStackLength()) {
+        if (myAddedAsync > AsyncStacksUtils.getMaxStackLength()) {
           addFrameIfNeeded(new XStackFrame() {
             @Override
             public void customizePresentation(@NotNull ColoredTextContainer component) {
@@ -354,26 +373,27 @@ public class JavaExecutionStack extends XExecutionStack {
           }, true);
           return;
         }
-        i++;
+        myAddedAsync++;
         if (stackFrame == null) {
-          separator = true;
+          mySeparator = true;
           continue;
         }
         XStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
         if (newFrame != null && showFrame(newFrame)) {
-          StackFrameItem.setWithSeparator(newFrame, separator);
-          addFrameIfNeeded(newFrame, false);
-          separator = false;
+          StackFrameItem.setWithSeparator(newFrame, mySeparator);
+          if (addFrameIfNeeded(newFrame, false)) {
+            mySeparator = false;
+          }
         }
+        schedule(suspendContext, null, myAsyncStack, mySeparator);
+        return;
       }
-      myContainer.addStackFrames(Collections.emptyList(), true);
     }
   }
 
   private static boolean showFrame(@NotNull XStackFrame frame) {
     if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames() &&
-        frame instanceof JVMStackFrameInfoProvider) {
-      JVMStackFrameInfoProvider info = (JVMStackFrameInfoProvider)frame;
+        frame instanceof JVMStackFrameInfoProvider info) {
       return !info.isSynthetic() && !info.isInLibraryContent();
     }
     return true;
@@ -385,7 +405,6 @@ public class JavaExecutionStack extends XExecutionStack {
     ThreadGroupReferenceProxyImpl gr = thread.threadGroupProxy();
     final String grname = (gr != null) ? gr.name() : null;
     final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(thread.status());
-    //noinspection HardCodedStringLiteral
     if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
       return JavaDebuggerBundle.message("label.thread.node.in.group", name, thread.uniqueID(), threadStatusText, grname);
     }
@@ -395,10 +414,9 @@ public class JavaExecutionStack extends XExecutionStack {
   private static @NlsContexts.ListItem CompletableFuture<String> calcRepresentationAsync(ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadReference ref = thread.getThreadReference();
-    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl)) {
+    if (!DebuggerUtilsAsync.isAsyncEnabled() || !(ref instanceof ThreadReferenceImpl threadReference)) {
       return CompletableFuture.completedFuture(calcRepresentation(thread));
     }
-    ThreadReferenceImpl threadReference = ((ThreadReferenceImpl)ref);
     CompletableFuture<String> nameFuture = threadReference.nameAsync();
     CompletableFuture<String> groupNameFuture = threadReference.threadGroupAsync().thenCompose(gr -> {
       if (gr instanceof ThreadGroupReferenceImpl) {

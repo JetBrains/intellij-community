@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.CommonBundle;
@@ -10,6 +10,7 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
@@ -150,6 +151,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> {
           try {
@@ -172,6 +178,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = true);
         table.repaint();
@@ -186,6 +197,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = false);
         table.repaint();
@@ -196,6 +212,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(table.getSelectedRowCount() == 1 && !table.isEditing());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -244,6 +265,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
     decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
                                                        JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
@@ -280,6 +306,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       public boolean isEnabled() {
         return table.getSelectedRowCount() > 0;
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     });
 
     myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
@@ -307,8 +338,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     static final String[] COLUMN_NAMES = getColumns();
 
-    @NotNull
-    private static String[] getColumns() {
+    private static @NotNull String @NotNull [] getColumns() {
       return new String[]{"",
         JavaDebuggerBundle.message("settings.capture.column.capture.class.name"),
         JavaDebuggerBundle.message("settings.capture.column.capture.method.name"),
@@ -332,8 +362,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           if (e instanceof PsiMethod) {
             addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
           }
-          else if (e instanceof PsiParameter) {
-            PsiParameter psiParameter = (PsiParameter)e;
+          else if (e instanceof PsiParameter psiParameter) {
             PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
             addCapturePointIfNeeded(psiParameter, psiMethod,
                                     DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
@@ -414,23 +443,16 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     @Override
     public Object getValueAt(int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
-      switch (col) {
-        case ENABLED_COLUMN:
-          return point.myEnabled;
-        case CLASS_COLUMN:
-          return point.myClassName;
-        case METHOD_COLUMN:
-          return point.myMethodName;
-        case PARAM_COLUMN:
-          return point.myCaptureKeyExpression;
-        case INSERT_CLASS_COLUMN:
-          return point.myInsertClassName;
-        case INSERT_METHOD_COLUMN:
-          return point.myInsertMethodName;
-        case INSERT_KEY_EXPR:
-          return point.myInsertKeyExpression;
-      }
-      return null;
+      return switch (col) {
+        case ENABLED_COLUMN -> point.myEnabled;
+        case CLASS_COLUMN -> point.myClassName;
+        case METHOD_COLUMN -> point.myMethodName;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression;
+        default -> null;
+      };
     }
 
     @Override
@@ -442,33 +464,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     public void setValueAt(Object value, int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
-        case ENABLED_COLUMN:
-          point.myEnabled = (boolean)value;
-          break;
-        case CLASS_COLUMN:
-          point.myClassName = (String)value;
-          break;
-        case METHOD_COLUMN:
-          point.myMethodName = (String)value;
-          break;
-        case PARAM_COLUMN:
-          point.myCaptureKeyExpression = (String)value;
-          break;
-        case INSERT_CLASS_COLUMN:
-          point.myInsertClassName = (String)value;
-          break;
-        case INSERT_METHOD_COLUMN:
-          point.myInsertMethodName = (String)value;
-          break;
-        case INSERT_KEY_EXPR:
-          point.myInsertKeyExpression = (String)value;
-          break;
+        case ENABLED_COLUMN -> point.myEnabled = (boolean)value;
+        case CLASS_COLUMN -> point.myClassName = (String)value;
+        case METHOD_COLUMN -> point.myMethodName = (String)value;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression = (String)value;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName = (String)value;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName = (String)value;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression = (String)value;
       }
       fireTableCellUpdated(row, col);
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       return columnIndex == ENABLED_COLUMN ? Boolean.class : String.class;
     }
 
@@ -618,7 +626,6 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       return splitter;
     }
 
-    @SuppressWarnings("SSBasedInspection")
     @Override
     protected void doOKAction() {
       mySettings.myAsyncScheduleAnnotations = StreamEx.of(myAsyncSchedulePanel.getAnnotations())
@@ -630,9 +637,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       super.doOKAction();
     }
 
-    @Nullable
     @Override
-    protected String getHelpId() {
+    protected @NotNull String getHelpId() {
       return "reference.idesettings.debugger.customAsyncAnnotations";
     }
   }

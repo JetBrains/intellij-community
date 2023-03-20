@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -10,6 +10,8 @@ open class KDocTemplate : Template<StringBuilder> {
     val description = Placeholder<StringBuilder>()
 
     val deprecation = Placeholder<StringBuilder>()
+
+    val containerInfo = Placeholder<StringBuilder>()
 
     override fun StringBuilder.apply() {
         append(DEFINITION_START)
@@ -23,6 +25,12 @@ open class KDocTemplate : Template<StringBuilder> {
         }
 
         insert(description)
+
+        if (!containerInfo.isEmpty()) {
+            append("<div class='bottom'>")
+            insert(containerInfo)
+            append("</div>")
+        }
     }
 
     sealed class DescriptionBodyTemplate : Template<StringBuilder> {
@@ -30,9 +38,12 @@ open class KDocTemplate : Template<StringBuilder> {
             val content = Placeholder<StringBuilder>()
             val sections = Placeholder<StringBuilder>()
             override fun StringBuilder.apply() {
-                append(CONTENT_START)
-                insert(content)
-                append(CONTENT_END)
+                val computedContent = buildString { insert(content) }
+                if (computedContent.isNotBlank()) {
+                    append(CONTENT_START)
+                    append(computedContent)
+                    append(CONTENT_END)
+                }
 
                 append(SECTIONS_START)
                 insert(sections)

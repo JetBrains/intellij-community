@@ -7,7 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -29,7 +29,7 @@ class ImmutableOptionsAnnotationChecker : CustomAnnotationChecker() {
       val value = literal.value as? String ?: continue
       val target : PsiModifierListOwner? =
         containingClass.findCodeFieldByName(value, false) as? GrField
-        ?: containingClass.castSafelyTo<GrRecordDefinition>()?.parameters?.find { it.name == value }
+        ?: containingClass.asSafely<GrRecordDefinition>()?.parameters?.find { it.name == value }
 
       if (target == null || (target is GrField && !target.isProperty) || target.hasModifierProperty(PsiModifier.STATIC)) {
         holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("immutable.options.property.not.exist", value)).range(literal).create()

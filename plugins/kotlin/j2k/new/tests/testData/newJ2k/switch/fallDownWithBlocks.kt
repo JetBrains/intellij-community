@@ -12,6 +12,7 @@ object C {
                     print("2")
                 }
             }
+
             2 -> {
                 val a = 2
                 print("2")

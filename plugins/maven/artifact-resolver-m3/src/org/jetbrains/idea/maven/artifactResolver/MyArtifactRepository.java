@@ -19,9 +19,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.repository.LocalArtifactRepository;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MyArtifactRepository extends LocalArtifactRepository {
 
   protected boolean resolveAsModule(Artifact artifact) {

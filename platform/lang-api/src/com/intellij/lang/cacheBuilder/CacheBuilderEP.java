@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,9 @@ final class CacheBuilderEP implements PluginAware {
         cachedClass = aClass;
       }
       return app.instantiateClass(aClass, pluginDescriptor.getPluginId());
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (PluginException e) {
       LOG.error(e);

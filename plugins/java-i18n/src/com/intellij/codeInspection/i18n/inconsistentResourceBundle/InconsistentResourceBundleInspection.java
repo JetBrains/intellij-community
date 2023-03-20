@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.ui.OptionAccessor;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -16,7 +16,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.*;
 
 public final class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
@@ -41,27 +40,23 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
   }
 
   @Override
-  public @NotNull JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(new OptionAccessor() {
-      @Override
-      public boolean getOption(String optionName) {
-        return isProviderEnabled(optionName);
-      }
+  public @NotNull OptPane getOptionsPane() {
+    return new OptPane(ContainerUtil.map(
+      myInspectionProviders.getValue(),
+      provider -> OptPane.checkbox(provider.getName(), provider.getPresentableName())));
+  }
 
-      @Override
-      public void setOption(String optionName, boolean optionValue) {
-        if (optionValue) {
-          mySettings.remove(optionName);
-        }
-        else {
-          mySettings.put(optionName, false);
-        }
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return OptionController.of(this::isProviderEnabled, (bindId, value) -> {
+      boolean boolValue = (Boolean)value;
+      if (boolValue) {
+        mySettings.remove(bindId);
+      }
+      else {
+        mySettings.put(bindId, false);
       }
     });
-    for (final InconsistentResourceBundleInspectionProvider provider : myInspectionProviders.getValue()) {
-      panel.addCheckbox(provider.getPresentableName(), provider.getName());
-    }
-    return panel;
   }
 
   @Override
@@ -95,8 +90,7 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     Set<ResourceBundle> visitedBundles = globalContext.getUserData(VISITED_BUNDLES_KEY);
-    if (!(file instanceof PropertiesFile)) return;
-    final PropertiesFile propertiesFile = (PropertiesFile)file;
+    if (!(file instanceof PropertiesFile propertiesFile)) return;
     ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assert visitedBundles != null;
     if (!visitedBundles.add(resourceBundle)) return;
@@ -129,7 +123,7 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
   }
 
   private boolean isProviderEnabled(final String providerName) {
-    return ContainerUtil.getOrElse(mySettings, providerName, true);
+    return mySettings.getOrDefault(providerName, true);
   }
 
   @SafeVarargs

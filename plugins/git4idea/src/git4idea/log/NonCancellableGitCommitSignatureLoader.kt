@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
 import git4idea.commit.signature.GitCommitSignature
 import java.util.concurrent.*
 
@@ -17,11 +19,11 @@ import java.util.concurrent.*
 internal class NonCancellableGitCommitSignatureLoader(project: Project) : GitCommitSignatureLoaderBase(project) {
 
   private val executor = ThreadPoolExecutor(1, 1, 10, TimeUnit.MILLISECONDS,
-    LinkedBlockingDeque(1), NamingThreadFactory(), ThreadPoolExecutor.DiscardOldestPolicy())
+                                            LinkedBlockingDeque(1), NamingThreadFactory(), ThreadPoolExecutor.DiscardOldestPolicy())
 
-  override fun requestData(indicator: ProgressIndicator, commits: List<CommitId>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
+  override fun requestData(indicator: ProgressIndicator, commits: Map<VirtualFile, List<Hash>>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
     executor.execute {
-      for ((root, hashes) in commits.groupBy({ it.root }, { it.hash })) {
+      for ((root, hashes) in commits) {
         try {
           val signatures = loadCommitSignatures(root, hashes)
 

@@ -42,8 +42,10 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     AUTO(PyBundle.messagePointer("python.debugger.qt.backend.auto")),
     PYQT4("PyQt4"),
     PYQT5("PyQt5"),
+    PYQT6("PyQt6"),
     PYSIDE("PySide"),
-    PYSIDE2("PySide2");
+    PYSIDE2("PySide2"),
+    PYSIDE6("PySide6");
 
     PyQtBackend(@NlsSafe @NotNull String displayName) {
       myDisplayNameSupplier = () -> displayName;
@@ -138,10 +140,6 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     mySupportQt.setSelected(settings.isSupportQtDebugging());
     myPyQtBackend.setSelectedItem(PyQtBackend.valueOf(StringUtil.toUpperCase(settings.getPyQtBackend())));
     myAttachProcessFilter.setText(settings.getAttachProcessFilter());
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 
   private void createUIComponents() {

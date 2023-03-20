@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi
+
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
+import com.intellij.psi.javadoc.PsiDocComment
+import com.intellij.psi.javadoc.PsiDocTag
+import com.intellij.psi.javadoc.PsiSnippetDocTag
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.IdempotenceChecker
@@ -18,11 +20,7 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16
-  }
-
+  
   void testEmptyImportList() {
     assert configureFile("").importList != null
     assert configureFile("class C { }").importList != null
@@ -166,7 +164,7 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
     DefaultLogger.disableStderrDumping(testRootDisposable)
     assertThrows(Throwable, "Non-idempotent") {
-      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiType.VOID, getClass(), null)
+      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiTypes.voidType(), getClass(), null)
     }
   }
 
@@ -228,43 +226,87 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test enum with name sealed"() {
-    withLanguageLevel(LanguageLevel.JDK_16_PREVIEW) {
-      def clazz = configureFile("enum sealed {}").classes[0]
-      assert !clazz.getAllMethods().any { it.name == "values" }
-    }
+    def clazz = configureFile("enum sealed {}").classes[0]
+    assert !clazz.getAllMethods().any { it.name == "values" }
   }
 
   void "test instanceof no pattern get type"() {
-    withLanguageLevel(LanguageLevel.JDK_X) {
-      def clazz = configureFile("class A{ boolean foo(Object a){ return a instanceof String;} }").classes[0]
-      def returnStatement = clazz.methods.first().getBody().statements.first() as PsiReturnStatement
-      def instanceOfExpression = returnStatement.returnValue as PsiInstanceOfExpression
-      assert instanceOfExpression.getCheckType().getText() == "String"
-    }
+    def clazz = configureFile("class A{ boolean foo(Object a){ return a instanceof String;} }").classes[0]
+    def returnStatement = clazz.methods.first().getBody().statements.first() as PsiReturnStatement
+    def instanceOfExpression = returnStatement.returnValue as PsiInstanceOfExpression
+    assert instanceOfExpression.getCheckType().getText() == "String"
   }
 
   void "test instanceof annotation and modifiers"() {
-    withLanguageLevel(LanguageLevel.JDK_16_PREVIEW) {
-      def statement = (PsiExpressionStatement)PsiElementFactory.getInstance(project)
-        .createStatementFromText("a instanceof @Ann final Foo f", null)
-      def variable = PsiTreeUtil.findChildOfType(statement, PsiPatternVariable.class)
-      assertNotNull(variable)
-      assertTrue(variable.hasModifierProperty(PsiModifier.FINAL))
-      def annotations = variable.getAnnotations()
-      assertEquals(1, annotations.size())
-      def annotation = annotations.first()
-      assertEquals("Ann", annotation.nameReferenceElement.referenceName)
-    }
+    def statement = (PsiExpressionStatement)PsiElementFactory.getInstance(project)
+      .createStatementFromText("a instanceof @Ann final Foo f", null)
+    def variable = PsiTreeUtil.findChildOfType(statement, PsiPatternVariable.class)
+    assertNotNull(variable)
+    assertTrue(variable.hasModifierProperty(PsiModifier.FINAL))
+    def annotations = variable.getAnnotations()
+    assertEquals(1, annotations.size())
+    def annotation = annotations.first()
+    assertEquals("Ann", annotation.nameReferenceElement.referenceName)
   }
 
-  private void withLanguageLevel(LanguageLevel level, Runnable r) {
-    def old = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel()
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level)
-    try {
-      r.run()
-    } finally {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(old)
-    }
+  void "test snippet comment"() {
+    def docComment = PsiElementFactory.getInstance(project).createDocCommentFromText("""
+/**
+ * Attributes:
+ * {@snippet attr1="Value1"
+ * attr2=value2
+ *  :
+ *    Body Line 1
+ *    Body Line 2
+ * }
+ */
+""")
+    def comment = PsiTreeUtil.findChildOfType(docComment, PsiSnippetDocTag.class)
+    def valueElement = comment.valueElement
+    def attributes = valueElement.attributeList.attributes
+    assert ["attr1", "attr2"] == attributes.collect { it.name }
+    assert ['"Value1"', "value2"] == attributes.collect { it.value.text }
+    assert ['    Body Line 1', '    Body Line 2', ' '] == valueElement.body.content.collect { it.text }
+  }
+
+
+  void "test add tags as range"() {
+    def file = configureFile(
+      """/**
+ * @t1
+ * @t2
+ */
+class A {}
+/**
+ */
+class B {}""")
+    def classes = file.classes
+    PsiDocComment sourceDocComment = classes[0].docComment
+    assertNotNull(sourceDocComment)
+
+    PsiDocComment targetDocComment = classes[1].docComment
+    assertNotNull(targetDocComment)
+    
+    final PsiDocTag[] tags = sourceDocComment.getTags()
+    runCommand { targetDocComment.addRange(tags[0], tags[tags.length - 1]) }
+    assertEquals(targetDocComment.getText(), "/**\n" +
+                                             " * @t1\n" +
+                                             " * @t2\n" +
+                                             " */")
+  }
+
+  void testLightRecordCanonicalConstructor() {
+    myFixture.configureByText("A.java", "record Rec(int x) {}")
+    PsiMethod constructor = ((PsiJavaFile)getFile()).getClasses()[0].getConstructors()[0]
+    assertTrue(constructor instanceof LightRecordCanonicalConstructor)
+    PsiParameterList list = constructor.getParameterList()
+    PsiParameter parameter = list.getParameter(0)
+    assertTrue(parameter instanceof LightRecordCanonicalConstructor.LightRecordConstructorParameter)
+    assertEquals("x", parameter.getName())
+    PsiElement scope = parameter.getDeclarationScope()
+    assertTrue(scope instanceof PsiMethod)
+    int index = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter)
+    assertEquals(0, index)
   }
 
   private PsiJavaFile configureFile(String text) {
@@ -273,5 +315,41 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
   private void runCommand(ThrowableRunnable block) {
     WriteCommandAction.writeCommandAction(project).run(block)
+  }
+
+  void "test record pattern"() {
+    def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b) r", null)
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
+    assert recordPattern.patternVariable.name == "r"
+    def structurePattern = recordPattern.deconstructionList
+    assert structurePattern != null
+    def components = structurePattern.deconstructionComponents
+    def pattern = (PsiTypeTestPattern)components[1]
+    assert pattern.patternVariable.name == "b"
+  }
+
+  void "test record pattern rename"() {
+    def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b) r", null)
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
+    recordPattern.patternVariable.setName("foo")
+    assert expression.text == "o instanceof Record(int a, boolean b) foo"
+  }
+
+  void "test record pattern type"() {
+    def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b)", null)
+    def recordPattern = (PsiDeconstructionPattern)expression.pattern
+    assert recordPattern.typeElement.text == "Record"
+  }
+
+  void "test foreach pattern"() {
+    def stmt = (PsiForeachPatternStatement)PsiElementFactory.getInstance(project).createStatementFromText("for (Rec(int i) : recs);", null)
+    def declaration = (PsiDeconstructionPattern)stmt.iterationPattern
+    assert declaration.typeElement.text == "Rec"
+  }
+
+  void "test foreach parameter"() {
+    def stmt = (PsiForeachStatement)PsiElementFactory.getInstance(project).createStatementFromText("for (int i : recs);", null)
+    def parameter = (PsiParameter)stmt.iterationParameter
+    assert parameter.typeElement.text == "int"
   }
 }

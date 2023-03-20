@@ -35,10 +35,9 @@ public final class ImportUtils {
 
   public static void addImportIfNeeded(@NotNull PsiClass aClass, @NotNull PsiElement context) {
     final PsiFile file = context.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile javaFile)) {
       return;
     }
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
     final PsiClass outerClass = aClass.getContainingClass();
     if (outerClass == null) {
       if (PsiTreeUtil.isAncestor(javaFile, aClass, true)) {
@@ -92,7 +91,7 @@ public final class ImportUtils {
 
   public static boolean nameCanBeImported(@NotNull String fqName, @NotNull PsiElement context) {
     final PsiFile containingFile = context.getContainingFile();
-    if (!(containingFile instanceof PsiJavaFile)) {
+    if (!(containingFile instanceof PsiJavaFile file)) {
       return false;
     }
     PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
@@ -121,7 +120,6 @@ public final class ImportUtils {
       }
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
     }
-    final PsiJavaFile file = (PsiJavaFile) containingFile;
     if (hasExactImportConflict(fqName, file)) {
       return false;
     }
@@ -199,10 +197,9 @@ public final class ImportUtils {
    */
   private static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context, boolean strict) {
     final PsiFile containingFile = context.getContainingFile();
-    if (!(containingFile instanceof PsiJavaFile)) {
+    if (!(containingFile instanceof PsiJavaFile javaFile)) {
       return false;
     }
-    final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
     final PsiImportList imports = javaFile.getImportList();
     if (imports == null) {
       return false;
@@ -223,8 +220,7 @@ public final class ImportUtils {
         continue;
       }
       final PsiElement element = importReference.resolve();
-      if (element instanceof PsiPackage) {
-        final PsiPackage aPackage = (PsiPackage)element;
+      if (element instanceof PsiPackage aPackage) {
         if (!strict) {
           if (aPackage.findClassByShortName(shortName, containingFile.getResolveScope()).length > 0) {
             return true;
@@ -330,18 +326,16 @@ public final class ImportUtils {
       }
     }
     final PsiFile contextFile = context.getContainingFile();
-    if (!(contextFile instanceof PsiJavaFile)) {
+    if (!(contextFile instanceof PsiJavaFile javaFile)) {
       return false;
     }
-    final PsiJavaFile javaFile = (PsiJavaFile)contextFile;
     final PsiImportList importList = javaFile.getImportList();
     if (importList == null) {
       return false;
     }
     final PsiImportStatementBase existingImportStatement = importList.findSingleImportStatement(memberName);
     if (existingImportStatement != null) {
-      if (existingImportStatement instanceof PsiImportStaticStatement) {
-        final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)existingImportStatement;
+      if (existingImportStatement instanceof PsiImportStaticStatement importStaticStatement) {
         if (!memberName.equals(importStaticStatement.getReferenceName())) {
           return false;
         }
@@ -425,10 +419,9 @@ public final class ImportUtils {
       return false;
     }
     final PsiFile psiFile = context.getContainingFile();
-    if (!(psiFile instanceof PsiJavaFile)) {
+    if (!(psiFile instanceof PsiJavaFile javaFile)) {
       return false;
     }
-    final PsiJavaFile javaFile = (PsiJavaFile)psiFile;
     final PsiImportList importList = javaFile.getImportList();
     if (importList == null) {
       return false;
@@ -510,7 +503,7 @@ public final class ImportUtils {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       if (referenceFound) {
         return;
       }
@@ -570,7 +563,7 @@ public final class ImportUtils {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       if (referenceFound) {
         return;
       }
@@ -579,10 +572,9 @@ public final class ImportUtils {
       if (reference.getQualifier() != null) return;
 
       final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiClass) || element instanceof PsiTypeParameter) {
+      if (!(element instanceof PsiClass aClass) || element instanceof PsiTypeParameter) {
         return;
       }
-      final PsiClass aClass = (PsiClass)element;
       final String testClassName = aClass.getName();
       final String testClassQualifiedName = aClass.getQualifiedName();
       if (testClassQualifiedName == null || testClassName == null ||

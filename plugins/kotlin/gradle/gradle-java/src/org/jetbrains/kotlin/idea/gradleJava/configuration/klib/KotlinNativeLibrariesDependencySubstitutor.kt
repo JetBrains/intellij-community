@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration.klib
 
@@ -7,6 +7,8 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
@@ -14,7 +16,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfoProvider
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.KotlinDependenciesPreprocessor
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
+import org.jetbrains.kotlin.idea.gradleJava.findKotlinPluginVersion
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.plugins.gradle.ExternalDependencyId
 import org.jetbrains.plugins.gradle.model.*
@@ -23,7 +25,7 @@ import java.io.File
 
 // KT-29613, KT-29783
 internal class KotlinNativeLibrariesDependencySubstitutor(
-    val mppModel: KotlinMPPGradleModel,
+    private val mppModel: KotlinMPPGradleModel,
     private val gradleModule: IdeaModule,
     private val resolverCtx: ProjectResolverContext
 ) : KotlinDependenciesPreprocessor {
@@ -38,8 +40,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
     private fun substituteDependencies(dependencies: Collection<ExternalDependency>): List<ExternalDependency> {
         val result = ArrayList(dependencies)
         for (i in 0 until result.size) {
-            val dependency = result[i]
-            val dependencySubstitute = when (dependency) {
+            val dependencySubstitute = when (val dependency = result[i]) {
                 is FileCollectionDependency -> getFileCollectionDependencySubstitute(dependency)
                 else -> DependencySubstitute.NoSubstitute
             }
@@ -70,10 +71,10 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
             KlibInfoProvider.create(kotlinNativeHome = kotlinNativeHome)
     }
 
-    private val kotlinVersion: String? by lazy {
+    private val kotlinVersion: IdeKotlinVersion? by lazy {
         // first, try to figure out Kotlin plugin version by classpath (the default approach)
         val classpathData = buildClasspathData(gradleModule, resolverCtx)
-        val versionFromClasspath = KotlinGradleFacadeImpl.findKotlinPluginVersion(classpathData)
+        val versionFromClasspath = findKotlinPluginVersion(classpathData)
 
         if (versionFromClasspath == null) {
             // then, examine Kotlin MPP Gradle model
@@ -82,6 +83,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
                 .flatMap { it.compilations.asSequence() }
                 .mapNotNull { it.kotlinTaskProperties.pluginVersion?.takeIf(String::isNotBlank) }
                 .firstOrNull()
+                ?.let(IdeKotlinVersion::opt) // Wasn't moved inside 'mapNotNull()' intentionally to get more stable behavior
 
             if (versionFromModel == null) {
                 LOG.warn(
@@ -143,10 +145,10 @@ private sealed class DependencySubstitute {
  * Library Name formatted for the IDE.
  */
 @IntellijInternalApi
-fun KlibInfo.ideName(kotlinVersion: String? = null): String = buildString {
+fun KlibInfo.ideName(kotlinVersion: IdeKotlinVersion? = null): String = buildString {
     if (isFromNativeDistribution) {
         append(KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX)
-        if (kotlinVersion != null) append(" $kotlinVersion - ") else append(" ")
+        if (kotlinVersion != null) append(" ${kotlinVersion.rawVersion} - ") else append(" ")
     }
 
     append(libraryName)

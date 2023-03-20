@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.border.IdeaTitledBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,17 @@ import static java.awt.GridBagConstraints.*;
 
 /**
  * This class creates a nicely formatted panel with components. Useful for option panels.
+ * <p>
+ *   <em>Implementation note:</em> even though this class implements an interface with a "panel" in its name,
+ *   it's not a Swing component itself, and therefore can be instantiated or accessed outside of the EDT.
+ *   Implementations, therefore, should NOT instantiate Swing objects in the constructors and/or
+ *   field/property initializers. They should be instantiated in the {@link #createPanel()} method
+ *   instead. For Kotlin implementations the easiest way to achieve this is to use lazy initialization
+ *   or {@code lateinit} for component fields, for example:
+<pre>
+private val myLabel: JLabel by lazy { JLabel(message("some.message.key")) }
+</pre>
+ * </p>
  */
 public class OptionGroup implements PanelWithAnchor {
   private final @NlsContexts.BorderTitle String myTitle;
@@ -64,8 +76,7 @@ public class OptionGroup implements PanelWithAnchor {
       int left = myIndented.get(i) ? IdeBorderFactory.TITLED_BORDER_INDENT : 0;
 
       Object option = myOptions.get(i);
-      if (option instanceof JComponent) {
-        JComponent component = (JComponent)option;
+      if (option instanceof JComponent component) {
         panel.add(component, new GridBagConstraints(0, i, REMAINDER, 1, 1, 0, WEST, getFill(component), JBUI.insets(top, left, 0, 0), 0, 0));
       }
       else {
@@ -81,7 +92,7 @@ public class OptionGroup implements PanelWithAnchor {
 
     JPanel p = new JPanel();
     p.setPreferredSize(new Dimension(0, 0));
-    panel.add(p, new GridBagConstraints(0, myOptions.size(), REMAINDER, 1, 0, 1, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(p, new GridBagConstraints(0, myOptions.size(), REMAINDER, 1, 0, 1, NORTH, NONE, JBInsets.emptyInsets(), 0, 0));
 
     if (myTitle != null) {
       IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, true);
@@ -130,8 +141,8 @@ public class OptionGroup implements PanelWithAnchor {
     double maxWidth = -1;
     JComponent anchor = null;
     for (Object o : myOptions) {
-      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent && ((Pair<?, ?>)o).first instanceof JComponent) {
-        JComponent component = (JComponent)((Pair<?, ?>)o).first;
+      if (o instanceof Pair && ((Pair<?, ?>)o).first instanceof AnchorableComponent &&
+          ((Pair<?, ?>)o).first instanceof JComponent component) {
         if (component.getPreferredSize().getWidth() > maxWidth) {
           maxWidth = component.getPreferredSize().getWidth();
           anchor = component;

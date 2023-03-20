@@ -21,9 +21,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
 public class FieldReturnValue implements ReturnValue {
   private final PsiField myField;
 

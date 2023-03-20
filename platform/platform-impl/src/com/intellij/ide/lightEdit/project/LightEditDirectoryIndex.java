@@ -55,7 +55,7 @@ class LightEditDirectoryIndex extends DirectoryIndex {
 
   @NotNull
   @Override
-  public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
+  public List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     return Collections.emptyList();
   }
 

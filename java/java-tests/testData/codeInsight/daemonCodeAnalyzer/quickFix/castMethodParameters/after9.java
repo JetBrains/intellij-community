@@ -1,4 +1,4 @@
-// "Cast 1st argument to 'Throwable'" "true"
+// "Cast 1st argument to 'Throwable'" "true-preview"
 class a {
     void f(Throwable a, Throwable b) {}
     void g() {

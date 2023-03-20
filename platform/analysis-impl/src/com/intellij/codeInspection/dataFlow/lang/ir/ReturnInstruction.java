@@ -29,9 +29,7 @@ public class ReturnInstruction extends ControlTransferInstruction {
   @NotNull
   @Override
   public Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new ReturnInstruction(getTransfer().bindToFactory(factory), myAnchor, false);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new ReturnInstruction(getTransfer().bindToFactory(factory), myAnchor, false);
   }
 
   @Nullable

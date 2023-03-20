@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -41,19 +41,18 @@ import java.util.Map;
 public final class PluginDescriptorChooser {
 
   private static final Map<String, String> INTELLIJ_MODULES =
-    ContainerUtil.<String, String>immutableMapBuilder()
-      .put("intellij.platform.ide", "PlatformExtensions.xml")
-      .put("intellij.platform.ide.impl", "PlatformExtensions.xml")
-      .put("intellij.platform.lang", "LangExtensions.xml")
-      .put("intellij.platform.execution.impl", "LangExtensions.xml")
-      .put("intellij.platform.lang.impl", "LangExtensions.xml")
-      .put("intellij.platform.vcs", "VcsExtensions.xml")
-      .put("intellij.platform.vcs.impl", "VcsExtensions.xml")
-      .put("intellij.java", "IdeaPlugin.xml")
-      .put("intellij.java.impl", "IdeaPlugin.xml")
-      .put("intellij.java.impl.inspections", "IdeaPlugin.xml")
-      .put("intellij.java.analysis.impl", "IdeaPlugin.xml")
-      .build();
+    Map.ofEntries(
+      Map.entry("intellij.platform.ide", "PlatformExtensions.xml"),
+      Map.entry("intellij.platform.ide.impl", "PlatformExtensions.xml"),
+      Map.entry("intellij.platform.lang", "LangExtensions.xml"),
+      Map.entry("intellij.platform.execution.impl", "LangExtensions.xml"),
+      Map.entry("intellij.platform.lang.impl", "LangExtensions.xml"),
+      Map.entry("intellij.platform.vcs", "VcsExtensions.xml"),
+      Map.entry("intellij.platform.vcs.impl", "VcsExtensions.xml"),
+      Map.entry("intellij.java", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.impl", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.impl.inspections", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.analysis.impl", "IdeaPlugin.xml"));
 
   public static void show(final Project project,
                           final Editor editor,
@@ -94,15 +93,13 @@ public final class PluginDescriptorChooser {
           return candidate.getIcon();
         }
 
-        @NotNull
         @Override
-        public String getTextFor(PluginDescriptorCandidate candidate) {
+        public @NotNull String getTextFor(PluginDescriptorCandidate candidate) {
           return candidate.getText();
         }
 
-        @Nullable
         @Override
-        public ListSeparator getSeparatorAbove(PluginDescriptorCandidate candidate) {
+        public @Nullable ListSeparator getSeparatorAbove(PluginDescriptorCandidate candidate) {
           final String separatorText = candidate.getSeparatorText();
           if (separatorText != null) {
             return new ListSeparator(separatorText);
@@ -119,11 +116,9 @@ public final class PluginDescriptorChooser {
     JBPopupFactory.getInstance().createListPopup(popupStep).showInBestPositionFor(editor);
   }
 
-  @NotNull
-  public static Extensions findOrCreateExtensionsForEP(DomFileElement<? extends IdeaPlugin> domFileElement, String epName) {
+  public static @NotNull Extensions findOrCreateExtensionsForEP(DomFileElement<? extends IdeaPlugin> domFileElement, String epName) {
     final IdeaPlugin ideaPlugin = domFileElement.getRootElement();
-    final List<Extensions> extensionsList = ideaPlugin.getExtensions();
-    for (Extensions extensions : extensionsList) {
+    for (Extensions extensions : ideaPlugin.getExtensions()) {
       if (extensions.getXmlTag() instanceof IncludedXmlTag) {
         continue;
       }
@@ -155,8 +150,8 @@ public final class PluginDescriptorChooser {
       }
 
       if (module1 != null && module2 != null) {
-        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
-                                                groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
+        int groupComparison = Integer.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
+                                              groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
         if (groupComparison != 0) {
           return groupComparison;
         }
@@ -198,7 +193,7 @@ public final class PluginDescriptorChooser {
     return Math.min(targetGroupPath.size(), groupPath.size());
   }
 
-  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
+  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(@NotNull String moduleName,
                                                                                List<DomFileElement<IdeaPlugin>> elements) {
     String extensionsFile = INTELLIJ_MODULES.get(moduleName);
     if (extensionsFile != null) {
@@ -222,8 +217,7 @@ public final class PluginDescriptorChooser {
       myStartsNewGroup = startsNewGroup;
     }
 
-    @NlsContexts.ListItem
-    public String getText() {
+    public @NlsContexts.ListItem String getText() {
       final String name = myDomFileElement.getFile().getName();
       final String pluginId = getPluginId();
       return pluginId != null ? name + " [" + pluginId + "]" : name;
@@ -233,16 +227,14 @@ public final class PluginDescriptorChooser {
       return getPluginId() != null ? AllIcons.Nodes.Plugin : EmptyIcon.create(AllIcons.Nodes.Plugin);
     }
 
-    @NlsContexts.Separator
-    public String getSeparatorText() {
+    public @NlsContexts.Separator String getSeparatorText() {
       if (!myStartsNewGroup) return null;
 
       final Module module = myDomFileElement.getModule();
       return module == null ? null : module.getName();
     }
 
-    @NlsSafe
-    private String getPluginId() {
+    private @NlsSafe String getPluginId() {
       return myDomFileElement.getRootElement().getPluginId();
     }
   }

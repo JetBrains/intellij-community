@@ -8,23 +8,19 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
 public interface VcsBaseContentProvider {
+
   @ApiStatus.Internal
   ProjectExtensionPointName<VcsBaseContentProvider> EP_NAME = new ProjectExtensionPointName<>("com.intellij.vcs.baseContentProvider");
 
-  @Nullable
-  BaseContent getBaseRevision(@NotNull VirtualFile file);
+  @Nullable BaseContent getBaseRevision(@NotNull VirtualFile file);
 
   boolean isSupported(@NotNull VirtualFile file);
 
   interface BaseContent {
-    @NotNull
-    VcsRevisionNumber getRevisionNumber();
 
-    @Nullable
-    String loadContent();
+    @NotNull VcsRevisionNumber getRevisionNumber();
+
+    @Nullable String loadContent();
   }
 }

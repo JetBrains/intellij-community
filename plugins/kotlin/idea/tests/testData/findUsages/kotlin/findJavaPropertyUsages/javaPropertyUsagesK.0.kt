@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "var p: Int"
 open class A {
     open var <caret>p: Int = 1
 }
@@ -26,4 +27,3 @@ fun test() {
     B().p = 1
 }
 
-// FIR_IGNORE

@@ -5,7 +5,9 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 
-class PluginInfoValidationRule : CustomValidationRule() {
+public class PluginInfoValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String = "plugin_info"
+
   override fun acceptRuleId(ruleId: String?) = ruleId in acceptedRules
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

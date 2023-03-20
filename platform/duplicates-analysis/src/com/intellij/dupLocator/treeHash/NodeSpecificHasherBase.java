@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class NodeSpecificHasherBase extends NodeSpecificHasher {
   private final TreeHasherBase myTreeHasher;
   private final DuplocatorSettings mySettings;

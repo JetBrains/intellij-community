@@ -2,9 +2,9 @@
 package git4idea.index.vfs
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 
 class GitIndexVirtualFileTabTitleProvider : CustomisableUniqueNameEditorTabTitleProvider() {
@@ -17,6 +17,6 @@ class GitIndexVirtualFileTabTitleProvider : CustomisableUniqueNameEditorTabTitle
   override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
     if (!isApplicable(file)) return null
     return GitBundle.message("stage.vfs.editor.tab.tooltip",
-                             FileUtil.getLocationRelativeToUserHome(file.filePath().presentableUrl))
+                             VcsUtil.getPresentablePath(project, file.filePath(), true, false))
   }
 }

@@ -16,7 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,7 +29,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ImplicitCallToSuperInspection extends BaseInspection {
 
@@ -48,10 +49,10 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "implicit.call.to.super.ignore.option"),
-                                          this, "m_ignoreForObjectSubclasses");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreForObjectSubclasses", InspectionGadgetsBundle.message(
+        "implicit.call.to.super.ignore.option")));
   }
 
   private static class AddExplicitSuperCall extends InspectionGadgetsFix {
@@ -63,13 +64,12 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiElement parent = methodName.getParent();
-      if (!(parent instanceof PsiMethod)) {
+      if (!(parent instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)parent;
       final PsiCodeBlock body = method.getBody();
       final PsiElementFactory factory =
         JavaPsiFacade.getElementFactory(project);
@@ -128,11 +128,9 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     }
 
     private boolean isConstructorCall(PsiStatement statement) {
-      if (!(statement instanceof PsiExpressionStatement)) {
+      if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)statement;
       final PsiExpression expression =
         expressionStatement.getExpression();
       return JavaPsiConstructorUtil.isConstructorCall(expression);

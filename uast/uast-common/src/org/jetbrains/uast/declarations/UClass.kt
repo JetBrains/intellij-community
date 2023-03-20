@@ -14,7 +14,7 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A class wrapper to be used in [UastVisitor].
  */
 interface UClass : UDeclaration, PsiClass {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiClass
@@ -91,7 +91,7 @@ interface UClass : UDeclaration, PsiClass {
 }
 
 interface UAnonymousClass : UClass, PsiAnonymousClass {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnonymousClass

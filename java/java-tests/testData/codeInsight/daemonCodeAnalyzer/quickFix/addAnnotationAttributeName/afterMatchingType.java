@@ -1,4 +1,4 @@
-// "Add 'name='" "true"
+// "Add 'name='" "true-preview"
 class T {
   @interface A {
     int size();

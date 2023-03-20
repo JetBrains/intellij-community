@@ -32,12 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
- */
 public class EditorHighlighterUpdater {
   @NotNull protected final Project myProject;
-  @NotNull private final EditorEx myEditor;
+  @NotNull protected final EditorEx myEditor;
   @Nullable private final VirtualFile myFile;
 
   public EditorHighlighterUpdater(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull EditorEx editor, @Nullable VirtualFile file) {
@@ -170,7 +167,7 @@ public class EditorHighlighterUpdater {
     @Override
     public void fileTypesChanged(@NotNull final FileTypeEvent event) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-    // File can be invalid after file type changing. The editor should be removed
+      // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       FileType type = event.getRemovedFileType();
       if (type != null && !(type instanceof AbstractFileType)) {
@@ -182,5 +179,4 @@ public class EditorHighlighterUpdater {
       }
     }
   }
-
 }

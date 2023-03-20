@@ -17,9 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvider {
   @Nullable
   @Override

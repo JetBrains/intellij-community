@@ -10,7 +10,7 @@
   <!-- Description -->
   <description><![CDATA[
     Provides a possibility to evaluate XPath expressions against any XML document
-    opened in IDEA. It can also generate and show an XPath expression that matches the current node.
+    opened in IDE. It can also generate and show an XPath expression that matches the current node.
     <p>
     Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
     expressions and named templates for XSLT documents.</p>
@@ -129,18 +129,22 @@
                      key="inspection.xslt.variable.shadowing.display.name" bundle="messages.XPathBundle"/>
 
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.ConvertIfToChooseIntention</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.ReplaceWithXslAttribute</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>$XSLT</language>
       <className>org.intellij.lang.xpath.xslt.intentions.InlineXslAttribute</className>
       <categoryKey>configurable.xslt.display.name</categoryKey>
     </intentionAction>
@@ -231,7 +235,7 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RefactoringMenu" />
     </group>
 
-    <group id="XPathView.XSLT.Associations" popup="true"
+    <group id="XPathView.XSLT.Associations" popup="true" icon="XpathIcons.Association"
            class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsGroup">
       <add-to-group group-id="XPathView.EditorPopup" anchor="last"
                     relative-to-action="XPathView.Actions.ShowPathDescription" />

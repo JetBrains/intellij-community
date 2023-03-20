@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -15,9 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -30,18 +29,17 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author gregsh
  */
 final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
-  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 5);
+  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 6);
 
   private final EventId1<Integer> MODULES_TOTAL = GROUP.registerEvent("modules.total", EventFields.Count);
+  private final EventId1<Integer> MODULE_GROUPS_TOTAL = GROUP.registerEvent("module.groups.total", EventFields.Count);
+  private final EventId1<Integer> UNLOADED_MODULES_TOTAL = GROUP.registerEvent("unloaded.modules.total", EventFields.Count);
   private final EventId1<Integer> CONTENT_ROOTS_TOTAL = GROUP.registerEvent("content.roots.total", EventFields.Count);
   private final EventId1<Integer> SOURCE_ROOTS_TOTAL = GROUP.registerEvent("source.roots.total", EventFields.Count);
   private final EventId1<Integer> EXCLUDED_ROOTS_TOTAL = GROUP.registerEvent("excluded.roots.total", EventFields.Count);
@@ -75,8 +73,9 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
       .toMap(JpsElementPropertiesSerializer::getType, JpsElementPropertiesSerializer::getTypeId);
     int contentRoots = 0, sourceRoots = 0, excludedRoots = 0, packagePrefix = 0;
     Object2IntMap<String> types = new Object2IntOpenHashMap<>();
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    Module[] modules = moduleManager.getModules();
+    Set<List<String>> moduleGroups = new HashSet<>(); 
     for (Module module : modules) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       contentRoots += rootManager.getContentEntries().length;
@@ -94,10 +93,16 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
           types.mergeInt(key, 1, Math::addExact);
         }
       }
+      String[] groupPath = moduleManager.getModuleGroupPath(module);
+      if (groupPath != null) {
+        moduleGroups.add(Arrays.asList(groupPath));
+      }
     }
 
     final Set<MetricEvent> result = new HashSet<>();
     result.add(MODULES_TOTAL.metric(modules.length));
+    result.add(MODULE_GROUPS_TOTAL.metric(moduleGroups.size()));
+    result.add(UNLOADED_MODULES_TOTAL.metric(moduleManager.getUnloadedModuleDescriptions().size()));
     result.add(CONTENT_ROOTS_TOTAL.metric(contentRoots));
     result.add(SOURCE_ROOTS_TOTAL.metric(sourceRoots));
     result.add(EXCLUDED_ROOTS_TOTAL.metric(excludedRoots));
@@ -114,7 +119,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     result.add(NAMED_SCOPES_TOTAL_SHARED.metric(sharedScopes.length));
 
     String basePath = project.getBasePath();
-    if (basePath != null && FileUtil.toSystemDependentName(basePath).startsWith(WslConstants.UNC_PREFIX)) {
+    if (basePath != null && WslPath.isWslUncPath(basePath)) {
       result.add(PROJECT_IN_WSL.metric());
     }
 

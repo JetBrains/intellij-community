@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,7 +27,6 @@ import java.util.List;
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjectsWatcher {
 
   @NotNull
@@ -104,7 +103,6 @@ public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjects
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public interface Contributor {
 
     void markDirtyAllExternalProjects(@NotNull Project project);

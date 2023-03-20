@@ -74,13 +74,15 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   public void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     final Collection<String> outputPaths = getState(keyPath);
     if (outputPaths != null) {
-      final boolean removed = outputPaths.remove(normalizePath(boundPath));
-      if (outputPaths.isEmpty()) {
-        remove(keyPath);
-      }
-      else {
-        if (removed) {
-          update(keyPath, outputPaths);
+      String normalizedPath = normalizePath(boundPath);
+      List<String> newState = ContainerUtil.filter(outputPaths, path -> !normalizedPath.equals(path));
+      final boolean removed = newState.size() != outputPaths.size();
+      if (removed) {
+        if (newState.isEmpty()) {
+          remove(keyPath);
+        }
+        else {
+          update(keyPath, newState);
         }
       }
     }

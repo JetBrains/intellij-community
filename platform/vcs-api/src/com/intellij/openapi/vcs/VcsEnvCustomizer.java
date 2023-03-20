@@ -11,6 +11,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * Allows to modify ENV that is used when invoking external VCS commands.
+ * <p>
+ * For example, it can be used to pass Project-specific variables (such as configured python venv folder)
+ * to the "git pre-commit hooks".
+ */
 public abstract class VcsEnvCustomizer {
   public static final ExtensionPointName<VcsEnvCustomizer> EP_NAME =
     ExtensionPointName.create("com.intellij.vcs.envCustomizer");

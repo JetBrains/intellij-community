@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.runReadAction
@@ -43,7 +43,7 @@ class SaveProjectTest {
     val module = projectModel.createModule("foo")
     fun setGroupPath(path: Array<String>?) {
       runWriteActionAndWait {
-        val model = projectModel.moduleManager.modifiableModel
+        val model = projectModel.moduleManager.getModifiableModel()
         model.setModuleGroupPath(module, path)
         model.commit()
       }
@@ -84,7 +84,7 @@ class SaveProjectTest {
 
   @Test
   fun `save renamed module`() {
-    val model = runReadAction { projectModel.moduleManager.modifiableModel }
+    val model = runReadAction { projectModel.moduleManager.getModifiableModel() }
     val module = projectModel.createModule("foo", model)
     model.renameModule(module, "bar")
     runWriteActionAndWait { model.commit() }

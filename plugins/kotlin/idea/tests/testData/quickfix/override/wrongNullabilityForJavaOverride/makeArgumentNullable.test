@@ -1,0 +1,59 @@
+// FILE: test.before.kt
+// "Change function signature to 'fun foo(x: String?): String'" "true"
+package p;
+
+class Bar : Foo() {
+    <caret>override fun foo(x: String): String {
+        return "bar"
+    }
+}
+
+// FILE: org/jspecify/nullness/NullMarked.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.MODULE;
+import static java.lang.annotation.ElementType.PACKAGE;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target({TYPE, PACKAGE, MODULE})
+@Retention(RUNTIME)
+public @interface NullMarked {}
+
+// FILE: org/jspecify/nullness/Nullable.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target(TYPE_USE)
+@Retention(RUNTIME)
+public @interface Nullable {}
+
+// FILE: p/Foo.java
+package p;
+
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+
+@NullMarked
+public class Foo {
+    public String foo(@Nullable String x) { return x; }
+}
+
+// FILE: test.after.kt
+// "Change function signature to 'fun foo(x: String?): String'" "true"
+package p;
+
+class Bar : Foo() {
+    <caret>override fun foo(x: String?): String {
+        return "bar"
+    }
+}

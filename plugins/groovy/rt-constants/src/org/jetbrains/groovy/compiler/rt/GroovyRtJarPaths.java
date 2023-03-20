@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.groovy.compiler.rt;
 
 import java.io.File;
@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class GroovyRtJarPaths {
+public final class GroovyRtJarPaths {
   public static List<String> getGroovyRtRoots(File jpsPluginRoot, boolean addClassLoaderJar) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     addGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar",
                        Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
     addGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar",

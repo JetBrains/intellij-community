@@ -1,41 +1,65 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
-import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
+import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.getResolvedPath
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.openProjectAsync
+import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.util.io.systemIndependentPath
-import java.nio.file.Path
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import javax.swing.Icon
 
-abstract class AutoLinkTestCase : ExternalSystemTestCase() {
+@TestApplication
+abstract class AutoLinkTestCase {
 
   lateinit var testDisposable: Disposable
-    private set
 
-  override fun setUp() {
-    super.setUp()
+  private lateinit var fileFixture: TempDirTestFixture
+
+  lateinit var testRoot: VirtualFile
+
+  @BeforeEach
+  fun setUp() {
     testDisposable = Disposer.newDisposable()
+
+    fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
+      .createTempDirTestFixture()
+    fileFixture.setUp()
+
+    runWriteActionAndWait {
+      testRoot = fileFixture.findOrCreateDir("AutoLinkTestCase")
+    }
   }
 
-  override fun tearDown() {
-    Disposer.dispose(testDisposable)
-    super.tearDown()
+  @AfterEach
+  fun tearDown() {
+    runAll(
+      { fileFixture.tearDown() },
+      { Disposer.dispose(testDisposable) }
+    )
   }
 
-  override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
-
-  override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
+  suspend fun openProject(relativePath: String): Project {
+    val projectRoot = testRoot.getDirectory(relativePath)
+    return openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+  }
 
   fun createUnlinkedProjectAware(systemId: String, buildFileExtension: String): MockUnlinkedProjectAware {
     return MockUnlinkedProjectAware(ProjectSystemId(systemId), buildFileExtension)
@@ -51,25 +75,34 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override fun linkAndRefreshProject(projectDirectory: Path, project: Project) =
+      override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+        val projectDirectory = getProjectDirectory(projectFile).toNioPath()
         unlinedProjectAware.linkAndLoadProject(project, projectDirectory.systemIndependentPath)
+      }
     }
     return object : ProjectOpenProcessor() {
-      override fun getName(): String = unlinedProjectAware.systemId.readableName
-      override fun getIcon(): Icon? = null
+      override val name: String
+        get() = unlinedProjectAware.systemId.readableName
+      override val icon: Icon?
+        get() = null
 
       override fun canOpenProject(file: VirtualFile): Boolean =
         openProvider.canOpenProject(file)
 
-      override fun doOpenProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-        val project = openProvider.openProject(projectFile, projectToClose, forceOpenInNewFrame)
+      override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+        throw UnsupportedOperationException("openProjectAsync must be used")
+      }
+
+      override suspend fun openProjectAsync(virtualFile: VirtualFile,
+                                            projectToClose: Project?,
+                                            forceOpenInNewFrame: Boolean): Project? {
+        val project = openProvider.openProject(virtualFile, projectToClose, forceOpenInNewFrame)
         if (project != null && !isExternalSystem) {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null)
         }
         return project
       }
-
 
       override fun canImportProjectAfterwards(): Boolean = true
       override fun importProjectAfterwards(project: Project, file: VirtualFile) =
@@ -92,49 +125,23 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
     return projectOpenProcessor
   }
 
-  fun createDummyCompilerXml(relativePath: String) {
-    createProjectSubFile(relativePath, """
-      <?xml version="1.0" encoding="UTF-8"?>
-      <project version="4">
-        <component name="CompilerConfiguration">
-          <bytecodeTargetLevel target="14" />
-        </component>
-      </project>
-    """.trimIndent())
-  }
-
-  fun createDummyModulesXml(relativePath: String) {
-    createProjectSubFile(relativePath, """
-      <?xml version="1.0" encoding="UTF-8"?>
-      <project version="4">
-        <component name="ProjectModuleManager">
-          <modules>
-            <module fileurl="file://${'$'}PROJECT_DIR${'$'}/project.iml" filepath="${'$'}PROJECT_DIR${'$'}/project.iml" />
-          </modules>
-        </component>
-      </project>
-    """.trimIndent())
-  }
-
-  fun openProjectFrom(projectPath: VirtualFile): Project {
-    return ExternalSystemSetupProjectTestCase.openProjectFrom(projectPath).apply {
-      UnlinkedProjectStartupActivity().runActivity(this)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-    }
-  }
-
-  fun assertNotificationAware(project: Project, vararg projects: ExternalSystemProjectId) {
-    val message = when (projects.isEmpty()) {
-      true -> "Notification must be expired"
-      else -> "Notification must be notified"
+  suspend fun assertNotificationAware(project: Project, vararg projects: Pair<String, String>) {
+    val expectedProjectIds = readAction {
+      projects.map { (systemId, relativePath) ->
+        val externalProjectPath = testRoot.toNioPath().getResolvedPath(relativePath).toCanonicalPath()
+        ExternalSystemProjectId(ProjectSystemId(systemId), externalProjectPath)
+      }
     }
     val notificationAware = UnlinkedProjectNotificationAware.getInstance(project)
-    assertEquals(message, projects.toSet(), notificationAware.getProjectsWithNotification())
+    Assertions.assertEquals(expectedProjectIds.toSet(), notificationAware.getProjectsWithNotification()) {
+      when (projects.isEmpty()) {
+        true -> "Notification must be expired"
+        else -> "Notification must be notified"
+      }
+    }
   }
 
   fun assertLinkedProjects(unlinedProjectAware: MockUnlinkedProjectAware, linkedProjects: Int) {
-    assertEquals(linkedProjects, unlinedProjectAware.linkCounter.get())
+    Assertions.assertEquals(linkedProjects, unlinedProjectAware.linkCounter.get())
   }
 }

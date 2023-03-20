@@ -7,8 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Just a holder for the common useful functionality.
- * 
- * @author Denis Zhdanov
  */
 public abstract class AbstractImportFromExternalSystemWizardStep extends ProjectImportWizardStep {
 

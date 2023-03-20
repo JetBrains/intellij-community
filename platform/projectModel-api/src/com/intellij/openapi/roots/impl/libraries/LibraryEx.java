@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -28,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- *  @author dsl
- */
 @ApiStatus.NonExtendable
 public interface LibraryEx extends Library {
   @NotNull
@@ -75,15 +73,29 @@ public interface LibraryEx extends Library {
 
     LibraryProperties getProperties();
 
-    void setKind(@NotNull PersistentLibraryKind<?> type);
+    void setKind(@Nullable PersistentLibraryKind<?> type);
 
     PersistentLibraryKind<?> getKind();
 
     /**
-     * Removes custom library kind and associated properties if any
+     * It's supposed that the external source is set when the library is created. This method is used internally to fix the project 
+     * configuration if this information was lost.
      */
+    @ApiStatus.Internal
+    void setExternalSource(@NotNull ProjectModelExternalSource externalSource);
+
+    /**
+     * Replaces custom kind by a special 'unknown' kind if it was set. 
+     * This method is called by the platform when a plugin which provides the custom kind is dynamically unloaded.
+     */
+    @ApiStatus.Internal
     void forgetKind();
 
+    /**
+     * Restores original kind which was converted to 'unknown' by {@link #forgetKind()}.  
+     * This method is called by the platform when a plugin which provides the custom kind is dynamically loaded.
+     */
+    @ApiStatus.Internal
     void restoreKind();
 
     /**

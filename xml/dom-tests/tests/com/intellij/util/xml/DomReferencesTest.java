@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class DomReferencesTest extends DomHardCoreTestCase {
 
   public void testMetaData() {

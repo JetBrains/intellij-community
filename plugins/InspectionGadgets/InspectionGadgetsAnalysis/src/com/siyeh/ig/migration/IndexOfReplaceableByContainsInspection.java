@@ -76,12 +76,11 @@ public class IndexOfReplaceableByContainsInspection
     extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression)) {
+      if (!(element instanceof PsiBinaryExpression expression)) {
         return;
       }
-      final PsiBinaryExpression expression = (PsiBinaryExpression)element;
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       CommentTracker commentTracker = new CommentTracker();
@@ -153,7 +152,7 @@ public class IndexOfReplaceableByContainsInspection
 
     @Override
     public void visitBinaryExpression(
-      PsiBinaryExpression expression) {
+      @NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
@@ -183,10 +182,9 @@ public class IndexOfReplaceableByContainsInspection
       }
       final Object object =
         ExpressionUtils.computeConstantExpression(rhs);
-      if (!(object instanceof Integer)) {
+      if (!(object instanceof Integer integer)) {
         return false;
       }
-      final Integer integer = (Integer)object;
       final int constant = integer.intValue();
       if (flipped) {
         if (constant == -1 && (JavaTokenType.NE.equals(tokenType) ||

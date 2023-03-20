@@ -5,7 +5,6 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.ui.scale.UserScaleContext;
-import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +46,7 @@ public abstract class LazyImageIcon extends ScaleContextSupport
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
     ScaleContext ctx = ScaleContext.create(g2d);
-    if (SVGLoader.isColorRedefinitionContext()) {
-      getRealIconForSelection(ctx).paintIcon(c, g, x, y);
-    } else {
-      getRealIcon(ctx).paintIcon(c, g, x, y);
-    }
+    getRealIcon(ctx).paintIcon(c, g, x, y);
   }
 
   @Override

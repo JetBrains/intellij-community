@@ -1,8 +1,5 @@
 import java.awt.*;
 
-/**
- * @author pegov
- */
 public class MacMessages {
 
 

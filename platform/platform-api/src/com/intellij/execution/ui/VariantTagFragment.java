@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +30,10 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   public void setVariantHintProvider(Function<? super V, String> variantHintProvider) {
     myVariantHintProvider = variantHintProvider;
+  }
+
+  public void setVariantDescriptionProvider(Function<? super V, String> variantDescriptionProvider) {
+    myVariantDescriptionProvider = variantDescriptionProvider;
   }
 
   public void setToggleListener(Consumer<? super V> toggleListener) {
@@ -59,6 +62,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   private final BiConsumer<? super T, ? super V> mySetter;
   private Function<? super V, String> myVariantNameProvider;
   private Function<? super V, String> myVariantHintProvider;
+  private Function<? super V, String> myVariantDescriptionProvider;
   private Consumer<? super V> myToggleListener;
 
   public VariantTagFragment(String id,
@@ -105,7 +109,6 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   @Override
   protected void applyEditorTo(@NotNull T s) {
     mySetter.accept(s, mySelectedVariant);
-    validate(s);
   }
 
   @Nls
@@ -118,6 +121,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     return myVariantHintProvider == null ? null : myVariantHintProvider.apply(variant); //NON-NLS
   }
 
+  @Nls
+  protected String getVariantDescription(V variant) {
+    return myVariantDescriptionProvider == null ? null : myVariantDescriptionProvider.apply(variant); //NON-NLS
+  }
+
   @Override
   public boolean isTag() {
     return true;
@@ -127,9 +135,25 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public @Nullable ActionGroup getCustomActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup(getName(), ContainerUtil.map(getVariants(), s ->
       new ToggleAction(getVariantName(s), getVariantHint(s), null) {
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        var description = getVariantDescription(s);
+
+        if (description != null) {
+          e.getPresentation().putClientProperty(Presentation.PROP_VALUE, description);
+        }
+      }
+
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return s.equals(mySelectedVariant);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -155,6 +179,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isDumbAware() {
         return true;
       }
@@ -168,7 +197,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     private final DropDownLink<V> myDropDown;
     private VariantTagFragment<?, V> myFragment;
 
-    private VariantTagButton(@Nls String text, Consumer<AnActionEvent> action) {
+    private VariantTagButton(@Nls String text, Consumer<? super AnActionEvent> action) {
       super(text, action);
       myDropDown = new DropDownLink<>(null, link -> showPopup());
       myDropDown.setAutoHideOnDisable(false);

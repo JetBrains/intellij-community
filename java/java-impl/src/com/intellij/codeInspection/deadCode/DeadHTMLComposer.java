@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -36,8 +35,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       genPageHeader(buf, refEntity);
     }
 
-    if (refEntity instanceof RefElementImpl) {
-      RefElementImpl refElement = (RefElementImpl)refEntity;
+    if (refEntity instanceof RefElementImpl refElement) {
       if (refElement.isSuspicious() && !refElement.isEntry()) {
         appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
         buf.append("<br>");
@@ -171,7 +169,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             }
           }
         } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious()) {
-          if (method.isAbstract()) {
+          if (method.isAbstract() && !refClass.isInterface()) {
             buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
             buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis15"));
@@ -203,8 +201,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
 
     buf.append("<br>");
-    if (refElement instanceof RefClassImpl) {
-      RefClassImpl refClass = (RefClassImpl)refElement;
+    if (refElement instanceof RefClassImpl refClass) {
       if (refClass.isSuspicious()) {
         if (refClass.isUtilityClass()) {
           // Append nothing.
@@ -357,9 +354,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       }
     }
 
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) refElement;
-
+    if (refElement instanceof RefMethod refMethod) {
       RefClass aClass = refMethod.getOwnerClass();
       if (!refMethod.isStatic() && !refMethod.isConstructor() && (aClass != null && !aClass.isAnonymous())) {
         for (RefOverridable refDerived : refMethod.getDerivedReferences()) {
@@ -369,8 +364,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           }
         }
       }
-    } else if (refElement instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement;
+    } else if (refElement instanceof RefClass refClass) {
       for (RefClass subClass : refClass.getSubClasses()) {
         if ((subClass.isInterface() || subClass.isAbstract()) && ((RefClassImpl)subClass).isSuspicious()) {
           newChildren.add(subClass);

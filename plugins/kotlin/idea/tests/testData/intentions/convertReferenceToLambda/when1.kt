@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // AFTER-WARNING: Variable 'foo' is never used
 
 class Test {

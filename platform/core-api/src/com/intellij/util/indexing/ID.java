@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -14,28 +12,71 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
-  private static final IntObjectMap<ID<?, ?>> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
 
-  private static final SimpleStringPersistentEnumerator ourNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
+  private static volatile SimpleStringPersistentEnumerator ourNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
+
+  private final static Map<String, ID<?, ?>> ourIdObjects = new ConcurrentHashMap<>();
 
   private static final Map<ID<?, ?>, PluginId> ourIdToPluginId = Collections.synchronizedMap(new HashMap<>());
   private static final Map<ID<?, ?>, Throwable> ourIdToRegistrationStackTrace = Collections.synchronizedMap(new HashMap<>());
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
-  private final short myUniqueId;
+  private volatile int myUniqueId;
 
-  private static @NotNull Path getEnumFile() {
+  @ApiStatus.Internal
+  @NotNull
+  private static Path getEnumFile() {
     return PathManager.getIndexRoot().resolve("indices.enum");
+  }
+
+  @ApiStatus.Internal
+  public static void reloadEnumFile() {
+    reloadEnumFile(getEnumFile());
+  }
+
+  //RC: method should probably be synchronized, since it uses current value .ourNameToIdRegistry
+  //    while building a new state, and this is unsafe if whole method could be called concurrently,
+  //    so that old value could be changed along the way. Right now this is 'safe' since method is
+  //    called only while shared index initialization, but...
+  private static void reloadEnumFile(@NotNull Path enumFile) {
+    if (enumFile.equals(ourNameToIdRegistry.getFile())) {
+      return;
+    }
+
+    SimpleStringPersistentEnumerator newNameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
+    Map<String, Integer> newInvertedState = newNameToIdRegistry.getInvertedState();
+    Map<String, Integer> oldInvertedState = ourNameToIdRegistry.getInvertedState();
+
+    oldInvertedState.forEach((oldKey, oldId) -> {
+      Integer newId = newInvertedState.get(oldKey);
+
+      if (newId == null) {
+        int createdId = newNameToIdRegistry.enumerate(oldKey);
+        if (createdId != oldId) {
+          reassign(oldKey, createdId);
+        }
+      }
+      else if (oldId.intValue() != newId.intValue()) {
+        reassign(oldKey, newId);
+      }
+    });
+
+    ourNameToIdRegistry = newNameToIdRegistry;
+  }
+
+  private static void reassign(String name, int newId) {
+    ID<?, ?> id = ourIdObjects.get(name);
+    if (id != null) {
+      id.myUniqueId = newId;
+    }
   }
 
   @ApiStatus.Internal
@@ -43,7 +84,7 @@ public class ID<K, V> extends IndexId<K,V> {
     super(name);
     myUniqueId = stringToId(name);
 
-    ID<?,?> old = ourRegistry.put(myUniqueId, this);
+    ID<?,?> old = ourIdObjects.put(name, this);
     assert old == null : "ID with name '" + name + "' is already registered";
 
     PluginId oldPluginId = ourIdToPluginId.put(this, pluginId);
@@ -52,8 +93,12 @@ public class ID<K, V> extends IndexId<K,V> {
     ourIdToRegistrationStackTrace.put(this, new Throwable());
   }
 
-  private static short stringToId(@NotNull String name) {
-    return ourNameToIdRegistry.enumerate(name);
+  private static int stringToId(@NotNull String name) {
+    int id = ourNameToIdRegistry.enumerate(name);
+    if (id != (short)id) {
+      throw new AssertionError("Too many indexes registered");
+    }
+    return id;
   }
 
   static void reinitializeDiskStorage() {
@@ -82,8 +127,8 @@ public class ID<K, V> extends IndexId<K,V> {
     if (checkCallerPlugin && id != null) {
       PluginId actualPluginId = ourIdToPluginId.get(id);
 
-      String actualPluginIdStr = actualPluginId == null ? "IDEA Core" : actualPluginId.getIdString();
-      String requiredPluginIdStr = requiredPluginId == null ? "IDEA Core" : requiredPluginId.getIdString();
+      String actualPluginIdStr = actualPluginId == null ? "IJ Core" : actualPluginId.getIdString();
+      String requiredPluginIdStr = requiredPluginId == null ? "IJ Core" : requiredPluginId.getIdString();
 
       if (!Objects.equals(actualPluginIdStr, requiredPluginIdStr)) {
         Throwable registrationStackTrace = ourIdToRegistrationStackTrace.get(id);
@@ -111,22 +156,19 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @ApiStatus.Internal
+  public static Collection<ID<?, ?>> getRegisteredIds() {
+    synchronized (ourIdToPluginId) {
+      return Collections.unmodifiableSet(new HashSet<>(ourIdToPluginId.keySet()));
+    }
+  }
+
+  @ApiStatus.Internal
   @NotNull
   public Throwable getRegistrationTrace() {
     return ourIdToRegistrationStackTrace.get(this);
   }
 
-  @Override
-  public final int hashCode() {
-    return myUniqueId;
-  }
-
-  @Override
-  public final boolean equals(Object obj) {
-    // IDs are singletons per unique ID. Compare them by object identity.
-    return this == obj;
-  }
-
+  @ApiStatus.Internal
   public int getUniqueId() {
     return myUniqueId;
   }
@@ -137,8 +179,10 @@ public class ID<K, V> extends IndexId<K,V> {
     return ourIdToPluginId.get(this);
   }
 
+  @ApiStatus.Internal
   public static ID<?, ?> findById(int id) {
-    return ourRegistry.get(id);
+    String key = ourNameToIdRegistry.valueOf(id);
+    return key == null ? null : ourIdObjects.get(key);
   }
 
   @ApiStatus.Internal
@@ -149,8 +193,9 @@ public class ID<K, V> extends IndexId<K,V> {
 
   @ApiStatus.Internal
   public synchronized static void unloadId(@NotNull ID<?, ?> id) {
-    ID<?, ?> oldID = ourRegistry.remove(id.getUniqueId());
-    LOG.assertTrue(id.equals(oldID));
+    String name = id.getName();
+    ID<?, ?> oldID = ourIdObjects.remove(name);
+    LOG.assertTrue(id.equals(oldID), "Failed to unload: " + name);
     ourIdToPluginId.remove(id);
     ourIdToRegistrationStackTrace.remove(id);
   }

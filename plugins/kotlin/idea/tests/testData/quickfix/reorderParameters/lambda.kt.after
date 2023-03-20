@@ -1,0 +1,5 @@
+// "Reorder parameters" "true"
+fun foo(
+    y: String = "OK",
+    x: () -> String = { y }
+) = Unit

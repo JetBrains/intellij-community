@@ -1,4 +1,4 @@
-// "Remove custom ''writeToParcel()'' function" "true"
+// "Remove custom 'writeToParcel()' function" "true"
 // ERROR: 'CREATOR' definition is not allowed. Use 'Parceler' companion object instead
 // WITH_STDLIB
 

@@ -25,10 +25,6 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class RemoveTrailingSuffixQuickFix implements LocalQuickFix {
 
   @NotNull
@@ -40,8 +36,7 @@ public class RemoveTrailingSuffixQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement numericLiteralExpression = descriptor.getPsiElement();
-    if (numericLiteralExpression instanceof PyNumericLiteralExpression) {
-      PyNumericLiteralExpression numeric = (PyNumericLiteralExpression)numericLiteralExpression;
+    if (numericLiteralExpression instanceof PyNumericLiteralExpression numeric) {
       String suffix = numeric.getIntegerLiteralSuffix();
       if (suffix == null) return;
       String text = numeric.getText();

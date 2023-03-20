@@ -369,21 +369,21 @@ public class o {
 
          while(true) {
             var10004 = var4[var10003];
-            switch(var1 % 5) {
-            case 0:
-               var10005 = 74;
-               break;
-            case 1:
-               var10005 = 64;
-               break;
-            case 2:
-               var10005 = 76;
-               break;
-            case 3:
-               var10005 = 110;
-               break;
-            default:
-               var10005 = 29;
+            switch (var1 % 5) {
+               case 0:
+                  var10005 = 74;
+                  break;
+               case 1:
+                  var10005 = 64;
+                  break;
+               case 2:
+                  var10005 = 76;
+                  break;
+               case 3:
+                  var10005 = 110;
+                  break;
+               default:
+                  var10005 = 29;
             }
 
             var4[var10003] = (char)(var10004 ^ var10005);
@@ -425,21 +425,21 @@ public class o {
 
       while(true) {
          var10004 = var4[var10003];
-         switch(var1 % 5) {
-         case 0:
-            var10005 = 74;
-            break;
-         case 1:
-            var10005 = 64;
-            break;
-         case 2:
-            var10005 = 76;
-            break;
-         case 3:
-            var10005 = 110;
-            break;
-         default:
-            var10005 = 29;
+         switch (var1 % 5) {
+            case 0:
+               var10005 = 74;
+               break;
+            case 1:
+               var10005 = 64;
+               break;
+            case 2:
+               var10005 = 76;
+               break;
+            case 3:
+               var10005 = 110;
+               break;
+            default:
+               var10005 = 29;
          }
 
          var4[var10003] = (char)(var10004 ^ var10005);

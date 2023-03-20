@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -13,17 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Objects;
 
-/**
- * @author Danila Ponomarenko
- */
 public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-
-    final PsiJavaToken token = (PsiJavaToken)element;
 
     if (token.getTokenType() != JavaTokenType.STRING_LITERAL) {
       return false;
@@ -49,11 +44,9 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return;
     }
-
-    final PsiJavaToken token = (PsiJavaToken)element;
 
     if (token.getTokenType() != JavaTokenType.STRING_LITERAL) {
       return;

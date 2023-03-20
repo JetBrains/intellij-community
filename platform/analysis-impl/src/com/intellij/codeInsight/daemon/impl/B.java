@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ class B implements AnnotationBuilder {
   private List<FixB> fixes;
   private boolean created;
   private final Throwable myDebugCreationPlace;
+  private PsiReference unresolvedReference;
 
   B(@NotNull AnnotationHolderImpl holder,
     @NotNull HighlightSeverity severity,
@@ -159,6 +161,11 @@ class B implements AnnotationBuilder {
     return new FixB(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor));
   }
 
+  void unresolvedReference(@NotNull PsiReference reference) {
+    assertNotSet(this.unresolvedReference, "unresolvedReference");
+    this.unresolvedReference = reference;
+  }
+
   @Override
   public @NotNull AnnotationBuilder range(@NotNull TextRange range) {
     assertNotSet(this.range, "range");
@@ -166,7 +173,7 @@ class B implements AnnotationBuilder {
     if (!currentElementRange.contains(range)) {
       markNotAbandoned();
       String message = "Range must be inside element being annotated: " + currentElementRange + "; but got: " + range;
-      throw PluginException.createByClass(message, null, myCurrentElement.getClass());
+      throw PluginException.createByClass(message, null, myCurrentAnnotator.getClass());
     }
 
     this.range = range;
@@ -263,7 +270,6 @@ class B implements AnnotationBuilder {
     if (tooltip == null && message != null) {
       tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
     }
-    //noinspection deprecation
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     if (needsUpdateOnTyping != null) {
       annotation.setNeedsUpdateOnTyping(needsUpdateOnTyping);
@@ -305,6 +311,9 @@ class B implements AnnotationBuilder {
         }
       }
     }
+    if (unresolvedReference != null) {
+      annotation.setUnresolvedReference(unresolvedReference);
+    }
     myHolder.add(annotation);
     myHolder.queueToUpdateIncrementally();
     myHolder.annotationCreatedFrom(this);
@@ -318,9 +327,10 @@ class B implements AnnotationBuilder {
 
   void assertAnnotationCreated() {
     if (!created) {
-      throw new IllegalStateException(
+      IllegalStateException exception = new IllegalStateException(
         "Abandoned AnnotationBuilder - its 'create()' method was never called: " + this +
         (myDebugCreationPlace == null ? "" : "\nSee cause for the AnnotationBuilder creation stacktrace"), myDebugCreationPlace);
+      throw PluginException.createByClass(exception, myCurrentAnnotator.getClass());
     }
   }
 

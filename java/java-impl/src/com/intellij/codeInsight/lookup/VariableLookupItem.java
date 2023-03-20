@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFieldImpl;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -32,9 +33,6 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Objects;
 
-/**
-* @author peter
-*/
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
   private static final String EQ = " = ";
   @Nullable private final MemberLookupHelper myHelper;
@@ -43,6 +41,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   private final boolean myNegatable;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
   private String myForcedQualifier;
+  private PsiClass myQualifierClass;
 
   public VariableLookupItem(PsiVariable var) {
     this(var, null, null);
@@ -65,18 +64,26 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     myHelper = helper;
     myColor = getInitializerColor(var);
     myTailText = tailText == null ? getInitializerText(var) : tailText;
-    myNegatable = PsiType.BOOLEAN.isAssignableFrom(var.getType());
+    myNegatable = PsiTypes.booleanType().isAssignableFrom(var.getType());
   }
 
   @ApiStatus.Internal
-  public LookupElement qualifyIfNeeded(@Nullable PsiReference position) {
+  public LookupElement qualifyIfNeeded(@Nullable PsiReference position, @Nullable PsiClass origClass) {
     PsiVariable var = getObject();
     if (var instanceof PsiField && !willBeImported() && shouldQualify((PsiField)var, position)) {
       boolean isInstanceField = !var.hasModifierProperty(PsiModifier.STATIC);
       PsiClass aClass = ((PsiField)var).getContainingClass();
+      if (aClass != null && origClass != null &&
+          !JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), position.getElement(), null, null) &&
+          JavaResolveUtil.isAccessible(origClass, origClass.getContainingClass(), origClass.getModifierList(), position.getElement(), null,
+                                       null) &&
+          var.isEquivalentTo(origClass.findFieldByName(var.getName(), true))) {
+        aClass = origClass;
+      }
       String className = aClass == null ? null : aClass.getName();
       if (className != null) {
         String infix = isInstanceField ? ".this." : ".";
+        myQualifierClass = aClass;
         myForcedQualifier = className + infix;
         for (String s : JavaCompletionUtil.getAllLookupStrings(aClass)) {
           setLookupString(s + infix + var.getName());
@@ -158,7 +165,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     boolean qualify = myHelper != null && !myHelper.willBeImported() || myForcedQualifier != null;
 
     PsiVariable variable = getObject();
@@ -295,7 +302,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       return;
     }
 
-    if (HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, place) != null &&
+    if (HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, place) != null &&
         !HighlightControlFlowUtil.isReassigned(variable, new HashMap<>())) {
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }
@@ -335,7 +342,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return type instanceof PsiClassType && enumClass.getManager().areElementsEquivalent(enumClass, ((PsiClassType)type).resolve());
   }
 
-  private static void qualifyFieldReference(InsertionContext context, PsiField field) {
+  private void qualifyFieldReference(InsertionContext context, PsiField field) {
     context.commitDocument();
     PsiFile file = context.getFile();
     final PsiReference reference = file.findReferenceAt(context.getStartOffset());
@@ -343,11 +350,16 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       return;
     }
 
-    PsiClass containingClass = field.getContainingClass();
+    PsiClass containingClass = myQualifierClass != null && myQualifierClass.isValid() ? myQualifierClass : field.getContainingClass();
     if (containingClass != null && containingClass.getName() != null) {
       context.getDocument().insertString(context.getStartOffset(), field.hasModifierProperty(PsiModifier.STATIC) ? "." : ".this.");
       JavaCompletionUtil.insertClassReference(containingClass, file, context.getStartOffset());
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
     }
+  }
+
+  @Override
+  public boolean isWorthShowingInAutoPopup() {
+    return myTailText != null;
   }
 }

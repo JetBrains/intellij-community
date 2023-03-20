@@ -1,4 +1,4 @@
-// "Replace with 'Map.containsKey()'" "true"
+// "Replace with 'Map.containsKey()'" "true-preview"
 import java.util.Map;
 
 class Test {

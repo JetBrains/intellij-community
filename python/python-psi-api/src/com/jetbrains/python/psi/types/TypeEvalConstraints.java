@@ -49,9 +49,7 @@ class TypeEvalConstraints {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TypeEvalConstraints)) return false;
-
-    TypeEvalConstraints that = (TypeEvalConstraints)o;
+    if (!(o instanceof TypeEvalConstraints that)) return false;
 
     return myAllowDataFlow == that.myAllowDataFlow && 
            myAllowStubToAST == that.myAllowStubToAST &&

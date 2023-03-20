@@ -24,7 +24,7 @@ public final class GitHandlerUtil {
   private GitHandlerUtil() {
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static int doSynchronously(@NotNull GitLineHandler handler,
                                     @NotNull @NlsContexts.ProgressTitle String operationTitle,
                                     @NotNull @Nls String operationName) {
@@ -38,7 +38,7 @@ public final class GitHandlerUtil {
     return handler.getExitCode();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runInCurrentThread(@NotNull GitHandler handler,
                                         @Nullable ProgressIndicator indicator,
                                         boolean setIndeterminateFlag,
@@ -59,7 +59,7 @@ public final class GitHandlerUtil {
     handler.runInCurrentThread(postStartAction);
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static class GitLineHandlerListenerProgress implements GitLineHandlerListener {
     @NotNull protected final GitHandler myHandler;
     @NotNull protected final @Nls String myOperationName;

@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.common.CurrentProjectInfo
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.storage.MutableLookupStorage
@@ -18,11 +17,13 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
+import com.intellij.util.PlatformUtils
 import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
   companion object {
     private const val COMPLETION_EVALUATION_HEADLESS = "completion.evaluation.headless"
+    private const val PYTHON_IN_DATASPELL = "python dataspell"
 
     private fun shouldInitialize(): Boolean {
       val app = ApplicationManager.getApplication()
@@ -31,8 +32,9 @@ class CompletionLoggerInitializer : LookupTracker() {
              || app.isUnitTestMode
     }
 
-    private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
+    private val LOGGED_SESSIONS_RATIO_LANGUAGE: Map<String, Double> = mapOf(
       "python" to 0.5,
+      PYTHON_IN_DATASPELL to 1.0,
       "scala" to 0.3,
       "php" to 0.2,
       "kotlin" to 0.2,
@@ -40,10 +42,15 @@ class CompletionLoggerInitializer : LookupTracker() {
       "javascript" to 0.2,
       "typescript" to 0.5,
       "c/c++" to 0.5,
-      "c#" to 0.1,
+      "c#" to 0.05,
       "go" to 0.4
     )
+
+    private val LOGGED_SESSIONS_RATIO_FILE_TYPE: Map<String, Double> = mapOf(
+      "ipynb" to 1.0,
+    )
   }
+
   private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
   override fun lookupClosed() {
@@ -57,7 +64,7 @@ class CompletionLoggerInitializer : LookupTracker() {
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
-    if (sessionShouldBeLogged(experimentInfo, storage.language, lookup.project)) {
+    if (sessionShouldBeLogged(experimentInfo, storage.language, lookup)) {
       val tracker = actionsTracker(lookup, storage, experimentInfo)
       actionListener.listener = tracker
       lookup.addLookupListener(tracker)
@@ -72,21 +79,27 @@ class CompletionLoggerInitializer : LookupTracker() {
   private fun actionsTracker(lookup: LookupImpl,
                              storage: MutableLookupStorage,
                              experimentInfo: ExperimentInfo): CompletionActionsListener {
-    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language))
+    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(getLoggingLanguageName(storage.language),
+                                                                            shouldLogElementFeatures(storage.language, lookup.project))
     val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }
 
-  private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language, project: Project): Boolean {
+  private fun shouldLogElementFeatures(language: Language, project: Project): Boolean =
+    ExperimentStatus.getInstance().forLanguage(language).shouldLogElementFeatures(project)
+
+  private fun sessionShouldBeLogged(experimentInfo: ExperimentInfo, language: Language, lookup: LookupImpl): Boolean {
     if (CompletionStatsPolicy.isStatsLogDisabled(language) || !getPluginInfo(language::class.java).isSafeToReport()) return false
+
     val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || experimentInfo.inExperiment || CurrentProjectInfo.getInstance(project).isIdeaProject) return true
+    if (application.isUnitTestMode || experimentInfo.shouldLogSessions(lookup.project)) return true
 
     if (!isCompletionLogsSendAllowed()) {
       return false
     }
 
-    val logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(getLoggingLanguageName(language).toLowerCase(), 1.0)
+    val logSessionChance = lookup.psiFile?.fileType?.defaultExtension?.let { LOGGED_SESSIONS_RATIO_FILE_TYPE[it] }
+                           ?: LOGGED_SESSIONS_RATIO_LANGUAGE.getOrDefault(getLoggingLanguageName(language).lowercase(), 1.0)
     return Random.nextDouble() < logSessionChance
   }
 
@@ -101,10 +114,15 @@ class CompletionLoggerInitializer : LookupTracker() {
         return sql.displayName
       }
     }
+
+    if (PlatformUtils.isDataSpell() && language.displayName.contains("python", ignoreCase = true)) {
+      return PYTHON_IN_DATASPELL
+    }
+
     return language.displayName
   }
 
-  private class LookupActionsListener private constructor(): AnActionListener {
+  private class LookupActionsListener private constructor() : AnActionListener {
     companion object {
       private val LOG = logger<LookupActionsListener>()
       private val instance = LookupActionsListener()

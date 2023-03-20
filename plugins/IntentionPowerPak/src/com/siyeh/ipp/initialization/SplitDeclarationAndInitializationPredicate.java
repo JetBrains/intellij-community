@@ -26,14 +26,13 @@ class SplitDeclarationAndInitializationPredicate
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiField)) {
+    if (!(parent instanceof PsiField field)) {
       return false;
     }
     if (element instanceof PsiComment &&
         element == parent.getFirstChild()) {
       return false;
     }
-    final PsiField field = (PsiField)parent;
     final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
       return false;

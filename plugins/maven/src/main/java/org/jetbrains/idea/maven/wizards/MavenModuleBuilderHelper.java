@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.openapi.GitSilentFileAdder;
+import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -81,11 +83,14 @@ public class MavenModuleBuilderHelper {
                          ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
                          : PsiFile.EMPTY_ARRAY;
     final VirtualFile pom = WriteCommandAction.writeCommandAction(project, psiFiles).withName(myCommandName).compute(() -> {
-        VirtualFile file = null;
+      GitSilentFileAdder vcsFileAdder = GitSilentFileAdderProvider.create(project);
+      VirtualFile file = null;
+      try {
         try {
           file = root.findChild(MavenConstants.POM_XML);
           if (file != null) file.delete(this);
           file = root.createChildData(this, MavenConstants.POM_XML);
+          vcsFileAdder.markFileForAdding(file);
           MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
         }
         catch (IOException e) {
@@ -94,19 +99,23 @@ public class MavenModuleBuilderHelper {
         }
 
         updateProjectPom(project, file);
+      }
+      finally {
+        vcsFileAdder.finish();
+      }
 
-        if (myAggregatorProject != null) {
-          VirtualFile aggregatorProjectFile = myAggregatorProject.getFile();
-          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile);
-          if (model != null) {
-            model.getPackaging().setStringValue("pom");
-            MavenDomModule module = model.getModules().addModule();
-            module.setValue(getPsiFile(project, file));
-            unblockAndSaveDocuments(project, aggregatorProjectFile);
-          }
+      if (myAggregatorProject != null) {
+        VirtualFile aggregatorProjectFile = myAggregatorProject.getFile();
+        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile);
+        if (model != null) {
+          model.getPackaging().setStringValue("pom");
+          MavenDomModule module = model.getModules().addModule();
+          module.setValue(getPsiFile(project, file));
+          unblockAndSaveDocuments(project, aggregatorProjectFile);
         }
-        return file;
-      });
+      }
+      return file;
+    });
 
     if (pom == null) return;
 
@@ -219,23 +228,32 @@ public class MavenModuleBuilderHelper {
 
   @VisibleForTesting
   void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project, String artifactId) {
+    GitSilentFileAdder vcsFileAdder = GitSilentFileAdderProvider.create(project);
     try {
-      artifactId = artifactId != null ? artifactId : myProjectId.getArtifactId();
-      if (artifactId != null) {
-        FileUtil.copyDir(new File(workingDir, artifactId), new File(pom.getParent().getPath()));
+      try {
+        artifactId = artifactId != null ? artifactId : myProjectId.getArtifactId();
+        if (artifactId != null) {
+          File sourceDir = new File(workingDir, artifactId);
+          File targetDir = new File(pom.getParent().getPath());
+          vcsFileAdder.markFileForAdding(targetDir, true); // VFS is refreshed below
+          FileUtil.copyDir(sourceDir, targetDir);
+        }
+        FileUtil.delete(workingDir);
       }
-      FileUtil.delete(workingDir);
-    }
-    catch (Exception e) {
-      showError(project, e);
-      return;
-    }
+      catch (Exception e) {
+        showError(project, e);
+        return;
+      }
 
-    pom.getParent().refresh(false, false);
-    pom.refresh(false, false);
-    updateProjectPom(project, pom);
+      pom.getParent().refresh(false, false);
+      pom.refresh(false, false);
+      updateProjectPom(project, pom);
 
-    LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
+      LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
+    }
+    finally {
+      vcsFileAdder.finish();
+    }
   }
 
   private static void showError(Project project, Throwable e) {

@@ -236,17 +236,11 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   }
 
   private static String getMavenScope(@NotNull DependencyScope scope) {
-    switch (scope) {
-      case RUNTIME:
-        return MavenConstants.SCOPE_RUNTIME;
-      case COMPILE:
-        return MavenConstants.SCOPE_COMPILE;
-      case TEST:
-        return MavenConstants.SCOPE_TEST;
-      case PROVIDED:
-        return MavenConstants.SCOPE_PROVIDED;
-      default:
-        throw new IllegalArgumentException(String.valueOf(scope));
-    }
+    return switch (scope) {
+      case RUNTIME -> MavenConstants.SCOPE_RUNTIME;
+      case COMPILE -> MavenConstants.SCOPE_COMPILE;
+      case TEST -> MavenConstants.SCOPE_TEST;
+      case PROVIDED -> MavenConstants.SCOPE_PROVIDED;
+    };
   }
 }

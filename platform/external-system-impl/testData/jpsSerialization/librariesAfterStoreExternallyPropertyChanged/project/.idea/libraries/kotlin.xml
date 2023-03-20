@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="kotlin">
+  <library name="kotlin" external-system-id="GRADLE">
     <CLASSES />
     <JAVADOC />
     <SOURCES />

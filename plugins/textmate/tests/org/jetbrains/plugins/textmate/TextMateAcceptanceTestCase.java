@@ -6,12 +6,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.plugins.textmate.configuration.BundleConfigBean;
 import org.jetbrains.plugins.textmate.configuration.TextMateSettings;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * Base class for tests needs in fixture.
@@ -24,7 +22,7 @@ import static com.intellij.util.containers.ContainerUtil.newHashSet;
  * <p/>
  */
 public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
-  private static final Set<String> loadingBundles = newHashSet(TestUtil.MARKDOWN_TEXTMATE, TestUtil.HTML, TestUtil.LATEX, TestUtil.PHP, TestUtil.BAT, TestUtil.JAVASCRIPT);
+  private static final Set<String> loadingBundles = ContainerUtil.newHashSet(TestUtil.MARKDOWN_TEXTMATE, TestUtil.HTML, TestUtil.LATEX, TestUtil.PHP, TestUtil.BAT, TestUtil.JAVASCRIPT);
 
   @Override
   public void setUp() throws Exception {
@@ -37,8 +35,8 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
     if (!loadingBundles.equals(enabledBundles)) {
       List<BundleConfigBean> bundles = new ArrayList<>();
       for (String bundleName : loadingBundles) {
-        File bundleDirectory = TestUtil.getBundleDirectory(bundleName);
-        bundles.add(new BundleConfigBean(bundleName, bundleDirectory.getAbsolutePath(), true));
+        Path bundleDirectory = TestUtil.getBundleDirectory(bundleName);
+        bundles.add(new BundleConfigBean(bundleName, bundleDirectory.toAbsolutePath().toString(), true));
       }
       state.setBundles(bundles);
       TextMateSettings.getInstance().loadState(state);

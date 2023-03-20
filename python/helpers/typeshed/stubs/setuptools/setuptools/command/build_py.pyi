@@ -1,11 +1,9 @@
 import distutils.command.build_py as orig
 from typing import Any
 
-from setuptools.lib2to3_ex import Mixin2to3
-
 def make_writable(target) -> None: ...
 
-class build_py(orig.build_py, Mixin2to3):
+class build_py(orig.build_py):
     package_data: Any
     exclude_package_data: Any
     def finalize_options(self) -> None: ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.generation.*
@@ -9,21 +9,19 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.light.LightFieldBuilder
 import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.NotNullFunction
+import com.intellij.util.VisibilityUtil
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-
-/**
- * @author peter
- */
 
 @CompileStatic
 class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCase {
@@ -126,16 +124,16 @@ class X<T extends String> {
 
   void "test strip field prefix"() {
     def settings = JavaCodeStyleSettings.getInstance(getProject())
-      settings.FIELD_NAME_PREFIX = "my"
-      myFixture.configureByText 'a.java', '''
+    settings.FIELD_NAME_PREFIX = "my"
+    myFixture.configureByText 'a.java', '''
   class Foo {
       String myName;
 
       <caret>
   }
   '''
-      generateGetter()
-      myFixture.checkResult '''
+    generateGetter()
+    myFixture.checkResult '''
   class Foo {
       String myName;
 
@@ -204,7 +202,7 @@ class Foo {
       @Override
       Collection<EncapsulatableClassMember> fun(PsiClass dom) {
         final List<EncapsulatableClassMember> result = new ArrayList<>();
-        def builder = new LightFieldBuilder(PsiManager.getInstance(project), "lombokGenerated", PsiType.INT)
+        def builder = new LightFieldBuilder(PsiManager.getInstance(project), "lombokGenerated", PsiTypes.intType())
         builder.setContainingClass(dom)
         result.add(new PsiFieldMember(builder))
         return result
@@ -312,6 +310,12 @@ class Foo {
   }
   
   void "test record accessor"() {
+    doRecordAccessorTest(VisibilityUtil.ESCALATE_VISIBILITY)
+    doRecordAccessorTest(PsiModifier.PRIVATE)
+  }
+
+  private void doRecordAccessorTest(String visibility) {
+    JavaCodeStyleSettings.getInstance(getProject()).VISIBILITY = visibility
     myFixture.configureByText('a.java', '''
 record Point(int x, int y) {
   <caret>

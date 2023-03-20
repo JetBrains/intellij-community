@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,12 +11,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache = Boolean.getBoolean("ide.cache.screen.insets")
-                                                                                                 ? CollectionFactory.createWeakMap() : null;
+                                                                                                 ? new WeakHashMap<>() : null;
   private static final int ourInsetsTimeout = SystemProperties.getIntProperty("ide.insets.cache.timeout", 5000);  // shouldn't be too long
 
   private ScreenUtil() { }
@@ -448,7 +448,7 @@ public final class ScreenUtil {
    * @param bounds - area to check if location shifted towards or not. Also in screen coordinates
    * @return true if movement from prevLocation to location is towards specified rectangular area
    */
-  public static boolean isMovementTowards(final Point prevLocation, final Point location, final Rectangle bounds) {
+  public static boolean isMovementTowards(final Point prevLocation, @NotNull Point location, final Rectangle bounds) {
     if (bounds == null) {
       return false;
     }

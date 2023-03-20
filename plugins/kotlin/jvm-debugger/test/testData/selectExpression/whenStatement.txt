@@ -1,0 +1,4 @@
+when (a) {
+        is Int -> print("foo")
+        is String -> print("bar")
+    }

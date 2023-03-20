@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -64,12 +64,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the array of children for the PSI element.
-   * Important: In some implementations children are only composite elements, i.e. not a leaf elements
+   * Important: In some implementations children are only composite elements, i.e. not leaf elements.
    *
    * @return the array of child elements.
    */
   @Contract(pure=true)
-  PsiElement @NotNull [] getChildren();
+  @NotNull PsiElement @NotNull [] getChildren();
 
   /**
    * Returns the parent of the PSI element.
@@ -152,7 +152,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   int getStartOffsetInParent();
 
   /**
-   * Returns the length of text of the PSI element.
+   * Returns the length of the text of the PSI element.
    *
    * @return the text length.
    */
@@ -160,7 +160,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   int getTextLength();
 
   /**
-   * Finds a leaf PSI element at the specified offset from the start of the text range of this node.
+   * Finds a leaf PSI element at the specified offset from the start of this element's text range.
    *
    * @param offset the relative offset for which the PSI element is requested.
    * @return the element at the offset, or null if none is found.
@@ -170,7 +170,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement findElementAt(int offset);
 
   /**
-   * Finds a reference at the specified offset from the start of the text range of this node.
+   * Finds a reference at the specified offset from the start of this element's text range.
    *
    * @param offset the relative offset for which the reference is requested.
    * @return the reference at the offset, or null if none is found.
@@ -213,8 +213,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the PSI element which should be used as a navigation target
-   * when navigation to this PSI element is requested. The method can either
-   * return {@code this} or substitute a different element if this element
+   * when navigation to this PSI element is requested.
+   * <p>
+   * The method can either return {@code this} or substitute a different element if this element
    * does not have an associated file and offset. (For example, if the source code
    * of a library is attached to a project, the navigation element for a compiled
    * library class is its source class.)
@@ -226,8 +227,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the PSI element which corresponds to this element and belongs to
-   * either the project source path or class path. The method can either return
-   * {@code this} or substitute a different element if this element does
+   * either the project source path or class path.
+   * <p>
+   * The method can either return {@code this} or substitute a different element if this element does
    * not belong to the source path or class path. (For example, the original
    * element for a library source file is the corresponding compiled class file.)
    *
@@ -283,6 +285,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Creates a copy of the file containing the PSI element and returns the corresponding
    * element in the created copy. Resolve operations performed on elements in the copy
    * of the file will resolve to elements in the copy, not in the original file.
+   * <p>
+   * For light elements, may return {@code null}.
    *
    * @return the element in the file copy corresponding to this element.
    */
@@ -319,7 +323,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Checks if it is possible to add the specified element as a child to this element,
-   * and throws an exception if the add is not possible. Does not actually modify anything.
+   * and throws an exception if adding is not possible. Does not actually modify anything.
    *
    * @param element the child element to check the addition possibility.
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
@@ -406,7 +410,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * Most method calls on invalid PSI result in {@link PsiInvalidElementAccessException}.
    * Once invalid, elements can't become valid again.
-   * Elements become invalid in following cases:
+   * Elements become invalid in the following cases:
    * <ul>
    *   <li>They have been deleted via PSI operation (e.g. {@link #delete()})</li>
    *   <li>They have been deleted as a result of an incremental reparse (document commit)</li>
@@ -452,8 +456,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * The returned references are expected to be used by language support,
-   * for example in Java `foo` element in `foo = 42` expression has a reference,
-   * which is used by Java language support to compute expected type of the assignment.
+   * for example, in Java the `foo` element in `foo = 42` expression has a reference,
+   * which is used by Java language support to compute the expected type of the assignment.
    * <p>
    * On the other hand {@code "bar"} literal in {@code new File("bar")} is a string literal,
    * and from Java language perspective it has no references,
@@ -473,7 +477,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   }
 
   /**
-   * Returns the reference from this PSI element to another PSI element (or elements), if one exists.
+   * Returns the reference from this PSI element to another PSI element (or elements) if one exists.
    * If the element has multiple associated references (see {@link #getReferences()}
    * for an example), returns the first associated reference.
    *

@@ -1,0 +1,235 @@
+package decompiler;
+
+import java.util.Collection;
+import java.util.List;
+
+public class TestInstanceofWithPattern {
+   void typePattern1(Object str) {
+      if (str instanceof String s) {// 9
+         System.out.println(s);// 10
+      } else {
+         System.out.println("no");// 12
+      }
+
+   }// 14
+
+   void typePattern2(Object str) {
+      if (!(str instanceof String s)) {// 17
+         System.out.println("no");// 18
+      } else {
+         if (s.length() > 3) {// 22
+            System.out.println(s);// 23
+         } else if (s.startsWith("a")) {// 24
+            System.out.println("" + s);// 25
+         }
+
+      }
+   }// 19 27
+
+   void typePatternInBinaryExpr(Object str) {
+      if (str instanceof String s) {// 30
+         if (s.length() > 1 || s.startsWith("a")) {
+            System.out.println(s);// 31
+            return;// 35
+         }
+      }
+
+      System.out.println("no");// 33
+   }
+
+   String returnInstanceof(Object obj) {
+      if (obj instanceof String s) {// 38
+         if (s.length() > 50) {
+            return "\"" + s.substring(0, 50) + "...\"";// 39
+         }
+      }
+
+      if (obj instanceof String s) {// 41
+         return "\"" + s + "\"";// 42
+      } else if (obj instanceof Collection<?> c) {// 44
+         return "Collection (size = " + c.size() + ")";// 45
+      } else {
+         return obj.toString();// 47
+      }
+   }
+
+   String complex(Object obj1, Object obj2) {
+      while(true) {
+         try {
+            if (obj1 instanceof String s) {// 53
+               while(!s.startsWith("a")) {// 55
+               }
+
+               return s;// 56
+            }
+
+            if (obj2 instanceof Collection<?> c) {// 59
+               return c.toString();// 60
+            }
+         } catch (Exception var7) {// 62
+            if (obj2 instanceof String s) {// 63
+               while(!s.startsWith("b")) {// 65
+               }
+
+               return s + "b";// 66
+            }
+
+            if (obj2 instanceof List<?> l) {// 69
+               String var10000 = this.getStr();// 70
+               return var10000 + l.size();
+            }
+         }
+      }
+   }
+
+   String getStr() {
+      return null;// 77
+   }
+}
+
+class 'decompiler/TestInstanceofWithPattern' {
+   method 'typePattern1 (Ljava/lang/Object;)V' {
+      3      7
+      6      7
+      e      8
+      12      8
+      18      10
+      1b      10
+      1d      10
+      20      13
+   }
+
+   method 'typePattern2 (Ljava/lang/Object;)V' {
+      1      16
+      4      16
+      7      17
+      a      17
+      c      17
+      f      26
+      16      19
+      19      19
+      1a      19
+      1d      20
+      21      20
+      28      21
+      2a      21
+      2d      21
+      30      22
+      34      22
+      39      22
+      3c      26
+   }
+
+   method 'typePatternInBinaryExpr (Ljava/lang/Object;)V' {
+      3      29
+      6      29
+      f      30
+      12      30
+      13      30
+      17      30
+      19      30
+      1c      30
+      1f      31
+      23      31
+      29      36
+      2c      36
+      2e      36
+      31      32
+   }
+
+   method 'returnInstanceof (Ljava/lang/Object;)Ljava/lang/String;' {
+      3      40
+      6      40
+      f      41
+      12      41
+      14      41
+      18      42
+      19      42
+      1b      42
+      1e      42
+      23      42
+      27      46
+      2a      46
+      33      47
+      38      47
+      3c      48
+      3f      48
+      48      49
+      4d      49
+      52      49
+      54      51
+      57      51
+   }
+
+   method 'complex (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/String;' {
+      5      58
+      8      58
+      14      59
+      16      59
+      19      59
+      1e      62
+      24      65
+      27      65
+      31      66
+      34      66
+      38      68
+      3e      69
+      41      69
+      4d      70
+      4f      70
+      52      70
+      57      73
+      5c      73
+      62      76
+      65      76
+      70      77
+      75      78
+      7a      78
+      7f      78
+   }
+
+   method 'getStr ()Ljava/lang/String;' {
+      0      85
+      1      85
+   }
+}
+
+Lines mapping:
+9 <-> 8
+10 <-> 9
+12 <-> 11
+14 <-> 14
+17 <-> 17
+18 <-> 18
+19 <-> 27
+22 <-> 20
+23 <-> 21
+24 <-> 22
+25 <-> 23
+27 <-> 27
+30 <-> 30
+31 <-> 32
+33 <-> 37
+35 <-> 33
+38 <-> 41
+39 <-> 43
+41 <-> 47
+42 <-> 48
+44 <-> 49
+45 <-> 50
+47 <-> 52
+53 <-> 59
+55 <-> 60
+56 <-> 63
+59 <-> 66
+60 <-> 67
+62 <-> 69
+63 <-> 70
+65 <-> 71
+66 <-> 74
+69 <-> 77
+70 <-> 78
+77 <-> 86
+Not mapped:
+21
+72

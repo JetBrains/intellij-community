@@ -153,7 +153,7 @@ abstract class SdkTestCase : LightPlatformTestCase() {
       sdkModel: SdkModel,
       parentComponent: JComponent,
       selectedSdk: Sdk?,
-      sdkCreatedCallback: Consumer<SdkDownloadTask>
+      sdkCreatedCallback: Consumer<in SdkDownloadTask>
     ) {
       val sdk = TestSdkGenerator.createNextSdk()
       sdkCreatedCallback.accept(object : SdkDownloadTask {

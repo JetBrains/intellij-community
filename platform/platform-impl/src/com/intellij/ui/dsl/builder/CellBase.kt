@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.ui.dsl.gridLayout.Constraints
-import com.intellij.ui.dsl.gridLayout.Grid
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
 enum class RightGap {
@@ -23,13 +21,13 @@ enum class RightGap {
 /**
  * Common API for cells
  */
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 @LayoutDslMarker
 interface CellBase<out T : CellBase<T>> {
 
   /**
    * Sets visibility of the cell and all children recursively.
-   * The cell is invisible while there is an invisible parent
+   * The cell is invisible if there is an invisible parent
    */
   fun visible(isVisible: Boolean): CellBase<T>
 
@@ -39,8 +37,13 @@ interface CellBase<out T : CellBase<T>> {
   fun visibleIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
+   * Binds cell visibility to provided [property] predicate
+   */
+  fun visibleIf(property: ObservableProperty<Boolean>): CellBase<T>
+
+  /**
    * Sets enabled state of the cell and all children recursively.
-   * The cell is disabled while there is a disabled parent
+   * The cell is disabled if there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): CellBase<T>
 
@@ -50,26 +53,36 @@ interface CellBase<out T : CellBase<T>> {
   fun enabledIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
-   * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default.
-   * Note that content width is usually less than cell width, use [HorizontalAlign.FILL] to stretch the content on whole cell width.
-   *
-   * @see [Constraints.horizontalAlign]
+   * Binds cell enabled state to provided [property] predicate
    */
+  fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T>
+
+  @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
-  /**
-   * Sets vertical alignment of content inside the cell, [VerticalAlign.CENTER] by default
-   * Note that content height is usually less than cell height, use [VerticalAlign.FILL] to stretch the content on whole cell height.
-   *
-   * @see [Constraints.verticalAlign]
-   */
+  @Deprecated("Use align method instead")
+  @ApiStatus.ScheduledForRemoval
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**
-   * Marks column of the cell as resizable: the column occupies all extra space in parent and changes size together with parent.
+   * Updates horizontal and/or vertical alignment of the component inside the cell. To stretch the content on whole cell
+   * use [AlignX.FILL]/[AlignY.FILL]/[Align.FILL]. For setting both horizontal and vertical alignment use [Align] constants or
+   * overloaded plus operator like `align(AlignX.LEFT + AlignY.TOP)`. Default alignment is [AlignX.LEFT] + [AlignY.CENTER].
+   *
+   * In case the cell should occupy all available width or height in parent mark the column as [resizableColumn]
+   * or the row as [Row.resizableRow] (or both if needed).
+   *
+   * @see [resizableColumn]
+   * @see [Constraints.horizontalAlign]
+   */
+  fun align(align: Align): CellBase<T>
+
+  /**
+   * Marks column of the cell as resizable: the column occupies all extra horizontal space in parent and changes size together with parent.
    * It's possible to have several resizable columns, which means extra space is shared between them.
    * There is no need to set resizable for cells in different rows but in the same column: it has no additional effect.
-   * Note that horizontal size and placement of component in columns are managed by [horizontalAlign]
+   * Note that alignment inside the cell is managed by [align] method
    *
    * @see [Grid.resizableColumns]
    */
@@ -78,8 +91,19 @@ interface CellBase<out T : CellBase<T>> {
   /**
    * Separates the next cell in the current row with [rightGap]. [RightGap.SMALL] gap is set after row label automatically
    * by [Panel.row] methods.
-   * Should not be used for last cell in a row
+   * Right gap is ignored for the last cell in a row
    */
   fun gap(rightGap: RightGap): CellBase<T>
+
+  /**
+   * Overrides all gaps around the cell by [customGaps]. Should be used rarely for very specific cases
+   */
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  fun customize(customGaps: Gaps): CellBase<T>
+
+  /**
+   * Overrides all gaps around the cell by [customGaps]. Should be used rarely for very specific cases
+   */
+  fun customize(customGaps: UnscaledGaps): CellBase<T>
 
 }

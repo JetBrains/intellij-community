@@ -89,8 +89,7 @@ public class DtdCompletionContributor extends CompletionContributor {
     final PsiElementProcessor processor = new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
-        if (element instanceof XmlEntityDecl) {
-          final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+        if (element instanceof XmlEntityDecl xmlEntityDecl) {
           String name = xmlEntityDecl.getName();
           if (name != null && xmlEntityDecl.isInternalReference()) {
             result.addElement(LookupElementBuilder.create(name).withInsertHandler(XmlCompletionContributor.ENTITY_INSERT_HANDLER));

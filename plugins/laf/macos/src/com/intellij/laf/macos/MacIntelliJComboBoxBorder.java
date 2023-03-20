@@ -53,9 +53,9 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
         clipForBorder(c, g2, width, height);
 
-        Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+        Outline op = getOutline((JComponent)c);
         if (c.isEnabled() && op != null) {
-          paintOutlineBorder(g2, width, height, arc, isSymmetric(), focused, Outline.valueOf(op.toString()));
+          paintOutlineBorder(g2, width, height, arc, isSymmetric(), focused, op);
         }
         else if (focused) {
           paintOutlineBorder(g2, width, height, arc, isSymmetric(), true, Outline.focus);
@@ -77,8 +77,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
   @Override
   protected boolean isFocused(Component c) {
-    if (c instanceof JComboBox) {
-      JComboBox<?> comboBox = (JComboBox<?>)c;
+    if (c instanceof JComboBox<?> comboBox) {
 
       if (!comboBox.isEnabled()) {
         return false;
@@ -100,8 +99,7 @@ public class MacIntelliJComboBoxBorder extends MacIntelliJTextBorder {
 
   Area getButtonBounds(Component c) {
     Rectangle bounds = null;
-    if (c instanceof JComboBox && ((JComboBox<?>)c).getUI() instanceof MacIntelliJComboBoxUI) {
-      MacIntelliJComboBoxUI ui = (MacIntelliJComboBoxUI)((JComboBox<?>)c).getUI();
+    if (c instanceof JComboBox && ((JComboBox<?>)c).getUI() instanceof MacIntelliJComboBoxUI ui) {
       bounds = ui.getArrowButtonBounds();
     }
     return bounds != null ? new Area(bounds) : new Area();

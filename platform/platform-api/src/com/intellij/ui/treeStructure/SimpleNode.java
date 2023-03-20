@@ -5,25 +5,19 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-public abstract class SimpleNode extends PresentableNodeDescriptor implements ComparableObject, LeafState.Supplier {
+public abstract class SimpleNode extends PresentableNodeDescriptor<Object> implements ComparableObject, LeafState.Supplier {
 
   protected static final SimpleNode[] NO_CHILDREN = new SimpleNode[0];
 
@@ -41,7 +35,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   @Override
-  public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+  public SimpleNode getChildToHighlightAt(int index) {
     return getChildAt(index);
   }
 
@@ -49,6 +43,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     super(null, null);
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -63,11 +58,8 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   protected SimpleTextAttributes getPlainAttributes() {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor());
-  }
-
-  private FileStatus getFileStatus() {
-    return FileStatus.NOT_CHANGED;
+    Color color = getColor(); // the most common case is no color, regular attributes, avoid memory allocation in this case
+    return color == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
   }
 
   @Nullable
@@ -83,32 +75,37 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     }
     if (newElement == null) return;
 
-    Color oldColor = myColor;
-    String oldName = myName;
-    Icon oldIcon = getIcon();
-    List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
+    doUpdate(presentation);
 
-    myColor = UIUtil.getTreeForeground();
-    updateFileStatus();
-
-    doUpdate();
-
-    myName = getName();
-    presentation.setPresentableText(myName);
-
-    presentation.setChanged(!Arrays.equals(new Object[]{getIcon(), myName, oldFragments, myColor},
-                                           new Object[]{oldIcon, oldName, oldFragments, oldColor}));
-
-    presentation.setForcedTextForeground(myColor);
-    presentation.setIcon(getIcon());
+    fillFallbackProperties(presentation);
   }
 
-  protected void updateFileStatus() {
-    assert getFileStatus() != null : getClass().getName() + ' ' + toString();
+  private void fillFallbackProperties(PresentationData presentation) {
+    fillFallbackText(presentation);
+    fillFallbackIcon(presentation);
+    fillFallbackColor(presentation);
+  }
 
-    Color fileStatusColor = getFileStatus().getColor();
-    if (fileStatusColor != null) {
-      myColor = fileStatusColor;
+  private void fillFallbackText(PresentationData presentation) {
+    var text = getColoredTextAsPlainText(presentation);
+    if (text == null) {
+      text = presentation.getPresentableText();
+    }
+    if (text == null) {
+      text = myName;
+    }
+    presentation.setPresentableText(text);
+  }
+
+  private void fillFallbackIcon(PresentationData presentation) {
+    if (presentation.getIcon(false) == null) {
+      presentation.setIcon(myClosedIcon);
+    }
+  }
+
+  private void fillFallbackColor(PresentationData presentation) {
+    if (presentation.getForcedTextForeground() == null) {
+      presentation.setForcedTextForeground(myColor);
     }
   }
 
@@ -117,7 +114,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void setNodeText(String text, String tooltip, boolean hasError) {
     clearColoredText();
     SimpleTextAttributes attributes = hasError ? getErrorAttributes() : getPlainAttributes();
@@ -129,19 +125,8 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void setPlainText(String aText) {
     clearColoredText();
-    addPlainText(aText);
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final void addPlainText(String aText) {
     getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));
   }
 
@@ -150,7 +135,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void clearColoredText() {
     getTemplatePresentation().clearText();
   }
@@ -160,7 +144,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void addColoredFragment(String aText, SimpleTextAttributes aAttributes) {
     addColoredFragment(aText, null, aAttributes);
   }
@@ -170,12 +153,41 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void addColoredFragment(String aText, String toolTip, SimpleTextAttributes aAttributes) {
     getTemplatePresentation().addText(new ColoredFragment(aText, toolTip, aAttributes));
   }
 
-  protected void doUpdate() {
+  /**
+   * Updates properties of the node's presentation.
+   * <p>
+   *   This method is called as a part of update process. During the update, the template presentation is cloned,
+   *   then the new element is computed (by calling {@link #updateElement()} and if it's not {@code null},
+   *   then this method is called with the cloned template presentation passed to it.
+   * </p>
+   * <p>
+   *   This method <em>only</em> change the given presentation.
+   *   In particular, should not change the template presentation (use the constructor or {@link #createPresentation()} for that),
+   *   nor the current presentation (it will be replaced by the given presentation when the update is finished),
+   *   nor the object's own fields (name, icon, color) - these can be set in the constructor or <em>before</em> the update.
+   *   Altering this object's state in any way in this method can cause race conditions and subtle UI bugs, as it's often called on
+   *   the background thread, and therefore the only safe way to deal with update is to publish the new presentation after the
+   *   update is finished, and not to change any state during the update.
+   * </p>
+   * <p>
+   *   To set the text, <em>either</em> use {@link PresentationData#addText(ColoredFragment)} / {@link PresentationData#addText(String, SimpleTextAttributes)}
+   *   (don't forget to call {@link PresentationData#clearText()} first, as it's initially copied from the template presentation!)
+   *   or {@link PresentationData#setPresentableText(String)}. The former takes precedence: when the update is done, the plain text version is
+   *   set to the colored text (with coloring removed) if any.
+   * </p>
+   * <p>
+   *   Note that if, at the end of the update, text, some of the text, color, icon properties are {@code null}, then
+   *   {@link PresentableNodeDescriptor} falls back to using own properties: {@link #myName}, {@link #getIcon()}, {@link #getColor()},
+   *   and uses them to fill in the missing properties of the updated presentation.
+   *   This is intended for classes that never bother to override {@link #update(PresentationData)} or this method, but still set some of those
+   *   properties.
+   * </p>
+   */
+  protected void doUpdate(@NotNull PresentationData presentation) {
   }
 
   @Override
@@ -189,19 +201,10 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
   public int getIndex(SimpleNode child) {
     final SimpleNode[] kids = getChildren();
-    for (int i = 0; i < kids.length; i++) {
-      SimpleNode each = kids[i];
-      if (each.equals(child)) return i;
-    }
-
-    return -1;
+    return ArrayUtil.indexOf(kids, child);
   }
 
   public abstract SimpleNode @NotNull [] getChildren();
-
-  public void accept(@NotNull SimpleNodeVisitor visitor) {
-    visitor.accept(this);
-  }
 
   public void handleSelection(SimpleTree tree) {
   }
@@ -233,16 +236,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return false;
   }
 
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(PresentationData)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setUniformIcon(Icon aIcon) {
-    setIcon(aIcon);
-  }
-
   @Override
   public Object @NotNull [] getEqualityObjects() {
     return NONE;
@@ -256,11 +249,12 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return getChildren()[i];
   }
 
-
+  @Override
   public final boolean equals(Object o) {
     return ComparableObjectCheck.equals(this, o);
   }
 
+  @Override
   public final int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }

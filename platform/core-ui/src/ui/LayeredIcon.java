@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.DarkIconProvider;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
@@ -75,6 +77,16 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   @NotNull
   @Override
+  public LayeredIcon replaceBy(@NotNull IconReplacer replacer) {
+    LayeredIcon result = new LayeredIcon(this);
+    for (int i = 0; i < result.myIcons.length; i++) {
+      result.myIcons[i] = replacer.replaceIcon(result.myIcons[i]);
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
   public LayeredIcon copy() {
     return new LayeredIcon(this);
   }
@@ -107,9 +119,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof LayeredIcon)) return false;
-
-    final LayeredIcon icon = (LayeredIcon)o;
+    if (!(o instanceof LayeredIcon icon)) return false;
 
     if (myHeight != icon.myHeight) return false;
     if (myWidth != icon.myWidth) return false;
@@ -158,7 +168,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   /**
    *
-   * @param constraint is expected to be one of compass-directions or CENTER
+   * @param constraint is expected to be one of the compass-directions or CENTER
    */
   public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
     int width = getIconWidth();
@@ -172,45 +182,44 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     int x;
     int y;
     switch (constraint) {
-      case SwingConstants.CENTER:
+      case SwingConstants.CENTER -> {
         x = (width - w) / 2;
-        y = (height - h) /2;
-        break;
-      case SwingConstants.NORTH:
+        y = (height - h) / 2;
+      }
+      case SwingConstants.NORTH -> {
         x = (width - w) / 2;
         y = 0;
-        break;
-      case SwingConstants.NORTH_EAST:
+      }
+      case SwingConstants.NORTH_EAST -> {
         x = width - w;
         y = 0;
-        break;
-      case SwingConstants.EAST:
+      }
+      case SwingConstants.EAST -> {
         x = width - w;
         y = (height - h) / 2;
-        break;
-      case SwingConstants.SOUTH_EAST:
+      }
+      case SwingConstants.SOUTH_EAST -> {
         x = width - w;
         y = height - h;
-        break;
-      case SwingConstants.SOUTH:
+      }
+      case SwingConstants.SOUTH -> {
         x = (width - w) / 2;
         y = height - h;
-        break;
-      case SwingConstants.SOUTH_WEST:
+      }
+      case SwingConstants.SOUTH_WEST -> {
         x = 0;
         y = height - h;
-        break;
-      case SwingConstants.WEST:
+      }
+      case SwingConstants.WEST -> {
         x = 0;
         y = (height - h) / 2;
-        break;
-      case SwingConstants.NORTH_WEST:
+      }
+      case SwingConstants.NORTH_WEST -> {
         x = 0;
         y = 0;
-        break;
-      default:
-        throw new IllegalArgumentException(
-          "The constraint should be one of SwingConstants' compass-directions [1..8] or CENTER [0], actual value is " + constraint);
+      }
+      default -> throw new IllegalArgumentException(
+        "The constraint should be one of SwingConstants' compass-directions [1..8] or CENTER [0], actual value is " + constraint);
     }
     setIcon(icon, layer, x, y);
   }
@@ -229,8 +238,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = (int)Math.floor(x + scaleVal(myXShift + myHShifts(i), OBJ_SCALE));
-      int yOffset = (int)Math.floor(y + scaleVal(myYShift + myVShifts(i), OBJ_SCALE));
+      int xOffset = (int)Math.floor(x + scaleVal(myXShift + getHShift(i), OBJ_SCALE));
+      int yOffset = (int)Math.floor(y + scaleVal(myYShift + getVShift(i), OBJ_SCALE));
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -262,11 +271,11 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return (int)Math.ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 
-  private int myHShifts(int i) {
+  public int getHShift(int i) {
     return (int)Math.floor(scaleVal(myHShifts[i], USR_SCALE));
   }
 
-  private int myVShifts(int i) {
+  public int getVShift(int i) {
     return (int)Math.floor(scaleVal(myVShifts[i], USR_SCALE));
   }
 
@@ -280,8 +289,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
       Icon icon = myIcons[i];
       if (icon == null) continue;
       allIconsAreNull = false;
-      int hShift = myHShifts(i);
-      int vShift = myVShifts(i);
+      int hShift = getHShift(i);
+      int vShift = getVShift(i);
       minX = Math.min(minX, hShift);
       maxX = Math.max(maxX, hShift + icon.getIconWidth());
       minY = Math.min(minY, vShift);
@@ -347,7 +356,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   private static void buildCompositeTooltip(Icon[] icons, StringBuilder result, Set<? super String> seenTooltips) {
     for (int i = 0; i < icons.length; i++) {
-      // first layer is the actual object (noun), other layers are modifiers (adjectives), so put first object in last position
+      // the first layer is the actual object (noun), other layers are modifiers (adjectives), so put a first object in the last position
       Icon icon = i == icons.length - 1 ? icons[0] : icons[i + 1];
       if (icon instanceof LayeredIcon) {
         buildCompositeTooltip(((LayeredIcon) icon).myIcons, result, seenTooltips);

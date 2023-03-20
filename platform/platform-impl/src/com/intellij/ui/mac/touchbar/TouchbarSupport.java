@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.IdeBundle;
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 
-public class TouchbarSupport {
+public final class TouchbarSupport {
   private static final String IS_ENABLED_KEY = "ide.mac.touchbar.enabled";
   private static final Logger LOG = Logger.getInstance(TouchbarSupport.class);
   private static final @NotNull AWTEventListener ourAWTEventListener = e -> {
@@ -34,7 +34,7 @@ public class TouchbarSupport {
   private static volatile boolean isInitialized;
   private static volatile boolean isEnabled = true;
 
-  private static MessageBusConnection ourConnection;
+  private static SimpleMessageBusConnection ourConnection;
 
   public static void initialize() {
     if (isInitialized) {
@@ -51,22 +51,27 @@ public class TouchbarSupport {
       if (!Registry.is(IS_ENABLED_KEY)) {
         LOG.info("touchbar disabled: registry");
         isEnabled = false;
-      } else {
+      }
+      else {
         // read isEnabled from OS (i.e. NSDefaults)
         String appId = Helpers.getAppId();
         if (appId == null || appId.isEmpty()) {
           LOG.info("can't obtain application id from NSBundle (touchbar enabled)");
-        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+        }
+        else if (NSDefaults.isShowFnKeysEnabled(appId)) {
           // user has enabled setting "FN-keys in touchbar" (global or per-app)
           if (NSDefaults.isFnShowsAppControls()) {
             LOG.info("touchbar enabled: show FN-keys but pressing fn-key toggle to show app-controls");
             isEnabled = true;
-          } else {
+          }
+          else {
             LOG.info("touchbar disabled: show fn-keys");
             isEnabled = false;
           }
-        } else
+        }
+        else {
           LOG.info("touchbar support is enabled");
+        }
       }
 
       isInitialized = true;
@@ -84,7 +89,7 @@ public class TouchbarSupport {
     CtxToolWindows.initialize();
 
     // listen plugins
-    ourConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    ourConnection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
     ourConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
@@ -97,8 +102,9 @@ public class TouchbarSupport {
   }
 
   public static void enable(boolean enable) {
-    if (!isInitialized || !isAvailable())
+    if (!isInitialized || !isAvailable()) {
       return;
+    }
 
     if (!enable) {
       if (isEnabled) {
@@ -108,8 +114,9 @@ public class TouchbarSupport {
         CtxDefault.disable();
         CtxToolWindows.disable();
 
-        if (ourConnection != null)
+        if (ourConnection != null) {
           ourConnection.disconnect();
+        }
         ourConnection = null;
 
         CustomActionsSchema.removeSettingsGroup(IdeActions.GROUP_TOUCHBAR);
@@ -126,11 +133,9 @@ public class TouchbarSupport {
 
   public static void onApplicationLoaded() {
     initialize();
-    if (!isInitialized || !isEnabled()) {
-      return;
+    if (isInitialized && isEnabled()) {
+      enableSupport();
     }
-
-    enableSupport();
   }
 
   public static boolean isAvailable() {
@@ -154,8 +159,9 @@ public class TouchbarSupport {
       return;
     }
     final Disposable tb = CtxPopup.showPopupItems(popup, popupComponent);
-    if (tb != null)
+    if (tb != null) {
       Disposer.register(popup, tb);
+    }
   }
 
   public static @Nullable Disposable showWindowActions(@NotNull Component contentPane) {

@@ -12,20 +12,13 @@ import training.learn.CourseManager
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
+import training.statistic.LearningInternalProblems
 import training.statistic.LessonStartingWay
 import training.util.LessonEndInfo
 import training.util.filterUnseenLessons
-import training.util.findLanguageByID
 
 abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   abstract val module: IftModule
-
-  /** This name will be used for generated file with lesson sample */
-  open val fileName: String
-    get() {
-      val id = languageId
-      return module.sanitizedName + if (id != null) "." + findLanguageByID(id)!!.associatedFileType!!.defaultExtension else ""
-    }
 
   open val languageId: String? get() = module.primaryLanguage?.primaryLanguage
 
@@ -33,8 +26,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   open fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor = module.preferredLearnWindowAnchor(project)
 
-  /** Relative path to existed file in the learning project */
-  open val existedFile: String? = null
+  /**
+   * Relative path to file in the learning project. Will be used existed or generated the new empty file.
+   *
+   * Also this non-null value will be used for scratch file name if this is a scratch lesson.
+   */
+  open val sampleFilePath: String? = null
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
   @RequiresBackgroundThread
@@ -46,6 +43,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   open val helpLinks: Map<String, String> get() = emptyMap()
 
   /** IDs of TipAndTrick suggestions in that this lesson can be promoted */
+  @Deprecated("Specify tips in LearningCourse.getLessonIdToTipsMap()")
   open val suitableTips: List<String> = emptyList()
 
   open val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
@@ -71,9 +69,13 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
     lessonListeners.forEach { it.lessonStarted(this, way) }
   }
 
-  internal fun onStop(project: Project, lessonPassed: Boolean, currentTaskIndex: Int, currentVisualIndex: Int) {
+  internal fun onStop(project: Project,
+                      lessonPassed: Boolean,
+                      currentTaskIndex: Int,
+                      currentVisualIndex: Int,
+                      internalProblems: Set<LearningInternalProblems>) {
     lessonListeners.forEach { it.lessonStopped(this) }
-    onLessonEnd(project, LessonEndInfo(lessonPassed, currentTaskIndex, currentVisualIndex))
+    onLessonEnd(project, LessonEndInfo(lessonPassed, currentTaskIndex, currentVisualIndex, internalProblems))
   }
 
   internal fun pass() {

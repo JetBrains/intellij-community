@@ -37,7 +37,6 @@ public interface GradleProjectSettingsControlBuilder {
 
   /**
    * get initial settings
-   * @return
    */
   GradleProjectSettings getInitialSettings();
 
@@ -57,7 +56,6 @@ public interface GradleProjectSettingsControlBuilder {
 
   /**
    * check if something was changed against initial settings
-   * @return
    */
   boolean isModified();
 

@@ -36,12 +36,14 @@ public final class InspectionTreeHtmlWriter {
   private final InspectionProfile myProfile;
   private final RefManager myManager;
 
-  public InspectionTreeHtmlWriter(@NotNull InspectionResultsView view,
+  public InspectionTreeHtmlWriter(@NotNull InspectionTree tree,
+                                  @NotNull InspectionProfile profile,
+                                  @NotNull RefManager refManager,
                                   @NotNull Path outputDir) {
-    myTree = view.getTree();
+    myTree = tree;
+    myProfile = profile;
+    myManager = refManager;
     myOutputDir = outputDir;
-    myProfile = view.getCurrentProfile();
-    myManager = view.getGlobalInspectionContext().getRefManager();
     serializeTreeToHtml();
   }
 

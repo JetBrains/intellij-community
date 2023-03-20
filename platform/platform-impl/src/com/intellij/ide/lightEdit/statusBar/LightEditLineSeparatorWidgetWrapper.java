@@ -1,41 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LightEditLineSeparatorWidgetWrapper extends LightEditAbstractPopupWidgetWrapper {
+public final class LightEditLineSeparatorWidgetWrapper extends LightEditAbstractPopupWidgetWrapper {
   public static final String WIDGET_ID = "light.edit.line.separator.widget";
 
-  public LightEditLineSeparatorWidgetWrapper(@NotNull Project project) {
-    super(project);
+  public LightEditLineSeparatorWidgetWrapper(@NotNull Project project, @NotNull CoroutineScope scope) {
+    super(project, scope);
   }
 
-  @NotNull
   @Override
-  public String ID() {
+  public @NotNull String ID() {
     return WIDGET_ID;
   }
 
-  @NotNull
   @Override
-  protected EditorBasedStatusBarPopup createOriginalWidget() {
-    return new LineSeparatorPanel(getProject()) {
-      @Nullable
+  protected @NotNull EditorBasedStatusBarPopup createOriginalWidget(@NotNull CoroutineScope scope) {
+    return new LineSeparatorPanel(getProject(), scope) {
       @Override
-      protected Editor getEditor() {
+      protected @Nullable Editor getEditor() {
         return getLightEditor();
-      }
-
-      @NotNull
-      @Override
-      protected DataContext getContext() {
-        return getEditorDataContext(super.getContext());
       }
     };
   }

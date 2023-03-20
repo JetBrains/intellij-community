@@ -22,9 +22,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
 import com.intellij.testFramework.TestDataPath;
 
-/**
- * @author ven
- */
 @TestDataPath("$CONTENT_ROOT/testData/refactoring/invertBoolean/")
 public class InvertBooleanTest extends LightRefactoringParameterizedTestCase {
   @Override

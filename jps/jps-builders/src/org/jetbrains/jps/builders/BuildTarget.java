@@ -41,9 +41,10 @@ import java.util.List;
  * @see BuildTargetType
  */
 public abstract class BuildTarget<R extends BuildRootDescriptor> {
+  @NotNull
   private final BuildTargetType<? extends BuildTarget<R>> myTargetType;
 
-  protected BuildTarget(BuildTargetType<? extends BuildTarget<R>> targetType) {
+  protected BuildTarget(@NotNull BuildTargetType<? extends BuildTarget<R>> targetType) {
     myTargetType = targetType;
   }
 
@@ -53,6 +54,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    */
   public abstract String getId();
 
+  @NotNull
   public final BuildTargetType<? extends BuildTarget<R>> getTargetType() {
     return myTargetType;
   }
@@ -62,7 +64,6 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    *
    * @param targetRegistry the registry of all targets existing in the project.
    * @param outputIndex    the index of output files by target.
-   * @return
    */
   public abstract Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex);
 

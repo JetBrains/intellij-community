@@ -6,3 +6,4 @@ class A {
         var foo: String = "foo"
     }
 }
+

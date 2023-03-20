@@ -26,8 +26,6 @@ import java.util.Set;
  * Encapsulates composite match condition, e.g. "an entry has type 'field' and modifier 'static'".
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class ArrangementCompositeMatchCondition implements ArrangementMatchCondition {
 

@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>Reports redundant constructor keywords on primary constructors.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Foo <b>constructor</b>(x: Int, y: Int)
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Foo(x: Int, y: Int)
+</code></pre>
+</body>
+</html>

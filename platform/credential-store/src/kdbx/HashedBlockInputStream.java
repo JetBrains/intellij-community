@@ -88,7 +88,6 @@ final class HashedBlockInputStream extends InputStream {
    * @param offset the offset to start from
    * @param length the number of bytes to return
    * @return the number of bytes actually returned, , -1 if end of file
-   * @throws IOException
    */
   private int get(byte[] b, int offset, int length) throws IOException {
     if (done) {

@@ -44,22 +44,20 @@ public final class XmlMatchUtil {
 
   public static PsiElement getElementToMatch(XmlAttributeValue attributeValue) {
     final PsiElement child = attributeValue.getFirstChild();
-    if (!(child instanceof XmlToken)) {
+    if (!(child instanceof XmlToken token)) {
       return null;
     }
-    final XmlToken token = (XmlToken)child;
     if (token.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
       return null;
     }
     final PsiElement sibling = child.getNextSibling();
-    if (!(sibling instanceof XmlToken)) {
+    if (!(sibling instanceof XmlToken secondToken)) {
       return sibling;
     }
-    final XmlToken secondToken = (XmlToken)sibling;
     return (secondToken.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) ? null : secondToken;
   }
 
-  private static boolean addSpecialXmlTags(@NotNull PsiElement element, List<XmlElement> list) {
+  private static boolean addSpecialXmlTags(@NotNull PsiElement element, List<? super XmlElement> list) {
     boolean result = false;
     for (SpecialElementExtractor extractor : SpecialElementExtractor.EP_NAME.getExtensionList()) {
       final PsiElement[] elements = extractor.extractSpecialElements(element);

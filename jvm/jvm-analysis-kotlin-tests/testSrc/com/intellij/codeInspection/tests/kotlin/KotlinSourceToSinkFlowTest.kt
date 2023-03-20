@@ -47,4 +47,11 @@ class KotlinSourceToSinkFlowTest: LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting("LocalInference.kt")
   }
 
+  fun testKotlinPropertyPropagateFix() {
+    myFixture.configureByFile("Property.kt")
+    val propagateAction = myFixture.getAvailableIntention("Propagate safe annotation from 'getF'")!!
+    myFixture.launchAction(propagateAction)
+    myFixture.checkResultByFile("Property.after.kt")
+  }
+
 }

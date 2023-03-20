@@ -1,1 +1,1 @@
-Value read 6 val x = Outer.t
+Value read 7 val x = Outer.t

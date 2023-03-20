@@ -24,6 +24,12 @@ fun test(list: List<Int>): List<Pair<IndexedValue<List<Int>>, IndexedValue<List<
         .plus(1)
         .plusElement(1)
         .requireNoNulls()
+        .runningFold(0) { acc, i -> acc + i }
+        .runningFoldIndexed(0) { _, acc, i -> acc + i }
+        .runningReduce { acc, i -> acc + i }
+        .runningReduceIndexed { _, acc, i -> acc + i }
+        .scan(0) { acc, i -> acc + i }
+        .scanIndexed(0) { _, acc, i -> acc + i }
         .sorted()
         .sortedBy { it }
         .sortedByDescending { it }

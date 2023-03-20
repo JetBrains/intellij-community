@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -108,6 +108,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/FileWithNoPackageStatement.java");
     }
 
+    @TestMetadata("ForRangeToRangeUntil.java")
+    public void testForRangeToRangeUntil() throws Exception {
+        runTest("testData/copyPaste/ForRangeToRangeUntil.java");
+    }
+
     @TestMetadata("GetterWithError.java")
     public void testGetterWithError() throws Exception {
         runTest("testData/copyPaste/GetterWithError.java");
@@ -173,6 +178,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/MethodWithOnlyOneAnnotation.java");
     }
 
+    @TestMetadata("NoJvmStaticForTopLevelFunction.java")
+    public void testNoJvmStaticForTopLevelFunction() throws Exception {
+        runTest("testData/copyPaste/NoJvmStaticForTopLevelFunction.java");
+    }
+
     @TestMetadata("OnlyClosingBrace.java")
     public void testOnlyClosingBrace() throws Exception {
         runTest("testData/copyPaste/OnlyClosingBrace.java");
@@ -228,8 +238,18 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/SingleWordFromIdentifier.java");
     }
 
+    @TestMetadata("TopLevelMainWithUsedArgs.java")
+    public void testTopLevelMainWithUsedArgs() throws Exception {
+        runTest("testData/copyPaste/TopLevelMainWithUsedArgs.java");
+    }
+
     @TestMetadata("UnconvertedMethodReference.java")
     public void testUnconvertedMethodReference() throws Exception {
         runTest("testData/copyPaste/UnconvertedMethodReference.java");
+    }
+
+    @TestMetadata("Until.java")
+    public void testUntil() throws Exception {
+        runTest("testData/copyPaste/Until.java");
     }
 }

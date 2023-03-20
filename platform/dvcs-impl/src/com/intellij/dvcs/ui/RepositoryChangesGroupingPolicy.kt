@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.repo.Repository
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.StaticFilePath
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.*
-import com.intellij.vcsUtil.VcsUtil
 import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
@@ -64,6 +63,6 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
   }
 
   companion object {
-    val REPOSITORY_CACHE = NotNullLazyKey.create<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>("ChangesTree.RepositoryCache") { mutableMapOf() }
+    val REPOSITORY_CACHE = NotNullLazyKey.createLazyKey<MutableMap<Repository, ChangesBrowserNode<*>>, ChangesBrowserNode<*>>("ChangesTree.RepositoryCache") { mutableMapOf() }
   }
 }

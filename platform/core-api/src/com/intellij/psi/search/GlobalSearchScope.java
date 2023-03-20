@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.model.ModelBranch;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -339,7 +340,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   @Contract(pure = true)
   public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
-    return new FileScope(psiFile.getProject(), psiFile.getVirtualFile(), null);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    return new FileScope(psiFile.getProject(), virtualFile != null ? BackedVirtualFile.getOriginFileIfBacked(virtualFile) : null, null);
   }
 
   @NotNull
@@ -663,7 +665,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       UnionScope that = (UnionScope)o;
 
-      return ContainerUtil.set(myScopes).equals(ContainerUtil.set(that.myScopes));
+      return ContainerUtil.newHashSet(myScopes).equals(ContainerUtil.newHashSet(that.myScopes));
     }
 
     @Override
@@ -822,6 +824,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
+    public @NotNull Collection<VirtualFile> getFilesIfCollection() {
+      return Collections.singleton(myVirtualFile);
+    }
+
+    @Override
     public boolean contains(@NotNull VirtualFile file) {
       return Comparing.equal(myVirtualFile, file);
     }
@@ -875,15 +882,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int[] asInts() {
+    public int @NotNull [] asArray() {
       return myVirtualFile instanceof VirtualFileWithId
-             ? new int[] { ((VirtualFileWithId)myVirtualFile).getId()}
+             ? new int[]{((VirtualFileWithId)myVirtualFile).getId()}
              : ArrayUtil.EMPTY_INT_ARRAY;
-    }
-
-    @Override
-    public @NotNull Iterable<VirtualFile> asIterable() {
-      return Collections.singletonList(myVirtualFile);
     }
   }
 
@@ -895,6 +897,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     AbstractFilesScope(@Nullable Project project, @Nullable Boolean hasFilesOutOfProjectRoots) {
       super(project);
       myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
+    }
+
+    @Override
+    public @Nullable Collection<VirtualFile> getFilesIfCollection() {
+      return getFiles();
     }
 
     abstract @NotNull VirtualFileSet getFiles();
@@ -937,17 +944,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean contains(int fileId) {
-      return ((CompactVirtualFileSet)getFiles()).containsId(fileId);
+      return ((VirtualFileSetEx)getFiles()).containsId(fileId);
     }
 
     @Override
-    public int[] asInts() {
-      return ((CompactVirtualFileSet)getFiles()).onlyInternalFileIds();
-    }
-
-    @Override
-    public @NotNull Iterable<VirtualFile> asIterable() {
-      return Collections.unmodifiableSet(getFiles());
+    public int @NotNull [] asArray() {
+      return ((VirtualFileSetEx)getFiles()).onlyInternalFileIds();
     }
   }
 

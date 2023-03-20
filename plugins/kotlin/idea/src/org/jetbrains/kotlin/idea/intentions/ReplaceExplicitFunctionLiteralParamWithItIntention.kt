@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -12,15 +12,15 @@ import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.copied
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -46,9 +46,11 @@ class ReplaceExplicitFunctionLiteralParamWithItIntention : PsiElementBaseIntenti
             val argumentIndex = call.valueArguments.indexOfFirst { it.getArgumentExpression() == lambda }
             val callOrQualified = call.getQualifiedExpressionForSelectorOrThis()
             val newCallOrQualified = callOrQualified.copied()
-            val newCall = newCallOrQualified.safeAs<KtQualifiedExpression>()?.callExpression ?: newCallOrQualified.safeAs() ?: return false
+            val newCall = newCallOrQualified.safeAs<KtQualifiedExpression>()?.callExpression
+                ?: newCallOrQualified as? KtCallExpression
+                ?: return false
             val newArgument = newCall.valueArguments.getOrNull(argumentIndex) ?: newCall.lambdaArguments.singleOrNull() ?: return false
-            newArgument.replace(KtPsiFactory(element).createLambdaExpression("", "TODO()"))
+            newArgument.replace(KtPsiFactory(project).createLambdaExpression("", "TODO()"))
             val newContext = newCallOrQualified.analyzeAsReplacement(callOrQualified, callOrQualified.analyze(BodyResolveMode.PARTIAL))
             if (newCallOrQualified.getResolvedCall(newContext)?.resultingDescriptor == null) return false
         }

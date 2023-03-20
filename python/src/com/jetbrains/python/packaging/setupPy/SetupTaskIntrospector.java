@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableSet;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 
-public class SetupTaskIntrospector {
+public final class SetupTaskIntrospector {
   private static final Logger LOG = Logger.getInstance(SetupTaskIntrospector.class);
 
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<>();
@@ -148,8 +148,7 @@ public class SetupTaskIntrospector {
     if (value instanceof PySequenceExpression) {
       Collections.addAll(result, ((PySequenceExpression)value).getElements());
     }
-    else if (value instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+    else if (value instanceof PyBinaryExpression binaryExpression) {
       if (binaryExpression.isOperator("+")) {
         collectSequenceElements(binaryExpression.getLeftExpression(), result);
         collectSequenceElements(binaryExpression.getRightExpression(), result);

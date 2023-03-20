@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
@@ -24,7 +24,7 @@ import static com.intellij.codeInspection.dataFlow.JavaMethodContractUtil.ORG_JE
 
 public class DefaultInferredAnnotationProvider implements InferredAnnotationProvider {
   private static final Set<String> JB_INFERRED_ANNOTATIONS =
-    ContainerUtil.set(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
+    Set.of(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
                       Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS = Collections.emptySet();
   private final Project myProject;
@@ -144,8 +144,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     if (owner instanceof PsiMethod && IMMUTABLE_FACTORY.methodMatches((PsiMethod)owner)) {
       return Mutability.UNMODIFIABLE.asAnnotation(myProject);
     }
-    if (!(owner instanceof PsiMethodImpl)) return null;
-    PsiMethodImpl method = (PsiMethodImpl)owner;
+    if (!(owner instanceof PsiMethodImpl method)) return null;
     PsiModifierList modifiers = method.getModifierList();
     if (modifiers.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION) ||
         modifiers.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
@@ -190,18 +189,15 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     PsiElement parent = parameter.getParent();
     if (!(parent instanceof PsiParameterList)) return null;
     PsiElement scope = parent.getParent();
-    if (scope instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)scope;
-      if (method.getName().equals("of")) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null) {
-          String className = containingClass.getQualifiedName();
-          if (CommonClassNames.JAVA_UTIL_LIST.equals(className) ||
-              CommonClassNames.JAVA_UTIL_SET.equals(className) ||
-              CommonClassNames.JAVA_UTIL_MAP.equals(className) ||
-              "java.util.EnumSet".equals(className)) {
-            return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
-          }
+    if (scope instanceof PsiMethod method && method.getName().equals("of")) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        String className = containingClass.getQualifiedName();
+        if (CommonClassNames.JAVA_UTIL_LIST.equals(className) ||
+            CommonClassNames.JAVA_UTIL_SET.equals(className) ||
+            CommonClassNames.JAVA_UTIL_MAP.equals(className) ||
+            "java.util.EnumSet".equals(className)) {
+          return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
         }
       }
     }

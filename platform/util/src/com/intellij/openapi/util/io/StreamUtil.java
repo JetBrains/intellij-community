@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,7 @@ public final class StreamUtil {
     return total;
   }
 
+  @ReviseWhenPortedToJDK(value = "9", description = "InputStream#readAllBytes")
   public static byte @NotNull [] readBytes(@NotNull InputStream inputStream) throws IOException {
     UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
     copy(inputStream, outputStream);
@@ -82,8 +84,7 @@ public final class StreamUtil {
     return Arrays.copyOf(buffer, dst);
   }
 
-  @NotNull
-  private static CharArrayWriter readChars(@NotNull Reader reader) throws IOException {
+  private static CharArrayWriter readChars(Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
     char[] buffer = new char[2048];
     int read;
@@ -138,6 +139,7 @@ public final class StreamUtil {
 
   /** @deprecated outdated pattern; use try-with-resources instead */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void closeStream(@Nullable Closeable stream) {
     if (stream != null) {
       try {

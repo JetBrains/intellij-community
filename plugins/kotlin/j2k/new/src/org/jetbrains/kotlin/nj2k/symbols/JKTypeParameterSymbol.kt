@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiTypeParameter
-import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.tree.JKTypeParameter
 import org.jetbrains.kotlin.nj2k.tree.JKTypeParameterListOwner
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory

@@ -42,7 +42,7 @@ public final class TextMateSettings implements PersistentStateComponent<TextMate
 
     @Transient
     public List<BundleConfigBean> getBundles() {
-      return bundles;
+      return new ArrayList<>(bundles);
     }
 
     // transient because XML serializer should set value directly, but our setter transforms data and accepts not List, but Collection

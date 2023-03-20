@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.intellij.openapi.util.io.FileUtil
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * An improved variant of [org.junit.rules.TemporaryFolder] with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient [newFile], [newDirectory] methods.
  */
-class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback {
+open class TempDirectory : ExternalResource() {
   private var myName: String? = null
   private val myNextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
@@ -56,14 +56,14 @@ class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback 
     }
 
   override fun apply(base: Statement, description: Description): Statement {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
+    before(description.methodName ?: description.className)
     return super.apply(base, description)
   }
 
-  override fun beforeEach(context: ExtensionContext) {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(context.displayName.take(30), true), true)
+  fun before(methodName: String) {
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(methodName.take(30), true), true)
   }
-  
+
   public override fun after() {
     val path = myRoot?.toPath()
     val vfsDir = myVirtualFileRoot
@@ -79,10 +79,6 @@ class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback 
     ).run()
   }
 
-  override fun afterEach(context: ExtensionContext) {
-    after()
-  }
-
   /**
    * Creates a new directory with a random name under the root temp directory.
    */
@@ -96,9 +92,7 @@ class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback 
   /**
    * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
    */
-  fun newDirectory(relativePath: String): File {
-    return newDirectoryPath(relativePath).toFile()
-  }
+  fun newDirectory(relativePath: String): File = newDirectoryPath(relativePath).toFile()
 
   /**
    * Creates a new directory at the given path relative to the root temp directory. Throws an exception if such a directory already exists.
@@ -171,5 +165,15 @@ class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback 
       makeDirectories(path.parent)
       Files.createDirectory(path)
     }
+  }
+}
+
+class TempDirectoryExtension : TempDirectory(), BeforeEachCallback, AfterEachCallback {
+  override fun beforeEach(context: ExtensionContext) {
+    before(context.displayName)
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    after()
   }
 }

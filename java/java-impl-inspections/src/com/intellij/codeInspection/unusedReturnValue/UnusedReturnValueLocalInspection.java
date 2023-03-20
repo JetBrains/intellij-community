@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -16,6 +16,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedReturnValue
 public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private final UnusedReturnValue myGlobal;
 
@@ -41,7 +42,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
-        PsiType.VOID.equals(method.getReturnType()) ||
+        PsiTypes.voidType().equals(method.getReturnType()) ||
         VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), myGlobal.highestModifier) < 0 ||
         myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
@@ -61,7 +62,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
         }
       }
       return element instanceof PsiMethodReferenceExpression &&
-             PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
+             PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
     })) {
       if (atLeastOneUsageExists[0]) {
         return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false, isOnTheFly)};

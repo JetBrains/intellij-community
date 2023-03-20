@@ -3,7 +3,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
 
 import java.util.Collections;
@@ -14,11 +13,11 @@ import java.util.Set;
 class HardCodedPurity {
   static final boolean AGGRESSIVE_HARDCODED_PURITY = Registry.is("java.annotations.inference.aggressive.hardcoded.purity", true);
 
-  private static final Set<Member> thisChangingMethods = ContainerUtil.set(
+  private static final Set<Member> thisChangingMethods = Set.of(
     new Member("java/lang/Throwable", "fillInStackTrace", "()Ljava/lang/Throwable;")
   );
   // Assumed that all these methods are not only pure, but return object which could be safely modified
-  private static final Set<Member> pureMethods = ContainerUtil.set(
+  private static final Set<Member> pureMethods = Set.of(
     // Maybe overloaded and be not pure, but this would be definitely bad code style
     // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
     new Member("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
@@ -104,7 +103,7 @@ class HardCodedPurity {
   }
 
   static class AggressiveHardCodedPurity extends HardCodedPurity {
-    static final Set<String> ITERABLES = ContainerUtil.set("java/lang/Iterable", "java/util/Collection",
+    static final Set<String> ITERABLES = Set.of("java/lang/Iterable", "java/util/Collection",
                                                            "java/util/List", "java/util/Set", "java/util/ArrayList",
                                                            "java/util/HashSet", "java/util/AbstractList",
                                                            "java/util/AbstractSet", "java/util/TreeSet");

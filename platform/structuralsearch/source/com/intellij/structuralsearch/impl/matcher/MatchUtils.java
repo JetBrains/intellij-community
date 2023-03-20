@@ -4,6 +4,8 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Objects;
+
 /**
  * @author maxim
  */
@@ -14,7 +16,7 @@ public final class MatchUtils {
   }
 
   public static boolean compareWithNoDifferenceToPackage(String typeImage, @NonNls String typeImage2, boolean ignoreCase) {
-    if (typeImage == null || typeImage2 == null) return typeImage == typeImage2;
+    if (typeImage == null || typeImage2 == null) return Objects.equals(typeImage, typeImage2);
     final boolean endsWith = ignoreCase ? StringUtil.endsWithIgnoreCase(typeImage2, typeImage) : typeImage2.endsWith(typeImage);
     return endsWith && (
       typeImage.length() == typeImage2.length() ||

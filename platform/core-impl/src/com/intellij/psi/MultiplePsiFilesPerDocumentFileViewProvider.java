@@ -55,12 +55,12 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   @Override
   @NotNull
   public List<PsiFile> getAllFiles() {
-    final List<PsiFile> roots = new ArrayList<>();
+    List<PsiFile> roots = new ArrayList<>();
     for (Language language : getLanguages()) {
       PsiFile psi = getPsi(language);
       if (psi != null) roots.add(psi);
     }
-    final PsiFile base = getPsi(getBaseLanguage());
+    PsiFile base = getPsi(getBaseLanguage());
     if (!roots.isEmpty() && roots.get(0) != base) {
       roots.remove(base);
       roots.add(0, base);
@@ -76,7 +76,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   }
 
   @Override
-  protected PsiFile getPsiInner(@NotNull final Language target) {
+  protected PsiFile getPsiInner(@NotNull Language target) {
     PsiFileImpl file = myRoots.get(target);
     if (file == null) {
       if (!shouldCreatePsi()) return null;
@@ -86,7 +86,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
       file = createPsiFileImpl(target);
       if (file == null) return null;
       if (myOriginal != null) {
-        final PsiFile originalFile = myOriginal.getPsi(target);
+        PsiFile originalFile = myOriginal.getPsi(target);
         if (originalFile != null) {
           file.setOriginalFile(originalFile);
         }
@@ -116,7 +116,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   public final @NotNull List<FileASTNode> getKnownTreeRoots() {
     List<FileASTNode> files = new ArrayList<>(myRoots.size());
     for (PsiFileImpl file : myRoots.values()) {
-      final FileASTNode treeElement = file.getNodeIfLoaded();
+      FileASTNode treeElement = file.getNodeIfLoaded();
       if (treeElement != null) {
         files.add(treeElement);
       }
@@ -140,8 +140,8 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
 
   @NotNull
   @Override
-  public final MultiplePsiFilesPerDocumentFileViewProvider createCopy(@NotNull final VirtualFile fileCopy) {
-    final MultiplePsiFilesPerDocumentFileViewProvider copy = cloneInner(fileCopy);
+  public final MultiplePsiFilesPerDocumentFileViewProvider createCopy(@NotNull VirtualFile fileCopy) {
+    MultiplePsiFilesPerDocumentFileViewProvider copy = cloneInner(fileCopy);
     copy.myOriginal = myOriginal == null ? this : myOriginal;
     return copy;
   }
@@ -152,14 +152,14 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   @Override
   @Nullable
   public PsiElement findElementAt(int offset, @NotNull Class<? extends Language> lang) {
-    final PsiFile mainRoot = getPsi(getBaseLanguage());
+    PsiFile mainRoot = getPsi(getBaseLanguage());
     PsiElement ret = null;
-    for (final Language language : getLanguages()) {
+    for (Language language : getLanguages()) {
       if (!ReflectionUtil.isAssignable(lang, language.getClass())) continue;
       if (lang.equals(Language.class) && !getLanguages().contains(language)) continue;
 
-      final PsiFile psiRoot = getPsi(language);
-      final PsiElement psiElement = findElementAt(psiRoot, offset);
+      PsiFile psiRoot = getPsi(language);
+      PsiElement psiElement = findElementAt(psiRoot, offset);
       if (psiElement == null || psiElement instanceof OuterLanguageElement) continue;
       if (ret == null || psiRoot != mainRoot) {
         ret = psiElement;
@@ -179,11 +179,11 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   public PsiReference findReferenceAt(int offset) {
     TextRange minRange = new TextRange(0, getContents().length());
     PsiReference ret = null;
-    for (final Language language : getLanguages()) {
-      final PsiElement psiRoot = getPsi(language);
-      final PsiReference reference = SharedPsiElementImplUtil.findReferenceAt(psiRoot, offset, language);
+    for (Language language : getLanguages()) {
+      PsiElement psiRoot = getPsi(language);
+      PsiReference reference = SharedPsiElementImplUtil.findReferenceAt(psiRoot, offset, language);
       if (reference == null) continue;
-      final TextRange textRange = reference.getRangeInElement().shiftRight(reference.getElement().getTextRange().getStartOffset());
+      TextRange textRange = reference.getRangeInElement().shiftRight(reference.getElement().getTextRange().getStartOffset());
       if (minRange.contains(textRange) && (!textRange.contains(minRange) || ret == null)) {
         minRange = textRange;
         ret = reference;

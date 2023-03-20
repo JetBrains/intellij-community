@@ -19,7 +19,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author peter
+ * Deprecated. Use {@link java.util.function.Supplier} with {@code @Nullable} annotation on the type parameter instead.
  */
 @FunctionalInterface
 public interface NullableFactory<T> extends Factory<T>{

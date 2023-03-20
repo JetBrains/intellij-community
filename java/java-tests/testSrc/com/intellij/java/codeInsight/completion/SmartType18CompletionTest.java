@@ -21,9 +21,9 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -251,6 +251,7 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     myFixture.complete(CompletionType.SMART, 1);
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
@@ -405,32 +406,34 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
 
   @NeedsIndex.Full(reason = "inheritors search")
   public void testNewClassSubclass() {
-    myFixture.configureByText("Test.java", "public class Test {\n" +
-                                           "  abstract static class Foo<T> {\n" +
-                                           "    Foo() {}\n" +
-                                           "  }\n" +
-                                           "\n" +
-                                           "  static class Bar extends Foo<String> {Bar() {}}\n" +
-                                           "\n" +
-                                           "  public static void main(String[] args) {\n" +
-                                           "    Foo<String> foo = <caret>\n" +
-                                           "\n" +
-                                           "  }\n" +
-                                           "}");
+    myFixture.configureByText("Test.java", """
+      public class Test {
+        abstract static class Foo<T> {
+          Foo() {}
+        }
+
+        static class Bar extends Foo<String> {Bar() {}}
+
+        public static void main(String[] args) {
+          Foo<String> foo = <caret>
+
+        }
+      }""");
     myFixture.complete(CompletionType.SMART, 2);
     assertEquals(List.of("new Bar"), myFixture.getLookupElementStrings());
     myFixture.type('\n');
-    myFixture.checkResult("public class Test {\n" +
-                          "  abstract static class Foo<T> {\n" +
-                          "    Foo() {}\n" +
-                          "  }\n" +
-                          "\n" +
-                          "  static class Bar extends Foo<String> {Bar() {}}\n" +
-                          "\n" +
-                          "  public static void main(String[] args) {\n" +
-                          "    Foo<String> foo = new Bar();\n" +
-                          "\n" +
-                          "  }\n" +
-                          "}");
+    myFixture.checkResult("""
+                            public class Test {
+                              abstract static class Foo<T> {
+                                Foo() {}
+                              }
+
+                              static class Bar extends Foo<String> {Bar() {}}
+
+                              public static void main(String[] args) {
+                                Foo<String> foo = new Bar();
+
+                              }
+                            }""");
   }
 }

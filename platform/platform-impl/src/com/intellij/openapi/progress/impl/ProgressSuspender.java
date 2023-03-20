@@ -24,9 +24,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 @ApiStatus.Internal
 public final class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
@@ -110,6 +107,10 @@ public final class ProgressSuspender implements AutoCloseable {
     return mySuspended;
   }
 
+  public boolean isClosed() {
+    return myClosed;
+  }
+
   /**
    * @param reason if provided, is displayed in the UI instead of suspended text passed into constructor until the progress is resumed
    */
@@ -152,11 +153,11 @@ public final class ProgressSuspender implements AutoCloseable {
       return false;
     }
 
-    if (isCurrentThreadHoldingKnownLocks()) {
+    if (myProgressesInNonSuspendableSections.containsKey(current)) {
       return false;
     }
 
-    if (myProgressesInNonSuspendableSections.containsKey(current)) {
+    if (isCurrentThreadHoldingKnownLocks()) {
       return false;
     }
 

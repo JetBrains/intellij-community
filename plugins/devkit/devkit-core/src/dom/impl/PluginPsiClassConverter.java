@@ -12,9 +12,6 @@ import com.intellij.util.xml.PsiClassConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-/**
- * @author peter
- */
 public class PluginPsiClassConverter extends PsiClassConverter {
 
   @Override

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -124,6 +125,11 @@ public class JavadocEditor extends ModuleElementsEditor {
             saveData();
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override

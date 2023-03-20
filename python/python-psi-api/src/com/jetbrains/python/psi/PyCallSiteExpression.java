@@ -23,7 +23,6 @@ import java.util.List;
 /**
  * Marker interface for Python expressions that are call sites for explicit or implicit function calls.
  *
- * @author vlan
  */
 public interface PyCallSiteExpression extends PyExpression {
 

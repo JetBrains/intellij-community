@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
+
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Set;
 
-import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 import static java.util.Collections.unmodifiableSet;
 
 /**
@@ -26,6 +27,7 @@ public interface GroovyCommonClassNames {
   String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
   String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
   String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
+  String ORG_CODEHAUS_GROOVY_MACRO_RUNTIME_MACRO = "org.codehaus.groovy.macro.runtime.Macro";
   String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
   String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
   String GROOVY_TRANSFORM_RECORD_TYPE = "groovy.transform.RecordType";
@@ -70,7 +72,7 @@ public interface GroovyCommonClassNames {
   String GROOVY_TRAIT = "groovy.transform.Trait";
   String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";
 
-  Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
+  Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(ContainerUtil.newLinkedHashSet(
     "org.codehaus.groovy.runtime.DateGroovyMethods",
     "org.codehaus.groovy.runtime.DefaultGroovyMethods",
     "org.codehaus.groovy.runtime.EncodingGroovyMethods",
@@ -89,7 +91,7 @@ public interface GroovyCommonClassNames {
     "org.codehaus.groovy.runtime.dgmimpl.NumberNumberDiv"
   ));
 
-  Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
+  Set<String> DEFAULT_STATIC_EXTENSIONS = unmodifiableSet(ContainerUtil.newLinkedHashSet(
     "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods"
   ));
 }

@@ -10,9 +10,6 @@ import org.jetbrains.idea.svn.api.Url;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface DeleteClient extends SvnClient {
 
   void delete(@NotNull File path, boolean force, boolean dryRun, @Nullable ProgressTracker handler) throws VcsException;

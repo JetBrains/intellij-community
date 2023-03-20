@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -26,8 +26,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.IndentAwareInjectedFileChangesHandler;
@@ -57,22 +58,21 @@ import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 /**
  * @author Gregory Shrago
  */
-public class QuickEditHandler extends UserDataHolderBase implements Disposable, DocumentListener {
+public final class QuickEditHandler extends UserDataHolderBase implements Disposable, DocumentListener {
   private final Project myProject;
   private final QuickEditAction myAction;
 
-  @NotNull
-  private final Editor myEditor;
+  private final @NotNull Editor myEditor;
   private final Document myOrigDocument;
 
-  @NotNull
-  private final Document myNewDocument;
+  private final @NotNull Document myNewDocument;
   private final PsiFile myNewFile;
   private final LightVirtualFile myNewVirtualFile;
 
@@ -86,14 +86,14 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
 
   QuickEditHandler(@NotNull Project project,
                    @NotNull PsiFile injectedFile,
-                   final @NotNull PsiFile origFile,
+                   @NotNull PsiFile origFile,
                    @NotNull Editor editor,
                    @NotNull QuickEditAction action) {
     myProject = project;
     myEditor = editor;
     myAction = action;
     myOrigDocument = editor.getDocument();
-    Place shreds = InjectedLanguageUtil.getShreds(injectedFile);
+    Place shreds = InjectedLanguageUtilBase.getShreds(injectedFile);
     FileType fileType = injectedFile.getFileType();
     Language language = injectedFile.getLanguage();
     PsiLanguageInjectionHost.Shred firstShred = ContainerUtil.getFirstItem(shreds);
@@ -194,21 +194,21 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
 
   public void navigate(int injectedOffset) {
     if (myAction.isShowInBalloon()) {
-      final JComponent component = myAction.createBalloonComponent(myNewFile);
+      JComponent component = myAction.createBalloonComponent(myNewFile);
       if (component != null) showBalloon(myEditor, myNewFile, component);
     }
     else {
-      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-      final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
+      FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+      FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
-        final EditorWindow curWindow = fileEditorManager.getCurrentWindow();
-        mySplittedWindow = curWindow.split(SwingConstants.HORIZONTAL, false, myNewVirtualFile, true);
+        EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
+        mySplittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values
       if (editor instanceof EditorEx) {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
-        final FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
+        FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
         foldingModel.runBatchFoldingOperation(() -> {
           CharSequence sequence = myNewDocument.getImmutableCharSequence();
           for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
@@ -234,7 +234,7 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
   }
 
   public static void showBalloon(Editor editor, PsiFile newFile, JComponent component) {
-    final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
+    Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
       .setShadow(true)
       .setAnimationCycle(0)
       .setHideOnClickOutside(true)
@@ -245,10 +245,10 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
     DumbAwareAction.create(e -> balloon.hide())
       .registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);
     Disposer.register(newFile.getProject(), balloon);
-    final Balloon.Position position = QuickEditAction.getBalloonPosition(editor);
+    Balloon.Position position = QuickEditAction.getBalloonPosition(editor);
     RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     if (position == Balloon.Position.above) {
-      final Point p = point.getPoint();
+      Point p = point.getPoint();
       point = new RelativePoint(point.getComponent(), new Point(p.x, p.y - editor.getLineHeight()));
     }
     balloon.show(point, position);
@@ -289,13 +289,13 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
   private void closeEditor() {
     boolean unsplit = false;
     if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
-      final EditorWithProviderComposite[] editors = mySplittedWindow.getEditors();
-      if (editors.length == 1 && Comparing.equal(editors[0].getFile(), myNewVirtualFile)) {
+      List<EditorComposite> editors = mySplittedWindow.getAllComposites();
+      if (editors.size() == 1 && Comparing.equal(editors.get(0).getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
     }
     if (unsplit) {
-      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow, false);
+      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow);
     }
     FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
   }
@@ -329,7 +329,7 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
   }
 
 
-  private void commitToOriginal(final DocumentEvent e) {
+  private void commitToOriginal(DocumentEvent e) {
     myCommittingToOriginal = true;
     try {
       PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
@@ -357,11 +357,6 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
     return myNewFile;
   }
 
-  @NotNull
-  public Document getFragmentDocument() {
-    return myNewDocument;
-  }
-
   public boolean tryReuse(@NotNull PsiFile injectedFile, @NotNull TextRange hostRange) {
     return myEditChangesHandler.tryReuse(injectedFile, hostRange);
   }
@@ -373,7 +368,7 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
 
   private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override
-    public void handle(final ReadOnlyFragmentModificationException e) {
+    public void handle(ReadOnlyFragmentModificationException e) {
       //nothing
     }
   }

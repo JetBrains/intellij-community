@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.output
 
@@ -182,7 +182,7 @@ class PreviewOutputBlocksManager(editor: Editor) {
     fun getBlockAtLine(line: Int): ScratchOutputBlock? = blocks.values.find { line in it.lineStart..it.lineEnd }
 }
 
-private fun countNewLines(list: List<ScratchOutput>) = list.sumBy { StringUtil.countNewLines(it.text) } + max(list.size - 1, 0)
+private fun countNewLines(list: List<ScratchOutput>) = list.sumOf { StringUtil.countNewLines(it.text) } + max(list.size - 1, 0)
 
 private fun Document.getLineContent(lineNumber: Int) =
     DiffUtil.getLinesContent(this, lineNumber, lineNumber + 1).toString()

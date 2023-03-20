@@ -7,11 +7,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FilePropertyKey;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Represents a non-linear operation which is executed before indexing process
@@ -22,7 +24,7 @@ import java.io.IOException;
  * Most frequently property represents some kind of "language level"
  * which is in most cases required to determine the algorithm of stub and other indexes building.
  * <br />
- * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFileDataKey()}.
+ * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFilePropertyKey()}.
  * <br/>
  * The computation of the value (simplified) for a given {@link VirtualFile} works as follows:
  * <ul>
@@ -58,11 +60,28 @@ public interface FilePropertyPusher<T> {
   default void afterRootsChanged(@NotNull Project project) {}
 
   /**
-   * After property was pushed it can be retrieved any time using {@link FilePropertyPusher#getFileDataKey()}
+   * After property was pushed it can be retrieved any time using {@code getFileDataKey()}
    * from {@link VirtualFile#getUserData(Key)}.
+   *
+   * @deprecated use {@link #getFilePropertyKey()} instead
    */
   @NotNull
-  Key<T> getFileDataKey();
+  @Deprecated(forRemoval = true)
+  default Key<T> getFileDataKey() {
+    // Existing plugins always override this method, so default body is never executed in the existing plugins.
+    // Default implementation of `getFileDataKey` is only invoked from default implementation of `getFilePropertyKey`.
+    // If new plugin observe this exception, this means that it did not override getFilePropertyKey nor getFileDataKey.
+    // (or invoked getFileDataKey explicitly, either way this should be found at development phase, not in runtime in the fields)
+    throw new IllegalStateException("Please override getFilePropertyKey().");
+  }
+
+  /**
+   * After property was pushed it can be retrieved at any time using {@link FilePropertyKey#getPersistentValue(VirtualFile)}
+   */
+  @NotNull
+  default FilePropertyKey<T> getFilePropertyKey() {
+    return new InMemoryFilePropertyKeyImpl<>(getFileDataKey());
+  }
 
   boolean pushDirectoriesOnly();
 
@@ -84,7 +103,7 @@ public interface FilePropertyPusher<T> {
   /**
    * This method is called to persist the computed Pusher value (of type T).
    * The implementation is supposed to call {@link PushedFilePropertiesUpdater#filePropertiesChanged}
-   * if a change is detected to issue the {@para fileOrDir} re-index
+   * if a change is detected to issue the {@code fileOrDir} re-index
    */
   void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
@@ -93,11 +112,36 @@ public interface FilePropertyPusher<T> {
   /**
    * @deprecated Please override {@link FilePropertyPusher#acceptsFile(VirtualFile, Project)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   default boolean acceptsFile(@NotNull VirtualFile file) {
     return false;
   }
   //</editor-fold>
+}
+
+
+/**
+ * Don't use outside {@link FilePropertyPusher#getFilePropertyKey()}.
+ * Should be deleted together with the {@link FilePropertyPusher#getFileDataKey()}
+ * ({@link FilePropertyPusher#getFilePropertyKey()} default body should also be deleted together with the {@link FilePropertyPusher#getFileDataKey()})
+ */
+@Deprecated
+@ApiStatus.Internal
+class InMemoryFilePropertyKeyImpl<T> implements FilePropertyKey<T> {
+  private final Key<T> key;
+
+  InMemoryFilePropertyKeyImpl(Key<T> key) { this.key = key; }
+
+  @Override
+  public T getPersistentValue(@Nullable VirtualFile virtualFile) {
+    return key.get(virtualFile);
+  }
+
+  @Override
+  public boolean setPersistentValue(@Nullable VirtualFile virtualFile, T value) {
+    T oldValue = key.get(virtualFile);
+    key.set(virtualFile, value);
+    return !Objects.equals(oldValue, value);
+  }
 }

@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author ksafonov
- */
 public abstract class HeaderHidingTabbedModuleEditor extends TabbedModuleEditor {
 
   public HeaderHidingTabbedModuleEditor(@NotNull Project project, @NotNull ModulesConfigurator modulesProvider, @NotNull Module module) {

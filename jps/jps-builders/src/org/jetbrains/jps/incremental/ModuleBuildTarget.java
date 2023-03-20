@@ -55,7 +55,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   );
   private final JavaModuleBuildTargetType myTargetType;
 
-  public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
+  public ModuleBuildTarget(@NotNull JpsModule module, @NotNull JavaModuleBuildTargetType targetType) {
     super(targetType, module);
     myTargetType = targetType;
   }
@@ -88,11 +88,6 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   @Override
   public boolean isTests() {
     return myTargetType.isTests();
-  }
-
-  @Override
-  public boolean isCompiledBeforeModuleLevelBuilders() {
-    return false;
   }
 
   @Override
@@ -254,7 +249,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     }
 
     final JpsModule module = getModule();
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly().recursively().exportedOnly();
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly().recursivelyExportedOnly();
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
     }
@@ -274,7 +269,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   private static int pathHashCode(@NotNull String path) {
-    // On case insensitive OS hash calculated from path converted to lower case
+    // On case-insensitive OS hash calculated from path converted to lower case
     if (ProjectStamps.PORTABLE_CACHES) {
       return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
     }

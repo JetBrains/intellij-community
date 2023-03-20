@@ -1,0 +1,78 @@
+fragment mergeRequest on MergeRequest {
+  id
+  iid
+  title
+  description
+  webUrl
+  createdAt
+
+  targetBranch
+  sourceBranch
+
+  diffRefs {
+    baseSha
+    startSha
+    headSha
+  }
+
+  conflicts
+  headPipeline {
+    ...pipeline
+  }
+  mergeStatusEnum
+  state
+  draft
+
+  targetProject {
+    ...project
+  }
+  sourceProject {
+    ...project
+  }
+
+  author {
+    ...user
+  }
+
+  approvedBy(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
+
+  assignees(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
+  reviewers(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...user
+    }
+  }
+
+  commits(first: 1000) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...glCommit
+    }
+  }
+  userPermissions {
+    ...mergeRequestPermissions
+  }
+}

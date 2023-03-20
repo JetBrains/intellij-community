@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +24,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -64,7 +65,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
-  private boolean myUiUpdating = true;
+  private boolean myUiUpdating;
 
   private Integer myMinRowHeight;
   private boolean myStriped;
@@ -77,6 +78,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private TableCell rollOverCell;
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
+  private boolean myShowLastHorizontalLine;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -175,7 +177,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     myUiUpdating = false;
 
-    new MyCellEditorRemover();
+    new MyCellEditorRemover().setupListeners();
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
@@ -383,8 +385,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setModel(@NotNull TableModel model) {
     super.setModel(model);
 
-    if (model instanceof SortableColumnModel) {
-      final SortableColumnModel sortableModel = (SortableColumnModel)model;
+    if (model instanceof SortableColumnModel sortableModel) {
       if (sortableModel.isSortable()) {
         final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
         rowSorter.setSortsOnUpdates(isSortOnUpdates());
@@ -415,6 +416,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       GraphicsUtil.setupAntialiasing(g);
     }
     super.paintComponent(g);
+    if (!showHorizontalLines && myShowLastHorizontalLine && getRowCount() > 0 && getColumnCount() > 0) {
+      Color color = g.getColor();
+      Rectangle leftCell = getCellRect(getRowCount() - 1, 0, true);
+      Rectangle rightCell = getCellRect(getRowCount() - 1, getColumnCount() - 1, true);
+      g.setColor(getGridColor());
+      SwingUtilities2.drawHLine(g, leftCell.x, rightCell.x + rightCell.width, leftCell.y + leftCell.height);
+      g.setColor(color);
+    }
     getEmptyText().paint(this, g);
   }
 
@@ -616,9 +625,25 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setShowVerticalLines(boolean showVerticalLines) {
     if (!showVerticalLines) {
       getColumnModel().setColumnMargin(0);
-      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+      setIntercellSpacing(new Dimension(0, getIntercellSpacing().height));
     }
     super.setShowVerticalLines(showVerticalLines);
+  }
+
+  @Override
+  public void setShowHorizontalLines(boolean showHorizontalLines) {
+    if (!showHorizontalLines) {
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
+    }
+    super.setShowHorizontalLines(showHorizontalLines);
+  }
+
+  public void setShowLastHorizontalLine(boolean showLastHorizontalLine) {
+    myShowLastHorizontalLine = showLastHorizontalLine;
+  }
+
+  public boolean getShowLastHorizontalLine() {
+    return myShowLastHorizontalLine;
   }
 
   @Override
@@ -699,11 +724,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
-    if (result instanceof JComponent && !isCellSelected(row, column)) {
-      JComponent component = (JComponent)result;
+    if (result instanceof JComponent component && !isCellSelected(row, column)) {
       if (isStriped()) {
         if (isTableDecorationSupported()) {
-          setRendererBackground(component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
+          setRendererBackground(component, row % 2 == 1 ? getBackground() : ObjectUtils.chooseNotNull(getStripeColor(), getBackground()));
         }
       }
       else {
@@ -732,6 +756,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
+  @Nullable
+  protected Color getStripeColor() {
+    return UIUtil.getDecoratedRowColor();
+  }
+
   /**
    * This method is intended to override default hovered background.
    *
@@ -746,7 +775,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     forEachComponent(container, child -> child.setBackground(background));
   }
 
-  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<Component> consumer) {
+  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<? super Component> consumer) {
     consumer.accept(container);
     for (Component component : container.getComponents()) {
       consumer.accept(component);
@@ -769,9 +798,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final class MyCellEditorRemover implements PropertyChangeListener, Activatable {
     private boolean myIsActive = false;
 
-    MyCellEditorRemover() {
+    private void setupListeners() {
       addPropertyChangeListener("tableCellEditor", this);
-      new UiNotifyConnector(JBTable.this, this);
+      UiNotifyConnector.installOn(JBTable.this, this);
     }
 
     public void activate() {
@@ -830,7 +859,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         @Override
         public void run() {
           Component c = focusManager.getFocusOwner();
-          if (UIUtil.isMeaninglessFocusOwner(c)) {
+          if (ComponentUtil.isMeaninglessFocusOwner(c)) {
             // this allows using popup menus and menu bar without stopping cell editing
             return;
           }
@@ -884,7 +913,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   protected TableRowSorter<TableModel> createRowSorter(final TableModel model) {
     return new DefaultColumnInfoBasedRowSorter(model);
   }
@@ -1016,9 +1045,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
                                                        int row,
                                                        int column) {
           Component delegate = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (!(delegate instanceof JLabel)) return delegate;
+          if (!(delegate instanceof JLabel cmp)) return delegate;
 
-          JLabel cmp = (JLabel)delegate;
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
           JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
@@ -1517,9 +1545,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
       for (int row : rows) {
         if (myTable.editCellAt(row, myColumnIndex)) {
-          TableCellEditor editor = myTable.getCellEditor();
-          if (editor instanceof DefaultCellEditor) {
-            ObjectUtils.consumeIfCast(((DefaultCellEditor)editor).getComponent(), JCheckBox.class, box -> box.setSelected(!box.isSelected()));
+          if (myTable.getCellEditor() instanceof DefaultCellEditor defaultCellEditor &&
+              defaultCellEditor.getComponent() instanceof JCheckBox checkBox) {
+            checkBox.setSelected(!checkBox.isSelected());
           }
           stopEditing(myTable);
           e.consume();

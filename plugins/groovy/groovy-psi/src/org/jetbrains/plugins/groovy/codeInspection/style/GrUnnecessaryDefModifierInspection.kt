@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.style
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -15,16 +16,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.isDefUnnecessary
-import javax.swing.JComponent
 
 class GrUnnecessaryDefModifierInspection : GrUnnecessaryModifierInspection("def") {
 
   @JvmField
   var reportExplicitTypeOnly: Boolean = true
 
-  override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
-    addCheckbox(GroovyBundle.message("unnecessary.def.explicitly.typed.only"), "reportExplicitTypeOnly")
-  }
+  override fun getOptionsPane() = pane(
+    checkbox("reportExplicitTypeOnly", GroovyBundle.message("unnecessary.def.explicitly.typed.only")))
 
   override fun isRedundant(element: PsiElement): Boolean {
     val modifierList = element.parent as? GrModifierList ?: return false

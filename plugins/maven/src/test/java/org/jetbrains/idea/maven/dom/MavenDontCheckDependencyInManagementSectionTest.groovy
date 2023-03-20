@@ -15,11 +15,9 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
   @Test

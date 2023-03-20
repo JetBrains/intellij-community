@@ -18,9 +18,6 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
-/**
- * @author ven
- */
 public final class CollectClassMembersUtil {
 
   private static class ClassMembers {

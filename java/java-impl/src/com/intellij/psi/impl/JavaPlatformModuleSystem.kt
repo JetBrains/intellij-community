@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -10,23 +10,29 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
+import java.util.regex.Pattern
 
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
  *
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-7.html">JLS 7 "Packages and Modules"</a>
- * @see <a href="http://openjdk.java.net/jeps/261">JEP 261: Module System</a>
+ * @see <a href="http://openjdk.org/jeps/261">JEP 261: Module System</a>
  */
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
@@ -82,7 +88,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
     val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
+    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
 
     if (targetModule != null) {
       if (targetModule == useModule) {
@@ -99,21 +105,26 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           return null  // a target is not on the mandatory module path
         }
 
-        var isRoot = !targetName.startsWith("java.") || inAddedModules(module, targetName) || hasUpgrade(module, targetName, packageName, place)
-        if (!isRoot) {
-          val root = JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
-          isRoot = root == null || JavaModuleGraphUtil.reads(root, targetModule)
-        }
-        if (!isRoot) {
-          return if (quick) ERR else ErrorWithFixes(
-            JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
-            listOf(AddModulesOptionFix(module, targetName)))
+        if (targetName.startsWith("java.") &&
+            targetName != PsiJavaModule.JAVA_BASE &&
+            !inAddedModules(module, targetName) &&
+            !hasUpgrade(module, targetName, packageName, place)) {
+          val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
+            JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
+          }
+          if (root != null && !JavaModuleGraphUtil.reads(root, targetModule)) {
+            return if (quick) ERR
+            else ErrorWithFixes(
+              JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
+              listOf(AddModulesOptionFix(module, targetName)))
+          }
         }
       }
 
       if (!(targetModule is LightJavaModule ||
             JavaModuleGraphUtil.exports(targetModule, packageName, useModule) ||
-            module != null && inAddedExports(module, targetName, packageName, useName))) {
+            module != null && inAddedExports(module, targetName, packageName, useName) ||
+            module != null && isPatchedModule(targetName, module, place))) {
         if (quick) return ERR
         val fixes = when {
           packageName.isEmpty() -> emptyList()
@@ -127,7 +138,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
 
-      if (useModule != null && !(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
+      if (useModule != null &&
+          !(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule)) &&
+          !inAddedReads(useModule, targetModule)) {
         return when {
           quick -> ERR
           PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
@@ -138,10 +151,31 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
     }
     else if (useModule != null) {
-      return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
+      val autoModule = detectAutomaticModule(target)
+      if ((autoModule == null) || ((!JavaModuleGraphUtil.reads(useModule, autoModule) && !inAddedReads(useModule, null)) &&
+                                   !inSameMultiReleaseModule(place, target))
+        ) {
+        return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
+      }
     }
 
     return null
+  }
+
+  private fun inSameMultiReleaseModule(place: PsiElement, target: PsiElement): Boolean {
+    val placeModule = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
+    val targetModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return false
+    if (targetModule.name.endsWith(".$MAIN")) {
+      val baseModuleName = targetModule.name.substringBeforeLast(MAIN)
+      return javaVersionPattern.matcher(placeModule.name.substringAfter(baseModuleName)).matches()
+    }
+    return false
+  }
+
+  private fun detectAutomaticModule(target: PsiFileSystemItem): PsiJavaModule? {
+    val project = target.project
+    val m = ProjectFileIndex.getInstance(project).getModuleForFile(target.virtualFile) ?: return null
+    return JavaPsiFacade.getInstance(project).findModule(LightJavaModule.moduleName(m.name), GlobalSearchScope.moduleScope(m))
   }
 
   private fun hasUpgrade(module: Module, targetName: String, packageName: String, place: PsiFileSystemItem): Boolean {
@@ -161,11 +195,16 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return false
   }
 
+  private fun isPatchedModule(targetModuleName: String, module: Module, place: PsiFileSystemItem): Boolean {
+    val rootForFile = ProjectRootManager.getInstance(place.project).fileIndex.getSourceRootForFile(place.virtualFile)
+    return rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(targetModuleName, module, rootForFile)
+  }
+
   private fun inAddedExports(module: Module, targetName: String, packageName: String, useName: String): Boolean {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
-    return optionValues(options, "--add-exports")
+    return JavaCompilerConfigurationProxy.optionValues(options, "--add-exports")
       .filter { it.startsWith(prefix) }
       .map { it.substring(prefix.length) }
       .flatMap { it.splitToSequence(",") }
@@ -174,27 +213,24 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
-    return optionValues(options, "--add-modules")
+    return JavaCompilerConfigurationProxy.optionValues(options, "--add-modules")
       .flatMap { it.splitToSequence(",") }
       .any { it == moduleName || it == "ALL-SYSTEM" || it == "ALL-MODULE-PATH" }
   }
 
-  private fun optionValues(options: List<String>, name: String) =
-    if (options.isEmpty()) emptySequence()
-    else {
-      var useValue = false
-      options.asSequence()
-        .map {
-          when {
-            it == name -> { useValue = true; "" }
-            useValue -> { useValue = false; it }
-            it.startsWith(name) && it[name.length] == '=' -> it.substring(name.length + 1)
-            else -> ""
-          }
-        }
-        .filterNot { it.isEmpty() }
-    }
+  private fun inAddedReads(fromJavaModule: PsiJavaModule, toJavaModule: PsiJavaModule?): Boolean {
+    val fromModule = ModuleUtilCore.findModuleForPsiElement(fromJavaModule) ?: return false
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(fromModule.project, fromModule)
+    return JavaCompilerConfigurationProxy.optionValues(options, "--add-reads")
+      .flatMap { it.splitToSequence(",") }
+      .any {
+        val (optFromModuleName, optToModuleName) = it.split("=").apply { it.first() to it.last() }
+        fromJavaModule.name == optFromModuleName &&
+        (toJavaModule?.name == optToModuleName || (optToModuleName == "ALL-UNNAMED" && isUnnamedModule(toJavaModule)))
+      }
+  }
 
+  private fun isUnnamedModule(module: PsiJavaModule?) = module == null || module is LightJavaModule
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
     @NonNls override fun getFamilyName() = "Fix compiler option" // not visible
@@ -209,6 +245,13 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         PsiManager.getInstance(project).dropPsiCaches()
         DaemonCodeAnalyzer.getInstance(project).restart()
       }
+    }
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+      val origOptions = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
+      val options = origOptions.toMutableList()
+      update(options)
+      return IntentionPreviewInfo.addListOption(options, JavaBundle.message("compiler.options")) { opt -> !origOptions.contains(opt) }
     }
 
     protected abstract fun update(options: MutableList<String>)
@@ -266,5 +309,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
     }
+  }
+
+  private companion object {
+    const val MAIN = "main"
+    val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
   }
 }

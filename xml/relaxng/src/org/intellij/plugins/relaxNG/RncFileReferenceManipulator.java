@@ -25,9 +25,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncFileReference;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 public class RncFileReferenceManipulator extends AbstractElementManipulator<RncFileReference> {
   @Override
   public RncFileReference handleContentChange(@NotNull RncFileReference element, @NotNull TextRange range, String newContent) throws

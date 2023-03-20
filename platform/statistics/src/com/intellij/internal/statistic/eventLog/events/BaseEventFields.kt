@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
+import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import kotlin.reflect.KProperty
 
@@ -11,7 +13,7 @@ sealed class EventField<T> {
   abstract val name: String
   abstract fun addData(fuData: FeatureUsageData, value: T)
 
-  infix fun with(data: T): EventPair<T> = EventPair(this, data)
+  @Contract(pure = true) infix fun with(data: T): EventPair<T> = EventPair(this, data)
 }
 
 abstract class PrimitiveEventField<T> : EventField<T>() {
@@ -23,7 +25,7 @@ abstract class ListEventField<T> : EventField<List<T>>() {
 }
 
 data class EventPair<T>(val field: EventField<T>, val data: T) {
-  fun addData(featureUsageData: FeatureUsageData) = field.addData(featureUsageData, data)
+  fun addData(featureUsageData: FeatureUsageData): Unit = field.addData(featureUsageData, data)
 }
 
 abstract class StringEventField(override val name: String) : PrimitiveEventField<String?>() {
@@ -33,8 +35,7 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
     }
   }
 
-  data class ValidatedByAllowedValues(@NonNls override val name: String,
-                                      val allowedValues: List<String>) : StringEventField(name) {
+  data class ValidatedByAllowedValues(@NonNls override val name: String, val allowedValues: List<String>) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{enum:${allowedValues.joinToString("|")}}")
   }
@@ -44,10 +45,20 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
       get() = listOf("{enum#$enumRef}")
   }
 
+  @kotlin.Deprecated("Please use StringEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
   data class ValidatedByCustomRule(@NonNls override val name: String,
                                    @NonNls val customRuleId: String) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#$customRuleId}")
+  }
+
+  data class ValidatedByCustomValidationRule(
+    @NonNls override val name: String,
+    @NonNls val customValidationRule: Class<out CustomValidationRule>
+  ) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(customValidationRule).ruleId}}")
   }
 
   data class ValidatedByRegexp(@NonNls override val name: String, @NonNls val regexpRef: String) : StringEventField(name) {
@@ -70,6 +81,15 @@ data class IntEventField(override val name: String) : PrimitiveEventField<Int>()
   }
 }
 
+data class RegexpIntEventField(override val name: String, @NonNls val regexp: String) : PrimitiveEventField<Int>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp:$regexp}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, value)
+  }
+}
+
 data class RoundedIntEventField(override val name: String) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
@@ -79,7 +99,7 @@ data class RoundedIntEventField(override val name: String) : PrimitiveEventField
   }
 }
 
-data class LongEventField(override val name: String): PrimitiveEventField<Long>() {
+data class LongEventField(override val name: String) : PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -88,7 +108,7 @@ data class LongEventField(override val name: String): PrimitiveEventField<Long>(
   }
 }
 
-data class RoundedLongEventField(override val name: String): PrimitiveEventField<Long>() {
+data class RoundedLongEventField(override val name: String) : PrimitiveEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -97,25 +117,25 @@ data class RoundedLongEventField(override val name: String): PrimitiveEventField
   }
 }
 
-data class FloatEventField(override val name: String): PrimitiveEventField<Float>() {
+data class FloatEventField(override val name: String) : PrimitiveEventField<Float>() {
   override val validationRule: List<String>
-    get() =  listOf("{regexp#float}")
+    get() = listOf("{regexp#float}")
 
   override fun addData(fuData: FeatureUsageData, value: Float) {
     fuData.addData(name, value)
   }
 }
 
-data class DoubleEventField(override val name: String): PrimitiveEventField<Double>() {
+data class DoubleEventField(override val name: String) : PrimitiveEventField<Double>() {
   override val validationRule: List<String>
-    get() =  listOf("{regexp#float}")
+    get() = listOf("{regexp#float}")
 
   override fun addData(fuData: FeatureUsageData, value: Double) {
     fuData.addData(name, value)
   }
 }
 
-data class BooleanEventField(override val name: String): PrimitiveEventField<Boolean>() {
+data class BooleanEventField(override val name: String) : PrimitiveEventField<Boolean>() {
   override val validationRule: List<String>
     get() = listOf("{enum#boolean}")
 
@@ -124,7 +144,7 @@ data class BooleanEventField(override val name: String): PrimitiveEventField<Boo
   }
 }
 
-data class AnonymizedEventField(override val name: String): PrimitiveEventField<String?>() {
+data class AnonymizedEventField(override val name: String) : PrimitiveEventField<String?>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#hash}")
 
@@ -135,26 +155,34 @@ data class AnonymizedEventField(override val name: String): PrimitiveEventField<
 
 data class EnumEventField<T : Enum<*>>(override val name: String,
                                        private val enumClass: Class<T>,
-                                       private val transform: (T) -> String): PrimitiveEventField<T>() {
+                                       private val transform: (T) -> String) : PrimitiveEventField<T>() {
   override fun addData(fuData: FeatureUsageData, value: T) {
     fuData.addData(name, transform(value))
   }
 
   override val validationRule: List<String>
-    get() = listOf("{enum:${enumClass.enumConstants.map(transform).joinToString("|")}}")
+    get() = listOf("{enum:${enumClass.enumConstants.joinToString("|", transform = transform)}}")
 }
 
-data class LongListEventField(override val name: String): ListEventField<Long>() {
+data class LongListEventField(override val name: String) : ListEventField<Long>() {
   override val validationRule: List<String>
-    get() =  listOf("{regexp#integer}")
+    get() = listOf("{regexp#integer}")
 
   override fun addData(fuData: FeatureUsageData, value: List<Long>) {
     fuData.addListLongData(name, value)
   }
 }
 
-abstract class StringListEventField(override val name: String) : ListEventField<String>() {
+data class IntListEventField(override val name: String) : ListEventField<Int>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
 
+  override fun addData(fuData: FeatureUsageData, value: List<Int>) {
+    fuData.addListNumberData(name, value)
+  }
+}
+
+abstract class StringListEventField(override val name: String) : ListEventField<String>() {
   override fun addData(fuData: FeatureUsageData, value: List<String>) {
     fuData.addData(name, value)
   }
@@ -170,10 +198,20 @@ abstract class StringListEventField(override val name: String) : ListEventField<
       get() = listOf("{enum#$enumRef}")
   }
 
+  @kotlin.Deprecated("Please use StringListEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
   data class ValidatedByCustomRule(@NonNls override val name: String,
                                    @NonNls val customRuleId: String) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#$customRuleId}")
+  }
+
+  data class ValidatedByCustomValidationRule(
+    @NonNls override val name: String,
+    @NonNls val customValidationRule: Class<out CustomValidationRule>
+    ) : StringListEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(customValidationRule).ruleId}}")
   }
 
   data class ValidatedByRegexp(@NonNls override val name: String, @NonNls val regexpRef: String) : StringListEventField(name) {
@@ -188,11 +226,13 @@ abstract class StringListEventField(override val name: String) : ListEventField<
 }
 
 data class ClassEventField(override val name: String): PrimitiveEventField<Class<*>?>() {
+
   override fun addData(fuData: FeatureUsageData, value: Class<*>?) {
-    if (value != null) {
-      val pluginInfo = getPluginInfo(value)
-      fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
+    if (value == null) {
+      return
     }
+    val pluginInfo = getPluginInfo(value)
+    fuData.addData(name, if (pluginInfo.isSafeToReport()) value.name else "third.party")
   }
 
   override val validationRule: List<String>
@@ -293,4 +333,3 @@ class ObjectListEventField(override val name: String, vararg val fields: EventFi
     fuData.addListObjectData(name, value.map { it.buildObjectData(fields) })
   }
 }
-

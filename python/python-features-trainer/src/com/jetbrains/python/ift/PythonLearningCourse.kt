@@ -8,7 +8,7 @@ import com.jetbrains.python.ift.lesson.basic.PythonContextActionsLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSelectLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSurroundAndUnwrapLesson
 import com.jetbrains.python.ift.lesson.completion.*
-import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTour
+import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTourLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonDeclarationAndUsagesLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonFileStructureLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonRecentFilesLesson
@@ -45,7 +45,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
-      listOf(PythonOnboardingTour())
+      listOf(PythonOnboardingTourLesson())
     }
   )
   else emptyList()
@@ -61,7 +61,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
         PythonContextActionsLesson(),
         GotoActionLesson(ls("Actions.py.sample")),
         PythonSelectLesson(),
-        SingleLineCommentLesson(ls("Comment.py.sample")),
+        CommentUncommentLesson(ls("Comment.py.sample")),
         DuplicateLesson(ls("Duplicate.py.sample")),
         MoveLesson("accelerate", ls("Move.py.sample")),
         CollapseLesson(ls("Collapse.py.sample")),
@@ -135,4 +135,51 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
       )
     },
   )
+
+  override fun getLessonIdToTipsMap(): Map<String, List<String>> = mutableMapOf(
+    // EditorBasics
+    "context.actions" to listOf("ContextActions"),
+    "Actions" to listOf("find_action", "GoToAction"),
+    "Select" to listOf("smart_selection", "CtrlW"),
+    "Comment line" to listOf("CommentCode"),
+    "Duplicate" to listOf("CtrlD", "DeleteLine"),
+    "Move" to listOf("MoveUpDown"),
+    "Surround and unwrap" to listOf("SurroundWith"),
+
+    // CodeCompletion
+    "Basic completion" to listOf("CodeCompletion"),
+    "Tab completion" to listOf("TabInLookups"),
+    "Postfix completion" to listOf("PostfixCompletion"),
+
+    // Refactorings
+    "Refactoring menu" to listOf("RefactorThis"),
+    "Rename" to listOf("Rename"),
+    "Extract variable" to listOf("IntroduceVariable"),
+    "Extract method" to listOf("ExtractMethod"),
+    "refactoring.quick.fix" to listOf("QuickFixRightArrow"),
+    "refactoring.in.place" to listOf("InPlaceRefactoring"),
+
+    // CodeAssistance
+    "CodeAssistance.LocalHistory" to listOf("local_history"),
+    "CodeAssistance.CodeFormatting" to listOf("LayoutCode"),
+    "CodeAssistance.ParameterInfo" to listOf("ParameterInfo"),
+    "CodeAssistance.QuickPopups" to listOf("CtrlShiftIForLookup", "CtrlShiftI", "QuickJavaDoc"),
+    "CodeAssistance.EditorCodingAssistance" to listOf("HighlightUsagesInFile", "NextPrevError", "NavigateBetweenErrors"),
+
+    // Navigation
+    "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+    "Find in files" to listOf("FindReplaceToggle", "FindInPath"),
+    "Declaration and usages" to listOf("GoToDeclaration", "ShowUsages"),
+    "File structure" to listOf("FileStructurePopup"),
+    "Recent Files and Locations" to listOf("recent-locations", "RecentFiles"),
+
+    // RunAndDebug
+    "python.run.configuration" to listOf("SelectRunDebugConfiguration"),
+    "python.debug.workflow" to listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor"),
+  ).also { map ->
+    val gitCourse = CourseManager.instance.findCommonCourseById("Git")
+    if (gitCourse != null) {
+      map.putAll(gitCourse.getLessonIdToTipsMap())
+    }
+  }
 }

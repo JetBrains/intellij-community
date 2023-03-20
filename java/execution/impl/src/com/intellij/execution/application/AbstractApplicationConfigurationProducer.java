@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -46,7 +46,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
       return false;
     }
     PsiFile containingFile = aClass.getContainingFile();
-    if (HighlightClassUtil.isJavaHashBangScript(containingFile)) {
+    if (JavaHighlightUtil.isJavaHashBangScript(containingFile)) {
       return false;
     }
     PsiMethod method = PsiMethodUtil.findMainInClass(aClass);
@@ -69,10 +69,15 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
 
   @Override
   public boolean isConfigurationFromContext(@NotNull T appConfiguration, @NotNull ConfigurationContext context) {
-    final PsiElement location = context.getPsiLocation();
-    final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
+    Location location = context.getLocation();
+    if (location == null) {
+      return false;
+    }
+
+    Location singleClassLocation = JavaExecutionUtil.stepIntoSingleClass(location);
+    final PsiClass aClass = PsiTreeUtil.getParentOfType(singleClassLocation.getPsiElement(), PsiClass.class, false);
     if (aClass != null && Objects.equals(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getMainClassName())) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(location, PsiMethod.class, false);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);
       if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
         return false;
       }

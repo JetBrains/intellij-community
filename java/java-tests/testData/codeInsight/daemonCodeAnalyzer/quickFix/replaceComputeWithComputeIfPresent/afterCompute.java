@@ -1,4 +1,4 @@
-// "Replace 'compute' with 'computeIfPresent'" "true"
+// "Replace 'compute' with 'computeIfPresent'" "true-preview"
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

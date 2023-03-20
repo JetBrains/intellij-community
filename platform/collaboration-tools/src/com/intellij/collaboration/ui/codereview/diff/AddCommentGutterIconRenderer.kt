@@ -51,8 +51,6 @@ abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, D
   }
 
   override fun hashCode(): Int {
-    var result = super.hashCode()
-    result = 31 * result + line
-    return result
+    return line
   }
 }

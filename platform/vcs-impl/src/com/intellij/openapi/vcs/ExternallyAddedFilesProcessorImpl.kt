@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
@@ -128,7 +128,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
   override val forCurrentProjectActionText: String = VcsBundle.message("external.files.add.notification.action.add")
   override val muteActionText: String = VcsBundle.message("external.files.add.notification.action.mute")
 
-  override val viewFilesDialogTitle: String? = VcsBundle.message("external.files.add.view.dialog.title", vcs.displayName)
+  override val viewFilesDialogTitle: String = VcsBundle.message("external.files.add.view.dialog.title", vcs.displayName)
 
   override fun notificationTitle() = ""
 

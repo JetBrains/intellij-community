@@ -59,10 +59,9 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
 
   @Override
   public boolean canDecodeInput(Object input) throws IOException {
-    if (!(input instanceof ImageInputStream)) {
+    if (!(input instanceof ImageInputStream stream)) {
       return false;
     }
-    final ImageInputStream stream = (ImageInputStream)input;
     try {
       final ImageFormat imageFormat = Imaging.guessFormat(new MyByteSource(stream));
       if (myFormats.contains(imageFormat)) {

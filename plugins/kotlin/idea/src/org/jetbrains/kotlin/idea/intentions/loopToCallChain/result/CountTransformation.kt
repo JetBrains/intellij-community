@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
@@ -21,7 +21,7 @@ class CountTransformation(
         val newFilter = if (filter == null)
             previousTransformation.effectiveCondition.asExpression(reformat)
         else
-            KtPsiFactory(filter).createExpressionByPattern(
+            KtPsiFactory(filter.project).createExpressionByPattern(
                 "$0 && $1", previousTransformation.effectiveCondition.asExpression(reformat), filter,
                 reformat = reformat
             )
@@ -43,7 +43,7 @@ class CountTransformation(
         return if (initialization.initializer.isZeroConstant()) {
             call
         } else {
-            KtPsiFactory(call).createExpressionByPattern("$0 + $1", initialization.initializer, call, reformat = reformat)
+            KtPsiFactory(call.project).createExpressionByPattern("$0 + $1", initialization.initializer, call, reformat = reformat)
         }
     }
 

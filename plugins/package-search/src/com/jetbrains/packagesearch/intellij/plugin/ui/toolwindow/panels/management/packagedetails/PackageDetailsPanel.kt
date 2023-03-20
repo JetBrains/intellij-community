@@ -1,20 +1,37 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.idea.packagesearch.SortMetric
 import java.awt.CardLayout
 import java.awt.Point
 import javax.swing.JPanel
@@ -22,7 +39,7 @@ import javax.swing.JViewport
 import javax.swing.SwingConstants
 
 internal class PackageDetailsPanel(
-    operationExecutor: OperationExecutor
+    project: Project
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.selectedPackage")) {
 
     private var currentPanelName = EMPTY_STATE
@@ -31,7 +48,7 @@ internal class PackageDetailsPanel(
         border = emptyBorder()
     }
 
-    private val headerPanel = PackageDetailsHeaderPanel(operationExecutor)
+    private val headerPanel = PackageDetailsHeaderPanel(project)
 
     private val infoPanel = PackageDetailsInfoPanel()
 
@@ -41,7 +58,7 @@ internal class PackageDetailsPanel(
     }
 
     private val emptyStatePanel = PackageSearchUI.borderPanel {
-        border = scaledEmptyBorder(12)
+        border = emptyBorder(12)
         addToCenter(
             PackageSearchUI.createLabel().apply {
                 text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.emptyState")
@@ -66,10 +83,12 @@ internal class PackageDetailsPanel(
 
     internal data class ViewModel(
         val selectedPackageModel: UiPackageModel<*>?,
-        val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        val repositoriesDeclarationsByModule: Map<PackageSearchModule, List<RepositoryModel>>,
         val targetModules: TargetModules,
         val onlyStable: Boolean,
-        val invokeLaterScope: CoroutineScope
+        val sortMetric: SortMetric,
+        val invokeLaterScope: CoroutineScope,
+        val allKnownRepositories: List<RepositoryModel>
     )
 
     fun display(viewModel: ViewModel) {
@@ -80,17 +99,19 @@ internal class PackageDetailsPanel(
 
         headerPanel.display(
             PackageDetailsHeaderPanel.ViewModel(
-                viewModel.selectedPackageModel,
-                viewModel.knownRepositoriesInTargetModules,
-                viewModel.targetModules,
-                viewModel.onlyStable
+                uiPackageModel = viewModel.selectedPackageModel,
+                knownRepositoriesInTargetModules = viewModel.repositoriesDeclarationsByModule,
+                allKnownRepositories = viewModel.allKnownRepositories,
+                targetModules = viewModel.targetModules,
+                onlyStable = viewModel.onlyStable
             )
         )
         infoPanel.display(
             PackageDetailsInfoPanel.ViewModel(
-                viewModel.selectedPackageModel.packageModel,
-                viewModel.selectedPackageModel.selectedVersion.originalVersion,
-                viewModel.knownRepositoriesInTargetModules.allKnownRepositories
+                packageModel = viewModel.selectedPackageModel.packageModel,
+                selectedVersion = viewModel.selectedPackageModel.selectedVersion.originalVersion,
+                allKnownRepositories = viewModel.allKnownRepositories,
+                knownRepositoriesInTargetModules = viewModel.repositoriesDeclarationsByModule,
             )
         )
 
@@ -106,6 +127,7 @@ internal class PackageDetailsPanel(
     }
 
     override fun build(): JPanel = cardPanel
+    override fun getData(dataId: String) = null
 
     companion object {
 

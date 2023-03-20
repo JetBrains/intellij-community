@@ -2,15 +2,18 @@
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
+import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +53,7 @@ public final class LanguageUtil {
 
   public static @Nullable Language getFileLanguage(@Nullable VirtualFile file) {
     if (file == null) return null;
-    Language l = file instanceof LightVirtualFile? ((LightVirtualFile)file).getLanguage() : null;
+    Language l = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getLanguage() : null;
     return l != null ? l : getFileTypeLanguage(file.getFileType());
   }
 
@@ -63,7 +66,9 @@ public final class LanguageUtil {
   }
 
   @NotNull
-  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(@NotNull ASTNode left, @NotNull ASTNode right, @NotNull Lexer lexer) {
+  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(@NotNull ASTNode left,
+                                                                                 @NotNull ASTNode right,
+                                                                                 @NotNull Lexer lexer) {
     String textStr = left.getText() + right.getText();
 
     lexer.start(textStr, 0, textStr.length());
@@ -92,7 +97,7 @@ public final class LanguageUtil {
 
   public static boolean isInTemplateLanguageFile(@NotNull PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();
-    if(psiFile == null) return false;
+    if (psiFile == null) return false;
 
     final Language language = psiFile.getViewProvider().getBaseLanguage();
     return language instanceof TemplateLanguage;
@@ -115,7 +120,7 @@ public final class LanguageUtil {
   }
 
   public static @NotNull List<Language> getInjectableLanguages() {
-    return getLanguages((lang) -> isInjectableLanguage(lang));
+    return getLanguages(lang -> isInjectableLanguage(lang));
   }
 
   public static boolean isFileLanguage(@NotNull Language language) {
@@ -126,7 +131,7 @@ public final class LanguageUtil {
   }
 
   public static @NotNull List<Language> getFileLanguages() {
-    return getLanguages((lang) -> isFileLanguage(lang));
+    return getLanguages(lang -> isFileLanguage(lang));
   }
 
   public static @NotNull List<Language> getLanguages(@NotNull Predicate<? super Language> filter) {
@@ -154,12 +159,14 @@ public final class LanguageUtil {
     return provider.getBaseLanguage();
   }
 
-  private static final Key<Collection<MetaLanguage>> MATCHING_LANGUAGES = Key.create("language.matching");
+  private static final Key<Pair<SoftReference<Application>,Set<MetaLanguage>>> MATCHING_LANGUAGES = Key.create("language.matching");
 
   static @NotNull Collection<MetaLanguage> matchingMetaLanguages(@NotNull Language language) {
-    Collection<MetaLanguage> cached = language.getUserData(MATCHING_LANGUAGES);
-    if (cached != null) {
-      return cached;
+    // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
+    // Ensure that we have cached against correct application.
+    Pair<SoftReference<Application>, Set<MetaLanguage>> cached = language.getUserData(MATCHING_LANGUAGES);
+    if (cached != null && cached.first.get() == ApplicationManager.getApplication()) {
+      return cached.second;
     }
 
     if (!ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(MetaLanguage.EP_NAME)) {
@@ -179,7 +186,10 @@ public final class LanguageUtil {
         }
       });
     }
-    return language.putUserDataIfAbsent(MATCHING_LANGUAGES, result);
+    Pair<SoftReference<Application>, Set<MetaLanguage>> toCache =
+      Pair.create(new SoftReference<>(ApplicationManager.getApplication()), result);
+    language.putUserData(MATCHING_LANGUAGES, toCache);
+    return result;
   }
 
   static void clearMatchingMetaLanguages(@NotNull Language language) {

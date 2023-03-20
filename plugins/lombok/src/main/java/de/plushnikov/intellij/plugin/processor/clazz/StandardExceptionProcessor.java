@@ -6,18 +6,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class StandardExceptionProcessor extends AbstractClassProcessor {
@@ -27,9 +26,8 @@ public class StandardExceptionProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    return nameHint == null || nameHint.equals(getConstructorName(psiClass));
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    return Collections.singleton(getConstructorName(psiClass));
   }
 
   private static String getConstructorName(@NotNull PsiClass psiClass) {
@@ -39,17 +37,17 @@ public class StandardExceptionProcessor extends AbstractClassProcessor {
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation,
                              @NotNull PsiClass psiClass,
-                             @NotNull ProblemBuilder builder) {
+                             @NotNull ProblemSink builder) {
     if (checkWrongType(psiClass)) {
-      builder.addError(LombokBundle.message("inspection.message.standardexception.class.only.supported.on.class"));
+      builder.addErrorMessage("inspection.message.standardexception.class.only.supported.on.class");
       return false;
     }
     if (checkWrongInheritorOfThrowable(psiClass)) {
-      builder.addError(LombokBundle.message("inspection.message.standardexception.should.extend.throwable"));
+      builder.addErrorMessage("inspection.message.standardexception.should.extend.throwable");
       return false;
     }
     if (checkWrongAccessVisibility(psiAnnotation)) {
-      builder.addError(LombokBundle.message("inspection.message.standardexception.accesslevel.none.not.valid"));
+      builder.addErrorMessage("inspection.message.standardexception.accesslevel.none.not.valid");
       //log error but continue
     }
     return true;
@@ -84,7 +82,7 @@ public class StandardExceptionProcessor extends AbstractClassProcessor {
     final PsiClassType javaLangStringType = PsiType.getJavaLangString(psiManager, psiClassResolveScope);
     final PsiClassType javaLangThrowableType = PsiType.getJavaLangThrowable(psiManager, psiClassResolveScope);
     final boolean addConstructorProperties =
-      ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.STANDARD_EXCEPTION_ADD_CONSTRUCTOR_PROPERTIES, psiClass);
+      ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES, psiClass);
 
     // message constructor
     if (noConstructorWithParamsOfTypesDefined(existedConstructors, javaLangStringType)) {

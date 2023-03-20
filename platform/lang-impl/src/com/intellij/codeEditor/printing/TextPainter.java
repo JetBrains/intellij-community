@@ -528,9 +528,9 @@ final class TextPainter extends BasePainter {
       double width = myHeaderFont.getStringBounds(headerText, fontRenderContext).getWidth() + getCharWidth(g);
       float yPos = (float) (lineHeight - descent + y);
       switch (alignment) {
-        case Left: drawStringToGraphics(g, headerText, x, yPos); break;
-        case Center: drawStringToGraphics(g, headerText, (float) (x + (w - width) / 2), yPos); break;
-        case Right: drawStringToGraphics(g, headerText, (float) (x + w - width), yPos); break;
+        case Left -> drawStringToGraphics(g, headerText, x, yPos);
+        case Center -> drawStringToGraphics(g, headerText, (float)(x + (w - width) / 2), yPos);
+        case Right -> drawStringToGraphics(g, headerText, (float)(x + w - width), yPos);
       }
     }
     return lineHeight;
@@ -546,24 +546,12 @@ final class TextPainter extends BasePainter {
         String token = s.substring(start, i);
         if (isExpression) {
           switch (token) {
-            case HEADER_TOKEN_PAGE:
-              result.append(myPageIndex + 1);
-              break;
-            case HEADER_TOKEN_TOTALPAGES:
-              result.append(myNumberOfPages);
-              break;
-            case HEADER_TOKEN_FILE:
-              result.append(myFullFileName);
-              break;
-            case HEADER_TOKEN_FILENAME:
-              result.append(myShortFileName);
-              break;
-            case HEADER_TOKEN_DATE:
-              result.append(myPrintDate);
-              break;
-            case HEADER_TOKEN_TIME:
-              result.append(myPrintTime);
-              break;
+            case HEADER_TOKEN_PAGE -> result.append(myPageIndex + 1);
+            case HEADER_TOKEN_TOTALPAGES -> result.append(myNumberOfPages);
+            case HEADER_TOKEN_FILE -> result.append(myFullFileName);
+            case HEADER_TOKEN_FILENAME -> result.append(myShortFileName);
+            case HEADER_TOKEN_DATE -> result.append(myPrintDate);
+            case HEADER_TOKEN_TIME -> result.append(myPrintTime);
           }
         } else {
           result.append(token);

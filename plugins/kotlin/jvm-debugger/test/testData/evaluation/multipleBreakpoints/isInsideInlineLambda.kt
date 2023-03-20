@@ -117,3 +117,11 @@ class A {
         return this
     }
 }
+
+
+// TODO: Muted on IR Evaluator
+// The breakpoint in the local function (`... EXPRESSION: it + 5...`)/Breakpoint5
+// is not hit, due to the local function compilation naming scheme not being
+// accounted for by the debugging framework. The breakpoints work individually,
+// but as a whole there is some interaction causing otherwise hit and correctly
+// behaving breakpoints to fail the evaluation assertion.

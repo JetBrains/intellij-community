@@ -18,6 +18,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -104,7 +105,9 @@ public class ToolRunProfile implements ModuleRunProfile{
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
               if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())
                 || (outputType == ProcessOutputTypes.STDERR && myTool.isShowConsoleOnStdErr())) {
-                RunContentManager.getInstance(project).toFrontRunContent(executor, processHandler);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  RunContentManager.getInstance(project).toFrontRunContent(executor, processHandler);
+                }, project.getDisposed());
               }
             }
           });

@@ -15,9 +15,10 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,13 +31,14 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CachedNumberConstructorCallInspection extends BaseInspection {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public class CachedNumberConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   static final Set<String> cachedNumberTypes = new HashSet<>();
 
@@ -59,13 +61,11 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
       "cached.number.constructor.call.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("cached.number.constructor.call.ignore.string.arguments.option"), "ignoreStringArguments");
-    panel.addCheckbox(InspectionGadgetsBundle.message("cached.number.constructor.call.report.only.deprecated"), "reportOnlyWhenDeprecated");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreStringArguments", InspectionGadgetsBundle.message("cached.number.constructor.call.ignore.string.arguments.option")),
+      checkbox("reportOnlyWhenDeprecated", InspectionGadgetsBundle.message("cached.number.constructor.call.report.only.deprecated")));
   }
 
   @Override
@@ -109,7 +109,7 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiNewExpression.class, false);
       assert expression != null;
       final PsiExpressionList argList = expression.getArgumentList();

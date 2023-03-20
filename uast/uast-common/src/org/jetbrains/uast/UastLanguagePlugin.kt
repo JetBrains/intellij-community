@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.lang.Language
@@ -17,13 +17,14 @@ import org.jetbrains.uast.util.classSetOf
  *
  * @see org.jetbrains.uast.generate.UastCodeGenerationPlugin for UAST code generation.
  */
+@JvmDefaultWithCompatibility
 interface UastLanguagePlugin {
   companion object {
     val extensionPointName = ExtensionPointName<UastLanguagePlugin>("org.jetbrains.uast.uastLanguagePlugin")
 
     fun getInstances(): Collection<UastLanguagePlugin> = extensionPointName.extensionList
 
-    fun byLanguage(language: Language): UastLanguagePlugin? = extensionPointName.extensionList.firstOrNull { it.language === language }
+    fun byLanguage(language: Language): UastLanguagePlugin? = UastFacade.findPlugin(language)
   }
 
   data class ResolvedMethod(val call: UCallExpression, val method: PsiMethod)
@@ -72,16 +73,9 @@ interface UastLanguagePlugin {
    */
   fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement?
 
-  fun getMethodCallExpression(
-    element: PsiElement,
-    containingClassFqName: String?,
-    methodName: String
-  ): ResolvedMethod?
+  fun getMethodCallExpression(element: PsiElement, containingClassFqName: String?, methodName: String): ResolvedMethod?
 
-  fun getConstructorCallExpression(
-    element: PsiElement,
-    fqName: String
-  ): ResolvedConstructor?
+  fun getConstructorCallExpression(element: PsiElement, fqName: String): ResolvedConstructor?
 
   fun getMethodBody(element: PsiMethod): UExpression? {
     if (element is UMethod) return element.uastBody
@@ -104,7 +98,6 @@ interface UastLanguagePlugin {
    */
   fun isExpressionValueUsed(element: UExpression): Boolean
 
-  @JvmDefault
   @Suppress("UNCHECKED_CAST")
   fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? =
     when {
@@ -115,11 +108,11 @@ interface UastLanguagePlugin {
     } as? T
 
 
-  @JvmDefault
-  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
-    sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
+    val result = convertElementWithParent(element, requiredTypes)
+    return if (result == null) emptySequence() else sequenceOf(result)
+  }
 
-  @JvmDefault
   val analysisPlugin: UastAnalysisPlugin?
     @ApiStatus.Experimental
     get() = null
@@ -135,7 +128,6 @@ interface UastLanguagePlugin {
    *         can be converted to at least one of the specified [uastTypes]
    *         (or to [UElement] if no type was specified)
    */
-  @JvmDefault
   fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> {
     logger<UastLanguagePlugin>().warn(Exception("fallback to the PsiElement for ${this.javaClass}, it can have a performance impact"))
     return classSetOf(PsiElement::class.java)

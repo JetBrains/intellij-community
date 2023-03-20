@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author ilyas
- */
 public class GrImplicitVariableImpl extends LightVariableBase implements GrImplicitVariable {
   public GrImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
     super(manager, nameIdentifier, GroovyLanguage.INSTANCE, type, writable, scope);

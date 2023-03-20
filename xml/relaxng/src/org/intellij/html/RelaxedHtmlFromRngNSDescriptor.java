@@ -34,9 +34,6 @@ import static com.intellij.xml.util.HtmlUtil.MATH_ML_NAMESPACE;
 import static com.intellij.xml.util.HtmlUtil.SVG_NAMESPACE;
 import static com.intellij.xml.util.XmlUtil.HTML_URI;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements RelaxedHtmlNSDescriptor {
   private static final Logger LOG = Logger.getInstance(RelaxedHtmlFromRngNSDescriptor.class);
 
@@ -74,9 +71,9 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
   @Override
   public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument doc) {
     final XmlElementDescriptor[] descriptors = super.getRootElementsDescriptors(doc);
-    List<XmlElementDescriptor> rootElements =
-      ContainerUtil.filter(descriptors, descriptor -> isRootTag((RelaxedHtmlFromRngElementDescriptor)descriptor));
-    ContainerUtil.addAll(rootElements, HtmlUtil.getCustomTagDescriptors(doc));
+    List<XmlElementDescriptor> rootElements = ContainerUtil.append(
+      ContainerUtil.filter(descriptors, descriptor -> isRootTag((RelaxedHtmlFromRngElementDescriptor)descriptor)),
+    HtmlUtil.getCustomTagDescriptors(doc));
     return rootElements.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 

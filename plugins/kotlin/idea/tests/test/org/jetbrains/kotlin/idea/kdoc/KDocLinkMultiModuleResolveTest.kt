@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.BindingContext.DECLARATION_TO_DESCRIPTOR
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -73,9 +73,9 @@ class KDocLinkMultiModuleResolveTest : AbstractMultiModuleTest() {
 
         val bindingContext = targetElement.analyze()
         val descriptor = bindingContext[DECLARATION_TO_DESCRIPTOR, targetElement]!!
-        val kdoc = descriptor.findKDoc()!! as KDocSection
+        val kdoc = descriptor.findKDoc()!!.contentTag as KDocSection
         val resolutionFacade = targetElement.getResolutionFacade()
-        assertNotEmpty(resolveKDocLink(bindingContext, resolutionFacade, descriptor, kdoc.findTagByName("sample")!!, link.split(".")))
+        assertNotEmpty(resolveKDocLink(bindingContext, resolutionFacade, descriptor, targetElement, kdoc.findTagByName("sample")!!, link.split(".")))
     }
 
     private fun doInfoTest(path: String) {

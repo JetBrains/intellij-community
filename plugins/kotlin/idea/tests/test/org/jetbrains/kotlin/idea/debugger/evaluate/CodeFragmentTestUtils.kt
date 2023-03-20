@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -10,14 +10,15 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils.BLOCK_CODE_FRAGMENT
-import org.jetbrains.kotlin.idea.debugger.getContextElement
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
+import org.jetbrains.kotlin.idea.debugger.core.getContextElement
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 import kotlin.test.assertTrue
 
@@ -42,7 +43,7 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     val file = createCodeFragment(filePath, elementAt!!, isBlock)
 
     val typeStr = InTextDirectivesUtils.findStringWithPrefixes(getFile().text, "// ${ExpectedCompletionUtils.RUNTIME_TYPE} ")
-    file.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) {
+    file.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) {
         if (typeStr != null) {
             val codeFragment = KtPsiFactory(project).createBlockCodeFragment(
                 "val xxx: $typeStr",

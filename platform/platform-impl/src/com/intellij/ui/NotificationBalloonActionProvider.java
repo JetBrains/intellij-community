@@ -2,12 +2,22 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.JBRectangle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,28 +34,25 @@ import java.util.List;
 public class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
-  private final String myDisplayGroupId;
   private final Component myRepaintPanel;
-  private final String myNotificationId;
-  private final String myNotificationDisplayId;
-  private BalloonImpl.ActionButton mySettingButton;
+  private final Notification myNotification;
+  private BalloonImpl.ActionButton myMoreButton;
   private BalloonImpl.ActionButton myCloseButton;
   private List<BalloonImpl.ActionButton> myActions;
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   private static final Rectangle CloseHoverBounds = new JBRectangle(5, 5, 12, 10);
 
   public NotificationBalloonActionProvider(@NotNull BalloonImpl balloon,
                                            @Nullable Component repaintPanel,
                                            @NotNull BalloonLayoutData layoutData,
-                                           @Nullable String displayGroupId,
-                                           @NotNull String notificationId,
-                                           @Nullable String notificationDisplayId) {
+                                           @NotNull Notification notification) {
     myLayoutData = layoutData;
-    myDisplayGroupId = displayGroupId;
     myBalloon = balloon;
     myRepaintPanel = repaintPanel;
-    myNotificationId = notificationId;
-    myNotificationDisplayId = notificationDisplayId;
+    myNotification = notification;
+
+    Disposer.register(balloon, () -> myPopupState.hidePopup());
   }
 
   @NotNull
@@ -53,23 +60,15 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   public List<BalloonImpl.ActionButton> createActions() {
     myActions = new ArrayList<>();
 
-    if (!myLayoutData.showSettingButton || myDisplayGroupId == null ||
-        !NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myDisplayGroupId)) {
-      mySettingButton = null;
+    if (!myLayoutData.showSettingButton) {
+      myMoreButton = null;
     }
     else {
-      mySettingButton = myBalloon.new ActionButton(
-        AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
+      myMoreButton = myBalloon.new ActionButton(
+        AllIcons.Actions.More, null,
         IdeBundle.message("tooltip.turn.notification.off"),
         event -> myBalloon.runWithSmartFadeoutPause(() -> {
-          NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationId, myNotificationDisplayId, myDisplayGroupId);
-          final NotificationsConfigurable configurable = new NotificationsConfigurable();
-          ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, () -> {
-            Runnable runnable = configurable.enableSearch(myDisplayGroupId);
-            if (runnable != null) {
-              runnable.run();
-            }
-          });
+          showMorePopup();
         })) {
         @Override
         public void repaint() {
@@ -79,7 +78,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
           }
         }
       };
-      myActions.add(mySettingButton);
+      myActions.add(myMoreButton);
 
       if (myRepaintPanel != null) {
         myLayoutData.showActions = () -> {
@@ -100,18 +99,22 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
-          if ((modifiers & InputEvent.ALT_MASK) != 0) {
+          if ((modifiers & InputEvent.ALT_MASK) != 0 && myLayoutData.closeAll != null) {
             myLayoutData.closeAll.run();
           }
           else {
             BalloonLayoutData.MergeInfo mergeInfo = myLayoutData.mergeData;
             if (mergeInfo != null && mergeInfo.linkIds != null) {
               for (BalloonLayoutData.ID id : mergeInfo.linkIds) {
-                NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myLayoutData.project, id.notificationId, id.notificationDisplayId, myDisplayGroupId);
+                NotificationCollector.getInstance()
+                  .logNotificationBalloonClosedByUser(myLayoutData.project, id.notificationId, id.notificationDisplayId,
+                                                      myNotification.getGroupId());
               }
             }
-            NotificationCollector.getInstance().logNotificationBalloonClosedByUser(myLayoutData.project, myNotificationId, myNotificationDisplayId, myDisplayGroupId);
-            myBalloon.hide(Registry.is("ide.notification.action.center", false));
+            NotificationCollector.getInstance()
+              .logNotificationBalloonClosedByUser(myLayoutData.project, myNotification.id, myNotification.getDisplayId(),
+                                                  myNotification.getGroupId());
+            myBalloon.hide(true);
           }
         });
       }) {
@@ -125,6 +128,61 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     return myActions;
   }
 
+  private void showMorePopup() {
+    if (!myPopupState.isHidden() || myPopupState.isRecentlyHidden()) {
+      return;
+    }
+
+    DefaultActionGroup group = new MyActionGroup();
+
+    if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myNotification.getGroupId())) {
+      group.add(new DumbAwareAction(IdeBundle.message("notification.settings.action.text")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent event) {
+          doShowSettings();
+        }
+      });
+      group.addSeparator();
+    }
+
+    //noinspection DialogTitleCapitalization
+    group.add(new DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again.for.this.project")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        handleDoNotAsk(true);
+      }
+    });
+    //noinspection DialogTitleCapitalization
+    group.add(new DumbAwareAction(IdeBundle.message("notifications.toolwindow.dont.show.again")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent event) {
+        handleDoNotAsk(false);
+      }
+    });
+
+    ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(myMoreButton), true, null, -1);
+    myPopupState.prepareToShow(popup);
+    popup.showUnderneathOf(myMoreButton);
+  }
+
+  private void doShowSettings() {
+    NotificationCollector.getInstance()
+      .logNotificationSettingsClicked(myNotification.id, myNotification.getDisplayId(), myNotification.getGroupId());
+    final NotificationsConfigurable configurable = new NotificationsConfigurable();
+    ShowSettingsUtil.getInstance().editConfigurable(myLayoutData.project, configurable, () -> {
+      Runnable runnable = configurable.enableSearch(myNotification.getGroupId());
+      if (runnable != null) {
+        runnable.run();
+      }
+    });
+  }
+
+  private void handleDoNotAsk(boolean forProject) {
+    myNotification.setDoNotAskFor(forProject ? myLayoutData.project : null);
+    myNotification.expire();
+  }
+
   @Override
   public void layout(@NotNull Rectangle bounds) {
     Dimension closeSize = myCloseButton.getPreferredSize();
@@ -134,9 +192,15 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     myCloseButton.setBounds(x - CloseHoverBounds.x, y - CloseHoverBounds.y,
                             closeSize.width + CloseHoverBounds.width, closeSize.height + CloseHoverBounds.height);
 
-    if (mySettingButton != null) {
-      Dimension size = mySettingButton.getPreferredSize();
-      mySettingButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
+    if (myMoreButton != null) {
+      Dimension size = myMoreButton.getPreferredSize();
+      myMoreButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
+    }
+  }
+
+  private static class MyActionGroup extends DefaultActionGroup implements TooltipDescriptionProvider {
+    private MyActionGroup() {
+      setPopup(true);
     }
   }
 }

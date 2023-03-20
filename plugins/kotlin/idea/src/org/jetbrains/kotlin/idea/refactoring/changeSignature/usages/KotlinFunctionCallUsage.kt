@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
@@ -9,12 +9,13 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallIntention
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeEmptyArgumentListIfApplicable
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
@@ -27,7 +28,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.*
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.kind
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class KotlinFunctionCallUsage(
     element: KtCallElement,
@@ -66,7 +68,7 @@ class KotlinFunctionCallUsage(
         if (element.valueArgumentList == null && changeInfo.isParameterSetOrOrderChanged && element.lambdaArguments.isNotEmpty()) {
             val anchor = element.typeArgumentList ?: element.calleeExpression
             if (anchor != null) {
-                element.addAfter(KtPsiFactory(element).createCallArguments("()"), anchor)
+                element.addAfter(KtPsiFactory(element.project).createCallArguments("()"), anchor)
             }
         }
         if (element.valueArgumentList != null) {
@@ -94,7 +96,9 @@ class KotlinFunctionCallUsage(
         if (resolvedCall == null || resolvedCall.isReallySuccess()) return false
 
         // TODO: investigate why arguments are not recorded for enum constructor call
-        if (element is KtSuperTypeCallEntry && element.parent.parent is KtEnumEntry && element.valueArguments.isEmpty()) return false
+        if (element.parentsWithSelf.match(KtSuperTypeCallEntry::class, KtInitializerList::class, last = KtEnumEntry::class) != null &&
+            element.valueArguments.isEmpty()
+        ) return false
 
         if (skipUnmatchedArgumentsCheck) return false
 
@@ -469,7 +473,7 @@ class KotlinFunctionCallUsage(
         }
 
         if (!skipRedundantArgumentList) {
-            newCallExpression?.valueArgumentList?.let(RemoveEmptyParenthesesFromLambdaCallIntention::applyToIfApplicable)
+            newCallExpression?.valueArgumentList?.let(::removeEmptyArgumentListIfApplicable)
         }
 
         newElement.flushElementsForShorteningToWaitList()

@@ -62,7 +62,7 @@ public class NewClassNamingConventionInspection extends AbstractNamingConvention
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         final String name = aClass.getName();
         if (name == null) return;
         checkName(aClass, name, holder);

@@ -1,0 +1,85 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.scratch.ScratchFileLanguageProvider"/>
+    </extensionPoint>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
+            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
+            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.MultipleScriptDefinitionsChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportChecker"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.IndexScriptDependenciesSourcesNotificationProvider"/>
+
+    <projectConfigurable groupId="language"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.scripting.configurable"
+                         id="preferences.language.Kotlin.scripting"
+                         instance="org.jetbrains.kotlin.idea.script.configuration.KotlinScriptingSettingsConfigurable"
+                         parentId="preferences.language.Kotlin"/>
+
+    <fileEditorProvider implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
+    <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
+
+    <scriptDefinitionContributor
+            id="ScriptTemplatesFromCompilerSettingsProvider"
+            implementation="org.jetbrains.kotlin.idea.script.ScriptTemplatesFromCompilerSettingsProvider"/>
+
+    <scriptDefinitionContributor
+            id="BridgeScriptDefinitionsContributor"
+            implementation="org.jetbrains.kotlin.idea.script.BridgeScriptDefinitionsContributor"/>
+
+    <scriptDefinitionContributor
+            id="ScriptTemplatesFromDependenciesProvider"
+            implementation="org.jetbrains.kotlin.idea.script.ScriptTemplatesFromDependenciesProvider"/>
+
+    <scriptDefinitionContributor id="ConsoleScriptDefinitionContributor"
+                                 implementation="org.jetbrains.kotlin.console.ConsoleScriptDefinitionContributor"/>
+
+    <scriptDefinitionContributor id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
+                                 implementation="org.jetbrains.kotlin.jsr223.ScriptDefinitionForExtensionAndIdeConsoleRootsSource"/>
+
+    <scriptDefinitionsProvider id="MainKtsScriptDefinitionSource"
+                               implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptDefinitionSource"/>
+
+    <scripting.support.checker.provider id="MainKtsScriptCheckerProvider"
+            implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptCheckerProvider"/>
+
+    <scripting.support.checker.provider id="SpaceKtsScriptCheckerProvider"
+            implementation="org.jetbrains.kotlin.idea.script.SpaceKtsScriptCheckerProvider"/>
+
+    <scripting.support.checker.provider id="TeamCityKtsScriptCheckerProvider"
+            implementation="org.jetbrains.kotlin.idea.script.TeamCityKtsScriptCheckerProvider"/>
+
+    <scripting.support.checker.provider id="WorkspaceKtsScriptCheckerProvider"
+            implementation="org.jetbrains.kotlin.idea.script.WorkspaceKtsScriptCheckerProvider"/>
+
+    <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.script.DefaultIdeScriptingConfigurationFacade"/>
+
+    <scratchFileLanguageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileLanguageProvider"/>
+    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
+  </extensions>
+
+  <actions>
+    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction">
+      <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </action>
+    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction"/>
+    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.scratch.actions.StopScratchAction"/>
+  </actions>
+</idea-plugin>

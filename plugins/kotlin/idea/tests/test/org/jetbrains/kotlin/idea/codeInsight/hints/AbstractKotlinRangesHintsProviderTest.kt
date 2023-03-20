@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import java.io.File
 
 abstract class AbstractKotlinRangesHintsProviderTest :
-    InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+    InlayHintsProviderTestCase() { // Abstract-prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
@@ -20,10 +20,10 @@ abstract class AbstractKotlinRangesHintsProviderTest :
     }
 
     private fun assertThatActualHintsMatch(fileName: String) {
-        with(KotlinRangesHintsProvider()) {
+        with(KotlinValuesHintsProvider()) {
             val fileContents = FileUtil.loadFile(File(fileName), true)
             val settings = createSettings()
-            testProvider("KotlinRangesHintsProvider.kt", fileContents, this, settings)
+            doTestProvider("KotlinValuesHintsProvider.kt", fileContents, this, settings)
         }
     }
 

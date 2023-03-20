@@ -21,11 +21,12 @@ import com.intellij.psi.*
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -47,7 +48,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val info = TestRunLineMarkerProvider().getInfo(identifier)!!
     val runAction = info.actions.first() as ExecutorAction
     val context = getContextByLocation(element)
-    runAction.getChildren(TestActionEvent(context.dataContext))
+    runAction.getChildren(TestActionEvent.createTestEvent(context.dataContext))
   }
 
   protected fun assertGutterRunActionsSize(element: PsiNameIdentifierOwner, expectedSize: Int) {
@@ -88,6 +89,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val producer = configurationFromContext.configurationProducer as P
     producer.setTestTasksChooser(testTasksFilter)
     val configuration = configurationFromContext.configuration as GradleRunConfiguration
+    assertTrue("Configuration created from context must force test re-execution", configuration.isForceTestExecution)
     assertTrue("Configuration can be setup by producer from his context",
       producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
     if (producer !is PatternGradleConfigurationProducer) {
@@ -218,11 +220,12 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         @Test public void test3() {}
       }
     """.trimIndent())
-    createProjectSubFile("settings.gradle", groovy {
-      assign("rootProject.name", "project")
-      call("include", "module", "my module")
-    })
-    createProjectSubFile("build.gradle", buildscript {
+    createSettingsFile {
+      setProjectName("project")
+      include("module")
+      include("my module")
+    }
+    createBuildFile {
       withJavaPlugin()
       withIdeaPlugin()
       withJUnit4()
@@ -245,7 +248,11 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       }
       withTask("testJar", "Jar") {
         code("dependsOn testClasses")
-        assign("baseName", "test-${'$'}{project.archivesBaseName}")
+        if (gradleVersion.baseVersion < GradleVersion.version("8.0")) {
+          assign("baseName", "test-${'$'}{project.archivesBaseName}")
+        } else {
+          assign("archiveBaseName", "test-${'$'}{project.archivesBaseName}")
+        }
         code("from sourceSets.test.output")
       }
       withPostfix {
@@ -259,18 +266,18 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
           code("testSourceDirs += file('automation')")
         }
       }
-    })
-    createProjectSubFile("module/build.gradle", buildscript {
+    }
+    createBuildFile("module") {
       withJavaPlugin()
       withJUnit4()
       addTestImplementationDependency(project(":", "tests"))
-    })
-    createProjectSubFile("my module/build.gradle", buildscript {
+    }
+    createBuildFile("my module") {
       withJavaPlugin()
       withJUnit4()
       withGroovyPlugin()
       addTestImplementationDependency(project(":", "tests"))
-    })
+    }
     importProject()
     assertModulesContains("project", "project.module", "project.my_module")
     val automationTestCase = extractClassData(automationTestCaseFile)

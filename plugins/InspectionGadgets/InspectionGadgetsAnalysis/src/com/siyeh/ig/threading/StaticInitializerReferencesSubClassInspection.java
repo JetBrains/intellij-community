@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -15,8 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * see https://bugs.openjdk.java.net/browse/JDK-8037567
- * @author peter
+ * see https://bugs.openjdk.org/browse/JDK-8037567
  */
 public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -25,12 +24,12 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
     return new JavaElementVisitor() {
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkSubClassReferences(field);
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         checkSubClassReferences(initializer);
       }
 

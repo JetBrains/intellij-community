@@ -84,7 +84,7 @@ class MavenImportBadConfigEventParser : MavenImportLoggedEventParser {
   }
 }
 
-class MavenConfigOpenQuickFix(val mavenConfig: VirtualFile, val errorMessage: String) : BuildIssueQuickFix {
+class MavenConfigOpenQuickFix(private val mavenConfig: VirtualFile, val errorMessage: String) : BuildIssueQuickFix {
 
   override val id: String = "open_maven_config_quick_fix"
 
@@ -110,7 +110,7 @@ object MavenConfigBuildIssue {
     val mavenProject = MavenProjectsManager.getInstance(project).rootProjects.firstOrNull()
     if (mavenProject == null) {
       MavenLog.LOG.warn("Cannot find appropriate maven project,project =  ${project.name}")
-      return null;
+      return null
     }
     val configFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
     if (configFile == null) return null

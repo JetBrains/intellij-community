@@ -4,16 +4,17 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
-import org.jetbrains.plugins.terminal.TerminalView
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 open class MoveTerminalToolwindowTabLeftRightAction(private val moveLeft: Boolean) : TerminalSessionContextMenuActionBase(), DumbAware {
-  override fun actionPerformedInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content) {
+  override fun actionPerformedInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content, terminalWidget: TerminalWidget) {
     move(content, project)
   }
 
-  override fun updateInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content) {
+  override fun updateInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content, terminalWidget: TerminalWidget) {
     e.presentation.isEnabled = isAvailable(content)
   }
 
@@ -32,7 +33,7 @@ open class MoveTerminalToolwindowTabLeftRightAction(private val moveLeft: Boolea
       TerminalTabCloseListener.executeContentOperationSilently(otherContent) {
         manager.removeContent(otherContent, false, false, false).doWhenDone {
           manager.addContent(otherContent, ind)
-          TerminalTabCloseListener(otherContent, project, TerminalView.getInstance(project))
+          TerminalTabCloseListener(otherContent, project, TerminalToolWindowManager.getInstance(project))
         }
       }
     }

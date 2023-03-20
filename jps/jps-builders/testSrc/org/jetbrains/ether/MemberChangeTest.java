@@ -15,9 +15,6 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
 public class MemberChangeTest extends IncrementalTestCase {
   public MemberChangeTest() {
     super("membersChange");
@@ -64,6 +61,10 @@ public class MemberChangeTest extends IncrementalTestCase {
   }
 
   public void testAddFieldToInterface() {
+    doTest();
+  }
+
+  public void testAddFieldToEnum() {
     doTest();
   }
 

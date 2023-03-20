@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -38,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -58,13 +59,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ArrayRenderer extends NodeRendererImpl{
+public class ArrayRenderer extends NodeRendererImpl {
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 
   public int START_INDEX = 0;
-  public int END_INDEX   = Integer.MAX_VALUE;
+  public int END_INDEX = Integer.MAX_VALUE;
   public int ENTRIES_LIMIT = XCompositeNode.MAX_CHILDREN_TO_SHOW;
 
   private boolean myForced = false;
@@ -105,8 +106,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     if (value == null) {
       return "null";
     }
-    else if (value instanceof ArrayReference) {
-      ArrayReference arrValue = (ArrayReference)value;
+    else if (value instanceof ArrayReference arrValue) {
       String componentTypeName = ((ArrayType)arrValue.type()).componentTypeName();
       boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(componentTypeName);
       if (TypeConversionUtil.isPrimitive(componentTypeName) || isString) {
@@ -116,9 +116,9 @@ public class ArrayRenderer extends NodeRendererImpl{
               int shownLength = Math.min(length, Registry.intValue(
                 isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
               return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
-                CompletableFuture<String>[] futures = StreamEx.of(values).map(ArrayRenderer::getElementAsString).toArray(CompletableFuture[]::new);
+                CompletableFuture<String>[] futures = ContainerUtil.map2Array(values, new CompletableFuture[0], ArrayRenderer::getElementAsString);
                 return CompletableFuture.allOf(futures).thenApply(__ -> {
-                  List<String> elements = StreamEx.of(futures).map(CompletableFuture::join).toList();
+                  List<String> elements = ContainerUtil.map(futures, CompletableFuture::join);
                   if (descriptor instanceof ValueDescriptorImpl) {
                     int compactLength = Math.min(shownLength, isString ? 5 : 10);
                     String compact =
@@ -182,11 +182,11 @@ public class ArrayRenderer extends NodeRendererImpl{
           }
 
           AtomicInteger added = new AtomicInteger();
-        AtomicBoolean hiddenNulls = new AtomicBoolean();
+          AtomicBoolean hiddenNulls = new AtomicBoolean();
 
-        addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
-      }
-    });
+          addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
+        }
+      });
   }
 
   private CompletableFuture<Void> addChunk(ArrayReference array,
@@ -411,8 +411,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         TreePath path = tree.getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           TreeNode parent = ((TreeNode)path.getLastPathComponent()).getParent();
-          if (parent instanceof XValueNodeImpl) {
-            XValueNodeImpl valueNode = (XValueNodeImpl)parent;
+          if (parent instanceof XValueNodeImpl valueNode) {
             ArrayAction.setArrayRenderer(NodeRendererSettings.getInstance().getArrayRenderer(),
                                          valueNode,
                                          DebuggerManagerEx.getInstanceEx(tree.getProject()).getContext());

@@ -25,8 +25,6 @@ import java.util.Collection;
 
 /**
  * Used by {@code PostProcessFormattingAspect} to exclude ranges which should never be automatically indented. For example, HEREDOC strings.
- *
- * @author Rustam Vishnyakov
  */
 public interface DisabledIndentRangesProvider {
   ExtensionPointName<DisabledIndentRangesProvider> EP_NAME = ExtensionPointName.create("com.intellij.disabledIndentRangesProvider");

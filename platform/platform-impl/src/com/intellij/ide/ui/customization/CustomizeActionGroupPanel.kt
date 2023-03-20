@@ -3,6 +3,7 @@ package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.customization.CustomizeActionGroupPanel.Companion.showDialog
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
@@ -35,7 +36,7 @@ import javax.swing.JList
  */
 class CustomizeActionGroupPanel(
   val groupId: String,
-  val addActionGroupIds: List<String> = emptyList(),
+  private val addActionGroupIds: List<String> = emptyList(),
 ) : BorderLayoutPanel() {
 
   private val list: JBList<Any>
@@ -109,7 +110,7 @@ class CustomizeActionGroupPanel(
   }
 
   private fun createSearchComponent(): Component {
-    val speedSearch = object : ListSpeedSearch<Any>(list, Function {
+    val speedSearch = object : ListSpeedSearch<Any>(list, null, Function {
       when (it) {
         is String -> ActionManager.getInstance().getAction(it).templateText
         else -> null
@@ -120,6 +121,7 @@ class CustomizeActionGroupPanel(
       override fun isSpeedSearchEnabled() = false
       override fun showPopup() {}
     }
+    speedSearch.setupListeners()
     val filterComponent = object : FilterComponent("CUSTOMIZE_ACTIONS", 5) {
       override fun filter() {
         speedSearch.findAndSelectElement(filter)
@@ -196,6 +198,10 @@ class CustomizeActionGroupPanel(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = direction.test(list.selectedIndices, list.model.size)
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private inner class RemoveAction(
@@ -217,6 +223,10 @@ class CustomizeActionGroupPanel(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = list.selectedIndices.isNotEmpty()
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private inner class RestoreAction(
@@ -234,6 +244,10 @@ class CustomizeActionGroupPanel(
       val current = (list.model as CollectionListModel).items
       e.presentation.isEnabled = defaultActions != current
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   enum class Direction(val sign: Int, val shortcut: ShortcutSet, val test: (index: IntArray, size: Int) -> Boolean) {
@@ -243,9 +257,13 @@ class CustomizeActionGroupPanel(
 
   private class MyListCellRender : ColoredListCellRenderer<Any>() {
     override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-      CustomizationUtil.acceptObjectIconAndText(value) { t, i ->
-        SpeedSearchUtil.appendFragmentsForSpeedSearch(list, t, SimpleTextAttributes.REGULAR_ATTRIBUTES, selected, this)
-        icon = i
+      CustomizationUtil.acceptObjectIconAndText(value) { text, description, icon ->
+        SpeedSearchUtil.appendFragmentsForSpeedSearch(list, text, SimpleTextAttributes.REGULAR_ATTRIBUTES, selected, this)
+        if (description != null) {
+          append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
+          append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        }
+        setIcon(icon)
       }
     }
   }

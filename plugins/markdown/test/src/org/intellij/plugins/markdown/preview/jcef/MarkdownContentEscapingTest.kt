@@ -2,22 +2,12 @@
 package org.intellij.plugins.markdown.preview.jcef
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.NonHeadlessRule
-import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.collectPageSource
-import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.createJcefTestRule
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.junit.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.RuleChain
-import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
@@ -25,20 +15,14 @@ import java.io.File
 /**
  * Run with:
  * * *intellij.test.standalone=true*
- * * *java.awt.headless=false* (although, this should be set by [NonHeadlessRule],
+ * * *java.awt.headless=false* 
  *   it seems that JCEF initialization will check this property before the rule is applied)
  *
  * Basically, all these tests are checking if the passed to the preview HTML
  * stays the same after conversion to incremental DOM.
  */
 @RunWith(Parameterized::class)
-class MarkdownContentEscapingTest(enableOsr: Boolean) {
-  private val disposableRule = DisposableRule()
-
-  @Rule
-  @JvmField
-  val ruleChain: TestRule = RuleChain.outerRule(NonHeadlessRule()).around(createJcefTestRule(enableOsr)).around(disposableRule)
-
+class MarkdownContentEscapingTest(enableOsr: Boolean): MarkdownJcefTestCase(enableOsr) {
   @Test
   fun `applied patch sanity`() = doTest("appliedPatchSanity")
 
@@ -59,7 +43,7 @@ class MarkdownContentEscapingTest(enableOsr: Boolean) {
 
   private fun doTest(name: String) {
     val content = File(testPath, "$name.html").readText()
-    val panel = MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content, disposableRule.disposable)
+    val panel = setupPreview(content)
     val expected = parseContentBody(content)
     var got = parseContentBody(panel.collectPageSource()!!)
     // can't listen for the content load, so use this primitive approach
@@ -70,8 +54,6 @@ class MarkdownContentEscapingTest(enableOsr: Boolean) {
     }
     assertTrue(got.children().isNotEmpty())
     assertEquals(expected.html(), got.child(0).html())
-    Thread.sleep(500) // wait until com.intellij.ui.jcef.JBCefOsrHandler.onPaint is called which call invokeLater()
-    UIUtil.pump()
   }
 
   private fun parseContentBody(html: String): Element {
@@ -83,14 +65,11 @@ class MarkdownContentEscapingTest(enableOsr: Boolean) {
   }
 
   companion object {
+    @Suppress("unused")
     @JvmStatic
     @get:Parameterized.Parameters(name = "enableOsr = {0}")
-    val modes = listOf(true, false)
+    val modes = listOf(true)
 
     private val testPath = FileUtil.join(MarkdownTestingUtil.TEST_DATA_PATH, "preview", "jcef", "escaping")
-
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
   }
 }

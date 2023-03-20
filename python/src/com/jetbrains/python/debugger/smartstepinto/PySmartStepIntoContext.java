@@ -50,8 +50,7 @@ public class PySmartStepIntoContext {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PySmartStepIntoContext)) return false;
-    PySmartStepIntoContext context = (PySmartStepIntoContext)o;
+    if (!(o instanceof PySmartStepIntoContext context)) return false;
     return myStartLine == context.myStartLine && myEndLine == context.myEndLine
            && myFrame.getFrameId().equals(context.getFrame().getFrameId());
   }

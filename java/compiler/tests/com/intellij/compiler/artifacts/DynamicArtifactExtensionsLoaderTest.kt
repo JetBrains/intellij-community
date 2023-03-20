@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.Disposable
@@ -21,7 +21,7 @@ import javax.swing.Icon
 
 class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
   fun `test unload and load artifact type`() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable) {}
     val artifactManager = ArtifactManager.getInstance(myProject)
     runWithRegisteredExtension(MockArtifactType(), ArtifactType.EP_NAME) {
       artifactManager.addArtifact("mock", MockArtifactType.getInstance(), PackagingElementFactory.getInstance().createArtifactRootElement())
@@ -75,7 +75,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     assertEquals("data", (artifact.getProperties(MockArtifactPropertiesProvider.getInstance()) as MockArtifactProperties).data)
   }
 
-  private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
+  private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     registerExtension(extension, extensionPoint, disposable)
     try {
@@ -86,7 +86,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     }
   }
 
-  private fun <T> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
+  private fun <T : Any> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
     val artifactTypeDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       runWriteAction {
@@ -98,7 +98,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable) {}
   }
 }
 
@@ -109,7 +109,7 @@ private class MockArtifactType : ArtifactType("mock", Supplier { "Mock" }) {
 
   override fun getIcon(): Icon = EmptyIcon.ICON_16
 
-  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String? = ""
+  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String = ""
 
   override fun createRootElement(artifactName: String): CompositePackagingElement<*> {
     return PackagingElementFactory.getInstance().createArtifactRootElement()
@@ -139,7 +139,7 @@ private class MockPackagingElementType : PackagingElementType<MockPackagingEleme
 
   override fun chooseAndCreate(context: ArtifactEditorContext,
                                artifact: Artifact,
-                               parent: CompositePackagingElement<*>): MutableList<out PackagingElement<*>> {
+                               parent: CompositePackagingElement<*>): List<PackagingElement<*>> {
     throw UnsupportedOperationException()
   }
 

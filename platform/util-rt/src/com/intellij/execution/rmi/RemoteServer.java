@@ -63,6 +63,11 @@ public class RemoteServer {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected static void start(Remote remote, boolean localHostOnly) throws Exception {
+    IdeaWatchdog watchdog = new IdeaWatchdogImpl();
+    if (remote instanceof IdeaWatchdogAware) {
+      ((IdeaWatchdogAware)remote).setWatchdog(watchdog);
+    }
+
     setupRMI(localHostOnly);
     banJNDI();
     setupSSL();
@@ -100,14 +105,13 @@ public class RemoteServer {
       Matcher matcher = REF_ENDPOINT_PATTERN.matcher(stub.toString());
       String servicesPort = matcher.find() ? matcher.group(1) : "0";
 
-      IdeaWatchdog watchdog = new IdeaWatchdogImpl();
       Remote watchdogStub = UnicastRemoteObject.exportObject(watchdog, 0);
       registry.bind(IdeaWatchdog.BINDING_NAME, watchdogStub);
 
       System.out.println("Port/ServicesPort/ID: " + (port + "/" + servicesPort + "/" + name));
       System.out.println();
 
-      spinUntilWatchdogAlive(watchdog);
+      spinWhileWatchdogAlive(watchdog);
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);
@@ -115,8 +119,8 @@ public class RemoteServer {
     }
   }
 
-  private static void spinUntilWatchdogAlive(IdeaWatchdog watchdog) throws Exception {
-    long waitTime = IdeaWatchdog.WAIT_TIMEOUT;
+  private static void spinWhileWatchdogAlive(IdeaWatchdog watchdog) throws Exception {
+    long waitTime = watchdog.getWaitTimeoutMillis();
     Object lock = new Object();
     while (true) {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter

@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -37,10 +25,11 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
@@ -66,13 +55,11 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
   public boolean IGNORE_NON_CONSTANT = false;
   public boolean SUGGEST_MAP_OF_ENTRIES = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("inspection.collection.factories.option.ignore.non.constant"), "IGNORE_NON_CONSTANT");
-    panel.addCheckbox(JavaBundle.message("inspection.collection.factories.option.suggest.ofentries"), "SUGGEST_MAP_OF_ENTRIES");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_NON_CONSTANT", JavaBundle.message("inspection.collection.factories.option.ignore.non.constant")),
+      checkbox("SUGGEST_MAP_OF_ENTRIES", JavaBundle.message("inspection.collection.factories.option.suggest.ofentries")));
   }
 
   @NotNull
@@ -83,7 +70,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
         if (model != null && model.isValid(SUGGEST_MAP_OF_ENTRIES)) {
           ProblemHighlightType type = model.myConstantContent || !IGNORE_NON_CONSTANT
@@ -113,7 +100,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     final boolean myCopy;
     final boolean myConstantContent;
     final boolean myRepeatingKeys;
-    final boolean myHasNulls;
+    final boolean myMayHaveNulls;
 
     PrepopulatedCollectionModel(List<PsiExpression> content, List<PsiElement> delete, String type) {
       this(content, delete, type, false);
@@ -128,11 +115,12 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         .cross(ExpressionUtils::nonStructuralChildren).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
       myConstantContent = !copy && StreamEx.ofValues(constants).flatCollection(Function.identity()).allMatch(Objects::nonNull);
       myRepeatingKeys = keyExpressions().flatCollection(constants::get).nonNull().distinct(2).findAny().isPresent();
-      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::nonStructuralChildren).map(PsiExpression::getType).has(PsiType.NULL);
+      myMayHaveNulls = !copy && StreamEx.of(myContent).flatMap(ExpressionUtils::nonStructuralChildren)
+        .anyMatch(ex -> NullabilityUtil.getExpressionNullability(ex, true) != Nullability.NOT_NULL);
     }
 
     boolean isValid(boolean suggestMapOfEntries) {
-      return !myHasNulls && !myRepeatingKeys && (suggestMapOfEntries || !hasTooManyMapEntries());
+      return !myMayHaveNulls && !myRepeatingKeys && (suggestMapOfEntries || !hasTooManyMapEntries());
     }
 
     private boolean hasTooManyMapEntries() {
@@ -140,55 +128,50 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
 
     private StreamEx<PsiExpression> keyExpressions() {
-      switch (myType) {
-        case "Set":
-          return StreamEx.of(myContent);
-        case "Map":
-          return IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
-        default:
-          return StreamEx.empty();
-      }
+      return switch (myType) {
+        case "Set" -> StreamEx.of(myContent);
+        case "Map" -> IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
+        default -> StreamEx.empty();
+      };
     }
 
     public static PrepopulatedCollectionModel fromList(PsiExpression listDefinition) {
       listDefinition = PsiUtil.skipParenthesizedExprDown(listDefinition);
-      if(listDefinition instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)listDefinition;
+      if(listDefinition instanceof PsiMethodCallExpression call) {
         if (ARRAYS_AS_LIST.test(call)) {
           return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), "List");
         }
         return fromCollect(call, "List", COLLECTORS_TO_LIST);
       }
-      if(listDefinition instanceof PsiNewExpression) {
-        return fromNewExpression((PsiNewExpression)listDefinition, "List", JAVA_UTIL_ARRAY_LIST);
+      if(listDefinition instanceof PsiNewExpression newExpression) {
+        return fromNewExpression(newExpression, "List", JAVA_UTIL_ARRAY_LIST);
       }
-      if (listDefinition instanceof PsiReferenceExpression) {
-        return fromVariable((PsiReferenceExpression)listDefinition, "List", JAVA_UTIL_ARRAY_LIST, COLLECTION_ADD);
+      if (listDefinition instanceof PsiReferenceExpression ref) {
+        return fromVariable(ref, "List", JAVA_UTIL_ARRAY_LIST, COLLECTION_ADD);
       }
       return null;
     }
 
     public static PrepopulatedCollectionModel fromSet(PsiExpression setDefinition) {
       setDefinition = PsiUtil.skipParenthesizedExprDown(setDefinition);
-      if (setDefinition instanceof PsiMethodCallExpression) {
-        return fromCollect((PsiMethodCallExpression)setDefinition, "Set", COLLECTORS_TO_SET);
+      if (setDefinition instanceof PsiMethodCallExpression call) {
+        return fromCollect(call, "Set", COLLECTORS_TO_SET);
       }
-      if (setDefinition instanceof PsiNewExpression) {
-        return fromNewExpression((PsiNewExpression)setDefinition, "Set", JAVA_UTIL_HASH_SET);
+      if (setDefinition instanceof PsiNewExpression newExpression) {
+        return fromNewExpression(newExpression, "Set", JAVA_UTIL_HASH_SET);
       }
-      if (setDefinition instanceof PsiReferenceExpression) {
-        return fromVariable((PsiReferenceExpression)setDefinition, "Set", JAVA_UTIL_HASH_SET, COLLECTION_ADD);
+      if (setDefinition instanceof PsiReferenceExpression ref) {
+        return fromVariable(ref, "Set", JAVA_UTIL_HASH_SET, COLLECTION_ADD);
       }
       return null;
     }
 
     public static PrepopulatedCollectionModel fromMap(PsiExpression mapDefinition) {
       mapDefinition = PsiUtil.skipParenthesizedExprDown(mapDefinition);
-      if (mapDefinition instanceof PsiReferenceExpression) {
-        return fromVariable((PsiReferenceExpression)mapDefinition, "Map", JAVA_UTIL_HASH_MAP, MAP_PUT);
+      if (mapDefinition instanceof PsiReferenceExpression ref) {
+        return fromVariable(ref, "Map", JAVA_UTIL_HASH_MAP, MAP_PUT);
       }
-      if (mapDefinition instanceof PsiNewExpression) {
-        PsiNewExpression newExpression = (PsiNewExpression)mapDefinition;
+      if (mapDefinition instanceof PsiNewExpression newExpression) {
         PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
         PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList != null) {
@@ -241,7 +224,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         PsiExpression initializer = variable.getInitializer();
         if (!ConstructionUtils.isEmptyCollectionInitializer(initializer)) return null;
         if (!PsiTypesUtil.classNameEquals(initializer.getType(), collectionClass)) return null;
-        Set<PsiElement> refs = ContainerUtil.set(DefUseUtil.getRefs(block, variable, initializer));
+        Set<PsiElement> refs = ContainerUtil.newHashSet(DefUseUtil.getRefs(block, variable, initializer));
         refs.remove(expression);
         PsiStatement cur = declaration;
         List<PsiExpression> contents = new ArrayList<>();

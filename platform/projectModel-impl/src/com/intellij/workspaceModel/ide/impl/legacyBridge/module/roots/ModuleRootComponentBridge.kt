@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.Disposable
@@ -12,13 +12,14 @@ import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.DisposableCachedValue
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -34,14 +35,14 @@ class ModuleRootComponentBridge(
     { moduleBridge.entityStorage },
     CachedValue { storage ->
       RootModelBridgeImpl(
-        moduleEntity = storage.findModuleEntity(moduleBridge),
+        moduleEntity = moduleBridge.findModuleEntity(storage),
         storage = moduleBridge.entityStorage,
         itemUpdater = null,
         // TODO
         rootModel = this,
         updater = null
       )
-    }).also { Disposer.register(this, it) }
+    }, "Root Model Bridge (${currentModule.name})").also { Disposer.register(this, it) }
 
   internal val moduleLibraryTable: ModuleLibraryTableBridgeImpl = ModuleLibraryTableBridgeImpl(moduleBridge)
 
@@ -50,7 +51,7 @@ class ModuleRootComponentBridge(
   }
 
   init {
-    MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension?> {
+    MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
         dropRootModelCache()
       }
@@ -64,7 +65,7 @@ class ModuleRootComponentBridge(
   private val model: RootModelBridgeImpl
     get() = modelValue.value
 
-  override val storage: WorkspaceEntityStorage
+  override val storage: EntityStorage
     get() = moduleBridge.entityStorage.current
 
   override val accessor: RootConfigurationAccessor
@@ -97,7 +98,7 @@ class ModuleRootComponentBridge(
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
+    MutableEntityStorage.from(moduleBridge.entityStorage.current),
     moduleBridge,
     accessor)
 
@@ -105,13 +106,18 @@ class ModuleRootComponentBridge(
    * This method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
    * of this {@link ModifiableRootModel} are available in its storage and references in its {@link OrderEntry} can be resolved properly.
    */
-  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
-                                                               ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
-    moduleBridge,
-    accessor)
+  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel =
+    getModifiableModelForMultiCommit(accessor, true)
 
-  fun getModifiableModel(diff: WorkspaceEntityStorageBuilder, accessor: RootConfigurationAccessor): ModifiableRootModel {
+  @ApiStatus.Internal
+  fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor, cacheStorageResult: Boolean): ModifiableRootModel = ModifiableRootModelBridgeImpl(
+    (moduleBridge.diff as? MutableEntityStorage) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
+    ?: MutableEntityStorage.from(moduleBridge.entityStorage.current),
+    moduleBridge,
+    accessor,
+    cacheStorageResult)
+
+  fun getModifiableModel(diff: MutableEntityStorage, accessor: RootConfigurationAccessor): ModifiableRootModel {
     return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor, false)
   }
 

@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ColorPicker;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -33,7 +34,7 @@ public class ChangeBackgroundAction extends DumbAwareAction {
     Component component = e.getInputEvent().getComponent();
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (component != null && decorator != null) {
-      ColorPicker.showColorPickerPopup(e.getProject(), null, null, new ColorListener() {
+      ColorChooserService.getInstance().showPopup(e.getProject(), null, null, new ColorListener() {
         @Override
         public void colorChanged(Color color, Object source) {
           myIcon.color = color;
@@ -47,6 +48,11 @@ public class ChangeBackgroundAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(Registry.is("ide.images.change.background.action.enabled", false));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static class MyBackgroundIcon implements Icon {

@@ -2,10 +2,10 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -14,12 +14,12 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -60,7 +60,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
 
   @Override
   public boolean useSmallLabels() {
-    return true;
+    return !ExperimentalUI.isNewUI();
   }
 
   @Override
@@ -79,15 +79,6 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
-  public Rectangle layout(JComponent c, Rectangle bounds) {
-    if (c instanceof Toolbar) {
-      bounds.height -= getSeparatorWidth();
-      return super.layout(c, bounds);
-    }
-    return super.layout(c, bounds);
-  }
-
-  @Override
   public void processDropOver(TabInfo over, RelativePoint relativePoint) {
     final Point point = relativePoint.getPoint(getComponent());
     myShowDropLocation = shouldAddToGlobal(point);
@@ -101,18 +92,43 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
     }
   }
 
+  /**
+   * @return scaled preferred runner tab label height aligned with toolbars
+   */
+  public static int getTabLabelPreferredHeight() {
+    return ExperimentalUI.isNewUI() ? JBUI.scale(JBUI.CurrentTheme.DebuggerTabs.tabHeight())
+                                    : JBUI.scale(29);
+  }
+
   @NotNull
   @Override
   protected TabLabel createTabLabel(@NotNull TabInfo info) {
     return new SingleHeightLabel(this, info) {
+      {
+        updateFont();
+      }
+
       @Override
-      public void setTabActions(ActionGroup group) {
-        super.setTabActions(group);
-        if (myActionPanel != null) {
-          final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
-          wrapper.remove(0);
-          wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
+      public void updateUI() {
+        super.updateUI();
+        updateFont();
+      }
+
+      private void updateFont() {
+        JComponent label = getLabelComponent();
+        if (label != null && ExperimentalUI.isNewUI()) {  // can be null at the first updateUI call during init
+          label.setFont(JBUI.CurrentTheme.DebuggerTabs.font());
         }
+      }
+
+      @Override
+      protected int getActionsInset() {
+        return 8;
+      }
+
+      @Override
+      protected int getPreferredHeight() {
+        return getTabLabelPreferredHeight();
       }
     };
 
@@ -140,17 +156,9 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
         getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
       }
 
-      if (JBTabsImpl.NEW_TABS) {
-        if (getLastLayoutPass() == null || getLastLayoutPass().getExtraBorderLines() == null) return;
-        List<LayoutPassInfo.LineCoordinates> borderLines = getLastLayoutPass().getExtraBorderLines();
-        for (LayoutPassInfo.LineCoordinates borderLine : borderLines) {
-          getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), borderLine.from(), borderLine.to());
-        }
-      } else {
-        getTabPainter()
-          .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
-                           new Point(x + width, y + myHeaderFitSize.height));
-      }
+      getTabPainter()
+        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
+                         new Point(x + width, y + myHeaderFitSize.height));
     }
 
     public void setSideMask(@SideBorder.SideMask int mask) {

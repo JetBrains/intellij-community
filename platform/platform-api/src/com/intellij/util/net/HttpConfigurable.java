@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -28,11 +28,13 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
-import com.intellij.util.proxy.SharedProxyConfig;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
@@ -62,6 +64,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public volatile boolean PROXY_AUTHENTICATION;
   public boolean KEEP_PROXY_PASSWORD;
   public transient String LAST_ERROR;
+  public transient String CHECK_CONNECTION_URL = "http://";
 
   private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<>();
   private final Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<>();
@@ -114,31 +117,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Override
-  public void noStateLoaded() {
-    // all settings are defaults
-    // trying user's proxy configuration entered while obtaining the license
-    SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
-    if (cfg == null) {
-      return;
-    }
-
-    SharedProxyConfig.clear();
-    if (cfg.host == null) {
-      return;
-    }
-
-    USE_HTTP_PROXY = true;
-    PROXY_HOST = cfg.host;
-    PROXY_PORT = cfg.port;
-    if (cfg.login != null) {
-      setPlainProxyPassword(new String(cfg.password));
-      storeSecure("proxy.login", cfg.login);
-      PROXY_AUTHENTICATION = true;
-      KEEP_PROXY_PASSWORD = true;
-    }
-  }
-
-  @Override
   public void initializeComponent() {
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
@@ -148,8 +126,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated use {@link #initializeComponent()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated(forRemoval = true)
   public void initComponent() {
     initializeComponent();
   }
@@ -353,13 +330,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
   /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void writeExternal(Element element) throws WriteExternalException {
     com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
     if (USE_PROXY_PAC && USE_HTTP_PROXY && !ApplicationManager.getApplication().isDisposed()) {
@@ -486,12 +463,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       List<Proxy> proxies = CommonProxy.getInstance().select(uri);
       // we will just take the first returned proxy, but we have an option to test connection through each of them,
       // for instance, by calling prepareUrl()
-      if (proxies != null && !proxies.isEmpty()) {
+      if (!proxies.isEmpty()) {
         for (Proxy proxy : proxies) {
           if (isRealProxy(proxy)) {
             SocketAddress address = proxy.address();
-            if (address instanceof InetSocketAddress) {
-              InetSocketAddress inetSocketAddress = (InetSocketAddress)address;
+            if (address instanceof InetSocketAddress inetSocketAddress) {
               if (Proxy.Type.SOCKS.equals(proxy.type())) {
                 result.add(pair(JavaProxyProperty.SOCKS_HOST, inetSocketAddress.getHostString()));
                 result.add(pair(JavaProxyProperty.SOCKS_PORT, String.valueOf(inetSocketAddress.getPort())));
@@ -632,21 +608,4 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       LOG.info(e);
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link HttpRequests#CONNECTION_TIMEOUT} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
-  public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
-
-  /** @deprecated use {@link HttpRequests#READ_TIMEOUT} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
-  public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
-
-  /** @deprecated use {@link HttpRequests#REDIRECT_LIMIT} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
-  public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
-  //</editor-fold>
 }

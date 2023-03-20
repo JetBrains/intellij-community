@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 class MyException1 extends Exception {}
 class MyException2 extends Exception {}
 
@@ -10,7 +10,7 @@ class Test {
       foo();
     } catch (MyException1 e) {
     } catch (MyException2 e) {
-        <caret><selection>e.printStackTrace();</selection>
+        <caret><selection>throw new RuntimeException(e);</selection>
     }
   }
 }

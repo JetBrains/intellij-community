@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 
 public final class MoveParenthesisFix implements IntentionAction, HighPriorityAction {
@@ -98,7 +99,7 @@ public final class MoveParenthesisFix implements IntentionAction, HighPriorityAc
     return parentCopy;
   }
 
-  public static boolean registerFix(HighlightInfo info, PsiCallExpression callExpression, final CandidateInfo[] candidates, TextRange fixRange) {
+  public static boolean registerFix(@NotNull HighlightInfo.Builder info, PsiCallExpression callExpression, final CandidateInfo[] candidates, TextRange fixRange) {
     PsiExpressionList parent = ObjectUtils.tryCast(callExpression.getParent(), PsiExpressionList.class);
     if (parent == null) return false;
     PsiCallExpression parentCall = ObjectUtils.tryCast(parent.getParent(), PsiCallExpression.class);
@@ -132,7 +133,7 @@ public final class MoveParenthesisFix implements IntentionAction, HighPriorityAc
       fix = new MoveParenthesisFix(parentCall, pos, shift);
     }
     if (fix == null) return false;
-    QuickFixAction.registerQuickFixAction(info, fixRange, fix);
+    info.registerFix(fix, null, null, fixRange, null);
     return true;
   }
 }

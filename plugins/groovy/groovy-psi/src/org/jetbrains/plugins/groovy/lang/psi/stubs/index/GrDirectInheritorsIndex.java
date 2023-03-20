@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
-/**
- * @author ilyas
- */
 public class GrDirectInheritorsIndex extends StringStubIndexExtension<GrReferenceList> {
   public static final StubIndexKey<String, GrReferenceList> KEY = StubIndexKey.createIndexKey("gr.class.super");
 

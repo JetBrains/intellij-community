@@ -40,8 +40,8 @@ public class LocalFilePath implements FilePath {
     this(path.toAbsolutePath().toString(), isDirectory);
   }
 
-  private LocalFilePath(@NotNull String path, boolean isDirectory,
-                        @SuppressWarnings("unused") @Nullable Void privateConstructorMarker) {
+  protected LocalFilePath(@NotNull String path, boolean isDirectory,
+                          @SuppressWarnings("unused") @Nullable Void privateConstructorMarker) {
     myPath = path;
     myIsDirectory = isDirectory;
   }
@@ -114,10 +114,20 @@ public class LocalFilePath implements FilePath {
     VirtualFile cachedFile = myCachedFile;
     if (cachedFile == null ||
         !cachedFile.isValid() ||
-        !(cachedFile.isCaseSensitive() ? cachedFile.getPath().equals(myPath) : cachedFile.getPath().equalsIgnoreCase(myPath))) {
-      myCachedFile = cachedFile = LocalFileSystem.getInstance().findFileByPath(myPath);
+        !(cachedFile.isCaseSensitive() ? getPath(cachedFile).equals(myPath) : getPath(cachedFile).equalsIgnoreCase(myPath))) {
+      myCachedFile = cachedFile = findFile(myPath);
     }
     return cachedFile;
+  }
+
+  @Nullable
+  protected VirtualFile findFile(@NotNull String path) {
+    return LocalFileSystem.getInstance().findFileByPath(path);
+  }
+
+  @NotNull
+  protected @NonNls String getPath(@NotNull VirtualFile cachedFile) {
+    return cachedFile.getPath();
   }
 
   @Override
@@ -168,7 +178,7 @@ public class LocalFilePath implements FilePath {
     String path = myPath;
     while ((file == null || !file.isValid()) && !path.isEmpty()) {
       path = PathUtil.getParentPath(path);
-      file = LocalFileSystem.getInstance().findFileByPath(path);
+      file = findFile(path);
     }
     if (file != null) {
       return file.getCharset();

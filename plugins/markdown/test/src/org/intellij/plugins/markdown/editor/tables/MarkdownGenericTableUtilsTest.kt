@@ -6,6 +6,7 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.valida
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownGenericTableUtilsTest: LightPlatformCodeInsightTestCase() {
   fun `test findCellIndex works fine`() {
     // language=Markdown
@@ -40,7 +41,7 @@ class MarkdownGenericTableUtilsTest: LightPlatformCodeInsightTestCase() {
   fun `test hasValidAlignment detects valid alignments`() {
     // language=Markdown
     val content = """
-    | none | left   | center |   right |  center uneven  | 
+    | none | left   | center |   right |  center uneven  |
     |------|:-------|:------:|--------:|:---------------:|
     |   a  | asd    |   56   |      56 |  cell content   |
     """.trimIndent()
@@ -54,7 +55,7 @@ class MarkdownGenericTableUtilsTest: LightPlatformCodeInsightTestCase() {
   fun `test hasValidAlignment detects invalid alignments`() {
     // language=Markdown
     val content = """
-    | none | left   | center |   right |  center uneven  | 
+    | none | left   | center |   right |  center uneven  |
     |------|:-------|:------:|--------:|:---------------:|
     |   a  |   sds  | ss     |   566   |   cell content  |
     """.trimIndent()

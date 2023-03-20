@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -34,11 +34,11 @@ abstract class KotlinExpressionTypeProvider : ExpressionTypeProvider<KtExpressio
         is KtFunctionLiteral -> false
         is KtFunction -> !hasBlockBody() && !hasDeclaredReturnType()
         is KtProperty -> typeReference == null
+        is KtParameter -> typeReference == null && (isLoopParameter || isLambdaParameter)
         is KtPropertyAccessor -> false
         is KtDestructuringDeclarationEntry -> true
         is KtStatementExpression, is KtDestructuringDeclaration -> false
         is KtIfExpression, is KtWhenExpression, is KtTryExpression -> shouldShowStatementType()
-        is KtLoopExpression -> false
         is KtConstantExpression -> false
         is KtThisExpression -> false
         else -> getQualifiedExpressionForSelector() == null && parent !is KtCallableReferenceExpression && !isFunctionCallee()

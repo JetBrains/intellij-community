@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -6,8 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -26,7 +26,7 @@ class Java9MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
     fun testSimpleLibraryExportsPackage() {
         val sources = listOf(File(testDataPath, getTestName(true) + "/library"))
         // -Xallow-kotlin-package to avoid "require kotlin.stdlib" in module-info.java
-        val extraOptions = listOf("-jdk-home", KotlinTestUtils.getAtLeastJdk9Home().path, "-Xallow-kotlin-package")
+        val extraOptions = listOf("-jdk-home", KotlinTestUtils.getCurrentProcessJdkHome().path, "-Xallow-kotlin-package")
         val libraryJar = KotlinCompilerStandalone(
             sources,
             platform = KotlinCompilerStandalone.Platform.Jvm(JvmTarget.JVM_9),
@@ -75,6 +75,17 @@ class Java9MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         val b = module("moduleB")
         val c = module("moduleC")
         module("main").addDependency(a).addDependency(b).addDependency(c)
+        checkHighlightingInProject()
+    }
+
+    fun testAutomaticModuleFromManifest() {
+        val d = module("dependency")
+        module("automaticByManifest").addDependency(d)
+        checkHighlightingInProject()
+    }
+
+    fun testJavaBaseIsIncludedByDefault() {
+        module("main")
         checkHighlightingInProject()
     }
 }

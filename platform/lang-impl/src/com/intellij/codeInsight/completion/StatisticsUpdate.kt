@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
@@ -19,10 +18,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.Alarm
+import org.jetbrains.annotations.VisibleForTesting
 
-/**
- * @author peter
- */
 class StatisticsUpdate
     private constructor(private val myInfo: StatisticsInfo) : Disposable {
   private var mySpared: Int = 0

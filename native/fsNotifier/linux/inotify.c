@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #include "fsnotifier.h"
 
 #include <dirent.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,11 +37,11 @@ static char event_buf[EVENT_BUF_LEN];
 
 static char path_buf[2 * PATH_MAX];
 
-static void read_watch_descriptors_count();
-static void watch_limit_reached();
+static void read_watch_descriptors_count(void);
+static void watch_limit_reached(void);
 
 
-bool init_inotify() {
+bool init_inotify(void) {
   inotify_fd = inotify_init();
   if (inotify_fd < 0) {
     int e = errno;
@@ -70,7 +71,7 @@ bool init_inotify() {
   return true;
 }
 
-static void read_watch_descriptors_count() {
+static void read_watch_descriptors_count(void) {
   FILE* f = fopen(WATCH_COUNT_NAME, "r");
   if (f == NULL) {
     userlog(LOG_ERR, "can't open %s: %s", WATCH_COUNT_NAME, strerror(errno));
@@ -94,7 +95,7 @@ void set_inotify_callback(void (* _callback)(const char*, uint32_t)) {
 }
 
 
-int get_inotify_fd() {
+int get_inotify_fd(void) {
   return inotify_fd;
 }
 
@@ -169,7 +170,7 @@ static int add_watch(unsigned int path_len, watch_node* parent) {
   return wd;
 }
 
-static void watch_limit_reached() {
+static void watch_limit_reached(void) {
   if (!limit_reached) {
     limit_reached = true;
     message("inotify.watch.limit");
@@ -371,7 +372,7 @@ static bool process_inotify_event(struct inotify_event* event) {
 }
 
 
-bool process_inotify_input() {
+bool process_inotify_input(void) {
   ssize_t len = read(inotify_fd, event_buf, EVENT_BUF_LEN);
   if (len < 0) {
     userlog(LOG_ERR, "read: %s", strerror(errno));
@@ -400,7 +401,7 @@ bool process_inotify_input() {
 }
 
 
-void close_inotify() {
+void close_inotify(void) {
   if (watches != NULL) {
     table_delete(watches);
   }

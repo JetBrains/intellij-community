@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
 
 /**
  * Base class for local inspections.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
+ * @see GlobalInspectionTool
  */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
@@ -110,6 +113,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
+   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
    * @param holder     where visitor will register problems found.
    * @param isOnTheFly true if inspection was run in non-batch mode
@@ -124,9 +128,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Override to provide your own inspection visitor.
-   * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
+   * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
+   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
    * @param holder     where visitor will register problems found.
    * @param isOnTheFly true if inspection was run in non-batch mode
@@ -160,7 +165,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Returns problem container (e.g., method, class, file) that is used as inspection view tree node.
-   *
+   * <p>
    * Consider {@link com.intellij.codeInspection.lang.RefManagerExtension#getElementContainer(PsiElement)}
    * to override container element for any inspection for given language.
    *

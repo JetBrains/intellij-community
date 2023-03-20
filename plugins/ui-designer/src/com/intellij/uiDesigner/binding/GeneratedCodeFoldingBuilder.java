@@ -21,7 +21,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();
     root.accept(visitor);
-    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);
+    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -39,11 +39,10 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     if (body.getStatementCount() != 1) return false;
     PsiStatement statement = body.getStatements()[0];
     if (!(statement instanceof PsiExpressionStatement) ||
-        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression)) {
+        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression call)) {
       return false;
     }
 
-    PsiMethodCallExpression call = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression();
     return AsmCodeGenerator.SETUP_METHOD_NAME.equals(call.getMethodExpression().getReferenceName());
   }
 
@@ -52,7 +51,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     private final List<FoldingDescriptor> myFoldingData = new ArrayList<>();
 
     @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
       String methodName = method.getName();
       if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(methodName) ||
           AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(methodName) ||
@@ -66,14 +65,14 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     }
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       if (AsmCodeGenerator.CACHED_GET_BUNDLE_METHOD.equals(field.getName())) {
         addFoldingData(field);
       }
     }
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       if (isGeneratedUIInitializer(initializer)) {
         addFoldingData(initializer);
       }

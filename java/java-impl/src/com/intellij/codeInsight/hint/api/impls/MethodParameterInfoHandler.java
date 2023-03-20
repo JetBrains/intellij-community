@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -148,8 +148,7 @@ public final class MethodParameterInfoHandler
         PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() :
                              currentMethodInfo instanceof PsiElement ? (PsiElement) currentMethodInfo :
                              null;
-        if ((element instanceof PsiMethod)) {
-          PsiMethod method = (PsiMethod)element;
+        if ((element instanceof PsiMethod method)) {
           PsiElement parent = expressionList.getParent();
 
           String originalMethodName = method.getName();
@@ -265,8 +264,7 @@ public final class MethodParameterInfoHandler
     return ContainerUtil.find(candidates, c -> {
       if (!(c instanceof CandidateInfo)) return false;
       PsiElement e = ((CandidateInfo)c).getElement();
-      if (!(e instanceof PsiMethod)) return false;
-      PsiMethod m = (PsiMethod)e;
+      if (!(e instanceof PsiMethod m)) return false;
       return m.getParameterList().isEmpty() && m.getName().equals(methodName);
     }) != null;
   }
@@ -486,22 +484,7 @@ public final class MethodParameterInfoHandler
     return new HighlightedInlays(currentHint, highlightedHints);
   }
 
-  private static class HighlightedInlays {
-    final Inlay<?> currentHint;
-    final List<Inlay<?>> highlightedHints;
-
-    HighlightedInlays(Inlay<?> current, List<Inlay<?>> highlighted) {
-      currentHint = current;
-      highlightedHints = highlighted;
-    }
-
-    @Override
-    public String toString() {
-      return "HighlightedInlays{" +
-             "currentHint=" + currentHint +
-             ", highlightedHints=" + highlightedHints +
-             '}';
-    }
+  private record HighlightedInlays(Inlay<?> currentHint, List<Inlay<?>> highlightedHints) {
   }
 
   private static void resetHints(@NotNull UserDataHolder context) {
@@ -830,6 +813,9 @@ public final class MethodParameterInfoHandler
         }
 
         String referenceName = element.getReferenceName();
+        if (referenceName == null) {
+          continue;
+        }
         if (shownAnnotations.add(referenceName) || JavaDocInfoGenerator.isRepeatableAnnotationType(resolved)) {
           if (lastSize != buffer.length()) buffer.append(' ');
           buffer.append('@').append(referenceName);
@@ -841,8 +827,7 @@ public final class MethodParameterInfoHandler
 
   @Override
   public void updateUI(final Object p, @NotNull final ParameterInfoUIContext context) {
-    if (p instanceof CandidateInfo) {
-      CandidateInfo info = (CandidateInfo)p;
+    if (p instanceof CandidateInfo info) {
       PsiMethod method = (PsiMethod)info.getElement();
       PsiElement parameterOwner = context.getParameterOwner();
       if (!method.isValid() || !parameterOwner.isValid() || 
@@ -854,7 +839,7 @@ public final class MethodParameterInfoHandler
 
       updateMethodPresentation(method, getCandidateInfoSubstitutor(info, call != null && call.resolveMethod() == method), context);
     }
-    else {
+    else if (p instanceof PsiMethod) {
       updateMethodPresentation((PsiMethod)p, null, context);
     }
   }

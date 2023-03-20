@@ -8,7 +8,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jdom.Element
 
 /**
- * @author Alexander Lobas
+ * For working Notification tool window action "Remind me tomorrow" we need save title/content and actions from notification object.
+ * Only for suggestion notifications.
+ *
+ * @see Notification.setRemindLaterHandlerId
  */
 interface NotificationRemindLaterHandler {
   companion object {

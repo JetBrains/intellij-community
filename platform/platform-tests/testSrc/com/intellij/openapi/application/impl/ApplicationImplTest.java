@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.Job;
@@ -31,12 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @RunFirst
@@ -101,26 +99,15 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
-  private static void joinWithTimeout(Future<?>... threads) throws TimeoutException {
-    for (Future<?> thread : threads) {
-      try {
-        thread.get(20, TimeUnit.SECONDS);
-      }
-      catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      if (!thread.isDone()) {
-        System.err.println(thread + " is still running. threaddump:\n" + ThreadDumper.dumpThreadsToString());
-        throw new TimeoutException();
-      }
-    }
+  private static void joinWithTimeout(Future<?> @NotNull ... threads) throws TimeoutException, ExecutionException, InterruptedException {
+    ConcurrencyUtil.getAll(20, TimeUnit.SECONDS, Arrays.asList(threads));
   }
-  private static void waitWithTimeout(List<? extends Job<?>> threads) throws TimeoutException {
+  private static void waitWithTimeout(@NotNull List<? extends Job<?>> threads) throws TimeoutException {
     for (Job<?> thread : threads) {
       try {
         thread.waitForCompletion(20_000);
       }
-      catch (ExecutionException | InterruptedException e) {
+      catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
       if (!thread.isDone()) {
@@ -158,6 +145,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction1 = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         application.runReadAction(() -> {
           read1Acquired.set(true);
           LOG.debug("read lock1 acquired");
@@ -185,9 +174,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         while (!aboutToAcquireWrite.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.writeRequested) checkTimeout();
+        while (!application.myLock.isWriteRequested()) checkTimeout();
         assertTrue(application.isWriteActionPending());
         //assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
         application.runReadAction(() -> {
@@ -207,10 +198,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> checkThread = ApplicationManager.getApplication().executeOnPooledThread(()->{
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         while (!aboutToAcquireWrite.get()) checkTimeout();
         while (!read1Acquired.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.writeRequested) checkTimeout();
+        while (!application.myLock.isWriteRequested()) checkTimeout();
 
         doFor(100, TimeUnit.MILLISECONDS, ()->{
           checkTimeout();
@@ -389,6 +382,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       try {
         assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         for (int i=0; i<100;i++) {
           SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> TimeoutUtil.sleep(20)));
           ApplicationManager.getApplication().runReadAction(() -> TimeoutUtil.sleep(20));
@@ -411,6 +406,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           try {
             assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
             assertFalse(ApplicationManager.getApplication().isDispatchThread());
+            ApplicationManager.getApplication().assertIsNonDispatchThread();
           }
           catch (Exception e) {
             exception = e;
@@ -421,7 +417,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (exception != null) throw exception;
   }
 
-  public void testWriteActionIsAllowedFromEDTOnly() throws TimeoutException {
+  public void testWriteActionIsAllowedFromEDTOnly() throws TimeoutException, ExecutionException, InterruptedException {
     Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
         try {
           ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
@@ -440,7 +436,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         boolean result = ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
           // check that defaultModalityState() carries write-safe context now
           ApplicationManager.getApplication().invokeAndWait(() -> {
-            ApplicationManager.getApplication().assertIsWriteThread();
+            ApplicationManager.getApplication().assertWriteIntentLockAcquired();
             ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
           });
         }, "Title", true, getProject());
@@ -578,7 +574,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       try {
         // wait for write action attempt to start - i.e. app.myLock.writeLock() started to execute
-        while (!app.myLock.writeRequested) checkTimeout();
+        while (!app.myLock.isWriteRequested()) checkTimeout();
         app.executeByImpatientReader(() -> {
           try {
             assertFalse(app.isReadAccessAllowed());
@@ -636,7 +632,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       // wait for write action attempt to start
-      while (!app.myLock.writeRequested) {
+      while (!app.myLock.isWriteRequested()) {
         try {
           checkTimeout();
         }
@@ -673,5 +669,72 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   public void testWriteCommandActionMustThrowRelevantException() {
     assertThrows(IOException.class, () -> WriteCommandAction.runWriteCommandAction(getProject(),
                                           (ThrowableComputable<ThrowableRunnable<?>, IOException>)() -> { throw new IOException("aaaah"); }));
+  }
+
+  public void testMustNotAllowStartingWriteActionFromWithinWriteActionListener() {
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      AtomicInteger nestingCount = new AtomicInteger();
+      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+      application.addApplicationListener(new ApplicationListener() {
+        @Override
+        public void beforeWriteActionStart(@NotNull Object action) {
+          nestingCount.incrementAndGet();
+          assertTrue(application.isWriteIntentLockAcquired());
+          assertEquals(nestingCount.get() > 1, application.isWriteAccessAllowed());
+          assertTrue(application.isWriteActionPending());
+          assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
+        }
+
+        @Override
+        public void writeActionStarted(@NotNull Object action) {
+          assertTrue(application.isWriteIntentLockAcquired());
+          assertTrue(application.isWriteActionInProgress());
+          assertTrue(application.isWriteAccessAllowed());
+          assertFalse(application.isWriteActionPending());
+          // jury is still out on whether we should allow starting write action from here
+          //assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
+        }
+
+        @Override
+        public void writeActionFinished(@NotNull Object action) {
+          assertTrue(application.isWriteIntentLockAcquired());
+          assertTrue(application.isWriteAccessAllowed());
+          assertTrue(application.isWriteActionInProgress());
+          assertFalse(application.isWriteActionPending());
+          if (nestingCount.get() < 2) {
+            // strange to allow it but this is how reformat works
+            application.runWriteAction(() -> { });
+          }
+        }
+
+        @Override
+        public void afterWriteActionFinished(@NotNull Object action) {
+          assertTrue(application.isWriteIntentLockAcquired());
+          assertFalse(application.isWriteAccessAllowed());
+          assertFalse(application.isWriteActionInProgress());
+          assertFalse(application.isWriteActionPending());
+          if (nestingCount.get() < 2) {
+            // strange to allow it but this is how a lot of code is
+            application.runWriteAction(() -> { });
+          }
+        }
+      }, disposable);
+      application.runWriteAction(() -> {
+        assertTrue(application.isWriteIntentLockAcquired());
+        assertTrue(application.isWriteAccessAllowed());
+        assertFalse(application.isWriteActionPending());
+        if (nestingCount.get() < 2) {
+          application.runWriteAction(() -> {
+            assertTrue(application.isWriteIntentLockAcquired());
+            assertTrue(application.isWriteAccessAllowed());
+            assertFalse(application.isWriteActionPending());
+          });
+        }
+      });
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 }

@@ -49,7 +49,7 @@ public class ProblematicVarargsMethodOverrideInspection extends BaseInspection {
   private static class NonVarargsMethodOverridesVarArgsMethodVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();

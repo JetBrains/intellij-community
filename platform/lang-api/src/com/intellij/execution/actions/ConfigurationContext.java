@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,9 +28,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,7 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance(ConfigurationContext.class);
   public static final Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
 
-  private final Location<PsiElement> myLocation;
+  private final Location<? extends PsiElement> myLocation;
   private final Editor myEditor;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized;
@@ -98,10 +97,14 @@ public class ConfigurationContext {
     return new ConfigurationContext(location);
   }
 
-  private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection, String place) {
+  private ConfigurationContext(@NotNull DataContext dataContext,
+                               @Nullable Location<PsiElement> location,
+                               @Nullable Module module,
+                               boolean multipleSelection,
+                               String place) {
     RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
     if (configuration == null) {
-      ExecutionEnvironment environment = dataContext.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
+      ExecutionEnvironment environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(dataContext);
       if (environment != null) {
         myConfiguration = environment.getRunnerAndConfigurationSettings();
         if (myConfiguration != null) {
@@ -150,34 +153,31 @@ public class ConfigurationContext {
     myModule = ModuleUtilCore.findModuleForPsiElement(element);
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
-    myDataContext = this::getDefaultData;
+    myDataContext = getDefaultDataContext();
     myEditor = null;
     myPlace = null;
   }
 
-  private ConfigurationContext(@NotNull Location location) {
-    //noinspection unchecked
+  private ConfigurationContext(@NotNull Location<? extends PsiElement> location) {
     myLocation = location;
     myModule = location.getModule();
     myEditor = null;
     myRuntimeConfiguration = null;
-    myDataContext = this::getDefaultData;
+    myDataContext = getDefaultDataContext();
     myPlace = null;
   }
 
-  private Object getDefaultData(String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) return myLocation.getProject();
+  private @Nullable Object getDefaultData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) return myLocation == null ? null : myLocation.getProject();
     if (PlatformCoreDataKeys.MODULE.is(dataId)) return myModule;
     if (Location.DATA_KEY.is(dataId)) return myLocation;
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation.getPsiElement();
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) return ContainerUtil.ar(myLocation.getPsiElement());
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return PsiUtilCore.getVirtualFile(myLocation.getPsiElement());
-    if (CommonDataKeys.EDITOR.is(dataId)) return myEditor; 
+    if (CommonDataKeys.EDITOR.is(dataId)) return myEditor;
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation == null ? null : myLocation.getPsiElement();
     return null;
   }
 
-  public DataContext getDefaultDataContext() {
-    return this::getDefaultData; 
+  public @NotNull DataContext getDefaultDataContext() {
+    return IdeUiService.getInstance().createCustomizedDataContext(DataContext.EMPTY_CONTEXT, this::getDefaultData);
   }
   
   public boolean containsMultipleSelection() {
@@ -399,7 +399,6 @@ public class ConfigurationContext {
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
@@ -411,9 +410,17 @@ public class ConfigurationContext {
   @Nullable
   public List<ConfigurationFromContext> getConfigurationsFromContext() {
     if (myConfigurationsFromContext == null) {
-      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true);
+      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, true);
     }
     return myConfigurationsFromContext;
+  }
+
+  /**
+   * The same as {@link #getConfigurationsFromContext()} but this method doesn't search among existing run configurations
+   */
+  public @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
+    // At the moment of writing, caching is not needed here, the result is cached outside.
+    return PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, false);
   }
 
   private static final class ExistingConfiguration {

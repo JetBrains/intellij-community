@@ -4,15 +4,11 @@ package com.intellij.execution.process;
 import com.intellij.execution.process.AnsiStreamingLexer.AnsiElementType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.execution.process.AnsiStreamingLexer.SGR;
-import static com.intellij.execution.process.AnsiStreamingLexer.TEXT;
 
 /**
  * See <a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code</a>.
@@ -28,10 +24,16 @@ public class AnsiEscapeDecoder {
   /**
    * Parses ansi-color codes from text and sends text fragments with color attributes to textAcceptor
    *
-   * @param text         a string with ANSI escape sequences
+   * @param text         a string with optional ANSI escape sequences
    * @param outputType   stdout/stderr/system (from {@link ProcessOutputTypes})
    * @param textAcceptor receives text fragments with color attributes.
    *                     It can implement ColoredChunksAcceptor to receive list of pairs (text, attribute).
+   * @apiNote <ul>
+   * <li>method does not guarantee synchronous processing. Meaning you should not expect that {@code textAcceptor} got all colored chunks
+   * after invoking this method (despite the current implementation). Processing may be deferred. The only guarantee here, is that
+   * {@code text} passed to the method is going to be processed in the same order as it was passed for each channel: {@code stdout},
+   * {@code stderr} and other.</li>
+   * </ul>
    */
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
     AnsiStreamingLexer effectiveLexer;
@@ -49,26 +51,31 @@ public class AnsiEscapeDecoder {
       return;
     }
 
-    effectiveLexer.append(text);
-    effectiveLexer.advance();
-
     List<Pair<String, Key>> chunks = null;
-    AnsiElementType elementType;
-    while ((elementType = effectiveLexer.getElementType()) != null) {
-      String elementText = effectiveLexer.getElementTextSmart();
-      assert elementText != null;
-      if (elementType == AnsiStreamingLexer.SGR) {
-        effectiveEmulator.processSgr(elementText);
-      }
-      else if (elementType == AnsiStreamingLexer.TEXT) {
-        chunks = processTextChunk(chunks, elementText, outputType, textAcceptor);
-      }
-      else {
-        assert elementType == AnsiStreamingLexer.CONTROL;
-        // Commands other than SGR are unhandled currently. Extend here when it's needed.
-      }
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (effectiveLexer) {
+      effectiveLexer.append(text);
       effectiveLexer.advance();
+
+      AnsiElementType elementType;
+      while ((elementType = effectiveLexer.getElementType()) != null) {
+        String elementText = effectiveLexer.getElementTextSmart();
+        assert elementText != null;
+        if (elementType == AnsiStreamingLexer.SGR) {
+          effectiveEmulator.processSgr(elementText);
+        }
+        else if (elementType == AnsiStreamingLexer.TEXT) {
+          chunks = processTextChunk(chunks, elementText, outputType, textAcceptor);
+        }
+        else {
+          assert elementType == AnsiStreamingLexer.CONTROL;
+          // Commands other than SGR are unhandled currently. Extend here when it's needed.
+        }
+        effectiveLexer.advance();
+      }
     }
+
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
@@ -116,8 +123,7 @@ public class AnsiEscapeDecoder {
   /**
    * @deprecated use {@link ColoredTextAcceptor} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {
     void coloredChunksAvailable(@NotNull List<Pair<String, Key>> chunks);
   }

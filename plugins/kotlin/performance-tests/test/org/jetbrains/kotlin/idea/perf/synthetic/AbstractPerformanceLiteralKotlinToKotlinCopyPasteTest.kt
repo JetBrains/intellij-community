@@ -1,20 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
+import org.jetbrains.kotlin.idea.performance.tests.utils.dispatchAllInvocationEvents
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.testFramework.performanceTest
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.testFramework.dispatchAllInvocationEvents
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
 /**
@@ -30,7 +30,7 @@ abstract class AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest : AbstractC
         val stats: Stats = Stats("Literal-k2k-CopyPaste")
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override fun setUp() {
         super.setUp()
@@ -48,7 +48,7 @@ abstract class AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest : AbstractC
     }
 
     private fun doWarmUpPerfTest() {
-        val fileEditorManager = FileEditorManagerEx.getInstance(project)
+        val fileEditorManager = FileEditorManager.getInstance(project)
         performanceTest<Pair<PsiFile, PsiFile>, Unit> {
             name(WARM_UP)
             stats(stats)
@@ -87,10 +87,10 @@ abstract class AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest : AbstractC
     fun doPerfTest(unused: String) {
         val testName = getTestName(false)
         val fileName = fileName()
-        val testPath = testPath()
+        val testPath: String = dataFilePath(fileName())
         val expectedPath = File(testPath.replace(".kt", ".expected.kt"))
 
-        val fileEditorManager = FileEditorManagerEx.getInstance(project)
+        val fileEditorManager = FileEditorManager.getInstance(project)
         performanceTest<Array<PsiFile>, Unit> {
             name(testName)
             stats(stats)

@@ -2,6 +2,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharSequenceReader;
 import net.n3.nanoxml.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,18 +28,11 @@ public final class NanoXmlUtil {
   }
 
   public static void parse(@NotNull InputStream is, @NotNull IXMLBuilder builder) {
-    try {
+    try (is) {
       parse(new MyXMLReader(is), builder);
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      try {
-        is.close();
-      }
-      catch (IOException ignore) {
-      }
     }
   }
 
@@ -48,18 +41,14 @@ public final class NanoXmlUtil {
   }
 
   public static void parse(@NotNull Reader reader, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
-    try {
+    try (reader) {
       parse(new MyXMLReader(reader), builder, validator);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
-    }
-    finally {
-      try {
-        reader.close();
-      }
-      catch (IOException ignore) {
-      }
     }
   }
 
@@ -80,6 +69,9 @@ public final class NanoXmlUtil {
       catch (ParserStoppedXmlException ignore) {
       }
       catch (XMLException e) {
+        if (e.getException() instanceof ProcessCanceledException) {
+          throw new ProcessCanceledException(e);
+        }
         LOG.debug(e);
       }
     }
@@ -139,17 +131,8 @@ public final class NanoXmlUtil {
   /**
    * @deprecated left for API compatibility
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
-
-    /**
-     * @deprecated left for API compatibility
-     */
-    @Deprecated
-    protected static void stop() throws ParserStoppedXmlException {
-      throw ParserStoppedXmlException.INSTANCE;
-    }
   }
 
   public static class BaseXmlBuilder implements NanoXmlBuilder {

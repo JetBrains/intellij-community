@@ -2,7 +2,7 @@
 package com.intellij.packaging.elements;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +14,6 @@ import org.jetbrains.annotations.NotNull;
  * This case was found at {@link com.intellij.java.configurationStore.ReloadProjectTest}
  */
 public interface ElementInitializer {
-  PackagingElement initialize(@NotNull PackagingElementEntity entity, @NotNull Project project, @NotNull WorkspaceEntityStorage storage);
-  PackagingElement initialize(@NotNull CompositePackagingElementEntity entity, @NotNull Project project, @NotNull WorkspaceEntityStorage storage);
+  PackagingElement initialize(@NotNull PackagingElementEntity entity, @NotNull Project project, @NotNull EntityStorage storage);
+  PackagingElement initialize(@NotNull CompositePackagingElementEntity entity, @NotNull Project project, @NotNull EntityStorage storage);
 }

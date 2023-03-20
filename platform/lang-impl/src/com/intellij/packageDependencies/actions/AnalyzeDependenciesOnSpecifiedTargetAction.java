@@ -33,4 +33,9 @@ public class AnalyzeDependenciesOnSpecifiedTargetAction extends AnAction {
       presentation.setVisible(false);
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

@@ -22,9 +22,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class LanguageIndentStrategy extends LanguageExtension<IndentStrategy> {
   public static final String EP_NAME = "com.intellij.lang.indentStrategy";
   public static final LanguageIndentStrategy INSTANCE = new LanguageIndentStrategy();

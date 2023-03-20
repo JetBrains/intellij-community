@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -10,13 +10,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   public boolean REPORT_VARIABLES = true;
@@ -24,6 +27,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   public boolean REPORT_CATCH_PARAMETERS = true;
   public boolean REPORT_FOREACH_PARAMETERS = true;
   public boolean REPORT_IMPLICIT_FINALS = true;
+  public boolean REPORT_PATTERN_VARIABLES = true;
 
   private final LocalQuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "LocalCanBeFinal";
@@ -44,6 +48,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     }
     if (!REPORT_IMPLICIT_FINALS) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_IMPLICIT_FINALS").setAttribute("value", "false"));
+    }
+    if (!REPORT_PATTERN_VARIABLES) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_PATTERN_VARIABLES").setAttribute("value", "false"));
     }
   }
 
@@ -116,7 +123,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     final List<ProblemDescriptor> problems = new ArrayList<>();
     final HashSet<PsiVariable> result = new HashSet<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitCodeBlock(PsiCodeBlock block) {
+      @Override public void visitCodeBlock(@NotNull PsiCodeBlock block) {
         if (block.getParent() instanceof PsiLambdaExpression && block != body) {
           final List<ProblemDescriptor> descriptors = checkCodeBlock(block, manager, onTheFly);
           if (descriptors != null) {
@@ -150,19 +157,22 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         List<PsiVariable> ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
        
         for (PsiVariable psiVariable : ssa) {
-          if (declared.contains(psiVariable)) {
+          if (declared.contains(psiVariable) && (!psiVariable.hasInitializer() || !VariableAccessUtils.variableIsAssigned(psiVariable, block))) {
             result.add(psiVariable);
           }
         }
       }
 
       @Override
-      public void visitResourceVariable(PsiResourceVariable variable) {
+      public void visitResourceVariable(@NotNull PsiResourceVariable variable) {
+        if (PsiTreeUtil.getParentOfType(variable, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
         result.add(variable);
       }
 
       @Override
-      public void visitCatchSection(PsiCatchSection section) {
+      public void visitCatchSection(@NotNull PsiCatchSection section) {
         super.visitCatchSection(section);
         if (!REPORT_CATCH_PARAMETERS) return;
         final PsiParameter parameter = section.getParameter();
@@ -179,7 +189,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
       }
 
-      @Override public void visitForeachStatement(PsiForeachStatement statement) {
+      @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         if (!REPORT_FOREACH_PARAMETERS) return;
         final PsiParameter param = statement.getIterationParameter();
@@ -196,16 +206,72 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
       }
 
+      @Override
+      public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+        super.visitPatternVariable(variable);
+        if (!REPORT_PATTERN_VARIABLES) return;
+        if (PsiTreeUtil.getParentOfType(variable, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
+        PsiElement context = PsiTreeUtil.getParentOfType(variable,
+                                                         PsiInstanceOfExpression.class,
+                                                         PsiCaseLabelElementList.class,
+                                                         PsiForeachPatternStatement.class,
+                                                         PsiForeachStatement.class);
+        int from;
+        int end;
+        if (context instanceof PsiInstanceOfExpression instanceOf) {
+          from = flow.getEndOffset(instanceOf);
+          end = flow.getEndOffset(body);
+        }
+        else if (context instanceof PsiCaseLabelElementList list) {
+          if (list.getElementCount() == 1) {
+            PsiCaseLabelElement element = list.getElements()[0];
+            if (element instanceof PsiGuardedPattern guardedPattern) {
+              PsiExpression guardingExpression = guardedPattern.getGuardingExpression();
+              if (guardingExpression == null) return;
+              from = flow.getStartOffset(guardingExpression);
+            }
+            else if (element instanceof PsiPatternGuard patternGuard) {
+              PsiExpression guardingExpression = patternGuard.getGuardingExpression();
+              if (guardingExpression == null) return;
+              from = flow.getStartOffset(guardingExpression);
+            }
+            else {
+              from = flow.getEndOffset(list.getParent());
+            }
+          }
+          else {
+            from = flow.getEndOffset(list.getParent());
+          }
+          end = flow.getEndOffset(body);
+        }
+        else if (context instanceof PsiForeachPatternStatement forEach) {
+          PsiStatement body = forEach.getBody();
+          if (body == null) return;
+          from = flow.getStartOffset(body);
+          end = flow.getEndOffset(body);
+        }
+        else {
+          return;
+        }
+        if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(variable)) {
+          writtenVariables.remove(variable);
+          result.add(variable);
+        }
+      }
+
       private Set<PsiVariable> getDeclaredVariables(PsiCodeBlock block) {
         final HashSet<PsiVariable> result = new HashSet<>();
         PsiElement[] children = block.getChildren();
         for (PsiElement child : children) {
           child.accept(new JavaElementVisitor() {
-            @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+            @Override
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               visitReferenceElement(expression);
             }
 
-            @Override public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+            @Override public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
               PsiElement[] declaredElements = statement.getDeclaredElements();
               for (PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) result.add((PsiVariable)declaredElement);
@@ -213,13 +279,12 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
             }
 
             @Override
-            public void visitForStatement(PsiForStatement statement) {
+            public void visitForStatement(@NotNull PsiForStatement statement) {
               super.visitForStatement(statement);
               final PsiStatement initialization = statement.getInitialization();
-              if (!(initialization instanceof PsiDeclarationStatement)) {
+              if (!(initialization instanceof PsiDeclarationStatement declarationStatement)) {
                 return;
               }
-              final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
               final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
               for (final PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) {
@@ -233,17 +298,19 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         return result;
       }
 
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.getParent() instanceof PsiMethodCallExpression) {
           super.visitReferenceExpression(expression);
         }
       }
     });
 
-    if (body.getParent() instanceof PsiMethod && REPORT_PARAMETERS) {
-      final PsiMethod method = (PsiMethod)body.getParent();
-      if (!(method instanceof SyntheticElement)) { // e.g. JspHolderMethod
-        Collections.addAll(result, method.getParameterList().getParameters());
+    if (body.getParent() instanceof PsiParameterListOwner methodOrLambda && REPORT_PARAMETERS &&
+        !(methodOrLambda instanceof SyntheticElement)) { // e.g. JspHolderMethod
+      for (PsiParameter parameter : methodOrLambda.getParameterList().getParameters()) {
+        if (parameter.getTypeElement() != null) {
+          result.add(parameter);
+        }
       }
     }
 
@@ -254,10 +321,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         continue;
       }
       final PsiElement parent = variable.getParent();
-      if (!(parent instanceof PsiDeclarationStatement)) {
+      if (!(parent instanceof PsiDeclarationStatement declarationStatement)) {
         continue;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       final PsiElement[] elements = declarationStatement.getDeclaredElements();
       final PsiElement grandParent = parent.getParent();
       if (elements.length > 1 && grandParent instanceof PsiForStatement) {
@@ -277,7 +343,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       if (!variable.isPhysical()) continue;
       final PsiIdentifier nameIdentifier = variable.getNameIdentifier();
       PsiElement problemElement = nameIdentifier != null ? nameIdentifier : variable;
-      if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
+      if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatementBase)) {
         problems.add(manager.createProblemDescriptor(problemElement,
                                                      JavaAnalysisBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
                                                      myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
@@ -300,8 +366,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     if (psiVariable instanceof PsiLocalVariable) {
       return !REPORT_VARIABLES;
     }
-    if (psiVariable instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)psiVariable;
+    if (psiVariable instanceof PsiParameter parameter) {
       final PsiElement declarationScope = parameter.getDeclarationScope();
       if (declarationScope instanceof PsiCatchSection) {
         return !REPORT_CATCH_PARAMETERS;
@@ -345,13 +410,13 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option"), "REPORT_VARIABLES");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option1"), "REPORT_PARAMETERS");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option2"), "REPORT_CATCH_PARAMETERS");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option3"), "REPORT_FOREACH_PARAMETERS");
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.local.can.be.final.option4"), "REPORT_IMPLICIT_FINALS");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_VARIABLES", JavaAnalysisBundle.message("inspection.local.can.be.final.option")),
+      checkbox("REPORT_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option1")),
+      checkbox("REPORT_CATCH_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option2")),
+      checkbox("REPORT_FOREACH_PARAMETERS", JavaAnalysisBundle.message("inspection.local.can.be.final.option3")),
+      checkbox("REPORT_IMPLICIT_FINALS", JavaAnalysisBundle.message("inspection.local.can.be.final.option4")),
+      checkbox("REPORT_PATTERN_VARIABLES", JavaAnalysisBundle.message("inspection.local.can.be.final.option5")));
   }
 }

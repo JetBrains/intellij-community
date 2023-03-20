@@ -28,13 +28,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class NormalizeDeclarationFix extends InspectionGadgetsFix {
 
@@ -53,7 +51,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof PsiVariable) && !(element instanceof PsiMethod) && !(element instanceof PsiDeclarationStatement)) {
       element = element.getParent();
@@ -68,15 +66,14 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
         return;
       }
     }
-    if (element instanceof PsiDeclarationStatement) {
-      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element;
+    if (element instanceof PsiDeclarationStatement declarationStatement) {
       final PsiElement grandParent = element.getParent();
       if (grandParent instanceof PsiForStatement) {
         splitMultipleDeclarationInForStatementInitialization((PsiForStatement)grandParent);
       }
       else {
         final PsiElement[] elements = declarationStatement.getDeclaredElements();
-        List<PsiVariable> psiVariables = StreamEx.of(elements).select(PsiVariable.class).collect(Collectors.toList());
+        List<PsiVariable> psiVariables = ContainerUtil.filterIsInstance(elements, PsiVariable.class);
         if (!myCStyleDeclaration || elements.length != psiVariables.size() || !new SingleDeclarationNormalizer(psiVariables).normalize()) {
           final PsiVariable variable = (PsiVariable)elements[0];
           variable.normalizeDeclaration();
@@ -108,8 +105,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
         }
       }
     }
-    else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    else if (element instanceof PsiMethod method) {
       final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement == null) {
         return;
@@ -143,12 +139,11 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       forStatement = BlockUtils.expandSingleStatementToBlockStatement(forStatement);
     }
     final PsiStatement initialization = forStatement.getInitialization();
-    if (!(initialization instanceof PsiDeclarationStatement)) {
+    if (!(initialization instanceof PsiDeclarationStatement declarationStatement)) {
       return;
     }
-    final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
     final List<PsiLocalVariable> variables =
-      StreamEx.of(declarationStatement.getDeclaredElements()).select(PsiLocalVariable.class).toList();
+      ContainerUtil.filterIsInstance(declarationStatement.getDeclaredElements(), PsiLocalVariable.class);
     final int min, max;
     final boolean dependentVariables = containsDependentVariables(variables);
     if (dependentVariables) {
@@ -196,8 +191,7 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
   }
 
   private static PsiLocalVariable tryResolveLocalVariable(PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       if (referenceExpression.getQualifierExpression() == null) {
         return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
       }

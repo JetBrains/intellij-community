@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.asJava
 
@@ -14,7 +14,8 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
 import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
@@ -27,7 +28,7 @@ import org.junit.runner.RunWith
 class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinJdkAndLibraryProjectDescriptor(KotlinArtifacts.instance.kotlinStdlib)
+        KotlinJdkAndLibraryProjectDescriptor(TestKotlinArtifacts.kotlinStdlib)
 
     fun testIsHiddenByDeprecated() {
         myFixture.configureByText(
@@ -335,9 +336,9 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
             listOf(
                 PsiType.getJavaLangString(myFixture.psiManager, scope),
                 PsiType.getTypeByName("java.lang.Throwable", project, scope),
-                PsiType.SHORT.createArrayType(),
+                PsiTypes.shortType().createArrayType(),
                 PsiType.getTypeByName("java.lang.Integer", project, scope).createArrayType().createArrayType(),
-                PsiType.LONG,
+                PsiTypes.longType(),
                 PsiType.getTypeByName("kotlin.Unit", project, scope)
             ),
             classLiterals.map { it.operand.type }
@@ -471,7 +472,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testKotlinAnnotationWithStringArrayLiteral() {
-        configureKotlinVersion("1.2")
+        configureKotlinVersion(IdeKotlinVersion.get("1.2.0"))
         myFixture.configureByText(
             "AnnotatedClass.kt", """
             annotation class Anno(val params: Array<String>)
@@ -517,7 +518,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
             innerAnnotationAttributeVal as PsiAnnotation
             val value = innerAnnotationAttributeVal.findAttributeValue("v").assertInstanceOf<PsiLiteral>()
             assertTextAndRange("1", value)
-            TestCase.assertEquals(PsiType.INT, value.assertInstanceOf<PsiExpression>().type)
+            TestCase.assertEquals(PsiTypes.intType(), value.assertInstanceOf<PsiExpression>().type)
         }
 
 
@@ -918,11 +919,11 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
             )
         }
 
-    private fun configureKotlinVersion(version: String) {
+    private fun configureKotlinVersion(version: IdeKotlinVersion) {
         WriteAction.run<Throwable> {
             val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
             val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
-            facet.configureFacet(version, null, modelsProvider, emptySet())
+            facet.configureFacet(version, null, modelsProvider)
             modelsProvider.commit()
         }
     }

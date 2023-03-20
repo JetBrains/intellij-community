@@ -133,7 +133,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
     final ExpectedTypeInfo[] expectedTypes = {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailType.NONE, null, ExpectedTypeInfoImpl.NULL)};
     PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-    List<Pair<PsiExpression, PsiType>> arguments = ContainerUtil.map2List(parameters, parameter -> Pair.create(null, substitutor.substitute(parameter.getType())));
+    List<Pair<PsiExpression, PsiType>> arguments = ContainerUtil.map(parameters, parameter -> Pair.create(null, substitutor.substitute(parameter.getType())));
     
     boolean shouldBeAbstract = false;
     if (!expression.isConstructor()) {
@@ -145,7 +145,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
       }
       else {
         if (secondSearchPossible) {
-          arguments.remove(0);
+          arguments = arguments.subList(1, arguments.size());
         }
         if (targetClass.isInterface()) {
           shouldBeAbstract = true;

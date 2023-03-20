@@ -1,4 +1,4 @@
-// "Merge with previous 'map' call" "false"
+// "Merge with previous 'map()' call" "false"
 
 import java.util.function.Function;
 import java.util.stream.Stream;

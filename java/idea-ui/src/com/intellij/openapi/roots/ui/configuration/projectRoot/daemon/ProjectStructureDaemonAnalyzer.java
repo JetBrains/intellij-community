@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.Disposable;
@@ -267,8 +267,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
     @Override
     public boolean canEat(Update update) {
-      if (!(update instanceof AnalyzeElementUpdate)) return false;
-      final AnalyzeElementUpdate other = (AnalyzeElementUpdate)update;
+      if (!(update instanceof AnalyzeElementUpdate other)) return false;
       return myElement.equals(other.myElement) && (!other.myCheck || myCheck) && (!other.myCollectUsages || myCollectUsages);
     }
 

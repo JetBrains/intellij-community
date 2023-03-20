@@ -1,21 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonListeners
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
+import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.*
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressWrapper
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -26,9 +25,13 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.DocumentUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import com.intellij.util.ThreeState
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
 import org.jetbrains.kotlin.idea.imports.OptimizedImportsBuilder
@@ -36,7 +39,6 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -49,7 +51,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     companion object {
         fun analyzeImports(file: KtFile): ImportData? {
             if (file is KtCodeFragment) return null
-            if (!ProjectRootsUtil.isInProjectSource(file, true)) return null
+            if (!RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(file)) return null
             if (file.importDirectives.isEmpty()) return null
 
             val optimizerData = KotlinImportOptimizer.collectDescriptorsToImport(file)
@@ -110,7 +112,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
 
         val problems = data.unusedImports.map {
             val fixes = arrayListOf<LocalQuickFix>()
-            fixes.add(OptimizeImportsQuickFix(file))
+            fixes.add(KotlinOptimizeImportsQuickFix(file))
             if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) {
                 fixes.add(EnableOptimizeImportsOnTheFlyFix(file))
             }
@@ -120,7 +122,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
                 KotlinBundle.message("unused.import.directive"),
                 isOnTheFly,
                 fixes.toTypedArray(),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING
             )
         }
 
@@ -134,43 +136,45 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
     private fun scheduleOptimizeImportsOnTheFly(file: KtFile, data: OptimizedImportsBuilder.InputData) {
         if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) return
         val optimizedImports = KotlinImportOptimizer.prepareOptimizedImports(file, data) ?: return // return if already optimized
-
-        // unwrap progress indicator
-        val progress = generateSequence(ProgressManager.getInstance().progressIndicator) {
-            (it as? ProgressWrapper)?.originalProgressIndicator
-        }.last() as DaemonProgressIndicator
-
         val project = file.project
+        val modificationCount = PsiModificationTracker.getInstance(project).modificationCount
 
-        val modificationCount = PsiModificationTracker.SERVICE.getInstance(project).modificationCount
-        val invokeFixLater = Disposable {
-            // later because should invoke when highlighting is finished
-            ApplicationManager.getApplication().invokeLater {
-                if (project.isDisposed) return@invokeLater
-                val editor = PsiEditorUtil.findEditor(file)
-                val currentModificationCount = PsiModificationTracker.SERVICE.getInstance(project).modificationCount
-                if (editor != null && currentModificationCount == modificationCount && timeToOptimizeImportsOnTheFly(
-                        file,
-                        editor,
-                        project
-                    )
-                ) {
-                    optimizeImportsOnTheFly(file, optimizedImports, editor, project)
-                }
+        val extensionsAllowToChangeFileSilently = SilentChangeVetoer.extensionsAllowToChangeFileSilently(project, file.virtualFile)
+        scheduleOptimizeOnDaemonFinished(file) {
+            val editor = PsiEditorUtil.findEditor(file)
+            val currentModificationCount = PsiModificationTracker.getInstance(project).modificationCount
+            if (editor != null && currentModificationCount == modificationCount && timeToOptimizeImportsOnTheFly(file, editor, extensionsAllowToChangeFileSilently)) {
+              optimizeImportsOnTheFly(file, optimizedImports, editor, project)
             }
-        }
-
-        if (Disposer.isDisposed(progress)) return
-        Disposer.register(progress, invokeFixLater)
-
-        if (progress.isCanceled) {
-            Disposer.dispose(invokeFixLater)
-            Disposer.dispose(progress)
-            progress.checkCanceled()
         }
     }
 
-    private fun timeToOptimizeImportsOnTheFly(file: KtFile, editor: Editor, project: Project): Boolean {
+    private fun scheduleOptimizeOnDaemonFinished(file: KtFile, action: () -> Unit) {
+        val daemonDisposable = Disposer.newDisposable()
+        // schedule optimise action after all applyInformation() calls
+        val myProject = file.project
+        myProject.getMessageBus().connect(daemonDisposable)
+            .subscribe<DaemonCodeAnalyzer.DaemonListener>(
+                DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
+                object : DaemonCodeAnalyzer.DaemonListener {
+                    override fun daemonFinished(incomingFileEditors: Collection<FileEditor?>) {
+                        Disposer.dispose(daemonDisposable)
+                        if ((DaemonCodeAnalyzer.getInstance(myProject) as DaemonCodeAnalyzerEx).isErrorAnalyzingFinished(file)) {
+                            // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
+                            AppUIExecutor.onUiThread().later().expireWith(myProject).withDocumentsCommitted(myProject).execute {
+                                if (file.isValid() && file.isWritable()) {
+                                    action.invoke()
+                                }
+                            }
+                        } else {
+                            scheduleOptimizeOnDaemonFinished(file, action)
+                        }
+                    }
+                })
+    }
+
+    private fun timeToOptimizeImportsOnTheFly(file: KtFile, editor: Editor, extensionsAllowToChangeFileSilently: ThreeState): Boolean {
+        val project = file.project
         if (project.isDisposed || !file.isValid || editor.isDisposed || !file.isWritable) return false
 
         // do not optimize imports on the fly during undo/redo
@@ -202,7 +206,8 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         }
         if (hasErrors) return false
 
-        return DaemonListeners.canChangeFileSilently(file)
+        return DaemonListeners.canChangeFileSilently(file, true/* assume inspections are run on files in content only */,
+                                                     extensionsAllowToChangeFileSilently)
     }
 
     private fun optimizeImportsOnTheFly(file: KtFile, optimizedImports: List<ImportPath>, editor: Editor, project: Project) {
@@ -212,16 +217,6 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         DocumentUtil.writeInRunUndoTransparentAction {
             KotlinImportOptimizer.replaceImports(file, optimizedImports)
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc)
-        }
-    }
-
-    private class OptimizeImportsQuickFix(file: KtFile) : LocalQuickFixOnPsiElement(file) {
-        override fun getText() = KotlinBundle.message("optimize.imports")
-
-        override fun getFamilyName() = name
-
-        override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-            OptimizeImportsProcessor(project, file).run()
         }
     }
 

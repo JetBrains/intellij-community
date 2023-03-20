@@ -16,9 +16,9 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement
 
@@ -27,6 +27,10 @@ class ConvertProjectLibraryToRepositoryLibraryAction(private val librariesConfig
   : ConvertToRepositoryLibraryActionBase(context) {
 
   override fun getSelectedLibrary(): LibraryEx? = (librariesConfigurable.selectedElement as? LibraryProjectStructureElement)?.library as? LibraryEx
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun replaceLibrary(library: Library, configureNewLibrary: (LibraryEditorBase) -> Unit) {
     val name = library.name

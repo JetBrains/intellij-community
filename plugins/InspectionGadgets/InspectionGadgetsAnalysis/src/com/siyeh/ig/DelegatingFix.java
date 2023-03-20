@@ -30,7 +30,7 @@ public class DelegatingFix extends InspectionGadgetsFix implements Iconable, Pri
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     delegate.applyFix(project, descriptor);
   }
 

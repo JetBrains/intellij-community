@@ -19,8 +19,10 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,11 +40,12 @@ import com.siyeh.ig.style.ConditionalExpressionGenerator;
 import com.siyeh.ig.style.IfConditionalModel;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class TrivialIfInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -56,11 +59,11 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), "ignoreChainedIf");
-    panel.addCheckbox(InspectionGadgetsBundle.message("trivial.if.option.ignore.assert.statements"), "ignoreAssertStatements");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreChainedIf", InspectionGadgetsBundle.message("trivial.if.option.ignore.chained")),
+      checkbox("ignoreAssertStatements", InspectionGadgetsBundle.message("trivial.if.option.ignore.assert.statements"))
+    );
   }
 
   @Override
@@ -76,15 +79,11 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     List<InspectionGadgetsFix> fixes = new SmartList<>(new TrivialIfFix());
-    boolean addIgnoreChainedIfFix = (boolean)infos[0];
-    if (addIgnoreChainedIfFix) {
-      fixes.add(new DelegatingFix(new SetInspectionOptionFix(
-        this, "ignoreChainedIf", InspectionGadgetsBundle.message("trivial.if.option.ignore.chained"), true)));
-    }
-    boolean addIgnoreAssertStatementsFix = (boolean)infos[1];
-    if (addIgnoreAssertStatementsFix) {
-      fixes.add(new DelegatingFix(new SetInspectionOptionFix(
-        this, "ignoreAssertStatements", InspectionGadgetsBundle.message("trivial.if.option.ignore.assert.statements"), true)));
+    String turnOffOption = (String)infos[0];
+    if (turnOffOption != null) {
+      OptCheckbox checkbox = (OptCheckbox)Objects.requireNonNull(getOptionsPane().findControl(turnOffOption));
+      String message = StringUtil.unescapeXmlEntities(checkbox.label().label());
+      fixes.add(new DelegatingFix(new SetInspectionOptionFix(this, turnOffOption, message, true)));
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
@@ -97,7 +96,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement ifKeywordElement = descriptor.getPsiElement();
       final PsiIfStatement statement = (PsiIfStatement)ifKeywordElement.getParent();
       simplify(statement);
@@ -145,10 +144,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return;
     }
     final PsiStatement thenBranch = ControlFlowUtils.stripBraces(statement.getThenBranch());
-    if (!(thenBranch instanceof PsiAssertStatement)) {
+    if (!(thenBranch instanceof PsiAssertStatement assertStatement)) {
       return;
     }
-    final PsiAssertStatement assertStatement = (PsiAssertStatement)thenBranch;
     final PsiExpression assertCondition = assertStatement.getAssertCondition();
     if (assertCondition == null) {
       return;
@@ -177,10 +175,18 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
           PsiElement anchor = Objects.requireNonNull(ifStatement.getFirstChild());
           ProblemHighlightType level =
             ignoreChainedIf && chainedIf ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-          boolean addIgnoreChainedIfFix = chainedIf && !ignoreChainedIf &&
-                                 !InspectionProjectProfileManager.isInformationLevel(getShortName(), ifStatement);
-          boolean addIgnoreAssertStatementsFix = !ignoreAssertStatements && isSimplifiableAssert(ifStatement);
-          registerError(anchor, level, addIgnoreChainedIfFix, addIgnoreAssertStatementsFix);
+          String turnOffOption;
+          if (chainedIf && !ignoreChainedIf &&
+              !InspectionProjectProfileManager.isInformationLevel(getShortName(), ifStatement)) {
+            turnOffOption = "ignoreChainedIf";
+          }
+          else if (!ignoreAssertStatements && isSimplifiableAssert(ifStatement)) {
+            turnOffOption = "ignoreAssertStatements";
+          }
+          else {
+            turnOffOption = null;
+          }
+          registerError(anchor, level, turnOffOption);
         }
       }
     };
@@ -204,10 +210,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return false;
     }
     final PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-    if (!(thenBranch instanceof PsiAssertStatement)) {
+    if (!(thenBranch instanceof PsiAssertStatement assertStatement)) {
       return false;
     }
-    final PsiAssertStatement assertStatement = (PsiAssertStatement)thenBranch;
     return assertStatement.getAssertCondition() != null;
   }
 }

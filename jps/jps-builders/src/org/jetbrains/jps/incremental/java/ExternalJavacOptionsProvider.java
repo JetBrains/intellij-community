@@ -28,7 +28,7 @@ public interface ExternalJavacOptionsProvider {
   /**
    * @deprecated Use {@link #getOptions(JavaCompilingTool, int)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   default Collection<String> getOptions(@NotNull JavaCompilingTool tool) {
     return Collections.emptyList();

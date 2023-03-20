@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -35,6 +36,10 @@ abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls Strin
     e.presentation.isEnabled = enabled
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   protected open fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT)
     return (project != null && GitUtil.getRepositories(project).isNotEmpty())
@@ -49,7 +54,7 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
     val selectedFiles = getSelectedFiles(e)
-    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project)
+    val unversionedFiles = ScheduleForAdditionAction.Manager.getUnversionedFiles(e, project)
     return isEnabled(project, selectedFiles, unversionedFiles.toList())
   }
 

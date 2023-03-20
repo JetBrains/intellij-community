@@ -34,15 +34,16 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
   }
 
   public void testParenthesesReturnNestedIf() {
-    doMemberTest("\n" +
-                 "  boolean b(int[] array) {\n" +
-                 "    if (array != null) {\n" +
-                 "      int len = array.length;\n" +
-                 "      /*'if' statement can be simplified*/if/**/(len == 10) return true;\n" +
-                 "    }\n" +
-                 "    return false;\n" +
-                 "  }\n" +
-                 "");
+    doMemberTest("""
+
+                     boolean b(int[] array) {
+                       if (array != null) {
+                         int len = array.length;
+                         /*'if' statement can be simplified*/if/**/(len == 10) return true;
+                       }
+                       return false;
+                     }
+                   """);
   }
 
   public void testParenthesesAssignment() {
@@ -57,80 +58,116 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
   }
 
   public void testReturn() {
-    doMemberTest("\n" +
-                 "  boolean b(int x) {\n" +
-                 "    if (x > 20) return true;\n" +
-                 "    /*'if' statement can be simplified*/if/**/ (x > 0) return true;\n" +
-                 "    return false;\n" +
-                 "}\n");
+    doMemberTest("""
+
+                     boolean b(int x) {
+                       if (x > 20) return true;
+                       /*'if' statement can be simplified*/if/**/ (x > 0) return true;
+                       return false;
+                   }
+                   """);
   }
 
   public void testReturnIgnoreChain() {
-    doMemberTest("\n" +
-                 "  boolean b(int x) {\n" +
-                 "    if (x > 20) return true;\n" +
-                 "    if (x > 0) return true;\n" +
-                 "    return false;\n" +
-                 "}\n");
+    doMemberTest("""
+
+                     boolean b(int x) {
+                       if (x > 20) return true;
+                       if (x > 0) return true;
+                       return false;
+                   }
+                   """);
   }
 
   public void testAssert() {
-    doMemberTest("\n" +
-                 "  void test(int x) {\n" +
-                 "    /*'if' statement can be simplified*/if/**/ (x > 20) assert false;\n" +
-                 "}\n");
+    doMemberTest("""
+
+                     void test(int x) {
+                       /*'if' statement can be simplified*/if/**/ (x > 20) assert false;
+                   }
+                   """);
   }
 
   public void testIgnoreAssert() {
-    doMemberTest("\n" +
-                 "  void test(int x) {\n" +
-                 "    if (x > 20) assert false;\n" +
-                 "}\n");
+    doMemberTest("""
+
+                     void test(int x) {
+                       if (x > 20) assert false;
+                   }
+                   """);
   }
 
   public void testReturnElseIf() {
-    doMemberTest("\n" +
-                 "  boolean b(int x) {\n" +
-                 "    if (x > 20) return true;\n" +
-                 "    else /*'if' statement can be simplified*/if/**/ (x > 0) return true;\n" +
-                 "    else return false;\n" +
-                 "}\n");
+    doMemberTest("""
+
+                     boolean b(int x) {
+                       if (x > 20) return true;
+                       else /*'if' statement can be simplified*/if/**/ (x > 0) return true;
+                       else return false;
+                   }
+                   """);
   }
 
   public void testReturnElseIfIgnoreChain() {
-    doMemberTest("\n" +
-                 "  boolean b(int x) {\n" +
-                 "    if (x > 20) return true;\n" +
-                 "    else if (x > 0) return true;\n" +
-                 "    else return false;\n" +
-                 "}\n");
+    doMemberTest("""
+
+                     boolean b(int x) {
+                       if (x > 20) return true;
+                       else if (x > 0) return true;
+                       else return false;
+                   }
+                   """);
   }
   
   public void testReturnEqualBranches() {
     // no warning: another inspection takes care about this
-    doMemberTest("\n" +
-                 "  boolean b(int x) {\n" +
-                 "    if (x > 20) return true;\n" +
-                 "    else return true;\n" +
-                 "}\n");
+    doMemberTest("""
+
+                     boolean b(int x) {
+                       if (x > 20) return true;
+                       else return true;
+                   }
+                   """);
   }
 
   public void testMethodCall() {
-    doMemberTest("void test(int x, Boolean foo) {\n" +
-                 "  if (x == 0) System.out.println(foo);\n" +
-                 "  else {\n" +
-                 "    /*'if' statement can be simplified*/if/**/ (x > 0) test(0, true);\n" +
-                 "    else test(0, false);\n" +
-                 "  }\n" +
-                 "}");
+    doMemberTest("""
+                   void test(int x, Boolean foo) {
+                     if (x == 0) System.out.println(foo);
+                     else {
+                       /*'if' statement can be simplified*/if/**/ (x > 0) test(0, true);
+                       else test(0, false);
+                     }
+                   }""");
   }
 
   public void testOverwrittenDeclaration() {
-    doMemberTest("boolean test(int x) {\n" +
-                 "  boolean result = false;\n" +
-                 "  /*'if' statement can be simplified*/if/**/ (x == 0) result = true;\n" +
-                 "  return result;\n" +
-                 "}");
+    doMemberTest("""
+                   boolean test(int x) {
+                     boolean result = false;
+                     /*'if' statement can be simplified*/if/**/ (x == 0) result = true;
+                     return result;
+                   }""");
+  }
+
+  public void testArrayWriteIncrement() {
+    doMemberTest("""
+                 void test(int[] arr, int idx, int i, int j) {
+                   arr[idx++] = i;
+                   if (i != j) {
+                     arr[idx++] = j;
+                   }
+                 }""");
+  }
+
+  public void testArrayWrite() {
+    doMemberTest("""
+                 void test(int[] arr, int idx, int i, int j) {
+                   arr[idx] = i;
+                   /*'if' statement can be simplified*/if/**/ (i != j) {
+                     arr[idx] = j;
+                   }
+                 }""");
   }
 
   @Override

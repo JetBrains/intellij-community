@@ -196,9 +196,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
     PsiUtilCore.ensureValid(parameters.getPosition());
     if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
-      myLookup.setLookupFocusDegree(CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
-                                    ? LookupFocusDegree.FOCUSED
-                                    : LookupFocusDegree.SEMI_FOCUSED);
+      LookupFocusDegree degree = CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
+                                 ? LookupFocusDegree.FOCUSED
+                                 : LookupFocusDegree.SEMI_FOCUSED;
+      myLookup.setLookupFocusDegree(degree);
     }
     addDefaultAdvertisements(parameters);
 
@@ -421,7 +422,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ProgressManager.checkCanceled();
 
     if (!myHandler.isTestingMode()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
 
     LookupElement lookupElement = item.getLookupElement();
@@ -815,7 +816,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private LightweightHint showErrorHint(Project project, Editor editor, @HintText String text) {
     LightweightHint[] result = {null};
-    EditorHintListener listener = (project1, hint, flags) -> result[0] = hint;
+    EditorHintListener listener = new EditorHintListener() {
+      @Override
+      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+        result[0] = hint;
+      }
+    };
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
     try {
       connection.subscribe(EditorHintListener.TOPIC, listener);
@@ -828,7 +834,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return result[0];
   }
 
-  private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
+  public static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
       for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.EP_NAME.getExtensionList()) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {
@@ -891,7 +897,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   /**
    * @deprecated intended for Rider
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;
     ourShowPopupAfterFirstItemGroupingTime = timeSpan;
@@ -934,7 +940,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     public void showIncompleteHint(@NotNull Editor editor, @NotNull @HintText String text, boolean isDumbMode) {
       String message = isDumbMode ?
                        text + CodeInsightBundle.message("completion.incomplete.during.indexing.suffix") : text;
-      HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(message), HintManager.UNDER);
+      HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(message), HintManager.ABOVE);
     }
   }
 }

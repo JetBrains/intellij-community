@@ -7,9 +7,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyMethodDescriptorExtension extends GroovyMethodDescriptor implements PluginAware {
 
   public static final ExtensionPointName<GroovyMethodDescriptorExtension> EP_NAME =

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie.dictionary
 
+import ai.grazie.nlp.similarity.Levenshtein
 import ai.grazie.spell.lists.WordList
-import ai.grazie.spell.utils.Distances
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
   fun isAlien(word: String): Boolean {
@@ -14,7 +14,7 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
       dictionaries.values.any { it.contains(word) ?: false }
     } else {
       val lowered = word.lowercase()
-      // NOTE: dictionary may not contain lowercase form, but may contain any form in a different case
+      // NOTE: dictionary may not contain a lowercase form, but may contain any form in a different case
       // current dictionary interface does not support caseSensitive
       dictionaries.values.any { (it.contains(word) ?: false) || it.contains(lowered) ?: false }
     }
@@ -26,7 +26,10 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
     val result = LinkedHashSet<String>()
     for (dictionary in dictionaries.values) {
       dictionary.consumeSuggestions(word) {
-        val distance = Distances.levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
+        if (it.isEmpty()) {
+          return@consumeSuggestions
+        }
+        val distance = Levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
         if (distance <= SimpleWordList.MAX_LEVENSHTEIN_DISTANCE) {
           result.add(it)
         }
@@ -34,6 +37,7 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
     }
 
     result.addAll(aggregator.suggest(word))
+    result.remove("")
     return result
   }
 }

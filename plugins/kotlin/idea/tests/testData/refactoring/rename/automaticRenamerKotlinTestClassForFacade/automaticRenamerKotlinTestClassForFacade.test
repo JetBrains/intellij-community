@@ -3,5 +3,6 @@
   "file": "foo.kt",
   "newName": "bar.kt",
   "withRuntime": "true",
-  "libraries": ["JUnit@lib/dev/jmock-junit4-2.5.1.jar"]
+  "libraries": ["JUnit4"],
+  "enabledInK2": true
 }

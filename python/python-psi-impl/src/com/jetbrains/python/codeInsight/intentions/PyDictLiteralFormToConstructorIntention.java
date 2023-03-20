@@ -45,16 +45,14 @@ public class PyDictLiteralFormToConstructorIntention extends PyBaseIntentionActi
 
     if (dictExpression != null) {
       PyKeyValueExpression[] elements = dictExpression.getElements();
-      if (elements.length != 0) {
-        for (PyKeyValueExpression element : elements) {
-          PyExpression key = element.getKey();
-          if (! (key instanceof PyStringLiteralExpression)) return false;
-          String str = ((PyStringLiteralExpression)key).getStringValue();
-          if (PyNames.isReserved(str)) return false;
+      for (PyKeyValueExpression element : elements) {
+        PyExpression key = element.getKey();
+        if (!(key instanceof PyStringLiteralExpression)) return false;
+        String str = ((PyStringLiteralExpression)key).getStringValue();
+        if (PyNames.isReserved(str)) return false;
 
-          if(str.length() == 0 || Character.isDigit(str.charAt(0))) return false;
-          if (!StringUtil.isJavaIdentifier(str)) return false;
-        }
+        if (str.length() == 0 || Character.isDigit(str.charAt(0))) return false;
+        if (!StringUtil.isJavaIdentifier(str)) return false;
       }
       return true;
     }

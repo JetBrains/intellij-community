@@ -23,13 +23,21 @@ private fun createPackedEntityId(arrayId: Int, clazz: Int) = arrayId.toLong() sh
 
 internal typealias EntityId = Long
 
+internal const val invalidEntityId: EntityId = -1
+
 val EntityId.arrayId: Int
-  get() = (this shr 32).toInt()
+  get() {
+    assert(this >= 0)
+    return (this shr 32).toInt()
+  }
 
 val EntityId.clazz: Int
-  get() = this.toInt()
+  get() {
+    assert(this >= 0)
+    return this.toInt()
+  }
 
-fun EntityId.asString() = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
+fun EntityId.asString() = if (this >= 0) clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString() else "UNINITIALIZED"
 
 fun EntityId.copy(arrayId: Int = this.arrayId, clazz: Int = this.clazz): EntityId {
   return createEntityId(arrayId, clazz)

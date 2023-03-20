@@ -10,8 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,42 +19,23 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
- * Allows plugging in annotations processing during override/implement.
- * <p/>
- * Parameter annotations would not be copied, if they are not specified in {@link #getAnnotations(PsiFile)}.
+ * Extends {@link OverrideImplementsAnnotationsFilter} with java-specific functionality.
  * 
- * {@link #transferToTarget(String, PsiModifierListOwner, PsiModifierListOwner)} can be used, to adjust annotations to the target place e.g.,
- * convert library's Nullable/NotNull annotations to project ones.
+ * {@link #transferToTarget(String, PsiModifierListOwner, PsiModifierListOwner)} can be used, to adjust annotations to the target place
+ * e.g., convert library's Nullable/NotNull annotations to project ones.
  * <p/>
  * @see JavaCodeStyleSettings#getRepeatAnnotations()
  */
-public interface OverrideImplementsAnnotationsHandler {
+public interface OverrideImplementsAnnotationsHandler extends OverrideImplementsAnnotationsFilter {
   ExtensionPointName<OverrideImplementsAnnotationsHandler> EP_NAME = ExtensionPointName.create("com.intellij.overrideImplementsAnnotationsHandler");
 
   /**
    * Returns annotations which should be copied from a source to an implementation (by default, no annotations are copied).
    */
   @Contract(pure = true)
+  @Override
   default String[] getAnnotations(@NotNull PsiFile file) {
-    return getAnnotations(file.getProject());
-  }
-
-  /**
-   * @deprecated Use {@link #getAnnotations(PsiFile)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure = true)
-  String[] getAnnotations(Project project);
-
-  /**
-   * @deprecated Use {@link #getAnnotations(PsiFile)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure = true)
-  default String @NotNull [] annotationsToRemove(Project project, @NotNull String fqName) {
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   /** Perform post processing on the annotations, such as deleting or renaming or otherwise updating annotations in the override */

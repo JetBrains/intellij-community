@@ -20,9 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementRemoveConditionAction extends AnAction {
 
   public ArrangementRemoveConditionAction() {

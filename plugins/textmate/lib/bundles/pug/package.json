@@ -1,16 +1,8 @@
 {
   "name": "pug",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "*"
-  },
-  "scripts": {
-    "update-grammar": "node ../node_modules/vscode-grammar-updater/bin davidrios/pug-tmbundle Syntaxes/Pug.JSON-tmLanguage ./syntaxes/pug.tmLanguage.json"
-  },
   "contributes": {
     "languages": [
       {
@@ -33,10 +25,11 @@
         "scopeName": "text.pug",
         "path": "./syntaxes/pug.tmLanguage.json"
       }
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/vscode.git"
+    ],
+    "configurationDefaults": {
+      "[jade]": {
+        "diffEditor.ignoreTrimWhitespace": false
+      }
+    }
   }
 }

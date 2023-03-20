@@ -72,9 +72,8 @@ public final class ValidationInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ValidationInfo)) return false;
+    if (!(o instanceof ValidationInfo that)) return false;
 
-    ValidationInfo that = (ValidationInfo)o;
     return StringUtil.equals(this.message, that.message) &&
            this.component == that.component &&
            this.okEnabled == that.okEnabled &&

@@ -2,9 +2,6 @@ package com.intellij.psi;
 
 import java.util.Set;
 
-/**
- * @author peter
- */
 public interface PsiClassOwnerEx extends PsiClassOwner {
 
   /**

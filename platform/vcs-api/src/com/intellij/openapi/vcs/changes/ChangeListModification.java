@@ -5,6 +5,8 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @see ChangeListManager
  */
@@ -20,6 +22,8 @@ public interface ChangeListModification {
   void removeChangeList(@NotNull LocalChangeList list);
 
   void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes);
+
+  void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes);
 
   /**
    * Prohibit changelist deletion or rename until the project is closed

@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.java.generate
 
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import junit.framework.TestCase
@@ -62,7 +63,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   fun `test simple reference creating from variable`() {
     val variable = psiFactory.createVariableDeclarationStatement(
       "a",
-      PsiType.INT, null
+      PsiTypes.intType(), null
     ).declaredElements.getOrNull(0)?.toUElementOfType<UVariable>() ?: fail("cannot create variable")
 
     val reference = uastElementFactory.createSimpleReference(variable, null) ?: fail("cannot create reference")
@@ -87,7 +88,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("a + b", null).toUElementOfType<UExpression>()
                      ?: fail("Cannot find plugin")
 
-    val returnExpression = uastElementFactory.createReturnExpresion(expression, false, null) ?: fail("cannot create return expression")
+    val returnExpression = uastElementFactory.createReturnExpression(expression, false, null) ?: fail("cannot create return expression")
 
     TestCase.assertEquals("return a + b;", returnExpression.sourcePsi?.text)
   }
@@ -105,7 +106,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("b", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create variable declaration")
 
-    val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, false, null) ?: fail("cannot create variable")
+    val declaration = uastElementFactory.createLocalVariable("a", PsiTypes.doubleType(), expression, false, null) ?: fail("cannot create variable")
 
     TestCase.assertEquals("double a = b;", declaration.sourcePsi?.text)
   }
@@ -114,18 +115,18 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
     val expression = psiFactory.createExpressionFromText("b", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create variable declaration")
 
-    val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true, null)
+    val declaration = uastElementFactory.createLocalVariable("a", PsiTypes.doubleType(), expression, true, null)
                       ?: fail("cannot create variable")
 
     TestCase.assertEquals("final double a = b;", declaration.sourcePsi?.text)
   }
 
   fun `test final variable declaration with unique name`() {
-    val context = psiFactory.createVariableDeclarationStatement("a", PsiType.INT, null, null)
+    val context = psiFactory.createVariableDeclarationStatement("a", PsiTypes.intType(), null, null)
     val expression = psiFactory.createExpressionFromText("b", context).toUElementOfType<UExpression>()
                      ?: fail("cannot create variable declaration")
 
-    val declaration = uastElementFactory.createLocalVariable("a", PsiType.DOUBLE, expression, true, null)
+    val declaration = uastElementFactory.createLocalVariable("a", PsiTypes.doubleType(), expression, true, null)
                       ?: fail("cannot create variable")
 
     TestCase.assertEquals("final double a1 = b;", declaration.sourcePsi?.text)
@@ -151,7 +152,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
 
     val lambda = uastElementFactory.createLambdaExpression(
       listOf(
-        UParameterInfo(PsiType.INT, "a"),
+        UParameterInfo(PsiTypes.intType(), "a"),
         UParameterInfo(null, "b")
       ),
       statement,
@@ -166,8 +167,8 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
 
     val lambda = uastElementFactory.createLambdaExpression(
       listOf(
-        UParameterInfo(PsiType.INT, "a"),
-        UParameterInfo(PsiType.DOUBLE, "b")
+        UParameterInfo(PsiTypes.intType(), "a"),
+        UParameterInfo(PsiTypes.doubleType(), "b")
       ),
       statement,
       null) ?: fail("cannot create lambda")
@@ -185,7 +186,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   }
 
   fun `test lambda expression with simplified block body with context`() {
-    val context = psiFactory.createVariableDeclarationStatement("a", PsiType.INT, null)
+    val context = psiFactory.createVariableDeclarationStatement("a", PsiTypes.intType(), null)
     val block = psiFactory.createStatementFromText("{ return \"10\"; }", context).toUElementOfType<UBlockExpression>()
                 ?: fail("cannot create block")
 
@@ -210,7 +211,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   fun `test suggested name`() {
     val expression = psiFactory.createExpressionFromText("f(a) + 1", null).toUElementOfType<UExpression>()
                      ?: fail("cannot create expression")
-    val variable = uastElementFactory.createLocalVariable(null, PsiType.INT, expression, true, null)
+    val variable = uastElementFactory.createLocalVariable(null, PsiTypes.intType(), expression, true, null)
                    ?: fail("cannot create variable")
 
     TestCase.assertEquals("final int i = f(a) + 1;", variable.sourcePsi?.text)
@@ -500,5 +501,97 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
             c().
             e()
     """.trimIndent(), callExpression.sourcePsi?.text)
+  }
+
+  fun `test initialize field`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String value) {
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String value) {
+            field = value;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  fun `test initialize field in method with whitespace`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String value) {
+          
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String value) {
+            field = value;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  fun `test initialize field in method with statement`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String value) {
+            int i = 0;
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String value) {
+            int i = 0;
+            field = value;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  fun `test initialize field with same name`() {
+    val psiFile = myFixture.configureByText("MyClass.java", """
+      class My<caret>Class {
+        String field;
+        void method(String field) {
+        }
+      }
+    """.trimIndent())
+    initializeField()
+    TestCase.assertEquals("""
+      class MyClass {
+        String field;
+        void method(String field) {
+            this.field = field;
+        }
+      }
+    """.trimIndent(), psiFile.text)
+  }
+
+  private fun initializeField() {
+    val uClass =
+      myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<PsiClass>().toUElementOfType<UClass>()
+      ?: fail("Cannot find UClass")
+    val uField = uClass.fields.firstOrNull() ?: fail("Cannot find field")
+    val uParameter = uClass.methods.find { it.name == "method"}?.uastParameters?.firstOrNull() ?: fail("Cannot find parameter")
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      val expression = generatePlugin.initializeField(uField, uParameter)
+      assertNotNull(expression)
+    }
   }
 }

@@ -3,7 +3,8 @@ public class AssResult {
     String vs = 'prefix'
     if (b) vs += ps  // no warning
     if (b) { vs += ps } // no warning
-    print <warning descr="Usage of assignment expression result">vs = 4</warning>
+    <error descr="Cannot resolve symbol 'print'">print</error> <error descr="Variable 'vs' already defined">vs</error> = 4
+    print(<warning descr="Usage of assignment expression result">vs = 4</warning>)
     println ps
   }
 

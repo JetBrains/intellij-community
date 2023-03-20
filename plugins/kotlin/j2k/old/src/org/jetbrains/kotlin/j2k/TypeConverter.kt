@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.TypeUtils
-import java.util.*
 
 interface JavaDataFlowAnalyzerFacade {
 
@@ -404,7 +403,11 @@ class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
                     }
                 }
 
-                override fun visitMethod(method: PsiMethod) {
+                override fun visitLambdaExpression(expression: PsiLambdaExpression) {
+                    // do not go into lambdas
+                }
+
+                override fun visitClass(cls: PsiClass) {
                     // do not go inside any other method (e.g. in anonymous class)
                 }
             })
@@ -413,7 +416,7 @@ class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
 
         private fun PsiExpression.nullability(): Nullability {
             return when (this) {
-                is PsiLiteralExpression -> if (type != PsiType.NULL) Nullability.NotNull else Nullability.Nullable
+                is PsiLiteralExpression -> if (type != PsiTypes.nullType()) Nullability.NotNull else Nullability.Nullable
 
                 is PsiNewExpression -> Nullability.NotNull
 
@@ -525,13 +528,13 @@ fun PsiExpression.getTypeConversionMethod(expectedType: PsiType): String? {
     if (actualType == expectedType) return null
     if (expectedType.canonicalText == CommonClassNames.JAVA_LANG_STRING) return "toString"
     return when (expectedType) {
-        PsiType.BYTE -> "toByte"
-        PsiType.SHORT -> "toShort"
-        PsiType.INT -> "toInt"
-        PsiType.LONG -> "toLong"
-        PsiType.FLOAT -> "toFloat"
-        PsiType.DOUBLE -> "toDouble"
-        PsiType.CHAR -> "toChar"
+        PsiTypes.byteType() -> "toByte"
+        PsiTypes.shortType() -> "toShort"
+        PsiTypes.intType() -> "toInt"
+        PsiTypes.longType() -> "toLong"
+        PsiTypes.floatType() -> "toFloat"
+        PsiTypes.doubleType() -> "toDouble"
+        PsiTypes.charType() -> "toChar"
         else -> null
     }
 }

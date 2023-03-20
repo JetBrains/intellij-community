@@ -10,8 +10,6 @@ import java.util.List;
 
 /**
  * Copies PsiType structure with an ability to replace some inner components.
- *
- * @author peter
  */
 public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
   protected static final Logger LOG = Logger.getInstance(PsiTypeMapper.class);
@@ -65,7 +63,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
 
   @Override
   public PsiType visitType(@NotNull final PsiType type) {
-    LOG.error(type);
+    LOG.error("No visit* methods were calleed for " + type);
     return null;
   }
 

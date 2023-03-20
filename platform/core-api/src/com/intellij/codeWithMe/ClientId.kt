@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
 import com.intellij.openapi.Disposable
@@ -6,9 +6,13 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
+import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
+import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
@@ -46,7 +50,7 @@ data class ClientId(val value: String) {
     /**
      * Specifies behavior for [ClientId.current]
      */
-    var AbsenceBehaviorValue: AbsenceBehavior = AbsenceBehavior.RETURN_LOCAL
+    private var AbsenceBehaviorValue: AbsenceBehavior = AbsenceBehavior.RETURN_LOCAL
 
     /**
      * Controls propagation behavior. When false, decorateRunnable does nothing.
@@ -59,6 +63,17 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     var localId: ClientId = defaultLocalId
+      private set
+
+    /**
+     * The ID for the owner of RD/CWM session.
+     * In case of CWM, it refers to [defaultLocalId].
+     * In case of RD, it refers to the controller ID.
+     *
+     * **Note:** returned value makes sense only for a host machine
+     */
+    @JvmStatic
+    var ownerId: ClientId = defaultLocalId
       private set
 
     /**
@@ -97,6 +112,24 @@ data class ClientId(val value: String) {
       get() = getCachedService()?.clientIdValue?.let(::ClientId)
 
     /**
+     * Overrides the ID of the owner of CWM/RD session.
+     */
+    @JvmStatic
+    @ApiStatus.Internal
+    fun overrideOwnerId(newId: ClientId, parentDisposable: Disposable) {
+      require(ownerId == defaultLocalId)
+      ownerId = newId
+      try {
+        Disposer.register(parentDisposable) {
+          ownerId = defaultLocalId
+        }
+      } catch (_: IncorrectOperationException) {
+        // The parent is already disposed
+        ownerId = defaultLocalId
+      }
+    }
+
+    /**
      * Overrides the ID that is considered to be local to this process. Can be only invoked once.
      */
     @JvmStatic
@@ -109,6 +142,7 @@ data class ClientId(val value: String) {
      * Returns true if and only if the given ID is considered to be local to this process
      */
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ClientId.isLocal", ReplaceWith("clientId.isLocal", "com.intellij.codeWithMe.ClientId.Companion.isLocal"))
     fun isLocalId(clientId: ClientId?): Boolean {
       return clientId.isLocal
@@ -126,6 +160,7 @@ data class ClientId(val value: String) {
      * Consider subscribing to a proper lifetime instead of this check.
      */
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use ClientId.isValid", ReplaceWith("clientId.isValid", "com.intellij.codeWithMe.ClientId.Companion.isValid"))
     fun isValidId(clientId: ClientId?): Boolean {
       return clientId.isValid
@@ -144,7 +179,9 @@ data class ClientId(val value: String) {
      * Consider using a lifetime that is usually passed along with the ID
      */
     @JvmStatic
-    fun ClientId?.toDisposable(): Disposable {
+    @Deprecated("Use create a per-client service that implements disposable to get proper disposable associated with the client id")
+        fun ClientId?.toDisposable(): Disposable {
+          @Suppress("DEPRECATION")
       return getCachedService()?.toDisposable(this) ?: Disposer.newDisposable()
     }
 
@@ -153,6 +190,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     @Suppress("DeprecatedCallableAddReplaceWith")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Consider using an overload that returns a AccessToken to follow java try-with-resources pattern")
     fun withClientId(clientId: ClientId?, action: Runnable): Unit = withClientId(clientId) { action.run() }
 
@@ -161,6 +199,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     @Suppress("DeprecatedCallableAddReplaceWith")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Consider using an overload that returns an AccessToken to follow java try-with-resources pattern")
     fun <T> withClientId(clientId: ClientId?, action: Callable<T>): T = withClientId(clientId) { action.call() }
 
@@ -169,14 +208,14 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-      val service = ClientIdService.tryGetInstance() ?: return action()
+      val service = getCachedService() ?: return action()
 
-      val newClientIdValue = if (!service.isValid(clientId)) {
-        getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
-        null
+      val newClientIdValue = if (service.isValid(clientId)) {
+        clientId?.value
       }
       else {
-        clientId?.value
+        getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
+        null
       }
 
       val oldClientIdValue = service.clientIdValue
@@ -189,23 +228,32 @@ data class ClientId(val value: String) {
       }
     }
 
-    class ClientIdAccessToken(val oldClientIdValue: String?) : AccessToken() {
+    class ClientIdAccessToken(private val oldClientIdValue: String?) : AccessToken() {
       override fun finish() {
         getCachedService()?.clientIdValue = oldClientIdValue
       }
     }
+
     @JvmStatic
     fun withClientId(clientId: ClientId?): AccessToken {
       if (clientId == null) return AccessToken.EMPTY_ACCESS_TOKEN
       return withClientId(clientId.value)
     }
+
     @JvmStatic
     fun withClientId(clientIdValue: String): AccessToken {
       val service = getCachedService()
-      val oldClientIdValue: String?
-      oldClientIdValue = service?.clientIdValue
-      if (service == null || clientIdValue == oldClientIdValue) return AccessToken.EMPTY_ACCESS_TOKEN
-      val newClientIdValue = if (service.isValid(ClientId(clientIdValue))) clientIdValue
+      if (service == null) {
+        return AccessToken.EMPTY_ACCESS_TOKEN
+      }
+      val oldClientIdValue = service.clientIdValue ?: localId.value
+      if (clientIdValue == oldClientIdValue) {
+        return AccessToken.EMPTY_ACCESS_TOKEN
+      }
+
+      val newClientIdValue = if (service.isValid(ClientId(clientIdValue))) {
+        clientIdValue
+      }
       else {
         LOG.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
         null
@@ -215,15 +263,31 @@ data class ClientId(val value: String) {
       return ClientIdAccessToken(oldClientIdValue)
     }
 
-    private var service:ClientIdService? = null
-    private fun getCachedService(): ClientIdService? {
-      var cached = service
-      if (cached != null) return cached
-      cached = ClientIdService.tryGetInstance()
-      if (cached != null) {
-        service = cached
+    private var service: Ref<ClientIdService?>? = null
+
+    @ApiStatus.Internal
+    fun getCachedService(): ClientIdService? {
+      val cached = service
+      if (cached != null) return cached.get()
+      val instance = ClientIdService.tryGetInstance()
+      if (instance != null) {
+        service = Ref.create(instance)
       }
-      return cached
+      return instance
+    }
+
+    @TestOnly
+    @ApiStatus.Internal
+    fun nullizeCachedServiceInTest(test: ThrowableRunnable<Throwable>) {
+      service = Ref.create(null)
+      try {
+        assert(getCachedService() == null)
+        assert(getCurrentValue() == defaultLocalId.value)
+        test.run()
+      }
+      finally {
+        service = null
+      }
     }
 
     @JvmStatic
@@ -251,9 +315,11 @@ data class ClientId(val value: String) {
 
     @JvmStatic
     fun <T> decorateCallable(callable: Callable<T>): Callable<T> {
-      if (!propagateAcrossThreads) return callable
+      if (!propagateAcrossThreads) {
+        return callable
+      }
       val currentId = currentOrNull
-      return Callable { withClientId(currentId, callable) }
+      return Callable { withClientId(currentId) { callable.call() } }
     }
 
     @JvmStatic
@@ -301,7 +367,7 @@ private class ClientIdElement(private val clientId: ClientId) : ThreadContextEle
     return ClientId.withClientId(clientId)
   }
 
-  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken): Unit {
+  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken) {
     oldState.finish()
   }
 }

@@ -10,7 +10,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +22,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author peter
- *
  * @see LookupElementDecorator
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
@@ -46,7 +43,7 @@ public final class LookupElementBuilder extends LookupElement {
                                @Nullable SmartPsiElementPointer<?> psiElement,
                                @NotNull Set<String> allLookupStrings,
                                boolean caseSensitive) {
-    myLookupString = lookupString;
+    myLookupString = validate(lookupString);
     myObject = object;
     myInsertHandler = insertHandler;
     myRenderer = renderer;
@@ -55,6 +52,11 @@ public final class LookupElementBuilder extends LookupElement {
     myPsiElement = psiElement;
     myAllLookupStrings = Collections.unmodifiableSet(allLookupStrings);
     myCaseSensitive = caseSensitive;
+  }
+
+  private String validate(String string) {
+    StringUtil.assertValidSeparators(string);
+    return string;
   }
 
   private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object) {
@@ -106,16 +108,6 @@ public final class LookupElementBuilder extends LookupElement {
     return result;
   }
 
-  /**
-   * @deprecated use {@link #withInsertHandler(InsertHandler)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
-    return withInsertHandler(insertHandler);
-  }
-
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
     return cloneWithUserData(myLookupString, myObject, insertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
@@ -138,16 +130,6 @@ public final class LookupElementBuilder extends LookupElement {
   @NotNull
   public Set<String> getAllLookupStrings() {
     return myAllLookupStrings;
-  }
-
-  /**
-   * @deprecated use {@link #withIcon(Icon)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setIcon(@Nullable Icon icon) {
-    return withIcon(icon);
   }
 
   @Contract(pure=true)
@@ -235,15 +217,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myPsiElement, myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withTypeText(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setTypeText(@Nullable String typeText) {
-    return withTypeText(typeText);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withTypeText(@Nullable String typeText) {
     return withTypeText(typeText, false);
@@ -270,15 +243,6 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withPresentableText(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setPresentableText(@NotNull String presentableText) {
-    return withPresentableText(presentableText);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withPresentableText(@NotNull String presentableText) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -313,29 +277,11 @@ public final class LookupElementBuilder extends LookupElement {
                              myAllLookupStrings, myCaseSensitive);
   }
 
-  /**
-   * @deprecated use {@link #withTailText(String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setTailText(@Nullable String tailText) {
-    return withTailText(tailText);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withTailText(@Nullable String tailText) {
     return withTailText(tailText, false);
   }
 
-  /**
-   * @deprecated use {@link #withTailText(String, boolean)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure=true)
-  public @NotNull LookupElementBuilder setTailText(@Nullable String tailText, boolean grayed) {
-    return withTailText(tailText, grayed);
-  }
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withTailText(@Nullable String tailText, boolean grayed) {
     final LookupElementPresentation presentation = copyPresentation();
@@ -399,7 +345,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     if (myRenderer != null) {
       myRenderer.renderElement(this, presentation);
     }

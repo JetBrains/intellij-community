@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.ide.impl.isTrusted
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
@@ -13,8 +14,12 @@ class VcsGroupsActionGroup : DefaultActionGroup(), DumbAware {
     val presentation = e.presentation
     val project = e.project
     if (project != null) {
-        presentation.text = ProjectLevelVcsManager.getInstance(project).consolidatedVcsName
+      presentation.text = ProjectLevelVcsManager.getInstance(project).consolidatedVcsName
     }
     presentation.isEnabledAndVisible = project != null && project.isTrusted()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

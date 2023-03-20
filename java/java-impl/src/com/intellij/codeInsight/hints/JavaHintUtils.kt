@@ -105,7 +105,7 @@ internal object JavaInlayHintsProvider {
     val element = resolveResult.element
     val substitutor = (resolveResult as? JavaResolveResult)?.substitutor ?: PsiSubstitutor.EMPTY
     
-    if (element is PsiMethod && isMethodToShow(element, callExpression)) {
+    if (element is PsiMethod && isMethodToShow(element)) {
       val info = callInfo(callExpression, element)
       if (isCallInfoToShow(info)) {
         return hintSet(info, substitutor)
@@ -173,16 +173,11 @@ internal object JavaInlayHintsProvider {
 
   private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.get()
 
-  private fun isMethodToShow(method: PsiMethod, callExpression: PsiCall): Boolean {
+  private fun isMethodToShow(method: PsiMethod): Boolean {
     val params = method.parameterList.parameters
     if (params.isEmpty()) return false
     if (params.size == 1) {
       val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
-      
-      if (!hintsProvider.showForBuilderLikeMethods.get()
-          && isBuilderLike(callExpression, method)) {
-        return false
-      }
       
       if (!hintsProvider.showIfMethodNameContainsParameterName.get()
           && isParamNameContainedInMethodName(params[0], method)) {
@@ -190,16 +185,6 @@ internal object JavaInlayHintsProvider {
       }
     }
     return true
-  }
-  
-  
-  private fun isBuilderLike(expression: PsiCall, method: PsiMethod): Boolean {
-    if (expression is PsiNewExpression) return false
-
-    val returnType = TypeConversionUtil.erasure(method.returnType) ?: return false
-    val calledMethodClassFqn = method.containingClass?.qualifiedName ?: return false
-
-    return returnType.equalsToText(calledMethodClassFqn)
   }
   
   private fun isParamNameContainedInMethodName(parameter: PsiParameter, method: PsiMethod): Boolean {

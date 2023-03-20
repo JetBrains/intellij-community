@@ -19,13 +19,11 @@ public final class DtdResolveUtil {
     final XmlElement parentThatProvidesMetaData = PsiTreeUtil
       .getParentOfType(CompletionUtilCoreImpl.getOriginalElement(element), XmlDocument.class, XmlMarkupDecl.class);
 
-    if (parentThatProvidesMetaData instanceof XmlDocument) {
-      final XmlDocument document = (XmlDocument)parentThatProvidesMetaData;
+    if (parentThatProvidesMetaData instanceof XmlDocument document) {
       XmlNSDescriptor rootTagNSDescriptor = document.getRootTagNSDescriptor();
       if (rootTagNSDescriptor == null) rootTagNSDescriptor = (XmlNSDescriptor)document.getMetaData();
       return rootTagNSDescriptor;
-    } else if (parentThatProvidesMetaData instanceof XmlMarkupDecl) {
-      final XmlMarkupDecl markupDecl = (XmlMarkupDecl)parentThatProvidesMetaData;
+    } else if (parentThatProvidesMetaData instanceof XmlMarkupDecl markupDecl) {
       final PsiMetaData psiMetaData = markupDecl.getMetaData();
 
       if (psiMetaData instanceof XmlNSDescriptor) {

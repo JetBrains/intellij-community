@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import kotlin.ranges.IntRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -85,53 +84,16 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
       }
       else {
         switch (c) {
-          case 'b':
-            outChars.append('\b');
-            break;
-
-          case 't':
-            outChars.append('\t');
-            break;
-
-          case 'n':
-            outChars.append('\n');
-            break;
-
-          case 'f':
-            outChars.append('\f');
-            break;
-
-          case 'r':
-            outChars.append('\r');
-            break;
-
-          case '"':
-            outChars.append('"');
-            break;
-
-          case '/':
-            outChars.append('/');
-            break;
-
-          case '\n':
-            outChars.append('\n');
-            break;
-          case '\'':
-            outChars.append('\'');
-            break;
-
-          case '\\':
-            outChars.append('\\');
-            break;
-
-          case '0':
-          case '1':
-          case '2':
-          case '3':
-          case '4':
-          case '5':
-          case '6':
-          case '7': {
+          case 'b' -> outChars.append('\b');
+          case 't' -> outChars.append('\t');
+          case 'n', '\n' -> outChars.append('\n');
+          case 'f' -> outChars.append('\f');
+          case 'r' -> outChars.append('\r');
+          case '"' -> outChars.append('"');
+          case '/' -> outChars.append('/');
+          case '\'' -> outChars.append('\'');
+          case '\\' -> outChars.append('\\');
+          case '0', '1', '2', '3', '4', '5', '6', '7' -> {
             char startC = c;
             int v = (int)c - '0';
             if (index < chars.length()) {
@@ -156,8 +118,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
             }
             outChars.append((char)v);
           }
-          break;
-          case 'x':
+          case 'x' -> {
             if (index + 2 <= chars.length()) {
               try {
                 int v = Integer.parseInt(chars.substring(index, index + 2), 16);
@@ -173,8 +134,8 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
               result = false;
               break loop;
             }
-            break;
-          case 'u':
+          }
+          case 'u' -> {
             if (index + 3 <= chars.length() && chars.charAt(index) == '{') {
               int end = chars.indexOf('}', index + 1);
               if (end < 0) {
@@ -190,7 +151,8 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
                 }
                 outChars.appendCodePoint(v);
                 index = end + 1;
-              } catch (Exception e) {
+              }
+              catch (Exception e) {
                 result = false;
                 break loop;
               }
@@ -215,11 +177,8 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
               result = false;
               break loop;
             }
-            break;
-
-          default:
-            outChars.append(c);
-            break;
+          }
+          default -> outChars.append(c);
         }
       }
 

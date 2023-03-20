@@ -1,40 +1,38 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationsManagerImpl
-import com.intellij.notification.impl.NotificationsToolWindowFactory
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.util.*
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
-import javax.swing.JRootPane
 import javax.swing.SwingConstants
 
 /**
  * @author Alexander Lobas
  */
-class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
-  private val myCollapsedData = HashMap<Balloon, CollapseInfo>()
+internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
+  private val collapsedData = HashMap<Balloon, CollapseInfo>()
 
   override fun dispose() {
     super.dispose()
-    myCollapsedData.clear()
+    collapsedData.clear()
   }
 
   override fun add(newBalloon: Balloon, layoutData: Any?) {
@@ -44,9 +42,9 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
       if (layoutData.collapseType == null) {
         throw NullPointerException()
       }
-      var size = myBalloons.size
-      for (balloon in myBalloons) {
-        if (myLayoutData[balloon] == null) {
+      var size = balloons.size
+      for (balloon in balloons) {
+        if (this.layoutData[balloon] == null) {
           size--
           break
         }
@@ -59,8 +57,8 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
       }
     }
     else {
-      for (balloon in myBalloons) {
-        if (myLayoutData[balloon] == null) {
+      for (balloon in balloons) {
+        if (this.layoutData[balloon] == null) {
           remove(balloon)
           break
         }
@@ -70,12 +68,12 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
   }
 
   private fun addNewBalloon(balloon: Balloon, layoutData: Any?, callback: (() -> Unit)? = null) {
-    myBalloons.add(balloon)
+    balloons.add(balloon)
 
     if (layoutData is BalloonLayoutData) {
-      layoutData.closeAll = myCloseAll
-      layoutData.doLayout = myLayoutRunnable
-      myLayoutData[balloon] = layoutData
+      layoutData.closeAll = Runnable(::closeAll)
+      layoutData.doLayout = layoutRunnable
+      this.layoutData[balloon] = layoutData
     }
     Disposer.register(balloon) {
       remove(balloon, false)
@@ -85,49 +83,56 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     calculateSize()
     relayout()
     if (!balloon.isDisposed) {
-      balloon.show(myLayeredPane)
+      balloon.show(layeredPane)
     }
     callback?.invoke()
     fireRelayout()
   }
 
   private fun doCollapse(newBalloon: Balloon, newLayoutData: BalloonLayoutData) {
-    val collapsedData = getCollapsedDataForNewBalloon(newLayoutData)
-    if (collapsedData == null) {
-      val p = getCollapsedDataForExistBalloon(newLayoutData)
-      remove(p.first)
-      p.second.addBalloon()
-      addNewBalloon(newBalloon, newLayoutData) {
-        p.second.show(myLayeredPane)
-      }
-    }
-    else {
-      collapsedData.addBalloon()
-      newBalloon.hide()
+    val exist = Array(1) { false }
+    val info = doCollapseForNewBalloon(newBalloon, newLayoutData, exist) ?: doCollapseForExistBalloon(newLayoutData, exist[0])
 
-      calculateSize()
-      relayout()
-      collapsedData.show(myLayeredPane)
-      fireRelayout()
+    info.addBalloon()
+
+    addNewBalloon(newBalloon, newLayoutData) {
+      info.show(layeredPane!!)
     }
   }
 
-  private fun getCollapsedDataForNewBalloon(newLayoutData: BalloonLayoutData): CollapseInfo? {
-    for (balloon in myBalloons) {
-      if (myLayoutData[balloon]?.collapseType === newLayoutData.collapseType) {
-        return myCollapsedData[balloon] ?: createCollapsedData(balloon, newLayoutData)
+  private fun doCollapseForNewBalloon(newBalloon: Balloon, newLayoutData: BalloonLayoutData, useExist: Array<Boolean>): CollapseInfo? {
+    var count = 0
+    for (balloon in balloons) {
+      if (layoutData[balloon]?.collapseType === newLayoutData.collapseType) {
+        count++
+        if (count > 1) {
+          useExist[0] = true
+          return null
+        }
+      }
+    }
+
+    for (balloon in balloons) {
+      if (layoutData[balloon]?.collapseType === newLayoutData.collapseType) {
+        return doCollapseForBalloons(balloon, newBalloon, newLayoutData)
       }
     }
     return null
   }
 
-  private fun getCollapsedDataForExistBalloon(newLayoutData: BalloonLayoutData): Pair<Balloon, CollapseInfo> {
-    for (balloon in myBalloons.reversed()) {
-      val layoutData = myLayoutData[balloon]
-      if (layoutData != null && layoutData.collapseType !== newLayoutData.collapseType) {
-        for (nextBalloon in myBalloons) {
-          if (balloon !== nextBalloon && layoutData.collapseType === myLayoutData[nextBalloon]?.collapseType) {
-            return Pair(balloon, myCollapsedData[nextBalloon] ?: createCollapsedData(nextBalloon, layoutData))
+  private fun doCollapseForExistBalloon(newLayoutData: BalloonLayoutData, useExist: Boolean): CollapseInfo {
+    val size = balloons.size
+    for (i in 0 until size) {
+      val balloon = balloons[i]
+      val layoutData = layoutData[balloon]
+
+      if (layoutData != null && (layoutData.collapseType === newLayoutData.collapseType) == useExist) {
+        for (j in i + 1 until size) {
+          val nextBalloon = balloons[j]
+          val nextLayoutData = this.layoutData[nextBalloon]
+
+          if (nextLayoutData != null && layoutData.collapseType === nextLayoutData.collapseType) {
+            return doCollapseForBalloons(balloon, nextBalloon, newLayoutData)
           }
         }
       }
@@ -135,20 +140,33 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     throw IllegalStateException()
   }
 
+  private fun doCollapseForBalloons(oldBalloon: Balloon, newBalloon: Balloon, newLayoutData: BalloonLayoutData): CollapseInfo {
+    val info = collapsedData[oldBalloon]
+    if (info == null) {
+      remove(oldBalloon)
+      return createCollapsedData(newBalloon, newLayoutData)
+    }
+
+    collapsedData.remove(oldBalloon)
+    remove(oldBalloon)
+
+    collapsedData[newBalloon] = info
+
+    return info
+  }
+
   private fun createCollapsedData(balloon: Balloon, newLayoutData: BalloonLayoutData): CollapseInfo {
-    val titleEnd = IdeBundle.message(if (newLayoutData.collapseType === BalloonLayoutData.Type.Timeline)
-      "notifications.collapse.balloon.title.timeline"
-    else "notifications.collapse.balloon.title.suggestion")
+    val titleEnd = if (newLayoutData.collapseType === BalloonLayoutData.Type.Timeline) "notifications.collapse.balloon.title.timeline"
+    else "notifications.collapse.balloon.title.suggestion"
 
     val newCollapseInfo = CollapseInfo(titleEnd)
-    myCollapsedData[balloon] = newCollapseInfo
-    Disposer.register(balloon, newCollapseInfo.balloon)
+    collapsedData[balloon] = newCollapseInfo
 
     return newCollapseInfo
   }
 
   override fun remove(balloon: Balloon, hide: Boolean) {
-    myCollapsedData.remove(balloon)
+    collapsedData.remove(balloon)?.hide()
     super.remove(balloon, hide)
   }
 
@@ -157,26 +175,26 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
   override fun calculateSize() {
     super.calculateSize()
 
-    for (balloon in myBalloons) {
-      myCollapsedData[balloon]?.calculateSize()
+    for (balloon in balloons) {
+      collapsedData[balloon]?.calculateSize()
     }
   }
 
   override fun getSize(balloon: Balloon): Dimension {
     val size = super.getSize(balloon)
-    val info = myCollapsedData[balloon]
+    val info = collapsedData[balloon]
     if (info != null) {
       size.height += info.height
     }
     return size
   }
 
-  override fun setBounds(balloons: MutableList<Balloon>, startX: Int, startY: Int) {
+  override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
     var y = startY
 
     for (balloon in balloons) {
       val bounds = Rectangle(super.getSize(balloon))
-      val info = myCollapsedData[balloon]
+      val info = collapsedData[balloon]
       if (info != null) {
         info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight, bounds.width, info.fullHeight))
         y -= info.height
@@ -188,7 +206,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
     }
   }
 
-  private inner class CollapseInfo(@Nls val titleEnd: String) {
+  private inner class CollapseInfo(val titleEnd: String) {
     var collapsedBalloons = 0
     val titleLabel: LinkLabel<Any>
     val balloon: Balloon
@@ -214,7 +232,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
         val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(titleLabel))
         if (project != null) {
           closeAll()
-          ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)?.show()
+          ActionCenter.getToolWindow(project)?.show()
         }
       }, null)
 
@@ -233,7 +251,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
         .setHideOnKeyOutside(false)
         .setHideOnFrameResize(false)
         .setBorderColor(NotificationsManagerImpl.BORDER_COLOR)
-        .setBorderInsets(JBUI.emptyInsets())
+        .setBorderInsets(JBInsets.emptyInsets())
 
       balloon = builder.createBalloon()
 
@@ -257,7 +275,8 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
 
     fun addBalloon() {
       collapsedBalloons++
-      titleLabel.text = IdeBundle.message("notifications.collapse.balloon.title", collapsedBalloons, titleEnd)
+      titleLabel.text = IdeBundle.message("notifications.collapse.balloon.title", collapsedBalloons,
+                                          IdeBundle.message(titleEnd, collapsedBalloons))
     }
 
     fun show(pane: JLayeredPane) {
@@ -267,10 +286,16 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
       }
     }
 
+    fun hide() {
+      balloon.hide()
+    }
+
     fun calculateSize() {
-      val insets = (balloon as BalloonImpl).shadowBorderInsets
-      fullHeight = balloon.preferredSize.height
-      height = fullHeight - JBUI.scale(7) - insets.top - insets.bottom
+      if (balloon is BalloonImpl) {
+        val insets = balloon.shadowBorderInsets
+        fullHeight = balloon.preferredSize.height
+        height = fullHeight - JBUI.scale(7) - insets.top - insets.bottom
+      }
     }
   }
 }

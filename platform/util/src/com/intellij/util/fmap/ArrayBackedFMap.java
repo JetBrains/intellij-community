@@ -6,11 +6,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class ArrayBackedFMap<K, V> implements FMap<K, V> {
 
   static final int ARRAY_THRESHOLD = 8;
 
-  private final @NotNull Object @NotNull [] myData;
+  private final @NotNull Object @NotNull [] myData; // array of alternating pairs: K,V,K,V...
 
   ArrayBackedFMap(@NotNull Object @NotNull ... data) {
     assert 3 * 2 <= data.length; // at least 3 key-value pairs
@@ -18,11 +18,11 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     myData = data;
   }
 
-  ArrayBackedFMap(@NotNull Map<K, V> map) {
+  ArrayBackedFMap(@NotNull Map<? extends K, ? extends V> map) {
     assert map.size() <= ARRAY_THRESHOLD;
     Object[] data = new Object[map.size() * 2];
     int i = 0;
-    for (Map.Entry<K, V> entry : map.entrySet()) {
+    for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
       data[i++] = entry.getKey();
       data[i++] = entry.getValue();
     }
@@ -31,10 +31,10 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   }
 
   @Override
-  public @NotNull FMap<K, V> plus(K key, V value) {
+  public @NotNull FMap<K, V> plus(@NotNull K key, @NotNull V value) {
     for (int i = 0; i < myData.length; i += 2) {
-      if (myData[i].equals(key)) {
-        if (myData[i + 1].equals(value)) {
+      if (asKey(i).equals(key)) {
+        if (asValue(i + 1).equals(value)) {
           return this;
         }
         else {
@@ -58,21 +58,20 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     return new MapBackedFMap<>(map);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public @NotNull FMap<K, V> minus(K key) {
+  public @NotNull FMap<K, V> minus(@NotNull K key) {
     for (int i = 0; i < myData.length; i += 2) {
-      if (myData[i].equals(key)) {
+      if (asKey(i).equals(key)) {
         if (size() == 3) {
           if (i == 0) {
-            return new TwoKeysFMap<>((K)myData[2], (V)myData[3], (K)myData[4], (V)myData[5]);
+            return new TwoKeysFMap<>(asKey(2), asValue(3), asKey(4), asValue(5));
           }
           else if (i == 2) {
-            return new TwoKeysFMap<>((K)myData[0], (V)myData[1], (K)myData[4], (V)myData[5]);
+            return new TwoKeysFMap<>(asKey(0), asValue(1), asKey(4), asValue(5));
           }
           else {
             assert i == 4;
-            return new TwoKeysFMap<>((K)myData[0], (V)myData[1], (K)myData[2], (V)myData[3]);
+            return new TwoKeysFMap<>(asKey(0), asValue(1), asKey(2), asValue(3));
           }
         }
         else {
@@ -86,15 +85,23 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     return this;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public @Nullable V get(K key) {
+  public @Nullable V get(@NotNull K key) {
     for (int i = 0; i < myData.length; i += 2) {
-      if (myData[i].equals(key)) {
-        return (V)myData[i + 1];
+      if (asKey(i).equals(key)) {
+        return asValue(i + 1);
       }
     }
     return null;
+  }
+
+  private K asKey(int i) {
+    //noinspection unchecked
+    return (K)myData[i];
+  }
+  private V asValue(int i) {
+    //noinspection unchecked
+    return (V)myData[i];
   }
 
   @Override
@@ -107,12 +114,11 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     return myData.length / 2;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public @NotNull Collection<K> keys() {
     List<K> result = new ArrayList<>(size());
     for (int i = 0; i < myData.length; i += 2) {
-      result.add((K)myData[i]);
+      result.add(asKey(i));
     }
     return result;
   }
@@ -122,12 +128,11 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     return Collections.unmodifiableMap(toMapInner());
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   private Map<K, V> toMapInner() {
     Map<K, V> map = new HashMap<>(size());
     for (int i = 0; i < myData.length; i += 2) {
-      map.put((K)myData[i], (V)myData[i + 1]);
+      map.put(asKey(i), asValue(i + 1));
     }
     return map;
   }
@@ -146,8 +151,8 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     int keysHash = 0;
     int valuesHash = 0;
     for (int i = 0; i < myData.length; i += 2) {
-      keysHash = keysHash ^ myData[i].hashCode();
-      valuesHash = valuesHash ^ myData[i + 1].hashCode();
+      keysHash = keysHash ^ asKey(i).hashCode();
+      valuesHash = valuesHash ^ asValue(i + 1).hashCode();
     }
     return keysHash + 31 * valuesHash;
   }
@@ -157,7 +162,7 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     StringBuilder sb = new StringBuilder();
     sb.append("[\n");
     for (int i = 0; i < myData.length; i += 2) {
-      sb.append("  ").append(myData[i]).append(": ").append(myData[i + 1]).append(",\n");
+      sb.append("  ").append(asKey(i)).append(": ").append(asValue(i + 1)).append(",\n");
     }
     sb.append("]");
     return sb.toString();

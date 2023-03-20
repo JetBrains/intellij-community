@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance(DuplicatesFinder.class);
   public static final Key<Parameter> PARAMETER = Key.create("PARAMETER");
@@ -138,10 +135,9 @@ public final class DuplicatesFinder {
   private void annotatePattern() {
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         final PsiElement element = reference.resolve();
-        if (element instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)element;
+        if (element instanceof PsiVariable variable) {
           PsiType type = variable.getType();
           myParameters.annotateWithParameter(reference);
           if (myOutputParameters.contains(element)) {
@@ -162,7 +158,7 @@ public final class DuplicatesFinder {
   private void deannotatePattern() {
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         if (expression.getUserData(PARAMETER) != null) {
           expression.putUserData(PARAMETER, null);
@@ -170,7 +166,7 @@ public final class DuplicatesFinder {
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         if (reference.getUserData(PARAMETER) != null) {
           reference.putUserData(PARAMETER, null);
         }
@@ -208,8 +204,7 @@ public final class DuplicatesFinder {
     }
     LOG.assertTrue(myPattern.length == candidates.size());
     if (myPattern.length == 1 && myPattern[0] instanceof PsiExpression) {
-      if (candidates.get(0) instanceof PsiExpression) {
-        final PsiExpression candidateExpression = (PsiExpression)candidates.get(0);
+      if (candidates.get(0) instanceof PsiExpression candidateExpression) {
         if (PsiUtil.isAccessedForWriting(candidateExpression)) return null;
         final PsiType patternType = ((PsiExpression)myPattern[0]).getType();
         final PsiType candidateType = candidateExpression.getType();
@@ -859,8 +854,7 @@ public final class DuplicatesFinder {
     else if (candidate instanceof PsiDeclarationStatement) {
       final PsiElement[] declaredElements = ((PsiDeclarationStatement)candidate).getDeclaredElements();
       if (declaredElements.length != 1) return false;
-      if (!(declaredElements[0] instanceof PsiVariable)) return false;
-      final PsiVariable variable = (PsiVariable)declaredElements[0];
+      if (!(declaredElements[0] instanceof PsiVariable variable)) return false;
       if (!matchPattern(patternReturnStatement.getReturnValue(), variable.getInitializer(), candidates, match)) return false;
       return match.registerReturnValue(new VariableReturnValue(variable));
     }
@@ -883,9 +877,7 @@ public final class DuplicatesFinder {
 
   private static boolean equivalentResolve(final PsiElement resolveResult1, final PsiElement resolveResult2, PsiElement qualifier2) {
     if (Comparing.equal(resolveResult1, resolveResult2)) return true;
-    if (resolveResult1 instanceof PsiMethod && resolveResult2 instanceof PsiMethod) {
-      final PsiMethod method1 = (PsiMethod)resolveResult1;
-      final PsiMethod method2 = (PsiMethod)resolveResult2;
+    if (resolveResult1 instanceof PsiMethod method1 && resolveResult2 instanceof PsiMethod method2) {
       if (method1.hasModifierProperty(PsiModifier.STATIC)) return false; // static methods don't inherit
       if (ArrayUtil.find(method1.findSuperMethods(), method2) >= 0) return true;
       if (ArrayUtil.find(method2.findSuperMethods(), method1) >= 0) return true;
@@ -986,8 +978,7 @@ public final class DuplicatesFinder {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Parameter)) return false;
-      Parameter p = (Parameter)o;
+      if (!(o instanceof Parameter p)) return false;
       return Objects.equals(myVariable, p.myVariable) &&
              Objects.equals(myType, p.myType) &&
              myFolded == p.myFolded;

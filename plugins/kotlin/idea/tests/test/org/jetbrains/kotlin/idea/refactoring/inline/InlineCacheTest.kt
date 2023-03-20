@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.psi.*
@@ -53,14 +53,14 @@ class InlineCacheTest : LightPlatformCodeInsightTestCase() {
     )
 
     private fun createJavaDeclaration(): PsiDeclarationStatement = javaFactory.createVariableDeclarationStatement(
-        "number",
-        PsiType.INT,
-        javaFactory.createExpressionFromText("1 + 3", null),
+      "number",
+      PsiTypes.intType(),
+      javaFactory.createExpressionFromText("1 + 3", null),
     )
 
     private val javaFactory: PsiElementFactory get() = JavaPsiFacade.getElementFactory(project)
 
     private val strategy = object : UsageReplacementStrategy {
-        override fun createReplacer(usage: KtReferenceExpression): (() -> KtElement?)? = TODO()
+        override fun createReplacer(usage: KtReferenceExpression): () -> KtElement? = TODO()
     }
 }

@@ -34,8 +34,7 @@ public abstract class RunAnythingRunConfigurationProvider extends RunAnythingPro
 
     Object value = wrapper.getValue();
     Project project = fetchProject(dataContext);
-    if (value instanceof RunnerAndConfigurationSettings) {
-      RunnerAndConfigurationSettings runnerAndConfigurationSettings = (RunnerAndConfigurationSettings)value;
+    if (value instanceof RunnerAndConfigurationSettings runnerAndConfigurationSettings) {
       if (!RunManager.getInstance(project).hasSettings(runnerAndConfigurationSettings)) {
         RunManager.getInstance(project).addConfiguration(runnerAndConfigurationSettings);
         RunConfigurationOptionUsagesCollector.logAddNew(

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -95,8 +96,7 @@ public class CopyAbstractMethodImplementationHandler {
     }
     if (mySourceClass.isEnum()) {
       for (PsiField field : mySourceClass.getFields()) {
-        if (field instanceof PsiEnumConstant){
-          final PsiEnumConstant enumConstant = (PsiEnumConstant)field;
+        if (field instanceof PsiEnumConstant enumConstant){
           final PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
           if (initializingClass == null) {
             myTargetEnumConstants.add(enumConstant);
@@ -133,7 +133,15 @@ public class CopyAbstractMethodImplementationHandler {
         ChangeContextUtil.encodeContextInfo(sourceBody, true);
         final PsiElement newBody = body.replace(sourceBody.copy());
         ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
-
+        final PsiDocComment docComment = overriddenMethod.getDocComment();
+        if (docComment != null) {
+          try {
+            docComment.delete();
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
         PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
         try {

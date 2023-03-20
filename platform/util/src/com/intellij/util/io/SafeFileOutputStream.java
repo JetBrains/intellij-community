@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.UtilBundle;
@@ -28,8 +28,11 @@ import java.util.concurrent.Future;
  * or a backup file exists along with a partially overwritten target file.</p>
  *
  * <p><b>The class is not thread-safe</b>; expected to be used within try-with-resources or an equivalent statement.</p>
+ *
+ * @see com.intellij.openapi.vfs.SafeWriteRequestor
+ * @see PreemptiveSafeFileOutputStream
  */
-public class SafeFileOutputStream extends OutputStream {
+public final class SafeFileOutputStream extends OutputStream {
   private static final String DEFAULT_BACKUP_EXT = "~";
   private static final CopyOption[] BACKUP_COPY = {StandardCopyOption.REPLACE_EXISTING};
   private static final OpenOption[] MAIN_WRITE = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.SYNC};
@@ -40,6 +43,7 @@ public class SafeFileOutputStream extends OutputStream {
   private final @Nullable Future<Path> myBackupFuture;
   private final BufferExposingByteArrayOutputStream myBuffer;
   private boolean myClosed = false;
+  private boolean myFailed = false;
 
   public SafeFileOutputStream(@NotNull File target) {
     this(target.toPath(), DEFAULT_BACKUP_EXT);
@@ -72,15 +76,34 @@ public class SafeFileOutputStream extends OutputStream {
     return backup;
   }
 
-
   @Override
   public void write(int b) throws IOException {
-    myBuffer.write(b);
+    if (myFailed) return;
+    try {
+      myBuffer.write(b);
+    }
+    catch (OutOfMemoryError err) {
+      myFailed = true;
+      throw suppressOOM(err);
+    }
   }
 
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
-    myBuffer.write(b, off, len);
+    if (myFailed) return;
+    try {
+      myBuffer.write(b, off, len);
+    }
+    catch (OutOfMemoryError err) {
+      myFailed = true;
+      throw suppressOOM(err);
+    }
+  }
+
+  private IOException suppressOOM(OutOfMemoryError oom) {
+    IOException e = new IOException(UtilBundle.message("safe.write.oom", myTarget));
+    e.addSuppressed(oom);
+    return e;
   }
 
   public void abort() throws IOException {
@@ -92,6 +115,11 @@ public class SafeFileOutputStream extends OutputStream {
   public void close() throws IOException {
     if (myClosed) return;
     myClosed = true;
+
+    if (myFailed) {
+      abort();
+      return;
+    }
 
     @Nullable Path backup = waitForBackup();
     OutputStream sink = openFile();

@@ -2,4 +2,4 @@
 
 package foo
 
-expect class <!AMBIGUOUS_ACTUALS("Class 'A'; bottom, middle"), LINE_MARKER("descr='Has actuals in common'")!>A<!>
+expect class <!AMBIGUOUS_ACTUALS("Class 'A'; bottom, middle"), LINE_MARKER("descr='Has actuals in middle module'")!>A<!>

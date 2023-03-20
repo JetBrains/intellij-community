@@ -20,7 +20,7 @@ public abstract class PsiDirectoryFactory {
   public abstract PsiDirectory createDirectory(@NotNull VirtualFile file);
 
   @NotNull
-  public abstract @NlsSafe String getQualifiedName(@NotNull PsiDirectory directory, final boolean presentable);
+  public abstract @NlsSafe String getQualifiedName(@NotNull PsiDirectory directory, boolean presentable);
 
   @Nullable
   public abstract PsiDirectoryContainer getDirectoryContainer(@NotNull PsiDirectory directory);

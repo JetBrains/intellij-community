@@ -5,9 +5,9 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.util.GUtil;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
+import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 
 import java.io.File;
 import java.util.Collection;
@@ -32,7 +32,7 @@ public class CompileDependenciesProvider {
   private Configuration myCompileOnlyConfiguration;
   private Collection<ExternalDependency> myDependencies;
   private Collection<File> myFiles;
-  private final Map<Configuration, Set<File>> myConfigurationFilesCache = new HashMap<Configuration, Set<File>>();
+  private final Map<Configuration, Set<File>> myConfigurationFilesCache = new HashMap<>();
 
   public CompileDependenciesProvider(SourceSet sourceSet, Project project) {
     mySourceSet = sourceSet;
@@ -78,7 +78,7 @@ public class CompileDependenciesProvider {
   public CompileDependenciesProvider resolve(DeprecatedDependencyResolver resolver) {
     // resolve compile dependencies
     boolean isMainSourceSet = mySourceSet.getName().equals(SourceSet.MAIN_SOURCE_SET_NAME);
-    String deprecatedCompileConfigurationName = isMainSourceSet ? "compile" : GUtil.toCamelCase(mySourceSet.getName()) + "Compile";
+    String deprecatedCompileConfigurationName = isMainSourceSet ? "compile" : StringUtils.toCamelCase(mySourceSet.getName(), false) + "Compile";
 
     Object configurationName = invokeMethod(mySourceSet, "getCompileConfigurationName");
     assert configurationName != null;

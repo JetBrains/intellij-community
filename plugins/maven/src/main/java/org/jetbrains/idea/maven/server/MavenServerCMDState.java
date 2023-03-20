@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -13,6 +13,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,10 +24,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
+import org.jetbrains.idea.maven.MavenVersionSupportUtil;
+import org.jetbrains.idea.maven.buildtool.quickfix.InstallMaven2BuildIssue;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
-import org.slf4j.impl.Log4jLoggerFactory;
+import org.slf4j.impl.JDK14LoggerFactory;
 
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,7 +118,7 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
-    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
+    params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(myDistribution));
 
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
     for (String s : classPath) {
@@ -146,6 +152,25 @@ public class MavenServerCMDState extends CommandLineState {
     return params;
   }
 
+  public static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
+    if (!distribution.isValid()) {
+      MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
+      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
+    }
+
+    MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);
+
+
+    if (extension == null) {
+      if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3") < 0) {
+        throw new BuildIssueException(new InstallMaven2BuildIssue());
+      }
+      throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
+    }
+    MavenLog.LOG.info("Using extension " + extension + " to start MavenServer");
+    return extension.collectClassPathAndLibsFolder(distribution);
+  }
+
   private void setupMainExt(SimpleJavaParameters params) {
     //it is critical to setup maven.ext.class.path for maven >=3.6, otherwise project extensions will not be loaded
     MavenUtil.addEventListener(myDistribution.getVersion(), params);
@@ -172,10 +197,9 @@ public class MavenServerCMDState extends CommandLineState {
 
   protected @NotNull Collection<String> collectRTLibraries(String mavenVersion) {
     Set<String> classPath = new LinkedHashSet<>();
-    classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
       classPath.add(PathUtil.getJarPathForClass(Logger.class));
-      classPath.add(PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
+      classPath.add(PathUtil.getJarPathForClass(JDK14LoggerFactory.class));
     }
 
     classPath.add(PathUtil.getJarPathForClass(StringUtilRt.class));//util-rt
@@ -260,7 +284,7 @@ public class MavenServerCMDState extends CommandLineState {
       if (value == null) return null;
       Matcher matcher = MEMORY_PROPERTY_PATTERN.matcher(value);
       if (matcher.find()) {
-        return new MemoryProperty(matcher.group(1), Long.valueOf(matcher.group(2)), matcher.group(3));
+        return new MemoryProperty(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3));
       }
       LOG.warn(value + " not match " + MEMORY_PROPERTY_PATTERN);
       return null;

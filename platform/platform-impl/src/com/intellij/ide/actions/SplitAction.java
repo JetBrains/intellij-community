@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -12,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Vladimir Kondratyev
  * @author Konstantin Bulenkov
  */
 public abstract class SplitAction extends AnAction implements DumbAware {
@@ -35,7 +35,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     final VirtualFile file = window.getSelectedFile();
 
     if (myCloseSource && file != null) {
-      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, window.isFilePinned(file));
+      file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), window.isFilePinned(file));
       window.closeFile(file, false, false);
     }
 
@@ -49,6 +49,11 @@ public abstract class SplitAction extends AnAction implements DumbAware {
 
     boolean enabled = isEnabled(selectedFile, window);
     event.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private boolean isEnabled(@Nullable VirtualFile vFile, @Nullable EditorWindow window) {

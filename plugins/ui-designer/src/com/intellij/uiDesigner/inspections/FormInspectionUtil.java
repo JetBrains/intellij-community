@@ -43,8 +43,7 @@ public final class FormInspectionUtil {
     if (textProperty != null) {
       Object propValue = textProperty.getPropertyValue(component);
       String value = null;
-      if (propValue instanceof StringDescriptor) {
-        StringDescriptor descriptor = (StringDescriptor) propValue;
+      if (propValue instanceof StringDescriptor descriptor) {
         if (component instanceof RadComponent) {
           value = StringDescriptorManager.getInstance(module).resolve((RadComponent) component, descriptor);
         }

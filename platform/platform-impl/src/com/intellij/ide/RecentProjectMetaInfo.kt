@@ -1,23 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ide
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
-import java.util.concurrent.atomic.AtomicLong
 
 class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
   var opened by property(false)
 
+  /**
+   * If true, the project will not be reopened on startup and not displayed in the recent projects list.
+   * Suitable for internal projects, that should not be accessed by usual ways of opening projects.
+   */
+  @get:Attribute
+  var hidden by property(false)
+
   @get:Attribute
   var displayName by string()
 
-  // to set frame title as earlier as possible
+  // to set frame title as early as possible
   @get:Attribute
   var frameTitle by string()
 
@@ -27,6 +34,7 @@ class RecentProjectMetaInfo : BaseState() {
   var binFolder by string()
   var projectOpenTimestamp by property(0L)
   var buildTimestamp by property(0L)
+  var activationTimestamp by property(0L)
   var metadata by string()
 
   @get:Attribute
@@ -41,10 +49,6 @@ class RecentProjectManagerState : BaseState() {
   @get:OptionTag
   val recentPaths by list<String>()
 
-  @Deprecated("")
-  @get:OptionTag
-  val openPaths by list<String>()
-
   @get:OptionTag
   val groups by list<ProjectGroup>()
   var pid by string()
@@ -55,22 +59,5 @@ class RecentProjectManagerState : BaseState() {
 
   var lastProjectLocation by string()
 
-  fun validateRecentProjects(modCounter: AtomicLong) {
-    val limit = AdvancedSettings.getInt("ide.max.recent.projects")
-    if (additionalInfo.size <= limit) {
-      return
-    }
-
-    while (additionalInfo.size > limit) {
-      val iterator = additionalInfo.keys.iterator()
-      while (iterator.hasNext()) {
-        val path = iterator.next()
-        if (!additionalInfo[path]!!.opened) {
-          iterator.remove()
-          break
-        }
-      }
-    }
-    modCounter.incrementAndGet()
-  }
+  var lastOpenedProject by string()
 }

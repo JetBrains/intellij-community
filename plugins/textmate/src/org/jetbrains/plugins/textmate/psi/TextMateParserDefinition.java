@@ -35,12 +35,6 @@ public class TextMateParserDefinition implements ParserDefinition {
 
   @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
-    return TokenSet.WHITE_SPACE;
-  }
-
-  @NotNull
-  @Override
   public TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.psi
 
@@ -24,7 +24,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         val testName = getTestName(true)
         return when {
             testName.endsWith("WithAnnotation") -> KotlinLightProjectDescriptor.INSTANCE
-            testName.endsWith("WithRuntime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            testName.endsWith("WithRuntime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
             else -> JAVA_LATEST
         }
     }

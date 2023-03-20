@@ -78,8 +78,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ProjectExternalDependency> list, ProjectExternalDependency dependency,
                                            int index, boolean selected, boolean hasFocus) {
-        if (dependency instanceof DependencyOnPlugin) {
-          DependencyOnPlugin value = (DependencyOnPlugin)dependency;
+        if (dependency instanceof DependencyOnPlugin value) {
           append(getPluginNameById(value.getPluginId()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           String minVersion = value.getMinVersion();
           String maxVersion = value.getMaxVersion();
@@ -187,12 +186,13 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
 
     ComboBox<String> pluginChooser = new ComboBox<>(ArrayUtilRt.toStringArray(pluginIds), 250);
     pluginChooser.setRenderer(SimpleListCellRenderer.create("", this::getPluginNameById));
-    new ComboboxSpeedSearch(pluginChooser) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(pluginChooser, null) {
       @Override
       protected String getElementText(Object element) {
         return getPluginNameById((String)element);
       }
     };
+    search.setupListeners();
     pluginChooser.setSelectedItem(original.getPluginId());
 
     final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getRawMinVersion()));

@@ -5,10 +5,12 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
+import com.intellij.ide.troubleshooting.DimensionServiceTroubleInfoCollectorKt;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -41,7 +43,7 @@ import java.util.function.Consumer;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
-  private static final String NOTIFICATION_GROUP = "Collect Zipped Logs";
+  public static final String NOTIFICATION_GROUP = "Collect Zipped Logs";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -93,8 +95,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<Compressor> additionalFiles) throws IOException {
-    PerformanceWatcher.getInstance().dumpThreads("", false);
+  public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<? super Compressor> additionalFiles) throws IOException {
+    PerformanceWatcher.getInstance().dumpThreads("", false, false);
 
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);
     @SuppressWarnings("SpellCheckingInspection") String date = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
@@ -121,6 +123,10 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           settings.append(troubleInfoCollector.collectInfo(project)).append('\n');
         }
         zip.addFile("troubleshooting.txt", settings.toString().getBytes(StandardCharsets.UTF_8));
+        zip.addFile(
+          "dimension.txt",
+          DimensionServiceTroubleInfoCollectorKt.collectDimensionServiceDiagnosticsData(project).getBytes(StandardCharsets.UTF_8)
+        );
       }
 
       // JVM crash logs
@@ -145,5 +151,10 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     }
 
     return archive;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

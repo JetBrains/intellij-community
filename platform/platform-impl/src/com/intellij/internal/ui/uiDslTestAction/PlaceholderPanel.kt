@@ -3,39 +3,49 @@ package com.intellij.internal.ui.uiDslTestAction
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
-import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-private enum class PlaceholderComponent {
-  NONE,
-  LABEL,
-  CHECK_BOX,
-  TEXT_FIELD,
-  INT_TEXT_FIELD,
-
-  /**
-   * Custom validation is used
-   */
-  CUSTOM_TEXT_FIELD,
-
-  /**
-   * Used one instance. Check that
-   * - all listeners are removed after the component is removed from placeholder
-   * - no duplicate listeners in the instance after several installing into placeholder
-   */
-  INSTANCE_TEXT_FIELD,
-}
-
 @Suppress("DialogTitleCapitalization")
 @ApiStatus.Internal
 internal class PlaceholderPanel(parentDisposable: Disposable) {
+
+  companion object {
+
+    private enum class PlaceholderComponent {
+      NONE,
+      LABEL,
+      CHECK_BOX,
+      TEXT_FIELD,
+      INT_TEXT_FIELD,
+
+      /**
+       * Custom validation is used
+       */
+      CUSTOM_TEXT_FIELD,
+
+      /**
+       * Used one instance. Check that
+       * - all listeners are removed after the component is removed from placeholder
+       * - no duplicate listeners in the instance after several installing into placeholder
+       */
+      INSTANCE_TEXT_FIELD,
+    }
+
+    private data class Model(
+      var simpleCheckbox: Boolean = false,
+      var placeholderCheckBox: Boolean = false,
+      var placeholderTextField: String = "placeholderTextField",
+      var placeholderIntTextField: Int = 0,
+      var placeholderCustomTextField: String = "placeholderCustomTextField",
+      var placeholderInstanceTextField: Int = 0,
+    )
+  }
 
   lateinit var panel: DialogPanel
     private set
@@ -62,8 +72,8 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
 
     panel = panel {
       row {
-        label("<html>Validation of placeholder. Select component and change values. Reset, Apply and isModified should work " +
-              "as expected. Check also validation for int text field")
+        text("Validation of placeholder. Select component and change values. Reset, Apply and isModified should work " +
+             "as expected. Check also validation for int text field")
       }.bottomGap(BottomGap.MEDIUM)
 
       row {
@@ -72,29 +82,23 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
       }
       row("Select Placeholder:") {
         comboBox(PlaceholderComponent.values().toList())
-          .applyToComponent {
-            addItemListener {
-              if (it.stateChange == ItemEvent.SELECTED) {
-                val type = it?.item as? PlaceholderComponent
-                if (type == null) {
-                  placeholder.component = null
-                }
-                else {
-                  placeholder.component = createPlaceholderComponent(type)
-                }
-              }
+          .onChanged {
+            val type = it.item
+            if (type == null) {
+              placeholder.component = null
+            }
+            else {
+              placeholder.component = createPlaceholderComponent(type)
             }
           }
         checkBox("enabled")
           .applyToComponent {
             isSelected = true
-            addItemListener { placeholder.enabled(this.isSelected) }
-          }
+          }.onChanged { placeholder.enabled(it.isSelected) }
         checkBox("visible")
           .applyToComponent {
             isSelected = true
-            addItemListener { placeholder.visible(this.isSelected) }
-          }
+          }.onChanged { placeholder.visible(it.isSelected) }
       }
       row("Placeholder:") {
         placeholder = placeholder()
@@ -119,9 +123,7 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
       }
     }
 
-    val disposable = Disposer.newDisposable()
-    panel.registerValidators(disposable)
-    Disposer.register(parentDisposable, disposable)
+    panel.registerValidators(parentDisposable)
 
     SwingUtilities.invokeLater {
       initValidation()
@@ -173,13 +175,3 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
     }
   }
 }
-
-@ApiStatus.Internal
-internal data class Model(
-  var simpleCheckbox: Boolean = false,
-  var placeholderCheckBox: Boolean = false,
-  var placeholderTextField: String = "placeholderTextField",
-  var placeholderIntTextField: Int = 0,
-  var placeholderCustomTextField: String = "placeholderCustomTextField",
-  var placeholderInstanceTextField: Int = 0,
-)

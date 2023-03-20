@@ -1,31 +1,38 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.gradle;
 
+import com.intellij.testFramework.UsefulTestCase;
 import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions;
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
+import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
+
+import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 
 
 public class PluginTargetVersionsRule implements MethodRule {
     @SuppressWarnings("ClassExplicitlyAnnotation")
     private static class TargetVersionsImpl implements TargetVersions {
-        private final String value;
+        private final String[] value;
 
-        TargetVersionsImpl(String value) {
+        TargetVersionsImpl(String... value) {
             this.value = value;
         }
 
         @Override
-        public String value() {
+        public String[] value() {
             return value;
         }
 
@@ -50,33 +57,43 @@ public class PluginTargetVersionsRule implements MethodRule {
             );
         }
 
-        MultiplePluginVersionGradleImportingTestCase testCase = (MultiplePluginVersionGradleImportingTestCase) target;
+        TestWithKotlinPluginAndGradleVersions testCase = (TestWithKotlinPluginAndGradleVersions) target;
         if (targetVersions != null && !shouldRun(targetVersions, testCase)) {
-            return new Statement() {
-                @Override
-                public void evaluate() {
-                    System.out.println(
-                            "Test is marked passed due to unmet requirements\n" +
-                            "Gradle version: " +
-                            testCase.gradleVersion +
-                            " | Requirement: " +
-                            targetVersions.gradleVersion() +
-                            "\n" +
-                            "Plugin version: " +
-                            testCase.getKotlinPluginVersionString() +
-                            " | Requirement: " +
-                            targetVersions.pluginVersion()
-                    );
-                }
-            };
+            String mark = IS_UNDER_TEAMCITY ? "passed" : "ignored";
+            String message = "Test is marked " + mark + " due to unmet requirements\n" +
+                             "Gradle version: " +
+                             testCase.getGradleVersion() +
+                             " | Requirement: " +
+                             targetVersions.gradleVersion() +
+                             "\n" +
+                             "Plugin version: " +
+                             testCase.getKotlinPluginVersion() +
+                             " | Requirement: " +
+                             targetVersions.pluginVersion();
+
+            /*
+             Tests are marked as successful on CI instead of Ignored, because this makes overall project maintainance easier
+             (managing legitimately ignored tests).
+             Running tests locally will still mark them as 'Ignored'
+             */
+            if (IS_UNDER_TEAMCITY) {
+                return new Statement() {
+                    @Override
+                    public void evaluate() {
+                        System.out.println(message);
+                    }
+                };
+            } else {
+                throw new AssumptionViolatedException(message);
+            }
         }
 
         return base;
     }
 
-    private static boolean shouldRun(PluginTargetVersions targetVersions, MultiplePluginVersionGradleImportingTestCase testCase) {
-        var gradleVersion = testCase.gradleVersion;
-        var pluginVersion = testCase.getKotlinPluginVersionString();
+    private static boolean shouldRun(PluginTargetVersions targetVersions, TestWithKotlinPluginAndGradleVersions testCase) {
+        var gradleVersion = testCase.getGradleVersion();
+        var pluginVersion = testCase.getKotlinPluginVersion();
 
         var gradleVersionMatcher = createMatcher("Gradle", targetVersions.gradleVersion());
         var kotlinVersionRequirement = KotlinVersionUtils.parseKotlinVersionRequirement(targetVersions.pluginVersion());
@@ -93,7 +110,7 @@ public class PluginTargetVersionsRule implements MethodRule {
 
         TargetVersions targetVersions = new TargetVersionsImpl(version);
 
-        return new CustomMatcher<>(caption + " version '" + targetVersions.value() + "'") {
+        return new CustomMatcher<>(caption + " version '" + Arrays.toString(targetVersions.value()) + "'") {
             @Override
             public boolean matches(Object item) {
                 return item instanceof String && new VersionMatcher(GradleVersion.version(item.toString())).isVersionMatch(targetVersions);

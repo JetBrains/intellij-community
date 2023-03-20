@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
@@ -24,12 +24,10 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplate
 import java.nio.file.Path
 
-object AndroidSinglePlatformModuleConfigurator :
+abstract class AndroidSinglePlatformModuleConfiguratorBase :
     SinglePlatformModuleConfigurator,
     AndroidModuleConfigurator {
     override val moduleKind: ModuleKind get() = ModuleKind.singlePlatformAndroid
-
-    override fun getNewAndroidManifestPath(module: Module): Path? = null
 
     @NonNls
     override val id = "android"
@@ -45,12 +43,10 @@ object AndroidSinglePlatformModuleConfigurator :
 
 
     override fun createRootBuildFileIrs(configurationData: ModulesToIrConversionData): List<BuildSystemIR> = irsList {
-        listOf(
+        (listOf(
             DefaultRepository.GRADLE_PLUGIN_PORTAL,
-            DefaultRepository.JCENTER,
             DefaultRepository.GOOGLE,
-            configurationData.kotlinVersion.repository
-        ).forEach { repository ->
+        ) + configurationData.kotlinVersion.repositories).forEach { repository ->
             +BuildScriptRepositoryIR(RepositoryIR(repository))
         }
 
@@ -64,19 +60,18 @@ object AndroidSinglePlatformModuleConfigurator :
 
     override fun createBuildFileIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module) = irsList {
         +super<AndroidModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
-        +RepositoryIR((DefaultRepository.JCENTER))
+        +RepositoryIR((DefaultRepository.GOOGLE))
         +AndroidConfigIR(
-            javaPackage = when (reader.createAndroidPlugin(module)) {
-                AndroidGradlePlugin.APPLICATION -> module.javaPackage(configurationData.pomIr)
-                AndroidGradlePlugin.LIBRARY -> null
-            },
-            newManifestPath = getNewAndroidManifestPath(module),
-            printVersionCode = true,
-            printBuildTypes = true,
+            javaPackage = module.javaPackage(configurationData.pomIr),
+            isApplication = true,
+            useCompose = useCompose,
         )
     }
 
-    override fun createKotlinPluginIR(configurationData: ModulesToIrConversionData, module: Module): KotlinBuildSystemPluginIR? =
+    protected open val useCompose: Boolean
+        get() = true
+
+    override fun createKotlinPluginIR(configurationData: ModulesToIrConversionData, module: Module): KotlinBuildSystemPluginIR =
         KotlinBuildSystemPluginIR(
             KotlinBuildSystemPluginIR.Type.android,
             version = configurationData.kotlinVersion,
@@ -90,8 +85,19 @@ object AndroidSinglePlatformModuleConfigurator :
         module: Module
     ): List<BuildSystemIR> = buildList {
         +super<AndroidModuleConfigurator>.createModuleIRs(reader, configurationData, module)
-        +DEPENDENCIES.APP_COMPAT
-        +DEPENDENCIES.CONSTRAINT_LAYOUT
+        if (useCompose) {
+            +DEPENDENCIES.COMPOSE_UI
+            +DEPENDENCIES.COMPOSE_UI_TOOLING
+            +DEPENDENCIES.COMPOSE_UI_TOOLING_PREVIEW
+            +DEPENDENCIES.COMPOSE_FOUNDATION
+            +DEPENDENCIES.COMPOSE_MATERIAL
+            +DEPENDENCIES.ACTIVITY
+        }
+        else {
+            +DEPENDENCIES.MATERIAL
+            +DEPENDENCIES.APP_COMPAT
+            +DEPENDENCIES.CONSTRAINT_LAYOUT
+        }
     }
 
     override fun Writer.runArbitraryTask(
@@ -117,16 +123,21 @@ object AndroidSinglePlatformModuleConfigurator :
             "sharedPackage" to sharedPackage?.asCodePackage()
         )
 
-        TemplatesPlugin.addFileTemplates.execute(
-            listOf(
-                FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.activityMainXml, modulePath, settings),
-                FileTemplate(getAndroidManifestXml(module), modulePath, settings),
-                FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.colorsXml, modulePath, settings),
-                FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.stylesXml, modulePath, settings),
-                FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.mainActivityKt(javaPackage), modulePath, settings)
-            )
+        val files = mutableListOf(
+            FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.androidManifestXml, modulePath, settings),
+            FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.stylesXml(useCompose), modulePath, settings),
+            FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.mainActivityKt(javaPackage, useCompose), modulePath, settings)
         )
+        if (useCompose) {
+            files.add(FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.myApplicationThemeKt(javaPackage), modulePath, settings))
+        }
+        else {
+            files.add(FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.activityMainXml, modulePath, settings))
+            files.add(FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.colorsXml, modulePath, settings))
+        }
+        TemplatesPlugin.addFileTemplates.execute(files)
         GradlePlugin.gradleProperties.addValues("android.useAndroidX" to true)
+        GradlePlugin.gradleProperties.addValues("android.nonTransitiveRClass" to true)
     }
 
     override fun Reader.createAndroidPlugin(module: Module): AndroidGradlePlugin =
@@ -134,6 +145,48 @@ object AndroidSinglePlatformModuleConfigurator :
 
 
     object DEPENDENCIES {
+        val COMPOSE_UI = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui"),
+            version = Versions.ANDROID.ANDROIDX_COMPOSE,
+            dependencyType = DependencyType.MAIN
+        )
+
+        val COMPOSE_UI_TOOLING = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui-tooling"),
+            version = Versions.ANDROID.ANDROIDX_COMPOSE,
+            dependencyType = DependencyType.MAIN
+        )
+
+        val COMPOSE_UI_TOOLING_PREVIEW = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui-tooling-preview"),
+            version = Versions.ANDROID.ANDROIDX_COMPOSE,
+            dependencyType = DependencyType.MAIN
+        )
+
+        val COMPOSE_FOUNDATION = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.foundation", "foundation"),
+            version = Versions.ANDROID.ANDROIDX_COMPOSE,
+            dependencyType = DependencyType.MAIN
+        )
+
+        val COMPOSE_MATERIAL = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.material", "material"),
+            version = Versions.ANDROID.ANDROIDX_COMPOSE,
+            dependencyType = DependencyType.MAIN
+        )
+
+        val ACTIVITY = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(DefaultRepository.GOOGLE, "androidx.activity", "activity-compose"),
+            version = Versions.ANDROID.ANDROIDX_ACTIVITY,
+            dependencyType = DependencyType.MAIN
+        )
+
+        val MATERIAL = ArtifactBasedLibraryDependencyIR(
+            MavenArtifact(DefaultRepository.GOOGLE, "com.google.android.material", "material"),
+            version = Versions.ANDROID.ANDROID_MATERIAL,
+            dependencyType = DependencyType.MAIN
+        )
+
         val CONSTRAINT_LAYOUT = ArtifactBasedLibraryDependencyIR(
             MavenArtifact(DefaultRepository.GOOGLE, "androidx.constraintlayout", "constraintlayout"),
             version = Versions.ANDROID.ANDROIDX_CONSTRAINTLAYOUT,
@@ -147,3 +200,10 @@ object AndroidSinglePlatformModuleConfigurator :
         )
     }
 }
+
+object AndroidWithoutComposeSinglePlatformModuleConfigurator : AndroidSinglePlatformModuleConfiguratorBase() {
+    override val useCompose: Boolean
+        get() = false
+}
+
+object AndroidSinglePlatformModuleConfigurator : AndroidSinglePlatformModuleConfiguratorBase()

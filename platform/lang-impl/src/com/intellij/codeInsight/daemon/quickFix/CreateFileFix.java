@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -29,11 +28,9 @@ import org.jetbrains.annotations.PropertyKey;
 import java.io.IOException;
 
 /**
- * @author peter
  * @deprecated Use {@link CreateDirectoryPathFix} or {@link CreateFilePathFix} instead.
 */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final int REFRESH_INTERVAL = 1000;
 

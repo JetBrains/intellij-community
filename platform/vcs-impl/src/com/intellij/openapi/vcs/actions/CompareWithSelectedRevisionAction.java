@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -118,6 +119,10 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -260,7 +265,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
       table.clearSelection();
     }
 
-    new SpeedSearchBase<TableView>(table) {
+    SpeedSearchBase<TableView> search = new SpeedSearchBase<>(table, null) {
       @Override
       protected int getSelectedIndex() {
         return table.getSelectedRow();
@@ -278,17 +283,18 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
 
       @Override
       protected String getElementText(Object element) {
-        VcsFileRevision revision = (VcsFileRevision) element;
+        VcsFileRevision revision = (VcsFileRevision)element;
         return revision.getRevisionNumber().asString() + " " + revision.getBranchName() + " " + revision.getAuthor();
       }
 
       @Override
       protected void selectElement(Object element, String selectedText) {
-        VcsFileRevision revision = (VcsFileRevision) element;
-        TableUtil.selectRows(myComponent, new int[] {myComponent.convertRowIndexToView(revisions.indexOf(revision))});
+        VcsFileRevision revision = (VcsFileRevision)element;
+        TableUtil.selectRows(myComponent, new int[]{myComponent.convertRowIndexToView(revisions.indexOf(revision))});
         TableUtil.scrollSelectionToVisible(myComponent);
       }
     };
+    search.setupListeners();
 
     table.setMinimumSize(new JBDimension(300, 50));
     final PopupChooserBuilder builder = new PopupChooserBuilder(table);

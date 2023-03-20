@@ -76,7 +76,7 @@ public final class FrameworkSupportUtil {
     return false;
   }
 
-  public static Comparator<FrameworkSupportInModuleProvider> getFrameworkSupportProvidersComparator(final List<FrameworkSupportInModuleProvider> types) {
+  public static Comparator<FrameworkSupportInModuleProvider> getFrameworkSupportProvidersComparator(final List<? extends FrameworkSupportInModuleProvider> types) {
     DFSTBuilder<FrameworkSupportInModuleProvider>
       builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new ProvidersGraph(types))));
     if (!builder.isAcyclic()) {
@@ -107,7 +107,7 @@ public final class FrameworkSupportUtil {
   private static class ProvidersGraph implements InboundSemiGraph<FrameworkSupportInModuleProvider> {
     private final List<FrameworkSupportInModuleProvider> myFrameworkSupportProviders;
 
-    ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
+    ProvidersGraph(final List<? extends FrameworkSupportInModuleProvider> frameworkSupportProviders) {
       myFrameworkSupportProviders = new ArrayList<>(frameworkSupportProviders);
     }
 

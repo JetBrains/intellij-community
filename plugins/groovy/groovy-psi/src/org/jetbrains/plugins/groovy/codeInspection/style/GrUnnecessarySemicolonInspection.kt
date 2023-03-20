@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.style
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -27,26 +27,25 @@ class GrUnnecessarySemicolonInspection : LocalInspectionTool(), CleanupLocalInsp
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
     override fun visitElement(element: PsiElement) {
-      if (element.node.elementType !== T_SEMI || isSemicolonNecessary(element)) return
+      if (element.node.elementType !== T_SEMI || Holder.isSemicolonNecessary(element)) return
       holder.registerProblem(
         element,
         GroovyBundle.message("unnecessary.semicolon.description"),
-        ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-        fix
+        Holder.fix
       )
     }
   }
 
-  companion object {
+  private object Holder {
+    val fix: LocalQuickFix = RemoveElementWithoutFormatterFix(GroovyBundle.message("unnecessary.semicolon.fix"))
 
-    private val fix = RemoveElementWithoutFormatterFix(GroovyBundle.message("unnecessary.semicolon.fix"))
     private val nlSet = TokenSet(NL)
     private val forwardSet = WHITE_SPACES_OR_COMMENTS + TokenSet(T_SEMI) - nlSet
     private val backwardSet = WHITE_SPACES_OR_COMMENTS - nlSet
     private val separators = TokenSet(NL, T_SEMI)
     private val previousSet = TokenSet(T_LBRACE, T_ARROW)
 
-    private fun isSemicolonNecessary(semicolon: PsiElement): Boolean {
+    fun isSemicolonNecessary(semicolon: PsiElement): Boolean {
       if (semicolon.parent is GrTraditionalForClause) return true
 
       val prevSibling = skipSet(semicolon, false, backwardSet) ?: return false

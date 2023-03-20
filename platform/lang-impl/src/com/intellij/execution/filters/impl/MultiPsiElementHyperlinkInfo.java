@@ -24,8 +24,12 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-class MultiPsiElementHyperlinkInfo extends HyperlinkInfoBase {
+public class MultiPsiElementHyperlinkInfo extends HyperlinkInfoBase {
   private final Map<VirtualFile, SmartPsiElementPointer<?>> myMap;
+
+  public Collection<SmartPsiElementPointer<?>> getElementVariants() {
+    return myMap.values();
+  }
 
   MultiPsiElementHyperlinkInfo(Collection<? extends PsiElement> elements) {
     SmartPointerManager manager = null;

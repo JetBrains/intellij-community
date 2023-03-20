@@ -5,6 +5,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.*
@@ -12,9 +13,9 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
@@ -31,16 +32,15 @@ open class ArtifactBridge(
 ) : ModifiableArtifact, UserDataHolderBase() {
 
   init {
-    val busConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
-          if (it.entity.persistentId() != artifactId) return@forEach
+          if (it.entity.symbolicId != artifactId) return@forEach
 
           // Artifact may be "re-added" with the same id
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
           // We should make sure that we "disable" removed artifact bridge
-          if (event.storageAfter.resolve(artifactId) != null
+          if (artifactId in event.storageAfter
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != originalArtifact) {
             return@forEach
@@ -49,13 +49,13 @@ open class ArtifactBridge(
           // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
           // If case of storage here, the new bridges will be added to the store.
           entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
-          assert(entityStorage.current.resolve(artifactId) != null) { "Cannot resolve artifact $artifactId." }
+          assert(artifactId in entityStorage.current) { "Cannot resolve artifact $artifactId." }
         }
       }
     })
   }
 
-  private val diffOrNull: WorkspaceEntityStorageBuilder?
+  private val diffOrNull: MutableEntityStorage?
     get() {
       val storage = entityStorage
       if (storage is VersionedEntityStorageOnBuilder) {
@@ -64,7 +64,7 @@ open class ArtifactBridge(
       return null
     }
 
-  private val diff: WorkspaceEntityStorageBuilder
+  private val diff: MutableEntityStorage
     get() = diffOrNull ?: error("")
 
   private var artifactIdRaw = _artifactId
@@ -77,9 +77,9 @@ open class ArtifactBridge(
   // and not supposed to be) and the name of the artifact is modified directly in diff. However, we assume that this case isn't possible.
   val artifactId: ArtifactId
     get() {
-      val persistentId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.persistentId()
-      if (persistentId != null) {
-        artifactIdRaw = persistentId
+      val symbolicId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.symbolicId
+      if (symbolicId != null) {
+        artifactIdRaw = symbolicId
       }
       return artifactIdRaw
     }
@@ -103,9 +103,7 @@ open class ArtifactBridge(
     else type
   }
 
-  override fun getName(): String {
-    return artifactId.name
-  }
+  final override fun getName(): @NlsSafe String = artifactId.name
 
   override fun isBuildOnMake(): Boolean {
     val artifactEntity = entityStorage.base.get(artifactId)
@@ -176,7 +174,7 @@ open class ArtifactBridge(
 
   override fun setBuildOnMake(enabled: Boolean) {
     val entity = diff.get(artifactId)
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.includeInProjectBuild = enabled
     }
   }
@@ -184,7 +182,7 @@ open class ArtifactBridge(
   override fun setOutputPath(outputPath: String?) {
     val outputUrl = outputPath?.let { VirtualFileUrlManager.getInstance(project).fromPath(it) }
     val entity = diff.get(artifactId)
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.outputUrl = outputUrl
     }
   }
@@ -193,7 +191,7 @@ open class ArtifactBridge(
     val actualArtifactId = artifactId
     val entity = diff.get(actualArtifactId)
     val oldName = actualArtifactId.name
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.name = name
     }
     this.artifactIdRaw = ArtifactId(name)
@@ -212,7 +210,15 @@ open class ArtifactBridge(
     }
     val oldRootElement = entity.rootElement!!
     if (oldRootElement != rootEntity) {
-      diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+      // As we replace old root element with the new one, we should kick builder from old root element
+      if (originalArtifact != null) {
+        diff.elements.getDataByEntity(oldRootElement)?.let { oldRootBridge ->
+          oldRootBridge.forThisAndFullTree {
+            it.updateStorage(originalArtifact.entityStorage)
+          }
+        }
+      }
+      diff.modifyEntity(entity) {
         this.rootElement = rootEntity
       }
       diff.removeEntity(oldRootElement)
@@ -224,8 +230,8 @@ open class ArtifactBridge(
       val entity = diff.get(artifactId)
       val (toBeRemoved, filtered) = entity.customProperties.partition { it.providerType == provider.id }
       if (toBeRemoved.isNotEmpty()) {
-        diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
-          this.customProperties = filtered.asSequence()
+        diff.modifyEntity(entity) {
+          this.customProperties = filtered
         }
         toBeRemoved.forEach { diff.removeEntity(it) }
       }
@@ -241,7 +247,7 @@ open class ArtifactBridge(
         diff.addArtifactPropertiesEntity(entity, provider.id, tag, entity.entitySource)
       }
       else {
-        diff.modifyEntity(ModifiableArtifactPropertiesEntity::class.java, existingProperty) {
+        diff.modifyEntity(existingProperty) {
           this.propertiesXmlTag = tag
         }
       }
@@ -250,7 +256,7 @@ open class ArtifactBridge(
 
   override fun setArtifactType(selected: ArtifactType) {
     val entity = diff.get(artifactId)
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.artifactType = selected.id
     }
 
@@ -273,7 +279,7 @@ open class ArtifactBridge(
   }
 
   companion object {
-    internal fun resetProperties(id: ArtifactId, myDiff: WorkspaceEntityStorageBuilder?) {
+    internal fun resetProperties(id: ArtifactId, myDiff: MutableEntityStorage?) {
       // We process only artifact bridges with builder because this logic is applied to the new created artifacts only.
       // If the artifact entity already exists, we suppose that this artifact already has all custom properties filled.
       val builder = myDiff ?: return

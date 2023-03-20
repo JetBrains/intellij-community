@@ -17,23 +17,26 @@ public class FlipConditionalIntentionTest extends IPPTestCase {
   }
 
   public void testIncomplete() {
-    doTest("class X {\n" +
-           "  void test() {\n" +
-           "    System.out.println(/*_Flip '?:'*/!()?\"foo\":\"bar\");\n" +
-           "  }\n" +
-           "}",
-           "class X {\n" +
-           "  void test() {\n" +
-           "    System.out.println(() ? \"bar\" : \"foo\");\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class X {
+               void test() {
+                 System.out.println(/*_Flip '?:'*/!()?"foo":"bar");
+               }
+             }""",
+           """
+             class X {
+               void test() {
+                 System.out.println(() ? "bar" : "foo");
+               }
+             }""");
   }
 
   public void testIncomplete2() {
-    doTestIntentionNotAvailable("class X {\n" +
-                                "  void test(int a, int b) {\n" +
-                                "    int x = /*_Flip '?:'*/a ? 1 : b ? 2 : ;\n" +
-                                "  }\n" +
-                                "}");
+    doTestIntentionNotAvailable("""
+                                  class X {
+                                    void test(int a, int b) {
+                                      int x = /*_Flip '?:'*/a ? 1 : b ? 2 : ;
+                                    }
+                                  }""");
   }
 }

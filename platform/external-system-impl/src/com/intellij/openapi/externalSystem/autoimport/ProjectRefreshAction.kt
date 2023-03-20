@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -20,7 +21,12 @@ class ProjectRefreshAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val project = e.project ?: return
+    val project = e.project
+    if (project == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
     val systemIds = notificationAware.getSystemIds()
     if (systemIds.isNotEmpty()) {
@@ -30,6 +36,8 @@ class ProjectRefreshAction : DumbAwareAction() {
     }
     e.presentation.isEnabled = notificationAware.isNotificationVisible()
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   @NlsActions.ActionText
   private fun getNotificationText(systemIds: Set<ProjectSystemId>): String {

@@ -14,12 +14,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.workspaceModel.ide.JpsFileEntitySource;
-import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource;
+import com.intellij.workspaceModel.ide.VirtualFileUrls;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeUtils;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.Nls;
@@ -35,9 +36,6 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 import java.io.IOException;
 import java.util.function.Function;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @NotNull
   @Override
@@ -57,8 +55,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryEntry) {
         if (libraryEntry.isModuleLevel()) {
           final Library library = libraryEntry.getLibrary();
           if (library == null ||
@@ -90,8 +87,8 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
 
   private static void updateEntitySource(Module module, Function<? super EntitySource, ? extends EntitySource> updateSource) {
     ModuleBridge moduleBridge = (ModuleBridge)module;
-    WorkspaceEntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
-    ModuleEntity moduleEntity = ModuleManagerBridgeImpl.findModuleEntity(moduleEntityStorage, moduleBridge);
+    EntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
+    ModuleEntity moduleEntity = ModuleBridgeUtils.findModuleEntity(moduleBridge, moduleEntityStorage);
     if (moduleEntity != null) {
       EntitySource entitySource = moduleEntity.getEntitySource();
       ModuleManagerBridgeImpl
@@ -102,7 +99,7 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
   @Override
   public void attach(@NotNull ModuleRootModel model) {
     updateEntitySource(model.getModule(), source -> {
-      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, model.getModule().getProject());
+      VirtualFileUrlManager virtualFileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(model.getModule().getProject());
       String contentRoot = getContentRoot(model);
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
       return new EclipseProjectFile(virtualFileUrlManager.fromUrl(classpathFileUrl), (JpsFileEntitySource)source);

@@ -49,8 +49,7 @@ public abstract class ComponentTreeWatcher {
       return;
     }
 
-    if (parentComponent instanceof Container && processChildren((Container)parentComponent)) {
-      Container container = (Container)parentComponent;
+    if (parentComponent instanceof Container container && processChildren((Container)parentComponent)) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         register(container.getComponent(i));
       }
@@ -68,8 +67,7 @@ public abstract class ComponentTreeWatcher {
 
   private void unregister(Component component) {
 
-    if (component instanceof Container && processChildren((Container)component)) {
-      Container container = (Container)component;
+    if (component instanceof Container container && processChildren((Container)component)) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         unregister(container.getComponent(i));
       }

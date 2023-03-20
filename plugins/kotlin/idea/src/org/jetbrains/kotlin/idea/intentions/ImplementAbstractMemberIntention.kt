@@ -1,14 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.OverrideImplementUtil
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -18,6 +21,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -25,10 +29,12 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementMembersHandler
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
+import org.jetbrains.kotlin.idea.core.overrideImplement.GenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -36,13 +42,11 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchReques
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import javax.swing.ListSelectionModel
 
@@ -59,8 +63,8 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         superMember: CallableMemberDescriptor
     ): CallableMemberDescriptor? {
         val superClass = superMember.containingDeclaration as? ClassDescriptor ?: return null
-        val substitutor = getTypeSubstitutor(superClass.defaultType, subClass.defaultType) ?: TypeSubstitutor.EMPTY
-        val signatureInSubClass = superMember.substitute(substitutor) as? CallableMemberDescriptor ?: return null
+        val substitution = getTypeSubstitution(superClass.defaultType, subClass.defaultType).orEmpty()
+        val signatureInSubClass = superMember.substitute(substitution) as? CallableMemberDescriptor ?: return null
         val subMember = subClass.findCallableMemberBySignature(signatureInSubClass)
         return if (subMember?.kind?.isReal == true) subMember else null
     }
@@ -72,6 +76,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val memberDescriptor = member.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return emptySequence()
 
         fun acceptSubClass(subClass: PsiElement): Boolean {
+            if (!BaseIntentionAction.canModify(subClass)) return false
             val classDescriptor = when (subClass) {
                 is KtLightClass -> subClass.kotlinOrigin?.resolveToDescriptorIfAny()
                 is KtEnumEntry -> subClass.resolveToDescriptorIfAny()
@@ -112,17 +117,16 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val subClassDescriptor = targetClass.resolveToDescriptorIfAny() ?: return
         val superMemberDescriptor = member.resolveToDescriptorIfAny() as? CallableMemberDescriptor ?: return
         val superClassDescriptor = superMemberDescriptor.containingDeclaration as? ClassDescriptor ?: return
-        val substitutor = getTypeSubstitutor(superClassDescriptor.defaultType, subClassDescriptor.defaultType)
-            ?: TypeSubstitutor.EMPTY
-        val descriptorToImplement = superMemberDescriptor.substitute(substitutor) as CallableMemberDescriptor
+        val substitution = getTypeSubstitution(superClassDescriptor.defaultType, subClassDescriptor.defaultType).orEmpty()
+        val descriptorToImplement = superMemberDescriptor.substitute(substitution) as CallableMemberDescriptor
         val chooserObject = OverrideMemberChooserObject.create(
-            member.project,
-            descriptorToImplement,
-            descriptorToImplement,
-            OverrideMemberChooserObject.BodyType.FROM_TEMPLATE,
-            preferConstructorParameters
+          member.project,
+          descriptorToImplement,
+          descriptorToImplement,
+          BodyType.FromTemplate,
+          preferConstructorParameters
         )
-        OverrideImplementMembersHandler.generateMembers(editor, targetClass, listOf(chooserObject), false)
+        GenerateMembersHandler.generateMembers(editor, targetClass, listOf(chooserObject), false)
     }
 
     private fun implementInJavaClass(member: KtNamedDeclaration, targetClass: PsiClass) {
@@ -185,6 +189,14 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
     }
 
     override fun startInWriteAction(): Boolean = false
+
+    override fun checkFile(file: PsiFile): Boolean {
+        return true
+    }
+
+    override fun preparePsiElementForWriteIfNeeded(target: KtNamedDeclaration): Boolean {
+        return true
+    }
 
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")

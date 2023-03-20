@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
@@ -9,8 +9,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
 
-public class TouchbarTest {
-  private static Icon ourTestIcon = IconLoader.getIcon("/modules/edit.png");
+public final class TouchbarTest {
+  private static final Icon ourTestIcon = IconLoader.getIcon("modules/edit.png", TouchbarTest.class.getClassLoader());
 
   public static void main(String[] args) {
     SwingUtilities.invokeLater(() -> _createFrame());
@@ -72,16 +72,6 @@ public class TouchbarTest {
     final Random rnd = new Random(System.currentTimeMillis());
     final int size = rnd.nextInt(maxIndex/2);
     ourIndices = new HashSet<>();
-    // System.out.println("generated test indices:");
-    if (false) {
-      ourIndices.add(4);
-      ourIndices.add(6);
-      ourIndices.add(7);
-      ourIndices.add(11);
-      System.out.println(ourIndices);
-      return ourIndices;
-    }
-
 
     for (int c = 0; c < size; ++c) {
       final int id = rnd.nextInt(maxIndex);

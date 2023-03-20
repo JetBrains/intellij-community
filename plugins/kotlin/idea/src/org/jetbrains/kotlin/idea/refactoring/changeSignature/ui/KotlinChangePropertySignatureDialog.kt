@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
@@ -17,13 +17,14 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.SeparatorFactory
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.selected
 import com.intellij.util.Alarm
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
@@ -42,11 +43,9 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.SwingUtilities
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
-import kotlin.properties.Delegates
 
 class KotlinChangePropertySignatureDialog(
     project: Project,
@@ -94,8 +93,6 @@ class KotlinChangePropertySignatureDialog(
     private val receiverDefaultValueField = createKotlinEditorTextField(receiverDefaultValueCodeFragment, withListener = false)
 
     private var receiverTypeCheckBox: JCheckBox? = null
-    private var receiverTypeLabel: JLabel by Delegates.notNull()
-    private var receiverDefaultValueLabel: JLabel by Delegates.notNull()
 
     private val updateSignatureAlarm = Alarm()
     private val signatureComponent: MethodSignatureComponent = KotlinSignatureComponent("", project).apply {
@@ -133,7 +130,7 @@ class KotlinChangePropertySignatureDialog(
 
     private fun calculateSignature(): String = buildString {
         methodDescriptor.baseDeclaration.safeAs<KtValVarKeywordOwner>()?.valOrVarKeyword?.let {
-            val visibility = visibilityCombo.selectedItem
+            val visibility = if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem else methodDescriptor.visibility
             if (visibility != DescriptorVisibilities.DEFAULT_VISIBILITY) {
                 append("$visibility ")
             }
@@ -158,47 +155,40 @@ class KotlinChangePropertySignatureDialog(
     override fun createCenterPanel(): JComponent = panel {
         if (methodDescriptor.canChangeVisibility()) {
             row(KotlinBundle.message("label.text.visibility")) {
-                visibilityCombo.selectedItem = methodDescriptor.visibility
-                visibilityCombo.addActionListener(signatureUpdater)
-                visibilityCombo()
+                cell(visibilityCombo)
+                    .applyToComponent {
+                        selectedItem = methodDescriptor.visibility
+                        addActionListener(signatureUpdater)
+                    }
             }
         }
 
-        row(KotlinBundle.message("label.text.name")) { nameField(growX) }
-        row(KotlinBundle.message("label.text.type")) { returnTypeField(growX) }
+        row(KotlinBundle.message("label.text.name")) { cell(nameField).align(AlignX.FILL) }
+        row(KotlinBundle.message("label.text.type")) { cell(returnTypeField).align(AlignX.FILL) }
 
         if (methodDescriptor.baseDeclaration is KtProperty) {
-            fun updateReceiverUI(receiverComboBox: JCheckBox) {
-                val withReceiver = receiverComboBox.isSelected
-                receiverTypeLabel.isEnabled = withReceiver
-                receiverTypeField.isEnabled = withReceiver
-                receiverDefaultValueLabel.isEnabled = withReceiver
-                receiverDefaultValueField.isEnabled = withReceiver
+            row {
+                receiverTypeCheckBox = checkBox(KotlinBundle.message("checkbox.text.extension.property"))
+                    .applyToComponent {
+                        addActionListener(signatureUpdater)
+                        isSelected = methodDescriptor.receiver != null
+                    }.component
             }
 
-            val receiverTypeCheckBox = JCheckBox(KotlinBundle.message("checkbox.text.extension.property")).apply {
-                addActionListener { updateReceiverUI(this) }
-                addActionListener(signatureUpdater)
-                isSelected = methodDescriptor.receiver != null
-            }
+            row(KotlinBundle.message("label.text.receiver.type")) {
+                cell(receiverTypeField).align(AlignX.FILL)
+            }.enabledIf(receiverTypeCheckBox!!.selected)
 
-            row { receiverTypeCheckBox() }
-
-            this@KotlinChangePropertySignatureDialog.receiverTypeCheckBox = receiverTypeCheckBox
-
-            receiverTypeLabel = JLabel(KotlinBundle.message("label.text.receiver.type"))
-            row(receiverTypeLabel) { receiverTypeField(growX) }
-
-            receiverDefaultValueLabel = JLabel(KotlinBundle.message("label.text.default.receiver.value"))
             if (methodDescriptor.receiver == null) {
-                row(receiverDefaultValueLabel) { receiverDefaultValueField(growX) }
+                row(KotlinBundle.message("label.text.default.receiver.value")) {
+                    cell(receiverDefaultValueField).align(AlignX.FILL)
+                }.enabledIf(receiverTypeCheckBox!!.selected)
             }
-
-            updateReceiverUI(receiverTypeCheckBox)
         }
 
-        row { SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null)(growX) }
-        row { signatureComponent(grow) }
+        group(RefactoringBundle.message("signature.preview.border.title"), indent = false) {
+            row { cell(signatureComponent).align(AlignX.FILL) }
+        }
 
         updateSignature()
     }
@@ -238,7 +228,7 @@ class KotlinChangePropertySignatureDialog(
             originalDescriptor,
             name,
             returnTypeCodeFragment.getTypeInfo(isCovariant = false, forPreview = false),
-            visibilityCombo.selectedItem as DescriptorVisibility,
+            if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem as DescriptorVisibility else methodDescriptor.visibility,
             emptyList(),
             receiver,
             originalDescriptor.method,

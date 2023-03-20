@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,13 +26,14 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.JavaLoggingUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
@@ -43,9 +46,10 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(loggerClassNames, InspectionGadgetsBundle.message("logger.class.name"),
-                                              InspectionGadgetsBundle.message("choose.logger.class"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("loggerClassNames", InspectionGadgetsBundle.message("logger.class.name"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.logger.class"))));
   }
 
   @Override

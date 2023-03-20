@@ -5,9 +5,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 public class ParameterizedTypeImpl implements ParameterizedType {
   private final Type myRawType;
   private final Type[] myArguments;

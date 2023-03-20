@@ -21,7 +21,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
@@ -32,6 +31,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 
 public class LookupManagerImpl extends LookupManager {
   private static final Logger LOG = Logger.getInstance(LookupManagerImpl.class);
@@ -48,7 +49,9 @@ public class LookupManagerImpl extends LookupManager {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(final Project project, @NotNull final LightweightHint hint, final int flags) {
+      public void hintShown(final Project project,
+                            @NotNull final LightweightHint hint,
+                            final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
@@ -157,7 +160,7 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   private void showDocOnItemChange(@NotNull Lookup lookup, @NotNull Alarm alarm) {
-    if (Registry.is("documentation.v2")) {
+    if (isDocumentationV2Enabled()) {
       return;
     }
     lookup.addLookupListener(new LookupListener() {

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class PersistentMapBasedForwardIndex implements ForwardIndex {
+public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableIndexStore {
   private volatile @NotNull PersistentMap<Integer, ByteArraySequence> myPersistentMap;
   private final @NotNull Path myMapFile;
   private final boolean myUseChunks;
@@ -53,6 +53,11 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   }
 
   @Override
+  public int keysCountApproximately() {
+    return MeasurableIndexStore.keysCountApproximatelyIfPossible(myPersistentMap);
+  }
+
+  @Override
   public void clear() throws IOException {
     myPersistentMap.closeAndClean();
     myPersistentMap = createMap(myMapFile, myUseChunks, myReadOnly, myStorageLockContext);
@@ -65,6 +70,10 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
 
   public boolean containsMapping(int key) throws IOException {
     return myPersistentMap.containsMapping(key);
+  }
+
+  public PersistentMap<Integer, ByteArraySequence> getUnderlyingMap(){
+    return myPersistentMap;
   }
 
   @NotNull

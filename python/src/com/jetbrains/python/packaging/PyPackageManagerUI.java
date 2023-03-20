@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -33,9 +34,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author vlan
- */
 public final class PyPackageManagerUI {
   @NotNull private static final Logger LOG = Logger.getInstance(PyPackageManagerUI.class);
 
@@ -56,14 +54,17 @@ public final class PyPackageManagerUI {
   }
 
   public void installManagement() {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC);
     ProgressManager.getInstance().run(new InstallManagementTask(myProject, mySdk, myListener));
   }
 
   public void install(@Nullable final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC);
     ProgressManager.getInstance().run(new InstallTask(myProject, mySdk, requirements, extraArgs, myListener));
   }
 
   public void uninstall(@NotNull final List<PyPackage> packages) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.EXEC);
     if (checkDependents(packages)) {
       return;
     }
@@ -192,7 +193,7 @@ public final class PyPackageManagerUI {
             req -> ContainerUtil.map(req.getInstallOptions(), option -> Pair.create(option, req.getName()))) : null;
         final List<String> packageManagerArguments = exceptions.stream()
           .flatMap(e -> (e instanceof PyExecutionException) ? ((PyExecutionException)e).getArgs().stream() : null)
-          .collect(Collectors.toList());
+          .toList();
         final String packageNames = requirements != null ? requirements.stream()
           .filter(req -> packageManagerArguments.contains(req.first))
           .map(req -> req.second)
@@ -273,9 +274,6 @@ public final class PyPackageManagerUI {
         indicator.setIndeterminate(true);
         try {
           manager.install(null, myExtraArgs);
-        }
-        catch (RunCanceledByUserException e) {
-          exceptions.add(e);
         }
         catch (ExecutionException e) {
           exceptions.add(e);

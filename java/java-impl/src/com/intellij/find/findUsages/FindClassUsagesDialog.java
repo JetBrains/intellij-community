@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -25,6 +10,9 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.ui.StateRestoringCheckBox;
 
 import javax.swing.*;
+import java.util.List;
+
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
 
 public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsagesOptions> {
   private StateRestoringCheckBox myCbUsages;
@@ -71,17 +59,17 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     options.isCheckDeepInheritance = true;
     options.isIncludeInherited = false;
 
-    FUCounterUsageLogger.getInstance().logEvent(myPsiElement.getProject(), EVENT_LOG_GROUP, "find.class.started", createFeatureUsageData(options));
+    FIND_CLASS_STARTED.log(myPsiElement.getProject(), createFeatureUsageData(options));
   }
 
   @Override
-  protected FeatureUsageData createFeatureUsageData(JavaClassFindUsagesOptions options) {
-    FeatureUsageData data = super.createFeatureUsageData(options);
-    data.addData("methodUsages", options.isMethodsUsages);
-    data.addData("fieldUsages", options.isFieldsUsages);
-    data.addData("derivedUsages", options.isDerivedClasses);
-    data.addData("implementingClasses", options.isImplementingClasses);
-    data.addData("derivedInterfaces", options.isDerivedInterfaces);
+  protected List<EventPair<?>> createFeatureUsageData(JavaClassFindUsagesOptions options) {
+    List<EventPair<?>> data = super.createFeatureUsageData(options);
+    data.add(METHOD_USAGES.with(options.isMethodsUsages));
+    data.add(FIELD_USAGES.with(options.isFieldsUsages));
+    data.add(DERIVED_USAGES.with(options.isDerivedClasses));
+    data.add(IMPLEMENTING_CLASSES.with(options.isImplementingClasses));
+    data.add(DERIVED_INTERFACES.with(options.isDerivedInterfaces));
     return data;
   }
 

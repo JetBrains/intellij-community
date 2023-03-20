@@ -66,7 +66,8 @@ public interface RollbackEnvironment {
    *
    * @param file the file to rollback.
    */
-  void rollbackIfUnchanged(VirtualFile file);
+  default void rollbackIfUnchanged(VirtualFile file) {
+  }
 
   /**
    * @return the list of VCS-specific rollback-flavoured actions to show in Commit dialog

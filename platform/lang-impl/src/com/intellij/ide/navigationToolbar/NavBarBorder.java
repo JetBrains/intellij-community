@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -33,7 +35,9 @@ public class NavBarBorder implements Border {
 
   @Override
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-    if (UISettings.getInstance().getShowMainToolbar()) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() && uiSettings.getNavBarLocation() == NavBarLocation.TOP
+        || !ExperimentalUI.isNewUI() && uiSettings.getShowMainToolbar()) {
       g.setColor(BORDER_COLOR);
       g.fillRect(x, y, width, BW.get());
     }
@@ -41,7 +45,16 @@ public class NavBarBorder implements Border {
 
   @Override
   public Insets getBorderInsets(final Component c) {
-    if (!UISettings.getInstance().getShowMainToolbar()) {
+    var settings = UISettings.getInstance();
+    if (ExperimentalUI.isNewUI() && settings.getShowNavigationBar()) {
+      if (settings.getNavBarLocation() == NavBarLocation.TOP) {
+        return JBUI.CurrentTheme.NavBar.itemInsets();
+      }
+      else {
+        return JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsets();
+      }
+    }
+    else if (!settings.getShowMainToolbar()) {
       return JBUI.insets(1, 0, 1, 4);
     }
     return JBUI.insets(1, 0, 0, 4);

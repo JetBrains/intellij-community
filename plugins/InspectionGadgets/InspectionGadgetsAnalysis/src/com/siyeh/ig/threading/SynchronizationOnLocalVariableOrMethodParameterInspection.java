@@ -22,14 +22,15 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizationOnLocalVariableOrMethodParameterInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean reportLocalVariables = true;
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean reportMethodParameters = true;
 
   @Override
@@ -57,30 +58,27 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
   private class SynchronizationOnLocalVariableVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       if (!reportLocalVariables && !reportMethodParameters) {
         return;
       }
       final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(statement.getLockExpression());
-      if (!(lockExpression instanceof PsiReferenceExpression)) {
+      if (!(lockExpression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lockExpression;
       if (referenceExpression.isQualified()) {
         return;
       }
       boolean localVariable = false;
       final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiLocalVariable) {
-        final PsiLocalVariable variable = (PsiLocalVariable)target;
-        if (!reportLocalVariables || isSynchronizedCollection(variable, referenceExpression)) {
+      if (target instanceof PsiLocalVariable variable) {
+        if (!reportLocalVariables || isSynchronizedCollection(variable, referenceExpression) || isReferencedToField(variable, referenceExpression)) {
           return;
         }
         localVariable = true;
       }
-      else if (target instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)target;
+      else if (target instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
         if (scope instanceof PsiMethod) {
           if (!reportMethodParameters) {
@@ -105,16 +103,37 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       registerError(referenceExpression, Boolean.valueOf(localVariable));
     }
 
-    private PsiElement getScope(PsiElement element) {
+    private static boolean isReferencedToField(PsiLocalVariable variable, PsiReferenceExpression referenceExpression) {
+      PsiElement parent = PsiTreeUtil.findCommonParent(variable, referenceExpression);
+      if (parent == null) {
+        return false;
+      }
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer != null && !isField(initializer)) {
+        return false;
+      }
+      return !VariableAccessUtils.variableIsAssigned(variable, t -> isField(t), parent);
+    }
+
+    private static boolean isField(PsiExpression expression) {
+      if (expression instanceof PsiAssignmentExpression assignmentExpression) {
+        return isField(assignmentExpression.getRExpression());
+      }
+      if (expression instanceof PsiReferenceExpression referenceExpression) {
+        return referenceExpression.resolve() instanceof PsiField;
+      }
+      return false;
+    }
+
+    private static PsiElement getScope(PsiElement element) {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
     }
 
-    private boolean isSynchronizedCollection(@NotNull PsiVariable variable, PsiReferenceExpression referenceExpression) {
+    private static boolean isSynchronizedCollection(@NotNull PsiVariable variable, PsiReferenceExpression referenceExpression) {
       final PsiExpression definition = DeclarationSearchUtils.findDefinition(referenceExpression, variable);
-      if (!(definition instanceof PsiMethodCallExpression)) {
+      if (!(definition instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)definition;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return false;
@@ -130,8 +149,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
 
   private static boolean isEscaping(PsiVariable variable) {
     final PsiElement scope;
-    if (variable instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)variable;
+    if (variable instanceof PsiParameter parameter) {
       scope = parameter.getDeclarationScope();
     }
     else if (variable instanceof PsiLocalVariable) {
@@ -161,7 +179,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (escaping) {
         return;
       }

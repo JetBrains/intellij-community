@@ -2,15 +2,14 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.ui.scale.TestScaleHelper
-import org.intellij.plugins.markdown.editor.tables.TableTestUtils.runWithChangedSettings
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
-  override fun tearDown() {
-    TestScaleHelper.restoreRegistryProperties()
-    super.tearDown()
-  }
-
+  @Test
   fun `test single tab forward`() {
     // language=Markdown
     val before = """
@@ -27,6 +26,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after)
   }
 
+  @Test
   fun `test multiple tabs forward`() {
     // language=Markdown
     val before = """
@@ -43,6 +43,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 2)
   }
 
+  @Test
   fun `test multiple tabs forward to next row`() {
     // language=Markdown
     val before = """
@@ -61,6 +62,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 5)
   }
 
+  @Test
   fun `test single tab backward`() {
     // language=Markdown
     val before = """
@@ -77,6 +79,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, forward = false)
   }
 
+  @Test
   fun `test multiple tabs backward`() {
     // language=Markdown
     val before = """
@@ -93,6 +96,7 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 2, forward = false)
   }
 
+  @Test
   fun `test multiple tabs backward to previous row`() {
     // language=Markdown
     val before = """
@@ -111,17 +115,31 @@ class MarkdownTableTabTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, count = 5, forward = false)
   }
 
+  @Test
+  fun `test multiple tabs forward in empty cells`() {
+    // language=Markdown
+    val before = """
+    ||||
+    |-|-|-|
+    |<caret>|||
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    ||||
+    |-|-|-|
+    |||<caret>|
+    """.trimIndent()
+    doTest(before, after, count = 2)
+  }
+
   private fun doTest(content: String, expected: String, count: Int = 1, forward: Boolean = true) {
-    TestScaleHelper.setRegistryProperty("markdown.tables.editing.support.enable", "true")
-    runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        when {
-          forward -> executeAction("EditorTab")
-          else -> executeAction("EditorUnindentSelection")
-        }
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      when {
+        forward -> executeAction("EditorTab")
+        else -> executeAction("EditorUnindentSelection")
       }
-      checkResultByText(expected)
     }
+    checkResultByText(expected)
   }
 }

@@ -45,10 +45,11 @@ public class ResourceBundleTest extends BasePlatformTestCase {
   }
 
   public void testDifferentPropertiesDontCombinedToResourceBundle() {
-    final PsiFile xmlFile = myFixture.addFileToProject("p.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                             "<!DOCTYPE properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\">\n" +
-                                                             "<properties>\n" +
-                                                             "</properties>");
+    final PsiFile xmlFile = myFixture.addFileToProject("p.xml", """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+      <properties>
+      </properties>""");
     final PsiFile propFile = myFixture.addFileToProject("p.properties", "");
 
     final PropertiesFile xmlPropFile = PropertiesImplUtil.getPropertiesFile(xmlFile);

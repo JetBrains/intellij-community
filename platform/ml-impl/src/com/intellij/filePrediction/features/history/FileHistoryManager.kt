@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.filePrediction.features.history
 
 import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
@@ -11,9 +11,8 @@ data class NextFileProbability(
 )
 
 class FileHistoryManager(private val model: NGramIncrementalModelRunner) {
-
-  fun saveFileHistory(project: Project) {
-    FileHistoryPersistence.saveNGrams(project, model)
+  fun saveFileHistoryAsync(project: Project) {
+    FileHistoryPersistence.saveNGramsAsync(project, model)
   }
 
   fun onFileOpened(fileUrl: String) {

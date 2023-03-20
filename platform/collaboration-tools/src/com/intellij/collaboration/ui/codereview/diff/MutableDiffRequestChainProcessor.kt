@@ -5,7 +5,6 @@ import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
@@ -14,7 +13,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupA
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import kotlin.properties.Delegates
 
-open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
+abstract class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -65,15 +64,17 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
   }
 
   override fun goToNextChange(fromDifferences: Boolean) {
-    currentIndex += 1
-    selectCurrentChange()
-    updateRequest(false, if (fromDifferences) ScrollToPolicy.FIRST_CHANGE else null)
+    goToNextChangeImpl(fromDifferences) {
+      currentIndex += 1
+      selectCurrentChange()
+    }
   }
 
   override fun goToPrevChange(fromDifferences: Boolean) {
-    currentIndex -= 1
-    selectCurrentChange()
-    updateRequest(false, if (fromDifferences) ScrollToPolicy.LAST_CHANGE else null)
+    goToPrevChangeImpl(fromDifferences) {
+      currentIndex -= 1
+      selectCurrentChange()
+    }
   }
 
   override fun isNavigationEnabled(): Boolean {
@@ -85,7 +86,7 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     return MyGoToChangePopupAction()
   }
 
-  open fun selectFilePath(filePath: FilePath) = Unit
+  abstract fun selectFilePath(filePath: FilePath)
 
   private fun selectCurrentChange() {
     val producer = currentRequestProvider as? ChangeDiffRequestChain.Producer ?: return

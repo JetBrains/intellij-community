@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractBreadcrumbsTest : KotlinLightPlatformCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor? = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor? = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected open fun doTest(unused: String) {
         val fileName = fileName()
@@ -25,6 +25,6 @@ abstract class AbstractBreadcrumbsTest : KotlinLightPlatformCodeInsightFixtureTe
         val crumbs = elements.joinToString(separator = "\n") { "  " + provider.getElementInfo(it) }
         val tooltips = elements.joinToString(separator = "\n") { "  " + provider.getElementTooltip(it) }
         val resultText = "Crumbs:\n$crumbs\nTooltips:\n$tooltips"
-        KotlinTestUtils.assertEqualsToFile(testDataFile(File(fileName).nameWithoutExtension + ".txt"), resultText)
+        KotlinTestUtils.assertEqualsToFile(dataFile(File(fileName).nameWithoutExtension + ".txt"), resultText)
     }
 }

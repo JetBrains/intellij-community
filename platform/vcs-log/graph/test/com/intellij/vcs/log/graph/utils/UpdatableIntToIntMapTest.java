@@ -16,12 +16,12 @@
 
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.util.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
@@ -84,7 +84,7 @@ public abstract class UpdatableIntToIntMapTest {
   }
 
 
-  protected abstract UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize);
+  protected abstract UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull Predicate<? super Integer> thisIsVisible, int longSize);
 
   public Tester getTest(int longSize, String initVisibility) {
     final Set<Integer> visibleNodes = parseSet(initVisibility);

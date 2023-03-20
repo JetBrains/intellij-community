@@ -17,9 +17,6 @@ package com.intellij.xml.breadcrumbs;
 
 import java.awt.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class CrumbPresentation {
   public abstract Color getBackgroundColor(boolean selected, boolean hovered, boolean light);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
@@ -68,7 +68,7 @@ class AddToCollectionTransformation(
         get() = 0
 
     override fun generateCode(chainedCallGenerator: ChainedCallGenerator): KtExpression {
-        return KtPsiFactory(loop).createExpressionByPattern(
+        return KtPsiFactory(loop.project).createExpressionByPattern(
             "$0 += $1", targetCollection, chainedCallGenerator.receiver,
             reformat = chainedCallGenerator.reformat
         )

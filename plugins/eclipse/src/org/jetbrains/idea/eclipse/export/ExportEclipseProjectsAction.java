@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.export;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,7 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +35,9 @@ import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExportEclipseProjectsAction.class);
@@ -57,6 +45,11 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -112,7 +105,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
       }
     }
     else {
-      LinkedHashMap<Module, String> module2StorageRoot = new LinkedHashMap<>();
+      Map<Module, String> module2StorageRoot = new LinkedHashMap<>();
       for (Module module : dialog.getSelectedModules()) {
         VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
         String storageRoot = contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);

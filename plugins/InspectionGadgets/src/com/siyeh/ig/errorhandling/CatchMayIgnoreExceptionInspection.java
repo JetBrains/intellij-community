@@ -26,7 +26,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
@@ -53,10 +53,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -66,15 +68,12 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   public boolean m_ignoreNonEmptyCatchBlock = true;
   public boolean m_ignoreUsedIgnoredName = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.comments"),
-                      "m_ignoreCatchBlocksWithComments");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.nonempty"), "m_ignoreNonEmptyCatchBlock");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.ignored.used"), "m_ignoreUsedIgnoredName");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreCatchBlocksWithComments", InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.comments")),
+      checkbox("m_ignoreNonEmptyCatchBlock", InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.nonempty")),
+      checkbox("m_ignoreUsedIgnoredName", InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.ignored.used")));
   }
 
   @NotNull
@@ -82,7 +81,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTryStatement(PsiTryStatement statement) {
+      public void visitTryStatement(@NotNull PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiCatchSection[] catchSections = statement.getCatchSections();
         for (final PsiCatchSection section : catchSections) {
@@ -119,20 +118,20 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           RenameCatchParameterFix renameFix = new RenameCatchParameterFix(generateName(block));
           AddCatchBodyFix addBodyFix = getAddBodyFix(block);
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
-                                 renameFix, addBodyFix, fix);
+                                 LocalQuickFix.notNullElements(renameFix, addBodyFix, fix));
         }
         else if (!VariableAccessUtils.variableIsUsed(parameter, section)) {
           if (!m_ignoreNonEmptyCatchBlock &&
               (!m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(block, PsiComment.class) == null)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"),
-                                   new RenameFix(generateName(block), false, false), fix);
+                                   LocalQuickFix.notNullElements(new RenameFix(generateName(block), false, false), fix));
           }
         }
         else {
           String className = mayIgnoreVMException(parameter, block);
           if (className != null) {
             String message = InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message", className);
-            holder.registerProblem(catchToken, message, fix);
+            holder.registerProblem(catchToken, message, LocalQuickFix.notNullElements(fix));
           }
         }
       }
@@ -153,11 +152,11 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       }
 
       /**
-       * Returns true if given catch block may ignore VM exception such as NullPointerException
+       * Returns class name of important VM exception (like NullPointerException) if given catch block may ignore it
        *
        * @param parameter a catch block parameter
        * @param block     a catch block body
-       * @return true if it's determined that catch block may ignore VM exception
+       * @return class name of important VM exception (like NullPointerException) if given catch block may ignore it
        */
       private @Nullable String mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
         PsiType type = parameter.getType();
@@ -332,8 +331,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiCatchSection)) return;
-      final PsiCatchSection catchSection = (PsiCatchSection)parent;
+      if (!(parent instanceof PsiCatchSection catchSection)) return;
       final PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       final PsiIdentifier identifier = parameter.getNameIdentifier();

@@ -15,47 +15,49 @@ Groovy script
       PsiErrorElement:';', <statement> or new line expected, got 'catch'
         PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
-      Call expression
+      Method call
         Parenthesized expression
           PsiElement(()('(')
           PsiWhiteSpace(' ')
-          Reference expression
-            PsiElement(identifier)('Exception1')
-          PsiErrorElement:')' or ',' expected, got 'e1'
-            <empty list>
+          Call expression
+            Reference expression
+              PsiElement(identifier)('Exception1')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Reference expression
+                PsiElement(identifier)('e1')
+          PsiElement())(')')
         PsiWhiteSpace(' ')
-        Command arguments
-          Reference expression
-            PsiElement(identifier)('e1')
-      PsiErrorElement:',' expected, got ')'
-        PsiElement())(')')
-      PsiWhiteSpace(' ')
-      Block statement
-        Open block
+        Arguments
+          <empty list>
+        Closable block
           PsiElement({)('{')
+          Parameter list
+            <empty list>
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:';', <statement> or new line expected, got 'catch'
         PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
-      Call expression
+      Method call
         Parenthesized expression
           PsiElement(()('(')
           PsiWhiteSpace(' ')
-          Reference expression
-            PsiElement(identifier)('Exception1')
-          PsiErrorElement:')' or ',' expected, got 'e2'
-            <empty list>
+          Call expression
+            Reference expression
+              PsiElement(identifier)('Exception1')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Reference expression
+                PsiElement(identifier)('e2')
+          PsiElement())(')')
         PsiWhiteSpace(' ')
-        Command arguments
-          Reference expression
-            PsiElement(identifier)('e2')
-      PsiErrorElement:',' expected, got ')'
-        PsiElement())(')')
-      PsiWhiteSpace(' ')
-      Block statement
-        Open block
+        Arguments
+          <empty list>
+        Closable block
           PsiElement({)('{')
+          Parameter list
+            <empty list>
           PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:';', <statement> or new line expected, got 'finally'

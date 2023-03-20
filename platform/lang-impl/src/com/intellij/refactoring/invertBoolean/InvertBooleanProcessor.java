@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InvertBooleanProcessor.class);
   private final InvertBooleanDelegate myDelegate;
@@ -127,8 +124,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
     final ArrayList<UsageInfo> extractedUsages = new ArrayList<>(usages.length);
     for (UsageInfo usage : usages) {
-      if (usage instanceof MoveRenameUsageInfo) {
-        MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
+      if (usage instanceof MoveRenameUsageInfo usageInfo) {
         if (element.equals(usageInfo.getReferencedElement())) {
           extractedUsages.add(usageInfo);
         }

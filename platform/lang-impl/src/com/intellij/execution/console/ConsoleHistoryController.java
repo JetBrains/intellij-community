@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +44,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -60,6 +60,7 @@ import java.util.*;
  */
 public class ConsoleHistoryController implements Disposable {
   private static final Logger LOG = Logger.getInstance(ConsoleHistoryController.class);
+  private static final char P = 'P';
 
   @Service
   private static final class ControllerRegistry implements SettingsSavingComponentJavaAdapter {
@@ -81,7 +82,7 @@ public class ConsoleHistoryController implements Disposable {
   private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
   private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
-  private final AnAction myBrowseHistory = new MyBrowseAction();
+  private final AnAction myBrowseHistory = createBrowseAction();
   private boolean myMultiline;
   private ModelHelper myHelper;
   private long myLastSaveStamp;
@@ -89,8 +90,7 @@ public class ConsoleHistoryController implements Disposable {
   /**
    * @deprecated use {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView)} or {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView, ConsoleHistoryModel)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
     this(new ConsoleRootType(type, null) { }, persistenceId, console);
   }
@@ -244,17 +244,17 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   protected void setConsoleText(final Entry command, final boolean storeUserText, final boolean regularMode) {
-    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.text())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     WriteCommandAction.writeCommandAction(myConsole.getProject()).run(() -> {
       if (storeUserText) {
         String text = document.getText();
-        if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
+        if (Comparing.equal(command.text(), text) && myHelper.getContent() != null) return;
         myHelper.setContent(text);
         myHelper.getModel().setContent(text);
       }
-      CharSequence text = Objects.requireNonNullElse(command.getText(), "");
+      CharSequence text = Objects.requireNonNullElse(command.text(), "");
       int offset;
       if (regularMode) {
         if (myMultiline) {
@@ -262,7 +262,7 @@ public class ConsoleHistoryController implements Disposable {
         }
         else {
           document.setText(text);
-          offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
+          offset = command.offset() == -1 ? document.getTextLength() : command.offset();
         }
       }
       else {
@@ -294,7 +294,6 @@ public class ConsoleHistoryController implements Disposable {
     MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
       myUpDownKeystrokes = upDownKeystrokes;
-      getTemplatePresentation().setVisible(false);
     }
 
     @Override
@@ -307,10 +306,15 @@ public class ConsoleHistoryController implements Disposable {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
       //enabled &= getModel().hasHistory(myNext);
       e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(false);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     private boolean isUpDownKey(@NotNull AnActionEvent e) {
@@ -342,7 +346,11 @@ public class ConsoleHistoryController implements Disposable {
 
 
 
-  private class MyBrowseAction extends DumbAwareAction {
+  protected BrowseAction createBrowseAction() {
+    return new BrowseAction();
+  }
+
+  protected class BrowseAction extends DumbAwareAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -351,12 +359,17 @@ public class ConsoleHistoryController implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String title = LangBundle.message("dialog.title.history", myConsole.getTitle());
+      String title = getTitle();
       final ContentChooser<String> chooser = new ContentChooser<>(myConsole.getProject(), title, true, true) {
         {
           setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
-          setOKButtonMnemonic('P');
+          setOKButtonMnemonic(P);
           setCancelButtonText(CommonBundle.getCloseButtonText());
           setUseNumbering(false);
         }
@@ -409,6 +422,13 @@ public class ConsoleHistoryController implements Disposable {
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
       }
+    }
+
+
+    @NotNull
+    @NlsContexts.DialogTitle
+    protected String getTitle() {
+      return LangBundle.message("dialog.title.history", myConsole.getTitle());
     }
   }
 

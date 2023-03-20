@@ -7,42 +7,41 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
-import com.intellij.openapi.roots.libraries.LibraryKind
+import com.intellij.openapi.roots.libraries.LibraryKindRegistry
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.toExternalSource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.getCustomProperties
 import java.io.StringReader
 
 class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
-  val storage: WorkspaceEntityStorage,
+  val storage: EntityStorage,
   val libraryTable: LibraryTable,
   val parentDisposable: Disposable) {
   private val roots = collectFiles(libraryEntity)
   private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) {
-    FileContainerDescription(libraryEntity.excludedRoots,
-                             emptyList())
+    FileContainerDescription(libraryEntity.excludedRoots.map { it.url }, emptyList())
   }
   else null
 
   private val kindProperties by lazy {
-    val customProperties = libraryEntity.getCustomProperties()
+    val customProperties = libraryEntity.libraryProperties
     val k = customProperties?.libraryType?.let {
-      LibraryKind.findById(it) ?: UnknownLibraryKind.getOrCreate(it)
+      LibraryKindRegistry.getInstance().findKindById(it) ?: UnknownLibraryKind.getOrCreate(it)
     } as? PersistentLibraryKind<*>
     val p = loadProperties(k, customProperties)
     k to p
@@ -64,7 +63,7 @@ class LibraryStateSnapshot(
   }
 
   val name: String?
-    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.persistentId())
+    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.symbolicId)
 
   val module: Module?
     get() = (libraryTable as? ModuleLibraryTableBridge)?.module

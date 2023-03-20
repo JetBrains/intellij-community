@@ -205,7 +205,7 @@ public final class DynamicToolWindowWrapper {
 
     myTreeTable = new MyTreeTable(myTreeTableModel);
 
-    new TreeTableSpeedSearch(myTreeTable, o -> {
+    TreeTableSpeedSearch.installOn(myTreeTable, o -> {
       final Object node = o.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)node).getUserObject();
@@ -258,15 +258,14 @@ public final class DynamicToolWindowWrapper {
 
         String newTypeValue = ((MyPropertyTypeCellEditor)e.getSource()).getCellEditorValue();
 
-        if (newTypeValue == null || tree == null) {
+        if (tree == null) {
           myTreeTable.editingStopped(e);
           return;
         }
 
         try {
           final PsiType type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(newTypeValue, null);
-          String canonical = type.getCanonicalText();
-          if (canonical != null) newTypeValue = canonical;
+          newTypeValue = type.getCanonicalText();
         }
         catch (IncorrectOperationException ex) {
           //do nothing in case bad string is entered
@@ -287,12 +286,11 @@ public final class DynamicToolWindowWrapper {
         final Object editingPropertyObject = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), CLASS_OR_ELEMENT_NAME_COLUMN);
         final Object editingClassObject = myTreeTable.getValueAt(tree.getRowForPath(editingClassPath), CLASS_OR_ELEMENT_NAME_COLUMN);
 
-        if (!(editingPropertyObject instanceof DItemElement) || !(editingClassObject instanceof DClassElement)) {
+        if (!(editingPropertyObject instanceof DItemElement dynamicElement) || !(editingClassObject instanceof DClassElement)) {
           myTreeTable.editingStopped(e);
           return;
         }
 
-        final DItemElement dynamicElement = (DItemElement)editingPropertyObject;
         final String name = dynamicElement.getName();
         final String className = ((DClassElement)editingClassObject).getName();
 
@@ -408,11 +406,8 @@ public final class DynamicToolWindowWrapper {
         final Object classRow = parent.getLastPathComponent();
         final Object dynamicRow = selectionPath.getLastPathComponent();
 
-        if (!(classRow instanceof DefaultMutableTreeNode)) return;
-        if (!(dynamicRow instanceof DefaultMutableTreeNode)) return;
-
-        final DefaultMutableTreeNode dynamicItemNode = (DefaultMutableTreeNode)dynamicRow;
-        final DefaultMutableTreeNode classNode = (DefaultMutableTreeNode)classRow;
+        if (!(classRow instanceof DefaultMutableTreeNode classNode)) return;
+        if (!(dynamicRow instanceof DefaultMutableTreeNode dynamicItemNode)) return;
 
         final boolean removeClass = classNode.getChildCount() == 1;
         if (!removeDynamicElement(dynamicItemNode, isShowDialog, rowsCount)) return;
@@ -564,8 +559,7 @@ public final class DynamicToolWindowWrapper {
         append(classShortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
 
-      if (value instanceof DItemElement) {
-        final DItemElement itemElement = ((DItemElement)value);
+      if (value instanceof DItemElement itemElement) {
         final String name = itemElement.getName();
 
         appendName(name);
@@ -638,17 +632,17 @@ public final class DynamicToolWindowWrapper {
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return getSelectedElement();
-      }
-      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-        final PsiElement element = getSelectedElement();
-
-        if (element == null) return null;
-        return element.getContainingFile();
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        TreePath path = getTree().getSelectionPath();
+        return path == null ? null : (DataProvider)slowId -> getSlowData(slowId, path);
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new DeleteProvider() {
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+
           @Override
           public void deleteElement(@NotNull DataContext dataContext) {
             deleteRow();
@@ -664,19 +658,25 @@ public final class DynamicToolWindowWrapper {
       return null;
     }
 
-    private PsiElement getSelectedElement() {
-      final TreePath path = getTree().getSelectionPath();
+    private @Nullable Object getSlowData(@NotNull String dataId, @NotNull TreePath path) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getElementFromPath(path);
+      }
+      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+        PsiElement element = getElementFromPath(path);
+        return element == null ? null : element.getContainingFile();
+      }
+      return null;
+    }
 
-      if (path == null) return null;
+    private @Nullable PsiElement getElementFromPath(@NotNull TreePath path) {
       final Object selectedObject = path.getLastPathComponent();
-      if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
+      if (!(selectedObject instanceof DefaultMutableTreeNode selectedNode)) return null;
 
-      final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selectedObject;
       final Object userObject = selectedNode.getUserObject();
       if (!(userObject instanceof DNamedElement)) return null;
 
-      if (userObject instanceof DClassElement) {
-        final DClassElement classElement = (DClassElement)userObject;
+      if (userObject instanceof DClassElement classElement) {
 
         try {
           PsiType type  = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(classElement.getName(), null);
@@ -692,8 +692,7 @@ public final class DynamicToolWindowWrapper {
         catch (IncorrectOperationException e) {
           return null;
         }
-      } else if (userObject instanceof DItemElement) {
-        final DItemElement itemElement = (DItemElement)userObject;
+      } else if (userObject instanceof DItemElement itemElement) {
 
         final TreeNode parentNode = selectedNode.getParent();
         if (!(parentNode instanceof DefaultMutableTreeNode)) return null;

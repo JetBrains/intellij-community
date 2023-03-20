@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -20,11 +20,13 @@ import java.util.function.Predicate;
 
 abstract class UndoRedo {
   protected final UndoManagerImpl myManager;
+  protected final UndoManagerImpl.ClientState myState;
   protected final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
-  protected UndoRedo(UndoManagerImpl manager, FileEditor editor) {
-    myManager = manager;
+  protected UndoRedo(UndoManagerImpl.ClientState state, FileEditor editor) {
+    myState = state;
+    myManager = state.myManager;
     myEditor = editor;
     myUndoableGroup = getLastAction();
   }
@@ -171,10 +173,9 @@ abstract class UndoRedo {
   private static Map<DocumentReference, Set<ActionChangeRange>> decompose(@NotNull UndoableGroup group, boolean isRedo) {
     Map<DocumentReference, Set<ActionChangeRange>> reference2Ranges = new HashMap<>();
     for (UndoableAction action : group.getActions()) {
-      if (!(action instanceof AdjustableUndoableAction)) {
+      if (!(action instanceof AdjustableUndoableAction adjustable)) {
         continue;
       }
-      AdjustableUndoableAction adjustable = (AdjustableUndoableAction)action;
       DocumentReference[] affected = adjustable.getAffectedDocuments();
       if (affected == null) {
         continue;
@@ -200,9 +201,9 @@ abstract class UndoRedo {
       if (refs == null) continue;
 
       for (DocumentReference ref : refs) {
-        if (ref instanceof DocumentReferenceByDocument) {
-          Document doc = ref.getDocument();
-          if (doc != null && !doc.isWritable()) readOnlyDocs.add(doc);
+        if (ref instanceof DocumentReferenceByDocument docRef) {
+          Document doc = docRef.getDocument();
+          if (!doc.isWritable()) readOnlyDocs.add(doc);
         }
       }
     }
@@ -243,7 +244,7 @@ abstract class UndoRedo {
     doWithReportHandler(handler -> handler.reportException(myManager.getProject(), e, !isRedo()));
   }
 
-  private static void doWithReportHandler(Predicate<UndoReportHandler> condition) {
+  private static void doWithReportHandler(Predicate<? super UndoReportHandler> condition) {
     for (var handler : UndoReportHandler.EP_NAME.getExtensionList()) {
       if (condition.test(handler)) {
         return;

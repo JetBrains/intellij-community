@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.TestApplicationManagerKt;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.tests.DynamicExtensionPointsTester;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +52,8 @@ public class _LastInSuiteTest extends TestCase {
 
   public void testDynamicExtensions() {
     boolean testDynamicExtensions = SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
-    Assume.assumeTrue("intellij.test.all.dynamic.extension.points is off, no dynamic extensions to test", !DynamicExtensionPointsTester.EXTENSION_POINTS_WHITE_LIST.isEmpty() || testDynamicExtensions);
+    Assume.assumeTrue("intellij.test.all.dynamic.extension.points is off, no dynamic extensions to test",
+                      !DynamicExtensionPointsTester.EXTENSION_POINTS_WHITE_LIST.isEmpty() || testDynamicExtensions);
     DynamicExtensionPointsTester.checkDynamicExtensionPoints(_LastInSuiteTest::getTestName);
   }
 
@@ -65,17 +68,18 @@ public class _LastInSuiteTest extends TestCase {
       return;
     }
 
-    TestApplicationManagerKt.disposeApplicationAndCheckForLeaks();
+    TestApplicationManager.disposeApplicationAndCheckForLeaks();
   }
 
-  // should be run as late as possible to give Languages chance to instantiate as many of them as possible
-  public void testLanguagesHaveDifferentDisplayNames() throws ClassNotFoundException {
+  // should be run as late as possible to give the Languages the chance to instantiate as many of them as possible
+  public void testLanguagesHaveDifferentDisplayNames() {
     Collection<Language> languages = Language.getRegisteredLanguages();
     Map<String, Language> displayNames = new HashMap<>();
     for (Language language : languages) {
       Language prev = displayNames.put(language.getDisplayName(), language);
       if (prev != null) {
-        fail(prev + " ("+prev.getClass()+") and " + language +" ("+language.getClass()+") both have identical display name: "+language.getDisplayName());
+        fail("The languages '%s' (%s) and '%s' (%s) have the same display name '%s'"
+               .formatted(prev, prev.getClass().getName(), language, language.getClass().getName(), language.getDisplayName()));
       }
     }
   }
@@ -84,8 +88,16 @@ public class _LastInSuiteTest extends TestCase {
     long started = _FirstInSuiteTest.getSuiteStartTime();
     if (started != 0) {
       long testSuiteDuration = System.nanoTime() - started;
-      System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']%n", testSuiteDuration / 1000000);
+      System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']%n", testSuiteDuration / 1_000_000);
     }
     LightPlatformTestCase.reportTestExecutionStatistics();
+  }
+
+  public void testFilenameIndexConsistency() {
+    FSRecords.checkFilenameIndexConsistency();
+  }
+
+  public void testGlobalState() {
+    GlobalState.checkSystemStreams();
   }
 }

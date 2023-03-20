@@ -16,6 +16,7 @@ import java.util.List;
 public final class UIPluginGroup {
   public Component panel;
   public List<ListPluginComponent> plugins = new ArrayList<>();
+  public boolean excluded;
 
   public @Nullable ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
     return findComponent(descriptor.getPluginId());

@@ -6,19 +6,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 @Internal
 public final class UsageNodePresentation {
 
   private final @Nullable Icon myIcon;
+  private final @Nullable Color myBackgroundColor;
   private final @NotNull Object myText;
 
   public UsageNodePresentation(
     @Nullable Icon icon,
-    @NotNull TextChunk @NotNull [] text
-  ) {
+    @NotNull TextChunk @NotNull [] text,
+    @Nullable Color color) {
     myIcon = icon;
     myText = TextChunk.compact(text);
+    myBackgroundColor = color;
   }
 
   public @Nullable Icon getIcon() {
@@ -27,5 +30,9 @@ public final class UsageNodePresentation {
 
   public @NotNull TextChunk @NotNull [] getText() {
     return TextChunk.inflate(myText);
+  }
+
+  public @Nullable Color getBackgroundColor() {
+    return myBackgroundColor;
   }
 }

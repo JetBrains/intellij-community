@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.local;
 
 import com.intellij.openapi.components.Service;
@@ -16,28 +16,53 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-@Service
+@Service(Service.Level.APP)
 public final class ActionsGlobalSummaryManager {
-
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
+  private static final int DEFAULT_STATISTICS_VERSION = 3;
+  private static final int UPDATED_STATISTICS_VERSION = 4;
+
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
+  private final Map<String, ActionGlobalUsageInfo> myUpdatedStatisticsMap;
+
   private final ActionsGlobalTotalSummary mySummary;
+  private final ActionsGlobalTotalSummary myUpdatedSummary;
+
 
   public ActionsGlobalSummaryManager() {
-    myStatisticsMap = loadStatistics();
+    myStatisticsMap = loadStatistics("/statistics/actionsUsagesV3.csv");
+    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV4.csv");
     mySummary = calculateTotalSummary(myStatisticsMap);
+    myUpdatedSummary = calculateTotalSummary(myUpdatedStatisticsMap);
   }
+
+  public static int getDefaultStatisticsVersion() { return DEFAULT_STATISTICS_VERSION; }
+
+  /**
+   * @return Version of the global statistics used for an experimental ML model. Returns -1 if no experimental model is used.
+   */
+  public static int getUpdatedStatisticsVersion() { return UPDATED_STATISTICS_VERSION; }
 
   @Nullable
   public ActionGlobalUsageInfo getActionStatistics(String actionID) {
     return myStatisticsMap.get(actionID);
   }
 
+  @Nullable
+  public ActionGlobalUsageInfo getUpdatedActionStatistics(String actionID) {
+    return myUpdatedStatisticsMap.get(actionID);
+  }
+
   @NotNull
   public ActionsGlobalTotalSummary getTotalSummary() {
     return mySummary;
+  }
+
+  @NotNull
+  public ActionsGlobalTotalSummary getUpdatedTotalSummary() {
+    return myUpdatedSummary;
   }
 
   private final static String DEFAULT_SEPARATOR = ",";
@@ -53,9 +78,9 @@ public final class ActionsGlobalSummaryManager {
     return new ActionsGlobalTotalSummary(maxCount, minCount);
   }
 
-  private Map<String, ActionGlobalUsageInfo> loadStatistics() {
+  private Map<String, ActionGlobalUsageInfo> loadStatistics(String filename) {
     Map<String, ActionGlobalUsageInfo> res = new HashMap<>();
-    try (InputStream stream = getClass().getResourceAsStream("/statistics/actionsUsages.csv");
+    try (InputStream stream = getClass().getResourceAsStream(filename);
          BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       String line = reader.readLine();
       while (line != null) {
@@ -77,21 +102,6 @@ public final class ActionsGlobalSummaryManager {
     return res;
   }
 
-  public static class ActionsGlobalTotalSummary {
-    private final long maxUsageCount;
-    private final long minUsageCount;
-
-    public ActionsGlobalTotalSummary(long maxUsageCount, long minUsageCount) {
-      this.maxUsageCount = maxUsageCount;
-      this.minUsageCount = minUsageCount;
-    }
-
-    public long getMaxUsageCount() {
-      return maxUsageCount;
-    }
-
-    public long getMinUsageCount() {
-      return minUsageCount;
-    }
+  public record ActionsGlobalTotalSummary(long maxUsageCount, long minUsageCount) {
   }
 }

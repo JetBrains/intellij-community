@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Predicate;
 
 public final class CommitIdByStringCondition implements Predicate<CommitId> {
-  @NotNull private final String myHashString;
+  private final @NotNull String myHashString;
 
   public CommitIdByStringCondition(@NotNull String hashString) {
     myHashString = hashString;

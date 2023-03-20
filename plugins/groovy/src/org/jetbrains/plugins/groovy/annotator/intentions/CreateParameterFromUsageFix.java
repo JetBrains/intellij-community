@@ -1,13 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
@@ -15,8 +14,10 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -43,6 +44,19 @@ public class CreateParameterFromUsageFix extends Intention implements MethodOrCl
 
   public CreateParameterFromUsageFix(GrReferenceExpression ref) {
     myName = ref.getReferenceName();
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiMethod method = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiMethod.class);
+    if (method == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    PsiMethod copy = ((PsiMethod)method.copy());
+    PsiParameterList list = copy.getParameterList();
+    list.add(GroovyPsiElementFactory.getInstance(project).createParameter(myName, PsiType.getJavaLangObject(PsiManager.getInstance(project), file.getResolveScope())));
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, method.getText(), copy.getText());
   }
 
   @NotNull

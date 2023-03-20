@@ -26,25 +26,26 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
 
     importProject(
       withGradleIdeaExtPlugin(
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    compiler {\n" +
-        "      resourcePatterns '!*.java;!*.class'\n" +
-        "      clearOutputDirectory false\n" +
-        "      addNotNullAssertions false\n" +
-        "      autoShowFirstErrorInEditor false\n" +
-        "      displayNotificationPopup false\n" +
-        "      enableAutomake false\n" +
-        "      parallelCompilation true\n" +
-        "      rebuildModuleOnDependencyChange false\n" +
-        "      javac {\n" +
-        "        preferTargetJDKCompiler false\n" +
-        "        javacAdditionalOptions '-Dkey=val'\n" +
-        "        generateNoWarnings true\n" +
-        "      }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          idea {
+            project.settings {
+              compiler {
+                resourcePatterns '!*.java;!*.class'
+                clearOutputDirectory false
+                addNotNullAssertions false
+                autoShowFirstErrorInEditor false
+                displayNotificationPopup false
+                enableAutomake false
+                parallelCompilation true
+                rebuildModuleOnDependencyChange false
+                javac {
+                  preferTargetJDKCompiler false
+                  javacAdditionalOptions '-Dkey=val'
+                  generateNoWarnings true
+                }
+              }
+            }
+          }""")
     );
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
@@ -69,16 +70,17 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   public void testArtifactsSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    ideArtifacts {\n" +
-        "      myArt {\n" +
-        "         file(\"build.gradle\")\n" +
-        "      }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}"
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              ideArtifacts {
+                myArt {
+                   file("build.gradle")
+                }
+              }
+            }
+          }"""
       )
     );
     importProject();

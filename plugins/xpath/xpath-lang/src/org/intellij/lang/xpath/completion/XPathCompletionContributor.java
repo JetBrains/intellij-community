@@ -162,8 +162,7 @@ public class XPathCompletionContributor extends CompletionContributor {
       prefix = "$" + prefix;
     }
 
-    if (element.getParent() instanceof XPathNodeTest) {
-      final XPathNodeTest nodeTest = ((XPathNodeTest)element.getParent());
+    if (element.getParent() instanceof XPathNodeTest nodeTest) {
       if (nodeTest.isNameTest()) {
         final PrefixedName prefixedName = nodeTest.getQName();
         assert prefixedName != null;

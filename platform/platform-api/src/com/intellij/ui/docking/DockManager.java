@@ -4,7 +4,6 @@ package com.intellij.ui.docking;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +33,8 @@ public abstract class DockManager {
   /**
    * @deprecated use {@link #getContainerFor(Component, Predicate)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public abstract @Nullable DockContainer getContainerFor(Component c);
 
-  public abstract @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<DockContainer> filter);
+  public abstract @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<? super DockContainer> filter);
 }

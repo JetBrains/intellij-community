@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -41,16 +41,17 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
+public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor {
   protected final Project myProject;
 
   NodeRenderer myRenderer = null;
@@ -104,26 +105,25 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Override
   public boolean isArray() {
     assertValueReady();
-    return myValue instanceof ArrayReference; 
+    return myValue instanceof ArrayReference;
   }
 
 
-  
   public boolean isDirty() {
     assertValueReady();
-    return myIsDirty; 
+    return myIsDirty;
   }
-  
+
   @Override
   public boolean isLvalue() {
     assertValueReady();
-    return myIsLvalue; 
+    return myIsLvalue;
   }
-  
+
   @Override
   public boolean isNull() {
     assertValueReady();
-    return myValue == null; 
+    return myValue == null;
   }
 
   @Override
@@ -135,14 +135,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Override
   public boolean isPrimitive() {
     assertValueReady();
-    return myValue instanceof PrimitiveValue; 
+    return myValue instanceof PrimitiveValue;
   }
 
   public boolean isEnumConstant() {
     assertValueReady();
     return myValue instanceof ObjectReference && isEnumConstant(((ObjectReference)myValue));
   }
-  
+
   public boolean isValueValid() {
     return myValueException == null;
   }
@@ -166,7 +166,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
       final EvaluationContextImpl evalContext = myStoredEvaluationContext;
       if (evalContext != null && !evalContext.getSuspendContext().isResumed() &&
-        myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
+          myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
 
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
@@ -192,9 +192,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     assertValueReady();
-    return myValue; 
+    return myValue;
   }
-  
+
   @Override
   public boolean isExpandable() {
     return myIsExpandable;
@@ -210,7 +210,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     try {
       value = calcValue(evaluationContext);
 
-      if(!myIsNew) {
+      if (!myIsNew) {
         try {
           if (myValue instanceof DoubleValue && Double.isNaN(((DoubleValue)myValue).doubleValue())) {
             myIsDirty = !(value instanceof DoubleValue);
@@ -276,9 +276,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         Value trace = invokeExceptionGetStackTrace(exceptionObj, evaluationContext);
 
         // print to console as well
-        if (printToConsole && trace instanceof ArrayReference) {
+        if (printToConsole && trace instanceof ArrayReference traceArray) {
           DebugProcessImpl process = evaluationContext.getDebugProcess();
-          ArrayReference traceArray = (ArrayReference)trace;
           process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
           for (Value stackElement : traceArray.getValues()) {
             process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
@@ -395,7 +394,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     // only call labelChanged when we have expandable value
-    expandableFuture.whenComplete((res, ex) ->  {
+    expandableFuture.whenComplete((res, ex) -> {
       if (ex == null) {
         myIsExpandable = res;
       }
@@ -493,15 +492,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
-    if (descriptor instanceof ValueDescriptorImpl) {
-      ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
+    if (descriptor instanceof ValueDescriptorImpl valueDescriptor) {
       myRenderer = valueDescriptor.myRenderer;
     }
     super.displayAs(descriptor);
   }
 
   public Renderer getLastRenderer() {
-    return myRenderer != null ? myRenderer: myAutoRenderer;
+    return myRenderer != null ? myRenderer : myAutoRenderer;
   }
 
   public Renderer getLastLabelRenderer() {
@@ -575,30 +573,37 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       });
     }
 
-    return ReadAction.nonBlocking(() -> {
-      PsiElement res = null;
-      try {
-        res = getDescriptorEvaluation(context);
-      }
-      catch (NeedMarkException e) {
-        XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
-        if (markers != null) {
-          ValueMarkup existing = markers.getMarkup(value);
-          String name;
-          if (existing != null) {
-            name = existing.getText();
-          }
-          else {
-            name = e.getMarkName();
-            markers.markValue(value, new ValueMarkup(name, new JBColor(0, 0), null));
-          }
-          res = JavaPsiFacade.getElementFactory(myProject)
-            .createExpressionFromText(name + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
-                                      PositionUtil.getContextElement(context));
+    Promise<PsiElement> res;
+    try {
+      PsiElement result = ReadAction.nonBlocking(() -> getDescriptorEvaluation(context)).executeSynchronously();
+      res = Promises.resolvedPromise(result);
+    }
+    catch (Exception wrapper) {
+      if (!(wrapper.getCause() instanceof EvaluateException)) throw wrapper;
+      if (!(wrapper.getCause() instanceof NeedMarkException e)) throw (EvaluateException)wrapper.getCause();
+
+      XValueMarkers<?, ?> markers = DebuggerUtilsImpl.getValueMarkers(context.getDebugProcess());
+      if (markers != null) {
+        ValueMarkup existing = markers.getMarkup(value);
+        String markName;
+        Promise<Object> promise;
+        if (existing != null) {
+          markName = existing.getText();
+          promise = Promises.resolvedPromise();
         }
+        else {
+          markName = e.getMarkName();
+          promise = markers.markValue(value, new ValueMarkup(markName, new JBColor(0, 0), null));
+        }
+        res = promise.then(__ -> ReadAction.nonBlocking(() -> JavaPsiFacade.getElementFactory(myProject)
+          .createExpressionFromText(markName + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
+                                    PositionUtil.getContextElement(context))).executeSynchronously());
       }
-      return CompletableFuture.completedFuture(res);
-    }).executeSynchronously();
+      else {
+        res = Promises.resolvedPromise(null);
+      }
+    }
+    return Promises.asCompletableFuture(res);
   }
 
   protected static class NeedMarkException extends EvaluateException {
@@ -685,7 +690,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       if (classRenderer.SHOW_OBJECT_ID) {
         buf.append('@');
-        if(ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
           buf.append("uniqueID");
         }
         else {
@@ -697,7 +702,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     if (objRef instanceof ArrayReference) {
       int idx = buf.indexOf("[");
-      if(idx >= 0) {
+      if (idx >= 0) {
         if (labelListener == null || descriptor == null) {
           buf.insert(idx + 1, ((ArrayReference)objRef).length());
         }
@@ -724,12 +729,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     try {
       Type type = objRef.type();
       return type instanceof ClassType && ((ClassType)type).isEnum();
-    } catch (ObjectCollectedException ignored) {}
+    }
+    catch (ObjectCollectedException ignored) {
+    }
     return false;
   }
 
   public boolean canSetValue() {
-    return myValueReady && !myIsSynthetic && isLvalue();
+    return myValueReady && isLvalue();
   }
 
   public XValueModifier getModifier(JavaValue value) {
@@ -764,37 +771,6 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     super.clear();
     setValueLabel("");
     myIsExpandable = false;
-  }
-
-  @Override
-  @Nullable
-  public ValueMarkup getMarkup(final DebugProcess debugProcess) {
-    final Value value = getValue();
-    if (value instanceof ObjectReference) {
-      final ObjectReference objRef = (ObjectReference)value;
-      final Map<ObjectReference, ValueMarkup> map = getMarkupMap(debugProcess);
-      if (map != null) {
-        return map.get(objRef);
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public void setMarkup(final DebugProcess debugProcess, @Nullable final ValueMarkup markup) {
-    final Value value = getValue();
-    if (value instanceof ObjectReference) {
-      final Map<ObjectReference, ValueMarkup> map = getMarkupMap(debugProcess);
-      if (map != null) {
-        final ObjectReference objRef = (ObjectReference)value;
-        if (markup != null) {
-          map.put(objRef, markup);
-        }
-        else {
-          map.remove(objRef);
-        }
-      }
-    }
   }
 
   public boolean canMark() {

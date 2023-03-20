@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.IconLoader;
@@ -33,7 +32,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public class SplitButtonAction extends ActionGroup implements CustomComponentAction, UpdateInBackground {
+public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
   private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
@@ -47,8 +46,8 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
   }
 
   @Override
-  public boolean isUpdateInBackground() {
-    return UpdateInBackground.isUpdateInBackground(myActionGroup);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myActionGroup.getActionUpdateThread();
   }
 
   @Override
@@ -61,7 +60,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     if (presentation.isVisible()) {
       AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
       if (action != null) {
-        Presentation actionPresentation = Utils.getOrCreateUpdateSession(e).presentation(action);
+        Presentation actionPresentation = e.getUpdateSession().presentation(action);
         presentation.copyFrom(actionPresentation, splitButton);
         if (splitButton != null) {
           boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
@@ -77,7 +76,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
   @Nullable
   private AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
-    UpdateSession session = Utils.getOrCreateUpdateSession(e);
+    UpdateSession session = e.getUpdateSession();
     var children = session.children(myActionGroup);
     var firstEnabled = ContainerUtil.find(children, a -> session.presentation(a).isEnabled());
     return firstEnabled != null ? firstEnabled : ContainerUtil.getFirstItem(children);

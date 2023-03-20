@@ -21,7 +21,6 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -35,6 +34,7 @@ import com.intellij.util.PatternValuesIndex;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils.InjectionInfo;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
@@ -54,11 +54,13 @@ import java.util.regex.Pattern;
  * It also tries to deal with the "glued token" problem by removing or adding whitespace to the prefix/suffix.
  */
 final class XmlLanguageInjector implements MultiHostInjector {
-  private final Configuration myConfiguration;
-  private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
+  record XmlIndex(long modCount, @Nullable Pattern pattern, @NotNull Collection<String> strings) {}
+  private volatile XmlIndex myXmlIndex;
+  private final Project myProject;
 
+  @SuppressWarnings("PublicConstructorInNonPublicClass")
   public XmlLanguageInjector(@NotNull Project project) {
-    myConfiguration = Configuration.getProjectInstance(project);
+    myProject = project;
   }
 
   @Override
@@ -75,18 +77,17 @@ final class XmlLanguageInjector implements MultiHostInjector {
     final PsiFile containingFile = xmlElement.getContainingFile();
     final Ref<Boolean> unparsableRef = Ref.create();
     getInjectedLanguage(xmlElement, unparsableRef, (language, list) -> {
-      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-        if (ranges.contains(trinity.third.shiftRight(trinity.first.getTextRange().getStartOffset()))) return true;
+      for (InjectionInfo trinity : list) {
+        if (ranges.contains(trinity.range().shiftRight(trinity.host().getTextRange().getStartOffset()))) return true;
       }
-      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
-        final PsiLanguageInjectionHost host1 = trinity.first;
-        if (host1.getContainingFile() != containingFile) continue;
-        final TextRange textRange = trinity.third;
-        ranges.add(textRange.shiftRight(host1.getTextRange().getStartOffset()));
+      for (InjectionInfo trinity : list) {
+        if (trinity.host().getContainingFile() != containingFile) continue;
+        final TextRange textRange = trinity.range();
+        ranges.add(textRange.shiftRight(trinity.host().getTextRange().getStartOffset()));
       }
-      InjectorUtils.registerInjection(language, list, containingFile, registrar);
+      InjectorUtils.registerInjection(language, containingFile, list, registrar);
       InjectorUtils.registerSupport(InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID),
-                                    true, list.get(0).getFirst(), language);
+                                    true, list.get(0).host(), language);
       if (Boolean.TRUE.equals(unparsableRef.get())) {
         InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
@@ -96,12 +97,10 @@ final class XmlLanguageInjector implements MultiHostInjector {
 
   void getInjectedLanguage(final PsiElement place,
                            final Ref<? super Boolean> unparsableRef,
-                           final PairProcessor<? super Language, ? super List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>> processor) {
-    if (place instanceof XmlTag) {
-      final XmlTag xmlTag = (XmlTag)place;
+                           final PairProcessor<? super Language, ? super List<InjectionInfo>> processor) {
+    if (place instanceof XmlTag xmlTag) {
 
-      List<BaseInjection> injections = myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
-      //noinspection ForLoopReplaceableByForEach
+      List<BaseInjection> injections = getConfiguration().getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
       for (int i = 0, injectionsSize = injections.size(); i < injectionsSize; i++) {
         final BaseInjection injection = injections.get(i);
         if (injection.acceptsPsiElement(xmlTag)) {
@@ -109,7 +108,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
           if (language == null) continue;
           final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
-          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<>();
+          final List<InjectionInfo> result = new ArrayList<>();
 
           xmlTag.acceptChildren(new PsiElementVisitor() {
             @Override
@@ -122,7 +121,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
                   InjectedLanguage l =
                     InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
                   for (TextRange textRange : list) {
-                    result.add(Trinity.create((PsiLanguageInjectionHost)element, l, textRange));
+                    result.add(new InjectionInfo((PsiLanguageInjectionHost)element, l, textRange));
                   }
                 }
               }
@@ -136,7 +135,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
           });
           if (!result.isEmpty()) {
             if (separateFiles) {
-              for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
+              for (InjectionInfo trinity : result) {
                 processor.process(language, Collections.singletonList(trinity));
               }
             }
@@ -150,9 +149,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
         }
       }
     }
-    else if (place instanceof XmlAttributeValue && place.getParent() instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)place.getParent();
-      final XmlAttributeValue value = (XmlAttributeValue)place;
+    else if (place instanceof XmlAttributeValue value && place.getParent() instanceof XmlAttribute attribute) {
       //if (value == null) return;
       // Check that we don't inject anything into embedded (e.g. JavaScript) content:
       // XmlToken: "
@@ -166,8 +163,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
         return;
       }
 
-      List<BaseInjection> injections = myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
-      //noinspection ForLoopReplaceableByForEach
+      List<BaseInjection> injections = getConfiguration().getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
       for (int i = 0, size = injections.size(); i < size; i++) {
         BaseInjection injection = injections.get(i);
         if (injection.acceptsPsiElement(attribute) && !injection.shouldBeIgnored(value)) {
@@ -177,15 +173,15 @@ final class XmlLanguageInjector implements MultiHostInjector {
 
           final List<TextRange> ranges = injection.getInjectedArea(value);
           if (ranges.isEmpty()) continue;
-          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<>();
+          final List<InjectionInfo> result = new ArrayList<>();
           final InjectedLanguage l =
             InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
           for (TextRange textRange : ranges) {
-            result.add(Trinity.create((PsiLanguageInjectionHost)value, l, textRange));
+            result.add(new InjectionInfo((PsiLanguageInjectionHost)value, l, textRange));
           }
           if (separateFiles) {
-            for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-              processor.process(language, Collections.singletonList(trinity));
+            for (InjectionInfo info : result) {
+              processor.process(language, Collections.singletonList(info));
             }
           }
           else {
@@ -199,13 +195,16 @@ final class XmlLanguageInjector implements MultiHostInjector {
     }
   }
 
-  // NOTE: local name of an xml entity or attribute value should match at least one string in the index
+  private Configuration getConfiguration() {
+    return Configuration.getProjectInstance(myProject);
+  }
+
+  // NOTE: local name of an XML entity or attribute value should match at least one string in the index
   private boolean isInIndex(XmlElement xmlElement) {
-    final Trinity<Long, Pattern, Collection<String>> index = getXmlAnnotatedElementsValue();
+    final XmlIndex index = getXmlAnnotatedElementsValue();
     if (xmlElement instanceof XmlAttributeValue) xmlElement = (XmlElement)xmlElement.getParent();
     final XmlTag tag;
-    if (xmlElement instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)xmlElement;
+    if (xmlElement instanceof XmlAttribute attribute) {
       if (areThereInjectionsWithText(attribute.getLocalName(), index)) return true;
       if (areThereInjectionsWithText(attribute.getValue(), index)) return true;
       //if (areThereInjectionsWithText(attribute.getNamespace(), index)) return false;
@@ -223,25 +222,27 @@ final class XmlLanguageInjector implements MultiHostInjector {
     return false;
   }
 
-  private static boolean areThereInjectionsWithText(final String text, Trinity<Long, Pattern, Collection<String>> index) {
+  private static boolean areThereInjectionsWithText(final String text, XmlIndex index) {
     if (text == null) return false;
-    if (index.third.contains(text)) return true;
-    Pattern pattern = index.second;
+    if (index.strings.contains(text)) return true;
+    Pattern pattern = index.pattern;
     return pattern != null && pattern.matcher(text).matches();
   }
 
-  private Trinity<Long, Pattern, Collection<String>> getXmlAnnotatedElementsValue() {
-    Trinity<Long, Pattern, Collection<String>> index = myXmlIndex;
-    if (index == null || myConfiguration.getModificationCount() != index.first.longValue()) {
+  private XmlIndex getXmlAnnotatedElementsValue() {
+    Configuration configuration = getConfiguration();
+
+    XmlIndex index = myXmlIndex;
+    if (index == null || configuration.getModificationCount() != index.modCount) {
       final Map<ElementPattern<?>, BaseInjection> map = new HashMap<>();
-      for (BaseInjection injection : myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
+      for (BaseInjection injection : configuration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (!place.isEnabled() || place.getElementPattern() == null) continue;
           map.put(place.getElementPattern(), injection);
         }
       }
       final Collection<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-      index = Trinity.create(myConfiguration.getModificationCount(), buildPattern(stringSet), stringSet);
+      index = new XmlIndex(configuration.getModificationCount(), buildPattern(stringSet), stringSet);
       myXmlIndex = index;
     }
     return index;

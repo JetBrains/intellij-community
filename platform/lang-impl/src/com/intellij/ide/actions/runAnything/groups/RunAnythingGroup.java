@@ -27,13 +27,13 @@ public abstract class RunAnythingGroup {
   };
 
   /**
-   * {@link #myMoreIndex} is a group's 'load more..' index in the main list.
+   * Group's 'load more...' index in the main list.
    * -1 means that group has all items loaded and no more 'load more..' placeholder
    */
   volatile int myMoreIndex = -1;
 
   /**
-   * {@link #myTitleIndex} is an index of group title in the main list.
+   * An index of group title in the main list.
    * -1 means that group has zero elements and thus has no showing title
    */
   volatile int myTitleIndex = -1;

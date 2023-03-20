@@ -1,6 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.BiFunction;
 
-public class BackgroundHighlightingUtil {
+public final class BackgroundHighlightingUtil {
   /**
    * start background thread where find injected fragment at the caret position,
    * invoke {@code backgroundProcessor} on that fragment and invoke later {@code edtProcessor} in EDT,
@@ -60,11 +63,10 @@ public class BackgroundHighlightingUtil {
       .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), t -> {
         if (t == null) return;
         PsiFile foundFile = t.getFirst();
-        Editor newEditor = t.getSecond();
-        T result = t.getThird();
         if (foundFile == null) return;
-
         if (foundFile.isValid() && offsetBefore == editor.getCaretModel().getOffset()) {
+          Editor newEditor = t.getSecond();
+          T result = t.getThird();
           edtProcessor.accept(foundFile, newEditor, result);
         }
         else {
@@ -74,14 +76,25 @@ public class BackgroundHighlightingUtil {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private static boolean isValidEditor(@NotNull Editor editor) {
+  static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
     return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
            UIUtil.isShowing(editor.getContentComponent());
   }
 
+  static boolean needMatching(@NotNull Editor newEditor, @NotNull CodeInsightSettings codeInsightSettings) {
+    if (!codeInsightSettings.HIGHLIGHT_BRACES) return false;
+
+    if (newEditor.getSelectionModel().hasSelection()) return false;
+
+    if (newEditor.getSoftWrapModel().isInsideOrBeforeSoftWrap(newEditor.getCaretModel().getVisualPosition())) return false;
+
+    TemplateState state = TemplateManagerImpl.getTemplateState(newEditor);
+    return state == null || state.isFinished();
+  }
+
   @NotNull
-  private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
+  static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
     PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
     if (injectedElement != null) {
       PsiFile injected = injectedElement.getContainingFile();

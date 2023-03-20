@@ -1,44 +1,55 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Function;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.project.MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher;
 
-public class MavenProjectsManagerWatcher {
+public final class MavenProjectsManagerWatcher {
 
   private static final Logger LOG = Logger.getInstance(MavenProjectsManagerWatcher.class);
 
   private final Project myProject;
-  private final MavenProjectsTree myProjectsTree;
+  private MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenProjectsAware myProjectsAware;
@@ -55,13 +66,13 @@ public class MavenProjectsManagerWatcher {
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    myProjectsAware = new MavenProjectsAware(project, projectsTree, projectsManager, this, myBackgroundExecutor);
+    myProjectsAware = new MavenProjectsAware(project, projectsManager, this, myBackgroundExecutor);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
   }
 
   public synchronized void start() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
-    busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
+    busConnection.subscribe(ProjectTopics.MODULES, new MavenRenameModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
     registerGeneralSettingsWatcher(projectsManager, this, myBackgroundExecutor, myDisposable);
@@ -72,7 +83,7 @@ public class MavenProjectsManagerWatcher {
 
   @TestOnly
   public synchronized void enableAutoImportInTests() {
-    AutoImportProjectTracker.getInstance(myProject).enableAutoImportInTests();
+    AutoImportProjectTracker.enableAutoReloadInTests(myDisposable);
   }
 
   public synchronized void stop() {
@@ -81,71 +92,79 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
-    scheduleUpdateAll(false, true);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
+  }
+
+
+  public void setProjectsTree(MavenProjectsTree tree) {
+    myProjectsTree = tree;
   }
 
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll(false, true);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAll(false, true);
+    scheduleUpdateAll(new MavenImportSpec(false, true, true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-    scheduleUpdateAll(false, false);
+    scheduleUpdateAll(new MavenImportSpec(false, false, false));
   }
 
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    */
-  public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
-    if(Registry.is("maven.new.import")) {
-      return Promises.resolvedPromise();
+  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
+    if (MavenUtil.isLinearImportEnabled()) {
+      return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
     }
 
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject);
     try {
-      Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-      scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
+      Runnable onCompletion = createScheduleImportAction(spec, promise);
+      scheduleReadingTask(new MavenProjectsProcessorReadingTask(spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
     }
     finally {
-      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      if (!spec.isForceResolve()) {
+        promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      }
     }
     return promise;
   }
 
   public Promise<Void> scheduleUpdate(List<VirtualFile> filesToUpdate,
                                       List<VirtualFile> filesToDelete,
-                                      boolean force,
-                                      final boolean forceImportAndResolve) {
+                                      MavenImportSpec spec) {
 
-    if(Registry.is("maven.new.import")) {
-      return Promises.resolvedPromise();
+    if (MavenUtil.isLinearImportEnabled()) {
+      return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
     }
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject);
     try {
-      Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
+      Runnable onCompletion = createScheduleImportAction(spec, promise);
       if (LOG.isDebugEnabled()) {
-        String withForceOptionMessage = force ? " with force option" : "";
+        String withForceOptionMessage = spec.isForceReading() ? " with force option" : "";
         LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
                   ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
       }
 
       scheduleReadingTask(new MavenProjectsProcessorReadingTask(
-        filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
+        filesToUpdate, filesToDelete, spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
     }
     finally {
-      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      if (!spec.isForceResolve()) {
+        promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      }
     }
     return promise;
   }
@@ -158,16 +177,16 @@ public class MavenProjectsManagerWatcher {
   }
 
   @NotNull
-  private Runnable createScheduleImportAction(final boolean forceImportAndResolve, final AsyncPromise<Void> promise) {
+  private Runnable createScheduleImportAction(MavenImportSpec spec, final AsyncPromise<Void> promise) {
     return () -> {
       if (myProject.isDisposed()) {
         promise.setError("Project disposed");
         return;
       }
 
-      if (forceImportAndResolve) {
+      if (spec.isForceResolve()) {
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        projectsManager.scheduleImportAndResolve()
+        projectsManager.scheduleImportAndResolve(spec)
           .onSuccess(modules -> promise.setResult(null))
           .onError(t -> promise.setError(t));
       }
@@ -196,44 +215,131 @@ public class MavenProjectsManagerWatcher {
       }
 
       if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
-        scheduleUpdate(newFiles, deletedFiles, false, false);
+        scheduleUpdate(newFiles, deletedFiles, new MavenImportSpec(false, false, true));
       }
     }
   }
 
-  private class MavenIgnoredModulesWatcher implements ModuleListener {
+  private static class MavenRenameModulesWatcher implements ModuleListener {
     @Override
-    public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-      if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
+    public void modulesRenamed(@NotNull Project project,
+                               @NotNull List<? extends Module> modules,
+                               @NotNull Function<? super Module, String> oldNameProvider) {
+      for (var module : modules) {
+        new MavenRenameModuleHandler(project, module, oldNameProvider.fun(module)).handleModuleRename();
+      }
+    }
 
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      MavenProject mavenProject = projectsManager.findProject(module);
-      if (mavenProject != null && !projectsManager.isIgnored(mavenProject)) {
-        VirtualFile file = mavenProject.getFile();
+    private static class MavenRenameModuleHandler {
+      private final Project myProject;
+      private final Module myModule;
+      private final String myOldName;
+      private final String myNewName;
+      private String myGroupId;
+      private final MavenProjectsManager myProjectsManager;
+      private final List<MavenProject> myUpdatedMavenProjects = new ArrayList<>();
 
-        if (projectsManager.isManagedFile(file) && projectsManager.getModules(mavenProject).isEmpty()) {
-          MavenLog.LOG.info("remove managed maven project  + " + mavenProject + "because there is no module for it");
-          projectsManager.removeManagedFiles(Collections.singletonList(file));
+      private MavenRenameModuleHandler(@NotNull Project project,
+                                       @NotNull Module module,
+                                       @NotNull String oldName) {
+        myProject = project;
+        myModule = module;
+        myOldName = oldName;
+
+        // handle module groups: group.subgroup.module
+        var myNewNameHierarchy = module.getName().split("\\.");
+        myNewName = myNewNameHierarchy[myNewNameHierarchy.length - 1];
+
+        myProjectsManager = MavenProjectsManager.getInstance(project);
+      }
+
+      private boolean replaceArtifactId(@Nullable XmlTag parentTag) {
+        if (null == parentTag) return false;
+        var artifactIdTag = parentTag.findFirstSubTag("artifactId");
+        if (null == artifactIdTag) return false;
+        var groupIdTag = parentTag.findFirstSubTag("groupId");
+        if (null == groupIdTag) return false;
+        if (myGroupId.equals(groupIdTag.getValue().getText()) && myOldName.equals(artifactIdTag.getValue().getText())) {
+          artifactIdTag.getValue().setText(myNewName);
+          return true;
         }
-        else {
-          if (projectsManager.getRootProjects().contains(mavenProject)) {
-            MavenLog.LOG.info("Requested to ignore " + mavenProject + ", will not do it because it is a root project");
-            return;
+        return false;
+      }
+
+      private boolean replaceModuleArtifactId(MavenDomProjectModel mavenModel) {
+        var artifactIdTag = mavenModel.getArtifactId().getXmlTag();
+        if (null != artifactIdTag) {
+          if (myOldName.equals(artifactIdTag.getValue().getText())) {
+            artifactIdTag.getValue().setText(myNewName);
+            return true;
           }
-          MavenLog.LOG.info("Ignoring " + mavenProject);
-          projectsManager.setIgnoredState(Collections.singletonList(mavenProject), true);
+        }
+        return false;
+      }
+
+      private boolean replaceArtifactIdReferences(MavenDomProjectModel mavenModel) {
+        var replaced = false;
+        if (null != mavenModel.getXmlTag()) {
+          // parent artifactId
+          replaced = replaceArtifactId(mavenModel.getXmlTag().findFirstSubTag("parent"));
+        }
+
+        // dependencies and exclusions
+        var dependencies = mavenModel.getDependencies();
+        for (var dependency : dependencies.getDependencies()) {
+          replaced |= replaceArtifactId(dependency.getXmlTag());
+          for (var exclusion : dependency.getExclusions().getExclusions()) {
+            replaced |= replaceArtifactId(exclusion.getXmlTag());
+          }
+        }
+        return replaced;
+      }
+
+      private void processModule(Module module, Predicate<MavenDomProjectModel> artifactIdReplacer) {
+        if (!myProjectsManager.isMavenizedModule(module)) return;
+        var mavenProject = myProjectsManager.findProject(module);
+        if (null == mavenProject) return;
+        var mavenModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
+        if (null == mavenModel) return;
+        var psiFile = DomUtil.getFile(mavenModel);
+        var mavenProjectUpdated = new AtomicBoolean(false);
+
+        WriteCommandAction.writeCommandAction(myProject, psiFile).run(() -> {
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+          Document document = documentManager.getDocument(psiFile);
+          if (document != null) {
+            documentManager.commitDocument(document);
+          }
+
+          mavenProjectUpdated.set(artifactIdReplacer.test(mavenModel));
+
+          if (document != null) {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+        });
+        if (mavenProjectUpdated.get()) {
+          myUpdatedMavenProjects.add(mavenProject);
         }
       }
-    }
 
-    @Override
-    public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
-      if(Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-      // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
+      public void handleModuleRename() {
+        if (!myProjectsManager.isMavenizedModule(myModule)) return;
+        var mavenProject = myProjectsManager.findProject(myModule);
+        if (null == mavenProject) return;
+        myGroupId = mavenProject.getMavenId().getGroupId();
 
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      MavenProject mavenProject = projectsManager.findProject(module);
-      if (mavenProject != null) projectsManager.setIgnoredState(Collections.singletonList(mavenProject), false);
+        var modules = ModuleManager.getInstance(myProject).getModules();
+        for (var module : modules) {
+          if (module == myModule) {
+            processModule(module, this::replaceModuleArtifactId);
+          } else {
+            processModule(module, this::replaceArtifactIdReferences);
+          }
+        }
+
+        myProjectsManager.forceUpdateProjects(myUpdatedMavenProjects);
+      }
     }
   }
+
 }

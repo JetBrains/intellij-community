@@ -21,7 +21,7 @@ public final class PyEditorHandlerConfig {
     PyMappingPattern.class,
     PyPatternArgumentList.class,
   };
-  static final Class[] WRAPPABLE_CLASSES = new Class[]{
+  public static final Class[] WRAPPABLE_CLASSES = new Class[]{
     PsiComment.class,
     PyParenthesizedExpression.class,
     PyListCompExpression.class,

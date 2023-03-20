@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.hierarchy
 
 import com.intellij.ide.hierarchy.*
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.*
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
-import com.intellij.rt.execution.junit.ComparisonDetailsExtractor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ArrayUtil
 import junit.framework.ComparisonFailure
@@ -21,11 +20,11 @@ import org.jetbrains.kotlin.idea.KotlinHierarchyViewTestBase
 import org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCalleeTreeStructure
 import org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallerTreeStructure
 import org.jetbrains.kotlin.idea.hierarchy.overrides.KotlinOverrideTreeStructure
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.createTextEditorBasedDataContext
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
 /*
@@ -133,13 +132,13 @@ abstract class AbstractHierarchyTest : KotlinHierarchyViewTestBase() {
                 TestCase.fail("Unexpected error: " + e.localizedMessage)
             }
         } catch (failure: ComparisonFailure) {
-            val actual = ComparisonDetailsExtractor.getActual(failure)
+            val actual = failure.actual
             val verificationFilePath = testDataPath + "/" + getTestName(false) + "_verification.xml"
             KotlinTestUtils.assertEqualsToFile(File(verificationFilePath), actual)
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     override val testDataDirectory: File
         get() {

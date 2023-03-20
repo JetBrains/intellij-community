@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
@@ -31,7 +33,7 @@ import java.util.stream.Stream;
 /**
  * @author Bas Leijdekkers
  */
-public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
+public class ImplicitDefaultCharsetUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final List<String> UTF_8_ARG = Collections.singletonList("java.nio.charset.StandardCharsets.UTF_8");
   private static final List<String> FALSE_AND_UTF_8_ARG = Arrays.asList("false", "java.nio.charset.StandardCharsets.UTF_8");
@@ -47,6 +49,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
+  @SafeTypeForPreview
   private static final class CharsetOverload {
     static final CharsetOverload NONE = new CharsetOverload(null, Collections.emptyList());
 
@@ -87,7 +90,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
         PsiType[] parameterTypes = signature.getParameterTypes();
         if (method.isConstructor() && "java.io.PrintWriter".equals(aClass.getQualifiedName()) && parameterTypes.length == 1 &&
             parameterTypes[0].equalsToText("java.io.OutputStream")) {
-          parameterTypes = ArrayUtil.append(parameterTypes, PsiType.BOOLEAN);
+          parameterTypes = ArrayUtil.append(parameterTypes, PsiTypes.booleanType());
           args = FALSE_AND_UTF_8_ARG;
         }
         MethodSignature newSignature = MethodSignatureUtil
@@ -130,7 +133,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     );
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (METHODS.test(expression)) {
         registerMethodCallError(expression, expression);
@@ -138,7 +141,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiMethod constructor = expression.resolveConstructor();
       if (constructor == null) {
@@ -170,6 +173,20 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
       else if ("java.io.PrintWriter".equals(qName)) {
         if (count > 1 && hasCharsetType(parameters[count - 1]) || parameters[0].getType().equalsToText("java.io.Writer")) {
           return;
+        }
+        if (count == 1) {
+          PsiExpressionList args = expression.getArgumentList();
+          if (args != null &&
+              PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(args.getExpressions())) instanceof PsiReferenceExpression ref &&
+              ref.resolve() instanceof PsiField field) {
+            if (field.getName().equals("out") || field.getName().equals("err")) {
+              PsiClass containingClass = field.getContainingClass();
+              if (containingClass != null && CommonClassNames.JAVA_LANG_SYSTEM.equals(containingClass.getQualifiedName())) {
+                // new PrintWriter(System.out): likely system default encoding is expected
+                return;
+              }
+            }
+          }
         }
       }
       else if ("java.util.Formatter".equals(qName)) {
@@ -216,7 +233,6 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     /**
      * Refers to the method but it is read-only
      */
-    @SafeFieldForPreview
     private final CharsetOverload myCharsetOverload;
 
     private AddUtf8CharsetFix(CharsetOverload charsetOverload) {
@@ -224,7 +240,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiCallExpression.class);
       if (call == null) return;
       PsiExpressionList arguments = call.getArgumentList();

@@ -14,9 +14,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> implements Cloneable, ElementPattern<T> {
   private InitialPatternCondition<T> myInitialCondition;
   private Object myConditions;
@@ -112,7 +109,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   @NotNull
-  public Self oneOf(final T... values) {
+  public Self oneOf(final T @NotNull ... values) {
     final Collection<T> list;
 
     final int length = values.length;
@@ -120,7 +117,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       list = Collections.singletonList(values[0]);
     }
     else if (length >= 11) {
-      list = ContainerUtil.set(values);
+      list = ContainerUtil.newHashSet(values);
     }
     else {
       list = Arrays.asList(values);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils;
-import org.jetbrains.kotlin.psi.KtBlockExpression;
-import org.jetbrains.kotlin.psi.KtExpression;
-import org.jetbrains.kotlin.psi.KtIfExpression;
-import org.jetbrains.kotlin.psi.KtPsiFactoryKt;
+import org.jetbrains.kotlin.psi.*;
 
 public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder {
 
@@ -34,7 +31,7 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
             return null;
         }
 
-        KtIfExpression ifExpression = (KtIfExpression) KtPsiFactoryKt.KtPsiFactory(project).createExpression(getCodeTemplate());
+        KtIfExpression ifExpression = (KtIfExpression) new KtPsiFactory(project).createExpression(getCodeTemplate());
         ifExpression = (KtIfExpression) container.addAfter(ifExpression, statements[statements.length - 1]);
 
         // TODO move a comment for first statement

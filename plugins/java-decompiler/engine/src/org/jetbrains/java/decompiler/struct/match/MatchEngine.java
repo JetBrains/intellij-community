@@ -5,7 +5,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -40,13 +40,13 @@ public class MatchEngine {
     entry("name", MatchProperties.EXPRENT_FIELD_NAME));
 
   @SuppressWarnings("SpellCheckingInspection")
-  private static final Map<String, Integer> stat_type = Map.of(
-    "if", Statement.TYPE_IF,
-    "do", Statement.TYPE_DO,
-    "switch", Statement.TYPE_SWITCH,
-    "trycatch", Statement.TYPE_TRYCATCH,
-    "basicblock", Statement.TYPE_BASICBLOCK,
-    "sequence", Statement.TYPE_SEQUENCE);
+  private static final Map<String, StatementType> stat_type = Map.of(
+    "if", StatementType.IF,
+    "do", StatementType.DO,
+    "switch", StatementType.SWITCH,
+    "trycatch", StatementType.TRY_CATCH,
+    "basicblock", StatementType.BASIC_BLOCK,
+    "sequence", StatementType.SEQUENCE);
 
   private static final Map<String, Integer> expr_type = Map.ofEntries(
     entry("array", Exprent.EXPRENT_ARRAY),
@@ -116,44 +116,17 @@ public class MatchEngine {
             strValue = values[2];
           }
 
-          switch (property) {
-            case STATEMENT_TYPE:
-              value = stat_type.get(strValue);
-              break;
-            case STATEMENT_STATSIZE:
-            case STATEMENT_EXPRSIZE:
-              value = Integer.valueOf(strValue);
-              break;
-            case STATEMENT_POSITION:
-            case EXPRENT_POSITION:
-            case EXPRENT_INVOCATION_CLASS:
-            case EXPRENT_INVOCATION_SIGNATURE:
-            case EXPRENT_INVOCATION_PARAMETER:
-            case EXPRENT_VAR_INDEX:
-            case EXPRENT_FIELD_NAME:
-            case EXPRENT_CONSTVALUE:
-            case STATEMENT_RET:
-            case EXPRENT_RET:
-              value = strValue;
-              break;
-            case STATEMENT_IFTYPE:
-              value = stat_if_type.get(strValue);
-              break;
-            case EXPRENT_FUNCTYPE:
-              value = expr_func_type.get(strValue);
-              break;
-            case EXPRENT_EXITTYPE:
-              value = expr_exit_type.get(strValue);
-              break;
-            case EXPRENT_CONSTTYPE:
-              value = expr_const_type.get(strValue);
-              break;
-            case EXPRENT_TYPE:
-              value = expr_type.get(strValue);
-              break;
-            default:
-              throw new RuntimeException("Unhandled matching property");
-          }
+          value = switch (property) {
+            case STATEMENT_TYPE -> stat_type.get(strValue);
+            case STATEMENT_STATSIZE, STATEMENT_EXPRSIZE -> Integer.valueOf(strValue);
+            case STATEMENT_POSITION, EXPRENT_POSITION, EXPRENT_INVOCATION_CLASS, EXPRENT_INVOCATION_SIGNATURE, EXPRENT_INVOCATION_PARAMETER, EXPRENT_VAR_INDEX, EXPRENT_FIELD_NAME, EXPRENT_CONSTVALUE, STATEMENT_RET, EXPRENT_RET ->
+              strValue;
+            case STATEMENT_IFTYPE -> stat_if_type.get(strValue);
+            case EXPRENT_FUNCTYPE -> expr_func_type.get(strValue);
+            case EXPRENT_EXITTYPE -> expr_exit_type.get(strValue);
+            case EXPRENT_CONSTTYPE -> expr_const_type.get(strValue);
+            case EXPRENT_TYPE -> expr_type.get(strValue);
+          };
 
           matchNode.addRule(property, new RuleValue(parameter, value));
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util
 
 import com.intellij.openapi.diagnostic.logger
@@ -30,6 +30,7 @@ private class ArgsReader(
   name: String
 ) {
   private val key = "--$name="
+  private val keyWithoutParameter = "--$name"
 
   inline fun <T> nonEmptyArgs(map: (String) -> T): List<T> {
     val result = args(map)
@@ -62,6 +63,14 @@ private class ArgsReader(
 
     require(values.size == 1) { "argument $key is specified multiple times: $values" }
     return values.first()
+  }
+
+  inline fun <T : Any> argWithoutValue(map: (String) -> T, noinline whenWithoutParameter: () -> T, noinline whenNotProvided: () -> T) : T {
+    val withoutParam = args.value.contains(keyWithoutParameter)
+    if (withoutParam) {
+      return whenWithoutParameter()
+    }
+    return arg(map, whenNotProvided)
   }
 
   inline fun <T : Any> argOrNull(map: (String) -> T): T? {
@@ -153,6 +162,15 @@ class ArgsParser(args: List<String>) {
 
     fun boolean(default: () -> Boolean = { false }) = parse { arg(toBoolean, default) }
     fun booleanOrNull() = optional().parse { argOrNull(toBoolean) }
+
+    /**
+     * Allows to parse boolean flags.
+     *
+     * If the command line arguments contain strings '--foo' or '--foo=true', then it sets the argument 'foo' to `true`.
+     * If the command line arguments contain a string '--foo=false' or do not contain an argument which key is '--foo', then it
+     * sets the argument 'foo' to `false`.
+     */
+    fun flag() = optional().parse { argWithoutValue(toBoolean, { true }, { false }) }
 
     fun int(default: () -> Int) = parse { arg(toInt, default) }
     fun toIntOrNull() = optional().parse { argOrNull(toInt) }

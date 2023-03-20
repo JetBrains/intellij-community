@@ -1,23 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.ReplaceSelectorOfQualifiedExpressionFix
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
@@ -46,15 +47,17 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         conversion: Conversion
     ) {
         val receiverType = expression.receiverExpression.getType(context) ?: return
-        val receiverTypeArgument = receiverType.arguments.singleOrNull()?.type ?: return
+        val receiverTypeArgument = receiverType.arguments.singleOrNull() ?: return
+        val receiverTypeArgumentType = receiverTypeArgument.type
         val resolvedCall = expression.getResolvedCall(context) ?: return
         if (calleeExpression.text == "filterIsInstance") {
+            if (receiverTypeArgument.projectionKind == Variance.IN_VARIANCE) return
             val typeParameterDescriptor = resolvedCall.candidateDescriptor.typeParameters.singleOrNull() ?: return
             val argumentType = resolvedCall.typeArguments[typeParameterDescriptor] ?: return
-            if (receiverTypeArgument.isFlexible() || !receiverTypeArgument.isSubtypeOf(argumentType)) return
+            if (receiverTypeArgumentType.isFlexible() || !receiverTypeArgumentType.isSubtypeOf(argumentType)) return
         } else {
             // xxxNotNull
-            if (TypeUtils.isNullableType(receiverTypeArgument)) return
+            if (TypeUtils.isNullableType(receiverTypeArgumentType)) return
             if (calleeExpression.text != "filterNotNull") {
                 // Also check last argument functional type to have not-null result
                 val lastParameterMatches = resolvedCall.hasLastFunctionalParameterWithResult(context) {

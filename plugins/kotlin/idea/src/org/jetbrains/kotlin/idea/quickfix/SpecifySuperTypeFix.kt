@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -10,16 +10,17 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
@@ -28,7 +29,7 @@ class SpecifySuperTypeFix(
     private val superTypes: List<String>
 ) : KotlinQuickFixAction<KtSuperExpression>(superExpression) {
 
-    override fun getText() = KotlinIdeaCompletionBundle.message("intention.name.specify.supertype")
+    override fun getText() = KotlinBundle.message("intention.name.specify.supertype")
 
     override fun getFamilyName() = text
 
@@ -48,14 +49,14 @@ class SpecifySuperTypeFix(
     }
 
     private fun KtSuperExpression.specifySuperType(superType: String) {
-        project.executeWriteCommand(KotlinIdeaCompletionBundle.message("intention.name.specify.supertype")) {
+        project.executeWriteCommand(KotlinBundle.message("intention.name.specify.supertype")) {
             val label = this.labelQualifier?.text ?: ""
-            replace(KtPsiFactory(this).createExpression("super<$superType>$label"))
+            replace(KtPsiFactory(project).createExpression("super<$superType>$label"))
         }
     }
 
     private fun createListPopupStep(superExpression: KtSuperExpression, superTypes: List<String>): ListPopupStep<*> {
-        return object : BaseListPopupStep<String>(KotlinIdeaCompletionBundle.message("popup.title.choose.supertype"), superTypes) {
+        return object : BaseListPopupStep<String>(KotlinBundle.message("popup.title.choose.supertype"), superTypes) {
             override fun isAutoSelectionEnabled() = false
 
             override fun onChosen(selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
@@ -86,7 +87,7 @@ class SpecifySuperTypeFix(
             }
             if (superTypes.size != superTypeListEntries.size) return null
 
-            val psiFactory = KtPsiFactory(superExpression)
+            val psiFactory = KtPsiFactory(superExpression.project)
             val superTypesForSuperExpression = superTypes.mapNotNull { (typeElement, kotlinType) ->
                 if (superTypes.any { it.second != kotlinType && it.second.isSubtypeOf(kotlinType) }) return@mapNotNull null
                 val fqName = kotlinType.fqName ?: return@mapNotNull null

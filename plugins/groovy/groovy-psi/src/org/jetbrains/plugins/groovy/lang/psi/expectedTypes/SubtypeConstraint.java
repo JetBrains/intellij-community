@@ -7,9 +7,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author ven
- */
 public final class SubtypeConstraint extends TypeConstraint {
   private final PsiType myDefaultType;
 

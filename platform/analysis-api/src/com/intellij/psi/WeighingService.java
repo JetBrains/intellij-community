@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class WeighingService {
   private static final KeyedExtensionCollector<Weigher, Key> COLLECTOR = new KeyedExtensionCollector<>("com.intellij.weigher");
 

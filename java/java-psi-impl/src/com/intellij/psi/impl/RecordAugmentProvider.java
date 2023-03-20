@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -89,7 +89,6 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
 
   private static boolean shouldGenerateMethod(PsiRecordComponent component, List<PsiMethod> ownMethods) {
     String componentName = component.getName();
-    if (componentName == null) return false;
     for (PsiMethod method : ownMethods) {
       // Return type is not checked to avoid unnecessary warning about clashing signatures in case of different return types
       if (componentName.equals(method.getName()) && method.getParameterList().isEmpty()) return false;
@@ -98,7 +97,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   }
 
   @NotNull
-  private static <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
+  public static <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
     PsiRecordComponent[] components = aClass.getRecordComponents();
     PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     ArrayList<Psi> fields = new ArrayList<>(components.length);
@@ -130,7 +129,6 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   @Nullable
   private static PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
-    if (name == null) return null;
     if (hasForbiddenType(component)) return null;
     String typeText = getTypeText(component);
     if (typeText == null) return null;

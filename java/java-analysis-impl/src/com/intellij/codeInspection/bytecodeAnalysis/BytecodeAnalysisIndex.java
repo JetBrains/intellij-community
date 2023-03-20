@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -21,9 +21,6 @@ import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-/**
- * @author lambdamix
- */
 public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
@@ -160,13 +157,11 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
         Result rhs = pair.result;
-        if (rhs instanceof Value) {
-          Value finalResult = (Value)rhs;
+        if (rhs instanceof Value finalResult) {
           out.writeBoolean(true); // final flag
           DataInputOutputUtil.writeINT(out, finalResult.ordinal());
         }
-        else if (rhs instanceof Pending) {
-          Pending pendResult = (Pending)rhs;
+        else if (rhs instanceof Pending pendResult) {
           out.writeBoolean(false); // pending flag
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
@@ -179,8 +174,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
             }
           }
         }
-        else if (rhs instanceof Effects) {
-          Effects effects = (Effects)rhs;
+        else if (rhs instanceof Effects effects) {
           DataInputOutputUtil.writeINT(out, effects.effects.size());
           for (EffectQuantum effect : effects.effects) {
             writeEffect(out, effect);
@@ -256,9 +250,8 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       else if (effect == EffectQuantum.ThisChangeQuantum) {
         DataInputOutputUtil.writeINT(out, -2);
       }
-      else if (effect instanceof EffectQuantum.CallQuantum) {
+      else if (effect instanceof EffectQuantum.CallQuantum callQuantum) {
         DataInputOutputUtil.writeINT(out, -3);
-        EffectQuantum.CallQuantum callQuantum = (EffectQuantum.CallQuantum)effect;
         writeKey(out, callQuantum.key);
         out.writeBoolean(callQuantum.isStatic);
         DataInputOutputUtil.writeINT(out, callQuantum.data.length);
@@ -266,27 +259,25 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           writeDataValue(out, dataValue);
         }
       }
-      else if (effect instanceof EffectQuantum.ReturnChangeQuantum) {
+      else if (effect instanceof EffectQuantum.ReturnChangeQuantum returnChangeQuantum) {
         DataInputOutputUtil.writeINT(out, -4);
-        writeKey(out, ((EffectQuantum.ReturnChangeQuantum)effect).key);
+        writeKey(out, returnChangeQuantum.key);
       }
-      else if (effect instanceof EffectQuantum.FieldReadQuantum) {
+      else if (effect instanceof EffectQuantum.FieldReadQuantum fieldReadQuantum) {
         DataInputOutputUtil.writeINT(out, -5);
-        writeKey(out, ((EffectQuantum.FieldReadQuantum)effect).key);
+        writeKey(out, fieldReadQuantum.key);
       }
-      else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
-        DataInputOutputUtil.writeINT(out, ((EffectQuantum.ParamChangeQuantum)effect).n);
+      else if (effect instanceof EffectQuantum.ParamChangeQuantum paramChangeQuantum) {
+        DataInputOutputUtil.writeINT(out, paramChangeQuantum.n);
       }
     }
 
     private static EffectQuantum readEffect(@NotNull DataInput in) throws IOException {
       int effectMask = DataInputOutputUtil.readINT(in);
-      switch (effectMask) {
-        case -1:
-          return EffectQuantum.TopEffectQuantum;
-        case -2:
-          return EffectQuantum.ThisChangeQuantum;
-        case -3:
+      return switch (effectMask) {
+        case -1 -> EffectQuantum.TopEffectQuantum;
+        case -2 -> EffectQuantum.ThisChangeQuantum;
+        case -3 -> {
           EKey key = readKey(in);
           boolean isStatic = in.readBoolean();
           int dataLength = DataInputOutputUtil.readINT(in);
@@ -294,14 +285,12 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           for (int di = 0; di < dataLength; di++) {
             data[di] = readDataValue(in);
           }
-          return new EffectQuantum.CallQuantum(key, data, isStatic);
-        case -4:
-          return new EffectQuantum.ReturnChangeQuantum(readKey(in));
-        case -5:
-          return new EffectQuantum.FieldReadQuantum(readKey(in));
-        default:
-          return new EffectQuantum.ParamChangeQuantum(effectMask);
-      }
+          yield new EffectQuantum.CallQuantum(key, data, isStatic);
+        }
+        case -4 -> new EffectQuantum.ReturnChangeQuantum(readKey(in));
+        case -5 -> new EffectQuantum.FieldReadQuantum(readKey(in));
+        default -> new EffectQuantum.ParamChangeQuantum(effectMask);
+      };
     }
 
     private static void writeDataValue(@NotNull DataOutput out, DataValue dataValue) throws IOException {
@@ -331,22 +320,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
 
     private static DataValue readDataValue(@NotNull DataInput in) throws IOException {
       int dataI = DataInputOutputUtil.readINT(in);
-      switch (dataI) {
-        case -1:
-          return DataValue.ThisDataValue;
-        case -2:
-          return DataValue.LocalDataValue;
-        case -3:
-          return DataValue.OwnedDataValue;
-        case -4:
-          return DataValue.UnknownDataValue1;
-        case -5:
-          return DataValue.UnknownDataValue2;
-        case -6:
-          return new DataValue.ReturnDataValue(readKey(in));
-        default:
-          return DataValue.ParameterDataValue.create(dataI);
-      }
+      return switch (dataI) {
+        case -1 -> DataValue.ThisDataValue;
+        case -2 -> DataValue.LocalDataValue;
+        case -3 -> DataValue.OwnedDataValue;
+        case -4 -> DataValue.UnknownDataValue1;
+        case -5 -> DataValue.UnknownDataValue2;
+        case -6 -> new DataValue.ReturnDataValue(readKey(in));
+        default -> DataValue.ParameterDataValue.create(dataI);
+      };
     }
   }
 }

@@ -50,17 +50,17 @@ public class ChangeListAdapter implements ChangeListListener {
 
 
   @Override
-  public void changesAdded(Collection<Change> changes, ChangeList toList) {
+  public void changesAdded(Collection<? extends Change> changes, ChangeList toList) {
     changeListsChanged();
   }
 
   @Override
-  public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
+  public void changesRemoved(Collection<? extends Change> changes, ChangeList fromList) {
     changeListsChanged();
   }
 
   @Override
-  public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+  public void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {
     changeListsChanged();
   }
 

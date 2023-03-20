@@ -2,17 +2,20 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logGitChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logGitFinished
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.openapi.GitRepositoryInitializer
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 
 class GitNewProjectWizardStep(
   parent: NewProjectWizardBaseStep
@@ -20,35 +23,44 @@ class GitNewProjectWizardStep(
     NewProjectWizardBaseData by parent,
     GitNewProjectWizardData {
 
-  override val gitProperty = propertyGraph.graphProperty { false }
+  private val gitRepositoryInitializer = GitRepositoryInitializer.getInstance()
 
-  override var git by gitProperty
+  private val gitProperty = propertyGraph.property(false)
+    .bindBooleanStorage(GIT_PROPERTY_NAME)
+
+  override val git get() = gitRepositoryInitializer != null && gitProperty.get()
 
   override fun setupUI(builder: Panel) {
-    with(builder) {
-      row(EMPTY_LABEL) {
-        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
-          .bindSelected(gitProperty)
-      }.bottomGap(BottomGap.SMALL)
+    if (gitRepositoryInitializer != null) {
+      with(builder) {
+        row("") {
+          checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
+            .bindSelected(gitProperty)
+            .whenStateChangedFromUi { logGitChanged() }
+        }.bottomGap(BottomGap.SMALL)
+      }
     }
   }
 
   override fun setupProject(project: Project) {
-    if (git) {
-      val projectBaseDirectory = LocalFileSystem.getInstance().findFileByNioFile(projectPath)
-      if (projectBaseDirectory != null) {
-        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-          GitRepositoryInitializer.getInstance()!!.initRepository(project, projectBaseDirectory)
+    setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {
+      if (git) {
+        val rootDirectory = path.toNioPath().resolve(name).refreshAndFindVirtualDirectory()
+        if (rootDirectory != null) {
+          whenProjectCreated(project) {
+            runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
+              setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {
+                gitRepositoryInitializer!!.initRepository(project, rootDirectory, true)
+              }
+            }
+          }
         }
       }
+      logGitFinished(git)
     }
-    NewProjectWizardCollector.logGitFinished(context, git)
   }
 
   init {
     data.putUserData(GitNewProjectWizardData.KEY, this)
-    gitProperty.afterChange {
-      NewProjectWizardCollector.logGitChanged(context)
-    }
   }
 }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -15,7 +13,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -27,6 +25,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.XExpressionDialog;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,7 @@ public class ThrowExceptionAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    final JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
+    final JavaStackFrame stackFrame = getStackFrame(e);
     if (stackFrame == null || project == null) {
       return;
     }
@@ -80,7 +79,6 @@ public class ThrowExceptionAction extends DebuggerAction {
           showError(debugProcess.getProject(), JavaDebuggerBundle.message("error.throw.exception", e.getLocalizedMessage()));
           return;
         }
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
@@ -92,7 +90,7 @@ public class ThrowExceptionAction extends DebuggerAction {
   }
 
   private static void showError(Project project, @NlsContexts.DialogMessage String message) {
-    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
+    JvmDropFrameActionHandler.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
   }
 
   private static void evaluateAndReturn(final Project project,
@@ -125,14 +123,12 @@ public class ThrowExceptionAction extends DebuggerAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
-    boolean enable = stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0;
+    JavaStackFrame stackFrame = getStackFrame(e);
+    DebuggerUIUtil.setActionEnabled(e, stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0);
+  }
 
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(enable);
-    }
-    else {
-      e.getPresentation().setVisible(enable);
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

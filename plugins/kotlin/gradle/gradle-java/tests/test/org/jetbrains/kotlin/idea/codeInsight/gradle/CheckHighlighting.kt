@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
@@ -22,7 +22,8 @@ data class HighlightingCheck(
     private val testDataDirectory: File,
     private val testLineMarkers: Boolean = true,
     private val severityLevel: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-    private val correspondingFilePostfix: String = ""
+    private val correspondingFilePostfix: String = "",
+    private val postprocessActualTestData: (String) -> String = { it }
 ) {
 
     private val checker = CodeMetaInfoTestCase(
@@ -47,12 +48,14 @@ data class HighlightingCheck(
     operator fun invoke(module: Module) {
         for (sourceRoot in module.sourceRoots) {
             VfsUtilCore.processFilesRecursively(sourceRoot) { file ->
-                if (file.isDirectory || file.extension != "kt" && file.extension != "java") return@processFilesRecursively true
+                if (file.isDirectory || file.extension != "kt" && file.extension != "java" || file.path.contains("build/generated"))
+                    return@processFilesRecursively true
                 runInEdtAndWait {
                     checker.checkFile(
                         file,
                         file.findCorrespondingFileInTestDir(Paths.get(projectPath), testDataDirectory, correspondingFilePostfix),
-                        project
+                        project,
+                        postprocessActualTestData
                     )
                 }
                 true

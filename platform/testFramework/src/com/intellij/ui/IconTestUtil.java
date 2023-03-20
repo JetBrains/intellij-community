@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,8 +19,8 @@ import java.util.List;
 public final class IconTestUtil {
   public static @Nullable String getIconPath(@NotNull Icon icon) {
     icon = unwrapRetrievableIcon(icon);
-    if (icon instanceof IconLoader.CachedImageIcon) {
-      return ((IconLoader.CachedImageIcon)icon).getOriginalPath();
+    if (icon instanceof CachedImageIcon) {
+      return ((CachedImageIcon)icon).getOriginalPath();
     }
     else {
       // DummyIcon
@@ -36,8 +36,7 @@ public final class IconTestUtil {
   }
 
   public static @NotNull Icon unwrapIcon(@NotNull Icon icon) {
-    while (icon instanceof CompositeIcon) {
-      CompositeIcon compositeIcon = (CompositeIcon)icon;
+    while (icon instanceof CompositeIcon compositeIcon) {
       if (compositeIcon.getIconCount() == 0) {
         break;
       }

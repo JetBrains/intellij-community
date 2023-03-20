@@ -1,7 +1,7 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.CommonBundle
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
@@ -10,16 +10,16 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Marker interface for [VcsShortCommitDetails] and [VcsFullCommitDetails] instances to indicate
- * that this is a placeholder object without any data.
+ * that this is a placeholder object without any data, except for [CommitId].
  *
- * @see [VcsLog.getSelectedShortDetails]
- * @see [VcsLog.getSelectedDetails]
+ * @see [VcsLogCommitSelection.cachedMetadata]
+ * @see [VcsLogCommitSelection.cachedFullDetails]
  */
 interface LoadingDetails
 
 @ApiStatus.Internal
-open class LoadingDetailsImpl(private val commitIdComputable: Computable<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
-  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { commitIdComputable.compute() }
+open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: Int, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
+  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { storage.getCommitId(commitIndex)!! }
 
   override fun getId(): Hash = commitId.hash
   override fun getRoot(): VirtualFile = commitId.root
@@ -37,4 +37,9 @@ open class LoadingDetailsImpl(private val commitIdComputable: Computable<out Com
   companion object {
     private val STUB_USER = VcsUserImpl("", "")
   }
+}
+
+class LoadingDetailsWithRoot(storage: VcsLogStorage, commitIndex: Int, private val cachedRoot: VirtualFile, loadingTaskIndex: Long) :
+  LoadingDetailsImpl(storage, commitIndex, loadingTaskIndex) {
+  override fun getRoot(): VirtualFile = cachedRoot
 }

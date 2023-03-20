@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -17,16 +17,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
@@ -46,6 +48,13 @@ public final class ProblemDescriptorUtil {
   public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement psiElement) {
     TextRange range = descriptor instanceof ProblemDescriptorBase ? ((ProblemDescriptorBase)descriptor).getTextRange() : null;
     return extractHighlightedText(range, psiElement);
+  }
+
+  @NotNull
+  public static String sanitizeIllegalXmlChars(@NotNull String text) {
+    if (Verifier.checkCharacterData(text) == null) return text;
+    return text.codePoints().map(cp -> Verifier.isXMLCharacter(cp) ? cp : '?')
+      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
   }
 
   @NotNull
@@ -216,39 +225,29 @@ public final class ProblemDescriptorUtil {
   public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
                                                        @NotNull HighlightSeverity severity,
                                                        @NotNull SeverityRegistrar severityRegistrar) {
-    switch (highlightType) {
-      case GENERIC_ERROR_OR_WARNING:
-        return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_DEPRECATED:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
-      case LIKE_MARKED_FOR_REMOVAL:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.MARKED_FOR_REMOVAL.getAttributesKey());
-      case LIKE_UNKNOWN_SYMBOL:
+    return switch (highlightType) {
+      case GENERIC_ERROR_OR_WARNING -> severityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      case LIKE_DEPRECATED -> new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
+      case LIKE_MARKED_FOR_REMOVAL ->
+        new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.MARKED_FOR_REMOVAL.getAttributesKey());
+      case LIKE_UNKNOWN_SYMBOL -> {
         if (severity == HighlightSeverity.ERROR) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
+          yield new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
         }
         if (severity == HighlightSeverity.WARNING) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
+          yield new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
         }
-        return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_UNUSED_SYMBOL:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
-      case INFO:
-        return HighlightInfoType.INFO;
-      case WEAK_WARNING:
-        return HighlightInfoType.WEAK_WARNING;
-      case WARNING:
-        return HighlightInfoType.WARNING;
-      case ERROR:
-        return HighlightInfoType.WRONG_REF;
-      case GENERIC_ERROR:
-        return HighlightInfoType.ERROR;
-      case INFORMATION:
-        return HighlightInfoType.INFORMATION;
-      case POSSIBLE_PROBLEM:
-        return HighlightInfoType.POSSIBLE_PROBLEM;
-    }
-    throw new RuntimeException("Cannot map " + highlightType);
+        yield severityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      }
+      case LIKE_UNUSED_SYMBOL -> new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
+      case INFO -> HighlightInfoType.INFO;
+      case WEAK_WARNING -> HighlightInfoType.WEAK_WARNING;
+      case WARNING -> HighlightInfoType.WARNING;
+      case ERROR -> HighlightInfoType.WRONG_REF;
+      case GENERIC_ERROR -> HighlightInfoType.ERROR;
+      case INFORMATION -> HighlightInfoType.INFORMATION;
+      case POSSIBLE_PROBLEM -> HighlightInfoType.POSSIBLE_PROBLEM;
+    };
   }
   public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
     if (annotations.isEmpty()) {
@@ -280,7 +279,7 @@ public final class ProblemDescriptorUtil {
                                                        int endOffset,
                                                        @NotNull @InspectionMessage String message,
                                                        boolean isAfterEndOfLine,
-                                                       LocalQuickFix @NotNull [] quickFixes) {
+                                                       @NotNull LocalQuickFix @NotNull [] quickFixes) {
     if (severity == HighlightSeverity.INFORMATION ||
         startOffset == endOffset && !isAfterEndOfLine) {
       return null;
@@ -324,7 +323,7 @@ public final class ProblemDescriptorUtil {
     return new TextRange(startOffset - elementTextRange.getStartOffset(), endOffset - elementTextRange.getStartOffset());
   }
 
-  private static LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
+  private static @NotNull LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
                                                              @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
@@ -351,15 +350,18 @@ public final class ProblemDescriptorUtil {
   }
 
   public static ProblemDescriptor toProblemDescriptor(@NotNull PsiFile file, @NotNull HighlightInfo info) {
-    List<LocalQuickFix> quickFixes =
-      ContainerUtil.mapNotNull(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()), p -> {
-        IntentionAction intention = p.first.getAction();
-        if (intention instanceof LocalQuickFix) return (LocalQuickFix)intention;
-        if (intention instanceof LocalQuickFixAsIntentionAdapter) {
-          return ((LocalQuickFixAsIntentionAdapter)intention).getFix();
-        }
-        return null;
-      });
+    List<LocalQuickFix> quickFixes = new ArrayList<>();
+    info.findRegisteredQuickFix((descriptor, range) -> {
+      IntentionAction intention = descriptor.getAction();
+      LocalQuickFix fix =
+        intention instanceof LocalQuickFix ? (LocalQuickFix)intention :
+        intention instanceof LocalQuickFixAsIntentionAdapter ?
+        ((LocalQuickFixAsIntentionAdapter)intention).getFix() : null;
+      if (fix != null) {
+        quickFixes.add(fix);
+      }
+      return null;
+    });
     return convertToDescriptor(file, info.getSeverity(), info.getStartOffset(), info.getEndOffset(), info.getDescription(), info.isAfterEndOfLine(), quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 }

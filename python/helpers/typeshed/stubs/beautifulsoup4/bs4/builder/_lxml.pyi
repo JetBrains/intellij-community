@@ -19,7 +19,7 @@ class LXMLTreeBuilderForXML(TreeBuilder):
     soup: Any
     nsmaps: Any
     def __init__(self, parser: Any | None = ..., empty_element_tags: Any | None = ..., **kwargs) -> None: ...
-    def prepare_markup(  # type: ignore  # the order of the parameters is different
+    def prepare_markup(  # type: ignore[override]  # the order of the parameters is different
         self,
         markup,
         user_specified_encoding: Any | None = ...,

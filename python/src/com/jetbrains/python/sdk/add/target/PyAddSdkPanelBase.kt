@@ -2,15 +2,20 @@
 package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
@@ -22,7 +27,7 @@ import java.util.function.Supplier
  */
 abstract class PyAddSdkPanelBase(protected val project: Project?,
                                  protected val module: Module?,
-                                 protected val targetSupplier: Supplier<TargetEnvironmentConfiguration>?)
+                                 private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?)
   : PyAddSdkPanel(), PyAddTargetBasedSdkView {
   protected val defaultProject: Project
     get() = ProjectManager.getInstance().defaultProject
@@ -32,6 +37,12 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
 
   protected val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
     get() = targetSupplier?.get()
+
+  /**
+   *  For targets providing access to FS returns instance to map target path to abstraction used by validation.
+   *  Otherwise return null, so [validateExecutableFile] and [validateEmptyDir] skips validations
+   */
+  protected val pathInfoProvider: TargetConfigurationReadableFs? = targetEnvironmentConfiguration as? TargetConfigurationReadableFs
 
   protected val isUnderLocalTarget: Boolean
     get() = targetEnvironmentConfiguration == null
@@ -54,7 +65,7 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
                                     existingSdks: Collection<Sdk>,
                                     sdkName: String? = null): Sdk {
       // TODO [targets] Should flavor be more flexible?
-      val data = PyTargetAwareAdditionalData(virtualEnvSdkFlavor).also {
+      val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor)).also {
         it.interpreterPath = interpreterPath
         it.targetEnvironmentConfiguration = environmentConfiguration
       }
@@ -62,7 +73,7 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
       val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)
 
       val name: String
-      if (sdkName != null && sdkName.isNotEmpty()) {
+      if (!sdkName.isNullOrEmpty()) {
         name = sdkName
       }
       else {
@@ -71,16 +82,18 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
 
       val sdk = SdkConfigurationUtil.createSdk(existingSdks, generateSdkHomePath(data), PythonSdkType.getInstance(), data, name)
 
+      if (project != null && project.modules.isNotEmpty() &&
+          PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() ?: false) {
+        sdk.associateWithModule(project.modules[0], null)
+      }
+
       sdk.versionString = sdkVersion
 
       data.isValid = true
 
       return sdk
     }
-
-    private fun generateSdkHomePath(data: PyTargetAwareAdditionalData): String {
-      // TODO [targets] Add identifier PyTargetAwareAdditionalData
-      return "target://" + data.interpreterPath
-    }
+    // TODO [targets] Add identifier PyTargetAwareAdditionalData
+    private fun generateSdkHomePath(data: PyTargetAwareAdditionalData): String = data.interpreterPath
   }
 }

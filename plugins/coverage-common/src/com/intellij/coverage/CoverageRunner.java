@@ -26,7 +26,7 @@ public abstract class CoverageRunner {
 
   /**
    * When multiple coverage runners are available for one {@link CoverageEngine}, 
-   * {@link #getPresentableName()} is used to render coverage runner in UI.
+   * {@code getPresentableName()} is used to render coverage runner in UI.
    */
   @NotNull
   @NonNls
@@ -52,6 +52,13 @@ public abstract class CoverageRunner {
   @NonNls
   public String @NotNull [] getDataFileExtensions() {
     return new String[]{getDataFileExtension()};
+  }
+
+  /**
+   * Checks whether a file is supported by the runner.
+   */
+  public boolean canBeLoaded(@NotNull File candidate) {
+    return true;
   }
 
   /**

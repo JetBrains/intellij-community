@@ -20,10 +20,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CreateFieldFix extends QuickFix{
   private static final Logger LOG = Logger.getInstance(CreateFieldFix.class);
 

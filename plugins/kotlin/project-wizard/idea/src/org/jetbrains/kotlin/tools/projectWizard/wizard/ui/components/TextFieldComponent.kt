@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
@@ -13,8 +14,8 @@ import javax.swing.JComponent
 
 class TextFieldComponent(
     context: Context,
-    labelText: String? = null,
-    description: String? = null,
+    labelText: @NlsContexts.Label String? = null,
+    description: @NlsContexts.Label String? = null,
     initialValue: String? = null,
     validator: SettingValidator<String>? = null,
     onValueUpdate: (String, isByUser: Boolean) -> Unit = { _, _ -> }

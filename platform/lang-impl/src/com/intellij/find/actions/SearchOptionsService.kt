@@ -1,11 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
 import com.intellij.find.actions.SearchOptionsService.MyState
 import com.intellij.find.actions.SearchOptionsService.SearchVariant
 import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
+import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.openapi.components.*
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 
 // TODO persist custom options with the same mechanism as in PersistentStateComponent
 @State(name = "SearchOptions", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
@@ -86,11 +90,21 @@ internal class PersistedSearchOptions(
   val textSearch: Boolean,
 )
 
-internal fun getSearchOptions(variant: SearchVariant, target: SearchTarget): PersistedSearchOptions {
-  return searchOptionsService().getSearchOptions(variant, target.targetKey())
+internal fun getSearchOptions(
+  variant: SearchVariant,
+  target: SearchTarget,
+  selectedScope: SearchScope,
+): AllSearchOptions {
+  val persistedOptions: PersistedSearchOptions = searchOptionsService().getSearchOptions(variant, target.targetKey())
+  val scopeToUse = target.maximalSearchScope as? LocalSearchScope
+                   ?: selectedScope
+  return AllSearchOptions(
+    options = UsageOptions.createOptions(persistedOptions.usages, scopeToUse),
+    textSearch = if (target.hasTextSearchStrings()) persistedOptions.textSearch else null,
+  )
 }
 
-internal fun setSearchOptions(variant: SearchVariant, target: SearchTarget, allOptions: AllSearchOptions<*>) {
+internal fun setSearchOptions(variant: SearchVariant, target: SearchTarget, allOptions: AllSearchOptions) {
   val newOptions = PersistedSearchOptions(allOptions.options.isUsages, allOptions.textSearch ?: true)
   searchOptionsService().setSearchOptions(variant, target.targetKey(), newOptions)
 }

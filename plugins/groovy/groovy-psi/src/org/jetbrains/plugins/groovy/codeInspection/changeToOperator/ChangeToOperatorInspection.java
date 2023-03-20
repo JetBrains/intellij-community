@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -23,9 +23,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-import javax.swing.*;
-
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformations.TRANSFORMATIONS;
 
 public class ChangeToOperatorInspection extends BaseInspection {
@@ -40,9 +40,8 @@ public class ChangeToOperatorInspection extends BaseInspection {
       @Override
       public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCall) {
         final GrExpression invokedExpression = methodCall.getInvokedExpression();
-        if (!(invokedExpression instanceof GrReferenceExpression)) return;
+        if (!(invokedExpression instanceof GrReferenceExpression referenceExpression)) return;
 
-        final GrReferenceExpression referenceExpression = (GrReferenceExpression)invokedExpression;
         if (referenceExpression.getDotTokenType() != GroovyTokenTypes.mDOT) return;
 
         final PsiElement highlightElement = referenceExpression.getReferenceNameElement();
@@ -68,29 +67,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
 
   @Nullable
   protected GroovyFix getFix(@NotNull Transformation transformation, @NotNull String methodName) {
-    return new GroovyFix() {
-      @Nls
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return GroovyBundle.message("replace.with.operator.fix", methodName);
-      }
-
-      @Override
-      protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-        PsiElement call = descriptor.getPsiElement().getParent();
-        if (call == null) return;
-        call = call.getParent();
-        if (!(call instanceof GrMethodCall)) return;
-        GrMethodCall methodCall = (GrMethodCall) call;
-        GrExpression invokedExpression = methodCall.getInvokedExpression();
-        if (!(invokedExpression instanceof GrReferenceExpression)) return;
-
-        Options options = getOptions();
-        if(!transformation.couldApply(methodCall, options)) return;
-        transformation.apply(methodCall, options);
-      }
-    };
+    return new OperatorToMethodFix(transformation, methodName, getOptions());
   }
 
   @Nullable
@@ -101,13 +78,47 @@ public class ChangeToOperatorInspection extends BaseInspection {
   }
 
 
+  private static class OperatorToMethodFix extends GroovyFix {
+
+    private final @SafeFieldForPreview Transformation myTransformation;
+
+    private final String methodName;
+
+    private final @SafeFieldForPreview Options myOptions;
+
+    private OperatorToMethodFix(Transformation transformation, String name, Options options) {
+      myTransformation = transformation;
+      methodName = name;
+      myOptions = options;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return GroovyBundle.message("replace.with.operator.fix", methodName);
+    }
+
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+      PsiElement call = descriptor.getPsiElement().getParent();
+      if (call == null) return;
+      call = call.getParent();
+      if (!(call instanceof GrMethodCall methodCall)) return;
+      GrExpression invokedExpression = methodCall.getInvokedExpression();
+      if (!(invokedExpression instanceof GrReferenceExpression)) return;
+
+      if(!myTransformation.couldApply(methodCall, myOptions)) return;
+      myTransformation.apply(methodCall, myOptions);
+    }
+  }
+
   @Override
-  public JComponent createGroovyOptionsPanel() {
-    MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.double.negation.option"), "useDoubleNegation");
-    optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
-    optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.parentheses"), "withoutAdditionalParentheses");
-    return optionsPanel;
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("useDoubleNegation", GroovyBundle.message("replace.with.operator.double.negation.option")),
+      checkbox("shouldChangeCompareToEqualityToEquals", GroovyBundle.message("replace.with.operator.compareTo.equality.option")),
+      checkbox("withoutAdditionalParentheses", GroovyBundle.message("replace.with.operator.parentheses")));
   }
 
   private Options getOptions() {

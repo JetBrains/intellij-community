@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -16,7 +17,7 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifiableAssertionInspection extends BaseInspection {
+public class SimplifiableAssertionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
@@ -61,12 +62,11 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       return false;
     }
     final PsiType type = expression2.getType();
-    return PsiType.BOOLEAN.equals(type);
+    return PsiTypes.booleanType().equals(type);
   }
 
   static boolean isEqualityComparison(PsiExpression expression) {
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQEQ)) {
         return false;
@@ -88,10 +88,9 @@ public class SimplifiableAssertionInspection extends BaseInspection {
   }
 
   static boolean isIdentityComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
+    if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
     if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
       return false;
     }
@@ -117,7 +116,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = methodNameIdentifier.getParent();
       if (parent == null) {
@@ -206,8 +205,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression lhs = null;
       PsiExpression rhs = null;
-      if (firstArgument instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)firstArgument;
+      if (firstArgument instanceof PsiBinaryExpression binaryExpression) {
         lhs = binaryExpression.getLOperand();
         rhs = binaryExpression.getROperand();
       }
@@ -262,8 +260,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
 
       final PsiExpression originalExpression = assertHint.getOriginalExpression();
       if (lhsType != null && TypeConversionUtil.isFloatOrDoubleType(lhsType.getDeepComponentType()) ||
-          rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType()) ||
-          isPrimitiveAndBoxedFloat(lhsType, rhsType) || isPrimitiveAndBoxedFloat(rhsType, lhsType)) {
+          rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType())) {
         final String noDelta = compoundMethodCall(methodName, assertHint, buf.toString());
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalExpression.getProject());
         final PsiExpression expression = methodName.equals("assertNotEquals")
@@ -279,15 +276,10 @@ public class SimplifiableAssertionInspection extends BaseInspection {
     }
 
     private boolean isPrimitiveAndBoxedWithOverloads(PsiType lhsType, PsiType rhsType) {
-      if (lhsType instanceof PsiPrimitiveType && !PsiType.FLOAT.equals(lhsType) && !PsiType.DOUBLE.equals(lhsType)) {
+      if (lhsType instanceof PsiPrimitiveType && !PsiTypes.floatType().equals(lhsType) && !PsiTypes.doubleType().equals(lhsType)) {
         return rhsType instanceof PsiClassType;
       }
       return false;
-    }
-
-    private boolean isPrimitiveAndBoxedFloat(PsiType lhsType, PsiType rhsType) {
-      return lhsType instanceof PsiPrimitiveType && rhsType instanceof PsiClassType &&
-             (PsiType.DOUBLE.equals(rhsType) && PsiType.FLOAT.equals(rhsType));
     }
 
     private void replaceWithNegatedBooleanAssertion(AssertHint assertHint) {
@@ -309,7 +301,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
         return;
       }
       final IElementType tokenType = binaryExpression.getOperationTokenType();
-      if (!(ExpressionUtils.isEvaluatedAtCompileTime(lhs)) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
+      if (!ExpressionUtils.isEvaluatedAtCompileTime(lhs) && ExpressionUtils.isEvaluatedAtCompileTime(rhs)) {
         rhs = lhs;
       }
       @NonNls final String methodName = assertHint.getMethod().getName();
@@ -473,10 +465,9 @@ public class SimplifiableAssertionInspection extends BaseInspection {
     }
 
     private boolean isEqEqExpression(PsiExpression argument) {
-      if (!(argument instanceof PsiBinaryExpression)) {
+      if (!(argument instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)argument;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       return JavaTokenType.EQEQ.equals(tokenType);
     }

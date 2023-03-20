@@ -9,7 +9,6 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import training.util.PerformActionUtil
 import training.util.isToStringContains
 import java.awt.Rectangle
 import javax.swing.JEditorPane
@@ -29,7 +28,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
     prepareSample(sample)
 
     actionTask("GotoNextError") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("editor.coding.assistance.goto.next.error", action(it))
     }
 
@@ -53,29 +52,23 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
       }
     }
 
-    // instantly close error description popup after GotoNextError action
-    prepareRuntimeTask {
-      PerformActionUtil.performAction("EditorPopupMenu", editor, project)
-    }
-
     task("ShowErrorDescription") {
       text(LessonsBundle.message("editor.coding.assistance.show.warning.description", action(it)))
       // escapeHtml required in case of hieroglyph localization
       val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))
-      triggerByUiComponentAndHighlight<JEditorPane>(false, false) { ui ->
+      triggerUI().component { ui: JEditorPane ->
         ui.text.isToStringContains(inspectionInfoLabelText)
       }
       restoreIfModifiedOrMoved()
       test {
         Thread.sleep(500)
         invokeActionViaShortcut("CONTROL F1")
-        invokeActionViaShortcut("CONTROL F1")
       }
     }
 
     task {
       text(LessonsBundle.message("editor.coding.assistance.fix.warning") + " " + getFixWarningText())
-      triggerByPartOfComponent { ui: HyperlinkLabel ->
+      triggerAndBorderHighlight().componentPart { ui: HyperlinkLabel ->
         if (ui.text == warningIntentionText) {
           Rectangle(ui.x - 20, ui.y - 10, ui.width + 125, ui.height + 10)
         }
@@ -118,8 +111,6 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
     val sequence = editor.document.charsSequence
     return caretOffset != sequence.length && sequence[caretOffset].isLetter()
   }
-
-  override val suitableTips = listOf("HighlightUsagesInFile", "NextPrevError", "NavigateBetweenErrors")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("editor.coding.assistance.help.link"),

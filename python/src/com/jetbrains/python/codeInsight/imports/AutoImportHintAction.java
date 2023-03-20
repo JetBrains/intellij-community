@@ -82,7 +82,7 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myDelegate.invoke(file);
+    myDelegate.invoke();
   }
 
   @Override

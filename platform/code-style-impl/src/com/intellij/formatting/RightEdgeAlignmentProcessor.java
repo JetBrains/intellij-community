@@ -20,14 +20,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * {@link BlockAlignmentProcessor} implementation for {@link Alignment} that
  * {@link Alignment.Anchor#RIGHT anchors to the right block edge}.
- * 
- * @author Denis Zhdanov
  */
 public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
 
   @Override
   protected IndentData calculateAlignmentAnchorIndent(@NotNull Context context) {
-    LeafBlockWrapper offsetResponsibleBlock = context.alignment.getOffsetRespBlockBefore(context.targetBlock);
+    LeafBlockWrapper offsetResponsibleBlock = context.alignment().getOffsetRespBlockBefore(context.targetBlock());
     if (offsetResponsibleBlock == null) {
       return null;
     }
@@ -39,7 +37,7 @@ public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor
     else {
       final int targetIndent = CoreFormatterUtil.getStartColumn(offsetResponsibleBlock)
                                + offsetResponsibleBlock.getSymbolsAtTheLastLine();
-      final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock);
+      final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock());
       if (prevIndentedBlock == null) {
         return new IndentData(0, targetIndent);
       }
@@ -52,9 +50,9 @@ public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor
 
   @Override
   protected boolean applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
-    WhiteSpace whiteSpace = context.targetBlock.getWhiteSpace();
+    WhiteSpace whiteSpace = context.targetBlock().getWhiteSpace();
     int indentSpaces = alignmentAnchorIndent.getIndentSpaces();
-    int spaces = alignmentAnchorIndent.getSpaces() - context.targetBlock.getSymbolsAtTheLastLine();
+    int spaces = alignmentAnchorIndent.getSpaces() - context.targetBlock().getSymbolsAtTheLastLine();
     if (spaces < 0) {
       indentSpaces += spaces;
       spaces = 0;
@@ -75,10 +73,10 @@ public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor
       // Let's say, the last block has indent '10', hence, the result would be:
       // block11   block12
       //           test-block-that-has-rather-big-width-and-aligned-to-block12
-      CompositeBlockWrapper parent = context.targetBlock.getParent();
+      CompositeBlockWrapper parent = context.targetBlock().getParent();
       if (parent != null) {
         IndentData childOffset = CoreFormatterUtil.getIndent(
-          context.indentOptions, context.targetBlock, context.targetBlock.getStartOffset()
+          context.indentOptions(), context.targetBlock(), context.targetBlock().getStartOffset()
         );
         if (whiteSpace.getTotalSpaces() > childOffset.getTotalSpaces()) {
           int leftShift = whiteSpace.getTotalSpaces() - childOffset.getTotalSpaces();
@@ -99,8 +97,8 @@ public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor
 
   @Override
   protected int getAlignmentIndentDiff(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
-    IndentData indentBeforeBlock = context.targetBlock.getNumberOfSymbolsBeforeBlock();
-    int numberOfSymbolsBeforeBlock = indentBeforeBlock.getTotalSpaces() + context.targetBlock.getSymbolsAtTheLastLine();
+    IndentData indentBeforeBlock = context.targetBlock().getNumberOfSymbolsBeforeBlock();
+    int numberOfSymbolsBeforeBlock = indentBeforeBlock.getTotalSpaces() + context.targetBlock().getSymbolsAtTheLastLine();
     return alignmentAnchorIndent.getTotalSpaces() - numberOfSymbolsBeforeBlock;
   }
 }

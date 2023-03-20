@@ -74,6 +74,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component[] myFocusOwners = new Component[0];
 
   private @NlsContexts.PopupAdvertisement String myAd;
+  private JComponent myAdvertiser;
   private boolean myShowShadow = true;
   private boolean myShowBorder = true;
   private boolean myFocusable = true;
@@ -251,6 +252,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
     popup.setNormalWindowLevel(myNormalWindowLevel);
     popup.setOkHandler(myOkHandler);
+    if (myAdvertiser != null) {
+      popup.setFooterComponent(myAdvertiser);
+    }
 
     if (myUserData != null) {
       popup.setUserData(myUserData);
@@ -360,6 +364,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment) {
     myAd = text;
     myAdAlignment = textAlignment;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setAdvertiser(@Nullable JComponent advertiser) {
+    myAdvertiser = advertiser;
     return this;
   }
 

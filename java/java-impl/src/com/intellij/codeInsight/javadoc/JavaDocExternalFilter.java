@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
@@ -39,7 +39,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   );
 
   private static final Pattern HREF_SELECTOR = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-  private static final Pattern METHOD_HEADING = Pattern.compile("<H[34]>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static final Pattern METHOD_HEADING = Pattern.compile("<H[34].*>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   private final RefConvertor[] myReferenceConverters = {
     new RefConvertor(HREF_SELECTOR) {

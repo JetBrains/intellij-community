@@ -16,9 +16,9 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -37,7 +37,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitBlockStatement(PsiBlockStatement statement) {
+  public void visitBlockStatement(@NotNull PsiBlockStatement statement) {
     final PsiElement parent = statement.getParent();
     final boolean isAlreadyCounted = parent instanceof PsiDoWhileStatement ||
                                      parent instanceof PsiWhileStatement ||
@@ -52,7 +52,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     if (expression.getBody() instanceof PsiCodeBlock) {
       enterScope(expression);
     }
@@ -72,7 +72,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitForeachStatement(PsiForeachStatement statement) {
+  public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     enterScope(statement);
     super.visitForeachStatement(statement);
   }
@@ -112,7 +112,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitSwitchExpression(PsiSwitchExpression expression) {
+  public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     enterScope(expression);
     super.visitSwitchExpression(expression);
   }
@@ -128,7 +128,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
     exitScope(element);
   }
 
-  private final Set<PsiElement> scopeEntered = new THashSet<>();
+  private final Set<PsiElement> scopeEntered = new HashSet<>();
   private void enterScope(PsiElement element) {
     scopeEntered.add(element);
     m_currentDepth++;

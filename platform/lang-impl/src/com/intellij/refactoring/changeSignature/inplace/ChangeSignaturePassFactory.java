@@ -8,7 +8,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -73,8 +73,9 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
         HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(range);
         builder.textAttributes(attributes);
         builder.descriptionAndTooltip(RefactoringBundle.message("text.signature.change.was.detected.highlight.tooltip"));
+        IntentionAction action = new ApplyChangeSignatureAction(currentRefactoring.getInitialName());
+        builder.registerFix(action, null, null, null, null);
         info = builder.createUnconditionally();
-        QuickFixAction.registerQuickFixAction(info, new ApplyChangeSignatureAction(currentRefactoring.getInitialName()));
       }
       Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.emptyList();
       UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());

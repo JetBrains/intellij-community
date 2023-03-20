@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +34,11 @@ public class ExternalJavadocPresentationTest extends LightJavaCodeInsightTestCas
     doTest("lang/String.html#toLowerCase()", "String/7/page.html", "String/7/expectedToLowerCase.html");
     doTest("lang/String.html#toLowerCase()", "String/6/page.html", "String/6/expectedToLowerCase.html");
     doTest("lang/String.html#toLowerCase()", "String/16/page.html", "String/16/expectedToLowerCase.html");
+  }
+
+  public void testListAdd() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest("List.html#add-E-", "List/8/page.html", "List/8/expectedAdd.html"));
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest("util/List.html#add(java.lang.Object)", "List/17/page.html", "List/17/expectedAdd.html"));
   }
 
   public void testInvalidJavadoc() {

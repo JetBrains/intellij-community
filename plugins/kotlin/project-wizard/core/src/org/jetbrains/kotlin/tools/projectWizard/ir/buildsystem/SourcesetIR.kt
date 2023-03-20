@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem
 
@@ -37,16 +37,26 @@ data class MultiplatformSourcesetIR(
 ) : SourcesetIR(), IrsOwner, GradleIR {
     override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): MultiplatformSourcesetIR = copy(irs = irs)
 
-    override fun GradlePrinter.renderGradle() = getting(sourcesetName, prefix = null) {
-        val dependencies = irsOfType<DependencyIR>()
-        val needBody = dependencies.isNotEmpty() || dsl == GradlePrinter.GradleDsl.GROOVY
-        if (needBody) {
-            +" "
-            inBrackets {
-                if (dependencies.isNotEmpty()) {
-                    indent()
-                    sectionCall("dependencies", dependencies)
+    override fun GradlePrinter.renderGradle() {
+        getting(sourcesetName, prefix = null) {
+            val dependencies = irsOfType<DependencyIR>()
+            val needBody = dependencies.isNotEmpty() || dsl == GradlePrinter.GradleDsl.GROOVY
+            if (needBody) {
+                +" "
+                inBrackets {
+                    if (dependencies.isNotEmpty()) {
+                        indent()
+                        sectionCall("dependencies", dependencies)
+                    }
                 }
+            }
+        }
+        for (dependsOn in original.dependsOnModules) {
+            if (dependsOn.sourceSets.any { it.sourcesetType == sourcesetType }) {
+                nl()
+                indent()
+                val capitalSuffix = sourcesetType.name.capitalize(Locale.US) // for example: "Main" or "Test"
+                sourcesetName.dependsOn(dependsOn.name + capitalSuffix) // for example: iosSimulatorArm64Main.dependsOn(iosMain)
             }
         }
     }

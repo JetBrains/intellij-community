@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class RemoteSdkCredentialsBuilder {
   private String myInterpreterPath = null;
-  private static final String myHelpersPath = null;
   private RemoteCredentials myRemoteCredentials = null;
   private static final String myHelpersDefaultDirName = ".idea_helpers";
 
@@ -20,10 +19,6 @@ public class RemoteSdkCredentialsBuilder {
 
     if (myInterpreterPath != null) {
       result.setInterpreterPath(myInterpreterPath);
-    }
-
-    if (myHelpersPath != null) {
-      result.setHelpersPath(myHelpersPath);
     }
 
     return result;
@@ -40,17 +35,12 @@ public class RemoteSdkCredentialsBuilder {
     copyTo.setHelpersVersionChecked(data.isHelpersVersionChecked());
   }
 
+  /**
+   * @deprecated Just inline this method.
+   */
+  @Deprecated
   public static void copyCredentials(@NotNull RemoteCredentials data, @NotNull MutableRemoteCredentials copyTo) {
-    copyTo.setHost(data.getHost());
-    copyTo.setLiteralPort(data.getLiteralPort());//then port is copied
-    copyTo.setUserName(data.getUserName());
-    copyTo.setPassword(data.getPassword());
-    copyTo.setPrivateKeyFile(data.getPrivateKeyFile());
-    copyTo.setPassphrase(data.getPassphrase());
-    copyTo.setAuthType(data.getAuthType());
-
-    copyTo.setStorePassword(data.isStorePassword());
-    copyTo.setStorePassphrase(data.isStorePassphrase());
+    RemoteCredentialsHolder.copyRemoteCredentials(data, copyTo);
   }
 
   public RemoteSdkCredentialsBuilder withCredentials(@Nullable RemoteCredentials remoteCredentials) {

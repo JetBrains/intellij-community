@@ -23,9 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsing;
 
-/**
- * @author ilyas
- */
 public class GroovyDocParser implements PsiParser {
   @Override
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -82,8 +82,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
             refElement = helper.resolveReferencedClass(reference.getClassNameText(), ref);
           }
 
-          if (refElement instanceof PsiClass) {
-            PsiClass psiClass = (PsiClass)refElement;
+          if (refElement instanceof PsiClass psiClass) {
             if (isInsideDocComment ? useFqInJavadoc : useFqInCode) {
               String qName = psiClass.getQualifiedName();
               if (qName == null) return element;
@@ -266,11 +265,11 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         if (parent instanceof PsiTypeElement) {
           final PsiClass containingClass = refClass.getContainingClass();
           if (containingClass != null && containingClass.hasTypeParameters()) {
-            if (parent.getParent() instanceof PsiInstanceOfExpression) {
+            if (parent.getParent() instanceof PsiInstanceOfExpression || parent.getParent() instanceof PsiPatternVariable) {
               return false;
             }
             if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
+              PsiElement enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
               if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, refClass, false)) {
                 return false;
               }

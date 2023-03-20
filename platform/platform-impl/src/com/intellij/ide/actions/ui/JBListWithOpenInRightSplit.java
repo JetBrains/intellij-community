@@ -2,10 +2,14 @@
 package com.intellij.ide.actions.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.ui.MouseTracker;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -22,92 +26,64 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.openapi.actionSystem.AnActionEvent.createFromDataContext;
-
 public class JBListWithOpenInRightSplit<T> extends JBList<T> {
-
-  @NotNull
-  public static <T> JBList<T> createListWithOpenInRightSplitter(@NotNull Condition<? super T> isSplitterAvailable) {
-    return createListWithOpenInRightSplitter(createDefaultListModel(), isSplitterAvailable);
-  }
 
   @NotNull
   public static <T> JBList<T> createListWithOpenInRightSplitter(@NotNull ListModel<T> dataModel,
                                                                 @Nullable Condition<? super T> checkRightSplitter) {
-    return createListWithOpenInRightSplitter(dataModel, checkRightSplitter, false);
-  }
-
-  @NotNull
-  public static <T> JBList<T> createListWithOpenInRightSplitter(@NotNull ListModel<T> dataModel,
-                                                                @Nullable Condition<? super T> checkRightSplitter,
-                                                                boolean showIconInVisibleArea) {
     return Registry.is("lists.use.open.in.right.splitter")
-           ? new JBListWithOpenInRightSplit<>(dataModel, checkRightSplitter, showIconInVisibleArea)
+           ? new JBListWithOpenInRightSplit<>(dataModel, checkRightSplitter)
            : new JBList<>(dataModel);
   }
 
-  private class JBFileMouseHandler extends MouseAdapter {
-    @Override
-    public void mouseEntered(MouseEvent e) {
-      myMousePoint = e != null ? e.getPoint() : null;
-      updateHover();
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-      myMousePoint = null;
-      updateHover();
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-      myMousePoint = e != null ? e.getPoint() : null;
-      updateHover();
-    }
-
-    private void updateHover() {
-      boolean isHovered = isHovered();
-      setCursor(isHovered ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
-      if (myTooltip != null && !isHovered) {
-        HelpTooltip.hide(JBListWithOpenInRightSplit.this);
-      }
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-      Point point = e.getPoint();
-      int index = locationToIndex(point);
-      
-      //alt + click is "OpenInRightSplit", or click the icon
-      if (index != -1 && getIconRectangle(index).contains(point)) {
-        invokeAction();
-        e.consume();
-      }
+  private void updateHover() {
+    boolean isHovered = isHovered();
+    setCursor(isHovered ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
+    if (myTooltip != null && !isHovered) {
+      HelpTooltip.hide(this);
     }
   }
 
   private boolean isHovered() {
-    int index = myMousePoint == null ? -1 : locationToIndex(myMousePoint);
+    Point mousePoint = mouseTracker.getMousePoint();
+    int index = mousePoint == null ? -1 : locationToIndex(mousePoint);
     if (index == -1) return false;
     T at = getModel().getElementAt(index);
     if (!canOpenInSplitter(at)) return false;
 
-    return getIconRectangle(index).contains(myMousePoint);
+    return getIconRectangle(index).contains(mousePoint);
   }
 
-  @Nullable
-  private Point myMousePoint;
+  private final MouseTracker mouseTracker;
+
   @Nullable
   private final HelpTooltip myTooltip;
   @Nullable
   private final Condition<? super T> myCheckRightSplitter;
-  private final boolean myShowIconInVisibleArea;
 
-  public JBListWithOpenInRightSplit(@NotNull ListModel<T> dataModel, @Nullable Condition<? super T> checkRightSplitter, boolean showIconInVisibleArea) {
+  public JBListWithOpenInRightSplit(@NotNull ListModel<T> dataModel, @Nullable Condition<? super T> checkRightSplitter) {
     super(dataModel);
     myCheckRightSplitter = checkRightSplitter;
-    myShowIconInVisibleArea = showIconInVisibleArea;
-    JBFileMouseHandler handler = new JBFileMouseHandler();
+    mouseTracker = new MouseTracker(this);
+    mouseTracker.addMoveListener(new MouseTracker.MoveListener() {
+      @Override
+      public void changed(@Nullable Point oldMousePoint, @Nullable Point newMousePoint) {
+        updateHover();
+      }
+    });
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        Point point = e.getPoint();
+        int index = locationToIndex(point);
+
+        //alt + click is "OpenInRightSplit", or click the icon
+        if (index != -1 && getIconRectangle(index).contains(point)) {
+          invokeAction();
+          e.consume();
+        }
+      }
+    });
 
     AnAction action = ActionManager.getInstance().getAction(getActionId());
     if (action != null) {
@@ -124,9 +100,6 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
     if (action != null) {
       OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(this);
     }
-
-    addMouseListener(handler);
-    addMouseMotionListener(handler);
   }
 
 
@@ -135,12 +108,14 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
     super.paint(g);
 
     boolean isSelectedUnderMouse = false;
-    if (myMousePoint != null) {
-      int index = locationToIndex(myMousePoint);
+    Point mousePoint = mouseTracker.getMousePoint();
+
+    if (mousePoint != null) {
+      int index = locationToIndex(mousePoint);
       if (index != -1 && canOpenInSplitter(getModel().getElementAt(index))) {
         isSelectedUnderMouse = getSelectedIndex() == index;
         final Rectangle iconRect = getIconRectangle(index);
-        boolean isIconHover = myMousePoint != null && iconRect.contains(myMousePoint);
+        boolean isIconHover = iconRect.contains(mousePoint);
         Icon icon = getIcon();
         if (isSelectedUnderMouse) {
           icon = IconLoader.getDarkIcon(icon, true);
@@ -172,11 +147,9 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
   @NotNull
   protected Rectangle getIconRectangle(int index) {
     Rectangle bounds = getCellBounds(index, index);
-    if (myShowIconInVisibleArea) {
-      Rectangle visibleRect = getVisibleRect();
-      visibleRect.setSize(visibleRect.width - getInsets().right, visibleRect.height);
-      bounds = bounds.intersection(visibleRect);
-    }
+    Rectangle visibleRect = getVisibleRect();
+    visibleRect.setSize(visibleRect.width - getInsets().right, visibleRect.height);
+    bounds = bounds.intersection(visibleRect);
     Icon icon = toSize(getIcon());
     return new Rectangle(((int) bounds.getMaxX()) - icon.getIconWidth(),
                          bounds.y + (bounds.height - icon.getIconHeight()) / 2,
@@ -191,10 +164,9 @@ public class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
   protected void invokeAction() {
     HelpTooltip.dispose(this);
-    
+
     AnAction action = ActionManager.getInstance().getAction(getActionId());
-    DataContext context = DataManager.getInstance().getDataContext(this);
-    action.actionPerformed(createFromDataContext(getClass().getName(), null, context));
+    ActionUtil.invokeAction(action, this, getClass().getName(), null, null);
   }
 
   @Override

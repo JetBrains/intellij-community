@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.preview
 
 import com.intellij.codeWithMe.ClientId
@@ -65,8 +65,8 @@ class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: C
       else -> EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW)
     }
     if (editor is EditorEx) {
-      val scheme = EditorColorsUtil.getGlobalOrDefaultColorScheme()
-      editor.colorsScheme = scheme
+      val scheme = EditorColorsUtil.getColorSchemeForBackground(editor.colorsScheme.defaultBackground)
+      editor.colorsScheme = editor.createBoundColorSchemeDelegate(scheme)
       editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project)
     }
     with(editor.settings) {

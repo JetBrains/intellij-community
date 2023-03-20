@@ -1,0 +1,251 @@
+default = 'shortlog'
+mimetype = 'application/json'
+
+filerevision = '\{
+  "node": {node|json},
+  "path": {file|json},
+  "date": {date|json},
+  "desc": {desc|utf8|json},
+  "branch": {if(branch, branch%changesetbranch, "default"|json)},
+  "bookmarks": [{join(bookmarks%changelistentryname, ", ")}],
+  "tags": [{join(tags%changelistentryname, ", ")}],
+  "user": {author|utf8|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "phase": {phase|json},
+  "lines": [{join(text%lineentry, ", ")}]
+  }'
+lineentry = '\{
+  "line": {line|json}
+  }'
+search = '\{
+  "node": {node|json},
+  "query": {query|json},
+  "entries": [{join(entries%changelistentry, ", ")}]
+  }'
+# changelog and shortlog are the same web API but with different
+# number of entries.
+changelog = changelist.tmpl
+shortlog = changelist.tmpl
+graph = graph.tmpl
+changelistentry = '\{
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|utf8|json},
+  "branch": {if(branch, branch%changesetbranch, "default"|json)},
+  "bookmarks": [{join(bookmarks%changelistentryname, ", ")}],
+  "tags": [{join(tags%changelistentryname, ", ")}],
+  "user": {author|utf8|json},
+  "phase": {phase|json},
+  "parents": [{if(allparents, join(allparents%changesetparent, ", "),
+                  join(parent%changesetparent, ", "))}]
+  }'
+graphentry = '\{
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|utf8|json},
+  "branch": {if(branch, branch%changesetbranch, "default"|json)},
+  "bookmarks": [{join(bookmarks%changelistentryname, ", ")}],
+  "tags": [{join(tags%changelistentryname, ", ")}],
+  "user": {author|utf8|json},
+  "phase": {phase|json},
+  "col": {col|json},
+  "row": {row|json},
+  "color": {color|json},
+  "edges": {edges|json},
+  "parents": [{if(allparents, join(allparents%changesetparent, ", "),
+                  join(parent%changesetparent, ", "))}]
+  }'
+changelistentryname = '{name|utf8|json}'
+changeset = '\{
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|utf8|json},
+  "branch": {if(branch, branch%changesetbranch, "default"|json)},
+  "bookmarks": [{join(changesetbookmark, ", ")}],
+  "tags": [{join(changesettag, ", ")}],
+  "user": {author|utf8|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "files": [{join(files, ", ")}],
+  "diff": [{join(diff, ", ")}],
+  "phase": {phase|json}
+  }'
+changesetbranch = '{name|utf8|json}'
+changesetbookmark = '{bookmark|utf8|json}'
+changesettag = '{tag|utf8|json}'
+changesetparent = '{node|json}'
+manifest = '\{
+  "node": {node|json},
+  "abspath": {path|json},
+  "directories": [{join(dentries%direntry, ", ")}],
+  "files": [{join(fentries%fileentry, ", ")}],
+  "bookmarks": [{join(bookmarks%name, ", ")}],
+  "tags": [{join(tags%name, ", ")}]
+  }'
+name = '{name|utf8|json}'
+direntry = '\{
+  "abspath": {path|json},
+  "basename": {basename|json},
+  "emptydirs": {emptydirs|json}
+  }'
+fileentry = '\{
+  "abspath": {file|json},
+  "basename": {basename|json},
+  "date": {date|json},
+  "size": {size|json},
+  "flags": {permissions|json}
+  }'
+tags = '\{
+  "node": {node|json},
+  "tags": [{join(entriesnotip%tagentry, ", ")}]
+  }'
+tagentry = '\{
+  "tag": {tag|utf8|json},
+  "node": {node|json},
+  "date": {date|json}
+  }'
+bookmarks = '\{
+  "node": {node|json},
+  "bookmarks": [{join(entries%bookmarkentry, ", ")}]
+  }'
+bookmarkentry = '\{
+  "bookmark": {bookmark|utf8|json},
+  "node": {node|json},
+  "date": {date|json}
+  }'
+branches = '\{
+  "branches": [{join(entries%branchentry, ", ")}]
+  }'
+branchentry = '\{
+  "branch": {branch|utf8|json},
+  "node": {node|json},
+  "date": {date|json},
+  "status": {status|json}
+  }'
+shortlogentry = '{changelistentry}'
+summary = '\{
+  "node": {node|json},
+  "lastchange": {lastchange|json},
+  "bookmarks": [{join(bookmarks%bookmarkentry, ", ")}],
+  "branches": [{join(branches%branchentry, ", ")}],
+  "shortlog": [{join(shortlog%shortlogentry, ", ")}],
+  "tags": [{join(tags%tagentry, ", ")}],
+  "archives": [{join(archives%archiveentry, ", ")}],
+  "labels": {labels|json}
+  }'
+archiveentry = '\{
+  "node": {node|json},
+  "extension": {extension|json},
+  "type": {type|json},
+  "url": {"{urlbase}{url}archive/{node}{extension}"|json}
+  }'
+filediff = '\{
+  "path": {file|json},
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|utf8|json},
+  "author": {author|utf8|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "children": [{join(child%changesetparent, ", ")}],
+  "diff": [{join(diff, ", ")}]
+  }'
+diffblock = '\{
+  "blockno": {blockno|json},
+  "lines": [{join(lines, ", ")}]
+  }'
+difflineplus = '\{
+  "t": "+",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+difflineminus = '\{
+  "t": "-",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+difflineat = '\{
+  "t": "@",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+diffline = '\{
+  "t": "",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+filecomparison = '\{
+  "path": {file|json},
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|utf8|json},
+  "author": {author|utf8|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "children": [{join(child%changesetparent, ", ")}],
+  "leftnode": {leftnode|json},
+  "rightnode": {rightnode|json},
+  "comparison": [{join(comparison, ", ")}]
+  }'
+comparisonblock = '\{
+  "lines": [{join(lines, ", ")}]
+  }'
+comparisonline = '\{
+  "t": {type|json},
+  "ln": {leftlineno|json},
+  "ll": {leftline|json},
+  "rn": {rightlineno|json},
+  "rl": {rightline|json}
+  }'
+fileannotate = '\{
+  "abspath": {file|json},
+  "node": {node|json},
+  "author": {author|utf8|json},
+  "date": {date|json},
+  "desc": {desc|utf8|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "children": [{join(child%changesetparent, ", ")}],
+  "permissions": {permissions|json},
+  "annotate": [{join(annotate%fileannotation, ", ")}]
+  }'
+fileannotation = '\{
+  "node": {node|json},
+  "author": {author|utf8|json},
+  "desc": {desc|utf8|json},
+  "abspath": {file|json},
+  "targetline": {targetline|json},
+  "line": {line|json},
+  "lineno": {lineno|json},
+  "revdate": {revdate|json}
+  }'
+filelog = '\{
+  "entries": [{join(entries%changelistentry, ", ")}]
+  }'
+helptopics = '\{
+  "topics": [{join(topics%helptopicentry, ", ")}],
+  "earlycommands": [{join(earlycommands%helptopicentry, ", ")}],
+  "othercommands": [{join(othercommands%helptopicentry, ", ")}]
+  }'
+helptopicentry = '\{
+  "topic": {topic|utf8|json},
+  "summary": {summary|utf8|json}
+  }'
+help = '\{
+  "topic": {topic|utf8|json},
+  "rawdoc": {doc|utf8|json}
+  }'
+filenodelink = '\{
+  "file": {file|json},
+  "status": {status|json}
+  }'
+filenolink = '{filenodelink}'
+index = '\{
+  "entries": [{join(entries%indexentry, ", ")}]
+  }'
+indexentry = '\{
+  "name": {name|utf8|json},
+  "description": {description|utf8|json},
+  "contact": {contact|utf8|json},
+  "lastchange": {lastchange|json},
+  "labels": {labels|json}
+  }'
+error = '\{
+  "error": {error|utf8|json}
+  }'

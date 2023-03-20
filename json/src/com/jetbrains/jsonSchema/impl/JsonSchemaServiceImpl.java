@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -18,13 +18,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.jetbrains.jsonSchema.JsonPointerUtil;
-import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
-import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
-import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
+import com.jetbrains.jsonSchema.*;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -157,15 +155,20 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   @Nullable
   public VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile) {
-    return ContentAwareJsonSchemaFileProvider.EP_NAME.extensions()
+    return ContentAwareJsonSchemaFileProvider.EP_NAME.getExtensionList().stream()
       .map(provider -> provider.getSchemaFile(psiFile))
       .filter(schemaFile -> schemaFile != null)
       .findFirst()
       .orElse(null);
   }
 
+  private static boolean shouldIgnoreFile(@NotNull VirtualFile file, @NotNull Project project) {
+    return JsonSchemaMappingsProjectConfiguration.getInstance(project).isIgnoredFile(file);
+  }
+
   @NotNull
   public Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
+    if (shouldIgnoreFile(file, myProject)) return Collections.emptyList();
     String schemaUrl = null;
     if (!onlyUserSchemas) {
       // prefer schema-schema if it is specified in "$schema" property
@@ -228,7 +231,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       if (virtualFile != null) return Collections.singletonList(virtualFile);
     }
 
-    return ContainerUtil.createMaybeSingletonList(resolveSchemaFromOtherSources(file));
+    VirtualFile schemaFromOtherSources = resolveSchemaFromOtherSources(file);
+    if (schemaFromOtherSources != null) {
+      return ContainerUtil.createMaybeSingletonList(schemaFromOtherSources);
+    }
+
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    if (psiFile == null) {
+      return Collections.emptyList();
+    }
+    else {
+      return ContainerUtil.createMaybeSingletonList(getDynamicSchemaForFile(psiFile));
+    }
   }
 
   @NotNull

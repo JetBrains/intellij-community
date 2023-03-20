@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.focus;
 
 import com.intellij.internal.InternalActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -20,14 +21,12 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 
-/**
- * @author spleaner
- */
-public class FocusDebuggerAction extends AnAction implements DumbAware {
+final class FocusDebuggerAction extends AnAction implements DumbAware {
+
   private static final Logger LOG = Logger.getInstance(FocusDebuggerAction.class);
   private FocusDrawer myFocusDrawer;
 
-  public FocusDebuggerAction() {
+  FocusDebuggerAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode") || Boolean.getBoolean("idea.ui.focus.debugger")) {
       ApplicationManager.getApplication().invokeLater(() -> perform());
     }
@@ -43,7 +42,8 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
       myFocusDrawer = new FocusDrawer();
       myFocusDrawer.start();
       Toolkit.getDefaultToolkit().addAWTEventListener(myFocusDrawer, AWTEvent.FOCUS_EVENT_MASK);
-    } else {
+    }
+    else {
       myFocusDrawer.setRunning(false);
       Toolkit.getDefaultToolkit().removeAWTEventListener(myFocusDrawer);
       myFocusDrawer = null;
@@ -51,13 +51,16 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    if (myFocusDrawer == null) {
-      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.start.focus.debugger"));
-    } else {
-      presentation.setText(InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.stop.focus.debugger"));
-    }
+    presentation.setText(myFocusDrawer != null ?
+                         InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.stop.focus.debugger") :
+                         InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.start.focus.debugger"));
   }
 
   private static class FocusDrawer extends Thread implements AWTEventListener, ApplicationActivationListener {
@@ -71,17 +74,12 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
       ACTIVE, DELAYED, INACTIVE, UNKNOWN;
 
       public Color getColor() {
-        switch (this) {
-          case ACTIVE:
-            return JBColor.green;
-          case DELAYED:
-            return JBColor.yellow;
-          case INACTIVE:
-            return JBColor.red;
-          case UNKNOWN:
-            return JBColor.gray;
-        }
-        throw new RuntimeException("Unknown application state");
+        return switch (this) {
+          case ACTIVE -> JBColor.green;
+          case DELAYED -> JBColor.yellow;
+          case INACTIVE -> JBColor.red;
+          case UNKNOWN -> JBColor.gray;
+        };
       }
     }
 
@@ -184,8 +182,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (event instanceof FocusEvent) {
-        FocusEvent focusEvent = (FocusEvent)event;
+      if (event instanceof FocusEvent focusEvent) {
         Component fromComponent = focusEvent.getComponent();
         Component oppositeComponent = focusEvent.getOppositeComponent();
 

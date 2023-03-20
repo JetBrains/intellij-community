@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,7 +34,7 @@ class ExternalProjectSystemRegistryImpl : ExternalProjectSystemRegistry {
     }
 
     if (modulePropertyManager.isMavenized()) {
-      return getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID)
+      return getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID)
     }
 
     return null

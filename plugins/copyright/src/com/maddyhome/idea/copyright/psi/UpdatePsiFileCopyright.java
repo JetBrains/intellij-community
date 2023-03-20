@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -252,6 +252,9 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
     catch (PatternSyntaxException ignore) {
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.error(e);
     }
@@ -345,21 +348,21 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           int end = action.getEnd();
 
           switch (action.getType()) {
-            case CommentAction.ACTION_INSERT:
+            case CommentAction.ACTION_INSERT -> {
               String comment = getCommentText(action.getPrefix(), action.getSuffix());
               if (!comment.isEmpty()) {
                 doc.insertString(start, comment);
               }
-              break;
-            case CommentAction.ACTION_REPLACE:
+            }
+            case CommentAction.ACTION_REPLACE -> {
               if (allowReplacement) {
                 String oldComment = doc.getText(new TextRange(start, end));
                 doc.replaceString(start, end, getCommentText("", "", oldComment));
               }
-              break;
-            case CommentAction.ACTION_DELETE:
+            }
+            case CommentAction.ACTION_DELETE -> {
               if (allowReplacement) doc.deleteString(start, end);
-              break;
+            }
           }
         }
         PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
@@ -410,7 +413,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
   }
 
-  protected static class CommentAction implements Comparable<CommentAction> {
+  protected static final class CommentAction implements Comparable<CommentAction> {
     public static final int ACTION_INSERT = 1;
     public static final int ACTION_REPLACE = 2;
     public static final int ACTION_DELETE = 3;

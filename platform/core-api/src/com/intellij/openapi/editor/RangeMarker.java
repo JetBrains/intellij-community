@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +70,8 @@ public interface RangeMarker extends UserDataHolder, Segment {
   int getEndOffset();
 
   /**
-   * Checks if the marker has been invalidated by deleting the entire fragment of text
-   * containing the marker.
+   * Checks whether the marker is still alive, or it has been invalidated, either by deleting
+   * the entire fragment of text containing the marker, or by an explicit call to {@link #dispose()}.
    *
    * @return true if the marker is valid, false if it has been invalidated.
    */
@@ -95,15 +96,34 @@ public interface RangeMarker extends UserDataHolder, Segment {
 
   Comparator<? super RangeMarker> BY_START_OFFSET = BY_START_OFFSET_THEN_END_OFFSET;
 
+  /**
+   * @return true if the range marker should increase its length when a character is inserted at the {@link #getEndOffset()} offset.
+   */
   boolean isGreedyToRight();
+
+  /**
+   * @return true if the range marker should increase its length when a character is inserted at the {@link #getStartOffset()} offset.
+   */
   boolean isGreedyToLeft();
 
   /**
    * Destroys and de-registers the range marker.
-   * After this method call the {@link #isValid()} returns {@code true} always,
-   * and the behaviour of all other methods is undefined, which means they could throw exceptions.                    `
-   * Calling this method is not strictly necessary, because range markers are garbage-collectable,
-   * but could help performance in case of high GC pressure (see {@link RangeMarker} javadoc).
+   * <p>
+   * From the moment this method is called, {@link #isValid()} starts returning {@code false},
+   * and the behaviour of all other methods becomes undefined, which means they can throw exceptions.
+   * Calling this method is not strictly necessary because range markers are garbage-collectable,
+   * but may help improve performance in case of a high GC pressure (see the {@link RangeMarker} javadoc).
    */
   void dispose();
+
+  /**
+   * @return a {@link TextRange} with offsets of this range marker.
+   * This method is preferable because the most implementations are thread-safe, so the returned range is always consistent, whereas
+   * the more conventional {@code TextRange.create(getStartOffset(), getEndOffset())} could return inconsistent range when the selection
+   * changed between {@link #getStartOffset()} and {@link #getEndOffset()} calls.
+   */
+  @NotNull
+  default TextRange getTextRange() {
+    return new TextRange(getStartOffset(), getEndOffset());
+  }
 }

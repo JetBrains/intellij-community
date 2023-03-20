@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
@@ -7,34 +7,26 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.AddEditDeleteListPanel;
-import com.intellij.util.ui.JBUI;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodMatcher;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
-import java.util.List;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 
 public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -69,24 +61,12 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     addNameGroup("y,height,top,bottom");
   }
 
-  @Override @Nullable
-  public JComponent createOptionsPanel() {
-    NameGroupsPanel nameGroupsPanel = new NameGroupsPanel();
-
-    ListTable table = new ListTable(new ListWrappingTableModel(
-      Arrays.asList(myIgnoredMethods.getClassNames(), myIgnoredMethods.getMethodNamePatterns()),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final var tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(
-      InspectionGadgetsBundle.message("choose.class"),
-      JavaBundle.message("section.title.inspection.suspicious.names.ignore.methods"),
-      table,
-      false);
-
-    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    panel.add(nameGroupsPanel, "growx, wrap");
-    panel.addGrowing(tablePanel);
-    return panel;
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("myNameGroups", AnalysisBundle.message("suspicious.name.combination.options.title")),
+      myIgnoredMethods.getTable(JavaBundle.message("section.title.inspection.suspicious.names.ignore.methods")).prefix("myIgnoredMethods")
+    );
   }
 
   @Override
@@ -156,83 +136,31 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     return StringUtil.toLowerCase(word.trim());
   }
 
-  private class NameGroupsPanel extends AddEditDeleteListPanel<String> {
-
-    NameGroupsPanel() {
-      super(AnalysisBundle.message("suspicious.name.combination.options.title"), myNameGroups);
-      setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
-      setPreferredSize(JBUI.size(150, 130));
-      myListModel.addListDataListener(new ListDataListener() {
-        @Override
-        public void intervalAdded(ListDataEvent e) {
-          saveChanges();
-        }
-
-        @Override
-        public void intervalRemoved(ListDataEvent e) {
-          saveChanges();
-        }
-
-        @Override
-        public void contentsChanged(ListDataEvent e) {
-          saveChanges();
-        }
-      });
-    }
-
-    @Override
-    protected String findItemToAdd() {
-      return Messages.showInputDialog(this,
-                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
-                                      AnalysisBundle.message("suspicious.name.combination.add.title"),
-                                      Messages.getQuestionIcon(), "", null);
-    }
-
-    @Override
-    protected String editSelectedItem(@NlsSafe String inputValue) {
-      return Messages.showInputDialog(this,
-                                      AnalysisBundle.message("suspicious.name.combination.options.prompt"),
-                                      AnalysisBundle.message("suspicious.name.combination.edit.title"),
-                                      Messages.getQuestionIcon(),
-                                      inputValue, null);
-    }
-
-    private void saveChanges() {
-      clearNameGroups();
-      for(int i=0; i<myListModel.getSize(); i++) {
-        addNameGroup(myListModel.getElementAt(i));
-      }
-    }
-  }
-
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myProblemsHolder;
 
     MyVisitor(final ProblemsHolder problemsHolder) {
       myProblemsHolder = problemsHolder;
     }
-    @Override public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(@NotNull PsiVariable variable) {
       if (variable.hasInitializer()) {
         PsiExpression expr = variable.getInitializer();
-        if (expr instanceof PsiReferenceExpression) {
-          PsiReferenceExpression refExpr = (PsiReferenceExpression) expr;
+        if (expr instanceof PsiReferenceExpression refExpr) {
           PsiIdentifier nameIdentifier = variable.getNameIdentifier();
           checkCombination(nameIdentifier != null ? nameIdentifier : variable, variable.getName(), refExpr.getReferenceName(), "suspicious.name.assignment");
         }
       }
     }
 
-    @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       PsiExpression lhs = expression.getLExpression();
       PsiExpression rhs = expression.getRExpression();
-      if (lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
-        PsiReferenceExpression lhsExpr = (PsiReferenceExpression) lhs;
-        PsiReferenceExpression rhsExpr = (PsiReferenceExpression) rhs;
+      if (lhs instanceof PsiReferenceExpression lhsExpr && rhs instanceof PsiReferenceExpression rhsExpr) {
         checkCombination(lhsExpr, lhsExpr.getReferenceName(), rhsExpr.getReferenceName(), "suspicious.name.assignment");
       }
     }
 
-    @Override public void visitCallExpression(PsiCallExpression expression) {
+    @Override public void visitCallExpression(@NotNull PsiCallExpression expression) {
       final PsiMethod psiMethod = expression.resolveMethod();
       if (myIgnoredMethods.matches(psiMethod)) return;
       final PsiExpressionList argList = expression.getArgumentList();
@@ -254,7 +182,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    public void visitReturnStatement(final PsiReturnStatement statement) {
+    public void visitReturnStatement(final @NotNull PsiReturnStatement statement) {
       final PsiExpression returnValue = statement.getReturnValue();
       PsiMethod containingMethod = PsiTreeUtil.getParentOfType(returnValue, PsiMethod.class, true, PsiLambdaExpression.class);
       if (returnValue instanceof PsiReferenceExpression && containingMethod != null) {

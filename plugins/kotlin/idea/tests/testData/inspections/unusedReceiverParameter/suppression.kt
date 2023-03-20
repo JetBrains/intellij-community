@@ -2,6 +2,6 @@
 val Any.v: Int
     get() = 123
 
-@Suppress("unused")
+@Suppress("UnusedReceiverParameter")
 val Any.v1: Int
     get() = 123

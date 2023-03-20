@@ -35,9 +35,6 @@ import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHa
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyRefactoringProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceVariableHandler() {
@@ -84,6 +81,11 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
       }
     }
     return false;
+  }
+
+  @Override
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, @Nullable PsiElement context) {
+    return true;
   }
 
   @Nullable

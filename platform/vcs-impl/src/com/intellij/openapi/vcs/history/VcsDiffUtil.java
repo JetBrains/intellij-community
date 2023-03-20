@@ -11,13 +11,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,11 +94,12 @@ public final class VcsDiffUtil {
 
     dialogBuilder.setTitle(title);
     dialogBuilder.setActionDescriptors(new DialogBuilder.CloseDialogAction());
-    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(project, false, true);
+    final SimpleAsyncChangesBrowser changesBrowser = new SimpleAsyncChangesBrowser(project, false, true);
     changesBrowser.setChangesToDisplay(changes);
     dialogBuilder.setCenterPanel(changesBrowser);
     dialogBuilder.setPreferredFocusComponent(changesBrowser.getPreferredFocusedComponent());
     dialogBuilder.setDimensionServiceKey("VcsDiffUtil.ChangesDialog");
+    dialogBuilder.addDisposable(() -> changesBrowser.shutdown());
     dialogBuilder.showNotModal();
   }
 
@@ -116,7 +116,7 @@ public final class VcsDiffUtil {
     String revNumTitle1 = getRevisionTitle(getShortRevisionString(targetRevNumber), false);
     String revNumTitle2 = VcsBundle.message("diff.title.local");
     String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
-                                           revNumTitle1, revNumTitle2, VcsUtil.getFilePath(file));
+                                           revNumTitle1, revNumTitle2, file.getName());
 
     CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
       return provider.compareWithWorkingDir(file, targetRevNumber);

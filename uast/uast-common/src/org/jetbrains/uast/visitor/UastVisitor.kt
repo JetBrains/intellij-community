@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.visitor
 
 import org.jetbrains.uast.*
@@ -48,8 +48,7 @@ interface UastVisitor {
   fun visitThisExpression(node: UThisExpression): Boolean = visitExpression(node)
   fun visitSuperExpression(node: USuperExpression): Boolean = visitExpression(node)
   fun visitReturnExpression(node: UReturnExpression): Boolean = visitExpression(node)
-  fun visitBreakExpression(node: UBreakExpression): Boolean = visitExpression(node)
-  @JvmDefault fun visitYieldExpression(node: UYieldExpression): Boolean = visitExpression(node)
+  fun visitBreakExpression(node: UBreakExpression): Boolean = visitExpression(node) fun visitYieldExpression(node: UYieldExpression): Boolean = visitExpression(node)
   fun visitContinueExpression(node: UContinueExpression): Boolean = visitExpression(node)
   fun visitThrowExpression(node: UThrowExpression): Boolean = visitExpression(node)
   fun visitArrayAccessExpression(node: UArrayAccessExpression): Boolean = visitExpression(node)
@@ -103,8 +102,7 @@ interface UastVisitor {
   fun afterVisitThisExpression(node: UThisExpression) = afterVisitExpression(node)
   fun afterVisitSuperExpression(node: USuperExpression) = afterVisitExpression(node)
   fun afterVisitReturnExpression(node: UReturnExpression) = afterVisitExpression(node)
-  fun afterVisitBreakExpression(node: UBreakExpression) = afterVisitExpression(node)
-  @JvmDefault fun afterVisitYieldExpression(node: UYieldExpression) = afterVisitExpression(node)
+  fun afterVisitBreakExpression(node: UBreakExpression) = afterVisitExpression(node) fun afterVisitYieldExpression(node: UYieldExpression) = afterVisitExpression(node)
   fun afterVisitContinueExpression(node: UContinueExpression) = afterVisitExpression(node)
   fun afterVisitThrowExpression(node: UThrowExpression) = afterVisitExpression(node)
   fun afterVisitArrayAccessExpression(node: UArrayAccessExpression) = afterVisitExpression(node)
@@ -124,7 +122,6 @@ abstract class AbstractUastVisitor : UastVisitor {
  * So make sure that overridden methods returns `true` and please think twice before returning `false` if you are passing implementation to
  * [com.intellij.uast.UastVisitorAdapter].
  */
-@Suppress("KDocUnresolvedReference")
 abstract class AbstractUastNonRecursiveVisitor : UastVisitor {
   override fun visitElement(node: UElement): Boolean = true
 }

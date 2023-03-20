@@ -1,5 +1,6 @@
 {
   "type": "JAVA_CLASS",
   "classId": "testing/SomeClass",
-  "newName": "NewName"
+  "newName": "NewName",
+  "enabledInK2": true
 }

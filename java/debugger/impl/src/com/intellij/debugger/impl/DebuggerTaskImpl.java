@@ -15,9 +15,6 @@
  */
 package com.intellij.debugger.impl;
 
-/**
- * @author lex
- */
 public abstract class DebuggerTaskImpl implements DebuggerTask {
   private int myHolds = 0;
 

@@ -4,10 +4,8 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.Nls;
@@ -39,12 +37,11 @@ public class RemoveCloneableFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement().getParent();
-    if (!(element instanceof PsiClass)) {
+    if (!(element instanceof PsiClass aClass)) {
       return;
     }
-    final PsiClass aClass = (PsiClass)element;
     final PsiReferenceList implementsList = aClass.getImplementsList();
     if (implementsList == null) {
       return;
@@ -75,7 +72,7 @@ public class RemoveCloneableFix extends InspectionGadgetsFix {
     private boolean cloneCalled = false;
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (cloneCalled) return;
       super.visitMethodCallExpression(expression);
       if (!CloneUtils.isCallToClone(expression)) {
@@ -90,7 +87,7 @@ public class RemoveCloneableFix extends InspectionGadgetsFix {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     private boolean isCloneCalled() {
       return cloneCalled;

@@ -31,7 +31,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
   private final @NotNull PsiLiteralExpression myLiteral;
   private final @NotNull PsiCall myCall;
 
-  public ChangeStringLiteralToCharInMethodCallFix(@NotNull PsiLiteralExpression literal, @NotNull PsiCall methodCall) {
+  private ChangeStringLiteralToCharInMethodCallFix(@NotNull PsiLiteralExpression literal, @NotNull PsiCall methodCall) {
     myLiteral = literal;
     myCall = methodCall;
   }
@@ -42,7 +42,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
     final String convertedValue = convertedValue();
     final boolean isString = isString(myLiteral.getType());
     return QuickFixBundle.message("fix.single.character.string.to.char.literal.text", myLiteral.getText(),
-                                  quote(convertedValue, ! isString), isString ? PsiType.CHAR.getCanonicalText() : "String");
+                                  quote(convertedValue, ! isString), isString ? PsiTypes.charType().getCanonicalText() : "String");
   }
 
   @Override
@@ -92,7 +92,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
   }
 
   public static void registerFixes(final PsiMethod @NotNull [] candidates, @NotNull final PsiConstructorCall call,
-                                   @NotNull final HighlightInfo out, TextRange fixRange) {
+                                   @NotNull final HighlightInfo.Builder out, TextRange fixRange) {
     final Set<PsiLiteralExpression> literals = new HashSet<>();
     if (call.getArgumentList() == null) {
       return;
@@ -108,7 +108,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
 
   public static void registerFixes(final CandidateInfo @NotNull [] candidates,
                                    @NotNull final PsiMethodCallExpression methodCall,
-                                   @Nullable final HighlightInfo info, 
+                                   @Nullable final HighlightInfo.Builder info,
                                    @Nullable TextRange fixRange) {
     if (info == null) return;
     final Set<PsiLiteralExpression> literals = new HashSet<>();
@@ -126,10 +126,10 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
 
   private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
                                       @NotNull final PsiCall call,
-                                      @NotNull final HighlightInfo info, TextRange fixRange) {
+                                      @NotNull final HighlightInfo.Builder info, TextRange fixRange) {
     for (PsiLiteralExpression literal : literals) {
       final ChangeStringLiteralToCharInMethodCallFix fix = new ChangeStringLiteralToCharInMethodCallFix(literal, call);
-      QuickFixAction.registerQuickFixAction(info, fixRange, fix);
+      info.registerFix(fix, null, null, fixRange, null);
     }
   }
 
@@ -167,7 +167,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix implements Intention
   }
 
   private static boolean charToString(final PsiType firstType, final PsiType secondType) {
-    return Comparing.equal(PsiType.CHAR, firstType) && isString(secondType);
+    return Comparing.equal(PsiTypes.charType(), firstType) && isString(secondType);
   }
 
   private static boolean isString(final PsiType type) {

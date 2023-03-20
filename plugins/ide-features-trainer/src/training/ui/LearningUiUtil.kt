@@ -34,6 +34,8 @@ object LearningUiUtil {
       return myRobot ?: throw IllegalStateException("Cannot initialize the robot")
     }
 
+  val defaultComponentSearchShortTimeout = Timeout.timeout(500, TimeUnit.MILLISECONDS)
+
   private fun initializeRobot() {
     if (myRobot != null) releaseRobot()
     myRobot = IftSmartWaitRobot()
@@ -112,7 +114,7 @@ object LearningUiUtil {
     val locationOnScreen = component.locationOnScreen
     val onScreenRect = Rectangle(locationOnScreen.x, locationOnScreen.y, component.width, component.height)
     val bounds = window.bounds
-    return bounds.intersects(onScreenRect)
+    return bounds.intersects(onScreenRect) && !component.bounds.isEmpty
   }
 
   fun <ComponentType : Component> findShowingComponentWithTimeout(project: Project,
@@ -177,9 +179,8 @@ object LearningUiUtil {
                                                       componentClass: Class<ComponentType>,
                                                       selector: ((candidates: Collection<ComponentType>) -> ComponentType?)? = null,
                                                       finderFunction: (ComponentType) -> Boolean = { true }): ComponentType? {
-    val delay = Timeout.timeout(500, TimeUnit.MILLISECONDS)
     return try {
-      findShowingComponentWithTimeout(project, componentClass, delay, selector, finderFunction)
+      findShowingComponentWithTimeout(project, componentClass, defaultComponentSearchShortTimeout, selector, finderFunction)
     }
     catch (e: WaitTimedOutError) {
       null

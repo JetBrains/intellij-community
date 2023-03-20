@@ -17,9 +17,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractRemoteExternalSystemService<S extends ExternalSystemExecutionSettings>
   implements RemoteExternalSystemService<S>
 {

@@ -56,9 +56,6 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFT
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-/**
- * @author ilyas
- */
 public class GroovyIndentProcessor extends GroovyElementVisitor {
   public static final int GDOC_COMMENT_INDENT = 1;
   private static final TokenSet GSTRING_TOKENS_INNER = TokenSet.create(GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mGSTRING_END,
@@ -218,7 +215,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
-    if (TokenSets.BLOCK_SET.contains(myChildType)) {
+    if (myChild == ifStatement.getCondition()) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
+    else if (TokenSets.BLOCK_SET.contains(myChildType)) {
       if (myChild == ifStatement.getCondition()) {
         myResult = getContinuationWithoutFirstIndent();
       }

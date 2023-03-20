@@ -34,7 +34,7 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testPasteMultilineText() = doTestPaste("<html>  \n  <body>\n  </body>\n</html>  ")
 
-  fun testBadEscape() = doTestPaste("\\");
+  fun testBadEscape() = doTestPaste("\\")
 
   private fun doTestPaste(textToPaste: String) {
     myFixture.configureByText("plain.txt", "<selection>$textToPaste</selection>")

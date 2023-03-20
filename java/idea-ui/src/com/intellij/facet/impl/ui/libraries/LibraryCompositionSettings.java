@@ -127,6 +127,10 @@ public final class LibraryCompositionSettings implements Disposable {
     mySelectedLibrary = library;
   }
 
+  public @Nullable Library getSelectedLibrary() {
+    return mySelectedLibrary;
+  }
+
   public void setNewLibraryLevel(final LibrariesContainer.LibraryLevel newLibraryLevel) {
     myNewLibraryLevel = newLibraryLevel;
   }

@@ -131,8 +131,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
 
     TreeNode[] oldPath = getPathToRoot(oldNode);
     if (! (oldPath[0] instanceof RepositoryTreeNode)) {
-      final TreeNode[] result = Arrays.copyOfRange(oldPath, 1, oldPath.length);
-      oldPath = result;
+      oldPath = Arrays.copyOfRange(oldPath, 1, oldPath.length);
     }
 
     TreeNode root = (TreeNode) getRoot();
@@ -141,13 +140,13 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
       root = null;
       while (children.hasMoreElements()) {
         TreeNode node = (TreeNode) children.nextElement();
-        if ((node instanceof RepositoryTreeNode) && (((RepositoryTreeNode) node).getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL()))) {
+        if ((node instanceof RepositoryTreeNode treeNode) && (treeNode.getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL()))) {
           root = node;
           break;
         }
       }
     } else {
-      if ((root == null) || (! ((RepositoryTreeNode) root).getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL()))) {
+      if (!((RepositoryTreeNode) root).getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL())) {
         return null;
       }
     }
@@ -167,7 +166,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
   }
 
   @Nullable
-  private RepositoryTreeNode getChild(final RepositoryTreeNode node, final Url url) {
+  private static RepositoryTreeNode getChild(final RepositoryTreeNode node, final Url url) {
     final List<RepositoryTreeNode> children = node.getAlreadyLoadedChildren();
     for (RepositoryTreeNode child : children) {
       if (child.getURL().equals(url)) {

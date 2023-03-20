@@ -5,9 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class RngHtml5SchemaProvider extends Html5SchemaProvider {
   @NotNull
   @Override

@@ -234,7 +234,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
       }
       if (shouldRemove) {
         for (FoldRegion r : regionsToProcess) {
-          rangeToExpandStatusMap.putIfAbsent(TextRange.create(r), r.isExpanded());
+          rangeToExpandStatusMap.putIfAbsent(r.getTextRange(), r.isExpanded());
         }
         toRemove.addAll(regionsToProcess);
       }

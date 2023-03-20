@@ -3,11 +3,13 @@ package com.jetbrains.python.inspections;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
@@ -30,14 +32,14 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * User : ktisha
@@ -63,28 +65,15 @@ public class PyPep8NamingInspection extends PyInspection {
   public boolean ignoreOverriddenFunctions = true;
   public final List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel rootPanel = new JPanel(new BorderLayout());
-    PythonUiService uiService = PythonUiService.getInstance();
-    JCheckBox checkBox = uiService.createInspectionCheckBox(PyPsiBundle.message("ignore.overridden.functions"), this, "ignoreOverriddenFunctions");
-    if (checkBox != null) {
-      rootPanel.add(checkBox, BorderLayout.NORTH);
-    }
-
-    JComponent classes = uiService.createListEditForm(PyPsiBundle.message("INSP.pep8.naming.column.name.excluded.base.classes"), ignoredBaseClasses);
-    JComponent errors = uiService.createListEditForm(PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"), ignoredErrors);
-
-    if (classes != null && errors != null) {
-      JComponent splitter = uiService.onePixelSplitter(false, classes, errors);
-
-      if (splitter != null) {
-        rootPanel.add(splitter, BorderLayout.CENTER);
-      }
-    }
-
-    return rootPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreOverriddenFunctions", PyPsiBundle.message("ignore.overridden.functions")),
+      horizontalStack(
+        stringList("ignoredBaseClasses", PyPsiBundle.message("INSP.pep8.naming.column.name.excluded.base.classes")),
+        stringList("ignoredErrors", PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"))
+      )
+    );
   }
 
   protected void addFunctionQuickFixes(ProblemsHolder holder,
@@ -103,7 +92,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
   }
 
-  protected LocalQuickFix[] createRenameAndIngoreErrorQuickFixes(@Nullable PsiElement node,
+  protected LocalQuickFix[] createRenameAndIgnoreErrorQuickFixes(@Nullable PsiElement node,
                                                                  String errorCode) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     if (node != null) {
@@ -157,9 +146,15 @@ public class PyPep8NamingInspection extends PyInspection {
     public List<String> getBaseClassNames() {
       return myBaseClassNames;
     }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      // The quick fix updates the inspection's settings, nothing changes in the current file
+      return IntentionPreviewInfo.EMPTY;
+    }
   }
 
-  protected static class IgnoreErrorFix implements LocalQuickFix {
+  protected class IgnoreErrorFix implements LocalQuickFix {
     private final String myCode;
 
     IgnoreErrorFix(String code) {
@@ -170,6 +165,19 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public String getFamilyName() {
       return PyPsiBundle.message("QFIX.NAME.ignore.errors.like.this");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      if (ignoredErrors.contains(myCode)) return IntentionPreviewInfo.EMPTY;
+      ArrayList<String> updated = new ArrayList<>(ignoredErrors);
+      updated.add(myCode);
+      return IntentionPreviewInfo.addListOption(updated, myCode, PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"));
     }
 
     @Override
@@ -231,7 +239,7 @@ public class PyPep8NamingInspection extends PyInspection {
 
     protected void registerAndAddRenameAndIgnoreErrorQuickFixes(@Nullable final PsiElement node, @NotNull final String errorCode) {
       if (getHolder() != null && getHolder().isOnTheFly()) {
-        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), createRenameAndIngoreErrorQuickFixes(node, errorCode));
+        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), createRenameAndIgnoreErrorQuickFixes(node, errorCode));
       }
       else {
         registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), new IgnoreErrorFix(errorCode));

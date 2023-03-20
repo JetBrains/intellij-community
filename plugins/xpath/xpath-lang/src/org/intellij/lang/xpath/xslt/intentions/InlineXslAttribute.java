@@ -78,16 +78,14 @@ public class InlineXslAttribute implements IntentionAction {
         final XmlTag[] exprs = tag.findSubTags("value-of", XsltSupport.XSLT_NS);
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
-            if (child instanceof XmlText) {
-                final XmlText text = (XmlText)child;
-                if (text.getText().trim().length() == 0) {
+            if (child instanceof XmlText text) {
+              if (text.getText().trim().length() == 0) {
                     if (texts.length == 0 && exprs.length == 0) {
                         return false;
                     }
                 }
-            } else if (child instanceof XmlTag) {
-                final XmlTag t = (XmlTag)child;
-                if (XsltSupport.isXsltTag(t)) {
+            } else if (child instanceof XmlTag t) {
+              if (XsltSupport.isXsltTag(t)) {
                     if ("text".equals(t.getLocalName())) {
 
                     } else if ("value-of".equals(t.getLocalName())) {
@@ -115,14 +113,12 @@ public class InlineXslAttribute implements IntentionAction {
         final StringBuilder sb = new StringBuilder();
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
-            if (child instanceof XmlText) {
-                final XmlText text = (XmlText)child;
-                if (text.getText().trim().length() > 0) {
+            if (child instanceof XmlText text) {
+              if (text.getText().trim().length() > 0) {
                     sb.append(text.getText().replaceAll("\"", "&quot;"));
                 }
-            } else if (child instanceof XmlTag) {
-                final XmlTag t = (XmlTag)child;
-                if (XsltSupport.isXsltTag(t)) {
+            } else if (child instanceof XmlTag t) {
+              if (XsltSupport.isXsltTag(t)) {
                     if ("text".equals(t.getLocalName())) {
                         sb.append(t.getValue().getText().replaceAll("\"", "&quot;"));
                     } else if ("value-of".equals(t.getLocalName())) {

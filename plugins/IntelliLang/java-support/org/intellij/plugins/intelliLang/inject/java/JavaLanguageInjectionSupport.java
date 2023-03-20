@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.*;
@@ -529,7 +530,8 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction(IntelliLangBundle.message("java.parameter"), null, PlatformIcons.PARAMETER_ICON) {
+      new AnAction(IntelliLangBundle.message("java.parameter"), null,
+                   IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter)) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());

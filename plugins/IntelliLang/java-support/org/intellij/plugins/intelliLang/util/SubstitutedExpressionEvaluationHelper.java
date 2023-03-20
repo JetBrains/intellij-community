@@ -63,11 +63,10 @@ public class SubstitutedExpressionEvaluationHelper {
       @Override
       public @Nullable Object computeExpression(@NotNull PsiExpression o, @NotNull PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
         PsiType resolvedType = null;
-        if (o instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression c = (PsiMethodCallExpression)o;
+        if (o instanceof PsiMethodCallExpression c) {
           PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
           PsiType returnType = m != null ? m.getReturnType() : null;
-          if (returnType != null && !PsiType.VOID.equals(returnType)) {
+          if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
             // find substitution
             Object substituted = calcSubstituted(m);
             if (substituted != null) return substituted;
@@ -80,8 +79,7 @@ public class SubstitutedExpressionEvaluationHelper {
             // find substitution
             Object substituted = calcSubstituted((PsiModifierListOwner)resolved);
             if (substituted != null) return substituted;
-            if (resolved instanceof PsiVariable) {
-              PsiVariable psiVariable = (PsiVariable)resolved;
+            if (resolved instanceof PsiVariable psiVariable) {
               resolvedType = psiVariable.getType();
               Collection<PsiExpression> values;
               if (dfaOption == Configuration.DfaOption.ASSIGNMENTS) {
@@ -110,7 +108,7 @@ public class SubstitutedExpressionEvaluationHelper {
         uncomputables.add(o);
         if (includeUncomputablesAsLiterals) {
           if (resolvedType != null) {
-            if (PsiType.DOUBLE.isAssignableFrom(resolvedType)) return 1; // magic number!
+            if (PsiTypes.doubleType().isAssignableFrom(resolvedType)) return 1; // magic number!
           }
           StringBuilder sb = new StringBuilder();
           o.accept(new PsiRecursiveElementWalkingVisitor() {

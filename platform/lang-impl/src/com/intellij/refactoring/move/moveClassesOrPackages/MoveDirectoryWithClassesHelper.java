@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -12,26 +13,30 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * @author ksafonov
- */
 public abstract class MoveDirectoryWithClassesHelper {
   private static final ExtensionPointName<MoveDirectoryWithClassesHelper> EP_NAME =
     ExtensionPointName.create("com.intellij.refactoring.moveDirectoryWithClassesHelper");
 
-  public abstract void findUsages(Collection<PsiFile> filesToMove, PsiDirectory[] directoriesToMove, Collection<UsageInfo> result,
+  public abstract void findUsages(Collection<? extends PsiFile> filesToMove, PsiDirectory[] directoriesToMove, Collection<? super UsageInfo> result,
                                   boolean searchInComments, boolean searchInNonJavaFiles, Project project);
 
+  public void findUsages(Map<VirtualFile, MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper> filesToMove,
+                         PsiDirectory[] directoriesToMove, Collection<? super UsageInfo> result,
+                         boolean searchInComments, boolean searchInNonJavaFiles, Project project) {
+    Set<PsiFile> psiFiles = filesToMove.keySet().stream().map(PsiManager.getInstance(project)::findFile)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
+    findUsages(psiFiles, directoriesToMove, result, searchInComments, searchInNonJavaFiles, project);
+  }
+
   public abstract boolean move(PsiFile file,
-                                  PsiDirectory moveDestination,
-                                  Map<PsiElement, PsiElement> oldToNewElementsMapping,
-                                  List<PsiFile> movedFiles,
-                                  RefactoringElementListener listener);
+                               PsiDirectory moveDestination,
+                               Map<PsiElement, PsiElement> oldToNewElementsMapping,
+                               List<? super PsiFile> movedFiles,
+                               RefactoringElementListener listener);
 
   public abstract void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper);
 
@@ -42,7 +47,7 @@ public abstract class MoveDirectoryWithClassesHelper {
   public void preprocessUsages(Project project,
                                Set<PsiFile> files,
                                UsageInfo[] infos,
-                               PsiDirectory directory,
+                               PsiDirectory targetDirectory,
                                MultiMap<PsiElement, String> conflicts) {}
 
   public static List<MoveDirectoryWithClassesHelper> findAll() {
@@ -53,9 +58,9 @@ public abstract class MoveDirectoryWithClassesHelper {
   public static class Default extends MoveDirectoryWithClassesHelper {
 
     @Override
-    public void findUsages(Collection<PsiFile> filesToMove,
+    public void findUsages(Collection<? extends PsiFile> filesToMove,
                            PsiDirectory[] directoriesToMove,
-                           Collection<UsageInfo> result,
+                           Collection<? super UsageInfo> result,
                            boolean searchInComments,
                            boolean searchInNonJavaFiles,
                            Project project) {
@@ -89,10 +94,10 @@ public abstract class MoveDirectoryWithClassesHelper {
 
     @Override
     public boolean move(PsiFile psiFile,
-                           PsiDirectory moveDestination,
-                           Map<PsiElement, PsiElement> oldToNewElementsMapping,
-                           List<PsiFile> movedFiles,
-                           RefactoringElementListener listener) {
+                        PsiDirectory moveDestination,
+                        Map<PsiElement, PsiElement> oldToNewElementsMapping,
+                        List<? super PsiFile> movedFiles,
+                        RefactoringElementListener listener) {
       if (moveDestination.equals(psiFile.getContainingDirectory())) {
         return false;
       }

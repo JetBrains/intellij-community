@@ -13,6 +13,10 @@ DJANGO_SUSPEND = 2
 JINJA2_SUSPEND = 3
 JUPYTER_SUSPEND = 4
 
+GET_FRAME_NORMAL_GROUP = 0
+GET_FRAME_SPECIAL_GROUP = 1
+GET_FRAME_RETURN_GROUP = 2
+
 
 class DebugInfoHolder:
     # we have to put it here because it can be set through the command line (so, the
@@ -76,6 +80,9 @@ elif IS_IRONPYTHON:
 
 IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
 
+# `aarch64` on Linux, `arm64` on macOS
+IS_AARCH64 = platform.machine().lower() in ['aarch64', 'arm64']
+
 IS_LINUX = sys.platform.startswith('linux')
 IS_MACOS = sys.platform == 'darwin'
 
@@ -117,6 +124,10 @@ IS_PY36_OR_GREATER = False
 IS_PY37_OR_GREATER = False
 IS_PY36_OR_LESSER = False
 IS_PY38_OR_GREATER = False
+IS_PY38 = False
+IS_PY39_OR_GREATER = False
+IS_PY311 = False
+IS_PY311_OR_GREATER = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -128,7 +139,11 @@ try:
         IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
         IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
         IS_PY36_OR_LESSER = sys.version_info[:2] <= (3, 6)
+        IS_PY38 = sys.version_info[0] == 3 and sys.version_info[1] == 8
         IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
+        IS_PY39_OR_GREATER = sys.version_info >= (3, 9)
+        IS_PY311 = sys.version_info[0] == 3 and sys.version_info[1] == 11
+        IS_PY311_OR_GREATER = sys.version_info >= (3, 11)
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
@@ -172,6 +187,8 @@ ASYNC_EVAL_TIMEOUT_SEC = 60
 NEXT_VALUE_SEPARATOR = "__pydev_val__"
 BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
 SHOW_DEBUG_INFO_ENV = os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True'
+IS_ASYNCIO_REPL = os.getenv('ASYNCIO_REPL') == 'True' and IS_PY38_OR_GREATER
+IS_ASYNCIO_DEBUGGER_ENV = os.getenv('ASYNCIO_DEBUGGER_ENV') == 'True' and IS_PY38_OR_GREATER
 
 # If True, CMD_SET_NEXT_STATEMENT and CMD_RUN_TO_LINE commands have responses indicating success or failure.
 GOTO_HAS_RESPONSE = IS_PYCHARM

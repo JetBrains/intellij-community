@@ -18,7 +18,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
@@ -35,7 +35,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class EmptyStatementBodyInspection extends BaseInspection {
 
@@ -72,11 +73,10 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("statement.with.empty.body.include.option"), "m_reportEmptyBlocks");
-    panel.addCheckbox(InspectionGadgetsBundle.message("comments.as.content.option"), "commentsAreContent");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_reportEmptyBlocks", InspectionGadgetsBundle.message("statement.with.empty.body.include.option")),
+      checkbox("commentsAreContent", InspectionGadgetsBundle.message("comments.as.content.option")));
   }
 
   @Override
@@ -153,7 +153,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
       final PsiCodeBlock body = statement.getBody();
       if (body == null || !isEmpty(body)) {

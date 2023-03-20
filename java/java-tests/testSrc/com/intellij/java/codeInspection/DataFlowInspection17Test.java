@@ -46,8 +46,14 @@ public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
   public void testPatterns() {
     doTest();
   }
+  
+  public void testPatternInStreamNotComplex() {
+    doTest();
+  }
 
   public void testInstanceof() {
     doTest();
   }
+
+  public void testNewStringWrongEquals() { doTest(); }
 }

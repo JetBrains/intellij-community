@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @author Irina.Chernushina on 12/5/2017.
- *
  * Provide this custom comparator to detect whether to reparse lazy-reparseable children of the node for the language:
  * - For instance, if parsing of some IReparseableElementType depends on its parent contents, a custom comparator is needed to check this.
  * - Having a custom comparator as an extension point helps for correct comparing also for embedded/injected fragments.

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions
 
@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinQualifiedNameProvider : QualifiedNameProvider {
-    override fun adjustElementToCopy(element: PsiElement?) = null
+    override fun adjustElementToCopy(element: PsiElement) = null
 
-    override fun getQualifiedName(element: PsiElement?) = when (element) {
+    override fun getQualifiedName(element: PsiElement) = when (element) {
         is KtClassOrObject -> element.fqName?.asString()
         is KtNamedFunction -> getJavaQualifiedName(LightClassUtil.getLightClassMethod(element))
 
@@ -29,8 +29,8 @@ class KotlinQualifiedNameProvider : QualifiedNameProvider {
 
     private fun getJavaQualifiedName(element: PsiElement?) = element?.let { JavaQualifiedNameProvider().getQualifiedName(element) }
 
-    override fun qualifiedNameToElement(fqn: String?, project: Project?) = null
+    override fun qualifiedNameToElement(fqn: String, project: Project) = null
 
-    override fun insertQualifiedName(fqn: String?, element: PsiElement?, editor: Editor?, project: Project?) {
+    override fun insertQualifiedName(fqn: String, element: PsiElement, editor: Editor, project: Project) {
     }
 }

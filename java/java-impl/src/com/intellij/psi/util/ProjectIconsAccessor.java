@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
@@ -9,13 +9,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastLiteralUtils;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ public class ProjectIconsAccessor {
   private static final int ICON_MAX_HEIGHT = 16;
   private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; // 2Kb
 
-  private static final List<String> ICON_EXTENSIONS = ContainerUtil.immutableList("png", "ico", "bmp", "gif", "jpg", "svg");
+  private static final List<String> ICON_EXTENSIONS = List.of("png", "ico", "bmp", "gif", "jpg", "svg");
 
   private final Project myProject;
 
@@ -57,7 +57,7 @@ public class ProjectIconsAccessor {
     initializerElement.accept(new AbstractUastVisitor() {
       @Override
       public boolean visitLiteralExpression(@NotNull ULiteralExpression node) {
-        PsiElement psi = node.getJavaPsi();
+        PsiElement psi = UastLiteralUtils.getSourceInjectionHost(node);
         if (psi != null) {
           for (PsiReference ref : psi.getReferences()) {
             if (ref instanceof FileReference) {

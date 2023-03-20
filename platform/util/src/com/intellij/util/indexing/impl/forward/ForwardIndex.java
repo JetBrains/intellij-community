@@ -3,7 +3,7 @@ package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.KeyValueStore;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

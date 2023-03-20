@@ -76,7 +76,7 @@ import java.util.Map;
  * @see Builder
  */
 public abstract class PySkeletonGenerator {
-  private static class Run {
+  private static final class Run {
     static final Logger LOG = Logger.getInstance(Run.class);
   }
 
@@ -243,14 +243,10 @@ public abstract class PySkeletonGenerator {
           else if (msgType.equals("log")) {
             final String level = controlMessage.get("level").getAsString();
             final String message = controlMessage.get("message").getAsString();
-            if (level.equals("info")) {
-              Run.LOG.info(message);
-            }
-            else if (level.equals("debug")) {
-              Run.LOG.debug(message);
-            }
-            else if (level.equals("trace")) {
-              Run.LOG.trace(message);
+            switch (level) {
+              case "info" -> Run.LOG.info(message);
+              case "debug" -> Run.LOG.debug(message);
+              case "trace" -> Run.LOG.trace(message);
             }
           }
           else if (msgType.equals("generation_result")) {
@@ -354,16 +350,11 @@ public abstract class PySkeletonGenerator {
 
   protected static void sendLineToProcessInput(@NotNull BaseProcessHandler<?> handler, @NotNull String line) throws ExecutionException {
     final OutputStream input = handler.getProcessInput();
-    if (input != null) {
-      try {
-        sendLineToStream(input, line);
-      }
-      catch (IOException e) {
-        throw new ExecutionException(e);
-      }
+    try {
+      sendLineToStream(input, line);
     }
-    else {
-      LOG.warn("Process " + handler.getCommandLine() + " can't accept any input");
+    catch (IOException e) {
+      throw new ExecutionException(e);
     }
   }
 

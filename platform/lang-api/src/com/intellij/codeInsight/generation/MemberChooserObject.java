@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public interface MemberChooserObject {
   void renderTreeNode(SimpleColoredComponent component, JTree tree);
 

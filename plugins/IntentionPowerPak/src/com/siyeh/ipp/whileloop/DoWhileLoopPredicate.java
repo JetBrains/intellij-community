@@ -26,20 +26,17 @@ class DoWhileLoopPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final IElementType tokenType = token.getTokenType();
     if (!JavaTokenType.DO_KEYWORD.equals(tokenType)) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiDoWhileStatement)) {
+    if (!(parent instanceof PsiDoWhileStatement doWhileStatement)) {
       return false;
     }
-    final PsiDoWhileStatement doWhileStatement =
-      (PsiDoWhileStatement)parent;
     return !(doWhileStatement.getCondition() == null ||
              doWhileStatement.getBody() == null);
   }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -55,10 +56,10 @@ public class GrNumberConverter extends GrTypeConverter {
       return isFloatOrDoubleType(targetType) ? OK : null;
 
     if (TypesUtil.isClassType(targetType, JAVA_MATH_BIG_DECIMAL))
-      return TypesUtil.isNumericType(actualType) || PsiType.NULL.equals(actualType) ? OK : ERROR;
+      return TypesUtil.isNumericType(actualType) || PsiTypes.nullType().equals(actualType) ? OK : ERROR;
 
     if (TypesUtil.isClassType(targetType, JAVA_MATH_BIG_INTEGER))
-      return TypesUtil.isIntegralNumberType(actualType) || PsiType.NULL.equals(actualType) ? OK : ERROR;
+      return TypesUtil.isIntegralNumberType(actualType) || PsiTypes.nullType().equals(actualType) ? OK : ERROR;
 
     if (TypesUtil.isClassType(actualType, JAVA_MATH_BIG_INTEGER))
       return TypesUtil.isClassType(targetType, JAVA_MATH_BIG_INTEGER, JAVA_MATH_BIG_DECIMAL) ? OK : null;

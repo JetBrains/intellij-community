@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.lang.Language
@@ -71,11 +71,11 @@ class GroovyUastPlugin : UastLanguagePlugin {
     classSetOf(GroovyPsiElement::class.java)
 }
 
-class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, UInjectionHost {
+class GrULiteral(private val grElement: GrLiteral, private val parentProvider: () -> UElement?) : ULiteralExpression, UInjectionHost {
   override val value: Any? get() = grElement.value
   override fun evaluate(): Any? = value
   override val uastParent: UElement? by lazy(parentProvider)
-  override val psi: PsiElement? = grElement
+  override val psi: PsiElement = grElement
   override val uAnnotations: List<UAnnotation> = emptyList() //not implemented
   override val isString: Boolean
     get() = super<UInjectionHost>.isString
@@ -83,7 +83,7 @@ class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) 
     get() = grElement
 }
 
-class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentProvider: () -> UElement?) : UNamedExpression {
+class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, private val parentProvider: () -> UElement?) : UNamedExpression {
   override val name: String?
     get() = grElement.name
   override val expression: UExpression
@@ -102,8 +102,8 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
   override fun hashCode(): Int = grElement.hashCode()
 }
 
-class GrUAnnotation(val grElement: GrAnnotation,
-                    val parentProvider: () -> UElement?) : UAnnotationEx, UAnchorOwner, UMultiResolvable {
+class GrUAnnotation(private val grElement: GrAnnotation,
+                    private val parentProvider: () -> UElement?) : UAnnotationEx, UAnchorOwner, UMultiResolvable {
 
   override val javaPsi: PsiAnnotation = grElement
 
@@ -133,7 +133,7 @@ class GrUAnnotation(val grElement: GrAnnotation,
 
   override val uastParent: UElement? by lazy(parentProvider)
 
-  override val psi: PsiElement? = grElement
+  override val psi: PsiElement = grElement
 }
 
 class GrUnknownUExpression(override val psi: PsiElement?, override val uastParent: UElement?) : UExpression {

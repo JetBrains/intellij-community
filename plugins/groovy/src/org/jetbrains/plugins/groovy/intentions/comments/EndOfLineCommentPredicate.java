@@ -27,13 +27,12 @@ class EndOfLineCommentPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof PsiComment)) {
+    if (!(element instanceof PsiComment comment)) {
       return false;
     }
     if (element instanceof PsiDocComment) {
       return false;
     }
-    final PsiComment comment = (PsiComment) element;
     final IElementType type = comment.getTokenType();
     return GroovyTokenTypes.mSL_COMMENT.equals(type);
   }

@@ -11,15 +11,9 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * @author dsl
- * @author peter
- */
 public final class KeywordParser {
   private static final Logger LOG = Logger.getInstance(KeywordParser.class);
   private final List<Set<String>> myKeywordSets = new ArrayList<>();
@@ -49,6 +43,10 @@ public final class KeywordParser {
       result.add(StringUtil.toUpperCase(s));
     }
     return result;
+  }
+
+  public List<String> getAllKeywords() {
+    return myKeywordSets.stream().flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   public boolean hasToken(int position, CharSequence myBuffer, @Nullable TokenInfo tokenInfo) {

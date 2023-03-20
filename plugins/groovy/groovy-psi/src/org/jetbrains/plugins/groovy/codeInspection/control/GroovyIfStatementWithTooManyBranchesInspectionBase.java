@@ -50,8 +50,7 @@ public class GroovyIfStatementWithTooManyBranchesInspectionBase extends BaseInsp
     public void visitIfStatement(@NotNull GrIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiElement parent = statement.getParent();
-      if (parent instanceof GrIfStatement) {
-        final GrIfStatement parentStatement = (GrIfStatement) parent;
+      if (parent instanceof GrIfStatement parentStatement) {
         final GrStatement elseBranch = parentStatement.getElseBranch();
         if (statement.equals(elseBranch)) {
           return;

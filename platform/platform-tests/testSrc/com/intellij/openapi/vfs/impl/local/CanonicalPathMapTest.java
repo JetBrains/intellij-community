@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -27,7 +27,7 @@ public class CanonicalPathMapTest {
   private static final String CHILD_DIR = separatorChar + "child_dir";
   private static final String CHILD_FILE = separatorChar + "child.txt";
 
-  @Rule public TempDirectory myTempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
   public void flatRootReportedExactlyViaParent() {
@@ -134,9 +134,9 @@ public class CanonicalPathMapTest {
     assumeSymLinkCreationIsSupported();
 
     // Tests the situation where the watch root is a symlink AND REMAPPED by the native file watcher.
-    File realDir = myTempDir.newDirectory("real");
-    File symLink = IoTestUtil.createSymLink(realDir.getPath(), myTempDir.getRoot() + "/link");
-    File mappedDir = new File(myTempDir.getRoot(), "mapped");
+    File realDir = tempDir.newDirectory("real");
+    File symLink = IoTestUtil.createSymLink(realDir.getPath(), tempDir.getRoot() + "/link");
+    File mappedDir = new File(tempDir.getRoot(), "mapped");
 
     // Initial symlink map: .../root/link -> .../root/real
     CanonicalPathMap map = createCanonicalPathMap(singletonList(symLink.getPath()), emptyList());

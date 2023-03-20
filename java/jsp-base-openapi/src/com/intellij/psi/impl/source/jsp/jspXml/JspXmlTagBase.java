@@ -18,9 +18,6 @@ package com.intellij.psi.impl.source.jsp.jspXml;
 import com.intellij.psi.impl.source.jsp.jspXml.JspTag;
 import com.intellij.psi.xml.XmlTag;
 
-/**
- * @author peter
- */
 public interface JspXmlTagBase extends XmlTag, JspTag {
   XmlTag findParentTag();
 }

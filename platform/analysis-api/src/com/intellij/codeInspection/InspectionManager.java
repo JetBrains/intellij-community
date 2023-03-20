@@ -29,13 +29,13 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
-                                                                  QuickFix @Nullable ... fixes);
+                                                                  @NotNull QuickFix<?> @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
   public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
                                                                   @NotNull Module module,
-                                                                  QuickFix @Nullable ... fixes);
+                                                                  @NotNull QuickFix<?> @Nullable ... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
@@ -58,14 +58,14 @@ public abstract class InspectionManager {
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             boolean onTheFly,
-                                                            LocalQuickFix[] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix @Nullable [] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             boolean isAfterEndOfLine);
@@ -77,25 +77,25 @@ public abstract class InspectionManager {
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            LocalQuickFix... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @Nullable("null means the text range of the element") TextRange rangeInElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            LocalQuickFix... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            final boolean showTooltip,
+                                                            boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            final LocalQuickFix... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
@@ -111,25 +111,23 @@ public abstract class InspectionManager {
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix[] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, LocalQuickFix[], ProblemHighlightType, boolean, boolean)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix[] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean isAfterEndOfLine);
 
@@ -143,27 +141,13 @@ public abstract class InspectionManager {
                                                             @NotNull PsiElement endElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
-                                                            LocalQuickFix... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
-
-  /**
-   * @deprecated use {@link #createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  @Contract(pure = true)
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                            final TextRange rangeInElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            final LocalQuickFix... fixes);
 
   /**
    * @deprecated use {@link #createNewGlobalContext()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   @Contract(pure = true)
   public abstract GlobalInspectionContext createNewGlobalContext(boolean reuse);
@@ -173,5 +157,6 @@ public abstract class InspectionManager {
   public abstract GlobalInspectionContext createNewGlobalContext();
 
   @NotNull
+  @ApiStatus.Internal
   public abstract List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file);
 }

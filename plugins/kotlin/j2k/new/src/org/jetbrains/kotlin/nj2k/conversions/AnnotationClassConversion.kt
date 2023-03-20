@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.toExpression
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKAnnotation.UseSiteTarget.PROPERTY_GETTER
 
 import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.isArrayType
@@ -42,7 +44,8 @@ class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveAppl
         val isVarArgs = type is JKJavaArrayType && name.value == "value"
         return JKParameter(
             JKTypeElement(
-                if (!isVarArgs) type else (type as JKJavaArrayType).type
+                if (!isVarArgs) type else (type as JKJavaArrayType).type,
+                returnType::annotationList.detached()
             ),
             JKNameIdentifier(name.value),
             isVarArgs = isVarArgs,
@@ -53,15 +56,10 @@ class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveAppl
             ) {
                 JKKtAnnotationArrayInitializerExpression(initializer)
             } else initializer,
-            annotationList = this::annotationList.detached(),
+            annotationList = ::annotationList.detached().also { it.annotations.forEach { ann -> ann.useSiteTarget = PROPERTY_GETTER } },
         ).also { parameter ->
-            if (trailingComments.any { it is JKComment }) {
-                parameter.trailingComments += trailingComments
-            }
-            if (leadingComments.any { it is JKComment }) {
-                parameter.leadingComments += leadingComments
-            }
-
+            parameter.trailingComments += trailingComments
+            parameter.leadingComments += leadingComments
         }
     }
 }

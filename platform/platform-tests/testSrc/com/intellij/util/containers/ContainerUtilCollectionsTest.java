@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -101,7 +101,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testRemoveFromSoftEntrySet() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftMap();
     map.put(this, this);
     Set<Map.Entry<Object, Object>> entries = map.entrySet();
     assertEquals(1, entries.size());
@@ -135,7 +135,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
-    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentSoftMap());
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentSoftMap());
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentWKWVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
@@ -162,7 +162,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapTossed() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentSoftMap();
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftMap();
     checkKeyTossedEventually(map);
   }
 
@@ -178,6 +178,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkValueTossedEventually(map);
   }
 
+  @SuppressWarnings("ConstantValue") // Map contract is tested, not implied here
   private void checkClearsEventuallyAfterGCPressure(Map<Object, Object> map, @NotNull Runnable putKey) {
     assertTrue(map.isEmpty());
     assertEquals(0, map.size());
@@ -322,7 +323,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testConcurrentSoftMapMustNotAcceptNullKeyOrValue() {
-    Map<String, String> map = ContainerUtil.createConcurrentSoftMap();
+    Map<String, String> map = CollectionFactory.createConcurrentSoftMap();
 
     assertNullKeysMustThrow(map);
     assertNullValuesMustThrow(map);
@@ -353,7 +354,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testWeakMapMustNotAcceptNullKey() {
-    assertNullKeysMustThrow(ContainerUtil.createWeakMap());
+    assertNullKeysMustThrow(CollectionFactory.createWeakMap(11,0.5f,HashingStrategy.canonical()));
   }
   @Test
   public void testSoftMapMustNotAcceptNullKey() {
@@ -608,6 +609,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     GCWatcher.fromClearedRef(ref).ensureCollected();
 
     set.add(this);  // to run processQueues();
+    //noinspection ConstantValue -- set contract is tested, not implied here
     assertFalse(set.isEmpty());
     set.remove(this);
 
@@ -620,7 +622,8 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testWeakKeyMapsKeySetIsIterable() {
-    checkKeySetIterable(ContainerUtil.createWeakMap());
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> CollectionFactory.createWeakMap(11,1,HashingStrategy.canonical()));
+    checkKeySetIterable(CollectionFactory.createWeakMap(11,0.5f,HashingStrategy.canonical()));
     checkKeySetIterable(ContainerUtil.createWeakKeySoftValueMap());
     checkKeySetIterable(ContainerUtil.createWeakKeyWeakValueMap());
     checkKeySetIterable(ContainerUtil.createConcurrentWeakMap());

@@ -32,7 +32,7 @@ import java.util.Objects;
 
 public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   implements IntentionActionWithFixAllOption {
-  private static final Logger LOG = Logger.getInstance(AddReturnFix.class);
+  private static final Logger LOG = Logger.getInstance(AddVariableInitializerFix.class);
 
   public AddVariableInitializerFix(@NotNull PsiVariable variable) {
     super(variable);

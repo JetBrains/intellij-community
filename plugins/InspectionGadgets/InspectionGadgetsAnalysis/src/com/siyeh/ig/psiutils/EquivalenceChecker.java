@@ -20,14 +20,14 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Comparator.*;
 
 /**
@@ -49,14 +50,15 @@ public class EquivalenceChecker {
   private static final EquivalenceChecker ourCanonicalPsiEquivalence = new EquivalenceChecker();
   private static final Comparator<PsiMember> MEMBER_COMPARATOR =
     comparing(PsiMember::getName, nullsFirst(naturalOrder())).thenComparing(PsiMember::getText);
-  private static final Comparator<PsiExpression> EXPRESSION_COMPARATOR =
-    comparing(expression -> PsiUtil.skipParenthesizedExprDown(expression),
-              nullsFirst(comparing((PsiExpression expr) -> expr.getClass().getName()).thenComparing(PsiExpression::getText)));
+  private static final Comparator<PsiCaseLabelElement> LABEL_ELEMENT_COMPARATOR =
+    comparing(element -> skipParenthesizedElementDown(element), nullsFirst(
+      comparing((PsiCaseLabelElement element) -> element.getClass().getName()).thenComparing(PsiCaseLabelElement::getText)));
 
   protected EquivalenceChecker() {}
 
   /**
    * Returns a shareable EquivalenceChecker instance that does not track declaration equivalence.
+   *
    * @return a shareable EquivalenceChecker instance
    */
   public static EquivalenceChecker getCanonicalPsiEquivalence() {
@@ -129,8 +131,21 @@ public class EquivalenceChecker {
     if (statement1 == null || statement2 == null) {
       return Match.exact(statement1 == statement2);
     }
+    if (statement1 == statement2) {
+      return EXACT_MATCH;
+    }
     if (statement1.getClass() != statement2.getClass()) {
-        return EXACT_MISMATCH;
+      if (statement1 instanceof PsiLabeledStatement) {
+        statement1 = ((PsiLabeledStatement)statement1).getStatement();
+        markDeclarationsAsEquivalent(statement1, statement2);
+        return statementsMatch(statement1, statement2);
+      }
+      else if (statement2 instanceof PsiLabeledStatement) {
+        statement2 = ((PsiLabeledStatement)statement2).getStatement();
+        markDeclarationsAsEquivalent(statement1, statement2);
+        return statementsMatch(statement1, statement2);
+      }
+      return EXACT_MISMATCH;
     }
     if (statement1 instanceof PsiAssertStatement) {
       return assertStatementsMatch((PsiAssertStatement)statement1, (PsiAssertStatement)statement2);
@@ -161,6 +176,9 @@ public class EquivalenceChecker {
     }
     if (statement1 instanceof PsiForeachStatement) {
       return forEachStatementsMatch((PsiForeachStatement)statement1, (PsiForeachStatement)statement2);
+    }
+    if (statement1 instanceof PsiForeachPatternStatement) {
+      return forEachPatternStatementsMatch((PsiForeachPatternStatement)statement1, (PsiForeachPatternStatement)statement2);
     }
     if (statement1 instanceof PsiIfStatement) {
       return ifStatementsMatch((PsiIfStatement)statement1, (PsiIfStatement)statement2);
@@ -362,6 +380,22 @@ public class EquivalenceChecker {
     return statementsMatch(body1, body2).partialIfExactMismatch(body1, body2);
   }
 
+  private Match forEachPatternStatementsMatch(PsiForeachPatternStatement statement1, PsiForeachPatternStatement statement2) {
+    final PsiExpression value1 = statement1.getIteratedValue();
+    final PsiExpression value2 = statement2.getIteratedValue();
+    if (!expressionsMatch(value1, value2).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
+    final PsiPattern pattern1 = statement1.getIterationPattern();
+    final PsiPattern pattern2 = statement2.getIterationPattern();
+    if (!patternsMatch(pattern1, pattern2).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
+    final PsiStatement body1 = statement1.getBody();
+    final PsiStatement body2 = statement2.getBody();
+    return statementsMatch(body1, body2).partialIfExactMismatch(body1, body2);
+  }
+
   protected Match switchBlocksMatch(@NotNull PsiSwitchBlock switchBlock1, @NotNull PsiSwitchBlock switchBlock2) {
     final PsiCodeBlock body1 = switchBlock1.getBody();
     final PsiCodeBlock body2 = switchBlock2.getBody();
@@ -402,8 +436,8 @@ public class EquivalenceChecker {
   protected Match breakStatementsMatch(@NotNull PsiBreakStatement statement1, @NotNull PsiBreakStatement statement2) {
     final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
     final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null || identifier2 == null) {
-      return Match.exact(identifier1 == identifier2);
+    if (identifier1 == null && identifier2 == null) {
+      return EXACT_MATCH;
     }
     return Match.exact(equivalentDeclarations(statement1.findExitedStatement(), statement2.findExitedStatement()));
   }
@@ -411,41 +445,28 @@ public class EquivalenceChecker {
   protected Match continueStatementsMatch(@NotNull PsiContinueStatement statement1, @NotNull PsiContinueStatement statement2) {
     final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
     final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
-    if (identifier1 == null || identifier2 == null) {
-      return Match.exact(identifier1 == identifier2);
+    if (identifier1 == null && identifier2 == null) {
+      return EXACT_MATCH;
     }
     return Match.exact(equivalentDeclarations(statement1.findContinuedStatement(), statement2.findContinuedStatement()));
   }
 
-  private static boolean isDefaultCase(@NotNull PsiSwitchLabelStatementBase statement) {
-    return statement.isDefaultCase() || hasOnlyDefaultCaseLabelElement(statement);
-  }
-
-  private static boolean hasOnlyDefaultCaseLabelElement(@NotNull PsiSwitchLabelStatementBase statement) {
-    PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
-    if (labelElementList == null) return false;
-    if (labelElementList.getElementCount() != 1) return false;
-    return labelElementList.getElements()[0] instanceof PsiDefaultCaseLabelElement;
-  }
-
   protected Match switchLabelStatementsMatch(@NotNull PsiSwitchLabelStatementBase statement1,
                                              @NotNull PsiSwitchLabelStatementBase statement2) {
-    if (isDefaultCase(statement1) != isDefaultCase(statement2)) {
+    boolean hasOnlyDefaultCase = SwitchUtils.hasOnlyDefaultCase(statement1);
+    if (hasOnlyDefaultCase != SwitchUtils.hasOnlyDefaultCase(statement2)) {
       return EXACT_MISMATCH;
     }
-    final PsiCaseLabelElementList labelElementList1 =
-      hasOnlyDefaultCaseLabelElement(statement1) ? null : statement1.getCaseLabelElementList();
-    final PsiCaseLabelElementList labelElementList2 =
-      hasOnlyDefaultCaseLabelElement(statement2) ? null : statement2.getCaseLabelElementList();
+    final PsiCaseLabelElementList labelElementList1 = hasOnlyDefaultCase ? null : statement1.getCaseLabelElementList();
+    final PsiCaseLabelElementList labelElementList2 = hasOnlyDefaultCase ? null : statement2.getCaseLabelElementList();
     if ((labelElementList1 == null || labelElementList2 == null) && labelElementList1 != labelElementList2) {
       return EXACT_MISMATCH;
     }
     PsiCaseLabelElement[] labelElements1 = labelElementList1 != null ? labelElementList1.getElements() : PsiCaseLabelElement.EMPTY_ARRAY;
     PsiCaseLabelElement[] labelElements2 = labelElementList2 != null ? labelElementList2.getElements() : PsiCaseLabelElement.EMPTY_ARRAY;
-    var patternLists = getCaseLabelElementsBy(labelElements1, labelElements2, PsiPattern.class);
-    var expressionLists = getCaseLabelElementsBy(labelElements1, labelElements2, PsiExpression.class);
-    var defaultLists = getCaseLabelElementsBy(labelElements1, labelElements2, PsiDefaultCaseLabelElement.class);
-    if (hasCompilationError(patternLists, expressionLists, defaultLists)) return EXACT_MISMATCH;
+    if (!labelElementsAreEquivalent(labelElements1, labelElements2, true).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
     final boolean rule1 = statement1 instanceof PsiSwitchLabeledRuleStatement;
     final boolean rule2 = statement2 instanceof PsiSwitchLabeledRuleStatement;
     if (rule1 && rule2) {
@@ -458,46 +479,7 @@ public class EquivalenceChecker {
     else if (rule1 || rule2) {
       return EXACT_MISMATCH;
     }
-    return expressionsAreEquivalent(expressionLists.first.toArray(PsiExpression.EMPTY_ARRAY),
-                                    expressionLists.second.toArray(PsiExpression.EMPTY_ARRAY), true);
-  }
-
-  private boolean hasCompilationError(Pair<List<PsiPattern>, List<PsiPattern>> patternLists,
-                                      Pair<List<PsiExpression>, List<PsiExpression>> expressionLists,
-                                      Pair<List<PsiDefaultCaseLabelElement>, List<PsiDefaultCaseLabelElement>> defaultLists) {
-    boolean areAllListSizesEqual =
-      StreamEx.of(patternLists, expressionLists, defaultLists).allMatch(lists -> lists.first.size() == lists.second.size());
-    if (!areAllListSizesEqual || patternLists.first.size() > 1 || defaultLists.first.size() > 1) {
-      return true;
-    }
-    if (patternLists.first.size() == 1) {
-      if (!defaultLists.first.isEmpty() || expressionLists.first.size() > 1) {
-        return true;
-      }
-      if (expressionLists.first.size() == 1) {
-        if (!ExpressionUtils.isNullLiteral(expressionLists.first.get(0)) || !ExpressionUtils.isNullLiteral(expressionLists.second.get(0))) {
-          return true;
-        }
-      }
-      if (!patternsMatch(patternLists.first.get(0), patternLists.second.get(0)).isExactMatch()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static <T> Pair<List<T>, List<T>> getCaseLabelElementsBy(PsiCaseLabelElement[] labelElements1,
-                                                                   PsiCaseLabelElement[] labelElements2,
-                                                                   Class<T> clazz) {
-    List<T> list1 = new SmartList<>();
-    List<T> list2 = new SmartList<>();
-    collectCaseLabelElementsBy(labelElements1, clazz, list1);
-    collectCaseLabelElementsBy(labelElements2, clazz, list2);
-    return Pair.create(list1, list2);
-  }
-
-  private static <T> void collectCaseLabelElementsBy(PsiCaseLabelElement[] labelElements, Class<T> clazz, List<T> out) {
-    StreamEx.of(labelElements).select(clazz).forEach(out::add);
+    return EXACT_MATCH;
   }
 
   private Match patternsMatch(@Nullable PsiPattern pattern1, @Nullable PsiPattern pattern2) {
@@ -515,7 +497,42 @@ public class EquivalenceChecker {
     if (pattern1 instanceof PsiTypeTestPattern && pattern2 instanceof PsiTypeTestPattern) {
       return Match.exact(primaryPatternsMatch((PsiTypeTestPattern)pattern1, (PsiTypeTestPattern)pattern2));
     }
+    if (pattern1 instanceof PsiDeconstructionPattern deconstruction1 && pattern2 instanceof PsiDeconstructionPattern deconstruction2) {
+      PsiPattern[] components1 = deconstruction1.getDeconstructionList().getDeconstructionComponents();
+      PsiPattern[] components2 = deconstruction2.getDeconstructionList().getDeconstructionComponents();
+      if (components1.length != components2.length) {
+        return EXACT_MISMATCH;
+      }
+      for (int i = 0; i < components1.length; i++) {
+        if (!patternsMatch(components1[i], components2[i]).isExactMatch()) {
+          return EXACT_MISMATCH;
+        }
+      }
+      PsiPatternVariable variable1 = deconstruction1.getPatternVariable();
+      PsiPatternVariable variable2 = deconstruction2.getPatternVariable();
+      if ((variable1 == null || variable2 == null) && !Match.exact(variable1 == variable2).isExactMatch()) {
+        return EXACT_MISMATCH;
+      }
+      PsiTypeElement typeElement1 = deconstruction1.getTypeElement();
+      PsiTypeElement typeElement2 = deconstruction2.getTypeElement();
+      if (!typeElementsAreEquivalent(typeElement1, typeElement2).isExactMatch()) {
+        return EXACT_MISMATCH;
+      }
+      markDeclarationsAsEquivalent(variable1, variable2);
+      return EXACT_MATCH;
+    }
     return EXACT_MISMATCH;
+  }
+
+  protected Match patternGuardsMatch(@NotNull PsiPatternGuard guard1, @NotNull PsiPatternGuard guard2) {
+    PsiPattern pattern1 = guard1.getPattern();
+    PsiPattern pattern2 = guard2.getPattern();
+    if (!patternsMatch(pattern1, pattern2).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
+    PsiExpression expression1 = guard1.getGuardingExpression();
+    PsiExpression expression2 = guard2.getGuardingExpression();
+    return expressionsMatch(expression1, expression2);
   }
 
   private Match guardedPatternsMatch(@NotNull PsiGuardedPattern guardedPattern1, @NotNull PsiGuardedPattern guardedPattern2) {
@@ -573,8 +590,7 @@ public class EquivalenceChecker {
 
   private static List<PsiStatement> collectStatements(PsiCodeBlock codeBlock, List<PsiStatement> out) {
     for (PsiStatement statement : codeBlock.getStatements()) {
-      if (statement instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)statement;
+      if (statement instanceof PsiBlockStatement blockStatement) {
         collectStatements(blockStatement.getCodeBlock(), out);
       }
       else if (!(statement instanceof PsiEmptyStatement)) {
@@ -623,11 +639,48 @@ public class EquivalenceChecker {
                                                 @NotNull PsiExpressionListStatement statement2) {
     final PsiExpression[] expressions1 = statement1.getExpressionList().getExpressions();
     final PsiExpression[] expressions2 = statement2.getExpressionList().getExpressions();
-    return expressionsAreEquivalent(expressions1, expressions2, false);
+    return labelElementsAreEquivalent(expressions1, expressions2, false);
   }
 
   public boolean expressionsAreEquivalent(@Nullable PsiExpression expression1, @Nullable PsiExpression expression2) {
     return expressionsMatch(expression1, expression2).isExactMatch();
+  }
+
+  private static PsiCaseLabelElement skipParenthesizedElementDown(@Nullable PsiCaseLabelElement element) {
+    if (element instanceof PsiPattern) {
+      return JavaPsiPatternUtil.skipParenthesizedPatternDown((PsiPattern)element);
+    }
+    if (element instanceof PsiExpression) {
+      return PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
+    }
+    return element;
+  }
+
+  public Match labelElementsMatch(@Nullable PsiCaseLabelElement element1, @Nullable PsiCaseLabelElement element2) {
+    if (element1 == element2) {
+      return EXACT_MATCH;
+    }
+    element1 = skipParenthesizedElementDown(element1);
+    element2 = skipParenthesizedElementDown(element2);
+    if (element1 == null || element2 == null) {
+      return Match.exact(element1 == element2);
+    }
+    if (element1.getClass() != element2.getClass()) {
+      return EXACT_MISMATCH;
+    }
+    if (element1 instanceof PsiDefaultCaseLabelElement) {
+      return EXACT_MATCH;
+    }
+    if (element1 instanceof PsiPattern) {
+      return patternsMatch((PsiPattern)element1, (PsiPattern)element2);
+    }
+    if (element1 instanceof PsiPatternGuard) {
+      return patternGuardsMatch((PsiPatternGuard)element1, (PsiPatternGuard)element2);
+    }
+    if (element1 instanceof PsiExpression) {
+      return expressionsMatch((PsiExpression)element1, (PsiExpression)element2);
+    }
+    return null;
   }
 
   public Match expressionsMatch(@Nullable PsiExpression expression1, @Nullable PsiExpression expression2) {
@@ -740,8 +793,7 @@ public class EquivalenceChecker {
   }
 
   private static PsiElement unwrapLambdaBody(PsiElement element) {
-    while (element instanceof PsiCodeBlock) {
-      final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
+    while (element instanceof PsiCodeBlock codeBlock) {
       final PsiStatement[] statements = codeBlock.getStatements();
       if (statements.length != 1) {
         break;
@@ -764,7 +816,7 @@ public class EquivalenceChecker {
   }
 
   protected Match literalExpressionsMatch(PsiLiteralExpression expression1, PsiLiteralExpression expression2) {
-    if (PsiType.NULL.equals(expression1.getType()) && PsiType.NULL.equals(expression2.getType())) {
+    if (PsiTypes.nullType().equals(expression1.getType()) && PsiTypes.nullType().equals(expression2.getType())) {
       return EXACT_MATCH;
     }
     final Object value1 = expression1.getValue();
@@ -792,8 +844,7 @@ public class EquivalenceChecker {
     else {
       return EXACT_MISMATCH; // incomplete code
     }
-    if (element1 instanceof PsiMember) {
-      final PsiMember member1 = (PsiMember)element1;
+    if (element1 instanceof PsiMember member1) {
       if (member1.hasModifierProperty(PsiModifier.STATIC)) {
         return EXACT_MATCH;
       }
@@ -804,30 +855,48 @@ public class EquivalenceChecker {
     else {
       return EXACT_MATCH;
     }
+    PsiClass target1 = getQualifierTarget(referenceExpression1);
+    PsiClass target2 = getQualifierTarget(referenceExpression2);
+    if (target1 != null || target2 != null) {
+      if (target1 == null || target2 == null) return EXACT_MISMATCH;
+      return Match.exact(equivalentDeclarations(target1, target2));
+    }
     final PsiExpression qualifier1 = PsiUtil.skipParenthesizedExprDown(referenceExpression1.getQualifierExpression());
     final PsiExpression qualifier2 = PsiUtil.skipParenthesizedExprDown(referenceExpression2.getQualifierExpression());
-    if (qualifier1 != null && !(qualifier1 instanceof PsiQualifiedExpression)) {
-      if (qualifier2 == null) {
-        return EXACT_MISMATCH;
-      }
-      Match match = expressionsMatch(qualifier1, qualifier2);
-      if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
-          !((GenericsUtil.getLeastUpperBound(qualifier1.getType(), qualifier2.getType(),
-                                             referenceExpression1.getManager())) instanceof PsiArrayType)) {
-        // access to the member (length or clone()) of incompatible arrays
-        return EXACT_MISMATCH;
-      }
-      if (match.isExactMismatch()) {
-        return new Match(qualifier1, qualifier2);
-      }
-      return match;
+    if (qualifier1 == null || qualifier2 == null) {
+      return Match.exact(qualifier1 == qualifier2);
     }
-    else {
-      if (qualifier2 != null && !(qualifier2 instanceof PsiQualifiedExpression)) {
-        return EXACT_MISMATCH;
+    Match match = expressionsMatch(qualifier1, qualifier2);
+    if (!match.isExactMatch() && PsiUtil.isArrayClass(((PsiMember)element1).getContainingClass()) &&
+        !(GenericsUtil.getLeastUpperBound(qualifier1.getType(), qualifier2.getType(),
+                                          referenceExpression1.getManager()) instanceof PsiArrayType)) {
+      // access to the member (length or clone()) of incompatible arrays
+      return EXACT_MISMATCH;
+    }
+    if (match.isExactMismatch()) {
+      return new Match(qualifier1, qualifier2);
+    }
+    return match;
+  }
+
+  protected PsiClass getQualifierTarget(PsiReferenceExpression ref) {
+    PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ref.getQualifierExpression());
+    if (qualifier instanceof PsiQualifiedExpression) {
+      PsiJavaCodeReferenceElement classRef = ((PsiQualifiedExpression)qualifier).getQualifier();
+      return classRef != null ? tryCast(classRef.resolve(), PsiClass.class) : ClassUtils.getContainingClass(ref);
+    }
+    if (qualifier == null) {
+      PsiMember member = tryCast(ref.resolve(), PsiMember.class);
+      if (member != null) {
+        PsiClass currentClass = ClassUtils.getContainingClass(ref);
+        PsiClass memberClass = member.getContainingClass();
+        if (memberClass != null && currentClass != null) {
+          return currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true) ?
+                 currentClass : memberClass;
+        }
       }
     }
-    return EXACT_MATCH;
+    return null;
   }
 
   protected Match instanceOfExpressionsMatch(PsiInstanceOfExpression instanceOfExpression1, PsiInstanceOfExpression instanceOfExpression2) {
@@ -841,13 +910,9 @@ public class EquivalenceChecker {
     if (!typeElementsAreEquivalent(typeElement1, typeElement2).isExactMatch()) {
       return EXACT_MISMATCH;
     }
-    PsiPatternVariable patternVariable1 = JavaPsiPatternUtil.getPatternVariable(instanceOfExpression1.getPattern());
-    PsiPatternVariable patternVariable2 = JavaPsiPatternUtil.getPatternVariable(instanceOfExpression2.getPattern());
-    if (patternVariable1 == null || patternVariable2 == null) {
-      return Match.exact(patternVariable1 == patternVariable2);
-    }
-    markDeclarationsAsEquivalent(patternVariable1, patternVariable2);
-    return EXACT_MATCH;
+    PsiPrimaryPattern pattern1 = instanceOfExpression1.getPattern();
+    PsiPrimaryPattern pattern2 = instanceOfExpression2.getPattern();
+    return patternsMatch(pattern1, pattern2);
   }
 
   protected Match typeElementsAreEquivalent(PsiTypeElement typeElement1, PsiTypeElement typeElement2) {
@@ -869,7 +934,7 @@ public class EquivalenceChecker {
     }
     final PsiExpression[] args1 = methodCallExpression1.getArgumentList().getExpressions();
     final PsiExpression[] args2 = methodCallExpression2.getArgumentList().getExpressions();
-    match = match.combine(expressionsAreEquivalent(args1, args2, false));
+    match = match.combine(labelElementsAreEquivalent(args1, args2, false));
 
     if (args1.length != 0 && match.isPartialMatch()) {
       final PsiElement leftDiff = match.getLeftDiff();
@@ -907,7 +972,7 @@ public class EquivalenceChecker {
     }
     final PsiExpression[] arrayDimensions1 = newExpression1.getArrayDimensions();
     final PsiExpression[] arrayDimensions2 = newExpression2.getArrayDimensions();
-    if (!expressionsAreEquivalent(arrayDimensions1, arrayDimensions2, false).isExactMatch()) {
+    if (!labelElementsAreEquivalent(arrayDimensions1, arrayDimensions2, false).isExactMatch()) {
       return EXACT_MISMATCH;
     }
     final PsiArrayInitializerExpression arrayInitializer1 =
@@ -939,10 +1004,11 @@ public class EquivalenceChecker {
       }
       return EXACT_MISMATCH;
     }
-    return expressionsAreEquivalent(args1, args2, false);
+    return labelElementsAreEquivalent(args1, args2, false);
   }
 
   private Match classesMatch(PsiAnonymousClass class1, PsiAnonymousClass class2) {
+    markDeclarationsAsEquivalent(class1, class2);
     PsiJavaCodeReferenceElement baseClass1 = class1.getBaseClassReference();
     PsiJavaCodeReferenceElement baseClass2 = class2.getBaseClassReference();
     Match match = javaCodeReferenceElementsMatch(baseClass1, baseClass2);
@@ -951,8 +1017,8 @@ public class EquivalenceChecker {
     List<PsiMember> children2 = PsiTreeUtil.getChildrenOfTypeAsList(class2, PsiMember.class);
     int size = children1.size();
     if (size != children2.size()) return EXACT_MISMATCH;
-    children1.sort(MEMBER_COMPARATOR);
-    children2.sort(MEMBER_COMPARATOR);
+    children1 = ContainerUtil.sorted(children1, MEMBER_COMPARATOR);
+    children2 = ContainerUtil.sorted(children2, MEMBER_COMPARATOR);
     for (int i = 0; i < size; i++) {
       // first pass checks only signatures for accurate reference tracking
       PsiElement child1 = children1.get(i);
@@ -1043,7 +1109,7 @@ public class EquivalenceChecker {
                                                    @NotNull PsiArrayInitializerExpression arrayInitializerExpression2) {
     final PsiExpression[] initializers1 = arrayInitializerExpression1.getInitializers();
     final PsiExpression[] initializers2 = arrayInitializerExpression2.getInitializers();
-    return expressionsAreEquivalent(initializers1, initializers2, false);
+    return labelElementsAreEquivalent(initializers1, initializers2, false);
   }
 
   protected Match typeCastExpressionsMatch(@NotNull PsiTypeCastExpression typeCastExpression1,
@@ -1089,7 +1155,7 @@ public class EquivalenceChecker {
     if (!polyadicExpression1.getOperationTokenType().equals(polyadicExpression2.getOperationTokenType())) {
       return EXACT_MISMATCH;
     }
-    return expressionsAreEquivalent(polyadicExpression1.getOperands(), polyadicExpression2.getOperands(), false);
+    return labelElementsAreEquivalent(polyadicExpression1.getOperands(), polyadicExpression2.getOperands(), false);
   }
 
   protected Match binaryExpressionsMatch(@NotNull PsiBinaryExpression binaryExpression1, @NotNull PsiBinaryExpression binaryExpression2) {
@@ -1099,20 +1165,17 @@ public class EquivalenceChecker {
     final PsiExpression left2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getLOperand());
     final PsiExpression right1 = PsiUtil.skipParenthesizedExprDown(binaryExpression1.getROperand());
     final PsiExpression right2 = PsiUtil.skipParenthesizedExprDown(binaryExpression2.getROperand());
-    if (right1 == null || right2 == null) {
-      return Match.exact(right1 == right2);
-    }
     if (!tokenType1.equals(tokenType2)) {
       // process matches like "a < b" and "b > a"
       final RelationType rel1 = DfaPsiUtil.getRelationByToken(tokenType1);
       final RelationType rel2 = DfaPsiUtil.getRelationByToken(tokenType2);
-      if(rel1 != null && rel2 != null && rel1.getFlipped() == rel2) {
-        return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {right2, left2}, false);
+      if (rel1 != null && rel2 != null && rel1.getFlipped() == rel2) {
+        return labelElementsAreEquivalent(new PsiExpression[]{left1, right1}, new PsiExpression[]{right2, left2}, false);
       }
       return EXACT_MISMATCH;
     }
-    return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {left2, right2},
-                                    ParenthesesUtils.isCommutativeOperation(binaryExpression1));
+    return labelElementsAreEquivalent(new PsiExpression[]{left1, right1}, new PsiExpression[]{left2, right2},
+                                      ParenthesesUtils.isCommutativeOperation(binaryExpression1));
   }
 
   protected Match assignmentExpressionsMatch(@NotNull PsiAssignmentExpression assignmentExpression1,
@@ -1146,23 +1209,23 @@ public class EquivalenceChecker {
     return EXACT_MISMATCH;
   }
 
-  protected Match expressionsAreEquivalent(PsiExpression @Nullable [] expressions1,
-                                           PsiExpression @Nullable [] expressions2,
-                                           boolean inAnyOrder) {
-    if (expressions1 == null || expressions2 == null) {
-      return Match.exact(expressions1 == expressions2);
+  protected Match labelElementsAreEquivalent(PsiCaseLabelElement @Nullable [] labelElements1,
+                                             PsiCaseLabelElement @Nullable [] labelElements2,
+                                             boolean inAnyOrder) {
+    if (labelElements1 == null || labelElements2 == null) {
+      return Match.exact(labelElements1 == labelElements2);
     }
-    if (expressions1.length != expressions2.length) {
+    if (labelElements1.length != labelElements2.length) {
       return EXACT_MISMATCH;
     }
     if (inAnyOrder) {
-      Arrays.sort(expressions1, EXPRESSION_COMPARATOR);
-      Arrays.sort(expressions2, EXPRESSION_COMPARATOR);
+      Arrays.sort(labelElements1, LABEL_ELEMENT_COMPARATOR);
+      Arrays.sort(labelElements2, LABEL_ELEMENT_COMPARATOR);
     }
 
     Match incompleteMatch = null;
-    for (int i = 0; i < expressions1.length; i++) {
-      final Match match = expressionsMatch(expressions1[i], expressions2[i]);
+    for (int i = 0; i < labelElements1.length; i++) {
+      final Match match = labelElementsMatch(labelElements1[i], labelElements2[i]);
       if (incompleteMatch == null && match.isPartialMatch()) {
         incompleteMatch = match;
       }
@@ -1170,7 +1233,7 @@ public class EquivalenceChecker {
         if (incompleteMatch != null) {
           return EXACT_MISMATCH;
         }
-        incompleteMatch = match.partialIfExactMismatch(expressions1[i], expressions2[i]);
+        incompleteMatch = match.partialIfExactMismatch(labelElements1[i], labelElements2[i]);
       }
     }
     return incompleteMatch == null ? EXACT_MATCH : incompleteMatch;
@@ -1218,6 +1281,6 @@ public class EquivalenceChecker {
   protected void markDeclarationsAsEquivalent(PsiElement element1, PsiElement element2) {}
 
   protected boolean equivalentDeclarations(PsiElement element1, PsiElement element2) {
-    return element1 == element2;
+    return element1 == element2 || EquivalentMethodUtil.areEquivalentMethods(element1, element2);
   }
 }

@@ -15,13 +15,17 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
-final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
+final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
+  private final Invoker myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
+
   private final Object myRoot = ObjectUtils.NULL;
 
   private final List<Node.Clazz> myTestClasses = new SmartList<>();
@@ -92,6 +96,11 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     }
 
     treeStructureChanged(null, null, null);
+  }
+
+  @Override
+  public @NotNull Invoker getInvoker() {
+    return myInvoker;
   }
 
   @Nullable

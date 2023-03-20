@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ConfigImportHelper.ConfigDirsSearchResult;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -18,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
@@ -105,35 +105,20 @@ public final class OldDirectoryCleaner {
       Stats.completed(groups.size(), groups.stream().mapToLong(g -> g.size).sum());
     }
     else if (!groups.isEmpty()) {
-      UpdateChecker.getNotificationGroup()
+      NotificationGroupManager.getInstance().getNotificationGroup("leftover.ide.directories")
         .createNotification(message("old.dirs.notification.text"), NotificationType.INFORMATION)
         .addAction(createSimpleExpiring(message("old.dirs.notification.action"), () -> confirmAndDelete(project, groups)))
         .notify(project);
     }
     else {
-      UpdateChecker.getNotificationGroup()
+      NotificationGroupManager.getInstance().getNotificationGroup("leftover.ide.directories")
         .createNotification(message("old.dirs.not.found.notification.text"), NotificationType.INFORMATION)
         .notify(project);
     }
   }
 
-  private static class DirectoryGroup {
-    private final @NlsSafe String name;
-    private final List<Path> directories;
-    private final long lastUpdated;
-    private final long size;
-    private final int entriesToDelete;
-    private final boolean isInstalled;
-
-    private DirectoryGroup(String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete, boolean isInstalled) {
-      this.name = name;
-      this.directories = directories;
-      this.lastUpdated = lastUpdated;
-      this.size = size;
-      this.entriesToDelete = entriesToDelete;
-      this.isInstalled = isInstalled;
-    }
-
+  private record DirectoryGroup(@NlsSafe String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete,
+                                boolean isInstalled) {
     @Override
     public String toString() {
       return "{" + directories + ' ' + lastUpdated + '}';
@@ -263,7 +248,7 @@ public final class OldDirectoryCleaner {
 
             if (!errors.isEmpty()) {
               @NlsSafe String content = String.join("<br>", errors);
-              UpdateChecker.getNotificationGroup()
+              NotificationGroupManager.getInstance().getNotificationGroup("leftover.ide.directories")
                 .createNotification(message("old.dirs.delete.error"), content, NotificationType.WARNING)
                 .addAction(ShowLogAction.notificationAction())
                 .notify(project);
@@ -379,13 +364,13 @@ public final class OldDirectoryCleaner {
 
       @Override
       public Object getValueAt(int row, int column) {
-        switch (column) {
-          case 0:  return mySelected.get(row);
-          case 1:  return myGroups.get(row).name;
-          case 2:  return DateFormatUtil.formatBetweenDates(myGroups.get(row).lastUpdated, myNow);
-          case 3:  return StringUtil.formatFileSize(myGroups.get(row).size);
-          default: return null;
-        }
+        return switch (column) {
+          case 0 -> mySelected.get(row);
+          case 1 -> myGroups.get(row).name;
+          case 2 -> DateFormatUtil.formatBetweenDates(myGroups.get(row).lastUpdated, myNow);
+          case 3 -> StringUtil.formatFileSize(myGroups.get(row).size);
+          default -> null;
+        };
       }
 
       @Override

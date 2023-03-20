@@ -1,0 +1,6 @@
+// "Change parameter 'x' type of function 'foo' to 'Any?'" "true"
+fun <Y> foo(x: Any?, y: Y) {}
+
+fun <T> bar(x: T) {
+    foo(x, "")
+}

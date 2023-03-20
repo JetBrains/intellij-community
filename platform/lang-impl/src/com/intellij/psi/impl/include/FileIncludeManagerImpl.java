@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -112,7 +113,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     names.add(originalName);
     for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensionList()) {
       String newName = provider.getIncludeName(context, originalName);
-      if (newName != originalName) {
+      if (!Strings.areSameInstance(newName, originalName)) {
         names.add(newName);
       }
     }
@@ -226,10 +227,8 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     private void getAllFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<? super VirtualFile> result) {
       if (!result.add(file)) return;
       VirtualFile[] includes = getFiles(file, compileTimeOnly);
-      if (includes.length != 0) {
-        for (VirtualFile include : includes) {
-          getAllFilesRecursively(include, compileTimeOnly, result);
-        }
+      for (VirtualFile include : includes) {
+        getAllFilesRecursively(include, compileTimeOnly, result);
       }
     }
 

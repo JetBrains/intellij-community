@@ -157,9 +157,8 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
 
         PsiElement e = start;
         while (e != null) {
-            if (e instanceof XmlTag) {
-                final XmlTag tag = (XmlTag)e;
-                if (XsltSupport.isVariable(tag)) {
+            if (e instanceof XmlTag tag) {
+              if (XsltSupport.isVariable(tag)) {
                     final XsltVariable variable = XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class);
                     final LocalSearchScope searchScope = new LocalSearchScope(parentScope);
                     final Query<PsiReference> query = ReferencesSearch.search(variable, searchScope);

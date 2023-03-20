@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -33,7 +33,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -81,7 +81,7 @@ public class UsageViewTest extends BasePlatformTestCase {
 
     UsageView usageView = createUsageView(usages);
 
-    LightPlatformTestCase.clearEncodingManagerDocumentQueue();
+    TestApplicationKt.clearEncodingManagerDocumentQueue(ApplicationManager.getApplication());
     FileDocumentManager.getInstance().saveAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
 
@@ -126,13 +126,12 @@ public class UsageViewTest extends BasePlatformTestCase {
 
   public void testUsageViewCanRerunAfterTargetWasInvalidatedAndRestored() {
     @Language("JAVA")
-    String fileText = "public class X{" +
-                      "    void foo() {\n" +
-                      "        bar();\n" +
-                      "        bar();\n" +
-                      "    }" +
-                      "    void bar() {}\n" +
-                      "}";
+    String fileText = """
+      public class X{    void foo() {
+              bar();
+              bar();
+          }    void bar() {}
+      }""";
     PsiFile psiFile = myFixture.addFileToProject("X.java", fileText);
 
     PsiElement[] members = psiFile.getChildren()[psiFile.getChildren().length - 1].getChildren();
@@ -170,6 +169,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     assertTrue(usageView.canPerformReRun());
 
     UsageView newView = usageView.doReRun();
+    Disposer.register(myFixture.getTestRootDisposable(), newView);
     Set<Usage> usages = newView.getUsages();
     assertEquals(2, usages.size());
   }
@@ -229,12 +229,14 @@ public class UsageViewTest extends BasePlatformTestCase {
     assertEmpty(excluded);
 
     String text = new ExporterToTextFile(usageView, UsageViewSettings.getInstance()).getReportText();
-    assertEquals("Usages in  (1 usage found)\n" +
-                 "    Unclassified  (1 usage found)\n" +
-                 "        light_idea_test_case  (1 usage found)\n" +
-                 "              (1 usage found)\n" +
-                 "                X.java  (1 usage found)\n" +
-                 "                    1 public class X{ int xxx; } //comment\n", StringUtil.convertLineSeparators(text));
+    assertEquals("""
+                   Usages in  (1 usage found)
+                       Unclassified  (1 usage found)
+                           light_idea_test_case  (1 usage found)
+                                 (1 usage found)
+                                   X.java  (1 usage found)
+                                       1 public class X{ int xxx; } //comment
+                   """, StringUtil.convertLineSeparators(text));
   }
 
   @NotNull

@@ -1,18 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,6 +65,11 @@ public abstract class DataValidators {
   }
 
   private static boolean isDataValid(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
+    if (isPsiElementProvided(data) &&
+        EDT.isCurrentThreadEdt() &&
+        SlowOperations.isInSection(SlowOperations.FORCE_ASSERT)) {
+      reportPsiElementOnEdt(dataId, source);
+    }
     //noinspection unchecked
     Validator<Object>[] validators = (Validator<Object>[])getValidators(dataId);
     if (validators == null) return true;
@@ -64,34 +79,50 @@ public abstract class DataValidators {
       }
     }
     catch (ClassCastException ex) {
-      LOG.error("Object of incorrect type provided by " + source.getClass().getName() + ".getData(\"" + dataId + "\")");
+      reportObjectOfIncorrectType(dataId, source, ex);
       return false;
     }
     return true;
   }
 
+  private static boolean isPsiElementProvided(@Nullable Object data) {
+    if (data instanceof PsiElement && !(data instanceof FakePsiElement)) return true;
+    if (data instanceof Object[] array) return isPsiElementProvided(ArrayUtil.getFirstElement(array));
+    if (data instanceof Collection<?> collection) return isPsiElementProvided(ContainerUtil.getFirstItem(collection));
+    return false;
+  }
+
+  private static void reportPsiElementOnEdt(@NotNull String dataId, @NotNull Object source) {
+    LOG.error(PluginException.createByClass(
+      "PSI element is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
+      "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER", null, source.getClass()));
+  }
+
+  private static void reportObjectOfIncorrectType(@NotNull String dataId, @NotNull Object source, @NotNull ClassCastException ex) {
+    LOG.error(PluginException.createByClass(
+      "Object of incorrect type provided by " + source.getClass().getName() +
+      ".getData(\"" + dataId + "\")", ex, source.getClass()));
+  }
+
   private static final Map<String, Validator<?>[]> ourValidators = new ConcurrentHashMap<>();
 
   static {
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull DataValidators extension,
-                                 @NotNull PluginDescriptor pluginDescriptor) {
-        ourValidators.clear();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull DataValidators extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
-        ourValidators.clear();
-      }
-    }, null);
+    Application app = ApplicationManager.getApplication();
+    ExtensionPoint<@NotNull KeyedLazyInstance<GetDataRule>> dataRuleEP = app.getExtensionArea()
+      .getExtensionPointIfRegistered(EP_NAME.getName());
+    if (dataRuleEP != null) {
+      dataRuleEP.addChangeListener(() -> ourValidators.clear(), app);
+    }
   }
 
   static Validator<?> @Nullable [] getValidators(@NotNull String dataId) {
     Validator<?>[] result = ourValidators.get(dataId);
     if (result != null || !ourValidators.isEmpty()) {
       return result;
+    }
+    List<DataValidators> extensions = EP_NAME.getExtensionsIfPointIsRegistered();
+    if (extensions.isEmpty()) {
+      return null;
     }
     Map<String, List<Validator<?>>> map = FactoryMap.create(__ -> new ArrayList<>());
     Registry registry = new Registry() {
@@ -101,7 +132,7 @@ public abstract class DataValidators {
         map.get(key.getName()).add(validator);
       }
     };
-    for (DataValidators validators : EP_NAME.getExtensionList()) {
+    for (DataValidators validators : extensions) {
       validators.collectValidators(registry);
     }
     Validator<?>[] emptyArray = new Validator[0];

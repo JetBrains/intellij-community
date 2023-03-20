@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.OutputChecker;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -30,19 +31,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Provides a framework for compiling Java code, for running or debugging it, and for capturing the output.
+ * <p>
+ * The output is recorded using {@link #print(String, Key)} and {@link #println(String, Key)},
+ * and at the end of the test, it can be validated against prerecorded output files, as described in {@link OutputChecker}.
+ * This validation needs to be triggered explicitly using {@link #getChecker()} and {@link OutputChecker#checkValid(Sdk)};
+ * by default, the output is discarded.
+ */
 public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
-  private int myTimeout;
+  private int myTimeoutMillis = 300_000;
   private static Path ourOutputRoot;
   private Path myModuleOutputDir;
 
-  public ExecutionTestCase() {
-    setTimeout(300000); //30 seconds
-  }
+  protected static final String SOURCES_DIRECTORY_NAME = "src";
 
-  public final void setTimeout(int timeout) {
-    myTimeout = timeout;
+  public final void setTimeout(int timeoutMillis) {
+    myTimeoutMillis = timeoutMillis;
   }
 
   protected abstract OutputChecker initOutputChecker();
@@ -98,7 +106,7 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     super.setUpModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
       final String modulePath = getTestAppPath();
-      final String srcPath = modulePath + File.separator + "src";
+      final String srcPath = modulePath + File.separator + SOURCES_DIRECTORY_NAME;
       VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
       VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
 
@@ -116,6 +124,11 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   @Override
   protected Sdk getTestProjectJdk() {
     return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
+  /** Adds the message to a buffer that can later be validated using {@link #getChecker()}. */
+  protected final void systemPrintln(@NotNull @NonNls String msg) {
+    println(msg, ProcessOutputType.SYSTEM);
   }
 
   public void println(@NonNls String s, Key outputType) {
@@ -141,12 +154,6 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   protected void tearDown() throws Exception {
     myChecker = null;
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
-    //myChecker.checkValid(getTestProjectJdk());
-    //probably some thread is destroyed right now because of log exception
-    //wait a little bit
-    synchronized (this) {
-      wait(300);
-    }
   }
 
   protected JavaParameters createJavaParameters(String mainClass) {
@@ -174,46 +181,34 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     return getModuleOutputDir().toString();
   }
 
-  public void waitProcess(@NotNull final ProcessHandler processHandler) {
+  public void waitProcess(@NotNull ProcessHandler processHandler) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
 
-    final boolean[] isRunning = {true};
+    AtomicBoolean isRunning = new AtomicBoolean(true);
     alarm.addRequest(() -> {
-      boolean b;
-      synchronized (isRunning) {
-        b = isRunning[0];
-      }
-      if (b) {
+      if (isRunning.get()) {
         processHandler.destroyProcess();
-        LOG.error("process was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
+        LOG.error("process was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
-    }, myTimeout);
+    }, myTimeoutMillis);
     processHandler.waitFor();
-    synchronized (isRunning) {
-      isRunning[0] = false;
-    }
+    isRunning.set(false);
     Disposer.dispose(alarm);
   }
 
   public void waitFor(Runnable r) {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    final Thread thread = Thread.currentThread();
-
-    final boolean[] isRunning = {true};
+    Thread thread = Thread.currentThread();
+    AtomicBoolean isRunning = new AtomicBoolean(true);
     alarm.addRequest(() -> {
-      boolean b;
-      synchronized (isRunning) {
-        b = isRunning[0];
-      }
-      if (b) {
+      if (isRunning.get()) {
         thread.interrupt();
-        LOG.error("test was running over " + myTimeout / 1000 + " seconds. Interrupted. ");
+        LOG.error("test was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
-    }, myTimeout);
+    }, myTimeoutMillis);
     r.run();
-    synchronized (isRunning) {
-      isRunning[0] = false;
-    }
+    isRunning.set(false);
     Thread.interrupted();
+    Disposer.dispose(alarm);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.vfs
 
 import com.intellij.openapi.application.ApplicationManager
@@ -11,7 +11,10 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.vcs.log.Hash
@@ -121,7 +124,7 @@ class GitIndexVirtualFile(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(GitIndexVirtualFile::class.java)
-    const val SEPARATOR = ':'
+    private const val SEPARATOR = ':'
 
     private fun encode(project: Project, root: VirtualFile, filePath: FilePath): String {
       return StringUtil.escapeChar(project.locationHash, SEPARATOR) + SEPARATOR +

@@ -13,8 +13,12 @@ import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -175,21 +179,14 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
             if (files == null) return;
 
             for (Pair<PsiElement, TextRange> rangePair : files) {
-              if (rangePair.getFirst() instanceof JsonPathFile) {
-                JsonPathFile jsonPathFile = (JsonPathFile)rangePair.getFirst();
-
-                LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper =
-                  ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
-
-                visitJsonPathLiterals(jsonPathFile, rangePair.getSecond(), escaper);
+              if (rangePair.getFirst() instanceof JsonPathFile jsonPathFile) {
+                visitJsonPathLiterals(jsonPathFile);
               }
             }
           }
         }
 
-        private void visitJsonPathLiterals(JsonPathFile jsonPathFile,
-                                           TextRange fileRange,
-                                           LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper) {
+        private void visitJsonPathLiterals(JsonPathFile jsonPathFile) {
           jsonPathFile.accept(new JsonPathRecursiveElementVisitor() {
             @Override
             public void visitIdSegment(@NotNull JsonPathIdSegment o) {
@@ -197,10 +194,9 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
 
               JsonPathId id = o.getId();
               if (!id.getTextRange().isEmpty()) {
-                StringBuilder decodeBuilder = new StringBuilder();
-                TextRange idTextRange = id.getTextRange().shiftRight(fileRange.getStartOffset());
-                if (escaper.decode(idTextRange, decodeBuilder)) {
-                  pathNameConsumer.accept(decodeBuilder.toString());
+                String literalText = getElementTextWithoutHostEscaping(id);
+                if (!StringUtil.isEmptyOrSpaces(literalText)) {
+                  pathNameConsumer.accept(literalText);
                 }
               }
             }
@@ -213,18 +209,22 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
               if (quotedPathsList == null) return;
 
               for (JsonPathStringLiteral stringLiteral : quotedPathsList.getStringLiteralList()) {
-                TextRange literalTextRange = stringLiteral.getTextRange().shiftRight(fileRange.getStartOffset());
-
-                StringBuilder decodeBuilder = new StringBuilder();
-                for (Pair<TextRange, String> fragment : stringLiteral.getTextFragments()) {
-                  if (!fragment.getFirst().isEmpty()) {
-                    escaper.decode(fragment.getFirst().shiftRight(literalTextRange.getStartOffset()), decodeBuilder);
+                String literalText = getElementTextWithoutHostEscaping(stringLiteral);
+                if (literalText != null) {
+                  String literalValue = StringUtil.unquoteString(literalText);
+                  if (!StringUtil.isEmptyOrSpaces(literalValue)) {
+                    pathNameConsumer.accept(literalValue);
                   }
                 }
+              }
+            }
 
-                if (decodeBuilder.length() > 0) {
-                  pathNameConsumer.accept(decodeBuilder.toString());
-                }
+            private String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+              if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) {
+                return injectedLanguageManager.getUnescapedText(element);
+              }
+              else {
+                return element.getText();
               }
             }
           });

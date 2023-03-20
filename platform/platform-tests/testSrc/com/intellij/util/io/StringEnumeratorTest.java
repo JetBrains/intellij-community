@@ -18,14 +18,16 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 public class StringEnumeratorTest extends TestCase {
   private static final String COLLISION_1 = "";
@@ -84,7 +86,7 @@ public class StringEnumeratorTest extends TestCase {
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2),
+    assertEquals(Set.of(COLLISION_1, COLLISION_2),
                  new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
@@ -103,7 +105,7 @@ public class StringEnumeratorTest extends TestCase {
     
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(Set.of(COLLISION_1, COLLISION_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
 
@@ -116,7 +118,7 @@ public class StringEnumeratorTest extends TestCase {
 
     assertEquals(UTF_1, myEnumerator.valueOf(id1));
     assertEquals(UTF_2, myEnumerator.valueOf(id2));
-    assertEquals(ContainerUtil.set(UTF_1, UTF_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(Set.of(UTF_1, UTF_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   public void testOpeningClosing() throws IOException {
@@ -169,7 +171,7 @@ public class StringEnumeratorTest extends TestCase {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).assertTiming();
+    }).attempts(1).assertTiming();
     myEnumerator.close();
     System.out.printf("File size = %d bytes\n", myFile.length());
   }

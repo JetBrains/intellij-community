@@ -167,7 +167,6 @@ public final class NameResolverTools {
    * Checks if some string contains last component one of name
    *
    * @param text  test to check
-   * @param names
    */
   public static boolean isContainsName(@NotNull final String text, @NotNull final FQNamesProvider names) {
     for (final String lastComponent : getLastComponents(names)) {
@@ -182,7 +181,6 @@ public final class NameResolverTools {
    * Checks if some file contains last component one of name
    *
    * @param file  file to check
-   * @param names
    */
   public static boolean isContainsName(@NotNull final PsiFile file, @NotNull final FQNamesProvider names) {
     return isContainsName(file.getText(), names);
@@ -217,8 +215,7 @@ public final class NameResolverTools {
 
     @Override
     public boolean value(final PsiElement element) {
-      if (element instanceof PyCallExpression) {
-        PyCallExpression callExpression = (PyCallExpression)element;
+      if (element instanceof PyCallExpression callExpression) {
         return isCalleeShortCut(callExpression, myNameToSearch);
       }
       return false;

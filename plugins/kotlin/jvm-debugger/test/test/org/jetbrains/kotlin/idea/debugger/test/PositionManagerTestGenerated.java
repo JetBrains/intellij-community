@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -70,6 +70,11 @@ public abstract class PositionManagerTestGenerated extends AbstractPositionManag
             runTest("testData/positionManager/innerClass.kt");
         }
 
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/positionManager/interface.kt");
+        }
+
         @TestMetadata("JvmNameAnnotation.kt")
         public void testJvmNameAnnotation() throws Exception {
             runTest("testData/positionManager/JvmNameAnnotation.kt");
@@ -108,11 +113,6 @@ public abstract class PositionManagerTestGenerated extends AbstractPositionManag
         @TestMetadata("topLevelPropertyInitializer.kt")
         public void testTopLevelPropertyInitializer() throws Exception {
             runTest("testData/positionManager/topLevelPropertyInitializer.kt");
-        }
-
-        @TestMetadata("trait.kt")
-        public void testTrait() throws Exception {
-            runTest("testData/positionManager/trait.kt");
         }
 
         @TestMetadata("twoClasses.kt")

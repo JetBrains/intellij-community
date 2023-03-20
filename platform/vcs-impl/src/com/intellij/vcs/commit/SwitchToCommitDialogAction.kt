@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_CHECKIN_PROJECT
 import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
@@ -9,6 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 
 private class SwitchToCommitDialogAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabledAndVisible = project != null &&

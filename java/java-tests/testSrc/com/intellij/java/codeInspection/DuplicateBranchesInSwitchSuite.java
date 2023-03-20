@@ -6,7 +6,6 @@ import org.junit.runners.Suite;
 
 /**
  * Tests for {@link com.intellij.codeInspection.DuplicateBranchesInSwitchInspection}
- * @author Pavel.Dolgov
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({

@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class RedundantCastTest extends LightJavaCodeInsightFixtureTestCase {
@@ -110,4 +111,8 @@ public class RedundantCastTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.addClass("package a.b; public class B extends a.A { public void foo(){}}");
     doTest();
   }
+
+  public void testSwitchSelectorJava17() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest); }
+
+  public void testSwitchSelectorJava19() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest); }
 }

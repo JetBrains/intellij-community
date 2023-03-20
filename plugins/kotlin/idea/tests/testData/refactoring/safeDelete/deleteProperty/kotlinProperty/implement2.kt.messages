@@ -1,2 +1,2 @@
-val foo: String in final class B : A, Z implements val foo: String in interface A.
-val foo: String in final class B : A, Z implements val foo: String in interface Z.
+property B.foo implements property A.foo.
+property B.foo implements property Z.foo.

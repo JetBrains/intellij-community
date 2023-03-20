@@ -8,19 +8,17 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
 
-/**
- * @author vlan
- */
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
+class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   private val installedLines = listOf("Already installed", "Skipping", "Updating")
 
   @Volatile
@@ -29,12 +27,6 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
   private var requirements: List<PyRequirement>? = null
 
   private var outdatedPackages: Map<String, PoetryOutdatedVersion> = emptyMap()
-
-  init {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, this, Runnable {
-      PythonSdkType.getInstance().setupSdkPaths(sdk)
-    })
-  }
 
   override fun installManagement() {}
 
@@ -45,7 +37,7 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
   }
 
   override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
-    val args = if (requirements == null || requirements.isEmpty()) {
+    val args = if (requirements.isNullOrEmpty()) {
       listOfNotNull(listOf("install"),
         extraArgs)
         .flatten()
@@ -91,7 +83,8 @@ class PyPoetryPackageManager(val sdk: Sdk) : PyPackageManager() {
   }
 
   override fun createVirtualEnv(destinationDir: String, useGlobalSite: Boolean): String {
-    throw ExecutionException("Creating virtual environments based on Poetry environments is not supported")
+    throw ExecutionException(
+      PyBundle.message("python.sdk.dialog.message.creating.virtual.environments.based.on.poetry.environments.not.supported"))
   }
 
   override fun getPackages() = packages

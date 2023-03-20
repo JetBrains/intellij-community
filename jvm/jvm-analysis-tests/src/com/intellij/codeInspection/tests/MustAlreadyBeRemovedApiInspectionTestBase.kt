@@ -10,7 +10,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-abstract class MustAlreadyBeRemovedApiInspectionTestBase : UastInspectionTestBase() {
+abstract class MustAlreadyBeRemovedApiInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = MustAlreadyBeRemovedApiInspection().apply { currentVersion = "3.0" }
 
   @Suppress("DuplicatedCode")

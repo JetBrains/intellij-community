@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport
@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 
 enum class CoroutineDebuggerMode {
     DISABLED,
@@ -40,7 +40,7 @@ internal object CoroutineAgentConnector {
 
     private fun findKotlinxCoroutinesCoreJar(project: Project, configuration: RunConfigurationBase<*>?): KotlinxCoroutinesSearchResult {
         val matchResult = project
-            .getJarVirtualFiles(project, configuration, kotlinxCoroutinesPackageName)
+            .getJarVirtualFiles(configuration, kotlinxCoroutinesPackageName)
             .asSequence()
             .mapNotNull { kotlinxCoroutinesCoreJarRegex.matchEntire(it) }
             .firstOrNull()
@@ -55,21 +55,19 @@ internal object CoroutineAgentConnector {
     }
 
     private fun Project.getJarVirtualFiles(
-        project: Project,
         configuration: RunConfigurationBase<*>?,
         packageName: String
     ): List<String> {
-        val kotlinxCoroutinesPackage = JavaPsiFacade.getInstance(this)
-            .findPackage(packageName)
-            ?: return emptyList()
-        var scope = GlobalSearchScope.allScope(project)
-        if (configuration is ModuleBasedConfiguration<*, *>) {
-            configuration.configurationModule.module?.let {
-                scope = it.getModuleRuntimeScope(
-                    configuration is JavaTestConfigurationWithDiscoverySupport
-                )
-            }
-        }
+        if (configuration !is ModuleBasedConfiguration<*, *>) return emptyList()
+
+        val scope = configuration.configurationModule.module?.getModuleRuntimeScope(
+            configuration is JavaTestConfigurationWithDiscoverySupport
+        ) ?: return emptyList()
+
+        val kotlinxCoroutinesPackage =
+            runReadActionInSmartMode { JavaPsiFacade.getInstance(this).findPackage(packageName) } ?:
+            return emptyList()
+
         return kotlinxCoroutinesPackage.getDirectories(scope).mapNotNull {
             it.virtualFile.path.getParentJarPath()
         }

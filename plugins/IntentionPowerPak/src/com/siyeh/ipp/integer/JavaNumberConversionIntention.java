@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.integer;
 
 import com.intellij.codeInsight.intention.numeric.AbstractNumberConversionIntention;
@@ -7,7 +7,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ImmutableList;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.JavaPsiMathUtil;
@@ -19,17 +18,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static com.siyeh.ipp.integer.JavaNumberConverters.*;
 
 public class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
-  private static final ImmutableList<NumberConverter> JAVA_1_CONVERTERS = immutableList(
-    INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC);
-  private static final ImmutableList<NumberConverter> JAVA_5_CONVERTERS = immutableList(
-    INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
-  private static final ImmutableList<NumberConverter> JAVA_7_CONVERTERS = immutableList(
-    INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_BINARY, INTEGER_TO_OCTAL, 
-    FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
+
+  private static final class Holder {
+    static final List<NumberConverter> JAVA_1_CONVERTERS = List.of(
+      INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC);
+    static final List<NumberConverter> JAVA_5_CONVERTERS = List.of(
+      INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
+    static final List<NumberConverter> JAVA_7_CONVERTERS = List.of(
+      INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_BINARY, INTEGER_TO_OCTAL,
+      FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
+  }
 
   @Override
   @Nullable
@@ -56,12 +57,12 @@ public class JavaNumberConversionIntention extends AbstractNumberConversionInten
     if (!(file instanceof PsiJavaFile)) return Collections.emptyList();
     LanguageLevel level = PsiUtil.getLanguageLevel(file);
     if (level.isLessThan(LanguageLevel.JDK_1_5)) {
-      return JAVA_1_CONVERTERS;
+      return Holder.JAVA_1_CONVERTERS;
     }
     if (level.isLessThan(LanguageLevel.JDK_1_7)) {
-      return JAVA_5_CONVERTERS;
+      return Holder.JAVA_5_CONVERTERS;
     }
-    return JAVA_7_CONVERTERS;
+    return Holder.JAVA_7_CONVERTERS;
   }
 
   @Override

@@ -1,0 +1,5 @@
+<idea-plugin  xmlns:xi="http://www.w3.org/2001/XInclude" implementation-detail="true">
+  <id>org.jetbrains.kotlin.fe10-binding</id>
+  <vendor>JetBrains</vendor>
+  <xi:include href="fe10Binding.xml" xpointer="xpointer(/idea-plugin/*)"/>
+</idea-plugin>

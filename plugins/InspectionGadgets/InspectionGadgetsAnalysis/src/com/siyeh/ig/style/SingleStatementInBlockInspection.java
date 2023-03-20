@@ -104,8 +104,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
 
     private static boolean hasPotentialDanglingElse(@NotNull PsiStatement statement) {
       final PsiElement parent = statement.getParent();
-      if (parent instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+      if (parent instanceof PsiIfStatement ifStatement) {
         if (ifStatement.getThenBranch() == statement && ifStatement.getElseBranch() != null) {
           return true;
         }
@@ -143,7 +142,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiStatement.class);
       if (statement instanceof PsiBlockStatement) {
         statement = PsiTreeUtil.getNonStrictParentOfType(statement.getParent(), PsiStatement.class);

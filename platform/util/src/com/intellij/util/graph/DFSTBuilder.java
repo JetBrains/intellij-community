@@ -18,9 +18,6 @@ import java.util.*;
 import java.util.function.ObjIntConsumer;
 import java.util.function.ToIntFunction;
 
-/**
- * @author dsl, ven
- */
 public final class DFSTBuilder<Node> {
 
   private final @NotNull OutboundSemiGraph<Node> myGraph;
@@ -143,8 +140,8 @@ public final class DFSTBuilder<Node> {
       build(putTNumber, putNNumber, allNodes);
     }
 
-    private void build(ObjIntConsumer<Node> putTNumber,
-                       ObjIntConsumer<Node> putNNumber,
+    private void build(ObjIntConsumer<? super Node> putTNumber,
+                       ObjIntConsumer<? super Node> putNNumber,
                        Node[] allNodes) {
       for (int i = 0; i < index.length; i++) {
         if (index[i] != -1) {

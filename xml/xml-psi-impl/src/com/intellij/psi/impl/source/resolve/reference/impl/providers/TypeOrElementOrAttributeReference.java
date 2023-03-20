@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
@@ -77,24 +77,18 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     final String localName = tag.getLocalName();
     final String attributeLocalName = attribute.getLocalName();
 
-    if (SchemaReferencesProvider.REF_ATTR_NAME.equals(attributeLocalName) || SchemaReferencesProvider.SUBSTITUTION_GROUP_ATTR_NAME.equals(attributeLocalName)) {
-      if (localName.equals(SchemaReferencesProvider.GROUP_TAG_NAME)) {
-        return ReferenceType.GroupReference;
-      } else if (localName.equals(SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME)) {
-        return ReferenceType.AttributeGroupReference;
-      } else if (SchemaReferencesProvider.ELEMENT_TAG_NAME.equals(localName)) {
-        return ReferenceType.ElementReference;
-      } else if (SchemaReferencesProvider.ATTRIBUTE_TAG_NAME.equals(localName)) {
-        return ReferenceType.AttributeReference;
-      }
-    } else if (SchemaReferencesProvider.TYPE_ATTR_NAME.equals(attributeLocalName) ||
-               SchemaReferencesProvider.BASE_ATTR_NAME.equals(attributeLocalName) ||
-               SchemaReferencesProvider.MEMBER_TYPES_ATTR_NAME.equals(attributeLocalName) ||
-               SchemaReferencesProvider.ITEM_TYPE_ATTR_NAME.equals(attributeLocalName)
-              ) {
-      return ReferenceType.TypeReference;
-    }
-    return null;
+    return switch (attributeLocalName) {
+      case SchemaReferencesProvider.REF_ATTR_NAME, SchemaReferencesProvider.SUBSTITUTION_GROUP_ATTR_NAME -> switch (localName) {
+        case SchemaReferencesProvider.GROUP_TAG_NAME -> ReferenceType.GroupReference;
+        case SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME -> ReferenceType.AttributeGroupReference;
+        case SchemaReferencesProvider.ELEMENT_TAG_NAME -> ReferenceType.ElementReference;
+        case SchemaReferencesProvider.ATTRIBUTE_TAG_NAME -> ReferenceType.AttributeReference;
+        default -> null;
+      };
+      case SchemaReferencesProvider.TYPE_ATTR_NAME, SchemaReferencesProvider.BASE_ATTR_NAME, 
+        SchemaReferencesProvider.MEMBER_TYPES_ATTR_NAME, SchemaReferencesProvider.ITEM_TYPE_ATTR_NAME -> ReferenceType.TypeReference;
+      default -> null;
+    };
   }
 
   @NotNull
@@ -126,19 +120,19 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
 
     if (myType != null && nsDescriptor != null) {
 
-      switch(myType) {
-        case GroupReference: return nsDescriptor.findGroup(canonicalText);
-        case AttributeGroupReference: return nsDescriptor.findAttributeGroup(canonicalText);
-        case ElementReference: {
+      return switch (myType) {
+        case GroupReference -> nsDescriptor.findGroup(canonicalText);
+        case AttributeGroupReference -> nsDescriptor.findAttributeGroup(canonicalText);
+        case ElementReference -> {
           XmlElementDescriptor descriptor = nsDescriptor.getElementDescriptor(
             XmlUtil.findLocalNameByQualifiedName(canonicalText), getNamespace(tag, canonicalText),
             new HashSet<>(),
             true
           );
 
-          return descriptor != null ? descriptor.getDeclaration(): null;
+          yield descriptor != null ? descriptor.getDeclaration() : null;
         }
-        case AttributeReference: {
+        case AttributeReference -> {
           //final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(canonicalText);
           final String localNameByQualifiedName = XmlUtil.findLocalNameByQualifiedName(canonicalText);
           XmlAttributeDescriptor descriptor = nsDescriptor.getAttribute(
@@ -147,20 +141,23 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
             tag
           );
 
-          if (descriptor != null) return descriptor.getDeclaration();
+          if (descriptor != null) yield descriptor.getDeclaration();
 
-          return null;
+          yield null;
         }
-        case TypeReference: {
-          TypeDescriptor typeDescriptor = redefined[0] ? nsDescriptor.findTypeDescriptor(XmlUtil.findLocalNameByQualifiedName(canonicalText), "") :
-                                                         nsDescriptor.getTypeDescriptor(canonicalText,tag);
+        case TypeReference -> {
+          TypeDescriptor typeDescriptor =
+            redefined[0] ? nsDescriptor.findTypeDescriptor(XmlUtil.findLocalNameByQualifiedName(canonicalText), "") :
+            nsDescriptor.getTypeDescriptor(canonicalText, tag);
           if (typeDescriptor instanceof ComplexTypeDescriptor) {
-            return typeDescriptor.getDeclaration();
-          } else if (typeDescriptor != null) {
-            return myElement;
+            yield typeDescriptor.getDeclaration();
           }
+          else if (typeDescriptor != null) {
+            yield myElement;
+          }
+          yield null;
         }
-      }
+      };
     }
 
     return null;
@@ -291,25 +288,13 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
   }
 
   public static Object[] getVariants(XmlTag tag, ReferenceType type, String prefix) {
-    String[] tagNames = null;
-
-    switch (type) {
-      case GroupReference:
-        tagNames = new String[] {SchemaReferencesProvider.GROUP_TAG_NAME};
-        break;
-      case AttributeGroupReference:
-        tagNames = new String[] {SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME};
-        break;
-      case AttributeReference:
-        tagNames = new String[] {SchemaReferencesProvider.ATTRIBUTE_TAG_NAME};
-        break;
-      case ElementReference:
-        tagNames = new String[] {SchemaReferencesProvider.ELEMENT_TAG_NAME};
-        break;
-      case TypeReference:
-        tagNames = new String[] {SchemaReferencesProvider.SIMPLE_TYPE_TAG_NAME, SchemaReferencesProvider.COMPLEX_TYPE_TAG_NAME};
-        break;
-    }
+    String[] tagNames = switch (type) {
+      case GroupReference -> new String[]{SchemaReferencesProvider.GROUP_TAG_NAME};
+      case AttributeGroupReference -> new String[]{SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME};
+      case AttributeReference -> new String[]{SchemaReferencesProvider.ATTRIBUTE_TAG_NAME};
+      case ElementReference -> new String[]{SchemaReferencesProvider.ELEMENT_TAG_NAME};
+      case TypeReference -> new String[]{SchemaReferencesProvider.SIMPLE_TYPE_TAG_NAME, SchemaReferencesProvider.COMPLEX_TYPE_TAG_NAME};
+    };
 
     final XmlDocument document = ((XmlFile)tag.getContainingFile()).getDocument();
     if (document == null) {

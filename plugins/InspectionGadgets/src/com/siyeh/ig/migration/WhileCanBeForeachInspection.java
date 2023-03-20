@@ -91,7 +91,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement whileElement = descriptor.getPsiElement();
       final PsiWhileStatement whileStatement = (PsiWhileStatement)whileElement.getParent();
       replaceWhileWithForEach(whileStatement);
@@ -108,10 +108,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         return;
       }
       final PsiElement declaredElement = declaration.getDeclaredElements()[0];
-      if (!(declaredElement instanceof PsiLocalVariable)) {
+      if (!(declaredElement instanceof PsiLocalVariable iterator)) {
         return;
       }
-      final PsiLocalVariable iterator = (PsiLocalVariable)declaredElement;
       final PsiMethodCallExpression initializer = (PsiMethodCallExpression)PsiUtil.skipParenthesizedExprDown(iterator.getInitializer());
       if (initializer == null) {
         return;
@@ -190,9 +189,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         final PsiExpression expression = assignment.getRExpression();
         final PsiTypeElement typeElement = iterator.getTypeElement();
         if (typeElement.isInferredType() &&
-            (expression == null || 
-             PsiType.NULL.equals(expression.getType()) || 
-             expression instanceof PsiArrayInitializerExpression || 
+            (expression == null ||
+             PsiTypes.nullType().equals(expression.getType()) ||
+             expression instanceof PsiArrayInitializerExpression ||
              expression instanceof PsiFunctionalExpression) &&     
             PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
           deleteIterator = false;

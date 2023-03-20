@@ -11,7 +11,6 @@ public final class PrivateConstField public constructor() {
 
         public final val field: kotlin.Int /* compiled code */
 
-        @test.A @field:java.lang.Deprecated public final val fieldWithAnnotation: kotlin.Int /* compiled code */
+        @test.A public final val fieldWithAnnotation: kotlin.Int /* compiled code */
     }
 }
-

@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
@@ -23,15 +24,20 @@ import javax.swing.JComponent
 import javax.swing.JWindow
 
 class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
+  init {
+    isEnabledInModalContext = true
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val dump = createDump()
 
     val panel = JBPanel<Nothing>(BorderLayout())
     panel.add(JBScrollPane(JBTextArea(dump)), BorderLayout.CENTER)
 
-    val visibleFrame = WindowManager.getInstance().findVisibleFrame()
-    val popup = JWindow(visibleFrame)
+    val parent = WindowManager.getInstance().suggestParentWindow(e.project)
+    val popup = JWindow(parent)
     popup.type = Window.Type.POPUP
+    popup.isAlwaysOnTop = true
     popup.focusableWindowState = false
     popup.add(panel)
 
@@ -44,11 +50,11 @@ class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
     panel.add(closeButton, BorderLayout.NORTH)
 
     popup.setSize(800, 600)
-    popup.setLocationRelativeTo(visibleFrame)
+    popup.setLocationRelativeTo(parent)
     popup.isVisible = true
   }
 
-  fun createDump() : @NlsSafe String {
+  private fun createDump() : @NlsSafe String {
     val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     val activeWindow = keyboardFocusManager.activeWindow
     val focusedWindow = keyboardFocusManager.focusedWindow
@@ -82,5 +88,9 @@ class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
     }
 
     return dump.joinToString("\n")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

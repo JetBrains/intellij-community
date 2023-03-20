@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author lex
- */
 public interface DebugProcess extends UserDataHolder {
   @NonNls String JAVA_STRATUM = "Java";
 
@@ -57,6 +54,7 @@ public interface DebugProcess extends UserDataHolder {
    * The usual place to call this method is vmAttachedEvent. No additional actions are needed in this case.
    * If position manager is appended later, when DebugSession is up and running, one might need to call BreakpointManager.updateAllRequests()
    * to ensure that just added position manager was considered when creating breakpoint requests
+   *
    * @param positionManager to be appended
    */
   void appendPositionManager(PositionManager positionManager);

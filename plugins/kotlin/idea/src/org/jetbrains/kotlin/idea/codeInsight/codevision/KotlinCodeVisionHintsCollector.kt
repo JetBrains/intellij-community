@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.codevision
 
@@ -8,8 +8,6 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.MouseButton
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
@@ -38,7 +36,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.SmartList
 
 
-@Suppress("UnstableApiUsage")
 class KotlinCodeVisionHintsCollector(
     editor: Editor, private val showUsages: Boolean, private val showInheritors: Boolean,
     private val usagesLimit: Int, private val inheritorsLimit: Int
@@ -136,7 +133,6 @@ class KotlinCodeVisionHintsCollector(
         return cachedValue.showUsages != showUsages || cachedValue.showInheritors != showInheritors
     }
 
-    @Suppress("GrazieInspection")
     private fun prepareBlockElements(
         element: PsiElement,
         editor: Editor,
@@ -206,7 +202,7 @@ class KotlinCodeVisionHintsCollector(
         private val inheritorsLimit: Int
     ) : CachedValueProvider<CachedHints> {
 
-        override fun compute(): CachedValueProvider.Result<CachedHints>? {
+        override fun compute(): CachedValueProvider.Result<CachedHints> {
             val hints: MutableList<KotlinCodeVisionLimitedHint> = SmartList()
 
             if (showUsages)

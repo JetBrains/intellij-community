@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -11,10 +10,11 @@ import com.intellij.ui.DeferredIconImpl;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.icons.CachedImageIcon;
+import com.intellij.ui.icons.IconUtilKt;
+import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.ui.scale.paint.ImageComparator;
-import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -23,8 +23,8 @@ import org.junit.rules.ExternalResource;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -45,7 +45,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   private static final float ICON_OBJ_SCALE = 1.75f;
   private static final float ICON_OVER_USR_SCALE = 1.0f;
 
-  // 0.75 is impractical system scale factor, however it's used to stress-test the scale subsystem
+  // 0.75 is an impractical system scale factor, however, it's used to stress-test the scale subsystem
   private static final float[] SCALES = {0.75f, 1, 2, 2.5f};
 
   @ClassRule
@@ -103,7 +103,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   private static @NotNull CachedImageIcon createIcon() throws MalformedURLException {
-    return new CachedImageIcon(new File(getIconPath()).toURI().toURL(), false);
+    return new CachedImageIcon(getIconPath().toUri().toURL(), false);
   }
 
   private static void test(@NotNull Icon icon, @NotNull UserScaleContext iconUserContext) {
@@ -126,8 +126,10 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     /*
      * (B) override scale
      */
-    if (!(icon instanceof RetrievableIcon)) { // RetrievableIcon may return a copy of its wrapped icon and we may fail to override scale in the origin.
-      Icon iconB = IconUtil.overrideScale(IconLoader.copy(icon, null, true), USR_SCALE.of(ICON_OVER_USR_SCALE));
+    // RetrievableIcon may return a copy of its wrapped icon,
+    // and we may fail to override a scale in the origin.
+    if (!(icon instanceof RetrievableIcon)) {
+      Icon iconB = IconUtil.overrideScale(IconUtilKt.copyIcon(icon, null, true), USR_SCALE.of(ICON_OVER_USR_SCALE));
 
       usrSize2D = ICON_BASE_SIZE * ICON_OVER_USR_SCALE * iconContext.getScale(OBJ_SCALE);
       usrSize = (int)Math.round(usrSize2D);
@@ -157,7 +159,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
     assertIcon(iconC, contextC, scales.first, scales.second, "Test (C) scale icon");
 
-    // Additionally check that the original image hasn't changed after scaling
+    // Additionally, check that the original image hasn't changed after scaling
     Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(iconContext.getScale(DEV_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
@@ -193,11 +195,11 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     assertThat(icon.getIconWidth()).describedAs(testDescription + ": unexpected icon user width").isEqualTo(usrSize);
     assertThat(icon.getIconHeight()).describedAs(testDescription + ": unexpected icon user height").isEqualTo(usrSize);
 
-    Assertions.assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
+    assertThat(ImageUtil.getRealWidth(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real width").isEqualTo(devSize);
     assertThat(ImageUtil.getRealHeight(IconLoader.toImage(icon, ctx))).describedAs(testDescription + ": unexpected icon real height").isEqualTo(devSize);
   }
 
-  private static String getIconPath() {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg";
+  private static Path getIconPath() {
+    return Path.of(PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg");
   }
 }

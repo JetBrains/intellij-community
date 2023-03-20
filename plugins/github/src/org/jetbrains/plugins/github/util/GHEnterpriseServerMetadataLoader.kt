@@ -35,5 +35,14 @@ class GHEnterpriseServerMetadataLoader : Disposable {
     }
   }
 
+  @CalledInAny
+  internal fun findRequestByEndpointUrl(url: String): CompletableFuture<GHEnterpriseServerMeta>? {
+    for ((server, request) in serverMetadataRequests) {
+      val serverUrl = server.toUrl()
+      if (url.startsWith(serverUrl)) return request
+    }
+    return null
+  }
+
   override fun dispose() {}
 }

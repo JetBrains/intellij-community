@@ -199,12 +199,12 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     } ?: return
 
     updateValueIfNeeded(model = model, domDependency = domDependency, domValue = domDependency.version,
-      managedDomValue = managedDependency.version, newValue = newMavenId.version,
-      siblingsBeforeTag = elementsBeforeDependencyVersion)
+                        managedDomValue = managedDependency.version, newValue = newMavenId.version,
+                        siblingsBeforeTag = elementsBeforeDependencyVersion)
 
     updateValueIfNeeded(model = model, domDependency = domDependency, domValue = domDependency.scope,
-      managedDomValue = managedDependency.scope, newValue = newScope,
-      siblingsBeforeTag = elementsBeforeDependencyScope)
+                        managedDomValue = managedDependency.scope, newValue = newScope,
+                        siblingsBeforeTag = elementsBeforeDependencyScope)
   }
 
   private fun updateValueIfNeeded(model: MavenDomProjectModel,
@@ -219,7 +219,6 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
         addTagIfNotExists(tagName = domValue.xmlElementName, parentElement = domDependency, siblingsBeforeTag = siblingsBeforeTag)
         updateVariableOrValue(model, domValue, newValue)
       }
-      else -> domValue.xmlTag?.delete()
     }
   }
 
@@ -376,39 +375,67 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   }
 
   //for faster testing
-  internal fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
+  fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
     return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
       val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
-      model.dependencies.dependencies.map { mavenDomDependency ->
-        DeclaredDependency(
+      val dependencies = model.dependencies.dependencies.map { mavenDomDependency ->
+        DeclaredDependencyData(
           groupId = mavenDomDependency.groupId.stringValue,
           artifactId = mavenDomDependency.artifactId.stringValue,
-          version = retrieveDependencyVersion(myProject, mavenDomDependency),
+          version = mavenDomDependency.version.stringValue,
           configuration = mavenDomDependency.scope.stringValue,
-          dataContext = DataContext { if (CommonDataKeys.PSI_ELEMENT.`is`(it)) mavenDomDependency.xmlElement else null }
+          dataContext = DataContext { if (CommonDataKeys.PSI_ELEMENT.`is`(it)) mavenDomDependency.xmlElement else null },
+        )
+      }
+      retrieveDependencyVersions(myProject, model, dependencies.filter{it.version == null})
+      return@compute dependencies.map { data ->
+        DeclaredDependency(
+          groupId = data.groupId,
+          artifactId = data.artifactId,
+          version = data.version,
+          configuration = data.configuration,
+          dataContext = data.dataContext
         )
       }
     }
   }
 
-  private fun retrieveDependencyVersion(project: Project, dependency: MavenDomDependency): String? {
-    val directVersion = dependency.version.stringValue
-    if (directVersion != null) return directVersion
+  private class DeclaredDependencyData(
+    val groupId: String?,
+    val artifactId: String?,
+    var version: String?,
+    val configuration: String?,
+    val dataContext: DataContext,
+  )
 
-    val managingDependency = MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project)
-    return managingDependency?.version?.stringValue
+  private fun retrieveDependencyVersions(project: Project, domModel: MavenDomProjectModel, dependencies: List<DeclaredDependencyData>) {
+    if (dependencies.isEmpty()) return
 
+    val dependencyMap = dependencies.filter { it.version == null && it.artifactId != null }.groupBy({ it.artifactId!! }, { it })
+    MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(
+      domModel,
+      { mavenDomDependency ->
+        val groupId = mavenDomDependency.groupId.stringValue
+        val artifactId = mavenDomDependency.artifactId.stringValue
+        val version = mavenDomDependency.version.stringValue
+        if (!version.isNullOrBlank() && dependencyMap.containsKey(artifactId)) {
+          for (dependency in dependencyMap[artifactId]!!) {
+            if (groupId == dependency.groupId) {
+              dependency.version = version
+            }
+          }
+        }
+
+        return@processDependenciesInDependencyManagement !dependencies.any { it.version == null }
+      }, project)
   }
+
 
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
-    return ReadAction.compute<List<UnifiedDependencyRepository>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)
-                  ?: return@compute emptyList()
-      model.repositories.repositories.map {
-        UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "")
-      }
-    }
+    val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file)  ?: return emptyList()
+    return model.repositories.repositories
+      .map { UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "") }
   }
 
 }

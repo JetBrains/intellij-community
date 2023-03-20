@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 import com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 import com.intellij.psi.CommonClassNames.JAVA_LANG_LONG
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.codehaus.groovy.syntax.Numbers
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NUM_INT
@@ -27,7 +28,7 @@ internal fun parseInteger(literalText: String): Number? {
 internal fun getLiteralType(literal: GrLiteral): PsiType? {
   val elemType = GrLiteralImpl.getLiteralType(literal)
   if (elemType === GroovyElementTypes.KW_NULL) {
-    return PsiType.NULL
+    return PsiTypes.nullType()
   }
   val integerLiteralWithoutSuffix = elemType == NUM_INT && literal.text.let { text ->
     !text.hasIntegerSuffix()

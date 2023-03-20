@@ -265,17 +265,11 @@ final class GithubRepository extends BaseRepository {
 
   @Override
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
-    boolean isOpen;
-    switch (state) {
-      case OPEN:
-        isOpen = true;
-        break;
-      case RESOLVED:
-        isOpen = false;
-        break;
-      default:
-        throw new IllegalStateException("Unknown state: " + state);
-    }
+    boolean isOpen = switch (state) {
+      case OPEN -> true;
+      case RESOLVED -> false;
+      default -> throw new IllegalStateException("Unknown state: " + state);
+    };
     GithubApiRequestExecutor executor = getExecutor();
     GithubServerPath server = getServer();
     String repoAuthor = getRepoAuthor();
@@ -361,9 +355,8 @@ final class GithubRepository extends BaseRepository {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof GithubRepository)) return false;
+    if (!(o instanceof GithubRepository that)) return false;
 
-    GithubRepository that = (GithubRepository)o;
     if (!Objects.equals(getRepoAuthor(), that.getRepoAuthor())) return false;
     if (!Objects.equals(getRepoName(), that.getRepoName())) return false;
     if (!Comparing.equal(isAssignedIssuesOnly(), that.isAssignedIssuesOnly())) return false;

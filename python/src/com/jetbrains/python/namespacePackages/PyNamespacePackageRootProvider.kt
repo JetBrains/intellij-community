@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.namespacePackages
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
@@ -9,12 +10,10 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.ui.JBColor
-import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.module.PyContentEntriesEditor
@@ -28,7 +27,7 @@ class PyNamespacePackageRootProvider: PyRootTypeProvider() {
 
   init {
     if (!Registry.`is`("python.explicit.namespace.packages")) {
-      throw ExtensionNotApplicableException.INSTANCE
+      throw ExtensionNotApplicableException.create()
     }
   }
 
@@ -58,7 +57,7 @@ class PyNamespacePackageRootProvider: PyRootTypeProvider() {
   override fun getRoots(): MultiMap<ContentEntry, VirtualFilePointer> = myNamespacePackages
 
   override fun getIcon(): Icon {
-    return PlatformIcons.PACKAGE_ICON
+    return AllIcons.Nodes.Package
   }
 
   override fun getName(): String {

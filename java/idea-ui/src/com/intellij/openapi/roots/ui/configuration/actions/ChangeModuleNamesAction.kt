@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.actions
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.module.Module
@@ -21,6 +22,10 @@ class ChangeModuleNamesAction : DumbAwareAction(JavaUiBundle.message("action.tex
     e.presentation.isVisible = project != null && isQualifiedModuleNamesEnabled(project) && e.getData(LangDataKeys.MODIFIABLE_MODULE_MODEL) != null
     val modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY)
     e.presentation.isEnabled = modules != null && modules.size > 1
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

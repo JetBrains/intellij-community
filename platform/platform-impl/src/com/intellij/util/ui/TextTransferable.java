@@ -63,12 +63,7 @@ public class TextTransferable implements Transferable {
 
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
-    for (DataFlavor f : FLAVORS.getValue()) {
-      if (flavor.equals(f)) {
-        return true;
-      }
-    }
-    return false;
+    return FLAVORS.getValue().contains(flavor);
   }
 
   @Override

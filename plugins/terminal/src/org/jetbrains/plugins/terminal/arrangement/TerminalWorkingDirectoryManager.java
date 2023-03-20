@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -16,7 +17,7 @@ import com.jediterm.terminal.ProcessTtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -26,7 +27,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -86,20 +86,23 @@ public class TerminalWorkingDirectoryManager {
     data.myWorkingDirectory = content.getUserData(INITIAL_CWD_KEY);
     content.putUserData(INITIAL_CWD_KEY, null);
     dataRef.set(data);
-    JBTerminalWidget widget = Objects.requireNonNull(TerminalView.getWidgetByContent(content));
-    widget.getTerminalPanel().addCustomKeyListener(listener);
-    Disposer.register(content, () -> widget.getTerminalPanel().removeCustomKeyListener(listener));
+    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
+    if (widget != null) {
+      widget.getTerminalPanel().addCustomKeyListener(listener);
+      Disposer.register(content, () -> widget.getTerminalPanel().removeCustomKeyListener(listener));
+    }
     myDataByContentMap.put(content, data);
   }
 
   private static void updateWorkingDirectory(@NotNull Content content, @NotNull Data data) {
-    JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+    JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
+    TerminalWidget newWidget = widget != null ? widget.asNewWidget() : null;
     if (widget != null) {
-      data.myWorkingDirectory = getWorkingDirectory(widget, data.myContentName);
+      data.myWorkingDirectory = getWorkingDirectory(newWidget);
     }
   }
 
-  public static @Nullable String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
+  public static @Nullable String getWorkingDirectory(@NotNull TerminalWidget widget) {
     ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
     if (connector == null) return null;
     try {
@@ -115,7 +118,7 @@ public class TerminalWorkingDirectoryManager {
     catch (InterruptedException ignored) {
     }
     catch (ExecutionException e) {
-      String message = "Failed to fetch cwd for " + name;
+      String message = "Failed to fetch cwd for " + widget.getTerminalTitle().buildTitle();
       if (LOG.isDebugEnabled()) {
         LOG.warn(message, e);
       }
@@ -124,9 +127,17 @@ public class TerminalWorkingDirectoryManager {
       }
     }
     catch (TimeoutException e) {
-      LOG.warn("Timeout fetching cwd for " + name, e);
+      LOG.warn("Timeout fetching cwd for " + widget.getTerminalTitle().buildTitle(), e);
     }
     return null;
+  }
+
+  /**
+   * @deprecated use {@link #getWorkingDirectory(TerminalWidget)} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static @Nullable String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
+    return getWorkingDirectory(widget.asNewWidget());
   }
 
   private static boolean checkDirectory(@Nullable String directory) {
@@ -144,7 +155,7 @@ public class TerminalWorkingDirectoryManager {
     Data data = getData(content);
     if (data != null) {
       myDataByContentMap.remove(content);
-      JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+      JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
       if (widget != null) {
         widget.getTerminalPanel().removeCustomKeyListener(data.myKeyListener);
       }

@@ -107,7 +107,12 @@ def activate_matplotlib(enable_gui_function):
         if not hasattr(pyplot, 'switch_backend'):
             return False
 
-    gui, backend = find_gui_and_backend()
+    try:
+        gui, backend = find_gui_and_backend()
+    except:
+        # matplotlib module wasn't fully imported, try later
+        return False
+
     is_interactive = is_interactive_backend(backend)
     if is_interactive:
         enable_gui_function(gui)

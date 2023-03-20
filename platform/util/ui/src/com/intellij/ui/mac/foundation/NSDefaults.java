@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class NSDefaults {
+public final class NSDefaults {
   private static final Logger LOG = Logger.getInstance(NSDefaults.class);
 
   // NOTE: skip call of Foundation.invoke(myDefaults, "synchronize") (when read settings)
   // It waits for any pending asynchronous updates to the defaults database and returns; this method is unnecessary and shouldn't be used.
 
-  private static class Path {
+  private static final class Path {
     private final @NotNull ArrayList<Node> myPath = new ArrayList<>();
 
     @Override
@@ -118,7 +118,7 @@ public class NSDefaults {
       }
     }
 
-    private static class Node {
+    private static final class Node {
       private final @NotNull String mySelector;
       private final @NotNull String myNodeName;
       private @NotNull ID cachedNodeObj = ID.NIL;
@@ -365,20 +365,23 @@ public class NSDefaults {
   //
 
   public static boolean isDarkMenuBar() {
-    assert SystemInfo.isMac;
+    assert SystemInfoRt.isMac;
 
-    final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
-      final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
-      if (defaults.equals(ID.NIL))
+      ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+      if (defaults.equals(ID.NIL)) {
         return false;
-      final ID valObj = Foundation.invoke(defaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle"));
-      if (valObj.equals(ID.NIL))
+      }
+      ID valObj = Foundation.invoke(defaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle"));
+      if (valObj.equals(ID.NIL)) {
         return false;
+      }
 
-      final String sval = Foundation.toStringViaUTF8(valObj);
+      String sval = Foundation.toStringViaUTF8(valObj);
       return sval != null && sval.equals("Dark");
-    } finally {
+    }
+    finally {
       pool.drain();
     }
   }

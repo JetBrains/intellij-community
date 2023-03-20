@@ -36,7 +36,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
   @NotNull
   @Override
   public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ArtifactoryModel.RepositoryType[] repos = gson.fromJson(
         HttpRequests.request(toUrl(url, "repositories"))
@@ -66,7 +66,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
   @Override
   public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
 
 

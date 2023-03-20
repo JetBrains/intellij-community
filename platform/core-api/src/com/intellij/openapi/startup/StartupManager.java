@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.startup;
 
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,14 +30,9 @@ public abstract class StartupManager {
   public abstract void registerStartupActivity(@NotNull Runnable runnable);
 
   /**
-   * Registers an activity that is performed after project is opened without any visible progress.
-   * You may access the PSI structures from the activity, unless runnable implements {@link DumbAware}.</p>
-   * <p>
-   * Consider to use {@link #runAfterOpened} if possible.
-   *
-   * @param runnable the activity to execute.
-   * @see StartupActivity#POST_STARTUP_ACTIVITY
+   * @deprecated Use {@link #runAfterOpened}.
    */
+  @Deprecated
   public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
 
   /**
@@ -45,9 +40,12 @@ public abstract class StartupManager {
    * The runnable will be executed in current thread if project is already opened.</p>
    * <p>
    * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity">docs</a> for details.
+   * <p>
+   * Consider using extension point instead.
    *
    * @see StartupActivity#POST_STARTUP_ACTIVITY
    */
+  @ApiStatus.Internal
   public abstract void runAfterOpened(@NotNull Runnable runnable);
 
   public abstract boolean postStartupActivityPassed();
@@ -59,11 +57,11 @@ public abstract class StartupManager {
    * <p>
    * The runnable can be executed immediately if method is called from EDT and project is already opened.
    * <p>
-   * Consider to use {@link #runAfterOpened} if possible.
    *
-   * @param runnable the activity to execute.
-   * @see com.intellij.openapi.application.ModalityState
-   * @see com.intellij.openapi.application.Application#invokeLater(Runnable)
+   * @deprecated Use {@link #runAfterOpened}.
    */
   public abstract void runWhenProjectIsInitialized(@NotNull Runnable runnable);
+
+  @ApiStatus.Internal
+  public abstract @NotNull Job getAllActivitiesPassedFuture();
 }

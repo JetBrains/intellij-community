@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
@@ -82,17 +83,17 @@ class EditVariableDialog extends DialogWrapper {
     // Create the table
     myTable = new JBTable(dataModel);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTable.setPreferredScrollableViewportSize(JBUI.size(500, -1));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(600, -1));
     myTable.setVisibleRowCount(8);
-    myTable.getColumn(names[0]).setPreferredWidth(120);
-    myTable.getColumn(names[1]).setPreferredWidth(200);
-    myTable.getColumn(names[2]).setPreferredWidth(200);
+    myTable.getColumn(names[0]).setPreferredWidth(100);
+    myTable.getColumn(names[1]).setPreferredWidth(300);
+    myTable.getColumn(names[2]).setPreferredWidth(100);
     myTable.getColumn(names[3]).setPreferredWidth(100);
     if (myVariables.size() > 0) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
-    Predicate<Macro> isAcceptableInContext = macro -> myContextTypes.isEmpty() || myContextTypes.stream().anyMatch(macro::isAcceptableInContext);
+    Predicate<Macro> isAcceptableInContext = macro -> myContextTypes.isEmpty() || ContainerUtil.exists(myContextTypes, macro::isAcceptableInContext);
     Stream<String> availableMacroNames = Arrays.stream(MacroFactory.getMacros()).filter(isAcceptableInContext).map(Macro::getPresentableName).sorted();
     Set<String> uniqueNames = availableMacroNames.collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -190,7 +191,7 @@ class EditVariableDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    public Class getColumnClass(int c) {
+    public Class<?> getColumnClass(int c) {
       if (c <= 2) {
         return String.class;
       }

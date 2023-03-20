@@ -25,7 +25,6 @@ import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignme
 
 /**
  * @author Dmitry.Krasilschikov
- * @date 11.04.2007
  */
 public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implements GrVariable {
 
@@ -68,8 +67,7 @@ public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implement
   @Override
   public @Nullable GrExpression getInitializerGroovy() {
     final PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration) {
-      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
+    if (parent instanceof GrVariableDeclaration declaration) {
       if (declaration.isTuple()) {
         GrExpression rValue = declaration.getTupleInitializer();
         if (!(rValue instanceof GrListOrMap)) {
@@ -92,8 +90,7 @@ public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implement
   @Override
   public @Nullable PsiType getInitializerType() {
     PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration) {
-      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
+    if (parent instanceof GrVariableDeclaration declaration) {
       if (declaration.isTuple()) {
         GrExpression rValue = declaration.getTupleInitializer();
         if (rValue == null) {

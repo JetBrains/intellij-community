@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ExceptionBreakpoint
@@ -69,7 +69,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return null;
     }
     int dotIndex = qualifiedName.lastIndexOf('.');
-    return dotIndex >= 0? qualifiedName.substring(0, dotIndex) : "";
+    return dotIndex >= 0 ? qualifiedName.substring(0, dotIndex) : "";
   }
 
   @Override
@@ -113,7 +113,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       return psiClass != null ? SourcePosition.createFromElement(psiClass) : null;
     });
 
-    if(classPosition == null) {
+    if (classPosition == null) {
       createOrWaitPrepare(debugProcess, getQualifiedName());
     }
     else {
@@ -147,18 +147,17 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
-    if(event instanceof ExceptionEvent) {
-      return ((ExceptionEvent) event).exception();
+    if (event instanceof ExceptionEvent) {
+      return ((ExceptionEvent)event).exception();
     }
     return super.getThisObject(context, event);
   }
 
   @Override
   public String getEventMessage(LocatableEvent event) {
-    String exceptionName = (getQualifiedName() != null)? getQualifiedName() : CommonClassNames.JAVA_LANG_THROWABLE;
-    String threadName    = null;
-    if (event instanceof ExceptionEvent) {
-      ExceptionEvent exceptionEvent = (ExceptionEvent)event;
+    String exceptionName = (getQualifiedName() != null) ? getQualifiedName() : CommonClassNames.JAVA_LANG_THROWABLE;
+    String threadName = null;
+    if (event instanceof ExceptionEvent exceptionEvent) {
       try {
         exceptionName = exceptionEvent.exception().type().name();
         threadName = exceptionEvent.thread().name();
@@ -192,8 +191,8 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     if (getProperties().isCatchFiltersEnabled() && event instanceof ExceptionEvent) {
       Location location = ((ExceptionEvent)event).catchLocation();
       if (location != null && !typeMatchesClassFilters(location.declaringType().name(),
-                                   getProperties().getCatchClassFilters(),
-                                   getProperties().getCatchClassExclusionFilters())) {
+                                                       getProperties().getCatchClassFilters(),
+                                                       getProperties().getCatchClassExclusionFilters())) {
         return false;
       }
     }
@@ -207,10 +206,10 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   //@SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
   //  super.writeExternal(parentNode);
-  //  if(getQualifiedName() != null) {
+  //  if (getQualifiedName() != null) {
   //    parentNode.setAttribute("class_name", getQualifiedName());
   //  }
-  //  if(getPackageName() != null) {
+  //  if (getPackageName() != null) {
   //    parentNode.setAttribute("package_name", getPackageName());
   //  }
   //}
@@ -227,23 +226,23 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
 
-    //noinspection HardCodedStringLiteral
     String packageName = parentNode.getAttributeValue("package_name");
-    setPackageName(packageName != null? packageName : calcPackageName(packageName));
+    setPackageName(packageName != null ? packageName : calcPackageName(packageName));
 
     try {
-      getProperties().NOTIFY_CAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));
-    } catch (Exception ignore) {
+      getProperties().NOTIFY_CAUGHT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));
+    }
+    catch (Exception ignore) {
     }
     try {
-      getProperties().NOTIFY_UNCAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
-    } catch (Exception ignore) {
+      getProperties().NOTIFY_UNCAUGHT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
+    }
+    catch (Exception ignore) {
     }
 
-    //noinspection HardCodedStringLiteral
     String className = parentNode.getAttributeValue("class_name");
     setQualifiedName(className);
-    if(className == null) {
+    if (className == null) {
       throw new InvalidDataException(getReadNoClassName());
     }
   }

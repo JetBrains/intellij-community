@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -27,18 +28,20 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformUtils;
+import com.intellij.ui.popup.PopupState;
+import com.intellij.util.*;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -94,16 +97,17 @@ public class RunConfigurationStorageUi {
 
       myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
       if (myStoreAsFileCheckBox.isSelected()) {
-        manageStorageFileLocation();
+        manageStorageFileLocation(null);
       }
     });
   }
 
   private @NotNull ActionButton createStoreAsFileGearButton() {
+    PopupState<Balloon> state = PopupState.forBalloon();
     AnAction showStoragePathAction = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        manageStorageFileLocation();
+        if (!state.isRecentlyHidden()) manageStorageFileLocation(state);
       }
     };
     Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
@@ -122,7 +126,7 @@ public class RunConfigurationStorageUi {
     };
   }
 
-  private void manageStorageFileLocation() {
+  private void manageStorageFileLocation(@Nullable PopupState<Balloon> state) {
     Disposable balloonDisposable = Disposer.newDisposable();
 
     Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
@@ -173,6 +177,7 @@ public class RunConfigurationStorageUi {
       }
     });
 
+    if (state != null) state.prepareToShow(balloon);
     balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
   }
 
@@ -221,7 +226,10 @@ public class RunConfigurationStorageUi {
     if (file == null) return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
     if (!file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
 
-    if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, true) == null) {
+    boolean isInContent = WorkspaceFileIndexEx.IS_ENABLED
+                          ? WorkspaceFileIndex.getInstance(project).isUrlInContent(VfsUtilCore.pathToUrl(path)) != ThreeState.NO
+                          : ProjectFileIndex.getInstance(project).isInContent(file);
+    if (!isInContent) {
       if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) == null) {
         return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
       }
@@ -375,17 +383,15 @@ public class RunConfigurationStorageUi {
   }
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {
-    if (!isModified()) return;
+    apply(settings, true);
+  }
 
+  public void apply(@NotNull RunnerAndConfigurationSettings settings, boolean checkPathValidity) {
     switch (myRCStorageType) {
-      case Workspace:
-        settings.storeInLocalWorkspace();
-        break;
-      case DotIdeaFolder:
-        settings.storeInDotIdeaFolder();
-        break;
-      case ArbitraryFileInProject:
-        if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
+      case Workspace -> settings.storeInLocalWorkspace();
+      case DotIdeaFolder -> settings.storeInDotIdeaFolder();
+      case ArbitraryFileInProject -> {
+        if (checkPathValidity && getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
           // don't apply incorrect UI to the model
         }
         else {
@@ -394,12 +400,9 @@ public class RunConfigurationStorageUi {
           String fileName = getFileNameByRCName(name);
           settings.storeInArbitraryFileInProject(myFolderPathIfStoredInArbitraryFile + "/" + fileName);
         }
-        break;
-      default:
-        throw new IllegalStateException("Unexpected value: " + myRCStorageType);
+      }
+      default -> throw new IllegalStateException("Unexpected value: " + myRCStorageType);
     }
-    myRCStorageTypeInitial = myRCStorageType;
-    myFolderPathIfStoredInArbitraryFileInitial = myFolderPathIfStoredInArbitraryFile;
   }
 
   private static class RunConfigurationStoragePopup {
@@ -475,9 +478,9 @@ public class RunConfigurationStorageUi {
           if (file.getPath().equals(myDotIdeaStoragePath)) return true;
           return file.isDirectory() &&
                  super.isFileSelectable(file) &&
-                 ProjectFileIndex.getInstance(project).isInContent(file) &&
                  !file.getPath().endsWith("/.idea") &&
-                 !file.getPath().contains("/.idea/");
+                 !file.getPath().contains("/.idea/") &&
+                 ReadAction.compute(() -> ProjectFileIndex.getInstance(project).isInContent(file));
         }
       };
 
@@ -504,7 +507,7 @@ public class RunConfigurationStorageUi {
     }
 
     @NotNull @SystemIndependent String getPath() {
-      return StringUtil.trimTrailing(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()), '/');
+      return UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()));
     }
   }
 

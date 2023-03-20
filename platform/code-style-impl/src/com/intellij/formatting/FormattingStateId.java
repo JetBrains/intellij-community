@@ -13,8 +13,6 @@ import java.util.function.Supplier;
 
 /**
  * Enumerates formatting processing states.
- * 
- * @author Denis Zhdanov
  */
 public enum FormattingStateId {
 

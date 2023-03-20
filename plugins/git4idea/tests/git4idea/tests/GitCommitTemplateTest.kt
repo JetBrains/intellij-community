@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.runAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.WaitFor
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
@@ -20,7 +20,8 @@ class GitCommitTemplateTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    waitForTemplateTrackerReady()
+    // backgroundPostStartupActivity are not started in unit tests
+    project.service<GitCommitTemplateTracker>().start()
   }
 
   override fun tearDown() {
@@ -208,16 +209,5 @@ class GitCommitTemplateTest : GitPlatformTest() {
   private fun File.refresh() {
     LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
-  }
-
-  private fun waitForTemplateTrackerReady() {
-    object : WaitFor() {
-      override fun condition(): Boolean = project.service<GitCommitTemplateTracker>().isStarted()
-      override fun assertCompleted(message: String?) {
-        if (!condition()) {
-          fail(message)
-        }
-      }
-    }.assertCompleted("Failed to wait ${this::class.simpleName}")
   }
 }

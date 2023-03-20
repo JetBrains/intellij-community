@@ -14,7 +14,6 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 
 /**
- * @author spleaner
  * @author Konstantin Bulenkov
  */
 public class StripeTable extends JBTable {

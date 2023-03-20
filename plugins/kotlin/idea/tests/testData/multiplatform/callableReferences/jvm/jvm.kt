@@ -2,13 +2,13 @@
 
 package sample
 
-actual interface <!LINE_MARKER("descr='Has declaration in common module'")!>C<!> {
-    actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>common_2_C<!>()
+actual interface <!LINE_MARKER("descr='Has expects in common-2 module'")!>C<!> {
+    actual fun <!LINE_MARKER("descr='Has expects in common-2 module'")!>common_2_C<!>()
     fun jvm_C()
 }
 
-actual interface B : A {
-    actual fun common_1_B()
+actual interface <!LINE_MARKER("descr='Has expects in common-1 module'")!>B<!> : A {
+    actual fun <!LINE_MARKER("descr='Has expects in common-1 module'")!>common_1_B<!>()
     fun jvm_B()
 }
 

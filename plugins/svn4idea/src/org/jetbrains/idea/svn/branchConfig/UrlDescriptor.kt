@@ -9,7 +9,7 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
 
-class UrlDescriptor(val isEncoded: Boolean) : KeyDescriptor<Url> {
+class UrlDescriptor(private val isEncoded: Boolean) : KeyDescriptor<Url> {
   @Throws(IOException::class)
   override fun save(out: DataOutput, value: Url): Unit = out.writeUTF(if (isEncoded) value.toString() else value.toDecodedString())
 

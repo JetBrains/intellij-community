@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,12 +27,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class LoggingConditionDisagreesWithLogStatementInspection extends BaseInspection {
 
-  private static final @NonNls Set<String> loggingLevels = ContainerUtil.set(
-    "debug", "error", "fatal", "info", "trace", "warn", "severe", "warning", "info", "config", "fine", "finer", "finest"
+  private static final @NonNls Set<String> loggingLevels = Set.of(
+    "debug", "error", "fatal", "info", "trace", "warn", "severe", "warning", "config", "fine", "finer", "finest"
   );
 
   private static final Map<String, LoggingProblemChecker> problemCheckers = new HashMap<>();
@@ -61,7 +62,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
   private static class LoggingConditionDisagreesWithLogStatementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
@@ -125,8 +126,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
           return;
         }
       }
-      else if (condition instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
+      else if (condition instanceof PsiPrefixExpression prefixExpression) {
         if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
           return;
         }
@@ -143,10 +143,9 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
+      if (!(qualifier instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
       final PsiElement target = referenceExpression.resolve();
       if (target == null) {
         return;
@@ -154,10 +153,9 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)condition;
       final PsiReferenceExpression conditionMethodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression conditionQualifier = conditionMethodExpression.getQualifierExpression();
-      if (!(conditionQualifier instanceof PsiReferenceExpression)) {
+      if (!(conditionQualifier instanceof PsiReferenceExpression conditionReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression conditionReferenceExpression = (PsiReferenceExpression)conditionQualifier;
       final PsiElement conditionTarget = conditionReferenceExpression.resolve();
       if (!target.equals(conditionTarget)) {
         return;
@@ -205,18 +203,16 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
 
     @Nullable
     public static String getLoggingLevelFromArgument(PsiExpression argument) {
-      if (!(argument instanceof PsiReferenceExpression)) {
+      if (!(argument instanceof PsiReferenceExpression argumentReference)) {
         return null;
       }
-      final PsiReferenceExpression argumentReference = (PsiReferenceExpression)argument;
       if (!"java.util.logging.Level".equals(TypeUtils.resolvedClassName(argument.getType()))) {
         return null;
       }
       final PsiElement argumentTarget = argumentReference.resolve();
-      if (!(argumentTarget instanceof PsiField)) {
+      if (!(argumentTarget instanceof PsiField field)) {
         return null;
       }
-      final PsiField field = (PsiField)argumentTarget;
       return StringUtil.toLowerCase(field.getName());
     }
   }
@@ -249,18 +245,16 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();
         final PsiExpression argument = arguments[0];
-        if (!(argument instanceof PsiReferenceExpression)) {
+        if (!(argument instanceof PsiReferenceExpression referenceExpression)) {
           return false;
         }
         if (!InheritanceUtil.isInheritor(argument.getType(), "org.apache.logging.log4j.Level")) {
           return false;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
         final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiField)) {
+        if (!(target instanceof PsiField field)) {
           return false;
         }
-        final PsiField field = (PsiField)target;
         final String fieldName = field.getName();
         return !StringUtil.toLowerCase(fieldName).equals(priority);
       }
@@ -268,24 +262,21 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();
         for (PsiExpression argument : arguments) {
-          if (!(argument instanceof PsiReferenceExpression)) {
+          if (!(argument instanceof PsiReferenceExpression argumentReference)) {
             continue;
           }
-          final PsiReferenceExpression argumentReference = (PsiReferenceExpression)argument;
           final PsiType type = argument.getType();
-          if (!(type instanceof PsiClassType)) {
+          if (!(type instanceof PsiClassType classType)) {
             continue;
           }
-          final PsiClassType classType = (PsiClassType)type;
           final PsiClass aClass = classType.resolve();
           if (!InheritanceUtil.isInheritor(aClass, "org.apache.log4j.Priority")) {
             continue;
           }
           final PsiElement argumentTarget = argumentReference.resolve();
-          if (!(argumentTarget instanceof PsiField)) {
+          if (!(argumentTarget instanceof PsiField field)) {
             continue;
           }
-          final PsiField field = (PsiField)argumentTarget;
           final String fieldName = field.getName();
           return !StringUtil.toLowerCase(fieldName).equals(priority);
         }

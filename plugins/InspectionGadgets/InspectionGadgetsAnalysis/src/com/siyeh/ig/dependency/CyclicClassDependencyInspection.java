@@ -17,10 +17,9 @@ package com.siyeh.ig.dependency;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -30,20 +29,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclarationKt;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CyclicClassDependencyInspection extends BaseGlobalInspection {
 
   public boolean ignoreInSameFile = false;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("cyclic.class.dependency.ignore.in.same.file"),
-                                          this, "ignoreInSameFile");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInSameFile", InspectionGadgetsBundle.message("cyclic.class.dependency.ignore.in.same.file")));
   }
 
   @Override
@@ -52,10 +53,9 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
     if (refClass.isAnonymous() || refClass.isLocalClass() || refClass.isSyntheticJSP()) {
       return null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -23,8 +23,8 @@ class KDocFinderTest : LightPlatformCodeInsightFixtureTestCase() {
         val declaration = (myFixture.file as KtFile).declarations[0]
         val descriptor = declaration.unsafeResolveToDescriptor() as ClassDescriptor
         val constructorDescriptor = descriptor.unsubstitutedPrimaryConstructor!!
-        val doc = constructorDescriptor.findKDoc()
-        Assert.assertEquals("Doc for constructor of class C.", doc!!.getContent())
+        val docContent = constructorDescriptor.findKDoc()
+        Assert.assertEquals("Doc for constructor of class C.", docContent!!.contentTag.getContent())
     }
 
     fun testAnnotated() {
@@ -33,8 +33,8 @@ class KDocFinderTest : LightPlatformCodeInsightFixtureTestCase() {
         val descriptor = declaration.unsafeResolveToDescriptor() as ClassDescriptor
         val overriddenFunctionDescriptor =
             descriptor.defaultType.memberScope.getContributedFunctions(Name.identifier("xyzzy"), NoLookupLocation.FROM_TEST).single()
-        val doc = overriddenFunctionDescriptor.findKDoc()
-        Assert.assertEquals("Doc for method xyzzy", doc!!.getContent())
+        val docContent = overriddenFunctionDescriptor.findKDoc()
+        Assert.assertEquals("Doc for method xyzzy", docContent!!.contentTag.getContent())
     }
 
     fun testOverridden() {
@@ -43,8 +43,8 @@ class KDocFinderTest : LightPlatformCodeInsightFixtureTestCase() {
         val descriptor = declaration.unsafeResolveToDescriptor() as ClassDescriptor
         val overriddenFunctionDescriptor =
             descriptor.defaultType.memberScope.getContributedFunctions(Name.identifier("xyzzy"), NoLookupLocation.FROM_TEST).single()
-        val doc = overriddenFunctionDescriptor.findKDoc()
-        Assert.assertEquals("Doc for method xyzzy", doc!!.getContent())
+        val docContent = overriddenFunctionDescriptor.findKDoc()
+        Assert.assertEquals("Doc for method xyzzy", docContent!!.contentTag.getContent())
     }
 
     fun testOverriddenWithSubstitutedType() {
@@ -53,8 +53,8 @@ class KDocFinderTest : LightPlatformCodeInsightFixtureTestCase() {
         val descriptor = declaration.unsafeResolveToDescriptor() as ClassDescriptor
         val overriddenFunctionDescriptor =
             descriptor.defaultType.memberScope.getContributedFunctions(Name.identifier("xyzzy"), NoLookupLocation.FROM_TEST).single()
-        val doc = overriddenFunctionDescriptor.findKDoc()
-        Assert.assertEquals("Doc for method xyzzy", doc!!.getContent())
+        val docContent = overriddenFunctionDescriptor.findKDoc()
+        Assert.assertEquals("Doc for method xyzzy", docContent!!.contentTag.getContent())
     }
 
     fun testProperty() {
@@ -63,7 +63,40 @@ class KDocFinderTest : LightPlatformCodeInsightFixtureTestCase() {
         val descriptor = declaration.unsafeResolveToDescriptor() as ClassDescriptor
         val propertyDescriptor =
             descriptor.defaultType.memberScope.getContributedVariables(Name.identifier("xyzzy"), NoLookupLocation.FROM_TEST).single()
-        val doc = propertyDescriptor.findKDoc()
-        Assert.assertEquals("Doc for property xyzzy", doc!!.getContent())
+        val docContent = propertyDescriptor.findKDoc()
+        Assert.assertEquals("Doc for property xyzzy", docContent!!.contentTag.getContent())
+    }
+
+    fun testSections() {
+        myFixture.configureByFile(getTestName(false) + ".kt")
+        val declaration = (myFixture.file as KtFile).declarations[0]
+        val descriptor = declaration.unsafeResolveToDescriptor() as ClassDescriptor
+        val docContent = descriptor.findKDoc()
+
+        val sections = docContent!!.sections
+        Assert.assertEquals(2, sections.size)
+
+        val mainSection = sections[0]
+        Assert.assertEquals(docContent.contentTag, mainSection) // should be equal to default/main content
+        Assert.assertEquals("General class description, first paragraph in the KDoc\n\n", mainSection.getContent())
+
+        val additionalSection = sections[1]
+
+        val propertyTag = additionalSection.findTagByName("property")!!
+        Assert.assertEquals("name", propertyTag.getSubjectName())
+        Assert.assertEquals("name property content", propertyTag.getContent())
+
+        val paramTag = additionalSection.findTagByName("param")!!
+        Assert.assertEquals("name", paramTag.getSubjectName())
+        Assert.assertEquals("name param content", paramTag.getContent())
+
+        val returnTag = additionalSection.findTagByName("return")!!
+        Assert.assertEquals("return content", returnTag.getContent())
+
+        // note: if the ordering was different, i.e @param was put before @property,
+        // then it would be concatenated to the mainSection and section content would differ slightly:
+        // 0: general description + @param tag content
+        // 1: @property and @return
+        // in this test, @property was intentionally put in between as a divider
     }
 }

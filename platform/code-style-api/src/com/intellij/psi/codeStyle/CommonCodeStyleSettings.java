@@ -23,7 +23,6 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +42,6 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
- *
- * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
   // Dev. notes:
@@ -1079,9 +1076,7 @@ public class CommonCodeStyleSettings {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndentOptions)) return false;
-
-      IndentOptions that = (IndentOptions)o;
+      if (!(o instanceof IndentOptions that)) return false;
 
       if (CONTINUATION_INDENT_SIZE != that.CONTINUATION_INDENT_SIZE) return false;
       if (INDENT_SIZE != that.INDENT_SIZE) return false;
@@ -1131,10 +1126,19 @@ public class CommonCodeStyleSettings {
       document.putUserData(INDENT_OPTIONS_KEY, this);
     }
 
+    /**
+     * @deprecated Use {@link #retrieveFromAssociatedDocument(Document)}
+     */
     @Nullable
+    @Deprecated
     public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
+    }
+
+    @Nullable
+    public static IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
+      return document.getUserData(INDENT_OPTIONS_KEY);
     }
 
     /**
@@ -1189,16 +1193,7 @@ public class CommonCodeStyleSettings {
     return mySoftMargins.getValues();
   }
 
-  void setSoftMargins(List<Integer> values) {
+  public void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
-  }
-
-  /**
-   * @deprecated Use {@link CodeStyle#getLocalLanguageSettings(Editor, int)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
-    return CodeStyle.getLocalLanguageSettings(editor, tailOffset);
   }
 }

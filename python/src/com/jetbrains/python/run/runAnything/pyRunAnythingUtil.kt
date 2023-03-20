@@ -14,9 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 
-/**
- * @author vlan
- */
 internal val DataContext.project: Project
   get() = RunAnythingUtil.fetchProject(this)
 

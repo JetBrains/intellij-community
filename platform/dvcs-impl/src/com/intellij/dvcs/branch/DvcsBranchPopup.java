@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -7,17 +7,14 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroupPopup;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.dvcs.ui.LightActionGroup;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -25,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 
 public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull protected final Project myProject;
@@ -55,16 +50,16 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     myInSpecificRepository = myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC;
     String title = buildTitle(currentRepository);
     myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions(), dimensionKey, dataContext);
-    initBranchSyncPolicyIfNotInitialized();
+    new DvcsBranchSyncPolicyUpdateNotifier<>(myProject, myVcs, myVcsSettings, myRepositoryManager).initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {
-      myPopup.addToolbarAction(new TrackReposSynchronouslyAction(myVcsSettings), true);
+      myPopup.addToolbarAction(new DefaultTrackReposSynchronouslyAction(myVcsSettings), true);
     }
   }
 
   @Nullable
   private @Nls String buildTitle(@NotNull Repo currentRepository) {
-    if (ExperimentalUI.isNewVcsBranchPopup()) return null;
+    if (ExperimentalUI.isNewUI()) return null;
 
     String vcsName = myVcs.getDisplayName();
     return myInSpecificRepository ?
@@ -75,32 +70,6 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   @NotNull
   public ListPopup asListPopup() {
     return myPopup;
-  }
-
-  private void initBranchSyncPolicyIfNotInitialized() {
-    if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.NOT_DECIDED) {
-      if (myRepositoryManager.shouldProposeSyncControl()) {
-        notifyAboutSyncedBranches();
-        myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.SYNC);
-      }
-      else {
-        myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.DONT_SYNC);
-      }
-    }
-  }
-
-  private void notifyAboutSyncedBranches() {
-    VcsNotifier.getInstance(myProject).notify(
-      STANDARD_NOTIFICATION
-        .createNotification(DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"), NotificationType.INFORMATION)
-        .setDisplayId("vcs.branch.operations.are.executed.on.all.roots")
-        .addAction(
-          NotificationAction.create(DvcsBundle.message("action.NotificationAction.DvcsBranchPopup.text.disable"), (event, notification) -> {
-            ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getDisplayName());
-            if (myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC) {
-              notification.expire();
-            }
-          })));
   }
 
   @NotNull
@@ -156,22 +125,16 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     public static final int DEFAULT_NUM = 5;
   }
 
-  private static class TrackReposSynchronouslyAction extends ToggleAction implements DumbAware {
+  private static class DefaultTrackReposSynchronouslyAction extends TrackReposSynchronouslyAction {
     private final DvcsSyncSettings myVcsSettings;
 
-    TrackReposSynchronouslyAction(@NotNull DvcsSyncSettings vcsSettings) {
-      super(DvcsBundle.message("sync.setting"), DvcsBundle.message("sync.setting.description", VcsBundle.message("vcs.generic.name")), null);
+    protected DefaultTrackReposSynchronouslyAction(@NotNull DvcsSyncSettings vcsSettings) {
       myVcsSettings = vcsSettings;
     }
 
     @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myVcsSettings.setSyncSetting(state ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
+    protected @NotNull DvcsSyncSettings getSettings(@NotNull AnActionEvent e) {
+      return myVcsSettings;
     }
   }
 }

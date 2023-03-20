@@ -3,8 +3,11 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
@@ -16,10 +19,13 @@ import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.ui.*;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -30,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Dennis.Ushakov
@@ -44,6 +51,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected static final int MEMBER_ICON_POSITION = 0;
 
   protected final @NlsContexts.ColumnName String myAbstractColumnHeader;
+  private @NotNull CancellablePromise<List<MemberInfoData>> myCancellablePromise;
   protected List<M> myMemberInfos;
   protected final boolean myAbstractEnabled;
   protected MemberInfoModel<T, M> myMemberInfoModel;
@@ -63,6 +71,12 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     else {
       myMemberInfoModel = new DefaultMemberInfoModel<>();
     }
+
+    myCancellablePromise = updatePresentation();
+    myTableModel.addTableModelListener(e -> {
+      myCancellablePromise.cancel();
+      myCancellablePromise = updatePresentation();
+    });
 
     setModel(myTableModel);
 
@@ -85,7 +99,39 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setIntercellSpacing(new Dimension(0, 0));
 
     new MyEnableDisableAction().register();
-    new TableSpeedSearch(this);
+    TableSpeedSearch.installOn(this);
+  }
+
+  @NotNull
+  private CancellablePromise<List<MemberInfoData>> updatePresentation() {
+    return ReadAction.nonBlocking(() -> ContainerUtil.map(myMemberInfos, this::calculateMemberInfoData))
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .onSuccess(data -> SwingUtilities.invokeLater(() -> repaint()));
+  }
+
+  @NotNull
+  private MemberInfoData calculateMemberInfoData(M memberInfo) {
+    RowIcon icon = IconManager.getInstance().createRowIcon(3);
+    icon.setIcon(getMemberIcon(memberInfo, 0), MEMBER_ICON_POSITION);
+    setVisibilityIcon(memberInfo, icon);
+    icon.setIcon(getOverrideIcon(memberInfo), OVERRIDE_ICON_POSITION);
+
+    return new MemberInfoData(myMemberInfoModel.getTooltipText(memberInfo),
+                              icon,
+                              myMemberInfoModel.isMemberEnabled(memberInfo),
+                              myMemberInfoModel.checkForProblems(memberInfo));
+  }
+
+  private MemberInfoData getMemberInfoData(int row) {
+    if (!myCancellablePromise.isDone()) {
+      return null;
+    }
+    try {
+      return myCancellablePromise.get(100, TimeUnit.MILLISECONDS).get(row);
+    }
+    catch (Exception e) {
+      return null;
+    }
   }
 
   public Collection<M> getSelectedMemberInfos() {
@@ -149,9 +195,17 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       M item = ContainerUtil.getFirstItem(getSelectedMemberInfos());
-      return item == null ? null : item.getMember();
+      if (item == null) return null;
+      return (DataProvider)slowId -> getSlowData(slowId, item);
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull M item) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return item.getMember();
     }
     return null;
   }
@@ -170,6 +224,12 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   public void addNotify() {
     super.addNotify();
     scrollSelectionInView();
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    myCancellablePromise.cancel();
   }
 
   @Nullable
@@ -262,48 +322,38 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final M memberInfo = myTable.myMemberInfos.get(rowIndex);
-      switch (columnIndex) {
-        case CHECKED_COLUMN:
+      return switch (columnIndex) {
+        case CHECKED_COLUMN -> {
           if (myTable.myMemberInfoModel.isMemberEnabled(memberInfo)) {
-            return memberInfo.isChecked();
+            yield memberInfo.isChecked();
           }
           else {
-            return myTable.myMemberInfoModel.isCheckedWhenDisabled(memberInfo);
+            yield myTable.myMemberInfoModel.isCheckedWhenDisabled(memberInfo);
           }
-        case ABSTRACT_COLUMN:
-          {
-            return myTable.getAbstractColumnValue(memberInfo);
-          }
-        case DISPLAY_NAME_COLUMN:
-          return memberInfo.getDisplayName();
-        default:
-          throw new RuntimeException("Incorrect column index");
-      }
+        }
+        case ABSTRACT_COLUMN -> myTable.getAbstractColumnValue(memberInfo);
+        case DISPLAY_NAME_COLUMN -> memberInfo.getDisplayName();
+        default -> throw new RuntimeException("Incorrect column index");
+      };
     }
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case CHECKED_COLUMN:
-          return " ";
-        case ABSTRACT_COLUMN:
-          return myTable.myAbstractColumnHeader;
-        case DISPLAY_NAME_COLUMN:
-          return getDisplayNameColumnHeader();
-        default:
-          throw new RuntimeException("Incorrect column index");
-      }
+      return switch (column) {
+        case CHECKED_COLUMN -> " ";
+        case ABSTRACT_COLUMN -> myTable.myAbstractColumnHeader;
+        case DISPLAY_NAME_COLUMN -> getDisplayNameColumnHeader();
+        default -> throw new RuntimeException("Incorrect column index");
+      };
     }
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      switch (columnIndex) {
-        case CHECKED_COLUMN:
-          return myTable.myMemberInfoModel.isMemberEnabled(myTable.myMemberInfos.get(rowIndex));
-        case ABSTRACT_COLUMN:
-          return myTable.isAbstractColumnEditable(rowIndex);
-      }
-      return false;
+      return switch (columnIndex) {
+        case CHECKED_COLUMN -> myTable.myMemberInfoModel.isMemberEnabled(myTable.myMemberInfos.get(rowIndex));
+        case ABSTRACT_COLUMN -> myTable.isAbstractColumnEditable(rowIndex);
+        default -> false;
+      };
     }
 
 
@@ -357,6 +407,11 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
+  protected Icon getMemberIcon(M memberInfo, @Iconable.IconFlags int flags) {
+    return memberInfo.getMember().getIcon(flags);
+  }
+
+  private record MemberInfoData(@Nls String tooltip, Icon icon, boolean isEditable, int problem) {}
   private static class MyTableRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends ColoredTableCellRenderer {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
@@ -367,29 +422,22 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     @Override
     public void customizeCellRenderer(@NotNull JTable table, final Object value,
                                       boolean isSelected, boolean hasFocus, final int row, final int column) {
-
-      final int modelColumn = myTable.convertColumnIndexToModel(column);
-      final M memberInfo = myTable.myMemberInfos.get(row);
-      setToolTipText(myTable.myMemberInfoModel.getTooltipText(memberInfo));
-      if (modelColumn == DISPLAY_NAME_COLUMN) {
-        Icon memberIcon = myTable.getMemberIcon(memberInfo, 0);
-        Icon overrideIcon = myTable.getOverrideIcon(memberInfo);
-        RowIcon icon = IconManager.getInstance().createRowIcon(3);
-        icon.setIcon(memberIcon, MEMBER_ICON_POSITION);
-        myTable.setVisibilityIcon(memberInfo, icon);
-        icon.setIcon(overrideIcon, OVERRIDE_ICON_POSITION);
-        setIcon(icon);
-      }
-      else {
-        setIcon(null);
-      }
       setIconOpaque(false);
       setOpaque(false);
-      final boolean cellEditable = myTable.myMemberInfoModel.isMemberEnabled(memberInfo);
-      setEnabled(cellEditable);
 
+      removeAll();
+      MemberInfoData data = myTable.getMemberInfoData(row);
+      if (data == null) {
+        append(IdeBundle.message("progress.text.loading"));
+        setIcon(AnimatedIcon.Default.INSTANCE);
+        return;
+      }
+      setToolTipText(data.tooltip());
+      setIcon(data.icon());
+      setEnabled(data.isEditable());
       if (value == null) return;
-      final int problem = myTable.myMemberInfoModel.checkForProblems(memberInfo);
+
+      final int problem = data.problem();
       Color c = null;
       if (problem == MemberInfoModel.ERROR) {
         c = JBColor.RED;
@@ -399,11 +447,6 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       }
       append((String)value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, c));
     }
-
-  }
-
-  protected Icon getMemberIcon(M memberInfo, @Iconable.IconFlags int flags) {
-    return memberInfo.getMember().getIcon(flags);
   }
 
   private static class MyBooleanRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends BooleanTableCellRenderer {

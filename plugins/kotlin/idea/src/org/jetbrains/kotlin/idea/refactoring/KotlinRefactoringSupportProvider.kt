@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -41,7 +41,7 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     fun getExtractFunctionHandler(): RefactoringActionHandler = ExtractKotlinFunctionHandler()
 
     fun getExtractFunctionToScopeHandler(): RefactoringActionHandler =
-        ExtractKotlinFunctionHandler(true, ExtractKotlinFunctionHandler.InteractiveExtractionHelper)
+        ExtractKotlinFunctionHandler(allContainersEnabled = true)
 
     override fun getChangeSignatureHandler() = KotlinChangeSignatureHandler()
 
@@ -52,6 +52,24 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getExtractSuperClassHandler() = KotlinExtractSuperclassHandler
 
     override fun getExtractInterfaceHandler() = KotlinExtractInterfaceHandler
+
+    /**
+     * Kotlin has its own family of handlers for this, so we want to disable the platform implementation of
+     * [com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler].
+     *
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler
+     */
+    override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
+
+    /**
+     *  Kotlin has its own handler for this, so we want to disable the platform implementation of
+     *  [com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler].
+     *
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
+     * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler
+     */
+    override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
 }
 
 class KotlinVetoRenameCondition : Condition<PsiElement> {

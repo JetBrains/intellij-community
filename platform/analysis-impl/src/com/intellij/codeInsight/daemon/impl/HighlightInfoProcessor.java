@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +53,9 @@ public abstract class HighlightInfoProcessor {
                                                long elementRange,
                                                @Nullable List<? extends HighlightInfo> infos){}
 
-  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession,
-                                 @Nullable Editor editor,
-                                 double progress){}
+  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession, @Nullable Editor editor, double progress) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+  }
 
 
   private static final HighlightInfoProcessor EMPTY = new HighlightInfoProcessor() { };

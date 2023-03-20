@@ -328,21 +328,31 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     StringBuilder builder = new StringBuilder(s.length());
-    boolean inQuotes = false;
+    char quote = 0;
+    boolean isEscaped = false;
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
-      if (c == separator && !inQuotes) {
+      boolean isSeparator = c == separator;
+      boolean isQuote = c == '"' || c == '\'';
+      boolean isQuoted = quote != 0;
+      boolean isEscape = c == '\\';
+
+      if (!isQuoted && isSeparator) {
         if (builder.length() > 0) {
           result.add(builder.toString());
           builder.setLength(0);
         }
         continue;
       }
-      if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
-        inQuotes = !inQuotes;
+
+      if (!isEscaped && isQuote && (quote == 0 || quote == c)) {
+        quote = isQuoted ? 0 : c;
       }
+
+      isEscaped = isEscape && !isEscaped;
+
       builder.append(c);
     }
     if (builder.length() > 0) {
@@ -354,18 +364,39 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
-    return formatFileSize(fileSize, " ");
+    return formatFileSize(fileSize, " ", -1);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
+    return formatFileSize(fileSize, unitSeparator, -1);
+  }
+
+  /**
+   *
+   * @param fileSize - size of the file in bytes
+   * @param unitSeparator - separator inserted between value and unit
+   * @param rank - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @return string with formatted file size
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
     if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
     if (fileSize == 0) return '0' + unitSeparator + 'B';
-    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
+    if (rank < 0) {
+      rank = rankForFileSize(fileSize);
+    }
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
     return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
+  }
+
+  @Contract(pure = true)
+  public static int rankForFileSize(long fileSize) {
+    if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
+    return (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
   }
 
   /**

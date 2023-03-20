@@ -3,7 +3,7 @@ Run Java
 Connected to the target VM
 soLastStatementInInlineFunctionArgumentInNonInlineCall.kt:6
 soLastStatementInInlineFunctionArgumentInNonInlineCall.kt:7
-soLastStatementInInlineFunctionArgumentInNonInlineCall.kt:17
+soLastStatementInInlineFunctionArgumentInNonInlineCall.kt:16
 Disconnected from the target VM
 
 Process finished with exit code 0

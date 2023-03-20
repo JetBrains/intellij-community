@@ -2,6 +2,7 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.settings.NodeRendererSettings
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -23,6 +24,10 @@ class ForceOnDemandRenderersAction : ToggleAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = DebuggerAction.isInJavaSession(e)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   companion object {

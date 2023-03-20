@@ -1,0 +1,7 @@
+// WITH_STDLIB
+@OptIn(ExperimentalUnsignedTypes::class)
+fun test() {
+    uintArrayOf(1u).forEachIndexed { index, element ->
+        println("$index:$element")
+    }
+}

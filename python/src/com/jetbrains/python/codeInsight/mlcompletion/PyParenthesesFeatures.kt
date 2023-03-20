@@ -9,8 +9,8 @@ object PyParenthesesFeatures {
   fun haveOpeningBrace(names: Map<String, Int>): Boolean = haveOpeningBracket(names, "{", "}")
 
   private fun haveOpeningBracket(names: Map<String, Int>, openingBracket: String, closingBracket: String): Boolean {
-    val cntOpening = names.entries.sumBy { if (it.key == openingBracket) it.value else 0 }
-    val cntClosing = names.entries.sumBy { if (it.key == closingBracket) it.value else 0 }
+    val cntOpening = names.entries.sumOf { if (it.key == openingBracket) it.value else 0 }
+    val cntClosing = names.entries.sumOf { if (it.key == closingBracket) it.value else 0 }
     return cntOpening > cntClosing
   }
 }

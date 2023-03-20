@@ -32,6 +32,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -46,9 +47,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
+
+/**
+ * @deprecated use {@link AbstractProjectViewPaneWithAsyncSupport} instead.
+ */
+@Deprecated(forRemoval = true)
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
   private AsyncProjectViewSupport myAsyncSupport;
-  private JScrollPane myComponent;
+  private JComponent myComponent;
 
   protected AbstractProjectViewPSIPane(@NotNull Project project) {
     super(project);
@@ -66,14 +73,23 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
     enableDnD();
-    myComponent = ScrollPaneFactory.createScrollPane(myTree);
+    JScrollPane treePaneScroll = ScrollPaneFactory.createScrollPane(myTree);
+    JComponent promoter = createPromoter();
+    if (promoter != null ) {
+      JPanel contentAndPromoter = new JPanel();
+      contentAndPromoter.setLayout(new BoxLayout(contentAndPromoter, BoxLayout.Y_AXIS));
+      contentAndPromoter.add(treePaneScroll);
+      contentAndPromoter.add(promoter);
+      myComponent = contentAndPromoter;
+    } else {
+      myComponent = treePaneScroll;
+    }
     if (Registry.is("error.stripe.enabled")) {
       ErrorStripePainter painter = new ErrorStripePainter(true);
-      Disposer.register(this, new TreeUpdater<>(painter, myComponent, myTree) {
+      Disposer.register(this, new TreeUpdater<>(painter, treePaneScroll, myTree) {
         @Override
         protected void update(ErrorStripePainter painter, int index, Object object) {
-          if (object instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+          if (object instanceof DefaultMutableTreeNode node) {
             object = node.getUserObject();
           }
           super.update(painter, index, getStripe(object, myTree.isExpanded(index)));
@@ -84,7 +100,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
     BaseProjectTreeBuilder treeBuilder = createBuilder(treeModel);
     if (treeBuilder != null) {
-      installComparator(treeBuilder);
+      installComparator(treeBuilder, createComparator());
       setTreeBuilder(treeBuilder);
     }
     else {
@@ -94,7 +110,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
     initTree();
 
-    Disposer.register(this, new UiNotifyConnector(myTree, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myTree, new Activatable() {
       private boolean showing;
 
       @Override
@@ -117,11 +133,17 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+  public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+    installComparator(getTreeBuilder(), comparator);
+  }
+
+  private void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (myAsyncSupport != null) {
       myAsyncSupport.setComparator(comparator);
     }
-    super.installComparator(builder, comparator);
+    else if (builder != null) {
+      builder.setNodeDescriptorComparator(comparator);
+    }
   }
 
   @Override
@@ -161,13 +183,15 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    new MySpeedSearch(myTree);
+    MySpeedSearch.installOn(myTree);
 
     myTree.addKeyListener(new PsiCopyPasteManager.EscapeHandler());
     CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
   protected void onSelectionChanged() {
+    myProject.getMessageBus().syncPublisher(PROJECT_VIEW_SELECTION_TOPIC).onChanged();
+
     if (myTree != null && myTree.getSelectionModel() != null) {
       int count = myTree.getSelectionModel().getSelectionCount();
       String description = count > 1 && myTree.hasFocus() ? LangBundle.message("project.view.elements.selected", count) : null;
@@ -231,6 +255,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     return ActionCallback.DONE;
   }
 
+  @Deprecated(forRemoval = true)
   @NotNull
   public ActionCallback beforeSelect() {
     // actually, getInitialized().doWhenDone() should be called by builder internally
@@ -240,6 +265,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     return builder.getInitialized();
   }
 
+  @Deprecated(forRemoval = true)
   protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel treeModel) {
     return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
       @Override
@@ -255,6 +281,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   protected abstract ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel);
 
+  @ApiStatus.Internal
+  @Nullable
+  protected JComponent createPromoter() {
+    return null;
+  }
+
   @NotNull
   protected abstract AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder);
 
@@ -266,8 +298,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
    */
   protected ErrorStripe getStripe(Object object, boolean expanded) {
     if (expanded && object instanceof PsiDirectoryNode) return null;
-    if (object instanceof PresentableNodeDescriptor) {
-      PresentableNodeDescriptor node = (PresentableNodeDescriptor)object;
+    if (object instanceof PresentableNodeDescriptor node) {
       TextAttributesKey key = node.getPresentation().getTextAttributesKey();
       TextAttributes attributes = key == null ? null : EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getAttributes(key);
       Color color = attributes == null ? null : attributes.getErrorStripeColor();
@@ -277,8 +308,15 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   protected static final class MySpeedSearch extends TreeSpeedSearch {
-    MySpeedSearch(JTree tree) {
-      super(tree);
+    private MySpeedSearch(JTree tree) {
+      super(tree, (Void)null);
+    }
+
+    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+    public static @NotNull MySpeedSearch installOn(@NotNull JTree tree) {
+      MySpeedSearch search = new MySpeedSearch(tree);
+      search.setupListeners();
+      return search;
     }
 
     @Override

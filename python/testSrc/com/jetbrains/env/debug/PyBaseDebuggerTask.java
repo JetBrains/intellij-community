@@ -28,6 +28,7 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import org.apache.commons.lang.StringUtils;
@@ -182,6 +183,10 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return convertToList(myDebugProcess.loadFrame(null));
   }
 
+  protected List<PyDebugValue> loadSpecialVariables(ProcessDebugger.GROUP_TYPE groupType) throws PyDebuggerException {
+    return convertToList(myDebugProcess.loadSpecialVariables(groupType));
+  }
+
   protected PyStackFrame getCurrentStackFrame() {
     return (PyStackFrame) myDebugProcess.getSession().getCurrentStackFrame();
   }
@@ -329,8 +334,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   public static void setBreakpointSuspendPolicy(Project project, int line, SuspendPolicy policy) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : XDebuggerTestUtil.getBreakpoints(breakpointManager)) {
-      if (breakpoint instanceof XLineBreakpoint) {
-        final XLineBreakpoint lineBreakpoint = (XLineBreakpoint)breakpoint;
+      if (breakpoint instanceof XLineBreakpoint lineBreakpoint) {
 
         if (lineBreakpoint.getLine() == line) {
           WriteAction.runAndWait(() -> lineBreakpoint.setSuspendPolicy(policy));
@@ -470,7 +474,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
    * Waits until the given string appears in the output the given number of times.
    * @param string The string to match output with.
    * @param times The number of times we expect to see the string.
-   * @throws InterruptedException
    */
   public void waitForOutput(String string, int times) throws InterruptedException {
     long started = System.currentTimeMillis();

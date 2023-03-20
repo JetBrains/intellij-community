@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -34,15 +34,13 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Class must be accessed from EDT only
+ * The class must be accessed only from EDT.
  */
 public abstract class AppIcon {
   private static final Logger LOG = Logger.getInstance(AppIcon.class);
@@ -52,10 +50,10 @@ public abstract class AppIcon {
   @NotNull
   public static AppIcon getInstance() {
     if (ourIcon == null) {
-      if (GraphicsEnvironment.isHeadless() || GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName().equals("PGraphicsEnvironment")) {
-        // PGraphicsEnvironment indicates a Projector-replaces-AWT environment, in which case any OS-specific AppIcons are not applicable
+      if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isProjectorEnvironment()) {
         ourIcon = new EmptyIcon();
-      } else if (SystemInfoRt.isMac) {
+      }
+      else if (SystemInfoRt.isMac) {
         ourIcon = new MacAppIcon();
       }
       else if (SystemInfoRt.isXWindow) {
@@ -83,20 +81,25 @@ public abstract class AppIcon {
   public abstract void requestAttention(@Nullable Project project, boolean critical);
 
   /**
-   * This method requests OS to activate the specified application window. This might cause the window to steal focus from another
-   * (currently active) application, which is generally not considered acceptable. So it should be used only in special cases, when we know
-   * that the user definitely expects such behaviour. In most cases, requesting focus in the target window via standard AWT mechanism and
-   * {@link #requestAttention(Project, boolean)} should be used instead, to request user attention but not switch the focus to it
-   * automatically.
+   * This method requests the OS to activate the specified application window.
+   * This might cause the window to steal focus from another (currently active) application, which is generally not considered acceptable.
+   * So it should be used only in special cases, when we know that the user definitely expects such behaviour.
+   * In most cases, requesting focus in the target window via the standard AWT mechanism and {@link #requestAttention(Project, boolean)}
+   * should be used instead, to request user attention but not switch the focus to it automatically.
    * <p>
-   * This method might resort to requesting user attention to target window, if focus stealing is not supported by OS
+   * This method might resort to requesting user attention to a target window if focus stealing is not supported by the OS
    * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
+   *
+   * @see #requestFocus(Window)
    */
   public void requestFocus(IdeFrame frame) {
     requestFocus(frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent()));
   }
 
-  protected void requestFocus(@Nullable Window window) {
+  /**
+   * @see #requestFocus(IdeFrame)
+   */
+  public void requestFocus(@Nullable Window window) {
   }
 
   public void requestFocus() {
@@ -208,15 +211,12 @@ public abstract class AppIcon {
       try {
         if (myAppImage != null) return myAppImage;
 
-        Image appImage = (Image)getAppMethod("getDockIconImage").invoke(getApp());
+        Image appImage = Taskbar.getTaskbar().getIconImage();
         if (appImage == null) return null;
 
         // [tav] expecting two resolution variants for the dock icon: 128x128, 256x256
         appImage = MultiResolutionImageProvider.getMaxSizeResolutionVariant(appImage);
         myAppImage = ImageUtil.toBufferedImage(appImage);
-      }
-      catch (NoSuchMethodException e) {
-        return null;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -230,16 +230,15 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
+        Taskbar.getTaskbar().setIconBadge(text);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
     }
 
     @Override
-    protected void requestFocus(@Nullable Window window) {
+    public void requestFocus(@Nullable Window window) {
       if (window != null) {
         window.toFront();
       }
@@ -251,9 +250,8 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
+        Desktop.getDesktop().requestForeground(true);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -264,9 +262,8 @@ public abstract class AppIcon {
       EDT.assertIsEdt();
 
       try {
-        getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
+        Taskbar.getTaskbar().requestUserAttention(true, critical);
       }
-      catch (NoSuchMethodException ignored) { }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -393,23 +390,11 @@ public abstract class AppIcon {
 
     static void setDockIcon(BufferedImage image) {
       try {
-        getAppMethod("setDockIconImage", Image.class).invoke(getApp(), image);
+        Taskbar.getTaskbar().setIconImage(image);
       }
       catch (Exception e) {
         LOG.error(e);
       }
-    }
-
-    private static Method getAppMethod(String name, Class<?>... args) throws NoSuchMethodException, ClassNotFoundException {
-      return getAppClass().getMethod(name, args);
-    }
-
-    private static Object getApp() throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, IllegalAccessException {
-      return getAppClass().getMethod("getApplication").invoke(null);
-    }
-
-    private static Class<?> getAppClass() throws ClassNotFoundException {
-      return Class.forName("com.apple.eawt.Application");
     }
   }
 
@@ -667,17 +652,17 @@ public abstract class AppIcon {
     }
 
     @Override
-    protected void requestFocus(@Nullable Window window) {
+    public void requestFocus(@Nullable Window window) {
       if (window != null) {
         try {
-          // This is required for the focus stealing mechanism to work reliably,
+          // This is required for the focus stealing mechanism to work reliably;
           // see WinFocusStealer.setFocusStealingEnabled javadoc for details
           Thread.sleep(Registry.intValue("win.request.focus.delay.ms"));
         }
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        window.toFront();
+        UIUtil.toFront(window);
       }
     }
 

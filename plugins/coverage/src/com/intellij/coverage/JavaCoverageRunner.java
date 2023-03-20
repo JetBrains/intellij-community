@@ -4,11 +4,9 @@ package com.intellij.coverage;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -17,7 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.instrumentation.SaveHook;
+import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
 import jetbrains.coverage.report.ClassInfo;
 import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.SourceCodeProvider;
@@ -50,28 +48,29 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   }
 
   public abstract void appendCoverageArgument(final String sessionDataFilePath, final String @Nullable [] patterns, final SimpleJavaParameters parameters,
-                                              final boolean collectLineInfo, final boolean isSampling);
+                                              final boolean testTracking, final boolean branchCoverage);
 
   public void appendCoverageArgument(final String sessionDataFilePath,
                                      final String @Nullable [] patterns,
                                      String[] excludePatterns,
                                      final SimpleJavaParameters parameters,
-                                     final boolean collectLineInfo,
-                                     final boolean isSampling,
+                                     final boolean testTracking,
+                                     final boolean branchCoverage,
                                      String sourceMapPath,
                                      final Project project) {
-    appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
+    appendCoverageArgument(sessionDataFilePath, patterns, parameters, testTracking, branchCoverage);
   }
 
-  public boolean isBranchInfoAvailable(boolean sampling) {
-    return !sampling;
+  public boolean isBranchInfoAvailable(boolean branchCoverage) {
+    return branchCoverage;
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
     final long startNs = System.nanoTime();
     final ProjectData projectData = suite.getCoverageData();
     if (projectData == null) return;
-    SaveHook.appendUnloaded(projectData, new IdeaClassFinder(project, suite), false);
+    IDEACoverageRunner.setExcludeAnnotations(project, projectData);
+    UnloadedUtil.appendUnloaded(projectData, new IdeaClassFinder(project, suite), false, suite.isTracingEnabled());
 
     final long generationStartNs = System.nanoTime();
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
@@ -132,5 +131,9 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
       tempFile = new File(path);
     }
     return tempFile;
+  }
+
+  public boolean shouldProcessUnloadedClasses() {
+    return true;
   }
 }

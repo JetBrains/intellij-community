@@ -27,7 +27,7 @@ public class ProcessOutputType extends Key<Object> {
    * {@code ProcessOutputType.STDOUT} base type:
    * <pre>{@code coloredStdoutType.getBaseOutputType() == ProcessOutputType.STDOUT}</pre>
    * <p/>
-   * Thus to check whether a process output type is from stdout:
+   * Thus, to check whether a process output type is from stdout:
    * <pre>{@code ProcessOutputType.isStdout(key)}</pre>
    * instead of
    * <pre>{@code ProcessOutputType.STDOUT.equals(key)} or ProcessOutputType.STDOUT == key</pre>
@@ -40,7 +40,7 @@ public class ProcessOutputType extends Key<Object> {
    * {@code ProcessOutputType.STDERR} base type:
    * <pre>{@code coloredStderrType.getBaseOutputType() == ProcessOutputType.STDERR}</pre>
    * <p/>
-   * Thus to check whether a process output type is from stderr:
+   * Thus, to check whether a process output type is from stderr:
    * <pre>{@code ProcessOutputType.isStderr(key)}</pre>
    * instead of
    * <pre>{@code ProcessOutputType.STDERR.equals(key)} or ProcessOutputType.STDERR == key</pre>
@@ -56,12 +56,12 @@ public class ProcessOutputType extends Key<Object> {
 
   private ProcessOutputType(@NotNull String name) {
     super(name);
-    myStreamType = null;
+    myStreamType = this;
   }
 
   @NotNull
   public ProcessOutputType getBaseOutputType() {
-    return myStreamType != null ? myStreamType : this;
+    return myStreamType;
   }
 
   public boolean isStdout() {

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Kotlin2JvmCompilerArguments">
-    <option name="jvmTarget" value="1.8" />
+    <option name="jvmTarget" value="17" />
   </component>
   <component name="KotlinCommonCompilerArguments">
-    <option name="apiVersion" value="1.5" />
-    <option name="languageVersion" value="1.5" />
+    <option name="apiVersion" value="1.8" />
+    <option name="languageVersion" value="1.8" />
   </component>
   <component name="KotlinCompilerSettings">
-    <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=kotlin.RequiresOptIn -Xopt-in=com.intellij.openapi.util.IntellijInternalApi" />
+    <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction" />
+  </component>
+  <component name="KotlinJpsPluginSettings">
+    <option name="version" value="1.8.0" />
   </component>
 </project>

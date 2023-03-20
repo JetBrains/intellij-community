@@ -12,6 +12,10 @@ import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.Objects;
 
+/**
+ * @deprecated use {@link org.jetbrains.plugins.terminal.action.TerminalSplitAction} instead
+ */
+@Deprecated(forRemoval = true)
 public abstract class TerminalSplitAction extends TerminalAction {
 
   private final boolean myVertically;

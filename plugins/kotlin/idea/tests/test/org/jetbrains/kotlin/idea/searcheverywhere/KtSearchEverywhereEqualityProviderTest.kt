@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.searcheverywhere
 
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.*
@@ -8,12 +8,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.findFacadeClass
+import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 /**
@@ -42,7 +42,7 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
             doTest({ it.ktFile to it.facadeClass }, expectedToRemove = { it.facadeClass }, withFacade = true)
         }
 
-        fun `test KtFile and KtClassForFacade shouldn't be deduplicated when non default JvmName is used`() {
+        fun `test KtFile and KtClassForFacade shouldnt be deduplicated when non default JvmName is used`() {
             doTest({ it.ktFile to it.facadeClass }, expectedToRemove = { null }, withFacade = true, facadeName = "Bar")
         }
     }
@@ -53,7 +53,7 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
             doTest({ it.ktClass to it.facadeClass }, expectedToRemove = { it.facadeClass }, withFacade = true)
         }
 
-        fun `test KtClass and KtClassForFacade shouldn't be deduplicated when non default JvmName is used`() {
+        fun `test KtClass and KtClassForFacade shouldnt be deduplicated when non default JvmName is used`() {
             doTest({ it.ktClass to it.facadeClass }, expectedToRemove = { null }, withFacade = true, facadeName = "Bar")
         }
 
@@ -77,8 +77,27 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners::class)
+    class EqualElements : KtSearchEverywhereEqualityProviderTest() {
+        fun `test equals KtClass and KtClass should be skipped`() {
+            doTest({ it.ktClass to it.ktClass }, expectedToRemove = { null })
+        }
+
+        fun `test equals KtClassUlc and KtClassUlc should be skipped`() {
+            doTest({ it.ktClass.ulc to it.ktClass.ulc }, expectedToRemove = { null })
+        }
+
+        fun `test equals KtClassForFacade and KtClassForFacade should be skipped`() {
+            doTest({ it.facadeClass to it.facadeClass }, withFacade = true, expectedToRemove = { null })
+        }
+
+        fun `test equals KtFile and KtFile should be skipped`() {
+            doTest({ it.ktFile to it.ktFile }, expectedToRemove = { null })
+        }
+    }
+
     protected val KtClassOrObject.ulc
-        get() = LightClassGenerationSupport.getInstance(project).createUltraLightClass(this)!!
+        get() = this.toLightClass()!!
 
     protected val PsiFile.ktFile
         get() = findElementAt(myFixture.caretOffset)?.parentOfType<KtFile>()!!
@@ -116,8 +135,14 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
             alreadyFoundItems = listOf(SearchEverywhereFoundElementInfo(x, 0, null))
         )
         if (action1 == DoNothing || action2 == DoNothing) assertTrue(action1 == DoNothing && action2 == DoNothing)
-        if (action1 == Skip) assertTrue(action2 is Replace)
-        if (action2 == Skip) assertTrue(action1 is Replace)
+        if (x === y) {
+            assertTrue(action1 == Skip)
+            assertTrue(action2 == Skip)
+        } else {
+            if (action1 == Skip) assertTrue(action2 is Replace)
+            if (action2 == Skip) assertTrue(action1 is Replace)
+        }
+
         val actualRemoved = listOf(action1, action2)
             .filterIsInstance<Replace>()
             .flatMapTo(mutableSetOf()) { it.toBeReplaced }

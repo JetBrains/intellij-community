@@ -2,59 +2,65 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCache
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankingModel
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.internal.statistic.eventLog.events.EventPair
 
 internal class SearchEverywhereMlSearchState(
-  val sessionStartTime: Long, val searchStartTime: Long,
-  val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
+  private val sessionStartTime: Long, val searchStartTime: Long,
+  val searchIndex: Int, val searchStartReason: SearchRestartReason,
+  val tabId: String, val experimentGroup: Int, val orderByMl: Boolean,
   val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
-  private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
+  private val modelProvider: SearchEverywhereModelProvider,
+  private val providersCache: FeaturesProviderCache?,
+  projectIsDumb: Boolean?,
+  searchScope: ScopeDescriptor?,
+  isSearchEverywhere: Boolean,
 ) {
-  private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
-  private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, projectIsDumb,
+                                                                                           searchScope, isSearchEverywhere)
+  private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
   private val model: SearchEverywhereRankingModel by lazy {
-    val provider = SearchEverywhereMLRankingModelProvider.getForTab(tabId)
-    SearchEverywhereRankingModel(provider)
+    SearchEverywhereRankingModel(modelProvider.getModel(tabId))
   }
 
-  @Synchronized
-  fun getElementFeatures(elementId: Int,
+  fun getElementFeatures(elementId: Int?,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
-                         priority: Int): SearchEverywhereMLItemInfo {
-    return cachedElementsInfo.computeIfAbsent(elementId) {
-      val features = mutableMapOf<String, Any>()
-      SearchEverywhereElementFeaturesProvider.getFeatureProvidersForTab(tabId).forEach { provider ->
-        val cache = providersCaches[provider::class.java]
-        features.putAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, cache))
-      }
-
-      return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
+                         priority: Int,
+                         mixedListInfo: SearchEverywhereMixedListInfo): SearchEverywhereMLItemInfo {
+    val features = arrayListOf<EventPair<*>>()
+    val contributorId = contributor.searchProviderId
+    val contributorFeatures = contributorFeaturesProvider.getFeatures(contributor, mixedListInfo)
+    SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
+      features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
     }
+
+    return SearchEverywhereMLItemInfo(elementId, contributorId, features, contributorFeatures)
   }
 
-  @Synchronized
-  fun getMLWeightIfDefined(elementId: Int): Double? {
-    return cachedMLWeight[elementId]
-  }
-
-  @Synchronized
-  fun getMLWeight(elementId: Int,
-                  element: Any,
-                  contributor: SearchEverywhereContributor<*>,
-                  context: SearchEverywhereMLContextInfo,
-                  priority: Int): Double {
-    return cachedMLWeight.computeIfAbsent(elementId) {
-      val features = hashMapOf<String, Any>()
-      features.putAll(context.features)
-      features.putAll(getElementFeatures(elementId, element, contributor, priority).features)
-      model.predict(features)
-    }
+  fun getMLWeight(context: SearchEverywhereMLContextInfo,
+                  itemInfo: SearchEverywhereMLItemInfo): Double {
+    val features = (context.features + itemInfo.features + searchStateFeatures + itemInfo.contributorFeatures)
+      .associate { it.field.name to it.data }
+    return model.predict(features)
   }
 }
 
-internal data class SearchEverywhereMLItemInfo(val id: Int, val contributorId: String, val features: Map<String, Any>)
+internal data class SearchEverywhereMLItemInfo(val id: Int?,
+                                               val contributorId: String,
+                                               val features: List<EventPair<*>>,
+                                               val contributorFeatures: List<EventPair<*>>) {
+  fun featuresAsMap(): Map<String, Any> = features.mapNotNull {
+    val data = it.data
+    if (data == null) null else it.field.name to data
+  }.toMap()
+}

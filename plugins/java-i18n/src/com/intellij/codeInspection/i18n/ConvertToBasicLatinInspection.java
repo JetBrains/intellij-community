@@ -51,7 +51,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         super.visitLiteralExpression(expression);
         if (!(expression instanceof PsiLiteralExpressionImpl)) return;
         if (!LITERALS.contains(((PsiLiteralExpressionImpl)expression).getLiteralElementType())) {
@@ -61,7 +61,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
-      public void visitDocComment(PsiDocComment comment) {
+      public void visitDocComment(@NotNull PsiDocComment comment) {
         super.visitDocComment(comment);
         handle(comment);
       }
@@ -168,8 +168,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       Int2ObjectMap<String> entities = new Int2ObjectOpenHashMap<>();
       Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, element -> {
-        if (element instanceof XmlEntityDecl) {
-          XmlEntityDecl entity = (XmlEntityDecl)element;
+        if (element instanceof XmlEntityDecl entity) {
           Matcher m = pattern.matcher(entity.getValueElement().getValue());
           if (m.matches()) {
             char i = (char)Integer.parseInt(m.group(1));

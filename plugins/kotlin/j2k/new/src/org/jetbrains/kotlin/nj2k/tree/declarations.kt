@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
 
@@ -18,7 +18,8 @@ class JKClass(
     annotationList: JKAnnotationList,
     otherModifierElements: List<JKOtherModifierElement>,
     visibilityElement: JKVisibilityModifierElement,
-    modalityElement: JKModalityModifierElement
+    modalityElement: JKModalityModifierElement,
+    recordComponents: List<JKJavaRecordComponent> = emptyList()
 ) : JKDeclaration(), JKVisibilityOwner, JKOtherModifiersOwner, JKModalityOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
     override fun accept(visitor: JKVisitor) = visitor.visitClass(this)
 
@@ -32,13 +33,16 @@ class JKClass(
     override var visibilityElement by child(visibilityElement)
     override var modalityElement by child(modalityElement)
 
+    var recordComponents: List<JKJavaRecordComponent> by children(recordComponents)
+
     enum class ClassKind(val text: String) {
         ANNOTATION("annotation class"),
         CLASS("class"),
         ENUM("enum class"),
         INTERFACE("interface"),
         OBJECT("object"),
-        COMPANION("companion object")
+        COMPANION("companion object"),
+        RECORD("data class")
     }
 }
 
@@ -79,7 +83,7 @@ class JKForLoopVariable(
 }
 
 
-class JKParameter(
+open class JKParameter(
     type: JKTypeElement,
     name: JKNameIdentifier,
     var isVarArgs: Boolean = false,
@@ -93,6 +97,12 @@ class JKParameter(
     override fun accept(visitor: JKVisitor) = visitor.visitParameter(this)
 }
 
+class JKJavaRecordComponent(
+    type: JKTypeElement,
+    name: JKNameIdentifier,
+    isVarArgs: Boolean,
+    annotationList: JKAnnotationList
+) : JKParameter(type, name, isVarArgs, annotationList = annotationList)
 
 class JKEnumConstant(
     name: JKNameIdentifier,
@@ -112,15 +122,20 @@ class JKEnumConstant(
 }
 
 
-class JKTypeParameter(name: JKNameIdentifier, upperBounds: List<JKTypeElement>) : JKDeclaration() {
+class JKTypeParameter(
+    name: JKNameIdentifier,
+    upperBounds: List<JKTypeElement>,
+    annotationList: JKAnnotationList = JKAnnotationList()
+) : JKDeclaration(), JKAnnotationListOwner {
     override var name: JKNameIdentifier by child(name)
     var upperBounds: List<JKTypeElement> by children(upperBounds)
+    override var annotationList by child(annotationList)
 
     override fun accept(visitor: JKVisitor) = visitor.visitTypeParameter(this)
 }
 
-abstract class JKMethod : JKDeclaration(), JKVisibilityOwner, JKModalityOwner, JKOtherModifiersOwner, JKTypeParameterListOwner,
-    JKAnnotationListOwner {
+abstract class JKMethod : JKDeclaration(),
+                          JKVisibilityOwner, JKModalityOwner, JKOtherModifiersOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
     abstract var parameters: List<JKParameter>
     abstract var returnType: JKTypeElement
     abstract var block: JKBlock
@@ -230,7 +245,7 @@ class JKField(
     override fun accept(visitor: JKVisitor) = visitor.visitField(this)
 }
 
-sealed class JKInitDeclaration(block: JKBlock)   : JKDeclaration() {
+sealed class JKInitDeclaration(block: JKBlock) : JKDeclaration() {
     var block: JKBlock by child(block)
     abstract val isStatic: Boolean
     override val name: JKNameIdentifier by child(JKNameIdentifier("<init>"))

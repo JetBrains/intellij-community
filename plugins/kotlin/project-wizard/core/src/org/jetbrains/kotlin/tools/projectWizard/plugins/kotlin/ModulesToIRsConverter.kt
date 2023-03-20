@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 
 import kotlinx.collections.immutable.persistentListOf
@@ -80,7 +80,7 @@ class ModulesToIRsConverter(
         val initialState = ModulesToIrsState(projectPath, parentModuleHasTransitivelySpecifiedKotlinVersion = false)
 
         val parentModuleHasKotlinVersion = allModules.any { module ->
-            module.configurator == AndroidSinglePlatformModuleConfigurator ||
+            module.configurator is AndroidSinglePlatformModuleConfiguratorBase ||
             module.configurator is MppModuleConfigurator && module.subModules.any { subModule ->
                         subModule.configurator is AndroidTargetConfiguratorBase &&
                         subModule.dependencies.filterIsInstance<ModuleReference.ByModule>().any { moduleRef ->
@@ -189,7 +189,7 @@ class ModulesToIRsConverter(
                     persistentListOf()
                 ),
                 listOf(module),
-                data.pomIr.copy(artifactId = module.name),
+                data.pomIr.copy(),
                 isRoot = false, /* TODO */
                 renderPomIr = renderPomIr,
                 writer.createBuildFileIRs(module, state)

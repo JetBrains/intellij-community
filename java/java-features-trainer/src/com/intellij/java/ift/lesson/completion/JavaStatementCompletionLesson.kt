@@ -37,7 +37,7 @@ class JavaStatementCompletionLesson
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     actionTask("EditorCompleteStatement") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       JavaLessonsBundle.message("java.statement.completion.complete.for", action(it), code("for"))
     }
     task("EditorCompleteStatement") {
@@ -87,8 +87,6 @@ class JavaStatementCompletionLesson
 
     return trimmedText == "{if(){}}"
   }
-
-  override val suitableTips = listOf("CompleteStatement", "FinishBySmartEnter")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(JavaLessonsBundle.message("java.statement.completion.help.link"),

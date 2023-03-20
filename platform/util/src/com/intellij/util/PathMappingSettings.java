@@ -13,8 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class PathMappingSettings extends AbstractPathMapper implements Cloneable {
+  // C:\
+  private static final Pattern WIN_DRIVE = Pattern.compile("^[a-z]:[/\\\\]$", Pattern.CASE_INSENSITIVE);
 
   @NotNull
   private List<PathMapping> myPathMappings;
@@ -287,6 +290,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     private static String trimSlash(@NotNull String s) {
+      if (WIN_DRIVE.matcher(s).matches()) {
+        // No need to convert c:\ -> C:
+        // Path.ancestor doens't work with it
+        return s;
+      }
       if (s.equals("/")) {
         return s;
       }

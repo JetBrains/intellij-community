@@ -1,20 +1,10 @@
-import sys
+from html.parser import HTMLParser as HTMLParser
+from io import StringIO as StringIO
 
-if sys.version_info >= (3, 0):
-    unicode = str
-    unichr = chr
-    basestring = str
-    interactive_prompt = input
-    from html.parser import HTMLParser as HTMLParser
-    from io import StringIO as StringIO
-else:
-    unicode = unicode
-    unichr = unichr
-    basestring = basestring
-    interactive_prompt = raw_input
-    from StringIO import StringIO as StringIO
-
-    from HTMLParser import HTMLParser as HTMLParser
+unicode = str
+unichr = chr
+basestring = str
+interactive_prompt = input
 
 def coerce_string(value): ...
 def is_string(value): ...

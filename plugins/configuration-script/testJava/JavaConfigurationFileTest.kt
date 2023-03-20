@@ -1,4 +1,3 @@
-@file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.configurationScript
 
 import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions

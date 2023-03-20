@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -32,8 +32,7 @@ public final class ShowContentAction extends AnAction implements DumbAware {
 
   public ShowContentAction(@NotNull ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
     myWindow = window;
-    AnAction original = ActionManager.getInstance().getAction(ACTION_ID);
-    new ShadowAction(this, original, c, parentDisposable);
+    new ShadowAction(this, ACTION_ID, c, parentDisposable);
     ActionUtil.copyFrom(this, ACTION_ID);
   }
 
@@ -44,6 +43,11 @@ public final class ShowContentAction extends AnAction implements DumbAware {
     e.getPresentation().setText(window == null || window.getContentUiType() == ToolWindowContentUiType.TABBED
                                 ? ActionsBundle.message("action.ShowContent.text")
                                 : ActionsBundle.message("action.ShowContent.views.text"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

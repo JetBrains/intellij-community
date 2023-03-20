@@ -16,15 +16,16 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,9 +36,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class EmptyClassInspection extends BaseInspection {
 
@@ -51,18 +50,15 @@ public class EmptyClassInspection extends BaseInspection {
   public boolean commentsAreContent = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-
-    panel.add(annotationsListControl, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"), "ignoreClassWithParameterization");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE),
-              "ignoreThrowables");
-    panel.addCheckbox(InspectionGadgetsBundle.message("comments.as.content.option"), "commentsAreContent");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("ignoreClassWithParameterization", InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option")),
+      checkbox("ignoreThrowables",
+               InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE)),
+      checkbox("commentsAreContent", InspectionGadgetsBundle.message("comments.as.content.option"))
+    );
   }
 
   @Override
@@ -88,12 +84,11 @@ public class EmptyClassInspection extends BaseInspection {
     if (!(info instanceof PsiModifierListOwner)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    List<InspectionGadgetsFix> fixes =
-      AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations, new ArrayList<>());
+    InspectionGadgetsFix[] fixes = AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
     if (info instanceof PsiAnonymousClass) {
-      fixes.add(0, new ConvertEmptyAnonymousToNewFix());
+      return ArrayUtil.prepend(new ConvertEmptyAnonymousToNewFix(), fixes);
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes;
   }
 
   @Override
@@ -103,7 +98,7 @@ public class EmptyClassInspection extends BaseInspection {
 
   private static class ConvertEmptyAnonymousToNewFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element == null) return;
       PsiElement parent = element.getParent();
@@ -121,7 +116,7 @@ public class EmptyClassInspection extends BaseInspection {
       if (lBrace != null && rBrace != null) {
         PsiElement prev = lBrace.getPrevSibling();
         PsiElement start = prev instanceof PsiWhiteSpace ? prev : lBrace;
-        Document document = PsiDocumentManager.getInstance(project).getDocument(aClass.getContainingFile());
+        Document document = aClass.getContainingFile().getViewProvider().getDocument();
         if (document == null) return;
         int anonymousStart = start.getTextRange().getStartOffset();
         int rBraceEnd = rBrace.getTextRange().getEndOffset();
@@ -141,10 +136,9 @@ public class EmptyClassInspection extends BaseInspection {
     @Override
     public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
-      if (!(file instanceof PsiJavaFile)) {
+      if (!(file instanceof PsiJavaFile javaFile)) {
         return;
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)file;
       if (javaFile.getClasses().length != 0) {
         return;
       }
@@ -216,12 +210,11 @@ public class EmptyClassInspection extends BaseInspection {
     }
 
     private boolean isSuperParametrization(PsiClass aClass) {
-      if (!(aClass instanceof PsiAnonymousClass)) {
+      if (!(aClass instanceof PsiAnonymousClass anonymousClass)) {
         final PsiReferenceList extendsList = aClass.getExtendsList();
         final PsiReferenceList implementsList = aClass.getImplementsList();
         return hasTypeArguments(extendsList) || hasTypeArguments(implementsList);
       }
-      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
       final PsiJavaCodeReferenceElement reference = anonymousClass.getBaseClassReference();
       final PsiReferenceParameterList parameterList = reference.getParameterList();
       if (parameterList == null) {

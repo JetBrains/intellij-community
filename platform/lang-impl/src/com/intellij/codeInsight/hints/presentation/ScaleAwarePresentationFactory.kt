@@ -39,11 +39,11 @@ class ScaleAwarePresentationFactory(
   }
 
   override fun icon(icon: Icon): InlayPresentation {
-    return MyScaledIconPresentation(icon, editor, fontShift = 0)
+    return ScaleAwareIconPresentation(icon, editor, fontShift = 0)
   }
 
   fun icon(icon: Icon, debugName: String, fontShift: Int): InlayPresentation {
-    return MyScaledIconPresentation(icon, editor, debugName, fontShift)
+    return ScaleAwareIconPresentation(icon, editor, debugName, fontShift)
   }
 
   fun inset(base: InlayPresentation, left: Int = 0, right: Int = 0, top: Int = 0, down: Int = 0): InlayPresentation {
@@ -62,15 +62,16 @@ class ScaleAwarePresentationFactory(
   }
 }
 
-private class ScaledInsetPresentation(
-  private val presentation: InlayPresentation,
-  private val left: Int,
-  private val right: Int,
-  private val top: Int,
-  private val down: Int,
-  private val editor: Editor
+@ApiStatus.Internal
+class ScaledInsetPresentation(
+  val presentation: InlayPresentation,
+  val left: Int,
+  val right: Int,
+  val top: Int,
+  val down: Int,
+  val editor: Editor
 ) : ScaledDelegatedPresentation() {
-  override val delegate: InsetPresentation by valueOf<InsetPresentation, Int> { fontSize ->
+  override val delegate: InsetPresentation by valueOf<InsetPresentation, Float> { fontSize ->
     InsetPresentation(
       presentation,
       scaleByFont(left, fontSize),
@@ -79,19 +80,20 @@ private class ScaledInsetPresentation(
       scaleByFont(down, fontSize)
     )
   }.withState {
-    editor.colorsScheme.editorFontSize
+    editor.colorsScheme.editorFontSize2D
   }
 }
 
-private class ScaledContainerPresentation(
-  private val presentation: InlayPresentation,
-  private val editor: Editor,
-  private val padding: InlayPresentationFactory.Padding? = null,
-  private val roundedCorners: InlayPresentationFactory.RoundedCorners? = null,
-  private val background: Color? = null,
-  private val backgroundAlpha: Float = 0.55f
+@ApiStatus.Internal
+class ScaledContainerPresentation(
+  val presentation: InlayPresentation,
+  val editor: Editor,
+  val padding: InlayPresentationFactory.Padding? = null,
+  val roundedCorners: InlayPresentationFactory.RoundedCorners? = null,
+  val background: Color? = null,
+  val backgroundAlpha: Float = 0.55f
 ) : ScaledDelegatedPresentation() {
-  override val delegate: ContainerInlayPresentation by valueOf<ContainerInlayPresentation, Int> { fontSize ->
+  override val delegate: ContainerInlayPresentation by valueOf<ContainerInlayPresentation, Float> { fontSize ->
     ContainerInlayPresentation(
       presentation,
       scaleByFont(padding, fontSize),
@@ -100,11 +102,12 @@ private class ScaledContainerPresentation(
       backgroundAlpha
     )
   }.withState {
-    editor.colorsScheme.editorFontSize
+    editor.colorsScheme.editorFontSize2D
   }
 }
 
-private abstract class ScaledDelegatedPresentation : BasePresentation() {
+@ApiStatus.Internal
+abstract class ScaledDelegatedPresentation : BasePresentation() {
   protected abstract val delegate: InlayPresentation
 
   override val width: Int
@@ -134,9 +137,10 @@ private abstract class ScaledDelegatedPresentation : BasePresentation() {
   }
 }
 
-private class LineCenteredInset(
-  private val presentation: InlayPresentation,
-  private val editor: Editor
+@ApiStatus.Internal
+class LineCenteredInset(
+  val presentation: InlayPresentation,
+  val editor: Editor
 ) : ScaledDelegatedPresentation() {
   override val delegate: InlayPresentation by valueOf<InlayPresentation, Int> { lineHeight ->
     val innerHeight = presentation.height
@@ -146,10 +150,11 @@ private class LineCenteredInset(
   }
 }
 
-private class MyScaledIconPresentation(val icon: Icon,
-                                       val editor: Editor,
-                                       private val debugName: String = "image",
-                                       val fontShift: Int) : BasePresentation() {
+@ApiStatus.Internal
+class ScaleAwareIconPresentation(val icon: Icon,
+                                 private val editor: Editor,
+                                 private val debugName: String = "image",
+                                 val fontShift: Int) : BasePresentation() {
   override val width: Int
     get() = scaledIcon.iconWidth
   override val height: Int
@@ -164,11 +169,11 @@ private class MyScaledIconPresentation(val icon: Icon,
 
   override fun toString(): String = "<$debugName>"
 
-  private val scaledIcon by valueOf<Icon, Int> { fontSize ->
+  private val scaledIcon by valueOf<Icon, Float> { fontSize ->
     (icon as? ScaleContextAware)?.updateScaleContext(ScaleContext.create(editor.component))
-    IconUtil.scaleByFont(icon, editor.component, fontSize.toFloat())
+    IconUtil.scaleByFont(icon, editor.component, fontSize)
   }.withState {
-    editor.colorsScheme.editorFontSize - fontShift
+    editor.colorsScheme.editorFontSize2D - fontShift
   }
 }
 
@@ -199,9 +204,9 @@ private class StateDependantValueBuilder<TData : Any, TState : Any>(private val 
   }
 }
 
-private fun scaleByFont(sizeFor12: Int, fontSize: Int) = (JBUIScale.getFontScale(fontSize.toFloat()) * sizeFor12).roundToInt()
+fun scaleByFont(sizeFor12: Int, fontSize: Float) = (JBUIScale.getFontScale(fontSize) * sizeFor12).roundToInt()
 
-private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSize: Int) =
+private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSize: Float) =
   paddingFor12?.let { (left, right, top, bottom) ->
     InlayPresentationFactory.Padding(
       left = scaleByFont(left, fontSize),
@@ -211,7 +216,7 @@ private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSiz
     )
   }
 
-private fun scaleByFont(roundedCornersFor12: InlayPresentationFactory.RoundedCorners?, fontSize: Int) =
+private fun scaleByFont(roundedCornersFor12: InlayPresentationFactory.RoundedCorners?, fontSize: Float) =
   roundedCornersFor12?.let { (arcWidth, arcHeight) ->
     InlayPresentationFactory.RoundedCorners(
       arcWidth = scaleByFont(arcWidth, fontSize),

@@ -41,8 +41,7 @@ public abstract class XmlNamespaceHelper {
 
   @Nullable
   public String getNamespacePrefix(PsiElement element) {
-    if (element instanceof XmlAttribute) {
-      XmlAttribute attribute = (XmlAttribute)element;
+    if (element instanceof XmlAttribute attribute) {
       String prefix = attribute.getNamespacePrefix();
       if (!StringUtil.isEmpty(prefix)) {
         return prefix;

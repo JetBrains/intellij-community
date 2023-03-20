@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,6 +26,10 @@ public interface ExtendableTextComponent {
 
   void removeExtension(@NotNull Extension extension);
 
+  /**
+   * @see Extension#create(Icon, String, Runnable)
+   * @see Extension#create(Icon, Icon, String, Runnable)
+   */
   interface Extension {
     Icon getIcon(boolean hovered);
 
@@ -50,8 +54,16 @@ public interface ExtendableTextComponent {
       return false;
     }
 
+    /**
+     * @deprecated Use {@link #getActionOnClick(InputEvent)} instead.
+     */
+    @Deprecated
     default Runnable getActionOnClick() {
       return null;
+    }
+
+    default Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
+      return getActionOnClick();
     }
 
     default @NlsContexts.Tooltip String getTooltip() {

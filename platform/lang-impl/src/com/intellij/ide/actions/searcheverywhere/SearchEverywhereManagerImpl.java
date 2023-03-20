@@ -78,10 +78,10 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     Project project = initEvent.getProject();
     Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors = createContributors(initEvent, project, contextComponent);
-    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
+    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project, contextComponent);
+    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
     mySearchEverywhereUI = createView(myProject, contributors);
-    contributors.keySet().forEach(c -> Disposer.register(mySearchEverywhereUI, c));
+    contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);
 
     myHistoryIterator = myHistoryList.getIterator(tabID);
@@ -107,7 +107,6 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
         DIALOG_CLOSED.log(myProject);
         return true;
       })
-      .addUserData("SIMPLE_WINDOW")
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
@@ -165,23 +164,22 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
+  private List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
-      return Collections.singletonMap(factory.createContributor(initEvent), SearchEverywhereTabDescriptor.IDE);
+      return Collections.singletonList(factory.createContributor(initEvent));
     }
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res = new HashMap<>();
-    res.put(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)),
-            SearchEverywhereTabDescriptor.IDE);
-    res.put(PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent)), SearchEverywhereTabDescriptor.PROJECT);
-    res.put(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()),
-            SearchEverywhereTabDescriptor.IDE);
+    List<SearchEverywhereContributor<?>> res = new ArrayList<>();
+    res.add(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)));
+    res.add(PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent)));
+    res.add(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()));
 
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
-      SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
-      SearchEverywhereTabDescriptor tab = factory.getTab();
-      res.put(contributor, tab);
+      if (factory.isAvailable(project)) {
+        SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
+        res.add(contributor);
+      }
     }
 
     return res;
@@ -270,7 +268,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myEverywhere = everywhere;
   }
 
-  private SearchEverywhereUI createView(Project project, Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
+  private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
@@ -381,6 +379,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
     addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
+    addShortcut(res, "TextSearchContributor", "TextSearchAction");
 
     return res;
   }
@@ -394,22 +393,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     private final static int HISTORY_LIMIT = 50;
 
-    private static class HistoryItem {
-      private final String searchText;
-      private final String contributorID;
-
-      HistoryItem(String searchText, String contributorID) {
-        this.searchText = searchText;
-        this.contributorID = contributorID;
-      }
-
-      public String getSearchText() {
-        return searchText;
-      }
-
-      public String getContributorID() {
-        return contributorID;
-      }
+    private record HistoryItem(String searchText, String contributorID) {
     }
 
     private final List<HistoryItem> historyList = new ArrayList<>();
@@ -421,16 +405,16 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     public void saveText(@NotNull String text, @NotNull String contributorID) {
       historyList.stream()
-        .filter(item -> text.equals(item.getSearchText()) && contributorID.equals(item.getContributorID()))
+        .filter(item -> text.equals(item.searchText()) && contributorID.equals(item.contributorID()))
         .findFirst()
         .ifPresent(historyList::remove);
 
       historyList.add(new HistoryItem(text, contributorID));
 
-      List<String> list = filteredHistory(item -> item.getContributorID().equals(contributorID));
+      List<String> list = filteredHistory(item -> item.contributorID().equals(contributorID));
       if (list.size() > HISTORY_LIMIT) {
         historyList.stream()
-          .filter(item -> item.getContributorID().equals(contributorID))
+          .filter(item -> item.contributorID().equals(contributorID))
           .findFirst()
           .ifPresent(historyList::remove);
       }
@@ -443,7 +427,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
         return size > HISTORY_LIMIT ? res.subList(size - HISTORY_LIMIT, size) : res;
       }
       else {
-        return filteredHistory(item -> item.getContributorID().equals(contributorID));
+        return filteredHistory(item -> item.contributorID().equals(contributorID));
       }
     }
 
@@ -451,7 +435,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     private List<String> filteredHistory(Predicate<? super HistoryItem> predicate) {
       return historyList.stream()
         .filter(predicate)
-        .map(item -> item.getSearchText())
+        .map(item -> item.searchText())
         .collect(distinctCollector);
     }
 

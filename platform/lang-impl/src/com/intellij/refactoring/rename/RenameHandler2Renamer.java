@@ -33,9 +33,9 @@ final class RenameHandler2Renamer implements Renamer {
 
   @Override
   public void performRename() {
-    SlowOperations.allowSlowOperations(() -> {
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       IdeEventQueue.getInstance().setEventCount(myEventCount); // Make DataContext valid again.
       BaseRefactoringAction.performRefactoringAction(myProject, myDataContext, myHandler);
-    });
+    }
   }
 }

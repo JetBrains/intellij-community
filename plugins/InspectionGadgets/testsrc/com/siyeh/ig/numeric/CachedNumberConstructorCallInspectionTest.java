@@ -18,5 +18,5 @@ public class CachedNumberConstructorCallInspectionTest extends LightJavaInspecti
   public void testSimple() { doStatementTest("new /*Number constructor call with primitive argument*/Integer/**/(1);"); }
   public void testStringArgument() { doStatementTest("new /*Number constructor call with primitive argument*/Byte/**/(\"1\");"); }
   public void testNoWarn() { doStatementTest("Long.valueOf(1L);"); }
-  public void testNoAssertionError() { doStatementTest("Integer i = new Integer(new String/*!'(' or '[' expected*//*!')' expected*/{/*!*//*!*/}/*!';' expected*//*!Unexpected token*/)/*!*//*!*/;"); }
+  public void testNoAssertionError() { doStatementTest("Integer i = new Integer(new String/*!'(' or '[' expected*//*!',' or ')' expected*/{/*!*//*!*/}/*!';' expected*//*!Unexpected token*/)/*!*//*!*/;"); }
 }

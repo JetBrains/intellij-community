@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots
 
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.roots.impl.libraries.CustomLibraryTableImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -9,7 +10,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -44,6 +51,17 @@ abstract class LibraryTableTestCase {
     checkConsistency()
     assertThat(libraryTable.libraries).isEmpty()
     assertThat(library.isDisposed).isTrue()
+  }
+
+  @Test
+  fun `rename library`() {
+    val library = createLibrary("a")
+    assertThat(libraryTable.getLibraryByName("a")).isSameAs(library)
+    
+    projectModel.renameLibrary(library, "b")
+    assertThat(libraryTable.libraries.single()).isSameAs(library)
+    assertThat(libraryTable.getLibraryByName("a")).isNull()
+    assertThat(libraryTable.getLibraryByName("b")).isSameAs(library)
   }
 
   @Test
@@ -169,6 +187,37 @@ abstract class LibraryTableTestCase {
     assertThat(libraryTable.libraries).isEmpty()
   }
 
+  @Test
+  fun `check events count at library update`() {
+    Assume.assumeFalse("Test isn't applicable for CustomLibraryTable", libraryTable is CustomLibraryTableImpl)
+
+    var eventsCount = 0
+    val libraryNames = listOf("a", "b", "c")
+    projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        eventsCount++
+      }
+    })
+    edit { model -> libraryNames.forEach { libraryName -> model.createLibrary(libraryName) } }
+    assertThat(eventsCount).isEqualTo(1)
+    eventsCount = 0
+
+    edit { model ->
+      val mutableEntityStorage = (model as LegacyBridgeModifiableBase).diff
+      libraryNames.forEach { libraryName ->
+        val library = model.getLibraryByName(libraryName) as LibraryBridgeImpl
+        library.setTargetBuilder(mutableEntityStorage)
+        val libModifiableModel = library.modifiableModel
+        libModifiableModel.addRoot("/a/b/c.jar", OrderRootType.CLASSES)
+        libModifiableModel.commit()
+      }
+    }
+    assertThat(eventsCount).isEqualTo(1)
+    eventsCount = 0
+
+    libraryTable.libraries.forEach { assertThat(it.getUrls(OrderRootType.CLASSES)[0]).isEqualTo("/a/b/c.jar") }
+    edit { model -> model.libraries.forEach { model.removeLibrary(it) } }
+  }
 
   private fun <T> edit(action: (LibraryTable.ModifiableModel) -> T): T{
     checkConsistency()

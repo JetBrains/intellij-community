@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 class X {
   static final char MY_CHAR = 'x';
   
@@ -42,5 +44,14 @@ class X {
     if (x == y) return;
     System.out.println(Math.max(x, y));
     System.out.println(Math.min(x, y));
+  }
+
+  void objectsRequireNonNull() {
+    String s = null;
+    String result = Objects.<warning descr="Result of 'requireNonNullElse' is the same as the second argument making the call meaningless">requireNonNullElse</warning>(s, "hello");
+    String result2 = Objects.<warning descr="Result of 'requireNonNullElse' is the same as the first argument making the call meaningless">requireNonNullElse</warning>(result, "other");
+    Integer val = 123;
+    Object res = Objects.<warning descr="Result of 'requireNonNullElse' is the same as the first argument making the call meaningless">requireNonNullElse</warning>(val, 456);
+    Object r = Objects.<warning descr="Result of 'requireNonNullElse' is the same as the second argument making the call meaningless">requireNonNullElse</warning>(null, "oops");
   }
 }

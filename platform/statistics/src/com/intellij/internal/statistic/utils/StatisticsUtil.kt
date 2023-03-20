@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
+import org.jetbrains.annotations.ApiStatus
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.util.*
@@ -31,6 +32,7 @@ object StatisticsUtil {
    * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use roundToPowerOfTwo instead", replaceWith = ReplaceWith("roundToPowerOfTwo"))
   fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
@@ -147,6 +149,7 @@ object StatisticsUtil {
   }
 
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use roundToUpperBound instead", replaceWith = ReplaceWith("roundToUpperBound"))
   fun getUpperBound(value: Int, bounds: IntArray): Int = roundToUpperBound(value, bounds)
 

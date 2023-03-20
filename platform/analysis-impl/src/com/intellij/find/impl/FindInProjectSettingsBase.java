@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -18,7 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class FindInProjectSettingsBase implements PersistentStateComponent<FindInProjectSettingsBase> {
-  private static final int MAX_RECENT_SIZE = 30;
+  private static final int MAX_RECENT_SIZE = 300;
 
   @XCollection(style = XCollection.Style.v2, elementName = "find", valueAttributeName = "")
   private final List<String> findStrings = new ArrayList<>();
@@ -66,16 +65,10 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
   }
 
   public void addStringToFind(@NotNull @NlsSafe String s) {
-    if (s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0) {
-      return;
-    }
     addRecentStringToList(s, findStrings);
   }
 
   public void addStringToReplace(@NotNull @NlsSafe String s) {
-    if (s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0) {
-      return;
-    }
     addRecentStringToList(s, replaceStrings);
   }
 
@@ -83,13 +76,20 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
     return ArrayUtilRt.toStringArray(findStrings);
   }
 
+  public @NlsSafe String getMostRecentFindString() {
+    return findStrings.isEmpty() ? "" : findStrings.get(findStrings.size() - 1);
+  }
+
   public @NlsSafe String @NotNull [] getRecentReplaceStrings() {
     return ArrayUtilRt.toStringArray(replaceStrings);
   }
 
-  static void addRecentStringToList(@Nullable @NlsSafe String str,
-                                    @NotNull List<? super String> list) {
-    if (StringUtil.isEmptyOrSpaces(str)) {
+  public @NlsSafe String getMostRecentReplaceString() {
+    return replaceStrings.isEmpty() ? "" : replaceStrings.get(replaceStrings.size() - 1);
+  }
+
+  static void addRecentStringToList(@Nullable @NlsSafe String str, @NotNull List<? super String> list) {
+    if (str == null) {
       return;
     }
 
@@ -100,7 +100,7 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
     }
   }
 
-  static class FindInProjectPathMacroFilter extends PathMacroFilter {
+  static final class FindInProjectPathMacroFilter extends PathMacroFilter {
     @Override
     public boolean skipPathMacros(@NotNull Element element) {
       String tag = element.getName();

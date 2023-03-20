@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.icons.AllIcons;
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +34,10 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.FileContentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -138,9 +142,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       return edit != null && e.getPresentation().isEnabled();
     });
     decorator.setEditAction(button -> performEditAction());
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
+    decorator.addExtraAction(new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
                                                        IntelliLangBundle.messagePointer("action.AnActionButton.description.duplicate"),
-                                                       PlatformIcons.COPY_ICON) {
+                                                       IconManager.getInstance().getPlatformIcon(PlatformIcons.Copy)) {
 
       @Override
       public boolean isEnabled() {
@@ -158,9 +162,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     });
 
     decorator.addExtraAction(
-      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.enable.selected.injections"),
-                                IntelliLangBundle.messagePointer("action.AnActionButton.description.enable.selected.injections"),
-                                PlatformIcons.SELECT_ALL_ICON) {
+      new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.enable.selected.injections"),
+                                    IntelliLangBundle.messagePointer("action.AnActionButton.description.enable.selected.injections"),
+                                    com.intellij.util.PlatformIcons.SELECT_ALL_ICON) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -168,9 +172,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
     });
     decorator.addExtraAction(
-      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.disable.selected.injections"),
-                                IntelliLangBundle.messagePointer("action.AnActionButton.description.disable.selected.injections"),
-                                PlatformIcons.UNSELECT_ALL_ICON) {
+      new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.disable.selected.injections"),
+                                    IntelliLangBundle.messagePointer("action.AnActionButton.description.disable.selected.injections"),
+                                    com.intellij.util.PlatformIcons.UNSELECT_ALL_ICON) {
 
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -186,6 +190,11 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         performToggleAction();
       }
@@ -193,8 +202,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
     if (myInfos.length > 1) {
       AnActionButton shareAction =
-        new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.move.to.ide.scope"),
-                                  PlatformIcons.IMPORT_ICON) {
+        new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.move.to.ide.scope"),
+                                  com.intellij.util.PlatformIcons.IMPORT_ICON) {
         {
           addCustomUpdater(e -> {
             CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
@@ -240,9 +249,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       shareAction.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK)));
       decorator.addExtraAction(shareAction);
     }
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.import"),
-                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.import"),
-                                                       AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.import"),
+                                                           IntelliLangBundle.messagePointer("action.AnActionButton.description.import"),
+                                                           AllIcons.Actions.Install) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -250,7 +259,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         updateCountLabel();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.export"),
+    decorator.addExtraAction(new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.export"),
                                                        IntelliLangBundle.messagePointer("action.AnActionButton.description.export"),
                                                        AllIcons.ToolbarDecorator.Export) {
 
@@ -266,7 +275,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         Configuration configuration = new Configuration();
         configuration.setInjections(injections);
         try {
-          JdomKt.write(configuration.getState(), wrapper.getFile().toPath());
+          JDOMUtil.write(configuration.getState(), wrapper.getFile().toPath());
         }
         catch (IOException ex) {
           final String msg = ex.getLocalizedMessage();
@@ -502,13 +511,14 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       getColumnModel().getColumn(2).setMinWidth(preferred);
       getColumnModel().getColumn(2).setPreferredWidth(preferred);
       getColumnModel().getColumn(2).setMaxWidth(preferred);
-      new TableViewSpeedSearch<>(this) {
+      TableViewSpeedSearch<InjInfo> search = new TableViewSpeedSearch<>(this, null) {
         @Override
         protected String getItemText(@NotNull InjInfo element) {
           final BaseInjection injection = element.injection;
           return injection.getSupportId() + " " + injection.getInjectedLanguageId() + " " + injection.getDisplayName();
         }
       };
+      search.setupListeners();
     }
 
   }
@@ -853,16 +863,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }
   }
 
-  private static final class InjInfo {
-    final BaseInjection injection;
-    final CfgInfo cfgInfo;
-    final boolean bundled;
-
-    private InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
-      this.injection = injection;
-      this.cfgInfo = cfgInfo;
-      this.bundled = bundled;
-    }
+  private record InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
   }
 
   private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {

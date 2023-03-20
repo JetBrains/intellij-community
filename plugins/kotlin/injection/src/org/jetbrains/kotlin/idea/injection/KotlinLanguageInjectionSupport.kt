@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.injection
 
@@ -108,8 +108,10 @@ class KotlinLanguageInjectionSupport : AbstractLanguageInjectionSupport() {
         return commentRef.get() as? PsiComment
     }
 
-    internal fun findAnnotationInjectionLanguageId(host: KtElement): InjectionInfo? {
-        val annotationEntry = findAnnotationInjection(host) ?: return null
+    internal fun findAnnotationInjectionLanguageId(host: KtElement): InjectionInfo? =
+        findAnnotationInjection(host)?.let(::toInjectionInfo)
+
+    internal fun toInjectionInfo(annotationEntry: KtAnnotationEntry): InjectionInfo? {
         val extractLanguageFromInjectAnnotation = extractLanguageFromInjectAnnotation(annotationEntry) ?: return null
         val prefix = extractStringArgumentByName(annotationEntry, "prefix")
         val suffix = extractStringArgumentByName(annotationEntry, "suffix")

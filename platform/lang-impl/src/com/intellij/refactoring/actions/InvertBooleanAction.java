@@ -10,9 +10,6 @@ import com.intellij.refactoring.invertBoolean.InvertBooleanDelegate;
 import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class InvertBooleanAction extends BaseRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {

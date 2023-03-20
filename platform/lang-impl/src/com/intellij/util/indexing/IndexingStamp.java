@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,27 +7,24 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A file has three indexed states (per particular index): indexed (with particular index_stamp which monotonically increases), outdated and (trivial) unindexed.
@@ -43,7 +40,7 @@ public final class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
   private static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
 
-  private IndexingStamp() {}
+  private IndexingStamp() { }
 
   @NotNull
   public static FileIndexingState isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
@@ -77,30 +74,42 @@ public final class IndexingStamp {
   /**
    * The class is meant to be accessed from synchronized block only
    */
-  private static final class Timestamps {
-    private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 2, false);
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static final class Timestamps {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 2, false);
     private Object2LongMap<ID<?, ?>> myIndexStamps;
     private boolean myIsDirty = false;
 
-    private Timestamps(@Nullable DataInputStream stream) throws IOException {
+    @VisibleForTesting
+    public Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         int[] outdatedIndices = null;
+        //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
+        // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
+        // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
+        // value
         long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
         long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
         if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
           int numberOfOutdatedIndices = (int)diff;
           outdatedIndices = new int[numberOfOutdatedIndices];
-          while(numberOfOutdatedIndices > 0) {
+          while (numberOfOutdatedIndices > 0) {
             outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(stream);
           }
           dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
         }
 
-        while(stream.available() > 0) {
+        //and after is just a set of ints -- Index IDs from ID class
+        while (stream.available() > 0) {
           ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
           if (id != null && !(id instanceof StubIndexKey)) {
             long stamp = IndexVersion.getIndexCreationStamp(id);
-            if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+            if (stamp == 0) {
+              continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+            }
             if (myIndexStamps == null) {
               myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
             }
@@ -111,10 +120,67 @@ public final class IndexingStamp {
         }
 
         if (outdatedIndices != null) {
-          for(int outdatedIndexId:outdatedIndices) {
+          for (int outdatedIndexId : outdatedIndices) {
             ID<?, ?> id = ID.findById(outdatedIndexId);
             if (id != null && !(id instanceof StubIndexKey)) {
-              if (IndexVersion.getIndexCreationStamp(id) == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              if (IndexVersion.getIndexCreationStamp(id) == 0) {
+                continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              }
+              long stamp = INDEX_DATA_OUTDATED_STAMP;
+              if (myIndexStamps == null) {
+                myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+              }
+              if (stamp <= dominatingIndexStamp) {
+                myIndexStamps.put(id, stamp);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    public Timestamps(final @Nullable ByteBuffer buffer) {
+      if (buffer != null) {
+        int[] outdatedIndices = null;
+        //'header' is either timestamp (dominatingIndexStamp), or, if timestamp is small enough
+        // (<MAX_SHORT), it is really a number of 'outdatedIndices', followed by actual indices
+        // ints (which is index id from ID class), and followed by another timestamp=dominatingIndexStamp
+        // value
+        long dominatingIndexStamp = DataInputOutputUtil.readTIME(buffer);
+        long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
+        if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
+          int numberOfOutdatedIndices = (int)diff;
+          outdatedIndices = new int[numberOfOutdatedIndices];
+          while (numberOfOutdatedIndices > 0) {
+            outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(buffer);
+          }
+          dominatingIndexStamp = DataInputOutputUtil.readTIME(buffer);
+        }
+
+        //and after is just a set of ints -- Index IDs from ID class
+        while (buffer.hasRemaining()) {
+          ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(buffer));
+          if (id != null && !(id instanceof StubIndexKey)) {
+            long stamp = IndexVersion.getIndexCreationStamp(id);
+            if (stamp == 0) {
+              continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+            }
+            if (myIndexStamps == null) {
+              myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
+            }
+            if (stamp <= dominatingIndexStamp) {
+              myIndexStamps.put(id, stamp);
+            }
+          }
+        }
+
+        if (outdatedIndices != null) {
+          for (int outdatedIndexId : outdatedIndices) {
+            ID<?, ?> id = ID.findById(outdatedIndexId);
+            if (id != null && !(id instanceof StubIndexKey)) {
+              if (IndexVersion.getIndexCreationStamp(id) == 0) {
+                continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              }
               long stamp = INDEX_DATA_OUTDATED_STAMP;
               if (myIndexStamps == null) {
                 myIndexStamps = new Object2LongOpenHashMap<>(5, 0.98f);
@@ -145,14 +211,14 @@ public final class IndexingStamp {
       for (Object2LongMap.Entry<ID<?, ?>> entry : entries) {
         long b = entry.getLongValue();
         if (b == INDEX_DATA_OUTDATED_STAMP) {
-           ++data[numberOfOutdatedIndex];
-           b = IndexVersion.getIndexCreationStamp(entry.getKey());
-         }
-         data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
+          ++data[numberOfOutdatedIndex];
+          b = IndexVersion.getIndexCreationStamp(entry.getKey());
+        }
+        data[dominatingStampIndex] = Math.max(data[dominatingStampIndex], b);
 
-         if (IS_UNIT_TEST && b == HAS_NO_INDEXED_DATA_STAMP) {
-           FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
-         }
+        if (IS_UNIT_TEST && b == HAS_NO_INDEXED_DATA_STAMP) {
+          FileBasedIndexImpl.LOG.info("Wrong indexing timestamp state: " + myIndexStamps);
+        }
       }
 
       if (data[numberOfOutdatedIndex] > 0) {
@@ -195,6 +261,14 @@ public final class IndexingStamp {
     public boolean isDirty() {
       return myIsDirty;
     }
+
+    @Override
+    public String toString() {
+      return "Timestamps{" +
+             "indexStamps: " + myIndexStamps +
+             ", dirty: " + myIsDirty +
+             '}';
+    }
   }
 
   private static final int INDEXING_STAMP_CACHE_CAPACITY = SystemProperties.getIntProperty("index.timestamp.cache.size", 100);
@@ -202,74 +276,90 @@ public final class IndexingStamp {
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
-  static void dropTimestampMemoryCaches() {
+  @TestOnly
+  public static void dropTimestampMemoryCaches() {
     flushCaches();
     ourTimestampsCache.clear();
   }
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
-    Lock readLock = getStripedLock(fileId).readLock();
-    readLock.lock();
-    try {
+    return ourLock.withReadLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       return stamp.get(indexName);
-    } finally {
-      readLock.unlock();
-    }
+    });
   }
 
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
     ourTimestampsCache.remove(fileId);
-    try (DataOutputStream out =  FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
-      new Timestamps(null).writeToStream(out);
+    try (DataOutputStream out = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
+      new Timestamps((DataInputStream)null).writeToStream(out);
     }
   }
 
   @NotNull
   private static Timestamps createOrGetTimeStamp(int id) {
+    return getTimestamp(id, true);
+  }
+
+  @Contract("_, true->!null")
+  private static Timestamps getTimestamp(int id, boolean createIfNoneSaved) {
     assert id > 0;
     Timestamps timestamps = ourTimestampsCache.get(id);
     if (timestamps == null) {
-      try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
-        timestamps = new Timestamps(stream);
+      if (FSRecords.supportsRawAttributesAccess()) {
+        try {
+          timestamps = FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, Timestamps::new);
+          if (timestamps == null && !createIfNoneSaved) {
+            return null;
+          }
+          
+          timestamps = new Timestamps((DataInputStream)null);
+        }
+        catch (IOException e) {
+          throw FSRecords.handleError(e);
+        }
       }
-      catch (IOException e) {
-        FSRecords.handleError(e);
-        throw new RuntimeException(e);
+      else {
+        try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
+          if (stream == null && !createIfNoneSaved) return null;
+          timestamps = new Timestamps(stream);
+        }
+        catch (IOException e) {
+          throw FSRecords.handleError(e);
+        }
       }
       ourTimestampsCache.cacheOrGet(id, timestamps);
     }
     return timestamps;
   }
 
-  public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
-    assert fileId > 0;
-    Lock writeLock = getStripedLock(fileId).writeLock();
-    writeLock.lock();
-    try {
-      Timestamps stamp = createOrGetTimeStamp(fileId);
-      stamp.set(indexName, indexCreationStamp);
-    } finally {
-      writeLock.unlock();
-    }
+  @TestOnly
+  public static boolean hasIndexingTimeStamp(int fileId) {
+    return getTimestamp(fileId, false) != null;
   }
 
-  public static @NotNull List<ID<?,?>> getNontrivialFileIndexedStates(int fileId) {
-    Lock readLock = getStripedLock(fileId).readLock();
-    readLock.lock();
-    try {
+  public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
+    assert fileId > 0;
+    ourLock.withWriteLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
-      if (stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
-        return List.copyOf(stamp.myIndexStamps.keySet());
+      stamp.set(indexName, indexCreationStamp);
+      return null;
+    });
+  }
+
+  public static @NotNull List<ID<?, ?>> getNontrivialFileIndexedStates(int fileId) {
+    return ourLock.withReadLock(fileId, () -> {
+      try {
+        Timestamps stamp = createOrGetTimeStamp(fileId);
+        if (stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
+          return List.copyOf(stamp.myIndexStamps.keySet());
+        }
       }
-    }
-    catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
-    }
-    finally {
-      readLock.unlock();
-    }
-    return Collections.emptyList();
+      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
+      }
+      return Collections.emptyList();
+    });
   }
 
   public static void flushCaches() {
@@ -277,22 +367,42 @@ public final class IndexingStamp {
   }
 
   public static void flushCache(int finishedFile) {
-    Lock readLock = getStripedLock(finishedFile).readLock();
-    readLock.lock();
-    try {
+    boolean exit = ourLock.withReadLock(finishedFile, () -> {
       Timestamps timestamps = ourTimestampsCache.get(finishedFile);
-      if (timestamps == null) return;
+      if (timestamps == null) return true;
       if (!timestamps.isDirty()) {
         ourTimestampsCache.remove(finishedFile);
-        return;
+        return true;
       }
-    } finally {
-      readLock.unlock();
-    }
+      return false;
+    });
+    if (exit) return;
 
     while (!ourFinishedFiles.offer(finishedFile)) {
       doFlush();
     }
+  }
+
+  @TestOnly
+  public static int @NotNull [] dumpCachedUnfinishedFiles() {
+    return ourLock.withAllLocksWriteLocked(() -> {
+      int[] cachedKeys = ourTimestampsCache
+        .entrySet()
+        .stream()
+        .filter(e -> e.getValue().isDirty())
+        .mapToInt(e -> e.getKey())
+        .toArray();
+
+      if (cachedKeys.length == 0) {
+        return ArrayUtil.EMPTY_INT_ARRAY;
+      }
+      else {
+        IntSet cachedIds = new IntArraySet(cachedKeys);
+        Set<Integer> finishedIds = new HashSet<>(ourFinishedFiles);
+        cachedIds.removeAll(finishedIds);
+        return cachedIds.toIntArray();
+      }
+    });
   }
 
   private static void doFlush() {
@@ -300,34 +410,32 @@ public final class IndexingStamp {
     ourFinishedFiles.drainTo(files);
 
     if (!files.isEmpty()) {
-      for (Integer file : files) {
-        Lock writeLock = getStripedLock(file).writeLock();
-        writeLock.lock();
-        try {
-          Timestamps timestamp = ourTimestampsCache.remove(file);
-          if (timestamp == null) continue;
+      for (Integer fileId : files) {
+        RuntimeException exception = ourLock.withWriteLock(fileId, () -> {
+          try {
+            final Timestamps timestamp = ourTimestampsCache.remove(fileId);
+            if (timestamp == null) return null;
 
-          if (timestamp.isDirty() /*&& file.isValid()*/) {
-            try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
-              timestamp.writeToStream(sink);
+            if (timestamp.isDirty() /*&& file.isValid()*/) {
+              //RC: now I don't see the benefits of implementing timestamps write via raw attribute bytebuffer access
+              //    doFlush() is mostly outside the critical path, while implementing timestamps.writeToBuffer(buffer)
+              //    is complicated with all those variable-sized numbers used.
+              try (DataOutputStream sink = FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
+                timestamp.writeToStream(sink);
+              }
             }
+            return null;
           }
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        } finally {
-          writeLock.unlock();
+          catch (IOException e) {
+            return new RuntimeException(e);
+          }
+        });
+        if (exception != null) {
+          throw exception;
         }
       }
     }
   }
 
-  private static final ReadWriteLock[] ourLocks = new ReadWriteLock[16];
-  static {
-    for(int i = 0; i < ourLocks.length; ++i) ourLocks[i] = new ReentrantReadWriteLock();
-  }
-
-  private static ReadWriteLock getStripedLock(int fileId) {
-    if (fileId < 0) fileId = -fileId;
-    return ourLocks[(fileId & 0xFF) % ourLocks.length];
-  }
+  private static final StripedLock ourLock = new StripedLock();
 }

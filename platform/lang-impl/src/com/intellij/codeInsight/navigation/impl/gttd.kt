@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.SymbolTypeProvider
+import com.intellij.codeInsight.navigation.*
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationPlaceAwareProvider
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
@@ -45,8 +43,10 @@ internal class GTTDActionData(
   private val offset: Int,
 ) {
 
-  private fun typeSymbols() = targetData.typeSymbols(editor, offset)
+  private fun typeSymbols() = targetData.typeSymbols(project, editor, offset)
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   fun ctrlMouseInfo(): CtrlMouseInfo? {
     val typeSymbols = typeSymbols().take(2).toList()
     return when (typeSymbols.size) {
@@ -56,19 +56,34 @@ internal class GTTDActionData(
     }
   }
 
+  fun ctrlMouseData(): CtrlMouseData? {
+    val typeSymbols = typeSymbols().take(2).toList()
+    return when (typeSymbols.size) {
+      0 -> null
+      1 -> symbolCtrlMouseData(
+        project,
+        typeSymbols.single(),
+        targetData.elementAtOffset(),
+        targetData.highlightRanges(),
+        declared = false,
+      )
+      else -> multipleTargetsCtrlMouseData(targetData.highlightRanges())
+    }
+  }
+
   fun result(): NavigationActionResult? {
-    return result(typeSymbols().navigationTargets(project).toCollection(SmartList()))
+    return result(typeSymbols().navigationTargets(project).toCollection(LinkedHashSet()))
   }
 }
 
-private fun TargetData.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol> {
+private fun TargetData.typeSymbols(project: Project, editor: Editor, offset: Int): Sequence<Symbol> {
   return when (this) {
-    is TargetData.Declared -> typeSymbols(editor, offset)
-    is TargetData.Referenced -> typeSymbols(editor, offset)
+    is TargetData.Declared -> typeSymbols(project, editor, offset)
+    is TargetData.Referenced -> typeSymbols(project, editor, offset)
   }
 }
 
-private fun TargetData.Declared.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol> = sequence {
+private fun TargetData.Declared.typeSymbols(project: Project, editor: Editor, offset: Int): Sequence<Symbol> = sequence {
   val psiSymbolService = PsiSymbolService.getInstance()
   for (declaration: PsiSymbolDeclaration in declarations) {
     val target = declaration.symbol
@@ -80,13 +95,13 @@ private fun TargetData.Declared.typeSymbols(editor: Editor, offset: Int): Sequen
     }
     else {
       for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
-        yieldAll(typeProvider.getSymbolTypes(target))
+        yieldAll(typeProvider.getSymbolTypes(project, target))
       }
     }
   }
 }
 
-private fun TargetData.Referenced.typeSymbols(editor: Editor, offset: Int): Sequence<Symbol> = sequence {
+private fun TargetData.Referenced.typeSymbols(project: Project, editor: Editor, offset: Int): Sequence<Symbol> = sequence {
   for (reference: PsiSymbolReference in references) {
     if (reference is EvaluatorReference) {
       for (targetElement in reference.targetElements) {
@@ -98,7 +113,7 @@ private fun TargetData.Referenced.typeSymbols(editor: Editor, offset: Int): Sequ
     else {
       for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
         for (target in reference.resolveReference()) {
-          yieldAll(typeProvider.getSymbolTypes(target))
+          yieldAll(typeProvider.getSymbolTypes(project, target))
         }
       }
     }
@@ -141,7 +156,7 @@ internal fun result(navigationTargets: Collection<NavigationTarget>): Navigation
       SingleTarget(request, null)
     }
     else -> MultipleTargets(navigationTargets.map { navigationTarget ->
-      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.targetPresentation, null)
+      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.presentation(), null)
     })
   }
 }

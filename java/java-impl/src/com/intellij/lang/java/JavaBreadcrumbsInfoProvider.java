@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -14,8 +13,6 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.Icon;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.psi.PsiNameHelper.getShortClassName;
@@ -48,12 +45,6 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     String description = ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
     String suffix = e instanceof PsiParameterListOwner? "()" : null;
     return suffix != null ? description + suffix : description;
-  }
-
-  @Nullable
-  @Override
-  public Icon getElementIcon(@NotNull PsiElement element) {
-    return null;
   }
 
   @Nullable

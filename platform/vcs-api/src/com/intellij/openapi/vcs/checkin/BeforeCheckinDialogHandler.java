@@ -17,15 +17,15 @@ public abstract class BeforeCheckinDialogHandler {
    * Checks if commit conditions are valid and Commit Dialog should be shown.
    *
    * @param project       project where commit is performed
-   * @param changes       changes to commit
+   * @param changes       changes selected for commit
    * @param executors     custom commit executors available for commit
    * @param showVcsCommit {@code true} if usual VCS commit is available in Commit Dialog.
    *                      {@code false} if only custom commit executors could be used.
    * @return {@code true} if commit conditions are valid and Commit Dialog should be shown. {@code false} otherwise.
    */
   public boolean beforeCommitDialogShown(@NotNull Project project,
-                                         @NotNull List<Change> changes,
-                                         @NotNull Iterable<CommitExecutor> executors,
+                                         @NotNull List<? extends Change> changes,
+                                         @NotNull Iterable<? extends CommitExecutor> executors,
                                          boolean showVcsCommit) {
     throw new AbstractMethodError();
   }

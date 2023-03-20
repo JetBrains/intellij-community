@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaArrangementOverriddenMethodsInfo {
 
   @NotNull private final List<JavaElementArrangementEntry> myMethodEntries = new ArrayList<>();

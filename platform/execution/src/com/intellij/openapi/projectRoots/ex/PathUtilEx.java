@@ -9,14 +9,14 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -29,6 +29,11 @@ public final class PathUtilEx {
     return chooseJdk(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
+  /**
+   * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @Nullable
   public static Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
@@ -38,6 +43,10 @@ public final class PathUtilEx {
     return chooseJdk(modules);
   }
 
+  /**
+   * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead 
+   */
+  @Deprecated
   @Nullable
   public static Sdk chooseJdk(@NotNull Collection<? extends Module> modules) {
     List<Sdk> jdks = ContainerUtil.mapNotNull(modules, module -> {
@@ -49,7 +58,6 @@ public final class PathUtilEx {
     if (jdks.isEmpty()) {
       return null;
     }
-    jdks.sort(ComparatorUtil.compareBy(jdk -> StringUtil.notNullize(jdk.getVersionString()), String.CASE_INSENSITIVE_ORDER));
-    return jdks.get(jdks.size() - 1);
+    return jdks.stream().max(Comparator.comparing(jdk -> JavaVersion.tryParse(jdk.getVersionString()), Comparator.nullsFirst(Comparator.naturalOrder()))).orElse(null);
   }
 }

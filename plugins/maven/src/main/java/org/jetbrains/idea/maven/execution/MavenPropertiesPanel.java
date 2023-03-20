@@ -28,9 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-* @author Sergey Evdokimov
-*/
 public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
   private final Map<String, String> myAvailableProperties;
 

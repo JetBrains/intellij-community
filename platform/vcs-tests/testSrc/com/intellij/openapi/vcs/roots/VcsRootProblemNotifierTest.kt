@@ -47,6 +47,9 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
       }
       Registry.get("vcs.root.auto.add.nofity").resetToDefault()
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

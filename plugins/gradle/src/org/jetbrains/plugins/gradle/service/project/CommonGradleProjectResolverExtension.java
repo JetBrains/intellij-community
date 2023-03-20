@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
@@ -13,6 +15,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
@@ -20,23 +23,27 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap;
+import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.LazyInitializer;
-import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.prefix.map.MutablePrefixTreeMap;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
@@ -48,15 +55,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
+import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleData;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -68,7 +80,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
@@ -84,6 +95,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
 
+  public static final String GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT = "gradle.version.catalogs.dynamic.support";
+
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
     final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
@@ -98,7 +111,15 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                              new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    populateProjectSdkModel(gradleProject, ideProject);
+    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(DependencyAccessorsModel.class);
+    if (dependencyAccessorsModel != null && Registry.is(GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
+      ideProject.createChild(BuildScriptClasspathData.ACCESSORS, dependencyAccessorsModel);
+    }
+
+    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getExtraProject(VersionCatalogsModel.class);
+    if (versionCatalogsModel != null) {
+      ideProject.createChild(BuildScriptClasspathData.VERSION_CATALOGS, versionCatalogsModel);
+    }
   }
 
   @NotNull
@@ -168,8 +189,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
           projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
         assert sourceSetMap != null;
         sourceSetMap.put(moduleId, Pair.create(sourceSetDataNode, sourceSet));
-
-        populateModuleSdkModel(gradleModule, sourceSetDataNode);
       }
     }
     else {
@@ -191,43 +210,24 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       }
     }
 
-    populateModuleSdkModel(gradleModule, mainModuleNode);
-
     final ProjectData projectData = projectDataNode.getData();
     if (StringUtil.equals(mainModuleData.getLinkedExternalProjectPath(), projectData.getLinkedExternalProjectPath())) {
       projectData.setGroup(mainModuleData.getGroup());
       projectData.setVersion(mainModuleData.getVersion());
     }
+    populateBuildScriptSource(gradleModule, mainModuleNode);
 
     return mainModuleNode;
   }
 
-  private static void populateProjectSdkModel(@NotNull IdeaProject ideaProject, @NotNull DataNode<? extends ProjectData> projectNode) {
-    String sdkName = resolveJdkName(ideaProject.getJdkName());
-    ProjectSdkData projectSdkData = new ProjectSdkData(sdkName);
-    projectNode.createChild(ProjectSdkData.KEY, projectSdkData);
-  }
-
-  private static void populateModuleSdkModel(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> moduleNode) {
+  private void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
     try {
-      String jdkName = ideaModule.getJdkName();
-      String sdkName = resolveJdkName(jdkName);
-      ModuleSdkData moduleSdkData = new ModuleSdkData(sdkName);
-      moduleNode.createChild(ModuleSdkData.KEY, moduleSdkData);
+      File buildScriptSource = ideaModule.getGradleProject().getBuildScript().getSourceFile();
+      GradleProjectBuildScriptData buildProjectData = new GradleProjectBuildScriptData(buildScriptSource);
+      mainModuleNode.createChild(GradleProjectBuildScriptData.KEY, buildProjectData);
     }
-    // todo[Vlad] the catch can be omitted when the support of the Gradle < 3.0 will be dropped
     catch (UnsupportedMethodException ignore) {
     }
-  }
-
-  private static @Nullable String resolveJdkName(@Nullable String jdkNameOrVersion) {
-    if (jdkNameOrVersion == null) return null;
-    Sdk sdk = SdkLookupUtil.lookupSdk(builder -> builder
-      .withSdkName(jdkNameOrVersion)
-      .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
-      .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
-    );
-    return sdk == null ? null : sdk.getName();
   }
 
   private static String @NotNull [] getIdeModuleGroup(String moduleName, IdeaModule gradleModule) {
@@ -294,7 +294,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       sourceSetContentRoots = addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
     }
 
-    PathPrefixTreeMap<ContentRootData> contentRootIndex = new PathPrefixTreeMap<>();
+    MutablePrefixTreeMap<String, ContentRootData> contentRootIndex = CanonicalPathPrefixTreeFactory.INSTANCE.createMap();
     for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
       ContentRootData contentRootData = contentRootDataNode.getData();
       contentRootIndex.set(contentRootData.getRootPath(), contentRootData);
@@ -328,7 +328,9 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
       }
 
-      if (!resolverCtx.isResolveModulePerSourceSet()) {
+      boolean sourceSetsAreNotConfigured = sourceSetContentRoots.isEmpty();
+
+      if (!resolverCtx.isResolveModulePerSourceSet() || sourceSetsAreNotConfigured) {
         List<? extends IdeaSourceDirectory> sourceDirectories = gradleContentRoot.getSourceDirectories().getAll();
         List<? extends IdeaSourceDirectory> testDirectories = gradleContentRoot.getTestDirectories().getAll();
         List<? extends IdeaSourceDirectory> resourceDirectories = Collections.emptyList();
@@ -365,7 +367,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       ContentRootData contentRootData = contentRootDataNode.getData();
       existsContentRoots.add(contentRootData.getRootPath());
     }
-    for (ContentRootData ideContentRoot : contentRootIndex.getValues()) {
+    for (ContentRootData ideContentRoot : contentRootIndex.values()) {
       if (!existsContentRoots.contains(ideContentRoot.getRootPath())) {
         ideModule.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
       }
@@ -391,18 +393,18 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       @Override
       public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
         sourceSet.getSources().forEach((key, sourceDirectorySet) -> {
-            ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(key);
-            for (File file : sourceDirectorySet.getSrcDirs()) {
-              String path = FileUtil.toCanonicalPath(file.getPath());
+          ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(key);
+          for (File file : sourceDirectorySet.getSrcDirs()) {
+            String path = FileUtil.toCanonicalPath(file.getPath());
             contentsRoots.add(path);
             ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, path);
-              if (FileUtil.isAncestor(path, buildDirPath, true)) {
-                ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, buildDirPath);
-              }
-              ideContentRoot.storePath(sourceType, path);
-              dataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+            if (FileUtil.isAncestor(path, buildDirPath, true)) {
+              ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, buildDirPath);
             }
-          });
+            ideContentRoot.storePath(sourceType, path);
+            dataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
+          }
+        });
       }
     });
 
@@ -485,7 +487,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
           }
           final ModuleData moduleData = dataNode.getData();
           moduleData.useExternalCompilerOutput(resolverCtx.isDelegatedBuild());
-          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
+          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> directorySetEntry
+            : sourceSet.getSources().entrySet()) {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
             File ideOutputDir = getIdeOutputDir(sourceDirectorySet);
@@ -509,7 +512,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
       });
       if (outputDirs.stream().anyMatch(path -> FileUtil.isAncestor(ideaOutDir, new File(path), false))) {
-        excludeOutDir(ideModule, ideaOutDir);
+        GradleUtil.excludeOutDir(ideModule, ideaOutDir);
       }
       return;
     }
@@ -559,7 +562,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       }
 
       if (!resolverCtx.isDelegatedBuild() && !inheritOutputDirs && (outputDir == null || testOutputDir == null)) {
-        excludeOutDir(ideModule, ideaOutDir);
+        GradleUtil.excludeOutDir(ideModule, ideaOutDir);
       }
     }
 
@@ -584,22 +587,23 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Nullable
   private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
-    return sourceDirectorySet.getGradleOutputDirs().stream().findFirst().orElse(null);
-  }
+    Set<File> srcDirs = sourceDirectorySet.getSrcDirs();
+    Collection<File> outputDirectories = sourceDirectorySet.getGradleOutputDirs();
+    String firstExistingLang = srcDirs.stream()
+      .sorted()
+      .filter(File::exists)
+      .findFirst()
+      .map(File::getName)
+      .orElse(null);
 
-  private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
-    ContentRootData excludedContentRootData;
-    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
-    if (contentRootDataDataNode == null ||
-        !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
-      excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getPath());
-      ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
-    }
-    else {
-      excludedContentRootData = contentRootDataDataNode.getData();
+    if (firstExistingLang == null) {
+      return ContainerUtil.getFirstItem(outputDirectories);
     }
 
-    excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getPath());
+    return outputDirectories.stream()
+      .filter(f -> f.getPath().contains(firstExistingLang))
+      .findFirst()
+      .orElse(ContainerUtil.getFirstItem(outputDirectories));
   }
 
   @Override
@@ -696,8 +700,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (externalProject != null) {
       String directoryToRunTask = gradleModuleData.getDirectoryToRunTask();
       boolean isSimpleTaskNameAllowed = directoryToRunTask.equals(moduleConfigPath);
-      String compositeBuildGradlePath = gradleModuleData.getCompositeBuildGradlePath();
-      boolean compositeBuildTasksShouldBeUsed = !compositeBuildGradlePath.isEmpty();
 
       for (ExternalTask task : externalProject.getTasks().values()) {
         String taskGroup = task.getGroup();
@@ -706,12 +708,12 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
         boolean inherited = StringUtil.equals(task.getName(), task.getQName());
         String taskFullName;
-        if (compositeBuildTasksShouldBeUsed) {
+        if (gradleModuleData.isIncludedBuild()) {
           if (inherited) {
             // running a task for all subprojects using the qualified task name is not supported for included builds
             continue;
           }
-          taskFullName = gradleModuleData.getTaskPath(task.getName(), true);
+          taskFullName = gradleModuleData.getTaskPathOfSimpleTaskName(task.getName());
         }
         else {
           taskFullName = isSimpleTaskNameAllowed ? task.getName() : task.getQName();
@@ -759,24 +761,26 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @NotNull
   @Override
   public Set<Class<?>> getExtraProjectModelClasses() {
-    return newLinkedHashSet(
+    return ContainerUtil.newLinkedHashSet(
       BuildScriptClasspathModel.class,
       GradleExtensions.class,
       ExternalTestsModel.class,
       IntelliJProjectSettings.class,
-      IntelliJSettings.class
+      IntelliJSettings.class,
+      DependencyAccessorsModel.class,
+      VersionCatalogsModel.class
     );
   }
 
   @NotNull
   @Override
   public ProjectImportModelProvider getModelProvider() {
-    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), newLinkedHashSet(ExternalProject.class, IdeaProject.class));
+    return new ClassSetImportModelProvider(getExtraProjectModelClasses(), ContainerUtil.newLinkedHashSet(ExternalProject.class, IdeaProject.class));
   }
 
   @Override
   public Set<Class<?>> getTargetTypes() {
-    return newLinkedHashSet(
+    return ContainerUtil.newLinkedHashSet(
       ExternalProjectDependency.class,
       ExternalLibraryDependency.class,
       FileCollectionDependency.class,
@@ -818,7 +822,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
    * @param dirs             directories which paths should be stored at the given content root
    * @throws IllegalArgumentException if specified by {@link ContentRootData#storePath(ExternalSystemSourceType, String)}
    */
-  private static void populateContentRoot(@NotNull final PathPrefixTreeMap<ContentRootData> contentRootIndex,
+  private static void populateContentRoot(@NotNull final MutablePrefixTreeMap<String, ContentRootData> contentRootIndex,
                                           @NotNull final ExternalSystemSourceType type,
                                           @Nullable final Iterable<? extends IdeaSourceDirectory> dirs)
     throws IllegalArgumentException {
@@ -842,12 +846,14 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         LOG.debug(e);
       }
       String path = FileUtil.toCanonicalPath(dir.getDirectory().getPath());
-      if (contentRootIndex.getAllAncestorKeys(path).isEmpty()) {
+      List<String> contentRoots = new ArrayList<>(contentRootIndex.getAncestorKeys(path));
+      if (contentRoots.isEmpty()) {
         ContentRootData contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, path);
         contentRootIndex.set(path, contentRootData);
+        contentRoots.add(path);
       }
-      List<String> ancestors = contentRootIndex.getAllAncestorKeys(path);
-      String contentRootPath = ancestors.get(ancestors.size() - 1);
+      String contentRootPath = ContainerUtil.getLastItem(contentRoots);
+      assert contentRootPath != null;
       ContentRootData contentRoot = contentRootIndex.get(contentRootPath);
       assert contentRoot != null;
       contentRoot.storePath(dirSourceType, path);
@@ -923,10 +929,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         Object result = getDependencyModule.invoke(dependency);
         return (IdeaModule)result;
       }
-      catch (IllegalAccessException e) {
-        LOG.info("Failed to get dependency module for [" + dependency + "]", e);
-      }
-      catch (InvocationTargetException e) {
+      catch (IllegalAccessException | InvocationTargetException e) {
         LOG.info("Failed to get dependency module for [" + dependency + "]", e);
       }
     }
@@ -1050,7 +1053,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       library.addPath(LibraryPathType.DOC, javadocPath.getPath());
     }
 
-    if (level == LibraryLevel.PROJECT && !linkProjectLibrary(resolverCtx, ideProject, library)) {
+    if (level == LibraryLevel.PROJECT && !linkProjectLibrary(ideProject, library)) {
       level = LibraryLevel.MODULE;
     }
 

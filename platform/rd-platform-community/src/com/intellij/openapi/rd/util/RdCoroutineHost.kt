@@ -1,14 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.rd.util
 
 import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.createLifetime
-import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.jetbrains.rd.framework.util.RdCoroutineScope
@@ -20,7 +17,7 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
   companion object {
     private val logger = logger<RdCoroutineHost>()
 
-    val instance by lazy { RdCoroutineHost(application.createLifetime() /* When shutting down the application we have to cancel and wait for all coroutines */) }
+    val instance by lazy { RdCoroutineHost(ApplicationManager.getApplication().createLifetime() /* When shutting down the application we have to cancel and wait for all coroutines */) }
 
     fun init() { instance }
     fun initAsync() = AppExecutorUtil.getAppExecutorService().execute { init() }
@@ -32,11 +29,13 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
 
   override val defaultDispatcher: CoroutineContext get() = applicationThreadPool
 
-  val uiDispatcher = object : CoroutineDispatcher() {
+  val uiDispatcher get() = Dispatchers.EDT
+
+  val uiDispatcherWithInlining = object : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) = invokeLater { block.run() }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-      if (!application.isDispatchThread)
+      if (!ApplicationManager.getApplication().isDispatchThread)
         return true
 
       val modality = ModalityState.current()
@@ -50,7 +49,7 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
 
   val uiDispatcherAnyModality = object : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) = invokeLater(ModalityState.any()) { block.run() }
-    override fun isDispatchNeeded(context: CoroutineContext) = !application.isDispatchThread
+    override fun isDispatchNeeded(context: CoroutineContext) = !ApplicationManager.getApplication().isDispatchThread
   }
 
   init {

@@ -10,7 +10,7 @@
  *   Item item = env.generateData(Generator.sampledFrom(sys.currentItems), "working on %s item");
  * </code>
  *
- * @param T the type of member in this group.
+ * @param T the type of member in this group. And another sentence.
  */
 class ExampleClassWithNoTypos<T> {
 
@@ -19,7 +19,7 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Creates an empty group.
      *
-     * @param name The name of the group.
+     * @param name The name of the group. And another sentence.
      */
     public ExampleClassWithNoTypos(String name) {
         this.name = name;
@@ -30,7 +30,7 @@ class ExampleClassWithNoTypos<T> {
      *
      * @param cancellable Whether the progress can be cancelled.
      * @param member member to add
-     * @return the new size of the group.
+     * @return the new size of the group. And another sentence.
      */
     Integer goodFunction(boolean cancellable, T member) {
         return 1; // no error comment
@@ -47,9 +47,7 @@ class ExampleClassWithNoTypos<T> {
 }
 
 /**
- * It is friend there
- *
- * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend there
  *
  * </unopenedTag>
  *
@@ -72,8 +70,8 @@ class ExampleClassWithTypos<T> {
      * It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
      * <warning descr="UPPERCASE_SENTENCE_START">second</warning> sentence.
      * 
-     * @param member member to add
-     * @return the new size of <warning descr="DT_DT">a the</warning> group.
+     * @param member member to add. And another sentence.
+     * @return the new size of <warning descr="DT_DT">a the</warning> group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence.
      */
     Integer badFunction(T member) {
         return 1; // It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> in the comment
@@ -92,4 +90,11 @@ class ForMultiLanguageSupport {
     // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
     // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
     // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
+
+  /**
+   * @throws Exception wenn ein Fehler auftritt
+   */
+  public static void main(String[] args) throws Exception {
+    throw new Exception("Hello World");
+  }
 }

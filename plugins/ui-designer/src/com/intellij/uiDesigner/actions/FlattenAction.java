@@ -102,13 +102,12 @@ public class FlattenAction extends AbstractGuiEditorAction {
   }
 
   private static boolean canFlatten(final RadComponent c) {
-    if (!(c instanceof RadContainer)) {
+    if (!(c instanceof RadContainer container)) {
       return false;
     }
     if (c.getParent() instanceof RadRootContainer) {
       return false;
     }
-    RadContainer container = (RadContainer) c;
     if (container.getLayoutManager().isGrid() && container.getParent().getLayoutManager().isGrid()) {
       return true;
     }

@@ -5,7 +5,6 @@ package com.intellij.navigation;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,7 @@ import java.util.List;
 public interface GotoClassContributor extends ChooseByNameContributor {
   
   @Nullable
-  String getQualifiedName(NavigationItem item);
+  String getQualifiedName(@NotNull NavigationItem item);
 
   @Nullable
   String getQualifiedNameSeparator();
@@ -30,6 +29,7 @@ public interface GotoClassContributor extends ChooseByNameContributor {
    * @see #getElementLanguage()
    */
   @NotNull
+  @Nls
   default String getElementKind() {
     return IdeBundle.message("go.to.class.kind.text");
   }
@@ -40,7 +40,7 @@ public interface GotoClassContributor extends ChooseByNameContributor {
   @NotNull
   @Nls
   default List<String> getElementKindsPluralized() {
-    return ContainerUtil.newArrayList(IdeBundle.message("go.to.class.kind.text.pluralized"));
+    return List.of(IdeBundle.message("go.to.class.kind.text.pluralized"));
   }
 
   @NotNull

@@ -47,20 +47,26 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     final MyParentElementProcessor processor = new MyParentElementProcessor();
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 2);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n" +
-                 "ear:ear.ear/web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   ear:ear.ear/web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 1);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 0);
     assertEquals("war:dir\n", processor.getLog());
 
     ArtifactUtil.processParents(war, getContext(), processor, 2);
-    assertEquals("war:web.war\n" +
-                 "ear:ear.ear/web.war\n", processor.getLog());
+    assertEquals("""
+                   war:web.war
+                   ear:ear.ear/web.war
+                   """, processor.getLog());
 
   }
 

@@ -36,8 +36,7 @@ public class ResourceBundleEditorRenderer extends NodeRenderer {
       return false;
     }
     final ItemPresentation presentation = treeElement.getPresentation();
-    if (presentation instanceof TextAttributesPresentation) {
-      final TextAttributesPresentation textAttributesPresentation = (TextAttributesPresentation)presentation;
+    if (presentation instanceof TextAttributesPresentation textAttributesPresentation) {
       final String text = textAttributesPresentation.getPresentableText();
       if (text != null) {
         SimpleTextAttributes attr = SimpleTextAttributes.fromTextAttributes(

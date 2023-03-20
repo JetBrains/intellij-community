@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection;
 
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -10,7 +10,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.codeInspection.BaseInspection.getProbableBugs;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -28,8 +30,8 @@ public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
 
   @NotNull
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
-    return new MyVisitor();
+  public GroovyElementVisitor buildGroovyVisitor(@NotNull ProblemsHolder holder, boolean onTheFly) {
+    return new MyVisitor(holder);
   }
 
   @Nls
@@ -39,13 +41,13 @@ public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
     return getProbableBugs();
   }
 
+  private static class MyVisitor extends GroovyElementVisitor {
+    private final ProblemsHolder myHolder;
 
-  @Override
-  protected String buildErrorString(Object... args) {
-    return GradleInspectionBundle.message("multiple.repository.urls", args);
-  }
+    MyVisitor(ProblemsHolder holder) {
+      myHolder = holder;
+    }
 
-  private static class MyVisitor extends BaseInspectionVisitor {
     @Override
     public void visitClosure(@NotNull GrClosableBlock closure) {
       PsiFile file = closure.getContainingFile();
@@ -66,11 +68,9 @@ public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
 
       List<GrCallExpression> statements = findUrlCallExpressions(closure);
       if (statements.size() > 1) {
-        registerError(closure);
-
-        registerError(closure, GradleInspectionBundle.message("multiple.repository.urls"),
-                      new LocalQuickFix[]{new MultipleRepositoryUrlsFix(closure, mavenMethodExpression.getText())},
-                      ProblemHighlightType.GENERIC_ERROR);
+        myHolder.registerProblem(closure, GradleInspectionBundle.message("multiple.repository.urls"),
+                                 ProblemHighlightType.GENERIC_ERROR,
+                                 new MultipleRepositoryUrlsFix(mavenMethodExpression.getText()));
       }
     }
   }

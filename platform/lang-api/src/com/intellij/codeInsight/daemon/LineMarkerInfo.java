@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
 
-  public final int updatePass;
+  public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);
@@ -150,7 +149,6 @@ public class LineMarkerInfo<T extends PsiElement> {
    * or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
    */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
                         Icon icon,
@@ -168,7 +166,6 @@ public class LineMarkerInfo<T extends PsiElement> {
    * or {@link #LineMarkerInfo(PsiElement, TextRange)} instead
    */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,

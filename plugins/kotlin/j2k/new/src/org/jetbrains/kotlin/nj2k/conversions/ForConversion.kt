@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 import org.jetbrains.kotlin.utils.NumberWithRadix
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.extractRadix
 import kotlin.math.abs
 
@@ -25,14 +26,11 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
 
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKJavaForLoopStatement) return recurse(element)
-
         convertToForeach(element)?.also { return recurse(it.withFormattingFrom(element)) }
-        convertToWhile(element)?.also { return recurse(it.withFormattingFrom(element)) }
-
-        return recurse(element)
+        convertToWhile(element).also { return recurse(it.withFormattingFrom(element)) }
     }
 
-    private fun convertToWhile(loopStatement: JKJavaForLoopStatement): JKStatement? {
+    private fun convertToWhile(loopStatement: JKJavaForLoopStatement): JKStatement {
         val whileBody = createWhileBody(loopStatement)
         val condition =
             if (loopStatement.condition !is JKStubExpression) loopStatement::condition.detached()
@@ -60,6 +58,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                         symbolProvider
                     )
                 )
+
             !notNeedParentBlock -> blockStatement(convertedFromForLoopSyntheticWhileStatement)
             else -> convertedFromForLoopSyntheticWhileStatement
         }
@@ -75,12 +74,13 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 val statements = loopStatement.updaters.map { it.copyTreeAndDetach() } + element.copyTreeAndDetach()
                 return if (element.parent is JKBlock)
                     JKBlockStatementWithoutBrackets(statements)
-                else JKBlockStatement(JKBlockImpl(statements))
+                else blockStatement(statements)
             }
         }
 
         val body = continueStatementConverter.applyToElement(loopStatement::body.detached())
 
+        val statements: List<JKStatement>
         if (body is JKBlockStatement) {
             val hasNameConflict = loopStatement.initializers.any { initializer ->
                 initializer is JKDeclarationStatement && initializer.declaredStatements.any { loopVar ->
@@ -92,18 +92,17 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 }
             }
 
-            val statements =
+            statements =
                 if (hasNameConflict) {
                     listOf(JKExpressionStatement(runExpression(body, symbolProvider))) + loopStatement::updaters.detached()
                 } else {
                     body.block::statements.detached() + loopStatement::updaters.detached()
                 }
-            return JKBlockStatement(JKBlockImpl(statements))
         } else {
-            val statements =
-                listOf(body as JKStatement) + loopStatement::updaters.detached()
-            return JKBlockStatement(JKBlockImpl(statements))
+            statements = listOf(body as JKStatement) + loopStatement::updaters.detached()
         }
+
+        return blockStatement(statements)
     }
 
     private fun convertToForeach(loopStatement: JKJavaForLoopStatement): JKForInStatement? {
@@ -115,7 +114,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
             && !loopVarPsi.hasWriteAccesses(referenceSearcher, loopStatement.condition.psi())
         ) {
             val left = condition.left as? JKFieldAccessExpression ?: return null
-            if (condition.right.psi<PsiExpression>()?.type in listOf(PsiType.DOUBLE, PsiType.FLOAT, PsiType.CHAR)) return null
+            if (condition.right.psi<PsiExpression>()?.type in listOf(PsiTypes.doubleType(), PsiTypes.floatType(), PsiTypes.charType())) return null
             if (left.identifier.target != loopVar) return null
             val operationType =
                 (loopStatement.updaters.singleOrNull() as? JKExpressionStatement)?.expression?.isVariableIncrementOrDecrement(loopVar)
@@ -124,9 +123,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 "--" -> true
                 else -> return null
             }
-            val operatorToken =
-                ((condition.operator as? JKKtOperatorImpl)?.token as? JKKtSingleValueOperatorToken)?.psiToken
-            val inclusive = when (operatorToken) {
+            val inclusive = when (condition.operator.safeAs<JKKtOperatorImpl>()?.token.safeAs<JKKtSingleValueOperatorToken>()?.psiToken) {
                 KtTokens.LT -> if (reversed) return null else false
                 KtTokens.LTEQ -> if (reversed) return null else true
                 KtTokens.GT -> if (reversed) false else return null
@@ -135,17 +132,18 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 else -> return null
             }
             val start = loopVar::initializer.detached()
-            val right = condition::right.detached().parenthesizeIfBinaryExpression()
+            val right = condition::right.detached().parenthesizeIfCompoundExpression()
             val range = forIterationRange(start, right, reversed, inclusive)
             val explicitType =
-                if (context.converter.settings.specifyLocalVariableTypeByDefault)
+                if (context.converter.settings.specifyLocalVariableTypeByDefault || loopVar.type.hasAnnotations)
                     JKJavaPrimitiveType.INT
                 else JKNoType
             val loopVarDeclaration =
                 JKForLoopVariable(
-                    JKTypeElement(explicitType),
+                    JKTypeElement(explicitType, loopVar.type::annotationList.detached()),
                     loopVar::name.detached(),
-                    JKStubExpression()
+                    JKStubExpression(),
+                    loopVar::annotationList.detached()
                 )
             return JKForInStatement(
                 loopVarDeclaration,
@@ -178,12 +176,14 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 convertBound(bound, if (inclusiveComparison) 0 else +1),
                 context
             )
+
             bound !is JKLiteralExpression && !inclusiveComparison ->
                 untilToExpression(
                     start,
                     convertBound(bound, 0),
                     context
                 )
+
             else -> JKBinaryExpression(
                 start,
                 convertBound(bound, if (inclusiveComparison) 0 else -1),
@@ -315,8 +315,8 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
         return (parent as? JKBlock)
             ?.statements
             ?.takeLastWhile { it != this }
-            ?.any {
-                it.declaredVariableNames().any { it in names }
+            ?.any { statement ->
+                statement.declaredVariableNames().any { it in names }
             } == true
     }
 
@@ -324,6 +324,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
         when (this) {
             is JKDeclarationStatement ->
                 declaredStatements.filterIsInstance<JKVariable>().map { it.name.value }
+
             is JKJavaForLoopStatement -> initializers.flatMap { it.declaredVariableNames() }
             else -> emptyList()
         }

@@ -17,7 +17,6 @@ import com.intellij.ui.content.TabbedContent
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.impl.VcsLogToolWindowTabsWatcher.VcsLogToolWindowTab
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.visible.VisiblePackRefresher
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener

@@ -1,5 +1,4 @@
-// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
-LineBreakpoint created at oneLineLambda.kt:9
+LineBreakpoint created at oneLineLambda.kt:9 lambdaOrdinal = -1
 Run Java
 Connected to the target VM
 oneLineLambda.kt:9

@@ -11,6 +11,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
@@ -21,6 +23,10 @@ import org.jetbrains.yaml.psi.YAMLKeyValue;
 public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
   @Override
   public PsiElement @Nullable [] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset, Editor editor) {
+    boolean shouldSuppressNavigation =
+      ContainerUtil.exists(JsonSchemaGotoDeclarationSuppressor.EP_NAME.getExtensionList(), it -> it.shouldSuppressGtd(sourceElement));
+    if (shouldSuppressNavigation) return null;
+
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
     if (elementType != YAMLTokenTypes.SCALAR_KEY) return null;
     final YAMLKeyValue literal = PsiTreeUtil.getParentOfType(sourceElement, YAMLKeyValue.class);

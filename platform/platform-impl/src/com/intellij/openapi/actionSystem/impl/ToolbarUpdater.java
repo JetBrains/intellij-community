@@ -33,7 +33,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
   public ToolbarUpdater(@NotNull JComponent component) {
     myComponent = component;
-    new UiNotifyConnector(component, this);
+    UiNotifyConnector.installOn(component, this);
   }
 
   @Override
@@ -70,7 +70,7 @@ public abstract class ToolbarUpdater implements Activatable {
     else if (!application.isHeadlessEnvironment()) {
       IdeFocusManager focusManager = IdeFocusManager.getInstance(null);
       if (application.isDispatchThread()) {
-        focusManager.doWhenFocusSettlesDown(updateRunnable);
+        application.runReadAction(() -> focusManager.doWhenFocusSettlesDown(updateRunnable));
       }
       else {
         UiNotifyConnector.doWhenFirstShown(myComponent, () -> focusManager.doWhenFocusSettlesDown(updateRunnable));
@@ -154,9 +154,8 @@ public abstract class ToolbarUpdater implements Activatable {
 
     @Override
     public boolean equals(Object obj) {
-      if (!(obj instanceof MyUpdateRunnable)) return false;
+      if (!(obj instanceof MyUpdateRunnable that)) return false;
 
-      MyUpdateRunnable that = (MyUpdateRunnable)obj;
       if (myHash != that.myHash) return false;
 
       ToolbarUpdater updater1 = myUpdaterRef.get();

@@ -1,0 +1,6 @@
+// FIR_COMPARISON
+fun test() {
+    null<caret>
+}
+
+// ELEMENT: null

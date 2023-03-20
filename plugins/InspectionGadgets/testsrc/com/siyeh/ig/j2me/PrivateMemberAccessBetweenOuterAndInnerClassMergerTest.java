@@ -42,16 +42,17 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassMergerTest extends Ligh
 
   public void testMerged() throws IOException, JDOMException {
     final Element in = JDOMUtil.load(
-      "<profile version=\"1.0\">\n" +
-      "  <option name=\"myName\" value=\"Test\" />\n" +
-      "  <inspection_tool class=\"LocalVariableOfConcreteClass\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
-      "  <inspection_tool class=\"InstanceVariableOfConcreteClass\" />\n" +
-      "  <inspection_tool class=\"ParameterOfConcreteClass\" />\n" +
-      "  <inspection_tool class=\"MethodReturnOfConcreteClass\" />\n" +
-      "  <inspection_tool class=\"CastToConcreteClass\" />\n" +
-      "  <inspection_tool class=\"StaticVariableOfConcreteClass\" />\n" +
-      "  <inspection_tool class=\"InstanceofConcreteClass\" />\n" +
-      "</profile>");
+      """
+        <profile version="1.0">
+          <option name="myName" value="Test" />
+          <inspection_tool class="LocalVariableOfConcreteClass" enabled="true" level="WARNING" enabled_by_default="true" />
+          <inspection_tool class="InstanceVariableOfConcreteClass" />
+          <inspection_tool class="ParameterOfConcreteClass" />
+          <inspection_tool class="MethodReturnOfConcreteClass" />
+          <inspection_tool class="CastToConcreteClass" />
+          <inspection_tool class="StaticVariableOfConcreteClass" />
+          <inspection_tool class="InstanceofConcreteClass" />
+        </profile>""");
     myProfile.readExternal(in);
     assertTrue(myProfile.getToolsOrNull("UseOfConcreteClass", null).isEnabled());
   }

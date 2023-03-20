@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -19,16 +20,19 @@ import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -43,14 +47,19 @@ public class CommentedOutCodeInspection extends BaseInspection {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("inspection.commented.out.code.min.lines.options"),
-                                              this, "minLines");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.min.lines.options"), 1,
+             1000));
   }
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[] { new DeleteCommentedOutCodeFix(), new UncommentCodeFix() };
+    int lines = (int)infos[0];
+    return new InspectionGadgetsFix[]{new DeleteCommentedOutCodeFix(), new UncommentCodeFix(),
+      new DelegatingFix(new SetInspectionOptionFix(
+        this, "minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.disable.short.fragments"), lines + 1))
+    };
   }
 
   private static class DeleteCommentedOutCodeFix extends InspectionGadgetsFix {
@@ -64,12 +73,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiComment)) {
+      if (!(element instanceof PsiComment comment)) {
         return;
       }
-      final PsiComment comment = (PsiComment)element;
       if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         final List<PsiElement> toDelete = new ArrayList<>();
         toDelete.add(comment);
@@ -97,12 +105,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiComment)) {
+      if (!(element instanceof PsiComment comment)) {
         return;
       }
-      final PsiComment comment = (PsiComment)element;
       if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         final List<TextRange> ranges = new ArrayList<>();
         ranges.add(comment.getTextRange());
@@ -120,7 +127,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
       else {
         final TextRange range = element.getTextRange();
         final PsiFile file = element.getContainingFile();
-        final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+        final Document document = file.getViewProvider().getDocument();
         assert document != null;
         final int start = range.getStartOffset();
         final int end = range.getEndOffset();
@@ -173,10 +180,11 @@ public class CommentedOutCodeInspection extends BaseInspection {
       }
       else {
         final String text = getCommentText(comment);
-        if (StringUtil.countNewLines(text) + 1 < minLines || isCode(text, comment) != ThreeState.YES) {
+        final int lines = StringUtil.countNewLines(text) + 1;
+        if (lines < minLines || isCode(text, comment) != ThreeState.YES) {
           return;
         }
-        registerErrorAtOffset(comment, 0, 2, StringUtil.countNewLines(text) + 1);
+        registerErrorAtOffset(comment, 0, 2, lines);
       }
     }
   }
@@ -190,8 +198,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final PsiElement fragment;
     PsiElement parent = context.getParent();
-    if (parent instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)parent;
+    if (parent instanceof PsiMethod method) {
       if (!MethodUtils.isInsideMethodBody(context, method)) {
         parent = method.getParent();
       }
@@ -199,8 +206,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     else if (parent instanceof PsiField) {
       parent = parent.getParent();
     }
-    else if (parent instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)parent;
+    else if (parent instanceof PsiClass aClass) {
       if (!ClassUtils.isInsideClassBody(context, aClass)) {
         parent = aClass.getParent();
       }
@@ -225,10 +231,9 @@ public class CommentedOutCodeInspection extends BaseInspection {
   }
 
   private static boolean isIfStatementWithoutElse(PsiStatement statement) {
-    if (!(statement instanceof PsiIfStatement)) {
+    if (!(statement instanceof PsiIfStatement ifStatement)) {
       return false;
     }
-    final PsiIfStatement ifStatement = (PsiIfStatement)statement;
     final PsiStatement elseBranch = ifStatement.getElseBranch();
     return elseBranch == null || isIfStatementWithoutElse(elseBranch);
   }
@@ -310,7 +315,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       if (PsiLiteralUtil.isUnsafeLiteral(expression)) {
         invalidCode = true;
         stopWalking();
@@ -322,7 +327,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.getParent() instanceof PsiExpressionStatement) {
         invalidCode = true;
@@ -331,7 +336,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLabeledStatement(PsiLabeledStatement statement) {
+    public void visitLabeledStatement(@NotNull PsiLabeledStatement statement) {
       super.visitLabeledStatement(statement);
       if (isProbablyUrl(statement)) {
         invalidCode = true;
@@ -353,7 +358,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (myStrict && expression.getParent() instanceof PsiExpressionStatement) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();

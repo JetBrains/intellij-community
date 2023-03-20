@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 class HelloLambda {
   public HelloLambda() {
     Runnable r = () -> System.out.println(x);

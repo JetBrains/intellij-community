@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.cache;
 
 import com.intellij.openapi.application.Application;
@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -17,13 +19,11 @@ import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -32,33 +32,39 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSettings> {
+final class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSettings> {
   private final static Logger LOG = Logger.getInstance(CodeStyleCachedValueProvider.class);
 
   private final static int MAX_COMPUTATION_THREADS = 10;
 
-  private final @NotNull WeakReference<PsiFile> myFileRef;
-  private final @NotNull AsyncComputation       myComputation;
-  private final @NotNull Lock                   myComputationLock = new ReentrantLock();
+  private final @NotNull FileViewProvider myViewProvider;
+  private final @NotNull AsyncComputation myComputation;
+  private final @NotNull Project myProject;
+  private final @NotNull Lock myComputationLock = new ReentrantLock() {
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ReentrantLock;
+    }
+  };
 
   private final static ExecutorService ourExecutorService =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("CodeStyleCachedValueProvider", MAX_COMPUTATION_THREADS);
 
-  CodeStyleCachedValueProvider(@NotNull PsiFile file) {
-    myFileRef = new WeakReference<>(file);
-    myComputation = new AsyncComputation(file.getProject());
+  CodeStyleCachedValueProvider(@NotNull FileViewProvider viewProvider, @NotNull Project project) {
+    myViewProvider = viewProvider;
+    myComputation = new AsyncComputation(project);
+    myProject = project;
   }
 
   boolean isExpired() {
-    return myFileRef.get() == null || myComputation.isExpired();
+    return myComputation.isExpired();
   }
 
   @Nullable
   CodeStyleSettings tryGetSettings() {
-    final PsiFile file = myFileRef.get();
-    if (file != null && myComputationLock.tryLock()) {
+    if (myComputationLock.tryLock()) {
       try {
-        return CachedValuesManager.getCachedValue(file, this);
+        return CachedValuesManager.getManager(myProject).getCachedValue(myViewProvider, this);
       }
       finally {
         myComputationLock.unlock();
@@ -76,10 +82,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   public Result<CodeStyleSettings> compute() {
     CodeStyleSettings settings = myComputation.getCurrResult();
     if (settings != null) {
-      PsiFile file = myFileRef.get();
-      if (file != null) {
-        logCached(file, settings);
-      }
+      logCached(settings);
       return new Result<>(settings, getDependencies(settings, myComputation));
     }
     return null;
@@ -101,10 +104,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     return ArrayUtil.toObjectArray(dependencies);
   }
 
-  private static void logCached(@NotNull PsiFile file, @NotNull CodeStyleSettings settings) {
+  private void logCached(@NotNull CodeStyleSettings settings) {
     LOG.debug(String.format(
-      "File: %s (%s), cached: %s, tracker: %d", file.getName(), Integer.toHexString(file.hashCode()), settings,
-      settings.getModificationTracker().getModificationCount()));
+      "File: %s (%s), cached: %s, tracker: %d", myViewProvider.getVirtualFile().getName(), Integer.toHexString(myViewProvider.hashCode()),
+      settings, settings.getModificationTracker().getModificationCount()));
   }
 
   /**
@@ -133,7 +136,6 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       if (isRunOnBackground()) {
         myPromise = ReadAction.nonBlocking(() -> computeSettings())
                               .expireWith(myProject)
-                              .expireWhen(() -> myFileRef.get() == null)
                               .finishOnUiThread(ModalityState.any(), val -> notifyCachedValueComputed())
                               .submit(ourExecutorService);
       }
@@ -163,7 +165,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       }
     }
 
-    private boolean isRunOnBackground() {
+    private static boolean isRunOnBackground() {
       final Application application = ApplicationManager.getApplication();
       return !application.isUnitTestMode() && !application.isHeadlessEnvironment() && application.isDispatchThread();
     }
@@ -179,9 +181,9 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     }
 
     private void computeSettings() {
-      final PsiFile file = myFileRef.get();
-      if (file == null) {
-        LOG.warn("PSI file has expired, cancelling computation");
+      VirtualFile file = myViewProvider.getVirtualFile();
+      PsiFile psiFile = getPsiFile();
+      if (psiFile == null) {
         cancel();
         return;
       }
@@ -190,17 +192,18 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         if (LOG.isDebugEnabled()) {
           LOG.debug("Computation started for " + file.getName());
         }
-        CodeStyleSettings currSettings = getCurrentSettings(file);
+        CodeStyleSettings currSettings = getCurrentSettings(psiFile);
         myOldTrackerSetting = currSettings.getModificationTracker().getModificationCount();
+        //noinspection TestOnlyProblems
         if (currSettings != mySettingsManager.getTemporarySettings()) {
-          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
-          modifiableSettings.applyIndentOptionsFromProviders(file);
+          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(myViewProvider, currSettings);
+          modifiableSettings.applyIndentOptionsFromProviders(myProject, file);
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Created TransientCodeStyleSettings for " + file.getName() + ", tab size " + modifiableSettings.getIndentOptionsByFile(file).TAB_SIZE);
+            LOG.debug("Created TransientCodeStyleSettings for " + file.getName());
           }
 
           for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
-            if (modifier.modifySettings(modifiableSettings, file)) {
+            if (modifier.modifySettings(modifiableSettings, psiFile)) {
               LOG.debug("Modifier: " + modifier.getClass().getName());
               modifiableSettings.setModifier(modifier);
               currSettings = modifiableSettings;
@@ -234,12 +237,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     public CodeStyleSettings getCurrResult() {
       if (myIsActive.compareAndSet(false, true)) {
         if (LOG.isDebugEnabled()) {
-          PsiFile psiFile = myFileRef.get();
-          if (psiFile != null) {
-            LOG.debug("Computation initiated for " + psiFile.getName());
-          } else {
-            LOG.debug("Computation initiated for expired PSI file");
-          }
+          LOG.debug("Computation initiated for " + myViewProvider.getVirtualFile().getName());
         }
         start();
       }
@@ -254,12 +252,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       myScheduledRunnables.clear();
       myIsActive.set(false);
       if (LOG.isDebugEnabled()) {
-        PsiFile psiFile = myFileRef.get();
-        if (psiFile != null) {
-          LOG.debug("Computation reset for " + psiFile.getName());
-        } else {
-          LOG.debug("Computation reset for expired PSI file");
-        }
+        LOG.debug("Computation reset for " + myViewProvider.getVirtualFile().getName());
       }
     }
 
@@ -282,13 +275,22 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         runnable.run();
       }
       if (!myProject.isDisposed()) {
-        ObjectUtils.consumeIfNotNull(myFileRef.get(), file -> {
-          final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
-          settingsManager.fireCodeStyleSettingsChanged(file);
-        });
+        CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(myViewProvider.getVirtualFile());
       }
       myComputation.reset();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      AsyncComputation that = (AsyncComputation)o;
+      return myProject.equals(that.myProject);
+    }
+  }
+
+  private @Nullable PsiFile getPsiFile() {
+    return myViewProvider.getPsi(myViewProvider.getBaseLanguage());
   }
 
   //
@@ -298,7 +300,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   @Override
   public boolean equals(Object obj) {
     return obj instanceof CodeStyleCachedValueProvider &&
-           Objects.equals(this.myFileRef.get(), ((CodeStyleCachedValueProvider)obj).myFileRef.get());
+           Objects.equals(this.myViewProvider, ((CodeStyleCachedValueProvider)obj).myViewProvider);
   }
 
 

@@ -32,14 +32,14 @@ public class MavenModelConverter {
     return convertModel(model,
                         asSourcesList(build.getSourceDirectory()),
                         asSourcesList(build.getTestSourceDirectory()),
-                        Collections.<Artifact>emptyList(),
-                        Collections.<DependencyNode>emptyList(),
-                        Collections.<Artifact>emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
                         localRepository);
   }
 
   private static List<String> asSourcesList(String directory) {
-    return directory == null ? Collections.<String>emptyList() : Collections.singletonList(directory);
+    return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
   @NotNull
@@ -90,7 +90,7 @@ public class MavenModelConverter {
     result.setDirectory(build.getDirectory());
     result.setResources(convertResources(build.getResources()));
     result.setTestResources(convertResources(build.getTestResources()));
-    result.setFilters(build.getFilters() == null ? Collections.<String>emptyList() : build.getFilters());
+    result.setFilters(build.getFilters() == null ? Collections.emptyList() : build.getFilters());
   }
 
   public static MavenId createMavenId(Artifact artifact) {
@@ -102,7 +102,11 @@ public class MavenModelConverter {
 
     List<MavenResource> result = new ArrayList<MavenResource>(resources.size());
     for (Resource each : resources) {
-      result.add(new MavenResource(each.getDirectory(),
+      String directory = each.getDirectory();
+
+      if (null == directory) continue;
+
+      result.add(new MavenResource(directory,
                                    each.isFiltering(),
                                    each.getTargetPath(),
                                    ensurePatterns(each.getIncludes()),
@@ -112,7 +116,7 @@ public class MavenModelConverter {
   }
 
   private static List<String> ensurePatterns(List<String> patterns) {
-    return patterns == null ? Collections.<String>emptyList() : patterns;
+    return patterns == null ? Collections.emptyList() : patterns;
   }
 
   public static List<MavenRemoteRepository> convertRepositories(List<? extends Repository> repositories) {
@@ -318,7 +322,7 @@ public class MavenModelConverter {
       if (id == null) continue;
       MavenProfile profile = new MavenProfile(id, each.getSource());
       List<String> modules = each.getModules();
-      profile.setModules(modules == null ? Collections.<String>emptyList() : modules);
+      profile.setModules(modules == null ? Collections.emptyList() : modules);
       profile.setActivation(convertActivation(each.getActivation()));
       if (each.getBuild() != null) convertBuildBase(profile.getBuild(), each.getBuild());
       result.add(profile);

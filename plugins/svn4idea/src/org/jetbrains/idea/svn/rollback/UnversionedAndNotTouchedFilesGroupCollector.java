@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelistBuilder {
   private final List<Couple<File>> myToBeDeleted;
   private final Map<File, ThroughRenameInfo> myFromTo;
@@ -75,17 +72,17 @@ public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelist
   }
 
   @Override
-  public void processChange(Change change, VcsKey vcsKey) {
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
     processChangeImpl(change);
   }
 
   @Override
-  public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     processChangeImpl(change);
   }
 
   @Override
-  public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
     processChangeImpl(change);
   }
 

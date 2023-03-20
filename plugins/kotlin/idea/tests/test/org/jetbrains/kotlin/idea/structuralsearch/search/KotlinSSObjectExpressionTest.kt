@@ -1,47 +1,60 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSObjectExpressionTest : KotlinSSResourceInspectionTest() {
-    override fun getBasePath(): String = "objectExpression"
-
+class KotlinSSObjectExpressionTest : KotlinStructuralSearchTest() {
     fun testObject() {
-        doTest(
-            """
-                fun '_() = object {
+        doTest(pattern = """
+            fun '_() = object {
+                val c = 1
+            }
+        """.trimIndent(), highlighting = """
+            <warning descr="SSR">fun a() = object {
+                val c = 1
+            }</warning>
+            class A() {
+                <warning descr="SSR">private fun b() = object {
                     val c = 1
-                }
-            """
-        )
-    }
-
-    fun testObjectAnyReturn() {
-        doTest(
-            """
-                fun '_(): Any = object {
+                }</warning>
+                <warning descr="SSR">fun c() = object {
                     val c = 1
-                }
-            """
+                }</warning>
+            }
+        """.trimIndent()
         )
     }
 
     fun testObjectAnonymous() {
-        doTest(
-            """
-                private fun '_() = object {
+        doTest(pattern = """
+            private fun '_() = object {
+                val c = 1
+            }
+        """, highlighting = """
+            fun a() = object {
+                val c = 1
+            }
+            class A() {
+                <warning descr="SSR">private fun b() = object {
+                    val c = 1
+                }</warning>
+                fun c() = object {
                     val c = 1
                 }
-            """
+            }
+        """.trimIndent()
         )
     }
 
     fun testObjectSuperType() {
-        doTest(
-            """
-                fun '_() = object : '_() { }
-            """
+        doTest(pattern = """
+            fun '_() = object : '_() { }
+        """, highlighting = """
+            open class X
+            <warning descr="SSR">fun a() = object : X() { }</warning>
+            fun b() = object { }
+        """.trimIndent()
         )
     }
 }

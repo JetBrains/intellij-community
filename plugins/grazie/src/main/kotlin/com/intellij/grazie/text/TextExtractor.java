@@ -1,6 +1,7 @@
 package com.intellij.grazie.text;
 
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy;
 import com.intellij.grazie.ide.language.LanguageGrammarChecking;
 import com.intellij.lang.Language;
@@ -8,18 +9,17 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
  * An extension specifying how to extract natural language text from PSI for specific programming languages.
  */
 public abstract class TextExtractor {
+  private static final Logger LOG = Logger.getInstance(TextExtractor.class);
   @VisibleForTesting
   static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
@@ -85,7 +86,7 @@ public abstract class TextExtractor {
    * @deprecated use {@link #findTextsAt}
    * @return the first of {@link #findTextsAt} or null if it's empty
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static TextContent findTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     return ContainerUtil.getFirstItem(findTextsAt(psi, allowedDomains));
@@ -97,8 +98,8 @@ public abstract class TextExtractor {
    */
   public static @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     TextRange psiRange = psi.getTextRange();
-    JBIterable<PsiElement> hierarchy = SyntaxTraverser.psiApi().parents(psi);
-    for (PsiElement each : hierarchy) {
+    PsiFile file = null;
+    for (PsiElement each = psi; each != null; each = each.getParent()) {
       CachedValue<Cache> cache = each.getUserData(COMMON_PARENT_CACHE);
       if (cache != null) {
         List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
@@ -107,15 +108,19 @@ public abstract class TextExtractor {
           return cached;
         }
       }
+      if (each instanceof PsiFile) {
+        file = (PsiFile)each;
+        break;
+      }
     }
 
-    Language fileLanguage = psi.getContainingFile().getLanguage();
+    Language fileLanguage = (file != null ? file : psi.getContainingFile()).getLanguage();
 
-    for (PsiElement each : hierarchy) {
+    for (PsiElement each = psi; each != null; each = each.getParent()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
       List<TextContent> contents = obtainContents(allowedDomains, fileLanguage, each);
-      if (stamp.mayCacheNow()) {
+      if (stamp.mayCacheNow() && !contents.isEmpty()) {
         StreamEx.of(contents)
           .groupingBy(TextContent::getCommonParent)
           .forEach((commonParent, group) -> obtainCache(commonParent, COMMON_PARENT_CACHE).register(allowedDomains, group));
@@ -208,7 +213,7 @@ public abstract class TextExtractor {
    * @deprecated use {@link #findUniqueTextsAt}
    * @return the first of {@link #findUniqueTextsAt} or null if it's empty
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable TextContent findUniqueTextAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     return ContainerUtil.getFirstItem(findUniqueTextsAt(psi, allowedDomains));
   }
@@ -236,7 +241,14 @@ public abstract class TextExtractor {
                                                       @NotNull Language language) {
     TextExtractor extractor = EP.forLanguage(language);
     if (extractor != null) {
-      return extractor.buildTextContents(anyRoot, allowedDomains);
+      List<TextContent> contents = extractor.buildTextContents(anyRoot, allowedDomains);
+      for (TextContent content : contents) {
+        if (!content.getCommonParent().getTextRange().contains(content.textRangeToFile(TextRange.from(0, content.length())))) {
+          PluginException.logPluginError(LOG, "Inconsistent text content", null, extractor.getClass());
+          return List.of();
+        }
+      }
+      return contents;
     }
 
     // legacy extraction

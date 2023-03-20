@@ -2,6 +2,7 @@
 package com.intellij.execution.target;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -87,6 +88,15 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
   }
 
   default boolean needPrepareTarget() {
-    return TargetEnvironmentConfigurations.getEffectiveTargetName(this) != null;
+    Project project = (this instanceof RunConfigurationBase<?>)
+                      ? ((RunConfigurationBase<?>)this).getProject()
+                      : null;
+    String targetName = TargetEnvironmentConfigurations.getEffectiveTargetName(this, project);
+    if (targetName == null) return false;
+
+    TargetEnvironmentType<?> type = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe(t -> {
+      return targetName.equals(t.getDisplayName());
+    });
+    return type == null || !type.isLocalTarget();
   }
 }

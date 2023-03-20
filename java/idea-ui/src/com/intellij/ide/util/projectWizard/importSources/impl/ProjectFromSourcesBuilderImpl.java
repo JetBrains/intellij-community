@@ -2,7 +2,6 @@
 package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
@@ -17,6 +16,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.*;
@@ -148,83 +148,66 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     setBaseProjectPath(path);
   }
 
-  @Override
-  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-    boolean fromProjectStructure = model != null;
-    ModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
-    LibraryTable.ModifiableModel projectLibraryTable = modelsProvider.getLibraryTableModifiableModel(project);
-    Map<LibraryDescriptor, Library> projectLibs = new HashMap<>();
+  private void createProjectLevelLibraries(LibraryTable.ModifiableModel projectLibraryTable, Map<LibraryDescriptor, Library> projectLibs) {
+    for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
+      for (LibraryDescriptor lib : projectDescriptor.getLibraries()) {
+        final Collection<File> files = lib.getJars();
+        final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
+        final Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
+        for (File file : files) {
+          libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
+        }
+        libraryModel.commit();
+        projectLibs.put(lib, projectLib);
+      }
+    }
+  }
+
+  private List<Module> createModules(Map<LibraryDescriptor, Library> projectLibs,
+                                     Map<ModuleDescriptor, Module> descriptorToModuleMap,
+                                     ModulesProvider updatedModulesProvider,
+                                     ModifiableModuleModel moduleModel)
+    throws IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     List<Module> result = new ArrayList<>();
-    try {
-      WriteAction.run(() -> {
-        // create project-level libraries
-        for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
-          for (LibraryDescriptor lib : projectDescriptor.getLibraries()) {
-            final Collection<File> files = lib.getJars();
-            final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
-            final Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
-            for (File file : files) {
-              libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES);
-            }
-            libraryModel.commit();
-            projectLibs.put(lib, projectLib);
+    Map<String, Module> contentRootToModule = new HashMap<>();
+    for (Module module : moduleModel.getModules()) {
+      // check that module exists in provider
+      if (null != updatedModulesProvider.getModule(module.getName())) {
+        ModuleRootModel moduleRootModel = updatedModulesProvider.getRootModel(module);
+        for (String url : moduleRootModel.getContentRootUrls()) {
+          contentRootToModule.put(url, module);
+        }
+      }
+    }
+    for (ProjectDescriptor descriptor : getSelectedDescriptors()) {
+      for (final ModuleDescriptor moduleDescriptor : descriptor.getModules()) {
+        for (File contentRoot : moduleDescriptor.getContentRoots()) {
+          String url = VfsUtilCore.fileToUrl(contentRoot);
+          Module existingModule = contentRootToModule.get(url);
+          if (existingModule != null && ArrayUtil.contains(existingModule, moduleModel.getModules())) {
+            moduleModel.disposeModule(existingModule);
           }
         }
-        if (!fromProjectStructure) {
-          projectLibraryTable.commit();
+        final Module module;
+        if (moduleDescriptor.isReuseExistingElement()) {
+          final ExistingModuleLoader moduleLoader =
+            ExistingModuleLoader.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
+          module = moduleLoader.createModule(moduleModel);
         }
-      });
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()), IdeCoreBundle.message("title.add.module"));
-    }
-
-    final Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<>();
-
-    ModulesProvider updatedModulesProvider = fromProjectStructure ? modulesProvider : new DefaultModulesProvider(project);
-    try {
-      WriteAction.run(() -> {
-        final ModifiableModuleModel moduleModel = fromProjectStructure ? model : ModuleManager.getInstance(project).getModifiableModel();
-        Map<String, Module> contentRootToModule = new HashMap<>();
-        for (Module module : moduleModel.getModules()) {
-          for (String url : updatedModulesProvider.getRootModel(module).getContentRootUrls()) {
-            contentRootToModule.put(url, module);
-          }
+        else {
+          module = createModule(descriptor, moduleDescriptor, projectLibs, moduleModel);
         }
-        for (ProjectDescriptor descriptor : getSelectedDescriptors()) {
-          for (final ModuleDescriptor moduleDescriptor : descriptor.getModules()) {
-            for (File contentRoot : moduleDescriptor.getContentRoots()) {
-              String url = VfsUtilCore.fileToUrl(contentRoot);
-              Module existingModule = contentRootToModule.get(url);
-              if (existingModule != null && ArrayUtil.contains(existingModule, moduleModel.getModules())) {
-                moduleModel.disposeModule(existingModule);
-              }
-            }
-            final Module module;
-            if (moduleDescriptor.isReuseExistingElement()) {
-              final ExistingModuleLoader moduleLoader =
-                ExistingModuleLoader.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
-              module = moduleLoader.createModule(moduleModel);
-            }
-            else {
-              module = createModule(descriptor, moduleDescriptor, projectLibs, moduleModel);
-            }
-            result.add(module);
-            descriptorToModuleMap.put(moduleDescriptor, module);
-          }
-        }
-
-        if (!fromProjectStructure) {
-          moduleModel.commit();
-        }
-      });
+        result.add(module);
+        descriptorToModuleMap.put(moduleDescriptor, module);
+      }
     }
-    catch (Exception e) {
-      LOG.info(e);
-      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()), IdeCoreBundle.message("title.add.module"));
-    }
+    return result;
+  }
 
+  private void setupDependenciesBetweenModules(@NotNull Project project,
+                                               ModifiableModelsProvider modelsProvider,
+                                               Map<ModuleDescriptor, Module> descriptorToModuleMap,
+                                               ModulesProvider updatedModulesProvider) {
     // setup dependencies between modules
     try {
       WriteAction.run(() -> {
@@ -252,7 +235,8 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
     catch (Exception e) {
       LOG.info(e);
-      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()), IdeCoreBundle.message("title.add.module"));
+      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()),
+                               IdeCoreBundle.message("title.add.module"));
     }
 
     WriteAction.run(() -> {
@@ -260,7 +244,68 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
         updater.updateProject(project, modelsProvider, updatedModulesProvider);
       }
     });
+  }
+
+  private List<Module> doCommit(@NotNull Project project,
+                                ModifiableModuleModel moduleModel,
+                                ModulesProvider updatedModulesProvider,
+                                boolean commitModels) {
+    ModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
+    LibraryTable.ModifiableModel projectLibraryTable = modelsProvider.getLibraryTableModifiableModel(project);
+    Map<LibraryDescriptor, Library> projectLibs = new HashMap<>();
+    List<Module> result = new ArrayList<>();
+    try {
+      WriteAction.run(() -> {
+        createProjectLevelLibraries(projectLibraryTable, projectLibs);
+        if (commitModels) {
+          projectLibraryTable.commit();
+        }
+      });
+    }
+    catch (Exception e) {
+      LOG.info(e);
+      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()),
+                               IdeCoreBundle.message("title.add.module"));
+    }
+
+    final Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<>();
+
+    try {
+      WriteAction.run(() -> {
+        result.addAll(createModules(projectLibs, descriptorToModuleMap, updatedModulesProvider, moduleModel));
+        if (commitModels) {
+          moduleModel.commit();
+        }
+      });
+    }
+    catch (Exception e) {
+      LOG.info(e);
+      Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", e.getMessage()),
+                               IdeCoreBundle.message("title.add.module"));
+    }
+
+    setupDependenciesBetweenModules(project, modelsProvider, descriptorToModuleMap, updatedModulesProvider);
     return result;
+  }
+
+  @Override
+  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+    ModulesProvider updatedModulesProvider;
+    final ModifiableModuleModel moduleModel;
+    boolean commitModels;
+
+    if (model != null) {
+      // from project structure
+      moduleModel = model;
+      updatedModulesProvider = modulesProvider;
+      commitModels = false;
+    } else {
+      moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+      updatedModulesProvider = new DefaultModulesProvider(project);
+      commitModels = true;
+    }
+
+    return doCommit(project, moduleModel, updatedModulesProvider, commitModels);
   }
 
   @Override

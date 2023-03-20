@@ -17,18 +17,23 @@ public abstract class ImmutableCharSequence implements CharSequence {
   }
 
   @Contract(pure = true)
+  @NotNull
   public abstract ImmutableCharSequence concat(@NotNull CharSequence sequence);
 
   @Contract(pure = true)
+  @NotNull
   public abstract ImmutableCharSequence insert(int index, @NotNull CharSequence seq);
 
   @Contract(pure = true)
+  @NotNull
   public abstract ImmutableCharSequence delete(int start, int end);
 
   @Contract(pure = true)
+  @NotNull
   public abstract ImmutableCharSequence subtext(int start, int end);
 
   @Contract(pure = true)
+  @NotNull
   public ImmutableCharSequence replace(int start, int end, @NotNull CharSequence seq) {
     return delete(start, end).insert(start, seq);
   }

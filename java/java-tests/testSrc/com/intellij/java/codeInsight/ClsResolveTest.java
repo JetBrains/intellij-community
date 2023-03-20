@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.openapi.module.Module;
@@ -7,8 +7,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import com.intellij.testFramework.junit5.EdtInterceptor;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.junit5.RunInEdt;
+import com.intellij.testFramework.rules.TempDirectoryExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.jar.asm.Opcodes;
@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
@@ -27,9 +26,10 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@RunInEdt
 public class ClsResolveTest {
   @RegisterExtension
-  public TempDirectory tempDir = new TempDirectory();
+  public TempDirectoryExtension tempDir = new TempDirectoryExtension();
 
   private JavaCodeInsightTestFixture myFixture;
 
@@ -87,17 +87,17 @@ public class ClsResolveTest {
     myFixture = null;
   }
 
-  @ExtendWith(EdtInterceptor.class)
   @Test
   public void resolveIntoMutantJar() {
     myFixture.configureByText(
       "test.java",
-      "class test {{\n" +
-      "  mutant1.aB.m1();\n" +
-      "  mutant1.ab.m2();\n" +
-      "  MUTANT2.C.m3();\n" +
-      "  mutant2.D.m4();\n" +
-      "}}");
+      """
+        class test {{
+          mutant1.aB.m1();
+          mutant1.ab.m2();
+          MUTANT2.C.m3();
+          mutant2.D.m4();
+        }}""");
     myFixture.checkHighlighting();
   }
 }

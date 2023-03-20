@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.FactoryMap;
-import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.parsing.console.PyConsoleHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -69,6 +69,6 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       return false;
     }
     PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    return psiFile != null && PydevConsoleRunner.isInPydevConsole(psiFile);
+    return psiFile != null && PydevConsoleRunnerUtil.isInPydevConsole(psiFile);
   }
 }

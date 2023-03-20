@@ -4,7 +4,7 @@ package com.intellij.remoteServer.impl.configuration;
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -16,7 +16,6 @@ import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.util.CloudConfigurationBase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -27,16 +26,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-@State(name = "RemoteServers", storages = @Storage("remote-servers.xml"), category = SettingsCategory.TOOLS)
-public class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
+@State(name = "RemoteServers", storages = @Storage(value = "remote-servers.xml", roamingType = RoamingType.DISABLED))
+public final class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
-  private final List<RemoteServer<?>> myServers = new ArrayList<>();
+  private final List<RemoteServer<?>> myServers = new CopyOnWriteArrayList<>();
   private final List<RemoteServerState> myUnknownServers = new ArrayList<>();
-  private final MessageBus myMessageBus;
 
-  public RemoteServersManagerImpl(MessageBus messageBus) {
-    myMessageBus = messageBus;
+  public RemoteServersManagerImpl() {
     ServerType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ServerType addedType, @NotNull PluginDescriptor pluginDescriptor) {
@@ -108,18 +106,17 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   @Override
   public void addServer(RemoteServer<?> server) {
     myServers.add(server);
-    myMessageBus.syncPublisher(RemoteServerListener.TOPIC).serverAdded(server);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RemoteServerListener.TOPIC).serverAdded(server);
   }
 
   @Override
   public void removeServer(RemoteServer<?> server) {
     myServers.remove(server);
-    myMessageBus.syncPublisher(RemoteServerListener.TOPIC).serverRemoved(server);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RemoteServerListener.TOPIC).serverRemoved(server);
   }
 
-  @Nullable
   @Override
-  public RemoteServersManagerState getState() {
+  public @NotNull RemoteServersManagerState getState() {
     RemoteServersManagerState state = new RemoteServersManagerState();
     for (RemoteServer<?> server : myServers) {
       state.myServers.add(createServerState(server));

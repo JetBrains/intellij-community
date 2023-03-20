@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.JBUI
@@ -38,8 +28,8 @@ import javax.swing.JLabel
 class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
   override fun checkUnresolvedConflicts(panel: CheckinProjectPanel,
                                         commitContext: CommitContext,
-                                        executor: CommitExecutor?): CheckinHandler.ReturnResult? {
-    if (executor != null) return null
+                                        commitInfo: CommitInfo): CheckinHandler.ReturnResult? {
+    if (!commitInfo.isVcsCommit) return null
     if (!panel.vcsIsAffected(GitVcs.NAME)) return null
 
     val project = panel.project
@@ -75,22 +65,25 @@ class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
   }
 
   private class MyExcludedChangesDialog(project: Project, changes: List<Change>) : DialogWrapper(project) {
-    val browser = SimpleChangesBrowser(project, changes)
+    private val browser = SimpleAsyncChangesBrowser(project, false, false)
 
     init {
       title = GitBundle.message("title.changes.excluded.from.commit")
       setOKButtonText(GitBundle.message("button.changes.excluded.from.commit.commit.anyway"))
 
+      browser.setChangesToDisplay(changes)
+      Disposer.register(disposable) { browser.shutdown() }
+
       init()
     }
 
-    override fun createNorthPanel(): JComponent? {
+    override fun createNorthPanel(): JComponent {
       val label = JLabel(GitBundle.message("label.changes.excluded.from.commit.are.you.sure.want.to.continue"))
       label.border = JBUI.Borders.empty(5, 1)
       return label
     }
 
-    override fun createCenterPanel(): JComponent? = browser
-    override fun getPreferredFocusedComponent(): JComponent? = browser.preferredFocusedComponent
+    override fun createCenterPanel(): JComponent = browser
+    override fun getPreferredFocusedComponent(): JComponent = browser.preferredFocusedComponent
   }
 }

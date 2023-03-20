@@ -262,13 +262,48 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
+  // PY-33843
+  public void testIteratorVariableInComprehension() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorDependentExpressionInComprehensionIfComponent() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorDependentExpressionInComprehensionResult() {
+    doTestCannotPerform();
+  }
+
+  // PY-33843
+  public void testIteratorFreeExpressionInComprehensionIfComponent() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testIteratorFreeExpressionInComprehensionResult() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testExpressionInComprehensionIteratedList() {
+    doTest();
+  }
+
+  // PY-33843
+  public void testIteratorVariableDependentExpressionInComprehensionIteratedList() {
+    doTestCannotPerform();
+  }
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {
       doTest();
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      if (e.getMessage().equals("Cannot perform refactoring using the selected element(s)")) {
+      if (e.getMessage().equals("Cannot perform refactoring using the selected elements")) {
         thrownExpectedException = true;
       }
     }
@@ -276,10 +311,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   }
 
   public void testAttributesAreNotConsideredAsUsedNames() {
-    myFixture.configureByText(PythonFileType.INSTANCE, "def f<caret>unc():\n" +
-                                                       "    foo()\n" +
-                                                       "    baz.bar()\n" +
-                                                       "    return quux[42].spam + 'eggs'");
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      def f<caret>unc():
+          foo()
+          baz.bar()
+          return quux[42].spam + 'eggs'""");
     final PsiElement element = myFixture.getElementAtCaret();
     assertInstanceOf(element, PyFunction.class);
     final Collection<String> usedNames = PyUtil.collectUsedNames(element);

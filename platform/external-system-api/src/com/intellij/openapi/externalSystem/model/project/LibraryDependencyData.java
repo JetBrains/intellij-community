@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class LibraryDependencyData extends AbstractDependencyData<LibraryData> implements Named {
   @NotNull
-  private final LibraryLevel level;
+  private LibraryLevel level;
 
   @PropertyMapping({"ownerModule", "target", "level"})
   public LibraryDependencyData(@NotNull ModuleData ownerModule, @NotNull LibraryData library, @NotNull LibraryLevel level) {
@@ -18,6 +18,10 @@ public final class LibraryDependencyData extends AbstractDependencyData<LibraryD
   @NotNull
   public LibraryLevel getLevel() {
     return level;
+  }
+
+  public void setLevel(@NotNull LibraryLevel level) {
+    this.level = level;
   }
 
   @Override

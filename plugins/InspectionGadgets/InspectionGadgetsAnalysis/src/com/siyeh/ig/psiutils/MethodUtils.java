@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -12,12 +13,17 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -47,12 +53,12 @@ public final class MethodUtils {
 
   @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiType.INT, "compare", null, null);
+    return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiTypes.intType(), "compare", null, null);
   }
 
   @Contract("null -> false")
   public static boolean isCompareTo(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL)
+    return method != null && methodMatches(method, null, PsiTypes.intType(), HardcodedMethodConstants.COMPARE_TO, PsiTypes.nullType())
       && InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_COMPARABLE);
   }
 
@@ -62,17 +68,17 @@ public final class MethodUtils {
       return false;
     }
     final PsiClassType stringType = TypeUtils.getStringType(method);
-    return methodMatches(method, "java.lang.String", PsiType.INT, "compareToIgnoreCase", stringType);
+    return methodMatches(method, "java.lang.String", PsiTypes.intType(), "compareToIgnoreCase", stringType);
   }
 
   @Contract("null -> false")
   public static boolean isHashCode(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
+    return method != null && methodMatches(method, null, PsiTypes.intType(), HardcodedMethodConstants.HASH_CODE);
   }
 
   @Contract("null -> false")
   public static boolean isFinalize(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE);
+    return method != null && methodMatches(method, null, PsiTypes.voidType(), HardcodedMethodConstants.FINALIZE);
   }
 
   @Contract("null -> false")
@@ -89,7 +95,7 @@ public final class MethodUtils {
     if (method == null || !HardcodedMethodConstants.EQUALS.equals(method.getName())) return false;
     PsiParameterList parameterList = method.getParameterList();
     return parameterList.getParametersCount() == 1 &&
-           PsiType.BOOLEAN.equals(method.getReturnType()) &&
+           PsiTypes.booleanType().equals(method.getReturnType()) &&
            TypeUtils.isJavaLangObject(Objects.requireNonNull(parameterList.getParameter(0)).getType());
   }
 
@@ -99,7 +105,7 @@ public final class MethodUtils {
       return false;
     }
     final PsiClassType stringType = TypeUtils.getStringType(method);
-    return methodMatches(method, "java.lang.String", PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS_IGNORE_CASE, stringType);
+    return methodMatches(method, "java.lang.String", PsiTypes.booleanType(), HardcodedMethodConstants.EQUALS_IGNORE_CASE, stringType);
   }
 
   /**
@@ -170,7 +176,7 @@ public final class MethodUtils {
         final PsiParameter parameter = parameters[i];
         final PsiType type = parameter.getType();
         final PsiType parameterType = parameterTypes[i];
-        if (PsiType.NULL.equals(parameterType)) {
+        if (PsiTypes.nullType().equals(parameterType)) {
           continue;
         }
         if (parameterType != null && !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(type, parameterType)) {
@@ -230,7 +236,8 @@ public final class MethodUtils {
   }
 
   public static boolean hasSuper(@NotNull PsiMethod method) {
-    return getSuper(method) != null;
+    PsiAnnotation overrideAnnotation = method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+    return overrideAnnotation != null || getSuper(method) != null;
   }
 
   @Nullable
@@ -257,7 +264,7 @@ public final class MethodUtils {
    * Try to avoid calling it in such cases.
    */
   public static boolean isOverridden(@NotNull PsiMethod method) {
-    return OverridingMethodsSearch.search(method).findFirst() != null;
+    return OverridingMethodsSearch.search(method, false).findFirst() != null;
   }
 
   public static boolean isOverriddenInHierarchy(@NotNull PsiMethod method, @NotNull PsiClass baseClass) {
@@ -289,9 +296,13 @@ public final class MethodUtils {
 
   /**
    * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
-   * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
+   * also when it is a constructor which only calls super, contains empty statements, "if (false)" statements or only returns a constant.
+   *
+   * @param method  the method to check
+   * @param considerTrivialPredicate  predicate to consider further statements as trivial.
+   * For example, a predicate which returns {@code true} on {@link PsiThrowStatement}s could be used here.
    */
-  public static boolean isTrivial(PsiMethod method, @Nullable Predicate<PsiStatement> considerTrivialPredicate) {
+  public static boolean isTrivial(PsiMethod method, @Nullable Predicate<? super PsiStatement> considerTrivialPredicate) {
     if (method.hasModifierProperty(PsiModifier.NATIVE)) {
       return false;
     }
@@ -306,36 +317,30 @@ public final class MethodUtils {
     return isTrivial(initializer.getBody(), null);
   }
 
-  private static boolean isTrivial(PsiCodeBlock codeBlock, @Nullable Predicate<PsiStatement> trivialPredicate) {
+  private static boolean isTrivial(PsiCodeBlock codeBlock, @Nullable Predicate<? super PsiStatement> trivialPredicate) {
     if (codeBlock == null) {
       return true;
     }
     final PsiStatement[] statements = codeBlock.getStatements();
-    if (statements.length == 0) {
-      return true;
-    }
     for (PsiStatement statement : statements) {
       ProgressManager.checkCanceled();
       if (statement instanceof PsiEmptyStatement || trivialPredicate != null && trivialPredicate.test(statement)) {
         continue;
       }
-      if (statement instanceof PsiReturnStatement) {
-        final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+      if (statement instanceof PsiReturnStatement returnStatement) {
         final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-        if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
-          return true;
+        if (returnValue != null && !(returnValue instanceof PsiLiteralExpression)) {
+          return false;
         }
       }
-      else if (statement instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+      else if (statement instanceof PsiIfStatement ifStatement) {
         final PsiExpression condition = ifStatement.getCondition();
         final Object result = ExpressionUtils.computeConstantExpression(condition);
         if (result == null || !result.equals(Boolean.FALSE)) {
           return false;
         }
       }
-      else if (statement instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+      else if (statement instanceof PsiExpressionStatement expressionStatement) {
         if (!JavaPsiConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
           return false;
         }
@@ -343,6 +348,47 @@ public final class MethodUtils {
       else {
         return false;
       }
+    }
+    return true;
+  }
+
+  public static boolean isTrivial(@NotNull UMethod method, @Nullable Predicate<? super UExpression> trivialPredicate) {
+    if (method.getJavaPsi().hasModifier(JvmModifier.NATIVE)) return false;
+    return isTrivial(method.getUastBody(), trivialPredicate);
+  }
+
+  public static boolean isTrivial(@NotNull UClassInitializer initializer) {
+    return isTrivial(initializer.getUastBody(), null);
+  }
+
+  private static boolean isTrivial(@Nullable UExpression bodyExpression, @Nullable Predicate<? super UExpression> trivialPredicate) {
+    if (bodyExpression == null) return true;
+    final List<UExpression> expressions;
+    if (bodyExpression instanceof UBlockExpression) {
+      expressions = ((UBlockExpression)bodyExpression).getExpressions();
+    } else {
+      expressions = List.of(bodyExpression);
+    }
+    if (expressions.size() == 0) return true;
+    for (UExpression expression : expressions) {
+      ProgressManager.checkCanceled();
+      if (expression instanceof UastEmptyExpression || trivialPredicate != null && trivialPredicate.test(expression)) continue;
+      if (expression instanceof UReturnExpression returnExpression) {
+        final UExpression returnedExpression = returnExpression.getReturnExpression();
+        if (returnedExpression != null && !(UastUtils.skipParenthesizedExprDown(returnedExpression) instanceof ULiteralExpression)) {
+          return false;
+        }
+      }
+      else if (expression instanceof UIfExpression ifExpression) {
+        final UExpression condition = ifExpression.getCondition();
+        final Object result = condition.evaluate();
+        if (result == null || !result.equals(Boolean.FALSE)) return false;
+      }
+      else if (expression instanceof UCallExpression) {
+        final String methodName = ((UCallExpression)expression).getMethodName();
+        if (methodName != null && !methodName.equals(PsiKeyword.SUPER) && !methodName.equals("<init>")) return false;
+      }
+      else return false;
     }
     return true;
   }
@@ -356,16 +402,11 @@ public final class MethodUtils {
     for (PsiJavaCodeReferenceElement reference : references) {
       ProgressManager.checkCanceled();
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         continue;
       }
-      final PsiClass aClass = (PsiClass)target;
       final String qualifiedName = aClass.getQualifiedName();
-      for (String exception : exceptions) {
-        if (exception.equals(qualifiedName)) {
-          return true;
-        }
-      }
+      if (ArrayUtil.contains(qualifiedName, exceptions)) return true;
     }
     return false;
   }
@@ -377,16 +418,10 @@ public final class MethodUtils {
     if (!InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), PsiUtil.resolveClassInClassTypeOnly(method.getReturnType()), true)) {
       return false;
     }
-    final PsiElement navigationElement = method.getNavigationElement();
-    if (!(navigationElement instanceof PsiMethod)) {
-      return false;
-    }
-    method = (PsiMethod)navigationElement;
     final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
-    if (!(lastStatement instanceof PsiReturnStatement)) {
+    if (!(lastStatement instanceof PsiReturnStatement returnStatement)) {
       return false;
     }
-    final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
   }
@@ -469,19 +504,17 @@ public final class MethodUtils {
     if (statement == null) {
       return false;
     }
-    if (PsiType.VOID.equals(returnType)) {
-      if (!(statement instanceof PsiExpressionStatement)) {
+    if (PsiTypes.voidType().equals(returnType)) {
+      if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
       final PsiExpression expression = expressionStatement.getExpression();
       return isCallToOverloadedMethod(expression, method);
     }
     else {
-      if (!(statement instanceof PsiReturnStatement)) {
+      if (!(statement instanceof PsiReturnStatement returnStatement)) {
         return false;
       }
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       final PsiExpression returnValue = returnStatement.getReturnValue();
       return isCallToOverloadedMethod(returnValue, method);
     }
@@ -489,10 +522,9 @@ public final class MethodUtils {
 
   private static boolean isCallToOverloadedMethod(PsiExpression expression, PsiMethod method) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final String name = methodCallExpression.getMethodExpression().getReferenceName();
     if (!method.getName().equals(name)) {
       return false;
@@ -523,8 +555,7 @@ public final class MethodUtils {
       if (element == stop) {
         return null;
       }
-      if (element instanceof PsiModifierListOwner) {
-        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+      if (element instanceof PsiModifierListOwner modifierListOwner) {
         final PsiAnnotation annotation =
           AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
         if (annotation != null) {
@@ -532,8 +563,7 @@ public final class MethodUtils {
         }
       }
 
-      if (element instanceof PsiClassOwner) {
-        final PsiClassOwner classOwner = (PsiClassOwner)element;
+      if (element instanceof PsiClassOwner classOwner) {
         final String packageName = classOwner.getPackageName();
         final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
         if (aPackage == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.BundleBase;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +111,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       return null;
     }
     ClassLoader loader = pluginDescriptor == null ? null : pluginDescriptor.getPluginClassLoader();
-    return DynamicBundle.INSTANCE.getResourceBundle(pathToBundle, loader != null ? loader : getClass().getClassLoader());
+    return DynamicBundle.getResourceBundle(loader != null ? loader : getClass().getClassLoader(), pathToBundle);
   }
 
   @Nullable
@@ -233,8 +232,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   /**
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Attribute("implementation")
   public String implementationClass;
 
@@ -454,11 +452,6 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected boolean canCreateElement() {
       return true;
-    }
-
-    @Override
-    protected Class<?> getType() {
-      return null;
     }
   }
 }

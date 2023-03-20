@@ -41,7 +41,7 @@ public abstract class XDebuggerManager {
 
   /**
    * Start a new debugging session. Use this method only if debugging is started by using standard 'Debug' action i.e. this methods is called
-   * from {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method. Otherwise use {@link #startSessionAndShowTab} method
+   * from {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method. Otherwise, use {@link #startSessionAndShowTab} method
    */
   @NotNull
   public abstract XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
@@ -54,6 +54,15 @@ public abstract class XDebuggerManager {
   public abstract XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
                                                        @Nullable RunContentDescriptor contentToReuse,
                                                        @NotNull XDebugProcessStarter starter) throws ExecutionException;
+
+  /**
+   * Start a new debugging session and open 'Debug' tool window
+   * @param sessionName title of 'Debug' tool window
+   */
+  @NotNull
+  public abstract XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+                                                       @NotNull XDebugProcessStarter starter,
+                                                       @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window

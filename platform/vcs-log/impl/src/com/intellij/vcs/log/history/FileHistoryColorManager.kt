@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.vcs.FilePath
@@ -7,27 +7,29 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.history.FileHistoryPaths.filePaths
 import com.intellij.vcs.log.ui.VcsLogColorManager
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
+import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import com.intellij.vcsUtil.VcsFileUtil
 import java.awt.Color
 
 internal class FileHistoryColorManager(private val root: VirtualFile, private val path: FilePath) : VcsLogColorManager {
-  private var baseColorManager = VcsLogColorManagerImpl(setOf(path))
+  private var baseColorManager: VcsLogColorManager = VcsLogColorManagerFactory.create(setOf(path))
 
-  override fun getPathColor(path: FilePath): Color {
-    return baseColorManager.getPathColor(path)
+  override fun getPathColor(path: FilePath, colorMode: String): Color {
+    return baseColorManager.getPathColor(path, colorMode)
   }
 
   fun update(pack: VcsLogDataPack) {
     val pathsFromPack = pack.filePaths()
     if (pathsFromPack.isEmpty()) {
-      baseColorManager = VcsLogColorManagerImpl(setOf(path))
+      baseColorManager = VcsLogColorManagerFactory.create(setOf(path))
     }
     else {
-      val newPaths = CollectionFactory.createLinkedCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY).also { it.addAll(baseColorManager.paths) }
+      val newPaths = CollectionFactory.createLinkedCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY).also {
+        it.addAll(baseColorManager.paths)
+      }
       newPaths.retainAll(pathsFromPack)
       newPaths.addAll(pathsFromPack)
-      baseColorManager = VcsLogColorManagerImpl(newPaths)
+      baseColorManager = VcsLogColorManagerFactory.create(newPaths)
     }
   }
 

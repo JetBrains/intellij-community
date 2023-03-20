@@ -1,11 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.containers
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet
-import it.unimi.dsi.fastutil.longs.LongSet
-import it.unimi.dsi.fastutil.longs.LongSets
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import com.intellij.util.containers.CollectionFactory
+import it.unimi.dsi.fastutil.longs.*
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.util.*
 
@@ -13,18 +10,17 @@ import java.util.*
  * Bidirectional multimap that has longs as keys
  */
 class BidirectionalLongMultiMap<V> {
-  private val keyToValues: Long2ObjectOpenHashMap<ObjectOpenHashSet<V>>
-  private val valueToKeys: Object2ObjectOpenHashMap<V, LongOpenHashSet>
+  private val keyToValues: Long2ObjectMap<ObjectOpenHashSet<V>>
+  private val valueToKeys: MutableMap<V, LongOpenHashSet>
 
   constructor() {
     keyToValues = Long2ObjectOpenHashMap()
-    @Suppress("SSBasedInspection")
-    valueToKeys = Object2ObjectOpenHashMap()
+    valueToKeys = CollectionFactory.createSmallMemoryFootprintMap()
   }
 
   private constructor(
-    keyToValues: Long2ObjectOpenHashMap<ObjectOpenHashSet<V>>,
-    valueToKeys: Object2ObjectOpenHashMap<V, LongOpenHashSet>,
+    keyToValues: Long2ObjectMap<ObjectOpenHashSet<V>>,
+    valueToKeys: MutableMap<V, LongOpenHashSet>,
   ) {
     this.keyToValues = keyToValues
     this.valueToKeys = valueToKeys
@@ -108,11 +104,15 @@ class BidirectionalLongMultiMap<V> {
 
   fun copy(): BidirectionalLongMultiMap<V> {
 
-    val newKeyToValues = keyToValues.clone()
+    val newKeyToValues = Long2ObjectOpenHashMap(keyToValues)
     newKeyToValues.replaceAll { _, value -> value.clone() }
-    val newValuesToKeys = valueToKeys.clone()
+    val newValuesToKeys = CollectionFactory.createSmallMemoryFootprintMap(valueToKeys)
     newValuesToKeys.replaceAll { _, value -> value.clone() }
 
     return BidirectionalLongMultiMap(newKeyToValues, newValuesToKeys)
+  }
+
+  internal fun toMap(): Map<Long, Set<V>> {
+    return keyToValues
   }
 }

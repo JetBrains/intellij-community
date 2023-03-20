@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -15,6 +15,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
@@ -30,13 +31,15 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registerUastReferenceProvider(registrar,
-                                  injectionHostUExpression().andOr(
-                                    uExpression().constructorParameter(0, Notification.class.getName()),
-                                    uExpression().constructorParameter(0, NotificationBuilder.class.getName()),
-                                    uExpression().methodCallParameter(0, psiMethod().withName("getNotificationGroup")
-                                      .definedInClass(NotificationGroupManager.class.getName())),
-                                    uExpression().constructorParameter(0, SingletonNotificationManager.class.getName())
-                                  ),
+                                  injectionHostUExpression()
+                                    .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                    .andOr(
+                                      uExpression().constructorParameter(0, Notification.class.getName()),
+                                      uExpression().constructorParameter(0, NotificationBuilder.class.getName()),
+                                      uExpression().methodCallParameter(0, psiMethod().withName("getNotificationGroup")
+                                        .definedInClass(NotificationGroupManager.class.getName())),
+                                      uExpression().constructorParameter(0, SingletonNotificationManager.class.getName())
+                                    ),
 
                                   new UastInjectionHostReferenceProvider() {
                                     @Override
@@ -48,7 +51,7 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
                                   }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
-  private static class NotificationGroupIdReference extends ExtensionPointReferenceBase {
+  private static class NotificationGroupIdReference extends ExtensionReferenceBase {
 
     private NotificationGroupIdReference(PsiElement element) {
       super(element);

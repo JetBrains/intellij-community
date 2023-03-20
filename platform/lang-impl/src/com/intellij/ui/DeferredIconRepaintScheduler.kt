@@ -24,13 +24,13 @@ class DeferredIconRepaintScheduler {
   }
 
   @RequiresEdt
-  fun scheduleRepaint(request: RepaintRequest, iconWidth: Int, iconHeight: Int) {
+  fun scheduleRepaint(request: RepaintRequest, iconWidth: Int, iconHeight: Int, alwaysSchedule: Boolean) {
     val actualTarget = request.getActualTarget()
     if (actualTarget == null) {
       return
     }
     val component = request.component
-    if (component == actualTarget) {
+    if (!alwaysSchedule && component == actualTarget) {
       component.repaint(request.x, request.y, iconWidth, iconHeight)
     }
     else {
@@ -44,14 +44,15 @@ class DeferredIconRepaintScheduler {
       return list
     }
 
-    val tree = SwingUtilities.getAncestorOfClass(JTree::class.java, c)
-    if (tree != null) {
-      return tree
-    }
-
+    // check table first to process com.intellij.ui.treeStructure.treetable.TreeTable correctly
     val table = SwingUtilities.getAncestorOfClass(JTable::class.java, c)
     if (table != null) {
       return table
+    }
+
+    val tree = SwingUtilities.getAncestorOfClass(JTree::class.java, c)
+    if (tree != null) {
+      return tree
     }
 
     val box = SwingUtilities.getAncestorOfClass(JComboBox::class.java, c)
@@ -67,12 +68,12 @@ class DeferredIconRepaintScheduler {
     return c
   }
 
-  class RepaintRequest(
+  data class RepaintRequest(
     val component: Component?,
     val x: Int,
     val y: Int,
     val target: Component?,
-    val paintingParent: Component?,
+    private val paintingParent: Component?,
     val paintingParentRec: Rectangle?
   ) {
     fun getActualTarget(): Component? {

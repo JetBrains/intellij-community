@@ -1,4 +1,4 @@
-// "Remove '@throws' tag" "true"
+// "Remove '@throws' tag" "true-preview"
 
 class Foo {
   /**

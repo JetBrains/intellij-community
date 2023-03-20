@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
+import com.intellij.compiler.cache.git.GitRepositoryUtil;
+import com.intellij.compiler.cache.CompilerCacheLoadingSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
@@ -44,6 +47,26 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         if (compileMessage.getKind() == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.INTERNAL_BUILDER_ERROR) {
           LOG.error("Internal build error:\n" + compileMessage.getText());
         }
+        break;
+      case CACHE_DOWNLOAD_MESSAGE:
+        CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage = msg.getCacheDownloadMessage();
+        ProgressIndicator progressIndicator = getProgressIndicator();
+        progressIndicator.setIndeterminate(false);
+        // Used only in internal development thus shouldn't be localized
+        @NlsSafe String descriptionText = cacheDownloadMessage.getDescriptionText();
+        progressIndicator.setText(descriptionText);
+        if (cacheDownloadMessage.hasDone()) {
+          progressIndicator.setFraction(cacheDownloadMessage.getDone());
+        }
+        break;
+      case SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE:
+        CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatisticsMessage = msg.getCommitAndDownloadStatistics();
+        GitRepositoryUtil.saveLatestDownloadedCommit(downloadStatisticsMessage.getCommit());
+        CompilerCacheLoadingSettings.saveApproximateDecompressionSpeed(downloadStatisticsMessage.getDecompressionSpeed());
+        CompilerCacheLoadingSettings.saveApproximateDeletionSpeed(downloadStatisticsMessage.getDeletionSpeed());
+        break;
+      case SAVE_LATEST_BUILT_COMMIT_MESSAGE:
+        GitRepositoryUtil.saveLatestBuiltMasterCommit(myProject);
         break;
       case CONSTANT_SEARCH_TASK:
         // ignored, because the functionality is deprecated

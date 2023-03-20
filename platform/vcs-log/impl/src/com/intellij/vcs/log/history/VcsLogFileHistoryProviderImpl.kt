@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.google.common.util.concurrent.SettableFuture
@@ -12,11 +12,12 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRow
+import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.VcsLogUtil
-import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
@@ -52,7 +53,7 @@ private class VcsLogDirectoryHistoryProvider(private val project: Project) : Vcs
 
     val pathsFilter = createPathsFilter(project, logManager.dataManager, paths)!!
     val hashFilter = createHashFilter(hash, root)
-    var ui = VcsLogContentUtil.findAndSelect(project, MainVcsLogUi::class.java) { logUi ->
+    var ui = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, MainVcsLogUi::class.java, true) { logUi ->
       matches(logUi.filterUi.filters, pathsFilter, hashFilter)
     }
     val firstTime = ui == null
@@ -74,7 +75,7 @@ private class VcsLogDirectoryHistoryProvider(private val project: Project) : Vcs
         if (!dataManager.roots.contains(root) ||
             !VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY.getOrDefault(dataManager.getLogProvider(root))) return null
 
-        val correctedPath = getCorrectedPath(project, path, root, false)
+        val correctedPath = getCorrectedPath(project, path, false)
         if (!correctedPath.isDirectory) return null
 
         if (path.virtualFile == root) {
@@ -115,7 +116,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     if (!isNewHistoryEnabled() || paths.size != 1) return false
 
     val root = VcsLogUtil.getActualRoot(project, paths.single()) ?: return false
-    val correctedPath = getCorrectedPath(project, paths.single(), root, revisionNumber != null)
+    val correctedPath = getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (correctedPath.isDirectory) return false
 
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
@@ -127,7 +128,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     if (paths.size != 1) return
 
     val root = VcsLogUtil.getActualRoot(project, paths.first())!!
-    val path = getCorrectedPath(project, paths.single(), root, revisionNumber != null)
+    val path = getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (path.isDirectory) return
 
     val hash = revisionNumber?.let { HashImpl.build(it) }
@@ -135,12 +136,14 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
 
-    var fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi::class.java) { ui -> ui.matches(path, hash) }
+    var fileHistoryUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, FileHistoryUi::class.java, true) { ui ->
+      ui.matches(path, hash)
+    }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
       fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, Function { path.name + suffix },
-        FileHistoryUiFactory(path, root, hash), true)
+                                                   FileHistoryUiFactory(path, root, hash), true)
     }
     selectRowWhenOpen(logManager, hash, root, fileHistoryUi!!, firstTime)
   }
@@ -153,7 +156,7 @@ private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: Virt
     ui.jumpToNearestCommit(logManager.dataManager.storage, hash, root, true)
   }
   else if (firstTime) {
-    jumpToRow(ui, 0, true)
+    ui.jumpToRow(0, true, true)
   }
 }
 
@@ -170,18 +173,9 @@ private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, r
   }, SettableFuture.create(), silently, true)
 }
 
-private fun getCorrectedPath(project: Project, path: FilePath, root: VirtualFile,
-                             isRevisionHistory: Boolean): FilePath {
-  var correctedPath = path
-  if (root != VcsUtil.getVcsRootFor(project, correctedPath) && correctedPath.isDirectory) {
-    correctedPath = VcsUtil.getFilePath(correctedPath.path, false)
-  }
-
-  if (!isRevisionHistory) {
-    return VcsUtil.getLastCommitPath(project, correctedPath)
-  }
-
-  return correctedPath
+private fun getCorrectedPath(project: Project, path: FilePath, isRevisionHistory: Boolean): FilePath {
+  if (isRevisionHistory) return path
+  return VcsUtil.getLastCommitPath(project, path)
 }
 
 private fun triggerFileHistoryUsage(project: Project, paths: Collection<FilePath>, hash: Hash?) {

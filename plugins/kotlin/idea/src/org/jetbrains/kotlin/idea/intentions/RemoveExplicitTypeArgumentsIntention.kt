@@ -1,33 +1,34 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.diagnostics.Errors.*
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.copied
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
 @Suppress("DEPRECATION")
 class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArgumentList>(RemoveExplicitTypeArgumentsIntention::class) {
-    override fun problemHighlightType(element: KtTypeArgumentList): ProblemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
     override fun additionalFixes(element: KtTypeArgumentList): List<LocalQuickFix>? {
         val declaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return null
@@ -56,19 +56,40 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
     }
 }
 
+/**
+ * Related tests:
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.RemoveExplicitTypeArguments]
+ * [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.RemoveExplicitTypeArguments]
+ * [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated.DeprecatedSymbolUsage.Imports.testAddImportForOperator]
+ * [org.jetbrains.kotlin.idea.quickfix.QuickFixTestGenerated.DeprecatedSymbolUsage.TypeArguments.WholeProject.testClassConstructor]
+ * [org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated]
+ * [org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated.ExtractFunction]
+ * [org.jetbrains.kotlin.nj2k.*]
+ */
 class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentIntention<KtTypeArgumentList>(
     KtTypeArgumentList::class.java,
     KotlinBundle.lazyMessage("remove.explicit.type.arguments")
 ) {
     companion object {
+        private val INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS: Set<String> = setOf(
+            "kotlin.arrayOf"
+        )
+
         fun isApplicableTo(element: KtTypeArgumentList, approximateFlexible: Boolean): Boolean {
             val callExpression = element.parent as? KtCallExpression ?: return false
             val typeArguments = callExpression.typeArguments
-            if (typeArguments.isEmpty() || typeArguments.any { it.typeReference?.annotationEntries?.isNotEmpty() == true }) return false
+            if (typeArguments.isEmpty()) return false
+            if (typeArguments.any { it.typeReference?.isAnnotatedDeep() == true }) return false
 
             val resolutionFacade = callExpression.getResolutionFacade()
             val bindingContext = resolutionFacade.analyze(callExpression, BodyResolveMode.PARTIAL_WITH_CFA)
             val originalCall = callExpression.getResolvedCall(bindingContext) ?: return false
+
+            originalCall.resultingDescriptor.let {
+                if (it.isInlineFunctionWithReifiedTypeParameters() &&
+                    it.fqNameSafe.asString() !in INLINE_REIFIED_FUNCTIONS_WITH_INSIGNIFICANT_TYPE_ARGUMENTS
+                ) return false
+            }
 
             val (contextExpression, expectedType) = findContextToAnalyze(callExpression, bindingContext)
             val resolutionScope = contextExpression.getResolutionScope(bindingContext, resolutionFacade)
@@ -89,6 +110,10 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
                 expectedType = expectedType ?: TypeUtils.NO_EXPECTED_TYPE,
                 isStatement = contextExpression.isUsedAsStatement(bindingContext)
             )
+            val newDiagnostics = newBindingContext.diagnostics
+
+            val newCallee = newCallExpression.calleeExpression ?: return false
+            if (newDiagnostics.forElement(newCallee).any { it.factory == IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION }) return false
 
             val newCall = newCallExpression.getResolvedCall(newBindingContext) ?: return false
 
@@ -103,14 +128,22 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
                 }
             }
 
-            return args.size == newArgs.size && args.values.zip(newArgs.values).all { (argType, newArgType) ->
-                equalTypes(argType, newArgType)
-            }
+            return args.size == newArgs.size &&
+                    args.values.zip(newArgs.values).all { (argType, newArgType) -> equalTypes(argType, newArgType) } &&
+                    (newDiagnostics.asSequence() - bindingContext.diagnostics).none {
+                        it.factory == INFERRED_INTO_DECLARED_UPPER_BOUNDS || it.factory == UNRESOLVED_REFERENCE ||
+                                it.factory == BUILDER_INFERENCE_STUB_RECEIVER ||
+                                // just for sure because its builder inference related
+                                it.factory == COULD_BE_INFERRED_ONLY_WITH_UNRESTRICTED_BUILDER_INFERENCE
+                    }
         }
 
-        private fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
+        private fun CallableDescriptor.isInlineFunctionWithReifiedTypeParameters(): Boolean =
+            this is FunctionDescriptor && isInline && typeParameters.any { it.isReified }
+
+        fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
             for (element in expression.parentsWithSelf) {
-                if (element !is KtExpression) continue
+                if (element !is KtExpression || element is KtEnumEntry) continue
 
                 if (element.getQualifiedExpressionForSelector() != null) continue
                 if (element is KtFunctionLiteral) continue
@@ -160,5 +193,15 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
     override fun isApplicableTo(element: KtTypeArgumentList): Boolean = isApplicableTo(element, approximateFlexible = false)
 
-    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) = element.delete()
+    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) {
+        val prevCallExpression = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtCallExpression
+        val isBetweenLambdaArguments = prevCallExpression?.lambdaArguments?.isNotEmpty() == true &&
+                element.getNextSiblingIgnoringWhitespaceAndComments() is KtLambdaArgument
+
+        element.delete()
+
+        if (isBetweenLambdaArguments) {
+            prevCallExpression?.replace(KtPsiFactory(element.project).createExpressionByPattern("($0)", prevCallExpression))
+        }
+    }
 }

@@ -67,8 +67,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
           isLast = false;
           break;
         }
-        if (p instanceof PyNamedParameter) {
-          PyNamedParameter named = (PyNamedParameter)p;
+        if (p instanceof PyNamedParameter named) {
           if (named.isKeywordContainer() || named.isPositionalContainer()) {
             beforeWhat = p.getNode();
             isLast = false;

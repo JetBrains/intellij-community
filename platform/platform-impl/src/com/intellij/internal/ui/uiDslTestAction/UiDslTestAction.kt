@@ -1,32 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslTestAction
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.event.ItemEvent
-import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.border.Border
 
-@ApiStatus.Internal
-class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
+internal class UiDslTestAction : DumbAwareAction("Show UI DSL Tests") {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslTestDialog(e.project).show()
@@ -46,47 +40,38 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
   }
 
   override fun createCenterPanel(): JComponent {
-    val result = JBTabbedPane()
-    result.minimumSize = Dimension(300, 200)
-    result.preferredSize = Dimension(800, 600)
-    result.addTab("Labels", createLabelsPanel())
-    result.addTab("Text Fields", createTextFields())
-    result.addTab("Comments", JScrollPane(createCommentsPanel()))
-    result.addTab("Text MaxLine", createTextMaxLinePanel())
-    result.addTab("Groups", JScrollPane(GroupsPanel().panel))
-    result.addTab("Segmented Button", createSegmentedButton())
-    result.addTab("Visible/Enabled", createVisibleEnabled())
-    result.addTab("Cells With Sub-Panels", createCellsWithPanels())
-    result.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
-    result.addTab("Resizable Rows", createResizableRows())
+    val tabbedPane = JBTabbedPane()
+    tabbedPane.minimumSize = Dimension(300, 200)
+    tabbedPane.preferredSize = Dimension(1000, 800)
+    tabbedPane.addTab("Labels", JScrollPane(LabelsPanel().panel))
+    tabbedPane.addTab("Text Fields", createTextFields())
+    tabbedPane.addTab("Comments", JScrollPane(createCommentsPanel()))
+    tabbedPane.addTab("Text MaxLine", createTextMaxLinePanel())
+    tabbedPane.addTab("Groups", JScrollPane(GroupsPanel().panel))
+    tabbedPane.addTab("Segmented Button", SegmentedButtonPanel(myDisposable).panel)
+    tabbedPane.addTab("Visible/Enabled", createVisibleEnabled())
+    tabbedPane.addTab("Cells With Sub-Panels", createCellsWithPanels())
+    tabbedPane.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
+    tabbedPane.addTab("Resizable Rows", createResizableRows())
+    tabbedPane.addTab("Others", OthersPanel().panel)
+    tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
+    tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
+    tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
+    tabbedPane.addTab("Validation Refactoring API", ValidationRefactoringPanel(myDisposable).panel)
+    tabbedPane.addTab("OnChange", OnChangePanel().panel)
 
-    return result
-  }
-
-  fun createLabelsPanel(): JPanel {
-    val result = panel {
-      val model = DefaultComboBoxModel<String>()
-      var index = 0
-      row("Label for row") {
-        comboBox(model)
-      }
+    return panel {
       row {
-        val textField = intTextField()
-          .text("50")
-        button("Add items") {
-          val newItems = (1..textField.component.text.toInt()).map { "Item ${index++}" }
-          model.addAll(newItems)
-        }
-        button("Clear") {
-          model.removeAllElements()
+        button("Long texts") {
+          LongTextsDialog().show()
         }
       }
-    }
-    val disposable = Disposer.newDisposable()
-    result.registerValidators(disposable)
-    Disposer.register(myDisposable, disposable)
 
-    return result
+      row {
+        cell(tabbedPane)
+          .align(Align.FILL)
+      }.resizableRow()
+    }
   }
 
   fun createTextFields(): JPanel {
@@ -98,7 +83,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
       row("Text field 2:") {
         textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .comment("horizontalAlign(HorizontalAlign.FILL)")
       }
       row("Int text field 1:") {
@@ -116,41 +101,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
     }
 
-    val disposable = Disposer.newDisposable()
-    result.registerValidators(disposable)
-    Disposer.register(myDisposable, disposable)
-
-    return result
-  }
-
-  fun createSegmentedButton(): JPanel {
-    val buttons = listOf("Button 1", "Button 2", "Button Last")
-    val propertyGraph = PropertyGraph()
-    val property = propertyGraph.graphProperty { "" }
-    val rows = mutableMapOf<String, Row>()
-    val result = panel {
-      row("Segmented Button") {
-        segmentedButton(buttons, property, { s -> s })
-      }
-
-      rows[buttons[0]] = row(buttons[0]) {
-        textField()
-      }
-      rows[buttons[1]] = row(buttons[1]) {
-        checkBox("checkBox")
-      }
-      rows[buttons[2]] = row(buttons[2]) {
-        button("button") {}
-      }
-    }
-
-    property.afterChange {
-      for ((key, row) in rows) {
-        row.visible(key == it)
-      }
-    }
-
-    property.set(buttons[1])
+    result.registerValidators(myDisposable)
 
     return result
   }
@@ -195,7 +146,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
               }
             }
           }
-        }.verticalAlign(VerticalAlign.TOP)
+        }.align(AlignY.TOP)
 
         panel {
           row {
@@ -207,28 +158,26 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
               checkBox("visible")
                 .applyToComponent {
                   isSelected = true
-                  addItemListener {
-                    when (entity) {
-                      is Cell<*> -> entity.visible(this.isSelected)
-                      is Row -> entity.visible(this.isSelected)
-                      is Panel -> entity.visible(this.isSelected)
-                    }
+                }.onChanged {
+                  when (entity) {
+                    is Cell<*> -> entity.visible(it.isSelected)
+                    is Row -> entity.visible(it.isSelected)
+                    is Panel -> entity.visible(it.isSelected)
                   }
                 }
               checkBox("enabled")
                 .applyToComponent {
                   isSelected = true
-                  addItemListener {
-                    when (entity) {
-                      is Cell<*> -> entity.enabled(this.isSelected)
-                      is Row -> entity.enabled(this.isSelected)
-                      is Panel -> entity.enabled(this.isSelected)
-                    }
+                }.onChanged {
+                  when (entity) {
+                    is Cell<*> -> entity.enabled(it.isSelected)
+                    is Row -> entity.enabled(it.isSelected)
+                    is Panel -> entity.enabled(it.isSelected)
                   }
                 }
             }
           }
-        }.horizontalAlign(HorizontalAlign.RIGHT)
+        }.align(AlignX.RIGHT)
       }
 
       group("Control visibility by visibleIf") {
@@ -270,18 +219,18 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
       row("Row 3") {
         textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row("Row 4") {
         val subPanel = com.intellij.ui.dsl.builder.panel {
           row {
             textField()
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(AlignX.FILL)
               .text("Sub-Paneled Row")
           }
         }
         cell(subPanel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }
@@ -291,8 +240,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       for (rowLayout in RowLayout.values()) {
         row(rowLayout.name) {
           textArea()
-            .horizontalAlign(HorizontalAlign.FILL)
-            .verticalAlign(VerticalAlign.FILL)
+            .align(Align.FILL)
         }.layout(rowLayout)
           .resizableRow()
       }
@@ -312,14 +260,10 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     val result = panel {
       row("Component type") {
         comboBox(CollectionComboBoxModel(CommentComponentType.values().asList()))
-          .applyToComponent {
-            addItemListener {
-              if (it.stateChange == ItemEvent.SELECTED) {
-                type = it?.item as? CommentComponentType ?: CommentComponentType.CHECKBOX
-                applyType()
-                placeholder.revalidate()
-              }
-            }
+          .onChanged {
+            type = it.item ?: CommentComponentType.CHECKBOX
+            applyType()
+            placeholder.revalidate()
           }
       }
       row {

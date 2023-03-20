@@ -18,7 +18,7 @@ package com.siyeh.ig.cloneable;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -38,8 +38,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CloneableImplementsCloneInspection extends BaseInspection {
 
@@ -69,11 +71,10 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("cloneable.class.without.clone.ignore.option"), "m_ignoreCloneableDueToInheritance");
-    panel.addCheckbox(InspectionGadgetsBundle.message("cloneable.class.without.clone.ignore.when.clone.called.option"), "ignoreWhenCloneCalled");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreCloneableDueToInheritance", InspectionGadgetsBundle.message("cloneable.class.without.clone.ignore.option")),
+      checkbox("ignoreWhenCloneCalled", InspectionGadgetsBundle.message("cloneable.class.without.clone.ignore.when.clone.called.option")));
   }
 
   @Override
@@ -118,13 +119,12 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       @NonNls final StringBuilder methodText = new StringBuilder();
       final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
       if (PsiUtil.isLanguageLevel5OrHigher(aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {
@@ -152,9 +152,11 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
         methodText.append("return (").append(className).append(") super.clone();\n");
       }
       if (myGenerateTryCatch) {
-        methodText.append("} catch (CloneNotSupportedException e) {\n" +
-                          "throw new AssertionError();\n"  +
-                          "}\n");
+        methodText.append("""
+                            } catch (CloneNotSupportedException e) {
+                            throw new AssertionError();
+                            }
+                            """);
       }
       methodText.append("}");
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), element);

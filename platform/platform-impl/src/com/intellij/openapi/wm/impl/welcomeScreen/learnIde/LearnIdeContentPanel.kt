@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.HeaderColor
-import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
@@ -24,21 +23,18 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.*
-import javax.swing.event.AncestorEvent
 import javax.swing.plaf.ComponentUI
 
 class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() {
 
   //unscalable insets
-  val unscalable24px = 24
+  private val unscalable24px = 24
 
   private val interactiveCoursesPanel: JPanel = JPanel()
-  private val interactiveCoursesPanelBottomGap = rigid(1, 32)
   private val helpAndResourcesPanel: JPanel = JPanel()
-  private val viewComponent: JPanel = JPanel().apply { layout = BorderLayout(); background = WelcomeScreenUIManager.getProjectsBackground() }
-  private val myScrollPane: JBScrollPane = JBScrollPane(viewComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply { border = JBUI.Borders.empty() }
   private val contentPanel: JPanel = JPanel()
+  private val myScrollPane: JBScrollPane = JBScrollPane(contentPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply { border = JBUI.Borders.empty() }
   private val interactiveCoursesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.interactive.courses.text"),
                                                                       5, HeaderColor, true)
   private val helpAndResourcesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"),
@@ -51,14 +47,20 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     background = WelcomeScreenUIManager.getProjectsBackground()
 
     contentPanel.apply {
-      layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
+      layout = BorderLayout()
       border = JBUI.Borders.empty(unscalable24px)
-      isOpaque = false
-      initInteractiveCoursesPanel()
-      initHelpAndResourcePanel()
-      add(helpAndResourcesPanel)
-      add(Box.createVerticalGlue())
-      viewComponent.add(this, BorderLayout.CENTER)
+      background = WelcomeScreenUIManager.getProjectsBackground()
+    }
+
+    val interactiveCoursesExtensions = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
+    initInteractiveCoursesPanel(interactiveCoursesExtensions)
+    initHelpAndResourcePanel()
+
+    if (interactiveCoursesExtensions.none { it.isActive }) {
+      contentPanel.add(helpAndResourcesPanel, BorderLayout.CENTER)
+    }
+    else {
+      contentPanel.add(helpAndResourcesPanel, BorderLayout.SOUTH)
     }
 
     //set LearnPanel UI
@@ -78,46 +80,36 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     }
   }
 
-  private fun initInteractiveCoursesPanel() {
-    updateInteractiveCoursesPanel()
+  private fun initInteractiveCoursesPanel(interactiveCoursesExtensions: Array<InteractiveCourseFactory>) {
+    updateInteractiveCoursesPanel(interactiveCoursesExtensions)
     InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.addExtensionPointListener(
       object : ExtensionPointListener<InteractiveCourseFactory> {
         override fun extensionAdded(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
-          updateInteractiveCoursesPanel()
+          updateInteractiveCoursesPanel(interactiveCoursesExtensions)
         }
 
         override fun extensionRemoved(extension: InteractiveCourseFactory, pluginDescriptor: PluginDescriptor) {
-          updateInteractiveCoursesPanel()
+          updateInteractiveCoursesPanel(interactiveCoursesExtensions)
         }
       }, parentDisposable)
   }
 
-  private fun updateInteractiveCoursesPanel() {
-    val interactiveCoursesExtensions: Array<InteractiveCourseFactory> = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
+  private fun updateInteractiveCoursesPanel(interactiveCoursesExtensions: Array<InteractiveCourseFactory>) {
     //clear before
     interactiveCoursesPanel.removeAll()
     contentPanel.remove(interactiveCoursesPanel)
-    contentPanel.remove(interactiveCoursesPanelBottomGap)
 
-    interactiveCoursesPanel.layout = BoxLayout(interactiveCoursesPanel, BoxLayout.PAGE_AXIS)
+    interactiveCoursesPanel.layout = BoxLayout(interactiveCoursesPanel, BoxLayout.LINE_AXIS)
     interactiveCoursesPanel.isOpaque = false
 
-    if (interactiveCoursesExtensions.isNotEmpty()) {
-      interactiveCoursesPanel.add(interactiveCoursesHeader)
-      var actionButton: JButton? = null
-      for (interactiveCourse in interactiveCoursesExtensions.map { it.getInteractiveCourseData() }) {
-        interactiveCoursesPanel.add(rigid(0, 12))
-        val interactiveCoursePanel = InteractiveCoursePanel(interactiveCourse)
-        interactiveCoursesPanel.add(interactiveCoursePanel)
-        if (actionButton == null) actionButton = interactiveCoursePanel.startLearningButton
+    val componentsList = interactiveCoursesExtensions.filter { it.isActive }.map { it.getInteractiveCourseComponent() }
+    if (componentsList.isNotEmpty()) {
+      for (interactiveCourse in componentsList) {
+        interactiveCoursesPanel.add(interactiveCourse)
+        interactiveCoursesPanel.add((rigid(12, 6)))
       }
-      addAncestorListener(object : AncestorListenerAdapter() {
-        override fun ancestorAdded(event: AncestorEvent?) {
-          rootPane?.defaultButton = actionButton
-        }
-      })
-      contentPanel.add(interactiveCoursesPanel)
-      contentPanel.add(interactiveCoursesPanelBottomGap)
+      contentPanel.add(interactiveCoursesHeader, BorderLayout.NORTH)
+      contentPanel.add(interactiveCoursesPanel, BorderLayout.CENTER)
     }
     revalidate()
     repaint()

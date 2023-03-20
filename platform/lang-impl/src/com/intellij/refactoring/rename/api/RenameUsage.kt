@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.Pointer
+import com.intellij.usages.impl.rules.UsageType
 
 /**
  * Usages include both declarations and references.
@@ -20,6 +21,12 @@ interface RenameUsage {
   val declaration: Boolean
 
   /**
+   * @see com.intellij.usages.impl.rules.UsageTypeGroupingRule
+   */
+  val usageType: UsageType?
+    get() = null
+
+  /**
    * Example: setting Kotlin function name to a string which is not a valid Java identifier will break references in Java.
    * Such situations require user attention, so conflicts will trigger additional dialogs or another UI.
    *
@@ -31,6 +38,5 @@ interface RenameUsage {
    * @param newName new name of the [RenameTarget] which is targeted by this usage
    * @return list of conflicts produced by this usage, or empty list if there are no conflicts
    */
-  @JvmDefault
   fun conflicts(newName: String): List<RenameConflict> = emptyList()
 }

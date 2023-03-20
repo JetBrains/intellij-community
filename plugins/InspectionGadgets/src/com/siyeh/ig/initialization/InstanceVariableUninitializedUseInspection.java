@@ -17,8 +17,8 @@ package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -34,9 +34,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class InstanceVariableUninitializedUseInspection extends BaseInspection {
 
@@ -56,16 +57,11 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-
-    final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      annotationNames, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-
-    panel.add(annotationsPanel, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("primitive.fields.ignore.option"), "m_ignorePrimitives");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("annotationNames", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("m_ignorePrimitives", InspectionGadgetsBundle.message("primitive.fields.ignore.option")));
   }
 
   @Pattern(VALID_ID_PATTERN)
@@ -148,7 +144,7 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
       }
     }
 
-    private boolean isInitializedInInitializer(@NotNull PsiField field, UninitializedReadCollector uninitializedReadsCollector) {
+    private static boolean isInitializedInInitializer(@NotNull PsiField field, UninitializedReadCollector uninitializedReadsCollector) {
       final PsiClass aClass = field.getContainingClass();
       if (aClass == null) {
         return false;

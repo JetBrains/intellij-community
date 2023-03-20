@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -26,6 +27,11 @@ public abstract class SplitterAction extends DumbAwareAction {
     presentation.setVisible(presentation.isEnabled() || !ActionPlaces.isPopupPlace(event.getPlace()));
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   boolean isEnabled(@NotNull AnActionEvent event) {
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     return window != null && window.inSplitter();
@@ -40,16 +46,14 @@ public abstract class SplitterAction extends DumbAwareAction {
       window.getManager().setCurrentWindow(getDestination(window));
     }
 
-
-    public static final class Next extends Goto {
+    static final class Next extends Goto {
       @Override
       EditorWindow getDestination(@NotNull EditorWindow window) {
         return window.getManager().getNextWindow(window);
       }
     }
 
-
-    public static final class Previous extends Goto {
+    static final class Previous extends Goto {
       @Override
       EditorWindow getDestination(@NotNull EditorWindow window) {
         return window.getManager().getPrevWindow(window);
@@ -57,16 +61,14 @@ public abstract class SplitterAction extends DumbAwareAction {
     }
   }
 
-
-  public static final class ChangeOrientation extends SplitterAction {
+  static final class ChangeOrientation extends SplitterAction {
     @Override
     void actionPerformed(@NotNull EditorWindow window) {
       window.getManager().changeSplitterOrientation();
     }
   }
 
-
-  public static final class Unsplit extends SplitterAction {
+  static final class Unsplit extends SplitterAction {
     @Override
     void actionPerformed(@NotNull EditorWindow window) {
       window.getManager().unsplitWindow();
@@ -74,7 +76,7 @@ public abstract class SplitterAction extends DumbAwareAction {
   }
 
 
-  public static final class UnsplitAll extends DumbAwareAction {
+  static final class UnsplitAll extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       FileEditorManagerEx manager = getManager(event);
@@ -90,6 +92,11 @@ public abstract class SplitterAction extends DumbAwareAction {
       else {
         event.getPresentation().setEnabled(manager != null && manager.isInSplitter());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     private static FileEditorManagerEx getManager(@NotNull AnActionEvent event) {

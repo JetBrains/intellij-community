@@ -1,4 +1,4 @@
-// "Create local variable 'a'" "true"
+// "Create local variable 'a'" "true-preview"
 class C {
   void foo(Foo f) {
       Foo a = f;

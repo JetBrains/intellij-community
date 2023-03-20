@@ -11,6 +11,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -18,14 +19,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -80,7 +79,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = tryCast(descriptor.getPsiElement(), PsiExpression.class);
       if (expression == null) return;
       final PsiVariable toRemove;
@@ -145,8 +144,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       for (PsiExpression access : accesses) {
         if (access instanceof PsiMethodCallExpression) {
           PsiElement parent = ParenthesesUtils.getParentSkipParentheses(access);
-          if (parent instanceof PsiLocalVariable) {
-            PsiLocalVariable var = (PsiLocalVariable)parent;
+          if (parent instanceof PsiLocalVariable var) {
             PsiElement varParent = var.getParent();
             if (varParent instanceof PsiDeclarationStatement &&
                 varParent.getParent() == scope &&
@@ -206,7 +204,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
           String keyVariableText = keyParameterText + "=" + replacement + ".getKey();";
           PsiStatement keyDeclaration = JavaPsiFacade.getElementFactory(project).createStatementFromText(keyVariableText, body);
           codeBlock.addAfter(keyDeclaration, brace);
-          accesses = StreamEx.of(accesses).select(PsiMethodCallExpression.class).collect(Collectors.toList());
+          accesses = ContainerUtil.filterIsInstance(accesses, PsiMethodCallExpression.class);
         }
       }
       replaceParameterAccess(accesses, keyTypeText, replacement, mode);
@@ -263,7 +261,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression.getQualifierExpression() != null || !expression.isReferenceTo(myParameter)) {
           return;
@@ -277,12 +275,10 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
         if (!(parent instanceof PsiExpressionList)) return false;
         final PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) return false;
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) return false;
         if (!MAP_GET.test(methodCallExpression)) return false;
         PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodCallExpression.getMethodExpression().getQualifierExpression());
-        if (!(qualifier instanceof PsiReferenceExpression)) return false;
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+        if (!(qualifier instanceof PsiReferenceExpression referenceExpression)) return false;
         if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(myMapReference, referenceExpression)) return false;
         myParameterAccesses.add(methodCallExpression);
         return true;
@@ -311,12 +307,12 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
   private static class KeySetIterationMayUseEntrySetVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       final PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(statement.getIteratedValue());
       final PsiExpression iteratedExpression = getIteratedExpression(iteratedValue);
       if (iteratedExpression == null) return;
-      final PsiParameter parameter = statement.getIterationParameter();
+      PsiParameter parameter = statement.getIterationParameter();
       PsiElement context = statement.getBody();
       if (context == null) return;
       PsiReferenceExpression mapExpression = getMapReferenceFromKeySetCall(iteratedExpression);
@@ -329,7 +325,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (!ITERABLE_FOR_EACH.test(call)) return;
       PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
       PsiExpression expression = getIteratedExpression(qualifier);
@@ -366,8 +362,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
 
   @Contract("null -> null")
   private static PsiReferenceExpression getMapReferenceFromKeySetCall(PsiExpression keySetCandidate) {
-    if (!(keySetCandidate instanceof PsiMethodCallExpression)) return null;
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)keySetCandidate;
+    if (!(keySetCandidate instanceof PsiMethodCallExpression methodCallExpression)) return null;
     if (!MAP_KEY_SET.test(methodCallExpression)) return null;
     PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
     return tryCast(PsiUtil.skipParenthesizedExprDown(qualifier), PsiReferenceExpression.class);
@@ -386,10 +381,9 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (parent instanceof PsiAssignmentExpression) {
+      if (PsiUtil.isAccessedForWriting(expression)) {
         if (expression.isReferenceTo(myKey) ||
             EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(myMapReference, expression)) {
           myTainted = true;

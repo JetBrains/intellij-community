@@ -229,8 +229,7 @@ public class Value {
 
   @Override
   public boolean equals(Object o) {
-    if (o instanceof Value) {
-      Value other = (Value) o;
+    if (o instanceof Value other) {
       return other.name.equals(name) && other.serializer.equals(serializer);
     } else {
       return false;

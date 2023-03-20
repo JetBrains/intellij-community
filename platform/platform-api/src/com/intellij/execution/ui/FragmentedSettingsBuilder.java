@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -165,10 +165,10 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     myLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
     JPanel linkPanel = new JPanel(new BorderLayout());
     linkPanel.add(myLinkLabel, BorderLayout.CENTER);
-    CustomShortcutSet shortcutSet = KeymapUtil.getMnemonicAsShortcut(TextWithMnemonic.parse(message).getMnemonic());
+    CustomShortcutSet shortcutSet = KeymapUtil.getShortcutsForMnemonicCode(TextWithMnemonic.parse(message).getMnemonicCode());
     if (shortcutSet != null) {
-      List<String> list = ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut));
-      list.sort(Comparator.comparingInt(String::length));
+      List<String> list = ContainerUtil.sorted(ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut)),
+      Comparator.comparingInt(String::length));
       JLabel shortcutLabel = new JLabel(list.get(0));
       shortcutLabel.setEnabled(false);
       shortcutLabel.setBorder(JBUI.Borders.empty(0, 5));
@@ -182,7 +182,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     return myMain != null ? SeparatorFactory.createSeparator(myMain.getGroup(), null) : null;
   }
 
-  protected void addFragments(@NotNull List<SettingsEditorFragment<Settings, ?>> fragments) {
+  protected void addFragments(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> fragments) {
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       JComponent component = fragment.getComponent();
       addLine(component);
@@ -192,13 +192,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     }
   }
 
-  protected void addSubGroups(@NotNull List<SettingsEditorFragment<Settings, ?>> subGroups) {
+  protected void addSubGroups(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> subGroups) {
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent(), 0, 0, 0);
     }
   }
 
-  protected void addTagPanel(@NotNull List<SettingsEditorFragment<Settings, ?>> tags) {
+  protected void addTagPanel(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> tags) {
     JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP)));
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());
@@ -316,13 +316,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     ArrayList<SettingsEditorFragment<Settings, ?>> result = new ArrayList<>();
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       String group = fragment.getGroup();
-      int last = ContainerUtil.lastIndexOf(result, f -> f.getGroup() == group);
+      int last = ContainerUtil.lastIndexOf(result, f -> Objects.equals(f.getGroup(), group));
       result.add(last >= 0 ? last + 1 : result.size(), fragment);
     }
     return result;
   }
 
-  private void addCommandLinePanel(@NotNull List<SettingsEditorFragment<Settings, ?>> commandLine) {
+  private void addCommandLinePanel(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> commandLine) {
     if (!commandLine.isEmpty()) {
       CommandLinePanel panel = new CommandLinePanel(commandLine, myConfigId, this);
       addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
@@ -369,6 +369,11 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myFragment.isRemovable());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView;
 
 import com.intellij.core.JavaPsiBundle;
@@ -26,12 +26,12 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
       if (element instanceof PsiThrowStatement) {
         return JavaBundle.message("usage.target.exception");
       }
-      else if (element instanceof PsiAnonymousClass) {
-        String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
+      else if (element instanceof PsiAnonymousClass anonymousClass) {
+        String name = anonymousClass.getBaseClassReference().getReferenceName();
         return getAnonymousClassName(name);
       }
-      else if (element instanceof PsiClassInitializer) {
-        boolean isStatic = ((PsiClassInitializer)element).hasModifierProperty(PsiModifier.STATIC);
+      else if (element instanceof PsiClassInitializer initializer) {
+        boolean isStatic = initializer.hasModifierProperty(PsiModifier.STATIC);
         return isStatic ? CLINIT : INIT;
       }
     }
@@ -40,25 +40,24 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
       if (element instanceof PsiPackage) {
         return ((PsiPackage)element).getQualifiedName();
       }
-      else if (element instanceof PsiClass) {
-        if (element instanceof PsiAnonymousClass) {
-          String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
+      else if (element instanceof PsiClass aClass) {
+        if (element instanceof PsiAnonymousClass anonymousClass) {
+          String name = anonymousClass.getBaseClassReference().getReferenceName();
           return getAnonymousClassName(name);
         }
         else {
-          String ret = ((PsiClass)element).getQualifiedName(); // It happens for local classes
+          String ret = aClass.getQualifiedName(); // It happens for local classes
           if (ret == null) {
-            ret = ((PsiClass)element).getName();
+            ret = aClass.getName();
           }
           @NonNls String finalName = ObjectUtils.notNull(ret, NO_NAME_CLASS_VALUE);
           return finalName;
         }
       }
-      else if (element instanceof PsiVariable) {
-        return ((PsiVariable)element).getName();
+      else if (element instanceof PsiVariable var) {
+        return var.getName();
       }
-      else if (element instanceof PsiMethod) {
-        PsiMethod psiMethod = (PsiMethod)element;
+      else if (element instanceof PsiMethod psiMethod) {
         return PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                           PsiFormatUtilBase.SHOW_TYPE);
       }

@@ -1,7 +1,10 @@
 package de.plushnikov.intellij.plugin.intention.valvar.from;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.intention.LombokIntentionActionTest;
 

@@ -48,7 +48,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return ((Boolean)infos[0]) ? new FallthruInSwitchStatementFix((String) infos[1]) : null;
+    return (Boolean)infos[0] ? new FallthruInSwitchStatementFix((String) infos[1]) : null;
   }
 
   @Override
@@ -76,7 +76,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)descriptor.getPsiElement();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -101,7 +101,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       doCheckSwitchBlock(expression);
     }
@@ -122,8 +122,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
           return;
         }
         final PsiElement previousSibling = PsiTreeUtil.skipWhitespacesBackward(statement);
-        if (previousSibling instanceof PsiComment) {
-          final PsiComment comment = (PsiComment)previousSibling;
+        if (previousSibling instanceof PsiComment comment) {
           final String commentText = comment.getText();
           if (commentPattern.matcher(commentText).find() && JavaSuppressionUtil.getSuppressedInspectionIdsIn(comment) == null) {
             continue;

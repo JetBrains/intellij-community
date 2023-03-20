@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
@@ -37,10 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyOverrideImplementUtil {
+public final class PyOverrideImplementUtil {
 
   @Nullable
   public static PyClass getContextClass(@NotNull final Editor editor, @NotNull final PsiFile file) {
@@ -193,6 +190,7 @@ public class PyOverrideImplementUtil {
     PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(functionName, baseFunction);
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
     boolean baseMethodIsStatic = false;
+    boolean isProperty = false;
     if (decorators != null) {
       if (decorators.findDecorator(PyNames.CLASSMETHOD) != null) {
         pyFunctionBuilder.decorate(PyNames.CLASSMETHOD);
@@ -203,6 +201,7 @@ public class PyOverrideImplementUtil {
       }
       else if (decorators.findDecorator(PyNames.PROPERTY) != null ||
         decorators.findDecorator(PyNames.ABSTRACTPROPERTY) != null) {
+        isProperty = true;
         pyFunctionBuilder.decorate(PyNames.PROPERTY);
       }
     }
@@ -270,7 +269,7 @@ public class PyOverrideImplementUtil {
       statementBody.append(PyNames.PASS);
     }
     else {
-      if (!PyNames.INIT.equals(functionName) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE || overridingNew) {
+      if (!PyNames.INIT.equals(functionName) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE || overridingNew || isProperty) {
         statementBody.append("return ");
       }
       if (baseFunction.isAsync()) {
@@ -295,17 +294,20 @@ public class PyOverrideImplementUtil {
           StringUtil.join(nameResult, ".", statementBody);
           statementBody.append(", ").append(firstName);
         }
-        statementBody.append(").").append(functionName).append("(");
-        // type.__new__ is explicitly decorated as @staticmethod in our stubs, but not in real Python code
+        statementBody.append(").").append(functionName);
+
         if (parameters.size() > 0 && !(baseMethodIsStatic || overridingNew)) {
           parameters.remove(0);
         }
       }
       else {
-        statementBody.append(getReferenceText(pyClass, baseClass)).append(".").append(functionName).append("(");
+        statementBody.append(getReferenceText(pyClass, baseClass)).append(".").append(functionName);
       }
-      StringUtil.join(parameters, ", ", statementBody);
-      statementBody.append(")");
+      if (!isProperty) {
+        statementBody.append("(");
+        StringUtil.join(parameters, ", ", statementBody);
+        statementBody.append(")");
+      }
     }
 
     pyFunctionBuilder.statement(statementBody.toString());
@@ -345,9 +347,6 @@ public class PyOverrideImplementUtil {
   /**
    * Collect annotations from function parameters and return.
    *
-   * @param function
-   * @param typeEvalContext
-   * @return
    */
   @NotNull
   private static List<PyAnnotation> getAnnotations(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {

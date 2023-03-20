@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
+import com.intellij.model.BranchableSyntheticPsiElement;
+import com.intellij.model.ModelBranch;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
-public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement {
+public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement, BranchableSyntheticPsiElement {
   public LightRecordCanonicalConstructor(@NotNull PsiMethod method,
                                          @NotNull PsiClass containingClass) {
     super(method.getManager(), method, containingClass);
@@ -52,13 +54,26 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
   @Override
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.METHOD_ICON, ElementPresentationUtil.getFlags(this, false));
+      IconManager.getInstance().createLayeredIcon(this, IconManager.getInstance().getPlatformIcon(PlatformIcons.Method), ElementPresentationUtil.getFlags(this, false));
     if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
       VisibilityIcons.setVisibilityIcon(getContainingClass().getModifierList(), baseIcon);
     }
     return baseIcon;
   }
 
+  @Override
+  public @NotNull LightRecordCanonicalConstructor obtainBranchCopy(@NotNull ModelBranch branch) {
+    PsiClass recordCopy = branch.obtainPsiCopy(myContainingClass);
+    PsiMethod accessorCopy = recordCopy.findMethodBySignature(this, false);
+    assert accessorCopy instanceof LightRecordCanonicalConstructor;
+    return (LightRecordCanonicalConstructor)accessorCopy;
+  }
+  
+  @Override
+  public @Nullable ModelBranch getModelBranch() {
+    return ModelBranch.getPsiBranch(myContainingClass);
+  }
+  
   @Override
   public @NotNull PsiParameterList getParameterList() {
     PsiParameterList parameterList = super.getParameterList();
@@ -91,6 +106,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       myWrapper = wrapper;
     }
 
+    @Override
+    public @NotNull PsiElement getDeclarationScope() {
+      return myWrapper.getParent();
+    }
+
     public @Nullable PsiRecordComponent getRecordComponent() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(this, PsiClass.class);
       if (psiClass == null) return null;
@@ -108,12 +128,7 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       PsiRecordComponent recordComponent = getRecordComponent();
       if (recordComponent == null) return super.getModifierList();
 
-      return new LightModifierList(getPrototype()) {
-        @Override
-        public PsiAnnotation @NotNull [] getAnnotations() {
-          return recordComponent.getAnnotations();
-        }
-      };
+      return new LightRecordComponentModifierList(this, getPrototype(), recordComponent);
     }
 
     @Override
@@ -152,5 +167,15 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     public int hashCode() {
       return getPrototype().hashCode();
     }
+
+    @Override
+    public String toString() {
+      return "LightRecordConstructorParameter(" + super.toString() + ")";
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "LightRecordCanonicalConstructor(" + super.toString() + ")";
   }
 }

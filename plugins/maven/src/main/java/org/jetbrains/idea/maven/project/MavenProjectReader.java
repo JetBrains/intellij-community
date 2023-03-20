@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
@@ -19,8 +19,8 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -45,12 +45,12 @@ public final class MavenProjectReader {
                                               VirtualFile file,
                                               MavenExplicitProfiles explicitProfiles,
                                               MavenProjectReaderProjectLocator locator) {
-    File basedir = getBaseDir(file).toFile();
+    Path basedir = getBaseDir(file);
 
     Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
       doReadProjectModel(generalSettings, basedir, file, explicitProfiles, new HashSet<>(), locator);
 
-    MavenModel model = MavenServerManager.getInstance().getConnector(myProject, basedir.getPath())
+    MavenModel model = MavenServerManager.getInstance().getConnector(myProject, basedir.toString())
       .interpolateAndAlignModel(readResult.first.model, basedir);
 
     Map<String, String> modelMap = new HashMap<>();
@@ -71,7 +71,7 @@ public final class MavenProjectReader {
   }
 
   private Pair<RawModelReadResult, MavenExplicitProfiles> doReadProjectModel(MavenGeneralSettings generalSettings,
-                                                                             File projectPomDir,
+                                                                             Path projectPomDir,
                                                                              VirtualFile file,
                                                                              MavenExplicitProfiles explicitProfiles,
                                                                              Set<VirtualFile> recursionGuard,
@@ -90,7 +90,7 @@ public final class MavenProjectReader {
     model = resolveInheritance(generalSettings, model, projectPomDir, file, explicitProfiles, recursionGuard, locator, problems);
     addSettingsProfiles(generalSettings, model, alwaysOnProfiles, problems);
 
-    ProfileApplicationResult applied = applyProfiles(model, projectPomDir, getBaseDir(file).toFile(), explicitProfiles, alwaysOnProfiles);
+    ProfileApplicationResult applied = applyProfiles(model, projectPomDir, getBaseDir(file), explicitProfiles, alwaysOnProfiles);
     model = applied.getModel();
 
     repairModelBody(model);
@@ -204,8 +204,7 @@ public final class MavenProjectReader {
     mavenBuildBase.setTestResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "testResources", "testResource")));
     mavenBuildBase.setFilters(MavenJDOMUtil.findChildrenValuesByPath(xmlBuild, "filters", "filter"));
 
-    if (mavenBuildBase instanceof MavenBuild) {
-      MavenBuild mavenBuild = (MavenBuild)mavenBuildBase;
+    if (mavenBuildBase instanceof MavenBuild mavenBuild) {
 
       String source = MavenJDOMUtil.findChildValueByPath(xmlBuild, "sourceDirectory");
       if (!isEmptyOrSpaces(source)) mavenBuild.addSource(source);
@@ -220,11 +219,15 @@ public final class MavenProjectReader {
   private static List<MavenResource> collectResources(List<Element> xmlResources) {
     List<MavenResource> result = new ArrayList<>();
     for (Element each : xmlResources) {
-      result.add(new MavenResource(MavenJDOMUtil.findChildValueByPath(each, "directory"),
-                                   "true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering")),
-                                   MavenJDOMUtil.findChildValueByPath(each, "targetPath"),
-                                   MavenJDOMUtil.findChildrenValuesByPath(each, "includes", "include"),
-                                   MavenJDOMUtil.findChildrenValuesByPath(each, "excludes", "exclude")));
+      String directory = MavenJDOMUtil.findChildValueByPath(each, "directory");
+      boolean filtered = "true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering"));
+      String targetPath = MavenJDOMUtil.findChildValueByPath(each, "targetPath");
+      List<String> includes = MavenJDOMUtil.findChildrenValuesByPath(each, "includes", "include");
+      List<String> excludes = MavenJDOMUtil.findChildrenValuesByPath(each, "excludes", "exclude");
+
+      if (null == directory) continue;
+
+      result.add(new MavenResource(directory, filtered, targetPath, includes, excludes));
     }
     return result;
   }
@@ -249,7 +252,7 @@ public final class MavenProjectReader {
                                  ? "${project.build.directory}/test-classes" : build.getTestOutputDirectory());
   }
 
-  private List<MavenResource> repairResources(List<MavenResource> resources, String defaultDir) {
+  private List<MavenResource> repairResources(List<MavenResource> resources, @NotNull String defaultDir) {
     List<MavenResource> result = new ArrayList<>();
     if (resources.isEmpty()) {
       result.add(createResource(defaultDir));
@@ -263,7 +266,7 @@ public final class MavenProjectReader {
     return result;
   }
 
-  private MavenResource createResource(String directory) {
+  private MavenResource createResource(@NotNull String directory) {
     return new MavenResource(directory, false, null, Collections.emptyList(), Collections.emptyList());
   }
 
@@ -410,24 +413,18 @@ public final class MavenProjectReader {
   }
 
   private ProfileApplicationResult applyProfiles(MavenModel model,
-                                                 File projectPomDir,
-                                                 File basedir,
+                                                 Path projectPomDir,
+                                                 Path basedir,
                                                  MavenExplicitProfiles explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath());
-    try {
-      return connector.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (Exception e) {
-      connector.shutdown(false);
-      return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath())
-        .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
+
+    return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
+      .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,
                                         MavenModel model,
-                                        final File projectPomDir,
+                                        final Path projectPomDir,
                                         final VirtualFile file,
                                         final MavenExplicitProfiles explicitProfiles,
                                         final Set<VirtualFile> recursionGuard,
@@ -495,7 +492,7 @@ public final class MavenProjectReader {
                                                        MavenProjectProblem.ProblemType.PARENT, false));
       }
 
-      model = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath())
+      model = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
         .assembleInheritance(model, parentModel);
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
@@ -546,7 +543,8 @@ public final class MavenProjectReader {
             new MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.getDisabledProfiles()),
             projectData.nativeMavenProject,
             result.problems,
-            result.unresolvedArtifacts));
+            result.unresolvedArtifacts,
+            result.unresolvedProblems));
         }
       }
 

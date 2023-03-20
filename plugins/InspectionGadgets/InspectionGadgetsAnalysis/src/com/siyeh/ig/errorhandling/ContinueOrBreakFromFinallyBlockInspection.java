@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ContinueOrBreakFromFinallyBlockInspection
-  extends BaseInspection {
+public class ContinueOrBreakFromFinallyBlockInspection extends BaseInspection {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -35,8 +34,7 @@ public class ContinueOrBreakFromFinallyBlockInspection
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "continue.or.break.from.finally.block.problem.descriptor");
+    return InspectionGadgetsBundle.message("continue.or.break.from.finally.block.problem.descriptor");
   }
 
   @Override
@@ -44,22 +42,13 @@ public class ContinueOrBreakFromFinallyBlockInspection
     return new ContinueOrBreakFromFinallyBlockVisitor();
   }
 
-  private static class ContinueOrBreakFromFinallyBlockVisitor
-    extends BaseInspectionVisitor {
+  private static class ContinueOrBreakFromFinallyBlockVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitContinueStatement(
-      @NotNull PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       super.visitContinueStatement(statement);
-      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-        return;
-      }
-      final PsiStatement continuedStatement =
-        statement.findContinuedStatement();
-      if (continuedStatement == null) {
-        return;
-      }
-      if (ControlFlowUtils.isInFinallyBlock(continuedStatement)) {
+      final PsiStatement continuedStatement = statement.findContinuedStatement();
+      if (continuedStatement == null || !ControlFlowUtils.isInFinallyBlock(statement, continuedStatement)) {
         return;
       }
       registerStatementError(statement);
@@ -68,14 +57,8 @@ public class ContinueOrBreakFromFinallyBlockInspection
     @Override
     public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       super.visitBreakStatement(statement);
-      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-        return;
-      }
       final PsiStatement exitedStatement = statement.findExitedStatement();
-      if (exitedStatement == null) {
-        return;
-      }
-      if (ControlFlowUtils.isInFinallyBlock(exitedStatement)) {
+      if (exitedStatement == null || !ControlFlowUtils.isInFinallyBlock(statement, exitedStatement)) {
         return;
       }
       registerStatementError(statement);

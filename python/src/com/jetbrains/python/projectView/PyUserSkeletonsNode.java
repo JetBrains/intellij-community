@@ -14,9 +14,6 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public final class PyUserSkeletonsNode extends PsiDirectoryNode {
   private PyUserSkeletonsNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

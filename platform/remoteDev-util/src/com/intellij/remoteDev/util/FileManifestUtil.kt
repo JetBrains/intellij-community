@@ -6,11 +6,13 @@ import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
+import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -27,7 +29,7 @@ object FileManifestUtil {
 
   private fun isSymlink(file: Path) = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
 
-  class ManifestGenerator(private val targetDir: Path, private val includeInManifest: (Path) -> Boolean) : BiConsumer<Decompressor.Entry, Path> {
+  class ManifestGenerator(private val targetDir: Path, private val includeInManifest: (Path) -> Boolean, private val includeModifiedDate: Boolean = true) : BiConsumer<Decompressor.Entry, Path> {
     private val list = mutableListOf<String>()
 
     override fun accept(entry: Decompressor.Entry, path: Path) {
@@ -47,7 +49,7 @@ object FileManifestUtil {
             else                             33188 // -rw-r--r--, octal 0100644
           }
           // symlink permissions don't have meaning anyway, and we can't even set them to be consistent across OS:
-          // https://bugs.openjdk.java.net/browse/JDK-8220793 can't set attributes for symlinks pointing to non-existing files
+          // https://bugs.openjdk.org/browse/JDK-8220793 can't set attributes for symlinks pointing to non-existing files
           EntryType.SYMLINK -> -1
           EntryType.DIR ->     16877 // drwxr-xr-x, octal 0040755
           else -> error("Unknown entry type for ${entry.name}")
@@ -66,12 +68,17 @@ object FileManifestUtil {
     private data class FileAttributes(val mode: Int, val lastModifiedTime: FileTime, val size: Long)
 
     private fun addManifestEntry(name: String, type: EntryType, mode: Int, size: Long, lastModifiedTime: FileTime) {
+      // If the modified date is excluded from manifest, it will be 0 in all entries.
+      val modifiedDateValue = if (includeModifiedDate) {
+        (lastModifiedTime.toMillis() / 1000).toString()
+      } else "N/A"
+
       when(type) {
         EntryType.SYMLINK -> {
-          list.add("$name L ${size} ${lastModifiedTime.toMillis() / 1000}")
+          list.add("$name L ${size} $modifiedDateValue")
         }
         EntryType.FILE -> {
-          list.add("$name F ${Integer.toOctalString(mode)} ${size} ${lastModifiedTime.toMillis() / 1000}")
+          list.add("$name F ${Integer.toOctalString(mode)} ${size} $modifiedDateValue")
         }
         EntryType.DIR -> {
           list.add("$name D ${Integer.toOctalString(mode)}")
@@ -152,35 +159,49 @@ object FileManifestUtil {
     }
   }
 
-  fun decompressWithManifest(archiveFile: Path, targetDir: Path, includeInManifest: (Path) -> Boolean) {
+  private fun getFileFirstBytes(file: Path, @Suppress("SameParameterValue") length: Int): ByteArray {
+    val start = ByteBuffer.allocate(length)
+    FileChannel.open(file).use { channel -> channel.read(start, 0) }
+    start.flip()
+    check(start.remaining() == length) { "File $file is smaller than $length bytes" }
+    return start.toByteArray()
+  }
+
+  fun decompressWithManifest(archiveFile: Path, targetDir: Path, includeModifiedDate: Boolean, includeInManifest: (Path) -> Boolean) {
     if (targetDir.exists()) error("$targetDir already exists, refusing to extract to it")
 
-    val manifestor = ManifestGenerator(targetDir, includeInManifest)
+    val start = getFileFirstBytes(archiveFile, 2)
+
+    val manifestor = ManifestGenerator(targetDir, includeInManifest, includeModifiedDate)
     when {
-      archiveFile.extension.equals("zip", ignoreCase = true) || archiveFile.extension.equals("sit", ignoreCase = true) ->
+      // 'PK' for zip files
+      start[0] == 0x50.toByte() && start[1] == 0x4B.toByte() ->
         Decompressor.Zip(archiveFile)
           .withZipExtensions()
           .allowEscapingSymlinks(false)
           .postProcessor(manifestor)
           .extract(targetDir)
-      archiveFile.name.endsWith(".tar.gz", ignoreCase = true) ->
+      // 0x1F 0x8B for gzip
+      start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte() ->
         Decompressor.Tar(archiveFile)
           .allowEscapingSymlinks(false)
           .postProcessor(manifestor)
           .extract(targetDir)
-      else -> error("Unknown archive extension in file name: ${archiveFile.name}")
+      else -> error("Unsupported archive: " +
+                    "file:${archiveFile.name} " +
+                    "magic:${start.joinToString(" ") { "0x${Integer.toHexString(it.toInt())}" }}")
     }
 
     manifestor.writeToDisk(targetDir)
   }
 
-  fun generateDirectoryManifest(root: Path, includeInManifest: (Path) -> Boolean): String {
-    val manifestor = ManifestGenerator(root, includeInManifest)
+  fun generateDirectoryManifest(root: Path, includeModifiedDate: Boolean, includeInManifest: (Path) -> Boolean): String {
+    val manifestor = ManifestGenerator(root, includeInManifest, includeModifiedDate)
     manifestor.calculateForExistingDirectory()
     return manifestor.generate()
   }
 
-  fun isUpToDate(root: Path, includeInManifest: (Path) -> Boolean): Boolean {
+  fun isUpToDate(root: Path, includeModifiedDate: Boolean, includeInManifest: (Path) -> Boolean): Boolean {
     val manifestFile = root.resolve(ManifestFileName)
     if (manifestFile.notExists()) {
       logger.info("isUpToDate false for '$root': manifest file $manifestFile does not exist")
@@ -188,7 +209,7 @@ object FileManifestUtil {
     }
 
     val manifestFileContent = manifestFile.readText(StandardCharsets.UTF_8)
-    val actualOnDiskContent = generateDirectoryManifest(root, includeInManifest)
+    val actualOnDiskContent = generateDirectoryManifest(root, includeModifiedDate, includeInManifest)
 
     if (manifestFileContent == actualOnDiskContent) {
       logger.info("isUpToDate true for '$root': manifest file $manifestFile contains actual information")
@@ -222,7 +243,7 @@ object FileManifestUtil {
    * @param path - base path to extract directory
    * @param filterPaths - filter files to check for up-to-date state
    */
-  fun getExtractDirectory(path: Path, filterPaths: (Path) -> Boolean): ExtractDirectory {
+  fun getExtractDirectory(path: Path, includeModifiedDate: Boolean, filterPaths: (Path) -> Boolean): ExtractDirectory {
     val suffix = ".${ProcessHandle.current().pid()}.${System.currentTimeMillis()}"
 
     val retriesCount = 100
@@ -230,14 +251,14 @@ object FileManifestUtil {
     (1..retriesCount).forEach moveFolder@{ attempt ->
       val destinationPath = if (attempt <= 1) path else Path.of("$path-$attempt")
 
-      val isUpToDate = isUpToDate(destinationPath, filterPaths)
+      val isUpToDate = isUpToDate(destinationPath, includeModifiedDate, filterPaths)
       if (isUpToDate) {
         logger.info("All files inside extract directory '$destinationPath' are up-to-date")
         return ExtractDirectory(destinationPath, true)
       }
 
       if (!destinationPath.exists()) {
-        logger.info("Destination does not exist, returning $destinationPath")
+        logger.info("Destination extract directory path does not exist: '$destinationPath'. Use this path.")
         return ExtractDirectory(destinationPath, false)
       }
 

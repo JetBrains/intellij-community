@@ -15,9 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public interface XmlHighlightingAwareElementDescriptor {
 
   boolean shouldCheckRequiredAttributes();

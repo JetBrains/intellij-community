@@ -4,3 +4,5 @@
 package test
 
 public fun foo(): String?<caret>? = null
+
+// IGNORE_FIR

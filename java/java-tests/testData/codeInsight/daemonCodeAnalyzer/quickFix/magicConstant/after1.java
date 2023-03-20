@@ -1,4 +1,4 @@
-// "Replace with 'FontType.PLAIN'" "true"
+// "Replace with 'FontType.PLAIN'" "true-preview"
 import org.intellij.lang.annotations.MagicConstant;
 
 class D {

@@ -9,12 +9,13 @@ class ThriftAbstractGetValueAsyncThread(PyDBDaemonThread):
     """
     Abstract class for a thread, which evaluates values for async variables
     """
-    def __init__(self, server, seq, var_objects):
+    def __init__(self, server, seq, var_objects, user_type_renderers=None):
         PyDBDaemonThread.__init__(self)
         self.server = server
         self.seq = seq
         self.var_objs = var_objects
         self.cancel_event = threading.Event()
+        self.user_type_renderers = user_type_renderers
 
     def send_result(self, xml):
         raise NotImplementedError()
@@ -27,7 +28,7 @@ class ThriftAbstractGetValueAsyncThread(PyDBDaemonThread):
             if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
                 break
             # pydev_console_thrift.DebugValue()
-            values.append(pydevd_thrift.var_to_struct(var_obj, name, evaluate_full_value=True))
+            values.append(pydevd_thrift.var_to_struct(var_obj, name, evaluate_full_value=True, user_type_renderers=self.user_type_renderers))
         self.send_result(values)
 
 

@@ -16,7 +16,7 @@ class TestDependenciesResolver : AsyncDependenciesResolver {
             )
             else -> DependenciesResolver.ResolveResult.Success(
                 dependencies = ScriptDependencies(
-                    classpath = listOf(environment["template-classes"] as File),
+                    classpath = environment["template-classes"] as List<File>,
                     imports = listOf("x_" + text.replace(Regex("#IGNORE_IN_CONFIGURATION"), ""))
                 ),
                 reports = listOf(ScriptReport(text))
@@ -24,7 +24,7 @@ class TestDependenciesResolver : AsyncDependenciesResolver {
         }
 
         javaClass.classLoader
-            .loadClass("org.jetbrains.kotlin.idea.script.ScriptConfigurationLoadingTest")
+            .loadClass("org.jetbrains.kotlin.idea.script.ScriptConfigurationLoadingTest8")
             .methods.single { it.name == "loadingScriptConfigurationCallback" }
             .invoke(null)
 

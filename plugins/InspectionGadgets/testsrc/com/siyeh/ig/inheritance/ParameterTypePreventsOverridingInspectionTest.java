@@ -74,19 +74,19 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightJavaInsp
   }
 
   public void testStaticmethod() {
-    doTest("import java.util.List;" +
-           "class ParameterTypePreventsOverridingFalsePositiveForStaticMethods {\n" +
-           "    public static class SuperClass {\n" +
-           "        public static <T> Object wrap( List<T> something ) {\n" +
-           "            return null;\n" +
-           "        }\n" +
-           "    }\n" +
-           "    public static class SubClass extends SuperClass {\n" +
-           "        public static <T> Object wrap( List<T> something ) {\n" +
-           "            return null;\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.List;class ParameterTypePreventsOverridingFalsePositiveForStaticMethods {
+                 public static class SuperClass {
+                     public static <T> Object wrap( List<T> something ) {
+                         return null;
+                     }
+                 }
+                 public static class SubClass extends SuperClass {
+                     public static <T> Object wrap( List<T> something ) {
+                         return null;
+                     }
+                 }
+             }""");
   }
 
   @Override

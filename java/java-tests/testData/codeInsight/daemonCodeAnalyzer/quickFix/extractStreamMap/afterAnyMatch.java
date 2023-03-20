@@ -1,4 +1,4 @@
-// "Extract variable 'lowerCase' to 'map' operation" "true"
+// "Extract variable 'lowerCase' to 'map' operation" "true-preview"
 import java.util.*;
 import java.util.stream.*;
 

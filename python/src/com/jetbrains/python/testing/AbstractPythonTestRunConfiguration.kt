@@ -5,7 +5,10 @@ import com.intellij.execution.Location
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.value.*
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
@@ -13,6 +16,7 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import java.nio.file.Path
 
 /**
  * Parent of all test configurations
@@ -21,10 +25,12 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration
  */
 abstract class AbstractPythonTestRunConfiguration<T : AbstractPythonTestRunConfiguration<T>>
 @JvmOverloads
-protected constructor(project: Project, factory: ConfigurationFactory, val requiredPackage: String? = null) :
+protected constructor(project: Project, factory: ConfigurationFactory, private val requiredPackage: String? = null) :
   AbstractPythonRunConfiguration<T>(project, factory) {
   /**
    * Create test spec (string to be passed to runner, probably glued with [TEST_NAME_PARTS_SPLITTER])
+   *
+   * *To be deprecated. The part of the legacy implementation based on [com.intellij.execution.configurations.GeneralCommandLine].*
    *
    * @param location   test location as reported by runner
    * @param failedTest failed test
@@ -51,6 +57,23 @@ protected constructor(project: Project, factory: ConfigurationFactory, val requi
     return null
   }
 
+  open fun getTestSpec(request: TargetEnvironmentRequest,
+                       location: Location<*>,
+                       failedTest: AbstractTestProxy): TargetEnvironmentFunction<String>? {
+    val element = location.psiElement
+    var pyClass = PsiTreeUtil.getParentOfType(element, PyClass::class.java, false)
+    if (location is PyPsiLocationWithFixedClass) {
+      pyClass = location.fixedClass
+    }
+    val pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction::class.java, false)
+    val virtualFile = location.virtualFile
+    return virtualFile?.canonicalPath?.let { localPath ->
+      val targetPath = targetPath(Path.of(localPath))
+      (listOf(targetPath) + listOfNotNull(pyClass?.name, pyFunction?.name).map(::constant))
+        .joinToStringFunction(separator = TEST_NAME_PARTS_SPLITTER)
+    }
+  }
+
   @Throws(RuntimeConfigurationException::class)
   override fun checkConfiguration() {
     super.checkConfiguration()
@@ -64,7 +87,12 @@ protected constructor(project: Project, factory: ConfigurationFactory, val requi
    * Check if framework is available on SDK
    */
   fun isFrameworkInstalled(): Boolean {
-    val sdk = sdk ?: return false // No SDK -- no tests
+    val sdk = sdk
+    if (sdk == null) {
+      // No SDK -- no tests
+      logger<AbstractPythonRunConfiguration<*>>().warn("SDK is null")
+      return false
+    }
     val requiredPackage = this.requiredPackage ?: return true // Installed by default
     return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
   }

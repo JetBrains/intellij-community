@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.ui
 
@@ -24,7 +24,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.core.util.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.scratch.*
 import org.jetbrains.kotlin.idea.scratch.output.*
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -157,6 +157,8 @@ class KtScratchFileEditorWithPreview private constructor(
     fun clearOutputHandlers() {
         commonPreviewOutputHandler.clear(scratchFile)
     }
+
+    override fun isShowActionsInTabs(): Boolean = false
 
     override fun createViewActionGroup(): ActionGroup {
         return DefaultActionGroup(showEditorAction, showEditorAndPreviewAction)

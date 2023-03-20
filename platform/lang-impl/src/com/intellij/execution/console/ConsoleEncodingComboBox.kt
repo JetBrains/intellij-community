@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.encoding.EncodingManager
@@ -13,24 +14,33 @@ import com.intellij.openapi.vfs.encoding.EncodingReference
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleListCellRenderer
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.nio.charset.Charset
 import javax.swing.JList
 
 class ConsoleEncodingComboBox : ComboBox<ConsoleEncodingComboBox.EncodingItem>() {
-  interface EncodingItem
+  interface EncodingItem {
+    val displayName: @Nls @NlsContexts.Label String
+  }
 
-  private data class LabelItem(@NlsContexts.Separator val label: String) : EncodingItem
+  private data class LabelItem(@NlsContexts.Separator val label: String) : EncodingItem {
+    override val displayName: @Nls @NlsContexts.Label String = label
+  }
 
   private interface SelectableItem : EncodingItem
 
   private data class CharsetItem(val reference: EncodingReference) : SelectableItem {
     constructor(charset: Charset) : this(EncodingReference(charset))
 
-    override fun toString(): String {
-      return reference.charset?.displayName()
-             ?: IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName())
+    override val displayName: @NlsSafe String
+      get() {
+        return reference.charset?.displayName()
+               ?: IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName())
+      }
 
+    override fun toString(): String {
+      return displayName
     }
 
     companion object {
@@ -73,7 +83,7 @@ class ConsoleEncodingComboBox : ComboBox<ConsoleEncodingComboBox.EncodingItem>()
       }
 
       override fun customize(list: JList<out EncodingItem>, value: EncodingItem, index: Int, selected: Boolean, hasFocus: Boolean) {
-        text = value.toString()
+        text = value.displayName
       }
     }
   }

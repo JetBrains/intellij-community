@@ -45,9 +45,7 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue transfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
     DfaVariableValue staticVariable = myStaticVariable == null ? null : myStaticVariable.bindToFactory(factory);
-    var instruction = new ArrayStoreInstruction(getDfaAnchor(), myIndexProblem, transfer, staticVariable);
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new ArrayStoreInstruction(getDfaAnchor(), myIndexProblem, transfer, staticVariable);
   }
 
   @Override

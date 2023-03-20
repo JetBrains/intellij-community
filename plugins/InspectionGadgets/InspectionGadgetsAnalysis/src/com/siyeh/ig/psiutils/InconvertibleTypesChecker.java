@@ -2,10 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.psi.PsiCapturedWildcardType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Contract;
@@ -20,6 +17,8 @@ public final class InconvertibleTypesChecker {
   public static @Nullable TypeMismatch checkTypes(@NotNull PsiType leftType,
                                                   @NotNull PsiType rightType,
                                                   @NotNull LookForMutualSubclass lookForMutualSubclass) {
+    // Compilation error
+    if (LambdaUtil.notInferredType(leftType) || LambdaUtil.notInferredType(rightType)) return null;
     if (TypeUtils.areConvertible(leftType, rightType) || TypeUtils.mayBeEqualByContract(leftType, rightType)) {
       return deepCheck(leftType, rightType, lookForMutualSubclass);
     }

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
-import java.awt.Image
+import java.awt.image.BufferedImage
 
 /**
  * Collection of factory methods for API requests used in plugin
@@ -24,8 +24,8 @@ object GithubApiRequests {
     fun get(url: String) = Get.json<GithubAuthenticatedUser>(url).withOperationName("get profile information")
 
     @JvmStatic
-    fun getAvatar(url: String) = object : Get<Image>(url) {
-      override fun extractResult(response: GithubApiResponse): Image {
+    fun getAvatar(url: String) = object : Get<BufferedImage>(url) {
+      override fun extractResult(response: GithubApiResponse): BufferedImage {
         return response.handleBody(ThrowableConvertor {
           GithubApiContentHelper.loadImage(it)
         })
@@ -77,19 +77,6 @@ object GithubApiRequests {
         get(getUrl(server, CurrentUser.urlSuffix, urlSuffix, getQuery(pagination?.toString().orEmpty())))
 
       fun get(url: String) = Get.jsonPage<GithubOrg>(url).withOperationName("get user organizations")
-    }
-
-    object RepoSubs : Entity("/subscriptions") {
-      @JvmStatic
-      fun pages(server: GithubServerPath) = GithubApiPagesLoader.Request(get(server), ::get)
-
-      @JvmOverloads
-      @JvmStatic
-      fun get(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
-        get(getUrl(server, CurrentUser.urlSuffix, urlSuffix, getQuery(pagination?.toString().orEmpty())))
-
-      @JvmStatic
-      fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get repository subscriptions")
     }
   }
 
@@ -331,33 +318,15 @@ object GithubApiRequests {
     object PullRequests : Entity("/pulls") {
 
       @JvmStatic
-      fun create(server: GithubServerPath,
-                 username: String, repoName: String,
-                 title: String, description: String, head: String, base: String) =
-        Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
-                                             GithubPullRequestRequest(title, description, head, base))
-          .withOperationName("create pull request in $username/$repoName")
-
-      @JvmStatic
       fun update(serverPath: GithubServerPath, username: String, repoName: String, number: Long,
                  title: String? = null,
                  body: String? = null,
                  state: GithubIssueState? = null,
                  base: String? = null,
                  maintainerCanModify: Boolean? = null) =
-        Patch.json<GithubPullRequestDetailed>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
-                                              GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
+        Patch.json<Any>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
+                        GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
           .withOperationName("update pull request $number")
-
-      @JvmStatic
-      fun update(url: String,
-                 title: String? = null,
-                 body: String? = null,
-                 state: GithubIssueState? = null,
-                 base: String? = null,
-                 maintainerCanModify: Boolean? = null) =
-        Patch.json<GithubPullRequestDetailed>(url, GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
-          .withOperationName("update pull request")
 
       @JvmStatic
       fun merge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
@@ -386,6 +355,17 @@ object GithubApiRequests {
                                      GithubApiUrlQueryBuilder.urlQuery { param(GithubRequestPagination(pageSize = 1)) })) {
           override fun extractResult(response: GithubApiResponse) = response.findHeader("ETag")
         }.withOperationName("get pull request list ETag")
+
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, number: Long) =
+        object : Get<String>(getUrl(repository, urlSuffix, "/$number"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              it.reader().use { it.readText() }
+            })
+          }
+        }.withOperationName("get diff of a PR")
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
@@ -441,38 +421,8 @@ object GithubApiRequests {
                    }))
 
       @JvmStatic
-      fun get(server: GithubServerPath, query: String, pagination: GithubRequestPagination? = null) =
-        get(getUrl(server, Search.urlSuffix, urlSuffix,
-                   GithubApiUrlQueryBuilder.urlQuery {
-                     param("q", query)
-                     param(pagination)
-                   }))
-
-
-      @JvmStatic
       fun get(url: String) = Get.jsonSearchPage<GithubSearchedIssue>(url).withOperationName("search issues in repository")
     }
-  }
-
-  object Auth : Entity("/authorizations") {
-    @JvmStatic
-    fun create(server: GithubServerPath, scopes: List<String>, note: String) =
-      Post.json<GithubAuthorization>(getUrl(server, urlSuffix),
-                                     GithubAuthorizationCreateRequest(scopes, note, null))
-        .withOperationName("create authorization $note")
-
-    @JvmStatic
-    fun get(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
-      get(getUrl(server, urlSuffix,
-                 GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
-
-    @JvmStatic
-    fun get(url: String) = Get.jsonPage<GithubAuthorization>(url)
-      .withOperationName("get authorizations")
-
-    @JvmStatic
-    fun pages(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
-      GithubApiPagesLoader.Request(get(server, pagination), ::get)
   }
 
   abstract class Entity(val urlSuffix: String)

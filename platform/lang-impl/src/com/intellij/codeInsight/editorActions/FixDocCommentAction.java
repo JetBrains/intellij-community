@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Updates existing documentation comment if necessary if the one exists. E.g. we've changed method signature and want to remove all
  * outdated parameters and create stubs for the new ones.
- *
- * @author Denis Zhdanov
  */
 public class FixDocCommentAction extends EditorAction {
 
@@ -62,7 +60,7 @@ public class FixDocCommentAction extends EditorAction {
         return;
       }
 
-      process(psiFile, editor, project, editor.getCaretModel().getOffset()); 
+      process(psiFile, editor, project, editor.getCaretModel().getOffset());
     }
   }
 
@@ -104,10 +102,9 @@ public class FixDocCommentAction extends EditorAction {
     }
 
     Commenter c = LanguageCommenters.INSTANCE.forLanguage(language);
-    if (!(c instanceof CodeDocumentationAwareCommenter)) {
+    if (!(c instanceof CodeDocumentationAwareCommenter commenter)) {
       return;
     }
-    final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)c;
     final Runnable task;
     if (pair.second == null || pair.second.getTextRange().isEmpty()) {
       task = () -> generateComment(pair.first, editor, docProvider, commenter, project);
@@ -127,7 +124,6 @@ public class FixDocCommentAction extends EditorAction {
       final Runnable command = () -> ApplicationManager.getApplication().runWriteAction(task);
       CommandProcessor.getInstance().executeCommand(project, command, CodeInsightBundle.message("command.fix.documentation"), null);
     }
-    
   }
 
   /**
@@ -135,7 +131,7 @@ public class FixDocCommentAction extends EditorAction {
    * <p/>
    * It's assumed that this method {@link PsiDocumentManager#commitDocument(Document) syncs} all PSI-document
    * changes during the processing.
-   * 
+   *
    * @param anchor      target element for which a comment should be generated
    * @param editor      target editor
    * @param commenter   commenter to use
@@ -161,7 +157,7 @@ public class FixDocCommentAction extends EditorAction {
       int nonWhiteSpaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), lineStartOffset, commentStartOffset - 1, " \t") + 1;
       commentStartOffset = Math.max(nonWhiteSpaceOffset, lineStartOffset);
     }
-  
+
     int commentBodyRelativeOffset = 0;
     int caretOffsetToSet = -1;
     StringBuilder buffer = new StringBuilder();
@@ -170,7 +166,7 @@ public class FixDocCommentAction extends EditorAction {
       buffer.append(commentPrefix).append("\n");
       commentBodyRelativeOffset += commentPrefix.length() + 1;
     }
-  
+
     String linePrefix = commenter.getDocumentationCommentLinePrefix();
     if (linePrefix != null) {
       buffer.append(linePrefix);
@@ -179,16 +175,16 @@ public class FixDocCommentAction extends EditorAction {
     }
     buffer.append("\n");
     commentBodyRelativeOffset++;
-  
+
     String commentSuffix = commenter.getDocumentationCommentSuffix();
     if (commentSuffix != null) {
       buffer.append(commentSuffix).append("\n");
     }
-  
+
     if (buffer.length() <= 0) {
       return;
     }
-  
+
     document.insertString(commentStartOffset, buffer);
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
     docManager.commitDocument(document);
@@ -197,7 +193,7 @@ public class FixDocCommentAction extends EditorAction {
     if (pair == null || pair.second == null) {
       return;
     }
-  
+
     String stub = documentationProvider.generateDocumentationContentStub(pair.second);
     CaretModel caretModel = editor.getCaretModel();
     if (stub != null) {
@@ -215,7 +211,7 @@ public class FixDocCommentAction extends EditorAction {
     if (pair == null || pair.second == null) {
       return;
     }
-    
+
     int start = Math.min(calcStartReformatOffset(pair.first), calcStartReformatOffset(pair.second));
     int end = pair.second.getTextRange().getEndOffset();
 

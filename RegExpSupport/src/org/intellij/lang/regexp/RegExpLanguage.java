@@ -15,9 +15,10 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
 
-public class RegExpLanguage extends Language {
+public class RegExpLanguage extends Language implements InjectableLanguage {
     public static final RegExpLanguage INSTANCE = new RegExpLanguage();
 
     protected RegExpLanguage() {

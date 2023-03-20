@@ -520,6 +520,11 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
         setSelected(e, isSelected(e) && enabled && visible);
         super.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return super.getActionUpdateThread();
+      }
     };
     myToggleRegularExpression = new LargeFileToggleAction(this, EditorBundle.message("large.file.editor.regex.action.mnemonic.text")) {
       @Override
@@ -528,6 +533,10 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
         if (state && myToggleWholeWordsAction != null) {
           myToggleWholeWordsAction.setSelected(false);
         }
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return super.getActionUpdateThread();
       }
     };
     myStatusTextAction = new LargeFileStatusTextAction(this);

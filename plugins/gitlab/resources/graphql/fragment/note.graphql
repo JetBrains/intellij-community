@@ -1,0 +1,30 @@
+fragment note on Note {
+  id
+  createdAt
+  author {
+    ...user
+  }
+  body
+  system
+
+  position {
+    diffRefs {
+      baseSha
+      headSha
+      startSha
+    }
+    filePath
+    positionType
+    oldLine
+    oldPath
+    newLine
+    newPath
+  }
+  url
+  resolvable
+  resolved
+  userPermissions {
+    resolveNote
+    adminNote
+  }
+}

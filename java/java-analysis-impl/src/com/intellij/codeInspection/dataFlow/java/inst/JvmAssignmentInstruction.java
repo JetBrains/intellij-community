@@ -25,9 +25,7 @@ public class JvmAssignmentInstruction extends SimpleAssignmentInstruction {
   
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new JvmAssignmentInstruction(getDfaAnchor(), getDestination().bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new JvmAssignmentInstruction(getDfaAnchor(), getDestination().bindToFactory(factory));
   }
 
   @Override

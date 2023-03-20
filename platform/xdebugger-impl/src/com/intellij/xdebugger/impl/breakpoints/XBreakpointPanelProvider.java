@@ -71,7 +71,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   }
 
   @Override
-  public void provideBreakpointItems(Project project, Collection<BreakpointItem> items) {
+  public void provideBreakpointItems(Project project, Collection<? super BreakpointItem> items) {
     Arrays.stream(XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints())
       .map(XBreakpointItem::new)
       .forEach(items::add);

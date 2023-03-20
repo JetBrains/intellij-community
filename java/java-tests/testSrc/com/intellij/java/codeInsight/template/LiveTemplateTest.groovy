@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -18,9 +18,10 @@ import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInsight.template.macro.ConcatMacro
 import com.intellij.codeInsight.template.macro.FilePathMacroBase
 import com.intellij.codeInsight.template.macro.SplitWordsMacro
-import com.intellij.internal.statistic.FUCounterCollectorTestCase
+import com.intellij.ide.DataManager
+import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbServiceImpl
@@ -33,16 +34,11 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.DocumentUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
-/**
- * @author spleaner
- */
 @SuppressWarnings("SpellCheckingInspection")
 class LiveTemplateTest extends LiveTemplateTestCase {
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
@@ -56,7 +52,7 @@ class LiveTemplateTest extends LiveTemplateTestCase {
     String group = "user"
     final Template template = manager.createTemplate(templateName, group, templateText)
     template.addVariable("ARG", "", "", false)
-    TemplateContextType contextType = contextType(JavaCodeContextType.class)
+    TemplateContextType contextType = contextType(JavaCodeContextType.Generic.class)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
@@ -279,7 +275,7 @@ class Foo {
   }
 
   private static <T extends TemplateContextType> T contextType(Class<T> clazz) {
-    ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz)
+    return TemplateContextTypes.getByClass(clazz)
   }
 
   private void configure() {
@@ -355,7 +351,7 @@ class Foo {
   }
 
   void testJavaOtherContext() throws IOException {
-    def stmtContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Statement)
+    def stmtContext = TemplateContextTypes.getByClass(JavaCodeContextType.Statement)
 
     configureFromFileText("a.java", "class Foo {{ iter<caret>  }}")
 
@@ -383,16 +379,16 @@ class Foo {
     def defContext = new TemplateContext()
     defContext.readTemplateContext(defElement)
 
-    assert !defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Statement))
-    assert defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Declaration))
-    assert defContext.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic))
+    assert !defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Statement))
+    assert defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Declaration))
+    assert defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic))
 
     def copy = defContext.createCopy()
 
     def write = copy.writeTemplateContext(null)
     assert write.children.size() == 2 : JDOMUtil.writeElement(write)
 
-    copy.setEnabled(TemplateContextType.EP_NAME.findExtension(JavaCommentContextType), false)
+    copy.setEnabled(TemplateContextTypes.getByClass(JavaCommentContextType), false)
 
     write = copy.writeTemplateContext(null)
     assert write.children.size() == 3 : JDOMUtil.writeElement(write)
@@ -403,12 +399,12 @@ class Foo {
     context.readTemplateContext(new Element("context"))
 
     def defContext = new TemplateContext()
-    def commentContext = TemplateContextType.EP_NAME.findExtension(JavaCommentContextType)
+    def commentContext = TemplateContextTypes.getByClass(JavaCommentContextType)
     defContext.setEnabled(commentContext, true)
 
     context.setDefaultContext(defContext)
     assert context.isEnabled(commentContext)
-    assert !context.isEnabled(TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic))
+    assert !context.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic))
   }
 
   void "test adding new context to Other"() {
@@ -419,7 +415,7 @@ class Foo {
     def context = new TemplateContext()
     context.readTemplateContext(defElement)
 
-    def javaContext = TemplateContextType.EP_NAME.findExtension(JavaCodeContextType.Generic)
+    def javaContext = TemplateContextTypes.getByClass(JavaCodeContextType.Generic)
     context.setEnabled(javaContext, true)
 
     def saved = context.writeTemplateContext(null)
@@ -428,7 +424,7 @@ class Foo {
     context.readTemplateContext(saved)
 
     assert context.isEnabled(javaContext)
-    assert context.isEnabled(TemplateContextType.EP_NAME.findExtension(EverywhereContextType))
+    assert context.isEnabled(TemplateContextTypes.getByClass(EverywhereContextType))
   }
 
   private static writeCommand(Runnable runnable) {
@@ -685,7 +681,7 @@ class Foo {
     final Template template = manager.createTemplate("xxx", "user", '$VAR1$ $VAR2$ $VAR1$')
     template.addVariable("VAR1", "", "", true)
     template.addVariable("VAR2", new MacroCallNode(new FilePathMacroBase.FileNameMacro()), new ConstantNode("default"), true)
-    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
+    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.Generic.class), true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
     startTemplate(template)
@@ -1261,7 +1257,7 @@ class Foo {
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
     myFixture.configureByText 'a.java', '//a <selection><caret>foo_bar</selection> b'
-    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, [] as Set)
+    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, new HashSet())
     def action = group.find { it.templatePresentation.text.contains(template.key) }
     (action as InvokeTemplateAction).perform()
     myFixture.checkResult('//a foobar+x b')
@@ -1287,7 +1283,7 @@ class Foo {
   }
 
   void "test log livetemplate started event"() {
-    def events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents {
+    def events = FUCollectorTestCase.INSTANCE.collectLogEvents(testRootDisposable) {
       configureFromFileText("empty.java", "")
       TemplateManager manager = TemplateManager.getInstance(getProject())
       Template template = manager.createTemplate("empty", "user", '$VAR$')
@@ -1297,5 +1293,31 @@ class Foo {
     def logEvent = events.find { it.group.id == "live.templates" }
     assert logEvent
     assert logEvent.event.id == "started"
+  }
+
+  void "test additional actions"() {
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    TemplateImpl template = (TemplateImpl)manager.createTemplate('doubleparen', 'user', '(($END$$SELECTION$))')
+    TemplateContextType contextType = contextType(JavaCodeContextType.class)
+    template.getTemplateContext().setEnabled(contextType, true)
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable())
+    myFixture.configureByText("a.java", "class X {{<selection>hello</selection>}}")
+    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, new HashSet<Character>())
+    def action = group.find { it.templateText == "doubleparen" }
+    assert action instanceof ActionGroup
+    final Presentation presentation = new Presentation()
+    final DataContext context = DataManager.getInstance().getDataContext()
+    final AnActionEvent event = new AnActionEvent(null, context, "", presentation, ActionManager.getInstance(), 0);
+    assert !presentation.performGroup
+    assert !presentation.popupGroup
+    action.update(event)
+    assert presentation.performGroup
+    assert presentation.popupGroup
+    def children = (action as ActionGroup).getChildren(event)
+    assert children[0].templateText == "Edit live template settings"
+    assert children[1].templateText == "Disable 'doubleparen' template"
+    assert !template.isDeactivated()
+    children[1].actionPerformed(event)
+    assert template.isDeactivated()
   }
 }

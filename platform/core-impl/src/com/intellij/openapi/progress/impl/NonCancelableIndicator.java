@@ -30,7 +30,7 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
     }
   };
 
-  protected NonCancelableIndicator() {
+  NonCancelableIndicator() {
   }
 
   @Override
@@ -43,7 +43,7 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
 
   @Override
   public final void checkCanceled() {
-    CoreProgressManager.runCheckCanceledHooks(this);
+    ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(this);
   }
 
   @Override

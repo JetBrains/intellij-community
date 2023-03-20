@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -15,6 +15,7 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
+import com.intellij.ide.actions.searcheverywhere.GroupTitleRenderer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
@@ -34,6 +35,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
@@ -42,25 +44,21 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
@@ -70,14 +68,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.MATCHED_PROVIDER_PROPERTY;
 import static com.intellij.ide.actions.runAnything.RunAnythingSearchListModel.RunAnythingMainListModel;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static java.awt.FlowLayout.RIGHT;
 
 public class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
@@ -89,7 +86,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private static final String HELP_PLACEHOLDER = "?";
   private boolean myIsUsedTrigger;
   private volatile ActionCallback myCurrentWorker;
-  private boolean mySkipFocusGain = false;
   @Nullable private final VirtualFile myVirtualFile;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
@@ -158,16 +154,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     mySearchField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        if (mySkipFocusGain) {
-          mySkipFocusGain = false;
-          return;
-        }
         rebuildList();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        searchFinishedHandler.run();
       }
     });
   }
@@ -235,7 +222,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
                                       int itemsNumberToInsert) {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<RunAnythingItem> items = StreamEx.of(listModel.getItems()).select(RunAnythingItem.class).collect(Collectors.toList());
+      List<RunAnythingItem> items = ContainerUtil.filterIsInstance(listModel.getItems(), RunAnythingItem.class);
       RunAnythingGroup.SearchResult result;
       try {
         result = ProgressManager.getInstance().runProcess(
@@ -398,10 +385,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     });
   }
 
-  protected void resetFields() {
-    mySkipFocusGain = false;
-  }
-
   public void initResultsList() {
     myResultsList.addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -438,31 +421,30 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    ActionUtil.performDumbAwareUpdate(false, myChooseContextAction, event, false);
+    ActionUtil.performDumbAwareUpdate(myChooseContextAction, event, false);
   }
 
-  @Override
-  @NotNull
-  public JPanel createTopLeftPanel() {
-    myTextFieldTitle = new JLabel(IdeBundle.message("run.anything.run.anything.title"));
-    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+  private void createTextFieldTitle() {
+    myTextFieldTitle = new JLabel(IdeBundle.message("run.anything.run.anything.title")) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        Font defaultFont = JBFont.label();
+        if (SystemInfo.isMac) {
+          setFont(defaultFont.deriveFont(Font.BOLD, defaultFont.getSize() - 1f));
+        }
+        else {
+          setFont(defaultFont.deriveFont(Font.BOLD));
+        }
+      }
+    };
+
     Color foregroundColor = StartupUiUtil.isUnderDarcula()
                             ? UIUtil.isUnderWin10LookAndFeel() ? JBColor.WHITE : new JBColor(Gray._240, Gray._200)
                             : UIUtil.getLabelForeground();
 
 
     myTextFieldTitle.setForeground(foregroundColor);
-    myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(3, 5, 5, 0));
-    if (SystemInfo.isMac) {
-      myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD, myTextFieldTitle.getFont().getSize() - 1f));
-    }
-    else {
-      myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD));
-    }
-
-    topPanel.add(myTextFieldTitle);
-
-    return topPanel;
   }
 
   @NotNull
@@ -519,11 +501,10 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   public static void adjustEmptyText(@NotNull JBTextField textEditor,
-                                     @NotNull BooleanFunction<? super JBTextField> function,
+                                     @NotNull Predicate<JBTextField> function,
                                      @NotNull @NlsContexts.StatusText String leftText,
                                      @NotNull @NlsContexts.StatusText String rightText) {
-
-    textEditor.putClientProperty("StatusVisibleFunction", function);
+    textEditor.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, function);
     StatusText statusText = textEditor.getEmptyText();
     statusText.setShowAboveCenter(false);
     statusText.setText(leftText, SimpleTextAttributes.GRAY_ATTRIBUTES);
@@ -601,32 +582,32 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class MyListRenderer extends ColoredListCellRenderer<Object> {
-    private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
+
+    private final GroupTitleRenderer groupTitleRenderer = new GroupTitleRenderer();
+
+    private final RunAnythingMore runAnythingMore = new RunAnythingMore();
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
-      Component cmp = null;
+      Component cmp;
+      Color bg = isSelected ? UIUtil.getListBackground(isSelected, true) : list.getBackground();
       if (isMoreItem(index)) {
-        cmp = RunAnythingMore.get(isSelected);
-      }
-
-      if (cmp == null) {
+        runAnythingMore.setBackground(bg);
+        cmp = runAnythingMore;
+      } else {
         if (value instanceof RunAnythingItem) {
           cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
+          if (cmp.getBackground() == null || cmp.getBackground() == UIUtil.getListBackground()) {
+            cmp.setBackground(bg);
+          }
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
-          p.setBackground(UIUtil.getListBackground(isSelected, true));
+          p.setBackground(bg);
           p.add(cmp, BorderLayout.CENTER);
           cmp = p;
         }
-      }
-
-      Color bg = cmp.getBackground();
-      if (bg == null) {
-        cmp.setBackground(UIUtil.getListBackground(isSelected));
-        bg = cmp.getBackground();
       }
 
       Color foreground = cmp.getForeground();
@@ -634,25 +615,24 @@ public class RunAnythingPopupUI extends BigPopupUI {
         cmp.setForeground(UIUtil.getListForeground(isSelected));
         foreground = cmp.getBackground();
       }
-      myMainPanel.removeAll();
       RunAnythingSearchListModel model = getSearchingModel(myResultsList);
+      SelectablePanel wrapped = SelectablePanel.wrap(cmp, list.getBackground());
+      wrapped.setSelectionColor(bg);
+      wrapped.setForeground(foreground);
+      if (ExperimentalUI.isNewUI()) {
+        PopupUtil.configListRendererFixedHeight(wrapped);
+      }
+      else {
+        wrapped.setBorder(RENDERER_BORDER);
+      }
       if (model != null) {
         String title = model.getTitle(index);
         if (title != null) {
-          myMainPanel.add(RunAnythingUtil.createTitle(" " + title, UIUtil.getListBackground(false, false)), BorderLayout.NORTH);
+          return groupTitleRenderer.withDisplayedData(title, wrapped);
         }
       }
-      JPanel wrapped = new JPanel(new BorderLayout());
-      wrapped.setBackground(bg);
-      wrapped.setForeground(foreground);
-      wrapped.setBorder(RENDERER_BORDER);
-      wrapped.add(cmp, BorderLayout.CENTER);
-      myMainPanel.add(wrapped, BorderLayout.CENTER);
-      if (cmp instanceof Accessible) {
-        myMainPanel.setAccessible((Accessible)cmp);
-      }
 
-      return myMainPanel;
+      return wrapped;
     }
 
     @Override
@@ -758,12 +738,15 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   @Override
-  protected JPanel createSettingsPanel() {
-    JPanel res = new JPanel(new FlowLayout(RIGHT, 0, 0));
-    res.setOpaque(false);
+  protected JComponent createHeader() {
+    createTextFieldTitle();
+
+    JPanel result = new JPanel();
+    RowBuilder builder = new RowBuilder(result);
+    builder.addResizable(myTextFieldTitle);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    myChooseContextAction = new RunAnythingChooseContextAction(res) {
+    myChooseContextAction = new RunAnythingChooseContextAction(result) {
       @Override
       public void setAvailableContexts(@NotNull List<? extends RunAnythingContext> executionContexts) {
         myAvailableExecutingContexts.clear();
@@ -791,23 +774,35 @@ public class RunAnythingPopupUI extends BigPopupUI {
     actionGroup.addAction(new RunAnythingShowFilterAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("run.anything.toolbar", actionGroup, true);
+    toolbar.setTargetComponent(mySearchField);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
-    res.add(toolbarComponent);
-    return res;
+
+    if (ExperimentalUI.isNewUI()) {
+      myTextFieldTitle.setBorder(PopupUtil.getComplexPopupVerticalHeaderBorder());
+      toolbarComponent.setBorder(null);
+      result.setBorder(JBUI.Borders.compound(
+        JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0, 1, 0),
+        PopupUtil.getComplexPopupHorizontalHeaderBorder()));
+    }
+    else {
+      result.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+    }
+
+    builder.add(toolbarComponent);
+    return result;
   }
 
-
-  @NotNull
   @Override
-  protected @NlsContexts.PopupAdvertisement String[] getInitialHints() {
+  protected @NlsContexts.PopupAdvertisement String @NotNull [] getInitialHints() {
     return new String[]{IdeBundle.message("run.anything.hint.initial.text",
                                           KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
                                           KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE))};
   }
 
   @Override
+  @NotNull
   @Nls
   protected String getAccessibleName() {
     return IdeBundle.message("run.anything.accessible.name");
@@ -825,9 +820,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   @Override
-  public void dispose() {
-    resetFields();
-  }
+  public void dispose() {}
 
   private final class RunAnythingShowFilterAction extends ShowFilterAction {
     @NotNull private final Collection<RunAnythingGroup> myTemplateGroups;
@@ -845,6 +838,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     @Override
     protected boolean isEnabled() {
       return true;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

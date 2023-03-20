@@ -31,7 +31,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    */
   @Override
   @Nullable
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return null;
   }
 
@@ -41,7 +41,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    */
   @Deprecated
   @NotNull
-  public Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings modelSettings) {
+  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     //noinspection ConstantConditions
     return null;
   }
@@ -114,9 +114,10 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
   }
 
   private static final class LegacyConfigurableWrapper implements CodeStyleConfigurable {
+    @NotNull
     private final Configurable myConfigurable;
 
-    private LegacyConfigurableWrapper(Configurable configurable) {
+    private LegacyConfigurableWrapper(@NotNull Configurable configurable) {
       myConfigurable = configurable;
     }
 

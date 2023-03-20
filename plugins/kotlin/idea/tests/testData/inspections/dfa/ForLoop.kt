@@ -1,6 +1,7 @@
 // WITH_STDLIB
 import kotlin.collections.List
 
+@OptIn(ExperimentalStdlibApi::class)
 fun test() {
     for(i in 1..10) {
         if (<warning descr="Condition 'i < 0' is always false">i < 0</warning>) {}
@@ -10,6 +11,9 @@ fun test() {
         if (i >= 10) {}
     }
     for(i in 1 until 10) {
+        if (<warning descr="Condition 'i >= 10' is always false">i >= 10</warning>) {}
+    }
+    for(i in 1..<10) {
         if (<warning descr="Condition 'i >= 10' is always false">i >= 10</warning>) {}
     }
     for(i in 10 downTo 1) {
@@ -26,6 +30,9 @@ fun testEmptyLoop(x: Int, y: Int) {
     if (y >= x) return
     for(i in <warning descr="'for' range is always empty">x..y</warning>) {
     }
+    var a = 10
+    for(i in 10..0) {}
+    for(i in <warning descr="'for' range is always empty">a..0</warning>) {}
 }
 fun testArray(arr : Array<Int>) {
     for (x in arr) {

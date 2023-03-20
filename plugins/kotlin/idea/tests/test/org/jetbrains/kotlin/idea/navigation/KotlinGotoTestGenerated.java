@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -50,14 +50,19 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
             runTest("testData/navigation/gotoClass/innerClass.kt");
         }
 
+        @TestMetadata("interfaceWithFunImplement.kt")
+        public void testInterfaceWithFunImplement() throws Exception {
+            runTest("testData/navigation/gotoClass/interfaceWithFunImplement.kt");
+        }
+
         @TestMetadata("localDeclarations.kt")
         public void testLocalDeclarations() throws Exception {
             runTest("testData/navigation/gotoClass/localDeclarations.kt");
         }
 
-        @TestMetadata("noImplementationTrait.kt")
-        public void testNoImplementationTrait() throws Exception {
-            runTest("testData/navigation/gotoClass/noImplementationTrait.kt");
+        @TestMetadata("noImplementationInterface.kt")
+        public void testNoImplementationInterface() throws Exception {
+            runTest("testData/navigation/gotoClass/noImplementationInterface.kt");
         }
 
         @TestMetadata("simpleClass.kt")
@@ -68,11 +73,6 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
         @TestMetadata("simpleObject.kt")
         public void testSimpleObject() throws Exception {
             runTest("testData/navigation/gotoClass/simpleObject.kt");
-        }
-
-        @TestMetadata("traitWithFunImplement.kt")
-        public void testTraitWithFunImplement() throws Exception {
-            runTest("testData/navigation/gotoClass/traitWithFunImplement.kt");
         }
 
         @TestMetadata("typealias.kt")
@@ -116,6 +116,16 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
         @TestMetadata("jvmNameAnnotatedFile.kt")
         public void testJvmNameAnnotatedFile() throws Exception {
             runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFile.kt");
+        }
+
+        @TestMetadata("jvmNameAnnotatedFileMultiAnnotations.kt")
+        public void testJvmNameAnnotatedFileMultiAnnotations() throws Exception {
+            runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFileMultiAnnotations.kt");
+        }
+
+        @TestMetadata("jvmNameAnnotatedFilesKt.kt")
+        public void testJvmNameAnnotatedFilesKt() throws Exception {
+            runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFilesKt.kt");
         }
 
         @TestMetadata("jvmNameAnnotatedFunctions.kt")

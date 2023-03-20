@@ -15,6 +15,9 @@ public abstract class PyPackageManagers implements Disposable {
     return ApplicationManager.getApplication().getService(PyPackageManagers.class);
   }
 
+  /**
+   * @param sdk must not be disposed if {@link Disposable}
+   */
   @NotNull
   public abstract PyPackageManager forSdk(@NotNull Sdk sdk);
 

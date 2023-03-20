@@ -30,7 +30,7 @@ public class ActionCommand extends TypeCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final String actionName = getText().substring(PREFIX.length()).trim();
 
     final ActionManager am = ActionManager.getInstance();
@@ -44,8 +44,7 @@ public class ActionCommand extends TypeCommand {
       final Shortcut[] sc = getActiveKeymapShortcuts(actionName).getShortcuts();
       KeyStroke stroke = null;
       for (Shortcut each : sc) {
-        if (each instanceof KeyboardShortcut) {
-          final KeyboardShortcut ks = (KeyboardShortcut)each;
+        if (each instanceof KeyboardShortcut ks) {
           final KeyStroke first = ks.getFirstKeyStroke();
           final KeyStroke second = ks.getSecondKeyStroke();
           if (second == null) {

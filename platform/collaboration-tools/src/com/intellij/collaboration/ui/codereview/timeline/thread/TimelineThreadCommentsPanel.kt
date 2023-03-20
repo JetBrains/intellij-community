@@ -1,20 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline.thread
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel.Companion.FOLD_THRESHOLD
-import com.intellij.ide.plugins.newui.VerticalLayout
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.ClickListener
-import com.intellij.util.ui.JBInsets
+import com.intellij.icons.AllIcons
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.MacUIUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
-import java.awt.event.MouseEvent
-import java.awt.geom.RoundRectangle2D
+import java.awt.event.ActionEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListModel
@@ -27,23 +24,30 @@ import javax.swing.event.ListDataListener
 class TimelineThreadCommentsPanel<T>(
   private val commentsModel: ListModel<T>,
   private val commentComponentFactory: (T) -> JComponent,
-  offset: Int = JBUI.scale(8)
+  offset: Int = JBUI.scale(8),
+  private val foldButtonOffset: Int = 30
 ) : BorderLayoutPanel() {
-  companion object {
-    private const val FOLD_THRESHOLD = 3
-  }
 
-  private val foldModel = SingleValueModel(true)
+  val foldModel = SingleValueModel(true)
+  private val collapsedCountModel: SingleValueModel<Int> = SingleValueModel(commentsModel.size - FOLD_THRESHOLD - 1)
 
-  private val unfoldButtonPanel = BorderLayoutPanel().apply {
-    isOpaque = false
-    border = JBUI.Borders.emptyLeft(30)
+  init {
+    commentsModel.addListDataListener(object : ListDataListener {
+      override fun intervalAdded(e: ListDataEvent?) {
+        collapsedCountModel.value = commentsModel.size - FOLD_THRESHOLD - 1
+      }
 
-    addToLeft(UnfoldButton(foldModel).apply {
-      foreground = UIUtil.getLabelForeground()
-      font = UIUtil.getButtonFont()
+      override fun intervalRemoved(e: ListDataEvent?) {
+        collapsedCountModel.value = commentsModel.size - FOLD_THRESHOLD - 1
+      }
+
+      override fun contentsChanged(e: ListDataEvent?) {
+        collapsedCountModel.value = commentsModel.size - FOLD_THRESHOLD - 1
+      }
     })
   }
+
+  private val unfoldButtonPanel = createUnfoldPanel(collapsedCountModel)
 
   private val foldablePanel = FoldablePanel(unfoldButtonPanel, offset).apply {
     for (i in 0 until commentsModel.size) {
@@ -87,7 +91,7 @@ class TimelineThreadCommentsPanel<T>(
     })
 
     foldModel.addListener { updateFolding(it) }
-    updateFolding(true)
+    updateFolding(foldModel.value)
   }
 
   private fun updateFolding(folded: Boolean) {
@@ -109,16 +113,16 @@ class TimelineThreadCommentsPanel<T>(
   /**
    * [FoldablePanel] hides [unfoldButton] and allows to use this panel like it doesn't contain it
    */
-  private class FoldablePanel(private val unfoldButton: JComponent, offset: Int) : JPanel(VerticalLayout(offset)) {
+  private class FoldablePanel(private val unfoldButton: JComponent, offset: Int) : JPanel(ListLayout.vertical(offset)) {
     init {
       isOpaque = false
-      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL)
+      add(unfoldButton)
     }
 
     fun addComponent(component: JComponent, index: Int) {
       remove(unfoldButton)
-      add(component, VerticalLayout.FILL_HORIZONTAL, index)
-      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL, 1)
+      add(component, null, index)
+      add(unfoldButton, null, 1)
     }
 
     fun removeComponent(index: Int) {
@@ -126,7 +130,7 @@ class TimelineThreadCommentsPanel<T>(
       remove(index)
 
       val unfoldButtonIndex = if (components.isEmpty()) 0 else 1
-      add(unfoldButton, VerticalLayout.FILL_HORIZONTAL, unfoldButtonIndex)
+      add(unfoldButton, null, unfoldButtonIndex)
     }
 
     fun getModelComponent(modelIndex: Int): Component =
@@ -138,42 +142,34 @@ class TimelineThreadCommentsPanel<T>(
       }
   }
 
-  private class UnfoldButton(model: SingleValueModel<Boolean>) : JComponent() {
-    init {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      object : ClickListener() {
-        override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-          model.value = !model.value
-          return true
+  private fun createUnfoldPanel(foldedCount: SingleValueModel<Int>): JComponent =
+    BorderLayoutPanel().apply {
+      isOpaque = false
+      border = JBUI.Borders.emptyLeft(foldButtonOffset)
+
+      addToLeft(createUnfoldComponent(foldedCount) {
+        foldModel.value = !foldModel.value
+      })
+    }
+
+  companion object {
+    const val FOLD_THRESHOLD = 3
+
+    const val UNFOLD_BUTTON_VERTICAL_GAP = 18
+
+    fun createUnfoldComponent(foldedCount: Int, actionListener: (ActionEvent) -> Unit): JComponent =
+      createUnfoldComponent(SingleValueModel(foldedCount), actionListener)
+
+    private fun createUnfoldComponent(foldedCount: SingleValueModel<Int>, actionListener: (ActionEvent) -> Unit): JComponent {
+      return ActionLink("", actionListener).apply {
+        icon = AllIcons.Actions.MoreHorizontal
+      }.apply {
+        border = JBUI.Borders.empty(UNFOLD_BUTTON_VERTICAL_GAP, 0)
+
+        foldedCount.addAndInvokeListener {
+          text = CollaborationToolsBundle.message("review.thread.more.replies", it)
         }
-      }.installOn(this)
-    }
-
-    override fun getPreferredSize(): Dimension {
-      return Dimension(JBUI.scale(30), font.size)
-    }
-
-    override fun paintComponent(g: Graphics) {
-      val rect = Rectangle(size)
-      JBInsets.removeFrom(rect, insets)
-
-      val g2 = g as Graphics2D
-
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
-
-      val arc = DarculaUIUtil.BUTTON_ARC.float
-      g2.color = background
-      g2.fill(RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), arc, arc))
-
-      g2.color = foreground
-      g2.font = font
-      val line = StringUtil.ELLIPSIS
-      val lineBounds = g2.fontMetrics.getStringBounds(line, g2)
-      val x = (rect.width - lineBounds.width) / 2
-      val y = (rect.height + lineBounds.y) / 2 - lineBounds.y / 2
-      g2.drawString(line, x.toFloat(), y.toFloat())
+      }
     }
   }
 }

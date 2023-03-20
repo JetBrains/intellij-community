@@ -78,7 +78,9 @@ private object_element ::= property (','|&'}') {
   pin = 1
 }
 
-property ::= property_name (':' value) {
+private property_value ::= value
+
+property ::= property_name (':' property_value) {
   methods=[
     getName
     getNameElement
@@ -137,7 +139,9 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal {
 
 fake container ::=
 
-reference_expression ::= IDENTIFIER
+reference_expression ::= IDENTIFIER {
+  mixin="com.intellij.json.psi.impl.JsonReferenceLiteralMixin"
+}
 
 value ::= object | array | literal | reference_expression
 

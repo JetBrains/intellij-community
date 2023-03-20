@@ -15,8 +15,5 @@
  */
 package com.jetbrains.python.psi.types;
 
-/**
- * @author vlan
- */
 public interface PyOverridingAncestorsClassMembersProvider extends PyClassMembersProvider {
 }

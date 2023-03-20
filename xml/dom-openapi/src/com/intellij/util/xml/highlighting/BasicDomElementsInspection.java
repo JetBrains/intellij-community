@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.util.ReflectionUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
@@ -39,10 +39,9 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
    * @param helper  helper object
    */
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     int oldSize = holder.getSize();
-    if (element instanceof GenericDomValue) {
-      final GenericDomValue<?> genericDomValue = (GenericDomValue<?>) element;
+    if (element instanceof GenericDomValue<?> genericDomValue) {
       if (shouldCheckResolveProblems(genericDomValue)) {
         helper.checkResolveProblems(genericDomValue, holder);
       }
@@ -56,8 +55,10 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
       return;
     }
 
-    if (!(element instanceof GenericAttributeValue) && !GenericDomValue.class.equals(ReflectionUtil.getRawType(element.getDomElementType()))) {
-      if (!helper.checkNameIdentity(element, holder).isEmpty()) return;
+    if (!(element instanceof GenericAttributeValue) &&
+        !GenericDomValue.class.equals(ClassUtil.getRawType(element.getDomElementType())) &&
+        !helper.checkNameIdentity(element, holder).isEmpty()) {
+      return;
     }
 
     helper.checkCustomAnnotations(element, holder);

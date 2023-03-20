@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.GitPatchWriter;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,8 @@ import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldForceUnix
 
 public final class UnifiedDiffWriter {
   @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
+  @NonNls public static final String SUBJECT_HEADER = "Subject: [PATCH] ";
+  @NonNls public static final String HEADER_END_MARKER = "---";
   @NonNls public static final String ADDITIONAL_PREFIX = "IDEA additional info:";
   @NonNls public static final String ADD_INFO_HEADER = "Subsystem: ";
   @NonNls public static final String ADD_INFO_LINE_START = "<+>";
@@ -44,6 +47,21 @@ public final class UnifiedDiffWriter {
           commitContext, null);
   }
 
+  public static void writeCommitMessageHeader(@Nullable Project project,
+                                              @NotNull Writer writer,
+                                              @NotNull String lineSeparator,
+                                              @Nullable String commitMessage) throws IOException {
+    if (StringUtil.isEmpty(commitMessage)) return;
+    boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
+    String headerLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
+                                                     : lineSeparator;
+    writer.append(SUBJECT_HEADER);
+    writer.append(StringUtil.convertLineSeparators(commitMessage.trim(), headerLineSeparator));
+    writer.append(headerLineSeparator);
+    writer.append(HEADER_END_MARKER);
+    writer.append(headerLineSeparator);
+  }
+
   /**
    * @param lineSeparator Line separator to use for header lines,
    *                      and for content lines if {@link TextFilePatch#getLineSeparator()} was not specified.
@@ -54,16 +72,16 @@ public final class UnifiedDiffWriter {
                            @NotNull Writer writer,
                            @NotNull String lineSeparator,
                            @Nullable CommitContext commitContext,
-                           @Nullable List<PatchEP> patchEpExtensions) throws IOException {
+                           @Nullable List<? extends PatchEP> patchEpExtensions) throws IOException {
     boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
-    String headerLineSeparator = forceUnixSeparators ? "\n" : lineSeparator;
+    String headerLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
+                                                     : lineSeparator;
 
     // write the patch files without content modifications strictly after the files with content modifications,
     // because GitPatchReader is not ready for mixed style patches
     List<FilePatch> noContentPatches = new ArrayList<>();
     for (FilePatch filePatch : patches) {
-      if (!(filePatch instanceof TextFilePatch)) continue;
-      TextFilePatch patch = (TextFilePatch)filePatch;
+      if (!(filePatch instanceof TextFilePatch patch)) continue;
       if (patch.hasNoModifiedContent()) {
         noContentPatches.add(patch);
         continue;
@@ -80,28 +98,19 @@ public final class UnifiedDiffWriter {
         }
       }
 
-      String fileContentLineSeparator = patch.getLineSeparator();
-      if (fileContentLineSeparator == null || forceUnixSeparators) {
-        fileContentLineSeparator = headerLineSeparator;
-      }
+      String fileContentLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
+                                                            : StringUtil.notNullize(patch.getLineSeparator(), headerLineSeparator);
 
       writeFileHeading(writer, basePath, patch, headerLineSeparator, additionalMap);
       for (PatchHunk hunk : patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
                        headerLineSeparator);
         for (PatchLine line : hunk.getLines()) {
-          char prefixChar = ' ';
-          switch (line.getType()) {
-            case ADD:
-              prefixChar = '+';
-              break;
-            case REMOVE:
-              prefixChar = '-';
-              break;
-            case CONTEXT:
-              prefixChar = ' ';
-              break;
-          }
+          char prefixChar = switch (line.getType()) {
+            case ADD -> '+';
+            case REMOVE -> '-';
+            case CONTEXT -> ' ';
+          };
           String text = line.getText();
           text = StringUtil.trimEnd(text, "\n");
           writeLine(writer, text, prefixChar);

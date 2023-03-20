@@ -59,12 +59,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return all configurables as a plain list except the root configurable group
    */
-  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
+  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings, boolean checkNonDefaultProject) {
     List<Configurable> list = new ArrayList<>();
 
     for (Configurable configurable : ConfigurableExtensionPointUtil.getConfigurables(
       withIdeSettings ? project : currentOrDefaultProject(project),
-      withIdeSettings
+      withIdeSettings, checkNonDefaultProject
     )) {
       list.add(configurable);
       if (configurable instanceof Configurable.Composite) {
@@ -212,6 +212,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
+  public <T extends Configurable> boolean editConfigurable(Project project, @NotNull T configurable, @NotNull Consumer<? super T> advancedInitialization) {
+    return editConfigurable(null, project, configurable, advancedInitialization, createDimensionKey(configurable), isWorthToShowApplyButton(configurable));
+  }
+
+  @Override
   public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable) {
     return editConfigurable(parent, configurable, null);
   }
@@ -242,8 +247,18 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           @Nullable Project project,
                                           @NotNull Configurable configurable,
                                           @NotNull String dimensionKey,
-                                          @Nullable final Runnable advancedInitialization,
+                                          @Nullable Runnable advancedInitialization,
                                           boolean showApplyButton) {
+    Consumer<Configurable> consumer = advancedInitialization != null ? it -> advancedInitialization.run() : null;
+    return editConfigurable(parent, project, configurable, consumer, dimensionKey, showApplyButton);
+  }
+
+  private static <T extends Configurable> boolean editConfigurable(@Nullable Component parent,
+                                                                   @Nullable Project project,
+                                                                   @NotNull T configurable,
+                                                                   @Nullable final Consumer<? super T> advancedInitialization,
+                                                                   @NotNull String dimensionKey,
+                                                                   boolean showApplyButton) {
     final DialogWrapper editor;
     if (parent == null) {
       editor = SettingsDialogFactory.getInstance().create(project, dimensionKey, configurable, showApplyButton, false);
@@ -252,10 +267,10 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
-      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable() {
+      UiNotifyConnector.Once.installOn(editor.getContentPane(), new Activatable() {
         @Override
         public void showNotify() {
-          advancedInitialization.run();
+          advancedInitialization.accept(configurable);
         }
       });
     }

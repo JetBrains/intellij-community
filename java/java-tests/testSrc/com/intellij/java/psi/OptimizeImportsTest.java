@@ -1,19 +1,31 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.LanguageImportStatements;
+import com.intellij.lang.java.JavaImportOptimizer;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.util.PathUtil;
+
+import java.util.Set;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -30,14 +42,16 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testStaticImportsToOptimizeMixed() { doTest(); }
   public void testStaticImportsToOptimize2() { doTest(); }
   public void testStaticImportsToPreserve() {
-    myFixture.addClass("package pack.sample;\n" +
-                       "\n" +
-                       "public interface Sample {\n" +
-                       "    String Foo = \"FOO\";\n" +
-                       "    enum Type {\n" +
-                       "        T\n" +
-                       "    }\n" +
-                       "}\n");
+    myFixture.addClass("""
+                         package pack.sample;
+
+                         public interface Sample {
+                             String Foo = "FOO";
+                             enum Type {
+                                 T
+                             }
+                         }
+                         """);
     doTest();
   }
   public void testEmptyImportList() { doTest(); }
@@ -85,6 +99,23 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
   }
 
+  public void testScratch() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    VirtualFile scratch =
+      ScratchRootType.getInstance()
+        .createScratchFile(getProject(), PathUtil.makeFileName("scratch", "java"), JavaLanguage.INSTANCE,
+                           """
+                             import java.util.List;
+                             import java.util.List;
+                             import java.util.List;
+
+                             class Scratch { }""", ScratchFileService.Option.create_if_missing);
+    assertNotNull(scratch);
+    myFixture.configureFromExistingVirtualFile(scratch);
+    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+    myFixture.checkResult("class Scratch { }");
+  }
+
   public void testLeavesDocumentUnblocked() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", "import static java.ut<caret>il.List.*; class Foo {}");
@@ -97,25 +128,31 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testNoStubPsiMismatchOnRecordInsideImportList() {
     myFixture.enableInspections(new UnusedImportInspection());
-    myFixture.configureByText("a.java", "import java.ut<caret>il.List;\n" +
-                                        "record foo.bar.Goo;\n" +
-                                        "import java.util.Collection;\n\n" +
-                                        "class Foo {}");
+    myFixture.configureByText("a.java", """
+      import java.ut<caret>il.List;
+      record foo.bar.Goo;
+      import java.util.Collection;
+
+      class Foo {}""");
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
 
     // whatever: main thing it didn't throw
-    myFixture.checkResult("record foo.bar.Goo;\n" +
-                          "import java.util.Collection;\n\n" +
-                          "class Foo {}");
+    myFixture.checkResult("""
+                            record foo.bar.Goo;
+                            import java.util.Collection;
+
+                            class Foo {}""");
   }
 
   public void testNoStubPsiMismatchOnRecordInsideImportList2() {
     myFixture.enableInspections(new UnusedImportInspection());
-    myFixture.configureByText("a.java", "" +
-                                        "import java.ut<caret>il.Set;record \n" +
-                                        "import x java.util.Map;\n\n" +
-                                        "import java.util.Map;\n\n" +
-                                        "class Foo {}");
+    myFixture.configureByText("a.java", """
+      import java.ut<caret>il.Set;record\s
+      import x java.util.Map;
+
+      import java.util.Map;
+
+      class Foo {}""");
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
 
     // whatever: main thing it didn't throw
@@ -124,9 +161,13 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   public void testRemovingAllUnusedImports() {
     myFixture.enableInspections(new UnusedImportInspection());
-    myFixture.configureByText("a.java", "package p;\n\n" +
-                                        "import java.<caret>util.Set;\n" +
-                                        "import java.util.Map;\n\n");
+    myFixture.configureByText("a.java", """
+      package p;
+
+      import java.<caret>util.Set;
+      import java.util.Map;
+
+      """);
     myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
     myFixture.checkResult("package p;\n\n");
   }
@@ -144,6 +185,24 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       });
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), CodeStyleSettingsModifier.EP_NAME, modifier, getTestRootDisposable());
     doTest();
+  }
+
+  public void testOptimizeImportMessage() {
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      String fileName = getTestName(false) + ".java";
+      PsiFile file = myFixture.configureByFile(fileName);
+      Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
+      for (ImportOptimizer optimizer : optimizers) {
+        if (optimizer instanceof JavaImportOptimizer) {
+          Runnable runnable = optimizer.processFile(file);
+          assertTrue(runnable instanceof ImportOptimizer.CollectingInfoRunnable);
+          runnable.run();
+          ImportOptimizer.CollectingInfoRunnable infoRunnable = (ImportOptimizer.CollectingInfoRunnable)runnable;
+          String info = infoRunnable.getUserNotificationInfo();
+          assertEquals("Removed 2 imports", info);
+        }
+      }
+    });
   }
 
   private void doTest() {

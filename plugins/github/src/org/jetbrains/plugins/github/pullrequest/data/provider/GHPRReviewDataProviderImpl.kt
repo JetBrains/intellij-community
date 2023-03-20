@@ -1,31 +1,36 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.diff.util.Side
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.data.GHNode
-import org.jetbrains.plugins.github.api.data.GHNodes
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 
-class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
-                                 private val reviewService: GHPRReviewService,
+class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
+                                 private val changesProvider: GHPRChangesDataProvider,
                                  private val pullRequestId: GHPRIdentifier,
-                                 private val messageBus: MessageBus)
+                                 override val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
@@ -68,13 +73,10 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
     return future.dropReviews().notifyReviews()
   }
 
-  override fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String) =
-    commentService.getCommentMarkdownBody(progressIndicator, reviewId)
-
   override fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String> =
     reviewService.updateReviewBody(progressIndicator, reviewId, newText).successOnEdt {
       messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewUpdated(reviewId, newText)
-      it.bodyHTML
+      it.body
     }
 
   override fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?> {
@@ -88,18 +90,20 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
 
   override fun canComment() = reviewService.canComment()
 
-  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String) =
-    commentService.getCommentMarkdownBody(progressIndicator, commentId)
-
   override fun addComment(progressIndicator: ProgressIndicator,
                           reviewId: String,
                           body: String,
                           commitSha: String,
                           fileName: String,
-                          diffLine: Int): CompletableFuture<out GHPullRequestReviewComment> {
-    val future =
-      reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, diffLine)
-
+                          side: Side,
+                          line: Int): CompletableFuture<out GHPullRequestReviewComment> {
+    val future = changesProvider.loadPatchFromMergeBase(progressIndicator, commitSha, fileName)
+      .thenComposeAsync({ patch ->
+                          check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
+                          val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line)
+                                         ?: error("Can't map file line to diff")
+                          reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, position)
+                        }, ProcessIOExecutorService.INSTANCE)
     pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
     return future.dropReviews().notifyReviews()
   }
@@ -110,11 +114,12 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
     return pendingReviewRequestValue.value.thenCompose {
       val reviewId = it?.id
       if (reviewId == null) {
-        createReview(progressIndicator).thenCompose { review ->
+        reviewService.createReview(progressIndicator, pullRequestId).thenCompose { review ->
           reviewService.addComment(progressIndicator, pullRequestId, review.id, replyToCommentId, body).thenCompose { comment ->
-            submitReview(progressIndicator, review.id, GHPullRequestReviewEvent.COMMENT, null).thenApply {
-              comment
-            }
+            reviewService.submitReview(progressIndicator, pullRequestId, review.id, GHPullRequestReviewEvent.COMMENT, null)
+              .thenApply {
+                comment
+              }
           }.dropReviews().notifyReviews()
         }
       }
@@ -142,8 +147,17 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
         if (comments.isEmpty())
           null
         else
-          GHPullRequestReviewThread(it.id, it.isResolved, it.line, it.startLine, it.side,
-                                    GHNodes(comments))
+          GHPullRequestReviewThread(it.id,
+                                    it.isResolved,
+                                    it.isOutdated,
+                                    it.path,
+                                    it.side,
+                                    it.line,
+                                    it.originalLine,
+                                    it.startSide,
+                                    it.startLine,
+                                    it.originalStartLine,
+                                    GraphQLNodesDTO(comments))
       }
     }
 
@@ -155,13 +169,22 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
     val future = reviewService.updateComment(progressIndicator, pullRequestId, commentId, newText)
     reviewThreadsRequestValue.combineResult(future) { list, newComment ->
       list.map {
-        GHPullRequestReviewThread(it.id, it.isResolved, it.line, it.startLine, it.side,
-                                  GHNodes(it.comments.map { comment ->
+        GHPullRequestReviewThread(it.id,
+                                  it.isResolved,
+                                  it.isOutdated,
+                                  it.path,
+                                  it.side,
+                                  it.line,
+                                  it.originalLine,
+                                  it.startSide,
+                                  it.startLine,
+                                  it.originalStartLine,
+                                  GraphQLNodesDTO(it.comments.map { comment ->
                                     if (comment.id == commentId)
                                       GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,
-                                                                 newComment.bodyHTML, comment.createdAt,
-                                                                 comment.state, comment.path, comment.commit, comment.position,
-                                                                 comment.originalCommit, comment.originalPosition, comment.replyTo,
+                                                                 newComment.body, comment.createdAt,
+                                                                 comment.state, comment.commit,
+                                                                 comment.originalCommit, comment.replyTo,
                                                                  comment.diffHunk,
                                                                  comment.reviewId?.let { GHNode(it) }, comment.viewerCanDelete,
                                                                  comment.viewerCanUpdate)
@@ -187,6 +210,8 @@ class GHPRReviewDataProviderImpl(private val commentService: GHPRCommentService,
     }
     else {
       reviewService.addThread(progressIndicator, reviewId, body, line, side, startLine, fileName)
+    }.completionOnEdt {
+      pendingReviewRequestValue.drop()
     }.dropReviews().notifyReviews()
   }
 

@@ -13,18 +13,19 @@ public class SphinxDocstringTest extends PyTestCase {
   }
 
   public void testFieldAliases() {
-    final SphinxDocString docstring = createSphinxDocstring(":param p1: p1 description\n" +
-                                                            ":parameter p2: p2 description\n" +
-                                                            ":arg p3: p3 description\n" +
-                                                            ":argument p4: p4 description\n" +
-                                                            "\n" +
-                                                            ":key key1: key1 description\n" +
-                                                            ":keyword key2: key2 description\n" +
-                                                            "\n" +
-                                                            ":raises Exc1: Exc1 description  \n" +
-                                                            ":raise Exc2: Exc2 description \n" +
-                                                            ":except Exc3: Exc3 description \n" +
-                                                            ":exception Exc4: Exc4 description ");
+    final SphinxDocString docstring = createSphinxDocstring("""
+                                                              :param p1: p1 description
+                                                              :parameter p2: p2 description
+                                                              :arg p3: p3 description
+                                                              :argument p4: p4 description
+
+                                                              :key key1: key1 description
+                                                              :keyword key2: key2 description
+
+                                                              :raises Exc1: Exc1 description \s
+                                                              :raise Exc2: Exc2 description\s
+                                                              :except Exc3: Exc3 description\s
+                                                              :exception Exc4: Exc4 description\s""");
 
     assertSameElements(docstring.getParameters(), "p1", "p2", "p3", "p4");
     assertEquals("p1 description", docstring.getParamDescription("p1"));

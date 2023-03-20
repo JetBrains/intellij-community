@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -32,7 +32,7 @@ import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSam
 /**
  * Read/write .eml
  */
-public class IdeaSpecificSettings {
+public final class IdeaSpecificSettings {
   @NonNls public static final String RELATIVE_MODULE_SRC = "relative-module-src";
   @NonNls public static final String RELATIVE_MODULE_CLS = "relative-module-cls";
   @NonNls public static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
@@ -134,10 +134,9 @@ public class IdeaSpecificSettings {
           isModified = true;
         }
       }
-      if (!(entry instanceof LibraryOrderEntry)) continue;
+      if (!(entry instanceof LibraryOrderEntry libraryEntry)) continue;
 
       Element element = new Element("lib");
-      LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
 
       String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
       if (libraryName == null) {

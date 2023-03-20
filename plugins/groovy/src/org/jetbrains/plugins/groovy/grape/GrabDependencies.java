@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -8,8 +8,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,13 +63,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GrabDependencies.class);
 
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Grape");
   public static final String GRAPE_RUNNER = "org.jetbrains.plugins.groovy.grape.GrapeRunner";
 
   @Override
@@ -182,7 +179,6 @@ public class GrabDependencies implements IntentionAction {
       }
       catch (CantRunException e) {
         String title = GroovyBundle.message("grab.error.0.title", ExceptionUtil.getMessage(e));
-        //noinspection HardCodedStringLiteral
         NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR).notify(project);
         return;
       }
@@ -226,8 +222,7 @@ public class GrabDependencies implements IntentionAction {
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrAnnotation) {
-          GrAnnotation anno = (GrAnnotation)element;
+        if (element instanceof GrAnnotation anno) {
           String qname = anno.getQualifiedName();
           if (GrabAnnos.GRAB_ANNO.equals(qname)) grabs.add(anno);
           else if (GrabAnnos.GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);

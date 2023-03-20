@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k.ast
 
@@ -7,14 +7,14 @@ import org.jetbrains.kotlin.j2k.append
 import org.jetbrains.kotlin.j2k.buildList
 
 open class Class(
-        val name: Identifier,
-        annotations: Annotations,
-        modifiers: Modifiers,
-        val typeParameterList: TypeParameterList,
-        val extendsTypes: List<Type>,
-        val baseClassParams: List<DeferredElement<Expression>>?,
-        val implementsTypes: List<Type>,
-        val body: ClassBody
+  val name: Identifier,
+  annotations: Annotations,
+  modifiers: Modifiers,
+  val typeParameterList: TypeParameterList,
+  private val extendsTypes: List<Type>,
+  private val baseClassParams: List<DeferredElement<Expression>>?,
+  private val implementsTypes: List<Type>,
+  val body: ClassBody
 ) : Member(annotations, modifiers) {
 
     override fun generateCode(builder: CodeBuilder) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -21,11 +21,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -301,7 +305,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     panel.add(
       super.createSouthPanel(),
       new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTH, GridBagConstraints.NONE,
-                             JBUI.emptyInsets(), 0, 0)
+                             JBInsets.emptyInsets(), 0, 0)
     );
     return panel;
   }
@@ -400,7 +404,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected void installSpeedSearch() {
-    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, path -> {
+    final TreeSpeedSearch treeSpeedSearch = TreeSpeedSearch.installOn(myTree, false, path -> {
       final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
       if (lastPathComponent == null) return null;
       String text = lastPathComponent.getDelegate().getText();
@@ -544,8 +548,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       ParentNode newRoot = new ParentNode(null, new MemberChooserObjectBase(getAllContainersNodeName()), new Ref<>(0));
       while (children.hasMoreElements()) {
         final ParentNode nextElement = (ParentNode)children.nextElement();
-        if (nextElement instanceof ContainerNode) {
-          final ContainerNode containerNode = (ContainerNode)nextElement;
+        if (nextElement instanceof ContainerNode containerNode) {
           Enumeration<TreeNode> memberNodes = containerNode.children();
           List<MemberNode> memberNodesList = new ArrayList<>();
           while (memberNodes.hasMoreElements()) {
@@ -661,12 +664,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
-        T selectedElement = mySelectedElements.iterator().next();
-        return selectedElement instanceof ClassMemberWithElement ?
-               ((ClassMemberWithElement)selectedElement).getElement() : null;
-      }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      if (!(ContainerUtil.getFirstItem(mySelectedElements) instanceof ClassMemberWithElement member)) return null;
+      return (DataProvider) slowId -> CommonDataKeys.PSI_ELEMENT.is(slowId) ? member.getElement() : null;
     }
     return null;
   }
@@ -678,8 +678,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       if (paths == null) return;
       for (int i = 0; i < paths.length; i++) {
         Object node = paths[i].getLastPathComponent();
-        if (node instanceof MemberNode) {
-          final MemberNode memberNode = (MemberNode)node;
+        if (node instanceof MemberNode memberNode) {
           if (e.isAddedPath(i)) {
             if (!mySelectedNodes.contains(memberNode)) {
               mySelectedNodes.add(memberNode);
@@ -807,6 +806,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       myAlphabeticallySorted = flag;
       setSortComparator(flag ? new AlphaComparator() : new OrderComparator());
@@ -817,7 +821,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected ShowContainersAction getShowContainersAction() {
-    return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"), PlatformIcons.CLASS_ICON);
+    return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"),
+                                    IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class));
   }
 
   protected class ShowContainersAction extends ToggleAction {
@@ -831,6 +836,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       return myShowClasses;
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setShowClasses(flag);

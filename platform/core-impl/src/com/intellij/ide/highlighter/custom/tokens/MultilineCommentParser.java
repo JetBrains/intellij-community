@@ -4,9 +4,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 
 import com.intellij.psi.CustomHighlighterTokenType;
 
-/**
- * @author dsl
- */
 public final class MultilineCommentParser extends PrefixedTokenParser {
   private final char[] myEndDelimiter;
 

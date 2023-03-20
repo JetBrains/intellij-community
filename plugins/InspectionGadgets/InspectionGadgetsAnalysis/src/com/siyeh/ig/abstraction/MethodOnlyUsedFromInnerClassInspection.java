@@ -2,7 +2,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,9 +14,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
 
@@ -42,13 +42,11 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("method.only.used.from.inner.class.ignore.option"),
-                      "ignoreMethodsAccessedFromAnonymousClass");
-    panel.addCheckbox(InspectionGadgetsBundle.message("only.report.static.methods"), "onlyReportStaticMethods");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreMethodsAccessedFromAnonymousClass",
+               InspectionGadgetsBundle.message("method.only.used.from.inner.class.ignore.option")),
+      checkbox("onlyReportStaticMethods", InspectionGadgetsBundle.message("only.report.static.methods")));
   }
 
   @Override
@@ -59,7 +57,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
   private class MethodOnlyUsedFromInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.PRIVATE) || method.isConstructor()) {
         return;

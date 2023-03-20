@@ -166,6 +166,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     int[] ignore = externalToolPass == null || externalToolPass ? new int[]{
       Pass.LINE_MARKERS,
       Pass.LOCAL_INSPECTIONS,
+      Pass.SLOW_LINE_MARKERS,
       Pass.POPUP_HINTS,
       Pass.UPDATE_ALL,
       Pass.UPDATE_FOLDING,

@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
@@ -57,7 +58,6 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
@@ -156,7 +156,7 @@ public final class EditorTestUtil {
     HighlighterIterator editorIterator = editor.getHighlighter().createIterator(0);
 
     EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
-      project, ((EditorEx)editor).getVirtualFile());
+      project, editor.getVirtualFile());
     freshHighlighter.setEditor((EditorImpl)editor);
     freshHighlighter.setText(editor.getDocument().getImmutableCharSequence());
     HighlighterIterator freshIterator = freshHighlighter.createIterator(0);
@@ -585,7 +585,7 @@ public final class EditorTestUtil {
       return markup.insertMarks(editor.getDocument().getCharsSequence());
     }
 
-    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
+    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<? extends CaretInfo> carets) {
       CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
       // The expected state is properly sorted already, so it doesn't require extra sorting,
       // but for sake of consistency we use the same approach as for the actual caret state.
@@ -781,13 +781,10 @@ public final class EditorTestUtil {
                                              @Nullable Set<String> acceptableKeyNames) {
     Editor editor = fixture.getEditor();
     CaretModel caretModel = editor.getCaretModel();
-    List<Integer> caretsOffsets = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
-    if (caretsOffsets.isEmpty()) {
-      caretsOffsets.add(-1);
-    }
+    List<Integer> offs = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
+    List<Integer> caretsOffsets = offs.isEmpty() ? List.of(-1) : offs;
     caretModel.removeSecondaryCarets();
-    CharSequence documentSequence = editor.getDocument().getCharsSequence();
-
+    CharSequence documentSequence = InjectedLanguageEditorUtil.getTopLevelEditor(editor).getDocument().getCharsSequence();
 
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(fixture.getProject(), fixture.getProjectDisposable(), () -> {
       for (Integer caretsOffset : caretsOffsets) {
@@ -797,7 +794,7 @@ public final class EditorTestUtil {
 
         UsefulTestCase.assertSameLinesWithFile(
           answersFilePath,
-          renderTextWithHighlihgtingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
+          renderTextWithHighlightingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
           () -> "Failed at:\n " +
                 documentSequence.subSequence(0, caretsOffset) +
                 "<caret>" +
@@ -806,7 +803,7 @@ public final class EditorTestUtil {
       }});
   }
 
-  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<HighlightInfo> highlightInfos,
+  private static @NotNull String renderTextWithHighlightingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
                                                                  @NotNull CharSequence documentSequence,
                                                                  @Nullable Set<String> acceptableKeyNames) {
     List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()
@@ -820,7 +817,7 @@ public final class EditorTestUtil {
           Pair.create(it.getEndOffset(), "</" + keyText + ">")
         );
       })
-      .sorted(MARKERS_COMPARATOR).collect(Collectors.toList());
+      .sorted(MARKERS_COMPARATOR).toList();
 
     StringBuilder sb = new StringBuilder();
     int lastEnd = 0;
@@ -837,14 +834,7 @@ public final class EditorTestUtil {
   }
 
 
-  public static class CaretAndSelectionState {
-    public final List<CaretInfo> carets;
-    public final TextRange blockSelection;
-
-    public CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
-      this.carets = carets;
-      this.blockSelection = blockSelection;
-    }
+  public record CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
 
     /**
      * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified
@@ -897,12 +887,6 @@ public final class EditorTestUtil {
     public int calcHeightInPixels(@NotNull Inlay inlay) {
       return height == null ? EditorCustomElementRenderer.super.calcHeightInPixels(inlay) : height;
     }
-
-    @Override
-    public void paint(@NotNull Inlay inlay,
-                      @NotNull Graphics g,
-                      @NotNull Rectangle targetRegion,
-                      @NotNull TextAttributes textAttributes) {}
   }
 
   private static class EmptyCustomFoldingRenderer implements CustomFoldRegionRenderer {

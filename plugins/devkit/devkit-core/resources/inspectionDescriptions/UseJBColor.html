@@ -7,5 +7,16 @@ Reports usages of <code>java.awt.Color</code>.
 <p>
   Quick-fix replaces usages with <code>JBColor</code>, which defines "dark" color variant.
 </p>
+<p>Examples:</p>
+<pre>
+// bad:
+Color darkGreen = new Color(12, 58, 27);
+Color blue = Color.BLUE;
+
+// good:
+Color darkGreen = new JBColor(12, 58, 27);
+Color blue = JBColor.BLUE;
+Color green = new JBColor(new Color(12, 58, 27), new Color(27, 112, 39));
+</pre>
 </body>
 </html>

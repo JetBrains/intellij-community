@@ -39,15 +39,15 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!(root instanceof PsiJavaFile) || quick || !JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings()) {
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
     if (!PsiUtil.isLanguageLevel5OrHigher(root)) {
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
     final List<FoldingDescriptor> result = new ArrayList<>();
     root.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         if (Comparing.strEqual(annotation.getQualifiedName(), SuppressWarnings.class.getName())) {
           result.add(new FoldingDescriptor(annotation.getNode(), annotation.getTextRange(), null, placeholderText(annotation),
                                            JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings(), Collections.emptySet()));
@@ -55,7 +55,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
         super.visitAnnotation(annotation);
       }
     });
-    return result.toArray(FoldingDescriptor.EMPTY);
+    return result.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   @Override

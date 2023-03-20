@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.propertyBased
 
 import com.intellij.openapi.application.PathManager
@@ -10,6 +10,7 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.*
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.quickfix.AbstractImportFixInfo
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -19,6 +20,8 @@ import java.util.function.Supplier
 
 @SkipSlowTestLocally
 class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
+    private val seed: String? = System.getProperty("seed")
+
     override fun setUp() {
         super.setUp()
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
@@ -35,7 +38,7 @@ class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testRandomActivity() {
         enableInspections()
@@ -50,11 +53,15 @@ class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
             )
         }
         PropertyChecker
+            .customized()
+            .run {
+                seed?.let { this.rechecking(it) } ?: this
+            }
             .checkScenarios(actionSupplier)
     }
 
     private fun enableInspections() {
-        MadTestingUtil.enableAllInspections(project)
+        MadTestingUtil.enableAllInspections(project, KotlinLanguage.INSTANCE)
     }
 
     private fun actionOnKotlinFiles(fileActions: Function<PsiFile, Generator<out MadTestingAction>>): Supplier<MadTestingAction?> {

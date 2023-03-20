@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -70,8 +70,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     String descriptionDirectoryName = action instanceof IntentionActionWrapper
                                       ? ((IntentionActionWrapper)action).getDescriptionDirectoryName()
                                       : IntentionActionWrapper.getDescriptionDirectoryName(action.getClass().getName());
-    IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
-    settings.registerIntentionMetaData(action, category, descriptionDirectoryName);
+    IntentionsMetadataService.getInstance().registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
   @Override
@@ -82,8 +81,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @Override
-  @NotNull
-  public List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context) {
+  public @NotNull List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context) {
     checkForDuplicates();
     List<IntentionAction> options = new ArrayList<>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
@@ -92,9 +90,8 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     return options;
   }
 
-  @Nullable
   @Override
-  public IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action) {
+  public @Nullable IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action) {
     checkForDuplicates();
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       LocalInspectionToolWrapper localWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
@@ -133,15 +130,13 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     return new CleanupInspectionIntention(toolWrapper, fix, file, action.getText());
   }
 
-  @NotNull
   @Override
-  public IntentionAction createCleanupAllIntention() {
+  public @NotNull IntentionAction createCleanupAllIntention() {
     return CleanupAllIntention.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public List<IntentionAction> getCleanupIntentionOptions() {
+  public @NotNull List<IntentionAction> getCleanupIntentionOptions() {
     List<IntentionAction> options = new ArrayList<>();
     options.add(EditCleanupProfileIntentionAction.INSTANCE);
     options.add(CleanupOnScopeIntention.INSTANCE);
@@ -149,21 +144,18 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   }
 
   @Override
-  @NotNull
-  public LocalQuickFix convertToFix(@NotNull IntentionAction action) {
+  public @NotNull LocalQuickFix convertToFix(@NotNull IntentionAction action) {
     if (action instanceof LocalQuickFix) {
       return (LocalQuickFix)action;
     }
     return new LocalQuickFix() {
       @Override
-      @NotNull
-      public String getName() {
+      public @NotNull String getName() {
         return action.getText();
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return action.getFamilyName();
       }
 
@@ -208,6 +200,32 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
       }
     }
     return list;
+  }
+
+  @Override
+  public @NotNull List<IntentionAction> getAvailableIntentions(Collection<String> languageIds) {
+    if (myIntentionsDisabled) {
+      return Collections.emptyList();
+    }
+
+    checkForDuplicates();
+
+    List<IntentionAction> list = new ArrayList<>();
+    IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
+    for (IntentionAction action : myActions) {
+      if (isLanguageSupported(languageIds, action) && settings.isEnabled(action)) {
+        list.add(action);
+      }
+    }
+    return list;
+  }
+
+  private static boolean isLanguageSupported(Collection<String> fileLanguageIds, IntentionAction action) {
+    if (action instanceof IntentionActionWrapper) {
+      return ((IntentionActionWrapper)action).isApplicable(fileLanguageIds);
+    }
+
+    return true;
   }
 
   private boolean checkedForDuplicates; // benign data race

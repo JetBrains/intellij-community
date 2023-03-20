@@ -16,6 +16,7 @@ private val LOG = Logger.getInstance(IdeActivity::class.java)
 
 internal enum class IdeActivityState { NOT_STARTED, STARTED, FINISHED }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use com.intellij.internal.statistic.StructuredIdeActivity instead. " +
             "It allows us to generate events scheme from the product code and ensures that only data matching the scheme is being sent.")
 @ApiStatus.Internal
@@ -35,7 +36,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     return startedWithData(Consumer { })
   }
 
-  fun startedWithData(consumer: Consumer<FeatureUsageData>): IdeActivity {
+  private fun startedWithData(consumer: Consumer<FeatureUsageData>): IdeActivity {
     if (!LOG.assertTrue(state == IdeActivityState.NOT_STARTED, state.name)) return this
     state = IdeActivityState.STARTED
 

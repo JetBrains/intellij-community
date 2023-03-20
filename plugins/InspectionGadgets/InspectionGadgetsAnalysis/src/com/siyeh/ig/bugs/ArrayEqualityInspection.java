@@ -70,14 +70,13 @@ public class ArrayEqualityInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiBinaryExpression)) {
+      if (!(parent instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
       CommentTracker commentTracker = new CommentTracker();
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       @NonNls final StringBuilder newExpressionText = new StringBuilder();
       if (JavaTokenType.NE.equals(tokenType)) {

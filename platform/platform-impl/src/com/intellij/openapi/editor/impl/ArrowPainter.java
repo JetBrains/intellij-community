@@ -9,8 +9,6 @@ import java.awt.*;
 
 /**
  * Encapsulates logic of drawing arrows at graphics buffer (primary usage is to draw tabulation symbols representation arrows).
- *
- * @author Denis Zhdanov
  */
 public class ArrowPainter {
 

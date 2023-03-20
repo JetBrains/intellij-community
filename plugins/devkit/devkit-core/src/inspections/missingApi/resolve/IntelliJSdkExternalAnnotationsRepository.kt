@@ -12,5 +12,5 @@ interface IntelliJSdkExternalAnnotationsRepository {
    *
    * Returns annotations to be attached, or `null` if no suitable annotations are found.
    */
-  fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations?
+  suspend fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations?
 }

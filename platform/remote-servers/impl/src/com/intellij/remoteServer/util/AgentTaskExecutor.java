@@ -40,7 +40,7 @@ public class AgentTaskExecutor implements CloudAgentErrorHandler {
     }
   }
 
-  public <T> void execute(Computable<T> task, CallbackWrapper<T> callback) {
+  public <T> void execute(Computable<? extends T> task, CallbackWrapper<T> callback) {
     clear();
     T result;
     try {

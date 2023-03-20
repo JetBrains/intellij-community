@@ -85,11 +85,11 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, null, context, table);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
+  public DummyHolder(@NotNull PsiManager manager, CharTable table, Language language) {
     this(manager, null, null, table, null, language);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, final Language language, final PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
     this(manager, null, context, null, null, language);
   }
 
@@ -122,7 +122,7 @@ public class DummyHolder extends PsiFileImpl {
       PsiFile containingFile = context.getContainingFile();
       if (containingFile != null) return containingFile.getFileType();
     }
-    final LanguageFileType fileType = myLanguage.getAssociatedFileType();
+    LanguageFileType fileType = myLanguage.getAssociatedFileType();
     return fileType != null ? fileType : PlainTextFileType.INSTANCE;
   }
 

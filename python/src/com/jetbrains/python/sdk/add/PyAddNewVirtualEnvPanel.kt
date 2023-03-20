@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
+import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -23,9 +24,6 @@ import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
 
-/**
- * @author vlan
- */
 open class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val module: Module?,
                               private val existingSdks: List<Sdk>,
@@ -70,7 +68,7 @@ open class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(validateEnvironmentDirectoryLocation(pathField),
+    listOfNotNull(validateEnvironmentDirectoryLocation(pathField, PathInfo.localPathInfoProvider),
                   validateSdkComboBox(baseSdkField, this))
 
   override fun getOrCreateSdk(): Sdk? {

@@ -19,13 +19,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,39 +34,28 @@ public final class PsiUtilEx {
   private PsiUtilEx() {
   }
 
-  public static boolean isInSourceContent(PsiElement e) {
-    final VirtualFile file = e.getContainingFile().getVirtualFile();
-    if (file == null) return false;
-    final ProjectFileIndex index = ProjectRootManager.getInstance(e.getProject()).getFileIndex();
-    return index.isInContent(file);
-  }
-
   @Nullable
   public static PsiParameter getParameterForArgument(PsiElement element) {
     PsiElement p = element.getParent();
-    if (!(p instanceof PsiExpressionList)) return null;
-    PsiExpressionList list = (PsiExpressionList)p;
+    if (!(p instanceof PsiExpressionList list)) return null;
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiCallExpression)) return null;
     PsiExpression[] arguments = list.getExpressions();
-    for (int i = 0; i < arguments.length; i++) {
-      PsiExpression argument = arguments[i];
-      if (argument == element) {
-        final PsiCallExpression call = (PsiCallExpression)parent;
-        final PsiMethod method = call.resolveMethod();
-        if (method != null) {
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (parameters.length > i) {
-            return parameters[i];
-          }
-          else if (parameters.length > 0) {
-            final PsiParameter lastParam = parameters[parameters.length - 1];
-            if (lastParam.getType() instanceof PsiEllipsisType) {
-              return lastParam;
-            }
+    int i = ArrayUtil.indexOf(arguments, element);
+    if (i != -1) {
+      final PsiCallExpression call = (PsiCallExpression)parent;
+      final PsiMethod method = call.resolveMethod();
+      if (method != null) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length > i) {
+          return parameters[i];
+        }
+        else if (parameters.length > 0) {
+          final PsiParameter lastParam = parameters[parameters.length - 1];
+          if (lastParam.getType() instanceof PsiEllipsisType) {
+            return lastParam;
           }
         }
-        break;
       }
     }
     return null;

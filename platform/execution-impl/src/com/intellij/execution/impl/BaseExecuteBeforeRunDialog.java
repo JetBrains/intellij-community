@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
@@ -64,7 +64,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
 
     tree.addMouseListener(new MouseAdapter() {
       @Override
@@ -208,21 +208,18 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
     for (Enumeration<?> nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
       Object object = node.getUserObject();
-      if (!(object instanceof Descriptor)) {
+      if (!(object instanceof Descriptor descriptor)) {
         continue;
       }
-      final Descriptor descriptor = (Descriptor)object;
       final boolean isChecked = descriptor.isChecked();
 
-      if (descriptor instanceof ConfigurationTypeDescriptor) {
-        ConfigurationTypeDescriptor typeDesc = (ConfigurationTypeDescriptor)descriptor;
+      if (descriptor instanceof ConfigurationTypeDescriptor typeDesc) {
         for (ConfigurationFactory factory : typeDesc.getConfigurationType().getConfigurationFactories()) {
           RunnerAndConfigurationSettings settings = runManager.getConfigurationTemplate(factory);
           update(settings.getConfiguration(), isChecked, runManager);
         }
       }
-      else if (descriptor instanceof ConfigurationDescriptor) {
-        ConfigurationDescriptor configDesc = (ConfigurationDescriptor)descriptor;
+      else if (descriptor instanceof ConfigurationDescriptor configDesc) {
         update(configDesc.getConfiguration(), isChecked, runManager);
       }
     }
@@ -401,15 +398,13 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
         myLabel.setText(configurationTypeDescriptor.getConfigurationType().getDisplayName());
         myLabel.setIcon(configurationTypeDescriptor.getIcon());
       }
-      else if (descriptor instanceof GroupConfigurationDescriptor) {
-        GroupConfigurationDescriptor groupConfigurationDescriptor = (GroupConfigurationDescriptor)descriptor;
+      else if (descriptor instanceof GroupConfigurationDescriptor groupConfigurationDescriptor) {
         myLabel.setIcon(groupConfigurationDescriptor.getIcon());
         myLabel.setText(groupConfigurationDescriptor.getConfigurationType().getDisplayName());
         myLabel.setFont(tree.getFont());
         myCheckbox.setState(getStateFromChildren(node));
       }
-      else if (descriptor instanceof ConfigurationDescriptor) {
-        ConfigurationDescriptor configurationTypeDescriptor = (ConfigurationDescriptor)descriptor;
+      else if (descriptor instanceof ConfigurationDescriptor configurationTypeDescriptor) {
         myLabel.setFont(tree.getFont());
         myLabel.setText(configurationTypeDescriptor.getName());
         myLabel.setIcon(null);

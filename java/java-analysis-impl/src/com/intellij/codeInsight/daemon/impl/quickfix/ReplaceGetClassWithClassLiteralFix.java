@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
@@ -18,6 +19,8 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private @IntentionName String myText;
@@ -64,11 +67,14 @@ public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentio
     return JavaAnalysisBundle.message("replace.get.class.with.class.literal");
   }
 
-  public static void registerFix(PsiMethodCallExpression callExpression, HighlightInfo errorResult) {
+  public static void registerFix(PsiMethodCallExpression callExpression, HighlightInfo.Builder errorResult) {
     if (callExpression.getMethodExpression().getQualifierExpression() == null) {
       PsiMethod method = callExpression.resolveMethod();
       if (method != null && PsiTypesUtil.isGetClass(method)) {
-        QuickFixAction.registerQuickFixAction(errorResult, new ReplaceGetClassWithClassLiteralFix(callExpression));
+        IntentionAction action = new ReplaceGetClassWithClassLiteralFix(callExpression);
+        if (errorResult != null) {
+          errorResult.registerFix(action, null, null, null, null);
+        }
       }
     }
   }

@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
+import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -12,11 +15,16 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 import java.util.jar.Manifest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlin.io.path.name
 
 class CompressorTest {
   @Rule @JvmField var tempDir = TempDirectory()
@@ -109,6 +117,44 @@ class CompressorTest {
       "tar/d1/f11" to "11", "tar/d1/f12" to "12",
       "tar/d1/d11/f111" to "111", "tar/d1/d11/f112" to "112",
       "tar/d2/f21" to "21", "tar/d2/f22" to "22")
+  }
+
+  @Test fun tarWithEmptyPrefix() {
+    val file = tempDir.newFile("dir/file").toPath()
+    val tar = tempDir.newFile("test.tgz")
+    Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory("", file.parent) }
+    assertTar(tar, file.name to "")
+  }
+
+  @Test fun tarWithExecutableFiles() {
+    assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"))
+
+    val dir = tempDir.newDirectory("dir").toPath()
+    val regular = Files.createFile(dir.resolve("regular"))
+    val executable = Files.createFile(dir.resolve("executable"), PosixFilePermissions.asFileAttribute(PosixFilePermission.values().toSet()))
+
+    val tar = tempDir.newFile("test.tgz")
+    Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory(dir) }
+    val out = tempDir.newDirectory("out").toPath()
+    Decompressor.Tar(tar).extract(out)
+    assertThat(Files.getPosixFilePermissions(out.resolve(regular.name))).doesNotContain(PosixFilePermission.OWNER_EXECUTE)
+    assertThat(Files.getPosixFilePermissions(out.resolve(executable.name))).contains(PosixFilePermission.OWNER_EXECUTE)
+  }
+
+  @Test fun tarWithSymbolicLinks() {
+    assumeSymLinkCreationIsSupported()
+
+    val dir = tempDir.newDirectory("dir").toPath()
+    val origin = Files.createFile(dir.resolve("origin"))
+    val link = Files.createSymbolicLink(dir.resolve("link"), origin.fileName)
+
+    val tar = tempDir.newFile("test.tgz")
+    Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory(dir) }
+    NioFiles.deleteRecursively(dir)
+
+    val out = tempDir.newDirectory("out").toPath()
+    Decompressor.Tar(tar).extract(out)
+    assertThat(out.resolve(link.name)).isSymbolicLink.hasSameBinaryContentAs(out.resolve(origin.name))
   }
 
   @Test fun entryNameTrimming() {

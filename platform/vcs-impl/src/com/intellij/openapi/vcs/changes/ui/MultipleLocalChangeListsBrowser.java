@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -18,9 +17,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
@@ -37,6 +36,7 @@ import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +48,11 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY;
-import static com.intellij.util.containers.ContainerUtil.immutableSingletonList;
-import static com.intellij.util.containers.ContainerUtil.newUnmodifiableList;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
@@ -73,16 +70,15 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull private LocalChangeList myChangeList;
   private final List<Change> myChanges = new ArrayList<>();
   private final List<FilePath> myUnversioned = new ArrayList<>();
-  private boolean myHasHiddenUnversioned;
 
-  @Nullable private Runnable mySelectedListChangeListener;
+  @Nullable private SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
   private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
-                                         boolean showCheckboxes,
-                                         boolean highlightProblems,
-                                         boolean enableUnversioned,
-                                         boolean enablePartialCommit) {
+                                  boolean showCheckboxes,
+                                  boolean highlightProblems,
+                                  boolean enableUnversioned,
+                                  boolean enablePartialCommit) {
     super(project, showCheckboxes, highlightProblems);
     myEnableUnversioned = enableUnversioned;
     myEnablePartialCommit = enablePartialCommit;
@@ -126,7 +122,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   protected JComponent createHeaderPanel() {
     return JBUI.Panels.simplePanel(myChangeListChooser)
-                      .withBorder(JBUI.Borders.emptyLeft(6));
+      .withBorder(JBUI.Borders.emptyLeft(6));
   }
 
   @NotNull
@@ -165,7 +161,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     result.add(ActionManager.getInstance().getAction("ChangesView.Refresh"));
 
     if (myEnableUnversioned) {
-      result.add(new ShowHideUnversionedFilesAction());
       result.add(UnversionedViewDialog.registerUnversionedPopupGroup(myViewer));
     }
     else {
@@ -209,17 +204,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myBottomDiffComponent = value;
   }
 
-  public void setSelectedListChangeListener(@Nullable Runnable runnable) {
+  public void setSelectedListChangeListener(@Nullable SingleChangeListCommitWorkflowUi.ChangeListListener runnable) {
     mySelectedListChangeListener = runnable;
-  }
-
-  private boolean isShowUnversioned() {
-    return myEnableUnversioned && VcsConfiguration.getInstance(myProject).SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
-  }
-
-  private void setShowUnversioned(boolean value) {
-    VcsConfiguration.getInstance(myProject).SHOW_UNVERSIONED_FILES_WHILE_COMMIT = value;
-    updateDisplayedChanges();
   }
 
   @NotNull
@@ -232,17 +218,18 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myChangeListChooser.setSelectedChangeList(list);
   }
 
-  private void updateSelectedChangeList(@NotNull LocalChangeList list) {
-    boolean isListChanged = !myChangeList.getId().equals(list.getId());
+  private void updateSelectedChangeList(@NotNull LocalChangeList newChangeList) {
+    LocalChangeList oldChangeList = myChangeList;
+    boolean isListChanged = !oldChangeList.getId().equals(newChangeList.getId());
     if (isListChanged) {
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     }
-    myChangeList = list;
-    myChangeListChooser.setToolTipText(list.getName());
+    myChangeList = newChangeList;
+    myChangeListChooser.setToolTipText(newChangeList.getName());
     updateDisplayedChanges();
-    if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.run();
+    if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.changeListChanged(oldChangeList, newChangeList);
 
-    myInclusionModel.setChangeLists(immutableSingletonList(myChangeList));
+    myInclusionModel.setChangeLists(List.of(newChangeList));
   }
 
   @Override
@@ -254,18 +241,12 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   public void updateDisplayedChanges() {
     myChanges.clear();
     myUnversioned.clear();
-    myHasHiddenUnversioned = false;
 
     myChanges.addAll(myChangeList.getChanges());
 
     if (myEnableUnversioned) {
       List<FilePath> unversioned = ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
-      if (isShowUnversioned()) {
-        myUnversioned.addAll(unversioned);
-      }
-      if (!isShowUnversioned() && !unversioned.isEmpty()) {
-        myHasHiddenUnversioned = true;
-      }
+      myUnversioned.addAll(unversioned);
     }
 
     myViewer.rebuildTree();
@@ -280,15 +261,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     builder.setChanges(myChanges, decorator);
     builder.setUnversioned(myUnversioned);
 
-    if (myHasHiddenUnversioned) {
-      myViewer.getEmptyText()
-        .setText(VcsBundle.message("status.text.unversioned.files.available"))
-        .appendText(VcsBundle.message("plugins.configurable.show"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
-    }
-    else {
-      myViewer.getEmptyText()
-        .setText(DiffBundle.message("diff.count.differences.status.text", 0));
-    }
+    myViewer.getEmptyText()
+      .setText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     return builder.build();
   }
@@ -306,7 +280,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return ChangesListView.getSelectedUnversionedFiles(myViewer);
+      return VcsTreeModelData.selectedUnderTag(myViewer, UNVERSIONED_FILES_TAG)
+        .iterateUserObjects(FilePath.class);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
@@ -315,7 +290,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       return new ChangeList[]{myChangeList};
     }
     else if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
-      return ChangesListView.getExactlySelectedVirtualFiles(myViewer);
+      return VcsTreeModelData.mapToExactVirtualFile(VcsTreeModelData.exactlySelected(myViewer));
     }
     return super.getData(dataId);
   }
@@ -342,10 +317,12 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   public List<FilePath> getDisplayedUnversionedFiles() {
-    if (!isShowUnversioned()) return Collections.emptyList();
+    if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
+    if (containsCollapsedUnversionedNode(treeModelData)) {
+      return List.copyOf(myUnversioned);
+    }
 
     return treeModelData.userObjects(FilePath.class);
   }
@@ -353,10 +330,12 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   public List<FilePath> getSelectedUnversionedFiles() {
-    if (!isShowUnversioned()) return Collections.emptyList();
+    if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
+    if (containsCollapsedUnversionedNode(treeModelData)) {
+      return List.copyOf(myUnversioned);
+    }
 
     return treeModelData.userObjects(FilePath.class);
   }
@@ -364,20 +343,22 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   public List<FilePath> getIncludedUnversionedFiles() {
-    if (!isShowUnversioned()) return Collections.emptyList();
+    if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return newUnmodifiableList(myUnversioned);
+    if (containsCollapsedUnversionedNode(treeModelData)) {
+      return List.copyOf(myUnversioned);
+    }
 
     return treeModelData.userObjects(FilePath.class);
   }
 
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
-    Optional<ChangesBrowserNode<?>> node = treeModelData.nodesStream()
-      .filter(it -> it instanceof ChangesBrowserUnversionedFilesNode).findAny();
-    if (node.isEmpty()) return false;
+    ChangesBrowserUnversionedFilesNode unversionedFilesNode = treeModelData.iterateNodes()
+      .filter(ChangesBrowserUnversionedFilesNode.class)
+      .first();
+    if (unversionedFilesNode == null) return false;
 
-    ChangesBrowserUnversionedFilesNode unversionedFilesNode = (ChangesBrowserUnversionedFilesNode)node.get();
     return unversionedFilesNode.isManyFiles();
   }
 
@@ -391,7 +372,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends LocalChangeList> list, LocalChangeList value,
                                              int index, boolean selected, boolean hasFocus) {
-          String name = shortenTextWithEllipsis(value.getName().trim(), MAX_NAME_LEN, 0);
+          String name = StringUtil.shortenTextWithEllipsis(value.getName().trim(), MAX_NAME_LEN, 0);
           append(name, value.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       });
@@ -441,26 +422,14 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
 
-  private final class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
-    private ShowHideUnversionedFilesAction() {
-      super(VcsBundle.messagePointer("action.ToggleAction.text.show.unversioned.files"), Presentation.NULL_STRING,
-            AllIcons.Vcs.ShowUnversionedFiles);
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return isShowUnversioned();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      setShowUnversioned(state);
-    }
-  }
-
   private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction, DumbAware {
     ToggleChangeDiffAction() {
       super(VcsBundle.messagePointer("commit.dialog.include.action.name"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @NotNull

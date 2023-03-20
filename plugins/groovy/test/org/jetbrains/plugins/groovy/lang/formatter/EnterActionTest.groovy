@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.lang.formatter
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
-/**
- * @author ilyas
- */
 class EnterActionTest extends GroovyFormatterTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/enterAction/'
@@ -534,6 +531,12 @@ print 2
 /*
 <caret>
  */''')
+  }
+
+  void testIfCondition() {
+    doTest('if (<caret>true) {}', '''\
+if (
+    true) {}''')
   }
 }
 

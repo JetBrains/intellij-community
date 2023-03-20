@@ -19,9 +19,6 @@ import com.intellij.psi.PsiElement;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public interface SafeDeleteRefactoring extends Refactoring {
   List<PsiElement> getElements();
 

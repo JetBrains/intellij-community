@@ -22,9 +22,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
@@ -41,7 +38,8 @@ class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testConstructorParamCount() = doTest()
   fun testConstructorParamTypes() = doTest()
-  
+  fun testConstructorParamTypesTernary() = doTest()
+
   fun testNonVarargCall() = doTest()
 
   private fun doTest() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,7 +96,7 @@ public final class ClassInnerStuffCache {
   }
 
   private boolean classNameIsSealed() {
-    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_16_PREVIEW);
+    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_17);
   }
 
   @Nullable
@@ -195,7 +195,7 @@ public final class ClassInnerStuffCache {
     for (PsiClass psiClass : myClass.getOwnInnerClasses()) {
       String name = psiClass.getName();
       if (name == null) {
-        Logger.getInstance(ClassInnerStuffCache.class).error(psiClass);
+        Logger.getInstance(ClassInnerStuffCache.class).error("getName() returned null for " + psiClass);
       }
       else if (!(psiClass instanceof ExternallyDefinedPsiElement) || !cachedInners.containsKey(name)) {
         cachedInners.put(name, psiClass);
@@ -237,6 +237,16 @@ public final class ClassInnerStuffCache {
       myModifierList = createModifierList();
     }
 
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitMethod(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
+    
     private @NotNull PsiType createReturnType() {
       PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(myClass);
       if (myKind == EnumMethodKind.Values) {

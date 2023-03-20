@@ -9,9 +9,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-/**
- * @author pegov
- */
 public final class AltStateManager implements AWTEventListener {
 
   private static final AltStateManager ourInstance;

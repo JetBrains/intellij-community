@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryConstructorInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -41,11 +44,10 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unnecessary.constructor.annotation.option"),
-      this, "ignoreAnnotations");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAnnotations", InspectionGadgetsBundle.message(
+        "unnecessary.constructor.annotation.option")));
   }
 
   @Override
@@ -74,7 +76,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement nameIdentifier = descriptor.getPsiElement();
       final PsiElement constructor = nameIdentifier.getParent();
       assert constructor != null;
@@ -91,7 +93,8 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return;
       }
       final PsiMethod constructor = constructors[0];
-      if (!constructor.isPhysical() || constructor.getNameIdentifier() == null) {
+      final PsiIdentifier identifier = constructor.getNameIdentifier();
+      if (!constructor.isPhysical() || identifier == null) {
         return;
       }
       if (!aClass.isEnum()) {
@@ -119,20 +122,18 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
       final PsiCodeBlock body = constructor.getBody();
       if (ControlFlowUtils.isEmptyCodeBlock(body) ||
           isSuperConstructorInvocationWithoutArguments(ControlFlowUtils.getOnlyStatementInBlock(body))) {
-        registerMethodError(constructor);
+        registerError(identifier);
       }
     }
 
     private boolean isSuperConstructorInvocationWithoutArguments(PsiStatement statement) {
-      if (!(statement instanceof PsiExpressionStatement)) {
+      if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       if (!argumentList.isEmpty()) {
         return false;

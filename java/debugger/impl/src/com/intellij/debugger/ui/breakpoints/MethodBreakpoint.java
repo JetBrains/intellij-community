@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -24,7 +24,6 @@ import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -68,13 +67,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(MethodBreakpoint.class);
-  @Nullable private JVMName mySignature;
-  private boolean myIsStatic;
+  @Nullable protected JVMName mySignature;
+  protected boolean myIsStatic;
 
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
@@ -139,15 +137,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       request.enable();
     }
 
-    AtomicReference<ProgressWindow> indicatorRef = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(
-      () -> {
-        ProgressWindow progress =
-          new ProgressWindow(true, false, debugProcess.getProject(), JavaDebuggerBundle.message("cancel.emulation"));
-        progress.setDelayInMillis(2000);
-        indicatorRef.set(progress);
-      });
-    ProgressWindow indicator = indicatorRef.get();
+    ProgressWindow indicator =
+      new ProgressWindow(true, false, debugProcess.getProject(), JavaDebuggerBundle.message("cancel.emulation"));
+    indicator.setDelayInMillis(2000);
 
     AtomicBoolean changed = new AtomicBoolean();
     XBreakpointListener<XBreakpoint<?>> listener = new XBreakpointListener<XBreakpoint<?>>() {
@@ -213,8 +205,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return;
     }
     StreamEx<Method> methods = lambdaMethod != null
-                       ? StreamEx.of(lambdaMethod)
-                       : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
+                               ? StreamEx.of(lambdaMethod)
+                               : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
     boolean found = false;
     for (Method method : methods) {
       found = true;
@@ -241,6 +233,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         if (breakpoint.isWatchExit()) {
           MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
             int myLastLine = 0;
+
             @Override
             public void visitLineNumber(int line, Label start) {
               myLastLine = line;
@@ -249,13 +242,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
             @Override
             public void visitInsn(int opcode) {
               switch (opcode) {
-                case Opcodes.RETURN:
-                case Opcodes.IRETURN:
-                case Opcodes.FRETURN:
-                case Opcodes.ARETURN:
-                case Opcodes.LRETURN:
-                case Opcodes.DRETURN:
-                //case Opcodes.ATHROW:
+                case Opcodes.RETURN, Opcodes.IRETURN, Opcodes.FRETURN, Opcodes.ARETURN, Opcodes.LRETURN, Opcodes.DRETURN ->
                   allLineLocations.stream()
                     .filter(l -> l.lineNumber() == myLastLine)
                     .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
@@ -304,7 +291,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
 
-      if(!hasMethod) {
+      if (!hasMethod) {
         debugProcess.getRequestsManager().setInvalid(
           this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
         );
@@ -368,7 +355,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
     int locationLine = location.lineNumber();
     return JavaDebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
-                                  method.declaringType().name() + "." + method.name() + "()",
+                                      method.declaringType().name() + "." + method.name() + "()",
                                       locationQName,
                                       locationFileName,
                                       locationLine
@@ -403,13 +390,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   @Override
   public String getDisplayName() {
     final @Nls StringBuilder buffer = new StringBuilder();
-    if(isValid()) {
+    if (isValid()) {
       final String className = getClassName();
       final boolean classNameExists = className != null && className.length() > 0;
       if (classNameExists) {
         buffer.append(className);
       }
-      if(getMethodName() != null) {
+      if (getMethodName() != null) {
         if (classNameExists) {
           buffer.append(".");
         }
@@ -476,7 +463,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       final PsiIdentifier identifier = method.getNameIdentifier();
-      int methodNameOffset = identifier != null? identifier.getTextOffset() : methodOffset;
+      int methodNameOffset = identifier != null ? identifier.getTextOffset() : methodOffset;
       final MethodDescriptor res =
         new MethodDescriptor();
       res.methodName = JVMNameUtil.getJVMMethodName(method);
@@ -505,12 +492,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
     try {
-      getProperties().WATCH_ENTRY = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
-    } catch (Exception ignored) {
+      getProperties().WATCH_ENTRY = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
+    }
+    catch (Exception ignored) {
     }
     try {
-      getProperties().WATCH_EXIT = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
-    } catch (Exception ignored) {
+      getProperties().WATCH_EXIT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
+    }
+    catch (Exception ignored) {
     }
   }
 
@@ -546,15 +535,15 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return getProperties().myMethodName;
   }
 
-  private void setMethodName(@Nullable String methodName) {
+  protected void setMethodName(@Nullable String methodName) {
     getProperties().myMethodName = methodName;
   }
 
-  private static final class MethodDescriptor {
-    String methodName;
-    JVMName methodSignature;
-    boolean isStatic;
-    int methodLine;
+  public static final class MethodDescriptor {
+    public String methodName;
+    public JVMName methodSignature;
+    public boolean isStatic;
+    public int methodLine;
   }
 
   private static void processPreparedSubTypes(ReferenceType classType,

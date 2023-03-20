@@ -32,7 +32,6 @@ import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,6 +157,11 @@ public abstract class GitHandler {
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      toPass.add("protocol.file.allow=always");
+    }
+
     return toPass;
   }
 
@@ -368,6 +372,12 @@ public abstract class GitHandler {
     myCustomEnv.put(name, value);
   }
 
+  /**
+   * Use {@link #getExecutable()} and {@link GitExecutable#convertFilePath(File)}
+   *
+   * @deprecated Do not use, each ENV may have its own escaping rules.
+   */
+  @Deprecated
   public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
     myCustomEnv.put(name, myExecutable.convertFilePath(file));
   }
@@ -517,8 +527,7 @@ public abstract class GitHandler {
    * @return is "--progress" parameter supported by this version of Git.
    * @deprecated use {@link #addParameters}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean addProgressParameter() {
     if (myProject != null && GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
       addParameters("--progress");
@@ -531,8 +540,7 @@ public abstract class GitHandler {
    * @return exit code for process if it is available
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public int getExitCode() {
     if (myExitCode == null) {
       return -1;
@@ -577,7 +585,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * @param postStartAction
    * @deprecated remove together with {@link GitHandlerUtil}
    */
   @Deprecated
@@ -619,8 +626,7 @@ public abstract class GitHandler {
    * @return unmodifiable list of errors.
    * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public List<VcsException> errors() {
     return Collections.unmodifiableList(myErrors);
   }

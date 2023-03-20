@@ -1,4 +1,4 @@
-// "Make 'm1' return 'boolean'" "true"
+// "Make 'm1()' return 'boolean'" "true-preview"
 interface A {
     void m1();
 }

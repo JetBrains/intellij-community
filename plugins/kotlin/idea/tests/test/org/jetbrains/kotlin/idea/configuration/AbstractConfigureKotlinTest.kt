@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import java.io.File
 
 abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
     protected fun doTestConfigureModulesWithNonDefaultSetup(configurator: KotlinWithLibraryConfigurator<*>) {
@@ -51,11 +52,19 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
 
     private fun configure(modules: List<Module>, configurator: KotlinWithLibraryConfigurator<*>) {
         val project = modules.first().project
-        val collector = createConfigureKotlinNotificationCollector(project)
+        val collector = NotificationMessageCollector.create(project)
 
         configurator.getOrCreateKotlinLibrary(project, collector)
+        val writeActions = ArrayList<() -> Unit>()
         for (module in modules) {
-            configurator.configureModule(module, collector)
+            ReadAction.nonBlocking {
+                configurator.configureModule (module, collector, writeActions)
+            }.submit(AppExecutorUtil.getAppExecutorService()).get()
+        }
+        ApplicationManager.getApplication().runWriteAction{
+            writeActions.forEach { writeAction ->
+              writeAction.invoke()
+            }
         }
         collector.showNotification()
     }

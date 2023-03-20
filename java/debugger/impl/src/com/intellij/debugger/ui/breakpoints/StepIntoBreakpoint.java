@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
@@ -61,8 +61,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
           location = methods.values().iterator().next();
         }
         else {
-          if (myFilter instanceof LambdaMethodFilter) {
-            final LambdaMethodFilter lambdaFilter = (LambdaMethodFilter)myFilter;
+          if (myFilter instanceof LambdaMethodFilter lambdaFilter) {
             if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
               Method[] candidates = methods.keySet().toArray(new Method[methodsFound]);
               Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
@@ -88,7 +87,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
         LOG.debug("ObjectCollectedException: " + ex.getMessage());
       }
     }
-    catch(Exception ex) {
+    catch (Exception ex) {
       LOG.info(ex);
     }
   }

@@ -15,13 +15,15 @@ import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase.*
 import java.io.File
 import java.io.PrintWriter
+import java.io.Writer
 
 
 val BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine"
 
 abstract class FileSetCodeStyleProcessorTestBase : LightPlatformTestCase() {
 
-  var codeStyleSettings: CodeStyleSettings? = null
+  lateinit var codeStyleSettings: CodeStyleSettings
+
   var messageOutput: MessageOutput? = null
 
   override fun setUp() {
@@ -33,7 +35,17 @@ abstract class FileSetCodeStyleProcessorTestBase : LightPlatformTestCase() {
         IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
       }
     }
-    messageOutput = MessageOutput(PrintWriter(System.out), PrintWriter(System.err))
+    messageOutput = MessageOutput(PrintWriter(object: Writer(){
+          override fun close() {
+          }
+    
+          override fun flush() {
+          }
+
+          override fun write(cbuf: CharArray?, off: Int, len: Int) {
+            LOG.debug(String(cbuf!!, off, len))
+          }
+        }), PrintWriter(System.err))
   }
 
 }

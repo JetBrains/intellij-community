@@ -13,11 +13,14 @@ import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -35,6 +38,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ExecutionUtil {
@@ -42,7 +46,10 @@ public final class ExecutionUtil {
 
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
-  private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
+  private static final NotificationGroup ourSilentNotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("Silent Execution");
+  private static final NotificationGroup ourNotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("Execution");
 
   private ExecutionUtil() { }
 
@@ -128,6 +135,10 @@ public final class ExecutionUtil {
       LOG.info(fullMessage, e);
     }
 
+    if (e instanceof ProcessNotCreatedException) {
+      LOG.debug("Attempting to run: " + ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString());
+    }
+
     if (listener == null) {
       listener = ExceptionUtil.findCause(e, HyperlinkListener.class);
     }
@@ -139,9 +150,11 @@ public final class ExecutionUtil {
         return;
       }
 
-      IdeUiService.getInstance().notifyByBalloon(project, toolWindowId, MessageType.ERROR, title, fullMessage, _description, null, _listener);
+      boolean balloonShown = IdeUiService.getInstance().notifyByBalloon(project, toolWindowId, MessageType.ERROR,
+                                                                        fullMessage, null, _listener);
 
-      Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      NotificationGroup notificationGroup = balloonShown ? ourSilentNotificationGroup : ourNotificationGroup;
+      Notification notification = notificationGroup.createNotification(title, _description, NotificationType.ERROR);
       if (_listener != null) {
         notification.setListener((_notification, event) -> {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -215,6 +228,15 @@ public final class ExecutionUtil {
                                         @Nullable ExecutionTarget targetOrNullForDefault,
                                         @Nullable Long executionId,
                                         @Nullable DataContext dataContext) {
+    doRunConfiguration(configuration, executor, targetOrNullForDefault, executionId, dataContext, null);
+  }
+
+  public static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration,
+                                        @NotNull Executor executor,
+                                        @Nullable ExecutionTarget targetOrNullForDefault,
+                                        @Nullable Long executionId,
+                                        @Nullable DataContext dataContext,
+                                        @Nullable Consumer<? super ExecutionEnvironment> environmentCustomization) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder == null) {
       return;
@@ -230,9 +252,19 @@ public final class ExecutionUtil {
       builder.executionId(executionId);
     }
     if (dataContext != null) {
-      builder.dataContext(dataContext);
+      builder.dataContext(IdeUiService.getInstance().createAsyncDataContext(dataContext));
     }
-    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
+
+    ExecutionEnvironment environment = ApplicationManager.getApplication().isDispatchThread() ?
+                                       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> builder.build()),
+                                                                                                         ExecutionBundle.message("dialog.title.preparing.execution"), true,
+                                                                                                         null) :
+                                       builder.build();
+    if(environmentCustomization != null) {
+      environmentCustomization.accept(environment);
+    }
+
+    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(environment);
   }
 
   @Nullable
@@ -255,13 +287,23 @@ public final class ExecutionUtil {
 
   @NotNull
   public static Icon getLiveIndicator(@Nullable final Icon base) {
-    return getLiveIndicator(base, 13, 13);
+    return getLiveIndicator(base, true);
+  }
+
+  @NotNull
+  public static Icon getLiveIndicator(@Nullable final Icon base, boolean isAlive) {
+    return getLiveIndicator(base, 13, 13, isAlive);
+  }
+
+  @NotNull
+  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
+    return getLiveIndicator(base, emptyIconWidth, emptyIconHeight, true);
   }
 
   @SuppressWarnings("UseJBColor")
   @NotNull
-  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
-    return getIndicator(base, emptyIconWidth, emptyIconHeight, Color.GREEN);
+  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, boolean isAlive) {
+    return getIndicator(base, emptyIconWidth, emptyIconHeight, isAlive ? Color.GREEN : Color.GRAY);
   }
 
   @NotNull

@@ -21,7 +21,8 @@ public abstract class PlatformIdeService {
                            @Nullable @NlsContexts.NotificationTitle String title,
                            @Nullable @NlsContexts.NotificationSubtitle String subtitle,
                            @NotNull @NlsContexts.NotificationContent String content,
-                           @Nullable Project project) {
+                           @Nullable Project project,
+                           @NotNull String displayId) {
     StringBuilder message = new StringBuilder();
     if (title != null && !title.isEmpty()) {
       message.append(title);
@@ -32,9 +33,9 @@ public abstract class PlatformIdeService {
     }
     message.append(content);
     switch (type) {
-      case ERROR:       Logger.getInstance(PlatformIdeService.class).error(message.toString()); break;
-      case WARNING:     Logger.getInstance(PlatformIdeService.class).warn(message.toString()); break;
-      case INFORMATION: Logger.getInstance(PlatformIdeService.class).info(message.toString()); break;
+      case ERROR -> Logger.getInstance(PlatformIdeService.class).error(message.toString());
+      case WARNING -> Logger.getInstance(PlatformIdeService.class).warn(message.toString());
+      case INFORMATION -> Logger.getInstance(PlatformIdeService.class).info(message.toString());
     }
   }
 }

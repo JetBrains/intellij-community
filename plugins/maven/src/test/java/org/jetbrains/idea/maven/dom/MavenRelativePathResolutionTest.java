@@ -17,9 +17,11 @@ public class MavenRelativePathResolutionTest extends MavenDomWithIndicesTestCase
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
   }
 
   @Test
@@ -31,14 +33,14 @@ public class MavenRelativePathResolutionTest extends MavenDomWithIndicesTestCase
     String relativePathUnixSeparator =
       FileUtil.getRelativePath(new File(myProjectRoot.getPath()), file).replaceAll("\\\\", "/");
 
-    VirtualFile pom = createProjectPom("<groupId>test</groupId>" +
-                                       "<artifactId>project</artifactId>" +
-                                       "<version>1</version>" +
-                                       "<parent>" +
-                                       "  <groupId>org.example</groupId>" +
-                                       "  <artifactId>example</artifactId>" +
-                                       "  <version>1.0</version>" +
-                                       "  <relativePath>" + relativePathUnixSeparator + "<caret></relativePath>" +
+    VirtualFile pom = createProjectPom("<groupId>test</groupId>\n" +
+                                       "<artifactId>project</artifactId>\n" +
+                                       "<version>1</version>\n" +
+                                       "<parent>\n" +
+                                       "  <groupId>org.example</groupId>\n" +
+                                       "  <artifactId>example</artifactId>\n" +
+                                       "  <version>1.0</version>\n" +
+                                       "  <relativePath>\n" + relativePathUnixSeparator + "<caret></relativePath>\n" +
                                        "</parent>"
     );
 
@@ -62,14 +64,14 @@ public class MavenRelativePathResolutionTest extends MavenDomWithIndicesTestCase
     String relativePathUnixSeparator =
       FileUtil.getRelativePath(new File(myProjectRoot.getPath()), parentFile).replaceAll("\\\\", "/");
 
-    VirtualFile pom = createProjectPom("<groupId>test</groupId>" +
-                                       "<artifactId>project</artifactId>" +
-                                       "<version>1</version>" +
-                                       "<parent>" +
-                                       "  <groupId>org.example</groupId>" +
-                                       "  <artifactId>example</artifactId>" +
-                                       "  <version>1.0</version>" +
-                                       "  <relativePath>" + relativePathUnixSeparator + "<caret></relativePath>" +
+    VirtualFile pom = createProjectPom("<groupId>test</groupId>\n" +
+                                       "<artifactId>project</artifactId>\n" +
+                                       "<version>1</version>\n" +
+                                       "<parent>\n" +
+                                       "  <groupId>org.example</groupId>\n" +
+                                       "  <artifactId>example</artifactId>\n" +
+                                       "  <version>1.0</version>\n" +
+                                       "  <relativePath>\n" + relativePathUnixSeparator + "<caret></relativePath>\n" +
                                        "</parent>"
     );
 

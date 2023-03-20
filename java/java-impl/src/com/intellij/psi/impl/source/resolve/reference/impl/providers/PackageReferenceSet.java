@@ -57,7 +57,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     if (packageReference == null) {
       return Collections.emptyList();
     }
-    return ContainerUtil.map2List(packageReference.multiResolve(false),
+    return ContainerUtil.map(packageReference.multiResolve(false),
                                   (NullableFunction<ResolveResult, PsiPackage>)resolveResult -> (PsiPackage)resolveResult.getElement());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -24,12 +24,6 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- *         <p/>
- *         NOTE: the class must be compilable with JDK 1.3, so any methods and filds introduced in 1.4 or later must not be used
- */
 public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
   private static final SAXParser SAX_PARSER = createParser();
@@ -182,7 +176,7 @@ public final class Utils {
 
   public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader, final String targetForm)
     throws CodeGenerationException, RecursiveFormNestingException {
-    HashSet<String> usedFormNames = new HashSet<String>();
+    HashSet<String> usedFormNames = new HashSet<>();
     if (targetForm != null) {
       usedFormNames.add(targetForm);
     }
@@ -202,7 +196,7 @@ public final class Utils {
     catch (Exception e) {
       throw new CodeGenerationException(null, "Error loading nested form: " + e.getMessage(), e);
     }
-    final Set<String> thisFormNestedForms = new HashSet<String>();
+    final Set<String> thisFormNestedForms = new HashSet<>();
     final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
     final RecursiveFormNestingException[] recursiveNestingExceptions = new RecursiveFormNestingException[1];
     rootContainer.accept(new ComponentVisitor() {
@@ -309,10 +303,11 @@ public final class Utils {
     }
   }
 
-  public static InstrumentationClassFinder.PseudoClass suggestReplacementClass(InstrumentationClassFinder.PseudoClass componentClass) throws ClassNotFoundException, IOException {
+  static InstrumentationClassFinder.PseudoClass suggestReplacementClass(InstrumentationClassFinder.PseudoClass componentClass) throws ClassNotFoundException, IOException {
     final InstrumentationClassFinder.PseudoClass jComponentClass = componentClass.getFinder().loadClass(JComponent.class.getName());
     while (true) {
       componentClass = componentClass.getSuperClass();
+      assert componentClass != null;
       if (componentClass.equals(jComponentClass)) {
         return componentClass.getFinder().loadClass(JPanel.class.getName());
       }

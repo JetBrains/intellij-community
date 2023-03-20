@@ -1,24 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.RemoveEmptyPrimaryConstructorIntention
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class RemoveUnusedFunctionParameterFix(parameter: KtParameter, private val checkUsages: Boolean = true) :
-    KotlinQuickFixAction<KtParameter>(parameter) {
+  KotlinQuickFixAction<KtParameter>(parameter) {
     override fun getFamilyName() = ChangeFunctionSignatureFix.FAMILY_NAME
 
     override fun getText() = element?.let { KotlinBundle.message("remove.parameter.0", it.name.toString()) } ?: ""
@@ -28,6 +30,7 @@ class RemoveUnusedFunctionParameterFix(parameter: KtParameter, private val check
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val parameter = element ?: return
         val parameterList = parameter.parent as? KtParameterList ?: return
+        val parameterListHasComments = parameterList.anyDescendantOfType<PsiComment>()
         if (!checkUsages) {
             runWriteAction {
                 parameterList.removeParameter(parameter)
@@ -50,7 +53,7 @@ class RemoveUnusedFunctionParameterFix(parameter: KtParameter, private val check
             }
         }
 
-        if (primaryConstructor != null) {
+        if (primaryConstructor != null && !parameterListHasComments) {
             val removeConstructorIntention = RemoveEmptyPrimaryConstructorIntention()
             if (removeConstructorIntention.isApplicableTo(primaryConstructor)) {
                 editor?.caretModel?.moveToOffset(primaryConstructor.endOffset)

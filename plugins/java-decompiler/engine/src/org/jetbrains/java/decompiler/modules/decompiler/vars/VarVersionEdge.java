@@ -24,9 +24,8 @@ public class VarVersionEdge { // FIXME: can be removed?
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof VarVersionEdge)) return false;
+    if (!(o instanceof VarVersionEdge edge)) return false;
 
-    VarVersionEdge edge = (VarVersionEdge)o;
     return type == edge.type && source == edge.source && dest == edge.dest;
   }
 

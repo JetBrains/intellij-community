@@ -1,4 +1,4 @@
-// "Add 'A' as 1st parameter to method 'foo'" "true"
+// "Add 'A' as 1st parameter to method 'foo'" "true-preview"
 public class S {
 
   void foo(A a1, A a) {

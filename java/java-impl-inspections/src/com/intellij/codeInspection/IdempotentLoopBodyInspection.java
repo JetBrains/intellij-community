@@ -17,7 +17,7 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitWhileStatement(PsiWhileStatement loop) {
+      public void visitWhileStatement(@NotNull PsiWhileStatement loop) {
         PsiExpression condition = loop.getCondition();
         if (condition == null || SideEffectChecker.mayHaveSideEffects(condition)) return;
         PsiStatement body = loop.getBody();
@@ -36,7 +36,7 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
       }
 
       @Override
-      public void visitForStatement(PsiForStatement loop) {
+      public void visitForStatement(@NotNull PsiForStatement loop) {
         PsiExpression condition = loop.getCondition();
         if (condition != null && SideEffectChecker.mayHaveSideEffects(condition)) return;
         PsiStatement body = loop.getBody();

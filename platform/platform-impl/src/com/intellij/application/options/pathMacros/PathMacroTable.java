@@ -204,21 +204,23 @@ public final class PathMacroTable extends JBTable {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final Couple<String> pair = myMacros.get(rowIndex);
-      switch (columnIndex) {
-        case NAME_COLUMN: return pair.getFirst();
-        case VALUE_COLUMN: return pair.getSecond();
-      }
-      LOG.error("Wrong indices");
-      return null;
+      return switch (columnIndex) {
+        case NAME_COLUMN -> pair.getFirst();
+        case VALUE_COLUMN -> pair.getSecond();
+        default -> {
+          LOG.error("Wrong indices");
+          yield null;
+        }
+      };
     }
 
     @Override
     public String getColumnName(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_COLUMN: return ApplicationBundle.message("column.name");
-        case VALUE_COLUMN: return ApplicationBundle.message("column.value");
-      }
-      return null;
+      return switch (columnIndex) {
+        case NAME_COLUMN -> ApplicationBundle.message("column.name");
+        case VALUE_COLUMN -> ApplicationBundle.message("column.value");
+        default -> null;
+      };
     }
   }
 

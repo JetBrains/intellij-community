@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders
 
 import com.intellij.util.PathUtil
@@ -11,8 +11,15 @@ class ParallelBuildTest: JpsBuildTestCase() {
   }
 
   override fun tearDown() {
-    System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false.toString())
-    super.tearDown()
+    try {
+      System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false.toString())
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testBuildDependentModules() {

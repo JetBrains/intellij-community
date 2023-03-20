@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+// WITH_STDLIB
 
 class A
 
@@ -7,5 +7,5 @@ fun <T : A?> foo(x: List<T>) {
 }
 
 fun test() {
-    foo(listOf(A()))
+    foo<A?>(listOf(A()))
 }

@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import junit.framework.TestCase.assertFalse
+import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Test
+import kotlin.test.assertTrue
 
 class RecentProjectManagerTest {
   companion object {
@@ -15,102 +18,193 @@ class RecentProjectManagerTest {
     val appRule = ApplicationRule()
   }
 
+  // IDEA-298050
   @Test
-  fun `migrate open paths - no additional info`() {
+  fun `state modification tracker updated on groups expand`() {
     val manager = RecentProjectsManagerBase()
 
-    val element = JDOMUtil.load("""
-      <application>
-    <component name="RecentProjectsManager">
-      <option name="openPaths">
-        <list>
-          <option value="/IdeaProjects/untitled" />
-        </list>
-      </option>
-    </component>
-  </application>
-    """.trimIndent())
-    val state = RecentProjectManagerState()
-    element.getChild("component")!!.deserializeInto(state)
-    manager.loadState(state)
-    assertThat(manager.state.additionalInfo.keys.joinToString("\n")).isEqualTo("/IdeaProjects/untitled")
-    @Suppress("DEPRECATION")
-    assertThat(manager.state.recentPaths).isEmpty()
-  }
-
-  @Test
-  fun `migrate open paths - 1 additional info`() {
-    val manager = RecentProjectsManagerBase()
-
-    val element = JDOMUtil.load("""
-      <application>
-    <component name="RecentProjectsManager">
-      <option name="openPaths">
-        <list>
-          <option value="/IdeaProjects/untitled" />
-        </list>
-      </option>
-          <option name="additionalInfo">
-      <map>
-        <entry key="/IdeaProjects/untitled">
-          <value>
-            <RecentProjectMetaInfo>
-            </RecentProjectMetaInfo>
-          </value>
-        </entry>
-      </map>
-    </option>
-    </component>
-  </application>
-    """.trimIndent())
-    val state = RecentProjectManagerState()
-    element.getChild("component")!!.deserializeInto(state)
-    manager.loadState(state)
-    assertThat(manager.state.additionalInfo.keys.joinToString("\n")).isEqualTo("/IdeaProjects/untitled")
-    @Suppress("DEPRECATION")
-    assertThat(manager.state.recentPaths).isEmpty()
-  }
-
-  @Test
-  fun `migrate open paths - 2 additional info`() {
-    val manager = RecentProjectsManagerBase()
-
+    @Language("XML")
     val element = JDOMUtil.load("""
     <application>
-      <component name="RecentProjectsManager">
-        <option name="openPaths">
+      <component name="RecentDirectoryProjectsManager">
+        <option name="recentPaths">
           <list>
-            <option value="/IdeaProjects/untitled" />
+            <option value="/home/WebstormProjects/untitled" />
+            <option value="/home/WebstormProjects/conference-data" />
           </list>
         </option>
-            <option name="additionalInfo">
-        <map>
-          <entry key="/IdeaProjects/untitled">
-            <value>
-              <RecentProjectMetaInfo>
-              </RecentProjectMetaInfo>
-            </value>
-          </entry>
-          <entry key="/IdeaProjects/untitled2">
-            <value>
-              <RecentProjectMetaInfo>
-              </RecentProjectMetaInfo>
-            </value>
-          </entry>
-        </map>
-      </option>
+        <option name="pid" value="" />
+        <option name="additionalInfo">
+          <map>
+            <entry key="/home/WebstormProjects/conference-data">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1572355647642" />
+                  <option name="buildTimestamp" value="1564385774770" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/new-react-app-for-testing">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1571662310725" />
+                  <option name="buildTimestamp" value="1564385807237" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/untitled">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1574357146611" />
+                  <option name="buildTimestamp" value="1564385803063" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+          </map>
+        </option>
+        <option name="groups">
+      <list>
+        <ProjectGroup>
+          <option name="name" value="TEST" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/conference-data" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="name" value="TEST2" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/new-react-app-for-testing" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="name" value="TEST3" />
+        </ProjectGroup>
+      </list>
+    </option>
       </component>
     </application>
     """.trimIndent())
     val state = RecentProjectManagerState()
     element.getChild("component")!!.deserializeInto(state)
     manager.loadState(state)
-    assertThat(manager.state.additionalInfo.keys.joinToString("\n")).isEqualTo("""
-      /IdeaProjects/untitled2
-      /IdeaProjects/untitled
+
+    val initialModCounter = state.modificationCount
+
+    val groups = manager.groups
+    assertTrue(groups.all { !it.isExpanded })
+    groups.first().isExpanded = true
+
+    val newModCounter = state.modificationCount
+    assertTrue(
+      newModCounter > initialModCounter,
+      "Modification counter didn't change on group expand. Old counter: $initialModCounter, new counter: $newModCounter"
+    )
+  }
+
+  // IDEA-298050
+  @Test
+  fun `state modification tracker updated on groups expand when one was expanded before`() {
+    val manager = RecentProjectsManagerBase()
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+    <application>
+      <component name="RecentDirectoryProjectsManager">
+        <option name="recentPaths">
+          <list>
+            <option value="/home/WebstormProjects/untitled" />
+            <option value="/home/WebstormProjects/conference-data" />
+          </list>
+        </option>
+        <option name="pid" value="" />
+        <option name="additionalInfo">
+          <map>
+            <entry key="/home/WebstormProjects/conference-data">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1572355647642" />
+                  <option name="buildTimestamp" value="1564385774770" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/new-react-app-for-testing">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1571662310725" />
+                  <option name="buildTimestamp" value="1564385807237" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+            <entry key="/home/WebstormProjects/untitled">
+              <value>
+                <RecentProjectMetaInfo>
+                  <option name="build" value="WS-191.8026.39" />
+                  <option name="productionCode" value="WS" />
+                  <option name="projectOpenTimestamp" value="1574357146611" />
+                  <option name="buildTimestamp" value="1564385803063" />
+                </RecentProjectMetaInfo>
+              </value>
+            </entry>
+          </map>
+        </option>
+        <option name="groups">
+      <list>
+        <ProjectGroup>
+          <option name="name" value="TEST" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/conference-data" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="expanded" value="true" />
+          <option name="name" value="TEST2" />
+          <option name="projects">
+            <list>
+              <option value="/home/WebstormProjects/new-react-app-for-testing" />
+            </list>
+          </option>
+        </ProjectGroup>
+        <ProjectGroup>
+          <option name="name" value="TEST3" />
+        </ProjectGroup>
+      </list>
+    </option>
+      </component>
+    </application>
     """.trimIndent())
-    @Suppress("DEPRECATION")
-    assertThat(manager.state.recentPaths).isEmpty()
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+
+    val initialModCounter = state.modificationCount
+
+    val groups = manager.groups
+    assertFalse(groups.first().isExpanded)
+    assertTrue(groups[1].isExpanded)
+
+    groups.first().isExpanded = true
+
+    val newModCounter = state.modificationCount
+    assertTrue(
+      newModCounter > initialModCounter,
+      "Modification counter didn't change on group expand. Old counter: $initialModCounter, new counter: $newModCounter"
+    )
   }
 
   @Test
@@ -465,5 +559,115 @@ class RecentProjectManagerTest {
         "/home/boo/Documents/newproj201924",
         "/home/boo/Documents/BrightFuturesTestProj",
         "/home/boo/Documents/GoogleTestTests")
+  }
+
+  @Test
+  fun `validate a lot of recent opened projects`() {
+    val manager = RecentProjectsManagerBase()
+
+    val entries = StringBuilder()
+    val openedProjectCount = 2000
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo opened="true">
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+    assertThat(manager.getRecentPaths().first()).isEqualTo("/home/boo/project-1999")
+    assertThat(manager.getRecentPaths()).hasSize(openedProjectCount)
+  }
+
+  @Test
+  fun `validate a lot of recent projects`() {
+    val manager = RecentProjectsManagerBase()
+
+    val entries = StringBuilder()
+    val openedProjectCount = 2000
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo opened="${i % 2 == 0}">
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+    assertThat(manager.getRecentPaths().first()).isEqualTo("/home/boo/project-1998")
+    assertThat(manager.getRecentPaths()).hasSize(openedProjectCount / 2)
+  }
+
+  @Test
+  fun `remove old recent projects`() {
+    val manager = RecentProjectsManagerBase()
+
+    val entries = StringBuilder()
+    val openedProjectCount = 60
+    for (i in 0 until openedProjectCount) {
+      //language=XML
+      entries.append("""
+          <entry key="/home/boo/project-$i">
+            <value>
+              <RecentProjectMetaInfo>
+              </RecentProjectMetaInfo>
+            </value>
+          </entry>
+      """.trimIndent())
+    }
+
+    @Language("XML")
+    val element = JDOMUtil.load("""
+      <application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="additionalInfo">
+      <map>
+        $entries
+      </map>
+    </option>
+  </component>
+</application>
+      """.trimIndent())
+    val state = RecentProjectManagerState()
+    element.getChild("component")!!.deserializeInto(state)
+    manager.loadState(state)
+    assertThat(manager.getRecentPaths().joinToString(separator = "\n")).isEqualTo(Array(50) { "/home/boo/project-${it + 10}" }.reversed().joinToString(separator = "\n"))
   }
 }

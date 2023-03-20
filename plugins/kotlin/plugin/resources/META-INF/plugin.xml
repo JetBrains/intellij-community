@@ -1,7 +1,8 @@
-<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="http://kotlinlang.org" allow-bundled-update="true">
+<idea-plugin package="org.jetbrains.kotlin" xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="https://kotlinlang.org" allow-bundled-update="true">
   <id>org.jetbrains.kotlin</id>
 
   <name>Kotlin</name>
+  <category>Languages</category>
   <description><![CDATA[
 The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 <br>
@@ -18,12 +19,128 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
+    <h3>1.8.0</h3>
+    <ul>
+      <li>Kotlin/JVM: removed old backend, the `-Xuse-old-backend` compiler option is no longer supported, support for Java 19 bytecode</li>
+      <li>Kotlin/Native: support for Xcode 14 and `watchosDeviceArm64` target, new `ObjCName`, `HiddenFromObjC` and `ShouldRefineInSwift` annotations to improve Objective-C and Swift interoperability, CocoaPods Gradle plugin dynamically links registered Kotlin frameworks by default</li>
+      <li>Kotlin/JS: stable IR compiler that uses incremental compilation by default, deprecated old backend, support for reporting when `yarn.lock` is updated during the CI process, Gradle plugin supports `kotlin.js.browser.karma.browsers` property to set browser test targets</li>
+      <li>Compiler: Lombok compiler plugin supports the `@Builder` annotation</li>
+      <li>Kotlin Multiplatform: new Android source set layout that can be enabled in Gradle plugin with `kotlin.mpp.androidSourceSetLayoutVersion=2` and includes new naming schema for `KotlinSourceSet` entities, naming change to compilation configurations created by the Kotlin Multiplatform Gradle plugin</li>
+      <li>Gradle: ensured compatibility with Gradle 7.3, disable daemon fallback strategy with `kotlin.daemon.useFallbackStrategy`, exposed available Kotlin compiler options as Gradle lazy properties, minimum supported Gradle version is 6.8.3, minimum supported Android Gradle plugin version is 4.1.3</li>
+      <li>Libraries: stable extensions for `java.util.Optional` in stdlib, stable `toTimeUnit()`, `toDurationUnit`, `cbrt()` functions, JVM target is 1.8 for stdlib, experimental enhancement of `TimeMark` allowing `elapsedNow` to be read from multiple `TimeMark`s simultaneously, added extension functions to `java.nio.file.Path` that can recursively copy or delete directories</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.8.0">changelog</a>.
+    <br><br>
+    <h3>1.7.20</h3>
+    <ul>
+      <li>K2: support for the `all-open, `no-arg`, SAM-with-receiver, Lombok, Parcelize, AtomicFU, and `jvm-abi-gen` compiler plugins</li>
+      <li>Language: experimental `..<` (`rangeUntil`) operator for ranges with the excluded end bound, deprecated inferring type variables into an empty intersection type, warning on potentially empty intersection types, improved script handling in source roots</li>
+      <li>Language: builder inference in cases with multiple lambdas now requires explicit type arguments; using an uninferred stub type as a receiver in a call during type inference is now forbidden and leads to an error</li>
+      <li>Kotlin/JVM: experimental generic inline classes, more optimized cases of delegated properties</li>
+      <li>Kotlin/Native: the new memory manager enabled by default (with deprecated freezing API and an ability to run Kotlin `suspend` functions on non-main threads from Swift), customizable bundle identifier of the generated framework, improved documentation generated to the Objective-C header</li>
+      <li>Kotlin/JS IR: improved speed on the first build when using the incremental compilation, faster klib generation</li>
+      <li>Libraries: a new experimental interface for ranges with the excluded end bound, new walk and visit extensions for `java.nio.file.Path`</li>
+      <li>Gradle: simplified configuration method for the JVM Toolchain, fixed deprecations and ensured compatibility with Gradle 7.1</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.7.20">changelog</a>.
+    <br><br>
+    <h3>1.7.0</h3>
+    <ul>
+      <li>New Kotlin K2 compiler for JVM in Alpha</li>
+      <li>Language: changes in builder inference, allowed implementation by delegation to inlined value of inline class, changes in Opt-in annotations</li>
+      <li>Kotlin/JVM: performance improvements, removed `1.6` target version</li>
+      <li>Kotlin/Native: performance improvement for the new memory manager, embeddable compiler jar for Kotlin/Native by default, returning `Void` instead of `KotlinUnit` from `suspend` functions by default, generation of standalone executable for androidNative targets by default, prohibited exceptions through Objective-C bridges</li>
+      <li>Kotlin/JS: performance improvements, smaller bundle size, generated `.js` compatible with old browsers and engines</li>
+      <li>Libraries: extensions for `java.util.Optional` in stdlib, min/max(By/With) functions for non-empty collections, stable `Regex.matchAt()`, `Regex.matchesAt()`, `findAnnotations()`, `DeepRecursiveFunction` functions, getting named groups of a regex match in JS and Native</li>
+      <li>Gradle: Experimental incremental compilation, minimal supported Gradle version is `6.7.1` and Android Gradle plugin is `3.6.4`, allow to override default Kotlin/Native compiler download URL, deprecated `kotlin.compiler.execution.strategy`, removed `useExperimentalAnnotation`, `experimentalAnnotationInUse`, `kotlin.coroutines` (and related `kotlin.experimental.coroutines` Gradle DSL option) properties</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.7.0">changelog</a>.
+    <br><br>
+    <h3>1.6.20</h3>
+    <ul>
+      <li>Language: prototype of context receivers, definitely non-nullable types</li>
+      <li>Kotlin/JVM: experimental parallel compilation of a single module, callable references to functional interface constructors, improved compatibility for default methods</li>
+      <li>Kotlin/Native: instantiation of annotation classes, improved interop with Swift async/await, better stack traces with libbacktrace, performance improvements</li>
+      <li>Multiplatform: hierarchical project structure by default</li>
+      <li>CocoaPods Gradle plugin: new tasks for generating a suitable podspec for XCFramework publishing, accepting the podspec version when configuring CocoaPods for Kotlin/Native</li>
+      <li>Kotlin/JS: IR compiler improvements (incremental compilation, lazy initialization of top-level properties, separate JS files for project modules), export improvements</li>
+      <li>Security: using relative paths in klibs, persisting yarn.lock for Kotlin/JS Gradle projects, installation of npm dependencies with --ignore-scripts by default</li>
+      <li>Gradle: compiler execution strategies, cleaning up deprecated properties and options</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.20">changelog</a>.
+    <br>
+    For more details, see [What’s New in Kotlin 1.6.20](https://kotlinlang.org/docs/whatsnew1620.html).
+    <br><br>
+    <h3>1.6.20</h3>
+    <ul>
+      <li>Language: prototype of context receivers, definitely non-nullable types</li>
+      <li>Kotlin/JVM: experimental parallel compilation of a single module, callable references to functional interface constructors, improved compatibility for default methods</li>
+      <li>Kotlin/Native: instantiation of annotation classes, improved interop with Swift async/await, better stack traces with libbacktrace, performance improvements</li>
+      <li>Multiplatform: hierarchical project structure by default</li>
+      <li>CocoaPods Gradle plugin: new tasks for generating a suitable podspec for XCFramework publishing, accepting the podspec version when configuring CocoaPods for Kotlin/Native</li>
+      <li>Kotlin/JS: IR compiler improvements (incremental compilation, lazy initialization of top-level properties, separate JS files for project modules), export improvements</li>
+      <li>Security: using relative paths in klibs, persisting yarn.lock for Kotlin/JS Gradle projects, installation of npm dependencies with --ignore-scripts by default</li>
+      <li>Gradle: compiler execution strategies, cleaning up deprecated properties and options</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.20">changelog</a>.
+    <br>
+    For more details, see [What’s New in Kotlin 1.6.20](https://kotlinlang.org/docs/whatsnew1620.html).
+    <br><br>
+    <h3>1.6.0</h3>
+    <ul>
+      <li>Language: stable exhaustive `when` statements for enum, sealed and Boolean subjects, stable conversions from regular to suspending functional types, stable instantiation of annotation classes, improvements to type inference and builder inference</li>
+      <li>Kotlin/JVM: support for repeatable annotations with runtime retention and bytecode optimizations for delegated properties</li>
+      <li>Kotlin/Native: a preview of the new memory manager, support for Xcode 13, updated LLVM to 11.1.0, compiler caches enabled by default for `linuxX64` and `iosArm64`, cross-compilation for MinGW targets, unified compiler plugin ABI with JVM and JS IR backends, reworked unhandled exception handling API</li>
+      <li>Kotlin/JS: ability to disable downloading Node.js and Yarn</li>
+      <li>Gradle: removed 'kotlin.useFallbackCompilerSearch' build option</li>
+      <li>Stdlib: top-level `readln()` and `readlnOrNull()` on JVM, stable `typeOf()`, Duration API, and сollection builders, improvements to the existing API </li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.0">changelog</a>.
+    <br><br>
+	  <h3>1.5.30</h3>
+    <ul>
+      <li>Kotlin/JVM: instantiation of annotation classes and improvements to how nullability annotations are handled.</li>
+      <li>Kotlin/Native: support for Apple silicon, Kotlin DSL improvements for the Cocoapods Gradle plugin, deprecation of linkage with DLLs without import libraries for MinGW targets, optimized access to object declarations with `const val`s only, and debugger improvements.</li>
+      <li>Swift/Objective-C interop: experimental interoperability with Swift 5.5 async/await and improved singleton mapping.</li>
+      <li>C interop: passing by value for more C structs.</li>
+      <li>Kotlin Multiplatform: the ability to share custom `cinterop` libraries between platforms, XCFrameworks support, and a new default publishing setup for Android artifacts.</li>
+      <li>Kotlin/JS: IR backend in Beta and source map generation for it.</li>
+      <li>Gradle: Java toolchain support and changes to Kotlin daemon JVM argument configuration.</li>
+      <li>Standard library: improvements to the `Regex` and `Duration` APIs.</li>
+      <li>Compiler improvements: changes to the opt-in requirement mechanism, improvements to type inference on recursive generic types, and the elimination of builder inference restrictions.</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.5.30">changelog</a> and <a href="https://blog.jetbrains.com/kotlin/2021/08/kotlin-1-5-30-released/?utm_source=ide&utm_medium=change-notes&utm_campaign=1-5-30-release">this blog post</a>.
+    <br><br>
+    <h3>1.5.21</h3>
+    A bug fix release for Kotlin 1.5.20. Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.5.21">changelog</a>.
+    <br><br>
+    <h3>1.5.20</h3>
+    Released: <b>June 24, 2021</b>
+    <ul>
+      <li>String concatenation uses invokedynamic on JVM by default.</li>
+      <li>Annotations on function type parameters are emitted to the bytecode on JVM 1.8+.</li>
+      <li>Support calling Lombok-generated Java methods from Kotlin code in the same module.</li>
+      <li>Kotlin/Native: improved performance of `Array.copyInto` inside one array.</li>
+      <li>Kotlin/Native: opt-in export of KDoc comments to the generated Objective-C headers with the `-Xexport-kdoc` compiler option.</li>
+      <li>Experimental caching of annotation processors' classloaders.</li>
+      <li>Parallel compilation of Kotlin sources is controlled by `--parallel` Gradle property. The `kotlin.parallel.tasks.in.project` property is deprecated.</li>
+      <li>Aligned behavior of stdlib functions `isLowerCase`/`isUpperCase` and `digitToInt` across platforms.</li>
+    </ul>
+    For more details, see <a href="https://kotlinlang.org/docs/whatsnew1520.html?utm_source=ide&utm_medium=change-notes&utm_campaign=1-5-20-release">What’s New in Kotlin 1.5.20</a> and <a href="https://blog.jetbrains.com/kotlin/2021/06/kotlin-1-5-20-released/?utm_source=ide&utm_medium=change-notes&utm_campaign=1-5-20-release">this blog post</a>
+    <br><br>
+    <h3>1.5.10</h3>
+    Released: <b>May 24, 2021</b>
+    <br>
+    A bug fix release for Kotlin 1.5.0.
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.5.10/">changelog</a>.
+    <br><br>
     <h3>1.5.0</h3>
+    Released: <b>May 5, 2021</b>
     <ul>
       <li><a href="https://kotlinlang.org/docs/whatsnew14.html?utm_source=product&utm_medium=link#new-jvm-ir-backend">JVM IR backend</a> by default.</li>
       <li>New language features by default: inline value classes, sealed interfaces, and JVM records support.</li>
       <li>New default JVM target: 1.8 (1.6 is deprecated)</li>
-      <li>String concatenation and <a href="https://kotlinlang.org/docs/fun-interfaces.html?utm_source=product&utm_medium=link">SAM adapters</a>, use invokedynamic on JVM by default. Lambdas can use invokedynamic with an opt-in via `-Xlambdas=indy`.</li>
+      <li><a href="https://kotlinlang.org/docs/fun-interfaces.html?utm_source=product&utm_medium=link">SAM adapters</a> use invokedynamic on JVM by default. Lambdas can use invokedynamic with an opt-in via `-Xlambdas=indy`.</li>
       <li>Deprecation of `-Xjvm-default=enable` and `-Xjvm-default=compatibility` compiler modes and `@JvmDefault` annotation.</li>
       <li>Kotlin/Native compilation time improvements.</li>
       <li>Kotlin/JS uses webpack 5 by default.</li>
@@ -89,78 +206,15 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
     ]]>
   </change-notes>
 
-  <xi:include href="/META-INF/extensions/compiler.xml" /> <!-- extensions/compiler.xml comes from the Kotlin compiler -->
-
-  <xi:include href="core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="resolution.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="completion.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="inspections.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="refIndex.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlinx-serialization.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="native-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
-  <!--suppress XmlPathReference -->
-  <xi:include href="ultimate-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
-
-  <xi:include href="jvm-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="parcelize.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
   <dependencies>
     <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
     <plugin id="com.intellij.java"/>
   </dependencies>
 
+  <depends optional="true" config-file="performance-plugin.xml">com.jetbrains.performancePlugin</depends>
+
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 
-  <content>
-    <module name="kotlin.groovy"/>
-    <module name="kotlin.gradle.gradle-tooling"/>
-    <module name="kotlin.gradle.gradle-idea"/>
-    <module name="kotlin.gradle.gradle-java"/>
-    <module name="kotlin.gradle.gradle-native"/>
-    <module name="kotlin.maven"/>
-    <module name="kotlin.project-wizard.idea"/>
-    <module name="kotlin.project-wizard.gradle"/>
-    <module name="kotlin.project-wizard.maven"/>
-    <module name="kotlin.properties"/>
-    <module name="kotlin.jvm-decompiler"/>
-    <module name="kotlin.jvm-debugger.sequence"/>
-    <module name="kotlin.junit"/>
-    <module name="kotlin.testng"/>
-    <module name="kotlin.coverage"/>
-    <module name="kotlin.i18n"/>
-    <module name="kotlin.git"/>
-    <module name="kotlin.grazie"/>
-    <module name="kotlin.ml-completion"/>
-    <module name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle"/>
-    <module name="kotlin.compiler-plugins.annotation-based-compiler-support.maven"/>
-    <module name="kotlin.compiler-plugins.allopen.gradle"/>
-    <module name="kotlin.compiler-plugins.allopen.maven"/>
-    <module name="kotlin.compiler-plugins.noarg.gradle"/>
-    <module name="kotlin.compiler-plugins.noarg.maven"/>
-    <module name="kotlin.compiler-plugins.sam-with-receiver.gradle"/>
-    <module name="kotlin.compiler-plugins.sam-with-receiver.maven"/>
-    <module name="kotlin.compiler-plugins.parcelize.gradle"/>
-    <module name="kotlin.compiler-plugins.scripting"/>
-    <module name="kotlin.compiler-plugins.kapt"/>
-    <module name="kotlin.compiler-plugins.kotlinx-serialization.gradle"/>
-    <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
-
-    <module name="kotlin.copyright"/>
-    <module name="kotlin.injection"/>
-  </content>
+  <xi:include href="k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
+  <xi:include href="k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
 </idea-plugin>

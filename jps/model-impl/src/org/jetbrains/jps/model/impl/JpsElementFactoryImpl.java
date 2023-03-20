@@ -26,14 +26,14 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl;
 import org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl;
 import org.jetbrains.jps.model.library.impl.sdk.JpsSdkImpl;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl;
 
-public class JpsElementFactoryImpl extends JpsElementFactory {
+public final class JpsElementFactoryImpl extends JpsElementFactory {
   @Override
   public JpsModel createModel() {
     return new JpsModelImpl(new JpsEventDispatcherBase() {

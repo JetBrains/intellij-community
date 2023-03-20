@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.java.JavaBundle.message;
 
-/**
- * @author Pavel.Dolgov
- */
 public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspectionTool {
   @NotNull
   @Override
@@ -25,7 +25,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+      public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
         super.visitSwitchLabeledRuleStatement(statement);
 
         PsiStatement body = statement.getBody();
@@ -33,8 +33,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
           PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
           PsiStatement bodyStatement = getSingleStatement(codeBlock);
 
-          if (bodyStatement instanceof PsiYieldStatement) {
-            PsiYieldStatement yieldStatement = (PsiYieldStatement)bodyStatement;
+          if (bodyStatement instanceof PsiYieldStatement yieldStatement) {
             if (yieldStatement.getExpression() != null &&
                 PsiTreeUtil.getParentOfType(yieldStatement, PsiSwitchBlock.class) instanceof PsiSwitchExpression) {
               registerProblem(bodyStatement.getFirstChild());
@@ -51,7 +50,6 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
         if (element != null) {
           holder.registerProblem(element,
                                  message("inspection.labeled.switch.rule.redundant.code.block.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  new UnwrapCodeBlockFix());
         }
       }

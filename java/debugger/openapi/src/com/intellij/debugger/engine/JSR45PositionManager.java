@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -21,10 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,12 +28,12 @@ import java.util.regex.Pattern;
  */
 public abstract class JSR45PositionManager<Scope> implements PositionManager {
   private static final Logger LOG = Logger.getInstance(JSR45PositionManager.class);
-  protected final DebugProcess      myDebugProcess;
+  protected final DebugProcess myDebugProcess;
   protected final Scope myScope;
   private final String myStratumId;
   protected final SourcesFinder<Scope> mySourcesFinder;
   protected final String GENERATED_CLASS_PATTERN;
-  protected Matcher myGeneratedClassPatternMatcher;
+  protected final Matcher myGeneratedClassPatternMatcher;
   private final Set<LanguageFileType> myFileTypes;
 
   public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final LanguageFileType[] acceptedFileTypes,
@@ -46,10 +41,10 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     myDebugProcess = debugProcess;
     myScope = scope;
     myStratumId = stratumId;
-    myFileTypes = ContainerUtil.immutableSet(acceptedFileTypes);
+    myFileTypes = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(acceptedFileTypes)));
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
-    if(generatedClassPattern.length() == 0) {
+    if (generatedClassPattern.length() == 0) {
       generatedClassPattern = getGeneratedClassesNamePattern();
     }
     else {
@@ -77,7 +72,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     try {
       String sourcePath = getRelativeSourcePathByLocation(location);
       PsiFile file = mySourcesFinder.findSourceFile(sourcePath, myDebugProcess.getProject(), myScope);
-      if(file != null) {
+      if (file != null) {
         int lineNumber = getLineNumber(location);
         sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
       }
@@ -87,7 +82,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     catch (Throwable e) {
       LOG.info(e);
     }
-    if(sourcePosition == null) {
+    if (sourcePosition == null) {
       throw NoDataException.INSTANCE;
     }
     return sourcePosition;
@@ -131,7 +126,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
 
   private void checkSourcePositionFileType(final SourcePosition classPosition) throws NoDataException {
     final FileType fileType = classPosition.getFile().getFileType();
-    if(!myFileTypes.contains(fileType)) {
+    if (!myFileTypes.contains(fileType)) {
       throw NoDataException.INSTANCE;
     }
   }
@@ -141,7 +136,6 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   public List<Location> locationsOfLine(@NotNull final ReferenceType type, @NotNull final SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
     return locations != null ? locations : Collections.emptyList();
-
   }
 
   private List<Location> locationsOfClassAt(final ReferenceType type, final SourcePosition position) throws NoDataException {
@@ -201,9 +195,9 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   protected void onClassPrepare(final DebugProcess debuggerProcess, final ReferenceType referenceType,
-                              final SourcePosition position, final ClassPrepareRequestor requestor) {
+                                final SourcePosition position, final ClassPrepareRequestor requestor) {
     try {
-      if(locationsOfClassAt(referenceType, position) != null) {
+      if (locationsOfClassAt(referenceType, position) != null) {
         requestor.processClassPrepare(debuggerProcess, referenceType);
       }
     }
@@ -228,5 +222,4 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
 
     return sourcePath;
   }
-
 }

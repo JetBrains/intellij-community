@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -128,11 +128,8 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     result.add(node);
     for (int i = 0; i < node.getChildCount(); i++){
       final TreeNode child = node.getChildAt(i);
-      if (child instanceof PackageNode){
-        final PackageNode packNode = (PackageNode)child;
-        if (!result.contains(packNode)){
-          getPackageNodesHierarchy(packNode, result);
-        }
+      if (child instanceof PackageNode packNode && !result.contains(packNode)) {
+        getPackageNodesHierarchy(packNode, result);
       }
     }
   }
@@ -207,7 +204,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     EditSourceOnDoubleClickHandler.install(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
 
     PopupHandler.installPopupMenu(tree, createTreePopupActions(), "CyclicDependenciesPopup");
   }
@@ -373,8 +370,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
         node = (PackageDependenciesNode)value;
         if (myLeftTree && !mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES) {
           final PsiElement element = node.getPsiElement();
-          if (element instanceof PsiPackage) {
-            final PsiPackage aPackage = (PsiPackage)element;
+          if (element instanceof PsiPackage aPackage) {
             final Set<List<PsiPackage>> packageDependencies = myDependencies.get(aPackage);
             if (packageDependencies != null && !packageDependencies.isEmpty()) {
                 attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
@@ -410,6 +406,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_FILES;
     }
@@ -427,6 +428,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     HideOutOfCyclePackagesAction() {
       super(JavaBundle.message("hide.out.of.cyclic.packages.action.text"),
             JavaBundle.message("hide.out.of.cyclic.packages.action.description"), AllIcons.General.Filter);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -449,6 +455,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_GROUP_BY_SCOPE_TYPE;
     }
@@ -465,6 +476,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

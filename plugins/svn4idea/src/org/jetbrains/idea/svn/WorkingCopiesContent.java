@@ -28,27 +28,20 @@ public final class WorkingCopiesContent implements ChangesViewContentProvider {
     return new CopiesPanel(myProject);
   }
 
-  @Override
-  public void disposeContent() {
-  }
-
   public static void show(@NotNull Project project) {
     final ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    if (manager != null) {
-      final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-      if (window != null) {
-        window.show(null);
-        final ContentManager cm = window.getContentManager();
-        final Content content = cm.findContent(getTabName());
-        if (content != null) {
-          cm.setSelectedContent(content, true);
-        }
+    final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (window != null) {
+      window.show(null);
+      final ContentManager cm = window.getContentManager();
+      final Content content = cm.findContent(getTabName());
+      if (content != null) {
+        cm.setSelectedContent(content, true);
       }
     }
   }
 
   final static class VisibilityPredicate implements Predicate<Project> {
-    @NotNull
     @Override
     public boolean test(@NotNull Project project) {
       return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);

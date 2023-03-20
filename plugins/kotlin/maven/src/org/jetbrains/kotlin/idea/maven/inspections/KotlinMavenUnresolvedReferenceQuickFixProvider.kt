@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven.inspections
 
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -18,11 +19,11 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -88,7 +89,8 @@ class AddMavenDependencyQuickFix(
         if (ids.isEmpty()) return
 
         runWriteAction {
-            val isTestSource = ProjectRootManager.getInstance(project).fileIndex.isInTestSourceContentKotlinAware(virtualFile)
+            val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+            val isTestSource = fileIndex.getKotlinSourceRootType(virtualFile) == TestSourceKotlinRootType
             val scope = if (isTestSource) MavenArtifactScope.TEST else null
 
             PomFile.forFileOrNull(xmlFile)?.let { pom ->

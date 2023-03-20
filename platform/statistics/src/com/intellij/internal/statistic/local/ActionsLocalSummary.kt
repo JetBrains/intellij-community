@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.local
 
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -54,12 +54,13 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, 
 
   @Synchronized
   fun getActionsStats(): Map<String, ActionSummary> {
-    if (state.data.isEmpty()) {
+    val data = state.data
+    if (data.isEmpty()) {
       return emptyMap()
     }
 
-    val result = hashMapOf<String, ActionSummary>()
-    for (datum in state.data) {
+    val result = HashMap<String, ActionSummary>(data.size)
+    for (datum in data) {
       val summary = ActionSummary()
       summary.usageCount = datum.value.usageCount
       summary.lastUsedTimestamp = datum.value.lastUsedTimestamp
@@ -178,7 +179,7 @@ data class ActionsTotalSummary(
 
 private class ActionsLocalSummaryListener : AnActionListener {
   private val service = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
-                        ?: throw ExtensionNotApplicableException.INSTANCE
+                        ?: throw ExtensionNotApplicableException.create()
 
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (getPluginInfo(action::class.java).isSafeToReport()) {

@@ -1,6 +1,7 @@
 package com.intellij.grazie.text;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.grazie.text.TextContent.ExclusionKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -24,26 +26,40 @@ public class TextContentBuilder {
   /**
    * A basic builder that takes the full PSI text, considering any {@link OuterLanguageElement}s as unknown fragments.
    */
-  public static final TextContentBuilder FromPsi = new TextContentBuilder(e -> e instanceof OuterLanguageElement, e -> false, Collections.emptySet());
+  public static final TextContentBuilder FromPsi =
+    new TextContentBuilder(e -> e instanceof OuterLanguageElement ? ExclusionKind.unknown : null, Collections.emptySet(), Collections.emptySet());
 
-  private final Predicate<PsiElement> unknown;
-  private final Predicate<PsiElement> excluded;
-  private final Set<Character> indentChars;
+  private final Function<PsiElement, @Nullable ExclusionKind> classifier;
+  private final Set<Character> indentChars, suffixChars;
 
-  private TextContentBuilder(Predicate<PsiElement> unknown, Predicate<PsiElement> excluded, Set<Character> indentChars) {
-    this.unknown = unknown;
-    this.excluded = excluded;
+  private TextContentBuilder(Function<PsiElement, @Nullable ExclusionKind> classifier,
+                             Set<Character> indentChars,
+                             Set<Character> suffixChars) {
+    this.classifier = classifier;
     this.indentChars = indentChars;
+    this.suffixChars = suffixChars;
   }
 
   /** Exclude and {@link TextContent#markUnknown} all PSI elements satisfying the given condition. */
   public TextContentBuilder withUnknown(Predicate<PsiElement> unknown) {
-    return new TextContentBuilder(e -> this.unknown.test(e) || unknown.test(e), excluded, indentChars);
+    return appendClassifier(unknown, ExclusionKind.unknown);
   }
 
   /** Call {@link TextContent#excludeRange} for all PSI elements satisfying the given condition. */
   public TextContentBuilder excluding(Predicate<PsiElement> excluded) {
-    return new TextContentBuilder(unknown, e -> this.excluded.test(e) || excluded.test(e), indentChars);
+    return appendClassifier(excluded, ExclusionKind.exclude);
+  }
+
+  /** Exclude with {@link ExclusionKind#markup} all PSI elements satisfying the given condition. */
+  public TextContentBuilder withMarkup(Predicate<PsiElement> markup) {
+    return appendClassifier(markup, ExclusionKind.markup);
+  }
+
+  private TextContentBuilder appendClassifier(Predicate<PsiElement> predicate, ExclusionKind kind) {
+    return new TextContentBuilder(e -> {
+      ExclusionKind prev = this.classifier.apply(e);
+      return prev != null ? prev : predicate.test(e) ? kind : prev;
+    }, indentChars, suffixChars);
   }
 
   /**
@@ -55,7 +71,19 @@ public class TextContentBuilder {
     for (int i = 0; i < indentChars.length(); i++) {
       set.add(indentChars.charAt(i));
     }
-    return new TextContentBuilder(unknown, excluded, set);
+    return new TextContentBuilder(classifier, set, suffixChars);
+  }
+
+  /**
+   * For each line of the text, remove the suffix consisting of the given characters
+   * (packed together in a string for compactness)
+   */
+  public TextContentBuilder removingLineSuffixes(String suffixChars) {
+    Set<Character> set = new HashSet<>(this.suffixChars);
+    for (int i = 0; i < suffixChars.length(); i++) {
+      set.add(suffixChars.charAt(i));
+    }
+    return new TextContentBuilder(classifier, indentChars, set);
   }
 
   /**
@@ -85,28 +113,37 @@ public class TextContentBuilder {
 
   @Nullable
   public TextContent build(PsiElement root, TextContent.TextDomain domain, TextRange valueRange) {
-    int rootStart = root.getTextRange().getStartOffset();
-    String rootText = root.getText();
-    if (isWrongRange(valueRange, rootText.length())) {
-      LOG.error("The range " + valueRange + " is out of the PSI element, length " + rootText.length());
+    TextRange rootRange = root.getTextRange();
+    if (isWrongRange(valueRange, rootRange.getLength())) {
+      LOG.error("The range " + valueRange + " is out of the PSI element, length " + rootRange.getLength());
+      return null;
+    }
+
+    int rootStart = rootRange.getStartOffset();
+    TextRange fileValueRange = valueRange.shiftRight(rootStart);
+    CharSequence fileText = root.getContainingFile().getViewProvider().getContents();
+    if (isWrongRange(fileValueRange, fileText.length())) {
+      LOG.error("The range " + fileValueRange + " is out of the file, length " + fileText.length());
       return null;
     }
 
     TextContent content = new PsiRecursiveElementWalkingVisitor() {
       final List<TextContentImpl.TokenInfo> tokens = new ArrayList<>();
-      int currentStart = valueRange.getStartOffset();
+      int currentStart = fileValueRange.getStartOffset();
 
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        TextRange range = element.getTextRange().shiftLeft(rootStart).intersection(valueRange);
+        TextRange range = element.getTextRange().intersection(fileValueRange);
         if (range == null) return;
 
-        if (unknown.test(element)) {
+        @Nullable ExclusionKind kind = classifier.apply(element);
+        if (kind == ExclusionKind.exclude) {
           exclusionStarted(range);
-          tokens.add(new TextContentImpl.PsiToken("", root, TextRange.from(range.getStartOffset(), 0), true));
         }
-        else if (excluded.test(element)) {
+        else if (kind != null) {
           exclusionStarted(range);
+          var tokenKind = kind == ExclusionKind.markup ? TextContentImpl.TokenKind.markup : TextContentImpl.TokenKind.unknown;
+          tokens.add(new TextContentImpl.PsiToken("", root, TextRange.from(range.getStartOffset(), 0).shiftLeft(rootStart), tokenKind));
         }
         else {
           super.visitElement(element);
@@ -116,18 +153,19 @@ public class TextContentBuilder {
       private void exclusionStarted(TextRange range) {
         if (range.getStartOffset() != currentStart) {
           TextRange tokenRange = new TextRange(currentStart, range.getStartOffset());
-          tokens.add(new TextContentImpl.PsiToken(tokenRange.substring(rootText), root, tokenRange, false));
+          String tokenText = tokenRange.subSequence(fileText).toString();
+          tokens.add(new TextContentImpl.PsiToken(tokenText, root, tokenRange.shiftLeft(rootStart), TextContentImpl.TokenKind.text));
         }
         currentStart = range.getEndOffset();
       }
 
       @Nullable TextContent walkPsiTree() {
         root.accept(this);
-        exclusionStarted(TextRange.from(valueRange.getEndOffset(), 0));
+        exclusionStarted(TextRange.from(fileValueRange.getEndOffset(), 0));
         return tokens.isEmpty() ? null : new TextContentImpl(domain, tokens);
       }
     }.walkPsiTree();
-    return content == null ? null : content.removeIndents(indentChars).trimWhitespace();
+    return content == null ? null : content.removeIndents(indentChars).removeLineSuffixes(suffixChars).trimWhitespace();
   }
 
   private static boolean isWrongRange(TextRange valueRange, int maxLength) {

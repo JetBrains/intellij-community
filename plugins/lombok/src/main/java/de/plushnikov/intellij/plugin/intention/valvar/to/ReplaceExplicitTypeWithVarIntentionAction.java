@@ -23,10 +23,9 @@ public class ReplaceExplicitTypeWithVarIntentionAction extends AbstractReplaceEx
 
   @Override
   public boolean isAvailableOnVariable(@NotNull PsiVariable psiVariable) {
-    if (!(psiVariable instanceof PsiParameter)) {
+    if (!(psiVariable instanceof PsiParameter psiParameter)) {
       return false;
     }
-    PsiParameter psiParameter = (PsiParameter) psiVariable;
     PsiElement declarationScope = psiParameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiForStatement) && !(declarationScope instanceof PsiForeachStatement)) {
       return false;
@@ -35,7 +34,7 @@ public class ReplaceExplicitTypeWithVarIntentionAction extends AbstractReplaceEx
     return typeElement != null && !typeElement.isInferredType() && isNotFinal(psiParameter);
   }
 
-  private boolean isNotFinal(@NotNull PsiVariable variable) {
+  private static boolean isNotFinal(@NotNull PsiVariable variable) {
     PsiModifierList modifierList = variable.getModifierList();
     return modifierList == null || !modifierList.hasExplicitModifier(FINAL);
   }

@@ -1,12 +1,12 @@
 from _typeshed import SupportsRead
 from datetime import date, datetime, time, tzinfo
-from typing import Text, Union
+from typing_extensions import TypeAlias
 
-_Readable = SupportsRead[Union[Text, bytes]]
-_TakesAscii = Union[Text, bytes, _Readable]
+_Readable: TypeAlias = SupportsRead[str | bytes]
+_TakesAscii: TypeAlias = str | bytes | _Readable
 
 class isoparser:
-    def __init__(self, sep: Text | bytes | None = ...): ...
+    def __init__(self, sep: str | bytes | None = ...): ...
     def isoparse(self, dt_str: _TakesAscii) -> datetime: ...
     def parse_isodate(self, datestr: _TakesAscii) -> date: ...
     def parse_isotime(self, timestr: _TakesAscii) -> time: ...

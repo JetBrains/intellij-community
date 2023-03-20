@@ -19,6 +19,8 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -37,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,9 +133,8 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     else if (node instanceof LibraryNode) {
       return new FilePatternPackageSet(node.toString(), recursively ? "*/" : "*", false);
     }
-    else if (node instanceof FileNode) {
+    else if (node instanceof FileNode fNode) {
       if (recursively) return null;
-      FileNode fNode = (FileNode)node;
       final PsiFile file = (PsiFile)fNode.getPsiElement();
       if (file == null) return null;
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -153,6 +155,12 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return AllIcons.General.ProjectTab;
   }
 
+  @Nls
+  @Override
+  public @NotNull String getHintMessage() {
+    return LangBundle.message("package.pattern.provider.hint.label");
+  }
+
   private static final class CompactEmptyMiddlePackagesAction extends ToggleAction {
     private final Runnable myUpdate;
 
@@ -167,6 +175,10 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;

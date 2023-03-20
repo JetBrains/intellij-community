@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
+import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
-import java.util.function.Consumer
 
-@Suppress("MemberVisibilityCanBePrivate", "unused")
+@ApiStatus.NonExtendable
+@Suppress("MemberVisibilityCanBePrivate")
 abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>>(
   gradleVersion: GradleVersion
 ) : AbstractGradleBuildScriptBuilderCore<BSB>(gradleVersion), GradleBuildScriptBuilder<BSB> {
@@ -24,14 +25,11 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun addVersion(version: String) =
     withPrefix { assign("version", version) }
 
-  override fun configureTask(name: String, configure: Consumer<ScriptTreeBuilder>) =
-    configureTask(name, configure::accept)
-
   override fun addDependency(scope: String, dependency: String, sourceSet: String?) =
     addDependency(scope, string(dependency), sourceSet)
 
   override fun addDependency(scope: String, dependency: Expression, sourceSet: String?) = apply {
-    val dependencyScope = if (sourceSet == null) scope else sourceSet + scope.capitalize()
+    val dependencyScope = if (sourceSet == null) scope else sourceSet + StringUtil.capitalize(scope)
     withDependency { call(dependencyScope, dependency) }
   }
 
@@ -96,12 +94,23 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
       call("mavenCentral")
     }
 
-  override fun withPlugin(id: String, version: String?) = withPlugin {
-    when (version) {
-      null -> call("id", id)
-      else -> infixCall(call("id", id), "version", string(version))
+  override fun applyPlugin(plugin: String) =
+    withPrefix {
+      call("apply", argument("plugin", string(plugin)))
     }
-  }
+
+  override fun applyPluginFrom(path: String) =
+    withPrefix {
+      call("apply", argument("from", string(path)))
+    }
+
+  override fun withPlugin(id: String, version: String?) =
+    withPlugin {
+      when (version) {
+        null -> call("id", id)
+        else -> infixCall(call("id", id), "version", string(version))
+      }
+    }
 
   override fun withJavaPlugin() =
     withPlugin("java")
@@ -124,10 +133,18 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withKotlinMultiplatformPlugin() =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
 
-  override fun withGroovyPlugin() = apply {
+  override fun withGroovyPlugin() =
+    withGroovyPlugin(groovyVersion)
+
+  override fun withGroovyPlugin(version: String): BSB = apply {
     withPlugin("groovy")
     withMavenCentral()
-    addImplementationDependency("org.codehaus.groovy:groovy-all:$groovyVersion")
+    if (isSupportedGroovyApache(version)) {
+      addImplementationDependency("org.apache.groovy:groovy:$version")
+    }
+    else {
+      addImplementationDependency("org.codehaus.groovy:groovy-all:$version")
+    }
   }
 
   override fun withApplicationPlugin(
@@ -137,16 +154,22 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     defaultJvmArgs: List<String>?
   ) = apply {
     withPlugin("application")
-    configureTask("application") {
-      assignIfNotNull("mainModule", mainModule)
-      assignIfNotNull("mainClass", mainClass)
-      assignIfNotNull("executableDir", executableDir)
-      assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
+    withPostfix {
+      callIfNotEmpty("application") {
+        assignIfNotNull("mainModule", mainModule)
+        assignIfNotNull("mainClass", mainClass)
+        assignIfNotNull("executableDir", executableDir)
+        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let { list(*it) })
+      }
     }
   }
 
-  override fun withJUnit() =
-    if (isSupportedJUnit5(gradleVersion)) withJUnit5() else withJUnit4()
+  override fun withJUnit() = apply {
+    when (isSupportedJUnit5(gradleVersion)) {
+      true -> withJUnit5()
+      else -> withJUnit4()
+    }
+  }
 
   override fun withJUnit4() = apply {
     withMavenCentral()
@@ -156,9 +179,17 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withJUnit5() = apply {
     assert(isSupportedJUnit5(gradleVersion))
     withMavenCentral()
-    addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
-    addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
-    configureTask("test") {
+    when (isSupportedPlatformDependency(gradleVersion)) {
+      true -> {
+        addTestImplementationDependency(call("platform", "org.junit:junit-bom:$junit5Version"))
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter")
+      }
+      else -> {
+        addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")
+        addTestRuntimeOnlyDependency("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
+      }
+    }
+    configureTestTask {
       call("useJUnitPlatform")
     }
   }

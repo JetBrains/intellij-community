@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.diff.DiffContentFactory
@@ -6,27 +6,29 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.util.PsiFormatUtil.*
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotifications
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.LightColors
 import com.intellij.util.diff.Diff
+import java.util.function.Function
+import javax.swing.JComponent
 
-class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
-
+class LibrarySourceNotificationProvider : EditorNotificationProvider {
   private companion object {
-    private val LOG = Logger.getInstance(LibrarySourceNotificationProvider::class.java)
-    private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
-    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
+    private val LOG = logger<LibrarySourceNotificationProvider>()
+
+    // Support releases (e.g. "android-30") as well as previews (e.g. "android-tiramisu")
+    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\w+/android.jar!/.*".toRegex()
 
     private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
     private const val METHOD = SHOW_NAME or SHOW_PARAMETERS or SHOW_RAW_TYPE
@@ -34,9 +36,7 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
     private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
   }
 
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
@@ -44,22 +44,24 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
         if (offender != null) {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
-            val panel = EditorNotificationPanel(LightColors.RED)
-            panel.setText(JavaUiBundle.message("library.source.mismatch", offender.name))
-            panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
-              if (!project.isDisposed && clsFile.isValid) {
-                PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
+            return Function {
+              val panel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
+              panel.text = JavaUiBundle.message("library.source.mismatch", offender.name)
+              panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
+                if (!project.isDisposed && clsFile.isValid) {
+                  PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
+                }
               }
-            }
-            panel.createActionLabel(JavaUiBundle.message("library.source.show.diff")) {
-              if (!project.isDisposed && clsFile.isValid) {
-                val cf = DiffContentFactory.getInstance()
-                val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
-                DiffManager.getInstance().showDiff(project, request)
+              panel.createActionLabel(JavaUiBundle.message("library.source.show.diff")) {
+                if (!project.isDisposed && clsFile.isValid) {
+                  val cf = DiffContentFactory.getInstance()
+                  val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
+                  DiffManager.getInstance().showDiff(project, request)
+                }
               }
+              logMembers(offender)
+              return@Function panel
             }
-            logMembers(offender)
-            return panel
           }
         }
       }
@@ -79,41 +81,36 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
   private fun <T : PsiMember> differs(srcMembers: List<T>, clsMembers: List<T>, format: (T) -> String) =
     srcMembers.size != clsMembers.size || srcMembers.map(format).sorted() != clsMembers.map(format).sorted()
 
-  private fun fields(c: PsiClass) = if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
+  private fun fields(c: PsiClass): List<PsiField> =
+    if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
 
-  private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
+  private fun methods(c: PsiClass): List<PsiMethod> =
+    (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
 
-  private fun ignoreMethod(m: PsiMethod): Boolean {
+  private fun ignoreMethod(m: PsiMethod): Boolean =
     if (m.isConstructor) {
-      return m.parameterList.parametersCount == 0 // default constructor
+      m.parameterList.parametersCount == 0 // default constructor
     }
     else {
-      return m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
+      m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
     }
-  }
 
-  private fun inners(c: PsiClass) = if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
+  private fun inners(c: PsiClass): List<PsiClass> =
+    if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
 
   private fun format(f: PsiField) = formatVariable(f, FIELD, PsiSubstitutor.EMPTY)
-
   private fun format(m: PsiMethod) = formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)
-
   private fun format(c: PsiClass) = formatClass(c, CLASS).removeSuffix(" extends java.lang.Object")
 
-  private fun logMembers(offender: PsiClass) {
-    if (!LOG.isTraceEnabled) {
-      return
+  private fun logMembers(offender: PsiClass): Unit =
+    LOG.trace {
+      val cls = offender.originalElement as? PsiClass ?: return
+      val sourceMembers = formatMembers(offender)
+      val clsMembers = formatMembers(cls)
+      val diff = Diff.linesDiff(sourceMembers.toTypedArray(), clsMembers.toTypedArray()) ?: return
+      "Class: ${cls.qualifiedName}\n${diff}"
     }
-    val cls = offender.originalElement as? PsiClass ?: return
-    val sourceMembers = formatMembers(offender)
-    val clsMembers = formatMembers(cls)
-    val diff = Diff.linesDiff(sourceMembers.toTypedArray(), clsMembers.toTypedArray()) ?: return
-    LOG.trace("Class: ${cls.qualifiedName}\n$diff")
-  }
 
-  private fun formatMembers(c: PsiClass): List<String> {
-    return fields(c).map(::format).sorted() +
-           methods(c).map(::format).sorted() +
-           inners(c).map(::format).sorted()
-  }
+  private fun formatMembers(c: PsiClass): List<String> =
+    fields(c).map(::format).sorted() + methods(c).map(::format).sorted() + inners(c).map(::format).sorted()
 }

@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase() {
   fun `test single column without alignment`() {
     // language=Markdown
@@ -99,6 +100,54 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     |     right<caret> | none    |
     |----------:|---------|
     |      <caret>so<caret>me | some    |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
+  fun `test reformatting is not confused by escaped pipe`() {
+    // language=Markdown
+    val before = """
+    | none |
+    | :---:  |
+    | A\|B<caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | none |
+    |:----:|
+    | A\|B<caret> |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
+  fun `test reformatting is not confused by escaped pipe in table with multiple columns`() {
+    // language=Markdown
+    val before = """
+    | none |    A\|B |
+    | :---:  |  ---: |
+    | A\|B<caret> | A\|B\|\|\|B<caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | none |        A\|B |
+    |:----:|------------:|
+    | A\|B<caret> | A\|B\|\|\|B<caret> |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
+  fun `test reformatting is not confused by escaped pipe inside code span`() {
+    // language=Markdown
+    val before = """
+    | none |
+    | :---:  |
+    | `A\|B`<caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    |  none  |
+    |:------:|
+    | `A\|B`<caret> |
     """.trimIndent()
     doTest(before, after)
   }

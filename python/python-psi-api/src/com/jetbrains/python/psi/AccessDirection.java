@@ -30,7 +30,6 @@ public enum AccessDirection {
   DELETE;
 
   /**
-   * @param element
    * @return the access direction of element, judging from surrounding statements.
    */
   public static AccessDirection of(PyElement element) {

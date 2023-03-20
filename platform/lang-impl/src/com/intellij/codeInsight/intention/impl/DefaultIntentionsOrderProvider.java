@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -17,7 +17,7 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
 
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getSortedIntentions(@NotNull CachedIntentions context,
-                                                                           @NotNull List<IntentionActionWithTextCaching> intentions) {
+                                                                           @NotNull List<? extends IntentionActionWithTextCaching> intentions) {
     return ContainerUtil.sorted(intentions, (o1, o2) -> {
       int weight1 = getWeight(context, o1);
       int weight2 = getWeight(context, o2);
@@ -34,8 +34,8 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
     return getPriorityWeight(priority);
   }
 
-  private static int getWeight(@NotNull CachedIntentions context, @NotNull IntentionActionWithTextCaching action) {
-    final int group = context.getGroup(action).getPriority();
+  public static int getWeight(@NotNull CachedIntentions context, @NotNull IntentionActionWithTextCaching action) {
+    int group = context.getGroup(action).getPriority();
     IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
     if (nonDelegatedAction instanceof PriorityAction) {
       return group + getPriorityWeight(((PriorityAction)nonDelegatedAction).getPriority());
@@ -55,19 +55,13 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
     return action;
   }
 
-  private static int getPriorityWeight(@Nullable Priority priority) {
+  public static int getPriorityWeight(@Nullable Priority priority) {
     if (priority == null) return 0;
-    switch (priority) {
-      case TOP:
-        return 20;
-      case HIGH:
-        return 3;
-      case LOW:
-        return -3;
-      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX:
-        return IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
-      default:
-        return 0;
-    }
+    return switch (priority) {
+      case TOP -> 20;
+      case HIGH -> 3;
+      case LOW -> -3;
+      default -> 0;
+    };
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ide.IdeTooltip;
@@ -31,11 +31,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Collections;
 
 public abstract class GraphCommitCellController implements VcsLogCellController {
-  @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogGraphTable myTable;
-  @NotNull private final GraphCellPainter myGraphCellPainter;
+  private final @NotNull VcsLogData myLogData;
+  private final @NotNull VcsLogGraphTable myTable;
+  private final @NotNull GraphCellPainter myGraphCellPainter;
 
   public GraphCommitCellController(@NotNull VcsLogData logData,
                                    @NotNull VcsLogGraphTable table,
@@ -47,12 +48,10 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   protected abstract int getTooltipXCoordinate(int row);
 
-  @Nullable
-  protected abstract JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row);
+  protected abstract @Nullable JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row);
 
-  @Nullable
   @Override
-  public Cursor performMouseClick(int row, @NotNull MouseEvent e) {
+  public @Nullable Cursor performMouseClick(int row, @NotNull MouseEvent e) {
     PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE));
     if (printElement != null) {
       return performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
@@ -60,9 +59,8 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     return null;
   }
 
-  @Nullable
   @Override
-  public Cursor performMouseMove(int row, @NotNull MouseEvent e) {
+  public @Nullable Cursor performMouseMove(int row, @NotNull MouseEvent e) {
     Point pointInCell = myTable.getPointInCell(e.getPoint(), Commit.INSTANCE);
     PrintElement printElement = findPrintElement(row, pointInCell);
     Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
@@ -82,20 +80,18 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     return findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE)) == null;
   }
 
-  @Nullable
-  private PrintElement findPrintElement(int row, @NotNull Point pointInCell) {
+  private @Nullable PrintElement findPrintElement(int row, @NotNull Point pointInCell) {
     Collection<? extends PrintElement> printElements = myTable.getVisibleGraph().getRowInfo(row).getPrintElements();
     return myGraphCellPainter.getElementUnderCursor(printElements, pointInCell.x, pointInCell.y);
   }
 
-  @Nullable
-  private Cursor performGraphAction(@Nullable PrintElement printElement, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
+  private @Nullable Cursor performGraphAction(@Nullable PrintElement printElement, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
     boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
     if (isClickOnGraphElement) {
       triggerElementClick(printElement);
     }
 
-    Selection previousSelection = myTable.getSelection();
+    SelectionSnapshot previousSelection = myTable.getSelectionSnapshot();
     GraphAnswer<Integer> answer =
       myTable.getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
     return handleGraphAnswer(answer, isClickOnGraphElement, previousSelection, e);
@@ -103,7 +99,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   @Nullable
   Cursor handleGraphAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange,
-                           @Nullable Selection previousSelection, @Nullable MouseEvent e) {
+                           @Nullable SelectionSnapshot previousSelection, @Nullable MouseEvent e) {
     if (dataCouldChange) {
       myTable.getModel().fireTableDataChanged();
 
@@ -134,15 +130,13 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     return answer.getCursorToSet();
   }
 
-  @NotNull
-  @Nls
-  private String getArrowTooltipText(int commit, @Nullable Integer row) {
+  private @NotNull @Nls String getArrowTooltipText(int commit, @Nullable Integer row) {
     VcsShortCommitDetails details;
     if (row != null && row >= 0) {
-      details = myTable.getModel().getCommitMetadata(row); // preload rows around the commit
+      details = myTable.getModel().getCommitMetadata(row, true); // preload rows around the commit
     }
     else {
-      details = myLogData.getMiniDetailsGetter().getCommitData(commit); // preload just the commit
+      details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singletonList(commit)); // preload just the commit
     }
 
     if (details instanceof LoadingDetails) {
@@ -181,7 +175,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   void showTooltip(int row) {
-    Point topLeftCorner = new Point(myTable.getColumnLeftXCoordinate(myTable.getColumnViewIndex(Commit.INSTANCE)),
+    Point topLeftCorner = new Point(myTable.getColumnDataRectLeftX(myTable.getColumnViewIndex(Commit.INSTANCE)),
                                     row * myTable.getRowHeight());
     Point pointInCell = new Point(getTooltipXCoordinate(row), myTable.getRowHeight() / 2);
     showTooltip(row, pointInCell, new Point(topLeftCorner.x + pointInCell.x, topLeftCorner.y + pointInCell.y), true);

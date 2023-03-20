@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.util.messages.Topic
 
+@JvmDefaultWithCompatibility
 interface GHPRDataOperationsListener {
 
   fun onStateChanged() {}

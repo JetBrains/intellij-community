@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.List;
 
-/**
- * @author peter
- */
 public interface AbstractDomChildrenDescription extends AnnotatedElement, PomTarget {
   @NotNull
   List<? extends DomElement> getValues(@NotNull DomElement parent);

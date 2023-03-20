@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-@file:Suppress("UnstableApiUsage")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -13,7 +12,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,13 +19,13 @@ import com.intellij.testFramework.LightVirtualFileBase
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -97,6 +95,8 @@ class LoadConfigurationAction : AnAction(
         runPartialGradleImport(project, root)
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
         ensureValidActionVisibility(e)
     }
@@ -132,7 +132,7 @@ class LoadConfigurationAction : AnAction(
             ?.takeIf {
                 it !is LightVirtualFileBase
                         && it.isValid
-                        && FileTypeRegistry.getInstance().isFileOfType(it, KotlinFileType.INSTANCE)
+                        && it.isKotlinFileType()
                         && isGradleKotlinScript(it)
             }
     }

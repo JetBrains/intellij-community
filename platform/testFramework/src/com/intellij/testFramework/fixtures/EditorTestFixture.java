@@ -29,8 +29,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -251,7 +249,7 @@ public class EditorTestFixture {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 
-    final JList list = lookup.getList();
+    final JList<LookupElement> list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assertNotNull(strings);
     final List<String> actual = ContainerUtil.getFirstItems(strings, expected.length);
@@ -305,11 +303,10 @@ public class EditorTestFixture {
     List<HighlightInfo> infos = doHighlighting();
     List<IntentionAction> actions = new ArrayList<>();
     for (HighlightInfo info : infos) {
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          actions.add(pair.getFirst().getAction());
-        }
-      }
+      info.findRegisteredQuickFix((descriptor, range) -> {
+        actions.add(descriptor.getAction());
+        return null;
+      });
     }
     return actions;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public abstract class SourcePosition implements Navigatable{
+public abstract class SourcePosition implements Navigatable {
   private static final Logger LOG = Logger.getInstance(SourcePosition.class);
+
   @NotNull
   public abstract PsiFile getFile();
 
@@ -101,7 +102,7 @@ public abstract class SourcePosition implements Navigatable{
     }
 
     private void updateData() {
-      if(dataUpdateNeeded()) {
+      if (dataUpdateNeeded()) {
         myModificationStamp = getFile().getModificationStamp();
         myLine = null;
         myOffset = null;
@@ -156,7 +157,8 @@ public abstract class SourcePosition implements Navigatable{
           document = getDocument(file.getOriginalFile());
         }
       }
-      catch (ProcessCanceledException ignored) {}
+      catch (ProcessCanceledException ignored) {
+      }
       catch (Throwable e) {
         LOG.error(e);
       }
@@ -319,16 +321,15 @@ public abstract class SourcePosition implements Navigatable{
       @Override
       protected int calcOffset() {
         return ReadAction.compute(() -> {
-            PsiElement elem = pointer.getElement();
-            return elem != null ? elem.getTextOffset() : -1;
+          PsiElement elem = pointer.getElement();
+          return elem != null ? elem.getTextOffset() : -1;
         });
       }
     };
   }
 
   public boolean equals(Object o) {
-    if(o instanceof SourcePosition) {
-      SourcePosition sourcePosition = (SourcePosition)o;
+    if (o instanceof SourcePosition sourcePosition) {
       return Comparing.equal(sourcePosition.getFile(), getFile()) && sourcePosition.getOffset() == getOffset();
     }
 

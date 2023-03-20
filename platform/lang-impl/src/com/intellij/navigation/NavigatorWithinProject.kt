@@ -1,4 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.navigation
 
 import com.intellij.ide.IdeBundle
@@ -34,9 +35,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.containers.ComparatorUtil.max
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.*
 import java.io.File
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import java.util.regex.Pattern
 
 const val NAVIGATE_COMMAND = "navigate"
@@ -45,50 +46,47 @@ const val PROJECT_NAME_KEY = "project"
 const val ORIGIN_URL_KEY = "origin"
 const val SELECTION = "selection"
 
-fun openProject(parameters: Map<String, String>): CompletableFuture<Project?> {
-  val projectName = parameters[PROJECT_NAME_KEY]?.nullize(nullizeSpaces = true)
-  val originUrl = parameters[ORIGIN_URL_KEY]?.nullize(nullizeSpaces = true)
+suspend fun openProject(parameters: Map<String, String?>): ProtocolOpenProjectResult {
+  val projectName = parameters.get(PROJECT_NAME_KEY)?.nullize(nullizeSpaces = true)
+  val originUrl = parameters.get(ORIGIN_URL_KEY)?.nullize(nullizeSpaces = true)
   if (projectName == null && originUrl == null) {
-    return CompletableFuture.failedFuture(IllegalArgumentException(IdeBundle.message("jb.protocol.navigate.missing.parameters")))
+    return ProtocolOpenProjectResult.Error(IdeBundle.message("jb.protocol.navigate.missing.parameters"))
   }
 
-  val openProject = ProjectUtil.getOpenProjects().find {
+  val noProjectResultError = ProtocolOpenProjectResult.Error(IdeBundle.message("jb.protocol.navigate.no.project"))
+
+  ProjectUtil.getOpenProjects().find {
     projectName != null && it.name == projectName ||
     originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(it.guessProjectDir()?.toNioPath()))
-  }
-  if (openProject != null) {
-    return CompletableFuture.completedFuture(openProject)
-  }
-
+  }?.let { return ProtocolOpenProjectResult.Success(it) }
   val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
-    .filterIsInstance(ReopenProjectAction::class.java)
-    .find {
-      projectName != null && it.projectName == projectName ||
-      originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(Path.of(it.projectPath)))
-    }
-  if (recentProjectAction == null) {
-    return CompletableFuture.completedFuture(null)
-  }
+                              .filterIsInstance(ReopenProjectAction::class.java)
+                              .find {
+                                projectName != null && it.projectName == projectName ||
+                                originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(Path.of(it.projectPath)))
+                              } ?: return noProjectResultError
 
-  val result = CompletableFuture<Project?>()
-  RecentProjectsManagerBase.instanceEx
-    .openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
-    .thenAccept { project ->
-      when (project) {
-        null -> result.complete(null)
-        else -> {
-          ApplicationManager.getApplication().invokeLater({
-            if (project.isDisposed) result.complete(null)
-            else {
-              StartupManager.getInstance(project).runAfterOpened {
-                result.complete(project)
-              }
-            }
-          }, ModalityState.NON_MODAL)
-        }
-      }
+  val project = RecentProjectsManagerBase.getInstanceEx().openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
+                ?: return noProjectResultError
+  return withContext(Dispatchers.EDT) {
+    if (project.isDisposed) {
+      noProjectResultError
     }
-  return result
+    else {
+      val future = CompletableDeferred<Project>()
+      StartupManager.getInstance(project).runAfterOpened {
+        future.complete(project)
+      }
+      future.join()
+      ProtocolOpenProjectResult.Success(project)
+    }
+  }
+}
+
+sealed interface ProtocolOpenProjectResult {
+  class Success(val project: Project) : ProtocolOpenProjectResult
+
+  class Error(val message: String) : ProtocolOpenProjectResult
 }
 
 data class LocationInFile(val line: Int, val column: Int)
@@ -106,12 +104,13 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     fun parseNavigationPath(pathText: String): Triple<String?, String?, String?> {
       val matcher = PATH_WITH_LOCATION.matcher(pathText)
       return if (!matcher.matches()) Triple(null, null, null)
-             else Triple(matcher.group(PATH_GROUP), matcher.group(LINE_GROUP), matcher.group(COLUMN_GROUP))
+      else Triple(matcher.group(PATH_GROUP), matcher.group(LINE_GROUP), matcher.group(COLUMN_GROUP))
     }
 
     private fun parseLocationInFile(range: String): LocationInFile? {
       val position = range.split(':')
-      return if (position.size != 2) null else try {
+      return if (position.size != 2) null
+      else try {
         LocationInFile(position[0].toInt(), position[1].toInt())
       }
       catch (e: Exception) {
@@ -140,7 +139,7 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
 
   fun navigate(keysPrefixesToNavigate: List<NavigationKeyPrefix>) {
     keysPrefixesToNavigate.forEach { keyPrefix ->
-      parameters.filterKeys { it.startsWith(keyPrefix.prefix) }.values.forEach { navigatorByKeyPrefix[keyPrefix]?.invoke(it) }
+      parameters.filterKeys { it.startsWith(keyPrefix.prefix) }.values.forEach { navigatorByKeyPrefix.get(keyPrefix)?.invoke(it) }
     }
   }
 
@@ -150,7 +149,9 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     val fqn = parameters[JBProtocolCommand.FRAGMENT_PARAM_NAME]?.let { "$reference#$it" } ?: reference
     runNavigateTask(reference) {
       val dataContext = SimpleDataContext.getProjectContext(project)
-      val searcher = invokeAndWaitIfNeeded { SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)) }
+      val searcher = invokeAndWaitIfNeeded {
+        SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
+      }
       Disposer.register(project, searcher)
 
       try {
@@ -162,7 +163,8 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
               makeSelectionsVisible()
             }
           }
-      } finally {
+      }
+      finally {
         Disposer.dispose(searcher)
       }
     }

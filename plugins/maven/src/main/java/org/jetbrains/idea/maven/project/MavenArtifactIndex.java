@@ -10,9 +10,6 @@ import org.jetbrains.idea.maven.model.MavenId;
 
 import java.util.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenArtifactIndex {
 
   private static final MavenArtifactIndex EMPTY_INDEX = new MavenArtifactIndex(Collections.emptyMap());
@@ -25,6 +22,13 @@ public final class MavenArtifactIndex {
 
   public Map<String, Map<String, List<MavenArtifact>>> getData() {
     return myData;
+  }
+
+  public boolean hasArtifact(@Nullable String groupId, @Nullable String artifactId) {
+    Map<String, List<MavenArtifact>> groupMap = myData.get(groupId);
+    if (groupMap == null) return false;
+
+    return groupMap.containsKey(artifactId);
   }
 
   @NotNull

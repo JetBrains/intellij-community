@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -24,16 +24,16 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   public void testMyClass() { assertIntentionNotAvailable(); }
   public void testMyInterface() { assertIntentionNotAvailable(); }
   public void testMyInterfaceJava9() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> assertIntentionNotAvailable("Make 'm' private"));
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> assertIntentionNotAvailable("Make 'm()' private"));
   }
   public void testMyInterfaceDefaultJava9() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm' private"));
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm()' private"));
   }
   public void testMyInterfacePrivateJava9() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm' public"));
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm()' public"));
   }
   public void testMyInterfacePrivateStaticJava9() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm' public"));
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_9, () -> doTest("Make 'm()' public"));
   }
   public void testEnumConstructor() { assertIntentionNotAvailable(); }
   public void testLocalClass() { assertIntentionNotAvailable(); }
@@ -43,7 +43,7 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   public void testClass() { doTestWithChooser("protected"); }
   public void testInDefaultPackage() { doTest("Make 'Test' package-private"); }
   public void testInheritance() {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest("Make 'foo' public"));
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest("Make 'foo()' public"));
   }
 
   public void testTypeParameter() {
@@ -68,7 +68,7 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   }
 
   public void testRecordConstructor1() { 
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.HIGHEST, () -> doTest("Make 'Foo' protected")); 
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.HIGHEST, () -> doTest("Make 'Foo()' protected"));
   }
 
   public void testRecordConstructor2() {

@@ -16,9 +16,9 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
   private final Function<? super String, ? extends Document> myFactory;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -80,8 +77,8 @@ public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<E
     getEditorTextField().setDocument(document);
     for (DocumentListener listener : myDocumentListeners) {
       document.addDocumentListener(listener);
-      listener.documentChanged(new DocumentEventImpl(document, 0, oldText, text, -1, false, 0, oldText.length(), 0));
     }
+    WriteAction.run(() -> document.setText(text));
   }
 
   public boolean isEditable() {

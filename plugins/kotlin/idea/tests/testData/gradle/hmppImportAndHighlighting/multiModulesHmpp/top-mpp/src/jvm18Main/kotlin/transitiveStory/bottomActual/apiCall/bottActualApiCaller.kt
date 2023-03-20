@@ -10,7 +10,7 @@ open class Jvm18JApiInheritor : JavaApiContainer() {
 }
 
 open class Jvm18KApiInheritor : KotlinApiContainer() {
-    public override val <!LINE_MARKER("descr='Overrides property in 'KotlinApiContainer''")!>protectedKotlinDeclaration<!> =
+    public override val <!LINE_MARKER("descr='Overrides property in KotlinApiContainer (transitiveStory.apiJvm.beginning) Press ... to navigate'")!>protectedKotlinDeclaration<!> =
         "I'm an overridden Kotlin string in `$this` from `" + moduleName +
                 "` and shall be never visible to the other modules except my subclasses."
 }

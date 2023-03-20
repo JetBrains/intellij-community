@@ -19,6 +19,7 @@ package org.jetbrains.uast
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.log
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 open class UIdentifier(
   override val sourcePsi: PsiElement?,
@@ -33,7 +34,7 @@ open class UIdentifier(
   override fun asLogString(): String = log("Identifier ($name)")
 
   @Suppress("OverridingDeprecatedMember")
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("sourcePsi"))
   override val psi: PsiElement?
@@ -43,8 +44,37 @@ open class UIdentifier(
     get() = null
 }
 
-open class LazyParentUIdentifier(psi: PsiElement?, private val givenParent: UElement?) : UIdentifier(psi, givenParent) {
+open class LazyParentUIdentifier(psi: PsiElement?, givenParent: UElement?) : UIdentifier(psi, givenParent) {
+  @Volatile
+  private var uastParentValue: Any? = givenParent ?: NonInitializedLazyParentUIdentifierParent
 
-  override val uastParent: UElement? by lazy { givenParent ?: sourcePsi?.parent?.toUElement() }
+  override val uastParent: UElement?
+    get() {
+      val currentValue = uastParentValue
+      if (currentValue != NonInitializedLazyParentUIdentifierParent) {
+        return currentValue as UElement?
+      }
 
+      val newValue = computeParent()
+      if (updater.compareAndSet(this, NonInitializedLazyParentUIdentifierParent, newValue)) {
+        return newValue
+      }
+
+      return uastParentValue as UElement?
+    }
+
+  protected open fun computeParent(): UElement? {
+    return sourcePsi?.parent?.toUElement()
+  }
+
+  private companion object {
+    val updater: AtomicReferenceFieldUpdater<LazyParentUIdentifier, Any> =
+      AtomicReferenceFieldUpdater.newUpdater(
+        LazyParentUIdentifier::class.java,
+        Any::class.java,
+        "uastParentValue"
+      )
+
+    val NonInitializedLazyParentUIdentifierParent = Any()
+  }
 }

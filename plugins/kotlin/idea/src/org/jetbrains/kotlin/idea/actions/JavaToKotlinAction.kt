@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions
 
@@ -7,10 +7,8 @@ import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,7 +19,6 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,8 +29,10 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
@@ -42,19 +41,15 @@ import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
 import org.jetbrains.kotlin.j2k.FilesResult
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.OldJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.UserDataProperty
 import java.io.IOException
 import kotlin.io.path.notExists
 import kotlin.system.measureTimeMillis
-
-var VirtualFile.pathBeforeJ2K: String? by UserDataProperty(Key.create("PATH_BEFORE_J2K_CONVERSION"))
 
 class JavaToKotlinAction : AnAction() {
     companion object {
@@ -95,7 +90,7 @@ class JavaToKotlinAction : AnAction() {
                         mapping.setMapping(virtualFile, KotlinFileType.INSTANCE.language)
                     } else {
                         val fileName = uniqueKotlinFileName(virtualFile)
-                        virtualFile.pathBeforeJ2K = virtualFile.path
+                        virtualFile.pathBeforeJavaToKotlinConversion = virtualFile.path
                         virtualFile.rename(this, fileName)
                     }
                     result += virtualFile
@@ -106,6 +101,9 @@ class JavaToKotlinAction : AnAction() {
             return result
         }
 
+        /**
+         * For binary compatibility with third-party plugins.
+         */
         fun convertFiles(
             files: List<PsiJavaFile>,
             project: Project,
@@ -113,6 +111,24 @@ class JavaToKotlinAction : AnAction() {
             enableExternalCodeProcessing: Boolean = true,
             askExternalCodeProcessing: Boolean = true,
             forceUsingOldJ2k: Boolean = false
+        ): List<KtFile> = convertFiles(
+            files,
+            project,
+            module,
+            enableExternalCodeProcessing,
+            askExternalCodeProcessing,
+            forceUsingOldJ2k,
+            defaultSettings
+        )
+
+        fun convertFiles(
+            files: List<PsiJavaFile>,
+            project: Project,
+            module: Module,
+            enableExternalCodeProcessing: Boolean = true,
+            askExternalCodeProcessing: Boolean = true,
+            forceUsingOldJ2k: Boolean = false,
+            settings: ConverterSettings = defaultSettings
         ): List<KtFile> {
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
@@ -120,12 +136,12 @@ class JavaToKotlinAction : AnAction() {
                 val converter =
                     if (forceUsingOldJ2k) OldJavaToKotlinConverter(
                         project,
-                        ConverterSettings.defaultSettings,
+                        settings,
                         IdeaJavaToKotlinServices
                     ) else J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled).createJavaToKotlinConverter(
                         project,
                         module,
-                        ConverterSettings.defaultSettings,
+                        settings,
                         IdeaJavaToKotlinServices
                     )
                 converterResult = converter.filesToKotlin(
@@ -142,7 +158,7 @@ class JavaToKotlinAction : AnAction() {
                     convert()
                 }
                 val linesCount = runReadAction {
-                    javaFiles.sumBy { StringUtil.getLineBreakCount(it.text) }
+                    javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
                 }
 
                 J2KFusCollector.log(
@@ -258,12 +274,14 @@ class JavaToKotlinAction : AnAction() {
         convertFiles(javaFiles, project, module)
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isEnabled(e)
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if (isRunningInCidrIde) return false
+        if (KotlinPlatformUtils.isCidr) return false
         val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
         val project = e.project ?: return false
         e.getData(PlatformCoreDataKeys.MODULE) ?: return false

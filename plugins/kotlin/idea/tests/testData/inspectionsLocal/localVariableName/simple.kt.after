@@ -1,4 +1,5 @@
+// OFFLINE_REPORT: "Local variable name 'LIST' should start with a lowercase letter"
+// PROBLEM: "Local variable name 'LIST' should start with a lowercase letter"
 fun bar() {
     var LIST = 1
 }
-// OFFLINE_REPORT: "Local variable name 'LIST' should start with a lowercase letter"

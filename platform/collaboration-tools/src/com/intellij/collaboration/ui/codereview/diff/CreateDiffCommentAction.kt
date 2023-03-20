@@ -12,6 +12,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.CommonProcessors
 
 abstract class CreateDiffCommentAction : DumbAwareAction(messagePointer("action.CodeReview.CreateDiffComment.text")) {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isActive(e) && isEnabledAndVisible(e)

@@ -5,7 +5,9 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +84,14 @@ public final class JavaVarTypeUtil {
       PsiClass aClass = result.getElement();
       if (aClass != null) {
         PsiManager manager = aClass.getManager();
+        if (aClass instanceof PsiTypeParameter) {
+          PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+          if (TypeConversionUtil.isFreshVariable(typeParameter)) {
+            PsiType upperBound = TypeConversionUtil.getInferredUpperBoundForSynthetic(typeParameter);
+            return ObjectUtils.notNull(PsiSubstitutor.EMPTY.put(typeParameter, PsiWildcardType.createUnbounded(manager)).substitute(upperBound), 
+                                       classType);
+          }
+        }
         PsiSubstitutor targetSubstitutor = PsiSubstitutor.EMPTY;
         PsiSubstitutor substitutor = result.getSubstitutor();
         for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
@@ -121,8 +131,8 @@ public final class JavaVarTypeUtil {
 
     private static PsiWildcardType createDownwardProjection(PsiManager manager, PsiType bound) {
       PsiType downwardProjection = getDownwardProjection(bound);
-      return downwardProjection != PsiType.NULL ? PsiWildcardType.createSuper(manager, downwardProjection)
-                                                : PsiWildcardType.createUnbounded(manager);
+      return downwardProjection != PsiTypes.nullType() ? PsiWildcardType.createSuper(manager, downwardProjection)
+                                                       : PsiWildcardType.createUnbounded(manager);
     }
 
     private static boolean tryUpperBound(PsiClass aClass, PsiTypeParameter parameter, PsiType U) {
@@ -148,14 +158,14 @@ public final class JavaVarTypeUtil {
     @Override
     public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
       PsiType projection = arrayType.getComponentType().accept(this);
-      if (projection == PsiType.NULL) return PsiType.NULL;
+      if (projection == PsiTypes.nullType()) return PsiTypes.nullType();
       return projection.createArrayType();
     }
 
     @Override
     public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
       PsiType[] conjuncts = Arrays.stream(intersectionType.getConjuncts()).map(conjunct -> conjunct.accept(this)).toArray(PsiType[]::new);
-      if (ArrayUtil.find(conjuncts, PsiType.NULL) > -1) return PsiType.NULL;
+      if (ArrayUtil.find(conjuncts, PsiTypes.nullType()) > -1) return PsiTypes.nullType();
       return PsiIntersectionType.createIntersection(conjuncts);
     }
 
@@ -178,7 +188,7 @@ public final class JavaVarTypeUtil {
         PsiSubstitutor targetSubstitutor = PsiSubstitutor.EMPTY;
         for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
           PsiType ai = substitutor.substitute(parameter);
-          if (ai == null) return PsiType.NULL;
+          if (ai == null) return PsiTypes.nullType();
           if (!mentionsRestrictedTypeVariables(ai)) {
             targetSubstitutor = targetSubstitutor.put(parameter, ai);
           }
@@ -186,7 +196,7 @@ public final class JavaVarTypeUtil {
             if (((PsiWildcardType)ai).isExtends()) {
               PsiType extendsBound = ((PsiWildcardType)ai).getExtendsBound();
               PsiType projection = extendsBound.accept(this);
-              if (projection == PsiType.NULL) return PsiType.NULL;
+              if (projection == PsiTypes.nullType()) return PsiTypes.nullType();
               targetSubstitutor = targetSubstitutor.put(parameter, PsiWildcardType.createExtends(parameter.getManager(), projection));
             }
             else if (((PsiWildcardType)ai).isSuper()) {
@@ -194,16 +204,16 @@ public final class JavaVarTypeUtil {
               targetSubstitutor = targetSubstitutor.put(parameter, getUpwardProjection(superBound));
             }
             else {
-              return PsiType.NULL;
+              return PsiTypes.nullType();
             }
           }
           else {
-            return PsiType.NULL;
+            return PsiTypes.nullType();
           }
         }
         return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, targetSubstitutor);
       }
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
   }
 }

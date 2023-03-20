@@ -10,12 +10,17 @@ import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseNavigateToSourceAction extends DumbAwareAction implements UpdateInBackground {
+public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
   private final boolean myFocusEditor;
 
   protected BaseNavigateToSourceAction(boolean focusEditor) {
     myFocusEditor = focusEditor;
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -39,9 +44,14 @@ public abstract class BaseNavigateToSourceAction extends DumbAwareAction impleme
                                    (myFocusEditor || !(target instanceof NavigatableWithText)));
     e.getPresentation().setEnabled(enabled);
 
-    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText?
+    String navigateActionText = myFocusEditor && target instanceof NavigatableWithText ?
                                 ((NavigatableWithText)target).getNavigateActionText(true) : null;
-    e.getPresentation().setText(navigateActionText == null ? getTemplatePresentation().getText() : navigateActionText);
+    if (navigateActionText != null) {
+      e.getPresentation().setText(navigateActionText);
+    }
+    else {
+      e.getPresentation().setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
+    }
   }
 
   @Nullable

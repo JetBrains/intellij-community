@@ -11,10 +11,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CompileActionBase extends AnAction implements DumbAware, UpdateInBackground {
+public abstract class CompileActionBase extends AnAction implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -24,10 +29,10 @@ public abstract class CompileActionBase extends AnAction implements DumbAware, U
     if (file != null && editor != null && !DumbService.getInstance(project).isDumb()) {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete
     }
-    doAction(dataContext, project);
+    doAction(e.getDataContext(), project);
   }
 
-  protected abstract void doAction(final DataContext dataContext, final Project project);
+  protected abstract void doAction(@NotNull DataContext dataContext, final Project project);
 
   @Override
   public void update(@NotNull final AnActionEvent e) {

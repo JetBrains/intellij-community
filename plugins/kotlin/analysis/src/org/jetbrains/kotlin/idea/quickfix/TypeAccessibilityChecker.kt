@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -20,7 +20,7 @@ interface TypeAccessibilityChecker {
      * For example, you want to move `open class A<T : A>` class to another module.
      * In this case, you should add [FqName] of class `A` in [existingTypeNames].
      */
-    var existingTypeNames: Collection<String>
+    var existingTypeNames: Set<String>
 
     fun incorrectTypes(declaration: KtNamedDeclaration): Collection<FqName?>
     fun incorrectTypes(descriptor: DeclarationDescriptor): Collection<FqName?>
@@ -30,13 +30,13 @@ interface TypeAccessibilityChecker {
     fun checkAccessibility(descriptor: DeclarationDescriptor): Boolean
     fun checkAccessibility(type: KotlinType): Boolean
 
-    fun <R> runInContext(fqNames: Collection<String>, block: TypeAccessibilityChecker.() -> R): R
+    fun <R> runInContext(fqNames: Set<String>, block: TypeAccessibilityChecker.() -> R): R
 
     companion object {
         fun create(
             project: Project,
             targetModule: Module,
-            existingFqNames: Collection<String> = emptyList()
+            existingFqNames: Set<String> = emptySet(),
         ): TypeAccessibilityChecker = TypeAccessibilityCheckerImpl(project, targetModule, existingFqNames)
 
         @get:TestOnly

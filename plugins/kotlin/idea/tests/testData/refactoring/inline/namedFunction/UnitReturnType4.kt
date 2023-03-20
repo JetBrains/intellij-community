@@ -6,7 +6,7 @@ abstract class A {
 }
 
 fun foo<caret>() {
-    1.let { it.let { it.let { it.let { it?.doDo() } } } }
+    1.let { it.let { it.let { it.let { it.doDo() } } } }
 }
 
 class B : A() {

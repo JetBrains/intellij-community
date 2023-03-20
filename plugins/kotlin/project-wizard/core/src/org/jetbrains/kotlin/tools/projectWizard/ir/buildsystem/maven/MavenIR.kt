@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven
 
@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryWrapper
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.BuildFilePrinter
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.MavenPrinter
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repository
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 
@@ -23,9 +24,12 @@ data class PluginRepositoryMavenIR(
     override val repository: Repository
 ) : MavenIR, RepositoryWrapper {
     override fun MavenPrinter.renderMaven() {
-        node("pluginRepository") {
-            singleLineNode("id") { +repository.idForMaven }
-            singleLineNode("url") { +repository.url }
+        when (repository) {
+            DefaultRepository.MAVEN_LOCAL -> {}
+            else -> node("pluginRepository") {
+                singleLineNode("id") { +repository.idForMaven }
+                singleLineNode("url") { +repository.url }
+            }
         }
     }
 }

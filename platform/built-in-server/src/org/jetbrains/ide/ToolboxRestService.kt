@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.gson.JsonElement
@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.delete
 import io.netty.buffer.Unpooled
@@ -104,7 +104,6 @@ internal class ToolboxRestServiceConfig : Disposable {
 
 internal class ToolboxRestService : RestService() {
   internal companion object {
-    @Suppress("SSBasedInspection")
     private val LOG = logger<ToolboxRestService>()
   }
 
@@ -147,7 +146,7 @@ internal class ToolboxRestService : RestService() {
       response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
       channel.writeAndFlush(response).get()
 
-      val heartbeatDelay = requestJson.castSafelyTo<JsonObject>()?.get("heartbeatMillis")?.asLong
+      val heartbeatDelay = requestJson.asSafely<JsonObject>()?.get("heartbeatMillis")?.asLong
                            ?: System.getProperty("toolbox.heartbeat.millis", "5000").toLong()
 
       toolboxRequest to heartbeatDelay

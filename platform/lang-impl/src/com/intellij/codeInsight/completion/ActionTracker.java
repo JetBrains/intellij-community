@@ -13,18 +13,15 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
 
-/**
- * @author peter
- */
 final class ActionTracker {
   private final @NotNull MessageBusConnection myConnection;
   private @NotNull List<Integer> myCaretOffsets;
@@ -36,7 +33,8 @@ final class ActionTracker {
 
   ActionTracker(@NotNull Editor editor, @NotNull Disposable parentDisposable) {
     myEditor = editor;
-    myProject = Objects.requireNonNull(editor.getProject());
+    Project project = editor.getProject();
+    myProject = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     myIsDumb = DumbService.getInstance(myProject).isDumb();
 
     myConnection = myProject.getMessageBus().connect(parentDisposable);

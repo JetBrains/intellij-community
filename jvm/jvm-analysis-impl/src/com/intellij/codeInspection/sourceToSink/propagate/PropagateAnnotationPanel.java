@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink.propagate;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.sourceToSink.TaintValue;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -13,10 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -28,6 +26,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -35,14 +34,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
@@ -71,13 +73,14 @@ import java.util.stream.Stream;
 public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
   private final Tree myTree;
+  @NotNull
   private final Project myProject;
   private final TaintNode myRoot;
   private final PropagateTreeListener myTreeSelectionListener;
-  private final Consumer<@NotNull Collection<TaintNode>> myCallback;
+  private final @NotNull Consumer<? super Collection<@NotNull TaintNode>> myCallback;
   private Content myContent;
 
-  PropagateAnnotationPanel(Project project, @NotNull TaintNode root, @NotNull Consumer<Collection<@NotNull TaintNode>> callback) {
+  PropagateAnnotationPanel(@NotNull Project project, @NotNull TaintNode root, @NotNull Consumer<? super Collection<@NotNull TaintNode>> callback) {
     super(new BorderLayout());
     myTree = PropagateTree.create(this, root);
     myRoot = root;
@@ -102,7 +105,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     panel.add(toolbar, BorderLayout.NORTH);
     splitter.setSecondComponent(panel);
 
-    add(splitter);
+    add(splitter, BorderLayout.CENTER);
     addTreeActions(myTree, root);
   }
 
@@ -112,18 +115,22 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
   }
 
   private @NotNull JPanel createToolbar() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new JPanel(new BorderLayout());
     String annotateText = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.annotate");
     JButton annotateButton = new JButton(annotateText);
     annotateButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        UsageViewContentManager.getInstance(myProject).closeContent(myContent);
+        ToolWindow toolWindow = ProblemsView.getToolWindow(myProject);
+        if (toolWindow == null) return;
+        ContentManager contentManager = toolWindow.getContentManager();
+        contentManager.removeContent(myContent, true);
+        myContent.release();
         Set<TaintNode> toAnnotate = getSelectedElements(myRoot, new HashSet<>());
         if (toAnnotate != null) myCallback.accept(toAnnotate);
       }
     });
-    panel.add(annotateButton, new GridBagConstraints());
+    panel.add(annotateButton, BorderLayout.WEST);
     return panel;
   }
 
@@ -199,7 +206,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         TreePath[] selectionPaths = tree.getSelectionPaths();
-        if (selectionPaths == null || selectionPaths.length <= 0) return;
+        if (selectionPaths == null || selectionPaths.length == 0) return;
         TaintNode[] roots = tree.getSelectedNodes(TaintNode.class, null);
         Deque<TaintNode> nodes = new ArrayDeque<>(Arrays.asList(roots));
         boolean enable = false;
@@ -216,10 +223,15 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         e.getPresentation().setEnabled(enable);
       }
 
-      private Stream<TaintNode> nodes(TaintNode[] roots) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        // getSelectedNodes used
+        return ActionUpdateThread.EDT;
+      }
+
+      private static Stream<TaintNode> nodes(TaintNode[] roots) {
         return StreamEx.of(roots)
-          .flatMap(
-            root -> StreamEx.ofTree(root, n -> StreamEx.of(n.myCachedChildren == null ? Collections.emptyList() : n.myCachedChildren)));
+          .flatMap(root -> StreamEx.ofTree(root, n -> n.myCachedChildren == null ? null : StreamEx.of(n.myCachedChildren)));
       }
 
       @Override
@@ -326,6 +338,8 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         ApplicationManager.getApplication().runWriteAction(() -> myEditor.getDocument().setText(text));
         EditorHighlighter highlighter = createHighlighter(element);
         ((EditorEx)myEditor).setHighlighter(highlighter);
+        myEditor.getCaretModel().moveToOffset(model.myHighlightRange.getStartOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
         highlightRange(element.getProject(), model.myHighlightRange);
       }
 
@@ -420,19 +434,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
           return Collections.singletonList(root);
         }
       };
-      BaseTreeModel<TaintNode> propagateTreeModel = new BaseTreeModel<>() {
-        @Override
-        public List<? extends TaintNode> getChildren(Object object) {
-          TaintNode node = ObjectUtils.tryCast(object, TaintNode.class);
-          if (node == null) return Collections.emptyList();
-          return node.calcChildren();
-        }
-
-        @Override
-        public TaintNode getRoot() {
-          return rootWrapper;
-        }
-      };
+      BaseTreeModel<TaintNode> propagateTreeModel = new PropagateTreeModel(rootWrapper);
       AsyncTreeModel treeModel = new AsyncTreeModel(propagateTreeModel, parent);
       PropagateTree tree = new PropagateTree(treeModel);
       tree.setRootVisible(false);
@@ -441,6 +443,32 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       TreeUtil.installActions(tree);
       EditSourceOnDoubleClickHandler.install(tree);
       return tree;
+    }
+
+    private static class PropagateTreeModel extends BaseTreeModel<TaintNode> implements InvokerSupplier {
+      
+      private final TaintNode myRootWrapper;
+
+      private PropagateTreeModel(TaintNode wrapper) { 
+        myRootWrapper = wrapper; 
+      }
+
+      @Override
+      public List<? extends TaintNode> getChildren(Object object) {
+        TaintNode node = ObjectUtils.tryCast(object, TaintNode.class);
+        if (node == null) return Collections.emptyList();
+        return node.calcChildren();
+      }
+
+      @Override
+      public TaintNode getRoot() {
+        return myRootWrapper;
+      }
+
+      @Override
+      public @NotNull Invoker getInvoker() {
+        return Invoker.forBackgroundThreadWithReadAction(this);
+      }
     }
 
     private static class PropagateTreeRenderer extends ColoredTreeCellRenderer {
@@ -471,7 +499,8 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
         int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
         setIcon(ReadAction.compute(() -> psiElement.getIcon(flags)));
         int style = taintNode.isExcluded() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN;
-        Color color = taintNode.myTaintValue == TaintValue.TAINTED ? UIUtil.getErrorForeground() : null;
+        Color color;
+        color = taintNode.myTaintValue == TaintValue.TAINTED ? NamedColorUtil.getErrorForeground() : null;
         SimpleTextAttributes attributes = new SimpleTextAttributes(style, color);
         PsiMethod psiMethod = ObjectUtils.tryCast(psiElement, PsiMethod.class);
         if (psiMethod != null) {

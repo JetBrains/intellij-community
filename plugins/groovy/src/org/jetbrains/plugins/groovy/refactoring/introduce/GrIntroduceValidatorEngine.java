@@ -108,7 +108,6 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
    * @param startElement Container to start checking conflicts from
    * @param conflicts    Conflict accumulator
    * @param varName      Variable name
-   * @param startOffset
    */
   private void validateOccurrencesDown(@NotNull PsiElement startElement,
                                        @NotNull MultiMap<PsiElement, String> conflicts,

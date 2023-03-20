@@ -2,8 +2,7 @@
 class C {
     void test(int n) {
         String s = switch (n) {
-            case 1:
-            case 3:
+            case 1, 3:
                 break "a";
             case 2:
                 break "b";

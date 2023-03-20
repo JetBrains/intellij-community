@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -33,12 +33,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
@@ -52,13 +53,12 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   public boolean SUGGEST_FOREACH;
   private static final String SHORT_NAME = "Convert2streamapi";
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaBundle.message("checkbox.warn.if.only.foreach.replacement.is.available"), "SUGGEST_FOREACH");
-    panel.addCheckbox(JavaBundle.message("checkbox.warn.if.the.loop.is.trivial"), "REPLACE_TRIVIAL_FOREACH");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUGGEST_FOREACH", JavaBundle.message("checkbox.warn.if.only.foreach.replacement.is.available")),
+      checkbox("REPLACE_TRIVIAL_FOREACH", JavaBundle.message("checkbox.warn.if.the.loop.is.trivial"))
+    );
   }
 
   @Nls
@@ -94,11 +94,9 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   @Contract("null, null -> true; null, !null -> false")
   private static boolean sameReference(PsiExpression expr1, PsiExpression expr2) {
     if (expr1 == null && expr2 == null) return true;
-    if (!(expr1 instanceof PsiReferenceExpression) || !(expr2 instanceof PsiReferenceExpression)) return false;
-    PsiReferenceExpression ref1 = (PsiReferenceExpression)expr1;
-    PsiReferenceExpression ref2 = (PsiReferenceExpression)expr2;
-    return Objects.equals(ref1.getReferenceName(), ref2.getReferenceName()) && sameReference(ref1.getQualifierExpression(),
-                                                                                             ref2.getQualifierExpression());
+    if (!(expr1 instanceof PsiReferenceExpression ref1) || !(expr2 instanceof PsiReferenceExpression ref2)) return false;
+    return Objects.equals(ref1.getReferenceName(), ref2.getReferenceName()) && 
+           sameReference(ref1.getQualifierExpression(), ref2.getQualifierExpression());
   }
 
   /**
@@ -119,8 +117,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       return assignment.getRExpression();
     }
     else if (JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
-      if (assignment.getRExpression() instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
+      if (assignment.getRExpression() instanceof PsiBinaryExpression binOp) {
         IElementType op = TypeConversionUtil.convertEQtoOperation(compoundAssignmentOp);
         if (op.equals(binOp.getOperationTokenType())) {
           if (sameReference(binOp.getLOperand(), assignment.getLExpression())) {
@@ -152,8 +149,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       return var;
     }
     else if (JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
-      if (assignment.getRExpression() instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
+      if (assignment.getRExpression() instanceof PsiBinaryExpression binOp) {
         IElementType op = TypeConversionUtil.convertEQtoOperation(compoundAssignmentOp);
         if (op.equals(binOp.getOperationTokenType())) {
           PsiExpression left = binOp.getLOperand();
@@ -180,11 +176,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
         return ((PsiUnaryExpression)expression).getOperand();
       }
     }
-    else if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
-      if (ExpressionUtils.isLiteral(extractAddend(assignment), 1)) {
-        return assignment.getLExpression();
-      }
+    else if (expression instanceof PsiAssignmentExpression assignment && ExpressionUtils.isLiteral(extractAddend(assignment), 1)) {
+      return assignment.getLExpression();
     }
     return null;
   }
@@ -299,13 +292,10 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement, TerminalBlock tb) {
     PsiElement block = PsiUtil.getVariableCodeBlock(variable, statement);
     if (block != null) {
-      Predicate<PsiElement> notAllowedWrite = e -> {
-        if (!(e instanceof PsiReferenceExpression)) return false;
-        PsiReferenceExpression ref = (PsiReferenceExpression)e;
-        return PsiUtil.isAccessedForWriting(ref) &&
-               ref.isReferenceTo(variable) &&
-               tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
-      };
+      Predicate<PsiElement> notAllowedWrite = e -> e instanceof PsiReferenceExpression ref && 
+                                                   PsiUtil.isAccessedForWriting(ref) &&
+                                                   ref.isReferenceTo(variable) &&
+                                                   tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
       if (PsiTreeUtil.processElements(block, notAllowedWrite.negate()::test)) return true;
     }
     return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
@@ -314,13 +304,13 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   static String tryUnbox(PsiVariable variable) {
     PsiType type = variable.getType();
     String mapOp = null;
-    if (type.equals(PsiType.INT)) {
+    if (type.equals(PsiTypes.intType())) {
       mapOp = "mapToInt";
     }
-    else if (type.equals(PsiType.LONG)) {
+    else if (type.equals(PsiTypes.longType())) {
       mapOp = "mapToLong";
     }
-    else if (type.equals(PsiType.DOUBLE)) {
+    else if (type.equals(PsiTypes.doubleType())) {
       mapOp = "mapToDouble";
     }
     return mapOp == null ? "" : "." + mapOp + "(" + variable.getName() + " -> " + variable.getName() + ")";
@@ -338,7 +328,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     final boolean[] dependsOnCollection = {false};
     condition.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiExpression callQualifier = expression.getMethodExpression().getQualifierExpression();
         if (callQualifier == null ||
@@ -349,7 +339,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         super.visitThisExpression(expression);
         if (expression.getQualifier() == null && expression.getParent() instanceof PsiExpressionList) {
           dependsOnCollection[0] = true;
@@ -357,10 +347,10 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
     });
 
     return dependsOnCollection[0];
@@ -376,19 +366,19 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       processLoop(statement);
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
       processLoop(statement);
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       processLoop(statement);
     }
@@ -466,7 +456,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
     FindExtremumMigration.ExtremumTerminal extremumTerminal = FindExtremumMigration.extract(tb, nonFinalVariables);
     if (extremumTerminal != null) {
-      return new FindExtremumMigration(true, FindExtremumMigration.getOperation(extremumTerminal.isMax()) + "()");
+      return new FindExtremumMigration(true, FindExtremumMigration.getOperation(extremumTerminal.isMax()));
     }
     for (OperationReductionMigration.ReductionOperation reductionOperation : OperationReductionMigration.OPERATIONS) {
       if (getAccumulatedVariable(tb, nonFinalVariables, reductionOperation) != null) {
@@ -513,7 +503,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
                                                               boolean replaceTrivialForEach) {
     boolean shouldWarn = replaceTrivialForEach || tb.hasOperations();
     if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statement)).findFirst() == null) {
-      return new MatchMigration(shouldWarn, "anyMatch");
+      return new MatchMigration(shouldWarn, "anyMatch()/noneMatch()/allMatch");
     }
     if (nonFinalVariables.isEmpty() && statement instanceof PsiExpressionStatement) {
       return new FindFirstMigration(shouldWarn);
@@ -791,13 +781,13 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiType outType = mySource.getVariable().getType();
       String lambda = myVariable.getName() + " -> " + getStreamExpression(ct);
       if (outType instanceof PsiPrimitiveType && !outType.equals(inType)) {
-        if (outType.equals(PsiType.INT)) {
+        if (outType.equals(PsiTypes.intType())) {
           operation = "flatMapToInt";
         }
-        else if (outType.equals(PsiType.LONG)) {
+        else if (outType.equals(PsiTypes.longType())) {
           operation = "flatMapToLong";
         }
-        else if (outType.equals(PsiType.DOUBLE)) {
+        else if (outType.equals(PsiTypes.doubleType())) {
           operation = "flatMapToDouble";
         }
       }
@@ -1130,13 +1120,14 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiClass collectionClass =
         JavaPsiFacade.getInstance(statement.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
       PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
+      PsiParameter parameter = statement.getIterationParameter();
       if (collectionClass == null ||
           !InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true) ||
           isRawSubstitution(iteratedValueType, collectionClass) ||
-          !StreamApiUtil.isSupportedStreamElement(statement.getIterationParameter().getType())) {
+          !StreamApiUtil.isSupportedStreamElement(parameter.getType())) {
         return null;
       }
-      return new CollectionStream(statement, statement.getIterationParameter(), iteratedValue);
+      return new CollectionStream(statement, parameter, iteratedValue);
     }
   }
 
@@ -1161,7 +1152,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @Override
     public String createReplacement(CommentTracker ct) {
-      String className = myVariable.getType().equals(PsiType.LONG) ? "java.util.stream.LongStream" : "java.util.stream.IntStream";
+      String className = myVariable.getType().equals(PsiTypes.longType()) ? "java.util.stream.LongStream" : "java.util.stream.IntStream";
       String methodName = myIncluding ? "rangeClosed" : "range";
       return className + "." + methodName + "(" + ct.text(myExpression) + ", " + ct.text(myBound) + ")";
     }
@@ -1208,9 +1199,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     private @Nullable final PsiUnaryExpression myUnaryExpression;
 
     /**
-     * @param condition
      * @param type            if not null, equivalent form of update is: variable type= expression;
-     * @param unaryExpression
      */
     protected IterateStreamSource(
       @NotNull PsiLoopStatement loop,
@@ -1328,8 +1317,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiExpression updateExpr = null;
       IElementType op;
       PsiUnaryExpression unaryExpression = null;
-      if (expression instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+      if (expression instanceof PsiAssignmentExpression assignment) {
         op = TypeConversionUtil.convertEQtoOperation(assignment.getOperationTokenType());
         updateExpr = assignment.getRExpression();
         if (!ExpressionUtils.isReferenceTo(assignment.getLExpression(), variable)) return null;

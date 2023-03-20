@@ -14,16 +14,27 @@ class Sample {
   private Object methodWhichCanReturnNull(Integer someValue) {
     return someValue;
   }
+
+  private Boolean getB() {
+    return Math.random() > 0.5 ? Boolean.TRUE : Boolean.FALSE;
+  }
+
+  void foo() {
+    Boolean success = getB();
+    Assertions.assertThat(success).isTrue();
+  }
 }
 class Assertions {
   public static ObjectAssert assertThat(Object actual) {
     return new ObjectAssert(actual);
   }
 }
-class ObjectAssert {
+class ObjectAssert extends AbstractAssert {
   ObjectAssert(Object obj) {}
   
   public ObjectAssert isNotNull() {
     return this;
   }
+  public ObjectAssert isTrue() { return this; }
 }
+class AbstractAssert {}

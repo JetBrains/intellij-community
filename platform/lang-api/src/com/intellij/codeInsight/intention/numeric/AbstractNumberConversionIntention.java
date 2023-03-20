@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.numeric;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.LangBundle;
@@ -45,6 +46,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!BaseIntentionAction.canModify(file)) return false;
     List<NumberConverter> converters = getConverters(file);
     if (converters.isEmpty()) return false;
     NumberConversionContext context = getContext(file, editor);
@@ -131,7 +133,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
     JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setAccessibleName(LangBundle.message("intention.name.convert.number.to"))
-      .setTitle(StringUtil.wordsToBeginFromUpperCase(LangBundle.message("intention.name.convert.number.to")))
+      .setTitle(LangBundle.message("intention.name.convert.number.to.title"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)

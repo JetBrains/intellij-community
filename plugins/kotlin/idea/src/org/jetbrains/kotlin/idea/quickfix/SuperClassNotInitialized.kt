@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -13,14 +13,18 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
@@ -39,24 +43,30 @@ import org.jetbrains.kotlin.types.TypeConstructorSubstitution
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
     private const val DISPLAY_MAX_PARAMS = 5
 
     override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
         val delegator = diagnostic.psiElement as KtSuperTypeEntry
-        val classOrObjectDeclaration = delegator.parent.parent as? KtClassOrObject ?: return emptyList()
+        val classOrObjectDeclaration =
+          delegator.parents.match(KtSuperTypeList::class, last = KtClassOrObject::class) ?: return emptyList()
 
         val typeRef = delegator.typeReference ?: return emptyList()
         val type = typeRef.analyze()[BindingContext.TYPE, typeRef] ?: return emptyList()
         if (type.isError) return emptyList()
 
         val superClass = (type.constructor.declarationDescriptor as? ClassDescriptor) ?: return emptyList()
+        if (superClass.kind == ClassKind.ANNOTATION_CLASS || superClass.kind == ClassKind.ENUM_CLASS ||
+            superClass.isData || superClass.isInline || superClass.isValue
+        ) return emptyList()
         val classDescriptor = classOrObjectDeclaration.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return emptyList()
         val containingPackage = superClass.classId?.packageFqName
         val inSamePackage = containingPackage != null && containingPackage == classDescriptor.classId?.packageFqName
         val constructors = superClass.constructors.filter {
-            it.isVisible(classDescriptor) && (superClass.modality != Modality.SEALED || inSamePackage && classDescriptor.visibility != DescriptorVisibilities.LOCAL)
+          it.isVisible(classDescriptor, delegator.getResolutionFacade().languageVersionSettings) &&
+                    (superClass.modality != Modality.SEALED || inSamePackage && classDescriptor.visibility != DescriptorVisibilities.LOCAL)
         }
         if (constructors.isEmpty() && (!superClass.isExpect || superClass.kind != ClassKind.CLASS)) {
             return emptyList() // no accessible constructor
@@ -194,7 +204,7 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
                     } else {
                         nameRendered + ":" + IdeDescriptorRenderers.SOURCE_CODE.renderType(parameter.type)
                     } + defaultValue
-                    parametersToAdd.add(KtPsiFactory(element).createParameter(parameterText))
+                    parametersToAdd.add(KtPsiFactory(element.project).createParameter(parameterText))
                 }
 
                 return AddParametersFix(element, classDeclaration, parametersToAdd, argumentText.toString(), text)

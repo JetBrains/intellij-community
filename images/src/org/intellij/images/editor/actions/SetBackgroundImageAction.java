@@ -16,6 +16,7 @@
 package org.intellij.images.editor.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -37,6 +38,11 @@ public class SetBackgroundImageAction extends DumbAwareAction {
     boolean visible = !ActionPlaces.isPopupPlace(e.getPlace()) || image;
     e.getPresentation().setEnabled(project != null);
     e.getPresentation().setVisible(visible);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

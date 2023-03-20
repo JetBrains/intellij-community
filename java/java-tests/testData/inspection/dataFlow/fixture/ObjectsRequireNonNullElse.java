@@ -11,7 +11,7 @@ public class ObjectsRequireNonNullElse {
   void test2(String s) {
     String s1 = Objects.requireNonNullElse(s, "");
     if (!s1.equals(s)) {
-      if (<warning descr="Condition '!s1.isEmpty()' is always 'false'">!<warning descr="Result of 's1.isEmpty()' is always 'true'">s1.isEmpty()</warning></warning>) {}
+      if (<warning descr="Condition '!s1.isEmpty()' is always 'false'">!s1.isEmpty()</warning>) {}
     }
   }
 

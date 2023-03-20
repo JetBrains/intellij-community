@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -17,10 +17,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -37,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class XBreakpointManagerImpl implements XBreakpointManager {
@@ -131,13 +132,16 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     }
   }
 
+  private final ExecutorService myHttpBreakpointUpdater =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("HttpFileSystem breakpoints updater");
+
   private void updateBreakpointInFile(final VirtualFile file) {
     ReadAction
       .nonBlocking(() -> changedBreakpoints(file))
       .coalesceBy(Pair.create(this, file))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.defaultModalityState(), this::fireBreakpointsChanged)
-      .submit(AppExecutorUtil.getAppExecutorService());
+      .submit(myHttpBreakpointUpdater);
   }
 
   private @NotNull Collection<? extends XBreakpointBase<?, ?, ?>> changedBreakpoints(VirtualFile file) {
@@ -292,14 +296,15 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     sendBreakpointEvent(type, listener -> listener.breakpointRemoved(breakpoint));
   }
 
-  private void sendBreakpointEvent(XBreakpointType type, Consumer<XBreakpointListener<XBreakpoint<?>>> event) {
+  private void sendBreakpointEvent(XBreakpointType type, Consumer<? super XBreakpointListener<XBreakpoint<?>>> event) {
     if (myFirstLoadDone) {
       EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
       if (dispatcher != null) {
         //noinspection unchecked
-        event.consume(dispatcher.getMulticaster());
+        XBreakpointListener<XBreakpoint<?>> multicaster = dispatcher.getMulticaster();
+        event.accept(multicaster);
       }
-      event.consume(getBreakpointDispatcherMulticaster());
+      event.accept(getBreakpointDispatcherMulticaster());
     }
   }
 
@@ -365,13 +370,6 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Override
-  @Nullable
-  public <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type) {
-    Set<B> defaultBreakpoints = getDefaultBreakpoints(type);
-    return ContainerUtil.getFirstItem(defaultBreakpoints);
-  }
-
-  @Override
   @NotNull
   public <B extends XBreakpoint<?>> Set<B> getDefaultBreakpoints(@NotNull XBreakpointType<B, ?> type) {
     Set<XBreakpointBase<?, ?, ?>> breakpointsSet = myDefaultBreakpoints.get(type);
@@ -397,8 +395,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Override
   public boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint) {
-    //noinspection SuspiciousMethodCalls
-    return myDefaultBreakpoints.values().stream().anyMatch(s -> s.contains(breakpoint));
+    return ContainerUtil.exists(myDefaultBreakpoints.values(), s -> s.contains(breakpoint));
   }
 
   private <T extends XBreakpointProperties> EventDispatcher<XBreakpointListener> getOrCreateDispatcher(final XBreakpointType<?,T> type) {
@@ -458,8 +455,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     presentation.setErrorMessage(errorMessage);
     presentation.setIcon(icon);
     lineBreakpoint.setCustomizedPresentation(presentation);
-    myLineBreakpointManager.queueBreakpointUpdate(breakpoint);
-    fireBreakpointPresentationUpdated(breakpoint, null);
+    myLineBreakpointManager.queueBreakpointUpdate(breakpoint, () -> fireBreakpointPresentationUpdated(breakpoint, null));
   }
 
   @NotNull

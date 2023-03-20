@@ -7,9 +7,6 @@ import com.intellij.util.xml.JavaMethod;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
-*/
 final class PropertyAccessorInvocation implements Invocation {
   private final int myLastElement;
   private final JavaMethod[] myMethods;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.psi.*;
@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiMethod[] myMethods;
@@ -67,8 +64,7 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
                                             @Nullable PsiElement refElement,
                                             @NotNull PsiMethod method,
                                             @NotNull Processor<? super PsiReference> consumer) {
-    if (refElement instanceof PsiMethod) {
-      PsiMethod refMethod = (PsiMethod)refElement;
+    if (refElement instanceof PsiMethod refMethod) {
       PsiClass refMethodClass = refMethod.getContainingClass();
       if (refMethodClass == null) return true;
 

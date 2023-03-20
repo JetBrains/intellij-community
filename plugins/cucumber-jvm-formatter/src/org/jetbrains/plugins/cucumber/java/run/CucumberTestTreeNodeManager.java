@@ -53,8 +53,7 @@ public class CucumberTestTreeNodeManager implements JUnitTestTreeNodeManager {
       }
 
       return "locationHint='" + MapSerializerUtil.escapeStr(elementSMUrl, MapSerializerUtil.STD_ESCAPER) + "'";
-    } catch (NoSuchFieldException ignored) {
-    } catch (IllegalAccessException ignored) {
+    } catch (NoSuchFieldException | IllegalAccessException ignored) {
     }
     return "";
   }

@@ -1,7 +1,6 @@
-// "Import" "true"
+// "Import extension function 'BBB.aaa'" "true"
 // WITH_STDLIB
 // ERROR: Unresolved reference: aaa
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 fun test() {
     AAA().apply {
@@ -10,3 +9,4 @@ fun test() {
         }
     }
 }
+/* IGNORE_FIR */

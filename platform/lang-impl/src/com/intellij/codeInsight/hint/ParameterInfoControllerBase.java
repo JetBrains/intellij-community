@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -110,9 +109,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
                                      PsiElement parameterOwner,
                                      @NotNull ParameterInfoHandler handler,
                                      boolean showHint) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      Logger.getInstance(ParameterInfoControllerBase.class).error("Constructor should be called on EDT");  // DEXP-575205
-    }
+    ApplicationManager.getApplication().assertIsDispatchThread(); // DEXP-575205
 
     myProject = project;
     myEditor = editor;
@@ -248,8 +245,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   protected abstract void moveToParameterAtOffset(int offset);
 
   protected int getPrevOrNextParameterOffset(boolean isNext) {
-    if (!(myParameterInfoControllerData.getHandler() instanceof ParameterInfoHandlerWithTabActionSupport)) return -1;
-    ParameterInfoHandlerWithTabActionSupport handler = (ParameterInfoHandlerWithTabActionSupport)myParameterInfoControllerData.getHandler();
+    if (!(myParameterInfoControllerData.getHandler() instanceof ParameterInfoHandlerWithTabActionSupport handler)) return -1;
 
     IElementType delimiter = handler.getActualParameterDelimiterType();
     boolean noDelimiter = delimiter == TokenType.WHITE_SPACE;
@@ -321,8 +317,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(file.getProject(), PsiUtilCore.getLanguageAtOffset(file, offset), file.getViewProvider().getBaseLanguage());
 
     for (ParameterInfoHandler handler : handlers) {
-      if (handler instanceof ParameterInfoHandlerWithTabActionSupport) {
-        final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
+      if (handler instanceof ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2) {
 
         // please don't remove typecast in the following line; it's required to compile the code under old JDK 6 versions
         final E e = ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);

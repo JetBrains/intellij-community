@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.nj2k.conversions
+
 
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -14,13 +15,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUniverseMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.JKMethod
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.tree.JKTypeElement
-
-
-import org.jetbrains.kotlin.nj2k.types.isCollectionType
-import org.jetbrains.kotlin.nj2k.types.JKCapturedType
-import org.jetbrains.kotlin.nj2k.types.JKParametrizedType
-import org.jetbrains.kotlin.nj2k.types.JKStarProjectionType
-import org.jetbrains.kotlin.nj2k.types.JKType
+import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddElementsInfoConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -49,6 +44,7 @@ class AddElementsInfoConversion(context: NewJ2kConverterContext) : RecursiveAppl
             when (val symbol = symbolProvider.symbolsByPsi[superPsi]) {
                 is JKUniverseMethodSymbol ->
                     InternalSuperFunctionInfo(context.elementsInfoStorage.getOrCreateInfoForElement(symbol.target))
+
                 else -> ExternalSuperFunctionInfo(superDescriptor)
             }
         }
@@ -62,7 +58,7 @@ class AddElementsInfoConversion(context: NewJ2kConverterContext) : RecursiveAppl
         }
         return psiMethod.findSuperMethods().mapNotNull { superMethod ->
             when (superMethod) {
-                is KtLightMethod -> superMethod.kotlinOrigin?.resolveToDescriptorIfAny()?.safeAs()
+                is KtLightMethod -> superMethod.kotlinOrigin?.resolveToDescriptorIfAny() as? FunctionDescriptor
                 else -> superMethod.getJavaMethodDescriptor()
             }
         }

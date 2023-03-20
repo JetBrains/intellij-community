@@ -47,6 +47,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -82,10 +84,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static @NotNull SearchScope getUseScope(@NotNull PsiElement element, boolean restrictToCodeUsageScope) {
-    SearchScope scope = element.getUseScope();
+    SearchScope scope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(element.getContainingFile());
+    if (scope != null) return scope;
+    scope = element.getUseScope();
     for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {
       ProgressManager.checkCanceled();
-      SearchScope additionalScope = enlarger.getAdditionalUseScope(element);
+      SearchScope additionalScope = null;
+      try {
+        additionalScope = enlarger.getAdditionalUseScope(element);
+      }
+      catch (IndexNotReadyException pce) {
+        LOG.debug("ProcessCancelledException thrown while getUseScope() calculation", pce);
+      }
       if (additionalScope != null) {
         scope = scope.union(additionalScope);
       }
@@ -301,7 +311,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       Processor<PsiElement> localProcessor = localProcessor(searcher, processor);
 
-      // lists of files to search in this order. First there are lists with higher probability of hits (e.g. files with `containerName` or files near the target)
+      // lists of files to search in this order. First there are lists with higher probability of hits (e.g., files with `containerName` or files near the target)
       List<List<VirtualFile>> priorities = computePriorities(scope, searcher, searchContext, caseSensitively, containerName, session);
       if (priorities.isEmpty()) return true;
       int totalSize = priorities.stream().mapToInt(l -> l.size()).sum();
@@ -391,6 +401,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return myManager.runInBatchFilesMode(() -> {
       AtomicInteger counter = new AtomicInteger(alreadyProcessedFiles);
       AtomicBoolean stopped = new AtomicBoolean(false);
+      if (progress.isRunning()) {
+        progress.setIndeterminate(false);
+      }
       ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(progress);
       return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
         TooManyUsagesStatus.getFrom(originalIndicator).pauseProcessingIfTooManyUsages();
@@ -414,13 +427,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   // Tries to run {@code localProcessor} for each file in {@code files} concurrently on ForkJoinPool.
-  // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again.
+  // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again,
+  // trying to finish the unprocessed files (i.e. those for which {@code localProcessor} hasn't been called yet).
   // {@code localProcessor} must be as idempotent as possible (and must not return false on progress cancel)
-  public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
-                                                                    @NotNull List<? extends VirtualFile> files,
-                                                                    @NotNull ProgressIndicator progress,
-                                                                    @NotNull AtomicBoolean stopped,
-                                                                    @NotNull Processor<? super VirtualFile> localProcessor) {
+  private static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
+                                                                     @NotNull List<? extends VirtualFile> files,
+                                                                     @NotNull ProgressIndicator progress,
+                                                                     @NotNull AtomicBoolean stopped,
+                                                                     @NotNull Processor<? super VirtualFile> localProcessor) {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
       CoreProgressManager.assertUnderProgress(progress);
@@ -1092,7 +1106,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(globals.computeIfAbsent(key, __ -> new SmartList<>()), primitive, processor);
         }
       }
-      for (Processor<Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {
+      for (Processor<? super Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {
         ProgressManager.checkCanceled();
         customs.add((Computable<Boolean>)() -> customAction.process(processor));
       }
@@ -1108,8 +1122,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         Processor<PsiElement> localProcessor = localProcessor(searcher, adapted);
 
-        assert !localProcessors.containsKey(singleRequest) || localProcessors.get(singleRequest) == localProcessor;
-        localProcessors.put(singleRequest, localProcessor);
+        Processor<? super PsiElement> old = localProcessors.put(singleRequest, localProcessor);
+        assert old == null : old + ";" + localProcessor +"; singleRequest="+singleRequest;
       }
     }
   }
@@ -1262,7 +1276,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return Collections.singletonList(idIndexQuery);
       }
 
-      if (!TrigramIndex.isEnabled()) {
+      if (IdIndexEntry.useStrongerHash()) {
         return Collections.singletonList(idIndexQuery);
       }
 
@@ -1289,17 +1303,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                            boolean caseSensitively,
                                            boolean useOnlyWeakHashToSearch, @Nullable Short context) {
       Set<IdIndexEntry> keys = CollectionFactory.createSmallMemoryFootprintSet(ContainerUtil.flatMap(words, w -> getWordEntries(w, caseSensitively)));
-      Set<Integer> trigrams = new IntOpenHashSet();
+      IntSet trigrams;
       if (!useOnlyWeakHashToSearch) {
+        trigrams = new IntOpenHashSet();
         for (String word : words) {
-          TrigramBuilder.processTrigrams(word, new TrigramBuilder.TrigramProcessor() {
-            @Override
-            public boolean test(int value) {
-              trigrams.add(value);
-              return true;
-            }
-          });
+          trigrams.addAll(TrigramBuilder.getTrigrams(word));
         }
+      }
+      else {
+        trigrams = IntSets.EMPTY_SET;
       }
 
       return new TextIndexQuery(keys, trigrams, context, useOnlyWeakHashToSearch, words);
@@ -1315,7 +1327,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       }
       if (words.isEmpty()) return Collections.emptyList();
-      return ContainerUtil.map2List(words, word -> new IdIndexEntry(word, caseSensitively));
+      return ContainerUtil.map(words, word -> new IdIndexEntry(word, caseSensitively));
     }
   }
 }

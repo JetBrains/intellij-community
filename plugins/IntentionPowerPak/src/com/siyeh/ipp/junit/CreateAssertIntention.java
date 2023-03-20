@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -33,6 +34,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class CreateAssertIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("create.assert.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("create.assert.intention.name");
+  }
 
   @Override
   @NotNull
@@ -75,7 +86,7 @@ public class CreateAssertIntention extends Intention {
       }
       assert comparingExpression != null;
       final PsiType type = lhs.getType();
-      if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
+      if (PsiTypes.doubleType().equals(type) || PsiTypes.floatType().equals(type)) {
         newStatement = buildNewStatement("assertEquals",
                                           element, comparedExpression.getText(), comparingExpression.getText(), "0.0");
       }
@@ -161,19 +172,17 @@ public class CreateAssertIntention extends Intention {
 
   private static boolean hasStaticImports(PsiElement element) {
     final PsiFile file = element.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile javaFile)) {
       return false;
     }
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
     final PsiImportList importList = javaFile.getImportList();
     return importList != null && importList.getImportStaticStatements().length > 0;
   }
 
   private static boolean isEqualsExpression(PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression call)) {
       return false;
     }
-    final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
     if (!"equals".equals(methodName)) {
@@ -189,10 +198,9 @@ public class CreateAssertIntention extends Intention {
   }
 
   private static boolean isEqualityComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
+    if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     return JavaTokenType.EQEQ.equals(tokenType);
   }

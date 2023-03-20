@@ -1,15 +1,30 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchTestUtils
 import com.jetbrains.packagesearch.intellij.plugin.asNullable
 import com.jetbrains.packagesearch.intellij.plugin.assertThat
 import com.jetbrains.packagesearch.intellij.plugin.isEqualTo
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aGarbageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aNamedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aSemanticVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.aTimestampLikeVersion
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -133,36 +148,34 @@ internal class NormalizedPackageVersionTest {
     @Nested
     inner class RealWorldExamples {
 
-        val normalizer = PackageVersionNormalizer()
-
         @Test
-        internal fun `should sort apache commons-io versions correctly`() {
+        internal fun `should sort apache commons-io versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/commons-io.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
 
         @Test
-        internal fun `should sort scala-compiler versions correctly`() {
+        internal fun `should sort scala-compiler versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/scala-compiler.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
 
         @Test
-        internal fun `should sort postgresql versions correctly`() {
+        internal fun `should sort postgresql versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/postgresql.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
 
         @Test
-        internal fun `should sort compose-full versions correctly`() {
+        internal fun `should sort compose-full versions correctly`() = runTest {
             val expectedVersions = loadFromRes("versions_list/compose-full.csv")
-                .map { NormalizedPackageVersion.parseFromBlocking(it, normalizer) }
+                .map { PackageVersionNormalizer().parse(it) }
 
             assertThat(expectedVersions.shuffled().sortedDescending()).isEqualTo(expectedVersions)
         }
@@ -172,5 +185,3 @@ internal class NormalizedPackageVersionTest {
     }
 }
 
-internal fun NormalizedPackageVersion.Companion.parseFromBlocking(version: PackageVersion.Named, normalizer: PackageVersionNormalizer) =
-    runBlocking { parseFrom(version, normalizer) }

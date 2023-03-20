@@ -1,4 +1,4 @@
-// "Put arguments on one line" "true"
+// "Put arguments on one line" "true-preview"
 
 class A {
   void foo(int a1, int a2, int a3) {

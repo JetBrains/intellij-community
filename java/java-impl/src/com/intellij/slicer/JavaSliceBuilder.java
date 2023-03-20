@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -159,8 +159,7 @@ final class JavaSliceBuilder {
   @Contract(pure = true)
   static @NotNull JavaSliceBuilder create(@NotNull SliceUsage parent) {
     SliceValueFilter filter = parent.params.valueFilter;
-    if (parent instanceof JavaSliceUsage) {
-      JavaSliceUsage javaParent = (JavaSliceUsage)parent;
+    if (parent instanceof JavaSliceUsage javaParent) {
       return new JavaSliceBuilder(parent, javaParent.getSubstitutor(), javaParent.indexNesting, javaParent.syntheticField, filter);
     }
     return new JavaSliceBuilder(parent, PsiSubstitutor.EMPTY, 0, "", filter);
@@ -177,8 +176,7 @@ final class JavaSliceBuilder {
       if (!parentSubstitutor.getSubstitutionMap().containsKey(typeParameter)) continue;
       PsiType parentType = parentSubstitutor.substitute(parentSubstitutor.substitute(typeParameter));
 
-      if (resolved instanceof PsiTypeParameter) {
-        PsiTypeParameter res = (PsiTypeParameter)resolved;
+      if (resolved instanceof PsiTypeParameter res) {
         newMap.put(res, parentType);
       }
       else if (!Comparing.equal(type, parentType)) {

@@ -62,6 +62,13 @@
       }
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "#1AEBFF",
+      "selectedEndBorderColor": "#1AEBFF",
+      "selectedButtonColor": "#000000",
+      "focusedSelectedButtonColor": "#0f6780"
+    },
+
     "Borders": {
       "color": "#b3b3b3",
       "ContrastBorderColor": "#B3B3B3"
@@ -84,8 +91,6 @@
       "matchSelectionForeground": "#ED94FF"
     },
 
-
-
     "Component": {
       "errorFocusColor": "#E6194B",
       "inactiveErrorFocusColor": "#800002",
@@ -93,6 +98,12 @@
       "inactiveWarningFocusColor": "#804605",
       "iconColor": "#FFFFFF",
       "hoverIconColor": "#FFFFFF"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "Counter": {
@@ -131,6 +142,8 @@
       "selectedForeground": "#FFFFFF",
       "selectedBackground": "#0e5d73",
       "inactiveMaskColor": "#000000FF",
+
+      "unselectedBlend": "0.7",
 
       "underlineColor": "#1AEBFF",
       "underlineHeight": 4,
@@ -171,6 +184,17 @@
       "JVMFocusedFrameForeground": "#FFFFFF",
       "nativeFocusedFrameForeground": "#FFFFFF",
       "parentFocusedFrameForeground": "#FFFFFF"
+    },
+
+    "IconBadge": {
+      "borderWidth": 1.5,
+      "dotRadius": 3.5,
+      "dotX": 16.5,
+      "dotY": 3.5,
+      "errorBackground": "Actions.Red",
+      "warningBackground": "Actions.Yellow",
+      "infoBackground": "Actions.Blue",
+      "successBackground": "Actions.Green"
     },
 
     "InplaceRefactoringPopup": {
@@ -364,12 +388,6 @@
       "endBackground": "#FFD333FF"
     },
 
-    "SpeedSearch": {
-      "foreground": "#000000",
-      "borderColor": "#000000",
-      "background": "#1AEBFF"
-    },
-
     "StatusBar.borderColor": "#b3b3b3",
 
     "TabbedPane": {
@@ -457,14 +475,17 @@
     "Lesson": {
       "shortcutBackground": "#333638",
       "stepNumberForeground": "#FEFEFE",
-      "Tooltip.background": "#000080",
-      "Tooltip.borderColor": "#FFFFFF",
-      "Tooltip.spanBackground": "#1AEBFF",
-      "Tooltip.spanForeground": "#000000",
-      "Tooltip.foreground": "#FFFFFF",
-      "Tooltip.stepNumberForeground": "#FFFFFF",
       "Badge.newLessonBackground": "#00E61F",
       "Badge.newLessonForeground": "#000000"
+    },
+
+    "Tooltip.Learning": {
+      "background": "#000080",
+      "borderColor": "#FFFFFF",
+      "spanBackground": "#1AEBFF",
+      "spanForeground": "#000000",
+      "foreground": "#FFFFFF",
+      "stepNumberForeground": "#FFFFFF"
     },
 
     "WelcomeScreen": {
@@ -473,13 +494,33 @@
     },
 
     "MainToolbar": {
-      "icon.borderInsets": "10,10,10,10",
-      "dropdown.borderInsets": "12,6,12,6"
+      "Icon": {
+        "borderInsets": "10,10,10,10",
+        "background": "#000000",
+        "hoverBackground": "#3333FF",
+        "pressedBackground": "#3333FF"
+      },
+      "Dropdown": {
+        "borderInsets": "12,6,12,6",
+        "background": "#000000",
+        "hoverBackground": "#3333FF",
+        "pressedBackground": "#3333FF"
+      }
     },
 
     "Window.border" : "1,1,1,1,E6E6E6",
 
-    "textInactiveText" : "#E0861F"
+    "textInactiveText" : "#E0861F",
+
+    "RunWidget" : {
+      "foreground": "#ffffff",
+      "disabledForeground": "#FFFFFF66",
+      "background": "#3369d6",
+      "runningBackground": "#599e5e",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
+    }
   },
 
   "icons": {

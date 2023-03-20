@@ -4,11 +4,13 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.impl.*
 import org.junit.rules.ErrorCollector
 import java.io.File
 import java.nio.file.Path
+import java.util.zip.Deflater
 
 /**
  * Builds a data structure specifying content (files, their content, sub-directories, archives) of a directory. It can be used to either check
@@ -58,7 +60,15 @@ abstract class DirectoryContentBuilder {
   }
 
   inline fun zip(name: String, content: DirectoryContentBuilder.() -> Unit) {
-    val zipDefinition = ZipSpec()
+    zip(name, Deflater.DEFAULT_COMPRESSION, content)
+  }
+
+  inline fun uncompressedZip(name: String, content: DirectoryContentBuilder.() -> Unit) {
+    zip(name, Deflater.NO_COMPRESSION, content)
+  }
+
+  inline fun zip(name: String, compression: Int, content: DirectoryContentBuilder.() -> Unit) {
+    val zipDefinition = ZipSpec(compression)
     DirectoryContentBuilderImpl(zipDefinition).content()
     addChild(name, zipDefinition)
   }
@@ -95,8 +105,8 @@ interface DirectoryContentSpec {
 @JvmOverloads
 fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
-    expectedDataIsInSpec = true)
+  assertContentUnderFileMatches(toPath(), spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector.asReporter(),
+                                expectedDataIsInSpec = true)
 }
 
 /**
@@ -107,8 +117,8 @@ fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatc
 @JvmOverloads
 fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
                        filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
-    expectedDataIsInSpec = true)
+  assertContentUnderFileMatches(this, spec as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector.asReporter(),
+                                expectedDataIsInSpec = true)
 }
 
 /**
@@ -117,9 +127,26 @@ fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatc
  */
 @JvmOverloads
 fun DirectoryContentSpec.assertIsMatchedBy(path: Path, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
-                       filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
-  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector,
-    expectedDataIsInSpec = false)
+                                           filePathFilter: (String) -> Boolean = { true }, errorCollector: ErrorCollector? = null) {
+  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, errorCollector.asReporter(),
+                                expectedDataIsInSpec = false)
+}
+
+/**
+ * Checks that contents of [path] matches this spec. The same as [Path.assertMatches], but in case of comparison failure the data
+ * from the spec will be shown as actual, and the data from the file will be shown as expected.
+ */
+@JvmOverloads
+fun DirectoryContentSpec.assertIsMatchedBy(path: Path, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                                           filePathFilter: (String) -> Boolean, customErrorReporter: ContentMismatchReporter?) {
+  assertContentUnderFileMatches(path, this as DirectoryContentSpecImpl, fileTextMatcher, filePathFilter, customErrorReporter, 
+                                expectedDataIsInSpec = false)
+}
+
+private fun ErrorCollector?.asReporter(): ContentMismatchReporter? = this?.let { ContentMismatchReporter { _, error -> it.addError(error) } }
+
+fun interface ContentMismatchReporter {
+  fun reportError(relativePath: String, error: Throwable)
 }
 
 interface FileTextMatcher {
@@ -142,4 +169,12 @@ interface FileTextMatcher {
 
 fun DirectoryContentSpec.generateInVirtualTempDir(): VirtualFile {
   return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(generateInTempDir())!!
+}
+
+/**
+ * Generates files, directories and archives accordingly to this specification in [target] directory and refresh them in VFS
+ */
+fun DirectoryContentSpec.generate(target: VirtualFile) {
+  generate(VfsUtil.virtualToIoFile(target))
+  VfsUtil.markDirtyAndRefresh(false, true, true, target)
 }

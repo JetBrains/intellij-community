@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BreakpointManager
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -59,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -168,6 +168,9 @@ public class BreakpointManager {
     else if (ExceptionBreakpoint.CATEGORY.toString().equals(category.toString())) {
       typeCls = JavaExceptionBreakpointType.class;
     }
+    else if (CollectionBreakpoint.CATEGORY.toString().equals(category.toString())) {
+      typeCls = JavaCollectionBreakpointType.class;
+    }
     if (typeCls != null) {
       XBreakpointType type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
       ((XBreakpointManagerImpl)getXBreakpointManager()).getBreakpointDefaults(type).setSuspendPolicy(Breakpoint.transformSuspendPolicy(defaults.getSuspendPolicy()));
@@ -220,8 +223,7 @@ public class BreakpointManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaFieldBreakpointType.class, document, lineIndex);
     Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
-    if (javaBreakpoint instanceof FieldBreakpoint) {
-      FieldBreakpoint fieldBreakpoint = (FieldBreakpoint)javaBreakpoint;
+    if (javaBreakpoint instanceof FieldBreakpoint fieldBreakpoint) {
       fieldBreakpoint.setFieldName(fieldName);
       addBreakpoint(javaBreakpoint);
       return fieldBreakpoint;
@@ -236,9 +238,7 @@ public class BreakpointManager {
     return WriteAction.compute(() -> {
       XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint = XDebuggerManager.getInstance(myProject).getBreakpointManager()
         .addBreakpoint(type, new JavaExceptionBreakpointProperties(exceptionClassName, packageName));
-      Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
-      if (javaBreakpoint instanceof ExceptionBreakpoint) {
-        ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)javaBreakpoint;
+      if (getJavaBreakpoint(xBreakpoint) instanceof ExceptionBreakpoint exceptionBreakpoint) {
         exceptionBreakpoint.setQualifiedName(exceptionClassName);
         exceptionBreakpoint.setPackageName(packageName);
         addBreakpoint(exceptionBreakpoint);
@@ -254,15 +254,14 @@ public class BreakpointManager {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     XLineBreakpoint xBreakpoint = addXLineBreakpoint(JavaMethodBreakpointType.class, document, lineIndex);
-    Breakpoint javaBreakpoint = getJavaBreakpoint(xBreakpoint);
-    if (javaBreakpoint instanceof MethodBreakpoint) {
-      addBreakpoint(javaBreakpoint);
-      return (MethodBreakpoint)javaBreakpoint;
+    if (getJavaBreakpoint(xBreakpoint) instanceof MethodBreakpoint methodBreakpoint) {
+      addBreakpoint(methodBreakpoint);
+      return methodBreakpoint;
     }
     return null;
   }
 
-  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B,?>> typeCls, Document document, final int lineIndex) {
+  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls, Document document, final int lineIndex) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return WriteAction.compute(() -> XDebuggerManager.getInstance(myProject).getBreakpointManager()
@@ -387,7 +386,7 @@ public class BreakpointManager {
         }
       }
 
-      DebuggerInvocationUtil.invokeLater(myProject, this::updateBreakpointsUI);
+      updateBreakpointsUI();
     });
 
     myUIProperties.clear();
@@ -424,6 +423,9 @@ public class BreakpointManager {
     else if (category.equals(ExceptionBreakpoint.CATEGORY.toString())) {
       xBreakpoint = createXBreakpoint(JavaExceptionBreakpointType.class);
     }
+    else if (category.equals(CollectionBreakpoint.CATEGORY.toString())) {
+      xBreakpoint = createXBreakpoint(JavaCollectionBreakpointType.class);
+    }
     if (xBreakpoint == null) {
       throw new IllegalStateException("Unknown breakpoint category " + category);
     }
@@ -449,7 +451,6 @@ public class BreakpointManager {
 
     final int line;
     try {
-      //noinspection HardCodedStringLiteral
       line = Integer.parseInt(breakpointNode.getAttributeValue("line"));
     }
     catch (Exception e) {
@@ -511,7 +512,7 @@ public class BreakpointManager {
         breakpoint.markVerified(requestManager.isVerified(breakpoint));
         requestManager.deleteRequest(breakpoint);
       }
-      SwingUtilities.invokeLater(this::updateBreakpointsUI);
+      updateBreakpointsUI();
     }
   }
 
@@ -522,7 +523,7 @@ public class BreakpointManager {
         breakpoint.markVerified(false); // clean cached state
         breakpoint.createRequest(debugProcess);
       }
-      SwingUtilities.invokeLater(this::updateBreakpointsUI);
+      updateBreakpointsUI();
     }
   }
 
@@ -597,8 +598,10 @@ public class BreakpointManager {
   }
 
   public void updateBreakpointsUI() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    getBreakpoints().forEach(Breakpoint::updateUI);
+    ReadAction.nonBlocking(this::getBreakpoints)
+      .coalesceBy(this)
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .onSuccess(b -> b.forEach(Breakpoint::updateUI));
   }
 
   public void reloadBreakpoints() {

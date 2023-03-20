@@ -108,13 +108,10 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
 
   private static class FacetBasedFrameworkType extends FrameworkType {
     private final FacetType<?, ?> myFacetType;
-    private final Icon myIcon;
 
     FacetBasedFrameworkType(@NotNull FacetType<?, ?> facetType) {
       super(facetType.getStringId());
       myFacetType = facetType;
-      final Icon icon = myFacetType.getIcon();
-      myIcon = icon != null ? icon : EmptyIcon.ICON_16;
     }
 
     @NotNull
@@ -126,7 +123,8 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     @NotNull
     @Override
     public Icon getIcon() {
-      return myIcon;
+      Icon icon = myFacetType.getIcon();
+      return icon != null ? icon : EmptyIcon.ICON_16;
     }
   }
 }

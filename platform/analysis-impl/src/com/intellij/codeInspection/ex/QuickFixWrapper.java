@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -13,11 +14,11 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -120,6 +121,22 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
-    return myFix.generatePreview(project, myDescriptor.getDescriptorForPreview(file));
+    PsiFile psiFile = getFile();
+    PsiFile originalFile = IntentionPreviewUtils.getOriginalFile(file);
+    if (originalFile != psiFile) {
+      return myFix.generatePreview(project, myDescriptor);
+    }
+    ProblemDescriptor descriptorForPreview;
+    try {
+      descriptorForPreview = myDescriptor.getDescriptorForPreview(file);
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Cannot create preview descriptor for quickfix " + myFix.getFamilyName() + " (" + myFix.getClass() + ")",
+                                 e);
+    }
+    return myFix.generatePreview(project, descriptorForPreview);
   }
 }

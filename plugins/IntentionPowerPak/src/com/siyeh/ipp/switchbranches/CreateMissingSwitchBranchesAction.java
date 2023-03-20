@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAction {
   private static final int MAX_NUMBER_OF_BRANCHES = 100;
+  @SafeFieldForPreview
   private List<Value> myAllValues;
 
   @Override
@@ -90,7 +91,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
     if (dfr != null) {
       LongRangeSet range = DfIntType.extractRange(dfr.getDfType(expression));
-      if (type != null && PsiType.INT.isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
+      if (type != null && PsiTypes.intType().isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
         return range.stream().mapToObj(c -> Value.fromConstant(TypeConversionUtil.computeCastTo(c, type))).collect(Collectors.toList());
       }
       Set<Object> values = dfr.getExpressionValues(expression);

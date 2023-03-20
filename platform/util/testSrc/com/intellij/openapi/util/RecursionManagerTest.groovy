@@ -3,14 +3,10 @@ package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.testFramework.UsefulTestCase
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 import junit.framework.TestCase
 
-/**
- * @author peter
- */
 @CompileStatic
 class RecursionManagerTest extends TestCase {
   private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
@@ -42,7 +38,6 @@ class RecursionManagerTest extends TestCase {
     }
   }
 
-  @CompileDynamic
   void testAssertOnMissedCache() {
     assert "foo-return" == prevent("foo") {
       def stamp = RecursionManager.markStack()

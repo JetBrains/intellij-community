@@ -34,9 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(JavaFxRedundantPropertyValueInspection.class);
 
@@ -49,7 +46,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         super.visitXmlAttribute(attribute);
         final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
         if (!(descriptor instanceof JavaFxPropertyAttributeDescriptor)) return;
@@ -77,7 +74,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
       }
 
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
         if (!(descriptor instanceof JavaFxPropertyTagDescriptor)) {
@@ -129,24 +126,16 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
       return defaultValue.equals(attributeValue);
     }
     try {
-      switch (boxedQName) {
-        case CommonClassNames.JAVA_LANG_BOOLEAN:
-          return Boolean.parseBoolean(defaultValue) == Boolean.parseBoolean(attributeValue);
-        case CommonClassNames.JAVA_LANG_DOUBLE:
-          return Double.compare(Double.parseDouble(defaultValue), Double.parseDouble(attributeValue)) == 0;
-        case CommonClassNames.JAVA_LANG_FLOAT:
-          return Float.compare(Float.parseFloat(defaultValue), Float.parseFloat(attributeValue)) == 0;
-        case CommonClassNames.JAVA_LANG_INTEGER:
-          return Integer.parseInt(defaultValue) == Integer.parseInt(attributeValue);
-        case CommonClassNames.JAVA_LANG_LONG:
-          return Long.parseLong(defaultValue) == Long.parseLong(attributeValue);
-        case CommonClassNames.JAVA_LANG_SHORT:
-          return Short.parseShort(defaultValue) == Short.parseShort(attributeValue);
-        case CommonClassNames.JAVA_LANG_BYTE:
-          return Byte.parseByte(defaultValue) == Byte.parseByte(attributeValue);
-        default:
-          return defaultValue.equals(attributeValue);
-      }
+      return switch (boxedQName) {
+        case CommonClassNames.JAVA_LANG_BOOLEAN -> Boolean.parseBoolean(defaultValue) == Boolean.parseBoolean(attributeValue);
+        case CommonClassNames.JAVA_LANG_DOUBLE -> Double.compare(Double.parseDouble(defaultValue), Double.parseDouble(attributeValue)) == 0;
+        case CommonClassNames.JAVA_LANG_FLOAT -> Float.compare(Float.parseFloat(defaultValue), Float.parseFloat(attributeValue)) == 0;
+        case CommonClassNames.JAVA_LANG_INTEGER -> Integer.parseInt(defaultValue) == Integer.parseInt(attributeValue);
+        case CommonClassNames.JAVA_LANG_LONG -> Long.parseLong(defaultValue) == Long.parseLong(attributeValue);
+        case CommonClassNames.JAVA_LANG_SHORT -> Short.parseShort(defaultValue) == Short.parseShort(attributeValue);
+        case CommonClassNames.JAVA_LANG_BYTE -> Byte.parseByte(defaultValue) == Byte.parseByte(attributeValue);
+        default -> defaultValue.equals(attributeValue);
+      };
     }
     catch (NumberFormatException ignored) {
       return false;
@@ -189,7 +178,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
         if (line.isEmpty() || line.startsWith("--")) continue;
         boolean lineParsed = false;
         final int p1 = line.indexOf('#');
-        if (p1 > 0 && p1 < line.length()) {
+        if (p1 > 0) {
           final String className = line.substring(0, p1);
           final int p2 = line.indexOf('=', p1);
           if (p2 > p1 && p2 < line.length()) {

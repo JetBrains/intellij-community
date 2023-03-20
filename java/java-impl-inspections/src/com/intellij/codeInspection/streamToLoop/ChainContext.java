@@ -71,7 +71,6 @@ public class ChainContext {
    * @param desiredName desired name that is registered in context
    * @param type        variable type
    * @param initializer variable initializer
-   * @return
    */
   public String declare(String desiredName, String type, String initializer) {
     String name = registerVarName(Collections.singleton(desiredName));

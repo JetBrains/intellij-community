@@ -5,8 +5,10 @@ import com.intellij.execution.Executor
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider
+import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -57,13 +59,14 @@ private class RunAnythingTerminalBridge : TerminalShellCommandHandler, TerminalF
     }
   }
 
-  override fun fillData(project: Project, workingDirectory: String?, localSession: Boolean, command: String, data: FeatureUsageData) {
+  override fun fillData(project: Project, workingDirectory: String?, localSession: Boolean, command: String, data: MutableList<EventPair<*>>) {
     val dataContext = createDataContext(project, localSession, workingDirectory)
     val runAnythingProvider = RunAnythingProvider.EP_NAME.extensionList
       .filter { checkForCLI(it) }
       .ifEmpty { return }
       .first { provider -> provider.findMatchingValue(dataContext, command) != null }
 
-    data.addData("runAnythingProvider", runAnythingProvider::class.java.name)
+    data.add(EventFields.StringValidatedByCustomRule("runAnythingProvider",
+                                                     ClassNameRuleValidator::class.java).with(runAnythingProvider::class.java.name))
   }
 }

@@ -147,18 +147,42 @@ def _make_lnotab(code_to_modify, all_inserted_code):
     # As all numbers are relative, what we want is to hide the code we inserted in the previous line
     # (it should be the last thing right before we increment the line so that we have a line event
     # right after the inserted code).
-    addr = 0
+    curr_line_offset_in_old_code = 0
+    prev_line_offset_in_old_code = 0
+
     it = zip(byte_increments, line_increments)
-    k = inserted_so_far = 0
-    for i, (byte_incr, _line_incr) in enumerate(it):
-        addr += byte_incr
-        if addr == (all_inserted_code[k].offset - inserted_so_far):
+    k = inserted_so_far = index_delta = 0
+    for i, (byte_incr, line_incr) in enumerate(it):
+        curr_line_offset_in_old_code += byte_incr
+
+        # Skip if a line of code compiles to more than 127 instructions.
+        # For example, 130 instructions - [255, 0, 5, 1]. Then skip [255, 0].
+        if byte_incr == MAX_BYTE and line_incr == 0:
+            continue
+
+        current_command_offsets_range_in_new_code = range(prev_line_offset_in_old_code + inserted_so_far, curr_line_offset_in_old_code + inserted_so_far)
+
+        if curr_line_offset_in_old_code == all_inserted_code[k].offset - inserted_so_far or\
+                all_inserted_code[k].offset in current_command_offsets_range_in_new_code:
             bytecode_delta = len(all_inserted_code[k].code_list)
             inserted_so_far += bytecode_delta
-            new_list[i * 2] += bytecode_delta
+
+            new_list_offset_index = i * 2 + index_delta
+            expected_offset = new_list[new_list_offset_index] + bytecode_delta
+            # For example, if [..., 254, 1, ...] and bytecode_delta == 12,
+            # then lnotab should be modified to [..., 255, 0, 11, 1, ...].
+            if expected_offset > MAX_BYTE:
+                new_list = new_list[:new_list_offset_index] + [MAX_BYTE, 0] + new_list[new_list_offset_index:]
+                index_delta += 2
+                new_list[new_list_offset_index + 2] = expected_offset - MAX_BYTE
+            else:
+                new_list[new_list_offset_index] += bytecode_delta
             k += 1
-            if k >= len(all_inserted_code):
-                break
+
+        if k >= len(all_inserted_code):
+            break
+
+        prev_line_offset_in_old_code = curr_line_offset_in_old_code
 
     return bytes(new_list)
 

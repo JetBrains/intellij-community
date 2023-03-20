@@ -20,7 +20,7 @@ public class MalformedFormatString {
 
         String good = String.format("%s %s", 1, 2); // this is valid according to the inspector (correct)
         String warn = String.<warning descr="Too few arguments for format string (found: 1, expected: 2)">format</warning>("%s %s", 1); // this is invalid according to the inspector (correct)
-        String invalid = String.format("%s %s" + local, 1); // this is valid according to the inspector (INCORRECT!)
+        String invalid = String.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">format</warning>("%s %s " + local, 1); // this is valid according to the inspector (INCORRECT!)
         String interesting = String.<warning descr="Too few arguments for format string (found: 1, expected: 2)">format</warning>("%s %s" + "hmm", 1); // this is invalid according to the inspector (correct)
         String intAsChar = String.format("symbol '%1$c' (numeric value %1$d)", 60); // integer->char conversion is ok (correct)
     }
@@ -101,11 +101,24 @@ public class MalformedFormatString {
         String.format(<warning descr="Illegal format string specifier: precision ('.4') not allowed in '%.4tT'">"%.4tT"</warning>, new Date());
         String.format(<warning descr="Illegal format string specifier: precision ('.5') not allowed in '%.5c'">"%.5c"</warning>, '\u00A9');
         String.format(<warning descr="Illegal format string specifier: precision ('.6') not allowed in '%.6x'">"%.6x"</warning>, 15);
+        String.format(<warning descr="Illegal format string specifier: precision ('.1') not allowed in '%.1d'">"%.1d"</warning>, 1);
+
+        //date-time conversions not allowed
+        String.format(<warning descr="Illegal format string specifier: unknown conversion in 'tX'">"%tX"</warning>, java.time.LocalDateTime.now());
+        String.format("%tz", <warning descr="Argument type 'LocalDateTime' does not match the type of the format specifier '%tz'">java.time.LocalDateTime.now()</warning>);
+        String.format("%ts", <warning descr="Argument type 'LocalDateTime' does not match the type of the format specifier '%ts'">java.time.LocalDateTime.now()</warning>);
+        String.format("%tH", <warning descr="Argument type 'LocalDate' does not match the type of the format specifier '%tH'">java.time.LocalDate.now()</warning>);
+        String.format("%th", <warning descr="Argument type 'LocalTime' does not match the type of the format specifier '%th'">java.time.LocalTime.now()</warning>);
+        String.format("%ta", <warning descr="Argument type 'OffsetTime' does not match the type of the format specifier '%ta'">java.time.OffsetTime.now()</warning>);
     }
 
     void goodStrings() {
         String.format("%,d", 34567890);
         System.out.printf("%tF %n", java.time.ZonedDateTime.now()); // java.time.temporal.TemporalAccessor, new in Java 8
+        System.out.printf("%tI", java.time.LocalDateTime.now());
+        System.out.printf("%tB", java.time.LocalDate.now());
+        System.out.printf("%tR", java.time.LocalTime.now());
+        System.out.printf("%tZ", java.time.OffsetDateTime.now());
     }
 
     void previousFlag() {
@@ -156,4 +169,38 @@ class A {
         // should be OK
         String.format("%#s", f);
     }
+}
+
+
+class Prefix{
+  void foo(String additionalText){
+    System.out.printf("test" + getSomeText(additionalText), "parameter1");
+    System.out.printf("test" + additionalText, "parameter1");
+    String newString = "test" + additionalText;
+    System.out.printf(newString, "parameter1");
+    System.out.printf("test test" + additionalText, "parameter1");
+
+    System.out.printf("test %s " + getSomeText(additionalText), "parameter1");
+    System.out.printf("test %s " + additionalText, "parameter1");
+    String newString2 = "test %s " + additionalText;
+    System.out.printf(newString2, "parameter1");
+    System.out.printf("test test %s " + additionalText, "parameter1");
+
+    System.out.printf("test test %s %" + additionalText, "parameter1");
+    System.out.printf("test test %s %-1500" + additionalText, "parameter1");
+  }
+
+  void bar(String additionalText){
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test %s %s " + getSomeText(additionalText), "parameter1");
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test %s %s" + getSomeText(additionalText), "parameter1");
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test %s %s " + additionalText, "parameter1");
+    String newString2 = "test %s %s " + additionalText;
+    System.out.printf(newString2, "parameter1");
+    System.out.<warning descr="Too few arguments for format string (found: 1, expected at least: 2)">printf</warning>("test test %s %s " + additionalText, "parameter1");
+    System.out.printf("test test %d " + additionalText, <warning descr="Argument type 'String' does not match the type of the format specifier '%d'">"parameter1"</warning>);
+  }
+
+  String getSomeText(String text){
+    return text;
+  }
 }

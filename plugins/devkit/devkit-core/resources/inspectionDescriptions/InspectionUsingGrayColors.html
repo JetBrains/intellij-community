@@ -2,11 +2,15 @@
 <body>
 Reports usages of <code>java.awt.Color</code> to create gray colors.
 <p>
-  Quick-fix <b>Convert to Gray</b> replaces it using <code>com.intellij.ui.Gray</code> constants instead.
+  The <b>Convert to 'Gray'</b> quick fix replaces it using <code>com.intellij.ui.Gray</code> constants instead.
 </p>
-<p><b>Example:</b></p>
-<code>Color myGray = new Color(55, 55, 55);</code>
-<p>After the quick-fix is applied:</p>
-<code>Color myGray = Gray._55;</code>
+<p>Examples:</p>
+<pre>
+// bad:
+Color gray = new Color(37, 37, 37);
+
+// good:
+Color gray = Gray._37;
+</pre>
 </body>
 </html>

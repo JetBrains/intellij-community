@@ -28,18 +28,18 @@ class InheritingClasses {
 
 
     class InheritAny {
-        interface SomeTrait
-        interface SomeTrait2
+        interface SomeInterface
+        interface SomeInterface2
 
         class ImplicitAny
 
         class ExplicitAny : Any()
 
-        class OnlyTrait : SomeTrait
-        class OnlyTraits : SomeTrait, SomeTrait2
+        class OnlyInterface : SomeInterface
+        class OnlyInterfaces : SomeInterface, SomeInterface2
 
-        class TraitWithExplicitAny : Any(), SomeTrait
-        class TraitsWithExplicitAny : SomeTrait2, Any(), SomeTrait
+        class InterfaceWithExplicitAny : Any(), SomeInterface
+        class InterfacesWithExplicitAny : SomeInterface2, Any(), SomeInterface
     }
 
     abstract class InheritFunctionType : ((Int, String) -> Int)

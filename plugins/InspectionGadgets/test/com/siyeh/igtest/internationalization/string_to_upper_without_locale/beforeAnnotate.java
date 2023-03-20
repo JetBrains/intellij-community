@@ -1,4 +1,4 @@
-// "Annotate variable 'foo' as @NonNls" "true"
+// "Annotate variable 'foo' as '@NonNls'" "true"
 class X {
   void test() {
     String foo = "bar";

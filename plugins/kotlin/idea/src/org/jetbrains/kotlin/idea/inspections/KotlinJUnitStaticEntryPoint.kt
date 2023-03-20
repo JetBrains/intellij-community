@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:Suppress("DEPRECATION")
 
@@ -9,9 +9,9 @@ import com.intellij.codeInspection.reference.EntryPoint
 import com.intellij.codeInspection.reference.RefElement
 import com.intellij.openapi.util.DefaultJDOMExternalizer
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class KotlinJUnitStaticEntryPoint(@JvmField var wasSelected: Boolean = true) : EntryPoint() {
     override fun getDisplayName() = KotlinBundle.message("junit.static.methods")
@@ -22,13 +22,15 @@ class KotlinJUnitStaticEntryPoint(@JvmField var wasSelected: Boolean = true) : E
 
     private val staticJUnitAnnotations = listOf(
         "org.junit.BeforeClass",
+        "org.junit.jupiter.api.BeforeAll",
         "org.junit.AfterClass",
+        "org.junit.jupiter.api.AfterAll",
         "org.junit.runners.Parameterized.Parameters"
     )
 
-    override fun isEntryPoint(psiElement: PsiElement) = psiElement is PsiMethod &&
+    override fun isEntryPoint(psiElement: PsiElement) = psiElement is KtLightMethod &&
             AnnotationUtil.isAnnotated(psiElement, staticJUnitAnnotations, AnnotationUtil.CHECK_TYPE) &&
-            AnnotationUtil.isAnnotated(psiElement, listOf("kotlin.jvm.JvmStatic"), AnnotationUtil.CHECK_TYPE)
+            AnnotationUtil.isAnnotated(psiElement, "kotlin.jvm.JvmStatic", AnnotationUtil.CHECK_TYPE)
 
     override fun readExternal(element: Element) {
         DefaultJDOMExternalizer.readExternal(this, element)

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,10 +29,11 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class DuplicateConditionInspection extends BaseInspection {
 
@@ -51,10 +52,9 @@ public class DuplicateConditionInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option"),
-                                          this, "ignoreSideEffectConditions");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSideEffectConditions", InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option")));
   }
 
   @Override
@@ -79,7 +79,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
 
       final IElementType tokenType = expression.getOperationTokenType();
@@ -87,8 +87,7 @@ public class DuplicateConditionInspection extends BaseInspection {
 
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent instanceof PsiIfStatement) return;
-      if (parent instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression parentExpression = (PsiBinaryExpression)parent;
+      if (parent instanceof PsiBinaryExpression parentExpression) {
         if (tokenType.equals(parentExpression.getOperationTokenType())) return;
       }
 
@@ -120,8 +119,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType wantedTokenType) {
       condition = PsiUtil.skipParenthesizedExprDown(condition);
       if (condition == null) return;
-      if (condition instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+      if (condition instanceof PsiPolyadicExpression polyadicExpression) {
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (wantedTokenType.equals(tokenType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();

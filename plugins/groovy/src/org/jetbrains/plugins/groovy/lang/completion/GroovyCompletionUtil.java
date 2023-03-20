@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,6 +33,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -75,10 +78,9 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.ConstructorsKt.getAllConstructors;
 
-/**
- * @author ilyas
- */
 public final class GroovyCompletionUtil {
+
+  private static volatile boolean isSlowCompletionEnabled = true;
 
   private GroovyCompletionUtil() {
   }
@@ -86,8 +88,6 @@ public final class GroovyCompletionUtil {
   /**
    * Return true if last element of current statement is expression
    *
-   * @param statement
-   * @return
    */
   public static boolean endsWithExpression(PsiElement statement) {
     while (statement != null &&
@@ -98,6 +98,17 @@ public final class GroovyCompletionUtil {
       }
     }
     return statement != null;
+  }
+
+  @TestOnly
+  public static void disableSlowCompletionElements(Disposable disposable) {
+    boolean previousValue = isSlowCompletionEnabled;
+    isSlowCompletionEnabled = false;
+    Disposer.register(disposable, () -> isSlowCompletionEnabled = previousValue);
+  }
+
+  static boolean isSlowCompletionEnabled() {
+    return isSlowCompletionEnabled;
   }
 
   @Nullable
@@ -127,9 +138,7 @@ public final class GroovyCompletionUtil {
   /**
    * Shows whether keyword may be placed as a new statement beginning
    *
-   * @param element
    * @param canBeAfterBrace May be after '{' symbol or not
-   * @return
    */
   public static boolean isNewStatement(PsiElement element, boolean canBeAfterBrace) {
     PsiElement previousLeaf = getLeafByOffset(element.getTextRange().getStartOffset() - 1, element);
@@ -176,10 +185,9 @@ public final class GroovyCompletionUtil {
     }
 
     final PsiElement pparent = parent.getParent();
-    if (!(pparent instanceof GrVariableDeclaration)) return false;
+    if (!(pparent instanceof GrVariableDeclaration variableDeclaration)) return false;
     if (((GrVariableDeclaration)pparent).isTuple()) return false;
 
-    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)pparent;
     if (variableDeclaration.getTypeElementGroovy() != null) return false;
 
     return variableDeclaration.getVariables()[0] == parent;
@@ -312,7 +320,7 @@ public final class GroovyCompletionUtil {
   private static boolean getterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
     return GroovyPropertyUtils.isSimplePropertyGetter(element) &&
            (matcher.prefixMatches(GroovyPropertyUtils.getGetterNameNonBoolean(importedName)) ||
-            PsiType.BOOLEAN.equals(element.getReturnType()) && matcher.prefixMatches(GroovyPropertyUtils.getGetterNameBoolean(importedName)));
+            PsiTypes.booleanType().equals(element.getReturnType()) && matcher.prefixMatches(GroovyPropertyUtils.getGetterNameBoolean(importedName)));
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
@@ -338,6 +346,9 @@ public final class GroovyCompletionUtil {
                                                  @Nullable PsiElement position) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
+    if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)) {
+      builder = builder.strikeout();
+    }
     builder = setTailText(element, builder, substitutor);
     builder = setTypeText(element, builder, substitutor, position);
     return builder;
@@ -352,9 +363,8 @@ public final class GroovyCompletionUtil {
       builder = builder.withTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
                                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
     }
-    else if (element instanceof PsiClass) {
+    else if (element instanceof PsiClass psiClass) {
       String tailText = getPackageText((PsiClass)element);
-      final PsiClass psiClass = (PsiClass)element;
       if ((substitutor == null || substitutor.getSubstitutionMap().isEmpty()) && psiClass.getTypeParameters().length > 0) {
         tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), psiTypeParameter -> psiTypeParameter.getName(), "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
       }
@@ -420,8 +430,7 @@ public final class GroovyCompletionUtil {
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
 
     Object o = item.getObject();
-    if (o instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)o;
+    if (o instanceof PsiClass aClass) {
       if (aClass.getQualifiedName() == null) return;
       final String lookupString = item.getLookupString();
       int length = lookupString.length();

@@ -80,7 +80,7 @@ public final class OutputFileObject extends JpsFileObject {
    * @deprecated In general, an output object may be generated from several source files. Use {@link OutputFileObject#getSourceFiles()} method instead.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Nullable
   public File getSourceFile() {
     final Iterator<File> it = getSourceFiles().iterator();

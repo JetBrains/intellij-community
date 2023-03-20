@@ -15,12 +15,12 @@ import kotlin.math.max
 
 class EditorConfigDocumentationProvider : DocumentationProvider {
   override fun generateDoc(element: PsiElement, originalElement: PsiElement?): @Nls String? {
-    element as? EditorConfigDocumentationHolderElement ?: return null
+    if (element !is EditorConfigDocumentationHolderElement) return null
     return element.descriptor?.documentation
   }
 
   override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): @Nls String? {
-    element as? EditorConfigDocumentationHolderElement ?: return null
+    if (element !is EditorConfigDocumentationHolderElement) return null
     return element.descriptor?.documentation
   }
 

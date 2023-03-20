@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
@@ -33,7 +33,7 @@ class LazyCoroutineInfoData(
     private val mirror: MirrorOfCoroutineInfo,
     private val stackTraceProvider: CoroutineStackTraceProvider
 ) : CoroutineInfoData(CoroutineDescriptor.instance(mirror)) {
-    val stackFrames: CoroutineStackTraceProvider.CoroutineStackFrames? by lazy {
+    private val stackFrames: CoroutineStackTraceProvider.CoroutineStackFrames? by lazy {
         stackTraceProvider.findStackFrames(mirror)
     }
 

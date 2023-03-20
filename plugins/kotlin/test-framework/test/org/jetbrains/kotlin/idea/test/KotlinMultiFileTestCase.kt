@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ProjectRootManager
@@ -16,8 +17,7 @@ import com.intellij.refactoring.MultiFileTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import java.io.File
 
 abstract class KotlinMultiFileTestCase : MultiFileTestCase() {
@@ -63,7 +63,7 @@ abstract class KotlinMultiFileTestCase : MultiFileTestCase() {
 
     override fun prepareProject(rootDir: VirtualFile) {
         if (isMultiModule) {
-            val model = ModuleManager.getInstance(project).modifiableModel
+            val model = ModuleManager.getInstance(project).getModifiableModel()
 
             VfsUtilCore.visitChildrenRecursively(
                 rootDir,

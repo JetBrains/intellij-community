@@ -1,4 +1,4 @@
-// "Split into declaration and assignment" "true"
+// "Split into declaration and assignment" "true-preview"
 class Test {
   {
       for (int i<caret>//c1

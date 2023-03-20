@@ -1,7 +1,7 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import function 'foo'" "true"
 // ERROR: Not enough information to infer type variable T
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference
+/* IGNORE_FIR */
 
 package pack_one
 
@@ -16,9 +16,9 @@ package pack_one.sub
 fun foo() {}
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import function 'foo'" "true"
 // ERROR: Not enough information to infer type variable T
-// COMPILER_ARGUMENTS: -XXLanguage:+NewInference
+/* IGNORE_FIR */
 
 package pack_one
 
@@ -28,4 +28,5 @@ fun <T> foo() {}
 fun main() {
     foo<caret>()
 }
+
 

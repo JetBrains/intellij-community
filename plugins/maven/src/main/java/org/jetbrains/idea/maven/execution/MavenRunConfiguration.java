@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.CommonBundle;
@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -38,11 +39,15 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -73,6 +78,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
@@ -80,14 +86,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.util.containers.ContainerUtil.indexOf;
-import static org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters;
-
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
-
   private @NotNull MavenSettings settings = new MavenSettings(getProject());
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
@@ -127,8 +126,11 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
   private void initializeSettings() {
-    if (isEmptyOrSpaces(settings.getRunnerParameters().getWorkingDirPath())) {
-      ObjectUtils.consumeIfNotNull(getRootProjectPath(), settings.getRunnerParameters()::setWorkingDirPath);
+    if (StringUtil.isEmptyOrSpaces(settings.getRunnerParameters().getWorkingDirPath())) {
+      String rootProjectPath = getRootProjectPath();
+      if (rootProjectPath != null) {
+        settings.getRunnerParameters().setWorkingDirPath(rootProjectPath);
+      }
     }
   }
 
@@ -359,7 +361,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String execArgsStr;
 
       String execArgsPrefix = "-Dexec.args=";
-      int execArgsIndex = indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
+      int execArgsIndex = ContainerUtil.indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
       if (execArgsIndex != -1) {
         execArgsStr = programParametersList.get(execArgsIndex).substring(execArgsPrefix.length());
       }
@@ -368,12 +370,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
 
       ParametersList execArgs = new ParametersList();
-      execArgs.addAll(patchVmParameters(parameters.getVMParametersList()));
+      execArgs.addAll(MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters(parameters.getVMParametersList()));
 
       execArgs.addParametersString(execArgsStr);
 
-      String classPath = toSystemDependentName(parameters.getClassPath().getPathsString());
-      if (isNotEmpty(classPath)) {
+      String classPath = FileUtil.toSystemDependentName(parameters.getClassPath().getPathsString());
+      if (StringUtil.isNotEmpty(classPath)) {
         appendToClassPath(execArgs, classPath);
       }
 
@@ -396,12 +398,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     private static String getExecArgsFromPomXml(Project project, MavenRunnerParameters runnerParameters) {
       VirtualFile workingDir = VfsUtil.findFileByIoFile(runnerParameters.getWorkingDirFile(), false);
       if (workingDir != null) {
-        String pomFileName = defaultIfEmpty(runnerParameters.getPomFileName(), MavenConstants.POM_XML);
+        String pomFileName = StringUtil.defaultIfEmpty(runnerParameters.getPomFileName(), MavenConstants.POM_XML);
         VirtualFile pomFile = workingDir.findChild(pomFileName);
         if (pomFile != null) {
           MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, pomFile);
           if (projectModel != null) {
-            return notNullize(MavenPropertyResolver.resolve("${exec.args}", projectModel));
+            return StringUtil.notNullize(MavenPropertyResolver.resolve("${exec.args}", projectModel));
           }
         }
       }
@@ -450,8 +452,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenDistribution mavenDistribution =
           MavenDistributionsCache.getInstance(myConfiguration.getProject()).getMavenDistribution(myConfiguration.getRunnerParameters()
                                                                                                    .getWorkingDirPath());
-        String mavenHome = notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().toString()));
-        String mavenVersion = notNullize(mavenDistribution.getVersion());
+        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().toString()));
+        String mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
 
         MavenRuntimeTargetConfiguration mavenConfig = new MavenRuntimeTargetConfiguration();
         mavenConfig.setHomePath(mavenHome);
@@ -483,13 +485,60 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
     }
 
+    @Override
+    protected @Nullable ConsoleView createConsole(@NotNull Executor executor) throws ExecutionException {
+      ConsoleView console = super.createConsole(executor);
+      if (console != null && getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
+        return JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(
+          myConfiguration,
+          getRunnerSettings(),
+          console,
+          executor
+        );
+      }
+      else {
+        return console;
+      }
+    }
+
+    protected @Nullable ConsoleView createConsole(@NotNull Executor executor,
+                                                  @NotNull ProcessHandler processHandler,
+                                                  @NotNull Project project) throws ExecutionException {
+      ConsoleView console = createConsoleView(executor, processHandler, project);
+      if (console != null && getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
+        return JavaRunConfigurationExtensionManager.getInstance()
+          .decorateExecutionConsole(myConfiguration,
+                                    getRunnerSettings(),
+                                    console,
+                                    executor);
+      }
+      else {
+        return console;
+      }
+    }
+
+    protected @Nullable ConsoleView createConsoleView(@NotNull Executor executor,
+                                                      @NotNull ProcessHandler processHandler,
+                                                      @NotNull Project project) throws ExecutionException {
+      return emulateTerminal()
+             ? new TerminalExecutionConsole(project, null)
+             : super.createConsole(executor);
+    }
+
+    protected boolean emulateTerminal() {
+      return !SystemInfo.isWindows &&
+             myConfiguration.getGeneralSettings() != null &&
+             myConfiguration.getGeneralSettings().isEmulateTerminal() &&
+             getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest;
+    }
+
     public ExecutionResult doDelegateBuildExecute(@NotNull Executor executor,
                                                   @NotNull ProgramRunner runner,
                                                   ExternalSystemTaskId taskId,
                                                   DefaultBuildDescriptor descriptor,
                                                   ProcessHandler processHandler,
                                                   Function<String, String> targetFileMapper) throws ExecutionException {
-      ConsoleView consoleView = super.createConsole(executor);
+      ConsoleView consoleView = createConsole(executor, processHandler, myConfiguration.getProject());
       BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
       descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
       descriptor.withExecutionEnvironment(getEnvironment());
@@ -510,8 +559,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
                                         DefaultBuildDescriptor descriptor,
                                         ProcessHandler processHandler,
                                         @NotNull Function<String, String> targetFileMapper) throws ExecutionException {
-      final BuildView buildView = createBuildView(executor, taskId, descriptor);
-
+      final BuildView buildView = createBuildView(executor, descriptor, processHandler);
 
       if (buildView == null) {
         MavenLog.LOG.warn("buildView is null for " + myConfiguration.getName());
@@ -521,10 +569,14 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           new StartBuildEventImpl(descriptor, ""));
 
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
-      buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
+      if (emulateTerminal()) {
+        buildView.attachToProcess(processHandler);
+      }
+      else {
+        buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
+      }
 
-      AnAction[] actions = buildView != null ?
-                           new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)} : AnAction.EMPTY_ARRAY;
+      AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
       DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration)) {
         MavenResumeAction resumeAction =
@@ -577,7 +629,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String targetWorkingDirectory = targetedCommandLineBuilder.build().getWorkingDirectory();
       String workingDir =
         targetWorkingDirectory != null ? targetFileMapper.apply(targetWorkingDirectory) : getEnvironment().getProject().getBasePath();
-      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, myConfiguration.getProject());
+      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myConfiguration.getProject());
       DefaultBuildDescriptor descriptor =
         new DefaultBuildDescriptor(taskId, myConfiguration.getName(), workingDir, System.currentTimeMillis());
       if (MavenRunConfigurationType.isDelegate(getEnvironment())) {
@@ -589,9 +641,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Nullable
-    private BuildView createBuildView(@NotNull Executor executor, @NotNull ExternalSystemTaskId taskId,
-                                      @NotNull BuildDescriptor descriptor) throws ExecutionException {
-      ConsoleView console = super.createConsole(executor);
+    private BuildView createBuildView(@NotNull Executor executor,
+                                      @NotNull BuildDescriptor descriptor,
+                                      @NotNull ProcessHandler processHandler) throws ExecutionException {
+      ConsoleView console = createConsole(executor, processHandler, myConfiguration.getProject());
       if (console == null) {
         return null;
       }
@@ -636,7 +689,11 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
       throws ExecutionException {
       if (request instanceof LocalTargetEnvironmentRequest) {
-        return super.createTargetedCommandLine(request);
+        TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request);
+        if (emulateTerminal()) {
+          commandLineBuilder.setPtyOptions(getLocalTargetPtyOptions());
+        }
+        return commandLineBuilder;
       }
       if (request.getConfiguration() == null) {
         throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
@@ -648,6 +705,20 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request)
         .setupCommandLine(settings)
         .getCommandLine();
+    }
+
+    private static @NotNull PtyOptions getLocalTargetPtyOptions() {
+      return new PtyOptions() {
+        @Override
+        public int getInitialColumns() {
+          return LocalPtyOptions.DEFAULT.getInitialColumns();
+        }
+
+        @Override
+        public int getInitialRows() {
+          return LocalPtyOptions.DEFAULT.getInitialRows();
+        }
+      };
     }
 
     @Override
@@ -671,14 +742,29 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
       TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
       Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
-      OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process,
-                                                                          targetedCommandLine.getCommandPresentation(remoteEnvironment),
-                                                                          targetedCommandLine.getCharset(),
-                                                                          targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+      OSProcessHandler handler = createProcessHandler(remoteEnvironment, targetedCommandLineBuilder, targetedCommandLine, process);
       ProcessTerminatedListener.attach(handler);
       JavaRunConfigurationExtensionManager.getInstance()
         .attachExtensionsToProcess(myConfiguration, handler, getRunnerSettings());
       return handler;
+    }
+
+    protected @NotNull OSProcessHandler createProcessHandler(TargetEnvironment remoteEnvironment,
+                                                             TargetedCommandLineBuilder targetedCommandLineBuilder,
+                                                             TargetedCommandLine targetedCommandLine,
+                                                             Process process) throws ExecutionException {
+      if (emulateTerminal()) {
+        return new MavenKillableProcessHandler(process,
+                                               targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                               targetedCommandLine.getCharset(),
+                                               targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+      }
+      else {
+        return new KillableColoredProcessHandler.Silent(process,
+                                                        targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                        targetedCommandLine.getCharset(),
+                                                        targetedCommandLineBuilder.getFilesToDeleteOnTermination());
+      }
     }
 
     public RemoteConnectionCreator getRemoteConnectionCreator() {
@@ -713,22 +799,52 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       boolean isWindows = targetEnvironment.getTargetPlatform().getPlatform() == Platform.WINDOWS;
       path = isWindows && path.charAt(0) == '/' ? path.substring(1) : path;
       if (path.startsWith(projectRootTargetPath)) {
-        return Paths.get(projectRootlocalPath, trimStart(path, projectRootTargetPath)).toString();
+        return Paths.get(projectRootlocalPath, StringUtil.trimStart(path, projectRootTargetPath)).toString();
       }
       // workaround for "var -> private/var" symlink
       // TODO target absolute path can be used instead for such mapping of target file absolute paths
       if (path.startsWith("/private" + projectRootTargetPath)) {
-        return Paths.get(projectRootlocalPath, trimStart(path, "/private" + projectRootTargetPath)).toString();
+        return Paths.get(projectRootlocalPath, StringUtil.trimStart(path, "/private" + projectRootTargetPath)).toString();
       }
       return path;
     };
   }
 
-  public static class MavenHandlerFilterSpyWrapper extends ProcessHandler {
+  private interface MavenSpyFilter {
+    default ProcessListener filtered(ProcessListener listener, ProcessHandler processHandler) {
+      return new ProcessListenerWithFilteredSpyOutput(listener, processHandler);
+    }
+  }
+
+  private static class MavenKillableProcessHandler extends KillableProcessHandler implements MavenSpyFilter {
+
+    private MavenKillableProcessHandler(@NotNull Process process,
+                                        String commandLine,
+                                        @NotNull Charset charset,
+                                        @Nullable Set<File> filesToDelete) {
+      super(process, commandLine, charset, filesToDelete);
+    }
+
+    @Override
+    public @NotNull BaseOutputReader.Options readerOptions() {
+      return BaseOutputReader.Options.forTerminalPtyProcess();
+    }
+
+    @Override
+    public void addProcessListener(@NotNull ProcessListener listener) {
+      super.addProcessListener(filtered(listener, this));
+    }
+
+    @Override
+    public void addProcessListener(@NotNull final ProcessListener listener, @NotNull Disposable parentDisposable) {
+      super.addProcessListener(filtered(listener, this), parentDisposable);
+    }
+  }
+
+  private static class MavenHandlerFilterSpyWrapper extends ProcessHandler implements MavenSpyFilter {
     private final ProcessHandler myOriginalHandler;
 
     MavenHandlerFilterSpyWrapper(ProcessHandler original) {
-
       myOriginalHandler = original;
     }
 
@@ -776,20 +892,16 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     @Override
     public void addProcessListener(@NotNull ProcessListener listener) {
-      myOriginalHandler.addProcessListener(filtered(listener));
+      myOriginalHandler.addProcessListener(filtered(listener, this));
     }
 
     @Override
     public void addProcessListener(@NotNull final ProcessListener listener, @NotNull Disposable parentDisposable) {
-      myOriginalHandler.addProcessListener(filtered(listener), parentDisposable);
-    }
-
-    private ProcessListener filtered(ProcessListener listener) {
-      return new ProcessListenerWithFilteredSpyOutput(listener, this);
+      myOriginalHandler.addProcessListener(filtered(listener, this), parentDisposable);
     }
   }
 
-  /* this class is needede to implement build process handler and support running delegate builds*/
+  /* this class is needed to implement build process handler and support running delegate builds*/
   public static class MavenBuildHandlerFilterSpyWrapper extends BuildProcessHandler {
     private final ProcessHandler myOriginalHandler;
 
@@ -867,12 +979,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   public static class ProcessListenerWithFilteredSpyOutput implements ProcessListener {
     private final ProcessListener myListener;
-    private final ProcessHandler myProcessHandler;
     private final MavenSimpleConsoleEventsBuffer mySimpleConsoleEventsBuffer;
 
     ProcessListenerWithFilteredSpyOutput(ProcessListener listener, ProcessHandler processHandler) {
       myListener = listener;
-      myProcessHandler = processHandler;
       mySimpleConsoleEventsBuffer = new MavenSimpleConsoleEventsBuffer(
         (l, k) -> myListener.onTextAvailable(new ProcessEvent(processHandler, l), k),
         Registry.is("maven.spy.events.debug")

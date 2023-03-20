@@ -2,9 +2,11 @@
 package com.intellij.util.animation;
 
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.MathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -67,12 +69,14 @@ public final class JBAnimator implements Disposable {
   private @NotNull Type myType = Type.IN_TIME;
   private boolean myCyclic = false;
   private boolean myIgnorePowerSaveMode = false;
+  private @Nullable String myName = null;
 
   private final @NotNull ScheduledExecutorService myService;
   private final @NotNull AtomicLong myRunning = new AtomicLong();
   private final @NotNull AtomicBoolean myDisposed = new AtomicBoolean();
 
   private static final Logger LOG = Logger.getInstance(JBAnimator.class);
+  private @Nullable Statistic myStatistic = null;
 
   public JBAnimator() {
     this(Thread.SWING_THREAD, null);
@@ -132,7 +136,10 @@ public final class JBAnimator implements Disposable {
 
     final var taskId = myRunning.incrementAndGet();
 
-    if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled() || duration == 0) {
+    if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled()
+        || Registry.is("ui.no.bangs.and.whistles")
+        || RemoteDesktopService.isRemoteSession()
+        || duration == 0) {
       myService.schedule(() -> {
         if (taskId < myRunning.get()) {
           for (Animation animation : animations) {
@@ -156,6 +163,12 @@ public final class JBAnimator implements Disposable {
       return taskId;
     }
 
+    final var stat = new Statistic(myName, taskId);
+    stat.start = System.nanoTime();
+    if (myPeriod < 16) { // do not enable this until it's really necessary
+      JBAnimatorHelper.requestHighPrecisionTimer(this);
+    }
+
     myService.schedule(new Runnable() {
       final Type type = myType;
       final int period = myPeriod;
@@ -173,8 +186,15 @@ public final class JBAnimator implements Disposable {
         }
       }
 
+      private void finalizeRunning() {
+        JBAnimatorHelper.cancelHighPrecisionTimer(JBAnimator.this);
+        stat.end = System.nanoTime();
+        myStatistic = stat;
+      }
+
       @Override
       public void run() {
+        stat.count.incrementAndGet();
         // There's a penalty for run a task.
         // To decrease cumulative penalty difference between real start
         // and expected is subtracted from the next delay
@@ -184,6 +204,7 @@ public final class JBAnimator implements Disposable {
           wasLate = 0;
         }
         if (taskId < myRunning.get()) {
+          finalizeRunning();
           for (Animation animation : scheduledAnimations) {
             animation.fireEvent(Animation.Phase.CANCELLED);
           }
@@ -217,11 +238,8 @@ public final class JBAnimator implements Disposable {
         }
         expired.forEach(scheduledAnimations::remove);
         boolean isProceed = currentFrame < totalFrames || cycle;
-        for (Animation animation : isProceed ? expired : scheduledAnimations) {
-          animation.fireEvent(Animation.Phase.EXPIRED);
-        }
         if (isProceed) {
-          long nextDelay = Math.max(TimeUnit.MILLISECONDS.toNanos(currentDelay) - wasLate, 0);
+          long nextDelay = Math.max(TimeUnit.MILLISECONDS.toNanos(currentDelay) - wasLate, TimeUnit.MILLISECONDS.toNanos(1));
           nextScheduleTime = System.nanoTime() + nextDelay;
           myService.schedule(this, nextDelay, TimeUnit.NANOSECONDS);
         }
@@ -237,6 +255,12 @@ public final class JBAnimator implements Disposable {
           //                " ms; requested time is " +
           //                (delay + duration);
           //LOG.info(debugInfo);
+          finalizeRunning();
+        }
+        // we should fire events after taskId is updated
+        // and some final activity is done by calling finalizeRunning
+        for (Animation animation : isProceed ? expired : scheduledAnimations) {
+          animation.fireEvent(Animation.Phase.EXPIRED);
         }
       }
     }, delay, TimeUnit.MILLISECONDS);
@@ -272,7 +296,7 @@ public final class JBAnimator implements Disposable {
   }
 
   public @NotNull JBAnimator setPeriod(int period) {
-    myPeriod = Math.max(period, 5);
+    myPeriod = Math.max(period, 1);
     return this;
   }
 
@@ -306,12 +330,32 @@ public final class JBAnimator implements Disposable {
     return this;
   }
 
+  public @Nullable String getName() {
+    return myName;
+  }
+
+  /**
+   * Set an optional name to identify the animator.
+   */
+  public @NotNull JBAnimator setName(@Nullable String name) {
+    myName = name;
+    return this;
+  }
+
+  /**
+   * @return statistic of the last animation
+   */
+  public @Nullable Statistic getStatistic() {
+    return myStatistic;
+  }
+
   @Override
   public void dispose() {
     stop();
 
     if (!myDisposed.getAndSet(true) && myService != EdtExecutorService.getScheduledExecutorInstance()) {
       myService.shutdownNow();
+      JBAnimatorHelper.cancelHighPrecisionTimer(this);
     }
   }
 
@@ -359,57 +403,95 @@ public final class JBAnimator implements Disposable {
   }
 
   private static FrameCounter create(@NotNull Type type, int period, int duration) {
-    switch (type) {
-      case EACH_FRAME:
-        return new FrameCounter() {
+    return switch (type) {
+      case EACH_FRAME -> new FrameCounter() {
 
-          final long frames = duration / period + ((duration % period == 0) ? 0 : 1);
-          long frame = 0;
+        final long frames = duration / period + ((duration % period == 0) ? 0 : 1);
+        long frame = 0;
 
-          @Override
-          public long getNextFrame(boolean isCyclic) {
-            var f = frame;
-            frame++;
-            if (isCyclic) {
-              frame %= frames;
-            }
-            return f;
+        @Override
+        public long getNextFrame(boolean isCyclic) {
+          var f = frame;
+          frame++;
+          if (isCyclic) {
+            frame %= frames;
           }
+          return f;
+        }
 
-          @Override
-          public long getTotalFrames() {
-            // at least one frame should be played
-            return Math.max(frames, 1);
-          }
+        @Override
+        public long getTotalFrames() {
+          // at least one frame should be played
+          return Math.max(frames, 1);
+        }
 
-          @Override
-          public long getDelay(long currentFrame) {
-            return period;
-          }
-        };
+        @Override
+        public long getDelay(long currentFrame) {
+          return period;
+        }
+      };
+      case IN_TIME -> new FrameCounter() {
 
-      case IN_TIME:
-        return new FrameCounter() {
+        final long startTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
-          final long startTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        @Override
+        public long getNextFrame(boolean isCyclic) {
+          return TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) - startTime;
+        }
 
-          @Override
-          public long getNextFrame(boolean isCyclic) {
-            return TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) - startTime;
-          }
+        @Override
+        public long getTotalFrames() {
+          return duration;
+        }
 
-          @Override
-          public long getTotalFrames() {
-            return duration;
-          }
+        @Override
+        public long getDelay(long currentFrame) {
+          return Math.min(duration - currentFrame, period);
+        }
+      };
+    };
+  }
 
-          @Override
-          public long getDelay(long currentFrame) {
-            return Math.min(duration - currentFrame, period);
-          }
-        };
-      default:
-        throw new AssertionError();
+  @ApiStatus.Internal
+  public static class Statistic {
+    private @Nullable final String myName;
+    private final AtomicLong count = new AtomicLong(0);
+    private long start;
+    private long end;
+    private final long taskId;
+
+    public Statistic(@Nullable String name, long id) {
+      myName = name;
+      taskId = id;
+    }
+
+    public long getTaskId() {
+      return taskId;
+    }
+
+    /**
+     * @return total number of frames
+     */
+    public long getCount() {
+      return count.get();
+    }
+
+    /**
+     * @return animation duration in milliseconds
+     */
+    public long getDuration() {
+      return TimeUnit.NANOSECONDS.toMillis(end - start);
+    }
+
+    @Override
+    public String toString() {
+      return "Statistic{" +
+             "name=" + myName +
+             ", taskId=" + taskId +
+             ", duration=" + getDuration() + "ms" +
+             ", count=" + count +
+             ", updates=" + (count.get() * 1000 / getDuration()) +
+             '}';
     }
   }
 }

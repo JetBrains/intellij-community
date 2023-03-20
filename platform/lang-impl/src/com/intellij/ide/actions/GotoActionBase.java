@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -68,6 +68,11 @@ public abstract class GotoActionBase extends AnAction {
   protected abstract void gotoActionPerformed(@NotNull AnActionEvent e);
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
@@ -121,7 +126,7 @@ public abstract class GotoActionBase extends AnAction {
       if (selectedText != null) return new Pair<>(selectedText, 0);
     }
 
-    final String query = e.getData(SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY);
+    final String query = e.getData(PlatformDataKeys.SPEED_SEARCH_TEXT);
     if (!StringUtil.isEmpty(query)) {
       return Pair.create(query, 0);
     }
@@ -186,7 +191,7 @@ public abstract class GotoActionBase extends AnAction {
   /**
    * @deprecated use other overloaded methods
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
@@ -210,7 +215,6 @@ public abstract class GotoActionBase extends AnAction {
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
                                                             mayRequestOpenInCurrentWindow,
                                                             start.second);
-    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
     showNavigationPopup(callback, findUsagesTitle,
                         popup, allowMultipleSelection);
   }
@@ -284,6 +288,11 @@ public abstract class GotoActionBase extends AnAction {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(historyEnabled());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       void setText(@NotNull List<String> strings) {

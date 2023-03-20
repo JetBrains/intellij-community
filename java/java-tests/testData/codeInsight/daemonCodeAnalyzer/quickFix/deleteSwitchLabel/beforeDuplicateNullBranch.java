@@ -1,4 +1,4 @@
-// "Remove switch branch 'null'" "true"
+// "Remove switch branch 'null'" "true-preview"
 class Main {
     void test(Integer i) {
         switch (i) {

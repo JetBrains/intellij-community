@@ -1,4 +1,4 @@
-// "Create constructor" "true"
+// "Create constructor" "true-preview"
 class Test {
     void foo() throws Ex1 {}
     void bar() throws Ex2 {}

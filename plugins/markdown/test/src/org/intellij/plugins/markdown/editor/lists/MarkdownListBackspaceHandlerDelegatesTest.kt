@@ -26,10 +26,17 @@ class MarkdownListBackspaceHandlerDelegatesTest: LightPlatformCodeInsightTestCas
     TestCase.assertEquals(originalPosition, editor.caretModel.logicalPosition)
   }
 
-  private fun doTest() {
+  fun testIterateIndentLevels() = doTest(2)
+
+  fun testIterateIndentLevelsInBlockQuote() = doTest(2)
+
+  private fun doTest(repeats: Int = 1) {
     val testName = getTestName(true)
     configureByFile("$testName.md")
-    backspace()
-    checkResultByFile("$testName-after.md")
+    repeat(repeats) { i ->
+      backspace()
+      val suffix = if (repeats == 1) "" else "-${i + 1}"
+      checkResultByFile("$testName-after$suffix.md")
+    }
   }
 }

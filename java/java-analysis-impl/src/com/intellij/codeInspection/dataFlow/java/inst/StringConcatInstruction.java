@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.CustomMethodHandlers;
-import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction;
@@ -12,16 +12,15 @@ import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 
 public class StringConcatInstruction extends EvalInstruction {
-  private final @NotNull PsiType myStringType;
+  private final @NotNull TypeConstraint myStringType;
 
-  public StringConcatInstruction(@Nullable DfaAnchor anchor, @NotNull PsiType stringType) { 
+  public StringConcatInstruction(@Nullable DfaAnchor anchor, @NotNull TypeConstraint stringType) {
     super(anchor, 2);
     myStringType = stringType;
   }
@@ -45,7 +44,7 @@ public class StringConcatInstruction extends EvalInstruction {
     DfType resultRange = leftRange instanceof DfIntType ? ((DfIntType)leftRange).eval(rightRange, LongRangeBinOp.PLUS) : INT;
     DfType result = resultRange.isConst(0)
                     ? referenceConstant("", myStringType)
-                    : SpecialField.STRING_LENGTH.asDfType(resultRange).meet(TypeConstraints.exact(myStringType).asDfType());
+                    : SpecialField.STRING_LENGTH.asDfType(resultRange).meet(myStringType.asDfType());
     return factory.fromDfType(result);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.*
@@ -27,7 +27,6 @@ abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : Stored
   }
 
   override fun setValue(other: StoredProperty<T>): Boolean {
-    @Suppress("UNCHECKED_CAST")
     val newValue = (other as ObjectStateStoredPropertyBase<T>).value
     return if (newValue == value) {
       false
@@ -70,7 +69,7 @@ class EnumStoredProperty<T : Enum<*>>(private val defaultValue: T?, val clazz: C
 
   override fun getModificationCount() = 0L
 
-  override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T?) {
+  override fun setValue(thisRef: BaseState, newValue: T?) {
     val v = newValue ?: defaultValue
     if (value !== v) {
       thisRef.intIncrementModificationCount()

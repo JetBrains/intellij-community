@@ -44,6 +44,11 @@ public class DfEphemeralReferenceType implements DfEphemeralType, DfReferenceTyp
   }
 
   @Override
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    return new DfEphemeralReferenceType(myTypeConstraint.convert(factory));
+  }
+
+  @Override
   public @NotNull DfReferenceType dropTypeConstraint() {
     return DfTypes.NOT_NULL_OBJECT;
   }

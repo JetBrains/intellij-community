@@ -51,7 +51,6 @@ import java.util.*;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static git4idea.GitNotificationIdsHolder.BRANCH_OPERATION_SUCCESS;
 import static git4idea.GitUtil.getRepositoryManager;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -265,7 +264,7 @@ abstract class GitBranchOperation {
 
   protected final void notifyBranchHasChanged(@Nullable String branchName) {
     if (branchName != null) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (myProject.isDisposed()) return;
         myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
       });
@@ -339,7 +338,7 @@ abstract class GitBranchOperation {
     for (GitRepository repository : repositories) {
       Collection<Change> diffWithWorkingTree = GitChangeUtils.getDiffWithWorkingTree(repository, otherBranch, false);
       if (diffWithWorkingTree != null) {
-        List<String> diff = ChangesUtil.getPaths(diffWithWorkingTree.stream()).map(FilePath::getPath).collect(toList());
+        List<String> diff = ChangesUtil.iteratePaths(diffWithWorkingTree).map(FilePath::getPath).toList();
         List<Change> changesInRepo = GitUtil.findLocalChangesForPaths(myProject, repository.getRoot(), diff, false);
         if (!changesInRepo.isEmpty()) {
           changes.put(repository, changesInRepo);

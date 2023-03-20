@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.text.DateTimeFormatManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,6 +58,13 @@ public class ClockPanel extends JComponent {
   public ClockPanel() {
     myCalendar = getInstance();
     is24Hours = new SimpleDateFormat().toLocalizedPattern().contains("H");
+  }
+
+  private boolean is24Hours() {
+    if (DateTimeFormatManager.getInstance().isOverrideSystemDateFormat()) {
+      return DateTimeFormatManager.getInstance().isUse24HourTime();
+    }
+    return is24Hours;
   }
 
   private void scheduleNextRepaint() {
@@ -105,14 +113,15 @@ public class ClockPanel extends JComponent {
       g.setStroke(new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
       g.setColor(UIManager.getColor("Label.foreground"));
       myCalendar.setTimeInMillis(System.currentTimeMillis());
-      int hours = myCalendar.get(is24Hours ? HOUR_OF_DAY : HOUR);
-      if (hours == 0 && !is24Hours) {
+      boolean is24 = is24Hours();
+      int hours = myCalendar.get(is24 ? HOUR_OF_DAY : HOUR);
+      if (hours == 0 && !is24) {
         hours = 12;
       }
       int minutes = myCalendar.get(MINUTE);
       int x = 0;
       int y = (getHeight() - h) / 2;
-      boolean eveningDot = !is24Hours && myCalendar.get(HOUR_OF_DAY) > 11;
+      boolean eveningDot = !is24 && myCalendar.get(HOUR_OF_DAY) > 11;
       if (eveningDot) {
         g.setStroke(new BasicStroke(thickness * 2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g.draw(new Line2D.Float(x + thickness, y + thickness, x + thickness, y + thickness + thickness / 20));

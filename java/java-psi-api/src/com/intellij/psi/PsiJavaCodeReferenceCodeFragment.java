@@ -19,7 +19,6 @@ package com.intellij.psi;
  * Represents a fragment of Java code the contents of which is a reference element
  * referencing a Java class or package.
  *
- * @author ven
  * @see JavaCodeFragmentFactory#createReferenceCodeFragment(String, PsiElement, boolean, boolean)
  */
 public interface PsiJavaCodeReferenceCodeFragment extends JavaCodeFragment {

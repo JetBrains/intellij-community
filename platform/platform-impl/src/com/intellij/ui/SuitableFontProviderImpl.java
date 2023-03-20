@@ -9,7 +9,7 @@ import java.awt.*;
 
 public class SuitableFontProviderImpl implements SuitableFontProvider {
   @Override
-  public Font getFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, size, style, defaultFontFamily, null).getFont();
+  public Font getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, size, style, defaultFontFamily, null).getFont();
   }
 }

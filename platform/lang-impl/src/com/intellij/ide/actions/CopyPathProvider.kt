@@ -9,40 +9,67 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import java.awt.datatransfer.StringSelection
 
-abstract class CopyPathProvider : AnAction(), UpdateInBackground {
+abstract class CopyPathProvider : AnAction() {
+  companion object {
+    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME");
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    val dataContext = e.dataContext
-    val editor = CommonDataKeys.EDITOR.getData(dataContext)
-    val project = e.project
-    e.presentation.isEnabledAndVisible = project != null
-                                         && getQualifiedName(project, getElementsToCopy(editor, dataContext), editor, dataContext) != null
+    val project = e.project ?: run {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val customize = createCustomDataContext(e.dataContext)
+    val elements = try {
+      getElementsToCopy(editor, customize)
+    }
+    catch (e: IndexNotReadyException) {
+      emptyList()
+    }
+    val qName = try {
+      getQualifiedName(project, elements, editor, customize)
+    }
+    catch (e: IndexNotReadyException) {
+      null
+    }
+    e.presentation.isEnabledAndVisible = qName != null
+    e.presentation.putClientProperty(QUALIFIED_NAME, qName)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = getEventProject(e)
-    val dataContext = e.dataContext
-    val editor = CommonDataKeys.EDITOR.getData(dataContext)
+    val project = getEventProject(e) ?: return
+    val editor = e.getData(CommonDataKeys.EDITOR)
 
-    val customDataContext = createCustomDataContext(dataContext)
-    val elements = getElementsToCopy(editor, customDataContext)
-    project?.let {
-      val copy = getQualifiedName(project, elements, editor, customDataContext)
-      CopyPasteManager.getInstance().setContents(StringSelection(copy))
-      CopyReferenceUtil.setStatusBarText(project, IdeBundle.message("message.path.to.fqn.has.been.copied", copy))
-
-      CopyReferenceUtil.highlight(editor, project, elements)
+    val customized = createCustomDataContext(e.dataContext)
+    val elements = try {
+      getElementsToCopy(editor, customized)
     }
+    catch (e: IndexNotReadyException) {
+      emptyList()
+    }
+    val qName = getQualifiedName(project, elements, editor, customized)
+    CopyPasteManager.getInstance().setContents(StringSelection(qName))
+    CopyReferenceUtil.setStatusBarText(project, IdeBundle.message("message.path.to.fqn.has.been.copied", qName))
+
+    CopyReferenceUtil.highlight(editor, project, elements)
   }
 
   private fun createCustomDataContext(dataContext: DataContext): DataContext {
@@ -60,7 +87,7 @@ abstract class CopyPathProvider : AnAction(), UpdateInBackground {
   }
 
   @NlsSafe
-  open fun getQualifiedName(project: Project, elements: List<PsiElement>, editor: Editor?, dataContext: DataContext): String? {
+  protected open fun getQualifiedName(project: Project, elements: List<PsiElement>, editor: Editor?, dataContext: DataContext): String? {
     if (elements.isEmpty()) {
       return getPathToElement(project, editor?.document?.let { FileDocumentManager.getInstance().getFile(it) }, editor)
     }
@@ -88,8 +115,14 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project,
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
-    return virtualFile?.let {
-      ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false)?.let { module ->
+    if (virtualFile == null) return null
+    
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
+      return VfsUtilCore.getRelativePath(virtualFile, root)
+    }
+    else {
+      return ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false)?.let { module ->
         ModuleRootManager.getInstance(module).contentRoots.mapNotNull { root ->
           VfsUtilCore.getRelativePath(virtualFile, root)
         }.singleOrNull()

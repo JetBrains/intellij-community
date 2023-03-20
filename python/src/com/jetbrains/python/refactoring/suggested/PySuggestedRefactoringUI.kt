@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.openapi.ui.ValidationInfo
@@ -64,7 +64,7 @@ internal object PySuggestedRefactoringUI : SuggestedRefactoringUI() {
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  private fun placeholderText(shouldHaveDefaultValue: Boolean): String? {
+  private fun placeholderText(shouldHaveDefaultValue: Boolean): String {
     return if (shouldHaveDefaultValue) PyBundle.message("refactoring.change.signature.suggested.callSite.value")
     else PyBundle.message("refactoring.change.signature.suggested.callSite.value.optional")
   }

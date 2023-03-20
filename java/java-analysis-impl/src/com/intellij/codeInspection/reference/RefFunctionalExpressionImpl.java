@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,21 +13,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
-  private List<RefParameter> myParameters;
-  private boolean hasEmptyBody;
 
-  protected RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
+  RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
     super(expr, psi, manager);
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     UExpression element = getUastElement();
     LOG.assertTrue(element != null);
     PsiElement sourceElement = element.getSourcePsi();
@@ -60,7 +57,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
       RefMethod resolvedRefMethod = ObjectUtils.tryCast(getRefManager().getReference(resolvedMethod), RefMethod.class);
       if (resolvedRefMethod != null) {
         resolvedRefMethod.addDerivedReference(this);
-        resolvedRefMethod.waitForInitialized();
+        resolvedRefMethod.initializeIfNeeded();
         RefClass refClass = resolvedRefMethod.getOwnerClass();
         if (refClass != null) {
           refClass.addDerivedReference(this);
@@ -79,7 +76,6 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
         addReference(parameter, parameter.getPsiElement(), element, false, true, null);
       }
     }
-    getRefManager().fireBuildReferences(this);
   }
 
   @Override
@@ -96,7 +92,8 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
   @NotNull
   @Override
   public synchronized List<RefParameter> getParameters() {
-    return ObjectUtils.notNull(myParameters, Collections.emptyList());
+    LOG.assertTrue(isInitialized());
+    return ContainerUtil.filterIsInstance(getChildren(), RefParameter.class);
   }
 
   @Nullable
@@ -107,7 +104,8 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
 
   @Override
   public synchronized boolean hasEmptyBody() {
-    return hasEmptyBody;
+    LOG.assertTrue(isInitialized());
+    return checkFlag(RefMethodImpl.IS_BODY_EMPTY_MASK);
   }
 
   @Override
@@ -132,21 +130,15 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
     }
   }
 
-  private void setParameters(@Nullable List<UParameter> parameters) {
-    if (ContainerUtil.isEmpty(parameters)) return;
+  private void setParameters(@NotNull List<UParameter> parameters) {
+    if (parameters.isEmpty()) return;
     UExpression element = getUastElement();
     assert element != null;
-    List<RefParameter> refParameters = new ArrayList<>(parameters.size());
     for (int i = 0; i < parameters.size(); i++) {
       UParameter param = parameters.get(i);
       if (param.getSourcePsi() != null) {
-        RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
-        if (refParameter == null) continue;
-        refParameters.add(refParameter);
+        getRefJavaManager().getParameterReference(param, i, this);
       }
-    }
-    synchronized (this) {
-      myParameters = refParameters;
     }
   }
 
@@ -161,9 +153,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
         isEmptyBody = true;
       }
     }
-    synchronized (this) {
-      hasEmptyBody = isEmptyBody;
-    }
+    setFlag(isEmptyBody, RefMethodImpl.IS_BODY_EMPTY_MASK);
   }
 
   private static boolean checkIfOnlyCallsSuper(@NotNull UBlockExpression body, @Nullable PsiType type) {

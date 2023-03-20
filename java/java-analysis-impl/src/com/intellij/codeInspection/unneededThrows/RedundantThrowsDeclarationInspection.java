@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
@@ -8,8 +8,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.ThrowRefType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -23,6 +23,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -31,20 +32,22 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspectionTool {
   public boolean IGNORE_ENTRY_POINTS = false;
 
   private final RedundantThrowsDeclarationLocalInspection myLocalInspection = new RedundantThrowsDeclarationLocalInspection(this);
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("ignore.exceptions.thrown.by.entry.points.methods"), this, "IGNORE_ENTRY_POINTS");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_ENTRY_POINTS", JavaAnalysisBundle.message("ignore.exceptions.thrown.by.entry.points.methods")));
   }
 
   @Override
@@ -53,9 +56,8 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
                                                            @NotNull InspectionManager manager,
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
-    if (!(refEntity instanceof RefMethod)) return null;
+    if (!(refEntity instanceof RefMethod refMethod)) return null;
 
-    final RefMethod refMethod = (RefMethod)refEntity;
     if (refMethod.isSyntheticJSP()) return null;
 
     if (IGNORE_ENTRY_POINTS && refMethod.isEntry()) return null;
@@ -64,14 +66,12 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
     if (unThrown == null) return null;
 
     final PsiElement element = refMethod.getPsiElement();
-    if (!(element instanceof PsiMethod)) return null;
-
-    final PsiMethod method = (PsiMethod)element;
+    if (!(element instanceof PsiMethod method)) return null;
 
     if (method.hasModifier(JvmModifier.NATIVE)) return null;
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass())) return null;
 
-    final Set<PsiClass> unThrownSet = ContainerUtil.set(unThrown);
+    final Set<PsiClass> unThrownSet = ContainerUtil.newHashSet(unThrown);
 
     return RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(method, IGNORE_ENTRY_POINTS)
       .filter(throwRefType -> unThrownSet.contains(throwRefType.getType().resolve()))
@@ -79,22 +79,21 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         final PsiElement throwsRef = throwRefType.getReference();
         final String message = getMessage(refMethod);
         final MyQuickFix fix = new MyQuickFix(processor, throwRefType.getType().getClassName(), IGNORE_ENTRY_POINTS);
-        return manager.createProblemDescriptor(throwsRef, message, fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+        return manager.createProblemDescriptor(throwsRef, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
       })
       .toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull
   private static @InspectionMessage String getMessage(@NotNull final RefMethod refMethod) {
-    final RefClass ownerClass = refMethod.getOwnerClass();
-    if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
-      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor", "<code>#ref</code>");
+    if (refMethod.isAbstract()) {
+      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor");
     }
     if (!refMethod.getDerivedMethods().isEmpty()) {
-      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>");
+      return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor1");
     }
 
-    return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>");
+    return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor2");
   }
 
 
@@ -244,8 +243,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
             if (types.isEmpty()) {
               mappings.put(section, null);
             }
-            else if (catchParamType instanceof PsiDisjunctionType) {
-              final PsiDisjunctionType parameterType = (PsiDisjunctionType)catchParamType;
+            else if (catchParamType instanceof PsiDisjunctionType parameterType) {
               if (parameterType.getDisjunctions().size() == types.size()) continue;
               final PsiType newDisjunctionType = PsiDisjunctionType.createDisjunction(types, method.getManager());
 
@@ -300,9 +298,8 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       final Map<@NotNull PsiFile, @NotNull Set<@NotNull PsiTryStatement>> tryStatementsInFile = new HashMap<>();
 
       for (final PsiReference reference : references) {
-        if (!(reference instanceof PsiElement)) continue;
+        if (!(reference instanceof PsiElement element)) continue;
 
-        final PsiElement element = (PsiElement)reference;
         final PsiFile file = element.getContainingFile();
 
         final PsiClass clazz = PsiTreeUtil.getParentOfType(element, PsiClass.class);
@@ -410,8 +407,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
 
           final PsiType catchType = parameter.getType();
 
-          if (catchType instanceof PsiDisjunctionType) {
-            final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)catchType;
+          if (catchType instanceof PsiDisjunctionType disjunctionType) {
             for (final PsiType disjunction : disjunctionType.getDisjunctions()) {
               addCatchSectionType(catchSection, disjunction);
             }
@@ -435,7 +431,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
 
         block.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitCallExpression(PsiCallExpression callExpression) {
+          public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
             final List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(callExpression, block);
             for (PsiClassType exception : exceptions) {
               addExceptionInducer(exception, callExpression);
@@ -443,7 +439,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           }
 
           @Override
-          public void visitThrowStatement(PsiThrowStatement statement) {
+          public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
             final PsiExpression exception = statement.getException();
             if (exception == null) return;
 
@@ -559,11 +555,9 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       final PsiClass[] unThrown = refMethod.getUnThrownExceptions();
       if (unThrown == null) return res;
 
-      final Set<PsiClass> unThrownSet = ContainerUtil.set(unThrown);
-
       final List<PsiClassType> redundantThrows = RedundantThrowsDeclarationLocalInspection.getRedundantThrowsCandidates(psiMethod, myIgnoreEntryPoints)
         .map(ThrowRefType::getType)
-        .filter(type -> unThrownSet.contains(type.resolve()))
+        .filter(type -> ArrayUtil.contains(type.resolve(), unThrown))
         .toList();
 
       final StreamEx<PsiDocTag> javadocThrows = StreamEx.of(comment.getTags())

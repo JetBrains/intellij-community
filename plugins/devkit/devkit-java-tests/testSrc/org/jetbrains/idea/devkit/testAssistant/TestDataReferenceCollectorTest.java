@@ -47,6 +47,13 @@ public class TestDataReferenceCollectorTest extends LightJavaCodeInsightFixtureT
     assertEquals("/src/testData/refactoring/introduceVariable/extra/AnonymousType.kt", references.get(2));
   }
 
+  public void testTestMetadataDataNoTopLevel() {
+    final List<String> references = doTest();
+    assertEquals(2, references.size());
+    assertEquals("/src/testData/refactoring/introduceVariable/AnonymousType.kt", references.get(0));
+    assertEquals("/src/testData/refactoring/introduceVariable/extra/AnonymousType.kt", references.get(1));
+  }
+
   public void testAbstractMethod() {
     final List<String> references = doTest();
     assertEquals(1, references.size());

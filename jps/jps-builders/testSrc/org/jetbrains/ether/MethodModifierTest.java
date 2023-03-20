@@ -15,9 +15,6 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
 public class MethodModifierTest extends IncrementalTestCase {
   public MethodModifierTest() {
     super("methodModifiers");
@@ -29,6 +26,30 @@ public class MethodModifierTest extends IncrementalTestCase {
 
   public void testIncAccess() {
     doTest();
+  }
+
+  public void testChangePrivateToPackagePrivate() {
+    doTest().assertFailed();
+  }
+  
+  public void testChangePrivateToProtected() {
+    doTest().assertFailed();
+  }
+
+  public void testChangePrivateToPublic() {
+    doTest().assertFailed();
+  }
+
+  public void testChangePackagePrivateToProtected() {
+    doTest().assertFailed();
+  }
+
+  public void testChangePackagePrivateToPublic() {
+    doTest().assertFailed();
+  }
+
+  public void testChangeProtectedToPublic() {
+    doTest().assertFailed();
   }
 
   public void testSetAbstract() {

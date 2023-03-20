@@ -5,7 +5,6 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -57,11 +56,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   @Override
   protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
   }
 
   @Override
@@ -270,7 +264,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                 root.acceptChildren(new XmlElementVisitor() {
 
                   @Override
-                  public void visitXmlText(XmlText text) {
+                  public void visitXmlText(@NotNull XmlText text) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(text, XmlTag.class);
                     if (xmlTag != null && !xmlTag.getName().equals(myPropertyName)) {
                       usages.addAll(getUsages(text));
@@ -278,7 +272,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlAttributeValue(XmlAttributeValue value) {
+                  public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
                     if (xmlTag != null && !xmlTag.equals(root)) {
                       usages.addAll(getUsages(value));
@@ -286,7 +280,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlElement(XmlElement element) {
+                  public void visitXmlElement(@NotNull XmlElement element) {
                     element.acceptChildren(this);
                   }
                 });

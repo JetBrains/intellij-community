@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.SchemeManager;
@@ -20,7 +21,7 @@ import java.util.function.Function;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @NonNls
-  static final String CODE_STYLES_DIR_PATH = "codestyles";
+  public static final String CODE_STYLES_DIR_PATH = "codestyles";
 
   protected final SchemeManager<CodeStyleScheme> mySchemeManager;
 
@@ -34,7 +35,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
                                               boolean isBundled) {
         return new CodeStyleSchemeImpl(attributeProvider.apply("name"), attributeProvider.apply("parent"), dataHolder);
       }
-    });
+    }, null, null, SettingsCategory.CODE);
 
     mySchemeManager.loadSchemes();
     setCurrentScheme(getDefaultScheme());
@@ -91,6 +92,11 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
         }
       }
     }, null);
+  }
+
+  @Override
+  public List<CodeStyleScheme> getAllSchemes() {
+    return mySchemeManager.getAllSchemes();
   }
 
   private List<CodeStyleSettings> getAllSettings() {

@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // WITH_STDLIB
 
 @Throws(Throwable::class)

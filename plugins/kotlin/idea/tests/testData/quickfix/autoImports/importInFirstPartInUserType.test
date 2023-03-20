@@ -1,6 +1,8 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
+/* IGNORE_FIR */
+
 package testing
 
 class TestClass: <caret>Some.InnerInSome()
@@ -19,8 +21,10 @@ public class Some {
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
+/* IGNORE_FIR */
+
 package testing
 
 import some.Some

@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @see com.intellij.psi.util.PsiEditorUtilBase#findEditorByPsiElement
  */
-public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement implements OnTheFlyLocalFix {
+public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement implements LocalQuickFix {
 
   public PyRenameElementQuickFix(@Nullable PsiElement element) {
     super(element);
@@ -79,6 +79,11 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
 
   @Override
   public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public boolean availableInBatchMode() {
     return false;
   }
 

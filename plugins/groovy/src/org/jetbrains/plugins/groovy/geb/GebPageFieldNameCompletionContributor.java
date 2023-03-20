@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.util.FieldInitializerTailTypes;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GebPageFieldNameCompletionContributor extends CompletionContributor {
 
   public GebPageFieldNameCompletionContributor() {

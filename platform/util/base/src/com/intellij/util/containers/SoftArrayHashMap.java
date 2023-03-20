@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.function.BiPredicate;
 
-/**
- * @author peter
- */
 public final class SoftArrayHashMap<T,V> implements Cloneable {
   private Map<T, SoftArrayHashMap<T,V>> myContinuationMap;
   private Map<T,V> myValuesMap;
@@ -45,7 +42,7 @@ public final class SoftArrayHashMap<T,V> implements Cloneable {
     return get(key, 0);
   }
 
-  public boolean processLeafEntries(@NotNull BiPredicate<T, V> processor) {
+  public boolean processLeafEntries(@NotNull BiPredicate<? super T, ? super V> processor) {
     if (myValuesMap != null) {
       for (T t : myValuesMap.keySet()) {
         if (!processor.test(t, myValuesMap.get(t))) {

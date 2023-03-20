@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.hints.InlayHintsProviderExtension
+import com.intellij.codeInsight.hints.InlayHintsProviderExtensionBean
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.containers.MultiMap
+import junit.framework.TestCase
 
 class InlaySettingsTest : LightPlatformTestCase() {
 
@@ -82,5 +85,33 @@ class InlaySettingsTest : LightPlatformTestCase() {
         println("     Options for ${options[opt].size} languages ($languages): $opt")
       }
     }
+  }
+
+  fun testFindSettingsGetsValueFromCache() {
+    val hintsSettings = InlayHintsSettings()
+    val key = SettingsKey<Int>("foo")
+    val settings = hintsSettings.findSettings(key, Language.ANY, createSettings = { 10 })
+    TestCase.assertEquals(10, settings)
+
+    val settingsRepeated = hintsSettings.findSettings(key, Language.ANY, createSettings = { 5 }) // uses not the lambda, but cached
+    TestCase.assertEquals(10, settingsRepeated)
+  }
+
+  fun testDisabledByDefault() {
+    val hintsSettings = InlayHintsSettings()
+    val key = SettingsKey<Int>("foo")
+    val inlayProviderName = InlayHintsProviderExtension.inlayProviderName
+    val bean = InlayHintsProviderExtensionBean()
+    bean.isEnabledByDefault = false
+    bean.settingsKeyId = "foo"
+    bean.language = Language.ANY.id
+    inlayProviderName.point.registerExtension(bean, testRootDisposable)
+
+
+    TestCase.assertFalse("Disabled by default hints must be disabled", hintsSettings.hintsEnabled(key, Language.ANY))
+
+    hintsSettings.changeHintTypeStatus(key, Language.ANY, true)
+
+    TestCase.assertTrue("After enabling even disabled hints must be enabled", hintsSettings.hintsEnabled(key, Language.ANY))
   }
 }

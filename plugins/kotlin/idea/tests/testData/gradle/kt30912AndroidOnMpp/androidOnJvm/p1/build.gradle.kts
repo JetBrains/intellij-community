@@ -3,8 +3,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion({{compile_sdk_version}})
-    buildToolsVersion("{{build_tools_version}}")
+    compileSdk = {{compile_sdk_version}}
 }
 
 dependencies {

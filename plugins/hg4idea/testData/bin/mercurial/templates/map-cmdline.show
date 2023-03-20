@@ -1,0 +1,25 @@
+# TODO there are a few deficiencies in this file:
+# * The "namespace" of the labels needs to be worked out. We currently
+#   piggyback on existing values so color works.
+
+%include map-cmdline.default
+
+[templates]
+showbookmarks = '{if(active, "*", " ")} {pad(bookmark, longestbookmarklen + 4)}{shortest(node, nodelen)}\n'
+
+showwork = '{cset_shortnode}{namespaces % cset_namespace} {cset_shortdesc}'
+showstack = '{showwork}'
+
+cset_shortnode = '{labelcset(shortest(node, nodelen))}'
+
+# Treat branch and tags specially so we don't display "default" or "tip"
+cset_namespace = '{ifeq(namespace, "branches", names_branches, ifeq(namespace, "tags", names_tags, names_others))}'
+names_branches = '{ifeq(branch, "default", "", " ({label('log.{colorname}', branch)})")}'
+names_tags = '{if(filter_tags(names),
+                  " ({label('log.{colorname}', join(filter_tags(names), ' '))})")}'
+names_others = '{if(names, " ({label('log.{colorname}', join(names, ' '))})")}'
+
+cset_shortdesc = '{label("log.description", desc|firstline)}'
+
+[templatealias]
+filter_tags(names) = filter(names, ifeq(name, 'tip', '', name))

@@ -44,7 +44,6 @@ from stripe.api_resources.list_object import ListObject as ListObject
 from stripe.api_resources.login_link import LoginLink as LoginLink
 from stripe.api_resources.mandate import Mandate as Mandate
 from stripe.api_resources.order import Order as Order
-from stripe.api_resources.order_return import OrderReturn as OrderReturn
 from stripe.api_resources.payment_intent import PaymentIntent as PaymentIntent
 from stripe.api_resources.payment_method import PaymentMethod as PaymentMethod
 from stripe.api_resources.payout import Payout as Payout

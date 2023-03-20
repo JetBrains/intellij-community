@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui;
 
@@ -30,7 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.jetbrains.kotlin.idea.core.util.PhysicalFileSystemUtilsKt;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
@@ -144,11 +144,6 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         updateControls();
 
         initializedCheckBoxesState = getCheckboxesState(true);
-    }
-
-    @Override
-    protected void init() {
-        super.init();
     }
 
     private final BitSet initializedCheckBoxesState;
@@ -294,7 +289,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
                     KotlinFileChooserDialog dialog = new KotlinFileChooserDialog(
                             KotlinBundle.message("text.choose.containing.file"),
                             myProject,
-                            targetModuleScope, getTargetPackage());
+                            targetModuleScope, freezeTargets ? null : getTargetPackage());
 
                     File targetFile1 = new File(fileChooser.getText());
                     PsiFile targetPsiFile = PhysicalFileSystemUtilsKt.toPsiFile(targetFile1, myProject);

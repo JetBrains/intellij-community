@@ -18,9 +18,6 @@ package com.intellij.refactoring;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 
-/**
- * @author dsl
- */
 public interface ReplaceConstructorWithFactoryRefactoring extends Refactoring {
   PsiClass getOriginalClass();
   PsiClass getTargetClass();

@@ -2,12 +2,19 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenFilesInPreviewTabAction extends ToggleAction implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return UISettings.getInstance().getOpenInPreviewTabIfPossible();

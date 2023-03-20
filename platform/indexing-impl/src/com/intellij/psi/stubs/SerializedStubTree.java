@@ -154,10 +154,9 @@ public final class SerializedStubTree {
     if (this == that) {
       return true;
     }
-    if (!(that instanceof SerializedStubTree)) {
+    if (!(that instanceof SerializedStubTree thatTree)) {
       return false;
     }
-    final SerializedStubTree thatTree = (SerializedStubTree)that;
 
     final int length = myTreeByteLength;
     if (length != thatTree.myTreeByteLength) {

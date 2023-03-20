@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 @State(name = "StructuralSearchPlugin", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ConfigurationManager implements PersistentStateComponent<Element> {
   private static final int MAX_RECENT_SIZE = 30;
+  private static final int RECENT_CONFIGURATION_NAME_LENGTH = 40;
   @NonNls private static final String SEARCH_TAG_NAME = "searchConfiguration";
   @NonNls private static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
@@ -91,6 +92,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     if (configuration.getCreated() <= 0) {
       configuration.setCreated(System.currentTimeMillis());
     }
+    final var searchTemplate = configuration.getMatchOptions().getSearchPattern();
+    configuration.setName(searchTemplate.length() < RECENT_CONFIGURATION_NAME_LENGTH ? searchTemplate : searchTemplate.substring(0, RECENT_CONFIGURATION_NAME_LENGTH).trim() + "…");
     final Configuration old = findConfiguration(historyConfigurations, configuration);
     if (old != null) historyConfigurations.remove(old); // move to most recent
     historyConfigurations.add(0, configuration);
@@ -312,10 +315,6 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
     public static ConfigurationManagerState getInstance() {
       return ApplicationManager.getApplication().getService(ConfigurationManagerState.class);
-    }
-
-    public static ConfigurationManagerState getInstance(Project project) {
-      return project.getService(ConfigurationManagerState.class);
     }
 
     public void add(Configuration configuration) {

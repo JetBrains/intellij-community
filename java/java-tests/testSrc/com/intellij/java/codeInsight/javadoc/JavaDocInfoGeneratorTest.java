@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -8,9 +8,11 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -36,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-
 
 public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
@@ -104,10 +105,12 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testDocumentationForUncheckedExceptionsInSupers() { doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
   public void testParamInJavadoc() { doTestAtCaret(); }
+  public void testExternalLinksInJavadoc() { doTestAtCaret(); }
   public void testLiteralInsideCode() { useJava8(); doTestClass(); }
   public void testSuperJavadocExactResolve() { doTestAtCaret(); }
   public void testSuperJavadocErasureResolve() { doTestAtCaret(); }
   public void testPackageInfo() { doTestPackageInfo(); }
+  public void testPackageWithoutPackageInfo() { doTestPackageInfo(); }
   public void testPackageHtml() { doTestPackageInfo(); }
   public void testSyntheticEnumValues() { doTestAtCaret(); }
   public void testVariableDoc() { doTestAtCaret(); }
@@ -116,16 +119,61 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testTypeAnnotationClass() { useJava8(); doTestClass(); }
   public void testInlineTagIndex() { useJava9(); doTestClass(); }
   public void testInlineTagSummary() { useJava10(); doTestClass(); }
+  public void testLeadingSpacesInPre() { doTestClass(); }
+  public void testPreInDeprecated() { doTestClass(); }
+  public void testEscapeHtmlInCode() { doTestClass(); }
+  public void testEscapeAngleBracketsInCode() { doTestClass(); }
+  public void testInlineTagSnippet() { doTestClass(); }
+  public void testInlineTagSnippetNoMarkup() { doTestClass(); }
+  public void testInlineTagSnippetWithoutBody() { doTestClass(); }
+  public void testExternalSnippetRegion() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Region");
+  }
+  public void testExternalSnippetRegionNoMarkup() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("RegionNoMarkup");
+  }
+  public void testExternalSnippetNoRegion() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("NoRegion");
+  }
+  public void testExternalSnippetMain() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Main");
+  }
+  public void testExternalSnippetMultiTag() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("MultiTag");
+  }
+  public void testExternalSnippetTextFile() {
+      createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+      verifyJavadocFor("TextFile");
+  }
+  public void testExternalSnippetUnresolved() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Unresolved");
+  }
+  public void testExternalSnippetMalformed() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Malformed");
+  }
+  public void testUnknownInlineTag() { doTestClass(); }
+  public void testUnknownInlineMultilineTag() { doTestClass(); }
+  public void testUnknownTag() { doTestMethod(); }
+  public void testUnknownClassTag() { doTestClass(); }
+  public void testReflectConstructor() { useJava10(); doTestAtCaret(); }
 
   public void testRepeatableAnnotations() {
     useJava8();
     assertEquals(
-      "<span style=\"color:#808000;\">@</span><a href=\"psi_element://R\"><code><span style=\"color:#808000;\">R</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"a\"</span><span style=\"\">)</span>&nbsp;\n" +
-      "<span style=\"color:#808000;\">@</span><a href=\"psi_element://R\"><code><span style=\"color:#808000;\">R</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"b\"</span><span style=\"\">)</span>&nbsp;\n" +
-      "<span style=\"color:#000080;font-weight:bold;\">class</span> <span style=\"color:#000000;\">repeatableAnnotations</span>",
+      """
+        <span style="color:#808000;">@</span><a href="psi_element://R"><code><span style="color:#808000;">R</span></code></a><span style="">(</span><span style="color:#008000;font-weight:bold;">"a"</span><span style="">)</span>&nbsp;
+        <span style="color:#808000;">@</span><a href="psi_element://R"><code><span style="color:#808000;">R</span></code></a><span style="">(</span><span style="color:#008000;font-weight:bold;">"b"</span><span style="">)</span>&nbsp;
+        <span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">repeatableAnnotations</span>""",
       new JavaDocInfoGenerator(getProject(), getTestClass()).generateSignature(getTestClass()));
   }
-  
+
   public void testAnonymousAndSuperJavadoc() {
     PsiClass psiClass = PsiTreeUtil.findChildOfType(getTestClass(), PsiAnonymousClass.class);
     assertNotNull(psiClass);
@@ -133,17 +181,16 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     verifyJavaDoc(method);
   }
 
-  public void testEnumConstantOrdinal() {
-    PsiClass psiClass = getTestClass();
-    PsiField field = psiClass.getFields() [0];
-    String docInfo = new JavaDocumentationProvider().generateDoc(field, field);
-    assertNotNull(docInfo);
-    assertFileTextEquals(docInfo);
+  public void testEnumConstant1() {
+    doTestEnumConstant();
+  }
 
-    docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
-    assertNotNull(docInfo);
-    String htmlText = loadFile(new File(getTestDataPath() + TEST_DATA_FOLDER + getTestName(true) + "_quick.html"));
-    assertEquals(htmlText, replaceEnvironmentDependentContent(UIUtil.getHtmlBody(docInfo)));
+  public void testEnumConstant2() {
+    doTestEnumConstant();
+  }
+
+  public void testEnumConstant3() {
+    doTestEnumConstant();
   }
 
   public void testClickableFieldReference() {
@@ -189,7 +236,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testHideNonDocumentedFlowAnnotations() {
-    ModuleRootModificationUtil.setModuleSdk(myModule, removeAnnotationsJar(PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17())));
+    Sdk sdk = removeAnnotationsJar(PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17()));
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(myModule, sdk);
 
     PsiClass mapClass = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP);
     PsiMethod mapPut = mapClass.findMethodsByName("put", false)[0];
@@ -265,6 +314,19 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private void doTestClass() {
     PsiClass psiClass = getTestClass();
     verifyJavaDoc(psiClass);
+  }
+
+  private void doTestEnumConstant() {
+    PsiClass psiClass = getTestClass();
+    PsiField field = psiClass.getFields()[0];
+    String docInfo = new JavaDocumentationProvider().generateDoc(field, field);
+    assertNotNull(docInfo);
+    assertFileTextEquals(docInfo);
+
+    docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
+    assertNotNull(docInfo);
+    String htmlText = loadFile(new File(getTestDataPath() + TEST_DATA_FOLDER + getTestName(true) + "_quick.html"));
+    assertEquals(htmlText, replaceEnvironmentDependentContent(UIUtil.getHtmlBody(docInfo)));
   }
 
   private void doTestField() {

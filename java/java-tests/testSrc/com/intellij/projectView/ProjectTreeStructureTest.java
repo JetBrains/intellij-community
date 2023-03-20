@@ -28,37 +28,43 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
   public void test1() {
     getProjectTreeStructure().setProviders(new SameNamesJoiner(), new ClassNameConvertor(myProject));
-    assertStructureEqual(getPackageDirectory(), "package1\n" +
-                                                " Class2.java converted\n" +
-                                                " Form1 joined\n" +
-                                                "  Form1.form\n" +
-                                                "  Form1.java converted\n" +
-                                                " Form2.form\n");
+    assertStructureEqual(getPackageDirectory(), """
+      package1
+       Class2.java converted
+       Form1 joined
+        Form1.form
+        Form1.java converted
+       Form2.form
+      """);
   }
 
   public void testStandardProviders() {
     useStandardProviders();
 
-    assertStructureEqual(getPackageDirectory(), "package1\n" +
-                                                " Class1\n" +
-                                                " Class2.java\n" +
-                                                "  Class2\n" +
-                                                "  Class3\n" +
-                                                " Class4.java\n" +
-                                                " Form1\n" +
-                                                " Form1.form\n" +
-                                                " Form2.form\n");
+    assertStructureEqual(getPackageDirectory(), """
+      package1
+       Class1
+       Class2.java
+        Class2
+        Class3
+       Class4.java
+       Form1
+       Form1.form
+       Form2.form
+      """);
 
     getProjectTreeStructure().setProviders();
 
     assertStructureEqual(getPackageDirectory(),
-                         "package1\n" +
-                         " Class1.java\n" +
-                         " Class2.java\n" +
-                         " Class4.java\n" +
-                         " Form1.form\n" +
-                         " Form1.java\n" +
-                         " Form2.form\n");
+                         """
+                           package1
+                            Class1.java
+                            Class2.java
+                            Class4.java
+                            Form1.form
+                            Form1.java
+                            Form2.form
+                           """);
 
   }
 
@@ -66,63 +72,69 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     useStandardProviders();
 
     myStructure.setShowMembers(false);
-    assertStructureEqual(getPackageDirectory(), "package1\n" +
-                                                " Class1\n" +
-                                                " Class2\n");
+    assertStructureEqual(getPackageDirectory(), """
+      package1
+       Class1
+       Class2
+      """);
 
     myStructure.setShowMembers(true);
-    assertStructureEqual(getPackageDirectory(), "package1\n" +
-                                                " Class1\n" +
-                                                "  InnerClass\n" +
-                                                "   myInnerClassField\n" +
-                                                "  getValue\n" +
-                                                "  myField1\n" +
-                                                "  myField2\n" +
-                                                " Class2\n" +
-                                                "  InnerClass1\n" +
-                                                "   InnerClass12\n" +
-                                                "    InnerClass13\n" +
-                                                "     InnerClass14\n" +
-                                                "      InnerClass15\n" +
-                                                "       myInnerClassField\n" +
-                                                "      myInnerClassField\n" +
-                                                "     myInnerClassField\n" +
-                                                "    myInnerClassField\n" +
-                                                "   myInnerClassField\n" +
-                                                "  InnerClass2\n" +
-                                                "   InnerClass22\n" +
-                                                "    InnerClass23\n" +
-                                                "     InnerClass24\n" +
-                                                "      InnerClass25\n" +
-                                                "       myInnerClassField\n" +
-                                                "      myFieldToSelect\n" +
-                                                "     myInnerClassField\n" +
-                                                "    myInnerClassField\n" +
-                                                "   myInnerClassField\n" +
-                                                "  getValue\n" +
-                                                "  myField1\n" +
-                                                "  myField2\n" +
-                                                "  myField3\n" +
-                                                "  myField4\n", 100);
+    assertStructureEqual(getPackageDirectory(), """
+      package1
+       Class1
+        InnerClass
+         myInnerClassField
+        getValue
+        myField1
+        myField2
+       Class2
+        InnerClass1
+         InnerClass12
+          InnerClass13
+           InnerClass14
+            InnerClass15
+             myInnerClassField
+            myInnerClassField
+           myInnerClassField
+          myInnerClassField
+         myInnerClassField
+        InnerClass2
+         InnerClass22
+          InnerClass23
+           InnerClass24
+            InnerClass25
+             myInnerClassField
+            myFieldToSelect
+           myInnerClassField
+          myInnerClassField
+         myInnerClassField
+        getValue
+        myField1
+        myField2
+        myField3
+        myField4
+      """, 100);
   }
 
   public void testGetParentObject() {
     useStandardProviders();
     myStructure.setShowMembers(true);
-    assertStructureEqual(getContentDirectory(), "getParentObject\n" +
-                                                " src\n" +
-                                                "  com\n" +
-                                                "   package1\n" +
-                                                "    Class1\n" +
-                                                "     method\n" +
-                                                "     myField\n" +
-                                                "    Class2.java\n" +
-                                                "     Class2\n" +
-                                                "     Class3\n" +
-                                                "    Class4.java\n" +
-                                                "    Form1\n" +
-                                                "    Form1.form\n" +
-                                                "    Form2.form\n");
+    assertStructureEqual(getContentDirectory(), """
+      getParentObject
+       src
+        com
+         package1
+          Class1
+           method
+           myField
+          Class2.java
+           Class2
+           Class3
+          Class4.java
+          Form1
+          Form1.form
+          Form2.form
+      """);
 
     checkContainsMethod(myStructure.getRootElement(), myStructure);
   }
@@ -143,12 +155,14 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     myStructure.setShowLibraryContents(false);
     myStructure.hideExcludedFiles();
 
-    assertStructureEqual("Project\n" +
-                         " noDuplicateModules\n" +
-                         "  src\n" +
-                         "   com\n" +
-                         "    package1\n" +
-                         "     Test.java\n");
+    assertStructureEqual("""
+                           Project
+                            noDuplicateModules
+                             src
+                              com
+                               package1
+                                Test.java
+                           """);
   }
 
   public void testContentRootUnderExcluded() {
@@ -160,21 +174,25 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
     myStructure.setShowLibraryContents(false);
 
-    assertStructureEqual("Project\n" +
-                         " contentRootUnderExcluded\n" +
-                         "  B.txt\n" +
-                         "  exc\n" +
-                         "   excluded.txt\n" +
-                         "   gen\n" +
-                         "    A.java\n");
+    assertStructureEqual("""
+                           Project
+                            contentRootUnderExcluded
+                             B.txt
+                             exc
+                              excluded.txt
+                              gen
+                               A.java
+                           """);
 
     myStructure.hideExcludedFiles();
-    assertStructureEqual("Project\n" +
-                         " Module\n" +
-                         "  contentRootUnderExcluded\n" +
-                         "   B.txt\n" +
-                         "  gen\n" +
-                         "   A.java\n");
+    assertStructureEqual("""
+                           Project
+                            Module
+                             contentRootUnderExcluded
+                              B.txt
+                             gen
+                              A.java
+                           """);
   }
 
   public void testQualifiedModuleNames() {
@@ -207,17 +225,19 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
       return StringUtil.join(fragments, PresentableNodeDescriptor.ColoredFragment::getText, "");
     };
     String treeStructure = ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> PlatformTestUtil.print(myStructure, myStructure.getRootElement(), nodePresenter));
-    assertEquals("testQualifiedModuleNames\n" +
-                 " qualifiedModuleNames [testQualifiedModuleNames]\n" +
-                 "  a\n" +
-                 "   Foo\n" +
-                 "    foo.txt\n" +
-                 "   b [x.b]\n" +
-                 "    b.txt\n" +
-                 "   main\n" +
-                 "    main.txt\n" +
-                 "   util\n" +
-                 "    util.txt\n",
+    assertEquals("""
+                   testQualifiedModuleNames
+                    qualifiedModuleNames [testQualifiedModuleNames]
+                     a
+                      Foo
+                       foo.txt
+                      b [x.b]
+                       b.txt
+                      main
+                       main.txt
+                      util
+                       util.txt
+                   """,
                  treeStructure);
   }
 }

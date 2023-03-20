@@ -36,14 +36,15 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ClassMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.VersionedEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   public static final Logger LOG = Logger.getInstance(IdeModifiableModelsProviderImpl.class);
   public static final Key<IdeModifiableModelsProviderImpl> MODIFIABLE_MODELS_PROVIDER_KEY = Key.create("IdeModelsProvider");
   private LibraryTable.ModifiableModel myLibrariesModel;
-  private WorkspaceEntityStorageBuilder diff;
+  private MutableEntityStorage diff;
 
   public IdeModifiableModelsProviderImpl(Project project) {
     super(project);
@@ -162,7 +163,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         for (Module module : modules) {
           module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, null);
         }
-        Set<Module> existingModules = ContainerUtil.set(modules);
+        Set<Module> existingModules = Set.of(modules);
         rootModels = myModifiableRootModels.entrySet().stream().filter(entry -> existingModules.contains(entry.getKey())).map(Map.Entry::getValue).toArray(ModifiableRootModel[]::new);
         ((ModifiableModuleModelBridge)myModifiableModuleModel).prepareForCommit();
       }
@@ -179,7 +180,13 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       }
 
       for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
-        TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
+        TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(entry.getKey());
+        if (testModuleProperties instanceof TestModulePropertiesBridge) {
+          ((TestModulePropertiesBridge)testModuleProperties).setProductionModuleNameToBuilder(entry.getValue(),
+                                                                                              getActualStorageBuilder());
+        } else {
+          testModuleProperties.setProductionModuleName(entry.getValue());
+        }
       }
 
       for (Map.Entry<Module, ModifiableFacetModel> each: myModifiableFacetModels.entrySet()) {
@@ -188,8 +195,8 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         }
       }
       myModifiableModels.values().forEach(ModifiableModel::commit);
-      WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> {
-        WorkspaceEntityStorageBuilder storageBuilder = getActualStorageBuilder();
+      WorkspaceModel.getInstance(myProject).updateProjectModel("External system: commit model", builder -> {
+        MutableEntityStorage storageBuilder = getActualStorageBuilder();
         if (LOG.isTraceEnabled()) {
           LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);
         }
@@ -215,10 +222,12 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
     super.dispose();
   }
 
-  public WorkspaceEntityStorageBuilder getActualStorageBuilder() {
+  public MutableEntityStorage getActualStorageBuilder() {
     if (diff != null) return diff;
-    var initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
-    return diff = WorkspaceEntityStorageBuilder.from(initialStorage);
+    VersionedEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage();
+    LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
+    var initialStorage = storage.getCurrent();
+    return diff = MutableEntityStorage.from(initialStorage);
   }
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {

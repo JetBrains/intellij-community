@@ -35,7 +35,14 @@ public interface ProcessDebugger {
   @Nullable
   String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType) throws PyDebuggerException;
 
-  XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
+  enum GROUP_TYPE {
+    DEFAULT,
+    SPECIAL,
+    RETURN
+  }
+
+  @Nullable
+  XValueChildrenList loadFrame(String threadId, String frameId, GROUP_TYPE group_type) throws PyDebuggerException;
 
   List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
     throws PyDebuggerException;
@@ -122,6 +129,8 @@ public interface ProcessDebugger {
                      @Nullable String funcName, @NotNull SuspendPolicy policy);
 
   void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line);
+
+  void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers);
 
   void setShowReturnValues(boolean isShowReturnValues);
 

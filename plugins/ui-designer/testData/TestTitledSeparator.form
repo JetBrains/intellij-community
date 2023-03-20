@@ -26,6 +26,7 @@
         </constraints>
         <properties>
           <text resource-bundle="com/intellij/uiDesigner/core/TestProperties" key="test"/>
+          <toolTipText resource-bundle="com/intellij/uiDesigner/core/TestProperties" key="test"/>
         </properties>
       </component>
     </children>

@@ -64,7 +64,7 @@ public final class FluentIterableConversionUtil {
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
           if (!JavaGenericsUtil.isReifiableType(myType)) {
-            final String chosenName = chooseName(expression, PsiType.INT);
+            final String chosenName = chooseName(expression, PsiTypes.intType());
             final PsiType arrayType;
             if (myType instanceof PsiClassType) {
               final PsiClass resolvedClass = ((PsiClassType)myType).resolve();
@@ -203,7 +203,7 @@ public final class FluentIterableConversionUtil {
                                          PsiClass collection) {
       if (retValue == null) return false;
       PsiType type = retValue.getType();
-      if (PsiType.NULL.equals(type)) {
+      if (PsiTypes.nullType().equals(type)) {
         return true;
       }
       if (type instanceof PsiCapturedWildcardType) {

@@ -11,6 +11,7 @@ internal class JavaFxModuleTemplateGroup : FileTemplateGroupDescriptorFactory {
     val root = FileTemplateGroupDescriptor(JavaFXBundle.JAVA_FX, AllIcons.Nodes.Module)
 
     root.addTemplate(JAVAFX_POM_XML)
+    root.addTemplate(JAVAFX_MVNW_PROPERTIES)
     root.addTemplate(JAVAFX_BUILD_GRADLE)
     root.addTemplate(JAVAFX_SETTINGS_GRADLE)
     root.addTemplate(JAVAFX_GRADLEW_PROPERTIES)
@@ -31,6 +32,7 @@ internal class JavaFxModuleTemplateGroup : FileTemplateGroupDescriptorFactory {
   companion object {
     const val JAVAFX_BUILD_GRADLE = "javafx-build.gradle"
     const val JAVAFX_POM_XML = "javafx-pom.xml"
+    const val JAVAFX_MVNW_PROPERTIES = "javafx-maven-wrapper.properties"
     const val JAVAFX_SETTINGS_GRADLE = "javafx-settings.gradle"
     const val JAVAFX_GRADLEW_PROPERTIES = "javafx-gradle-wrapper.properties"
 

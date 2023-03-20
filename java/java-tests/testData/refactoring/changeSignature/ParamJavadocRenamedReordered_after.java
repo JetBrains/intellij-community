@@ -1,7 +1,7 @@
 class X {
 
   /**
-   * @param a aparam
+   * @param a  aparam
    * @param c
    * @param b1 bparam
    */

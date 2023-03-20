@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -13,11 +13,11 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.extractor.ProxyExtractor;
 import com.intellij.debugger.memory.agent.parsers.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.CpuArch;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class IdeaNativeAgentProxyMirror {
   private static final Logger LOG = Logger.getInstance(IdeaNativeAgentProxyMirror.class);
 
   private static final String PROXY_CLASS_NAME = "com.intellij.memory.agent.IdeaNativeAgentProxy";
-  
+
   private static final String IS_LOADED = "isLoaded";
 
   private static final String CAN_ESTIMATE_OBJECT_SIZE = "canEstimateObjectSize";
@@ -84,7 +84,8 @@ public class IdeaNativeAgentProxyMirror {
     Pair<long[], ObjectReference[]> sizesAndObjects;
     if (errCode != MemoryAgentActionResult.ErrorCode.OK) {
       sizesAndObjects = new Pair<>(new long[0], new ObjectReference[0]);
-    } else {
+    }
+    else {
       Pair<Long[], ObjectReference[]> parsingResult = SizeAndHeldObjectsParser.INSTANCE.parse(errCodeAndResult.getSecond());
       sizesAndObjects = new Pair<>(
         Arrays.stream(parsingResult.getFirst()).mapToLong(Long::longValue).toArray(),
@@ -190,7 +191,8 @@ public class IdeaNativeAgentProxyMirror {
           Collections.singletonList(new CalculationTimeoutReferringObject())
         )
       );
-    } else {
+    }
+    else {
       returnValue = GcRootsPathsParser.INSTANCE.parse(errCodeAndResult.getSecond());
     }
 
@@ -394,7 +396,7 @@ public class IdeaNativeAgentProxyMirror {
       JdkVersionDetector.JdkVersionInfo info = JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHomePath);
       if (info == null) return null;
 
-      String agentPath = getMemoryAgentPath(info.bitness);
+      String agentPath = getMemoryAgentPath(info.arch);
       if (agentPath == null) return null;
 
       setAgentPathPropertyValue(evaluationContext, systemClassType, agentPath);
@@ -422,17 +424,15 @@ public class IdeaNativeAgentProxyMirror {
     );
   }
 
-  @Nullable private static String getMemoryAgentPath(@NotNull Bitness bitness)
-    throws ExecutionException, InterruptedException, TimeoutException {
-    return MemoryAgentUtil.getAgentFilePathAsString(
-      Registry.is("debugger.memory.agent.debug"), MemoryAgentUtil.detectAgentKindByBitness(bitness)
-    );
+  private static @Nullable String getMemoryAgentPath(CpuArch arch) throws ExecutionException, InterruptedException, TimeoutException {
+    return MemoryAgentUtil.getAgentFilePathAsString(Registry.is("debugger.memory.agent.debug"), MemoryAgentUtil.detectAgentKindByArch(arch));
   }
 
   // Evaluates System.getProperty(propertyName)
-  @Nullable private static String getPropertyValue(@NotNull EvaluationContextImpl evaluationContext,
-                                                   @NotNull ClassType systemClassType,
-                                                   @NotNull String propertyName) throws EvaluateException {
+  @Nullable
+  private static String getPropertyValue(@NotNull EvaluationContextImpl evaluationContext,
+                                         @NotNull ClassType systemClassType,
+                                         @NotNull String propertyName) throws EvaluateException {
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
     Method getPropertyMethod = DebuggerUtils.findMethod(
       systemClassType, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;"

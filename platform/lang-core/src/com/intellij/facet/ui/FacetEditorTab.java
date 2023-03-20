@@ -6,7 +6,6 @@ import com.intellij.facet.Facet;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -26,12 +25,6 @@ public abstract class FacetEditorTab implements Configurable {
   }
 
   public void onTabLeaving() {
-  }
-
-  @Override
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
-    return null;
   }
 
   /**

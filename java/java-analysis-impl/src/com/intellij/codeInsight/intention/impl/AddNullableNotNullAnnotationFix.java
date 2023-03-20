@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
@@ -18,8 +17,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
  * @deprecated use {@link AddAnnotationPsiFix#createAddNullableFix(PsiModifierListOwner)} or
  * {@link AddAnnotationPsiFix#createAddNotNullFix(PsiModifierListOwner)}.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {
   public AddNullableNotNullAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner owner, String @NotNull ... annotationToRemove) {
     super(fqn, owner, annotationToRemove);

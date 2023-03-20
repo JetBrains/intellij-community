@@ -2,6 +2,9 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
+    <content url="file://$MODULE_DIR$/generated">
+      <sourceFolder url="file://$MODULE_DIR$/generated" isTestSource="false" generated="true" />
+    </content>
     <content url="file://$MODULE_DIR$/resources">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
     </content>
@@ -18,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" exported="" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
+    <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" name="gson" level="project" />
@@ -26,7 +30,6 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.inspect" exported="" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
@@ -34,7 +37,11 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.gradle.toolingProxy" />
-    <orderEntry type="library" name="Log4J" level="project" />
-    <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="commons-lang" level="project" />
   </component>
 </module>

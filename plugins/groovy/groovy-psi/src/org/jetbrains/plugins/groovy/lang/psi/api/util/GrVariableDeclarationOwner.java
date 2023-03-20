@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 
-/**
- * @author ilyas
- */
 public interface GrVariableDeclarationOwner extends GroovyPsiElement {
 
   /**

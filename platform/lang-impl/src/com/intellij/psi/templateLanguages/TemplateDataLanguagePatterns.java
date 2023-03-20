@@ -3,13 +3,14 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.fileTypes.impl.FileTypeAssocTableUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -21,15 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 @State(
     name = "TemplateDataLanguagePatterns",
     storages = @Storage("templateLanguages.xml"),
     category = SettingsCategory.CODE )
 public final class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
-  private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<>();
+  private FileTypeAssocTable<Language> myAssocTable = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
   @NonNls private static final String SEPARATOR = ";";
 
   public static TemplateDataLanguagePatterns getInstance() {

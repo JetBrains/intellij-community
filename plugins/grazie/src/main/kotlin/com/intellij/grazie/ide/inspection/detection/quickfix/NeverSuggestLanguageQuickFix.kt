@@ -1,11 +1,11 @@
 package com.intellij.grazie.ide.inspection.detection.quickfix
 
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.utils.englishName
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.detector.model.utils.englishName
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.utils.PsiPointer
 import com.intellij.icons.AllIcons

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scripting.gradle.roots
 
@@ -23,7 +23,6 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
 
     override fun setUp() {
         super.setUp()
-
         val newDisposable = Disposer.newDisposable()
         locator = MyRootsLocator(newDisposable)
         disposable = newDisposable
@@ -81,7 +80,8 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
                         sourcePath = listOf(),
                         imports = listOf(),
                         messages = listOf()
-                    )
+                    ),
+                    null
                 )
             )
         }

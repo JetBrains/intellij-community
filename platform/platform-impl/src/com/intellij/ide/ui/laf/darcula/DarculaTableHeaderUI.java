@@ -137,8 +137,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
   }
 
   private boolean isExpandableHintShown(TableColumn column) {
-    if (column != null && header instanceof ComponentWithExpandableItems) {
-      ComponentWithExpandableItems<?> c = (ComponentWithExpandableItems<?>)header;
+    if (column != null && header instanceof ComponentWithExpandableItems<?> c) {
       return column == ContainerUtil.getFirstItem(c.getExpandableItemsHandler().getExpandedItems());
     }
     return false;

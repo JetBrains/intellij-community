@@ -25,3 +25,5 @@ fun test() {
 
     ]
 }
+
+// SET_FALSE: CONTINUATION_INDENT_IN_ARGUMENT_LISTS

@@ -64,11 +64,11 @@ class TextComponentHint(val component: JTextComponent, @Nls text: String, var st
     checkForHint()
   }
 
-  fun setAlpha(alpha: Float) {
+  private fun setAlpha(alpha: Float) {
     setAlpha((alpha * 255).toInt())
   }
 
-  fun setAlpha(value: Int) {
+  private fun setAlpha(value: Int) {
     var alpha = value
     alpha = if (alpha > 255) 255 else if (alpha < 0) 0 else alpha
     val foreground = foreground
@@ -79,7 +79,7 @@ class TextComponentHint(val component: JTextComponent, @Nls text: String, var st
     super.setForeground(withAlpha)
   }
 
-  fun setStyle(style: Int) {
+  private fun setStyle(style: Int) {
     font = font.deriveFont(style)
   }
 

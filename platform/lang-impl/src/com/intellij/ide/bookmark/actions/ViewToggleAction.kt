@@ -3,14 +3,17 @@ package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
 import com.intellij.ide.bookmark.ui.BookmarksView
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ToggleOptionAction
 import com.intellij.openapi.project.DumbAware
 
 internal open class ViewToggleAction(key: String, option: (BookmarksView?) -> Option?)
-  : DumbAware, ToggleOptionAction({ option(it.bookmarksViewFromToolWindow) }) {
+  : DumbAware, ToggleOptionAction({ option(it.bookmarksView) }) {
   init {
     templatePresentation.setText(messagePointer(key))
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 internal class AutoscrollFromSourceToggleAction : ViewToggleAction("view.autoscroll.from.source.action.text", { it?.autoScrollFromSource })

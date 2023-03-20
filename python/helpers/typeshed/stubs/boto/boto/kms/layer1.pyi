@@ -1,4 +1,5 @@
-from typing import Any, Mapping, Type
+from collections.abc import Mapping
+from typing import Any
 
 from boto.connection import AWSQueryConnection
 
@@ -8,7 +9,7 @@ class KMSConnection(AWSQueryConnection):
     DefaultRegionEndpoint: str
     ServiceName: str
     TargetPrefix: str
-    ResponseError: Type[Exception]
+    ResponseError: type[Exception]
     region: Any
     def __init__(self, **kwargs) -> None: ...
     def create_alias(self, alias_name: str, target_key_id: str) -> dict[str, Any] | None: ...

@@ -129,6 +129,7 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
     Assert.assertNotNull(pathValue);
     Assert.assertTrue(pathValue.endsWith(mavenRunnerParameters.getWorkingDirPath()));
     Assert.assertTrue(parameters.getVMParametersList().hasProperty("maven.home"));
+    Assert.assertTrue(parameters.getVMParametersList().hasProperty("jansi.passthrough"));
   }
 
   public void testInheritGeneralSettings() throws ExecutionException {

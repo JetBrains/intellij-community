@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,8 +118,12 @@ public class ManagePackagesDialog extends DialogWrapper {
           }
         });
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
-    myListSpeedSearch = new ListSpeedSearch(myPackages, o -> {
+    myListSpeedSearch = ListSpeedSearch.installOn(myPackages, o -> {
       if (o instanceof RepoPackage)
         return ((RepoPackage)o).getName();
       return "";
@@ -203,8 +208,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent event) {
         final Object pyPackage = myPackages.getSelectedValue();
-        if (pyPackage instanceof RepoPackage) {
-          RepoPackage repoPackage = (RepoPackage)pyPackage;
+        if (pyPackage instanceof RepoPackage repoPackage) {
 
           String extraOptions = null;
           if (myOptionsCheckBox.isEnabled() && myOptionsCheckBox.isSelected()) {

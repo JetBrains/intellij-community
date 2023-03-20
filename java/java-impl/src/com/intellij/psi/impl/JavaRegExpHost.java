@@ -111,23 +111,21 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsInlineOptionFlag(char flag, PsiElement context) {
-    switch (flag) {
-      case 'i': // case-insensitive matching
-      case 'd': // Unix lines mode
-      case 'm': // multiline mode
-      case 's': // dotall mode
-      case 'u': // Unicode-aware case folding
-      case 'x': // whitespace and comments in pattern
-        return true;
-      case 'U': // Enables the Unicode version of Predefined character classes and POSIX character classes
-        return hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7);
-      default:
-        return false;
-    }
+    return switch (flag) {
+      case 'i' -> true; // case-insensitive matching
+      case 'd' -> true; // Unix lines mode
+      case 'm' -> true; // multiline mode
+      case 's' -> true; // dotall mode
+      case 'u' -> true; // Unicode-aware case folding
+      case 'x' -> true; // whitespace and comments in pattern
+      case 'U' -> // Enables the Unicode version of Predefined character classes and POSIX character classes
+        hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7);
+      default -> false;
+    };
   }
 
   @Override
-  public boolean characterNeedsEscaping(char c) {
+  public boolean characterNeedsEscaping(char c, boolean isInClass) {
     return false;
   }
 
@@ -188,45 +186,25 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsBoundary(RegExpBoundary boundary) {
-    switch (boundary.getType()) {
-      case UNICODE_EXTENDED_GRAPHEME:
-        return hasAtLeastJdkVersion(boundary, JavaSdkVersion.JDK_1_9);
-      case RESET_MATCH:
-        return false;
-      case LINE_START:
-      case LINE_END:
-      case WORD:
-      case NON_WORD:
-      case BEGIN:
-      case END:
-      case END_NO_LINE_TERM:
-      case PREVIOUS_MATCH:
-      default:
-        return true;
-    }
+    return switch (boundary.getType()) {
+      case UNICODE_EXTENDED_GRAPHEME -> hasAtLeastJdkVersion(boundary, JavaSdkVersion.JDK_1_9);
+      case RESET_MATCH -> false;
+      case LINE_START, LINE_END, WORD, NON_WORD, BEGIN, END, END_NO_LINE_TERM, PREVIOUS_MATCH -> true;
+    };
   }
 
   @Override
   public boolean supportsSimpleClass(RegExpSimpleClass simpleClass) {
-    switch(simpleClass.getKind()) {
-      case UNICODE_LINEBREAK:
-      case HORIZONTAL_SPACE:
-      case NON_HORIZONTAL_SPACE:
-      case NON_VERTICAL_SPACE:
-        return hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_8);
-      case VERTICAL_SPACE:
+    return switch (simpleClass.getKind()) {
+      case UNICODE_LINEBREAK, HORIZONTAL_SPACE, NON_HORIZONTAL_SPACE, NON_VERTICAL_SPACE ->
+        hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_8);
+      case VERTICAL_SPACE ->
         // is vertical tab before jdk 1.8
-        return true;
-      case UNICODE_GRAPHEME:
-        return hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_9);
-      case XML_NAME_START:
-      case NON_XML_NAME_START:
-      case XML_NAME_PART:
-      case NON_XML_NAME_PART:
-        return false;
-      default:
-        return true;
-    }
+        true;
+      case UNICODE_GRAPHEME -> hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_9);
+      case XML_NAME_START, NON_XML_NAME_START, XML_NAME_PART, NON_XML_NAME_PART -> false;
+      default -> true;
+    };
   }
 
   @Override
@@ -304,35 +282,14 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
       // Unicode properties and scripts available since JDK 1.7
       category = StringUtil.toUpperCase(category);
-      switch (category) { // see java.util.regex.UnicodeProp
+      return switch (category) { // see java.util.regex.UnicodeProp
         // 4 aliases
-        case "WHITESPACE":
-        case "HEXDIGIT":
-        case "NONCHARACTERCODEPOINT":
-        case "JOINCONTROL":
-
-        case "ALPHABETIC":
-        case "LETTER":
-        case "IDEOGRAPHIC":
-        case "LOWERCASE":
-        case "UPPERCASE":
-        case "TITLECASE":
-        case "WHITE_SPACE":
-        case "CONTROL":
-        case "PUNCTUATION":
-        case "HEX_DIGIT":
-        case "ASSIGNED":
-        case "NONCHARACTER_CODE_POINT":
-        case "DIGIT":
-        case "ALNUM":
-        case "BLANK":
-        case "GRAPH":
-        case "PRINT":
-        case "WORD":
-        case "JOIN_CONTROL":
-          return true;
-      }
-      return isValidUnicodeScript(category);
+        case "WHITESPACE", "HEXDIGIT", "NONCHARACTERCODEPOINT", "JOINCONTROL" -> true;
+        case "ALPHABETIC", "LETTER", "IDEOGRAPHIC", "LOWERCASE", "UPPERCASE", "TITLECASE",
+          "WHITE_SPACE", "CONTROL", "PUNCTUATION", "HEX_DIGIT", "ASSIGNED", "NONCHARACTER_CODE_POINT",
+          "DIGIT", "ALNUM", "BLANK", "GRAPH", "PRINT", "WORD", "JOIN_CONTROL" -> true;
+        default -> isValidUnicodeScript(category);
+      };
     }
     return isValidProperty(category);
   }

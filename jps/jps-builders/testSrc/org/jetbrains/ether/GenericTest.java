@@ -15,9 +15,6 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
 public class GenericTest extends IncrementalTestCase {
   public GenericTest() {
     super("generics");

@@ -1,42 +1,32 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public class ChangeParameterClassFix extends ExtendsListFix implements LowPriorityAction {
   public ChangeParameterClassFix(@NotNull PsiClass aClassToExtend, @NotNull PsiClassType parameterClass) {
@@ -71,7 +61,7 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(startElement.getContainingFile())) return;
     ApplicationManager.getApplication().runWriteAction(
       () -> invokeImpl(myClass)
     );
@@ -82,8 +72,7 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
           () -> {
-            Collection<PsiMethodMember> members =
-              ContainerUtil.map2List(toImplement, s -> new PsiMethodMember(s));
+            Collection<PsiMethodMember> members = ContainerUtil.map(toImplement, PsiMethodMember::new);
             OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
           });
       }
@@ -94,11 +83,34 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
         OverrideImplementUtil.chooseAndImplementMethods(project, editor1, myClass);
       }
     }
-    UndoUtil.markPsiFileForUndo(file);
+    UndoUtil.markPsiFileForUndo(startElement.getContainingFile());
   }
 
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiClass aClass = (PsiClass)getStartElement();
+    PsiFile fileCopy = (PsiFile)aClass.getContainingFile().copy();
+    PsiClass classCopy = PsiTreeUtil.findSameElementInCopy(aClass, fileCopy);
+    invokeImpl(classCopy);
+    Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(classCopy, true);
+    List<PsiMethodMember> toImplement = ContainerUtil.map(
+      ContainerUtil.filter(overrideImplement,
+                           t -> t.getElement() instanceof PsiMethod method && !method.hasModifierProperty(PsiModifier.DEFAULT)),
+      PsiMethodMember::new
+    );
+    if (!toImplement.isEmpty()) {
+      boolean insertOverrideAnnotation = JavaCodeStyleSettings.getInstance(file).INSERT_OVERRIDE_ANNOTATION;
+      var prototypes = OverrideImplementUtil.overrideOrImplementMethods(classCopy, toImplement, false, insertOverrideAnnotation);
+      PsiElement brace = classCopy.getRBrace();
+      if (brace == null) return IntentionPreviewInfo.EMPTY;
+      GenerateMembersUtil.insertMembersAtOffset(classCopy, brace.getTextOffset(), prototypes);
+      CodeStyleManager.getInstance(project).reformat(classCopy);
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, aClass.getContainingFile().getText(), classCopy.getContainingFile().getText());
   }
 }

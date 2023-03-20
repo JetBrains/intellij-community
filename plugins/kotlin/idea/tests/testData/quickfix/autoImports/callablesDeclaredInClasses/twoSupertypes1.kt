@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'Other.foo'" "true"
 package p
 
 class Other

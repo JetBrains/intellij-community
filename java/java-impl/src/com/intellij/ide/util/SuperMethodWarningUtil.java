@@ -30,15 +30,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class SuperMethodWarningUtil {
   public static final Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
@@ -58,8 +54,7 @@ public final class SuperMethodWarningUtil {
     return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method,
-                                                      @NotNull Collection<? extends PsiElement> ignore) {
+  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
     return checkSuperMethods(method, null, ignore);
   }
 
@@ -89,14 +84,11 @@ public final class SuperMethodWarningUtil {
       parentInterface,
       method.getContainingClass().isInterface(),
       ArrayUtilRt.toStringArray(superClasses));
-    switch (shouldIncludeBase) {
-      case Messages.YES:
-        return methodTargetCandidates;
-      case Messages.NO:
-        return new PsiMethod[] {method};
-      default:
-        return PsiMethod.EMPTY_ARRAY;
-    }
+    return switch (shouldIncludeBase) {
+      case Messages.YES -> methodTargetCandidates;
+      case Messages.NO -> new PsiMethod[]{method};
+      default -> PsiMethod.EMPTY_ARRAY;
+    };
   }
 
   @NotNull
@@ -146,11 +138,11 @@ public final class SuperMethodWarningUtil {
       aClass.isInterface(),
       containingClass.getQualifiedName()
     );
-    switch (useSuperMethod) {
-      case Messages.YES: return superMethod;
-      case Messages.NO: return method;
-      default: return null;
-    }
+    return switch (useSuperMethod) {
+      case Messages.YES -> superMethod;
+      case Messages.NO -> method;
+      default -> null;
+    };
   }
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
@@ -193,7 +185,7 @@ public final class SuperMethodWarningUtil {
                                  containingClass.isInterface() && !aClass.isInterface() ? 0 : 1, 
                                  SymbolPresentationUtil.getSymbolPresentableText(containingClass));
     }
-    JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
+    JBPopupFactory.getInstance().createPopupChooserBuilder(List.of(renameBase, renameCurrent))
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)

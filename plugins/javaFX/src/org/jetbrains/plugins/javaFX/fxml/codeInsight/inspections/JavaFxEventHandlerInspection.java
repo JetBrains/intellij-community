@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -21,23 +21,21 @@ import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author Pavel.Dolgov
- */
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool {
   public boolean myDetectNonVoidReturnType;
 
@@ -48,11 +46,10 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue xmlAttributeValue) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue) {
         super.visitXmlAttributeValue(xmlAttributeValue);
         final PsiElement valueParent = xmlAttributeValue.getParent();
-        if (!(valueParent instanceof XmlAttribute)) return;
-        final XmlAttribute attribute = (XmlAttribute)valueParent;
+        if (!(valueParent instanceof XmlAttribute attribute)) return;
 
         final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
         if (eventHandlerMethods.size() == 0) return;
@@ -63,7 +60,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
         if (myDetectNonVoidReturnType) {
           eventHandlerMethods.stream()
             .map(PsiMethod::getReturnType)
-            .filter(returnType -> !PsiType.VOID.equals(returnType))
+            .filter(returnType -> !PsiTypes.voidType().equals(returnType))
             .findAny()
             .ifPresent(ignored -> holder.registerProblem(xmlAttributeValue, JavaFXBundle.message("inspection.javafx.event.handler.return.type.problem")));
         }
@@ -124,10 +121,10 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
            parameters.length == 1 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonNames.JAVAFX_EVENT);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaFXBundle.message("inspection.javafx.event.handler.create.options.panel"), this, "myDetectNonVoidReturnType");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myDetectNonVoidReturnType", JavaFXBundle.message("inspection.javafx.event.handler.create.options.panel")));
   }
 
   private static void collectFieldTypeFixes(@NotNull XmlAttribute attribute,
@@ -142,8 +139,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     final PsiReference reference = idValue.getReference();
     if (reference == null) return;
     final PsiElement element = reference.resolve();
-    if (!(element instanceof PsiField)) return;
-    final PsiField tagField = (PsiField)element;
+    if (!(element instanceof PsiField tagField)) return;
     if (tagField.hasModifierProperty(PsiModifier.STATIC) || !JavaFxPsiUtil.isVisibleInFxml(tagField)) return;
 
     final PsiType tagFieldType = tagField.getType();
@@ -208,8 +204,7 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      if (!(startElement instanceof XmlAttribute)) return;
-      final XmlAttribute attribute = (XmlAttribute)startElement;
+      if (!(startElement instanceof XmlAttribute attribute)) return;
 
       final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);
       if (eventHandlerMethods.size() != 1) return;

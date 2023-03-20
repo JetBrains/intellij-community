@@ -84,7 +84,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
 
     val quickFixes = mutableListOf<BuildIssueQuickFix>()
     val oldestCompatibleGradleVersion = javaVersionUsed?.let { suggestOldestCompatibleGradleVersion(it) } ?: GradleVersion.version("4.8.1")
-    val newestCompatibleGradleVersion = javaVersionUsed?.let { suggestGradleVersion(it) }
+    val newestCompatibleGradleVersion = javaVersionUsed?.let { suggestLatestGradleVersion(it) }
     val versionSuggestion = getSuggestedGradleVersion(newestCompatibleGradleVersion, oldestCompatibleGradleVersion)
 
     val issueDescription = StringBuilder()
@@ -245,7 +245,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     private fun getSuggestedJavaVersion(gradleVersionUsed: GradleVersion?, javaVersionUsed: JavaVersion?): String {
       val suggestedJavaVersion: String
       val oldestCompatibleJavaVersion = gradleVersionUsed?.let { suggestOldestCompatibleJavaVersion(it) } ?: JavaVersion.compose(8)
-      val newestCompatibleJavaVersion = gradleVersionUsed?.let { suggestJavaVersion(it) } ?: JavaVersion.compose(8)
+      val newestCompatibleJavaVersion = gradleVersionUsed?.let { suggestLatestJavaVersion(it) } ?: JavaVersion.compose(8)
       if (javaVersionUsed != null) {
         when {
           javaVersionUsed < oldestCompatibleJavaVersion -> {

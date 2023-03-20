@@ -40,7 +40,7 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
 
   private static class StringConcatenationInFormatCallVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (FormatUtils.isFormatCall(call)) {
         PsiExpressionList argumentList = call.getArgumentList();
         PsiExpression formatArgument = FormatUtils.getFormatArgument(argumentList);
@@ -53,10 +53,9 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
 
     private void checkFormatString(PsiMethodCallExpression call, PsiExpression formatString) {
       formatString = PsiUtil.skipParenthesizedExprDown(formatString);
-      if (!(formatString instanceof PsiPolyadicExpression)) return;
+      if (!(formatString instanceof PsiPolyadicExpression polyadicExpression)) return;
       if (!ExpressionUtils.hasStringType(formatString)) return;
       if (PsiUtil.isConstantExpression(formatString)) return;
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)formatString;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       if (!ContainerUtil.exists(operands, o -> ExpressionUtils.nonStructuralChildren(o).anyMatch(
         c -> c instanceof PsiReferenceExpression || c instanceof PsiMethodCallExpression || c instanceof PsiArrayAccessExpression))) {

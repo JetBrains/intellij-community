@@ -1,21 +1,7 @@
-/*
- * Copyright 2006-2012 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -23,9 +9,9 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ExtendsUtilityClassInspection extends BaseInspection {
 
@@ -40,11 +26,10 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("class.extends.utility.class.problem.descriptor", superClassName);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.extends.utility.class.ignore.utility.class.option"),
-                                          this, "ignoreUtilityClasses");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreUtilityClasses", InspectionGadgetsBundle.message("class.extends.utility.class.ignore.utility.class.option")));
   }
 
   @Override
@@ -55,7 +40,7 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
   private class ClassExtendsUtilityClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.isInterface() || aClass.isAnnotationType()) {
         return;
       }
@@ -69,7 +54,7 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
       if (!UtilityClassUtil.isUtilityClass(superClass)) {
         return;
       }
-      if (ignoreUtilityClasses && UtilityClassUtil.isUtilityClass(aClass, false)) {
+      if (ignoreUtilityClasses && UtilityClassUtil.isUtilityClass(aClass, false, false)) {
         return;
       }
       registerClassError(aClass, superClass);

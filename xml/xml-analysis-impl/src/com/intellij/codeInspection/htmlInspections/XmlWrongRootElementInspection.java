@@ -37,11 +37,9 @@ public final class XmlWrongRootElementInspection extends HtmlLocalInspectionTool
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag.getParent() instanceof XmlTag)) {
       final PsiFile psiFile = tag.getContainingFile();
-      if (!(psiFile instanceof XmlFile)) {
+      if (!(psiFile instanceof XmlFile xmlFile)) {
         return;
       }
-
-      XmlFile xmlFile = (XmlFile) psiFile;
 
       final XmlDocument document = xmlFile.getDocument();
       if (document == null) {

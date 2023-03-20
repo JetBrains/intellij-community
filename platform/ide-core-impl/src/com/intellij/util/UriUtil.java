@@ -1,18 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-
 public final class UriUtil {
-  public static final CharMatcher PARAM_CHAR_MATCHER = CharMatcher.anyOf("?#;");
+  private static final String URI_SEPARATOR_CHARS = "?#;";
 
   private UriUtil() {
   }
@@ -28,7 +24,7 @@ public final class UriUtil {
   }
 
   public static String trimParameters(@NotNull String url) {
-    int end = PARAM_CHAR_MATCHER.indexIn(url);
+    int end = Strings.indexOfAny(url, URI_SEPARATOR_CHARS);
     return end != -1 ? url.substring(0, end) : url;
   }
 
@@ -39,10 +35,10 @@ public final class UriUtil {
    */
   @NotNull
   public static Couple<String> splitScheme(@NotNull String url) {
-    ArrayList<String> list = Lists.newArrayList(Splitter.on(URLUtil.SCHEME_SEPARATOR).limit(2).split(url));
-    if (list.size() == 1) {
-      return Couple.of("", list.get(0));
+    int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
+    if (index == -1) {
+      return Couple.of("", url);
     }
-    return Couple.of(list.get(0), list.get(1));
+    return Couple.of(url.substring(0, index), url.substring(index+URLUtil.SCHEME_SEPARATOR.length()));
   }
 }

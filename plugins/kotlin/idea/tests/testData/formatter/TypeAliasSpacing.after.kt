@@ -36,3 +36,5 @@ object OO
 typealias L = Int
 
 internal typealias M = Int
+
+typealias N = String

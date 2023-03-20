@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.CommonBundle;
@@ -10,6 +10,7 @@ import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.java.JavaBundle;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -25,7 +26,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
@@ -144,7 +144,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     splitter.setSecondComponent(consoleView.getComponent());
     add(splitter, BorderLayout.CENTER);
 
-    new ListSpeedSearch<>(myThreadList).setComparator(new SpeedSearchComparator(false, true));
+    ListSpeedSearch.installOn(myThreadList).setComparator(new SpeedSearchComparator(false, true));
 
     updateThreadList();
 
@@ -324,6 +324,11 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(COMPARATOR == BY_TYPE ? AllIcons.ObjectBrowser.SortByType : AllIcons.ObjectBrowser.Sorted);
       e.getPresentation().setText(COMPARATOR == BY_TYPE ? JavaBundle.message("sort.threads.by.type") :
@@ -331,7 +336,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
   private static final class CopyToClipboardAction extends DumbAwareAction {
-    private static final NotificationGroup GROUP = NotificationGroup.toolWindowGroup("Analyze thread dump", ToolWindowId.RUN, false);
+    private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Analyze thread dump");
     private final List<? extends ThreadState> myThreadDump;
     private final Project myProject;
 
@@ -362,6 +367,11 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myFilterPanel.isVisible();
     }
@@ -386,6 +396,11 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return UISettings.getInstance().getState().getMergeEqualStackTraces();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

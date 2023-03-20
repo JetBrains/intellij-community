@@ -16,17 +16,15 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler, MultiCharQuoteHandler {
   private final TokenSet myConcatenableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
   private final TokenSet myAppropriateElementTypeForLiteral = TokenSet.orSet(
+    JavaDocTokenType.ALL_JAVADOC_TOKENS,
     ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, ElementType.TEXT_LITERALS,
     TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET, JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(ElementType.TEXT_LITERALS);
+    super(TokenSet.orSet(ElementType.TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)));
   }
 
   @Override

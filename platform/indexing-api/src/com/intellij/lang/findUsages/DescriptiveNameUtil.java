@@ -22,8 +22,7 @@ public final class DescriptiveNameUtil {
   public static @NlsSafe String getDescriptiveName(@NotNull PsiElement psiElement) {
     PsiUtilCore.ensureValid(psiElement);
 
-    if (psiElement instanceof PsiMetaOwner) {
-      PsiMetaOwner psiMetaOwner = (PsiMetaOwner)psiElement;
+    if (psiElement instanceof PsiMetaOwner psiMetaOwner) {
       PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) return getMetaDataName(metaData);
     }

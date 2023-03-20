@@ -2,15 +2,13 @@
 package com.intellij.analysis;
 
 import com.intellij.core.CoreDeprecatedMessagesBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated use other bundles ({@link AnalysisBundle}, {@link com.intellij.codeInsight.CodeInsightBundle}) instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public final class AnalysisScopeBundle {
   private AnalysisScopeBundle() {
   }

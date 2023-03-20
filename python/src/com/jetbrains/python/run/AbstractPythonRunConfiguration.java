@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
@@ -30,7 +31,6 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +48,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
+  private Sdk mySdk = null;
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
@@ -119,6 +120,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @NotNull
   @Override
   public final SettingsEditor<T> getConfigurationEditor() {
+    if (Registry.is("python.new.run.config", false) && isNewUiSupported()) {
+      // TODO: actually, we should return result of `PythonExtendedConfigurationEditor.create()` call, but it produces side effects
+      // investigation needed PY-17716
+      return createConfigurationEditor();
+    }
     final SettingsEditor<T> runConfigurationEditor = PythonExtendedConfigurationEditor.create(createConfigurationEditor());
 
     final SettingsEditorGroup<T> group = new SettingsEditorGroup<>();
@@ -131,6 +137,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
     return group;
+  }
+
+  protected boolean isNewUiSupported() {
+    return false;
   }
 
   protected abstract SettingsEditor<T> createConfigurationEditor();
@@ -189,6 +199,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   @Override
   public String getSdkHome() {
+    if (mySdk != null) {
+      return mySdk.getHomePath();
+    }
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
       final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
@@ -207,16 +220,23 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
       if (sdk == null) return null;
       sdkHome = sdk.getHomePath();
     }
+    else if (mySdk != null) {
+      sdkHome = mySdk.getHomePath();
+    }
     else {
       sdkHome = getSdkHome();
     }
     return sdkHome;
   }
 
+  @Override
   @Nullable
   public Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkUtil.findPythonSdk(getModule());
+    }
+    else if (mySdk != null) {
+      return mySdk;
     }
     else {
       return PythonSdkUtil.findSdkByPath(getSdkHome());
@@ -229,6 +249,12 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
     readEnvs(element);
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
+
+    final String sdkName = JDOMExternalizerUtil.readField(element, "SDK_NAME");
+    if (sdkName != null) {
+      mySdk = PythonSdkUtil.findSdkByKey(sdkName);
+    }
+
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     final String addContentRoots = JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS");
@@ -258,6 +284,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
     writeEnvs(element);
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
+    if (mySdk != null) {
+      JDOMExternalizerUtil.writeField(element, "SDK_NAME", mySdk.getName());
+    }
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
@@ -303,6 +332,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
+  public void setSdk(@Nullable Sdk sdk) {
+    mySdk = sdk;
+  }
+
+  @Override
   @Nullable
   @Transient
   public Module getModule() {
@@ -344,6 +378,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
     target.setSdkHome(source.getSdkHome());
+    target.setSdk(source.getSdk());
     target.setWorkingDirectory(source.getWorkingDirectory());
     target.setModule(source.getModule());
     target.setUseModuleSdk(source.isUseModuleSdk());
@@ -373,8 +408,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
    *
-   * @param commandLine
-   * @param sdkHome
    */
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -384,8 +417,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * Patches command line after virtualenv patchers.
    * Default implementation does nothing.
    *
-   * @param commandLine
-   * @param sdkHome
    */
   protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -394,8 +425,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Alters PATH so that a virtualenv is activated, if present.
    *
-   * @param commandLine
-   * @param sdk
    */
   protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
     PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);
@@ -462,11 +491,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   /**
    * Adds test specs (like method, class, script, etc) to list of runner parameters.
-   *
-   * @deprecated this method has been moved to {@link com.jetbrains.python.testing.PythonTestCommandLineStateBase}
+   * <p>
+   * To be deprecated.
+   * <p>
+   * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
     // By default we simply add them as arguments
     paramsGroup.addParameters(testSpecs);

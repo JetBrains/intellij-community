@@ -42,8 +42,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   public static PyType asPyType(@Nullable PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       final PsiClass psiClass = classType.resolve();
       if (psiClass != null) {
         return new PyJavaClassType(psiClass, false);
@@ -62,8 +61,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     if (index < 0) return null;
     final List<PyType> superMethodParameterTypes = new ArrayList<>();
     PySuperMethodsSearch.search(func, context).forEach(psiElement -> {
-      if (psiElement instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)psiElement;
+      if (psiElement instanceof PsiMethod method) {
         final PsiParameter[] psiParameters = method.getParameterList().getParameters();
         int javaIndex = method.hasModifierProperty(PsiModifier.STATIC) ? index : index-1; // adjust for 'self' parameter
         if (javaIndex < psiParameters.length) {

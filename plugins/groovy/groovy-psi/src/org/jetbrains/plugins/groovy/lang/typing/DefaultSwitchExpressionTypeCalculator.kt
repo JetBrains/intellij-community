@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement
@@ -18,15 +19,15 @@ class DefaultSwitchExpressionTypeCalculator : GrTypeCalculator<GrSwitchExpressio
 
   companion object {
     private fun getCaseSectionType(section : GrCaseSection) : PsiType {
-      val flow = ControlFlowBuilder().buildControlFlow(section)
-      val yields = ControlFlowUtils.collectYields(flow).takeIf(List<*>::isNotEmpty) ?: return PsiType.NULL
+      val flow = ControlFlowBuilder.buildControlFlow(section)
+      val yields = ControlFlowUtils.collectYields(flow.flow).takeIf(List<*>::isNotEmpty) ?: return PsiTypes.nullType()
       return TypesUtil.getLeastUpperBoundNullable(yields.map { stmt: GrStatement ->
         when (stmt) {
           is GrYieldStatement -> stmt.yieldedValue?.type
           is GrExpression -> stmt.type
-          else -> PsiType.NULL
+          else -> PsiTypes.nullType()
         }
-      }, section.manager) ?: PsiType.NULL
+      }, section.manager) ?: PsiTypes.nullType()
     }
   }
 }

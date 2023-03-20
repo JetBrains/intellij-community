@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public class EditorScrollingPositionKeeper implements Disposable {
    * Performs given operation, restoring editor scrolling position afterwards.
    */
   public static void perform(@Nullable Editor editor, boolean stopAnimation, @NotNull Runnable operation) {
-    if (editor == null) {
+    if (editor == null || editor instanceof ImaginaryEditor) {
       operation.run();
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.protocolReader
 
 import org.jetbrains.io.JsonReaderEx
@@ -62,7 +62,7 @@ internal fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter
   return typeToTypeHandler.get(aClass)!!
 }
 
-internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
+internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
   val processed = HashSet<Class<*>>()
   private val refs = ArrayList<TypeRef<*>>()
   val subtypeCasters = ArrayList<SubtypeCaster>()
@@ -135,7 +135,6 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
 
   fun getFieldTypeParser(member: KCallable<*>?, type: Type, isSubtyping: Boolean, method: Method?): ValueReader {
     if (type is Class<*>) {
-      @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
       return when {
         type == java.lang.Long.TYPE -> LONG_PARSER
         type == Integer.TYPE || type == Integer::class.java -> INTEGER_PARSER
@@ -149,7 +148,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
-            else if ((member?.returnType?.isMarkedNullable ?: false) || method.getAnnotation<Optional>(Optional::class.java) != null) {
+            else if ((member?.returnType?.isMarkedNullable == true) || method.getAnnotation<Optional>(Optional::class.java) != null) {
               return NULLABLE_STRING_PARSER
             }
           }
@@ -161,7 +160,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         type.isArray -> ArrayReader(getFieldTypeParser(null, type.componentType, false, null), false)
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
-          val ref = getTypeRef(type) ?: throw UnsupportedOperationException("Method return type $type (simple class) not supported")
+          val ref = getTypeRef(type)
           ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
         }
       }
@@ -188,7 +187,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
     }
   }
 
-  fun <T> getTypeRef(typeClass: Class<T>): TypeRef<T>? {
+  private fun <T> getTypeRef(typeClass: Class<T>): TypeRef<T> {
     val result = TypeRef(typeClass)
     refs.add(result)
     return result
@@ -211,9 +210,6 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         throw JsonProtocolModelParseException("Already has superclass ${result.typeClass.name}")
       }
       result = getTypeRef(param)
-      if (result == null) {
-        throw JsonProtocolModelParseException("Unknown base class ${param.name}")
-      }
     }
     return result
   }

@@ -12,8 +12,8 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
@@ -69,7 +69,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertTrue(orderEntries[0] is ModuleSourceOrderEntry)
   }
 
-  private fun checkSampleProjectConfiguration(storage: WorkspaceEntityStorage, projectDir: File) {
+  private fun checkSampleProjectConfiguration(storage: EntityStorage, projectDir: File) {
     val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
     val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
@@ -115,7 +115,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals("$projectUrl/out/test-util", utilJavaSettings.compilerOutputForTests?.url)
     val utilContentRoot = assertOneElement(utilModule.contentRoots.toList())
     assertEquals("$projectUrl/util", utilContentRoot.url.url)
-    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).url)
+    assertEquals("$projectUrl/util/exc", assertOneElement(utilContentRoot.excludedUrls).url.url)
     assertEquals(listOf("*.xml", "cvs"), utilContentRoot.excludedPatterns)
     val utilModuleSrc = assertOneElement(utilModule.sourceRoots.toList())
     assertEquals("$projectUrl/util/src", utilModuleSrc.url.url)
@@ -164,10 +164,12 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(5, innerChildren.size)
     assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library?.resolve(storage) == log4jModuleLibrary })
     assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library?.resolve(storage) == junitProjectLibrary })
-    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().filePath!!.url))
-    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().filePath!!.url))
+    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(
+      innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().filePath.url))
+    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(
+      innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().filePath.url))
     innerChildren.filterIsInstance<ExtractedDirectoryPackagingElementEntity>().single().let {
-      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.filePath!!.url))
+      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.filePath.url))
       assertEquals("/junit/", it.pathInArchive)
     }
 
@@ -200,7 +202,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
     assertEquals("erlang-include", sourceRoot.rootType)
-    assertNull(sourceRoot.asCustomSourceRoot())
+    assertNull(sourceRoot.customSourceRootProperties)
   }
 
   fun `test load facets`() {
@@ -235,10 +237,10 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
                     </configuration>""".trimIndent(), bar.configurationXmlTag)
   }
 
-  private fun loadProject(projectFile: File): WorkspaceEntityStorage {
-    val storageBuilder = WorkspaceEntityStorageBuilder.create()
+  private fun loadProject(projectFile: File): EntityStorage {
+    val storageBuilder = MutableEntityStorage.create()
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
-    return storageBuilder.toStorage()
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, storageBuilder, virtualFileManager)
+    return storageBuilder.toSnapshot()
   }
 }

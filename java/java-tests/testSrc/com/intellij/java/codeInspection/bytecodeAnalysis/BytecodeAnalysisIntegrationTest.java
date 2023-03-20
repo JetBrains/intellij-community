@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -44,9 +44,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author lambdamix
- */
 public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
   private static final String INFERRED_TEST_METHOD =
@@ -105,19 +102,21 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     Disposer.register(getTestRootDisposable(), () -> settings.resetEnabled(descriptor));
 
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
-                   "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
-                   "<b><i><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.Contract\"><code><span style=\"color:#808000;\">Contract</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"null,_,_->null\"</span><span style=\"\">)</span></i></b> \n" +
-                   "<span style=\"color:#000000;\">Throwable</span> <span style=\"color:#000000;\">createWithCause</span><span style=\"\">(</span><span style=\"color:#000000;\">Class</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000000;\">String</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000000;\">Throwable</span><span style=\"\">)</span></html>");
+                   """
+                     <html><i>Inferred</i> annotations available. Full signature:<p>
+                     <b><i><span style="color:#808000;">@</span><a href="psi_element://org.jetbrains.annotations.Contract"><code><span style="color:#808000;">Contract</span></code></a><span style="">(</span><span style="color:#008000;font-weight:bold;">"null,_,_->null"</span><span style="">)</span></i></b>\s
+                     <span style="color:#000000;">Throwable</span> <span style="color:#000000;">createWithCause</span><span style="">(</span><span style="color:#000000;">Class</span><span style="">,</span>
+                     <span style="color:#000000;">String</span><span style="">,</span>
+                     <span style="color:#000000;">Throwable</span><span style="">)</span></html>""");
   }
 
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
-                   "<html>External annotations available. Full signature:<p>\n" +
-                   "<span style=\"color:#000000;\">String</span><span style=\"\">(</span><b><span style=\"color:#808000;\">@</span><a href=\"psi_element://org.jetbrains.annotations.NotNull\"><code><span style=\"color:#808000;\">NotNull</span></code></a></b> <span style=\"color:#000080;font-weight:bold;\">char</span><span style=\"\">[]</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,</span>\n" +
-                   "<span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">)</span></html>");
+                   """
+                     <html>External annotations available. Full signature:<p>
+                     <span style="color:#000000;">String</span><span style="">(</span><b><span style="color:#808000;">@</span><a href="psi_element://org.jetbrains.annotations.NotNull"><code><span style="color:#808000;">NotNull</span></code></a></b> <span style="color:#000080;font-weight:bold;">char</span><span style="">[]</span><span style="">,</span>
+                     <span style="color:#000080;font-weight:bold;">int</span><span style="">,</span>
+                     <span style="color:#000080;font-weight:bold;">int</span><span style="">)</span></html>""");
   }
 
   private void checkHasGutter(String className, String expectedText) {
@@ -155,7 +154,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       }
     };
     rootPackage.accept(visitor);
-    System.err.println(ClassDataIndexer.ourIndexSizeStatistics);
+    LOG.debug(String.valueOf(ClassDataIndexer.ourIndexSizeStatistics));
     assertEmpty(diffs);
   }
 
@@ -211,7 +210,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
   }
 
-  public void testExportInferredAnnotations() {
+  @SuppressWarnings("unused")
+  public void _testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
 
@@ -320,7 +320,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
 
     @Override
-    public void visitPackage(PsiPackage aPackage) {
+    public void visitPackage(@NotNull PsiPackage aPackage) {
       if (!"org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
         for (PsiPackage subPackage : aPackage.getSubPackages(myScope)) {
           visitPackage(subPackage);

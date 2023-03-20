@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +26,12 @@ public interface JBCefOSRHandlerFactory {
    * Creates a lightweight component on which the browser will be rendered.
    *
    * @see JBCefBrowserBase#getComponent
+   *
+   * @param isMouseWheelEventEnabled If {@code true}, the browser will intercept mouse wheel events. Otherwise, the browser won't react
+   *                                 on scrolling, and the parent component will handle scroll events.
    */
-  default @NotNull JComponent createComponent() {
-    return new JBCefOsrComponent();
+  default @NotNull JComponent createComponent(boolean isMouseWheelEventEnabled) {
+    return new JBCefOsrComponent(isMouseWheelEventEnabled);
   }
 
   /**
@@ -46,7 +49,7 @@ public interface JBCefOSRHandlerFactory {
    *
    * @see GraphicsEnvironment#isHeadless
    */
-  default @NotNull Function<JComponent, Rectangle> createScreenBoundsProvider() {
+  default @NotNull Function<? super JComponent, ? extends Rectangle> createScreenBoundsProvider() {
     return component -> {
       if (component != null && !GraphicsEnvironment.isHeadless()) {
         try {

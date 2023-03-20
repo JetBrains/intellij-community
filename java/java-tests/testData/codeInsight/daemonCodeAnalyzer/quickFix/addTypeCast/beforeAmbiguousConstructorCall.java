@@ -1,4 +1,4 @@
-// "Cast 1st argument to 'Supplier<Tokenizer>'" "true"
+// "Cast 1st argument to 'Supplier<Tokenizer>'" "true-preview"
 import java.util.function.Function;
 import java.util.function.Supplier;
 

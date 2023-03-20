@@ -151,7 +151,6 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
    * for more details see https://www.mercurial-scm.org/pipermail/mercurial/2014-April/047031.html
    *
    * @param status status as returned by {@link #added(java.lang.String)} and other methods.
-   * @throws IOException
    */
   protected void verifyStatus(String... status) throws IOException {
     verifyStatus(myProjectDir, status);

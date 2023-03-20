@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -10,6 +10,8 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import org.junit.Assert
@@ -30,18 +32,24 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
   }
 
   override fun tearDown() {
-    @Suppress("LocalVariableName") val _previousLogDir = previousLogDir
-    super.tearDown()
-    IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
-    SystemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, _previousLogDir)
+    try {
+      IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
+      SystemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, previousLogDir)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   @TestFor(issues = ["IDEA-252012"])
   fun `test index diagnostics are laid out per project`() {
     myFixture.addFileToProject("A.java", "class A { void m() { } }")
-    val indexingDiagnosticDir = IndexDiagnosticDumper.indexingDiagnosticDir
+    val indexingDiagnosticDir = IndexDiagnosticDumperUtils.indexingDiagnosticDir
     val allDirs = Files.list(indexingDiagnosticDir).use { it.toList() }
-    val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumper.indexingDiagnosticDir)
+    val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir)
     assertEquals(listOf(projectDir), allDirs)
 /*
     for (dir in allDirs) {
@@ -73,13 +81,16 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         projectName = "projectName",
         times = JsonProjectIndexingHistoryTimes(
           "reason",
-          false,
+          ScanningType.PARTIAL,
           JsonDuration(123),
           JsonDuration(456),
           JsonDuration(789),
+          JsonDuration(110),
           JsonDuration(234),
           JsonDuration(345),
           JsonDuration(345),
+          false,
+          JsonDuration(),
           JsonDateTime(ZonedDateTime.now()),
           JsonDateTime(ZonedDateTime.now()),
           JsonDuration(333),
@@ -129,10 +140,12 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             11,
             55,
             33,
+            filesFullyIndexedByInfrastructureExtensions = listOf(PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java").presentablePath),
             JsonDuration(123),
             JsonDuration(456),
             JsonDuration(789),
             JsonDuration(222),
+            roots = listOf("<project root>"),
             scannedFiles = listOf(
               JsonScanningStatistics.JsonScannedFile(
                 path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
@@ -147,8 +160,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             providerName = "providerName",
             totalNumberOfIndexedFiles = 444,
             totalNumberOfFilesFullyIndexedByExtensions = 33,
-            totalIndexingTime = JsonDuration(123),
-            contentLoadingTime = JsonDuration(456),
+            totalIndexingVisibleTime = JsonDuration(123),
+            contentLoadingVisibleTime = JsonDuration(456),
             numberOfTooLargeForIndexingFiles = 1,
             slowIndexedFiles = listOf(
               JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
@@ -163,7 +176,9 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
                 path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
                 wasFullyIndexedByExtensions = true
               )
-            )
+            ),
+            isAppliedAllValuesSeparately = true,
+            separateApplyingIndexesVisibleTime = JsonDuration(362)
           )
         )
       )

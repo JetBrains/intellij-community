@@ -24,11 +24,10 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
   public IntentionAction @NotNull [] getQuickFixes(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return IntentionAction.EMPTY_ARRAY;
     PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiClass)) return IntentionAction.EMPTY_ARRAY;
+    if (!(parent instanceof PsiClass psiClass)) return IntentionAction.EMPTY_ARRAY;
 
     if (!PsiUtil.isPluginProject(element.getProject())) return IntentionAction.EMPTY_ARRAY;
 
-    PsiClass psiClass = (PsiClass)parent;
     if (InheritanceUtil.isInheritor(psiClass, LocalInspectionTool.class.getName())) {
       return new IntentionAction[]{new RegisterInspectionFix(psiClass, LocalInspectionEP.LOCAL_INSPECTION)};
     }

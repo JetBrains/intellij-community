@@ -2,8 +2,7 @@
 class C {
     int foo(int n, boolean b) {
         switch (n) {
-            case 1:
-            case 3:
+            case 1, 3:
                 if(b) {
                     return bar("A");
                 } else {

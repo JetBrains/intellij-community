@@ -67,6 +67,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testForIncrementExpressionAndBody() { doTest(); }
   public void testEmptyBeforeReturn() { doTest(); }
   public void testIf() { doTest(); }
+  public void testIfWithComment() { doTest(); }
   public void testIfWithoutParentheses() { doTest(); }
   public void testBeforeStatement() { doTest(); }
   public void testTry1() { doTest(); }
@@ -74,6 +75,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testBlock1() { doTest(); }
   public void testAfterFor() { doTest(); }
   public void testBeforeFor() { doTest(); }
+  public void testForSingleStatementInBody() { doTest(); }
+  public void testForEachSingleStatementInBody() { doTest(); }
+  public void testForEachNextStatementNotIndented() { doTest(); }
   public void testAtBlockEnd() { doTest(); }
   public void testForceBlock() { doTest(); }
   public void testElseIf() { doTest(); }
@@ -81,6 +85,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIncompleteElseIf() { doTest(); }
   public void testField() { doTest(); }
   public void testMethod() { doTest(); }
+  public void testLikelyField() { doTest(); }
+  public void testVoidMethodIncomplete() { doTest(); }
+  public void testFieldWithEquals() { doTest(); }
   public void testClass() { doTest(); }
   public void testInnerEnumBeforeMethod() { doTest(); }
   public void testInnerEnumBeforeMethodWithSpace() { doTest(); }
@@ -113,6 +120,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteIfNextLineBraceStyle2() { myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE; doTest(); }
   public void testSCR36110() { doTest(); }
   public void testSCR37331() { doTest(); }
+  public void testGenericBeforeVar() { doTest(); }
 
   public void testIDEADEV434() {
     mySettings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
@@ -132,6 +140,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSwitchKeywordWithCondition() { doTest(); }
   public void testSwitchBraces() { doTest(); }
   public void testCaseColon() { doTest(); }
+  public void testMultipleCasesColon() { doTest(); }
   public void testDefaultColon() { doTest(); }
   public void testNewInParentheses() { doTest(); }
   public void testIDEADEV20713() { doTest(); }
@@ -178,6 +187,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testRecord() { doTest(); }
   public void testRecordWithComponent() { doTest(); }
   public void testRecordWithComponentNoBody() { doTest(); }
+  public void testClassBeforeRecord() { doTest(); }
   public void testVarargMethod() { doTest(); }
   public void testVarargMethod2() { doTest(); }
   public void testVarargMethod3() { doTest(); }
@@ -205,6 +215,10 @@ public class CompleteStatementTest extends EditorActionTestCase {
     doTest();
   }
   public void testSwitchAtTheEndOfClass() { doTest(); }
+  public void testAddMissingLambdaBody() { doTest(); }
+  public void testAddMissingLambdaBody2() { doTest(); }
+  public void testBlockInSwitchRule() { doTest(); }
+  public void testSwitchAddArrow() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

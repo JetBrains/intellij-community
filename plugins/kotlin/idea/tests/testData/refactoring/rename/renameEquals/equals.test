@@ -4,5 +4,6 @@
   "oldName": "equals",
   "newName": "foo",
   "mainFile": "equals.kt",
-  "skipSubstitute": true
+  "skipSubstitute": true,
+  "enabledInK2": true
 }

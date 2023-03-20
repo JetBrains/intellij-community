@@ -1,4 +1,4 @@
-// "Annotate annotation 'Subst' as @Retention(RetentionPolicy.RUNTIME)" "false"
+// "Annotate annotation 'Subst' as '@Retention(RetentionPolicy.RUNTIME)'" "false"
 import org.intellij.lang.annotations.Subst;
 
 import java.lang.reflect.Method;

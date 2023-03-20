@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -11,8 +11,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -62,6 +62,11 @@ public class PinActiveTabAction extends DumbAwareAction {
     Toggleable.setSelected(e.getPresentation(), selected);
     e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
     e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected Handler getHandler(@NotNull AnActionEvent e) {
@@ -146,8 +151,7 @@ public class PinActiveTabAction extends DumbAwareAction {
 
   @Nullable
   private static VirtualFile getFileInWindow(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) file = window.getSelectedFile();
+    VirtualFile file = window.getSelectedFile();
     if (file != null && window.isFileOpen(file)) return file;
     return null;
   }

@@ -50,7 +50,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
 
   @NotNull
   @Override
-  public PsiFieldStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
+  public PsiFieldStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
 
     boolean isDeprecatedByComment = false;

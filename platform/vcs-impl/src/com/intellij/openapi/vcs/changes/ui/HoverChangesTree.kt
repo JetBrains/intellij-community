@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClickListener
@@ -20,31 +19,30 @@ import javax.swing.JTree
 import javax.swing.SwingConstants
 import javax.swing.tree.TreePath
 
-abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean, highlightProblems: Boolean)
-  : ChangesTree(project, showCheckboxesBoolean, highlightProblems) {
+abstract class HoverChangesTree(val tree: ChangesTree) {
 
-  private var hoverData: HoverData? = null
+  private var _hoverData: HoverData? = null
     set(value) {
       if (field != value) {
         field = value
-        repaint()
+        tree.repaint()
       }
     }
 
-  init {
-    val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, highlightProblems)
-    setCellRenderer(MyTreeRenderer(nodeRenderer))
+  fun install() {
+    val nodeRenderer = ChangesBrowserNodeRenderer(tree.project, { tree.isShowFlatten }, tree.isHighlightProblems)
+    tree.cellRenderer = HoverChangesTreeRenderer(nodeRenderer)
     MyMouseListener().also {
-      addMouseMotionListener(it)
-      addMouseListener(it)
+      tree.addMouseMotionListener(it)
+      tree.addMouseListener(it)
     }
-    MyClickListener().installOn(this)
+    MyClickListener().installOn(tree)
   }
 
   abstract fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon?
 
   private fun getHoverData(point: Point): HoverData? {
-    val path = TreeUtil.getPathForLocation(this, point.x, point.y) ?: return null
+    val path = TreeUtil.getPathForLocation(tree, point.x, point.y) ?: return null
     val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return null
     val hoverIcon = getHoverIcon(node) ?: return null
     val componentBounds = getComponentBounds(path, hoverIcon.icon) ?: return null
@@ -53,7 +51,7 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
   }
 
   private fun getComponentBounds(path: TreePath, icon: Icon): Rectangle? {
-    val bounds = getPathBounds(path) ?: return null
+    val bounds = tree.getPathBounds(path) ?: return null
     val componentWidth = getComponentWidth(icon)
     bounds.setLocation(getComponentXCoordinate(componentWidth), bounds.y)
     bounds.setSize(componentWidth, bounds.height)
@@ -61,17 +59,14 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
   }
 
   private fun getComponentXCoordinate(componentWidth: Int): Int {
-    return visibleRect.width + visibleRect.x - componentWidth
+    return tree.visibleRect.width + tree.visibleRect.x - componentWidth
   }
 
   private fun getComponentWidth(icon: Icon): Int {
-    val scrollBar = ComponentUtil.getScrollPane(this)?.verticalScrollBar
-    val hasTransparentScrollbar = scrollBar != null && scrollBar.isVisible && !scrollBar.isOpaque
-    if (hasTransparentScrollbar) return icon.iconWidth + UIUtil.getScrollBarWidth()
-    return icon.iconWidth
+    return icon.iconWidth + tree.getTransparentScrollbarWidth()
   }
 
-  private class MyTreeRenderer(renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {
+  private inner class HoverChangesTreeRenderer(renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {
     private var floatingIcon: FloatingIcon? = null
 
     override fun paint(g: Graphics) {
@@ -89,30 +84,30 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
                                               row: Int,
                                               hasFocus: Boolean): Component {
       val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-      floatingIcon = prepareIcon(tree as HoverChangesTree, value as ChangesBrowserNode<*>, row, selected, hasFocus)
+      floatingIcon = prepareIcon(tree as ChangesTree, value as ChangesBrowserNode<*>, row, selected, hasFocus)
       return rendererComponent
     }
 
-    fun prepareIcon(tree: HoverChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean, hasFocus: Boolean): FloatingIcon? {
+    fun prepareIcon(tree: ChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean, hasFocus: Boolean): FloatingIcon? {
       if (tree.expandableItemsHandler.expandedItems.contains(row)) return null
 
-      val hoverData = tree.hoverData
+      val hoverData = _hoverData
       val hovered = hoverData?.node == node
       if (!hovered && !(selected && hasFocus)) return null
 
       val baseIcon = when {
         hovered -> hoverData!!.hoverIcon.icon
-        selected -> tree.getHoverIcon(node)?.icon ?: return null
+        selected -> getHoverIcon(node)?.icon ?: return null
         else -> return null
       }
 
       val foreground = when {
         hovered && hoverData!!.isOverOperationIcon -> baseIcon
-        else -> IconLoader.getDisabledIcon(baseIcon, this)
+        else -> IconLoader.getDisabledIcon(baseIcon)
       }
 
-      val componentWidth = tree.getComponentWidth(foreground)
-      val componentHeight = if (tree.isFixedRowHeight) tree.getRowHeight() else preferredSize.height
+      val componentWidth = getComponentWidth(foreground)
+      val componentHeight = tree.getRowHeight(this)
       val background = ColorIcon(componentWidth, componentHeight, componentWidth, componentHeight,
                                  tree.getBackground(row, selected), false)
 
@@ -121,18 +116,13 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
         setIcon(foreground, 1, SwingConstants.WEST)
       }
 
-      val location = tree.getComponentXCoordinate(componentWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
+      val location = getComponentXCoordinate(componentWidth) - (TreeUtil.getNodeRowX(tree, row) + tree.insets.left)
 
       return FloatingIcon(icon, location)
     }
-
-    private fun Tree.getBackground(row: Int, selected: Boolean): Color {
-      if (selected) return RenderingUtil.getBackground(this, selected)
-      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: RenderingUtil.getBackground(this, selected)
-    }
-
-    private data class FloatingIcon(val icon: Icon, val location: Int)
   }
+
+  private data class FloatingIcon(val icon: Icon, val location: Int)
 
   private inner class MyMouseListener : MouseAdapter() {
     override fun mouseMoved(e: MouseEvent) {
@@ -144,14 +134,14 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
     }
 
     private fun setHoverData(data: HoverData?) {
-      hoverData = data
+      _hoverData = data
       if (data != null && data.isOverOperationIcon) {
-        toolTipText = data.hoverIcon.tooltip
-        expandableItemsHandler.isEnabled = false
+        tree.toolTipText = data.hoverIcon.tooltip
+        tree.expandableItemsHandler.isEnabled = false
       }
       else {
-        toolTipText = null
-        expandableItemsHandler.isEnabled = true
+        tree.toolTipText = null
+        tree.expandableItemsHandler.isEnabled = true
       }
     }
   }
@@ -168,6 +158,24 @@ abstract class HoverChangesTree(project: Project, showCheckboxesBoolean: Boolean
   private data class HoverData(val node: ChangesBrowserNode<*>,
                                val isOverOperationIcon: Boolean,
                                val hoverIcon: HoverIcon)
+
+  companion object {
+    fun Tree.getBackground(row: Int, selected: Boolean): Color {
+      if (selected) return RenderingUtil.getBackground(this, true)
+      return getPathForRow(row)?.let { path -> getPathBackground(path, row) } ?: RenderingUtil.getBackground(this, false)
+    }
+
+    fun ChangesTree.getRowHeight(renderer: ChangesTreeCellRenderer): Int {
+      return if (isFixedRowHeight) rowHeight else renderer.preferredSize.height
+    }
+
+    fun Component.getTransparentScrollbarWidth(): Int {
+      val scrollBar = ComponentUtil.getScrollPane(this)?.verticalScrollBar
+      val hasTransparentScrollbar = scrollBar != null && scrollBar.isVisible && !scrollBar.isOpaque
+      if (hasTransparentScrollbar) return UIUtil.getScrollBarWidth()
+      return 0
+    }
+  }
 }
 
 /**

@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoryConverter;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface MavenDomMirror extends MavenDomElement {
   @NotNull
   @Convert(MavenRepositoryConverter.Url.class)

@@ -61,7 +61,9 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     String id = ObjectUtils.chooseNotNull(viewId, projectView.getDefaultViewId());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       AbstractProjectViewPane pane = projectView.getProjectViewPaneById(id);
-      pane.select(toSelect, virtualFile, requestFocus);
+      if (pane != null) {
+        pane.select(toSelect, virtualFile, requestFocus);
+      }
       return ActionCallback.DONE;
     }
 

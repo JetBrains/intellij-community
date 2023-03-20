@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
-import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector;
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunTargetValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
@@ -18,9 +18,9 @@ public class TargetCounterUsagesCollector extends CounterUsagesCollector {
   private static final EventId1<String> TARGET_CREATION_SUCCEEDED_EVENT;
 
   static {
-    GROUP = new EventLogGroup("run.target.events", 1);
-    StringEventField targetTypeField = EventFields.StringValidatedByCustomRule("type",
-                                                                               RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
+    GROUP = new EventLogGroup("run.target.events", 2);
+    StringEventField targetTypeField =
+      EventFields.StringValidatedByCustomRule("type", RunTargetValidator.class);
     TARGET_CREATION_BEGAN_EVENT = GROUP.registerEvent("creation.began", targetTypeField);
     TARGET_CREATION_CANCELLED_EVENT = GROUP.registerEvent("creation.cancelled", targetTypeField, EventFields.Int("step_number"));
     TARGET_CREATION_SUCCEEDED_EVENT = GROUP.registerEvent("creation.succeeded", targetTypeField);

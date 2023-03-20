@@ -41,8 +41,7 @@ public class DesignerEditorState implements FileEditorState {
     if (this == object) {
       return true;
     }
-    if (object instanceof DesignerEditorState) {
-      DesignerEditorState state = (DesignerEditorState)object;
+    if (object instanceof DesignerEditorState state) {
       return myModificationStamp == state.myModificationStamp && myZoom == state.myZoom;
     }
     return false;

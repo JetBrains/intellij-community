@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.util.BooleanFunction;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -22,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private final PopupComponentAdapter<T> myChooserComponent;
@@ -53,6 +57,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private final List<JBPopupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private @NlsContexts.PopupAdvertisement String myAd;
+  private JComponent myAdvertiser;
+
   private Dimension myMinSize;
   private ActiveComponent myCommandButton;
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<>();
@@ -60,11 +66,13 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private boolean myAutoselectOnMouseMove = true;
 
   private Function<? super T, String> myItemsNamer;
+  private boolean myFilterAlwaysVisible;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
+  private boolean myCancelOnOtherWindowOpen = true;
   private boolean myUseForXYLocation;
   private @Nullable Processor<? super JBPopup> myCouldPin;
   private int myVisibleRowCount = 15;
@@ -92,7 +100,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default void autoSelect() {}
     default void setSelectionMode(int selection) {}
 
-    default ListComponentUpdater getBackgroundUpdater() {
+    default GenericListComponentUpdater<T> getBackgroundUpdater() {
       return null;
     }
 
@@ -109,7 +117,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     }
 
     @Nullable
-    default BooleanFunction<KeyEvent> getKeyEventHandler() {
+    default Predicate<KeyEvent> getKeyEventHandler() {
       return null;
     }
 
@@ -120,6 +128,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     default JComponent buildFinalComponent() {
       return getComponent();
     }
+
+    default void setFixedRendererSize(@NotNull Dimension dimension) {}
   }
 
   @Override
@@ -277,6 +287,16 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
+  public PopupChooserBuilder<T> setFilterAlwaysVisible(boolean state) {
+    myFilterAlwaysVisible = state;
+    return this;
+  }
+
+  public boolean isFilterAlwaysVisible() {
+    return myFilterAlwaysVisible;
+  }
+
+  @Override
   public PopupChooserBuilder<T> setNamerForFiltering(Function<? super T, String> namer) {
     myItemsNamer = namer;
     return this;
@@ -309,12 +329,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public @NotNull JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
-    if (!myForceMovable && myTitle != null) {
-      JLabel label = new JLabel(myTitle);
-      label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-      label.setHorizontalAlignment(SwingConstants.CENTER);
-      contentPane.add(label, BorderLayout.NORTH);
-    }
 
     if (myAutoselect) {
       myChooserComponent.autoSelect();
@@ -377,6 +391,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       addEastComponentToContentPane(contentPane, myEastComponent);
     }
 
+    if (ExperimentalUI.isNewUI()) {
+      applyInsets(contentComponent);
+    }
+
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(contentPane, myPreferableFocusComponent);
     for (JBPopupListener each : myListeners) {
       builder.addListener(each);
@@ -387,15 +405,16 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)
-      .setTitle(myForceMovable ? myTitle : null)
+      .setTitle(myTitle)
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
       .setCancelKeyEnabled(myCancelKeyEnabled)
       .setAdText(myAd, myAdAlignment)
+      .setAdvertiser(myAdvertiser)
       .setKeyboardActions(myKeyboardActions)
       .setMayBeParent(myMayBeParent)
       .setLocateWithinScreenBounds(true)
-      .setCancelOnOtherWindowOpen(true)
+      .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
       .setModalContext(myModalContext)
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
       .setCancelOnClickOutside(myCancelOnClickOutside)
@@ -404,9 +423,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     if (myCancelCallback != null) {
       builder.setCancelCallback(myCancelCallback);
     }
-    BooleanFunction<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
+    Predicate<KeyEvent> keyEventHandler = myChooserComponent.getKeyEventHandler();
     if (keyEventHandler != null) {
-      builder.setKeyEventHandler(keyEventHandler);
+      builder.setKeyEventHandler(keyEventHandler::test);
     }
 
     if (myCommandButton != null) {
@@ -522,6 +541,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
+  public PopupChooserBuilder<T> setAdvertiser(@Nullable JComponent advertiser) {
+    myAdvertiser = advertiser;
+    return this;
+  }
+
+  @Override
   public PopupChooserBuilder<T> setAdText(String ad, int alignment) {
     myAd = ad;
     myAdAlignment = alignment;
@@ -531,6 +556,12 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public PopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
     myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
+    return this;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> setCancelOnOtherWindowOpen(boolean cancelOnWindow) {
+    myCancelOnOtherWindowOpen = cancelOnWindow;
     return this;
   }
 
@@ -565,7 +596,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> withHintUpdateSupply() {
-    HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent.getComponent());
+    HintUpdateSupply.installDataContextHintUpdateSupply(myChooserComponent.getComponent());
     addCancelCallback(() -> {
       HintUpdateSupply.hideHint(myChooserComponent.getComponent());
       return true;
@@ -585,12 +616,28 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     return this;
   }
 
+  @Override
+  public IPopupChooserBuilder<T> withFixedRendererSize(@NotNull Dimension dimension) {
+    myChooserComponent.setFixedRendererSize(dimension);
+    return this;
+  }
+
   public int getVisibleRowCount() {
     return myVisibleRowCount;
   }
 
   @Override
-  public ListComponentUpdater getBackgroundUpdater() {
+  public GenericListComponentUpdater<T> getBackgroundUpdater() {
     return myChooserComponent.getBackgroundUpdater();
+  }
+
+  /**
+   * Applies borders according to contentComponent. Can be extended later for different types of component
+   */
+  private void applyInsets(JComponent contentComponent) {
+    if (contentComponent instanceof ListWithFilter<?> listWithFilter) {
+      Insets insets = PopupUtil.getListInsets(StringUtil.isNotEmpty(myTitle), StringUtil.isNotEmpty(myAd));
+      listWithFilter.getList().setBorder(new EmptyBorder(insets));
+    }
   }
 }

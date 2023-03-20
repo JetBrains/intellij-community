@@ -81,6 +81,7 @@ class BaseCodeExecutor(object):
             pass
 
         more = False
+        exception_occurred = False
         try:
             sys.stdin = self.create_std_in(debugger, original_in)
             try:

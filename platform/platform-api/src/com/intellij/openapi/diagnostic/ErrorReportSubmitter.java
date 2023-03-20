@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,8 +89,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("ALL")
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
     throw new UnsupportedOperationException("'" + getClass().getName() + "' doesn't implement exception submitter API");

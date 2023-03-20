@@ -6,11 +6,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This filters can be used to prevent error highlighting (invalid code, unresolved references etc.) in files outside of project scope.
- *
  * Filter implementations should be permissive - i.e. should prevent highlighting only for files it absolutely knows about,
  * and return true otherwise.
  */
@@ -27,18 +25,15 @@ public abstract class ProblemHighlightFilter {
     return shouldHighlight(psiFile);
   }
 
-  public static boolean shouldHighlightFile(@Nullable final PsiFile psiFile) {
+  public static boolean shouldHighlightFile(@NotNull final PsiFile psiFile) {
     return SlowOperations.allowSlowOperations(() -> shouldProcess(psiFile, true));
   }
 
-  public static boolean shouldProcessFileInBatch(@Nullable final PsiFile psiFile) {
+  public static boolean shouldProcessFileInBatch(@NotNull final PsiFile psiFile) {
     return shouldProcess(psiFile, false);
   }
 
-  private static boolean shouldProcess(PsiFile psiFile, boolean onTheFly) {
-    if (psiFile == null) return true;
-
-    return !ContainerUtil
-      .exists(EP_NAME.getExtensionList(), filter -> onTheFly ? !filter.shouldHighlight(psiFile) : !filter.shouldProcessInBatch(psiFile));
+  private static boolean shouldProcess(@NotNull PsiFile psiFile, boolean onTheFly) {
+    return ContainerUtil.all(EP_NAME.getExtensionList(), filter -> onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile));
   }
 }

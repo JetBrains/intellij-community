@@ -22,9 +22,6 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
 import com.intellij.xml.XmlBundle
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel
 
@@ -42,23 +39,21 @@ class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
       indent {
         row(XmlBundle.message("settings.levels.to.highlight")) {
           spinner(1..50)
-            .bindIntValue({ options.tagTreeHighlightingLevelCount }, { options.tagTreeHighlightingLevelCount = it })
+            .bindIntValue(options::getTagTreeHighlightingLevelCount, options::setTagTreeHighlightingLevelCount)
             .onApply { clearTagTreeHighlighting() }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
           cell()
         }.layout(RowLayout.PARENT_GRID)
-          .enabledIf(enable.selected)
         row(XmlBundle.message("settings.opacity")) {
           spinner(0.0..1.0, step = 0.05)
             .bind({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
-              PropertyBinding(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
+                  MutableProperty(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
             .onApply { clearTagTreeHighlighting() }
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
           cell()
         }.layout(RowLayout.PARENT_GRID)
-          .enabledIf(enable.selected)
           .bottomGap(BottomGap.SMALL)
-      }
+      }.enabledIf(enable.selected)
     }
   }
 

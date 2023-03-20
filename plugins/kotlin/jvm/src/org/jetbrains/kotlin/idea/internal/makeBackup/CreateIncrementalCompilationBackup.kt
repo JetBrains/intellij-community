@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.internal.makeBackup
 
@@ -6,20 +6,23 @@ import com.intellij.compiler.server.BuildManager
 import com.intellij.history.core.RevisionsCollector
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.history.integration.patches.PatchCreator
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.WaitForProgressToShow
 import com.intellij.util.io.ZipUtil
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -118,7 +121,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
         indicator.fraction = PATCHES_FRACTION
 
         val projectSystemDir = File(backupDir, "project-system")
-        FileUtil.copyDir(BuildManager.getInstance().getProjectSystemDirectory(project)!!, projectSystemDir)
+        FileUtil.copyDir(BuildManager.getInstance().getProjectSystemDirectory(project), projectSystemDir)
 
         indicator.fraction = PATCHES_FRACTION + LOGS_FRACTION + PROJECT_SYSTEM_FRACTION
     }
@@ -175,13 +178,18 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
 
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(
             {
-                RevealFileAction.showDialog(
-                    project,
-                    KotlinJvmBundle.message("successfully.created.backup.0", backupFile.absolutePath),
-                    KotlinJvmBundle.message("created.backup"),
-                    backupFile,
-                    null
-                )
+                val confirmed =
+                    okCancel(
+                        KotlinJvmBundle.message("created.backup"),
+                        KotlinJvmBundle.message("successfully.created.backup.0", backupFile.absolutePath)
+                    )
+                    .yesText(RevealFileAction.getActionName(null))
+                    .noText(IdeBundle.message("action.close"))
+                    .icon(Messages.getInformationIcon())
+                    .ask(project)
+                if (confirmed) {
+                    RevealFileAction.openFile(backupFile)
+                }
             }, null, project
         )
     }

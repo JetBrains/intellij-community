@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
-/**
- * @author ilyas
- */
 class IntroduceVariableTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

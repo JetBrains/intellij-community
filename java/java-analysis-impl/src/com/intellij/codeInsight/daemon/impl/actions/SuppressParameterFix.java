@@ -28,9 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   private String myAlternativeID;
 
@@ -62,7 +59,7 @@ public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     return false;
   }
 

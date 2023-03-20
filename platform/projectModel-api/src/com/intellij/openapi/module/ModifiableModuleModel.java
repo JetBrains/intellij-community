@@ -139,8 +139,20 @@ public interface ModifiableModuleModel {
 
   String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
+  /**
+   * Returns {@code true} if at least one of the modules has an explicitly specified module group. Note that explicit module groups are 
+   * replaced by automatic grouping, so this method is left for compatibility with some old projects only.
+   */
+  @ApiStatus.Internal
   boolean hasModuleGroups();
 
+  /**
+   * Set or remove explicit module group for {@code module}.
+   * @deprecated explicit module groups are replaced by automatic module grouping accordingly to qualified names of modules 
+   * ([IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details), so this method must not be used anymore, group names 
+   * must be prepended to the module name, separated by dots, instead.
+   */
+  @Deprecated
   void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath);
 
   @NotNull

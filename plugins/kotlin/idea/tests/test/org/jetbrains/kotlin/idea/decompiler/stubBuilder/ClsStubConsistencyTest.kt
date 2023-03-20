@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.indexing.FileContentImpl
-import org.jetbrains.kotlin.idea.decompiler.classFile.KotlinClsStubBuilder
-import org.jetbrains.kotlin.idea.decompiler.classFile.buildDecompiledTextForClassFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.buildDecompiledTextForClassFile
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
@@ -31,7 +31,7 @@ class ClsStubConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
         Assert.assertEquals(expectedText, fileStub.serializeToString())
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testConsistency() {
         doTest(ClassId.topLevel(FqName("kotlin.collections.CollectionsKt")))

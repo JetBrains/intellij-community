@@ -1,4 +1,9 @@
 public class ModRange {
+  // IDEA-309609
+  boolean negativeNumber(int a) {
+    return a >= 0 && (-11 % a == -2);
+  }
+
   void testMult(int x, int y, boolean b) {
     if (<warning descr="Condition 'x * 2 == y * 2 + 1' is always 'false'">x * 2 == y * 2 + 1</warning>) {}
     if (x * 3 == y * 3 + 1) {} // possible through overflow

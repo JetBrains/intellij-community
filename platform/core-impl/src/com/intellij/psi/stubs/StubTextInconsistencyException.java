@@ -21,9 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class StubTextInconsistencyException extends RuntimeException implements ExceptionWithAttachments {
   private final String myStubsFromText;
   private final String myStubsFromPsi;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -28,10 +28,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.ByteSequence;
@@ -146,7 +143,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
         }, project.getDisposed());
       }
     });
-    messageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    messageBusConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -328,10 +325,6 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       if (icon != null) {
         data.setIcon(icon);
       }
-    }
-
-    @Override
-    public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
     }
 
     @Override

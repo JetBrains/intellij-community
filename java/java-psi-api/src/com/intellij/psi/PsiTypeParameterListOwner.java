@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a PSI element (class, interface, method or constructor) which can own a type
  * parameter list.
- *
- * @author dsl
  */
 public interface PsiTypeParameterListOwner extends PsiJvmMember, JvmTypeParametersOwner {
   /**

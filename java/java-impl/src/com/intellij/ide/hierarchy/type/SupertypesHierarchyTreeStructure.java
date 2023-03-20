@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -23,8 +23,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)element;
+    if (element instanceof PsiClass psiClass) {
       PsiClass[] supers = getSupers(psiClass);
       List<HierarchyNodeDescriptor> descriptors = new ArrayList<>();
       PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
@@ -33,7 +32,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
           descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aSuper, false));
         }
       }
-      return descriptors.toArray(new HierarchyNodeDescriptor[0]);
+      return descriptors.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
     } else if (element instanceof PsiFunctionalExpression) {
       PsiClass functionalInterfaceClass = LambdaUtil.resolveFunctionalInterfaceClass((PsiFunctionalExpression)element);
       if (functionalInterfaceClass != null) {

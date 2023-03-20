@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-public class StringPatternUtil {
+public final class StringPatternUtil {
   @NotNull
   public static StringPattern matchesBrics(StringPattern pattern, @NonNls @NotNull final String s) {
     final String escaped = StringUtil.escapeToRegexp(s);

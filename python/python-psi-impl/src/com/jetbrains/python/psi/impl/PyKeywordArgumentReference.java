@@ -18,12 +18,17 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.KeywordArgumentCompletionUtil;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,24 +65,18 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     if (!(call instanceof PyCallExpression)) {
       return ResolveResult.EMPTY_ARRAY;
     }
-    final PyExpression callee = ((PyCallExpression)call).getCallee();
-    if (callee == null) return ResolveResult.EMPTY_ARRAY;
-    final PsiPolyVariantReference calleeReference = (PsiPolyVariantReference)callee.getReference();
-    if (calleeReference == null) return ResolveResult.EMPTY_ARRAY;
-    final ResolveResult[] calleeCandidates = calleeReference.multiResolve(incompleteCode);
+
     List<ResolveResult> resultList = new ArrayList<>();
-    for (ResolveResult calleeCandidate : calleeCandidates) {
-      if (!calleeCandidate.isValidResult()) continue;
-      final PsiElement element = calleeCandidate.getElement();
-      if (element == null) continue;
-      final PyFunction calleeFunction = resolveToFunction(element, new HashSet<>());
-      if (calleeFunction != null) {
-        final PsiElement result = calleeFunction.getParameterList().findParameterByName(keyword);
-        if (result != null) {
-          resultList.add(new PsiElementResolveResult(result));
-        }
-      }
-    }
+    TypeEvalContext evalCtx = TypeEvalContext.codeInsightFallback(call.getProject());
+    StreamEx.of(((PyCallExpression)call).multiResolveCallee(PyResolveContext.defaultContext(evalCtx)))
+      .map(it -> it.getParameters(evalCtx))
+      .nonNull()
+      .flatMap(it -> StreamEx.of(it))
+      .filter(it -> keyword.equals(it.getName()))
+      .map(it -> it.getDeclarationElement())
+      .nonNull()
+      .forEach(it -> resultList.add(new PsiElementResolveResult(it)));
+
     return resultList.toArray(ResolveResult.EMPTY_ARRAY);
   }
 

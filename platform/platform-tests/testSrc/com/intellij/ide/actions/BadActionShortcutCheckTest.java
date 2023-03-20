@@ -21,7 +21,7 @@ public class BadActionShortcutCheckTest extends LightPlatformTestCase {
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processWarn(@NotNull String category, String message, Throwable t) {
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
         myLoggedWarnings.add(message);
         return super.processWarn(category, message, t);
       }

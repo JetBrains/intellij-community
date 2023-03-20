@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.model.Pointer
 import com.intellij.navigation.ItemPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.api.RenameTarget
@@ -34,13 +35,15 @@ internal class RenameTarget2UsageTarget(
 
   private fun computeItemPresentation(target: RenameTarget): ItemPresentation = object : ItemPresentation {
 
-    override fun getIcon(unused: Boolean): Icon? = target.presentation.icon
+    private val presentation: TargetPresentation = target.presentation()
 
-    override fun getPresentableText(): String? = RefactoringBundle.message(
-      "rename.target.text.0.1", target.presentation.presentableText, newName
+    override fun getIcon(unused: Boolean): Icon? = presentation.icon
+
+    override fun getPresentableText(): String = RefactoringBundle.message(
+      "rename.target.text.0.1", presentation.presentableText, newName
     )
 
-    override fun getLocationString(): String? = target.presentation.locationText
+    override fun getLocationString(): String? = presentation.locationText
   }
 
 

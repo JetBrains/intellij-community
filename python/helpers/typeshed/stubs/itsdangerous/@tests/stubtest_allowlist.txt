@@ -1,8 +1,0 @@
-itsdangerous.BadData.message
-itsdangerous.JSONWebSignatureSerializer.__init__
-itsdangerous.JSONWebSignatureSerializer.make_signer
-itsdangerous.Serializer.__init__
-itsdangerous.SigningAlgorithm
-itsdangerous.TimedJSONWebSignatureSerializer.__init__
-itsdangerous.TimedSerializer.loads
-itsdangerous.TimedSerializer.loads_unsafe

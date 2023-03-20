@@ -16,9 +16,6 @@ import com.intellij.util.ref.GCWatcher;
 
 import java.io.File;
 
-/**
- *  @author dsl
- */
 public class TypesTest extends GenericsTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -379,7 +376,7 @@ public class TypesTest extends GenericsTestCase {
     assertFalse(extendsWildcard.isSuper());
     assertEquals("Y", extendsWildcard.getBound().getCanonicalText());
     assertEquals("Y", extendsWildcard.getExtendsBound().getCanonicalText());
-    assertEquals(extendsWildcard.getSuperBound(), PsiType.NULL);
+    assertEquals(extendsWildcard.getSuperBound(), PsiTypes.nullType());
 
     // super wildcard test
     assertFalse(superWildcard.isExtends());
@@ -393,7 +390,7 @@ public class TypesTest extends GenericsTestCase {
     assertFalse(unboundedWildcard.isSuper());
     assertNull(unboundedWildcard.getBound());
     assertEquals(unboundedWildcard.getExtendsBound(), javaLangObject);
-    assertEquals(unboundedWildcard.getSuperBound(), PsiType.NULL);
+    assertEquals(unboundedWildcard.getSuperBound(), PsiTypes.nullType());
   }
 
   public void testWildcardTypesAssignable() {
@@ -427,20 +424,20 @@ public class TypesTest extends GenericsTestCase {
   public void testBinaryNumericPromotion() {
     PsiElementFactory factory = myJavaFacade.getElementFactory();
     final PsiExpression conditional = factory.createExpressionFromText("b ? new Integer (0) : new Double(0.0)", null);
-    assertEquals(PsiType.DOUBLE, conditional.getType());
+    assertEquals(PsiTypes.doubleType(), conditional.getType());
     final PsiExpression shift = factory.createExpressionFromText("Integer.valueOf(0) << 2", null);
-    assertEquals(PsiType.INT, shift.getType());
+    assertEquals(PsiTypes.intType(), shift.getType());
   }
 
   public void testUnaryExpressionType() {
     final PsiElementFactory factory = myJavaFacade.getElementFactory();
     final PsiExpression plusPrefix = factory.createExpressionFromText("+Integer.valueOf(1)", null);
-    assertEquals(PsiType.INT, plusPrefix.getType());
+    assertEquals(PsiTypes.intType(), plusPrefix.getType());
     final PsiExpression plusBytePrefix = factory.createExpressionFromText("+Byte.valueOf(1)", null);
-    assertEquals(PsiType.INT, plusBytePrefix.getType());
+    assertEquals(PsiTypes.intType(), plusBytePrefix.getType());
     final PsiStatement declaration = factory.createStatementFromText("Byte b = 1;", null);
     final PsiExpression plusPlusPostfix = factory.createExpressionFromText("b++", declaration);
-    assertEquals(PsiType.BYTE.getBoxedType(declaration), plusPlusPostfix.getType());
+    assertEquals(PsiTypes.byteType().getBoxedType(declaration), plusPlusPostfix.getType());
   }
 
   public void testVariableTypeInvalidation() {
@@ -451,7 +448,7 @@ public class TypesTest extends GenericsTestCase {
     assertTrue(type.isValid());
 
     Ref<PsiTypeElement> ref = Ref.create(var.getTypeElement());
-    ref.get().replace(factory.createTypeElement(PsiType.INT));
+    ref.get().replace(factory.createTypeElement(PsiTypes.intType()));
 
     assertFalse(type.isValid());
 

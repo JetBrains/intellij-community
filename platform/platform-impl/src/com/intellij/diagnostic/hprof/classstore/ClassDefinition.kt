@@ -39,7 +39,7 @@ class ClassDefinition(val name: String,
 
     if (id != other.id) return false
 
-    if (id == 0L && other.id == 0L) {
+    if (id == 0L) {
       return name == other.name
     }
 
@@ -48,6 +48,9 @@ class ClassDefinition(val name: String,
 
   val prettyName: String
     get() = computePrettyName(name)
+
+  val undecoratedName: String
+    get() = name.substringBefore('!')
 
   companion object {
     const val OBJECT_PREAMBLE_SIZE = 8

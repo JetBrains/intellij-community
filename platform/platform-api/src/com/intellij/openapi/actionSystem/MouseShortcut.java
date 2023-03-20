@@ -35,8 +35,7 @@ public class MouseShortcut extends Shortcut {
   private final int myClickCount;
 
   public static int getButton(MouseEvent event) {
-    if (event instanceof MouseWheelEvent) {
-      MouseWheelEvent wheel = (MouseWheelEvent)event;
+    if (event instanceof MouseWheelEvent wheel) {
       return 0 < wheel.getPreciseWheelRotation()
              ? BUTTON_WHEEL_DOWN
              : BUTTON_WHEEL_UP;

@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="intellij.java.analysis.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jsp.spi" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.uast" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.uast.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.resources" scope="RUNTIME" />

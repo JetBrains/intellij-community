@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class SingleTargetRequestResultProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiElement myTarget;

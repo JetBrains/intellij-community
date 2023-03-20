@@ -291,16 +291,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.text"));
       getTemplatePresentation().setDescription(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.description"));
+      getTemplatePresentation().setPerformGroup(true);
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return mySchemeActions.getActions().toArray(EMPTY_ARRAY);
-    }
-
-    @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
     }
 
     @Override

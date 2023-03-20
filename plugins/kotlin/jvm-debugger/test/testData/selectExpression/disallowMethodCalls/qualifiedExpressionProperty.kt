@@ -7,4 +7,5 @@ class MyClass {
     val bar = 1
 }
 
+// DISALLOW_METHOD_CALLS
 // EXPECTED: klass.bar

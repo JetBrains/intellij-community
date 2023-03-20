@@ -22,7 +22,7 @@ internal class BookmarksViewFactory : DumbAware, ToolWindowFactory, ToolWindowMa
     val panel = BookmarksView(project, isToolbarVisible(window, project)).also { it.orientation = orientation.get() }
     manager.addContent(manager.factory.createContent(panel, null, false).apply { isCloseable = false })
     project.messageBus.connect(manager).subscribe(ToolWindowManagerListener.TOPIC, this)
-    window.helpId = "Bookmarks.ToolWindow"
+    window.helpId = "bookmarks.tool.window.help"
     window.setTitleActions(listOfNotNull(ActionUtil.getAction("Bookmarks.ToolWindow.TitleActions")))
     if (window is ToolWindowEx) window.setAdditionalGearActions(ActionUtil.getActionGroup("Bookmarks.ToolWindow.GearActions"))
   }

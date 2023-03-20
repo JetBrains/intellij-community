@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin
 
@@ -7,26 +7,22 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    protected fun doTest(unused: String) {
-        val testPath = testPath()
+    protected open fun doTest(unused: String) {
+        val testPath = dataFilePath(fileName())
         configureCodeStyleAndRun(project) {
             val fixture = myFixture
             val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
             for (suffix in dependencySuffixes) {
                 val dependencyPath = fileName().replace(".kt", suffix)
-                if (File(testDataPath, dependencyPath).exists()) {
+                if (File(testDataDirectory, dependencyPath).exists()) {
                     fixture.configureByFile(dependencyPath)
                 }
             }
@@ -64,7 +60,11 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 codeStyleSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry(it.trim(), true))
             }
 
-            val log = project.executeWriteCommand<String?>("") { doTest(file) }
+            val log = if (runTestInWriteCommand) {
+                project.executeWriteCommand<String?>("") { doTest(file) }
+            } else {
+                doTest(file)
+            }
 
             KotlinTestUtils.assertEqualsToFile(File("$testPath.after"), myFixture.file.text)
             if (log != null) {
@@ -86,4 +86,6 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
 
     protected open val nameCountToUseStarImportForMembersDefault: Int
         get() = 3
+
+    protected open val runTestInWriteCommand: Boolean = true
 }

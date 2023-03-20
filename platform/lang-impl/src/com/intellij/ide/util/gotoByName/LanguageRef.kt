@@ -5,6 +5,7 @@ import com.intellij.lang.DependentLanguage
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.psi.PsiElement
@@ -17,7 +18,11 @@ data class LanguageRef(val id: String, @field:Nls val displayName: String, val i
     fun forLanguage(lang: Language): LanguageRef = LanguageRef(lang.id, lang.displayName, lang.associatedFileType?.icon)
 
     @JvmStatic
-    fun forNavigationitem(item: NavigationItem): LanguageRef? = (item as? PsiElement)?.language?.let { forLanguage(it) }
+    fun forNavigationitem(item: NavigationItem): LanguageRef? = when (item) {
+      is PsiElement -> forLanguage(item.language)
+      is PsiElementNavigationItem -> item.targetElement?.language?.let { forLanguage(it) }
+      else -> null
+    }
 
     @JvmStatic
     fun forAllLanguages(): List<LanguageRef> {

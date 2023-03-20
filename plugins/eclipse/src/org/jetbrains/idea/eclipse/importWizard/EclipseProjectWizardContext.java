@@ -4,9 +4,6 @@ package org.jetbrains.idea.eclipse.importWizard;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Vladislav.Kaznacheev
-*/
 interface EclipseProjectWizardContext {
   @Nullable
   String getRootDirectory();

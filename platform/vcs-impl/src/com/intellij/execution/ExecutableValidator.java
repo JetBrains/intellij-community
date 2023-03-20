@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,18 +46,23 @@ public abstract class ExecutableValidator {
 
   @NotNull private final @NlsContexts.DialogTitle String myNotificationErrorTitle;
   @NotNull private final @NlsContexts.DialogMessage String myNotificationErrorDescription;
+  @NotNull private final @NlsContexts.DialogMessage String myNotificationSafeModeDescription;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
+   *
    * @param notificationErrorTitle       title of the notification about not valid executable.
    * @param notificationErrorDescription description of this notification with a link to fix it (link action is defined by
    *                                     {@link #showSettingsAndExpireIfFixed(Notification)}
    */
-  public ExecutableValidator(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String notificationErrorTitle,
-                             @NotNull @NlsContexts.DialogMessage String notificationErrorDescription) {
+  public ExecutableValidator(@NotNull Project project,
+                             @NotNull @NlsContexts.DialogTitle String notificationErrorTitle,
+                             @NotNull @NlsContexts.DialogMessage String notificationErrorDescription,
+                             @NotNull @NlsContexts.DialogMessage String notificationSafeModeDescription) {
     myProject = project;
     myNotificationErrorTitle = notificationErrorTitle;
     myNotificationErrorDescription = notificationErrorDescription;
+    myNotificationSafeModeDescription = notificationSafeModeDescription;
   }
 
   protected abstract String getCurrentExecutable();
@@ -123,13 +129,13 @@ public abstract class ExecutableValidator {
    * Expires the notification if user fixes the path from the opened Settings dialog.
    * Makes sure that there is always only one notification about the problem in the stack of notifications.
    */
-  private void showExecutableNotConfiguredNotification(@NotNull Notification notification) {
+  private void showExecutableErrorNotification(@NotNull Notification notification) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
 
-    LOG.info("Executable is not valid: " + getCurrentExecutable());
-    if (NotificationsManager.getNotificationsManager().getNotificationsOfType(notification.getClass(), myProject).length == 0) { // show only once
+    NotificationsManager notificationsManager = NotificationsManager.getNotificationsManager();
+    if (notificationsManager.getNotificationsOfType(notification.getClass(), myProject).length == 0) { // show only once
       notification.notify(myProject.isDefault() ? null : myProject);
     }
   }
@@ -171,21 +177,26 @@ public abstract class ExecutableValidator {
 
   /**
    * Checks if executable is valid and displays the notification if not.
+   *
    * @return true if executable was valid, false - if not valid (and notification was shown in that case).
-   * @see #checkExecutableAndShowMessageIfNeeded(java.awt.Component)
+   * @see #checkExecutableAndShowMessageIfNeeded(Component)
    */
   public boolean checkExecutableAndNotifyIfNeeded() {
     if (myProject.isDisposed()) {
       return false;
     }
-    Notification notification = validate(getCurrentExecutable());
+    if (!myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+      return notify(new SafeModeErrorNotification());
+    }
 
+    LOG.info("Executable is not valid: " + getCurrentExecutable());
+    Notification notification = validate(getCurrentExecutable());
     return notify(notification);
   }
 
   protected boolean notify(@Nullable Notification notification) {
     if (notification != null) {
-      showExecutableNotConfiguredNotification(notification);
+      showExecutableErrorNotification(notification);
       return false;
     }
     return true;
@@ -200,6 +211,10 @@ public abstract class ExecutableValidator {
    */
   public boolean checkExecutableAndShowMessageIfNeeded(@Nullable Component parentComponent) {
     if (myProject.isDisposed()) {
+      return false;
+    }
+    if (!myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+      Messages.showErrorDialog(parentComponent, myNotificationSafeModeDescription, myNotificationErrorTitle);
       return false;
     }
 
@@ -224,6 +239,9 @@ public abstract class ExecutableValidator {
   }
 
   public boolean isExecutableValid() {
+    if (!myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+      return false;
+    }
     return isExecutableValid(getCurrentExecutable());
   }
 
@@ -236,7 +254,8 @@ public abstract class ExecutableValidator {
       this(prepareDescription(description, true), NotificationType.ERROR);
     }
 
-    public ExecutableNotValidNotification(@NotNull @NlsContexts.NotificationContent String preparedDescription, @NotNull NotificationType type) {
+    public ExecutableNotValidNotification(@NotNull @NlsContexts.NotificationContent String preparedDescription,
+                                          @NotNull NotificationType type) {
       super(ourNotificationGroup.getDisplayId(), preparedDescription, type);
       setListener(new NotificationListener.Adapter() {
         @Override
@@ -244,6 +263,14 @@ public abstract class ExecutableValidator {
           showSettingsAndExpireIfFixed(notification);
         }
       });
+    }
+  }
+
+  public class SafeModeErrorNotification extends Notification {
+    public SafeModeErrorNotification() {
+      super(ourNotificationGroup.getDisplayId(),
+            prepareDescription(myNotificationSafeModeDescription, false),
+            NotificationType.ERROR);
     }
   }
 }

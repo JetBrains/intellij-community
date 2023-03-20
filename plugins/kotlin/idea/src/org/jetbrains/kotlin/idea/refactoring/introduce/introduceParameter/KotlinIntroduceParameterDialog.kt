@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
@@ -11,16 +12,15 @@ import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.util.isMultiLine
+import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.ExtractFunctionParameterTablePanel
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.KotlinExtractFunctionDialog
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.validateElement
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -35,13 +35,13 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class KotlinIntroduceParameterDialog private constructor(
-    project: Project,
-    val editor: Editor,
-    val descriptor: IntroduceParameterDescriptor,
-    val lambdaExtractionDescriptor: ExtractableCodeDescriptor?,
-    nameSuggestions: Array<String>,
-    typeSuggestions: List<KotlinType>,
-    val helper: KotlinIntroduceParameterHelper
+  project: Project,
+  val editor: Editor,
+  val descriptor: IntroduceParameterDescriptor,
+  private val lambdaExtractionDescriptor: ExtractableCodeDescriptor?,
+  nameSuggestions: Array<String>,
+  typeSuggestions: List<KotlinType>,
+  val helper: KotlinIntroduceParameterHelper
 ) : RefactoringDialog(project, true) {
     constructor(
         project: Project,

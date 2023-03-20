@@ -43,11 +43,7 @@ public class IntroduceLombokVariableHandler extends IntroduceVariableHandler {
 
   private IntroduceVariableSettings getIntroduceVariableSettings(Project project, IntroduceVariableSettings variableSettings) {
     final PsiClassType psiClassType = PsiType.getTypeByName(selectedTypeFQN, project, GlobalSearchScope.projectScope(project));
-    if (null != psiClassType) {
-      return new IntroduceVariableSettingsDelegate(variableSettings, psiClassType);
-    } else {
-      return variableSettings;
-    }
+    return new IntroduceVariableSettingsDelegate(variableSettings, psiClassType);
   }
 
   private static class UnitTestMockVariableSettings implements IntroduceVariableSettings {

@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.XMap;
 import org.jdom.Attribute;
@@ -22,6 +23,8 @@ import java.util.*;
 import static com.intellij.util.xmlb.Constants.*;
 
 final class MapBinding implements MultiNodeBinding, NestedBinding {
+  private static final Logger LOG = Logger.getInstance(MapBinding.class);
+
   @SuppressWarnings("rawtypes")
   private static final Comparator<Object> KEY_COMPARATOR = (o1, o2) -> {
     if (o1 instanceof Comparable && o2 instanceof Comparable) {
@@ -153,8 +156,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
-    List<Element> childNodes;
+  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+    List<? extends Element> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = elements.get(0).getChildren();
@@ -198,11 +201,14 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @SuppressWarnings({"rawtypes", "DuplicatedCode"})
-  private @Nullable Map<?, ?> deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
-    // if accessor is null, it is sub-map and we must not use context
+  private @Nullable Map<?, ?> deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
+    // if accessor is null, it is sub-map, and we must not use context
     Map map = accessor == null ? null : (Map<?, ?>)context;
     if (map != null) {
-      if (ClassUtil.isMutableMap(map)) {
+      if (childNodes.isEmpty()) {
+        return map;
+      }
+      else if (ClassUtil.isMutableMap(map)) {
         map.clear();
       }
       else {

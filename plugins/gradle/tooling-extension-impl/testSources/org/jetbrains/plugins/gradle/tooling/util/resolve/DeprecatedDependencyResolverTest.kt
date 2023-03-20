@@ -19,7 +19,7 @@ class DeprecatedDependencyResolverTest {
       projectDep("p1", COMPILE),
       projectDep("p2", COMPILE))
 
-    removeDuplicates(testDependencies);
+    removeDuplicates(testDependencies)
 
     assertThat(testDependencies)
       .extracting("name")

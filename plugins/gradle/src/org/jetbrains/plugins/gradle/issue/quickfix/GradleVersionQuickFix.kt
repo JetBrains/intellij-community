@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
@@ -26,7 +27,6 @@ import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import org.gradle.internal.impldep.com.google.common.base.Charsets
 import org.gradle.internal.util.PropertiesUtils
-import org.gradle.util.GUtil
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -61,7 +61,7 @@ class GradleVersionQuickFix(private val projectPath: String,
         val notification = NotificationData(title, message, WARNING, PROJECT_SYNC)
           .apply {
             isBalloonNotification = true
-            balloonGroup = "Gradle Import"
+            balloonGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Wrapper Update")
             setListener("#open_log") { _, _ -> ShowLogAction.showLog() }
           }
         ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
@@ -100,8 +100,9 @@ class GradleVersionQuickFix(private val projectPath: String,
         wrapperProperties[WrapperExecutor.ZIP_STORE_PATH_PROPERTY] = "wrapper/dists"
       }
       else {
-        val inputStream = wrapperPropertiesFile.inputStream()
-        wrapperProperties = GUtil.loadProperties(inputStream)
+        wrapperProperties = wrapperPropertiesFile.inputStream().use { stream ->
+          Properties().also { it.load(stream) }
+        }
         wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
       }
 

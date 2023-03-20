@@ -146,12 +146,13 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testEnteringSomeQuotes() {
-    Editor editor = initDocument("class C {\n" +
-                                 "  void foo() {\n" +
-                                 "    first();\n" +
-                                 "    second();\n" +
-                                 "  }\n" +
-                                 "}");
+    Editor editor = initDocument("""
+                                   class C {
+                                     void foo() {
+                                       first();
+                                       second();
+                                     }
+                                   }""");
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       myDocument.insertString(myDocument.getText().lastIndexOf("first"), "'''");
       myDocument.insertString(myDocument.getText().lastIndexOf("second"), " ");
@@ -160,8 +161,10 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testUnicodeEscapeSequence() {
-    String prefix = "class A {\n" +
-                    "  String s = \"\"\"\n";
+    String prefix = """
+      class A {
+        String s = ""\"
+      """;
     initDocument(prefix +
                  "\\uuuuu005c\\\"\"\";\n" +
                  "}");
@@ -172,8 +175,10 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testUnicodeBackslashEscapesUnicodeSequence() {
-    String prefix = "class A {\n" +
-               "  String s = \"\"\"\n";
+    String prefix = """
+      class A {
+        String s = ""\"
+      """;
     initDocument(prefix +
                  "\\u005c\\u0040\"\"\";\n" +
                  "}");

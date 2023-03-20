@@ -9,9 +9,6 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author Pavel.Dolgov
- */
 @Suppress("ProtectedMemberInFinalClass")
 class Java9NonAccessibleTypeExposedTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {

@@ -11,3 +11,5 @@ public class JavaWithGroovyInvoke_0 {
 }
 
 // CRI_IGNORE
+
+// IGNORE_FIR_LOG

@@ -134,10 +134,7 @@
       "background": "#f6f6f6",
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
       "borderInsets": "6,1,6,1",
-      "borderCornerRadiusX": 16,
-      "borderCornerRadiusY": 16,
-      "leftBorderWith": 10,
-      "rightBorderWith": 0,
+      "borderCornerRadius": 8,
       "borderWidth": 0,
       "translucentBackground": "#ececec",
       "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
@@ -219,14 +216,20 @@
       "UI": "com.intellij.laf.macos.MacIntelliJTextFieldUI"
     },
 
+
+    "SearchFieldWithExtension": {
+      "border": "com.intellij.laf.macos.MacIntelliSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
+    },
+
     "Tree": {
       "hash": "#E6E6E6",
       "paintLines": false
     },
 
     "MainToolbar": {
-      "icon.borderInsets": "10,10,10,10",
-      "dropdown.borderInsets": "12,6,12,6"
+      "Icon.borderInsets": "10,10,10,10",
+      "Dropdown.borderInsets": "12,6,12,6"
     },
 
     "window": "#ececec"

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -53,6 +54,11 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = project.getService(VcsLogFileHistoryProvider.class);
     historyProvider.showFileHistory(Collections.singletonList(path), revisionNumber);
@@ -75,7 +81,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent event) {
-    return getFileAndRevision(event) != null;
+    Pair<FilePath, VcsRevisionNumber> fileAndRevision = getFileAndRevision(event);
+    return fileAndRevision != null && !fileAndRevision.second.asString().isEmpty();
   }
 
   @Nullable
@@ -84,7 +91,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     if (changes == null || changes.length != 1) return null;
     Change change = changes[0];
     Pair<FilePath, VcsRevisionNumber> fileAndRevision = getFileAndRevision(change);
-    if (fileAndRevision == null || change.getType() != Change.Type.DELETED) return fileAndRevision;
+    if (fileAndRevision == null ||
+        (change.getType() != Change.Type.DELETED && !fileAndRevision.second.asString().isEmpty())) return fileAndRevision;
 
     Project project = event.getProject();
     if (project == null ||

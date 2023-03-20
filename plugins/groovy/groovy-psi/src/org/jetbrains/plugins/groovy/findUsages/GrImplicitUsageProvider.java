@@ -32,8 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GrImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
-    if (element instanceof GrMethod) {
-      final GrMethod method = (GrMethod)element;
+    if (element instanceof GrMethod method) {
 
       if (PsiUtil.OPERATOR_METHOD_NAMES.contains(method.getName())) return true;
 
@@ -41,8 +40,7 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
       if (MissingMethodAndPropertyUtil.isMethodMissing(method)) return true;
       if (isDelegateAnnotated(method)) return true;
     }
-    else if (element instanceof GrParameter) {
-      final GrParameter parameter = (GrParameter)element;
+    else if (element instanceof GrParameter parameter) {
 
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof GrMethod && (MissingMethodAndPropertyUtil.isMethodMissing((GrMethod)scope) || MissingMethodAndPropertyUtil

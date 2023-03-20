@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.imports
 
@@ -16,21 +16,19 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtUserType
 
 class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     private val javaFullClassNameIndex get() = JavaFullClassNameIndex.getInstance()
-    private val kotlinFullClassNameIndex get() = KotlinFullClassNameIndex.getInstance()
-    private val kotlinTypeAliasShortNameIndex get() = KotlinTypeAliasShortNameIndex.getInstance()
 
     private fun findInIndex(fqName: FqName, scope: GlobalSearchScope): PsiElement? =
-        javaFullClassNameIndex.get(fqName.asString().hashCode(), project, scope)?.firstOrNull()
-            ?: kotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
+        javaFullClassNameIndex.get(fqName.asString(), project, scope)?.firstOrNull()
+            ?: KotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
 
     fun test() {
         val scope = GlobalSearchScope.everythingScope(project)
         val importsMap = ImportMapper.getImport2AliasMap()
         for ((oldName, aliasFqName) in importsMap) {
-            val aliases = kotlinTypeAliasShortNameIndex.get(aliasFqName.shortName().asString(), project, scope).map {
+            val aliases = KotlinTypeAliasShortNameIndex.get(aliasFqName.shortName().asString(), project, scope).map {
                 it.getTypeReference() ?: error("Type reference is not found: ${it.text}")
             }.distinctBy { it.text }
 

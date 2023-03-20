@@ -485,59 +485,63 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
 
     VirtualFile f11 = createChildData(c1, "file1.txt");
     VirtualFile f12 = createChildData(c2, "file1.txt");
-    setFileText(f11, "Health care and education, in my view, are next up for fundamental software-based transformation.\n" +
-                     "My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\n" +
-                     "We believe both of these industries, which historically have been highly resistant to entrepreneurial change,\n" +
-                     "are primed for tipping by great new software-centric entrepreneurs.\n" +
-                     "\n" +
-                     "Even national defense is increasingly software-based.\n" +
-                     "The modern combat soldier is embedded in a web of software that provides intelligence, communications,\n" +
-                     "logistics and weapons guidance.\n" +
-                     "Software-powered drones launch airstrikes without putting human pilots at risk.\n" +
-                     "Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\n" +
-                     "555");
-    setFileText(f12, "Health care and education, in my view, are next up for fundamental software-based transformation.\n" +
-                     "My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\n" +
-                     "We believe both of these industries, which historically have been highly resistant to entrepreneurial change,\n" +
-                     "are primed for tipping by great new software-centric entrepreneurs.\n" +
-                     "\n" +
-                     "Even national defense is increasingly software-based.\n" +
-                     "The modern combat soldier is embedded in a web of software that provides intelligence, communications,\n" +
-                     "logistics and weapons guidance.\n" +
-                     "Software-powered drones launch airstrikes without putting human pilots at risk.\n" +
-                     "Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\n" +
-                     "\n" +
-                     "Companies in every industry need to assume that a software revolution is coming.\n" +
-                     "This includes even industries that are software-based today.\n" +
-                     "Great incumbent software companies like Oracle and Microsoft are increasingly threatened with irrelevance\n" +
-                     "by new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).\n" +
-                     "\n" +
-                     "In some industries, particularly those with a heavy real-world component such as oil and gas,\n" +
-                     "the software revolution is primarily an opportunity for incumbents.\n" +
-                     "But in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups\n" +
-                     "that invade existing industries with impunity.\n" +
-                     "Over the next 10 years, the battles between incumbents and software-powered insurgents will be epic.\n" +
-                     "Joseph Schumpeter, the economist who coined the term \"creative destruction,\" would be proud.");
+    setFileText(f11, """
+      Health care and education, in my view, are next up for fundamental software-based transformation.
+      My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.
+      We believe both of these industries, which historically have been highly resistant to entrepreneurial change,
+      are primed for tipping by great new software-centric entrepreneurs.
 
-    final List<TextFilePatch> patches = new PatchReader("Index: coupleFiles/file1.txt\n" +
-                                                        "IDEA additional info:\n" +
-                                                        "Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP\n" +
-                                                        "<+>UTF-8\n" +
-                                                        "Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP\n" +
-                                                        "<+>Health care and education, in my view, are next up for fundamental software-based transformation.\\nMy venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\\nWe believe both of these industries, which historically have been highly resistant to entrepreneurial change,\\nare primed for tipping by great new software-centric entrepreneurs.\\n\\nEven national defense is increasingly software-based.\\nThe modern combat soldier is embedded in a web of software that provides intelligence, communications,\\nlogistics and weapons guidance.\\nSoftware-powered drones launch airstrikes without putting human pilots at risk.\\nIntelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\\n\\nCompanies in every industry need to assume that a software revolution is coming.\\nThis includes even industries that are software-based today.\\nGreat incumbent software companies like Oracle and Microsoft are increasingly threatened with irrelevance\\nby new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).\\n\\nIn some industries, particularly those with a heavy real-world component such as oil and gas,\\nthe software revolution is primarily an opportunity for incumbents.\\nBut in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups\\nthat invade existing industries with impunity.\\nOver the next 10 years, the battles between incumbents and software-powered insurgents will be epic.\\nJoseph Schumpeter, the economist who coined the term \\\"creative destruction,\\\" would be proud.\n" +
-                                                        "===================================================================\n" +
-                                                        "--- coupleFiles/file1.txt\t(date 1351241865000)\n" +
-                                                        "+++ coupleFiles/file1.txt\t(revision )\n" +
-                                                        "@@ -15,7 +15,7 @@\n" +
-                                                        " by new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).\n" +
-                                                        " \n" +
-                                                        " In some industries, particularly those with a heavy real-world component such as oil and gas,\n" +
-                                                        "-the software revolution is primarily an opportunity for incumbents.\n" +
-                                                        "+the software revolution is primarily an opportunity for incumbents.Unique\n" +
-                                                        " But in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups\n" +
-                                                        " that invade existing industries with impunity.\n" +
-                                                        " Over the next 10 years, the battles between incumbents and software-powered insurgents will be epic.\n" +
-                                                        "\\ No newline at end of file\n").readTextPatches();
+      Even national defense is increasingly software-based.
+      The modern combat soldier is embedded in a web of software that provides intelligence, communications,
+      logistics and weapons guidance.
+      Software-powered drones launch airstrikes without putting human pilots at risk.
+      Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.
+      555""");
+    setFileText(f12, """
+      Health care and education, in my view, are next up for fundamental software-based transformation.
+      My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.
+      We believe both of these industries, which historically have been highly resistant to entrepreneurial change,
+      are primed for tipping by great new software-centric entrepreneurs.
+
+      Even national defense is increasingly software-based.
+      The modern combat soldier is embedded in a web of software that provides intelligence, communications,
+      logistics and weapons guidance.
+      Software-powered drones launch airstrikes without putting human pilots at risk.
+      Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.
+
+      Companies in every industry need to assume that a software revolution is coming.
+      This includes even industries that are software-based today.
+      Great incumbent software companies like Oracle and Microsoft are increasingly threatened with irrelevance
+      by new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).
+
+      In some industries, particularly those with a heavy real-world component such as oil and gas,
+      the software revolution is primarily an opportunity for incumbents.
+      But in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups
+      that invade existing industries with impunity.
+      Over the next 10 years, the battles between incumbents and software-powered insurgents will be epic.
+      Joseph Schumpeter, the economist who coined the term "creative destruction," would be proud.""");
+
+    final List<TextFilePatch> patches = new PatchReader("""
+                                                          Index: coupleFiles/file1.txt
+                                                          IDEA additional info:
+                                                          Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+                                                          <+>UTF-8
+                                                          Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+                                                          <+>Health care and education, in my view, are next up for fundamental software-based transformation.\\nMy venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\\nWe believe both of these industries, which historically have been highly resistant to entrepreneurial change,\\nare primed for tipping by great new software-centric entrepreneurs.\\n\\nEven national defense is increasingly software-based.\\nThe modern combat soldier is embedded in a web of software that provides intelligence, communications,\\nlogistics and weapons guidance.\\nSoftware-powered drones launch airstrikes without putting human pilots at risk.\\nIntelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\\n\\nCompanies in every industry need to assume that a software revolution is coming.\\nThis includes even industries that are software-based today.\\nGreat incumbent software companies like Oracle and Microsoft are increasingly threatened with irrelevance\\nby new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).\\n\\nIn some industries, particularly those with a heavy real-world component such as oil and gas,\\nthe software revolution is primarily an opportunity for incumbents.\\nBut in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups\\nthat invade existing industries with impunity.\\nOver the next 10 years, the battles between incumbents and software-powered insurgents will be epic.\\nJoseph Schumpeter, the economist who coined the term \\"creative destruction,\\" would be proud.
+                                                          ===================================================================
+                                                          --- coupleFiles/file1.txt\t(date 1351241865000)
+                                                          +++ coupleFiles/file1.txt\t(revision )
+                                                          @@ -15,7 +15,7 @@
+                                                           by new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).
+                                                          \s
+                                                           In some industries, particularly those with a heavy real-world component such as oil and gas,
+                                                          -the software revolution is primarily an opportunity for incumbents.
+                                                          +the software revolution is primarily an opportunity for incumbents.Unique
+                                                           But in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups
+                                                           that invade existing industries with impunity.
+                                                           Over the next 10 years, the battles between incumbents and software-powered insurgents will be epic.
+                                                          \\ No newline at end of file
+                                                          """).readTextPatches();
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
     final List<AbstractFilePatchInProgress<?>> result = iterator.execute(patches);
@@ -559,57 +563,61 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
 
     final VirtualFile f11 = createChildData(c1, "file1.txt");
     final VirtualFile f12 = createChildData(c2, "file1.txt");
-    setFileText(f11, "Health care and education, in my view, are next up for fundamental software-based transformation.\n" +
-                     "My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\n" +
-                     "We believe both of these industries, which historically have been highly resistant to entrepreneurial change,\n" +
-                     "are primed for tipping by great new software-centric entrepreneurs.\n" +
-                     "\n" +
-                     "Even national defense is increasingly software-based.\n" +
-                     "The modern combat soldier is embedded in a web of software that provides intelligence, communications,\n" +
-                     "logistics and weapons guidance.\n" +
-                     "Software-powered drones launch airstrikes without putting human pilots at risk.\n" +
-                     "Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\n" +
-                     "555");
-    setFileText(f12, "Health care and education, in my view, are next up for fundamental software-based transformation.\n" +
-                     "My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\n" +
-                     "We believe both of these industries, which historically have been highly resistant to entrepreneurial change,\n" +
-                     "are primed for tipping by great new software-centric entrepreneurs.\n" +
-                     "\n" +
-                     "Even national defense is increasingly software-based.\n" +
-                     "The modern combat soldier is embedded in a web of software that provides intelligence, communications,\n" +
-                     "logistics and weapons guidance.\n" +
-                     "Software-powered drones launch airstrikes without putting human pilots at risk.\n" +
-                     "Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\n" +
-                     "\n" +
-                     "Companies in every industry need to assume that a software revolution is coming.\n" +
-                     "This includes even industries that are software-based today.\n" +
-                     "Great incumbent software companies like Oracle and Microsoft are increasingly threatened with irrelevance\n" +
-                     "by new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).\n" +
-                     "\n" +
-                     "In some industries, particularly those with a heavy real-world component such as oil and gas,\n" +
-                     "the software revolution is primarily an opportunity for incumbents.\n" +
-                     "But in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups\n" +
-                     "that invade existing industries with impunity.\n" +
-                     "Over the next 10 years, the battles between incumbents and software-powered insurgents will be epic.\n" +
-                     "Joseph Schumpeter, the economist who coined the term \"creative destruction,\" would be proud.");
+    setFileText(f11, """
+      Health care and education, in my view, are next up for fundamental software-based transformation.
+      My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.
+      We believe both of these industries, which historically have been highly resistant to entrepreneurial change,
+      are primed for tipping by great new software-centric entrepreneurs.
 
-    final List<TextFilePatch> patches = new PatchReader("Index: coupleFiles/file1.txt\n" +
-                                                        "IDEA additional info:\n" +
-                                                        "Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP\n" +
-                                                        "<+>UTF-8\n" +
-                                                        "Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP\n" +
-                                                        "<+>Health care and education, in my view, are next up for fundamental software-based transformation.\\nMy venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\\nWe believe both of these industries, which historically have been highly resistant to entrepreneurial change,\\nare primed for tipping by great new software-centric entrepreneurs.\\n\\nEven national defense is increasingly software-based.\\nThe modern combat soldier is embedded in a web of software that provides intelligence, communications,\\nlogistics and weapons guidance.\\nSoftware-powered drones launch airstrikes without putting human pilots at risk.\\nIntelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\\n555\n" +
-                                                        "===================================================================\n" +
-                                                        "--- coupleFiles/file1.txt\t(date 1351242049000)\n" +
-                                                        "+++ coupleFiles/file1.txt\t(revision )\n" +
-                                                        "@@ -8,4 +8,4 @@\n" +
-                                                        " logistics and weapons guidance.\n" +
-                                                        " Software-powered drones launch airstrikes without putting human pilots at risk.\n" +
-                                                        " Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\n" +
-                                                        "-555\n" +
-                                                        "\\ No newline at end of file\n" +
-                                                        "+555 ->\n" +
-                                                        "\\ No newline at end of file\n").readTextPatches();
+      Even national defense is increasingly software-based.
+      The modern combat soldier is embedded in a web of software that provides intelligence, communications,
+      logistics and weapons guidance.
+      Software-powered drones launch airstrikes without putting human pilots at risk.
+      Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.
+      555""");
+    setFileText(f12, """
+      Health care and education, in my view, are next up for fundamental software-based transformation.
+      My venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.
+      We believe both of these industries, which historically have been highly resistant to entrepreneurial change,
+      are primed for tipping by great new software-centric entrepreneurs.
+
+      Even national defense is increasingly software-based.
+      The modern combat soldier is embedded in a web of software that provides intelligence, communications,
+      logistics and weapons guidance.
+      Software-powered drones launch airstrikes without putting human pilots at risk.
+      Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.
+
+      Companies in every industry need to assume that a software revolution is coming.
+      This includes even industries that are software-based today.
+      Great incumbent software companies like Oracle and Microsoft are increasingly threatened with irrelevance
+      by new software offerings like Salesforce.com and Android (especially in a world where Google owns a major handset maker).
+
+      In some industries, particularly those with a heavy real-world component such as oil and gas,
+      the software revolution is primarily an opportunity for incumbents.
+      But in many industries, new software ideas will result in the rise of new Silicon Valley-style start-ups
+      that invade existing industries with impunity.
+      Over the next 10 years, the battles between incumbents and software-powered insurgents will be epic.
+      Joseph Schumpeter, the economist who coined the term "creative destruction," would be proud.""");
+
+    final List<TextFilePatch> patches = new PatchReader("""
+                                                          Index: coupleFiles/file1.txt
+                                                          IDEA additional info:
+                                                          Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+                                                          <+>UTF-8
+                                                          Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+                                                          <+>Health care and education, in my view, are next up for fundamental software-based transformation.\\nMy venture capital firm is backing aggressive start-ups in both of these gigantic and critical industries.\\nWe believe both of these industries, which historically have been highly resistant to entrepreneurial change,\\nare primed for tipping by great new software-centric entrepreneurs.\\n\\nEven national defense is increasingly software-based.\\nThe modern combat soldier is embedded in a web of software that provides intelligence, communications,\\nlogistics and weapons guidance.\\nSoftware-powered drones launch airstrikes without putting human pilots at risk.\\nIntelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.\\n555
+                                                          ===================================================================
+                                                          --- coupleFiles/file1.txt\t(date 1351242049000)
+                                                          +++ coupleFiles/file1.txt\t(revision )
+                                                          @@ -8,4 +8,4 @@
+                                                           logistics and weapons guidance.
+                                                           Software-powered drones launch airstrikes without putting human pilots at risk.
+                                                           Intelligence agencies do large-scale data mining with software to uncover and track potential terrorist plots.
+                                                          -555
+                                                          \\ No newline at end of file
+                                                          +555 ->
+                                                          \\ No newline at end of file
+                                                          """).readTextPatches();
 
     final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
     final List<AbstractFilePatchInProgress<?>> result = iterator.execute(patches);
@@ -624,25 +632,28 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
     VirtualFile subdir = createChildDirectory(root, "subdir");
     VirtualFile wrongVariant = createChildData(subdir, "fff1.txt");
 
-    setFileText(wrongVariant, "aaaa\n" +
-                              "bbbb\n" +
-                              "dddd\n" +
-                              "eeee");
+    setFileText(wrongVariant, """
+      aaaa
+      bbbb
+      dddd
+      eeee""");
 
-    List<TextFilePatch> patches = new PatchReader("Index: fff1.txt\n" +
-                                                  "IDEA additional info:\n" +
-                                                  "Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP\n" +
-                                                  "<+>UTF-8\n" +
-                                                  "===================================================================\n" +
-                                                  "--- fff1.txt\t(date 1459006145000)\n" +
-                                                  "+++ fff1.txt\t(revision )\n" +
-                                                  "@@ -1,4 +1,5 @@\n" +
-                                                  " aaaa\n" +
-                                                  " bbbb\n" +
-                                                  "+cccc\n" +
-                                                  " dddd\n" +
-                                                  " eeee\n" +
-                                                  "\\ No newline at end of file\n").readTextPatches();
+    List<TextFilePatch> patches = new PatchReader("""
+                                                    Index: fff1.txt
+                                                    IDEA additional info:
+                                                    Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+                                                    <+>UTF-8
+                                                    ===================================================================
+                                                    --- fff1.txt\t(date 1459006145000)
+                                                    +++ fff1.txt\t(revision )
+                                                    @@ -1,4 +1,5 @@
+                                                     aaaa
+                                                     bbbb
+                                                    +cccc
+                                                     dddd
+                                                     eeee
+                                                    \\ No newline at end of file
+                                                    """).readTextPatches();
 
     List<AbstractFilePatchInProgress<?>> result = new MatchPatchPaths(myProject).execute(patches, true);
     checkPath(result, "fff1.txt", Collections.singletonList(root), 0);

@@ -297,20 +297,21 @@ public final class PsiTestUtil {
   public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     Ref<Library> ref = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
-    Disposer.register(parent, () -> {
-      Library library = ref.get();
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
-        if (entry != null) {
-          model.removeOrderEntry(entry);
-        }
-      });
-      WriteCommandAction.runWriteCommandAction(null, ()-> {
-        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-        LibraryTable.ModifiableModel model = table.getModifiableModel();
-        model.removeLibrary(library);
-        model.commit();
-      });
+    Disposer.register(parent, () -> removeLibrary(module, ref.get()));
+  }
+
+  public static void removeLibrary(@NotNull Module module, @NotNull Library library) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+      if (entry != null) {
+        model.removeOrderEntry(entry);
+      }
+    });
+    WriteCommandAction.runWriteCommandAction(null, ()-> {
+      LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+      LibraryTable.ModifiableModel model = table.getModifiableModel();
+      model.removeLibrary(library);
+      model.commit();
     });
   }
 
@@ -405,7 +406,6 @@ public final class PsiTestUtil {
    * @param libName the name of the created library
    * @param libPath the path of a directory
    * @param jarArr the names of jars or subdirectories inside {@code libPath} that will become class roots
-   * @return
    */
   @NotNull
   public static Library addLibrary(@NotNull ModifiableRootModel model,
@@ -450,7 +450,6 @@ public final class PsiTestUtil {
    * @param libDir the path of a directory
    * @param classRoots the names of jars or subdirectories relative to {@code libDir} that will become class roots
    * @param sourceRoots the names of jars or subdirectories relative to {@code libDir} that will become source roots
-   * @return
    */
   public static void addLibrary(@NotNull Module module,
                                 String libName,

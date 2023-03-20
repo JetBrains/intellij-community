@@ -6,23 +6,27 @@ package com.jetbrains.python.target
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.getTargetEnvironmentRequest
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.RemoteSdkException
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 
+@Throws(RemoteSdkException::class)
 fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?, nullForUnparsableVersion: Boolean = true): String? {
   return getInterpreterVersion(project, interpreterPath, nullForUnparsableVersion)
 }
 
+@Throws(RemoteSdkException::class)
 fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
                                                       interpreterPath: String,
                                                       nullForUnparsableVersion: Boolean = true): String? {
-  val targetEnvironmentRequest = getTargetEnvironmentRequest(project)
+  val targetEnvironmentRequest = getTargetEnvironmentRequest(project ?: ProjectManager.getInstance().defaultProject)
                                  ?: throw IllegalStateException("Unable to get target configuration from Python SDK data")
   val result = Ref.create<String>()
   val exception = Ref.create<RemoteSdkException>()
@@ -69,6 +73,7 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
 
   if (!ProgressManager.getInstance().hasProgressIndicator()) {
     UIUtil.invokeAndWaitIfNeeded(Runnable { ProgressManager.getInstance().run(task) })
+    //invokeAndWaitIfNeeded(ModalityState.defaultModalityState()) { ProgressManager.getInstance().run(task) }
   }
   else {
     task.run(ProgressManager.getInstance().progressIndicator)

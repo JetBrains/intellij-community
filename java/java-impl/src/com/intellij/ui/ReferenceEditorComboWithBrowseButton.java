@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
   public ReferenceEditorComboWithBrowseButton(final ActionListener browseActionListener,
                                               final String text,

@@ -42,3 +42,4 @@ class L {
 }
 
 // EXISTS: constructor B(), constructor C(Int), constructor D(), constructor E(Int), constructor F(), constructor G(Int), constructor J(), constructor K(Int), constructor L()
+// IGNORE_K2

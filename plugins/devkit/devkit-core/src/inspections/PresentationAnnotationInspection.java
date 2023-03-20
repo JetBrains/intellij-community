@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.ide.presentation.Presentation;
@@ -48,7 +47,7 @@ public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
         assert resolve instanceof PsiField;
         DeprecationInspectionBase.checkDeprecated((PsiField)resolve, iconExpressionPsi, reference.getRangeInElement(), false,
                                                   false, true, false,
-                                                  holder, false, ProblemHighlightType.LIKE_DEPRECATED);
+                                                  holder, false);
       }
     }
     return holder.getResultsArray();

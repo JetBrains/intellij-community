@@ -1,20 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
+import com.intellij.codeInspection.dataFlow.types.DfJvmIntegralType
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
-import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
-import com.intellij.codeInspection.dataFlow.value.DfaValue
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
-import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.JavaPsiFacade
+import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 
 // TODO: support Java contracts
@@ -34,8 +34,13 @@ class KotlinFunctionCallInstruction(
     private val argCount: Int,
     private val qualifierOnStack: Boolean = false,
     private val exceptionTransfer: DfaControlTransferValue?
-) :
-    ExpressionPushingInstruction(KotlinExpressionAnchor(call)) {
+) : ExpressionPushingInstruction(KotlinExpressionAnchor(call)) {
+
+    override fun bindToFactory(factory: DfaValueFactory): Instruction =
+        if (exceptionTransfer == null) this
+        else KotlinFunctionCallInstruction((dfaAnchor as KotlinExpressionAnchor).expression, argCount,
+                                           qualifierOnStack, exceptionTransfer.bindToFactory(factory))
+
     override fun accept(interpreter: DataFlowInterpreter, stateBefore: DfaMemoryState): Array<DfaInstructionState> {
         val arguments = popArguments(stateBefore, interpreter)
         val factory = interpreter.factory
@@ -74,18 +79,29 @@ class KotlinFunctionCallInstruction(
         if (method != null && arguments.arguments.size == method.parameterList.parametersCount) {
             val handler = CustomMethodHandlers.find(method)
             if (handler != null) {
-                val dfaValue = handler.getMethodResultValue(arguments, stateBefore, factory, method)
+                var dfaValue = handler.getMethodResultValue(arguments, stateBefore, factory, method)
                 if (dfaValue != null) {
+                    val dfReferenceType = (dfaValue as? DfaTypeValue)?.dfType as? DfReferenceType
+                    if (dfReferenceType != null) {
+                        val newType = dfReferenceType.convert(KtClassDef.typeConstraintFactory(call))
+                        dfaValue = factory.fromDfType(newType)
+                    }
                     return MethodEffect(dfaValue, pure)
                 }
             }
         }
         val descriptor = call.resolveToCall()?.resultingDescriptor
+        var dfType = getExpressionDfType(call)
         if (descriptor != null) {
             val type = fromKnownDescriptor(descriptor, arguments, stateBefore)
-            if (type != null) return MethodEffect(factory.fromDfType(type.meet(getExpressionDfType(call))), true)
+            if (type != null) return MethodEffect(factory.fromDfType(type.meet(dfType)), true)
         }
-        return MethodEffect(factory.fromDfType(getExpressionDfType(call)), pure)
+        if (dfType is DfJvmIntegralType && method != null) {
+            val specifiedRange = JvmPsiRangeSetUtil.fromPsiElement(method)
+                .meet(JvmPsiRangeSetUtil.typeRange(method.returnType, true) ?: LongRangeSet.all())
+            dfType = dfType.meetRange(specifiedRange)
+        }
+        return MethodEffect(factory.fromDfType(dfType), pure)
     }
 
     private fun fromKnownDescriptor(descriptor: CallableDescriptor, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {
@@ -147,15 +163,14 @@ class KotlinFunctionCallInstruction(
     }
 
     private fun getExpressionDfType(expr: KtExpression): DfType {
-        val constructedClassName = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass?.fqNameOrNull()
-        if (constructedClassName != null) {
+        val constructedClass = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass
+        if (constructedClass != null) {
             // Set exact class type for constructor
-            val psiClass = JavaPsiFacade.getInstance(expr.project).findClass(constructedClassName.asString(), expr.resolveScope)
-            if (psiClass != null) {
-                return TypeConstraints.exactClass(psiClass).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-            }
+            return TypeConstraints.exactClass(KtClassDef(constructedClass))
+                .convert(KtClassDef.typeConstraintFactory(expr))
+                .asDfType().meet(DfTypes.NOT_NULL_OBJECT)
         }
-        return expr.getKotlinType().toDfType(expr)
+        return expr.getKotlinType().toDfType()
     }
 
     override fun getSuccessorIndexes(): IntArray {

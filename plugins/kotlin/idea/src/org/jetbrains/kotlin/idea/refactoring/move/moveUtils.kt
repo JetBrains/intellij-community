@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.ide.util.DirectoryUtil
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -23,8 +25,9 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -34,22 +37,19 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.refactoring.fqName.isImported
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
@@ -254,7 +254,7 @@ class UnqualifiableMoveRenameUsageInfo(
     referencedElement,
     false
 ), KotlinMoveUsage {
-    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo? {
+    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
         return UnqualifiableMoveRenameUsageInfo(
             refExpr,
             refExpr.mainReference,
@@ -280,7 +280,7 @@ class QualifiableMoveRenameUsageInfo(
     false
 ),
     KotlinMoveUsage {
-    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo? {
+    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
         return QualifiableMoveRenameUsageInfo(refExpr, refExpr.mainReference, referencedElement, isInternal)
     }
 }
@@ -290,12 +290,12 @@ interface DeferredKotlinMoveUsage : KotlinMoveUsage {
 }
 
 class CallableReferenceMoveRenameUsageInfo(
-    element: PsiElement,
-    reference: PsiReference,
-    referencedElement: PsiElement,
-    val originalFile: PsiFile,
-    val addImportToOriginalFile: Boolean,
-    override val isInternal: Boolean
+  element: PsiElement,
+  reference: PsiReference,
+  referencedElement: PsiElement,
+  val originalFile: PsiFile,
+  private val addImportToOriginalFile: Boolean,
+  override val isInternal: Boolean
 ) : MoveRenameUsageInfo(
     element,
     reference,
@@ -304,7 +304,7 @@ class CallableReferenceMoveRenameUsageInfo(
     referencedElement,
     false
 ), DeferredKotlinMoveUsage {
-    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo? {
+    override fun refresh(refExpr: KtSimpleNameExpression, referencedElement: PsiElement): UsageInfo {
         return CallableReferenceMoveRenameUsageInfo(
             refExpr,
             refExpr.mainReference,
@@ -431,7 +431,7 @@ private fun updateJavaReference(reference: PsiReferenceExpression, oldElement: P
         if (newClass != null && reference.qualifierExpression != null) {
 
             val refactoringOptions = object : MoveMembersOptions {
-                override fun getMemberVisibility(): String? = PsiModifier.PUBLIC
+                override fun getMemberVisibility(): String = PsiModifier.PUBLIC
                 override fun makeEnumConstant(): Boolean = true
                 override fun getSelectedMembers(): Array<PsiMember> = arrayOf(newElement)
                 override fun getTargetClassName(): String? = newClass.qualifiedName

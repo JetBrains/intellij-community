@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
@@ -31,6 +32,8 @@ internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAct
     event.presentation.isVisible = forward == null
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val switcher = Switcher.SWITCHER_KEY.get(project)
@@ -47,17 +50,19 @@ internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAct
 
 internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesAction(false)
 internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
-internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : DumbAwareAction() {
+internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = event.project != null
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
-      SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
-    }
+    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
+    ?: SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
   }
 }
 
@@ -65,6 +70,10 @@ internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : Du
 internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = Switcher.SWITCHER_KEY.get(event.project) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -79,6 +88,10 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getCheckBox(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun isSelected(event: AnActionEvent) = getCheckBox(event)?.isSelected ?: false
@@ -115,6 +128,10 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getFileList(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -172,7 +189,7 @@ internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Cons
   private val wasMetaDown = true == event?.isMetaDown
   val isEnabled = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
 
-  val initialModifiers = if (!isEnabled) null
+  private val initialModifiers = if (!isEnabled) null
   else StringBuilder().apply {
     if (wasAltDown) append("alt ")
     if (wasAltGraphDown) append("altGraph ")

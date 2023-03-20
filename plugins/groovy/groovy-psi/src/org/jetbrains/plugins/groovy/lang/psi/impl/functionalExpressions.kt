@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import groovy.lang.Closure
@@ -81,7 +84,9 @@ private fun GrFunctionalExpression.processDelegate(processor: PsiScopeProcessor,
                                                    place: PsiElement,
                                                    classToDelegate: PsiType?): Boolean {
   if (classToDelegate == null) return true
-
+  if (!ResolveUtil.processStaticImports(processor, containingFile, state, place)) {
+    return false
+  }
   val delegateState = state.put(ClassHint.RECEIVER, JustTypeArgument(classToDelegate)).put(ClassHint.RESOLVE_CONTEXT, this)
   return ResolveUtil.processAllDeclarations(classToDelegate, processor, delegateState, place)
 }

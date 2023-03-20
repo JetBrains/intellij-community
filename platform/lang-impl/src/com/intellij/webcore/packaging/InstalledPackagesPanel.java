@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.Application;
@@ -84,13 +85,18 @@ public class InstalledPackagesPanel extends JPanel {
     };
     myPackagesTable.setShowGrid(false);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
-    new TableSpeedSearch(myPackagesTable);
+    TableSpeedSearch.installOn(myPackagesTable);
 
     myUpgradeButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.upgrade"), IconUtil.getMoveUpIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         PackageManagementUsageCollector.triggerUpgradePerformed(myProject, myPackageManagementService);
         upgradeAction();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     myInstallButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.install"), IconUtil.getAddIcon()) {
@@ -102,6 +108,11 @@ public class InstalledPackagesPanel extends JPanel {
           dialog.show();
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
     myInstallButton.setShortcut(CommonShortcuts.getNew());
     myUninstallButton = new DumbAwareActionButton(IdeBundle.messagePointer("action.AnActionButton.text.uninstall"), IconUtil.getRemoveIcon()) {
@@ -109,6 +120,11 @@ public class InstalledPackagesPanel extends JPanel {
       public void actionPerformed(@NotNull AnActionEvent e) {
         PackageManagementUsageCollector.triggerUninstallPerformed(myProject, myPackageManagementService);
         uninstallAction();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     myUninstallButton.setShortcut(CommonShortcuts.getDelete());
@@ -190,8 +206,7 @@ public class InstalledPackagesPanel extends JPanel {
       final Set<String> packagesShouldBePostponed = getPackagesToPostpone();
       for (int row : rows) {
         final Object packageObj = myPackagesTableModel.getValueAt(row, 0);
-        if (packageObj instanceof InstalledPackage) {
-          InstalledPackage pkg = (InstalledPackage)packageObj;
+        if (packageObj instanceof InstalledPackage pkg) {
           final String packageName = pkg.getName();
           final String currentVersion = pkg.getVersion();
           final String availableVersion = (String)myPackagesTableModel.getValueAt(row, 2);
@@ -303,8 +318,7 @@ public class InstalledPackagesPanel extends JPanel {
         final int index = selected[i];
         if (index >= myPackagesTable.getRowCount()) continue;
         final Object value = myPackagesTable.getValueAt(index, 0);
-        if (value instanceof InstalledPackage) {
-          final InstalledPackage pkg = (InstalledPackage)value;
+        if (value instanceof InstalledPackage pkg) {
           if (!canUninstallPackage(pkg)) {
             canUninstall = false;
           }

@@ -40,7 +40,7 @@ public interface JvmFacade {
    *
    * @param qualifiedName the full-qualified name of the class to find.
    * @param scope         the scope to search.
-   * @return the array of found classes, or an empty array if no classes are found.
+   * @return the list of found classes, or an empty array if no classes are found.
    */
   @NotNull
   List<? extends JvmClass> findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);

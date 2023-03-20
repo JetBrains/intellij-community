@@ -4,4 +4,5 @@ class MyClass {
     }
 }
 
+// DISALLOW_METHOD_CALLS
 // EXPECTED: this@MyClass

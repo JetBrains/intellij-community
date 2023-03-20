@@ -15,9 +15,6 @@
  */
 package org.jetbrains.idea.maven.model;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface MavenCoordinate {
 
   String getGroupId();

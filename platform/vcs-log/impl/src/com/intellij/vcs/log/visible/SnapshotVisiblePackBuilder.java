@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.util.Key;
@@ -11,12 +11,13 @@ import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.graph.GraphColorManagerImpl;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.api.printer.GraphColorGetter;
 import com.intellij.vcs.log.graph.collapsing.CollapsedController;
 import com.intellij.vcs.log.graph.impl.facade.BaseController;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
+import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,30 +26,36 @@ import java.util.Set;
 
 public class SnapshotVisiblePackBuilder {
   private static final int VISIBLE_RANGE = 1000;
-  @NotNull private final VcsLogStorage myStorage;
+  private final @NotNull VcsLogStorage myStorage;
 
   public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
     myStorage = storage;
   }
 
-  @NotNull
-  public VisiblePack build(@NotNull VisiblePack visiblePack) {
-    if (visiblePack.getVisibleGraph() instanceof VisibleGraphImpl && visiblePack.getVisibleGraph().getVisibleCommitCount() > 0) {
-      return build(visiblePack.getDataPack(), ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters(),
-                   visiblePack.getAdditionalData());
+  public @NotNull VisiblePack build(@NotNull VisiblePack visiblePack) {
+    DataPackBase dataPack = visiblePack.getDataPack();
+    if (dataPack instanceof DataPack.ErrorDataPack) {
+      return visiblePack;
     }
-    else {
-      DataPackBase newPack = new DataPackBase(visiblePack.getDataPack().getLogProviders(),
-                                              RefsModel.createEmptyInstance(myStorage), false);
-      return new VisiblePack(newPack, EmptyVisibleGraph.getInstance(), true, visiblePack.getFilters());
+
+    if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0 || !(visiblePack.getVisibleGraph() instanceof VisibleGraphImpl)) {
+      DataPackBase newDataPack = new DataPackBase(dataPack.getLogProviders(),
+                                                  RefsModel.createEmptyInstance(myStorage), false);
+      if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
+        return new VisiblePack.ErrorVisiblePack(newDataPack, visiblePack.getFilters(),
+                                                ((VisiblePack.ErrorVisiblePack)visiblePack).getError());
+      }
+      return new VisiblePack(newDataPack, EmptyVisibleGraph.getInstance(), true, visiblePack.getFilters());
     }
+
+    return build(dataPack, ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters(),
+                 visiblePack.getAdditionalData());
   }
 
-  @NotNull
-  private VisiblePack build(@NotNull DataPackBase oldPack,
-                            @NotNull VisibleGraphImpl<Integer> oldGraph,
-                            @NotNull VcsLogFilterCollection filters,
-                            @Nullable Map<Key, Object> data) {
+  private @NotNull VisiblePack build(@NotNull DataPackBase oldPack,
+                                     @NotNull VisibleGraphImpl<Integer> oldGraph,
+                                     @NotNull VcsLogFilterCollection filters,
+                                     @NotNull Map<Key, Object> data) {
     int visibleRow = VISIBLE_RANGE;
     int visibleRange = VISIBLE_RANGE;
     PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);
@@ -57,13 +64,10 @@ public class SnapshotVisiblePackBuilder {
 
     RefsModel newRefsModel = createRefsModel(oldPack.getRefsModel(), heads, oldGraph, oldPack.getLogProviders(), visibleRow, visibleRange);
     DataPackBase newPack = new DataPackBase(oldPack.getLogProviders(), newRefsModel, false);
+    GraphColorGetter colorGetter = new GraphColorGetterByHeadFactory<>(new GraphColorManagerImpl(newRefsModel)).createColorGetter(info);
 
-    GraphColorManagerImpl colorManager =
-      new GraphColorManagerImpl(newRefsModel, VcsLogStorageImpl.createHashGetter(myStorage),
-                                DataPack.getRefManagerMap(oldPack.getLogProviders()));
-
-    VisibleGraph<Integer> newGraph =
-      new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null), info, colorManager);
+    VisibleGraph<Integer> newGraph = new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null),
+                                                            info, colorGetter);
 
     return new VisiblePack(newPack, newGraph, true, filters, data);
   }

@@ -20,7 +20,7 @@ import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.*;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,7 +105,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, false);
     if (defaultGenerator == null) {
       LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset",
-                AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
+                CoreAttachmentFactory.createAttachment(callback.getEditor().getDocument()));
       return;
     }
     try {
@@ -127,8 +127,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
         break;
       }
     }
-    while (node instanceof FilterNode) {
-      FilterNode filterNode = (FilterNode)node;
+    while (node instanceof FilterNode filterNode) {
       String suffix = filterNode.getFilter();
       for (ZenCodingGenerator generator : generators) {
         if (generator.isMyContext(callback, wrapping)) {
@@ -146,8 +145,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
     List<ZenCodingFilter> result = new ArrayList<>();
 
-    while (node instanceof FilterNode) {
-      FilterNode filterNode = (FilterNode)node;
+    while (node instanceof FilterNode filterNode) {
       String filterSuffix = filterNode.getFilter();
       for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
         if (filter.isMyContext(context) && filter.getSuffix().equals(filterSuffix)) {
@@ -275,7 +273,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     if (generator == null) {
       int offset = callback.getEditor().getCaretModel().getOffset();
       LOG.error("Emmet is disabled for context for file " + callback.getFileType().getName() + " in offset: " + offset,
-                AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
+                CoreAttachmentFactory.createAttachment(callback.getEditor().getDocument()));
       return false;
     }
     return checkTemplateKey(inputString, callback, generator);
@@ -383,7 +381,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
               new CustomLiveTemplateLookupElement(this, template.getKey(), template.getKey(), template.getDescription(),
                                                   !LiveTemplateCompletionContributor.shouldShowAllTemplates(), true) {
                 @Override
-                public void renderElement(LookupElementPresentation presentation) {
+                public void renderElement(@NotNull LookupElementPresentation presentation) {
                   super.renderElement(presentation);
                   presentation.setTailText("\t Emmet abbreviation", true);
                 }

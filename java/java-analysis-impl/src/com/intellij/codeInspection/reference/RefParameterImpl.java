@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +10,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -25,7 +25,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
 
   private final short myIndex;
   private Object myActualValueTemplate; // guarded by this
-  private int myUsageCount; // guarded by this
+  private short myUsageCount; // guarded by this
 
   RefParameterImpl(UParameter parameter, PsiElement psi, int index, RefManager manager, RefElement refElement) {
     super(parameter, psi, manager);
@@ -37,9 +37,14 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
       owner.add(this);
     }
 
-    //TODO kotlin receiver parameter must be used
-    if (myIndex == 0 && "$receiver".equals(getName())) {
-      setUsedForReading();
+    if (psi.getLanguage().isKindOf("kotlin")) {
+      //TODO kotlin receiver parameter must be used
+      if (myIndex == 0) {
+        String name = getName();
+        if ("$receiver".equals(name) || name.startsWith("$this$")) {
+          setUsedForReading();
+        }
+      }
     }
   }
 
@@ -58,7 +63,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     return checkFlag(USED_FOR_READING_MASK);
   }
 
-  private void setUsedForReading() {
+  void setUsedForReading() {
     setFlag(true, USED_FOR_READING_MASK);
   }
 
@@ -152,12 +157,15 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   @Nullable
-  public static Object getAccessibleExpressionValue(UExpression expression, Supplier<? extends PsiElement> accessPlace) {
-    if (expression instanceof UReferenceExpression) {
-      UReferenceExpression referenceExpression = (UReferenceExpression)expression;
+  public static Object getAccessibleExpressionValue(@Nullable UExpression expression, @NotNull Supplier<? extends PsiElement> accessPlace) {
+    if (expression == null) return null;
+    if (expression instanceof UExpressionList expressionList) {
+      List<Object> exprValues = ContainerUtil.map(expressionList.getExpressions(), expr -> getAccessibleExpressionValue(expr, accessPlace));
+      return ContainerUtil.all(exprValues, value -> value == VALUE_IS_NOT_CONST) ? VALUE_IS_NOT_CONST : exprValues;
+    }
+    if (expression instanceof UReferenceExpression referenceExpression) {
       UElement resolved = UResolvableKt.resolveToUElement(referenceExpression);
-      if (resolved instanceof UField) {
-        UField uField = (UField)resolved;
+      if (resolved instanceof UField uField) {
         PsiElement element = accessPlace.get();
         if (uField.isStatic() && uField.isFinal()) {
           if (element == null || !isAccessible(uField, element)) {
@@ -189,7 +197,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     String qName = ((UClass)fieldContainingClass).getQualifiedName();
     if (qName == null) return false;
     String fieldQName = qName + "." + field.getName();
-    return PsiResolveHelper.SERVICE.getInstance(place.getProject()).resolveReferencedVariable(fieldQName, place) != null;
+    return PsiResolveHelper.getInstance(place.getProject()).resolveReferencedVariable(fieldQName, place) != null;
   }
 
   @Nullable
@@ -197,7 +205,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     final int idx = fqName.lastIndexOf(' ');
     if (idx > 0) {
       final String method = fqName.substring(0, idx);
-      final RefMethod refMethod = RefMethodImpl.methodFromExternalName(manager, method);
+      final RefJavaElement refMethod = RefMethodImpl.methodFromExternalName(manager, method);
       if (refMethod != null) {
         final UMethod element = ObjectUtils.tryCast(refMethod.getUastElement(), UMethod.class);
         if (element == null) return null;

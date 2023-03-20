@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ import java.io.File;
 import java.util.*;
 
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData, LibraryOrderEntry> {
+public final class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData, LibraryOrderEntry> {
   private static final Logger LOG = Logger.getInstance(LibraryDependencyDataService.class);
 
   @NotNull
@@ -64,17 +64,18 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       LibraryData libraryData = dependencyData.getTarget();
       hasUnresolved |= libraryData.isUnresolved();
       switch (dependencyData.getLevel()) {
-        case MODULE:
+        case MODULE -> {
           Set<String> paths = new HashSet<>();
-            for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
-              paths.add(ExternalSystemApiUtil.toCanonicalPath(path) + dependencyData.getScope().name());
-            }
-            moduleLibrariesToImport.put(paths, dependencyData);
-            toImport.add(dependencyData);
-          break;
-        case PROJECT:
+          for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
+            paths.add(ExternalSystemApiUtil.toCanonicalPath(path) + dependencyData.getScope().name());
+          }
+          moduleLibrariesToImport.put(paths, dependencyData);
+          toImport.add(dependencyData);
+        }
+        case PROJECT -> {
           projectLibrariesToImport.put(libraryData.getInternalName() + dependencyData.getScope().name(), dependencyData);
           toImport.add(dependencyData);
+        }
       }
     }
 
@@ -102,7 +103,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       final LibraryData libraryData = dependencyData.getTarget();
       final String libraryName = libraryData.getInternalName();
       switch (dependencyData.getLevel()) {
-        case MODULE:
+        case MODULE -> {
           final Library moduleLib;
           if (libraryName.isEmpty()) {
             moduleLib = moduleLibraryTable.createLibrary();
@@ -113,8 +114,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           final LibraryOrderEntry existingLibraryDependency =
             syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLib, moduleRootModel, module);
           orderEntryDataMap.put(existingLibraryDependency, dependencyData);
-          break;
-        case PROJECT:
+        }
+        case PROJECT -> {
           final Library projectLib = modelsProvider.getLibraryByName(libraryName);
           if (projectLib == null) {
             final LibraryOrderEntry existingProjectLibraryDependency = syncExistingLibraryDependency(
@@ -131,6 +132,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           else {
             orderEntryDataMap.put(orderEntry, dependencyData);
           }
+        }
       }
     }
   }
@@ -175,8 +177,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           toImport.remove(existing);
         }
       }
-      else if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+      else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
         String libraryName = libraryOrderEntry.getLibraryName();
         LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + libraryOrderEntry.getScope().name());
         if (existing != null) {
@@ -224,8 +225,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                                                          @NotNull DependencyScope scope) {
     LibraryOrderEntry candidate = null;
     for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+      if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
         if (library == libraryOrderEntry.getLibrary()) {
           return libraryOrderEntry;
         }

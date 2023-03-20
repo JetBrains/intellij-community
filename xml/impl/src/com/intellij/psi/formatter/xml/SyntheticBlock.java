@@ -38,7 +38,11 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
   private final List<Block> mySubBlocks;
   private final Indent myChildIndent;
 
-  public SyntheticBlock(final List<Block> subBlocks, final Block parent, final Indent indent, XmlFormattingPolicy policy, final Indent childIndent) {
+  public SyntheticBlock(@NotNull List<@NotNull Block> subBlocks,
+                        @NotNull Block parent,
+                        @Nullable Indent indent,
+                        @NotNull XmlFormattingPolicy policy,
+                        @Nullable Indent childIndent) {
     super(subBlocks, parent, policy, indent);
     mySubBlocks = subBlocks;
     myChildIndent = childIndent;
@@ -57,7 +61,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
   }
 
   @Override
-  public Spacing getSpacing(Block child1, @NotNull Block child2) {
+  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     if (child1 instanceof ReadOnlyBlock || child2 instanceof ReadOnlyBlock) {
       return Spacing.getReadOnlySpacing();
     }
@@ -96,7 +100,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
         return Spacing.getReadOnlySpacing();
       }
       if (type1 == XmlTokenType.XML_CDATA_START && type2 == XmlTokenType.XML_CDATA_END) {
-        return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines()); 
+        return Spacing.createSpacing(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
       }
       if (type1 == XmlTokenType.XML_CDATA_START && child2 instanceof AnotherLanguageBlockWrapper ||
           type2 == XmlTokenType.XML_CDATA_END && child1 instanceof AnotherLanguageBlockWrapper) {
@@ -116,7 +120,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     }
 
     if (isSpaceInText(firstIsTag, secondIsTag, firstIsText, secondIsText) && keepWhiteSpaces()) {
-        return Spacing.getReadOnlySpacing();
+      return Spacing.getReadOnlySpacing();
     }
 
     if (firstIsEntityRef || secondIsEntityRef) {
@@ -136,9 +140,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
                                    myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (isXmlTagName(type1, type2)){
+    if (isXmlTagName(type1, type2)) {
       final int spaces = shouldAddSpaceAroundTagName(node1, node2) ? 1 : 0;
-      return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                   myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (isAttributeElementType(type2)) {
@@ -155,7 +160,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
       return Spacing.createSpacing(1, 1, 0,
                                    myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
     }
-    
+
     if (((AbstractXmlBlock)child1).isTextElement() && ((AbstractXmlBlock)child2).isTextElement()) {
       return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
     }
@@ -167,32 +172,36 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     if ((firstIsText || firstIsTag) && secondIsTag) {
       //<tag/>text <tag/></tag>
       if (((AbstractXmlBlock)child2).insertLineBreakBeforeTag()) {
-        return Spacing.createSpacing(0, Integer.MAX_VALUE, 
+        return Spacing.createSpacing(0, Integer.MAX_VALUE,
                                      ((AbstractXmlBlock)child2).getBlankLinesBeforeTag() + 1,
                                      myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                      myXmlFormattingPolicy.getKeepBlankLines());
-      } else if (((AbstractXmlBlock)child2).removeLineBreakBeforeTag()) {
+      }
+      else if (((AbstractXmlBlock)child2).removeLineBreakBeforeTag()) {
         return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                      myXmlFormattingPolicy.getKeepBlankLines());
       }
     }
 
     final boolean saveSpacesBetweenTagAndText =
-      myXmlFormattingPolicy.shouldSaveSpacesBetweenTagAndText() && child1.getTextRange().getEndOffset() < child2.getTextRange().getStartOffset();
+      myXmlFormattingPolicy.shouldSaveSpacesBetweenTagAndText() &&
+      child1.getTextRange().getEndOffset() < child2.getTextRange().getStartOffset();
 
     if (firstIsTag && secondIsText) {     //<tag/>-text
 
       if (((AbstractXmlBlock)child1).isTextElement() || saveSpacesBetweenTagAndText) {
         return Spacing.createSafeSpacing(true, myXmlFormattingPolicy.getKeepBlankLines());
-      } else {
+      }
+      else {
         return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
       }
     }
 
-    if ( firstIsText && secondIsTag) {     //text-<tag/>
+    if (firstIsText && secondIsTag) {     //text-<tag/>
       if (((AbstractXmlBlock)child2).isTextElement() || saveSpacesBetweenTagAndText) {
         return Spacing.createSafeSpacing(true, myXmlFormattingPolicy.getKeepBlankLines());
-      } else {
+      }
+      else {
         return Spacing.createSpacing(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
       }
     }
@@ -202,7 +211,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
                                    myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
+    return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaksInText(),
+                                 myXmlFormattingPolicy.getKeepBlankLines());
   }
 
   private boolean isEntityRef(final ASTNode node) {
@@ -227,14 +237,14 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
   }
 
   private boolean keepWhiteSpaces() {
-    return (myXmlFormattingPolicy.keepWhiteSpacesInsideTag( getTag()) || myXmlFormattingPolicy.getShouldKeepWhiteSpaces());
+    return (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag()) || myXmlFormattingPolicy.getShouldKeepWhiteSpaces());
   }
 
   protected boolean isTextFragment(final ASTNode node) {
     final ASTNode parent = node.getTreeParent();
     return parent != null && isTextNode(parent.getElementType())
            || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS
-           
+
       ;
   }
 
@@ -269,7 +279,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     return isAttributeBlock(getSubBlocks().get(getSubBlocks().size() - 1));
   }
 
-  public Indent getChildIndent() {
+  public @Nullable Indent getChildIndent() {
     return myChildIndent;
   }
 
@@ -277,7 +287,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     return astNode.getElementType() == XmlElementType.XML_TAG && isTextOnlyTag(astNode) &&
            isTextNotEndingWithLineBreaks(astNode.getTreePrev()) && isTextNotStartingWithLineBreaks(astNode.getTreeNext());
   }
-  
+
   private boolean isTextNotEndingWithLineBreaks(@Nullable ASTNode astNode) {
     if (astNode != null && isTextNode(astNode.getElementType())) {
       ASTNode lastChild = astNode.getLastChildNode();
@@ -287,7 +297,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     }
     return false;
   }
-  
+
   private boolean isTextNotStartingWithLineBreaks(@Nullable ASTNode astNode) {
     if (astNode != null && isTextNode(astNode.getElementType())) {
       ASTNode firstChild = astNode.getFirstChildNode();
@@ -297,14 +307,16 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     }
     return false;
   }
-  
+
   private boolean isTextOnlyTag(@NotNull ASTNode tagNode) {
     ASTNode child = tagNode.getFirstChildNode();
     boolean checkContent = false;
     while (child != null) {
       IElementType childType = child.getElementType();
       if (checkContent) {
-        if (childType == XmlTokenType.XML_END_TAG_START) return true;
+        if (childType == XmlTokenType.XML_END_TAG_START) {
+          return true;
+        }
         else if (!isTextNode(childType)) return false;
       }
       else {

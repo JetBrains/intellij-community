@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="jmock.junit4" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jmock:jmock-junit4:2.5.1" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jmock/jmock-junit4/2.5.1/jmock-junit4-2.5.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

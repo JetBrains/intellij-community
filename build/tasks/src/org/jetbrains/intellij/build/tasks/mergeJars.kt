@@ -1,63 +1,72 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RAW_RUN_BLOCKING")
+
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.lang.ImmutableZipEntry
-import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.context.Context
-import org.jetbrains.intellij.build.io.ZipArchiver
-import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.compressDir
-import org.jetbrains.intellij.build.io.writeNewFile
-import java.nio.file.FileSystems
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.io.*
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.*
-import java.util.concurrent.ForkJoinTask
 import java.util.function.IntConsumer
+import java.util.zip.Deflater
 
-private const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
+const val UTIL_JAR = "util.jar"
+const val UTIL_RT_JAR = "util_rt.jar"
+const val UTIL_8_JAR = "util-8.jar"
 
 sealed interface Source {
   val sizeConsumer: IntConsumer?
+
+  val filter: ((String) -> Boolean)?
+    get() = null
 }
 
 private val USER_HOME = Path.of(System.getProperty("user.home"))
-private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
+val MAVEN_REPO: Path = USER_HOME.resolve(".m2/repository")
 
-data class ZipSource(val file: Path, override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
-  override fun compareTo(other: ZipSource) = file.compareTo(other.file)
+internal val isWindows: Boolean = System.getProperty("os.name").startsWith("windows", ignoreCase = true)
+
+data class ZipSource(
+  @JvmField val file: Path,
+  @JvmField val excludes: List<Regex> = emptyList(),
+  @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
+  override val filter: ((String) -> Boolean)? = null,
+  override val sizeConsumer: IntConsumer? = null,
+) : Source, Comparable<ZipSource> {
+  override fun compareTo(other: ZipSource): Int {
+    return if (isWindows) file.toString().compareTo(other.file.toString()) else file.compareTo(other.file)
+  }
 
   override fun toString(): String {
-    val shortPath = if (file.startsWith(MAVEN_REPO)) {
-      MAVEN_REPO.relativize(file).toString()
-    }
-    else if (file.startsWith(USER_HOME)) {
-      "~/" + USER_HOME.relativize(file)
-    }
-    else {
-      file.toString()
+    val shortPath = when {
+      file.startsWith(MAVEN_REPO) -> MAVEN_REPO.relativize(file).toString()
+      file.startsWith(USER_HOME) -> "~/" + USER_HOME.relativize(file)
+      else -> file.toString()
     }
     return "zip(file=$shortPath)"
   }
 }
 
-data class DirSource(val dir: Path, val excludes: List<PathMatcher>, override val sizeConsumer: IntConsumer? = null) : Source {
+data class DirSource(@JvmField val dir: Path,
+                     @JvmField val excludes: List<PathMatcher> = emptyList(),
+                     override val sizeConsumer: IntConsumer? = null,
+                     @JvmField val prefix: String = "",
+                     @JvmField val removeModuleInfo: Boolean = true) : Source {
   override fun toString(): String {
-    val shortPath = if (dir.startsWith(USER_HOME)) {
-      "~/" + USER_HOME.relativize(dir)
-    }
-    else {
-      dir.toString()
-    }
+    val shortPath = if (dir.startsWith(USER_HOME)) "~/${USER_HOME.relativize(dir)}" else dir.toString()
     return "dir(dir=$shortPath, excludes=${excludes.size})"
   }
 }
 
-data class InMemoryContentSource(val relativePath: String, val data: ByteArray, override val sizeConsumer: IntConsumer? = null) : Source {
+data class InMemoryContentSource(@JvmField val relativePath: String,
+                                 @JvmField val data: ByteArray, override val sizeConsumer: IntConsumer? = null) : Source {
   override fun toString() = "inMemory(relativePath=$relativePath)"
 
   override fun equals(other: Any?): Boolean {
@@ -66,9 +75,7 @@ data class InMemoryContentSource(val relativePath: String, val data: ByteArray, 
 
     if (relativePath != other.relativePath) return false
     if (!data.contentEquals(other.data)) return false
-    if (sizeConsumer != other.sizeConsumer) return false
-
-    return true
+    return sizeConsumer == other.sizeConsumer
   }
 
   override fun hashCode(): Int {
@@ -79,45 +86,24 @@ data class InMemoryContentSource(val relativePath: String, val data: ByteArray, 
   }
 }
 
-fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource = ZipSource(file = file, sizeConsumer = sizeConsumer)
+interface NativeFileHandler {
+  val sourceToNativeFiles: MutableMap<ZipSource, List<String>>
 
-fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
-  val uniqueFiles = HashMap<Path, List<Source>>()
-  for (descriptor in descriptors) {
-    val existing = uniqueFiles.putIfAbsent(descriptor.first, descriptor.third)
-    if (existing != null) {
-      throw IllegalStateException(
-        "File ${descriptor.first} is already associated." +
-        "\nPrevious:\n  ${existing.joinToString(separator = "\n  ")}" +
-        "\nCurrent:\n  ${descriptor.third.joinToString(separator = "\n  ")}"
-      )
-    }
-  }
-
-  val traceContext = Context.current()
-
-  ForkJoinTask.invokeAll(descriptors.map { item ->
-    ForkJoinTask.adapt {
-      val file = item.first
-      tracer.spanBuilder("build jar")
-        .setParent(traceContext)
-        .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
-        .setAttribute("jar", file.toString())
-        .setAttribute(AttributeKey.stringArrayKey("sources"), item.third.map { item.toString() })
-        .startSpan()
-        .use {
-          buildJar(file, item.third, dryRun = dryRun)
-        }
-
-      // app.jar is combined later with other JARs and then re-ordered
-      if (!dryRun && item.second.isNotEmpty() && item.second != "lib/app.jar") {
-        reorderJar(relativePath = item.second, file = file, traceContext = traceContext)
-      }
-    }
-  })
+  suspend fun sign(name: String, data: ByteBuffer): Path?
 }
 
-fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
+@Obsolete
+fun buildJarSync(targetFile: Path, sources: List<Source>) {
+  runBlocking {
+    buildJar(targetFile, sources)
+  }
+}
+
+suspend fun buildJar(targetFile: Path,
+                     sources: List<Source>,
+                     compress: Boolean = false,
+                     dryRun: Boolean = false,
+                     nativeFileHandler: NativeFileHandler? = null) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -125,18 +111,18 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
     return
   }
 
-  val forbidNativeFiles = targetFile.fileName.toString() == "app.jar"
-  val packageIndexBuilder = PackageIndexBuilder()
+  val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
-    ZipFileWriter(outChannel).use { zipCreator ->
-      val uniqueNames = HashSet<String>()
+    ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
+      val uniqueNames = HashMap<String, Path>()
+
       for (source in sources) {
-        val positionBefore = outChannel.position()
+        val positionBefore = zipCreator.resultStream.getChannelPosition()
         when (source) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {
-              if (uniqueNames.add(it)) {
-                packageIndexBuilder.addFile(it)
+              if (uniqueNames.putIfAbsent(it, source.dir) == null && (!source.removeModuleInfo || it != "module-info.class")) {
+                packageIndexBuilder?.addFile(it)
                 true
               }
               else {
@@ -144,153 +130,237 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
               }
             })
             val normalizedDir = source.dir.toAbsolutePath().normalize()
-            archiver.setRootDir(normalizedDir, "")
-            compressDir(normalizedDir, archiver, excludes = source.excludes.takeIf { it.isNotEmpty() })
+            archiver.setRootDir(normalizedDir, source.prefix)
+            archiveDir(normalizedDir, archiver, excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty))
           }
+
           is InMemoryContentSource -> {
-            if (!uniqueNames.add(source.relativePath)) {
-              throw IllegalStateException("in-memory source must always be first (targetFile=$targetFile, source=${source.relativePath}, " +
-                                          "sources=${sources.joinToString()})")
+            if (uniqueNames.putIfAbsent(source.relativePath, Path.of(source.relativePath)) != null) {
+              throw IllegalStateException("in-memory source must always be first " +
+                                          "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
             }
 
-            packageIndexBuilder.addFile(source.relativePath)
+            packageIndexBuilder?.addFile(source.relativePath)
             zipCreator.uncompressedData(source.relativePath, source.data.size) {
               it.put(source.data)
             }
           }
-          else -> {
-            val file = (source as ZipSource).file
-            ImmutableZipFile.load(file).use { zipFile ->
-              val entries = getFilteredEntries(targetFile, file, zipFile, uniqueNames, includeManifest = sources.size == 1,
-                                               forbidNativeFiles)
-              writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
-            }
+
+          is ZipSource -> {
+            handleZipSource(source = source,
+                            targetFile = targetFile,
+                            nativeFileHandler = nativeFileHandler,
+                            uniqueNames = uniqueNames,
+                            sources = sources,
+                            packageIndexBuilder = packageIndexBuilder,
+                            zipCreator = zipCreator)
           }
         }
 
-        source.sizeConsumer?.accept((outChannel.position() - positionBefore).toInt())
+        source.sizeConsumer?.accept((zipCreator.resultStream.getChannelPosition() - positionBefore).toInt())
       }
-      packageIndexBuilder.writeDirs(zipCreator)
-      packageIndexBuilder.writePackageIndex(zipCreator)
+
+      packageIndexBuilder?.writePackageIndex(zipCreator)
     }
   }
 }
 
-private fun getFilteredEntries(targetFile: Path,
-                               sourceFile: Path,
-                               zipFile: ImmutableZipFile,
-                               uniqueNames: MutableSet<String>,
-                               includeManifest: Boolean,
-                               forbidNativeFiles: Boolean): Sequence<ImmutableZipEntry> {
-  val targetFileName = targetFile.fileName.toString()
-  return zipFile.entries.asSequence().filter {
-    val name = it.name
-
-    if (forbidNativeFiles && (it.name.endsWith(".jnilib") || it.name.endsWith(".dylib") || it.name.endsWith(".so"))) {
-      throw IllegalStateException("Library with native files must be packed separately (sourceFile=$sourceFile, targetFile=$targetFile, fileName=${it.name})")
-    }
-
-    @Suppress("SpellCheckingInspection")
-    uniqueNames.add(name) &&
-    !name.endsWith(".kotlin_metadata") &&
-    (includeManifest || name != "META-INF/MANIFEST.MF") &&
-    name != PACKAGE_INDEX_NAME &&
-    name != "license" && !name.startsWith("license/") &&
-    name != "META-INF/services/javax.xml.parsers.SAXParserFactory" &&
-    name != "META-INF/services/javax.xml.stream.XMLEventFactory" &&
-    name != "META-INF/services/javax.xml.parsers.DocumentBuilderFactory" &&
-    name != "META-INF/services/javax.xml.datatype.DatatypeFactory" &&
-    name != "native-image" && !name.startsWith("native-image/") &&
-    name != "native" && !name.startsWith("native/") &&
-    name != "licenses" && !name.startsWith("licenses/") &&
-    name != ".gitkeep" &&
-    name != "META-INF/CHANGES" &&
-    name != "META-INF/DEPENDENCIES" &&
-    name != "META-INF/LICENSE" &&
-    name != "META-INF/LICENSE.txt" &&
-    name != "META-INF/README.txt" &&
-    name != "META-INF/README.md" &&
-    name != "META-INF/NOTICE" &&
-    name != "META-INF/NOTICE.txt" &&
-    name != "LICENSE" &&
-    name != "LICENSE.md" &&
-    name != "module-info.class" &&
-    name != "license.txt" &&
-    name != "LICENSE.txt" &&
-    name != "COPYING.txt" &&
-    name != "about.html" &&
-    name != "pom.xml" &&
-    name != "THIRD_PARTY_LICENSES.txt" &&
-    name != "NOTICE.txt" &&
-    name != "NOTICE.md" &&
-    (requiresMavenFiles(targetFileName) || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
-    !name.startsWith("META-INF/INDEX.LIST") &&
-    (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
-  }
-}
-
-// junixsocket reads pom.properties from class path
-private fun requiresMavenFiles(jarName: String) = jarName.startsWith("junixsocket-")
-
-@Suppress("SpellCheckingInspection")
-private val excludedFromMergeLibs = java.util.Set.of(
-  "sqlite", "async-profiler",
-  "dexlib2", // android-only lib
-  "intellij-test-discovery", // used as agent
-  "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // contains native library
-  "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
-)
-
-fun isLibraryMergeable(libName: String): Boolean {
-  return !excludedFromMergeLibs.contains(libName) &&
-         !libName.startsWith("kotlin-") &&
-         !libName.startsWith("kotlinc.") &&
-         !libName.startsWith("projector-") &&
-         !libName.contains("-agent-") &&
-         !libName.startsWith("rd-") &&
-         !libName.contains("annotations", ignoreCase = true) &&
-         !libName.startsWith("junit", ignoreCase = true) &&
-         !libName.startsWith("cucumber-", ignoreCase = true) &&
-         !libName.contains("groovy", ignoreCase = true)
-}
-
-private val commonModuleExcludes = java.util.List.of(
-  FileSystems.getDefault().getPathMatcher("glob:**/icon-robots.txt"),
-  FileSystems.getDefault().getPathMatcher("glob:icon-robots.txt"),
-  FileSystems.getDefault().getPathMatcher("glob:.unmodified"),
-  FileSystems.getDefault().getPathMatcher("glob:classpath.index"),
-)
-
-fun addModuleSources(moduleName: String,
-                     moduleNameToSize: MutableMap<String, Int>,
-                     moduleOutputDir: Path,
-                     modulePatches: Collection<Path>,
-                     modulePatchContents: Map<String, ByteArray>,
-                     searchableOptionsRootDir: Path,
-                     extraExcludes: Collection<String>,
-                     sourceList: MutableList<Source>) {
-  val sizeConsumer = IntConsumer {
-    moduleNameToSize.merge(moduleName, it) { oldValue, value -> oldValue + value }
-  }
-
-  for (entry in modulePatchContents) {
-    sourceList.add(InMemoryContentSource(entry.key, entry.value, sizeConsumer))
-  }
-  // must be before module output to override
-  for (moduleOutputPatch in modulePatches) {
-    sourceList.add(DirSource(moduleOutputPatch, Collections.emptyList(), sizeConsumer))
-  }
-
-  val searchableOptionsModuleDir = searchableOptionsRootDir.resolve(moduleName)
-  if (Files.exists(searchableOptionsModuleDir)) {
-    sourceList.add(DirSource(searchableOptionsModuleDir, Collections.emptyList(), sizeConsumer))
-  }
-
-  val excludes = if (extraExcludes.isEmpty()) {
-    commonModuleExcludes
+private suspend fun handleZipSource(source: ZipSource,
+                                    targetFile: Path,
+                                    nativeFileHandler: NativeFileHandler?,
+                                    uniqueNames: MutableMap<String, Path>,
+                                    sources: List<Source>,
+                                    packageIndexBuilder: PackageIndexBuilder?,
+                                    zipCreator: ZipFileWriter) {
+  val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
+  val nativeFiles = if (nativeFileHandler == null) {
+    null
   }
   else {
-    commonModuleExcludes.plus(extraExcludes.map { FileSystems.getDefault().getPathMatcher("glob:$it") })
+    lazy(LazyThreadSafetyMode.NONE) {
+      val list = mutableListOf<String>()
+      check(nativeFileHandler.sourceToNativeFiles.put(source, list) == null)
+      list
+    }
   }
-  sourceList.add(DirSource(dir = moduleOutputDir, excludes = excludes, sizeConsumer = sizeConsumer))
+
+  val sourceFile = source.file
+  // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
+  // ability to read data without setting channel position, as setting channel position will require synchronization
+  suspendAwareReadZipFile(sourceFile) { name: String, dataSupplier: () -> ByteBuffer ->
+    val filter = source.filter
+    val isIncluded = if (filter == null) {
+      checkNameForZipSource(name = name,
+                            excludes = source.excludes,
+                            includeManifest = sources.size == 1,
+                            requiresMavenFiles = requiresMavenFiles)
+    }
+    else {
+      filter(name)
+    }
+
+    if (isIncluded && !isDuplicated(uniqueNames, name, sourceFile)) {
+      if (nativeFileHandler != null && isNative(name)) {
+        if (source.isPreSignedAndExtractedCandidate) {
+          nativeFiles!!.value.add(name)
+        }
+        else {
+          packageIndexBuilder?.addFile(name)
+
+          // sign it
+          val data = dataSupplier()
+          val file = nativeFileHandler.sign(name, data)
+          if (file == null) {
+            zipCreator.uncompressedData(name, dataSupplier())
+          }
+          else {
+            zipCreator.file(name, file)
+            Files.delete(file)
+          }
+        }
+      }
+      else {
+        packageIndexBuilder?.addFile(name)
+
+        zipCreator.uncompressedData(name, dataSupplier())
+      }
+    }
+  }
+}
+
+private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, sourceFile: Path): Boolean {
+  val old = uniqueNames.putIfAbsent(name, sourceFile) ?: return false
+  Span.current().addEvent("$name is duplicated and ignored", Attributes.of(
+    AttributeKey.stringKey("firstSource"), old.toString(),
+    AttributeKey.stringKey("secondSource"), sourceFile.toString(),
+  ))
+  return true
+}
+
+fun isNative(name: String): Boolean {
+  return name.endsWith(".jnilib") ||
+         name.endsWith(".dylib") ||
+         name.endsWith(".so") ||
+         name.endsWith(".exe") ||
+         name.endsWith(".dll") ||
+         name.endsWith(".node") ||
+         name.endsWith(".tbd")
+}
+
+@Suppress("SpellCheckingInspection")
+private fun getIgnoredNames(): Set<String> {
+  val set = HashSet<String>()
+  // compilation cache on TC
+  set.add(".hash")
+  set.add("classpath.index")
+  @Suppress("SpellCheckingInspection")
+  set.add(".gitattributes")
+  set.add("pom.xml")
+  set.add("about.html")
+  set.add("module-info.class")
+  set.add("META-INF/versions/9/module-info.class")
+  // default is ok (modules not used)
+  set.add("META-INF/versions/9/kotlin/reflect/jvm/internal/impl/serialization/deserialization/builtins/BuiltInsResourceLoader.class")
+  set.add("META-INF/versions/9/org/apache/xmlbeans/impl/tool/MavenPluginResolver.class")
+  set.add("META-INF/services/javax.xml.parsers.SAXParserFactory")
+  set.add("META-INF/services/javax.xml.stream.XMLEventFactory")
+  set.add("META-INF/services/javax.xml.parsers.DocumentBuilderFactory")
+  set.add("META-INF/services/javax.xml.datatype.DatatypeFactory")
+
+  set.add("META-INF/services/com.fasterxml.jackson.core.ObjectCodec")
+  set.add("META-INF/services/com.fasterxml.jackson.core.JsonFactory")
+  set.add("META-INF/services/reactor.blockhound.integration.BlockHoundIntegration")
+
+  set.add("META-INF/io.netty.versions.properties")
+
+  set.add("com/sun/jna/aix-ppc/libjnidispatch.a")
+  set.add("com/sun/jna/aix-ppc64/libjnidispatch.a")
+
+  // duplicates in maven-resolver-transport-http and maven-resolver-transport-file
+  set.add("META-INF/sisu/javax.inject.Named")
+  // duplicates in recommenders-jayes-io-2.5.5 and recommenders-jayes-2.5.5.jar
+  set.add("OSGI-INF/l10n/bundle.properties")
+  // groovy
+  set.add("META-INF/groovy-release-info.properties")
+
+  set.add("native-image")
+  set.add("native")
+  set.add("licenses")
+  set.add("META-INF/LGPL2.1")
+  set.add("META-INF/AL2.0")
+  @Suppress("SpellCheckingInspection")
+  set.add(".gitkeep")
+  set.add(INDEX_FILENAME)
+  for (originalName in listOf("NOTICE", "README", "LICENSE", "DEPENDENCIES", "CHANGES", "THIRD_PARTY_LICENSES", "COPYING")) {
+    for (name in listOf(originalName, originalName.lowercase())) {
+      set.add(name)
+      set.add("$name.txt")
+      set.add("$name.md")
+      set.add("META-INF/$name")
+      set.add("META-INF/$name.txt")
+      set.add("META-INF/$name.md")
+    }
+  }
+  return java.util.Set.copyOf(set)
+}
+
+private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
+
+private fun checkNameForZipSource(name: String,
+                                  excludes: List<Regex>,
+                                  includeManifest: Boolean,
+                                  requiresMavenFiles: Boolean): Boolean {
+  @Suppress("SpellCheckingInspection")
+  return !ignoredNames.contains(name) &&
+         excludes.none { it.matches(name) } &&
+         !name.endsWith(".kotlin_metadata") &&
+         (includeManifest || name != "META-INF/MANIFEST.MF") &&
+         !name.startsWith("license/") &&
+         !name.startsWith("META-INF/license/") &&
+         !name.startsWith("META-INF/LICENSE-") &&
+         !name.startsWith("native-image/") &&
+
+         //  Class 'jakarta.json.JsonValue' not found while looking for field 'jakarta.json.JsonValue NULL'
+         //!name.startsWith("com/jayway/jsonpath/spi/json/JakartaJsonProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/json/JsonOrgJsonProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/json/TapestryJsonProvider") &&
+         //
+         //!name.startsWith("com/jayway/jsonpath/spi/mapper/JakartaMappingProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/mapper/JsonOrgMappingProvider") &&
+         //!name.startsWith("com/jayway/jsonpath/spi/mapper/TapestryMappingProvider") &&
+
+         //!name.startsWith("io/opentelemetry/exporter/internal/grpc/") &&
+         //!name.startsWith("io/opentelemetry/exporter/internal/okhttp/") &&
+         //// com.thaiopensource.datatype.xsd.regex.xerces2 is used instead
+         //!name.startsWith("com/thaiopensource/datatype/xsd/regex/xerces/RegexEngineImpl") &&
+         //!name.startsWith("com/thaiopensource/relaxng/util/JingTask") &&
+         //!name.startsWith("com/thaiopensource/validate/schematron") &&
+         //!name.startsWith("com/thoughtworks/xstream/core/util/ISO8601JodaTimeConverter") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/BEAStaxDriver") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/AbstractXppDomDriver") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Xom") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Dom4") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/JDom2") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/KXml2") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Wstx") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/Xpp3") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/xppdom") &&
+         //!name.startsWith("com/thoughtworks/xstream/io/xml/XppDom") &&
+         //!name.startsWith("com/michaelbaranov/microba/jgrpah/birdview/Birdview") &&
+
+         // XmlRPC lib
+         !name.startsWith("org/xml/sax/") &&
+
+         !name.startsWith("META-INF/versions/9/org/apache/logging/log4j/") &&
+         !name.startsWith("META-INF/versions/9/org/bouncycastle/") &&
+         !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
+         !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
+
+         !name.startsWith("native/") &&
+         !name.startsWith("licenses/") &&
+         (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
+         !name.startsWith("META-INF/INDEX.LIST") &&
+         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
+         // we replace lib class by our own patched version
+         !name.startsWith("net/sf/cglib/core/AbstractClassGenerator")
 }

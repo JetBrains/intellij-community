@@ -16,8 +16,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.options.JavaInspectionButtons;
+import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalHandler;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -25,10 +30,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class FieldMayBeFinalInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -45,8 +56,20 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return MakeFieldFinalFix.buildFixUnconditional((PsiField)infos[0]);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.IMPLICIT_WRITE_ANNOTATIONS));
+  }
+
+  @Override
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    PsiField field = (PsiField)infos[0];
+    fixes.add(MakeFieldFinalFix.buildFixUnconditional(field));
+    SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
+      fixes.add(new DelegatingFix(EntryPointsManagerBase.getInstance(field.getProject()).new AddImplicitlyWriteAnnotation(annoName)));
+      return true;
+    });
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -57,7 +80,7 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
   private static class FieldMayBeFinalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
         return;

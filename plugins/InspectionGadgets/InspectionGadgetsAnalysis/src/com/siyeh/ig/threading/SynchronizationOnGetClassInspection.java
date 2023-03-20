@@ -50,13 +50,12 @@ public class SynchronizationOnGetClassInspection extends BaseInspection {
   private static class SynchronizationOnGetClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiExpression lockExpression = PsiUtil.skipParenthesizedExprDown(statement.getLockExpression());
-      if (!(lockExpression instanceof PsiMethodCallExpression)) {
+      if (!(lockExpression instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)lockExpression;
       if (!MethodCallUtils.isCallToMethod(methodCallExpression, CommonClassNames.JAVA_LANG_OBJECT, null, "getClass")) {
         return;
       }

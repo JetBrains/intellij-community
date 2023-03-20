@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction;
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction;
 import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice;
@@ -16,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,61 +25,51 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
+  @FileModifier.SafeFieldForPreview private final SmartPsiElementPointer<PsiClass> myParentClassPointer;
+  @FileModifier.SafeFieldForPreview private final SmartPsiElementPointer<PsiClass> mySubclassPointer;
+  private final @Nls String myName;
 
-  private static final String[] SUBCLASS_MODIFIERS = {PsiModifier.FINAL, PsiModifier.NON_SEALED, PsiModifier.SEALED};
-
-  private final boolean myParentIsInterface;
-  private final boolean myChildIsInterface;
-  private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> mySubclassReferencePointer;
-
-  private ExtendSealedClassFix(PsiJavaCodeReferenceElement reference, boolean parentIsInterface, boolean childIsInterface) {
-    mySubclassReferencePointer = SmartPointerManager.createPointer(reference);
-    myParentIsInterface = parentIsInterface;
-    myChildIsInterface = childIsInterface;
+  private ExtendSealedClassFix(PsiClass parentClass, PsiClass subclass) {
+    myParentClassPointer = SmartPointerManager.createPointer(parentClass);
+    mySubclassPointer = SmartPointerManager.createPointer(subclass);
+    int extendsImplements = subclass.isInterface() || !parentClass.isInterface() ? 1 : 2;
+    myName = QuickFixBundle.message("extend.sealed.title", subclass.getName(), extendsImplements, parentClass.getName());
   }
 
   @Override
   public @NotNull ChoiceTitleIntentionAction getTitle() {
-    String fixName = getName();
-    return new ChoiceTitleIntentionAction(fixName, fixName);
-  }
-
-  @NotNull
-  @Nls
-  private String getName() {
-    return QuickFixBundle.message(myParentIsInterface ? "implement.sealed.title" : "extend.sealed.title");
+    return new ChoiceTitleIntentionAction(QuickFixBundle.message("implement.or.extend.fix.family"), myName);
   }
 
   @Override
-  public @NotNull List<ChoiceVariantIntentionAction> getVariants() {
-    if (!myParentIsInterface && myChildIsInterface) return Collections.emptyList();
-    if (myChildIsInterface) {
-      return Arrays.asList(new ExtendSealedClassVariantAction(0, PsiModifier.SEALED),
-                           new ExtendSealedClassVariantAction(1, PsiModifier.NON_SEALED));
+  public @NotNull List<@NotNull ChoiceVariantIntentionAction> getVariants() {
+    PsiClass subclass = mySubclassPointer.getElement();
+    PsiClass parentClass = myParentClassPointer.getElement();
+    if (subclass == null || parentClass == null) return Collections.emptyList();
+    boolean parentIsInterface = parentClass.isInterface();
+    boolean subclassIsInterface = subclass.isInterface();
+    if (!parentIsInterface && subclassIsInterface) return Collections.emptyList();
+    if (subclassIsInterface) {
+      return Arrays.asList(new ExtendSealedClassVariantAction(0, PsiModifier.SEALED, myParentClassPointer, mySubclassPointer),
+                           new ExtendSealedClassVariantAction(1, PsiModifier.NON_SEALED, myParentClassPointer, mySubclassPointer));
     }
-    return IntStream.range(0, SUBCLASS_MODIFIERS.length)
-      .mapToObj(i -> new ExtendSealedClassVariantAction(i, SUBCLASS_MODIFIERS[i]))
-      .collect(Collectors.toList());
+    return Arrays.asList(new ExtendSealedClassVariantAction(0, PsiModifier.FINAL, myParentClassPointer, mySubclassPointer),
+                         new ExtendSealedClassVariantAction(1, PsiModifier.SEALED, myParentClassPointer, mySubclassPointer),
+                         new ExtendSealedClassVariantAction(2, PsiModifier.NON_SEALED, myParentClassPointer, mySubclassPointer));
   }
 
   /**
    * @return fixes or null if given case is not supported (but probably valid)
    */
-  static LocalQuickFix @Nullable [] createFixes(@NotNull PsiJavaCodeReferenceElement subclassReference,
-                                                @NotNull PsiClass parentClass,
-                                                @NotNull PsiClass subclass) {
+  static LocalQuickFix @Nullable [] createFixes(@NotNull PsiClass parentClass, @NotNull PsiClass subclass) {
     if (!parentClass.hasModifierProperty(PsiModifier.SEALED) || !parentClass.getManager().isInProject(parentClass)) return null;
     boolean parentIsInterface = parentClass.isInterface();
     if (parentIsInterface && (subclass.isRecord() || subclass.isEnum())) return null;
     PsiModifierList modifiers = subclass.getModifierList();
     if (modifiers == null || hasSealedClassSubclassModifier(modifiers)) return null;
-    ExtendSealedClassFix extendSealedClassFix = new ExtendSealedClassFix(subclassReference, parentIsInterface, subclass.isInterface());
+    ExtendSealedClassFix extendSealedClassFix = new ExtendSealedClassFix(parentClass, subclass);
     List<LocalQuickFix> actions = new ArrayList<>();
     actions.add(extendSealedClassFix.getTitle());
     actions.addAll(extendSealedClassFix.getVariants());
@@ -93,17 +83,25 @@ public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
   }
 
   private static boolean hasSealedClassSubclassModifier(@NotNull PsiModifierList modifiers) {
-    return ContainerUtil.exists(SUBCLASS_MODIFIERS, m -> modifiers.hasExplicitModifier(m));
+    return modifiers.hasExplicitModifier(PsiModifier.FINAL) ||
+           modifiers.hasExplicitModifier(PsiModifier.SEALED) ||
+           modifiers.hasExplicitModifier(PsiModifier.NON_SEALED);
   }
 
-  private class ExtendSealedClassVariantAction extends ChoiceVariantIntentionAction {
+  private static class ExtendSealedClassVariantAction extends ChoiceVariantIntentionAction {
 
     private final int myIndex;
     private final @NlsSafe String myModifier;
+    private final SmartPsiElementPointer<PsiClass> myParentClassPointer;
+    private final SmartPsiElementPointer<PsiClass> mySubclassPointer;
 
-    private ExtendSealedClassVariantAction(int index, @NotNull String modifier) {
+    private ExtendSealedClassVariantAction(int index, @NotNull String modifier,
+                                           SmartPsiElementPointer<PsiClass> parentClassPointer,
+                                           SmartPsiElementPointer<PsiClass> subclassPointer) {
       myIndex = index;
       myModifier = modifier;
+      myParentClassPointer = parentClassPointer;
+      mySubclassPointer = subclassPointer;
     }
 
     @Override
@@ -118,7 +116,7 @@ public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
 
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
-      return ExtendSealedClassFix.this.getName();
+      return QuickFixBundle.message("implement.or.extend.fix.family");
     }
 
     @Override
@@ -127,13 +125,15 @@ public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
     }
 
     @Override
+    public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return mySubclassPointer.getContainingFile();
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
-      if (editor == null) return;
-      PsiJavaCodeReferenceElement referenceElement = mySubclassReferencePointer.getElement();
-      if (referenceElement == null) return;
-      PsiClass parentClass = PsiTreeUtil.getParentOfType(referenceElement, PsiClass.class);
+      PsiClass parentClass = myParentClassPointer.getElement();
       if (parentClass == null || !parentClass.hasModifierProperty(PsiModifier.SEALED)) return;
-      PsiClass subclass = tryCast(referenceElement.resolve(), PsiClass.class);
+      PsiClass subclass = mySubclassPointer.getElement();
       if (subclass == null) return;
       if (ImplementOrExtendFix.implementOrExtend(parentClass, subclass) == null) return;
       PsiModifierList modifiers = subclass.getModifierList();
@@ -145,6 +145,14 @@ public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
           PsiModifier.SEALED.equals(myModifier) && subclassInheritors.anyMatch(child -> !hasSealedClassSubclassModifier(child))) {
         subclass.navigate(true);
       }
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiClass subclass = mySubclassPointer.getElement();
+      PsiClass copy = PsiTreeUtil.findSameElementInCopy(subclass, target);
+      if (copy == null) return null;
+      return new ExtendSealedClassVariantAction(myIndex, myModifier, myParentClassPointer, SmartPointerManager.createPointer(copy));
     }
   }
 }

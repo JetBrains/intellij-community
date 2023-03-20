@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
@@ -39,7 +39,7 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
     val roamingType = fileToItems.get(file)?.firstOrNull()?.roamingType ?: RoamingType.DEFAULT
     if (file.isFile()) {
       val fileBytes = file.readBytes()
-      streamProvider.doSave(fileSpec, fileBytes, fileBytes.size, roamingType)
+      streamProvider.doSave(fileSpec, fileBytes, roamingType)
     }
     else {
       saveDirectory(file, fileSpec, roamingType, streamProvider)
@@ -57,7 +57,7 @@ private fun saveDirectory(parent: Path, parentFileSpec: String, roamingType: Roa
       val childFileSpec = "$parentFileSpec/${file.fileName}"
       if (file.isFile()) {
         val fileBytes = Files.readAllBytes(file)
-        streamProvider.doSave(childFileSpec, fileBytes, fileBytes.size, roamingType)
+        streamProvider.doSave(childFileSpec, fileBytes, roamingType)
       }
       else {
         saveDirectory(file, childFileSpec, roamingType, streamProvider)

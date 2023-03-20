@@ -13,6 +13,7 @@ import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -57,6 +58,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private PsiModifierListStub myModList;
   private PsiRecordHeaderStub myHeaderStub;
   private Map<TypeInfo, ClsTypeAnnotationCollector> myAnnoBuilders;
+  private List<String> myPermittedSubclasses;
   private ClassInfo myClassInfo;
 
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement<?> parent, int access, String shortName) {
@@ -100,7 +102,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       isRecord);
     myResult = new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
-    myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
+    int classFlags = packClassFlags(flags);
+    if (myFirstPassData.isSealed()) {
+      classFlags |= ModifierFlags.SEALED_MASK;
+    }
+    myModList = new PsiModifierListStubImpl(myResult, classFlags);
     if (isRecord) {
       myHeaderStub = new PsiRecordHeaderStubImpl(myResult);
     }
@@ -137,6 +143,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       }
       newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, myClassInfo.interfaces);
     }
+  }
+
+  @Override
+  public void visitPermittedSubclass(String permittedSubclass) {
+    if (myPermittedSubclasses == null) {
+      myPermittedSubclasses = new SmartList<>();
+    }
+    myPermittedSubclasses.add(permittedSubclass);
   }
 
   private String getFqn(@NotNull String internalName, @Nullable String shortName, @Nullable String parentName) {
@@ -269,6 +283,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       myAnnoBuilders.values().forEach(ClsTypeAnnotationCollector::install);
     }
     myClassInfo.typeParameters.fillInTypeParameterList(myResult);
+    if (myPermittedSubclasses != null) {
+      List<TypeInfo> permittedTypes = myFirstPassData.createTypes(ArrayUtil.toStringArray(myPermittedSubclasses));
+      newReferenceList(JavaStubElementTypes.PERMITS_LIST, myResult, permittedTypes);
+    }
   }
 
   @Override

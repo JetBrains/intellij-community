@@ -19,9 +19,9 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -34,25 +34,28 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ShowRecentFindUsagesAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (usageView != null
-        && project != null
-        && ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getHistory().getAll().size() > 1) {
-      e.getPresentation().setEnabled(true);
-      return;
-    }
-    e.getPresentation().setEnabled(false);
+    Project project = e.getProject();
+    e.getPresentation().setEnabled(e.getData(UsageView.USAGE_VIEW_KEY) != null &&
+                                   project != null &&
+                                   ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getHistory().getAll().size() >
+                                   1);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = Objects.requireNonNull(e.getProject());
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     List<ConfigurableUsageTarget> history = new ArrayList<>(findUsagesManager.getHistory().getAll());
 

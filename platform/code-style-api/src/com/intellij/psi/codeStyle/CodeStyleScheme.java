@@ -37,7 +37,6 @@ public interface CodeStyleScheme extends Scheme {
   String getName();
 
   boolean isDefault();
-
   @NotNull
   CodeStyleSettings getCodeStyleSettings();
 }

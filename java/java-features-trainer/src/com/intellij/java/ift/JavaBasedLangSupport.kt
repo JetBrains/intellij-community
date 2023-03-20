@@ -1,74 +1,53 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ift
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.ide.impl.NewProjectUtil
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
-import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl
-import com.intellij.openapi.roots.ui.configuration.SdkLookup
-import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
-import com.intellij.openapi.ui.Messages
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.lang.JavaVersion
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.PlatformProjectOpenProcessor
 import training.lang.AbstractLangSupport
-import training.learn.LearnBundle
 import training.project.ProjectUtils
 import java.nio.file.Path
 
 abstract class JavaBasedLangSupport : AbstractLangSupport() {
+  protected val sourcesDirectoryPath = "src"
+
   override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    super.installAndOpenLearningProject(contentRoot, projectToClose) { project ->
-      findJavaSdkAsync(project) { sdk ->
-        if (sdk != null) {
-          applyProjectSdk(sdk, project)
-        }
-        postInitCallback(project)
+    val openProjectTask = OpenProjectTask {
+      this.projectToClose = projectToClose
+      // It is required to not run SetupJavaProjectFromSourcesActivity because
+      // Projects created from wizard do not use it now
+      this.beforeOpen = { project ->
+        project.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, false)
+        true
       }
     }
-  }
+    ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this, openProjectTask) { project ->
+      val projectPath = FileUtil.toSystemIndependentName(contentRoot.toString())
+      val outputPath = projectPath.removeSuffix("/") + "/out"
+      NewProjectUtil.setCompilerOutputPath(project, outputPath)
 
-  private fun findJavaSdkAsync(project: Project, onSdkSearchCompleted: (Sdk?) -> Unit) {
-    val javaSdkType = JavaSdk.getInstance()
-    val notification = ProjectUtils.createSdkDownloadingNotification()
-    SdkLookup.newLookupBuilder()
-      .withSdkType(javaSdkType)
-      .withVersionFilter {
-        JavaVersion.tryParse(it)?.isAtLeast(6) == true
-      }
-      .onDownloadableSdkSuggested { sdkFix ->
-        val userDecision = invokeAndWaitIfNeeded {
-          Messages.showYesNoDialog(
-            LearnBundle.message("learn.project.initializing.jdk.download.message", sdkFix.downloadDescription),
-            LearnBundle.message("learn.project.initializing.jdk.download.title"),
-            null
-          )
-        }
-        if (userDecision == Messages.YES) {
-          notification.notify(project)
-          SdkLookupDecision.CONTINUE
-        }
-        else {
-          onSdkSearchCompleted(null)
-          SdkLookupDecision.STOP
-        }
-      }
-      .onSdkResolved { sdk ->
-        if (sdk != null && sdk.sdkType === javaSdkType) {
-          onSdkSearchCompleted(sdk)
-          DumbService.getInstance(project).runWhenSmart {
-            notification.expire()
+      JavaProjectUtil.findJavaSdkAsync(project) { sdk ->
+        runInEdt {
+          if (sdk != null) {
+            applyProjectSdk(sdk, project)
           }
+          postInitCallback(project)
         }
       }
-      .executeLookup()
+    }
   }
 
   override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
@@ -79,15 +58,16 @@ abstract class JavaBasedLangSupport : AbstractLangSupport() {
     val applySdkAction = {
       runWriteAction { JavaSdkUtil.applyJdkToProject(project, sdk) }
     }
-    runInEdt {
-      CommandProcessor.getInstance().executeCommand(project, applySdkAction, null, null)
-    }
+    CommandProcessor.getInstance().executeCommand(project, applySdkAction, null, null)
   }
 
   override fun applyToProjectAfterConfigure(): (Project) -> Unit = { newProject ->
-    //Set language level for LearnProject
-    LanguageLevelProjectExtensionImpl.getInstanceImpl(newProject).currentLevel = LanguageLevel.JDK_1_6
+    invokeLater { ProjectUtils.markDirectoryAsSourcesRoot(newProject, sourcesDirectoryPath) }
   }
 
   override fun checkSdk(sdk: Sdk?, project: Project) {}
+
+  override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = true
+
+  override fun isSdkConfigured(project: Project) = ProjectRootManager.getInstance(project).projectSdk?.sdkType is JavaSdkType
 }

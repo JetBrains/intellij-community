@@ -48,8 +48,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * @author vlan
- * <p>
  * TODO: Merge it with {@link ScopeUtil}
  */
 public final class PyResolveUtil {
@@ -180,10 +178,22 @@ public final class PyResolveUtil {
              : ContainerUtil.map(resolveImportedElementQNameLocally((PyReferenceExpression)qualifier), qn -> qn.append(name));
     }
     else {
-      return fullMultiResolveLocally(expression, new HashSet<>())
+      List<QualifiedName> result = fullMultiResolveLocally(expression, new HashSet<>())
         .select(PyImportElement.class)
         .map(PyResolveUtil::getImportedElementQName)
         .nonNull()
+        .toList();
+      if (!result.isEmpty()) return result;
+      if (expression.getName() == null) return result;
+
+      PsiFile containingFile = expression.getContainingFile();
+      if (!(containingFile instanceof PyFile)) return result;
+      List<PyFromImportStatement> fromImports = ((PyFile)containingFile).getFromImports();
+      return StreamEx.of(fromImports)
+        .filter(it -> it.isStarImport())
+        .map(it -> it.getImportSourceQName())
+        .nonNull()
+        .map(it -> it.append(expression.getName()))
         .toList();
     }
   }
@@ -282,6 +292,7 @@ public final class PyResolveUtil {
         .map(context::getType)
         .nonNull()
         .flatMap(type -> {
+          // An instance type has access to instance attributes defined in __init__, a class type does not.
           final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
           final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
@@ -365,8 +376,7 @@ public final class PyResolveUtil {
     }
     // Forward references are allowed in annotations according to PEP 563
     PsiFile file = element.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
+    if (file instanceof PyFile pyFile) {
       return pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37) &&
              pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) &&
              PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;

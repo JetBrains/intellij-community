@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.serialization.ObjectSerializer
+import com.intellij.util.ReflectionUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.BDDAssertions.then
@@ -57,8 +58,7 @@ class DataNodeTest {
 
     val invocationHandler = InvocationHandler { _, _, _ -> 0 }
 
-    val proxyInstance = Proxy.newProxyInstance(classLoader, arrayOf(interfaceClass), invocationHandler)
-    @Suppress("UNCHECKED_CAST")
+    val proxyInstance = ReflectionUtil.proxy(interfaceClass, invocationHandler)
     val deserialized = wrapAndDeserialize(proxyInstance, URLClassLoader(arrayOf(libUrl)))
     assertThat(deserialized.data.javaClass.interfaces)
       .extracting("name")
@@ -86,7 +86,7 @@ class DataNodeTest {
   fun `proxy instance referenced from invocation handler (de-)serialized`() {
     val handler = object: InvocationHandler, Serializable {
       var counter: Int = 0
-      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
+      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any {
         return when (method?.name) {
           "incrementAndGet" -> ++counter
           else -> Unit

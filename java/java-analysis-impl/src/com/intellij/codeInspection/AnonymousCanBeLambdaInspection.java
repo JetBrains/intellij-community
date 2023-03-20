@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -19,19 +19,18 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousCanBeLambdaInspection.class);
@@ -56,10 +55,11 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     return "Convert2Lambda";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportNotAnnotatedInterfaces",
+               JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface")));
   }
 
   @NotNull
@@ -67,14 +67,14 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         final PsiElement parent = aClass.getParent();
         if (canBeConvertedToLambda(aClass, false, isOnTheFly || reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiElement lBrace = aClass.getLBrace();
           LOG.assertTrue(lBrace != null);
           final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-          ProblemHighlightType type = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+          ProblemHighlightType type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           if (isOnTheFly && !reportNotAnnotatedInterfaces) {
             final PsiClass baseClass = aClass.getBaseClassType().resolve();
             LOG.assertTrue(baseClass != null);
@@ -89,28 +89,27 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  public static boolean hasRuntimeAnnotations(PsiModifierListOwner listOwner, @NotNull Set<String> runtimeAnnotationsToIgnore) {
+  public static boolean mustKeepAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Set<String> runtimeAnnotationsToIgnore) {
     PsiModifierList modifierList = listOwner.getModifierList();
     if (modifierList == null) return false;
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      PsiElement target = ref != null ? ref.resolve() : null;
-      if (target instanceof PsiClass) {
-        if (runtimeAnnotationsToIgnore.contains(((PsiClass)target).getQualifiedName())) {
-          continue;
-        }
-        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation((PsiClass)target, Retention.class.getName());
-        if (retentionAnno != null) {
-          PsiAnnotationMemberValue value = retentionAnno.findAttributeValue("value");
-          if (value instanceof PsiReferenceExpression) {
-            final PsiElement resolved = ((PsiReferenceExpression)value).resolve();
-            if (resolved instanceof PsiField && RetentionPolicy.RUNTIME.name().equals(((PsiField)resolved).getName())) {
-              final PsiClass containingClass = ((PsiField)resolved).getContainingClass();
-              if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
-                return true;
-              }
-            }
+      String fqn;
+      if (ref != null &&
+          ref.resolve() instanceof PsiClass annotationClass &&
+          ((fqn = annotationClass.getQualifiedName()) == null ||
+          !runtimeAnnotationsToIgnore.contains(fqn))) {
+        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
+        // Default retention is CLASS: keep it
+        if (retentionAnno == null) return true;
+        if (retentionAnno.findAttributeValue("value") instanceof PsiReferenceExpression retentionValue &&
+            retentionValue.resolve() instanceof PsiField retentionField &&
+            (RetentionPolicy.RUNTIME.name().equals(retentionField.getName()) ||
+             RetentionPolicy.CLASS.name().equals(retentionField.getName()))) {
+          final PsiClass containingClass = retentionField.getContainingClass();
+          if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
+            return true;
           }
         }
       }
@@ -152,7 +151,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
         ((PsiLambdaExpression)lambda).getBody().replace(method.getBody());
         final PsiType interfaceType;
         if (copyCall.resolveMethod() == null) {
-          return PsiType.NULL;
+          return PsiTypes.nullType();
         }
         else {
           interfaceType = ((PsiLambdaExpression)lambda).getFunctionalInterfaceType();
@@ -162,7 +161,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       }
     }
 
-    return PsiType.NULL;
+    return PsiTypes.nullType();
   }
 
   public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,
@@ -180,7 +179,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
            aClass.getInitializers().length == 0 &&
            method.getBody() != null &&
            method.getDocComment() == null &&
-           !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
+           !mustKeepAnnotations(method, ignoredRuntimeAnnotations) &&
            !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
            !method.hasModifierProperty(PsiModifier.STRICTFP) &&
            !hasForbiddenRefsInsideBody(method, aClass);
@@ -237,11 +236,10 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element,
                                                           final boolean ignoreEqualsMethod,
                                                           boolean forceIgnoreTypeCast) {
-    if (!(element instanceof PsiNewExpression)) {
+    if (!(element instanceof PsiNewExpression newExpression)) {
       return null;
     }
 
-    final PsiNewExpression newExpression = (PsiNewExpression)element;
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
 
     if (anonymousClass == null) return null;
@@ -336,8 +334,8 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
   @NotNull
   static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
-    final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
-    psiComments.removeIf(comment -> PsiTreeUtil.isAncestor(body, comment, false));
+    final Collection<PsiComment> psiComments = ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class),
+    comment -> !PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());
   }
 
@@ -351,7 +349,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
     block.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         super.visitVariable(variable);
         if (!(variable instanceof PsiField)) {
           variables.add(variable);
@@ -359,7 +357,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       }
     });
 
-    final PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(lambdaExpression.getProject());
+    final PsiResolveHelper helper = PsiResolveHelper.getInstance(lambdaExpression.getProject());
     for (Iterator<PsiVariable> iterator = variables.iterator(); iterator.hasNext(); ) {
       PsiVariable local = iterator.next();
       final String localName = local.getName();
@@ -408,10 +406,10 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
       if (names.isEmpty()) return;
 
-      final LinkedHashMap<PsiElement, PsiElement> replacements = new LinkedHashMap<>();
+      final Map<PsiElement, PsiElement> replacements = new LinkedHashMap<>();
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
           super.visitVariable(variable);
           final String newName = names.get(variable);
           if (newName != null) {
@@ -420,7 +418,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
         }
 
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           final PsiElement resolve = expression.resolve();
           if (resolve instanceof PsiVariable) {
@@ -501,7 +499,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {
       if (myBodyContainsForbiddenRefs) return;
 
       super.visitMethodCallExpression(methodCallExpression);
@@ -513,7 +511,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       if (myBodyContainsForbiddenRefs) return;
 
       if (expression.getQualifier() == null) {
@@ -522,7 +520,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       if (myBodyContainsForbiddenRefs) return;
 
       if (expression.getQualifier() == null) {
@@ -531,14 +529,14 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       if (myBodyContainsForbiddenRefs) return;
 
       super.visitVariable(variable);
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (myBodyContainsForbiddenRefs) return;
 
       super.visitReferenceExpression(expression);

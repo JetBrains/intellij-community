@@ -6,6 +6,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -47,7 +48,7 @@ public abstract class LangDiffIgnoredRangeProvider implements DiffIgnoredRangePr
     FileType fileType = content.getContentType();
     VirtualFile file = content instanceof DocumentContent ? ((DocumentContent)content).getHighlightFile() : null;
     if (file != null) {
-      return LanguageUtil.getLanguageForPsi(project, file, fileType);
+      return ReadAction.compute(() -> LanguageUtil.getLanguageForPsi(project, file, fileType));
     }
     return fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType);
   }

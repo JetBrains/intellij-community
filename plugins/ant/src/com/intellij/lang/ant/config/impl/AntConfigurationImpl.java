@@ -15,6 +15,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -720,25 +722,44 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   @Override
-  public boolean executeTargetBeforeCompile(final DataContext context) {
-    return runTargetSynchronously(context, ExecuteBeforeCompilationEvent.getInstance());
+  public boolean executeTargetBeforeCompile(final CompileContext compileContext, final DataContext dataContext) {
+    return runTargetSynchronously(compileContext, dataContext, ExecuteBeforeCompilationEvent.getInstance());
   }
 
   @Override
-  public boolean executeTargetAfterCompile(final DataContext context) {
-    return runTargetSynchronously(context, ExecuteAfterCompilationEvent.getInstance());
+  public boolean executeTargetAfterCompile(final CompileContext compileContext, final DataContext dataContext) {
+    return runTargetSynchronously(compileContext, dataContext, ExecuteAfterCompilationEvent.getInstance());
   }
 
-  private boolean runTargetSynchronously(final DataContext dataContext, ExecutionEvent event) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      throw new IllegalStateException("Called in the event dispatch thread");
+  private boolean runTargetSynchronously(CompileContext compileContext, final DataContext dataContext, ExecutionEvent event) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    final ProgressIndicator progress = compileContext.getProgressIndicator();
+    progress.pushState();
+    try {
+      if (!isInitialized()) {
+        progress.setText(AntBundle.message("progress.text.loading.ant.config"));
+        ensureInitialized();
+      }
+
+      final AntBuildTarget target = getTargetForEvent(event);
+      if (target == null) {
+        // no task assigned
+        return true;
+      }
+
+      if (ExecuteAfterCompilationEvent.TYPE_ID.equals(event.getTypeId()) && compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+        compileContext.addMessage(
+          CompilerMessageCategory.INFORMATION, AntBundle.message("message.skip.ant.target.after.compilation.errors", target.getDisplayName()), null, -1, -1
+        );
+        return true;
+      }
+
+      progress.setText(AntBundle.message("progress.text.running.ant.tasks"));
+      return executeTargetSynchronously(dataContext, target);
     }
-    final AntBuildTarget target = getTargetForEvent(event);
-    if (target == null) {
-      // no task assigned
-      return true;
+    finally {
+      progress.popState();
     }
-    return executeTargetSynchronously(dataContext, target);
   }
 
   public static boolean executeTargetSynchronously(final DataContext dataContext, final AntBuildTarget target) {
@@ -824,10 +845,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return null;
     }
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(context);
-    if (!(psiFile instanceof XmlFile)) {
+    if (!(psiFile instanceof XmlFile xmlFile)) {
       return null;
     }
-    final XmlFile xmlFile = (XmlFile)psiFile;
     return AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
   }
 

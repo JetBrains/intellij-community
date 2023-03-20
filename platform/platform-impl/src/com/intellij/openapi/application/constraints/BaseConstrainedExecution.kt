@@ -21,7 +21,6 @@ import java.util.function.BooleanSupplier
  * Finally, the runnable is called, executing the task in the properly arranged context.
  *
  * @author eldar
- * @author peter
  */
 abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected val constraints: Array<ContextConstraint>)
   : ConstrainedExecution<E>, ConstrainedExecutionScheduler {

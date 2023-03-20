@@ -1,30 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Objects;
 
-public class LightRecordField extends LightField implements LightRecordMember {
+public final class LightRecordField extends LightField implements LightRecordMember {
   private final @NotNull PsiRecordComponent myRecordComponent;
+  private final @NotNull LightRecordComponentModifierList myModifierList;
 
   public LightRecordField(@NotNull PsiManager manager,
                           @NotNull PsiField field,
@@ -32,6 +27,7 @@ public class LightRecordField extends LightField implements LightRecordMember {
                           @NotNull PsiRecordComponent component) {
     super(manager, field, containingClass);
     myRecordComponent = component;
+    myModifierList = new LightRecordComponentModifierList(this, field, myRecordComponent);
   }
 
   @Override
@@ -65,37 +61,19 @@ public class LightRecordField extends LightField implements LightRecordMember {
 
   @Override
   public @NotNull PsiType getType() {
-    if (DumbService.isDumb(myRecordComponent.getProject())) return myRecordComponent.getType();
-    return CachedValuesManager.getCachedValue(this, () -> {
-      PsiType type = myRecordComponent.getType()
-        .annotate(() -> Arrays.stream(myRecordComponent.getAnnotations())
-          .filter(LightRecordField::hasApplicableAnnotationTarget)
-          .toArray(PsiAnnotation[]::new)
-        );
-      return CachedValueProvider.Result.create(type, this);
-    });
+    return myRecordComponent.getType();
   }
 
   @Override
-  public PsiAnnotation @NotNull [] getAnnotations() {
-    return getType().getAnnotations();
-  }
-
-  @Override
-  public boolean hasAnnotation(@NotNull String fqn) {
-    PsiType type = getType();
-    return type.hasAnnotation(fqn);
-  }
-
-  @Override
-  public @Nullable PsiAnnotation getAnnotation(@NotNull String fqn) {
-    return getType().findAnnotation(fqn);
+  public PsiModifierList getModifierList() {
+    return myModifierList;
   }
 
   @Override
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon =
+      iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Field), ElementPresentationUtil.getFlags(this, false));
     if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
       VisibilityIcons.setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PRIVATE, baseIcon);
     }
@@ -116,10 +94,6 @@ public class LightRecordField extends LightField implements LightRecordMember {
       containingClass = containingClass.getContainingClass();
     }
     return new LocalSearchScope(aClass);
-  }
-
-  private static boolean hasApplicableAnnotationTarget(PsiAnnotation annotation) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.FIELD) != null;
   }
 
   @Override

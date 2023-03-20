@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
+import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
-import com.intellij.ide.bookmark.Bookmark
-import com.intellij.ide.bookmark.BookmarkGroup
-import com.intellij.ide.bookmark.BookmarksListener
-import com.intellij.ide.bookmark.BookmarksManager
-import com.intellij.ide.bookmark.LineBookmark
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -20,15 +17,17 @@ internal abstract class IterateBookmarksAction(val forward: Boolean, dynamicText
   private val AnActionEvent.nextBookmark
     get() = project?.service<NextBookmarkService>()?.next(forward, contextBookmark as? LineBookmark)
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = when (val view = event.bookmarksToolWindow?.bookmarksView) {
+    event.presentation.isEnabled = when (val view = event.bookmarksView) {
       null -> event.nextBookmark != null
       else -> if (forward) view.hasNextOccurence() else view.hasPreviousOccurence()
     }
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    when (val view = event.bookmarksToolWindow?.bookmarksView) {
+    when (val view = event.bookmarksView) {
       null -> event.nextBookmark?.run { if (canNavigate()) navigate(true) }
       else -> if (forward) view.goNextOccurence() else view.goPreviousOccurence()
     }
@@ -65,8 +64,11 @@ internal class NextBookmarkService(private val project: Project) : BookmarksList
 
   fun next(forward: Boolean, bookmark: LineBookmark?): LineBookmark? {
     val bookmarks = getCachedBookmarks().ifEmpty { return null }
-    bookmark ?: return if (forward) bookmarks.first() else bookmarks.last()
-    return bookmarks.getOrNull(next(forward, bookmarks.binarySearch(bookmark, this)))
+    if (bookmark != null) {
+      val next = bookmarks.getOrNull(next(forward, bookmarks.binarySearch(bookmark, this)))
+      if (next != null || !BookmarkOccurrence.cyclic) return next
+    }
+    return if (forward) bookmarks.first() else bookmarks.last()
   }
 
   init {

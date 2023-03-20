@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
@@ -13,7 +13,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import gnu.trove.THash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
@@ -33,11 +32,13 @@ import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,10 +60,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.containers.ContainerUtil.set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vladislav.Soroka
@@ -87,7 +88,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<Object[]> data() {
+  public static Collection<String[]> data() {
     return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
   }
 
@@ -144,18 +145,16 @@ public abstract class AbstractModelBuilderTest {
     }
 
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
-    ProjectConnection connection = connector.connect();
 
-    try {
+    try (ProjectConnection connection = connector.connect()) {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
-                                                                                        ContainerUtil.<Class<?>>set(IdeaProject.class)));
+                                                                                        Collections.<Class<?>>singleton(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
       GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
-      File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
-      assertNotNull(initScript);
+      File initScript = GradleInitScriptUtil.createMainInitScript(false, getToolingExtensionClasses());
       executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
 
       buildActionExecutor.withArguments(executionSettings.getArguments());
@@ -165,17 +164,15 @@ public abstract class AbstractModelBuilderTest {
       allModels = buildActionExecutor.run();
       assertNotNull(allModels);
     }
-    finally {
-      connection.close();
-    }
   }
 
   public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
+    assumeTrue("Gradle version [" + gradleVersion + "] is incompatible with Java version [" + JavaVersion.current() + "]",
+               GradleJvmSupportMatrices.isSupported(GradleVersion.version(gradleVersion),
+                                                      JavaVersion.current()));
+
     if (GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0) {
-      Properties properties = System.getProperties();
-      String javaVersionString = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
-      JavaVersion javaVersion = JavaVersion.tryParse(javaVersionString);
-      assumeThat(javaVersion.feature, new CustomMatcher<Integer>("Java version older than 9") {
+      assumeThat(JavaVersion.current().feature, new CustomMatcher<Integer>("Java version older than 9") {
         @Override
         public boolean matches(Object item) {
           return item instanceof Integer && ((Integer)item).compareTo(9) < 0;
@@ -185,8 +182,8 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @NotNull
-  private Set<Class<?>> getToolingExtensionClasses() {
-    final Set<Class<?>> classes = set(
+  public static Set<Class<?>> getToolingExtensionClasses() {
+    return ContainerUtil.immutableSet(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
@@ -195,8 +192,6 @@ public abstract class AbstractModelBuilderTest {
       Init.class,
       Multimap.class,
       ShortTypeHandling.class,
-      // trove4j jar
-      THash.class,
       // fastutil
       Object2ObjectMap.class,
       // ion-java jar
@@ -204,14 +199,6 @@ public abstract class AbstractModelBuilderTest {
       // util-rt jat
       SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
     );
-
-    ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());
-    return classes;
-  }
-
-  @NotNull
-  protected Set<Class<?>> doGetToolingExtensionClasses() {
-    return Collections.emptySet();
   }
 
   @After

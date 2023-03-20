@@ -219,17 +219,16 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   public void testInSwitch() {
     doTest("java.lang.IllegalArgumentException",
            "Find why 'x' could be 5",
-           "class X {" +
-           "  static void test(int x) {\n" +
-           "    switch (x) {\n" +
-           "      case 3:\n" +
-           "        System.out.println(\"oops\");\n" +
-           "        break;\n" +
-           "      case 5:\n" +
-           "        throw new IllegalArgumentException();\n" +
-           "    }\n" +
-           "  }" +
-           "}");
+           """
+             class X {  static void test(int x) {
+                 switch (x) {
+                   case 3:
+                     System.out.println("oops");
+                     break;
+                   case 5:
+                     throw new IllegalArgumentException();
+                 }
+               }}""");
   }
 
   public void testInSwitchRule() {
@@ -257,15 +256,14 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   public void testIfExits() {
     doTest("java.lang.IllegalArgumentException",
            "Find why 'x' could be >= 0",
-           "class X {" +
-           "  static void test(int x) {\n" +
-           "    if (x < 0) {\n" +
-           "      System.out.println(\"ok\");\n" +
-           "      return;\n" +
-           "    }\n" +
-           "    throw new IllegalArgumentException();\n" +
-           "  }" +
-           "}");
+           """
+             class X {  static void test(int x) {
+                 if (x < 0) {
+                   System.out.println("ok");
+                   return;
+                 }
+                 throw new IllegalArgumentException();
+               }}""");
   }
   
   public void testNoInfo() {
@@ -328,33 +326,35 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   }
 
   public void testNpeJetBrains() {
-    doTest("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'y' of foo/bar/Test.callee must not be null\n" +
-           "\tat foo.bar.Test.$$$reportNull$$$0(Test.java)\n" +
-           "\tat foo.bar.Test.callee(Test.java)",
+    doTest("""
+             java.lang.IllegalArgumentException: Argument for @NotNull parameter 'y' of foo/bar/Test.callee must not be null
+             \tat foo.bar.Test.$$$reportNull$$$0(Test.java)
+             \tat foo.bar.Test.callee(Test.java)""",
            "Find why 'b' could be null",
-           "package foo.bar;\n" +
-           "class Test {\n" +
-           "  void caller(String a, String b, String c) {\n" +
-           "    callee(a, b, c);\n" +
-           "  }\n" +
-           "\n" +
-           "  void callee(String x, String y, String z) {}\n" +
-           "}");
+           """
+             package foo.bar;
+             class Test {
+               void caller(String a, String b, String c) {
+                 callee(a, b, c);
+               }
+
+               void callee(String x, String y, String z) {}
+             }""");
   }
   
   public void testNpeJetBrainsOverride() {
-    doTest("Exception in thread \"main\" java.lang.IllegalArgumentException: Argument for @NotNull parameter 's' of MainTest$XImpl.foo must not be null\n" +
-           "\tat MainTest$XImpl.$$$reportNull$$$0(MainTest.java)\n" +
-           "\tat MainTest$XImpl.foo(MainTest.java)",
+    doTest("""
+             Exception in thread "main" java.lang.IllegalArgumentException: Argument for @NotNull parameter 's' of MainTest$XImpl.foo must not be null
+             \tat MainTest$XImpl.$$$reportNull$$$0(MainTest.java)
+             \tat MainTest$XImpl.foo(MainTest.java)""",
            "Find why 's1' could be null",
-           "import org.jetbrains.annotations.NotNull;\n" +
-           "\n" +
-           "public class MainTest {\n" +
-           "    static void test(X x, String s, String s1) { x.foo(s, s1); }\n" +
-           "    interface X { void foo(String s, String t);}\n" +
-           "    static class XImpl implements X { @Override public void foo(String t, @NotNull String s) {}}" +
-           "    public static void main(String[] args) { test(new XImpl(), \"\", null); }" +
-           "}");
+           """
+             import org.jetbrains.annotations.NotNull;
+
+             public class MainTest {
+                 static void test(X x, String s, String s1) { x.foo(s, s1); }
+                 interface X { void foo(String s, String t);}
+                 static class XImpl implements X { @Override public void foo(String t, @NotNull String s) {}}    public static void main(String[] args) { test(new XImpl(), "", null); }}""");
   }
   
   public void testArrayCopySource() {

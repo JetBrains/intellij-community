@@ -16,7 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,8 +38,10 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ObjectEqualityInspection extends BaseInspection {
 
@@ -59,19 +61,17 @@ public class ObjectEqualityInspection extends BaseInspection {
   public boolean m_ignorePrivateConstructors = false;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("object.comparison.problem.description");
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("object.comparison.enumerated.ignore.option"), "m_ignoreEnums");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("object.comparison.klass.ignore.option"), "m_ignoreClassObjects");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option"), "m_ignorePrivateConstructors");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreEnums", InspectionGadgetsBundle.message("object.comparison.enumerated.ignore.option")),
+      checkbox("m_ignoreClassObjects", InspectionGadgetsBundle.message("object.comparison.klass.ignore.option")),
+      checkbox("m_ignorePrivateConstructors", InspectionGadgetsBundle.message(
+        "object.equality.ignore.between.objects.of.a.type.with.only.private.constructors.option")));
   }
 
   @Override
@@ -181,10 +181,9 @@ public class ObjectEqualityInspection extends BaseInspection {
     }
 
     private boolean isThisReference(@Nullable PsiExpression expression, @Nullable PsiClass psiClass) {
-      if (!(expression instanceof PsiThisExpression)) {
+      if (!(expression instanceof PsiThisExpression thisExpression)) {
         return false;
       }
-      final PsiThisExpression thisExpression = (PsiThisExpression)expression;
       final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       return qualifier == null || psiClass != null && qualifier.isReferenceTo(psiClass);
     }

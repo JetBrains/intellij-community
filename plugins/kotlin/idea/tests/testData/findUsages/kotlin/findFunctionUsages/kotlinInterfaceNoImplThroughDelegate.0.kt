@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages, skipImports
+// PSI_ELEMENT_AS_TITLE: "fun foo(): Unit"
 package server
 
 interface InterfaceNoImpl {
@@ -10,4 +11,3 @@ public class InterfaceWithDelegatedNoImpl(f: InterfaceNoImpl) : InterfaceNoImpl 
 
 fun test(twdni: InterfaceWithDelegatedNoImpl) = twdni.foo()
 
-// FIR_COMPARISON

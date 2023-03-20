@@ -12,8 +12,6 @@ import java.util.List;
 /**
  * A block that's created when template & template data language blocks overlap in an irreconcilable way. The block covers the entire overlap
  * area and isn't reformatted.
- *
- * @author peter
  */
 class ErrorLeafBlock implements Block {
   private final int myStartOffset;

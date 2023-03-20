@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
@@ -43,7 +43,6 @@ internal class Int2IntMapBinding : Binding {
       return
     }
 
-    @Suppress("UNCHECKED_CAST")
     val result = property.readUnsafe(hostObject) as Int2IntMap?
     if (result == null) {
       property.set(hostObject, readMap(context.reader))

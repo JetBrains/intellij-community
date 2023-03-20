@@ -244,9 +244,7 @@ public final class TemplateResource implements Serializable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TemplateResource)) return false;
-
-    TemplateResource that = (TemplateResource)o;
+    if (!(o instanceof TemplateResource that)) return false;
 
     return fileName.equals(that.fileName) && template.equals(that.template);
   }

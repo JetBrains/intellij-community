@@ -61,11 +61,10 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
 
   @Override
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
-    if (!(element instanceof PropertiesFile)) {
+    if (!(element instanceof PropertiesFile propertyFile)) {
       throw new IncorrectOperationException();
     }
 
-    final PropertiesFile propertyFile = (PropertiesFile)element;
     final String bundleName = FormReferenceProvider.getBundleName(propertyFile);
     LOG.assertTrue(bundleName != null);
     updateRangeText(bundleName);

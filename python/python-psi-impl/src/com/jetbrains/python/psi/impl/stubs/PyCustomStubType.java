@@ -21,7 +21,6 @@ public interface PyCustomStubType<Psi extends PyElement, Stub extends PyCustomSt
   /**
    * @param stream stream containing serialized stub
    * @return a custom stub instance or null if it could not be read.
-   * @throws IOException
    * @see PyCustomStub#serialize(StubOutputStream)
    */
   @Nullable

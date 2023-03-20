@@ -11,6 +11,7 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input> {
+import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
+
+public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input>,
+                                                                  MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
 
   protected final IndexId<Key, Value> myIndexId;
@@ -39,35 +43,24 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final LowMemoryWatcher myLowMemoryFlusher;
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                           @NotNull IndexStorageLayout<Key, Value> indexStorageLayout,
-                           @Nullable ReadWriteLock lock) throws IOException {
+                           @NotNull IndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
     this(extension,
          indexStorageLayout.openIndexStorage(),
          indexStorageLayout.openForwardIndex(),
-         indexStorageLayout.getForwardIndexAccessor(),
-         lock);
+         indexStorageLayout.getForwardIndexAccessor());
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex forwardIndex,
                            @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
-    this(extension, storage, forwardIndex, forwardIndexAccessor,  null);
-  }
-
-  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                           @NotNull IndexStorage<Key, Value> storage,
-                           @Nullable ForwardIndex forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                           @Nullable ReadWriteLock lock) throws IOException {
-    this(extension, () -> storage, () -> forwardIndex, forwardIndexAccessor, lock);
+    this(extension, () -> storage, () -> forwardIndex, forwardIndexAccessor);
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                            @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                           @Nullable ReadWriteLock lock) throws IOException {
+                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
@@ -83,8 +76,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myUseIntForwardIndex = myForwardIndex instanceof IntForwardIndex && myForwardIndexAccessor instanceof IntForwardIndexAccessor;
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
-    myLock = lock == null ? new ReentrantReadWriteLock() : lock;
-    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension, getSerializationProblemReporter()) : null;
+    myLock = new ReentrantReadWriteLock();
+    myValueSerializationChecker = new ValueSerializationChecker<>(extension, getSerializationProblemReporter());
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
 
@@ -142,7 +135,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public void clear() {
     myLock.writeLock().lock();
     try {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       doClear();
     }
     catch (StorageException | IOException e) {
@@ -202,6 +195,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  @Override
+  public int keysCountApproximately() {
+    return keysCountApproximatelyIfPossible(myStorage);
+  }
+
   protected boolean isDisposed() {
     return myDisposed;
   }
@@ -243,16 +241,18 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       data = mapInput(inputId, content);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (MapReduceIndexMappingException e) {
+    catch (ProcessCanceledException | MapReduceIndexMappingException e) {
       throw e;
     }
     catch (Exception e) {
       throw new MapReduceIndexMappingException(e, myExtension.getClass());
     }
 
+    return prepareUpdate(inputId, data);
+  }
+
+  @Override
+  public @NotNull IndexUpdateComputable prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
       data.getKeyValues(),
@@ -317,7 +317,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final RemovedKeyProcessor<Key> myRemovedKeyProcessor = new RemovedKeyProcessor<Key>() {
     @Override
     public void process(Key key, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.removeAllValues(key, inputId);
     }
   };
@@ -325,7 +325,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final KeyValueUpdateProcessor<Key, Value> myAddedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.addValue(key, inputId, value);
     }
   };
@@ -333,10 +333,14 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final KeyValueUpdateProcessor<Key, Value> myUpdatedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.updateValue(key, inputId, value);
     }
   };
+
+  protected void incrementModificationStamp() {
+    myModificationStamp.incrementAndGet();
+  }
 
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
     myLock.writeLock().lock();

@@ -16,7 +16,7 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void bar() {
-        <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">new RuntimeException()</warning>;
+        new <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">RuntimeException</warning>();
     }
 
     void suppressed() {
@@ -38,7 +38,7 @@ public class ThrowableInstanceNeverThrown {
     }
 
     void leftBehind() throws Throwable {
-        final RuntimeException e = <warning descr="Runtime exception instance 'new RuntimeException(\"throw me\")' is not thrown">new RuntimeException("throw me")</warning>;
+        final RuntimeException e = new <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">RuntimeException</warning>("throw me");
     }
 
     void saving() {
@@ -108,7 +108,7 @@ class L {
     }
 }
 class Main {
-  Runnable r = () -> <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">new RuntimeException()</warning>;
+  Runnable r = () -> new <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">RuntimeException</warning>();
 
   Throwable switchExpression1(int i) {
     return switch(i) {
@@ -117,7 +117,7 @@ class Main {
   }
 
   Throwable switchExpression2(int i) {
-    for (int j = 0; j < 10; j++, <warning descr="Throwable instance 'new Throwable()' is not thrown">new Throwable()</warning>) {}
+    for (int j = 0; j < 10; j++, new <warning descr="Throwable instance 'Throwable' is not thrown">Throwable</warning>()) {}
 
     return switch(i) {
       default -> {

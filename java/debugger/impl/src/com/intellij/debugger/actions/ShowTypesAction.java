@@ -3,6 +3,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
@@ -52,5 +53,10 @@ public class ShowTypesAction extends DumbAwareToggleAction {
       }
     }
     e.getPresentation().setEnabledAndVisible(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

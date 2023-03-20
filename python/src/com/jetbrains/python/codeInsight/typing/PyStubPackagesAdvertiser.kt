@@ -1,13 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.typing
 
 import com.google.common.cache.Cache
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl
-import com.intellij.codeInspection.ui.ListEditForm
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.execution.ExecutionException
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -28,7 +32,6 @@ import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.sdk.PythonSdkUtil
-import javax.swing.JComponent
 
 private class PyStubPackagesAdvertiser : PyInspection() {
   companion object {
@@ -45,23 +48,14 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = NotificationGroup(
-      "Python Stub Packages Advertiser",
-      NotificationDisplayType.STICKY_BALLOON,
-      true,
-      null,
-      null,
-      PyBundle.message("code.insight.stub.package.advertiser.notifications.group.title"),
-      null)
+    private val BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   var ignoredPackages: MutableList<String> = mutableListOf()
 
-  override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
-                                                               PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label"),
-                                                               ignoredPackages).contentPanel
-
+  override fun getOptionsPane() =
+    pane(stringList("ignoredPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
+  
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = Visitor(ignoredPackages, holder, session)
@@ -181,6 +175,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
             PyBundle.message("code.insight.type.hints.are.not.installed"),
             PyBundle.message("code.insight.install.type.hints.content"),
             NotificationType.INFORMATION)
+          .setSuggestionType(true)
           .addAction(
             NotificationAction.createSimpleExpiring(
               if (plural) PyBundle.message("code.insight.install.type.hints.action")

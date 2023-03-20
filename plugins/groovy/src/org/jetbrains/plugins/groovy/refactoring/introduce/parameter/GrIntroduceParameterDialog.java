@@ -8,10 +8,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -147,7 +144,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     }
 
     final PsiType closureReturnType = inferClosureReturnType();
-    if (PsiType.VOID.equals(closureReturnType)) {
+    if (PsiTypes.voidType().equals(closureReturnType)) {
       myForceReturnCheckBox.setEnabled(false);
       myForceReturnCheckBox.setSelected(false);
     }
@@ -352,15 +349,10 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     final PsiField[] usedFields = GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myInfo.getStatements(), getContainingClass());
     myGetterPanel.setVisible(usedFields.length > 0);
     switch (settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS) {
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL:
-        myReplaceAllFieldsRadioButton.setSelected(true);
-        break;
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL -> myReplaceAllFieldsRadioButton.setSelected(true);
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE ->
         myReplaceFieldsInaccessibleInRadioButton.setSelected(true);
-        break;
-      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE:
-        myDoNotReplaceRadioButton.setSelected(true);
-        break;
+      case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE -> myDoNotReplaceRadioButton.setSelected(true);
     }
   }
 

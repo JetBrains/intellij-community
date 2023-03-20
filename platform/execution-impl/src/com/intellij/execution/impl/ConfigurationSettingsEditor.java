@@ -55,8 +55,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     if (myCompound == null) {
       myCompound = new SettingsEditorGroup<>();
       Disposer.register(this, myCompound);
-      if (myConfigurationEditor instanceof SettingsEditorGroup) {
-        SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
+      if (myConfigurationEditor instanceof SettingsEditorGroup<RunConfiguration> group) {
         List<Pair<@TabTitle String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
         for (Pair<@TabTitle String, SettingsEditor<RunConfiguration>> pair : editors) {
           myCompound.addEditor(pair.getFirst(), new ConfigToSettingsWrapper(pair.getSecond()));
@@ -223,6 +222,10 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     return settings;
   }
 
+  boolean supportsSnapshots() {
+    return !(myConfigurationEditor instanceof CheckableRunConfigurationEditor);
+  }
+
   public void targetChanged(String targetName) {
     for (SettingsEditor<RunnerAndConfigurationSettings> editor : myEditors) {
       if (editor instanceof TargetAwareRunConfigurationEditor) {
@@ -318,7 +321,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       JComponent component = myConfigEditor.getComponent();
       if (myConfigEditor instanceof AdjustingTabSettingsEditor) {
         JPanel panel = new JPanel(new BorderLayout());
-        UiNotifyConnector connector = new UiNotifyConnector(panel, new Activatable() {
+        UiNotifyConnector connector = UiNotifyConnector.installOn(panel, new Activatable() {
           private boolean myIsEmpty = true;
           @Override
           public void showNotify() {

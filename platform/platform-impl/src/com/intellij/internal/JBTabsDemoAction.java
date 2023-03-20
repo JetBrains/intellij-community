@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -14,7 +15,6 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public final class JBTabsDemoAction extends AnAction {
+final class JBTabsDemoAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final JFrame frame = new JFrame();
@@ -204,7 +210,9 @@ public final class JBTabsDemoAction extends AnAction {
     south.add(refire);
 
     for (Component c : south.getComponents()) {
-      ObjectUtils.consumeIfCast(c, JComponent.class, box -> box.setOpaque(false));
+      if (c instanceof JComponent box) {
+        box.setOpaque(false);
+      }
     }
 
 
@@ -232,9 +240,6 @@ public final class JBTabsDemoAction extends AnAction {
     tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.setTabSidePaintBorder(5);
-    tabs.setPaintBorder(1, 1, 1, 1);
-
     tabs.getPresentation().setActiveTabFillIn(Color.white);
 
     //tabs.setBorder(new LineBorder(Color.blue, 5));

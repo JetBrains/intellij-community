@@ -96,8 +96,7 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
 
   @Nullable
   private static TextRange getDeclarationRangeFromPom(@NotNull PomTarget target, @NotNull PsiElement declaringElement) {
-    if (target instanceof PsiDeclaredTarget) {
-      PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+    if (target instanceof PsiDeclaredTarget declaredTarget) {
       TextRange nameIdentifierRange = declaredTarget.getNameIdentifierRange();
       if (nameIdentifierRange != null) {
         PsiElement navigationElement = declaredTarget.getNavigationElement();

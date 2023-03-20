@@ -32,7 +32,7 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
   }
 
   @Override
-  protected void customizeActions(@NotNull ActionManager manager, @NotNull List<AnAction> actions) {
+  protected void customizeActions(@NotNull ActionManager manager, @NotNull List<? super AnAction> actions) {
     String commitStageActionName = "Git.Commit.Stage";
     String stageAllActionName = "Git.Stage.Add.Tracked";
     addAfter(commitStageActionName, IdeActions.ACTION_CHECKIN_PROJECT, manager, actions);

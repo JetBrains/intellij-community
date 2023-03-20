@@ -2,6 +2,7 @@
 package com.jetbrains.python.ift
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
 import training.util.getFeedbackLink
@@ -15,7 +16,7 @@ class PythonLangSupport : PythonBasedLangSupport() {
 
   private val sourcesDirectoryName: String = "src"
 
-  override val filename: String = "Learning.py"
+  override val scratchFileName: String = "Learning.py"
 
   override val langCourseFeedback get() = getFeedbackLink(this, false)
 
@@ -24,4 +25,6 @@ class PythonLangSupport : PythonBasedLangSupport() {
   override fun applyToProjectAfterConfigure(): (Project) -> Unit = { project ->
     ProjectUtils.markDirectoryAsSourcesRoot(project, sourcesDirectoryName)
   }
+
+  override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = true
 }

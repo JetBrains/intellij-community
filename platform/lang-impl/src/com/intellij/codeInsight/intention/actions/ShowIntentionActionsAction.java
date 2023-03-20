@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.actions;
 
@@ -52,7 +52,7 @@ public class ShowIntentionActionsAction extends BaseCodeInsightAction implements
     Editor editor = getEditor(e.getDataContext(), project, false);
     if (editor == null) return;
 
-    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
@@ -64,9 +64,8 @@ public class ShowIntentionActionsAction extends BaseCodeInsightAction implements
     return true;
   }
 
-  @NotNull
   @Override
-  protected ShowIntentionActionsHandler getHandler() {
+  protected @NotNull ShowIntentionActionsHandler getHandler() {
     return new ShowIntentionActionsHandler();
   }
 }

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -16,24 +15,17 @@ import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
-import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +39,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
-import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_DOES_NOT_MATCH;
-import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_NOT_FOUND;
 import static java.util.Collections.singletonList;
 
 public final class VcsLogUtil {
@@ -56,20 +46,13 @@ public final class VcsLogUtil {
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
-  @NlsSafe public static final String HEAD = "HEAD";
+  public static final Pattern HASH_PREFIX_REGEX = Pattern.compile("[a-fA-F0-9]{4,40}");
+  public static final @NlsSafe String HEAD = "HEAD";
 
-  @NotNull
-  public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
-    return groupByRoot(refs, VcsRef::getRoot);
-  }
-
-  @NotNull
-  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<? extends T> items,
-                                                          @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
-    for (T item : items) {
-      VirtualFile root = rootGetter.fun(item);
-      map.computeIfAbsent(root, k -> new HashSet<>()).add(item);
+  public static @NotNull Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
+    Map<VirtualFile, Set<VcsRef>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
+    for (VcsRef item : refs) {
+      map.computeIfAbsent(item.getRoot(), k -> new HashSet<>()).add(item);
     }
     return map;
   }
@@ -78,8 +61,7 @@ public final class VcsLogUtil {
     return root1.getPresentableUrl().compareTo(root2.getPresentableUrl());
   }
 
-  @NotNull
-  private static Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files, @NotNull Set<? extends VirtualFile> roots) {
+  private static @NotNull Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files, @NotNull Set<? extends VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<>();
 
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
@@ -116,23 +98,20 @@ public final class VcsLogUtil {
     return selectedRoots;
   }
 
-  @NotNull
-  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUi logUi) {
+  public static @NotNull Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUi logUi) {
     VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
     Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
     return getAllVisibleRoots(roots, filters);
   }
 
-  @NotNull
-  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
-                                                    @NotNull VcsLogFilterCollection filters) {
+  public static @NotNull Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
+                                                             @NotNull VcsLogFilterCollection filters) {
     return getAllVisibleRoots(roots, filters.get(VcsLogFilterCollection.ROOT_FILTER), filters.get(VcsLogFilterCollection.STRUCTURE_FILTER));
   }
 
   // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
-  @NotNull
-  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
+  public static @NotNull Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
                                                     @Nullable VcsLogRootFilter rootFilter,
                                                     @Nullable VcsLogStructureFilter structureFilter) {
     if (rootFilter == null && structureFilter == null) return new HashSet<>(roots);
@@ -156,12 +135,11 @@ public final class VcsLogUtil {
     return new HashSet<>(ContainerUtil.intersection(fromRootFilter, fromStructureFilter));
   }
 
-  // for given root returns files that are selected in it
+  // for given root returns files that are selected in it,
   // if a root is visible as a whole returns empty set
   // same if root is invisible as a whole
   // so check that before calling this method
-  @NotNull
-  public static Set<FilePath> getFilteredFilesForRoot(@NotNull final VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
+  public static @NotNull Set<FilePath> getFilteredFilesForRoot(final @NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
     VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
     if (structureFilter == null) return Collections.emptySet();
     Collection<FilePath> files = structureFilter.getFiles();
@@ -172,9 +150,7 @@ public final class VcsLogUtil {
     }));
   }
 
-  @Nullable
-  @NlsSafe
-  public static String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
+  public static @Nullable @NlsSafe String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
     VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (filter == null) return null;
 
@@ -201,28 +177,19 @@ public final class VcsLogUtil {
     return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
   }
 
-  @NotNull
-  public static TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
+  public static @NotNull TextRevisionNumber convertToRevisionNumber(@NotNull Hash hash) {
     return new TextRevisionNumber(hash.asString(), hash.toShortString());
   }
 
-  @NotNull
-  public static VcsFullCommitDetails getDetails(@NotNull VcsLogData data, @NotNull VirtualFile root, @NotNull Hash hash)
-    throws VcsException {
-    return Objects.requireNonNull(getFirstItem(getDetails(data.getLogProvider(root), root, singletonList(hash.asString()))));
-  }
-
-  @NotNull
-  public static List<? extends VcsFullCommitDetails> getDetails(@NotNull VcsLogProvider logProvider,
-                                                                @NotNull VirtualFile root,
-                                                                @NotNull List<String> hashes) throws VcsException {
+  public static @NotNull List<? extends VcsFullCommitDetails> getDetails(@NotNull VcsLogProvider logProvider,
+                                                                         @NotNull VirtualFile root,
+                                                                         @NotNull List<String> hashes) throws VcsException {
     List<VcsFullCommitDetails> result = new ArrayList<>();
     logProvider.readFullDetails(root, hashes, result::add);
     return result;
   }
 
-  @NotNull
-  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail, boolean withChanges) {
+  public static @NotNull CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail, boolean withChanges) {
     return new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
                                               VcsUserUtil.getShortPresentation(detail.getCommitter()),
                                               new Date(detail.getCommitTime()),
@@ -230,20 +197,15 @@ public final class VcsLogUtil {
                                               convertToRevisionNumber(detail.getId()));
   }
 
-  @NotNull
-  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+  public static @NotNull CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
     return createCommittedChangeList(detail, true);
   }
 
-  @NotNull
-  @NlsSafe
-  public static String getShortHash(@NotNull String hashString) {
+  public static @NotNull @NlsSafe String getShortHash(@NotNull String hashString) {
     return getShortHash(hashString, SHORT_HASH_LENGTH);
   }
 
-  @NotNull
-  @NlsSafe
-  public static String getShortHash(@NotNull String hashString, int shortHashLength) {
+  public static @NotNull @NlsSafe String getShortHash(@NotNull String hashString, int shortHashLength) {
     return hashString.substring(0, Math.min(shortHashLength, hashString.length()));
   }
 
@@ -251,17 +213,15 @@ public final class VcsLogUtil {
     return s.length() == FULL_HASH_LENGTH && HASH_REGEX.matcher(s).matches();
   }
 
-  @Nullable
-  public static VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
+  public static @Nullable VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
     CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);
     if (compressedRefs == null) return null;
     Stream<VcsRef> branches = compressedRefs.streamBranches();
     return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
   }
 
-  @NotNull
-  public static List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
-                                            @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
+  public static @NotNull List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
+                                                     @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
     List<Change> changes = new ArrayList<>();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
     for (VcsFullCommitDetails details : detailsListReversed) {
@@ -271,8 +231,7 @@ public final class VcsLogUtil {
     return CommittedChangesTreeBrowser.zipChanges(changes);
   }
 
-  @Nullable
-  public static VirtualFile getActualRoot(@NotNull Project project, @NotNull FilePath path) {
+  public static @Nullable VirtualFile getActualRoot(@NotNull Project project, @NotNull FilePath path) {
     VcsRoot rootObject = ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(path);
     if (rootObject == null) return null;
     Map<VirtualFile, VcsLogProvider> providers = findLogProviders(singletonList(rootObject), project);
@@ -281,13 +240,22 @@ public final class VcsLogUtil {
     return provider.getVcsRoot(project, rootObject.getPath(), path);
   }
 
-  @Nullable
-  public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogUi logUi) {
+  public static @Nullable VirtualFile getActualRoot(@NotNull Project project,
+                                                    @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                                    @NotNull FilePath path) {
+    List<VirtualFile> sortedRoots = ContainerUtil.sorted(providers.keySet(), Comparator.comparing(VirtualFile::getPath).reversed());
+    VirtualFile root = ContainerUtil.find(sortedRoots, r -> FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(r), path.getIOFile(), false));
+    if (root == null) return null;
+    VcsLogProvider provider = providers.get(root);
+    if (provider == null) return null;
+    return provider.getVcsRoot(project, root, path);
+  }
+
+  public static @Nullable Collection<FilePath> getAffectedPaths(@NotNull VcsLogUi logUi) {
     return getAffectedPaths(logUi.getDataPack());
   }
 
-  @Nullable
-  public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogDataPack dataPack) {
+  public static @Nullable Collection<FilePath> getAffectedPaths(@NotNull VcsLogDataPack dataPack) {
     VcsLogStructureFilter structureFilter = dataPack.getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
     if (structureFilter != null) {
       return structureFilter.getFiles();
@@ -295,8 +263,7 @@ public final class VcsLogUtil {
     return null;
   }
 
-  @Nullable
-  public static Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
+  public static @Nullable Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
       if (properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
@@ -338,9 +305,7 @@ public final class VcsLogUtil {
     return Registry.intValue("vcs.log.max.changes.shown");
   }
 
-  @NotNull
-  @NonNls
-  public static String getSizeText(int maxSize) {
+  public static @NotNull @NonNls String getSizeText(int maxSize) {
     if (maxSize < 1000) {
       return String.valueOf(maxSize);
     }
@@ -358,24 +323,18 @@ public final class VcsLogUtil {
     return (maxSize / 1_000_000) + "M";
   }
 
-  @NotNull
-  @NonNls
-  public static String getProvidersMapText(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  public static @NotNull @NonNls String getProvidersMapText(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]";
   }
 
-  @NotNull
-  @Nls
-  public static String getVcsDisplayName(@NotNull Project project, @NotNull Collection<VcsLogProvider> logProviders) {
+  public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project, @NotNull Collection<? extends VcsLogProvider> logProviders) {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
     if (vcs.size() != 1) return VcsLogBundle.message("vcs");
     return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }
 
-  @NotNull
-  @Nls
-  public static String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
+  public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
     return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
   }
 
@@ -392,40 +351,19 @@ public final class VcsLogUtil {
     });
   }
 
-  public static void jumpToRow(@NotNull VcsLogUiEx vcsLogUi, int row, boolean silently) {
-    vcsLogUi.jumpTo(row, (visiblePack, r) -> {
-      if (visiblePack.getVisibleGraph().getVisibleCommitCount() <= r) return -1;
-      return r;
-    }, SettableFuture.create(), silently, true);
-  }
-
-  public static int getCommitRow(@NotNull VcsLogStorage storage, @NotNull VisiblePack visiblePack,
-                                 @NotNull Hash hash, @NotNull VirtualFile root) {
-    int commitIndex = storage.getCommitIndex(hash, root);
-    VisibleGraph<Integer> visibleGraph = visiblePack.getVisibleGraph();
-    if (visibleGraph instanceof VisibleGraphImpl) {
-      int nodeId = ((VisibleGraphImpl<Integer>)visibleGraph).getPermanentGraph().getPermanentCommitsInfo().getNodeId(commitIndex);
-      if (nodeId == COMMIT_NOT_FOUND) return COMMIT_NOT_FOUND;
-      if (nodeId < 0) return COMMIT_DOES_NOT_MATCH;
-      Integer rowIndex = ((VisibleGraphImpl<Integer>)visibleGraph).getLinearGraph().getNodeIndex(nodeId);
-      return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
+  public static void runWhenVcsAndLogIsReady(@NotNull Project project, @NotNull Consumer<? super VcsLogManager> action) {
+    VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
+    if (logManager != null) {
+      action.consume(logManager);
+      return;
     }
-    Integer rowIndex = visibleGraph.getVisibleRowIndex(commitIndex);
-    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
-  }
-
-  @NotNull
-  public static ListenableFuture<VcsLogUiEx.JumpResult> jumpToCommit(@NotNull VcsLogUiEx vcsLogUi,
-                                                                     @NotNull Hash commitHash,
-                                                                     @NotNull VirtualFile root,
-                                                                     boolean silently,
-                                                                     boolean focus) {
-    SettableFuture<VcsLogUiEx.JumpResult> future = SettableFuture.create();
-    vcsLogUi.jumpTo(commitHash, (visiblePack, hash) -> {
-      VcsLogStorage storage = vcsLogUi.getLogData().getStorage();
-      if (!storage.containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
-      return getCommitRow(storage, visiblePack, hash, root);
-    }, future, silently, focus);
-    return future;
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        VcsProjectLog.Companion.runWhenLogIsReady(project, manager -> {
+          action.consume(manager);
+          return Unit.INSTANCE;
+        });
+      }, project.getDisposed());
+    });
   }
 }

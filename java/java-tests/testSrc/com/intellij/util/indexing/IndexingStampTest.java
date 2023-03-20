@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,8 +20,7 @@ public class IndexingStampTest extends LightJavaCodeInsightFixtureTestCase {
 
     Generator<ID<?, ?>> indexIds =
       Generator.sampledFrom(FileBasedIndexExtension
-                              .EXTENSION_POINT_NAME
-                              .extensions()
+                              .EXTENSION_POINT_NAME.getExtensionList().stream()
                               .map(ex -> ex.getName())
                               .sorted(Comparator.comparing(id -> id.getName()))
                               .collect(Collectors.toList()));

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
  * @deprecated use {@link java.util.function.Function} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public interface Transform<S, T> {
   /**
    * @deprecated use {@link java.util.function.Function} instead

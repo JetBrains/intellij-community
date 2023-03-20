@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.configurationStore.JbXmlOutputter
@@ -13,7 +13,9 @@ internal interface SecureString {
   fun get(clearable: Boolean = true): OneTimeString
 }
 
-internal class ProtectedValue(private var encryptedValue: ByteArray, private var position: Int, private var streamCipher: SkippingStreamCipher) : Text(), SecureString {
+internal class ProtectedValue(private var encryptedValue: ByteArray,
+                              private var position: Int,
+                              private var streamCipher: SkippingStreamCipher) : Text(), SecureString {
   @Synchronized
   override fun get(clearable: Boolean): OneTimeString {
     val output = ByteArray(encryptedValue.size)
@@ -26,15 +28,19 @@ internal class ProtectedValue(private var encryptedValue: ByteArray, private var
     val value = encryptedValue
     decryptInto(value)
 
-    position = newStreamCipher.position.toInt()
-    newStreamCipher.processBytes(value, 0, value.size, value, 0)
+    synchronized(newStreamCipher) {
+      position = newStreamCipher.position.toInt()
+      newStreamCipher.processBytes(value, 0, value.size, value, 0)
+    }
     streamCipher = newStreamCipher
   }
 
   @Synchronized
   private fun decryptInto(out: ByteArray) {
-    streamCipher.seekTo(position.toLong())
-    streamCipher.processBytes(encryptedValue, 0, encryptedValue.size, out, 0)
+    synchronized(streamCipher) {
+      streamCipher.seekTo(position.toLong())
+      streamCipher.processBytes(encryptedValue, 0, encryptedValue.size, out, 0)
+    }
   }
 
   override fun getText() = throw IllegalStateException("encodeToBase64 must be used for serialization")
@@ -53,33 +59,39 @@ internal class UnsavedProtectedValue(val secureString: StringProtectedByStreamCi
 
 internal class ProtectedXmlWriter(private val streamCipher: SkippingStreamCipher) : JbXmlOutputter(isForbidSensitiveData = false) {
   override fun writeContent(out: Writer, element: Element, level: Int): Boolean {
-    if (element.name == KdbxEntryElementNames.value) {
-      val value = element.content.firstOrNull()
-      if (value is SecureString) {
-        val protectedValue: ProtectedValue
-        if (value is ProtectedValue) {
-          value.setNewStreamCipher(streamCipher)
-          protectedValue = value
-        }
-        else {
-          val bytes = (value as UnsavedProtectedValue).secureString.getAsByteArray()
+    if (element.name != KdbxEntryElementNames.value) {
+      return super.writeContent(out, element, level)
+    }
+
+    val value = element.content.firstOrNull()
+    if (value is SecureString) {
+      val protectedValue: ProtectedValue
+      if (value is ProtectedValue) {
+        value.setNewStreamCipher(streamCipher)
+        protectedValue = value
+      }
+      else {
+        val bytes = (value as UnsavedProtectedValue).secureString.getAsByteArray()
+        synchronized(streamCipher) {
           val position = streamCipher.position.toInt()
           streamCipher.processBytes(bytes, 0, bytes.size, bytes, 0)
           protectedValue = ProtectedValue(bytes, position, streamCipher)
-          element.setContent(protectedValue)
         }
-
-        out.write('>'.toInt())
-        out.write(escapeElementEntities(protectedValue.encodeToBase64()))
-        return true
+        element.setContent(protectedValue)
       }
+
+      out.write('>'.code)
+      out.write(escapeElementEntities(protectedValue.encodeToBase64()))
+      return true
     }
 
     return super.writeContent(out, element, level)
   }
 }
 
-internal fun isValueProtected(valueElement: Element) = valueElement.getAttributeValue(KdbxAttributeNames.protected).equals("true", ignoreCase = true)
+internal fun isValueProtected(valueElement: Element): Boolean {
+  return valueElement.getAttributeValue(KdbxAttributeNames.protected).equals("true", ignoreCase = true)
+}
 
 internal class XmlProtectedValueTransformer(private val streamCipher: SkippingStreamCipher) {
   private var position = 0

@@ -46,14 +46,15 @@ public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheriting
   }
 
   @Override
-  protected XmlTagBlock createTagBlock(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
-   return myBuilder.createXmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
+  protected XmlTagBlock createTagBlock(@NotNull ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
+    return myBuilder.createXmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
   }
 
   @Override
-  protected final Block createSyntheticBlock(ArrayList<Block> localResult, Indent childrenIndent) {
+  protected final Block createSyntheticBlock(@NotNull ArrayList<Block> localResult, Indent childrenIndent) {
     try {
-      List<Block> merged = myBuilder.mergeWithTemplateBlocks(localResult, myXmlFormattingPolicy.getSettings(), myXmlFormattingPolicy, childrenIndent);
+      List<Block> merged =
+        myBuilder.mergeWithTemplateBlocks(localResult, myXmlFormattingPolicy.getSettings(), myXmlFormattingPolicy, childrenIndent);
       return myBuilder.createSyntheticBlock(merged, this, Indent.getNoneIndent(), myXmlFormattingPolicy, childrenIndent);
     }
     catch (FragmentedTemplateException e) {
@@ -82,7 +83,7 @@ public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheriting
   protected Indent getChildrenIndent() {
     return Indent.getIndent(myXmlFormattingPolicy.indentChildrenOf(getTag()) ? Indent.Type.NORMAL : Indent.Type.NONE, false, true);
   }
-  
+
   boolean isScriptBlock() {
     return HtmlUtil.isScriptTag(getTag());
   }

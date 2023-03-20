@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.application.options.codeStyle.arrangement.match.EmptyArrangementRuleComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -11,9 +12,6 @@ import com.intellij.util.IconUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class AddArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware {
   public AddArrangementRuleAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.rule.add.text"));
@@ -26,6 +24,11 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
   public void update(@NotNull AnActionEvent e) {
     ArrangementMatchingRulesControl control = getRulesControl(e);
     e.getPresentation().setEnabled(control != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

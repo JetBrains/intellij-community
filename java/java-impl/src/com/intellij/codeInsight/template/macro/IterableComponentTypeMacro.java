@@ -24,9 +24,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class IterableComponentTypeMacro extends Macro {
   @Override
   public String getName() {

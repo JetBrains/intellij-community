@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -18,10 +18,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -30,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,7 +36,6 @@ import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,9 +104,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       });
     }
     else {
-      executionManager.startRunProfile(environment, currentState, (ignored) -> SlowOperations.allowSlowOperations(() -> {
-        return doExecute(currentState, environment);
-      }));
+      executionManager.startRunProfile(environment, currentState, (ignored) -> doExecute(currentState, environment));
     }
   }
 
@@ -222,7 +217,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;
     ProcessHandler processHandler = executionResult.getProcessHandler();
     assert processHandler != null : executionResult;
-    final ControlBreakAction controlBreakAction = new ControlBreakAction(processHandler, contentBuilder.getSearchScope());
+    final ControlBreakAction controlBreakAction = new ControlBreakAction();
     if (consoleComponent != null) {
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
       processHandler.addProcessListener(new ProcessAdapter() {
@@ -233,24 +228,35 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         }
       });
     }
-    contentBuilder.addAction(controlBreakAction);
     if (isJavaCommandLine) {
       AttachDebuggerAction.add(contentBuilder, processHandler);
     }
-    contentBuilder.addAction(new SoftExitAction(processHandler));
   }
 
   private abstract static class ProxyBasedAction extends AnAction {
-    protected final ProcessHandler myProcessHandler;
-
-    protected ProxyBasedAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, ProcessHandler processHandler) {
+    protected ProxyBasedAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
-      myProcessHandler = processHandler;
+    }
+
+    protected ProcessHandler getProcessHandler(@NotNull AnActionEvent e) {
+      RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+      return contentDescriptor == null ? null : contentDescriptor.getProcessHandler();
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return true;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public final void update(@NotNull AnActionEvent event) {
-      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
+      ProcessHandler processHandler = getProcessHandler(event);
+      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(processHandler);
       boolean available = proxy != null && available(proxy);
       Presentation presentation = event.getPresentation();
       if (!available) {
@@ -258,30 +264,29 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       }
       else {
         presentation.setVisible(true);
-        presentation.setEnabled(!myProcessHandler.isProcessTerminated());
+        presentation.setEnabled(!processHandler.isProcessTerminated());
       }
     }
 
     @Override
     public final void actionPerformed(@NotNull AnActionEvent e) {
-      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
+      ProcessHandler processHandler = getProcessHandler(e);
+      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(processHandler);
       if (proxy != null) {
-        perform(e, proxy);
+        perform(e, proxy, processHandler);
       }
     }
 
     protected abstract boolean available(ProcessProxy proxy);
 
-    protected abstract void perform(AnActionEvent e, ProcessProxy proxy);
+    protected abstract void perform(AnActionEvent e, ProcessProxy proxy, ProcessHandler handler);
   }
 
-  protected static final class ControlBreakAction extends ProxyBasedAction {
-    private final GlobalSearchScope mySearchScope;
+  public static final class ControlBreakAction extends ProxyBasedAction {
     private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Thread Dumper", 1);
 
-    public ControlBreakAction(final ProcessHandler processHandler, GlobalSearchScope searchScope) {
-      super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump, processHandler);
-      mySearchScope = searchScope;
+    public ControlBreakAction() {
+      super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_CANCEL, InputEvent.CTRL_DOWN_MASK)));
     }
 
@@ -291,14 +296,17 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     @Override
-    protected void perform(AnActionEvent event, ProcessProxy proxy) {
+    protected void perform(AnActionEvent event, ProcessProxy proxy, ProcessHandler processHandler) {
       Project project = event.getProject();
       if (project == null) {
         return;
       }
       RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
-      if (Registry.is("execution.dump.threads.using.attach") && myProcessHandler instanceof BaseProcessHandler && runnerContentUi != null) {
-        String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)myProcessHandler).getProcess()));
+      if (Registry.is("execution.dump.threads.using.attach") && processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
+        String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)processHandler).getProcess()));
+        RunTab runTab = event.getData(RunTab.KEY);
+        GlobalSearchScope scope =
+          runTab instanceof RunContentBuilder ? ((RunContentBuilder)runTab).getSearchScope() : GlobalSearchScope.allScope(project);
         if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
           myExecutor.execute(() -> {
             VirtualMachine vm = null;
@@ -313,16 +321,16 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
               }
               List<ThreadState> threads = ThreadDumpParser.parse(text);
               ApplicationManager.getApplication().invokeLater(
-                () -> DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope),
+                () -> DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), scope),
                 ModalityState.NON_MODAL);
             }
             catch (AttachNotSupportedException e) {
               LOG.debug(e);
-              dumpWithBreak(proxy, project);
+              dumpWithBreak(proxy, project, processHandler);
             }
             catch (Exception e) {
               LOG.warn(e);
-              dumpWithBreak(proxy, project);
+              dumpWithBreak(proxy, project, processHandler);
             }
             finally {
               if (vm != null) {
@@ -337,12 +345,12 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
           return;
         }
       }
-      dumpWithBreak(proxy, project);
+      dumpWithBreak(proxy, project, processHandler);
     }
 
-    private void dumpWithBreak(ProcessProxy proxy, Project project) {
+    private static void dumpWithBreak(ProcessProxy proxy, Project project, ProcessHandler processHandler) {
       boolean wise = Boolean.getBoolean(ourWiseThreadDumpProperty);
-      WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(project, myProcessHandler) : null;
+      WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(project, processHandler) : null;
 
       proxy.sendBreak();
 
@@ -391,6 +399,11 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null && myConnection == null) {
@@ -432,7 +445,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {
-      if (Registry.is("debugger.attach.to.process.action") && processHandler instanceof BaseProcessHandler) {
+      // disabled on macos because of IDEA-252760
+      if (Registry.is("debugger.attach.to.process.action") && processHandler instanceof BaseProcessHandler && !SystemInfo.isMac) {
         contentBuilder.addAction(new AttachDebuggerAction((BaseProcessHandler<?>)processHandler));
       }
     }
@@ -484,9 +498,9 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
   }
 
-  protected static final class SoftExitAction extends ProxyBasedAction {
-    public SoftExitAction(final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit, processHandler);
+  public static final class SoftExitAction extends ProxyBasedAction {
+    public SoftExitAction() {
+      super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit);
     }
 
     @Override
@@ -495,8 +509,8 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     }
 
     @Override
-    protected void perform(AnActionEvent e, ProcessProxy proxy) {
-      myProcessHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, Boolean.TRUE);
+    protected void perform(AnActionEvent e, ProcessProxy proxy, ProcessHandler processHandler) {
+      processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, Boolean.TRUE);
       proxy.sendStop();
     }
   }

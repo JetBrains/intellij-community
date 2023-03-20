@@ -6,8 +6,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -83,7 +85,7 @@ public class LicensePanel extends NonOpaquePanel {
       myMessage.setIcon(warning ? EmptyIcon.ICON_16 : null);
     }
 
-    myMessage.setForeground(errorColor ? DialogWrapper.ERROR_FOREGROUND_COLOR : null);
+    myMessage.setForeground(errorColor ? NamedColorUtil.getErrorForeground() : null);
     myMessage.setVisible(true);
 
     myPanel.setVisible(true);
@@ -155,6 +157,13 @@ public class LicensePanel extends NonOpaquePanel {
     setLink(IdeBundle.message("plugins.configurable.buy.the.plugin"), () ->
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
+    if (plugin instanceof PluginNode) {
+      List<String> tags = ((PluginNode)plugin).getTags();
+      if (tags.contains(Tags.Freemium.name())) {
+        updateLink(IdeBundle.message("plugins.configurable.activate.trial.for.full.access"), false);
+        return;
+      }
+    }
     PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {
         updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);

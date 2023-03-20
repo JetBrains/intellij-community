@@ -22,9 +22,6 @@ import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructor
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase {
   @NotNull
   @Override

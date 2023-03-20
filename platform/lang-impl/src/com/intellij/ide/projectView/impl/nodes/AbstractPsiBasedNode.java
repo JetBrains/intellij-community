@@ -11,8 +11,11 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
+import com.intellij.ide.projectView.impl.ProjectViewInplaceCommentProducerImplKt;
 import com.intellij.ide.tags.TagManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.InplaceCommentAppender;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
@@ -129,12 +132,18 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @Nullable
   private VirtualFile getVirtualFileForValue() {
     Object value = getEqualityObject();
-    if (value instanceof SmartPsiElementPointer<?>) {
-      SmartPsiElementPointer<?> pointer = (SmartPsiElementPointer<?>)value;
+    if (value instanceof SmartPsiElementPointer<?> pointer) {
       return pointer.getVirtualFile(); // do not retrieve PSI element
     }
     PsiElement psiElement = extractPsiFromValue();
     return PsiUtilCore.getVirtualFile(psiElement);
+  }
+
+  @Override
+  protected void appendInplaceComments(@NotNull InplaceCommentAppender appender) {
+    if (UISettings.getInstance().getShowInplaceComments()) {
+      ProjectViewInplaceCommentProducerImplKt.appendInplaceComments(this, appender);
+    }
   }
 
   // Should be called in atomic action

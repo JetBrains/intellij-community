@@ -52,10 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author vlan
- */
-public class PyUserSkeletonsUtil {
+public final class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
   private static final Logger LOG = Logger.getInstance(PyUserSkeletonsUtil.class);
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
@@ -208,12 +205,10 @@ public class PyUserSkeletonsUtil {
     if (owner != null && name != null) {
       assert owner != element;
       final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile, context);
-      if (originalOwner instanceof PyClass) {
-        final PyClass classOwner = (PyClass)originalOwner;
+      if (originalOwner instanceof PyClass classOwner) {
         final var fallbackContext = TypeEvalContext.codeInsightFallback(classOwner.getProject());
         final PyType type = fallbackContext.getType(classOwner);
-        if (type instanceof PyClassLikeType) {
-          final PyClassLikeType classType = (PyClassLikeType)type;
+        if (type instanceof PyClassLikeType classType) {
           final PyClassLikeType instanceType = classType.toInstance();
           final PyResolveContext resolveContext = PyResolveContext.defaultContext(ObjectUtils.notNull(context, fallbackContext));
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,

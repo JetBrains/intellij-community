@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,15 +31,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
   public boolean ignoreAnnotatedObject = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("type.parameter.extends.object.ignore.annotated"),
-                                          this, "ignoreAnnotatedObject");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAnnotatedObject", InspectionGadgetsBundle.message("type.parameter.extends.object.ignore.annotated")));
   }
 
   @Override
@@ -81,12 +83,10 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
       final PsiElement parent = identifier.getParent();
-      if (parent instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter =
-          (PsiTypeParameter)parent;
+      if (parent instanceof PsiTypeParameter typeParameter) {
         final PsiReferenceList extendsList =
           typeParameter.getExtendsList();
         final PsiJavaCodeReferenceElement[] referenceElements =
@@ -100,8 +100,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
         final PsiTypeElement typeElement = (PsiTypeElement)parent;
         PsiElement child = typeElement.getLastChild();
         while (child != null) {
-          if (child instanceof PsiJavaToken) {
-            final PsiJavaToken javaToken = (PsiJavaToken)child;
+          if (child instanceof PsiJavaToken javaToken) {
             final IElementType tokenType = javaToken.getTokenType();
             if (tokenType == JavaTokenType.QUEST) {
               return;
@@ -122,7 +121,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
   private class ExtendsObjectVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeParameter(PsiTypeParameter parameter) {
+    public void visitTypeParameter(@NotNull PsiTypeParameter parameter) {
       super.visitTypeParameter(parameter);
       final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
       if (extendsListTypes.length != 1) {
@@ -144,17 +143,16 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
 
     @Override
-    public void visitTypeElement(PsiTypeElement typeElement) {
+    public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
       final PsiElement lastChild = typeElement.getLastChild();
       if (!(lastChild instanceof PsiTypeElement)) {
         return;
       }
       final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiWildcardType)) {
+      if (!(type instanceof PsiWildcardType wildcardType)) {
         return;
       }
-      final PsiWildcardType wildcardType = (PsiWildcardType)type;
       if (!wildcardType.isExtends()) {
         return;
       }

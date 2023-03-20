@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
@@ -30,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected LookupElement[] myItems;
 
@@ -102,6 +100,7 @@ public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsigh
     } else {
       type(completionChar);
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   protected LookupImpl getLookup() {

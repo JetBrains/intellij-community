@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
@@ -228,16 +229,21 @@ public class FontEditorPreview implements PreviewPanel{
   private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
     @Override
     public @NotNull AnalyzerStatus getStatus() {
-      return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", () -> AnalyzerStatus.getEmptyController());
+      return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", UIController.EMPTY);
     }
   }
 
   public static class RestorePreviewTextAction extends DumbAwareAction {
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it -> it.getUserData(TEXT_MODEL_KEY));
       e.getPresentation().setEnabledAndVisible(editor != null &&
                                                textModel != null &&
                                                !textModel.isDefault());
@@ -262,9 +268,14 @@ public class FontEditorPreview implements PreviewPanel{
   public static class ToggleBoldFontAction extends DumbAwareAction {
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it -> it.getUserData(TEXT_MODEL_KEY));
       e.getPresentation().setEnabledAndVisible(textModel != null &&
                                                editor.getSelectionModel().hasSelection());
     }

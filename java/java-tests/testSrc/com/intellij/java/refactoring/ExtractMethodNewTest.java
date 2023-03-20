@@ -19,13 +19,14 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -1218,20 +1219,20 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   //TODO remove or implement
   public void _testMakeVoidMethodReturnVariable() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testNoReturnTypesSuggested() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
     //return type should not be suggested but still
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testReassignFinalFieldInside() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testShortenClassRefsInNewReturnType() throws Exception {
@@ -1440,12 +1441,14 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testNoStaticForInnerClass() {
-    try {
-      configureByFile(BASE_PATH + getTestName(false) + ".java");
-      performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
-      fail("Static modifier is forbidden inside inner classes");
-    } catch (PrepareFailedException e){
-    }
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
+      try {
+        configureByFile(BASE_PATH + getTestName(false) + ".java");
+        performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+        fail("Static modifier is forbidden inside inner classes");
+      } catch (PrepareFailedException ignored){
+      }
+    });
   }
 
   public void testStaticForNestedClass() throws Exception {
@@ -1845,7 +1848,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
     if (elements.length == 0) {
-      final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      final PsiExpression expression = IntroduceVariableUtil.getSelectedExpression(project, file, startOffset, endOffset);
       if (expression != null) {
         elements = new PsiElement[]{expression};
       }

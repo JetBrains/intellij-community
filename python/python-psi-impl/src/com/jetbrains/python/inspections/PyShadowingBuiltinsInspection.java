@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -34,36 +35,35 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 /**
  * Warns about shadowing built-in names.
  *
- * @author vlan
  */
 public class PyShadowingBuiltinsInspection extends PyInspection {
 
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();
 
-  @NotNull
-  protected LocalQuickFix[] createQuickFixes(String name, PsiElement problemElement) {
+  protected @NotNull LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement);
     if (qf != null) {
       fixes.add(qf);
     }
     fixes.add(new PyIgnoreBuiltinQuickFix(name));
-    return fixes.toArray(new LocalQuickFix[fixes.size()]);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance().createListEditForm(PyPsiBundle.message("INSP.shadowing.builtins.column.name.ignore.built.ins"), PyPsiBundle.message("INSP.shadowing.builtins.ignore.built.ins.label"), ignoredNames);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("ignoredNames", PyPsiBundle.message("INSP.shadowing.builtins.ignore.built.ins.label")));
   }
 
   @NotNull

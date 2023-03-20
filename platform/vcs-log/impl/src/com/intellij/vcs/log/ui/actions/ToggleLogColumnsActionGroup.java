@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -28,12 +28,11 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
           VcsLogBundle.message("action.description.select.columns.to.see"), null);
   }
 
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    setPopup(isPopup(e));
+    e.getPresentation().setPopupGroup(isPopup(e));
     e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
   }
 
@@ -53,6 +52,11 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     }
 
     return actions.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static boolean isPopup(@NotNull AnActionEvent e) {
@@ -101,6 +105,11 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
       super.update(e);
 
       e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

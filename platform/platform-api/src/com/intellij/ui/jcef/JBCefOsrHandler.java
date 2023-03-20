@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
@@ -17,9 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.awt.image.VolatileImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -37,7 +42,7 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
  */
 class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JComponent myComponent;
-  private final @NotNull Function<JComponent, Rectangle> myScreenBoundsProvider;
+  private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
@@ -53,15 +58,16 @@ class JBCefOsrHandler implements CefRenderHandler {
   private @NotNull Rectangle myPopupBounds = ZERO_RECT;
   private boolean myPopupShown;
 
-  JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<JComponent, Rectangle> screenBoundsProvider) {
+  JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
     component.setRenderHandler(this);
     myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.DEFAULT.createScreenBoundsProvider());
 
-    myComponent.addComponentListener(new ComponentAdapter() {
+    myComponent.addAncestorListener(new AncestorListenerAdapter() {
       @Override
-      public void componentShown(ComponentEvent e) {
-        updateLocation();
+      public void ancestorAdded(AncestorEvent event) {
+        // track got visible event
+        if (myComponent.isShowing()) updateLocation();
       }
     });
 
@@ -121,6 +127,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   public void onPaint(CefBrowser browser, boolean popup, Rectangle[] dirtyRects, ByteBuffer buffer, int width, int height) {
     JBHiDPIScaledImage image = myImage;
     VolatileImage volatileImage = myVolatileImage;
+    final double jreScale = myScale.getJreBiased();
 
     //
     // Recreate images when necessary
@@ -128,8 +135,15 @@ class JBCefOsrHandler implements CefRenderHandler {
     if (!popup) {
       Dimension size = getDevImageSize();
       if (size.width != width || size.height != height) {
-        image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
-        volatileImage = myComponent.createVolatileImage(width, height);
+        image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE),
+                                                           jreScale, null);
+        GraphicsConfiguration gc = myComponent.getGraphicsConfiguration();
+        if (gc != null) {
+          volatileImage = gc.createCompatibleVolatileImage((int)(width / jreScale), (int)(height / jreScale), Transparency.TRANSLUCENT);
+        }
+        else {
+          volatileImage = myComponent.createVolatileImage((int)(width / jreScale), (int)(height / jreScale));
+        }
         dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
       }
     }
@@ -148,7 +162,9 @@ class JBCefOsrHandler implements CefRenderHandler {
         dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
       }
       if (result == VolatileImage.IMAGE_INCOMPATIBLE) {
-        volatileImage = myComponent.createVolatileImage(imageWidth, imageHeight);
+        volatileImage = myComponent.getGraphicsConfiguration().createCompatibleVolatileImage((int)(imageWidth / jreScale),
+                                                                                             (int)(imageHeight / jreScale),
+                                                                                             Transparency.TRANSLUCENT);
       }
     }
 
@@ -201,6 +217,7 @@ class JBCefOsrHandler implements CefRenderHandler {
         double sx = viGr.getTransform().getScaleX();
         double sy = viGr.getTransform().getScaleY();
         viGr.scale(1 / sx, 1 / sy);
+        viGr.setComposite(AlphaComposite.Src);
         viGr.drawImage(bufferedImage,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
@@ -212,7 +229,18 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
     myImage = image;
     myVolatileImage = volatileImage;
-    SwingUtilities.invokeLater(() -> myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect)));
+    SwingUtilities.invokeLater(() -> {
+      if (!myComponent.isShowing()) return;
+      JRootPane root = myComponent.getRootPane();
+      RepaintManager rm = RepaintManager.currentManager(root);
+      Rectangle dirtySrc = new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
+      Rectangle dirtyDst = SwingUtilities.convertRectangle(myComponent, dirtySrc, root);
+      int dx = 1;
+      // NOTE: should mark area outside browser (otherwise background component won't be repainted)
+      rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx * 2, dirtyDst.height + dx * 2);
+
+      myComponent.repaint(popup ? scaleDown(new Rectangle(0, 0, imageWidth, imageHeight)) : scaleDown(outerRect));
+    });
   }
 
   @Override
@@ -236,9 +264,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     Image volatileImage = myVolatileImage;
     Image image = myImage;
     if (volatileImage != null) {
-      g.drawImage(volatileImage, 0, 0, null );
+      g.drawImage(volatileImage, 0, 0, null);
     }
-    //
     else if (image != null) {
       UIUtil.drawImage(g, image, 0, 0, null);
     }

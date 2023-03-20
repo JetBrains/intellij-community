@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -189,14 +191,13 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     else if (parent instanceof PsiReturnStatement) {
       targetType = PsiTypesUtil.getMethodReturnType(parent);
     }
-    if (targetType != null && !PsiType.VOID.equals(targetType)) {
+    if (targetType != null && !PsiTypes.voidType().equals(targetType)) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(targetType)) {
         return createUnboxingProblem(context, expression);
       }
       return nullableReturn.problem(context, expression);
     }
-    if (parent instanceof PsiVariable) {
-      PsiVariable var = (PsiVariable)parent;
+    if (parent instanceof PsiVariable var) {
       if (var.getType() instanceof PsiPrimitiveType) {
         return createUnboxingProblem(context, expression);
       }
@@ -222,8 +223,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
     else if (parent instanceof PsiIfStatement || parent instanceof PsiWhileStatement || parent instanceof PsiDoWhileStatement ||
              parent instanceof PsiUnaryExpression || parent instanceof PsiConditionalExpression ||
-             (parent instanceof PsiForStatement && ((PsiForStatement)parent).getCondition() == context) ||
-             (parent instanceof PsiAssertStatement && ((PsiAssertStatement)parent).getAssertCondition() == context)) {
+             (parent instanceof PsiForStatement forStatement && forStatement.getCondition() == context) ||
+             (parent instanceof PsiAssertStatement assertStatement && assertStatement.getAssertCondition() == context)) {
       return createUnboxingProblem(context, expression);
     }
     if (parent instanceof PsiSwitchBlock) {
@@ -233,13 +234,12 @@ public final class NullabilityProblemKind<T extends PsiElement> {
         parent instanceof PsiSynchronizedStatement) {
       return fieldAccessNPE.problem(context, expression);
     }
-    if (parent instanceof PsiNewExpression) {
-      return ((PsiNewExpression)parent).getQualifier() == context ?
-             innerClassNPE.problem((PsiNewExpression)parent, expression) :
+    if (parent instanceof PsiNewExpression newExpression) {
+      return newExpression.getQualifier() == context ?
+             innerClassNPE.problem(newExpression, expression) :
              createUnboxingProblem(context, expression); // Array dimension
     }
-    if (parent instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
+    if (parent instanceof PsiPolyadicExpression polyadic) {
       IElementType type = polyadic.getOperationTokenType();
       boolean noUnboxing = (type == JavaTokenType.PLUS && TypeUtils.isJavaLangString(polyadic.getType())) ||
                            ((type == JavaTokenType.EQEQ || type == JavaTokenType.NE) &&
@@ -249,8 +249,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
         return createUnboxingProblem(context, expression);
       }
     }
-    if (parent instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+    if (parent instanceof PsiArrayAccessExpression arrayAccessExpression) {
       if (arrayAccessExpression.getArrayExpression() == context) {
         return arrayAccessNPE.problem(arrayAccessExpression, expression);
       }
@@ -350,8 +349,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
           if (labelElementList == null) continue;
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
-            if (element instanceof PsiPattern && expressionType != null &&
-                JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), expressionType)) return null;
+            if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_19_PREVIEW) &&
+                element instanceof PsiPattern && expressionType != null &&
+                JavaPsiPatternUtil.isUnconditionalForType(element, expressionType)) {
+              return null;
+            }
           }
         }
       }
@@ -575,19 +577,20 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       return myFromUnknown;
     }
 
+    public boolean isAlwaysNull(boolean ignoreAssertions) {
+      PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
+      return expression != null &&
+             (ExpressionUtils.isNullLiteral(expression) || CommonDataflow.getDfType(expression, ignoreAssertions) == DfTypes.NULL);
+    }
+
     @NotNull
-    public @InspectionMessage String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
+    public @InspectionMessage String getMessage(boolean ignoreAssertions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
         throw new IllegalStateException("This problem kind has no message associated: " + myKind);
       }
       String suffix = myFromUnknown ? JavaAnalysisBundle.message("dataflow.message.unknown.nullability") : "";
-      PsiExpression expression = PsiUtil.skipParenthesizedExprDown(getDereferencedExpression());
-      if (expression != null) {
-        if (ExpressionUtils.isNullLiteral(expression) || expressions.get(expression) == DataFlowInspectionBase.ConstantResult.NULL) {
-          return myKind.myAlwaysNullMessage.get() + suffix;
-        }
-      }
-      return myKind.myNormalMessage.get() + suffix;
+      Supplier<@Nls String> msg = isAlwaysNull(ignoreAssertions) ? myKind.myAlwaysNullMessage : myKind.myNormalMessage;
+      return msg.get() + suffix;
     }
 
     @NotNull
@@ -598,8 +601,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof NullabilityProblem)) return false;
-      NullabilityProblem<?> problem = (NullabilityProblem<?>)o;
+      if (!(o instanceof NullabilityProblem<?> problem)) return false;
       return myKind.equals(problem.myKind) && getAnchor().equals(problem.getAnchor()) &&
              Objects.equals(myDereferencedExpression, problem.myDereferencedExpression);
     }

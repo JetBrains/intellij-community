@@ -1,28 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.GroupByTypeComparator;
-import com.intellij.ide.projectView.impl.ProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -37,43 +39,46 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class AssociationsEditor {
+final class AssociationsEditor implements Disposable {
+
+  private final @NotNull StructureTreeModel<MyProjectStructure> myModel;
   private JPanel myComponent;
   private JBList<PsiFile> myList;
   private Tree myTree;
 
   private final AssociationsModel myListModel;
   private final TransactionalManager myManager;
-  private final ProjectTreeBuilder myBuilder;
 
-  AssociationsEditor(final Project project, final TreeState oldState) {
+  AssociationsEditor(@NotNull Project project,
+                     @Nullable TreeState oldState) {
     myManager = ((FileAssociationsManagerImpl)FileAssociationsManager.getInstance(project)).getTempManager();
 
     initUI();
 
-    final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
-    myTree.setModel(treeModel);
+    myModel = new StructureTreeModel<>(new MyProjectStructure(project), this);
+    myModel.setComparator(new MyGroupByTypeComparator());
 
-    myBuilder = new ProjectTreeBuilder(project, myTree, treeModel, new MyGroupByTypeComparator(), new MyProjectStructure(project));
-
+    myTree.setModel(new AsyncTreeModel(myModel, this));
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
 
-    SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
-      if (oldState == null) {
-        expandTree(treeModel);
-      }
-      else {
-        oldState.applyTo(myTree);
-      }
-    }));
+    if (!project.isDefault()) {
+      SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
+        if (oldState == null) {
+          expandTree();
+        }
+        else {
+          oldState.applyTo(myTree);
+        }
+      }));
+    }
 
     myListModel = new AssociationsModel(myTree, myManager);
     myListModel.addListDataListener(new ListDataListener() {
@@ -103,7 +108,8 @@ final class AssociationsEditor {
     myComponent.add(splitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.project.xslt.files"), false, JBUI.emptyInsets()).setShowLine(false));
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.project.xslt.files"), false,
+                                                            JBInsets.emptyInsets()).setShowLine(false));
     myTree = new Tree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
@@ -119,21 +125,25 @@ final class AssociationsEditor {
       .addExtraAction(AnActionButton.fromAction(new RemoveAssociationAction()))
       .disableUpDownActions().disableAddAction().disableRemoveAction().createPanel();
     final IdeaTitledBorder border =
-      IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.associated.files"), false, JBUI.emptyInsets());
+      IdeBorderFactory.createTitledBorder(XPathBundle.message("border.title.associated.files"), false, JBInsets.emptyInsets());
     UIUtil.addBorder(rightPanel, border.setShowLine(false));
     splitter.setSecondComponent(rightPanel);
   }
 
-  private void expandTree(DefaultTreeModel newModel) {
-    final TreePath rootPath = new TreePath(newModel.getRoot());
+  private void expandTree() {
+    TreeNode rootNode = myModel.getRoot();
+    if (rootNode == null) return;
 
-    final Object element = myBuilder.getTreeStructure().getRootElement();
-    myBuilder.batch(indicator -> {
-      myBuilder.expand(element, null);
-      myBuilder.expand(myBuilder.getTreeStructure().getChildElements(element), null);
+    MyProjectStructure treeStructure = myModel.getTreeStructure();
+    Object element = treeStructure.getRootElement();
+    myModel.expand(element, myTree, path -> {
     });
+    for (Object childElement : treeStructure.getChildElements(element)) {
+      myModel.expand(childElement, myTree, path -> {
+      });
+    }
 
-    myTree.setSelectionPath(rootPath);
+    myTree.setSelectionPath(new TreePath(rootNode));
     myTree.scrollRectToVisible(new Rectangle(new Point(0, 0)));
   }
 
@@ -141,7 +151,7 @@ final class AssociationsEditor {
     return TreeState.createOn(myTree);
   }
 
-  public JPanel getComponent() {
+  public @NotNull JPanel getComponent() {
     return myComponent;
   }
 
@@ -155,8 +165,7 @@ final class AssociationsEditor {
 
   @Nullable
   private static Object getObject(Object component) {
-    if (!(component instanceof DefaultMutableTreeNode)) return null;
-    final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)component);
+    if (!(component instanceof DefaultMutableTreeNode node)) return null;
     final Object userObject = node.getUserObject();
     if (!(userObject instanceof ProjectViewNode)) return null;
     return ((ProjectViewNode<?>)userObject).getValue();
@@ -176,13 +185,14 @@ final class AssociationsEditor {
     myListModel.update(selection instanceof PsiFile ? ((PsiFile)selection) : null);
   }
 
+  @Override
   public void dispose() {
-    Disposer.dispose(myBuilder);
     myManager.dispose();
   }
 
-  public void select(final PsiFile file) {
-    myBuilder.getReady(this).doWhenDone(() -> myBuilder.selectAsync(file, file.getVirtualFile(), true));
+  public void select(@NotNull PsiFile file) {
+    myModel.select(file, myTree, path -> {
+    });
   }
 
   class AddAssociationActionWrapper extends AddAssociationAction {
@@ -200,6 +210,11 @@ final class AssociationsEditor {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getTreeSelection(myTree) instanceof PsiFile);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -222,6 +237,11 @@ final class AssociationsEditor {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getListSelection() instanceof PsiFile);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     private Object getListSelection() {
@@ -344,8 +364,7 @@ final class AssociationsEditor {
                                       int row,
                                       boolean hasFocus) {
       final Object object = getObject(value);
-      if (object instanceof PsiFile) {
-        final PsiFile file = (PsiFile)object;
+      if (object instanceof PsiFile file) {
         final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
         if (myManager.getAssociationsFor(file).length > 0) {
           //noinspection unchecked

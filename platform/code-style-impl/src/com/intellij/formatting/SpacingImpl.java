@@ -117,8 +117,7 @@ public class SpacingImpl extends Spacing {
    */
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof SpacingImpl)) return false;
-    final SpacingImpl spacing = (SpacingImpl)o;
+    if (!(o instanceof SpacingImpl spacing)) return false;
     return myFlags == spacing.myFlags &&
            myMinSpaces == spacing.myMinSpaces &&
            myMaxSpaces == spacing.myMaxSpaces &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.storage
 
@@ -20,7 +20,7 @@ open class UniqueFilesProvider(private val baseFileName: String,
                                private val logsDirectoryName: String,
                                private val storageSizeLimit: Int = MAX_STORAGE_SEND_SIZE) : FilePathProvider {
     companion object {
-        private const val MAX_STORAGE_SEND_SIZE = 3 * 1024 * 1024
+        private const val MAX_STORAGE_SEND_SIZE = 30 * 1024 * 1024
 
         fun extractChunkNumber(filename: String): Int? {
             return filename.substringAfter("_").substringBefore(".gz").toIntOrNull()
@@ -30,7 +30,7 @@ open class UniqueFilesProvider(private val baseFileName: String,
     override fun cleanupOldFiles() {
         val files = getDataFiles()
         val storageSize = files.fold(0L) { totalSize, file -> totalSize + file.length() }
-      if (storageSize > storageSizeLimit) {
+        if (storageSize > storageSizeLimit) {
             var currentSize = storageSize
             val iterator = files.iterator()
             while (iterator.hasNext() && currentSize > storageSizeLimit) {

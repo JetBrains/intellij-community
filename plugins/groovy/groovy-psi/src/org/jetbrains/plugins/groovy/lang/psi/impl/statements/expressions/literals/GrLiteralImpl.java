@@ -26,9 +26,6 @@ import java.math.BigInteger;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-/**
- * @author ilyas
- */
 public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance(GrLiteralImpl.class);
 

@@ -10,17 +10,17 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module-library">
       <library name="debugger-memory-agent" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.35" />
+        <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.43" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.35/debugger-memory-agent-1.0.35.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.43/debugger-memory-agent-1.0.43.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.35/debugger-memory-agent-1.0.35-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.43/debugger-memory-agent-1.0.43-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="commons-io" level="project" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

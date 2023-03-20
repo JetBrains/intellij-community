@@ -48,7 +48,7 @@ public final class RegexFacade {
                          int gosOffset,
                          boolean matchBeginOfString,
                          @Nullable Runnable checkCancelledCallback) {
-    gosOffset = gosOffset >= 0 ? gosOffset : byteOffset;
+    gosOffset = gosOffset != byteOffset ? Integer.MAX_VALUE : byteOffset;
     int options = matchBeginOfString ? Option.NONE : Option.NOTBOS;
 
     LastMatch lastResult = matchResult.get();
@@ -69,11 +69,17 @@ public final class RegexFacade {
     }
 
     final Matcher matcher = myRegex.matcher(string.bytes);
-    final int matchIndex = matcher.search(gosOffset, byteOffset, string.bytes.length, options);
-    final MatchData matchData = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
-    checkMatched(matchData, string);
-    matchResult.set(new LastMatch(string.id, byteOffset, gosOffset, options, matchData));
-    return matchData;
+    try {
+      final int matchIndex = matcher.search(gosOffset, byteOffset, string.bytes.length, options);
+      final MatchData matchData = matchIndex > -1 ? MatchData.fromRegion(matcher.getEagerRegion()) : MatchData.NOT_MATCHED;
+      checkMatched(matchData, string);
+      matchResult.set(new LastMatch(string.id, byteOffset, gosOffset, options, matchData));
+      return matchData;
+    }
+    catch (JOniException e) {
+      LOGGER.info("Failed to match textmate regex", e);
+      return MatchData.NOT_MATCHED;
+    }
   }
 
   private static void checkMatched(MatchData match, StringWithId string) {

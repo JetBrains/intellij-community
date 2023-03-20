@@ -23,9 +23,7 @@ import java.util.List;
 
 /**
  * A helper object for {@link RecursionManager}. It's obtained from {@link RecursionManager#createGuard(String)}.
- *
- * @author peter
-*/
+ */
 public abstract class RecursionGuard<Key> {
 
   /**
@@ -55,7 +53,7 @@ public abstract class RecursionGuard<Key> {
   /** @deprecated Use {@link RecursionManager#markStack()} instead */
   @NotNull
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public StackStamp markStack() {
     return RecursionManager.markStack();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Pair;
@@ -11,16 +11,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
+ * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
  *
  * @author Stanislav Erokhin
  * @author Kirill Likhodedov
  */
 public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
-  @NonNls public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
+  public static final @NonNls String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
-   * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
+   * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
    *
    * @param savedLog     currently available part of the log.
    * @param previousRefs references saved from the previous refresh.
@@ -28,8 +28,7 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
    * @param newRefs      all references (branches) of the repository.
    * @return Total saved log with new commits properly attached to it + number of new commits attached to the log.
    */
-  @NotNull
-  public Pair<List<Commit>, Integer> addCommits(@NotNull List<? extends Commit> savedLog,
+  public @NotNull Pair<List<Commit>, Integer> addCommits(@NotNull List<? extends Commit> savedLog,
                                                 @NotNull Collection<? extends CommitId> previousRefs,
                                                 @NotNull List<? extends Commit> firstBlock,
                                                 @NotNull Collection<? extends CommitId> newRefs) {
@@ -55,11 +54,10 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
   }
 
 
-  @NotNull
-  private Pair<Integer, Set<Commit>> getNewCommitsAndSavedGreenIndex(@NotNull List<? extends Commit> savedLog,
-                                                                     @NotNull Collection<? extends CommitId> previousRefs,
-                                                                     @NotNull List<? extends Commit> firstBlock,
-                                                                     @NotNull Collection<? extends CommitId> newRefs) {
+  private @NotNull Pair<Integer, Set<Commit>> getNewCommitsAndSavedGreenIndex(@NotNull List<? extends Commit> savedLog,
+                                                                              @NotNull Collection<? extends CommitId> previousRefs,
+                                                                              @NotNull List<? extends Commit> firstBlock,
+                                                                              @NotNull Collection<? extends CommitId> newRefs) {
     Set<CommitId> allUnresolvedLinkedHashes = new HashSet<>(newRefs);
     allUnresolvedLinkedHashes.removeAll(previousRefs);
     // at this moment allUnresolvedLinkedHashes contains only NEW refs
@@ -68,7 +66,7 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
     for (Commit commit : firstBlock) {
-      if (commit.getParents().size() != 0) {
+      if (!commit.getParents().isEmpty()) {
         allUnresolvedLinkedHashes.remove(commit.getId());
       }
     }
@@ -81,12 +79,12 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
     int lastIndex;
     for (lastIndex = 0; lastIndex < commits.size(); lastIndex++) {
       Commit commit = commits.get(lastIndex);
-      if (searchHashes.size() == 0) {
+      if (searchHashes.isEmpty()) {
         return lastIndex;
       }
       searchHashes.remove(commit.getId());
     }
-    if (searchHashes.size() != 0) {
+    if (!searchHashes.isEmpty()) {
       throw new VcsLogRefreshNotEnoughDataException();
     }
     return lastIndex;
@@ -107,11 +105,10 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
     return allNewsCommits;
   }
 
-  @NotNull
-  private Pair<Integer, Set<CommitId>> getRedCommitsAndSavedRedIndex(@NotNull List<? extends Commit> savedLog,
-                                                                     @NotNull Collection<? extends CommitId> previousRefs,
-                                                                     @NotNull List<? extends Commit> firstBlock,
-                                                                     @NotNull Collection<? extends CommitId> newRefs) {
+  private @NotNull Pair<Integer, Set<CommitId>> getRedCommitsAndSavedRedIndex(@NotNull List<? extends Commit> savedLog,
+                                                                              @NotNull Collection<? extends CommitId> previousRefs,
+                                                                              @NotNull List<? extends Commit> firstBlock,
+                                                                              @NotNull Collection<? extends CommitId> newRefs) {
     Set<CommitId> startRedCommits = new HashSet<>(previousRefs);
     startRedCommits.removeAll(newRefs);
     Set<CommitId> startGreenNodes = new HashSet<>(newRefs);
@@ -228,8 +225,7 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       newCommitsMap.remove(commit.getId());
     }
 
-    @NotNull
-    public List<Commit> getResultList() {
+    public @NotNull List<Commit> getResultList() {
       insertAllUseStack();
       return list;
     }

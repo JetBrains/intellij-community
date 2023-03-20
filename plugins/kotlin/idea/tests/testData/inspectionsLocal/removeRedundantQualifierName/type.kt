@@ -7,3 +7,5 @@ fun foo(a: my.simple.name<caret>.Foo) {
     val b: my.simple.name.Bar
     val c: my.simple.name.Foo
 }
+
+// IGNORE_FIR

@@ -13,13 +13,14 @@ public interface DoNotAskOption {
   abstract class Adapter implements DoNotAskOption {
     /**
      * Save the state of the checkbox in the settings, or perform some other related action.
-     * This method is called right after the dialog is {@link #close(int) closed}.
-     * <br/>
-     * Note that this method won't be called in the case when the dialog is closed by {@link #CANCEL_EXIT_CODE Cancel}
-     * if {@link #shouldSaveOptionsOnCancel() saving the choice on cancel is disabled} (which is by default).
+     * This method is called right after the dialog is closed, see {@code DialogWrapper.close(int)}.
+     * <p>
+     * If the dialog is closed by {@code DialogWrapper.CANCEL_EXIT_CODE},
+     * this method is not called by default.
+     * To call it even in this case, override {@link #shouldSaveOptionsOnCancel()} to return {@code true}.
      *
      * @param isSelected true if user selected "don't show again".
-     * @param exitCode   the {@link #getExitCode() exit code} of the dialog.
+     * @param exitCode   the exit code of the dialog, see {@code DialogWrapper.getExitCode}.
      * @see #shouldSaveOptionsOnCancel()
      */
     public abstract void rememberChoice(boolean isSelected, int exitCode);
@@ -60,18 +61,18 @@ public interface DoNotAskOption {
   }
 
   /**
-   * @return default selection state of checkbox (false -> checkbox selected)
+   * @return default selection state of checkbox (false means the checkbox is selected)
    */
   boolean isToBeShown();
 
   /**
-   * @param toBeShown - if dialog should be shown next time (checkbox selected -> false)
-   * @param exitCode  of corresponding DialogWrapper
+   * @param toBeShown if dialog should be shown next time (checkbox selected means false)
+   * @param exitCode  from the corresponding DialogWrapper
    */
   void setToBeShown(boolean toBeShown, int exitCode);
 
   /**
-   * @return true if checkbox should be shown
+   * @return true if the checkbox "Do not ask again" should be shown
    */
   boolean canBeHidden();
 

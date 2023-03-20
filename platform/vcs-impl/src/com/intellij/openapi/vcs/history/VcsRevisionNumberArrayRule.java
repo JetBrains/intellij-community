@@ -27,11 +27,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Konstantin Kolosovsky.
+ * {@link VcsDataKeys#VCS_REVISION_NUMBERS}
  */
 public class VcsRevisionNumberArrayRule implements GetDataRule {
 
@@ -52,7 +53,7 @@ public class VcsRevisionNumberArrayRule implements GetDataRule {
 
     ChangeList[] changeLists = VcsDataKeys.CHANGE_LISTS.getData(dataProvider);
     if (changeLists != null && changeLists.length > 0) {
-      List<CommittedChangeList> committedChangeLists = ContainerUtil.findAll(changeLists, CommittedChangeList.class);
+      List<CommittedChangeList> committedChangeLists = new ArrayList<>(ContainerUtil.findAll(changeLists, CommittedChangeList.class));
 
       if (!committedChangeLists.isEmpty()) {
         ContainerUtil.sort(committedChangeLists, CommittedChangeListByDateComparator.DESCENDING);

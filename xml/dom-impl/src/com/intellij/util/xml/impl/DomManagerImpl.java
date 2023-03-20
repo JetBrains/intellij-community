@@ -59,9 +59,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class DomManagerImpl extends DomManager implements Disposable {
   private static final Key<Object> MOCK = Key.create("MockElement");
 
@@ -435,15 +432,9 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @TestOnly
   public <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
-    registerFileDescription(description);
-    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
-  }
-
-  @Override
-  public void registerFileDescription(DomFileDescription<?> description) {
     clearCache();
-
     myApplicationComponent.registerFileDescription(description);
+    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
   }
 
   @Override

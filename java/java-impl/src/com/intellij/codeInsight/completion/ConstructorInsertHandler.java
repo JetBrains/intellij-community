@@ -18,6 +18,8 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -38,20 +40,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
-/**
-* @author peter
-*/
 public final class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupElement>> {
   private static final Logger LOG = Logger.getInstance(ConstructorInsertHandler.class);
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
@@ -313,45 +311,50 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
       TemplateManager.getInstance(project).finishTemplate(editor);
       if (DumbService.getInstance(project).isDumb()) return;
 
-      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-      final PsiAnonymousClass
-        aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
-      if (aClass == null) return;
-      CommandProcessor.getInstance().executeCommand(project, () -> SlowOperations.allowSlowOperations(() -> {
-        final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
-        for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
-          final CandidateInfo candidate = iterator.next();
-          final PsiElement element = candidate.getElement();
-          if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
-            iterator.remove();
+      int offset = editor.getCaretModel().getOffset();
+      RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
+      record OverrideContext(@NotNull PsiAnonymousClass aClass, @NotNull Collection<CandidateInfo> candidatesToImplement) {}
+      ReadAction.nonBlocking(() -> {
+        PsiAnonymousClass anonymousClass = PsiTreeUtil.findElementOfClassAtOffset(file, marker.getStartOffset(), PsiAnonymousClass.class, false);
+        if (anonymousClass == null) return null;
+        final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(anonymousClass, true);
+        candidatesToImplement.removeIf(
+            candidate -> candidate.getElement() instanceof PsiMethod method && method.hasModifierProperty(PsiModifier.DEFAULT));
+        return new OverrideContext(anonymousClass, candidatesToImplement);
+      }).withDocumentsCommitted(project)
+        .finishOnUiThread(ModalityState.NON_MODAL, context -> {
+        marker.dispose();
+        if (context == null) return;
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          PsiAnonymousClass anonymousClass = context.aClass;
+          boolean invokeOverride = context.candidatesToImplement.isEmpty();
+          if (invokeOverride) {
+            OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, anonymousClass, false);
           }
-        }
-        boolean invokeOverride = candidatesToImplement.isEmpty();
-        if (invokeOverride) {
-          OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
-        }
-        else {
-          ApplicationManagerEx.getApplicationEx()
-            .runWriteActionWithCancellableProgressInDispatchThread(getCommandName(), project, editor.getComponent(), indicator -> {
-              try {
-                List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
-                List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
-                List<PsiGenerationInfo<PsiMethod>> resultMembers =
-                  GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                resultMembers.get(0).positionCaret(editor, true);
-              }
-              catch (IncorrectOperationException ioe) {
-                LOG.error(ioe);
-              }
-            });
-        }
-      }), getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+          else {
+            ApplicationManagerEx.getApplicationEx()
+              .runWriteActionWithCancellableProgressInDispatchThread(getCommandName(), project, editor.getComponent(), indicator -> {
+                try {
+                  List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(
+                    anonymousClass, context.candidatesToImplement, false);
+                  List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
+                  List<PsiGenerationInfo<PsiMethod>> resultMembers =
+                    GenerateMembersUtil.insertMembersBeforeAnchor(anonymousClass, null, prototypes);
+                  resultMembers.get(0).positionCaret(editor, true);
+                }
+                catch (IncorrectOperationException ioe) {
+                  LOG.error(ioe);
+                }
+              });
+          }
+        }, getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+      }).submit(AppExecutorUtil.getAppExecutorService());
     };
   }
 
   @Contract("null -> false")
   private static boolean shouldStartTypeTemplate(PsiTypeElement[] parameters) {
-    if (parameters != null && parameters.length > 0) {
+    if (parameters != null) {
       for (PsiTypeElement parameter : parameters) {
         if (parameter.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
           return true;

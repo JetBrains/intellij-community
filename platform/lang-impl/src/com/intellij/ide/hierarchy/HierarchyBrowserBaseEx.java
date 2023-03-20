@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -36,6 +36,7 @@ import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.HintUpdateSupply;
@@ -48,7 +49,9 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -196,6 +199,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected abstract void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees);
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return getOccurrenceNavigator().getActionUpdateThread();
+  }
+
   /**
    * Put (scope type -> presentable name) pairs into a map.
    * This map is used in {@link #changeView(String, boolean)} method to get a proper localization in UI.
@@ -233,8 +241,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @Nullable
   protected Color getFileColorForNode(Object node) {
     if (node instanceof HierarchyNodeDescriptor) {
-      PsiFile containingFile = SlowOperations.allowSlowOperations(() -> ((HierarchyNodeDescriptor)node).getContainingFile());
-      return ProjectViewTree.getColorForElement(containingFile);
+      return ((HierarchyNodeDescriptor)node).getBackgroundColorCached();
     }
     return null;
   }
@@ -624,6 +631,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
       HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY = flag;
       Comparator<NodeDescriptor<?>> comparator = getComparator();
@@ -652,7 +664,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) return;
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) return;
 
       @Nls String currentViewType = browser.getCurrentViewType();
@@ -683,7 +695,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       presentation.setVisible(true);
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) {
         presentation.setEnabledAndVisible(false);
       }
@@ -694,6 +706,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         }
         presentation.setEnabled(isEnabled(browser, selectedElement));
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     protected boolean isEnabled(@NotNull HierarchyBrowserBaseEx browser, @NotNull PsiElement element) {
@@ -746,13 +763,18 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       presentation.setText(myI18nMap.getOrDefault(scopeType, () -> scopeType));
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     protected boolean isEnabled(){
       return true;
     }
 
     @Override
     @NotNull
-    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected final DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
 
       for(NamedScope namedScope: getValidScopes()) {
@@ -780,7 +802,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       panel.add(new JLabel(IdeBundle.message("label.scope")),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0));
       panel.add(super.createCustomComponent(presentation, place),
-                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0));
+      if (ExperimentalUI.isNewUI()) {
+        UIUtil.setBackgroundRecursively(panel, JBUI.CurrentTheme.ToolWindow.background());
+      }
       return panel;
     }
 

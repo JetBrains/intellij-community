@@ -1,4 +1,4 @@
-// "Replace with 'Boolean.FALSE.equals(flag)'" "true"
+// "Replace with 'Boolean.FALSE.equals(flag)'" "true-preview"
 
 import org.jetbrains.annotations.Nullable;
 

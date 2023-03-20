@@ -40,18 +40,20 @@ public class JavaPsiFormattingTest extends AbstractJavaFormatterTest {
     ), "", null);
 
     PsiExpression expr = ((PsiIfStatement)result.get()).getCondition();
-    assertEquals("PsiBinaryExpression:x & y\n" +
-                 "  PsiReferenceExpression:x\n" +
-                 "    PsiReferenceParameterList\n" +
-                 "      <empty list>\n" +
-                 "    PsiIdentifier:x('x')\n" +
-                 "  PsiWhiteSpace(' ')\n" +
-                 "  PsiJavaToken:AND('&')\n" +
-                 "  PsiWhiteSpace(' ')\n" +
-                 "  PsiReferenceExpression:y\n" +
-                 "    PsiReferenceParameterList\n" +
-                 "      <empty list>\n" +
-                 "    PsiIdentifier:y('y')\n",
+    assertEquals("""
+                   PsiBinaryExpression:x & y
+                     PsiReferenceExpression:x
+                       PsiReferenceParameterList
+                         <empty list>
+                       PsiIdentifier:x('x')
+                     PsiWhiteSpace(' ')
+                     PsiJavaToken:AND('&')
+                     PsiWhiteSpace(' ')
+                     PsiReferenceExpression:y
+                       PsiReferenceParameterList
+                         <empty list>
+                       PsiIdentifier:y('y')
+                   """,
                  DebugUtil.psiToString(expr, true));
   }
 

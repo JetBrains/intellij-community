@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.settings;
 
 import com.intellij.ide.JavaUiBundle;
@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.*;
 class DependencyExclusionEditor {
   private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
   private static final SimpleTextAttributes STRIKEOUT_GRAYED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT,
-                                                                                                   UIUtil.getInactiveTextColor());
+                                                                                                   NamedColorUtil.getInactiveTextColor());
   private final CheckboxTree myDependenciesTree;
   private final CheckedTreeNode myRootNode;
   private final JPanel myMainPanel;
@@ -44,9 +44,8 @@ class DependencyExclusionEditor {
         if (!(value instanceof CheckedTreeNode)) return;
 
         Object userObject = ((CheckedTreeNode)value).getUserObject();
-        if (!(userObject instanceof ArtifactDependencyNode)) return;
+        if (!(userObject instanceof ArtifactDependencyNode node)) return;
 
-        ArtifactDependencyNode node = (ArtifactDependencyNode)userObject;
         Artifact artifact = node.getArtifact();
         boolean rejected = node.isRejected();
         @NlsSafe final String groupArtifactFragment = artifact.getGroupId() + ":" + artifact.getArtifactId();
@@ -58,7 +57,7 @@ class DependencyExclusionEditor {
     }, myRootNode, policy) {
       @Override
       protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, treePath -> {
+        TreeSpeedSearch.installOn(this, false, treePath -> {
           Object node = treePath.getLastPathComponent();
           if (!(node instanceof CheckedTreeNode)) return "";
           Object data = ((CheckedTreeNode)node).getUserObject();

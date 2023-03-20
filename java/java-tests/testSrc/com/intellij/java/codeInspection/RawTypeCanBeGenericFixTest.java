@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -72,7 +58,7 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
       fail("No conflict detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Cannot convert type of expression <b>&quot;&quot;</b> from <b>java.lang.String</b> to <b>T</b><br>", 
+      assertEquals("Cannot convert type of expression <b>&quot;&quot;</b> from <b>java.lang.String</b> to <b>T</b>",
                    e.getMessage());
     }
   }
@@ -82,6 +68,15 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
   public void testAtTypeCast3() { assertIntentionNotAvailable("Change cast type to List<?>"); }
   public void testAtTypeCast4() { doTest("Change cast type to X<?>"); }
   public void testAtTypeCast5() { assertIntentionNotAvailable("Change cast type to X<?>"); }
+  public void testAtTypeCast6() { assertIntentionNotAvailable("Change cast type to Callable<><?>"); }
+
+  public void testAtConstructor1() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'")); }
+  public void testAtConstructor2() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'")); }
+  public void testAtConstructor3() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'")); }
+  public void testAtConstructor4() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'"));
+  }
 
   public void testAtInitializer() {
     assertIntentionNotAvailable(getMessagePrefix());

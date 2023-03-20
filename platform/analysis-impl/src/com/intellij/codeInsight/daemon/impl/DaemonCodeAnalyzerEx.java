@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -23,7 +24,7 @@ import java.util.List;
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
-    return (DaemonCodeAnalyzerEx)project.getComponent(DaemonCodeAnalyzer.class);
+    return (DaemonCodeAnalyzerEx)project.getService(DaemonCodeAnalyzer.class);
   }
 
   public static boolean processHighlights(@NotNull Document document,
@@ -43,13 +44,11 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           int endOffset,
                                           @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
       Object tt = marker.getErrorStripeTooltip();
-      if (!(tt instanceof HighlightInfo)) return true;
-      HighlightInfo info = (HighlightInfo)tt;
+      if (!(tt instanceof HighlightInfo info)) return true;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
              || info.getHighlighter() == null
              || processor.process(info);
@@ -58,20 +57,14 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   static boolean processHighlightsOverlappingOutside(@NotNull Document document,
                                                      @NotNull Project project,
-                                                     @Nullable("null means all") HighlightSeverity minSeverity,
                                                      int startOffset,
                                                      int endOffset,
                                                      @NotNull Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-
-    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
-      if (info == null) return true;
-      return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.getHighlighter() == null
-             || processor.process(info);
+      return info == null || info.getHighlighter() == null || processor.process(info);
     });
   }
 
@@ -79,6 +72,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
                               CommonProcessors.alwaysFalse());
   }
+  public abstract boolean hasVisibleLightBulbOrPopup();
 
   @NotNull
   public abstract List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
@@ -98,4 +92,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile);
 
+  public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
+    getFileStatusMap().markFileScopeDirty(document, new TextRange(0, document.getTextLength()), document.getTextLength(), reason);
+  }
 }

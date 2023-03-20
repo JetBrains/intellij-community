@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.Abstrac
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -49,12 +50,15 @@ class AddConstructorCreateCallableFromUsageFix(
                 ParameterInfo(TypeInfo(ktType, Variance.IN_VARIANCE), listOf(name))
             }
             val needPrimary = !targetKtClass.hasExplicitPrimaryConstructor()
+            val ktFactory = KtPsiFactory(targetKtClass)
+            val annotations = request.annotations.map { ktFactory.createAnnotationEntry("@${it.qualifiedName}") }
             val constructorInfo = ConstructorInfo(
                 parameterInfos,
                 targetKtClass,
                 isPrimary = needPrimary,
                 modifierList = modifierList,
-                withBody = true
+                withBody = true,
+                annotations = annotations
             )
             constructorInfo
         }

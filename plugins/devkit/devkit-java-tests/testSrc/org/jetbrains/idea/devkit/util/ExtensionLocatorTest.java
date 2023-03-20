@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,12 +8,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -32,20 +30,14 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "util/extensionLocator";
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
-
   public void testByExtensionPoint() {
     VirtualFile virtualFile = myFixture.copyFileToProject("pluginXml_locateByEp.xml");
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
     XmlFile xmlFile = assertInstanceOf(psiFile, XmlFile.class);
     IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile);
-    List<ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
+    List<? extends ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
     assertSize(1, epGroups);
-    List<ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();
+    List<? extends ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();
     assertSize(2, extensionPoints);
 
     ExtensionPoint namedEp = extensionPoints.get(0);
@@ -67,12 +59,12 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.copyFileToProject("SomeClass.java");
 
     PsiClass arrayListPsiClass = myFixture.findClass("java.util.ArrayList");
-    PsiClass linkedListPsiClass = myFixture.findClass(CommonClassNames.JAVA_UTIL_LINKED_LIST);
+    PsiClass hashMapPsiClass = myFixture.findClass(CommonClassNames.JAVA_UTIL_HASH_MAP);
     PsiClass myList1PsiClass = myFixture.findClass("SomeClass.MyList1");
     PsiClass myList2PsiClass = myFixture.findClass("SomeClass.MyList2");
 
     verifyLocator(locateExtensionsByPsiClass(arrayListPsiClass), 2);
-    verifyLocator(locateExtensionsByPsiClass(linkedListPsiClass), 1);
+    verifyLocator(locateExtensionsByPsiClass(hashMapPsiClass), 1);
     verifyLocator(locateExtensionsByPsiClass(myList1PsiClass), 1);
     verifyLocator(locateExtensionsByPsiClass(myList2PsiClass), 0);
   }

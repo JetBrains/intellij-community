@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class ChooseTypeExpression extends Expression {
   public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<>() {
     @Override

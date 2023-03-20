@@ -4,9 +4,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class ConvertRelativePathToAbsoluteIntentionAction extends ConvertAbsolutePathToRelativeIntentionAction {
 
   @Override

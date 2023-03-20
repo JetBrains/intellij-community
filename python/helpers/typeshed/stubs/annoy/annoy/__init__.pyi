@@ -1,8 +1,8 @@
 from _typeshed import SupportsLenAndGetItem
 from typing import overload
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
-_Vector = SupportsLenAndGetItem[float]
+_Vector: TypeAlias = SupportsLenAndGetItem[float]
 
 class AnnoyIndex:
     f: int

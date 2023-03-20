@@ -1,18 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -20,35 +16,39 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.*;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
-  private static final int MARGIN = 2;
 
   private final ShowUsagesTableCellRenderer myRenderer;
+  private final UsageView myUsageView;
 
-  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer) {
+  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer, UsageView usageView) {
     myRenderer = renderer;
+    myUsageView = usageView;
     ScrollingUtil.installActions(this);
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
@@ -60,39 +60,43 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      final int[] selected = getSelectedRows();
-      if (selected.length == 1) {
-        return getPsiElementForHint(getValueAt(selected[0], 0));
-      }
-    }
-    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+    if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      List<Object> selection = Arrays.stream(getSelectedRows())
+        .mapToObj(o -> getValueAt(o, 0))
+        .collect(Collectors.toList());
+      return (DataProvider)slowId -> getSlowData(slowId, selection);
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<Object> selection) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      Object single = ContainerUtil.getOnlyItem(selection);
+      return single == null ? null : getPsiElementForHint(single);
     }
     return null;
   }
 
   @Override
   public int getRowHeight() {
-    return super.getRowHeight() + 2 * MARGIN;
-  }
-
-  @NotNull
-  @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-    Component component = super.prepareRenderer(renderer, row, column);
-    if (component instanceof JComponent) {
-      ((JComponent)component).setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+    if (ExperimentalUI.isNewUI()) {
+      Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+      return JBUI.CurrentTheme.List.rowHeight() + innerInsets.top + innerInsets.bottom;
     }
-    return component;
+
+    return super.getRowHeight() + 2 * ShowUsagesTableCellRenderer.MARGIN;
   }
 
   @NotNull
-  Runnable prepareTable(@NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable) {
-    SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(this);
+  Runnable prepareTable(@NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable,
+                        @NotNull ShowUsagesActionHandler actionHandler) {
+    SpeedSearchBase<JTable> speedSearch = MySpeedSearch.installOn(this);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
-    setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight() + 2);
+    setRowHeight(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight() + 2);
     setShowGrid(false);
     setShowVerticalLines(false);
     setShowHorizontalLines(false);
@@ -110,7 +114,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
       moreUsagesSelected.set(false);
       filteredOutUsagesSelected.set(null);
       java.util.List<Object> usages = null;
-
+      //todo List<Usage>
       for (int i : getSelectedRows()) {
         Object value = getValueAt(i, 0);
         if (value instanceof UsageNode) {
@@ -155,14 +159,20 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
       List<Object> usages = selectedUsages.get();
       if (usages != null) {
         for (Object usage : usages) {
-          if (usage instanceof UsageInfo) {
-            UsageInfo usageInfo = (UsageInfo)usage;
-            UsageViewUtil.navigateTo(usageInfo, true);
-
-            PsiElement element = usageInfo.getElement();
-            if (element != null) {
-              UsageViewStatisticsCollector.logItemChosen(element.getProject(), CodeNavigateSource.ShowUsagesPopup, element.getLanguage());
+          if (usage instanceof UsageInfo usageInfo) {
+            PsiElement selectedElement = usageInfo.getElement();
+            if (selectedElement != null) {
+              String recentSearchText = speedSearch.getComparator().getRecentSearchText();
+              int numberOfLettersTyped = recentSearchText != null ? recentSearchText.length() : 0;
+              Project project = selectedElement.getProject();
+              UsageViewStatisticsCollector.logItemChosenInPopupFeatures(project, myUsageView, selectedElement,
+                                                                        actionHandler.buildFinishEventData(usageInfo));
+              UsageViewStatisticsCollector.logItemChosen(project, myUsageView, CodeNavigateSource.ShowUsagesPopup, getSelectedRow(),
+                                                         getRowCount(),
+                                                         numberOfLettersTyped,
+                                                         selectedElement.getLanguage(), false);
             }
+            UsageViewUtil.navigateTo(usageInfo, true);
           }
           else if (usage instanceof Navigatable) {
             ((Navigatable)usage).navigate(true);
@@ -216,8 +226,15 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   private static class MySpeedSearch extends SpeedSearchBase<JTable> {
-    MySpeedSearch(@NotNull ShowUsagesTable table) {
-      super(table);
+    private MySpeedSearch(@NotNull ShowUsagesTable table) {
+      super(table, null);
+    }
+
+    @Contract("_ -> new")
+    static @NotNull MySpeedSearch installOn(@NotNull ShowUsagesTable table) {
+      MySpeedSearch search = new MySpeedSearch(table);
+      search.setupListeners();
+      return search;
     }
 
     @Override
@@ -237,8 +254,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
 
     @Override
     protected String getElementText(@NotNull Object element) {
-      if (!(element instanceof UsageNode)) return element.toString();
-      UsageNode node = (UsageNode)element;
+      if (!(element instanceof UsageNode node)) return element.toString();
       if (node instanceof ShowUsagesAction.StringNode) return "";
       Usage usage = node.getUsage();
       if (usage == getTable().MORE_USAGES_SEPARATOR || usage == getTable().USAGES_OUTSIDE_SCOPE_SEPARATOR || usage == getTable().USAGES_FILTERED_OUT_SEPARATOR) return "";

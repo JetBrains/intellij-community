@@ -7,6 +7,6 @@ import java.util.*
 @GraphQLFragment("/graphql/fragment/comment.graphql")
 open class GHComment(id: String,
                      val author: GHActor?,
-                     val bodyHTML: String,
+                     val body: String,
                      val createdAt: Date)
   : GHNode(id)

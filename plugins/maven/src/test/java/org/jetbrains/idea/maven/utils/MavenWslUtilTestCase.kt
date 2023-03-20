@@ -3,11 +3,11 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.RunAll
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenTestCase
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWindowsFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveLocalRepository
@@ -27,11 +27,15 @@ class MavenWslUtilTestCase : MavenTestCase() {
   @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
-    Assume.assumeTrue("Windows only", SystemInfo.isWindows)
+    IoTestUtil.assumeWindows()
     Assume.assumeFalse("WSL should be installed", WslDistributionManager.getInstance().installedDistributions.isEmpty())
     myDistribution = WslDistributionManager.getInstance().installedDistributions[0]
 
-    myUserHome = File("\\\\wsl$\\${myDistribution.msId}\\home\\${myDistribution.environment["USER"]}")
+    val user = myDistribution.environment?.get("USER")
+    if (user == null){
+      fail("Cannot retrieve env variables from WSL")
+    }
+    myUserHome = File("\\\\wsl$\\${myDistribution.msId}\\home\\${user}")
     ensureWslTempDirCreated()
   }
 
@@ -55,7 +59,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
   fun testShouldReturnMavenLocalDirOnWsl() {
     TestCase.assertEquals(
       File(File(myUserHome, ".m2"), "repository"),
-      myDistribution.resolveLocalRepository(null, null, null));
+      myDistribution.resolveLocalRepository(null, null, null))
   }
 
   @Test
@@ -72,10 +76,10 @@ class MavenWslUtilTestCase : MavenTestCase() {
                                        "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                                        "      xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
                                        "      <localRepository>/tmp/path/to/repo</localRepository>\n" +
-                                       "</settings>");
+                                       "</settings>")
     TestCase.assertEquals(
       File(myDistribution.getWindowsPath("/tmp/path/to/repo")!!),
-      myDistribution.resolveLocalRepository(null, null, subFile.path));
+      myDistribution.resolveLocalRepository(null, null, subFile.path))
   }
 
   @Test
@@ -87,7 +91,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
 
   @Test
   fun testWindowFileMapInMnt() {
-    TestCase.assertEquals(File("c:\\somefile"), myDistribution.getWindowsFile(File("/mnt/c/somefile")));
+    TestCase.assertEquals(File("c:\\somefile"), myDistribution.getWindowsFile(File("/mnt/c/somefile")))
   }
 
   @Test
@@ -97,7 +101,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
 
   @Test
   fun testWslFileMapInMnt() {
-    TestCase.assertEquals(File("/mnt/c/somefile"), myDistribution.getWslFile(File("c:\\somefile")));
+    TestCase.assertEquals(File("/mnt/c/somefile"), myDistribution.getWslFile(File("c:\\somefile")))
   }
 
   @Test

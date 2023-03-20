@@ -52,8 +52,8 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     FileTypeManagerImpl.FileTypeWithDescriptor oldFtd = new FileTypeManagerImpl.FileTypeWithDescriptor(oldFileType, oldDescriptor);
     FileTypeManagerImpl.FileTypeWithDescriptor newFtd = new FileTypeManagerImpl.FileTypeWithDescriptor(newFileType, newDescriptor);
     result = ConflictingFileTypeMappingTracker.resolveConflict(matcher, oldFtd, newFtd);
-    assertSame(expectedResolveToNew ? newFileType : oldFileType, result.resolved.fileType);
-    assertEquals(expectedApprove, result.approved);
+    assertSame(expectedResolveToNew ? newFileType : oldFileType, result.resolved().fileType);
+    assertEquals(expectedApprove, result.approved());
   }
 
   @NotNull

@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -220,6 +220,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/Inner.kt");
         }
 
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/copyPaste/imports/Interface.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("testData/copyPaste/imports/Invoke.kt");
@@ -353,11 +358,6 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("TopLevelProperty.kt")
         public void testTopLevelProperty() throws Exception {
             runTest("testData/copyPaste/imports/TopLevelProperty.kt");
-        }
-
-        @TestMetadata("Trait.kt")
-        public void testTrait() throws Exception {
-            runTest("testData/copyPaste/imports/Trait.kt");
         }
 
         @TestMetadata("TypeArgForUnresolvedCall.kt")
@@ -578,6 +578,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/Inner.kt");
         }
 
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/copyPaste/imports/Interface.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("testData/copyPaste/imports/Invoke.kt");
@@ -711,11 +716,6 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("TopLevelProperty.kt")
         public void testTopLevelProperty() throws Exception {
             runTest("testData/copyPaste/imports/TopLevelProperty.kt");
-        }
-
-        @TestMetadata("Trait.kt")
-        public void testTrait() throws Exception {
-            runTest("testData/copyPaste/imports/Trait.kt");
         }
 
         @TestMetadata("TypeArgForUnresolvedCall.kt")

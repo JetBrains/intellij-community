@@ -19,7 +19,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.concurrent.TimeUnit
 
-internal abstract class BuiltInServerTestCase {
+abstract class BuiltInServerTestCase {
   companion object {
     @JvmField
     @ClassRule

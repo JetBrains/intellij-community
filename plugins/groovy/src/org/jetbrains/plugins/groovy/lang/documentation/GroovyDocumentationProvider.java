@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -55,15 +55,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 
-/**
- * @author ven
- */
 public class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 
@@ -123,9 +121,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       }
       return buffer.toString();
     }
-    else if (element instanceof PsiMethod) {
+    else if (element instanceof PsiMethod method) {
       @Nls StringBuilder buffer = new StringBuilder();
-      PsiMethod method = (PsiMethod)element;
       if (method instanceof GrGdkMethod) {
         appendStyledSpan(buffer, "[" + GroovyBundle.message("documentation.gdk.label") + "]", "color: #909090");
       }
@@ -180,6 +177,22 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
     else if (element instanceof GrTypeDefinition) {
       return generateClassInfo((GrTypeDefinition)element);
+    }
+    else if (element instanceof GroovyMapProperty mapProperty) {
+      @Nls StringBuilder buffer = new StringBuilder();
+      appendStyledSpan(buffer, "Map property\n");
+      PsiType inferredType = mapProperty.getPropertyType();
+      String typeLabel = inferredType != null
+                         ? GroovyBundle.message("documentation.inferred.type.label")
+                         : GroovyBundle.message("documentation.cannot.infer.type.label");
+      appendStyledSpan(buffer, "[" + typeLabel + "]", "color: #909090");
+      if (inferredType != null) {
+        buffer.append(" ");
+        appendTypeString(buffer, inferredType, originalElement, false);
+      }
+      buffer.append(" ");
+      appendStyledSpan(buffer, GroovyDocHighlightingManager.getInstance().getClassNameAttributes(), mapProperty.getName());
+      return buffer.toString();
     }
 
     return null;
@@ -423,8 +436,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   private static PsiElement getDocumentationElement(PsiElement element, PsiElement originalElement) {
-    if (element instanceof GrGdkMethod) {
-      element = ((GrGdkMethod)element).getStaticMethod();
+    if (element instanceof GrGdkMethod method) {
+      element = method.getStaticMethod();
     }
 
     final GrDocComment doc = PsiTreeUtil.getParentOfType(originalElement, GrDocComment.class);
@@ -432,27 +445,25 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       element = GrDocCommentUtil.findDocOwner(doc);
     }
 
-    if (element instanceof GrLightVariable) {
-      PsiElement navigationElement = element.getNavigationElement();
+    if (element instanceof GrLightVariable var) {
+      PsiElement navigationElement = var.getNavigationElement();
 
-      if (navigationElement != null) {
-        element = navigationElement;
+      element = navigationElement;
 
-        if (element.getContainingFile() instanceof PsiCompiledFile) {
-          navigationElement = element.getNavigationElement();
-          if (navigationElement != null) {
-            element = navigationElement;
-          }
+      if (element.getContainingFile() instanceof PsiCompiledFile) {
+        navigationElement = element.getNavigationElement();
+        if (navigationElement != null) {
+          element = navigationElement;
         }
+      }
 
-        if (element instanceof GrAccessorMethod) {
-          element = ((GrAccessorMethod)element).getProperty();
-        }
+      if (element instanceof GrAccessorMethod method) {
+        element = method.getProperty();
       }
     }
 
-    if (element instanceof GrPropertyForCompletion) {
-      element = ((GrPropertyForCompletion)element).getOriginalAccessor();
+    if (element instanceof GrPropertyForCompletion property) {
+      element = property.getOriginalAccessor();
     }
 
     return element;
@@ -562,12 +573,11 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
 
     StringBuilder builder = new StringBuilder();
-    if (owner instanceof GrMethod) {
-      final GrMethod method = (GrMethod)owner;
+    if (owner instanceof GrMethod method) {
       JavaDocumentationProvider.generateParametersTakingDocFromSuperMethods(builder, commenter, method);
 
       final PsiType returnType = method.getInferredReturnType();
-      if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiType.VOID.equals(returnType)) {
+      if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiTypes.voidType().equals(returnType)) {
         builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, contextComment.getContainingFile(), commenter));
         builder.append(LINE_SEPARATOR);
       }
@@ -591,27 +601,34 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Override
   public void collectDocComments(@NotNull PsiFile file,
                                  @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
-    if (!(file instanceof GroovyFile)) {
+    if (!(file instanceof GroovyFile groovyFile)) {
       return;
     }
-    var groovyFile = (GroovyFile)file;
-    processDocComments(PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocComment.class), sink);
+    List<GrDocCommentOwner> owners = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocCommentOwner.class);
+    List<GrDocComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocComment.class);
+    processDocComments(owners, comments, sink);
   }
 
-  private static void processDocComments(@NotNull List<GrDocComment> comments,
+  private static void processDocComments(@NotNull List<GrDocCommentOwner> owners,
+                                         @NonNls List<GrDocComment> danglingDocComments,
                                          @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
-    for (var comment : comments) {
-      if (comment == null) {
-        continue;
+    for (var docComment : danglingDocComments) {
+      if (docComment != null) {
+        sink.accept(docComment);
       }
-      GrDocCommentOwner owner = comment.getOwner();
+    }
+    for (var owner : owners) {
       if (owner == null) {
         continue;
       }
-      sink.accept(comment);
+      GrDocComment comment = owner.getDocComment();
+      if (comment != null) {
+        sink.accept(comment);
+      }
       if (owner instanceof GrTypeDefinition) {
         var nestedComments = PsiTreeUtil.getChildrenOfTypeAsList(((GrTypeDefinition)owner).getBody(), GrDocComment.class);
-        processDocComments(nestedComments, sink);
+        var nestedOwners = PsiTreeUtil.getChildrenOfTypeAsList(((GrTypeDefinition)owner).getBody(), GrDocCommentOwner.class);
+        processDocComments(nestedOwners, nestedComments, sink);
       }
     }
   }

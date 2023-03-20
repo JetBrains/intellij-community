@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
@@ -21,11 +21,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,8 +109,9 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(myFile.getContainingDirectory());
     
     PackageWrapper wrapper = PackageWrapper.create(targetPackage);
-    
-    PsiDirectory selectedDirectory = WriteAction.compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(wrapper, sourceRoot.getVirtualFile()));
+
+    PsiDirectory selectedDirectory =
+      WriteAction.compute(() -> CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(wrapper, sourceRoot.getVirtualFile()));
 
     try {
       String error;
@@ -126,12 +127,9 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
         return;
       }
 
-      new MoveClassesOrPackagesProcessor(
-        project,
-        ((PsiJavaFile) myFile).getClasses(),
-        new SingleSourceRootMoveDestination(wrapper, selectedDirectory), false,
-        false,
-        null).run();
+      SingleSourceRootMoveDestination moveDestination = new SingleSourceRootMoveDestination(wrapper, selectedDirectory);
+      JavaRefactoringFactory.getInstance(project)
+        .createMoveClassesOrPackages(((PsiJavaFile) myFile).getClasses(), moveDestination, false, false).run();
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

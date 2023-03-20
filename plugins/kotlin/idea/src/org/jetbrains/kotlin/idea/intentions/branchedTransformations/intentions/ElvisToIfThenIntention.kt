@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.convertToIfNotNullExpression
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.convertToIfStatement
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceValueForCondition
@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isStableSimp
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isNothing
@@ -66,6 +66,8 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
         val left = KtPsiUtil.safeDeparenthesize(element.left!!)
         val right = KtPsiUtil.safeDeparenthesize(element.right!!)
 
+        val psiFactory = KtPsiFactory(element.project)
+
         val leftSafeCastReceiver = left.findSafeCastReceiver(context)
         if (leftSafeCastReceiver == null) {
             val property = (KtPsiUtil.safeDeparenthesize(element).parent as? KtProperty)
@@ -77,10 +79,9 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
                     || right.getType(context)?.isNothing() == true
             if (rightIsReturnOrJumps && propertyName != null) {
                 val parent = property.parent
-                val factory = KtPsiFactory(element)
-                factory.createExpressionByPattern("if ($0 == null) $1", propertyName, right)
-                parent.addAfter(factory.createExpressionByPattern("if ($0 == null) $1", propertyName, right), property)
-                parent.addAfter(factory.createNewLine(), property)
+                psiFactory.createExpressionByPattern("if ($0 == null) $1", propertyName, right)
+                parent.addAfter(psiFactory.createExpressionByPattern("if ($0 == null) $1", propertyName, right), property)
+                parent.addAfter(psiFactory.createNewLine(), property)
                 element.replace(left)
                 return
             }
@@ -89,10 +90,9 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
         val (leftIsStable, ifStatement) = if (leftSafeCastReceiver != null) {
             val newReceiver = leftSafeCastReceiver.left
             val typeReference = leftSafeCastReceiver.right!!
-            val factory = KtPsiFactory(element)
             newReceiver.isStableSimpleExpression(context) to element.convertToIfStatement(
-                factory.createExpressionByPattern("$0 is $1", newReceiver, typeReference),
-                left.buildExpressionWithReplacedReceiver(factory, newReceiver),
+                psiFactory.createExpressionByPattern("$0 is $1", newReceiver, typeReference),
+                left.buildExpressionWithReplacedReceiver(psiFactory, newReceiver),
                 right
             )
         } else {

@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +118,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
         return JavaPsiFacade.getElementFactory(project).createType(listClass, classType);
       }
     }
-    return PsiType.NULL;
+    return PsiTypes.nullType();
   }
 
   public static @NotNull PsiType createElementType(Project project, Class<?> elementClass) {

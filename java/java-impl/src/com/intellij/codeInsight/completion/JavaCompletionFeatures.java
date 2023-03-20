@@ -17,9 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public interface JavaCompletionFeatures {
   @NonNls String SECOND_SMART_COMPLETION_CHAIN = "editing.completion.second.smarttype.chain";
   @NonNls String SECOND_SMART_COMPLETION_TOAR = "editing.completion.second.smarttype.toar";

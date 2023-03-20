@@ -4,13 +4,9 @@ package com.intellij.openapi.project
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
- * Implement this interface to provide a custom way to suggest base directory for projects. The implementation should be registered in your `plugin.xml`:
- * ```
- * <extensions defaultExtensionNs="com.intellij">
- *   <baseDirectorySuggester implementation="qualified-class-name"/>
- * </extensions>
- * ```
+ * This interface is deprecated, override [BaseProjectDirectories] service instead.
  */
+@Deprecated("Override BaseProjectDirectories service instead")
 interface BaseDirectorySuggester {
   /**
    * Return a directory which can be considered as the main directory for [project] or `null` if this implementation cannot suggest anything
@@ -18,8 +14,4 @@ interface BaseDirectorySuggester {
    * in various actions to suggest a directory for the project.
    */
   fun suggestBaseDirectory(project: Project): VirtualFile?
-}
-
-internal class FooBarBaz {
-  internal fun foo() {}
 }

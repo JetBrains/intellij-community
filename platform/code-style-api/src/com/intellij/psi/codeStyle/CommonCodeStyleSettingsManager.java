@@ -21,8 +21,6 @@ import java.util.Map;
 
 /**
  * Manages common code style settings for every language using them.
- *
- * @author Rustam Vishnyakov
  */
 final class CommonCodeStyleSettingsManager {
   private volatile Map<String, CommonCodeStyleSettings> myCommonSettingsMap;
@@ -242,8 +240,7 @@ final class CommonCodeStyleSettingsManager {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof CommonCodeStyleSettingsManager) {
-      CommonCodeStyleSettingsManager other = (CommonCodeStyleSettingsManager)obj;
+    if (obj instanceof CommonCodeStyleSettingsManager other) {
       if (getCommonSettingsMap().size() != other.getCommonSettingsMap().size() ||
           myUnknownSettingsMap.size() != other.myUnknownSettingsMap.size()) {
         return false;

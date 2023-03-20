@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -42,6 +43,10 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
     if (base == null || !psiClass.isInheritor(base, true)) return null;
 
     if (skipIfNotRegistered(psiClass)) {
+      return null;
+    }
+
+    if (TestSourcesFilter.isTestSources(psiClass.getContainingFile().getVirtualFile(), manager.getProject())) {
       return null;
     }
 

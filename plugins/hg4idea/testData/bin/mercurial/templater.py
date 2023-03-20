@@ -1,361 +1,669 @@
 # templater.py - template expansion for output
 #
-# Copyright 2005, 2006 Matt Mackall <mpm@selenic.com>
+# Copyright 2005, 2006 Olivia Mackall <olivia@selenic.com>
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from i18n import _
-import sys, os, re
-import util, config, templatefilters, parser, error
-import types
-import minirst
+"""Slightly complicated template engine for commands and hgweb
+
+This module provides low-level interface to the template engine. See the
+formatter and cmdutil modules if you are looking for high-level functions
+such as ``cmdutil.rendertemplate(ctx, tmpl)``.
+
+Internal Data Types
+-------------------
+
+Template keywords and functions take a dictionary of current symbols and
+resources (a "mapping") and return result. Inputs and outputs must be one
+of the following data types:
+
+bytes
+    a byte string, which is generally a human-readable text in local encoding.
+
+generator
+    a lazily-evaluated byte string, which is a possibly nested generator of
+    values of any printable types, and  will be folded by ``stringify()``
+    or ``flatten()``.
+
+None
+    sometimes represents an empty value, which can be stringified to ''.
+
+True, False, int, float
+    can be stringified as such.
+
+wrappedbytes, wrappedvalue
+    a wrapper for the above printable types.
+
+date
+    represents a (unixtime, offset) tuple.
+
+hybrid
+    represents a list/dict of printable values, which can also be converted
+    to mappings by % operator.
+
+hybriditem
+    represents a scalar printable value, also supports % operator.
+
+revslist
+    represents a list of revision numbers.
+
+mappinggenerator, mappinglist
+    represents mappings (i.e. a list of dicts), which may have default
+    output format.
+
+mappingdict
+    represents a single mapping (i.e. a dict), which may have default output
+    format.
+
+mappingnone
+    represents None of Optional[mappable], which will be mapped to an empty
+    string by % operation.
+
+mappedgenerator
+    a lazily-evaluated list of byte strings, which is e.g. a result of %
+    operation.
+"""
+
+from __future__ import absolute_import, print_function
+
+import abc
+import os
+
+from .i18n import _
+from .pycompat import getattr
+from . import (
+    config,
+    encoding,
+    error,
+    parser,
+    pycompat,
+    templatefilters,
+    templatefuncs,
+    templateutil,
+    util,
+)
+from .utils import (
+    resourceutil,
+    stringutil,
+)
 
 # template parsing
 
 elements = {
-    "(": (20, ("group", 1, ")"), ("func", 1, ")")),
-    ",": (2, None, ("list", 2)),
-    "|": (5, None, ("|", 5)),
-    "%": (6, None, ("%", 6)),
-    ")": (0, None, None),
-    "symbol": (0, ("symbol",), None),
-    "string": (0, ("string",), None),
-    "end": (0, None, None),
+    # token-type: binding-strength, primary, prefix, infix, suffix
+    b"(": (20, None, (b"group", 1, b")"), (b"func", 1, b")"), None),
+    b".": (18, None, None, (b".", 18), None),
+    b"%": (15, None, None, (b"%", 15), None),
+    b"|": (15, None, None, (b"|", 15), None),
+    b"*": (5, None, None, (b"*", 5), None),
+    b"/": (5, None, None, (b"/", 5), None),
+    b"+": (4, None, None, (b"+", 4), None),
+    b"-": (4, None, (b"negate", 19), (b"-", 4), None),
+    b"=": (3, None, None, (b"keyvalue", 3), None),
+    b",": (2, None, None, (b"list", 2), None),
+    b")": (0, None, None, None, None),
+    b"integer": (0, b"integer", None, None, None),
+    b"symbol": (0, b"symbol", None, None, None),
+    b"string": (0, b"string", None, None, None),
+    b"template": (0, b"template", None, None, None),
+    b"end": (0, None, None, None, None),
 }
 
-def tokenizer(data):
-    program, start, end = data
+
+def tokenize(program, start, end, term=None):
+    """Parse a template expression into a stream of tokens, which must end
+    with term if specified"""
     pos = start
+    program = pycompat.bytestr(program)
     while pos < end:
         c = program[pos]
-        if c.isspace(): # skip inter-token whitespace
+        if c.isspace():  # skip inter-token whitespace
             pass
-        elif c in "(,)%|": # handle simple operators
+        elif c in b"(=,).%|+-*/":  # handle simple operators
             yield (c, None, pos)
-        elif (c in '"\'' or c == 'r' and
-              program[pos:pos + 2] in ("r'", 'r"')): # handle quoted strings
-            if c == 'r':
-                pos += 1
-                c = program[pos]
-                decode = False
-            else:
-                decode = True
-            pos += 1
-            s = pos
-            while pos < end: # find closing quote
+        elif c in b'"\'':  # handle quoted templates
+            s = pos + 1
+            data, pos = _parsetemplate(program, s, end, c)
+            yield (b'template', data, s)
+            pos -= 1
+        elif c == b'r' and program[pos : pos + 2] in (b"r'", b'r"'):
+            # handle quoted strings
+            c = program[pos + 1]
+            s = pos = pos + 2
+            while pos < end:  # find closing quote
                 d = program[pos]
-                if decode and d == '\\': # skip over escaped characters
+                if d == b'\\':  # skip over escaped characters
                     pos += 2
                     continue
                 if d == c:
-                    if not decode:
-                        yield ('string', program[s:pos].replace('\\', r'\\'), s)
-                        break
-                    yield ('string', program[s:pos].decode('string-escape'), s)
+                    yield (b'string', program[s:pos], s)
                     break
                 pos += 1
             else:
-                raise error.ParseError(_("unterminated string"), s)
-        elif c.isalnum() or c in '_':
+                raise error.ParseError(_(b"unterminated string"), s)
+        elif c.isdigit():
+            s = pos
+            while pos < end:
+                d = program[pos]
+                if not d.isdigit():
+                    break
+                pos += 1
+            yield (b'integer', program[s:pos], s)
+            pos -= 1
+        elif (
+            c == b'\\'
+            and program[pos : pos + 2] in (br"\'", br'\"')
+            or c == b'r'
+            and program[pos : pos + 3] in (br"r\'", br'r\"')
+        ):
+            # handle escaped quoted strings for compatibility with 2.9.2-3.4,
+            # where some of nested templates were preprocessed as strings and
+            # then compiled. therefore, \"...\" was allowed. (issue4733)
+            #
+            # processing flow of _evalifliteral() at 5ab28a2e9962:
+            # outer template string    -> stringify()  -> compiletemplate()
+            # ------------------------    ------------    ------------------
+            # {f("\\\\ {g(\"\\\"\")}"}    \\ {g("\"")}    [r'\\', {g("\"")}]
+            #             ~~~~~~~~
+            #             escaped quoted string
+            if c == b'r':
+                pos += 1
+                token = b'string'
+            else:
+                token = b'template'
+            quote = program[pos : pos + 2]
+            s = pos = pos + 2
+            while pos < end:  # find closing escaped quote
+                if program.startswith(b'\\\\\\', pos, end):
+                    pos += 4  # skip over double escaped characters
+                    continue
+                if program.startswith(quote, pos, end):
+                    # interpret as if it were a part of an outer string
+                    data = parser.unescapestr(program[s:pos])
+                    if token == b'template':
+                        data = _parsetemplate(data, 0, len(data))[0]
+                    yield (token, data, s)
+                    pos += 1
+                    break
+                pos += 1
+            else:
+                raise error.ParseError(_(b"unterminated string"), s)
+        elif c.isalnum() or c in b'_':
             s = pos
             pos += 1
-            while pos < end: # find end of symbol
+            while pos < end:  # find end of symbol
                 d = program[pos]
-                if not (d.isalnum() or d == "_"):
+                if not (d.isalnum() or d == b"_"):
                     break
                 pos += 1
             sym = program[s:pos]
-            yield ('symbol', sym, s)
+            yield (b'symbol', sym, s)
             pos -= 1
-        elif c == '}':
-            pos += 1
-            break
+        elif c == term:
+            yield (b'end', None, pos)
+            return
         else:
-            raise error.ParseError(_("syntax error"), pos)
+            raise error.ParseError(_(b"syntax error"), pos)
         pos += 1
-    yield ('end', None, pos)
+    if term:
+        raise error.ParseError(_(b"unterminated template expansion"), start)
+    yield (b'end', None, pos)
 
-def compiletemplate(tmpl, context):
+
+def _parsetemplate(tmpl, start, stop, quote=b''):
+    r"""
+    >>> _parsetemplate(b'foo{bar}"baz', 0, 12)
+    ([('string', 'foo'), ('symbol', 'bar'), ('string', '"baz')], 12)
+    >>> _parsetemplate(b'foo{bar}"baz', 0, 12, quote=b'"')
+    ([('string', 'foo'), ('symbol', 'bar')], 9)
+    >>> _parsetemplate(b'foo"{bar}', 0, 9, quote=b'"')
+    ([('string', 'foo')], 4)
+    >>> _parsetemplate(br'foo\"bar"baz', 0, 12, quote=b'"')
+    ([('string', 'foo"'), ('string', 'bar')], 9)
+    >>> _parsetemplate(br'foo\\"bar', 0, 10, quote=b'"')
+    ([('string', 'foo\\')], 6)
+    """
     parsed = []
-    pos, stop = 0, len(tmpl)
-    p = parser.parser(tokenizer, elements)
+    for typ, val, pos in _scantemplate(tmpl, start, stop, quote):
+        if typ == b'string':
+            parsed.append((typ, val))
+        elif typ == b'template':
+            parsed.append(val)
+        elif typ == b'end':
+            return parsed, pos
+        else:
+            raise error.ProgrammingError(b'unexpected type: %s' % typ)
+    raise error.ProgrammingError(b'unterminated scanning of template')
 
-    while pos < stop:
-        n = tmpl.find('{', pos)
-        if n < 0:
-            parsed.append(("string", tmpl[pos:]))
-            break
-        if n > 0 and tmpl[n - 1] == '\\':
-            # escaped
-            parsed.append(("string", tmpl[pos:n - 1] + "{"))
-            pos = n + 1
-            continue
-        if n > pos:
-            parsed.append(("string", tmpl[pos:n]))
 
-        pd = [tmpl, n + 1, stop]
-        parseres, pos = p.parse(pd)
-        parsed.append(parseres)
+def scantemplate(tmpl, raw=False):
+    r"""Scan (type, start, end) positions of outermost elements in template
 
-    return [compileexp(e, context) for e in parsed]
+    If raw=True, a backslash is not taken as an escape character just like
+    r'' string in Python. Note that this is different from r'' literal in
+    template in that no template fragment can appear in r'', e.g. r'{foo}'
+    is a literal '{foo}', but ('{foo}', raw=True) is a template expression
+    'foo'.
 
-def compileexp(exp, context):
+    >>> list(scantemplate(b'foo{bar}"baz'))
+    [('string', 0, 3), ('template', 3, 8), ('string', 8, 12)]
+    >>> list(scantemplate(b'outer{"inner"}outer'))
+    [('string', 0, 5), ('template', 5, 14), ('string', 14, 19)]
+    >>> list(scantemplate(b'foo\\{escaped}'))
+    [('string', 0, 5), ('string', 5, 13)]
+    >>> list(scantemplate(b'foo\\{escaped}', raw=True))
+    [('string', 0, 4), ('template', 4, 13)]
+    """
+    last = None
+    for typ, val, pos in _scantemplate(tmpl, 0, len(tmpl), raw=raw):
+        if last:
+            yield last + (pos,)
+        if typ == b'end':
+            return
+        else:
+            last = (typ, pos)
+    raise error.ProgrammingError(b'unterminated scanning of template')
+
+
+def _scantemplate(tmpl, start, stop, quote=b'', raw=False):
+    """Parse template string into chunks of strings and template expressions"""
+    sepchars = b'{' + quote
+    unescape = [parser.unescapestr, pycompat.identity][raw]
+    pos = start
+    p = parser.parser(elements)
+    try:
+        while pos < stop:
+            n = min(
+                (tmpl.find(c, pos, stop) for c in pycompat.bytestr(sepchars)),
+                key=lambda n: (n < 0, n),
+            )
+            if n < 0:
+                yield (b'string', unescape(tmpl[pos:stop]), pos)
+                pos = stop
+                break
+            c = tmpl[n : n + 1]
+            bs = 0  # count leading backslashes
+            if not raw:
+                bs = (n - pos) - len(tmpl[pos:n].rstrip(b'\\'))
+            if bs % 2 == 1:
+                # escaped (e.g. '\{', '\\\{', but not '\\{')
+                yield (b'string', unescape(tmpl[pos : n - 1]) + c, pos)
+                pos = n + 1
+                continue
+            if n > pos:
+                yield (b'string', unescape(tmpl[pos:n]), pos)
+            if c == quote:
+                yield (b'end', None, n + 1)
+                return
+
+            parseres, pos = p.parse(tokenize(tmpl, n + 1, stop, b'}'))
+            if not tmpl.startswith(b'}', pos):
+                raise error.ParseError(_(b"invalid token"), pos)
+            yield (b'template', parseres, n)
+            pos += 1
+
+        if quote:
+            raise error.ParseError(_(b"unterminated string"), start)
+    except error.ParseError as inst:
+        _addparseerrorhint(inst, tmpl)
+        raise
+    yield (b'end', None, pos)
+
+
+def _addparseerrorhint(inst, tmpl):
+    if inst.location is None:
+        return
+    loc = inst.location
+    # Offset the caret location by the number of newlines before the
+    # location of the error, since we will replace one-char newlines
+    # with the two-char literal r'\n'.
+    offset = tmpl[:loc].count(b'\n')
+    tmpl = tmpl.replace(b'\n', br'\n')
+    # We want the caret to point to the place in the template that
+    # failed to parse, but in a hint we get a open paren at the
+    # start. Therefore, we print "loc + 1" spaces (instead of "loc")
+    # to line up the caret with the location of the error.
+    inst.hint = tmpl + b'\n' + b' ' * (loc + 1 + offset) + b'^ ' + _(b'here')
+
+
+def _unnesttemplatelist(tree):
+    """Expand list of templates to node tuple
+
+    >>> def f(tree):
+    ...     print(pycompat.sysstr(prettyformat(_unnesttemplatelist(tree))))
+    >>> f((b'template', []))
+    (string '')
+    >>> f((b'template', [(b'string', b'foo')]))
+    (string 'foo')
+    >>> f((b'template', [(b'string', b'foo'), (b'symbol', b'rev')]))
+    (template
+      (string 'foo')
+      (symbol 'rev'))
+    >>> f((b'template', [(b'symbol', b'rev')]))  # template(rev) -> str
+    (template
+      (symbol 'rev'))
+    >>> f((b'template', [(b'template', [(b'string', b'foo')])]))
+    (string 'foo')
+    """
+    if not isinstance(tree, tuple):
+        return tree
+    op = tree[0]
+    if op != b'template':
+        return (op,) + tuple(_unnesttemplatelist(x) for x in tree[1:])
+
+    assert len(tree) == 2
+    xs = tuple(_unnesttemplatelist(x) for x in tree[1])
+    if not xs:
+        return (b'string', b'')  # empty template ""
+    elif len(xs) == 1 and xs[0][0] == b'string':
+        return xs[0]  # fast path for string with no template fragment "x"
+    else:
+        return (op,) + xs
+
+
+def parse(tmpl):
+    """Parse template string into tree"""
+    parsed, pos = _parsetemplate(tmpl, 0, len(tmpl))
+    assert pos == len(tmpl), b'unquoted template should be consumed'
+    return _unnesttemplatelist((b'template', parsed))
+
+
+def parseexpr(expr):
+    """Parse a template expression into tree
+
+    >>> parseexpr(b'"foo"')
+    ('string', 'foo')
+    >>> parseexpr(b'foo(bar)')
+    ('func', ('symbol', 'foo'), ('symbol', 'bar'))
+    >>> from . import error
+    >>> from . import pycompat
+    >>> try:
+    ...   parseexpr(b'foo(')
+    ... except error.ParseError as e:
+    ...   pycompat.sysstr(e.message)
+    ...   e.location
+    'not a prefix: end'
+    4
+    >>> try:
+    ...   parseexpr(b'"foo" "bar"')
+    ... except error.ParseError as e:
+    ...   pycompat.sysstr(e.message)
+    ...   e.location
+    'invalid token'
+    7
+    """
+    try:
+        return _parseexpr(expr)
+    except error.ParseError as inst:
+        _addparseerrorhint(inst, expr)
+        raise
+
+
+def _parseexpr(expr):
+    p = parser.parser(elements)
+    tree, pos = p.parse(tokenize(expr, 0, len(expr)))
+    if pos != len(expr):
+        raise error.ParseError(_(b'invalid token'), pos)
+    return _unnesttemplatelist(tree)
+
+
+def prettyformat(tree):
+    return parser.prettyformat(tree, (b'integer', b'string', b'symbol'))
+
+
+def compileexp(exp, context, curmethods):
+    """Compile parsed template tree to (func, data) pair"""
+    if not exp:
+        raise error.ParseError(_(b"missing argument"))
     t = exp[0]
-    if t in methods:
-        return methods[t](exp, context)
-    raise error.ParseError(_("unknown method '%s'") % t)
+    return curmethods[t](exp, context)
+
 
 # template evaluation
 
+
 def getsymbol(exp):
-    if exp[0] == 'symbol':
+    if exp[0] == b'symbol':
         return exp[1]
-    raise error.ParseError(_("expected a symbol"))
+    raise error.ParseError(_(b"expected a symbol, got '%s'") % exp[0])
+
 
 def getlist(x):
     if not x:
         return []
-    if x[0] == 'list':
+    if x[0] == b'list':
         return getlist(x[1]) + [x[2]]
     return [x]
 
-def getfilter(exp, context):
-    f = getsymbol(exp)
-    if f not in context._filters:
-        raise error.ParseError(_("unknown function '%s'") % f)
-    return context._filters[f]
 
 def gettemplate(exp, context):
-    if exp[0] == 'string':
-        return compiletemplate(exp[1], context)
-    if exp[0] == 'symbol':
+    """Compile given template tree or load named template from map file;
+    returns (func, data) pair"""
+    if exp[0] in (b'template', b'string'):
+        return compileexp(exp, context, methods)
+    if exp[0] == b'symbol':
+        # unlike runsymbol(), here 'symbol' is always taken as template name
+        # even if it exists in mapping. this allows us to override mapping
+        # by web templates, e.g. 'changelogtag' is redefined in map file.
         return context._load(exp[1])
-    raise error.ParseError(_("expected template specifier"))
+    raise error.ParseError(_(b"expected template specifier"))
 
-def runstring(context, mapping, data):
-    return data
 
-def runsymbol(context, mapping, key):
-    v = mapping.get(key)
-    if v is None:
-        v = context._defaults.get(key, '')
-    if util.safehasattr(v, '__call__'):
-        return v(**mapping)
-    if isinstance(v, types.GeneratorType):
-        v = list(v)
-        mapping[key] = v
-        return v
-    return v
+def _runrecursivesymbol(context, mapping, key):
+    raise error.InputError(_(b"recursive reference '%s' in template") % key)
+
+
+def buildtemplate(exp, context):
+    ctmpl = [compileexp(e, context, methods) for e in exp[1:]]
+    return (templateutil.runtemplate, ctmpl)
+
 
 def buildfilter(exp, context):
-    func, data = compileexp(exp[1], context)
-    filt = getfilter(exp[2], context)
-    return (runfilter, (func, data, filt))
+    n = getsymbol(exp[2])
+    if n in context._filters:
+        filt = context._filters[n]
+        arg = compileexp(exp[1], context, methods)
+        return (templateutil.runfilter, (arg, filt))
+    if n in context._funcs:
+        f = context._funcs[n]
+        args = _buildfuncargs(exp[1], context, methods, n, f._argspec)
+        return (f, args)
+    raise error.ParseError(_(b"unknown function '%s'") % n)
 
-def runfilter(context, mapping, data):
-    func, data, filt = data
-    try:
-        return filt(func(context, mapping, data))
-    except (ValueError, AttributeError, TypeError):
-        if isinstance(data, tuple):
-            dt = data[1]
-        else:
-            dt = data
-        raise util.Abort(_("template filter '%s' is not compatible with "
-                           "keyword '%s'") % (filt.func_name, dt))
 
 def buildmap(exp, context):
-    func, data = compileexp(exp[1], context)
-    ctmpl = gettemplate(exp[2], context)
-    return (runmap, (func, data, ctmpl))
+    darg = compileexp(exp[1], context, methods)
+    targ = gettemplate(exp[2], context)
+    return (templateutil.runmap, (darg, targ))
 
-def runtemplate(context, mapping, template):
-    for func, data in template:
-        yield func(context, mapping, data)
 
-def runmap(context, mapping, data):
-    func, data, ctmpl = data
-    d = func(context, mapping, data)
-    if util.safehasattr(d, '__call__'):
-        d = d()
+def buildmember(exp, context):
+    darg = compileexp(exp[1], context, methods)
+    memb = getsymbol(exp[2])
+    return (templateutil.runmember, (darg, memb))
 
-    lm = mapping.copy()
 
-    for i in d:
-        if isinstance(i, dict):
-            lm.update(i)
-            lm['originalnode'] = mapping.get('node')
-            yield runtemplate(context, lm, ctmpl)
-        else:
-            # v is not an iterable of dicts, this happen when 'key'
-            # has been fully expanded already and format is useless.
-            # If so, return the expanded value.
-            yield i
+def buildnegate(exp, context):
+    arg = compileexp(exp[1], context, exprmethods)
+    return (templateutil.runnegate, arg)
+
+
+def buildarithmetic(exp, context, func):
+    left = compileexp(exp[1], context, exprmethods)
+    right = compileexp(exp[2], context, exprmethods)
+    return (templateutil.runarithmetic, (func, left, right))
+
 
 def buildfunc(exp, context):
     n = getsymbol(exp[1])
-    args = [compileexp(x, context) for x in getlist(exp[2])]
-    if n in funcs:
-        f = funcs[n]
-        return (f, args)
-    if n in templatefilters.funcs:
-        f = templatefilters.funcs[n]
+    if n in context._funcs:
+        f = context._funcs[n]
+        args = _buildfuncargs(exp[2], context, exprmethods, n, f._argspec)
         return (f, args)
     if n in context._filters:
+        args = _buildfuncargs(exp[2], context, exprmethods, n, argspec=None)
         if len(args) != 1:
-            raise error.ParseError(_("filter %s expects one argument") % n)
+            raise error.ParseError(_(b"filter %s expects one argument") % n)
         f = context._filters[n]
-        return (runfilter, (args[0][0], args[0][1], f))
+        return (templateutil.runfilter, (args[0], f))
+    raise error.ParseError(_(b"unknown function '%s'") % n)
 
-def get(context, mapping, args):
-    if len(args) != 2:
-        # i18n: "get" is a keyword
-        raise error.ParseError(_("get() expects two arguments"))
 
-    dictarg = args[0][0](context, mapping, args[0][1])
-    if not util.safehasattr(dictarg, 'get'):
-        # i18n: "get" is a keyword
-        raise error.ParseError(_("get() expects a dict as first argument"))
+def _buildfuncargs(exp, context, curmethods, funcname, argspec):
+    """Compile parsed tree of function arguments into list or dict of
+    (func, data) pairs
 
-    key = args[1][0](context, mapping, args[1][1])
-    yield dictarg.get(key)
+    >>> context = engine(lambda t: (templateutil.runsymbol, t))
+    >>> def fargs(expr, argspec):
+    ...     x = _parseexpr(expr)
+    ...     n = getsymbol(x[1])
+    ...     return _buildfuncargs(x[2], context, exprmethods, n, argspec)
+    >>> list(fargs(b'a(l=1, k=2)', b'k l m').keys())
+    ['l', 'k']
+    >>> args = fargs(b'a(opts=1, k=2)', b'**opts')
+    >>> list(args.keys()), list(args[b'opts'].keys())
+    (['opts'], ['opts', 'k'])
+    """
 
-def join(context, mapping, args):
-    if not (1 <= len(args) <= 2):
-        # i18n: "join" is a keyword
-        raise error.ParseError(_("join expects one or two arguments"))
+    def compiledict(xs):
+        return util.sortdict(
+            (k, compileexp(x, context, curmethods))
+            for k, x in pycompat.iteritems(xs)
+        )
 
-    joinset = args[0][0](context, mapping, args[0][1])
-    if util.safehasattr(joinset, '__call__'):
-        jf = joinset.joinfmt
-        joinset = [jf(x) for x in joinset()]
+    def compilelist(xs):
+        return [compileexp(x, context, curmethods) for x in xs]
 
-    joiner = " "
-    if len(args) > 1:
-        joiner = args[1][0](context, mapping, args[1][1])
+    if not argspec:
+        # filter or function with no argspec: return list of positional args
+        return compilelist(getlist(exp))
 
-    first = True
-    for x in joinset:
-        if first:
-            first = False
-        else:
-            yield joiner
-        yield x
+    # function with argspec: return dict of named args
+    _poskeys, varkey, _keys, optkey = argspec = parser.splitargspec(argspec)
+    treeargs = parser.buildargsdict(
+        getlist(exp),
+        funcname,
+        argspec,
+        keyvaluenode=b'keyvalue',
+        keynode=b'symbol',
+    )
+    compargs = util.sortdict()
+    if varkey:
+        compargs[varkey] = compilelist(treeargs.pop(varkey))
+    if optkey:
+        compargs[optkey] = compiledict(treeargs.pop(optkey))
+    compargs.update(compiledict(treeargs))
+    return compargs
 
-def sub(context, mapping, args):
-    if len(args) != 3:
-        # i18n: "sub" is a keyword
-        raise error.ParseError(_("sub expects three arguments"))
 
-    pat = stringify(args[0][0](context, mapping, args[0][1]))
-    rpl = stringify(args[1][0](context, mapping, args[1][1]))
-    src = stringify(args[2][0](context, mapping, args[2][1]))
-    src = stringify(runtemplate(context, mapping,
-                                compiletemplate(src, context)))
-    yield re.sub(pat, rpl, src)
+def buildkeyvaluepair(exp, content):
+    raise error.ParseError(_(b"can't use a key-value pair in this context"))
 
-def if_(context, mapping, args):
-    if not (2 <= len(args) <= 3):
-        # i18n: "if" is a keyword
-        raise error.ParseError(_("if expects two or three arguments"))
 
-    test = stringify(args[0][0](context, mapping, args[0][1]))
-    if test:
-        t = stringify(args[1][0](context, mapping, args[1][1]))
-        yield runtemplate(context, mapping, compiletemplate(t, context))
-    elif len(args) == 3:
-        t = stringify(args[2][0](context, mapping, args[2][1]))
-        yield runtemplate(context, mapping, compiletemplate(t, context))
+def buildlist(exp, context):
+    raise error.ParseError(
+        _(b"can't use a list in this context"),
+        hint=_(b'check place of comma and parens'),
+    )
 
-def ifeq(context, mapping, args):
-    if not (3 <= len(args) <= 4):
-        # i18n: "ifeq" is a keyword
-        raise error.ParseError(_("ifeq expects three or four arguments"))
 
-    test = stringify(args[0][0](context, mapping, args[0][1]))
-    match = stringify(args[1][0](context, mapping, args[1][1]))
-    if test == match:
-        t = stringify(args[2][0](context, mapping, args[2][1]))
-        yield runtemplate(context, mapping, compiletemplate(t, context))
-    elif len(args) == 4:
-        t = stringify(args[3][0](context, mapping, args[3][1]))
-        yield runtemplate(context, mapping, compiletemplate(t, context))
-
-def label(context, mapping, args):
-    if len(args) != 2:
-        # i18n: "label" is a keyword
-        raise error.ParseError(_("label expects two arguments"))
-
-    # ignore args[0] (the label string) since this is supposed to be a a no-op
-    t = stringify(args[1][0](context, mapping, args[1][1]))
-    yield runtemplate(context, mapping, compiletemplate(t, context))
-
-def rstdoc(context, mapping, args):
-    if len(args) != 2:
-        # i18n: "rstdoc" is a keyword
-        raise error.ParseError(_("rstdoc expects two arguments"))
-
-    text = stringify(args[0][0](context, mapping, args[0][1]))
-    style = stringify(args[1][0](context, mapping, args[1][1]))
-
-    return minirst.format(text, style=style, keep=['verbose'])
-
-methods = {
-    "string": lambda e, c: (runstring, e[1]),
-    "symbol": lambda e, c: (runsymbol, e[1]),
-    "group": lambda e, c: compileexp(e[1], c),
-#    ".": buildmember,
-    "|": buildfilter,
-    "%": buildmap,
-    "func": buildfunc,
-    }
-
-funcs = {
-    "get": get,
-    "if": if_,
-    "ifeq": ifeq,
-    "join": join,
-    "label": label,
-    "rstdoc": rstdoc,
-    "sub": sub,
+# methods to interpret function arguments or inner expressions (e.g. {_(x)})
+exprmethods = {
+    b"integer": lambda e, c: (templateutil.runinteger, e[1]),
+    b"string": lambda e, c: (templateutil.runstring, e[1]),
+    b"symbol": lambda e, c: (templateutil.runsymbol, e[1]),
+    b"template": buildtemplate,
+    b"group": lambda e, c: compileexp(e[1], c, exprmethods),
+    b".": buildmember,
+    b"|": buildfilter,
+    b"%": buildmap,
+    b"func": buildfunc,
+    b"keyvalue": buildkeyvaluepair,
+    b"list": buildlist,
+    b"+": lambda e, c: buildarithmetic(e, c, lambda a, b: a + b),
+    b"-": lambda e, c: buildarithmetic(e, c, lambda a, b: a - b),
+    b"negate": buildnegate,
+    b"*": lambda e, c: buildarithmetic(e, c, lambda a, b: a * b),
+    b"/": lambda e, c: buildarithmetic(e, c, lambda a, b: a // b),
 }
+
+# methods to interpret top-level template (e.g. {x}, {x|_}, {x % "y"})
+methods = exprmethods.copy()
+methods[b"integer"] = exprmethods[b"symbol"]  # '{1}' as variable
+
+
+class _aliasrules(parser.basealiasrules):
+    """Parsing and expansion rule set of template aliases"""
+
+    _section = _(b'template alias')
+    _parse = staticmethod(_parseexpr)
+
+    @staticmethod
+    def _trygetfunc(tree):
+        """Return (name, args) if tree is func(...) or ...|filter; otherwise
+        None"""
+        if tree[0] == b'func' and tree[1][0] == b'symbol':
+            return tree[1][1], getlist(tree[2])
+        if tree[0] == b'|' and tree[2][0] == b'symbol':
+            return tree[2][1], [tree[1]]
+
+
+def expandaliases(tree, aliases):
+    """Return new tree of aliases are expanded"""
+    aliasmap = _aliasrules.buildmap(aliases)
+    return _aliasrules.expand(aliasmap, tree)
+
 
 # template engine
 
-path = ['templates', '../templates']
-stringify = templatefilters.stringify
 
-def _flatten(thing):
-    '''yield a single stream from a possibly nested set of iterators'''
-    if isinstance(thing, str):
-        yield thing
-    elif not util.safehasattr(thing, '__iter__'):
-        if thing is not None:
-            yield str(thing)
-    else:
-        for i in thing:
-            if isinstance(i, str):
-                yield i
-            elif not util.safehasattr(i, '__iter__'):
-                if i is not None:
-                    yield str(i)
-            elif i is not None:
-                for j in _flatten(i):
-                    yield j
+def unquotestring(s):
+    '''unwrap quotes if any; otherwise returns unmodified string'''
+    if len(s) < 2 or s[0] not in b"'\"" or s[0] != s[-1]:
+        return s
+    return s[1:-1]
 
-def parsestring(s, quoted=True):
-    '''parse a string using simple c-like syntax.
-    string must be in quotes if quoted is True.'''
-    if quoted:
-        if len(s) < 2 or s[0] != s[-1]:
-            raise SyntaxError(_('unmatched quotes'))
-        return s[1:-1].decode('string_escape')
 
-    return s.decode('string_escape')
+class resourcemapper(object):  # pytype: disable=ignored-metaclass
+    """Mapper of internal template resources"""
+
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def availablekeys(self, mapping):
+        """Return a set of available resource keys based on the given mapping"""
+
+    @abc.abstractmethod
+    def knownkeys(self):
+        """Return a set of supported resource keys"""
+
+    @abc.abstractmethod
+    def lookup(self, mapping, key):
+        """Return a resource for the key if available; otherwise None"""
+
+    @abc.abstractmethod
+    def populatemap(self, context, origmapping, newmapping):
+        """Return a dict of additional mapping items which should be paired
+        with the given new mapping"""
+
+
+class nullresourcemapper(resourcemapper):
+    def availablekeys(self, mapping):
+        return set()
+
+    def knownkeys(self):
+        return set()
+
+    def lookup(self, mapping, key):
+        return None
+
+    def populatemap(self, context, origmapping, newmapping):
+        return {}
+
 
 class engine(object):
-    '''template expansion engine.
+    """template expansion engine.
 
     template expansion works like this. a map file contains key=value
     pairs. if value is quoted, it is treated as string. otherwise, it
@@ -372,149 +680,470 @@ class engine(object):
     {key%format}.
 
     filter uses function to transform value. syntax is
-    {key|filter1|filter2|...}.'''
+    {key|filter1|filter2|...}."""
 
-    def __init__(self, loader, filters={}, defaults={}):
+    def __init__(self, loader, filters=None, defaults=None, resources=None):
         self._loader = loader
+        if filters is None:
+            filters = {}
         self._filters = filters
+        self._funcs = templatefuncs.funcs  # make this a parameter if needed
+        if defaults is None:
+            defaults = {}
+        if resources is None:
+            resources = nullresourcemapper()
         self._defaults = defaults
-        self._cache = {}
+        self._resources = resources
+        self._cache = {}  # key: (func, data)
+        self._tmplcache = {}  # literal template: (func, data)
+
+    def overlaymap(self, origmapping, newmapping):
+        """Create combined mapping from the original mapping and partial
+        mapping to override the original"""
+        # do not copy symbols which overrides the defaults depending on
+        # new resources, so the defaults will be re-evaluated (issue5612)
+        knownres = self._resources.knownkeys()
+        newres = self._resources.availablekeys(newmapping)
+        mapping = {
+            k: v
+            for k, v in pycompat.iteritems(origmapping)
+            if (
+                k in knownres  # not a symbol per self.symbol()
+                or newres.isdisjoint(self._defaultrequires(k))
+            )
+        }
+        mapping.update(newmapping)
+        mapping.update(
+            self._resources.populatemap(self, origmapping, newmapping)
+        )
+        return mapping
+
+    def _defaultrequires(self, key):
+        """Resource keys required by the specified default symbol function"""
+        v = self._defaults.get(key)
+        if v is None or not callable(v):
+            return ()
+        return getattr(v, '_requires', ())
+
+    def symbol(self, mapping, key):
+        """Resolve symbol to value or function; None if nothing found"""
+        v = None
+        if key not in self._resources.knownkeys():
+            v = mapping.get(key)
+        if v is None:
+            v = self._defaults.get(key)
+        return v
+
+    def availableresourcekeys(self, mapping):
+        """Return a set of available resource keys based on the given mapping"""
+        return self._resources.availablekeys(mapping)
+
+    def knownresourcekeys(self):
+        """Return a set of supported resource keys"""
+        return self._resources.knownkeys()
+
+    def resource(self, mapping, key):
+        """Return internal data (e.g. cache) used for keyword/function
+        evaluation"""
+        v = self._resources.lookup(mapping, key)
+        if v is None:
+            raise templateutil.ResourceUnavailable(
+                _(b'template resource not available: %s') % key
+            )
+        return v
 
     def _load(self, t):
         '''load, parse, and cache a template'''
         if t not in self._cache:
-            self._cache[t] = compiletemplate(self._loader(t), self)
+            x = self._loader(t)
+            # put poison to cut recursion while compiling 't'
+            self._cache[t] = (_runrecursivesymbol, t)
+            try:
+                self._cache[t] = compileexp(x, self, methods)
+            except:  # re-raises
+                del self._cache[t]
+                raise
         return self._cache[t]
 
+    def _parse(self, tmpl):
+        """Parse and cache a literal template"""
+        if tmpl not in self._tmplcache:
+            x = parse(tmpl)
+            self._tmplcache[tmpl] = compileexp(x, self, methods)
+        return self._tmplcache[tmpl]
+
+    def preload(self, t):
+        """Load, parse, and cache the specified template if available"""
+        try:
+            self._load(t)
+            return True
+        except templateutil.TemplateNotFound:
+            return False
+
     def process(self, t, mapping):
-        '''Perform expansion. t is name of map element to expand.
+        """Perform expansion. t is name of map element to expand.
         mapping contains added elements for use during expansion. Is a
-        generator.'''
-        return _flatten(runtemplate(self, mapping, self._load(t)))
+        generator."""
+        func, data = self._load(t)
+        return self._expand(func, data, mapping)
 
-engines = {'default': engine}
+    def expand(self, tmpl, mapping):
+        """Perform expansion over a literal template
 
-class templater(object):
+        No user aliases will be expanded since this is supposed to be called
+        with an internal template string.
+        """
+        func, data = self._parse(tmpl)
+        return self._expand(func, data, mapping)
 
-    def __init__(self, mapfile, filters={}, defaults={}, cache={},
-                 minchunk=1024, maxchunk=65536):
-        '''set up template engine.
-        mapfile is name of file to read map definitions from.
-        filters is dict of functions. each transforms a value into another.
-        defaults is dict of default map definitions.'''
-        self.mapfile = mapfile or 'template'
-        self.cache = cache.copy()
-        self.map = {}
-        self.base = (mapfile and os.path.dirname(mapfile)) or ''
-        self.filters = templatefilters.filters.copy()
-        self.filters.update(filters)
-        self.defaults = defaults
-        self.minchunk, self.maxchunk = minchunk, maxchunk
-        self.ecache = {}
+    def _expand(self, func, data, mapping):
+        # populate additional items only if they don't exist in the given
+        # mapping. this is slightly different from overlaymap() because the
+        # initial 'revcache' may contain pre-computed items.
+        extramapping = self._resources.populatemap(self, {}, mapping)
+        if extramapping:
+            extramapping.update(mapping)
+            mapping = extramapping
+        return templateutil.flatten(self, mapping, func(self, mapping, data))
 
-        if not mapfile:
-            return
-        if not os.path.exists(mapfile):
-            raise util.Abort(_('style not found: %s') % mapfile)
 
-        conf = config.config()
-        conf.read(mapfile)
+def stylelist():
+    path = templatedir()
+    if not path:
+        return _(b'no templates found, try `hg debuginstall` for more info')
+    dirlist = os.listdir(path)
+    stylelist = []
+    for file in dirlist:
+        split = file.split(b".")
+        if split[-1] in (b'orig', b'rej'):
+            continue
+        if split[0] == b"map-cmdline":
+            stylelist.append(split[1])
+    return b", ".join(sorted(stylelist))
 
-        for key, val in conf[''].items():
-            if not val:
-                raise SyntaxError(_('%s: missing value') % conf.source('', key))
-            if val[0] in "'\"":
+
+def _open_mapfile(mapfile):
+    if os.path.exists(mapfile):
+        return util.posixfile(mapfile, b'rb')
+    raise error.Abort(
+        _(b"style '%s' not found") % mapfile,
+        hint=_(b"available styles: %s") % stylelist(),
+    )
+
+
+def _readmapfile(fp, mapfile):
+    """Load template elements from the given map file"""
+    if pycompat.iswindows:
+        # quick hack to make sure we can process '/' in the code dealing with
+        # ressource. Ideally we would make sure we use `/` instead of `ossep`
+        # in the templater code, but that seems a bigger and less certain
+        # change that we better left for the default branch.
+        name_paths = mapfile.split(pycompat.ossep)
+        mapfile = b'/'.join(name_paths)
+    base = os.path.dirname(mapfile)
+    conf = config.config()
+
+    def include(rel, remap, sections):
+        subresource = None
+        if base:
+            abs = os.path.normpath(os.path.join(base, rel))
+            if os.path.isfile(abs):
+                subresource = util.posixfile(abs, b'rb')
+        if not subresource:
+            if pycompat.ossep not in rel:
+                abs = rel
                 try:
-                    self.cache[key] = parsestring(val)
-                except SyntaxError, inst:
-                    raise SyntaxError('%s: %s' %
-                                      (conf.source('', key), inst.args[0]))
+                    subresource = resourceutil.open_resource(
+                        b'mercurial.templates', rel
+                    )
+                except resourceutil.FileNotFoundError:
+                    subresource = None
             else:
-                val = 'default', val
-                if ':' in val[1]:
-                    val = val[1].split(':', 1)
-                self.map[key] = val[0], os.path.join(self.base, val[1])
+                dir = templatedir()
+                if dir:
+                    abs = os.path.normpath(os.path.join(dir, rel))
+                    if os.path.isfile(abs):
+                        subresource = util.posixfile(abs, b'rb')
+        if subresource:
+            data = subresource.read()
+            conf.parse(
+                abs,
+                data,
+                sections=sections,
+                remap=remap,
+                include=include,
+            )
+
+    data = fp.read()
+    conf.parse(mapfile, data, remap={b'': b'templates'}, include=include)
+
+    cache = {}
+    tmap = {}
+    aliases = []
+
+    val = conf.get(b'templates', b'__base__')
+    if val and val[0] not in b"'\"":
+        # treat as a pointer to a base class for this style
+        path = os.path.normpath(os.path.join(base, val))
+
+        # fallback check in template paths
+        if not os.path.exists(path):
+            dir = templatedir()
+            if dir is not None:
+                p2 = os.path.normpath(os.path.join(dir, val))
+                if os.path.isfile(p2):
+                    path = p2
+                else:
+                    p3 = os.path.normpath(os.path.join(p2, b"map"))
+                    if os.path.isfile(p3):
+                        path = p3
+
+        fp = _open_mapfile(path)
+        cache, tmap, aliases = _readmapfile(fp, path)
+
+    for key, val in conf.items(b'templates'):
+        if not val:
+            raise error.ParseError(
+                _(b'missing value'), conf.source(b'templates', key)
+            )
+        if val[0] in b"'\"":
+            if val[0] != val[-1]:
+                raise error.ParseError(
+                    _(b'unmatched quotes'), conf.source(b'templates', key)
+                )
+            cache[key] = unquotestring(val)
+        elif key != b'__base__':
+            tmap[key] = os.path.join(base, val)
+    aliases.extend(conf.items(b'templatealias'))
+    return cache, tmap, aliases
+
+
+class loader(object):
+    """Load template fragments optionally from a map file"""
+
+    def __init__(self, cache, aliases):
+        if cache is None:
+            cache = {}
+        self.cache = cache.copy()
+        self._map = {}
+        self._aliasmap = _aliasrules.buildmap(aliases)
 
     def __contains__(self, key):
-        return key in self.cache or key in self.map
+        return key in self.cache or key in self._map
 
     def load(self, t):
-        '''Get the template for the given template name. Use a local cache.'''
+        """Get parsed tree for the given template name. Use a local cache."""
         if t not in self.cache:
             try:
-                self.cache[t] = util.readfile(self.map[t][1])
-            except KeyError, inst:
-                raise util.Abort(_('"%s" not in template map') % inst.args[0])
-            except IOError, inst:
-                raise IOError(inst.args[0], _('template file %s: %s') %
-                              (self.map[t][1], inst.args[1]))
-        return self.cache[t]
+                mapfile, fp = open_template(self._map[t])
+                self.cache[t] = fp.read()
+            except KeyError as inst:
+                raise templateutil.TemplateNotFound(
+                    _(b'"%s" not in template map') % inst.args[0]
+                )
+            except IOError as inst:
+                reason = _(b'template file %s: %s') % (
+                    self._map[t],
+                    stringutil.forcebytestr(inst.args[1]),
+                )
+                raise IOError(inst.args[0], encoding.strfromlocal(reason))
+        return self._parse(self.cache[t])
 
-    def __call__(self, t, **mapping):
-        ttype = t in self.map and self.map[t][0] or 'default'
-        if ttype not in self.ecache:
-            self.ecache[ttype] = engines[ttype](self.load,
-                                                 self.filters, self.defaults)
-        proc = self.ecache[ttype]
+    def _parse(self, tmpl):
+        x = parse(tmpl)
+        if self._aliasmap:
+            x = _aliasrules.expand(self._aliasmap, x)
+        return x
 
-        stream = proc.process(t, mapping)
-        if self.minchunk:
-            stream = util.increasingchunks(stream, min=self.minchunk,
-                                           max=self.maxchunk)
+    def _findsymbolsused(self, tree, syms):
+        if not tree:
+            return
+        op = tree[0]
+        if op == b'symbol':
+            s = tree[1]
+            if s in syms[0]:
+                return  # avoid recursion: s -> cache[s] -> s
+            syms[0].add(s)
+            if s in self.cache or s in self._map:
+                # s may be a reference for named template
+                self._findsymbolsused(self.load(s), syms)
+            return
+        if op in {b'integer', b'string'}:
+            return
+        # '{arg|func}' == '{func(arg)}'
+        if op == b'|':
+            syms[1].add(getsymbol(tree[2]))
+            self._findsymbolsused(tree[1], syms)
+            return
+        if op == b'func':
+            syms[1].add(getsymbol(tree[1]))
+            self._findsymbolsused(tree[2], syms)
+            return
+        for x in tree[1:]:
+            self._findsymbolsused(x, syms)
+
+    def symbolsused(self, t):
+        """Look up (keywords, filters/functions) referenced from the name
+        template 't'
+
+        This may load additional templates from the map file.
+        """
+        syms = (set(), set())
+        self._findsymbolsused(self.load(t), syms)
+        return syms
+
+
+class templater(object):
+    def __init__(
+        self,
+        filters=None,
+        defaults=None,
+        resources=None,
+        cache=None,
+        aliases=(),
+        minchunk=1024,
+        maxchunk=65536,
+    ):
+        """Create template engine optionally with preloaded template fragments
+
+        - ``filters``: a dict of functions to transform a value into another.
+        - ``defaults``: a dict of symbol values/functions; may be overridden
+          by a ``mapping`` dict.
+        - ``resources``: a resourcemapper object to look up internal data
+          (e.g. cache), inaccessible from user template.
+        - ``cache``: a dict of preloaded template fragments.
+        - ``aliases``: a list of alias (name, replacement) pairs.
+
+        self.cache may be updated later to register additional template
+        fragments.
+        """
+        allfilters = templatefilters.filters.copy()
+        if filters:
+            allfilters.update(filters)
+        self._loader = loader(cache, aliases)
+        self._proc = engine(self._loader.load, allfilters, defaults, resources)
+        self._minchunk, self._maxchunk = minchunk, maxchunk
+
+    @classmethod
+    def frommapfile(
+        cls,
+        mapfile,
+        fp=None,
+        filters=None,
+        defaults=None,
+        resources=None,
+        cache=None,
+        minchunk=1024,
+        maxchunk=65536,
+    ):
+        """Create templater from the specified map file"""
+        t = cls(filters, defaults, resources, cache, [], minchunk, maxchunk)
+        if not fp:
+            fp = _open_mapfile(mapfile)
+        cache, tmap, aliases = _readmapfile(fp, mapfile)
+        t._loader.cache.update(cache)
+        t._loader._map = tmap
+        t._loader._aliasmap = _aliasrules.buildmap(aliases)
+        return t
+
+    def __contains__(self, key):
+        return key in self._loader
+
+    @property
+    def cache(self):
+        return self._loader.cache
+
+    # for highlight extension to insert one-time 'colorize' filter
+    @property
+    def _filters(self):
+        return self._proc._filters
+
+    @property
+    def defaults(self):
+        return self._proc._defaults
+
+    def load(self, t):
+        """Get parsed tree for the given template name. Use a local cache."""
+        return self._loader.load(t)
+
+    def symbolsuseddefault(self):
+        """Look up (keywords, filters/functions) referenced from the default
+        unnamed template
+
+        This may load additional templates from the map file.
+        """
+        return self.symbolsused(b'')
+
+    def symbolsused(self, t):
+        """Look up (keywords, filters/functions) referenced from the name
+        template 't'
+
+        This may load additional templates from the map file.
+        """
+        return self._loader.symbolsused(t)
+
+    def renderdefault(self, mapping):
+        """Render the default unnamed template and return result as string"""
+        return self.render(b'', mapping)
+
+    def render(self, t, mapping):
+        """Render the specified named template and return result as string"""
+        return b''.join(self.generate(t, mapping))
+
+    def generate(self, t, mapping):
+        """Return a generator that renders the specified named template and
+        yields chunks"""
+        stream = self._proc.process(t, mapping)
+        if self._minchunk:
+            stream = util.increasingchunks(
+                stream, min=self._minchunk, max=self._maxchunk
+            )
         return stream
 
-def templatepath(name=None):
-    '''return location of template file or directory (if no name).
-    returns None if not found.'''
-    normpaths = []
 
-    # executable version (py2exe) doesn't support __file__
-    if util.mainfrozen():
-        module = sys.executable
-    else:
-        module = __file__
-    for f in path:
-        if f.startswith('/'):
-            p = f
-        else:
-            fl = f.split('/')
-            p = os.path.join(os.path.dirname(module), *fl)
-        if name:
-            p = os.path.join(p, name)
-        if name and os.path.exists(p):
-            return os.path.normpath(p)
-        elif os.path.isdir(p):
-            normpaths.append(os.path.normpath(p))
+def templatedir():
+    '''return the directory used for template files, or None.'''
+    path = os.path.normpath(os.path.join(resourceutil.datapath, b'templates'))
+    return path if os.path.isdir(path) else None
 
-    return normpaths
 
-def stylemap(styles, paths=None):
-    """Return path to mapfile for a given style.
+def open_template(name, templatepath=None):
+    """returns a file-like object for the given template, and its full path
 
-    Searches mapfile in the following locations:
-    1. templatepath/style/map
-    2. templatepath/map-style
-    3. templatepath/map
+    If the name is a relative path and we're in a frozen binary, the template
+    will be read from the mercurial.templates package instead. The returned path
+    will then be the relative path.
     """
+    # Does the name point directly to a map file?
+    if os.path.isfile(name) or os.path.isabs(name):
+        return name, open(name, mode='rb')
 
-    if paths is None:
-        paths = templatepath()
-    elif isinstance(paths, str):
-        paths = [paths]
+    # Does the name point to a template in the provided templatepath, or
+    # in mercurial/templates/ if no path was provided?
+    if templatepath is None:
+        templatepath = templatedir()
+    if templatepath is not None:
+        f = os.path.join(templatepath, name)
+        return f, open(f, mode='rb')
 
-    if isinstance(styles, str):
-        styles = [styles]
+    # Otherwise try to read it using the resources API
+    if pycompat.iswindows:
+        # quick hack to make sure we can process '/' in the code dealing with
+        # ressource. Ideally we would make sure we use `/` instead of `ossep`
+        # in the templater code, but that seems a bigger and less certain
+        # change that we better left for the default branch.
+        name_paths = name.split(pycompat.ossep)
+        name = b'/'.join(name_paths)
+    name_parts = name.split(b'/')
+    package_name = b'.'.join([b'mercurial', b'templates'] + name_parts[:-1])
+    return (
+        name,
+        resourceutil.open_resource(package_name, name_parts[-1]),
+    )
 
-    for style in styles:
-        if not style:
-            continue
-        locations = [os.path.join(style, 'map'), 'map-' + style]
-        locations.append('map')
 
-        for path in paths:
-            for location in locations:
-                mapfile = os.path.join(path, location)
-                if os.path.isfile(mapfile):
-                    return style, mapfile
-
-    raise RuntimeError("No hgweb templates found in %r" % paths)
+def try_open_template(name, templatepath=None):
+    try:
+        return open_template(name, templatepath)
+    except (EnvironmentError, ImportError):
+        return None, None

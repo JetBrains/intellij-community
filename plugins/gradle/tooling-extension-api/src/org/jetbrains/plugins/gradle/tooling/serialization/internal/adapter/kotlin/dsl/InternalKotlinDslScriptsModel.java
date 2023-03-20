@@ -13,7 +13,7 @@ public class InternalKotlinDslScriptsModel implements KotlinDslScriptsModel, Ser
   private final Map<File, KotlinDslScriptModel> myScriptModelsMap;
 
   public InternalKotlinDslScriptsModel(Map<File, KotlinDslScriptModel> scriptModelsMap) {
-    myScriptModelsMap = new LinkedHashMap<File, KotlinDslScriptModel>(scriptModelsMap.size());
+    myScriptModelsMap = new LinkedHashMap<>(scriptModelsMap.size());
     for (Map.Entry<File, KotlinDslScriptModel> modelEntry : scriptModelsMap.entrySet()) {
       myScriptModelsMap.put(modelEntry.getKey(), new InternalKotlinDslScriptModel(modelEntry.getValue()));
     }

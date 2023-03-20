@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker
 import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
-import com.intellij.ui.layout.*
 import com.intellij.vcs.commit.CommitModeManager.Companion.setCommitFromLocalChanges
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 import com.intellij.vcsUtil.VcsUtil
@@ -36,7 +35,7 @@ private fun cdLimitMaximumHistory(project: Project): CheckboxDescriptor {
 private fun cdShowChangesLastNDays(project: Project): CheckboxDescriptor {
   val vcsCA = VcsContentAnnotationSettings.getInstance(project)
   val name = VcsBundle.message("settings.show.changed.in.last.n.days.label", vcsCA.limitDays)
-  return CheckboxDescriptor(name, PropertyBinding(vcsCA::isShow, vcsCA::setShow), groupName = vcsOptionGroupName)
+  return CheckboxDescriptor(name, vcsCA::isShow, vcsCA::setShow, groupName = vcsOptionGroupName)
 }
 
 fun cdShowReadOnlyStatusDialog(project: Project): CheckboxDescriptor {
@@ -61,14 +60,12 @@ private fun cdShowRightMargin(project: Project): CheckboxDescriptor {
 // @formatter:off
 fun cdShowDirtyRecursively(project: Project): CheckboxDescriptor =                  CheckboxDescriptor(VcsBundle.message("checkbox.show.dirty.recursively"), vcsConfiguration(project)::SHOW_DIRTY_RECURSIVELY, groupName = vcsOptionGroupName)
 private fun cdWrapTypingOnRightMargin(project: Project): CheckboxDescriptor =       CheckboxDescriptor(ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), vcsConfiguration(project)::WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN, groupName = commitMessageOptionGroupName)
-private fun cdForceNonEmptyCommitMessage(project: Project): CheckboxDescriptor =    CheckboxDescriptor(VcsBundle.message("checkbox.force.non.empty.messages"), vcsConfiguration(project)::FORCE_NON_EMPTY_COMMENT, groupName = commitMessageOptionGroupName)
 private fun cdClearInitialCommitMessage(project: Project): CheckboxDescriptor =     CheckboxDescriptor(VcsBundle.message("checkbox.clear.initial.commit.message"), vcsConfiguration(project)::CLEAR_INITIAL_COMMIT_MESSAGE, groupName = commitMessageOptionGroupName)
-private fun cdOfferMoveAnotherChangelist(project: Project): CheckboxDescriptor =    CheckboxDescriptor(VcsBundle.message("checkbox.changelist.move.offer"), vcsConfiguration(project)::OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT, groupName = confirmationOptionGroupName)
 private fun cdIncludeShelfBaseContent(project: Project): CheckboxDescriptor =       CheckboxDescriptor(VcsBundle.message("vcs.shelf.store.base.content"), vcsConfiguration(project)::INCLUDE_TEXT_INTO_SHELF, groupName = confirmationOptionGroupName)
 private fun cdChangelistConflictDialog(project: Project): CheckboxDescriptor =      CheckboxDescriptor(VcsBundle.message("settings.show.conflict.resolve.dialog.checkbox"), changelistsOptions(project)::SHOW_DIALOG, groupName = changelistsOptionGroupName)
 private fun cdChangelistShowConflicts(project: Project): CheckboxDescriptor =       CheckboxDescriptor(VcsBundle.message("settings.highlight.files.with.conflicts.checkbox"), changelistsOptions(project)::HIGHLIGHT_CONFLICTS, groupName = changelistsOptionGroupName)
 private fun cdChangelistShowNonCurrent(project: Project): CheckboxDescriptor =      CheckboxDescriptor(VcsBundle.message("settings.highlight.files.from.non.active.changelist.checkbox"), changelistsOptions(project)::HIGHLIGHT_NON_ACTIVE_CHANGELIST, groupName = changelistsOptionGroupName)
-private fun cdNonModalCommit(project: Project): CheckboxDescriptor =                CheckboxDescriptor(VcsBundle.message("settings.commit.without.dialog"), PropertyBinding({ VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES }, { setCommitFromLocalChanges(project, it) }), groupName = commitOptionGroupName)
+private fun cdNonModalCommit(project: Project): CheckboxDescriptor =                CheckboxDescriptor(VcsBundle.message("settings.commit.without.dialog"), { VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES }, { setCommitFromLocalChanges(project, it) }, groupName = commitOptionGroupName)
 // @formatter:on
 
 class VcsOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
@@ -87,9 +84,7 @@ class VcsOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
       cdShowRightMargin(project),
       cdShowDirtyRecursively(project),
       cdWrapTypingOnRightMargin(project),
-      cdForceNonEmptyCommitMessage(project),
       cdClearInitialCommitMessage(project),
-      cdOfferMoveAnotherChangelist(project),
       cdIncludeShelfBaseContent(project),
       cdChangelistConflictDialog(project),
       cdChangelistShowConflicts(project),

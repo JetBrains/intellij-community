@@ -21,9 +21,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class FilePsiMutation extends ActionOnFile {
 
   public FilePsiMutation(@NotNull PsiFile file) {

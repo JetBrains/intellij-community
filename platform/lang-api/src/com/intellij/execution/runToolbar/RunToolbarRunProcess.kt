@@ -8,12 +8,13 @@ import com.intellij.ui.JBColor
 class RunToolbarRunProcess : RunToolbarProcess {
   override val ID: String = ToolWindowId.RUN
   override val executorId: String = ToolWindowId.RUN
-  override val name: String = ExecutionBundle.message("run.toolbar.run")
+  override val name: String = ExecutionBundle.message("run.toolbar.running")
+  override val shortName: String = ExecutionBundle.message("run.toolbar.run")
 
   override val actionId: String = "RunToolbarRunProcess"
   override val moreActionSubGroupName: String = "RunToolbarRunMoreActionSubGroupName"
 
   override val showInBar: Boolean = true
 
-  override val pillColor: JBColor =  JBColor.namedColor("RunToolbar.Run.activeBackground", JBColor(0xBAEEBA, 0x375E37))
+  override val pillColor: JBColor = JBColor.namedColor("RunToolbar.Run.activeBackground", JBColor(0xC7FFD1, 0x235423))
 }

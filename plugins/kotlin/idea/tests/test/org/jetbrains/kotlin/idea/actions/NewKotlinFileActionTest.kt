@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -51,7 +50,7 @@ class NewKotlinFileActionTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     private fun validateName(name: String, errorMessage: String?) {
-        val actualError = NewKotlinFileAction.nameValidator.getErrorText(name)
-        Assert.assertEquals("Invalid error message", errorMessage, actualError)
+        val actualError = NewKotlinFileNameValidator.getErrorText(name)
+        assertEquals("Invalid error message", errorMessage, actualError)
     }
 }

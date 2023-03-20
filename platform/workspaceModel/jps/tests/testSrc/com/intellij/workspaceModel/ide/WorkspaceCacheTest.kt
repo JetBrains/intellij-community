@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.Disposable
@@ -13,8 +13,9 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.storage.EntitySource
@@ -23,15 +24,18 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.*
 import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.exists
 
 class WorkspaceCacheTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField
@@ -44,7 +48,8 @@ class WorkspaceCacheTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
+    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager,
+                                             WorkspaceModelCacheSerializer::collectExternalCacheVersions)
   }
 
   @After
@@ -74,6 +79,21 @@ class WorkspaceCacheTest {
   }
 
   @Test
+  fun `save cache for unloaded modules`() {
+    val project = loadProject(prepareProject().projectDir)
+    val cache = WorkspaceModelCache.getInstance(project) as WorkspaceModelCacheImpl
+    cache.saveCacheNow()
+    assertFalse("Cache for unloaded entities must not be created if no entities are unloaded", cache.getUnloadedEntitiesCacheFilePath().exists())
+    
+    runBlocking {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("newModule"))
+    }
+    
+    cache.saveCacheNow()
+    assertTrue(cache.getUnloadedEntitiesCacheFilePath().exists())
+  }
+
+  @Test
   fun `custom version provider`() {
     val projectData = prepareProject()
 
@@ -93,7 +113,7 @@ class WorkspaceCacheTest {
 
     val project2 = loadProject(projectData.projectDir)
 
-    val modules = WorkspaceModel.getInstance(project2).entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertTrue(modules.any { it.name == "MyTestModule" })
   }
 
@@ -121,7 +141,7 @@ class WorkspaceCacheTest {
     ExtensionTestUtil.maskExtensions(WORKSPACE_MODEL_CACHE_VERSION_EP, listOf(VersionTwo), anotherPointDisposable)
     val project2 = loadProject(projectData.projectDir)
 
-    val modules = WorkspaceModel.getInstance(project2).entityStorage.current.entities(ModuleEntity::class.java).toList()
+    val modules = WorkspaceModel.getInstance(project2).currentSnapshot.entities(ModuleEntity::class.java).toList()
     assertFalse(modules.any { it.name == "MyTestModule" })
   }
 
@@ -132,13 +152,11 @@ class WorkspaceCacheTest {
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
 
-    val cacheFile = projectData.projectDir.resolve(cacheFileName())
-    cacheFile.createNewFile()
+    val cacheFile = projectData.projectDir.resolve(cacheFileName()).toPath()
+    Files.createFile(cacheFile)
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
 
-    cacheFile.outputStream().use {
-      serializer.serializeCache(it, storage)
-    }
+    serializer.serializeCache(cacheFile, storage)
     return projectData
   }
 

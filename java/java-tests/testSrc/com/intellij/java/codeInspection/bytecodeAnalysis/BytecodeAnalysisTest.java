@@ -33,9 +33,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author lambdamix
- */
 public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String PACKAGE_NAME = "bytecodeAnalysis";
   private static final String EXPECT_NOT_NULL = PACKAGE_NAME + ".ExpectNotNull";

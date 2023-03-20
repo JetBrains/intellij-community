@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -22,9 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.Objects;
 
-/**
- * @author ven
- */
 public class GrLightParameter extends LightVariableBuilder<GrLightParameter> implements GrParameter {
   public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;
@@ -162,7 +159,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   }
 
   @Override
-  public GrLightParameter setModifiers(@GrModifierConstant String... modifiers) {
+  public @NotNull GrLightParameter setModifiers(@GrModifierConstant @NotNull String @NotNull ... modifiers) {
     GrLightModifierList modifiersList = new GrLightModifierList(getContext());
     modifiersList.setModifiers(modifiers);
     myModifierList = modifiersList;

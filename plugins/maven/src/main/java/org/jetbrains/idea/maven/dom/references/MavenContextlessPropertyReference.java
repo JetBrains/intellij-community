@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenContextlessPropertyReference extends PsiReferenceBase<PsiElement> {
 
   private final XmlTag myProperties;

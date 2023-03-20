@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
-import com.intellij.execution.ExecutionTargetManager
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.compound.SettingsAndEffectiveTarget
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,7 +15,9 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     return true
   }
 
-  override fun getInformativeIcon(project: Project, selectedConfiguration: RunnerAndConfigurationSettings): Icon {
+  override fun getInformativeIcon(project: Project,
+                                  selectedConfiguration: RunnerAndConfigurationSettings,
+                                  e: AnActionEvent): Icon {
     return executor.icon
   }
 
@@ -25,9 +25,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     e.project?.let { project ->
       if (canRun(e)) {
         getSelectedConfiguration(e)?.let {
-          e.runToolbarData()?.startWaitingForAProcess(project, it, executor.id)
-
-          ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
+           ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
         }
       }
     }
@@ -58,14 +56,8 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
 
   protected fun canRun(e: AnActionEvent): Boolean {
     return e.project?.let { project->
-      val activeTarget = ExecutionTargetManager.getActiveTarget(project)
       return getSelectedConfiguration(e)?.let {
-
-        val target = SettingsAndEffectiveTarget(it.configuration, activeTarget)
-
-        val canRun = ExecutorRegistryImpl.RunnerHelper.canRun(project, listOf(target), executor)
-        canRun
-
+        ExecutorRegistryImpl.RunnerHelper.canRun(project, executor, it.configuration)
       } ?: false
     } ?: false
   }

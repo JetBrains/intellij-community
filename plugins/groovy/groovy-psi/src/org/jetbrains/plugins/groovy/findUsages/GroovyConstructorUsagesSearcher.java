@@ -145,8 +145,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       return newExpressionProcessor.process((GrNewExpression)parent);
     }
 
-    if (parent instanceof GrTypeElement) {
-      final GrTypeElement typeElement = (GrTypeElement)parent;
+    if (parent instanceof GrTypeElement typeElement) {
 
       final PsiElement grandpa = typeElement.getParent();
       if (grandpa instanceof GrVariableDeclaration) {
@@ -158,8 +157,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
           }
         }
       }
-      else if (grandpa instanceof GrMethod) {
-        final GrMethod method = (GrMethod)grandpa;
+      else if (grandpa instanceof GrMethod method) {
         if (typeElement == method.getReturnTypeElementGroovy()) {
           ControlFlowUtils.visitAllExitPoints(method.getBlock(), new ControlFlowUtils.ExitPointVisitor() {
             @Override
@@ -210,8 +208,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       final GrOpenBlock block = ((GrMethod)constructor).getBlock();
       if (block != null) {
         final GrStatement[] statements = block.getStatements();
-        if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
-          final GrConstructorInvocation invocation = (GrConstructorInvocation)statements[0];
+        if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation invocation) {
           if (invocation.isThisCall() == processThisRefs &&
               invocation.getManager().areElementsEquivalent(invocation.resolveMethod(), searchedConstructor) &&
               !consumer.process(invocation.getInvokedExpression())) {

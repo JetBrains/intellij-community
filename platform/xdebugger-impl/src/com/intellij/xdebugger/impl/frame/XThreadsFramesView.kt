@@ -1,13 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
@@ -21,6 +19,9 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.util.SequentialDisposables
+import com.intellij.xdebugger.impl.util.isNotAlive
+import com.intellij.xdebugger.impl.util.onTermination
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -48,8 +49,6 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   val threads: XDebuggerThreadsList get() = myThreadsList
   val frames: XDebuggerFramesList get() = myFramesList
 
-  private var myAlreadyPaused = false
-
   private val myFramesPresentationCache = mutableMapOf<Any, String>()
 
   private val mainPanel = JPanel(BorderLayout())
@@ -62,12 +61,6 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private const val splitterProportionKey = "XThreadsFramesViewSplitterKey"
     private const val splitterProportionDefaultValue = 0.5f
 
-    private val Disposable.isAlive get() = !Disposer.isDisposed(this)
-    private val Disposable.isNotAlive get() = !isAlive
-
-    private fun Disposable.onTermination(disposable: Disposable) = Disposer.register(this, disposable)
-    private fun Disposable.onTermination(action: () -> Unit) = Disposer.register(this, Disposable { action() })
-
     private fun Component.toScrollPane(): JScrollPane {
       return ScrollPaneFactory.createScrollPane(this)
     }
@@ -77,7 +70,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       shouldMatchCamelCase: Boolean = true,
       converter: ((Any?) -> String?)? = null
     ): T where T : JList<*> {
-      val search = if (converter != null) ListSpeedSearch(this, converter) else ListSpeedSearch(this)
+      val search = if (converter != null) ListSpeedSearch.installOn(this, converter) else ListSpeedSearch.installOn(this)
       search.comparator = SpeedSearchComparator(shouldMatchFromTheBeginning, shouldMatchCamelCase)
       return this
     }
@@ -146,7 +139,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         val actionManager = ActionManager.getInstance()
         val group = actionManager.getAction(XDebuggerActions.THREADS_TREE_POPUP_GROUP) as? ActionGroup ?: return
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+        actionManager.createActionPopupMenu("XDebuggerThreadsList", group).component.show(comp, x, y)
       }
     })
 
@@ -179,7 +172,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         val actionManager = ActionManager.getInstance()
         val group = actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP) as ActionGroup
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+        actionManager.createActionPopupMenu("XDebuggerFramesList", group).component.show(comp, x, y)
       }
     })
 
@@ -211,14 +204,12 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     }
     val suspendContext = session.suspendContext
     if (suspendContext == null) {
-      UIUtil.invokeLaterIfNeeded { myAlreadyPaused = false }
       requestClear()
       return
     }
 
     UIUtil.invokeLaterIfNeeded {
-      if (!myAlreadyPaused && (event == SessionEvent.PAUSED || event == SessionEvent.SETTINGS_CHANGED && session.isSuspended)) {
-        myAlreadyPaused = true
+      if (event == SessionEvent.PAUSED || event == SessionEvent.SETTINGS_CHANGED && session.isSuspended) {
         // clear immediately
         cancelClear()
         clear()
@@ -235,17 +226,17 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         if (selectedStack != currentExecutionStack) {
           val newSelectedItemIndex = threads.model.items.indexOfFirst { it.stack == currentExecutionStack }
           if (newSelectedItemIndex != -1) {
-            threads.selectedIndex = newSelectedItemIndex;
-            myFramesManager.refresh();
-            selectedStack = threads.selectedValue?.stack;
+            threads.selectedIndex = newSelectedItemIndex
+            myFramesManager.refresh()
+            selectedStack = threads.selectedValue?.stack
           }
         }
         if (selectedStack != currentExecutionStack)
-          return@invokeLaterIfNeeded;
+          return@invokeLaterIfNeeded
 
         val selectedFrame = frames.selectedValue
         if (selectedFrame != currentStackFrame) {
-          frames.setSelectedValue(currentStackFrame, true);
+          frames.setSelectedValue(currentStackFrame, true)
         }
       }
 
@@ -356,15 +347,15 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       addStackFramesInternal(mutableListOf(errorMessage), null, true)
     }
 
-    override fun addStackFrames(stackFrames: MutableList<out XStackFrame>, toSelect: XStackFrame?, last: Boolean) {
+    override fun addStackFrames(stackFrames: List<XStackFrame>, toSelect: XStackFrame?, last: Boolean) {
       addStackFramesInternal(stackFrames, toSelect, last)
     }
 
-    override fun addStackFrames(stackFrames: MutableList<out XStackFrame>, last: Boolean) {
+    override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
       addStackFrames(stackFrames, null, last)
     }
 
-    private fun addStackFramesInternal(stackFrames: MutableList<*>, toSelect: XStackFrame?, last: Boolean) {
+    private fun addStackFramesInternal(stackFrames: List<*>, toSelect: XStackFrame?, last: Boolean) {
       invokeIfNeeded {
         val insertIndex = myItems.size - 1
 
@@ -461,7 +452,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       }
     }
 
-    override fun addExecutionStack(executionStacks: MutableList<out XExecutionStack>, last: Boolean) {
+    override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
       invokeIfNeeded {
         val model = myThreadsList.model
         val insertIndex = model.size - 1
@@ -485,7 +476,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       addExecutionStack(mutableListOf(executionStack), last)
     }
 
-    private fun getThreadsList(executionStacks: MutableList<out XExecutionStack>): List<StackInfo> {
+    private fun getThreadsList(executionStacks: List<XExecutionStack>): List<StackInfo> {
       var sequence = executionStacks.asSequence()
       if (myActiveStack != null) {
         sequence = sequence.filter { it != myActiveStack }
@@ -502,35 +493,5 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         action()
       }
     }
-  }
-
-  private class SequentialDisposables(parent: Disposable? = null) : Disposable {
-    private var myCurrentDisposable: Disposable? = null
-
-    init {
-      parent?.onTermination(this)
-    }
-
-    fun next(): Disposable {
-      val newDisposable = Disposer.newDisposable()
-      Disposer.register(this, newDisposable)
-
-      myCurrentDisposable?.disposeIfNeeded()
-      myCurrentDisposable = newDisposable
-
-      return newDisposable
-    }
-
-    fun terminateCurrent() {
-      myCurrentDisposable?.disposeIfNeeded()
-      myCurrentDisposable = null
-    }
-
-    private fun Disposable.disposeIfNeeded() {
-      if (this.isAlive)
-        Disposer.dispose(this)
-    }
-
-    override fun dispose() = terminateCurrent()
   }
 }

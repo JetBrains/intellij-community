@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,8 +19,8 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private SmartTypePointer myPointer;
   private PsiType myDefaultType;
@@ -87,11 +85,17 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     Ref<PsiType[]> mainTypes = new Ref<>();
     Ref<PsiType[]> allTypes = new Ref<>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+    Runnable calculateTypes = () -> ReadAction.run(() -> {
       mainTypes.set(getTypesForMain());
       allTypes.set(getTypesForAll(true));
-    }), JavaBundle.message("progress.title.calculate.applicable.types"), false, project);
-    
+    });
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(calculateTypes, JavaBundle.message("progress.title.calculate.applicable.types"), false, project);
+    }
+    else {
+      calculateTypes.run();
+    }
+
     myTypesForMain = mainTypes.get();
     myTypesForAll = allTypes.get();
 
@@ -179,7 +183,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private PsiType[] getTypesForMain() {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider, false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
@@ -230,7 +234,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
 
     final ArrayList<PsiType> allowedTypes = new ArrayList<>();
-    RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+    CommonJavaRefactoringUtil.processSuperTypes(getDefaultType(), new CommonJavaRefactoringUtil.SuperTypeVisitor() {
       @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);

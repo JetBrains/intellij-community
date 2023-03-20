@@ -16,7 +16,6 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -52,12 +51,13 @@ public final class FieldNameConstantsHandler {
     return configDiscovery.getBooleanLombokConfigProperty(ConfigKey.FIELD_NAME_CONSTANTS_UPPERCASE, containingClass);
   }
 
-  public static List<PsiField> createFields(@NotNull PsiClass containingClass, @NotNull Collection<PsiField> psiFields) {
+  public static List<PsiField> createFields(@NotNull PsiClass containingClass, @NotNull Collection<PsiMember> psiMembers) {
     final Set<String> existingFieldNames = PsiClassUtil.collectClassFieldsIntern(containingClass).stream().map(PsiField::getName).collect(Collectors.toSet());
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
     final PsiClassType classType = psiElementFactory.createType(containingClass);
     boolean makeUppercased = useUppercasedConstants(containingClass);
-    return psiFields.stream().filter(psiField -> !existingFieldNames.contains(makeFieldNameConstant(psiField, makeUppercased)))
+    return psiMembers.stream()
+      .filter(psiMember -> !existingFieldNames.contains(makeFieldNameConstant(psiMember, makeUppercased)))
       .map(psiField -> {
         if (containingClass.isEnum()) {
           return createEnumConstant(psiField, makeUppercased, containingClass, classType);
@@ -101,24 +101,24 @@ public final class FieldNameConstantsHandler {
         .withMethodReturnType(enumClassType)
         .withBodyText("");
 
-      return Arrays.asList(valuesEnumMethod, valueOfEnumMethod);
+      return List.of(valuesEnumMethod, valueOfEnumMethod);
     });
 
     return lazyClassBuilder;
   }
 
-  private static PsiField createEnumConstant(@NotNull PsiField field, boolean makeUppercased, @NotNull PsiClass containingClass, PsiClassType classType) {
-    return new LombokEnumConstantBuilder(containingClass.getManager(), makeFieldNameConstant(field, makeUppercased), classType)
+  private static PsiField createEnumConstant(@NotNull PsiMember psiMember, boolean makeUppercased, @NotNull PsiClass containingClass, PsiClassType classType) {
+    return new LombokEnumConstantBuilder(containingClass.getManager(), makeFieldNameConstant(psiMember, makeUppercased), classType)
       .withContainingClass(containingClass)
       .withModifier(PsiModifier.PUBLIC)
       .withImplicitModifier(PsiModifier.STATIC)
       .withImplicitModifier(PsiModifier.FINAL)
-      .withNavigationElement(field);
+      .withNavigationElement(psiMember);
   }
 
-  private static String makeFieldNameConstant(@NotNull PsiField field, boolean makeUppercased1) {
-    final String fieldName = field.getName();
-    return makeUppercased1 ? LombokUtils.camelCaseToConstant(fieldName) : fieldName;
+  private static String makeFieldNameConstant(@NotNull PsiMember psiMember, boolean makeUppercased) {
+    final String fieldName = psiMember.getName();
+    return makeUppercased ? LombokUtils.camelCaseToConstant(fieldName) : fieldName;
   }
 
   @NotNull
@@ -134,19 +134,19 @@ public final class FieldNameConstantsHandler {
   }
 
   @NotNull
-  private static PsiField createFieldNameConstant(@NotNull PsiField psiField, boolean makeUppercased, @NotNull PsiClass containingClass) {
+  private static PsiField createFieldNameConstant(@NotNull PsiMember psiMember, boolean makeUppercased, @NotNull PsiClass containingClass) {
     final PsiManager manager = containingClass.getContainingFile().getManager();
     final PsiType fieldNameConstType = PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(containingClass.getProject()));
 
-    LombokLightFieldBuilder fieldNameConstant = new LombokLightFieldBuilder(manager, makeFieldNameConstant(psiField, makeUppercased), fieldNameConstType)
+    LombokLightFieldBuilder fieldNameConstant = new LombokLightFieldBuilder(manager, makeFieldNameConstant(psiMember, makeUppercased), fieldNameConstType)
       .withContainingClass(containingClass)
-      .withNavigationElement(psiField)
+      .withNavigationElement(psiMember)
       .withModifier(PsiModifier.PUBLIC)
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.FINAL);
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
-    final PsiExpression initializer = psiElementFactory.createExpressionFromText("\"" + psiField.getName() + "\"", containingClass);
+    final PsiExpression initializer = psiElementFactory.createExpressionFromText("\"" + psiMember.getName() + "\"", containingClass);
     fieldNameConstant.setInitializer(initializer);
     return fieldNameConstant;
   }

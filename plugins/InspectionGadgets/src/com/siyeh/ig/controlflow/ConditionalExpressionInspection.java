@@ -18,7 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,8 +28,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,7 +39,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ConditionalExpressionInspection extends BaseInspection {
 
@@ -59,11 +60,10 @@ public class ConditionalExpressionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("conditional.expression.option"), "ignoreSimpleAssignmentsAndReturns");
-    panel.addCheckbox(InspectionGadgetsBundle.message("conditional.expression.expression.context.option"), "ignoreExpressionContext");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSimpleAssignmentsAndReturns", InspectionGadgetsBundle.message("conditional.expression.option")),
+      checkbox("ignoreExpressionContext", InspectionGadgetsBundle.message("conditional.expression.expression.context.option")));
   }
 
   @Nullable
@@ -85,12 +85,11 @@ public class ConditionalExpressionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiConditionalExpression)) {
+      if (!(element instanceof PsiConditionalExpression expression)) {
         return;
       }
-      PsiConditionalExpression expression = (PsiConditionalExpression)element;
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expression);
       if (surrounder == null) return;
       CodeBlockSurrounder.SurroundResult result = surrounder.surround();
@@ -121,7 +120,8 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (initializer instanceof PsiArrayInitializerExpression) {
           final int conditionIdx = ArrayUtilRt.find(((PsiArrayInitializerExpression)initializer).getInitializers(), expression);
           if (conditionIdx >= 0) {
-            initializer = (PsiExpression)initializer.replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
+            initializer = (PsiExpression)initializer.replace(
+              CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
             final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
             LOG.assertTrue(arrayInitializer != null, initializer.getText());
             expression = (PsiConditionalExpression)arrayInitializer.getInitializers()[conditionIdx];
@@ -153,25 +153,20 @@ public class ConditionalExpressionInspection extends BaseInspection {
         ifStatement = (PsiIfStatement)tracker.replaceAndRestoreComments(statement, ifStatement);
       }
       final PsiStatement elseBranch = ifStatement.getElseBranch();
-      if (elseBranch instanceof PsiReturnStatement) {
-        final PsiReturnStatement returnStatement = (PsiReturnStatement)elseBranch;
+      if (elseBranch instanceof PsiReturnStatement returnStatement) {
         final PsiExpression value = returnStatement.getReturnValue();
-        if (value instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)value;
+        if (value instanceof PsiParenthesizedExpression parenthesizedExpression) {
           if (parenthesizedExpression.getExpression() == null) {
             elseBranch.delete();
           }
         }
       }
-      else if (elseBranch instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)elseBranch;
+      else if (elseBranch instanceof PsiExpressionStatement expressionStatement) {
         final PsiExpression statementExpression = expressionStatement.getExpression();
-        if (statementExpression instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)statementExpression;
+        if (statementExpression instanceof PsiAssignmentExpression assignmentExpression) {
           final PsiExpression rhs = assignmentExpression.getRExpression();
 
-          if (rhs instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rhs;
+          if (rhs instanceof PsiParenthesizedExpression parenthesizedExpression) {
             if (parenthesizedExpression.getExpression() == null) {
               rhs.delete();
             }
@@ -239,7 +234,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
   private class ConditionalExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression condition = expression.getCondition();
       PsiElement last = PsiTreeUtil.getDeepestLast(condition);
@@ -268,7 +263,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
           quickFixOnly = true;
         }
       }
-      final boolean canSurround = !PsiType.NULL.equals(expression.getType()) && CodeBlockSurrounder.canSurround(expression);
+      final boolean canSurround = !PsiTypes.nullType().equals(expression.getType()) && CodeBlockSurrounder.canSurround(expression);
       if (!canSurround && (ignoreExpressionContext || !isVisibleHighlight(expression))) {
         // quick fix is not built in this case (it will break code) and there will be no warning, so just return
         return;

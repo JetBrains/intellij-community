@@ -13,8 +13,6 @@ import java.util.Arrays;
  * An occurrence processor for Find Usages functionality. A typical scenario involves invoking
  * {@link ReferencesSearch.SearchParameters#getOptimizer()} and passing this processor together with search string and some other parameters to
  * {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, PsiElement, RequestResultProcessor)}.
- *
- * @author peter
  */
 public abstract class RequestResultProcessor {
   private final Object myEquality;

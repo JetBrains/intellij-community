@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(
@@ -54,7 +55,7 @@ public class KotlinEditorOptions implements PersistentStateComponent<KotlinEdito
     }
 
     @Override
-    public void loadState(KotlinEditorOptions state) {
+    public void loadState(@NotNull KotlinEditorOptions state) {
         XmlSerializerUtil.copyBean(state, this);
     }
 

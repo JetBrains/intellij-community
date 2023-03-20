@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
@@ -18,8 +19,10 @@ import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
 import com.intellij.remoteServer.runtime.*;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
+import com.intellij.remoteServer.util.CloudApplicationRuntime;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +76,7 @@ public final class RemoteServersDeploymentManager {
           updateServerContent(myServerToContent.get(server), connection);
           if (connection.getStatus() == ConnectionStatus.CONNECTED) {
             // connectionStatusChanged is also called for errors, don't initiate polling once again, IDEA-259400
-            if (connection.getStatusText() == connection.getStatus().getPresentableText()) { // effectively, checks for no error
+            if (Strings.areSameInstance(connection.getStatusText(), connection.getStatus().getPresentableText())) { // effectively, checks for no error
               myConnectionsToExpand.add(connection);
               pollDeployments(connection);
             }
@@ -90,9 +93,15 @@ public final class RemoteServersDeploymentManager {
         RemoteServersServiceViewContributor contributor = findContributor(server);
         if (contributor != null) {
           ServiceEventListener.ServiceEvent event = contributor.createDeploymentsChangedEvent(connection);
-          myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(event);
+          boolean justConnected = myConnectionsToExpand.remove(connection);
+          if (event == null && justConnected) {
+            event = ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass());
+          }
+          if (event != null) {
+            myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(event);
+          }
           updateServerContent(myServerToContent.get(server), connection);
-          if (myConnectionsToExpand.remove(connection)) {
+          if (justConnected) {
             RemoteServerNode serverNode = new RemoteServerNode(myProject, connection.getServer(), contributor);
             ServiceViewManager.getInstance(myProject).expand(serverNode, contributor.getClass());
           }
@@ -169,7 +178,8 @@ public final class RemoteServersDeploymentManager {
   }
 
   @Nullable
-  private RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
+  @ApiStatus.Internal
+  public RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
     for (RemoteServersServiceViewContributor contributor : myContributors.keySet()) {
       if (contributor.accept(server)) {
         return contributor;
@@ -254,7 +264,7 @@ public final class RemoteServersDeploymentManager {
       }
     }
 
-    private AbstractTreeNode<?> findDeployment(RemoteServersServiceViewContributor contributor,
+    public AbstractTreeNode<?> findDeployment(RemoteServersServiceViewContributor contributor,
                                                ServerConnection<?> connection,
                                                String deploymentName) {
       RemoteServerNode serverNode = new RemoteServerNode(myProject, connection.getServer(), contributor);
@@ -263,7 +273,11 @@ public final class RemoteServersDeploymentManager {
         ServiceEventListener.EventType.SERVICE_STRUCTURE_CHANGED, serverContributor, contributor.getClass()));
 
       for (Deployment deployment : connection.getDeployments()) {
-        if (deployment.getName().equals(deploymentName)) {
+        var runtime = deployment.getRuntime();
+
+        if (deployment.getName().equals(deploymentName) ||
+            (runtime instanceof CloudApplicationRuntime &&
+             ((CloudApplicationRuntime)runtime).getApplicationName().equals(deploymentName))) {
           return contributor.createDeploymentNode(connection, serverNode, deployment);
         }
       }

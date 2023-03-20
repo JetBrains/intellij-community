@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,7 +37,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static final Key<Boolean> HONOUR_RECENT_FILES_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_HONOUR_RECENT_FILES_IN_TESTS");
 
   private static final NotNullLazyKey<AtomicInteger, UserDataHolder> ACCESS_ALLOWED
-    = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS", holder -> new AtomicInteger());
+    = NotNullLazyKey.createLazyKey("NON_PROJECT_FILE_ACCESS", holder -> new AtomicInteger());
 
   private static final AtomicBoolean myInitialized = new AtomicBoolean();
 
@@ -78,15 +77,9 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     if (unlockOption == null) return deniedFiles;
 
     switch (unlockOption) {
-      case UNLOCK:
-        allowWriting(deniedFiles);
-        break;
-      case UNLOCK_DIR:
-        allowWriting(ContainerUtil.map(deniedFiles, VirtualFile::getParent));
-        break;
-      case UNLOCK_ALL:
-        ACCESS_ALLOWED.getValue(getApp()).incrementAndGet();
-        break;
+      case UNLOCK -> allowWriting(deniedFiles);
+      case UNLOCK_DIR -> allowWriting(ContainerUtil.map(deniedFiles, VirtualFile::getParent));
+      case UNLOCK_ALL -> ACCESS_ALLOWED.getValue(getApp()).incrementAndGet();
     }
 
     return Collections.emptyList();
@@ -137,7 +130,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       if(each.isNotWritable(file)) return false;
     }
 
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     if (fileIndex.isInContent(file)) return true;
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
 
@@ -159,8 +152,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   /**
    * @deprecated use {@link #allowWriting(Iterable)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void allowWriting(VirtualFile... allowedFiles) {
     allowWriting(Arrays.asList(allowedFiles));
   }

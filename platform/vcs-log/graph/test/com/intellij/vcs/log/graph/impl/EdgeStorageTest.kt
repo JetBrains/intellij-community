@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.impl
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.collapsing.EdgeStorage
@@ -49,11 +50,11 @@ class EdgeStorageTest : BaseTestGraphBuilder {
 
   infix fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
 
-  fun EdgeStorage.asString(): String = knownIds.sortR().map {
-    adapter.getAdjacentEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")
-  }.joinToString("|-")
+  fun EdgeStorage.asString(): String = knownIds.sortR().joinToString("|-") {
+    adapter.getAdjacentEdges(nodeIndexById(it), EdgeFilter.ALL).joinToString<GraphEdge>(",", transform = GraphEdge::asString)
+  }
 
-  val EdgeStorage.adapter: EdgeStorageWrapper get() = EdgeStorageWrapper(this, nodeIndexById, nodeIdByIndex)
+  private val EdgeStorage.adapter: EdgeStorageWrapper get() = EdgeStorageWrapper(this, nodeIndexById, nodeIdByIndex)
 
   @Test
   fun simple() = create() + (1 to 2) assert "11:12:n_U|-11:12:n_U"

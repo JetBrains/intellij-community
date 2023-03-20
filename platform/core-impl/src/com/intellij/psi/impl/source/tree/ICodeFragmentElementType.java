@@ -21,9 +21,6 @@ import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public abstract class ICodeFragmentElementType extends IFileElementType {
   public ICodeFragmentElementType(@NotNull String debugName, @Nullable Language language) {
     super(debugName, language);

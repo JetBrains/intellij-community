@@ -16,10 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceParameterList;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
@@ -32,13 +29,14 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   @NonNls private static final Pattern EXTENDS_PREFIX = Pattern.compile("^(\\?\\s*extends\\s*)(.*)");
   @NonNls private static final Pattern SUPER_PREFIX = Pattern.compile("^(\\?\\s*super\\s*)(.*)");
 
+  @NotNull
   private final PsiElement myParent;
   private final ClsTypeElementImpl[] myTypeParameters;
   private volatile PsiType[] myTypeParametersCachedTypes;
 
-  public ClsReferenceParameterListImpl(PsiElement parent,
-                                       @NotNull String @NotNull [] classParameters,
-                                       @NotNull TypeAnnotationContainer annotations) {
+  ClsReferenceParameterListImpl(@NotNull PsiElement parent,
+                                @NotNull String @NotNull [] classParameters,
+                                @NotNull TypeAnnotationContainer annotations) {
     myParent = parent;
 
     int length = classParameters.length;
@@ -65,6 +63,16 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
       }
 
       myTypeParameters[i] = new ClsTypeElementImpl(this, s, variance, annotations.forTypeArgument(length - i - 1));
+    }
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
     }
   }
 
@@ -98,7 +106,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   }
 
   @Override
-  public PsiElement getParent() {
+  public @NotNull PsiElement getParent() {
     return myParent;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.module.Module;
@@ -13,8 +13,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
@@ -28,13 +28,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * Index of EPs via {@link ExtensionPoint#getEffectiveQualifiedName}.
+ * Index of EP declarations via {@link ExtensionPoint#getEffectiveQualifiedName}.
+ *
+ * @see ExtensionPointClassIndex
  */
 public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
 
@@ -70,13 +70,25 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
     return 0;
   }
 
+  @NotNull
+  public static List<ExtensionPoint> getExtensionPointCandidates(Project project, GlobalSearchScope scope) {
+    List<ExtensionPoint> result = new ArrayList<>();
+
+    FileBasedIndex.getInstance().processAllKeys(NAME, key -> {
+      ContainerUtil.addIfNotNull(result, findExtensionPoint(project, scope, key));
+      return true;
+    }, scope, null);
+
+    return result;
+  }
+
   @Nullable
   public static ExtensionPoint findExtensionPoint(Module module, String fqn) {
     return findExtensionPoint(module.getProject(), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false), fqn);
   }
 
   @Nullable
-  public static ExtensionPoint findExtensionPoint(Project project,GlobalSearchScope scope, String fqn) {
+  public static ExtensionPoint findExtensionPoint(Project project, GlobalSearchScope scope, String fqn) {
     Ref<ExtensionPoint> result = Ref.create();
     FileBasedIndex.getInstance().processValues(NAME, fqn, null, (file, value) -> {
       final PsiManager psiManager = PsiManager.getInstance(project);
@@ -117,8 +129,10 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
     PsiFile psiFile = psiManager.findFile(file);
     if (!(psiFile instanceof XmlFile)) return null;
 
-    PsiElement psiElement = psiFile.findElementAt(offset);
-    XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
+    XmlTag xmlTag = AstLoadingFilter.forceAllowTreeLoading(psiFile, () -> {
+      PsiElement psiElement = psiFile.findElementAt(offset);
+      return PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
+    });
     final DomElement domElement = domManager.getDomElement(xmlTag);
     return ObjectUtils.tryCast(domElement, ExtensionPoint.class);
   }

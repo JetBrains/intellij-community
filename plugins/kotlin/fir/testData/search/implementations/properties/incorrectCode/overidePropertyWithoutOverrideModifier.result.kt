@@ -1,0 +1,1 @@
+KtProperty: B.foo

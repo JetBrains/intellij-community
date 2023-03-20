@@ -106,7 +106,7 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun setupMavenExtClassPath() {
-    val mavenEventListener = MavenServerManager.getMavenEventListener()
+    val mavenEventListener = MavenServerManager.getInstance().mavenEventListener
     val uploadPath = Paths.get(toSystemDependentName(mavenEventListener.path))
     val uploadRoot = createUploadRoot(MavenRuntimeType.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
     request.uploadVolumes += uploadRoot
@@ -159,8 +159,9 @@ class MavenCommandLineSetup(private val project: Project,
     if (generalSettings.isAlwaysUpdateSnapshots) {
       commandLine.addParameter("--update-snapshots")
     }
-    if (!generalSettings.threads.isNullOrBlank()) {
-      commandLine.addParameters("-T", generalSettings.threads)
+    val threads = generalSettings.threads
+    if (!threads.isNullOrBlank()) {
+      commandLine.addParameters("-T", threads)
     }
     generalSettings.failureBehavior.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }
     generalSettings.checksumPolicy.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }

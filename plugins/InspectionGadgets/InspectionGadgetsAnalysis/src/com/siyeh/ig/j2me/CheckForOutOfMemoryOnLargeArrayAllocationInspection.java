@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +24,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
   extends BaseInspection {
@@ -42,11 +43,10 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "large.array.allocation.no.outofmemoryerror.maximum.number.of.elements.option"),
-      this, "m_limit", 5);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message(
+        "large.array.allocation.no.outofmemoryerror.maximum.number.of.elements.option"), 1, Integer.MAX_VALUE - 1));
   }
 
   @Override
@@ -69,7 +69,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
       for (final PsiExpression dimension : dimensions) {
         final Integer intValue =
           (Integer)ConstantExpressionUtil.computeCastTo(
-            dimension, PsiType.INT);
+            dimension, PsiTypes.intType());
         if (intValue != null) {
           size *= intValue.intValue();
         }

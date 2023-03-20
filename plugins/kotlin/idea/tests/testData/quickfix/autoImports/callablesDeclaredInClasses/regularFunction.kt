@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import function 'RegObject.regularFun'" "true"
 package p
 
 open class Reg {

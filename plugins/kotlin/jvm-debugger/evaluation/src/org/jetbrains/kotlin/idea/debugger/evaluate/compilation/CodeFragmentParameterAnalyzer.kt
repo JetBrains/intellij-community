@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.codegen.AsmUtil
@@ -10,26 +11,26 @@ import org.jetbrains.kotlin.codegen.getCallLabelForLambdaArgument
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
+import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.*
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory.Companion.FAKE_JAVA_CONTEXT_FUNCTION_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.*
-import org.jetbrains.kotlin.idea.debugger.safeLocation
-import org.jetbrains.kotlin.idea.debugger.safeMethod
-import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.getThisName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isDotSelector
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_1_3_FQ_NAME
+import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.*
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.createFunctionType
@@ -46,8 +47,7 @@ class CodeFragmentParameterInfo(
 class CodeFragmentParameterAnalyzer(
     private val context: ExecutionContext,
     private val codeFragment: KtCodeFragment,
-    private val bindingContext: BindingContext,
-    private val evaluationStatus: EvaluationStatus
+    private val bindingContext: BindingContext
 ) {
     private val parameters = LinkedHashMap<DeclarationDescriptor, Smart>()
     private val crossingBounds = mutableSetOf<Dumb>()
@@ -110,31 +110,27 @@ class CodeFragmentParameterAnalyzer(
 
                 var processed = false
 
-                val extensionReceiver = resolvedCall.extensionReceiver
-                if (extensionReceiver is ImplicitReceiver) {
-                    val descriptor = extensionReceiver.declarationDescriptor
-                    val parameter = processReceiver(extensionReceiver)
-                    checkBounds(descriptor, expression, parameter)
-                    processed = true
+                fun processImplicitReceiver(receiver: ReceiverValue?) {
+                    if (receiver is ImplicitReceiver) {
+                        val parameter = processReceiver(receiver)
+                        if (parameter != null) {
+                            checkBounds(receiver.declarationDescriptor, expression, parameter)
+                            processed = true
+                        }
+                    }
                 }
 
-                val dispatchReceiver = resolvedCall.dispatchReceiver
-                if (dispatchReceiver is ImplicitReceiver) {
-                    val descriptor = dispatchReceiver.declarationDescriptor
-                    val parameter = processReceiver(dispatchReceiver)
-                    if (parameter != null) {
-                        checkBounds(descriptor, expression, parameter)
-                        processed = true
-                    }
+                with(resolvedCall) {
+                    processImplicitReceiver(dispatchReceiver)
+                    processImplicitReceiver(extensionReceiver)
+                    contextReceivers.forEach(::processImplicitReceiver)
                 }
 
                 if (!processed && resolvedCall.resultingDescriptor is SyntheticFieldDescriptor) {
                     val descriptor = resolvedCall.resultingDescriptor as SyntheticFieldDescriptor
                     val parameter = processSyntheticFieldVariable(descriptor)
-                    if (parameter != null) {
-                        checkBounds(descriptor, expression, parameter)
-                        processed = true
-                    }
+                    checkBounds(descriptor, expression, parameter)
+                    processed = true
                 }
 
                 // If a reference has receivers, we can calculate its value using them, no need to capture
@@ -163,15 +159,14 @@ class CodeFragmentParameterAnalyzer(
                 val parameter = when (target) {
                     is ClassDescriptor -> processDispatchReceiver(target)
                     is CallableDescriptor -> {
-                        val type = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type
-                        type?.let { processExtensionReceiver(target, type, expression.getLabelName()) }
+                        val type = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type ?: return null
+                        processContextReceiver(target, type)
+                            ?: processExtensionReceiver(target, type, expression.getLabelName())
                     }
                     else -> null
                 }
 
-                if (parameter != null) {
-                    checkBounds(target, expression, parameter)
-                }
+                checkBounds(target, expression, parameter)
 
                 return null
             }
@@ -214,6 +209,8 @@ class CodeFragmentParameterAnalyzer(
         return when (receiver) {
             is ImplicitClassReceiver -> processDispatchReceiver(receiver.classDescriptor)
             is ExtensionReceiver -> processExtensionReceiver(receiver.declarationDescriptor, receiver.type, null)
+            is ContextReceiver -> processContextReceiver(receiver.declarationDescriptor, receiver.type)
+            is ContextClassReceiver -> processDispatchReceiver(receiver.classDescriptor)
             else -> null
         }
     }
@@ -260,6 +257,17 @@ class CodeFragmentParameterAnalyzer(
                 && codeFragment.getCopyableUserData(KtCodeFragment.FAKE_CONTEXT_FOR_JAVA_FILE) != null
     }
 
+
+    private fun processContextReceiver(descriptor: CallableDescriptor, receiverType: KotlinType): Smart? {
+        val receiverParameter = descriptor.contextReceiverParameters.find { it.type == receiverType } ?: return null
+
+        return parameters.getOrPut(receiverParameter) {
+            val name = receiverParameter.name.asString()
+            val label = getThisName("${receiverType.fqName?.shortName()}")
+            Smart(Dumb(Kind.CONTEXT_RECEIVER, name, label), receiverType, receiverParameter)
+        }
+    }
+
     private fun processFakeJavaCodeReceiver(descriptor: CallableDescriptor): Smart? {
         val receiverParameter = descriptor
             .takeIf { descriptor is FunctionDescriptor }
@@ -273,7 +281,7 @@ class CodeFragmentParameterAnalyzer(
         }
     }
 
-    private fun processSyntheticFieldVariable(descriptor: SyntheticFieldDescriptor): Smart? {
+    private fun processSyntheticFieldVariable(descriptor: SyntheticFieldDescriptor): Smart {
         val propertyDescriptor = descriptor.propertyDescriptor
         val fieldName = propertyDescriptor.name.asString()
         val type = propertyDescriptor.type
@@ -284,7 +292,6 @@ class CodeFragmentParameterAnalyzer(
 
     private fun processSimpleNameExpression(target: DeclarationDescriptor, expression: KtSimpleNameExpression): Smart? {
         if (target is ValueParameterDescriptor && target.isCrossinline) {
-            evaluationStatus.error(EvaluationError.CrossInlineLambda)
             throw EvaluateExceptionUtil.createEvaluateException(
                 KotlinDebuggerEvaluationBundle.message("error.crossinline.lambda.evaluation")
             )
@@ -338,7 +345,7 @@ class CodeFragmentParameterAnalyzer(
     }
 
     private fun processCoroutineContextCall(target: DeclarationDescriptor): Smart? {
-        if (target is PropertyDescriptor && target.fqNameSafe == COROUTINE_CONTEXT_1_3_FQ_NAME) {
+        if (target is PropertyDescriptor && target.fqNameSafe == COROUTINE_CONTEXT_FQ_NAME) {
             return parameters.getOrPut(target) {
                 Smart(Dumb(Kind.COROUTINE_CONTEXT, ""), target.type, target)
             }

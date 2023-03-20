@@ -12,16 +12,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.KeyedLazyInstanceEP
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import training.lang.LangManager
 import training.lang.LangSupport
-import training.learn.course.IftModule
-import training.learn.course.LearningCourse
-import training.learn.course.LearningCourseBase
-import training.learn.course.Lesson
+import training.learn.course.*
 import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
 import training.util.*
@@ -44,8 +39,6 @@ class CourseManager internal constructor() : Disposable {
       parseVersion
     }
   }
-
-  val mapModuleVirtualFile: MutableMap<IftModule, VirtualFile> = ContainerUtil.createWeakMap()
 
   var unfoldModuleOnInit by WeakReferenceDelegator<IftModule>()
 
@@ -83,6 +76,11 @@ class CourseManager internal constructor() : Disposable {
       }
     }
 
+  val currentCourses: List<LearningCourse>
+    get() = LangManager.getInstance().getLanguageId()?.let { lang ->
+      getLanguageEPs(getLanguageToEPs(), lang).map { it.instance }
+    } ?: emptyList()
+
   override fun dispose() {
   }
 
@@ -102,19 +100,19 @@ class CourseManager internal constructor() : Disposable {
     commonCourses.clear()
   }
 
-  //TODO: remove this method or convert XmlModule to a Module
-  fun registerVirtualFile(module: IftModule, virtualFile: VirtualFile) {
-    mapModuleVirtualFile[module] = virtualFile
-  }
-
   /**
    * @param projectWhereToOpen -- where to open projectWhereToOpen
    * @param forceStartLesson -- force start lesson without check for passed status (passed lessons will be opened as completed text)
    */
-  fun openLesson(projectWhereToOpen: Project, lesson: Lesson?, startingWay: LessonStartingWay, forceStartLesson: Boolean = false) {
+  fun openLesson(projectWhereToOpen: Project,
+                 lesson: Lesson?,
+                 startingWay: LessonStartingWay,
+                 forceStartLesson: Boolean = false,
+                 forceOpenLearningProject: Boolean = false,
+  ) {
     LessonManager.instance.stopLesson()
     if (lesson == null) return //todo: remove null lessons
-    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson, startingWay))
+    OpenLessonActivities.openLesson(OpenLessonParameters(projectWhereToOpen, lesson, forceStartLesson, startingWay, forceOpenLearningProject))
   }
 
   fun findLessonById(lessonId: String): Lesson? {
@@ -126,6 +124,10 @@ class CourseManager internal constructor() : Disposable {
     return commonCourses[commonCourseId].map(ModuleInfo::module)
   }
 
+  fun findCommonCourseById(id: String): LearningCourse? {
+    return COMMON_COURSE_MODULES_EP.extensionList.find { it.key == id }?.instance
+  }
+
   fun isModuleExternal(module: IftModule): Boolean {
     prepareLangModules()
     if (commonCourses.isEmpty) reloadCommonModules()
@@ -133,13 +135,26 @@ class CourseManager internal constructor() : Disposable {
   }
 
   private fun reloadLangModules() {
-    val extensions = COURSE_MODULES_EP.extensions.filter { courseCanBeUsed(it.language) }
-    for (e in extensions) {
-      val langSupport = LangManager.getInstance().getLangSupportById(e.language)
-      if (langSupport != null) {
+    val languageToEPs = getLanguageToEPs()
+    for (languageId in languageToEPs.keys) {
+      val langSupport = LangManager.getInstance().getLangSupportById(languageId) ?: continue
+      for (e in getLanguageEPs(languageToEPs, languageId)) {
         languageCourses.putValues(langSupport, createModules(e.instance, e.pluginDescriptor))
       }
     }
+  }
+
+  private fun getLanguageToEPs(): Map<String, List<LanguageExtensionPoint<LearningCourseBase>>> {
+    return COURSE_MODULES_EP.extensions.groupBy { it.language }.filterKeys { courseCanBeUsed(it) }
+  }
+
+  private fun getLanguageEPs(map: Map<String, List<LanguageExtensionPoint<LearningCourseBase>>>, languageId: String): List<LanguageExtensionPoint<LearningCourseBase>> {
+    return map[languageId]?.let {
+      val replacingCourse = it.firstOrNull { extensionPoint ->
+        extensionPoint.instance.otherCoursesMergeStrategy() == LearningCoursesMergeStrategy.REPLACE_MODULES
+      }
+      if (replacingCourse != null) listOf(replacingCourse) else it
+    } ?: emptyList()
   }
 
   private fun reloadCommonModules() {

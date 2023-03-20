@@ -75,4 +75,31 @@ class SynchronizationOnLocalVariableOrMethodParameter {
       }
     }.start();
   }
+
+  Object o = new Object();
+
+  private void testWithAssign() {
+    synchronized(o) {
+      System.out.println("field");
+    }
+
+    Object localO = o;
+
+    synchronized(localO) {
+      System.out.println("field2");
+    }
+
+    Object effectivelyFinal;
+    if (o.hashCode() == 1) {
+      effectivelyFinal = o;
+      System.out.println("1");
+    }else {
+      effectivelyFinal = o;
+      System.out.println("1");
+    }
+
+    synchronized(effectivelyFinal) {
+      System.out.println("field2");
+    }
+  }
 }

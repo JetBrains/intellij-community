@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java
 
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -39,7 +39,7 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
     }.filter { it.sdkType is JavaSdk }
 
     val jdkVersions = sdks.mapTo(HashSet()) { sdk ->
-      JavaVersion.tryParse(sdk.versionString) to (sdk.homePath?.let { WslDistributionManager.isWslPath(it) } ?: false)
+      JavaVersion.tryParse(sdk.versionString) to (sdk.homePath?.let { WslPath.isWslUncPath(it) } ?: false)
     }
 
     val metrics = HashSet<MetricEvent>()

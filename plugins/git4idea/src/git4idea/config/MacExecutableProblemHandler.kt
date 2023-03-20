@@ -13,7 +13,7 @@ import java.io.File
 
 class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   companion object {
-    val LOG = logger<MacExecutableProblemHandler>()
+    private val LOG = logger<MacExecutableProblemHandler>()
 
     private const val XCODE_LICENSE_ERROR: @NonNls String = "Agreeing to the Xcode/iOS license"
     private const val XCODE_DEVELOPER_PART_ERROR: @NonNls String = "invalid active developer path"
@@ -27,16 +27,14 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
     when {
       isXcodeLicenseError(exception) -> showXCodeLicenseError(errorNotifier)
       isInvalidActiveDeveloperPath(exception) -> showInvalidActiveDeveloperPathError(errorNotifier)
-      else -> showGenericError(exception, errorNotifier, onErrorResolved)
+      else -> showGenericError(exception, errorNotifier)
     }
   }
 
-  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier) {
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
-      getHumanReadableErrorFor(exception),
-      ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
-        this.downloadAndInstall(errorNotifier, onErrorResolved)
-      })
+                            getHumanReadableErrorFor(exception),
+                            null)
   }
 
   internal fun downloadAndInstall(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
@@ -49,7 +47,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
           val pkgFileName = installer.pkgFileName!!
           if (downloadGit(installer, dmgFile, project, errorNotifier)) {
             errorNotifier.changeProgressTitle(GitBundle.message("install.installing.progress"))
-           installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
+            installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
           }
         }
       }

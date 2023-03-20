@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 class JavaIntentionPolicy extends IntentionPolicy {
   @Override
   protected boolean shouldSkipIntention(@NotNull String actionText) {
@@ -60,7 +57,8 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.matches("Replace with throws .*") || //may break catches with explicit exceptions
            actionText.equals("Generate 'clone()' method which always throws exception") || // IDEA-207048
            actionText.matches("Replace '.+' with '.+' in cast") || // can produce uncompilable code by design
-           actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'"); // Suspicious toArray may introduce compilation error
+           actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'") || // Suspicious toArray may introduce compilation error
+           actionText.equals("Rollback changes in current line"); //revert only one line
   }
 
   static boolean skipPreview(@NotNull IntentionAction action) {
@@ -87,7 +85,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
     String familyName = intention.getFamilyName();
     boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
                                       intentionText.startsWith("Replace with block comment") ||
-                                      intentionText.startsWith("Replace with javadoc") ||
+                                      intentionText.equals("Replace with Javadoc comment") ||
                                       intentionText.startsWith("Remove //noinspection") ||
                                       intentionText.startsWith("Convert to Basic Latin") ||
                                       intentionText.startsWith("Unwrap 'if' statement") ||//remove ifs content
@@ -99,7 +97,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.startsWith("Remove redundant arguments to call") ||//removes arg with all comments inside
                                       intentionText.startsWith("Convert to 'enum'") ||//removes constructor with javadoc?
                                       intentionText.startsWith("Remove redundant constructor") ||
-                                      intentionText.startsWith("Remove block marker comments") ||
+                                      intentionText.startsWith("Remove block marker comment") ||
                                       intentionText.startsWith("Remove redundant method") ||
                                       intentionText.startsWith("Delete unnecessary import") ||
                                       intentionText.startsWith("Delete empty class initializer") ||
@@ -178,7 +176,11 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
       familyName.equals("Simplify boolean expression") ||
       // A parenthesized enum switch case label is a compilation error
-      familyName.equals("Create missing enum switch branches");
+      familyName.equals("Create missing enum switch branches") ||
+      familyName.equals("Reformat the whole file") ||
+      familyName.equals("Fix whitespace") ||
+      // For some reason, these intentions cause many unstable results.
+      familyName.equals("Put elements on multiple lines") || familyName.equals("Put elements on one line");
   }
 
   @NotNull

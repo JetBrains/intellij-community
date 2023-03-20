@@ -74,7 +74,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiLocalVariable variable = (PsiLocalVariable)referenceExpression.resolve();
       if (variable == null) return;
@@ -128,10 +128,9 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
         return;
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression reference)) {
         return;
       }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
       final PsiElement referent = reference.resolve();
       if (!(referent instanceof PsiLocalVariable)) {
         return;
@@ -165,8 +164,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
         registerError(lhs);
         return;
       }
-      if (assignmentBlock instanceof PsiCodeBlock) {
-        final PsiCodeBlock block = (PsiCodeBlock)assignmentBlock;
+      if (assignmentBlock instanceof PsiCodeBlock block) {
         boolean before = true;
         for (PsiStatement statement : block.getStatements()) {
           if (statement.equals(assignmentParent)) before = false;
@@ -183,13 +181,11 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       outer:
       while (parent != null) {
         boolean before = true;
-        if (child instanceof PsiSwitchLabeledRuleStatement) {
-          final PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)child;
+        if (child instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
           parent = ruleStatement.getEnclosingSwitchBlock();
         }
-        else if (child instanceof PsiBreakStatement) {
+        else if (child instanceof PsiBreakStatement breakStatement) {
           // in switch statement
-          final PsiBreakStatement breakStatement = (PsiBreakStatement)child;
           parent = breakStatement.findExitedStatement();
         }
         else if (parent instanceof PsiCodeBlock) {

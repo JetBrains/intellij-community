@@ -14,7 +14,7 @@ public interface PyFromImportStatementStub extends StubElement<PyFromImportState
   /**
    * @deprecated Use stub-based {@link PyFromImportStatement#getStarImportElement()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   boolean isStarImport();
 
   int getRelativeLevel();

@@ -15,7 +15,7 @@ class TestDependenciesResolver : ScriptDependenciesResolver {
     ): Future<KotlinScriptExternalDependencies?> {
         return CompletableFuture.completedFuture(
                 object : KotlinScriptExternalDependencies {
-                    override val classpath: Iterable<File> = listOf(environment?.get("template-classes") as File)
+                    override val classpath: Iterable<File> = environment?.get("template-classes") as List<File>
                 })
 
     }

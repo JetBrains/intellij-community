@@ -9,3 +9,4 @@ fun main(args: Array<String>) {
     //Breakpoint!
     t.component2()
 }
+// IGNORE_K2

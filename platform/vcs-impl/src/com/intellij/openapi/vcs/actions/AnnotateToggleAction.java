@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
@@ -6,6 +6,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -25,10 +26,13 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,14 +43,21 @@ import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
- * @author: lesya
+ * @author lesya
  */
 public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(AnnotateToggleAction.class);
+
   public static final ExtensionPointName<Provider> EP_NAME =
     new ExtensionPointName<>("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
   public AnnotateToggleAction() {
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -100,6 +111,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
                                 @NotNull final Project project,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs) {
+    if (project.isDisposed() || editor.isDisposed()) return;
     UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
@@ -125,7 +137,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
       if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
-        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false)));
+        LOG.warn("Unexpected annotation lines number. Expected: " + expectedLines + ", actual: " + actualLines);
+        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
+          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
+        }));
         return;
       }
     }
@@ -167,17 +182,14 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       }
     };
 
-    if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
-      VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
-
-      changesListener.registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
-      Disposer.register(disposable, new Disposable() {
-        @Override
-        public void dispose() {
-          changesListener.unregisterAnnotation(fileAnnotation.getFile(), fileAnnotation);
-        }
-      });
-    }
+    VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
+    changesListener.registerAnnotation(fileAnnotation);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        changesListener.unregisterAnnotation(fileAnnotation);
+      }
+    });
 
     closeVcsAnnotations(editor);
 
@@ -192,6 +204,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     final Couple<Map<VcsRevisionNumber, Color>> bgColorMap = computeBgColors(fileAnnotation, editor);
     final Map<VcsRevisionNumber, Integer> historyIds = computeLineNumbers(fileAnnotation);
 
+    gutters.add(new FillerColumn(fileAnnotation, presentation, bgColorMap));
     if (switcher != null) {
       switcher.switchTo(switcher.getDefaultSource());
       final LineAnnotationAspect revisionAspect = switcher.getRevisionAspect();
@@ -212,11 +225,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       gutters.add(mergeSourceGutter);
     }
 
-    final List<LineAnnotationAspect> aspects = ContainerUtil.newArrayList(fileAnnotation.getAspects());
-    for (AnnotationGutterColumnProvider extension : AnnotationGutterColumnProvider.EP_NAME.getExtensions()) {
-      ContainerUtil.addIfNotNull(aspects, extension.createColumn(fileAnnotation));
-    }
-    for (LineAnnotationAspect aspect : aspects) {
+    List<LineAnnotationAspect> aspects = Arrays.asList(fileAnnotation.getAspects());
+    List<LineAnnotationAspect> fromExt =
+      ContainerUtil.mapNotNull(AnnotationGutterColumnProvider.EP_NAME.getExtensions(), extension -> extension.createColumn(fileAnnotation));
+    for (LineAnnotationAspect aspect : ContainerUtil.concat(aspects, fromExt)) {
       gutters.add(new AspectAnnotationFieldGutter(fileAnnotation, aspect, presentation, bgColorMap));
     }
 
@@ -224,8 +236,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     if (historyIds != null) {
       gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
-    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
-    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, bgColorMap);
+    if (!ExperimentalUI.isNewUI()) {
+      gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
+    }
+    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(fileAnnotation, gutters, bgColorMap);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 
@@ -234,7 +248,9 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     addActionsFromExtensions(presentation, fileAnnotation);
 
     for (AnnotationFieldGutter gutter : gutters) {
-      final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(upToDateLineNumbers, gutter);
+      final AnnotationGutterLineConvertorProxy proxy = gutter instanceof TextAnnotationGutterProvider.Filler
+                                                       ? new AnnotationGutterLineConvertorProxy.Filler(upToDateLineNumbers, gutter)
+                                                       : new AnnotationGutterLineConvertorProxy(upToDateLineNumbers, gutter);
       if (gutter.isGutterAction()) {
         editor.getGutter().registerTextAnnotation(proxy, proxy);
       }
@@ -242,6 +258,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
         editor.getGutter().registerTextAnnotation(proxy);
       }
     }
+
+    InlineDiffFromAnnotation.showDiffOnHover(editor, fileAnnotation, presentation, disposable);
   }
 
   @NotNull
@@ -359,12 +377,16 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
   }
 
   public interface Provider {
+    @CalledInAny
     boolean isEnabled(AnActionEvent e);
 
+    @CalledInAny
     boolean isSuspended(@NotNull AnActionEvent e);
 
+    @CalledInAny
     boolean isAnnotated(AnActionEvent e);
 
+    @RequiresEdt
     void perform(@NotNull AnActionEvent e, boolean selected);
 
     default @Nls(capitalization = Nls.Capitalization.Title) String getActionName(@NotNull AnActionEvent e) {
@@ -377,7 +399,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     private final Runnable myShowAnnotations;
 
     MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
-      super(LightColors.RED);
+      super(LightColors.RED, Status.Error);
       myEditor = editor;
       myShowAnnotations = doShowAnnotations;
 

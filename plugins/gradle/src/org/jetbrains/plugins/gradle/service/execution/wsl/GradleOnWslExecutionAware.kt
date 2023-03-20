@@ -6,7 +6,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WSLUtil
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -42,7 +41,7 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
     val jdkWslDistribution = WslPath.getDistributionByWindowsUncPath(homePath)
     if (wslDistribution.id != jdkWslDistribution?.id) {
       val isResolveProjectTask = task is ExternalSystemResolveProjectTask
-      val distributionPath = wslDistribution.uncRootPath.toString()
+      val distributionPath = wslDistribution.getUNCRootPath().toString()
       val distributionName = wslDistribution.presentableName
       val message = message("gradle.incorrect.jvm.wsl.issue.description", distributionName, distributionPath)
       throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))
@@ -114,7 +113,7 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
   }
 
   private fun resolveWslDistribution(path: String): WSLDistribution? {
-    if (!WSLUtil.isSystemCompatible() || !WslDistributionManager.isWslPath(path)) return null
+    if (!WSLUtil.isSystemCompatible()) return null
     return WslPath.getDistributionByWindowsUncPath(path)
   }
 }

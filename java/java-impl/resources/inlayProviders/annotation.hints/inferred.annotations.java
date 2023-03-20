@@ -1,1 +1,5 @@
-public length (@NotNull double x)
+class Test {
+  public int getSize(String s) {
+    return s.length();
+  }
+}

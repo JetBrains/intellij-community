@@ -79,10 +79,9 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     }
 
     private static boolean isSpace(PsiElement element) {
-      if (!(element instanceof RegExpChar)) {
+      if (!(element instanceof RegExpChar aChar)) {
         return false;
       }
-      final RegExpChar aChar = (RegExpChar)element;
       return aChar.getType() == RegExpChar.Type.CHAR && aChar.getValue() == ' ';
     }
   }

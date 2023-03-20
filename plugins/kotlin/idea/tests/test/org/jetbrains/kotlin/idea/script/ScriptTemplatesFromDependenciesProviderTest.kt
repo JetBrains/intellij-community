@@ -1,15 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.script
 
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
+import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
@@ -21,31 +25,49 @@ import java.io.File
 @TestDataPath("\$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners::class)
 @TestMetadata("testData/script/definition/jar")
-class ScriptTemplatesFromDependenciesProviderTest: AbstractScriptConfigurationTest() {
+class ScriptTemplatesFromDependenciesProviderTest : AbstractScriptConfigurationTest() {
     override fun setUp() {
         super.setUp()
 
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        runWriteAction {
-            project.invalidateProjectRoots()
-        }
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     }
 
     @TestMetadata("customDefinitionInJar")
     fun testCustomDefinitionInJar() {
-        val allDefinitions = ScriptDefinitionsManager.getInstance(project).getAllDefinitions()
+        val allDefinitions = run {
+            var definitions = emptyList<ScriptDefinition>()
+            val timeoutMs = 100L
+            val attempts = 20
+            // definitions are loaded in a background, spin some time to get them loaded
+            for (attempt in 0 until attempts) {
+                definitions = ScriptDefinitionsManager.getInstance(project).getAllDefinitions()
+                if (definitions.any { it.name == "Custom Init Script" }) {
+                    return@run definitions
+                }
+                Thread.sleep(timeoutMs)
+            }
+
+            definitions
+        }
         assertTrue(allDefinitions.joinToString { it.name }, allDefinitions.any { it.name == "Custom Init Script" })
         assertTrue(allDefinitions.joinToString { it.name }, allDefinitions.any { it.name == "Custom Setting Script" })
     }
 
+    private var customScriptDefinitionsJar: File? = null
+
     override fun setUpTestProject() {
         myModule = createMainModule()
-        val customScriptDefinitionsJar = buildJar()
-        module.addDependency(projectLibrary("customScriptDefinitionsLib", classesRoot = customScriptDefinitionsJar.jarRoot))
+        customScriptDefinitionsJar = buildJar()
+        module.addDependency(projectLibrary("customScriptDefinitionsLib", classesRoot = customScriptDefinitionsJar?.jarRoot))
     }
+
+    override fun tearDown(): Unit = runAll(
+        ThrowableRunnable {
+            customScriptDefinitionsJar?.delete()
+            customScriptDefinitionsJar = null
+        },
+        ThrowableRunnable { super.tearDown() },
+    )
 
     private fun buildJar(): File {
         val lib = File(testDataFile(), "lib").takeIf { it.isDirectory }!!
@@ -53,7 +75,6 @@ class ScriptTemplatesFromDependenciesProviderTest: AbstractScriptConfigurationTe
         buildScriptDefinitionMarkers(templateOutDir, lib)
 
         return KotlinCompilerStandalone.copyToJar(listOf(templateOutDir), "custom-script-definitions")
-            .also { it.deleteOnExit() }
     }
 
     private fun buildScriptDefinitionMarkers(templateOutDir: File, lib: File) {

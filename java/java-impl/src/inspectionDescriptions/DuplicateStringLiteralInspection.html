@@ -1,6 +1,8 @@
 <html>
 <body>
-Reports all string literals that are replicated unchanged throughout the project.
+Reports string literals that are replicated unchanged throughout the project.
+Two quick-fixes are provided. One to introduce a constant for a duplicated string and use it throughout the project,
+and one to show the location of all the duplicates of a particular string literal.
 <p>Example:</p>
 <pre><code>
   class C1 { String CONST1 = "duplicate string"; }

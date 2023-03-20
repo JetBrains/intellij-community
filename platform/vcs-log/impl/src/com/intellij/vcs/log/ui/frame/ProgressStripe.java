@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
@@ -17,8 +17,7 @@ public class ProgressStripe extends JBPanel {
   private final Disposable myDisposable;
   private final int myStartDelayMs;
 
-  @NotNull
-  private final JBPanel myPanel;
+  private final @NotNull JBPanel myPanel;
   protected MyLoadingDecorator myDecorator;
 
   public ProgressStripe(@NotNull JComponent targetComponent, @NotNull Disposable parent, int startDelayMs) {
@@ -72,8 +71,7 @@ public class ProgressStripe extends JBPanel {
   }
 
   private static class MyLoadingDecorator extends LoadingDecorator {
-    @NotNull
-    private final Disposable myDisposable;
+    private final @NotNull Disposable myDisposable;
 
     MyLoadingDecorator(@NotNull JComponent component,
                        @NotNull JPanel contentPanel,
@@ -84,11 +82,11 @@ public class ProgressStripe extends JBPanel {
     }
 
     public void startLoadingImmediately() {
-      _startLoading(false);
+      doStartLoading(false);
     }
 
     @Override
-    protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
+    protected @NotNull NonOpaquePanel customizeLoadingLayer(JPanel parent, @NotNull JLabel text, @NotNull AsyncProcessIcon icon) {
       parent.setLayout(new BorderLayout());
 
       NonOpaquePanel result = new NonOpaquePanel();
@@ -100,8 +98,7 @@ public class ProgressStripe extends JBPanel {
       return result;
     }
 
-    @NotNull
-    public Disposable getDisposable() {
+    public @NotNull Disposable getDisposable() {
       return myDisposable;
     }
   }

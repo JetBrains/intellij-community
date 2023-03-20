@@ -80,8 +80,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
   public int compareTo(VcsRevisionNumber crev) {
     if (this == crev) return 0;
 
-    if (crev instanceof GitRevisionNumber) {
-      GitRevisionNumber other = (GitRevisionNumber)crev;
+    if (crev instanceof GitRevisionNumber other) {
       if (myRevisionHash.equals(other.myRevisionHash)) {
         return 0;
       }

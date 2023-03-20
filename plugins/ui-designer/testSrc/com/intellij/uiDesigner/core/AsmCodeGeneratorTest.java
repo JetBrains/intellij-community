@@ -28,6 +28,7 @@ import com.intellij.util.*;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
+import com.intellij.util.xml.dom.XmlDomReader;
 import com.sun.tools.javac.Main;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -148,12 +149,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     LwRootContainer rootContainer = loadFormData(formPath);
     AsmCodeGenerator codeGenerator =
       new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, true, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
-    FileInputStream classStream = new FileInputStream(classFile);
-    try {
+    try (FileInputStream classStream = new FileInputStream(classFile)) {
       codeGenerator.patchClass(classStream);
     }
     finally {
-      classStream.close();
       FileUtil.delete(classFile);
       File[] inners = new File(tmpPath).listFiles((dir, name) -> name.startsWith(className + "$") && name.endsWith(".class"));
       if (inners != null) {
@@ -366,6 +365,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   public void testTitledSeparator() throws Exception {
     JPanel panel = (JPanel)getInstrumentedRootComponent("TestTitledSeparator.form", "BindingTest");
     assertEquals("Test Value", ((JLabel)((JPanel)panel.getComponent(2)).getComponent(0)).getText());
+    assertEquals("Test Value", ((JPanel)panel.getComponent(2)).getToolTipText());
   }
 
   public void testGotItPanel() throws Exception {

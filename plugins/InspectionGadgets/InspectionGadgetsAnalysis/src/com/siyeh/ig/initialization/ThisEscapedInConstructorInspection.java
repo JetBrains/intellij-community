@@ -45,7 +45,7 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
   private static class ThisExposedInConstructorInspectionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       if (!isInInitializer(expression)) {
         return;
@@ -54,17 +54,15 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
       final PsiClass containingClass = ClassUtils.getContainingClass(expression);
       if (qualifier != null) {
         final PsiElement element = qualifier.resolve();
-        if (!(element instanceof PsiClass)) {
+        if (!(element instanceof PsiClass aClass)) {
           return;
         }
-        final PsiClass aClass = (PsiClass)element;
         if (!aClass.equals(containingClass)) {
           return;
         }
       }
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         if (!thisEscapesToField(expression, assignmentExpression)) {
           return;
         }
@@ -72,15 +70,13 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
       }
       else if (parent instanceof PsiExpressionList) {
         final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiNewExpression) {
-          final PsiNewExpression newExpression = (PsiNewExpression)grandParent;
+        if (grandParent instanceof PsiNewExpression newExpression) {
           if (!thisEscapesToConstructor(expression, newExpression)) {
             return;
           }
           registerError(expression);
         }
-        else if (grandParent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        else if (grandParent instanceof PsiMethodCallExpression methodCallExpression) {
           if (!thisEscapesToMethod(expression, methodCallExpression)) {
             return;
           }
@@ -112,10 +108,9 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
         return false;
       }
       final PsiElement element = referenceElement.resolve();
-      if (!(element instanceof PsiClass)) {
+      if (!(element instanceof PsiClass constructorClass)) {
         return false;
       }
-      final PsiClass constructorClass = (PsiClass)element;
       return !PsiTreeUtil.isAncestor(containingClass, constructorClass, false) ||
              constructorClass.hasModifierProperty(PsiModifier.STATIC);
     }
@@ -126,15 +121,13 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
         return false;
       }
       final PsiExpression lExpression = assignmentExpression.getLExpression();
-      if (!(lExpression instanceof PsiReferenceExpression)) {
+      if (!(lExpression instanceof PsiReferenceExpression leftExpression)) {
         return false;
       }
-      final PsiReferenceExpression leftExpression = (PsiReferenceExpression)lExpression;
       final PsiElement element = leftExpression.resolve();
-      if (!(element instanceof PsiField)) {
+      if (!(element instanceof PsiField field)) {
         return false;
       }
-      final PsiField field = (PsiField)element;
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         return true;
       }

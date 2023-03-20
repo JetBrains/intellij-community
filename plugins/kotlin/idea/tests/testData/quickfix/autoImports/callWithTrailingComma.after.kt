@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: Type mismatch: inferred type is Int but String was expected
 // ACTION: Add 'toString()' call
 // ACTION: Change parameter 'p' type of function 'foo' to 'Int'
@@ -17,3 +17,5 @@ class X {
         foo(<selection><caret></selection>p, )
     }
 }
+
+/* IGNORE_FIR */

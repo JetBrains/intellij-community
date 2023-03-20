@@ -23,9 +23,6 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
-/**
- * @author peter
- */
 @CompileStatic
 class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
 

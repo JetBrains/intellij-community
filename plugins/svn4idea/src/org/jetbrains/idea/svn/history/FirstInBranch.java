@@ -14,10 +14,11 @@ import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.format;
@@ -92,13 +93,13 @@ public class FirstInBranch {
   private void debug(@Nullable CopyData copyData) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Found branch point " +
-                join(immutableList(myAbsoluteTrunkUrl.toDecodedString(), myAbsoluteBranchUrl.toDecodedString(), copyData), ", "));
+                join(Arrays.asList(myAbsoluteTrunkUrl.toDecodedString(), myAbsoluteBranchUrl.toDecodedString(), copyData), ", "));
     }
   }
 
   private void debug(@NotNull BranchPoint trunk, @NotNull BranchPoint branch, boolean isBranchFromTrunk) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Searching branch point for " + join(immutableList(trunk, branch, isBranchFromTrunk), ", "));
+      LOG.debug("Searching branch point for " + join(List.of(trunk, branch, isBranchFromTrunk), ", "));
     }
   }
 

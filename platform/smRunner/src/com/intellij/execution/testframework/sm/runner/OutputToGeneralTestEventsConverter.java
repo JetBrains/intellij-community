@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ColoredOutputTypeRegistry;
@@ -6,12 +6,12 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.ServiceMessageUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent.NodePropertyKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.ParseException;
 import java.util.Map;
 
+import static com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor.logProblem;
 import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor.getTFrameworkPrefix;
 
 /**
@@ -100,8 +101,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
    *
    * @deprecated use {@link #processConsistentText(String, Key)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void processConsistentText(@NotNull final String text,
                                        final Key<?> outputType,
                                        @SuppressWarnings("unused") final boolean tcLikeFakeOutput) {
@@ -218,11 +218,17 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-
   private void fireRootPresentationAdded(String rootName, @Nullable String comment, String rootLocation) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onRootPresentationAdded(rootName, comment, rootLocation);
+    }
+  }
+
+  private void fireSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSetNodeProperty(event);
     }
   }
 
@@ -360,6 +366,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String SUITE_TREE_NODE = "suiteTreeNode";
     @NonNls private static final String BUILD_TREE_ENDED_NODE = "treeEnded";
     @NonNls private static final String ROOT_PRESENTATION = "rootName";
+    @NonNls private static final String SET_NODE_PROPERTY = "setNodeProperty";
 
     @NonNls private static final String ATTR_KEY_STATUS = "status";
     @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
@@ -558,66 +565,62 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         LOG.debug(msg.asString());
       }
 
-      if (TESTING_STARTED.equals(name)) {
-        // Since a test reporter may not emit "testingStarted"/"testingFinished" events,
-        // startTesting() is already invoked before starting processing messages.
-        if (!myFirstTestingStartedEvent) {
-          setupProcessor();
-          startTesting();
+      switch (name) {
+        case TESTING_STARTED -> {
+          // Since a test reporter may not emit "testingStarted"/"testingFinished" events,
+          // startTesting() is already invoked before starting processing messages.
+          if (!myFirstTestingStartedEvent) {
+            setupProcessor();
+            startTesting();
+          }
+          myFirstTestingStartedEvent = false;
         }
-        myFirstTestingStartedEvent = false;
-      }
-      else if (TESTING_FINISHED.equals(name)) {
-        finishTesting();
-      }
-      else if (KEY_TESTS_COUNT.equals(name)) {
-        processTestCountInSuite(msg);
-      }
-      else if (CUSTOM_STATUS.equals(name)) {
-        processCustomStatus(msg);
-      }
-      else if (MESSAGE.equals(name)) {
-        final Map<String, String> msgAttrs = msg.getAttributes();
+        case TESTING_FINISHED -> finishTesting();
+        case KEY_TESTS_COUNT -> processTestCountInSuite(msg);
+        case CUSTOM_STATUS -> processCustomStatus(msg);
+        case MESSAGE -> {
+          final Map<String, String> msgAttrs = msg.getAttributes();
+          final String text = msgAttrs.get(ATTR_KEY_TEXT);
+          if (!StringUtil.isEmpty(text)) {
+            // some other text
 
-        final String text = msgAttrs.get(ATTR_KEY_TEXT);
-        if (!StringUtil.isEmpty(text)) {
-          // some other text
-
-          // we cannot pass output type here but it is a service message
-          // let's think that is was stdout
-          fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+            // we cannot pass output type here but it is a service message
+            // let's think that is was stdout
+            fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+          }
         }
-      }
-      else if (TEST_REPORTER_ATTACHED.equals(name)) {
-        fireOnTestFrameworkAttached(TestDurationStrategyKt.getDurationStrategy(msg.getAttributes().get("durationStrategy")));
-      }
-      else if (SUITE_TREE_STARTED.equals(name)) {
-        fireOnSuiteTreeStarted(msg.getAttributes().get("name"),
-                               msg.getAttributes().get(ATTR_KEY_LOCATION_URL),
-                               BaseStartedNodeEvent.getMetainfo(msg),
-                               TreeNodeEvent.getNodeId(msg),
-                               msg.getAttributes().get("parentNodeId"));
-      }
-      else if (SUITE_TREE_ENDED.equals(name)) {
-        fireOnSuiteTreeEnded(msg.getAttributes().get("name"));
-      }
-      else if (SUITE_TREE_NODE.equals(name)) {
-        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"),
-                                 msg.getAttributes().get(ATTR_KEY_LOCATION_URL),
-                                 BaseStartedNodeEvent.getMetainfo(msg),
-                                 TreeNodeEvent.getNodeId(msg),
-                                 msg.getAttributes().get("parentNodeId"));
-      }
-      else if (BUILD_TREE_ENDED_NODE.equals(name)) {
-        fireOnBuildTreeEnded();
-      }
-      else if (ROOT_PRESENTATION.equals(name)) {
-        final Map<String, String> attributes = msg.getAttributes();
-        fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"), attributes.get("location"));
-      }
-      else {
-        GeneralTestEventsProcessor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
-        fireOnUncapturedOutput(msg.asString() + "\n", ProcessOutputTypes.STDOUT);
+        case TEST_REPORTER_ATTACHED ->
+          fireOnTestFrameworkAttached(TestDurationStrategyKt.getDurationStrategy(msg.getAttributes().get("durationStrategy")));
+        case SUITE_TREE_STARTED -> fireOnSuiteTreeStarted(msg.getAttributes().get("name"),
+                                                          msg.getAttributes().get(ATTR_KEY_LOCATION_URL),
+                                                          BaseStartedNodeEvent.getMetainfo(msg),
+                                                          TreeNodeEvent.getNodeId(msg),
+                                                          msg.getAttributes().get("parentNodeId"));
+        case SUITE_TREE_ENDED -> fireOnSuiteTreeEnded(msg.getAttributes().get("name"));
+        case SUITE_TREE_NODE -> fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"),
+                                                         msg.getAttributes().get(ATTR_KEY_LOCATION_URL),
+                                                         BaseStartedNodeEvent.getMetainfo(msg),
+                                                         TreeNodeEvent.getNodeId(msg),
+                                                         msg.getAttributes().get("parentNodeId"));
+        case BUILD_TREE_ENDED_NODE -> fireOnBuildTreeEnded();
+        case ROOT_PRESENTATION -> {
+          final Map<String, String> attributes = msg.getAttributes();
+          fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"), attributes.get("location"));
+        }
+        case SET_NODE_PROPERTY -> {
+          final NodePropertyKey propertyKey = TestSetNodePropertyEvent.getPropertyKey(msg);
+          final String propertyValue = TestSetNodePropertyEvent.getPropertyValue(msg);
+          if (propertyKey == null) {
+            logProblem(LOG, "Missing/Unknown property key: " + msg.asString(), myTestFrameworkName);
+          }
+          else {
+            fireSetNodeProperty(new TestSetNodePropertyEvent(TreeNodeEvent.getNodeId(msg), propertyKey, propertyValue));
+          }
+        }
+        default -> {
+          logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
+          fireOnUncapturedOutput(msg.asString() + "\n", ProcessOutputTypes.STDOUT);
+        }
       }
     }
 
@@ -656,14 +659,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       final Map<String, String> attrs = msg.getAttributes();
       final String msgType = attrs.get(ATTR_KEY_TEST_TYPE);
       if (msgType != null) {
-        if (msgType.equals(ATTR_VAL_TEST_STARTED)) {
-          fireOnCustomProgressTestStarted();
-        }
-        else if (msgType.equals(ATTR_VAL_TEST_FINISHED)) {
-          fireOnCustomProgressTestFinished();
-        }
-        else if (msgType.equals(ATTR_VAL_TEST_FAILED)) {
-          fireOnCustomProgressTestFailed();
+        switch (msgType) {
+          case ATTR_VAL_TEST_STARTED -> fireOnCustomProgressTestStarted();
+          case ATTR_VAL_TEST_FINISHED -> fireOnCustomProgressTestFinished();
+          case ATTR_VAL_TEST_FAILED -> fireOnCustomProgressTestFailed();
         }
         return;
       }

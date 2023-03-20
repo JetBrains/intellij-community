@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
@@ -40,15 +41,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   @Override
   public PsiManager getManager() {
     return getParent().getManager();
-  }
-
-  @Override
-  public PsiFile getContainingFile() {
-    PsiElement parent = getParent();
-    if (parent == null) {
-      throw new PsiInvalidElementAccessException(this);
-    }
-    return parent.getContainingFile();
   }
 
   @Override
@@ -222,7 +214,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     int pos = buffer.length();
     ((ClsElementImpl)stub).appendMirrorText(indentLevel, buffer);
     if (buffer.length() != pos) {
-      if (separator == NEXT_LINE) {
+      if (Strings.areSameInstance(separator, NEXT_LINE)) {
         goNextLine(indentLevel, buffer);
       }
       else {

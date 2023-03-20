@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -21,7 +21,7 @@ public final class RequiredArgsConstructorProcessor extends AbstractConstructorC
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     boolean result;
 
     result = super.validate(psiAnnotation, psiClass, builder);
@@ -37,13 +37,9 @@ public final class RequiredArgsConstructorProcessor extends AbstractConstructorC
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {
-      target.addAll(createRequiredArgsConstructor(psiClass, methodVisibility, psiAnnotation, getStaticConstructorName(psiAnnotation)));
+      target.addAll(
+        createRequiredArgsConstructor(psiClass, methodVisibility, psiAnnotation, getStaticConstructorName(psiAnnotation), false));
     }
-  }
-
-  @NotNull
-  public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, @Nullable String staticName) {
-    return createRequiredArgsConstructor(psiClass, methodModifier, psiAnnotation, staticName, false);
   }
 
   @NotNull

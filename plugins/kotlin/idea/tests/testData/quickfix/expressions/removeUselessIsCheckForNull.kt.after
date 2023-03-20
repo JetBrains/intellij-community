@@ -1,0 +1,7 @@
+// "Remove useless is check" "true"
+fun foo() {
+    if (false) {
+    }
+}
+
+/* IGNORE_FIR */

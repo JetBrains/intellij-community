@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * An internal interface to perform index search optimization based on scope.
  * It represents file enumeration which contains whole {@link GlobalSearchScope}
@@ -15,12 +17,13 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Internal
 public interface VirtualFileEnumeration {
-
   boolean contains(int fileId);
 
-  int[] asInts();
+  int @NotNull [] asArray();
 
-  @NotNull Iterable<VirtualFile> asIterable();
+  default @Nullable Collection<VirtualFile> getFilesIfCollection() {
+    return null;
+  }
 
   static @Nullable VirtualFileEnumeration extract(@NotNull GlobalSearchScope scope) {
     if (scope instanceof VirtualFileEnumeration) {

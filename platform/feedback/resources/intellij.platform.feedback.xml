@@ -1,25 +1,40 @@
 <idea-plugin package="com.intellij.feedback">
   <extensions defaultExtensionNs="com.intellij">
 
-    <applicationService serviceImplementation="com.intellij.feedback.state.projectCreation.ProjectCreationInfoService"/>
+    <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
 
-    <notificationGroup displayType="BALLOON" id="Project Creation Feedback" bundle="messages.FeedbackMessages"/>
+    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"
+                       key="notification.group.feedback"/>
 
-    <typedHandler implementation="com.intellij.feedback.track.active.EditorTypingEventTracker"/>
-    <editorFactoryMouseListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
-    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
+    <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
+    <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
 
-    <registryKey defaultValue="false" description="Enable to collect user feedback" key="platform.feedback"/>
-
-    <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector"/>
+    <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
+    <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
+                 description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.feedback.localization.service.LocalizationFeedbackStartupListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
-      <action id="com.intellij.feedback.TestShowNewProjectFeedbackDialogAction"
-              class="com.intellij.feedback.TestShowNewProjectFeedbackDialogAction"
-              text="Show New Project Feedback Dialog" internal="true"/>
+      <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
+              class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
+      <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
+              class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
+              internal="true"/>
+      <action id="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+              class="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+              internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
   </actions>

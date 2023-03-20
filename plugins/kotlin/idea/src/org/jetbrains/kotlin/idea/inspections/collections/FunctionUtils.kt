@@ -1,27 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.builtins.getFunctionalClassKind
+import org.jetbrains.kotlin.builtins.getFunctionTypeKind
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.model.ReceiverKotlinCallArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedLambdaAtom
 import org.jetbrains.kotlin.resolve.calls.model.unwrap
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.SubKotlinCallArgumentImpl
 import org.jetbrains.kotlin.resolve.calls.tower.receiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -29,19 +30,19 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-fun KotlinType.isFunctionOfAnyKind() = constructor.declarationDescriptor?.getFunctionalClassKind() != null
+fun KotlinType.isFunctionOfAnyKind() = constructor.declarationDescriptor?.getFunctionTypeKind() != null
 
-fun KotlinType?.isMap(builtIns: KotlinBuiltIns): Boolean {
+fun KotlinType?.isMap(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
     val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
     return classDescriptor.name.asString().endsWith("Map") && classDescriptor.isSubclassOf(builtIns.map)
 }
 
-fun KotlinType?.isIterable(builtIns: KotlinBuiltIns): Boolean {
+fun KotlinType?.isIterable(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
     val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
     return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.iterable)
 }
 
-fun KotlinType?.isCollection(builtIns: KotlinBuiltIns): Boolean {
+fun KotlinType?.isCollection(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean {
     val classDescriptor = this?.constructor?.declarationDescriptor as? ClassDescriptor ?: return false
     return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.collection)
 }
@@ -60,7 +61,7 @@ fun KtCallExpression.isCalling(fqNames: List<FqName>, context: BindingContext? =
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.isEmpty()) return false
-    val resolvedCall = getResolvedCall(context ?: analyze(BodyResolveMode.PARTIAL)) ?: return false
+    val resolvedCall = getResolvedCall(context ?: safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return false
     return targetFqNames.any { resolvedCall.isCalling(it) }
 }
 

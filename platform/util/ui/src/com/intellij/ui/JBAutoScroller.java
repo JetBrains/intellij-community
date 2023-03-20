@@ -51,8 +51,7 @@ public final class JBAutoScroller implements ActionListener {
       component.putClientProperty(SCROLL_HANDLER_KEY, handler);
     }
 
-    if (component instanceof JTable) {
-      JTable t = (JTable)component;
+    if (component instanceof JTable t) {
       new MoveTableCellEditorOnAutoscrollFix(t);
       new ScrollOnTableSelectionChangeFix(t, locker);
     }

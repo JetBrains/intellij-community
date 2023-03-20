@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitDisposable;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @deprecated To remove in IDEA 2017.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitTask {
 
   private static final Logger LOG = Logger.getInstance(GitTask.class);

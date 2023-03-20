@@ -5,13 +5,13 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.TreeBackedLighterAST;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullComputable;
@@ -20,7 +20,6 @@ import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,17 +34,17 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   private CharSequence myContentAsText;
   private byte[] myIndexedFileHash;
   private boolean myLighterASTShouldBeThreadSafe;
-  private final boolean myPhysicalContent;
+  private final boolean myTransientContent;
 
   private FileContentImpl(@NotNull VirtualFile file,
                           @NotNull FileType fileType,
                           @Nullable CharSequence contentAsText,
                           @NotNull NotNullComputable<byte[]> contentComputable,
-                          boolean physicalContent) {
+                          boolean transientContent) {
     super(file, fileType, null);
     myContentAsText = contentAsText;
     myContentComputable = contentComputable;
-    myPhysicalContent = physicalContent;
+    myTransientContent = transientContent;
   }
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
@@ -74,9 +73,6 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
 
   private PsiFile createFileFromText(@NotNull CharSequence text) {
     Project project = getProject();
-    if (project == null) {
-      project = DefaultProjectFactory.getInstance().getDefaultProject();
-    }
     FileType fileType = getFileTypeWithoutSubstitution(this);
     if (!(fileType instanceof LanguageFileType)) {
       throw new AssertionError("PSI can be created only for a file with LanguageFileType but actual is " + fileType.getClass() + "." +
@@ -102,13 +98,13 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
 
   public static @NotNull FileContent createByContent(@NotNull VirtualFile file, byte @NotNull [] content) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file, content);
-    return new FileContentImpl(file, fileType, null, () -> content, true);
+    return new FileContentImpl(file, fileType, null, () -> content, false);
   }
 
   public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file,
                                                          @NotNull NotNullComputable<byte[]> contentComputable) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
-    return new FileContentImpl(file, fileType, null, contentComputable, true);
+    return new FileContentImpl(file, fileType, null, contentComputable, false);
   }
 
   public static @NotNull FileContent createByContent(@NotNull VirtualFile file,
@@ -141,7 +137,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
                                                   () -> {
                                                     throw new IllegalStateException("Content must be converted from 'contentAsText'");
                                                   },
-                                                  false);
+                                                  true);
     if (project != null) {
       content.setProject(project);
     }
@@ -157,8 +153,8 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return charset;
   }
 
-  public boolean isPhysicalContent() {
-    return myPhysicalContent;
+  public boolean isTransientContent() {
+    return myTransientContent;
   }
 
   @Override
@@ -193,7 +189,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
         return content;
       }
       if (myContentAsText == null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile);
+        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile, false, false);
       }
       return myContentAsText;
     } finally {
@@ -208,7 +204,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   }
 
   public byte @Nullable [] getIndexedFileHash() {
-    if (!myPhysicalContent) {
+    if (myTransientContent) {
       throw new IllegalStateException("Hashes are allowed only while physical changes indexing");
     }
     return myIndexedFileHash;
@@ -221,7 +217,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   @Override
   @NotNull
   public PsiFile getPsiFile() {
-    if (!myPhysicalContent) {
+    if (myTransientContent) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
 
       if (document != null) {
@@ -229,23 +225,30 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
         if (psiDocumentManager.isUncommited(document)) {
           PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
           if (existingPsi != null) {
-            return existingPsi;
+            return checkPsiProjectConsistency(existingPsi);
           }
         }
       }
     }
     PsiFile explicitPsi = getUserData(IndexingDataKeys.PSI_FILE);
     if (explicitPsi != null) {
-      return explicitPsi;
+      return checkPsiProjectConsistency(explicitPsi);
     }
     PsiFile cachedPsi = getUserData(CACHED_PSI);
     if (cachedPsi != null) {
-      return cachedPsi;
+      return checkPsiProjectConsistency(cachedPsi);
     }
     PsiFile createdPsi = createFileFromText(getContentAsText());
     createdPsi.putUserData(IndexingDataKeys.VIRTUAL_FILE, getFile());
     putUserData(CACHED_PSI, createdPsi);
-    return createdPsi;
+    return checkPsiProjectConsistency(createdPsi);
+  }
+
+  private @NotNull PsiFile checkPsiProjectConsistency(@NotNull PsiFile file) {
+    if (!file.getProject().equals(getProject())) {
+      Logger.getInstance(FileContentImpl.class).error("psi file's project is not equal to file content's project");
+    }
+    return file;
   }
 
   @ApiStatus.Internal

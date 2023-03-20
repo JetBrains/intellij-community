@@ -3,76 +3,87 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.ide.plugins.newui.VerticalLayout
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.scale.JBUIScale
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingSubmittableTextFieldModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.submitAction
+import java.awt.BorderLayout
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
-import javax.swing.text.BadLocationException
-import javax.swing.text.Utilities
+import javax.swing.JPanel
 
-internal open class GHEditableHtmlPaneHandle(private val project: Project,
-                                             private val editorPane: HtmlEditorPane,
-                                             private val loadSource: () -> CompletableFuture<String>,
-                                             private val updateText: (String) -> CompletableFuture<out Any?>) {
+internal class GHEditableHtmlPaneHandle(private val project: Project,
+                                        private val paneComponent: JComponent,
+                                        maxEditorWidth: Int? = null,
+                                        private val getSourceText: () -> String,
+                                        private val updateText: (String) -> CompletableFuture<out Any?>) {
 
-  val panel = NonOpaquePanel(VerticalLayout(JBUIScale.scale(8))).apply {
-    add(wrapEditorPane(editorPane))
+  constructor(project: Project, paneComponent: JComponent, getSourceText: () -> String, updateText: (String) -> CompletableFuture<out Any?>)
+    : this(project, paneComponent, null, getSourceText, updateText)
+
+  private val editorPaneLayout = SizeRestrictedSingleComponentLayout.constant(maxWidth = maxEditorWidth)
+
+  val panel = JPanel(null).apply {
+    isOpaque = false
   }
-
-  protected open fun wrapEditorPane(editorPane: HtmlEditorPane): JComponent = editorPane
 
   private var editor: JComponent? = null
 
+  init {
+    hideEditor()
+  }
+
   fun showAndFocusEditor() {
     if (editor == null) {
-      val placeHolderText = StringUtil.repeatSymbol('\n', Integer.max(0, getLineCount() - 1))
-
-      val model = GHPreLoadingSubmittableTextFieldModel(project, placeHolderText, loadSource()) { newText ->
+      val model = GHCommentTextFieldModel(project, getSourceText()) { newText ->
         updateText(newText).successOnEdt {
           hideEditor()
         }
       }
 
-      editor = GHSubmittableTextFieldFactory(model).create(CommonBundle.message("button.submit"), onCancel = {
+      val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
+
+      val cancelAction = swingAction(CommonBundle.getCancelButtonText()) {
         hideEditor()
-      })
-      panel.add(editor!!, VerticalLayout.FILL_HORIZONTAL)
-      panel.validate()
-      panel.repaint()
+      }
+
+      val actions = CommentInputActionsComponentFactory.Config(
+        primaryAction = MutableStateFlow(model.submitAction(GithubBundle.message("pull.request.comment.save"))),
+        cancelAction = MutableStateFlow(cancelAction),
+        submitHint = MutableStateFlow(GithubBundle.message("pull.request.comment.save.hint", submitShortcutText))
+      )
+
+      editor = GHCommentTextFieldFactory(model).create(actions)
+      panel.remove(paneComponent)
+      with(panel) {
+        layout = editorPaneLayout
+        add(editor!!)
+        revalidate()
+        repaint()
+      }
     }
 
-    editor?.let { GHUIUtil.focusPanel(it) }
+    editor?.let {
+      CollaborationToolsUIUtil.focusPanel(it)
+    }
   }
 
   private fun hideEditor() {
     editor?.let {
       panel.remove(it)
-      panel.revalidate()
-      panel.repaint()
+    }
+    with(panel) {
+      layout = BorderLayout()
+      add(paneComponent, BorderLayout.CENTER)
+      revalidate()
+      repaint()
     }
     editor = null
-  }
-
-  private fun getLineCount(): Int {
-    if (editorPane.document.length == 0) return 0
-    var lineCount = 0
-    var offset = 0
-    while (true) {
-      try {
-        offset = Utilities.getRowEnd(editorPane, offset) + 1
-        lineCount++
-      }
-      catch (e: BadLocationException) {
-        break
-      }
-    }
-    return lineCount
   }
 }

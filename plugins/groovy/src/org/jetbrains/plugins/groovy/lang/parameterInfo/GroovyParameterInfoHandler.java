@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +41,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
   private static final Logger LOG = Logger.getInstance(GroovyParameterInfoHandler.class);
 
@@ -57,7 +55,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public GroovyPsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
-    return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    GroovyPsiElement place = findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    if (place == null) {
+      return null;
+    }
+    final List<Object> itemsToShow = collectParameterInfo(place);
+    context.setItemsToShow(ArrayUtil.toObjectArray(itemsToShow));
+    return place;
   }
 
   @Override
@@ -87,11 +91,16 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, @NotNull CreateParameterInfoContext context) {
+    context.showHint(place, place.getTextRange().getStartOffset(), this);
+  }
+
+  @NotNull
+  @RequiresBackgroundThread
+  private static List<Object> collectParameterInfo(@NotNull GroovyPsiElement place) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
 
-    final List elementToShow = new ArrayList();
+    final List<Object> elementToShow = new ArrayList<>();
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
@@ -112,10 +121,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     else {
       elementToShow.addAll(Arrays.asList(variants));
     }
-    
+
     filterOutReflectedMethods(elementToShow);
-    context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
-    context.showHint(place, place.getTextRange().getStartOffset(), this);
+    return elementToShow;
   }
 
   private static void addMethodAndClosureVariants(@NotNull List<Object> elementToShow, GroovyResolveResult @NotNull [] variants) {
@@ -174,8 +182,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiType[] parameterTypes = null;
       PsiType[] argTypes = null;
       PsiSubstitutor substitutor = null;
-      if (objects[i] instanceof GroovyResolveResult) {
-        final GroovyResolveResult resolveResult = (GroovyResolveResult)objects[i];
+      if (objects[i] instanceof GroovyResolveResult resolveResult) {
         PsiNamedElement namedElement = (PsiNamedElement)resolveResult.getElement();
         if (namedElement instanceof GrReflectedMethod) namedElement = ((GrReflectedMethod)namedElement).getBaseMethod();
 
@@ -185,8 +192,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           context.setUIComponentEnabled(i, false);
           continue Outer;
         }
-        if (namedElement instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)namedElement;
+        if (namedElement instanceof PsiMethod method) {
           PsiParameter[] parameters = method.getParameterList().getParameters();
           parameters = updateConstructorParams(method, parameters, context.getParameterOwner());
           parameterTypes = PsiType.createArray(parameters.length);
@@ -197,8 +203,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
         if (argTypes == null) continue;
       }
-      else if (objects[i] instanceof GrSignature) {
-        final GrSignature signature = (GrSignature)objects[i];
+      else if (objects[i] instanceof GrSignature signature) {
         argTypes = PsiUtil.getArgumentTypes(place, false);
         parameterTypes = PsiType.createArray(signature.getParameterCount());
         int j = 0;
@@ -233,8 +238,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
-    if (place instanceof GrArgumentList) {
-      GrArgumentList list = (GrArgumentList)place;
+    if (place instanceof GrArgumentList list) {
 
       int idx = (list.getNamedArguments().length > 0) ? 1 : 0;
       for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -289,8 +293,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     StringBuilder buffer = new StringBuilder();
 
 
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+    if (element instanceof PsiMethod method) {
       if (method instanceof GrReflectedMethod) method = ((GrReflectedMethod)method).getBaseMethod();
 
       if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO) {
@@ -401,8 +404,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void appendParameterText(PsiParameter param, PsiSubstitutor substitutor, StringBuilder buffer) {
-    if (param instanceof GrParameter) {
-      GrParameter grParam = (GrParameter)param;
+    if (param instanceof GrParameter grParam) {
       GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, TypePresentation.PRESENTABLE, buffer, false);
 
       final GrExpression initializer = grParam.getInitializerGroovy();

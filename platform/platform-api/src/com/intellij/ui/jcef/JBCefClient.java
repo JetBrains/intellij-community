@@ -1,13 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.jcef.JBCefJSQuery.JSQueryFunc;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
@@ -16,6 +15,7 @@ import org.cef.callback.*;
 import org.cef.handler.*;
 import org.cef.misc.BoolRef;
 import org.cef.network.CefRequest;
+import org.cef.security.CefSSLInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,15 +41,18 @@ public final class JBCefClient implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  public static class Properties {
+  public static final class Properties {
     /**
      * Defines the size of the pool used by {@link JBCefJSQuery} after a native browser has been created.
      * <p>
-     * Accepts {@link Integer} values. JCEF does not allow to register new JavaScript queries after a native browser
-     * has been created. To workaround this limitation a pool of JS query slots can be reserved ahead. One slot
+     * Accepts {@link Integer} values. JCEF does not allow registering new JavaScript queries after a native browser
+     * has been created. To work around this limitation a pool of JS query slots can be reserved ahead. One slot
      * corresponds to a single {@link JBCefJSQuery} instance. The pool is not created by default unless it is explicitly
      * requested via this property. The property should be added to a client before the first browser associated
      * with the client is added to a UI hierarchy, otherwise it will have no effect.
+     * <p>
+     * When a {@link JBCefJSQuery} is disposed, its JS query function ({@link JBCefJSQuery#getFuncName}) is returned
+     * to the pool as a free slot and is then reused by a newly created {@link JBCefJSQuery}.
      */
     public static final @NotNull String JS_QUERY_POOL_SIZE = "JBCefClient.JSQuery.poolSize";
 
@@ -74,7 +77,7 @@ public final class JBCefClient implements JBCefDisposable {
   private final HandlerSupport<CefDisplayHandler> myDisplayHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDownloadHandler> myDownloadHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDragHandler> myDragHandler = new HandlerSupport<>();
-  private final HandlerSupport<CefMediaAccessHandler> myMediaAccessHandler = new HandlerSupport<>();
+  private final HandlerSupport<CefPermissionHandler> myPermissionHandler = new HandlerSupport<>();
   private final HandlerSupport<CefFocusHandler> myFocusHandler = new HandlerSupport<>();
   private final HandlerSupport<CefJSDialogHandler> myJSDialogHandler = new HandlerSupport<>();
   private final HandlerSupport<CefKeyboardHandler> myKeyboardHandler = new HandlerSupport<>();
@@ -96,7 +99,7 @@ public final class JBCefClient implements JBCefDisposable {
     };
     addPropertyChangeListener(Properties.JS_QUERY_POOL_SIZE, evt -> {
       if (evt.getNewValue() != null) {
-        createPool.run();
+        createPool.run(); // no need to sync it as the property change firing is sync'ed
       }
     });
     if (JS_QUERY_POOL_DEFAULT_SIZE > 0) {
@@ -172,8 +175,8 @@ public final class JBCefClient implements JBCefDisposable {
   }
 
   static class JSQueryPool {
-    private final JSQueryFunc[] pool;
-    private int currentFreeSlot;
+    private final List<JSQueryFunc> myPool;
+    private final int mySizeLimit;
 
     @Nullable
     static JSQueryPool create(@NotNull JBCefClient client) {
@@ -186,19 +189,25 @@ public final class JBCefClient implements JBCefDisposable {
     }
 
     JSQueryPool(@NotNull JBCefClient client, int poolSize) {
-      pool = new JSQueryFunc[poolSize];
-      for (int i = 0; i < pool.length; i++) {
-        pool[i] = new JSQueryFunc(client, i, true);
+      mySizeLimit = poolSize;
+      myPool = Collections.synchronizedList(new LinkedList<>());
+      // populate all the slots ahead
+      for (int i = 0; i < poolSize; i++) {
+        myPool.add(i, new JSQueryFunc(client, i, true));
       }
     }
 
     @Nullable
-    public JSQueryFunc getFreeSlot() {
-      if (currentFreeSlot >= pool.length) {
-        LOG.warn("JavaScript query pool is over [size: " + pool.length + "]", new Throwable());
+    public JSQueryFunc useFreeSlot() {
+      if (myPool.isEmpty()) {
+        LOG.warn("JavaScript query pool is over [size: " + mySizeLimit + "]", new Throwable());
         return null;
       }
-      return pool[currentFreeSlot++];
+      return myPool.remove(0);
+    }
+
+    public void releaseUsedSlot(@NotNull JSQueryFunc func) {
+      myPool.add(func);
     }
   }
 
@@ -246,10 +255,9 @@ public final class JBCefClient implements JBCefDisposable {
                                     String title,
                                     String defaultFilePath,
                                     Vector<String> acceptFilters,
-                                    int selectedAcceptFilter,
                                     CefFileDialogCallback callback) {
           return myDialogHandler.handleBoolean(browser, handler -> {
-            return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, selectedAcceptFilter, callback);
+            return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, callback);
           });
         }
       });
@@ -356,9 +364,9 @@ public final class JBCefClient implements JBCefDisposable {
     myDragHandler.remove(handler, browser, () -> myCefClient.removeDragHandler());
   }
 
-  public JBCefClient addMediaAccessHandler(@NotNull CefMediaAccessHandler handler, @NotNull CefBrowser browser) {
-    return myMediaAccessHandler.add(handler, browser, () -> {
-      myCefClient.addMediaAccessHandler(new CefMediaAccessHandler() {
+  public JBCefClient addPermissionHandler(@NotNull CefPermissionHandler handler, @NotNull CefBrowser browser) {
+    return myPermissionHandler.add(handler, browser, () -> {
+      myCefClient.addPermissionHandler(new CefPermissionHandler() {
 
         @Override
         public boolean onRequestMediaAccessPermission(CefBrowser browser,
@@ -366,9 +374,10 @@ public final class JBCefClient implements JBCefDisposable {
                                                       String requesting_url,
                                                       int requested_permissions,
                                                       CefMediaAccessCallback callback) {
-          return myMediaAccessHandler.handle(browser, handler -> {
+          Boolean res = myPermissionHandler.handle(browser, handler -> {
             return handler.onRequestMediaAccessPermission(browser, frame, requesting_url, requested_permissions, callback);
           });
+          return ObjectUtils.notNull(res, false);
         }
       });
     });
@@ -604,7 +613,7 @@ public final class JBCefClient implements JBCefDisposable {
         }
 
         @Override
-        public boolean onQuotaRequest(CefBrowser browser, String origin_url, long new_size, CefRequestCallback callback) {
+        public boolean onQuotaRequest(CefBrowser browser, String origin_url, long new_size, CefCallback callback) {
           return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.onQuotaRequest(browser, origin_url, new_size, callback);
           });
@@ -614,17 +623,19 @@ public final class JBCefClient implements JBCefDisposable {
         public boolean onCertificateError(CefBrowser browser,
                                           CefLoadHandler.ErrorCode cert_error,
                                           String request_url,
-                                          CefRequestCallback callback) {
-          return myRequestHandler.handleBoolean(browser, handler -> {
-            return handler.onCertificateError(browser, cert_error, request_url, callback);
-          });
-        }
+                                          CefSSLInfo sslInfo,
+                                          CefCallback callback) {
+          List<CefRequestHandler> handlers = myRequestHandler.get(browser);
+          if (handlers == null) {
+            return false;
+          }
 
-        @Override
-        public void onPluginCrashed(CefBrowser browser, String pluginPath) {
-          myRequestHandler.handle(browser, handler -> {
-            handler.onPluginCrashed(browser, pluginPath);
-          });
+          boolean result = false;
+          for (CefRequestHandler handler: handlers) {
+            result |= handler.onCertificateError(browser, cert_error, request_url, sslInfo, callback);
+          }
+
+          return result;
         }
 
         @Override

@@ -19,9 +19,6 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = (t1, t2) -> {
     Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();
@@ -72,8 +69,7 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
       ExternalSystemNode<?> child = root.getChildAt(i);
       ExternalSystemNodeDescriptor<?> descriptor = child.getDescriptor();
       Object element = descriptor.getElement();
-      if (element instanceof ExternalProjectPojo) {
-        ExternalProjectPojo pojo = (ExternalProjectPojo)element;
+      if (element instanceof ExternalProjectPojo pojo) {
         if (pojo.getPath().equals(project.getPath())) {
           if (!pojo.getName().equals(project.getName())) {
             pojo.setName(project.getName());

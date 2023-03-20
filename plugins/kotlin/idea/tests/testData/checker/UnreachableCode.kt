@@ -1,3 +1,5 @@
+// LANGUAGE_VERSION: 1.6
+
 fun t1() : Int{
   return 0
   <warning>1</warning>
@@ -66,12 +68,12 @@ fun t5() : Int {
     return 1
     <warning>2</warning>
   }
-  while (<warning>1 > 2</warning>)
+  while (<warning><warning>1 > 2</warning></warning>)
   <warning>return 1</warning>
 }
 
 fun t6() : Int {
-  while (1 > 2) {
+  while (<warning>1 > 2</warning>) {
     return 1
     <warning>2</warning>
   }
@@ -79,7 +81,7 @@ fun t6() : Int {
 }
 
 fun t6break() : Int {
-  while (1 > 2) {
+  while (<warning>1 > 2</warning>) {
     break
     <warning>2</warning>
   }

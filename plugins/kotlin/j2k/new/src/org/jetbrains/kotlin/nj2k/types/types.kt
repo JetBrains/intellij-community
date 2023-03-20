@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.types
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
@@ -91,14 +91,12 @@ class JKJavaPrimitiveType private constructor(override val jvmPrimitiveType: Jvm
 
         val ALL = listOf(BOOLEAN, CHAR, BYTE, SHORT, INT, FLOAT, LONG, DOUBLE)
 
-        @Suppress("UnstableApiUsage")
         private val psiKindToJK =
             ALL.associateBy { JvmPrimitiveTypeKind.getKindByName(it.jvmPrimitiveType.javaKeywordName) }
 
-        @Suppress("UnstableApiUsage")
         fun fromPsi(psi: PsiPrimitiveType) = when (psi) {
-            PsiType.VOID -> JKJavaVoidType
-            PsiType.NULL -> JKJavaNullPrimitiveType
+            PsiTypes.voidType() -> JKJavaVoidType
+            PsiTypes.nullType() -> JKJavaNullPrimitiveType
             else -> psiKindToJK[psi.kind] ?: error("Invalid PSI type ${psi.presentableText}")
         }
     }

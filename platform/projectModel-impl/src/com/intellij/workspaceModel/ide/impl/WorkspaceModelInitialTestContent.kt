@@ -2,22 +2,23 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.util.PlatformUtils
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 object WorkspaceModelInitialTestContent {
-  private val initialContent: AtomicReference<WorkspaceEntityStorage?> = AtomicReference(null)
+  private val initialContent: AtomicReference<EntityStorageSnapshot?> = AtomicReference(null)
 
   @Volatile
   var hasInitialContent = false
     private set
 
-  fun peek(): WorkspaceEntityStorage? = initialContent.get()
-  internal fun pop(): WorkspaceEntityStorage? = initialContent.getAndSet(null)
+  fun peek(): EntityStorageSnapshot? = initialContent.get()
+  internal fun pop(): EntityStorageSnapshot? = initialContent.getAndSet(null)
 
   @TestOnly
-  fun <R> withInitialContent(storage: WorkspaceEntityStorage, block: () -> R): R {
+  fun <R> withInitialContent(storage: EntityStorageSnapshot, block: () -> R): R {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       error("For test purposes only")
     }
@@ -26,12 +27,19 @@ object WorkspaceModelInitialTestContent {
       error("Initial content was already registered")
     }
 
+    val previousPropertyValue = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
+    if (storage !== EntityStorageSnapshot.empty()) {
+      System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.IDEA_CE_PREFIX)
+    }
     hasInitialContent = true
     try {
       return block()
     }
     finally {
       hasInitialContent = false
+      if (storage !== EntityStorageSnapshot.empty()) {
+        System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, previousPropertyValue)
+      }
       if (initialContent.getAndSet(null) != null) {
         error("Initial content was not used")
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.test
 
@@ -30,7 +30,7 @@ fun buildTestSuite(
                 desc: String,
                 signature: String?,
                 exceptions: Array<out String>?
-            ): MethodVisitor? = object : MethodNode(API_VERSION, access, name, desc, signature, exceptions) {
+            ): MethodVisitor = object : MethodNode(API_VERSION, access, name, desc, signature, exceptions) {
                 override fun visitEnd() {
                     val testCase = buildTestCase(ownerClass, this, create)
                     if (testCase != null) {

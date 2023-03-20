@@ -20,8 +20,8 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
     workingDirToBuildId.clear()
   }
 
-  val workingDirToBuildId: MutableMap<String, Any> = mutableMapOf()
-  val buildIdToFileProblems: MutableMap<Any, MutableSet<FileBuildProblem>> = mutableMapOf()
+  private val workingDirToBuildId: MutableMap<String, Any> = mutableMapOf()
+  private val buildIdToFileProblems: MutableMap<Any, MutableSet<FileBuildProblem>> = mutableMapOf()
 
   fun listenToBuildView(buildProgressObservable: BuildProgressObservable) {
     val collector = project.service<ProblemsCollector>()

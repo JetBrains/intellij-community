@@ -1,4 +1,4 @@
-// "Remove switch branch 'default'" "true"
+// "Remove switch branch 'default'" "true-preview"
 enum Day {
     MONDAY, TUESDAY, WEDNESDAY
 }

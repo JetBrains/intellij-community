@@ -128,7 +128,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         VFileEvent changeEvent = ContainerUtil.find(events, event -> event instanceof VFilePropertyChangeEvent
-                 && ((VFilePropertyChangeEvent)event).getPropertyName() == VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY
+                 && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY)
                  && dir.equals(event.getFile())
                  && ((VFilePropertyChangeEvent)event).getNewValue() == FileAttributes.CaseSensitivity.SENSITIVE);
         if (changeEvent != null) {

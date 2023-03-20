@@ -4,7 +4,6 @@ package com.intellij.notification.impl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +23,6 @@ public class NotificationsToolWindowNotificationListener implements Notification
 
   @Override
   public void notify(@NotNull Notification notification) {
-    if (Registry.is("ide.notification.action.center", false) && notification.canShowFor(myProject)) {
-      NotificationsToolWindowKt.addNotification(myProject, notification);
-    }
+    NotificationsToolWindowFactory.Companion.addNotification(myProject, notification);
   }
 }

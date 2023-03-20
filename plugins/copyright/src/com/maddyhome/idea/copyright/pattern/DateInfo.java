@@ -54,7 +54,6 @@ public class DateInfo
 
     /**
      * Support for hour24 property: the current hour (0-23).
-     * @return
      */
     @SuppressWarnings("unused")
     public int getHour24()

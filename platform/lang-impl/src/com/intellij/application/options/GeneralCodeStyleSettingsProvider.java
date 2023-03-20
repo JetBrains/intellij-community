@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
 public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
+  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.general")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new GeneralCodeStylePanel(settings);
       }
 

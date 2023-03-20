@@ -9,3 +9,12 @@ urllib.parse.parse_qs
 urllib.parse.parse_qsl
 
 os.startfile
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.WindowsPath.group
+pathlib.WindowsPath.owner

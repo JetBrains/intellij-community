@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingMode
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -32,18 +32,19 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_TOTAL;
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryDefaultInspection extends BaseInspection {
 
@@ -56,11 +57,10 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       "unnecessary.default.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.default.expressions.option"),
-                                          this, "onlyReportSwitchExpressions");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportSwitchExpressions", InspectionGadgetsBundle.message("unnecessary.default.expressions.option")));
   }
 
   @Nullable
@@ -78,13 +78,13 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (element instanceof PsiSwitchLabelStatementBase) {
-        DeleteSwitchLabelFix.deleteLabel((PsiSwitchLabelStatementBase)element);
+      if (element instanceof PsiSwitchLabelStatementBase label) {
+        DeleteSwitchLabelFix.deleteLabel(label);
       }
-      else if (element instanceof PsiDefaultCaseLabelElement) {
-        DeleteSwitchLabelFix.deleteLabelElement(((PsiDefaultCaseLabelElement)element));
+      else if (element instanceof PsiDefaultCaseLabelElement defaultElement) {
+        DeleteSwitchLabelFix.deleteLabelElement(project, defaultElement);
       }
     }
   }
@@ -102,7 +102,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
   private class UnnecessaryDefaultVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       checkSwitchBlock(expression);
     }
@@ -120,7 +120,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       }
       PsiSwitchLabeledRuleStatement ruleStatement = null;
       if (defaultStatement instanceof PsiSwitchLabeledRuleStatement) {
-        ruleStatement = ((PsiSwitchLabeledRuleStatement)defaultStatement);
+        ruleStatement = (PsiSwitchLabeledRuleStatement)defaultStatement;
       }
       else if (defaultStatement instanceof PsiDefaultCaseLabelElement) {
         PsiSwitchLabelStatementBase pDefaultStatement = PsiTreeUtil.getParentOfType(defaultStatement, PsiSwitchLabelStatementBase.class);
@@ -143,7 +143,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       while (nextStatement != null) {
         if (statementSwitch && !ControlFlowUtils.statementMayCompleteNormally(nextStatement)) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(switchBlock, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-          if (method != null && !PsiType.VOID.equals(method.getReturnType()) &&
+          if (method != null && !PsiTypes.voidType().equals(method.getReturnType()) &&
               !ControlFlowUtils.statementContainsNakedBreak(nextStatement)) {
             final PsiCodeBlock body = method.getBody();
             assert body != null;
@@ -176,13 +176,12 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
 
   private static boolean isDefaultNeededForInitializationOfVariable(PsiSwitchBlock switchBlock) {
     final Collection<PsiReferenceExpression> expressions = PsiTreeUtil.findChildrenOfType(switchBlock, PsiReferenceExpression.class);
-    final Set<PsiElement> checked = new THashSet<>();
+    final Set<PsiElement> checked = new HashSet<>();
     for (PsiReferenceExpression expression : expressions) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-      if (!(parent instanceof PsiAssignmentExpression)) {
+      if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
         continue;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       if (JavaTokenType.EQ != assignmentExpression.getOperationTokenType()) {
         continue;
       }
@@ -255,6 +254,6 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
       return null;
     }
     final CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchBlock);
-    return completenessResult == COMPLETE_WITHOUT_TOTAL ? result : null;
+    return completenessResult == COMPLETE_WITHOUT_UNCONDITIONAL ? result : null;
   }
 }

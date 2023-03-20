@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.config.Storage;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +42,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   private boolean myPrintTestingStartedTime = true;
 
   /**
-   * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit". 
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit".
    *                          Is used to distinguish problems of different test frameworks in logged exceptions
-   * @param executor
    */
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NlsSafe @NotNull String testFrameworkName, @NotNull Executor executor) {
     this(config.getProject(), config, testFrameworkName, executor);
@@ -67,7 +64,6 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * @deprecated Fix your runner and stop adding "\n" before TC message.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean serviceMessageHasNewLinePrefix() {
     return false;
   }

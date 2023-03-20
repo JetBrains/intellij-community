@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "n: Int"
 
 package pack
 
@@ -27,4 +28,6 @@ fun List<A>.ext1() {
 
 fun <T> T.getThis(): T = this
 
-// FIR_IGNORE
+
+
+// IGNORE_FIR_LOG

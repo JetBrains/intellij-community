@@ -3,5 +3,6 @@
   "mainFile": "test/JavaClient.java",
   "newName": "Foo",
   "withRuntime": "true",
-  "byRef": "true"
+  "byRef": "true",
+  "enabledInK2": true
 }

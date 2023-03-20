@@ -44,4 +44,12 @@ public class ExpandedItemListCellRendererWrapper<T> implements ListCellRenderer<
   public ListCellRenderer getWrappee() {
     return myWrappee;
   }
+
+  public static <T> ListCellRenderer<T> unwrap(ListCellRenderer<T> renderer) {
+    if (renderer instanceof ExpandedItemListCellRendererWrapper wrapper) {
+      //noinspection unchecked
+      return wrapper.getWrappee();
+    }
+    return renderer;
+  }
 }

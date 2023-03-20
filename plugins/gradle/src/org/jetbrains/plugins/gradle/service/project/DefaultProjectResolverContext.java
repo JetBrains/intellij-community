@@ -18,6 +18,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.Build;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
@@ -199,6 +200,20 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Override
   public String getBuildSrcGroup() {
     return myBuildSrcGroup;
+  }
+
+  @Nullable
+  @Override
+  public String getBuildSrcGroup(@NotNull IdeaModule module) {
+    if (!"buildSrc".equals(module.getProject().getName())) {
+      return myBuildSrcGroup;
+    }
+    String parentRootDir = module.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir().getParent();
+    return getModels().getAllBuilds().stream()
+      .filter(b -> b.getBuildIdentifier().getRootDir().toString().equals(parentRootDir))
+      .findFirst()
+      .map(Build::getName)
+      .orElse(myBuildSrcGroup);
   }
 
   @Override

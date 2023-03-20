@@ -18,11 +18,11 @@ package com.intellij.codeInsight.generation;
 import org.apache.velocity.exception.ResourceNotFoundException;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
-import java.io.InputStream;
+import java.io.Reader;
 
 public class VelocityIncludesClassLoader extends ClasspathResourceLoader {
   @Override
-  public InputStream getResourceStream(String name) throws ResourceNotFoundException {
-    return super.getResourceStream("com/intellij/codeInsight/generation/" + name);
+  public Reader getResourceReader(String name, String encoding) throws ResourceNotFoundException {
+    return super.getResourceReader("com/intellij/codeInsight/generation/" + name, encoding);
   }
 }

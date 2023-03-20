@@ -4,10 +4,7 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmMethod
-import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.JvmParameter
+import com.intellij.lang.jvm.*
 import com.intellij.openapi.extensions.ExtensionPointName
 
 val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create(
@@ -38,11 +35,26 @@ fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationReq
   }
 }
 
+fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                           attributeIndex: Int,
+                                           request: AnnotationAttributeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeAnnotationAttributeActions(annotation, attributeIndex, request)
+  }
+}
+
 fun createModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
   return createActions {
     it.createChangeModifierActions(target, request)
   }
 }
+
+fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
+  return createActions {
+    it.createChangeOverrideActions(target, shouldBePresent)
+  }
+}
+
 
 fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
   return createActions {

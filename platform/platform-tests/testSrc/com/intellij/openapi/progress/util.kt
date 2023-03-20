@@ -1,84 +1,109 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
+import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import junit.framework.TestCase.*
 import kotlinx.coroutines.*
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
-private const val TIMEOUT_MS: Long = 1000
+const val TEST_TIMEOUT_MS: Long = 1000
 
-fun submitTasks(service: ExecutorService, task: () -> Unit) {
-  service.execute(task)
-  service.submit(task)
-}
-
-fun submitTasksBlocking(service: ExecutorService, task: () -> Unit) {
-  val callable = Callable(task)
-  val callables = listOf(callable, callable)
-  service.invokeAny(callables) // one of callables may not be executed
-  service.invokeAll(callables)
+fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
+  runBlocking {
+    try {
+      withTimeout(TEST_TIMEOUT_MS, action)
+    }
+    catch (e: TimeoutCancellationException) {
+      println(dumpCoroutines())
+      throw e
+    }
+  }
 }
 
 fun neverEndingStory(): Nothing {
   while (true) {
-    ProgressManager.checkCanceled()
+    Cancellation.checkCancelled()
     Thread.sleep(1)
   }
 }
 
 fun withRootJob(action: (rootJob: Job) -> Unit): Job {
-  return CoroutineScope(Dispatchers.Default).async {
-    withJob {
-      action(coroutineContext.job)
+  @OptIn(DelicateCoroutinesApi::class)
+  return GlobalScope.async {
+    blockingContext {
+      val currentJob = requireNotNull(Cancellation.currentJob())
+      action(currentJob)
     }
   }
 }
 
-fun Semaphore.waitUp(): Unit = assertTrue(waitFor(TIMEOUT_MS))
+fun Semaphore.timeoutWaitUp() {
+  assertTrue(waitFor(TEST_TIMEOUT_MS))
+}
 
-fun <X> Future<X>.waitGet(): X = get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+suspend fun KSemaphore.timeoutAcquire() {
+  withTimeout(TEST_TIMEOUT_MS) {
+    acquire()
+  }
+}
+
+fun <X> Future<X>.timeoutGet(): X {
+  return get(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+}
 
 fun waitAssertCompletedNormally(future: Future<*>) {
-  future.waitGet()
+  future.timeoutGet()
   assertTrue(future.isDone)
   assertFalse(future.isCancelled)
 }
 
 fun waitAssertCompletedWith(future: Future<*>, clazz: KClass<out Throwable>) {
-  try {
-    future.waitGet()
-    fail("ExecutionException expected")
+  val ee = assertThrows<ExecutionException> {
+    future.timeoutGet()
   }
-  catch (e: ExecutionException) {
-    assertInstanceOf(e.cause, clazz.java)
-  }
+  assertInstanceOf(clazz.java, ee.cause)
 }
 
 fun waitAssertCompletedWithCancellation(future: Future<*>) {
   waitAssertCompletedWith(future, CancellationException::class)
 }
 
-fun Job.waitJoin(): Unit = runBlocking {
-  join()
-  withTimeout(TIMEOUT_MS) {
+fun Job.timeoutJoinBlocking(): Unit = runBlocking {
+  timeoutJoin()
+}
+
+suspend fun Job.timeoutJoin() {
+  withTimeout(TEST_TIMEOUT_MS) {
+    join()
+  }
+}
+
+suspend fun <T> Deferred<T>.timeoutAwait(): T {
+  return withTimeout(TEST_TIMEOUT_MS) {
+    await()
   }
 }
 
 fun waitAssertCompletedNormally(job: Job) {
-  job.waitJoin()
+  job.timeoutJoinBlocking()
   assertFalse(job.isCancelled)
 }
 
 fun waitAssertCancelled(job: Job) {
-  job.waitJoin()
+  job.timeoutJoinBlocking()
   assertTrue(job.isCancelled)
 }
 
@@ -103,18 +128,78 @@ fun loggedError(canThrow: Semaphore): Throwable {
   }
   try {
     LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable, details: Array<out String>): Boolean {
-        throwable = t
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        throwable = t!!
         gotIt.up()
-        return false
+        return Action.NONE
       }
     }) {
       canThrow.up()
-      gotIt.waitUp()
+      gotIt.timeoutWaitUp()
     }
   }
   finally {
     Thread.setDefaultUncaughtExceptionHandler(savedHandler)
   }
   return throwable
+}
+
+fun currentJobTest(test: (Job) -> Unit) {
+  val job = Job()
+  withCurrentJob(job) {
+    test(job)
+  }
+  assertTrue(job.isActive)
+  assertFalse(job.isCompleted)
+  assertFalse(job.isCancelled)
+}
+
+fun indicatorTest(test: (ProgressIndicator) -> Unit) {
+  val indicator = EmptyProgressIndicator()
+  withIndicator(indicator) {
+    test(indicator)
+  }
+  assertFalse(indicator.isCanceled)
+}
+
+internal fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
+  ProgressManager.getInstance().runProcess(action, indicator)
+}
+
+internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Callable<X> {
+  val lock = KSemaphore(permits = 1, acquiredPermits = 1)
+  var callable by AtomicReference<Callable<X>>()
+  cs.launch(Dispatchers.IO) {
+    suspendCancellableCoroutine { continuation: Continuation<Unit> ->
+      callable = Callable<X> {
+        try {
+          action().also {
+            continuation.resume(Unit)
+          }
+        }
+        catch (e: JobCanceledException) {
+          continuation.resume(Unit)
+          throw e
+        }
+        catch (e: Throwable) {
+          continuation.resumeWithException(e) // fail parent scope
+          throw e
+        }
+      }
+      lock.release()
+    }
+  }
+  lock.acquire()
+  return callable
+}
+
+inline fun <reified T> assertInstanceOf(instance: Any?): T {
+  return assertInstanceOf(T::class.java, instance)
+}
+
+inline fun <reified T : Throwable> assertLogThrows(executable: () -> Unit): T {
+  return assertThrows<T> {
+    val loggerError = assertThrows<TestLoggerAssertionError>(executable)
+    throw requireNotNull(loggerError.cause)
+  }
 }

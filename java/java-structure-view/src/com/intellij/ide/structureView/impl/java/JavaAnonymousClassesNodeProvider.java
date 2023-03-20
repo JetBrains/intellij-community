@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
@@ -14,7 +14,8 @@ import com.intellij.openapi.util.PropertyOwner;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +27,13 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaAnonymousClassesNodeProvider
+public final class JavaAnonymousClassesNodeProvider
   implements FileStructureNodeProvider<JavaAnonymousClassTreeElement>, PropertyOwner, DumbAware {
-  @NonNls public static final String ID = "SHOW_ANONYMOUS";
-  @NonNls public static final String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
+  public static final @NonNls String ID = "SHOW_ANONYMOUS";
+  public static final @NonNls String JAVA_ANONYMOUS_PROPERTY_NAME = "java.anonymous.provider";
 
-  @NotNull
   @Override
-  public Collection<JavaAnonymousClassTreeElement> provideNodes(@NotNull TreeElement node) {
+  public @NotNull Collection<JavaAnonymousClassTreeElement> provideNodes(@NotNull TreeElement node) {
     if (node instanceof PsiMethodTreeElement || node instanceof PsiFieldTreeElement || node instanceof ClassInitializerTreeElement) {
       final PsiElement el = ((PsiTreeElementBase<?>)node).getElement();
       if (el != null) {
@@ -52,9 +52,8 @@ public class JavaAnonymousClassesNodeProvider
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public String getCheckBoxText() {
+  public @NotNull String getCheckBoxText() {
     return JavaStructureViewBundle.message("file.structure.toggle.show.anonymous.classes");
   }
 
@@ -63,21 +62,18 @@ public class JavaAnonymousClassesNodeProvider
     return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
   }
 
-  @NotNull
   @Override
-  public ActionPresentation getPresentation() {
-    return new ActionPresentationData(getCheckBoxText(), null, PlatformIcons.ANONYMOUS_CLASS_ICON);
+  public @NotNull ActionPresentation getPresentation() {
+    return new ActionPresentationData(getCheckBoxText(), null, IconManager.getInstance().getPlatformIcon(PlatformIcons.AnonymousClass));
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 
-  @NotNull
   @Override
-  public String getPropertyName() {
+  public @NotNull String getPropertyName() {
     return JAVA_ANONYMOUS_PROPERTY_NAME;
   }
 }

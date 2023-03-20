@@ -21,9 +21,12 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
+import com.intellij.util.EnvironmentUtil
+import com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator.Companion.PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
@@ -32,9 +35,9 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppress
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 
 /**
- * @author vlan
+ * @see [PyConfigureSdkOnWslTest]
  */
-internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
+class PythonSdkConfigurator : DirectoryProjectConfigurator {
   companion object {
     private val LOGGER = Logger.getInstance(PythonSdkConfigurator::class.java)
 
@@ -58,6 +61,9 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdk != null || isProjectCreatedWithWizard) {
       return
     }
+    if (!Strings.isEmptyOrSpaces(EnvironmentUtil.getValue(PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE))) {
+      return
+    }
 
     val module = getModule(moduleRef, project) ?: return
     val extension = findExtension(module)
@@ -79,7 +85,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.getIntention(module) != null }
   }
 
-  private fun configureSdk(project: Project,
+  fun configureSdk(project: Project,
                            module: Module,
                            extension: PyProjectSdkConfigurationExtension?,
                            indicator: ProgressIndicator) {
@@ -149,15 +155,6 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
       indicator.text = PyBundle.message("looking.for.shared.conda.environment")
       guardIndicator(indicator) { mostPreferred(filterSharedCondaEnvs(module, existingSdks)) }?.let {
         setReadyToUseSdk(project, module, it)
-        return
-      }
-
-      guardIndicator(indicator) { detectCondaEnvs(module, existingSdks, context).firstOrNull() }?.let {
-        val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
-        runInEdt {
-          SdkConfigurationUtil.addSdk(newSdk)
-          setReadyToUseSdk(project, module, newSdk)
-        }
         return
       }
 

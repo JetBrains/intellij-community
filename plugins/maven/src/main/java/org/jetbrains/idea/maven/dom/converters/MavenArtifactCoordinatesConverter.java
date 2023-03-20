@@ -37,6 +37,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -236,7 +237,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      VirtualFile virtualFile = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
+      File file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
+      if (null == file) return null;
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);

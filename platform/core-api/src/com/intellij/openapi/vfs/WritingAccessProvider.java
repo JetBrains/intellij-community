@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.util.Collection;
 
 public abstract class WritingAccessProvider {
@@ -17,7 +18,7 @@ public abstract class WritingAccessProvider {
    * @deprecated Use {@link #EP}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static final ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
 
   public static final ProjectExtensionPointName<WritingAccessProvider> EP = new ProjectExtensionPointName<>("com.intellij.writingAccessProvider");
@@ -35,6 +36,11 @@ public abstract class WritingAccessProvider {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getReadOnlyMessage() {
     return CoreBundle.message("editing.read.only.file.hint");
+  }
+
+  @Nullable
+  public HyperlinkListener getHyperlinkListener() {
+    return null;
   }
 
   /**

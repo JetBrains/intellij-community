@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -265,10 +266,7 @@ public class GeneratedParserUtilBase {
 
   public static boolean nextTokenIsFast(PsiBuilder builder, IElementType... tokens) {
     IElementType tokenType = builder.getTokenType();
-    for (IElementType token : tokens) {
-      if (token == tokenType) return true;
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(tokens, tokenType) != -1;
   }
 
   public static boolean nextTokenIsFast(PsiBuilder builder, TokenSet tokens) {
@@ -302,10 +300,7 @@ public class GeneratedParserUtilBase {
       }
     }
     if (tokenType == null) return false;
-    for (IElementType token : tokens) {
-      if (tokenType == token) return true;
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(tokens, tokenType) != -1;
   }
 
   public static boolean nextTokenIs(PsiBuilder builder, IElementType token) {
@@ -754,8 +749,11 @@ public class GeneratedParserUtilBase {
 
   @Nullable
   private static PsiBuilderImpl.ProductionMarker getLatestExtensibleDoneMarker(@NotNull PsiBuilder builder) {
-    PsiBuilderImpl.ProductionMarker marker = ContainerUtil.getLastItem(((Builder)builder).getProductions());
-    return marker == null || marker.getTokenType() == null || !(marker instanceof PsiBuilder.Marker) ? null : marker;
+    Builder b = (Builder)builder;
+    PsiBuilderImpl.ProductionMarker marker = ContainerUtil.getLastItem(b.getProductions());
+    if (marker == null) return null;
+    IElementType type = marker.getTokenType();
+    return type != null && marker instanceof PsiBuilder.Marker && b.isExtensibleMarkerType(type) ? marker : null;
   }
 
   private static boolean reportError(PsiBuilder builder,
@@ -897,13 +895,18 @@ public class GeneratedParserUtilBase {
       parser = parser_;
     }
 
+    @NotNull
     public Lexer getLexer() {
       return ((PsiBuilderImpl)myDelegate).getLexer();
     }
 
-    @Nullable
+    @NotNull
     public List<PsiBuilderImpl.ProductionMarker> getProductions() {
       return ((PsiBuilderImpl)myDelegate).getProductions();
+    }
+
+    public boolean isExtensibleMarkerType(@NotNull IElementType type) {
+      return true;
     }
   }
 
@@ -1092,19 +1095,7 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  private static class Hooks<T> {
-    final Hook<T> hook;
-    final T param;
-    final int level;
-    final Hooks<?> next;
-
-    Hooks(Hook<T> hook, T param, int level, Hooks next) {
-      this.hook = hook;
-      this.param = param;
-      this.level = level;
-      this.next = next;
-    }
-
+  private record Hooks<T>(Hook<T> hook, T param, int level, Hooks next) {
     static <E> Hooks<E> concat(Hook<E> hook, E param, int level, Hooks<?> hooks) {
       return new Hooks<>(hook, param, level, hooks);
     }

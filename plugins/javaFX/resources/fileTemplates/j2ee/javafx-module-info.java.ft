@@ -5,7 +5,7 @@ module ${context.rootPackage} {
     requires javafx.web;
     #end
     #if ($context.hasLanguage("groovy"))
-    requires org.codehaus.groovy;
+    requires org.apache.groovy;
     #end
     #if ($context.hasLanguage("kotlin"))
     requires kotlin.stdlib;
@@ -18,7 +18,7 @@ module ${context.rootPackage} {
     requires com.dlsc.formsfx;
     #end
     #if ($context.hasLibrary("validatorfx"))
-    requires validatorfx;
+    requires net.synedra.validatorfx;
     #end
     #if ($context.hasLibrary("ikonli"))
     requires org.kordamp.ikonli.javafx;
@@ -28,6 +28,9 @@ module ${context.rootPackage} {
     #end
     #if ($context.hasLibrary("tilesfx"))
     requires eu.hansolo.tilesfx;
+    #end
+    #if ($context.hasLibrary("fxgl"))
+    requires com.almasb.fxgl.all;
     #end
 
     opens ${context.rootPackage} to javafx.fxml;

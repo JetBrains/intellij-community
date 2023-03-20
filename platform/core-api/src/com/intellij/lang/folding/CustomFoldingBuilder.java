@@ -21,8 +21,6 @@ import java.util.Set;
 
 /**
  * Builds custom folding regions. If custom folding is supported for a language, its FoldingBuilder must be inherited from this class.
- *
- * @author Rustam Vishnyakov
  */
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   private CustomFoldingProvider myDefaultProvider;
@@ -38,7 +36,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
         myDefaultProvider = null;
         ASTNode rootNode = root.getNode();
         if (rootNode != null) {
-          addCustomFoldingRegionsRecursively(new FoldingStack(rootNode), rootNode, descriptors, 0);
+          addCustomFoldingRegionsRecursively(new FoldingStack(), rootNode, descriptors, 0);
         }
       }
       buildLanguageFoldRegions(descriptors, root, document, quick);
@@ -46,7 +44,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     finally {
       ourCustomRegionElements.set(null);
     }
-    return descriptors.toArray(FoldingDescriptor.EMPTY);
+    return descriptors.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -72,7 +70,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
                                                   @NotNull ASTNode node,
                                                   @NotNull List<? super FoldingDescriptor> descriptors,
                                                   int currDepth) {
-    FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack(node) : foldingStack;
+    FoldingStack localFoldingStack = isCustomFoldingRoot(node) ? new FoldingStack() : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       ProgressManager.checkCanceled();
 
@@ -145,7 +143,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
    * Returns the default collapsed state for the folding region related to the specified node.
    *
    * @param node the node for which the collapsed state is requested.
-   * @return true if the region is collapsed by default, false otherwise.
+   * @return true, if the region is collapsed by default, false otherwise.
    */
   protected abstract boolean isRegionCollapsedByDefault(@NotNull ASTNode node);
 
@@ -154,11 +152,12 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   }
 
   /**
-   * Returns true if the node corresponds to custom region start. The node must be a custom folding candidate and match custom folding
+   * Returns true if the node corresponds to custom region start.
+   * The node must be a custom folding candidate and match the custom folding
    * start pattern.
    *
    * @param node The node which may contain custom region start.
-   * @return True if the node marks a custom region start.
+   * @return True, if the node marks a custom region start.
    */
   public final boolean isCustomRegionStart(@NotNull ASTNode node) {
     if (isCustomFoldingCandidate(node)) {
@@ -170,11 +169,11 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   }
 
   /**
-   * Returns true if the node corresponds to custom region end. The node must be a custom folding candidate and match custom folding
+   * Returns true if the node corresponds to the custom region end. The node must be a custom folding candidate and match the custom folding
    * end pattern.
    *
-   * @param node The node which may contain custom region end
-   * @return True if the node marks a custom region end.
+   * @param node The node which may contain the custom region end
+   * @return True, if the node marks a custom region end.
    */
   protected final boolean isCustomRegionEnd(@NotNull ASTNode node) {
     if (isCustomFoldingCandidate(node)) {
@@ -203,10 +202,10 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   }
 
   /**
-   * Checks if a node may contain custom folding tags. By default returns true for PsiComment but a language folding builder may override
+   * Checks if a node may contain custom folding tags. By default, returns true for PsiComment but a language folding builder may override
    * this method to allow only specific subtypes of comments (for example, line comments only).
    * @param node The node to check.
-   * @return True if the node may contain custom folding tags.
+   * @return True, if the node may contain custom folding tags.
    */
   protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
     return node.getPsi() instanceof PsiComment;
@@ -218,38 +217,29 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   }
 
   /**
-   * Checks if the node is used as custom folding root. Any custom folding elements inside the root are considered to be at the same level
-   * even if they are located at different levels of PSI tree. By default the method returns true if the node has any child elements
+   * Checks if the node is used as a custom folding root. Any custom folding elements inside the root are considered to be at the same level
+   * even if they are located at different levels of PSI tree. By default, the method returns true if the node has any child elements
    * (only custom folding comments at the same PSI tree level are processed, start/end comments at different levels will be ignored).
    *
    * @param node  The node to check.
-   * @return      True if the node is a root for custom foldings.
+   * @return      True, if the node is a root for custom foldings.
    */
   protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     return node.getFirstChildNode() != null;
   }
 
   private static final class FoldingStack extends Stack<ASTNode> {
-    @NotNull
-    private final ASTNode owner;
-
-    private FoldingStack(@NotNull ASTNode owner) {
+    private FoldingStack() {
       super(1);
-      this.owner = owner;
-    }
-
-    @NotNull
-    public ASTNode getOwner() {
-      return owner;
     }
   }
 
   /**
-   * Checks if the folding ranges can be created in the Dumb Mode. In the most of
+   * Checks if the folding ranges can be created in the dumb mode. In most
    * language implementations the method returns true, but for strong context-dependent
    * languages (like ObjC/C++) overridden method returns false.
    *
-   * @return True if the folding ranges can be created in the Dumb Mode
+   * @return True, if the folding ranges can be created in the dumb mode
    */
   @Override
   public boolean isDumbAware() {

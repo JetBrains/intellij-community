@@ -24,8 +24,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 /**
  * Manages gradle settings not specific to particular project (e.g. 'use wrapper' is project-level setting but 'gradle user home' is
  * a global one).
- * 
- * @author Denis Zhdanov
  */
 public class GradleSystemSettingsControl implements ExternalSystemSettingsControl<GradleSettings> {
 

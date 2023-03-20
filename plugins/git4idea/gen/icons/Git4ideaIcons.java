@@ -6,7 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class Git4ideaIcons {
   public static final Icon Star = AllIcons.Nodes.Favorite;
 }

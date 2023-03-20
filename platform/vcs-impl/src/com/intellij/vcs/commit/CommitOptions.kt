@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
-import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyMap
 
 interface CommitOptions {
   val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>
@@ -12,8 +10,10 @@ interface CommitOptions {
   val afterOptions: List<RefreshableOnComponent>
 }
 
-val CommitOptions.allOptions: Sequence<RefreshableOnComponent> get() = sequenceOf(vcsOptions.values, beforeOptions, afterOptions).flatten()
-val CommitOptions.isEmpty: Boolean get() = allOptions.none()
+val CommitOptions.allOptions: Sequence<RefreshableOnComponent>
+  get() = sequenceOf(vcsOptions.values, beforeOptions, afterOptions).flatten()
+val CommitOptions.isEmpty: Boolean
+  get() = allOptions.none()
 
 class CommitOptionsImpl(
   override val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>,
@@ -38,6 +38,9 @@ class MutableCommitOptions : CommitOptions {
     afterOptions.clear()
   }
 
-  fun toUnmodifiableOptions() =
-    CommitOptionsImpl(unmodifiableOrEmptyMap(vcsOptions), newUnmodifiableList(beforeOptions), newUnmodifiableList(afterOptions))
+  fun toUnmodifiableOptions(): CommitOptionsImpl {
+    return CommitOptionsImpl(java.util.Map.copyOf(vcsOptions),
+                             java.util.List.copyOf(beforeOptions),
+                             java.util.List.copyOf(afterOptions))
+  }
 }

@@ -1,4 +1,4 @@
-// "Apply conversion '.toArray(new java.lang.Integer[0])'" "true"
+// "Apply conversion '.toArray(new java.lang.Integer[0])'" "true-preview"
 
 import java.util.*;
 class Cast {

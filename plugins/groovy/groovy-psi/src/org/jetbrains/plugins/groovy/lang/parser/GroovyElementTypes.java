@@ -9,7 +9,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 /**
  * Utility interface that contains all Groovy non-token element types
  *
- * @author Dmitry.Krasilschikov, ilyas
+ * @author Dmitry.Krasilschikov
  */
 public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyStubElementTypes {
 
@@ -26,7 +26,6 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   IElementType ASSERT_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ASSERT_STATEMENT;
   // Expression statements
   IElementType LABELED_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LABELED_STATEMENT;
-  @Deprecated GroovyElementType CALL_EXPRESSION = APPLICATION_EXPRESSION;
   IElementType COMMAND_ARGUMENTS = APPLICATION_ARGUMENT_LIST;
   IElementType CONDITIONAL_EXPRESSION = TERNARY_EXPRESSION;
   IElementType ELVIS_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ELVIS_EXPRESSION;

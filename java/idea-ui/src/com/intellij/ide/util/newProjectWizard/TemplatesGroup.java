@@ -39,7 +39,6 @@ public final class TemplatesGroup implements Comparable<TemplatesGroup> {
 
   /**
    * Category-based group
-   * @param category
    */
   public TemplatesGroup(ProjectCategory category) {
     this(category.getDisplayName(), category.getDescription(), category.getIcon(), category.getWeight(), category.getGroupName(), category.getId(), category.createModuleBuilder());

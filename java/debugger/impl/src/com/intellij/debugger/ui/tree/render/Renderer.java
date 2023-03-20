@@ -11,6 +11,7 @@ public interface Renderer extends Cloneable, JDOMExternalizable {
 
   /**
    * Checks whether this renderer is applicable to this type
+   *
    * @deprecated override {@link #isApplicableAsync(Type)}
    */
   @Deprecated

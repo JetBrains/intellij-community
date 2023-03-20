@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -59,8 +59,7 @@ final class ImmutableCollectionModelUtils {
   private static boolean isNonResolvedTypeParameter(@Nullable PsiClass parameter,
                                                     @NotNull PsiElement context,
                                                     @NotNull PsiResolveHelper resolveHelper) {
-    if (!(parameter instanceof PsiTypeParameter)) return false;
-    PsiTypeParameter typeParameter = (PsiTypeParameter)parameter;
+    if (!(parameter instanceof PsiTypeParameter typeParameter)) return false;
     String name = typeParameter.getName();
     return name == null || resolveHelper.resolveReferencedClass(name, context) != parameter;
   }
@@ -309,6 +308,14 @@ final class ImmutableCollectionModelUtils {
       myType = type;
       myIsVarArgCall = !method.isVarArgs() || MethodCallUtils.isVarArgCall(call);
       myAssignedVariable = assignedVariable;
+    }
+
+    public String getText() {
+      return switch (myType) {
+        case MAP -> "new HashMap<>()";
+        case LIST -> "new ArrayList<>()";
+        case SET -> "new HashSet<>()";
+      };
     }
   }
 

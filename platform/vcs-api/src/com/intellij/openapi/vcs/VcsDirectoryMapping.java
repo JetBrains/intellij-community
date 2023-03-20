@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
-
-public class VcsDirectoryMapping {
+public final class VcsDirectoryMapping {
   public static final String DEFAULT_MAPPING_DIR = "";
 
   public static final Supplier<@Nls String> PROJECT_CONSTANT = VcsBundle.messagePointer("label.project.vcs.root.mapping");
@@ -18,7 +19,7 @@ public class VcsDirectoryMapping {
 
   @NotNull private final String myDirectory;
   private final String myVcs;
-  private VcsRootSettings myRootSettings;
+  private final VcsRootSettings myRootSettings;
 
   /**
    * Empty string as 'directory' denotes "default mapping" aka "&lt;Project&gt;".
@@ -60,18 +61,6 @@ public class VcsDirectoryMapping {
   @Nullable
   public VcsRootSettings getRootSettings() {
     return myRootSettings;
-  }
-
-  /**
-   * Sets the VCS-specific settings for the given mapping.
-   *
-   * @param rootSettings the VCS-specific settings
-   * @deprecated Use constructor parameter
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setRootSettings(final VcsRootSettings rootSettings) {
-    myRootSettings = rootSettings;
   }
 
   /**

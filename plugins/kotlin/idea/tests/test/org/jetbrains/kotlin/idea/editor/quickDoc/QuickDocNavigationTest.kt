@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.editor.quickDoc
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/kdoc/navigate")
 @RunWith(JUnit38ClassRunner::class)
 class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     fun testSimple() {
         val target = resolveDocLink("C")

@@ -1,4 +1,7 @@
 <idea-plugin>
+  <depends>com.intellij.completion.ml.ranking</depends>
+  <depends optional="true" config-file="gradle-groovy-toml-integration.xml">org.toml.lang</depends>
+
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"
                     dynamic="true"/>
@@ -21,6 +24,8 @@
 
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
+    <testLocationCustomizer implementation="org.jetbrains.plugins.gradle.execution.test.runner.spock.SpockGradleTestLocationCustomizer"/>
+    <dslInspectionProvider language="Groovy" implementationClass="org.jetbrains.plugins.gradle.codeInspection.groovy.GroovyGradleDslInspectionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -33,12 +38,18 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.gradle.config.GradleImplicitUsageProvider"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
+
+    <completion.ml.contextFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyElementFeatureProvider"/>
+    <completion.ml.ranking.features.policy language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyCompletionFeaturesPolicy"/>
+
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>
+    <trafficLightRendererContributor implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleGroovyTrafficLightRendererContributor"/>
 
     <lang.documentationProvider language="Groovy"
                                 implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider" order="first"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleDslAnnotator"/>
-    <weigher key="completion" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleCompletionWeigher"
-             id="gradleWeigher" order="first"/>
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
                      bundle="messages.GradleInspectionBundle"
                      key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
@@ -71,6 +82,8 @@
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectRenameUsageSearcher"/>
+
+    <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.gradle.service.project.wizard.groovy.GradleGroovyNewProjectWizard"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -100,7 +113,8 @@
                     implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationTypeCalculator"/>
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleUnresolvedReferenceFilter"/>
     <inlayHintFilter implementation="org.jetbrains.plugins.gradle.dsl.GradleInlayHintFilter"/>
-    <inspectionDisabler implementation="org.jetbrains.plugins.gradle.codeInspection.GradleFileTypeInspectionDisabler"/>
+    <completionCustomizer implementation="org.jetbrains.plugins.gradle.service.completion.GradleCompletionCustomizer"/>
+    <inspectionDisabler filetype="Gradle" implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleFileTypeInspectionDisabler"/>
   </extensions>
 
   <actions>

@@ -1,145 +1,154 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "RAW_RUN_BLOCKING")
+
 package org.jetbrains.intellij.build.io
 
+import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.trace.StatusCode
-import org.jetbrains.intellij.build.tasks.tracer
-import org.jetbrains.intellij.build.tasks.use
+import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.File
-import java.io.InputStream
-import java.lang.System.Logger
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+
+val DEFAULT_TIMEOUT: Duration = 10.minutes
 
 /**
  * Executes a Java class in a forked JVM.
  */
-fun runJava(mainClass: String,
-            args: Iterable<String>,
-            jvmArgs: Iterable<String>,
-            classPath: Iterable<String>,
-            logger: Logger = System.getLogger(mainClass),
-            timeoutMillis: Long = Timeout.DEFAULT,
-            workingDir: Path? = null) {
-  val timeout = Timeout(timeoutMillis)
-  var errorReader: CompletableFuture<Void>? = null
-  val classpathFile = Files.createTempFile("classpath-", ".txt")
-  tracer.spanBuilder("runJava")
+suspend fun runJava(mainClass: String,
+                    args: List<String>,
+                    jvmArgs: List<String> = emptyList(),
+                    classPath: List<String>,
+                    javaExe: Path,
+                    timeout: Duration = DEFAULT_TIMEOUT,
+                    workingDir: Path? = null,
+                    customOutputFile: Path? = null,
+                    onError: (() -> Unit)? = null) {
+  val jvmArgsWithJson = jvmArgs + "-Dintellij.log.to.json.stdout=true"
+  @Suppress("NAME_SHADOWING")
+  val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
+  spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
-    .setAttribute(AttributeKey.stringArrayKey("args"), args.toList())
-    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs.toList())
-    .setAttribute("workingDir", workingDir?.toString() ?: "")
-    .setAttribute("timeoutMillis", timeoutMillis)
-    .startSpan()
-    .use { span ->
-      try {
-        val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
-        val processArgs = createProcessArgs(jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
-        span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
-        val process = ProcessBuilder(processArgs).directory(workingDir?.toFile()).start()
+    .setAttribute(AttributeKey.stringArrayKey("args"), args)
+    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgsWithJson)
+    .setAttribute("workingDir", "$workingDir")
+    .setAttribute("timeoutMillis", timeout.toString())
+    .useWithScope2 { span ->
+      withContext(Dispatchers.IO) {
+        val toDelete = ArrayList<Path>(3)
+        var process: Process? = null
+        val phase = args.joinToString(prefix = "$mainClass ", separator = " ")
+        try {
+          val classpathFile = Files.createTempFile("classpath-", ".txt").also(toDelete::add)
+          val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
+          val processArgs = createProcessArgs(javaExe = javaExe,
+                                              jvmArgs = jvmArgsWithJson,
+                                              classpathFile = classpathFile,
+                                              mainClass = mainClass,
+                                              args = args)
+          span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
+          val errorOutputFile = Files.createTempFile("error-out-", ".txt").also(toDelete::add)
+          val outputFile = customOutputFile?.also { customOutputFile.parent?.let { Files.createDirectories(it) } }
+                           ?: Files.createTempFile("out-", ".txt").also(toDelete::add)
+          logFreeDiskSpace(workingDir, "before $phase")
+          process = ProcessBuilder(processArgs)
+            .directory(workingDir.toFile())
+            .redirectError(errorOutputFile.toFile())
+            .redirectOutput(outputFile.toFile())
+            .start()
 
-        errorReader = readErrorOutput(process, timeout, logger)
-        readOutputAndBlock(process, timeout, logger)
+          span.setAttribute("pid", process.pid())
 
-        fun javaRunFailed(reason: String) {
-          // do not throw error, but log as error to reduce bloody groovy stacktrace
-          logger.debug { "classPath=${classPathStringBuilder.substring("-classpath".length)})" }
+          fun javaRunFailed(reason: String) {
+            span.setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
+            span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
+            span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
+            span.setAttribute("errorOutput",
+                              runCatching { Files.readString(errorOutputFile) }.getOrNull() ?: "error output file doesn't exist")
+            onError?.invoke()
+            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}")
+          }
 
-          val message = "Cannot execute $mainClass (args=$args, vmOptions=$jvmArgs): $reason"
-          span.setStatus(StatusCode.ERROR, message)
-          logger.log(Logger.Level.ERROR, null as ResourceBundle?, message)
-        }
-
-        if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           try {
-            dumpThreads(process.pid())
+            withTimeout(timeout) {
+              while (process.isAlive) {
+                delay(5.milliseconds)
+              }
+            }
           }
-          catch (e: Exception) {
-            span.addEvent("cannot dump threads: ${e.message}")
+          catch (e: TimeoutCancellationException) {
+            try {
+              dumpThreads(process.pid())
+            }
+            catch (e: Exception) {
+              span.addEvent("cannot dump threads: ${e.message}")
+            }
+
+            process.destroyForcibly().waitFor()
+            javaRunFailed(e.message!!)
           }
 
-          process.destroyForcibly().waitFor()
-          javaRunFailed("$timeout timeout")
-        }
+          val exitCode = process.exitValue()
+          if (exitCode != 0) {
+            javaRunFailed("exitCode=$exitCode")
+          }
 
-        val exitCode = process.exitValue()
-        if (exitCode != 0) {
-          javaRunFailed("exitCode=${process.exitValue()}")
+          if (customOutputFile == null) {
+            checkOutput(outputFile = outputFile, span = span, errorConsumer = ::javaRunFailed)
+          }
         }
-      }
-      finally {
-        Files.deleteIfExists(classpathFile)
-        errorReader?.join()
+        finally {
+          process?.waitFor()
+          toDelete.forEach(FileUtilRt::deleteRecursively)
+          logFreeDiskSpace(workingDir, "after $phase")
+        }
       }
     }
 }
 
-internal fun runJavaWithOutputToFile(mainClass: String,
-                                     args: Iterable<String>,
-                                     jvmArgs: Iterable<String>,
-                                     classPath: Iterable<String>,
-                                     timeoutMillis: Long = Timeout.DEFAULT,
-                                     outputFile: Path,
-                                     workingDir: Path? = null) {
-  Files.createDirectories(outputFile.parent)
+private fun checkOutput(outputFile: Path, span: Span, errorConsumer: (String) -> Unit) {
+  val out = try {
+    Files.readString(outputFile)
+  }
+  catch (e: NoSuchFieldException) {
+    span.setAttribute("output", "output file doesn't exist")
+    return
+  }
 
-  val timeout = Timeout(timeoutMillis)
-  val classpathFile = Files.createTempFile("classpath-", ".txt")
-  tracer.spanBuilder("runJava")
-    .setAttribute("mainClass", mainClass)
-    .setAttribute(AttributeKey.stringArrayKey("args"), args.toList())
-    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs.toList())
-    .setAttribute("outputFile", outputFile.toString())
-    .setAttribute("workingDir", workingDir?.toString() ?: "")
-    .setAttribute("timeoutMillis", timeoutMillis)
-    .startSpan()
-    .use { span ->
-      try {
-        createClassPathFile(classPath, classpathFile)
-        val processArgs = createProcessArgs(jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
-        span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
-        val process = ProcessBuilder(processArgs)
-          .directory(workingDir?.toFile())
-          .redirectErrorStream(true)
-          .redirectOutput(outputFile.toFile())
-          .start()
-
-        fun javaRunFailed(reason: String) {
-          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (args=$args, vmOptions=$jvmArgs): $reason"
-          span.setStatus(StatusCode.ERROR, message)
-          if (Files.exists(outputFile)) {
-            span.setAttribute("processOutput", Files.readString(outputFile))
-          }
-          throw RuntimeException(message)
-        }
-
-        if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
-          process.destroyForcibly().waitFor()
-          javaRunFailed("$timeout timeout")
-        }
-
-        val exitCode = process.exitValue()
-        if (exitCode != 0) {
-          javaRunFailed("exitCode=${process.exitValue()}")
+  val messages = StringBuilder()
+  out.lineSequence()
+    .filter { it.isNotBlank() }
+    .forEach { line ->
+      if (line.startsWith('{')) {
+        val item = JSON.std.mapFrom(line)
+        val message = (item.get("message") as? String) ?: error("Missing field: 'message' in $line")
+        val level = (item.get("level") as? String) ?: error("Missing field: 'level' in $line")
+        messages.append(message).append('\n')
+        if (level == "SEVERE") {
+          errorConsumer("Error reported from child process logger: $message")
         }
       }
-      finally {
-        Files.deleteIfExists(classpathFile)
+      else {
+        messages.append(line).append('\n')
       }
     }
+  span.setAttribute("output", messages.toString())
 }
 
-private fun createProcessArgs(jvmArgs: Iterable<String>,
+private fun createProcessArgs(javaExe: Path,
+                              jvmArgs: List<String>,
                               classpathFile: Path?,
                               mainClass: String,
-                              args: Iterable<String>): MutableList<String> {
+                              args: List<String>): MutableList<String> {
   val processArgs = mutableListOf<String>()
-  // FIXME: enforce JBR
-  processArgs.add(ProcessHandle.current().info().command().orElseThrow())
-  @Suppress("SpellCheckingInspection")
+  processArgs.add(javaExe.toString())
   processArgs.add("-Djava.awt.headless=true")
   processArgs.add("-Dapple.awt.UIElement=true")
   processArgs.addAll(jvmArgs)
@@ -149,7 +158,7 @@ private fun createProcessArgs(jvmArgs: Iterable<String>,
   return processArgs
 }
 
-private fun createClassPathFile(classPath: Iterable<String>, classpathFile: Path): StringBuilder {
+private fun createClassPathFile(classPath: List<String>, classpathFile: Path): StringBuilder {
   val classPathStringBuilder = StringBuilder()
   classPathStringBuilder.append("-classpath").append('\n')
   for (s in classPath) {
@@ -161,88 +170,97 @@ private fun createClassPathFile(classPath: Iterable<String>, classpathFile: Path
   return classPathStringBuilder
 }
 
-@JvmOverloads
-fun runProcess(vararg args: String, workingDir: Path? = null,
-               logger: Logger = System.getLogger(args.joinToString(separator = " ")),
-               timeoutMillis: Long = Timeout.DEFAULT) {
-  runProcess(args.toList(), workingDir, logger, timeoutMillis)
-}
-
-@JvmOverloads
-fun runProcess(args: List<String>, workingDir: Path? = null,
-               logger: Logger = System.getLogger(args.joinToString(separator = " ")),
-               timeoutMillis: Long = Timeout.DEFAULT) {
-  tracer.spanBuilder("runProcess")
-    .setAttribute(AttributeKey.stringArrayKey("args"), args)
-    .setAttribute("timeoutMillis", timeoutMillis)
-    .startSpan()
-    .use {
-      val timeout = Timeout(timeoutMillis)
-      val process = ProcessBuilder(args).directory(workingDir?.toFile()).start()
-      val errorReader = readErrorOutput(process, timeout, logger)
-      try {
-        readOutputAndBlock(process, timeout, logger)
-
-        if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
-          process.destroyForcibly().waitFor()
-          throw ProcessRunTimedOut("Cannot execute $args: $timeout timeout")
-        }
-
-        val exitCode = process.exitValue()
-        if (exitCode != 0) {
-          throw RuntimeException("Cannot execute $args (exitCode=$exitCode)")
-        }
-      }
-      finally {
-        errorReader.join()
-      }
-    }
-}
-
-private fun readOutputAndBlock(process: Process, timeout: Timeout, logger: Logger) {
-  // join on CompletableFuture will help to process other tasks in FJP_
-  runAsync {
-    consume(process.inputStream, process, timeout, logger::info)
-  }.join()
-}
-
-private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger): CompletableFuture<Void> {
-  return runAsync {
-    consume(process.errorStream, process, timeout, logger::warn)
+fun runProcessBlocking(args: List<String>, workingDir: Path? = null) {
+  runBlocking {
+    runProcess(args = args,
+               workingDir = workingDir,
+               timeout = DEFAULT_TIMEOUT,
+               additionalEnvVariables = emptyMap(),
+               inheritOut = false)
   }
 }
 
-private fun consume(inputStream: InputStream, process: Process, timeout: Timeout, consume: (String) -> Unit) {
-  inputStream.bufferedReader().use { reader ->
-    var linesCount = 0
-    var linesBuffer = StringBuilder()
-    val flushTimeoutMs = 5000L
-    var lastCharReceived = System.currentTimeMillis()
-    while (!timeout.isElapsed && (process.isAlive || reader.ready())) {
-      if (reader.ready()) {
-        val char = reader.read().takeIf { it != -1 }?.toChar()
-        if (char == '\n' || char == '\r') linesCount++
-        if (char != null) {
-          linesBuffer.append(char)
-          lastCharReceived = System.currentTimeMillis()
-        }
-        if (char == null || !reader.ready() || linesCount > 100 || (System.currentTimeMillis() - lastCharReceived) > flushTimeoutMs) {
-          if (linesBuffer.isNotEmpty()) {
-            consume(linesBuffer.toString())
-            linesBuffer = StringBuilder()
-            linesCount = 0
+suspend fun runProcess(args: List<String>,
+                       workingDir: Path? = null,
+                       timeout: Duration = DEFAULT_TIMEOUT,
+                       additionalEnvVariables: Map<String, String> = emptyMap(),
+                       inheritOut: Boolean = false) {
+  @Suppress("NAME_SHADOWING")
+  val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
+  spanBuilder("runProcess")
+    .setAttribute(AttributeKey.stringArrayKey("args"), args)
+    .setAttribute("workingDir", "$workingDir")
+    .setAttribute("timeoutMillis", timeout.toString())
+    .useWithScope2 { span ->
+      withContext(Dispatchers.IO) {
+        val toDelete = ArrayList<Path>(3)
+        var process: Process? = null
+        val phase = args.joinToString(separator = " ")
+        try {
+          val errorOutputFile = if (inheritOut) null else Files.createTempFile("error-out-", ".txt").also(toDelete::add)
+          val outputFile = if (inheritOut) null else Files.createTempFile("out-", ".txt").also(toDelete::add)
+          logFreeDiskSpace(workingDir, "before $phase")
+          process = ProcessBuilder(args)
+            .directory(workingDir.toFile())
+            .also { builder ->
+              if (additionalEnvVariables.isNotEmpty()) {
+                builder.environment().putAll(additionalEnvVariables)
+              }
+              if (inheritOut) {
+                builder.inheritIO()
+              }
+              else {
+                builder.redirectOutput(outputFile!!.toFile())
+                builder.redirectError(errorOutputFile!!.toFile())
+              }
+            }
+            .start()
+          val pid = process.pid()
+          span.setAttribute("pid", pid)
+
+          fun errorOccurred() {
+            if (inheritOut) {
+              return
+            }
+
+            span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
+            span.setAttribute("errorOutput",
+                              runCatching { Files.readString(errorOutputFile) }.getOrNull() ?: "error output file doesn't exist")
+          }
+
+          try {
+            withTimeout(timeout) {
+              while (process.isAlive) {
+                delay(5.milliseconds)
+              }
+            }
+          }
+          catch (e: TimeoutCancellationException) {
+            process.destroyForcibly().waitFor()
+            errorOccurred()
+            throw e
+          }
+
+          val exitCode = process.exitValue()
+          if (exitCode != 0) {
+            errorOccurred()
+            throw RuntimeException("Process $pid finished with exitCode $exitCode)")
+          }
+
+          if (!inheritOut) {
+            checkOutput(outputFile!!, span) {
+              errorOccurred()
+              throw RuntimeException(it)
+            }
           }
         }
-      }
-      else {
-        Thread.sleep(100L)
+        finally {
+          process?.waitFor()
+          toDelete.forEach(FileUtilRt::deleteRecursively)
+          logFreeDiskSpace(workingDir, "after $phase")
+        }
       }
     }
-
-    if (linesBuffer.isNotBlank()) {
-      consume(linesBuffer.toString())
-    }
-   }
 }
 
 private fun appendArg(value: String, builder: StringBuilder) {
@@ -263,28 +281,11 @@ private fun appendArg(value: String, builder: StringBuilder) {
   }
 }
 
-internal class ProcessRunTimedOut(msg: String) : RuntimeException(msg)
-
-internal class Timeout(private val millis: Long) {
-  companion object {
-    val DEFAULT = TimeUnit.MINUTES.toMillis(10L)
-  }
-
-  private val start = System.currentTimeMillis()
-
-  val remainingTime: Long
-    get() = start.plus(millis).minus(System.currentTimeMillis()).takeIf { it > 0 } ?: 0
-  val isElapsed: Boolean
-    get() = remainingTime == 0L
-
-  override fun toString() = "${millis}ms"
-}
-
-internal fun dumpThreads(pid: Long) {
+internal suspend fun dumpThreads(pid: Long) {
   val jstack = System.getenv("JAVA_HOME")
                  ?.removeSuffix("/")
                  ?.removeSuffix("\\")
                  ?.let { "$it/bin/jstack" }
                ?: "jstack"
-  runProcess(jstack, "$pid")
+  runProcess(args = listOf(jstack, pid.toString()), inheritOut = true)
 }

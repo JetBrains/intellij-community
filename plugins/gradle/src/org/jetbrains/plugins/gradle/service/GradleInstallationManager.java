@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -8,16 +8,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,12 +48,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -96,38 +91,8 @@ public class GradleInstallationManager implements Disposable {
   @Nullable private Ref<File> myCachedGradleHomeFromPath;
   private final Map<String, BuildLayoutParameters> myBuildLayoutParametersCache = new ConcurrentHashMap<>();
 
-  public GradleInstallationManager() {
-    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
-      @Override
-      public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-        myBuildLayoutParametersCache.remove(workingDir);
-      }
-    };
-    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener, this);
-    AtomicBoolean listenerAdded = new AtomicBoolean(true);
-    MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    appConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (listenerAdded.compareAndSet(false, true)) {
-          ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener, GradleInstallationManager.this);
-        }
-      }
-
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        myBuildLayoutParametersCache.clear();
-        if (listenerAdded.compareAndSet(true, false)) {
-          ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener);
-        }
-      }
-    });
-    appConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        myBuildLayoutParametersCache.clear();
-      }
-    });
+  private static String getDefaultProjectKey(Project project) {
+    return project.getLocationHash();
   }
 
   @ApiStatus.Experimental
@@ -143,10 +108,9 @@ public class GradleInstallationManager implements Disposable {
   @ApiStatus.Experimental
   @NotNull
   public BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @Nullable String projectPath) {
-    return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, project.getLocationHash()), p -> {
+    return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, getDefaultProjectKey(project)), p -> {
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
-        if (!(executionAware instanceof GradleExecutionAware)) continue;
-        GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
+        if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
         BuildLayoutParameters buildLayoutParameters = projectPath == null
                                                       ? gradleExecutionAware.getDefaultBuildLayoutParameters(project)
                                                       : gradleExecutionAware.getBuildLayoutParameters(project, projectPath);
@@ -302,54 +266,9 @@ public class GradleInstallationManager implements Disposable {
   }
 
   /**
-   * Tries to return gradle home that is defined as a dependency to the given module.
-   *
-   * @param module target module
-   * @return file handle that points to the gradle installation home defined as a dependency of the given module (if any)
-   * @deprecated unused, obsolete api
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public VirtualFile getGradleHome(@Nullable Module module) {
-    if (module == null) {
-      return null;
-    }
-    final VirtualFile[] roots = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
-    for (VirtualFile root : roots) {
-      if (root != null && isGradleSdkHome(module.getProject(), root)) {
-        return root;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Tries to return gradle home defined as a dependency of the given module; falls back to the project-wide settings otherwise.
-   *
-   * @param module  target module that can have gradle home as a dependency
-   * @param project target project which gradle home setting should be used if module-specific gradle location is not defined
-   * @return gradle home derived from the settings of the given entities (if any); {@code null} otherwise
-   * @deprecated unused, obsolete api
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public VirtualFile getGradleHome(@Nullable Module module, @Nullable Project project, @NotNull String linkedProjectPath) {
-    final VirtualFile result = getGradleHome(module);
-    if (result != null) {
-      return result;
-    }
-
-    final File home = getGradleHome(project, linkedProjectPath);
-    return home == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(home);
-  }
-
-  /**
    * Tries to discover gradle installation path from the configured system path
    *
    * @return file handle for the gradle directory if it's possible to deduce from the system path; {@code null} otherwise
-   * @param project
    */
   @Nullable
   public File getGradleHomeFromPath(@Nullable Project project) {
@@ -431,8 +350,7 @@ public class GradleInstallationManager implements Disposable {
       project = openProjects.length > 0 ? openProjects[0] : projectManager.getDefaultProject();
     }
     for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
-      if (!(executionAware instanceof GradleExecutionAware)) continue;
-      GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
+      if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
       if (gradleExecutionAware.isGradleInstallationHomeDir(project, file.getPath())) {
         return true;
       }
@@ -610,7 +528,7 @@ public class GradleInstallationManager implements Disposable {
 
   private static boolean isGroovyJar(@NotNull String name) {
     name = StringUtil.toLowerCase(name);
-    return name.startsWith("groovy-all-") && name.endsWith(".jar") && !name.contains("src") && !name.contains("doc");
+    return name.startsWith("groovy-") && name.endsWith(".jar") && !name.contains("src") && !name.contains("doc");
   }
 
   @Nullable
@@ -669,5 +587,44 @@ public class GradleInstallationManager implements Disposable {
       }
     }
     return null;
+  }
+
+  private static class BuildLayoutParametersCacheCleanupListener extends ExternalSystemTaskNotificationListenerAdapter
+    implements ProjectManagerListener, DynamicPluginListener {
+    @Override
+    public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+      getInstance().myBuildLayoutParametersCache.remove(workingDir);
+    }
+
+    @Override
+    public void onEnd(@NotNull ExternalSystemTaskId id) {
+      // it is not enough to clean up cache on the start of an external event, because sometimes the changes occur `after` the event finishes.
+      // An example of this behavior is the downloading of gradle distribution:
+      // we must not rely on the caches that were computed without downloaded distribution.
+      if (!(id.getProjectSystemId() == GradleConstants.SYSTEM_ID && id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT)) {
+        return;
+      }
+      Project project = id.findProject();
+      if (project == null) {
+        return;
+      }
+      GradleInstallationManager installationManager = getInstance();
+      installationManager.myBuildLayoutParametersCache.remove(getDefaultProjectKey(project));
+      GradleSettings settings = GradleSettings.getInstance(project);
+      for (GradleProjectSettings linkedSettings : settings.getLinkedProjectsSettings()) {
+        String path = linkedSettings.getExternalProjectPath();
+        installationManager.myBuildLayoutParametersCache.remove(path);
+      }
+    }
+
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
+
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
   }
 }

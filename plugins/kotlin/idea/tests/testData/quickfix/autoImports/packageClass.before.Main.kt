@@ -1,6 +1,6 @@
-// "class org.jetbrains.kotlin.idea.quickfix.ImportFix" "false"
-// ACTION: Create function 'FooPackage'
+// "Import" "false"
 // ACTION: Create class 'FooPackage'
+// ACTION: Create function 'FooPackage'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: FooPackage
 

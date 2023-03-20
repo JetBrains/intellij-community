@@ -28,9 +28,6 @@ import java.util.List;
 import static com.intellij.util.LazyKt.recursionSafeLazy;
 import static kotlin.LazyKt.lazyOf;
 
-/**
- * @author ven
- */
 public final class GrClosureType extends GrLiteralClassType {
 
   private final List<GrSignature> mySignatures;
@@ -73,7 +70,7 @@ public final class GrClosureType extends GrLiteralClassType {
     final PsiClass psiClass = resolve();
     if (psiClass != null && psiClass.getTypeParameters().length == 1) {
       final PsiType type = GrClosureSignatureUtil.getReturnType(mySignatures);
-      if (type == PsiType.NULL || type == null) {
+      if (type == PsiTypes.nullType() || type == null) {
         return new PsiType[]{null};
       }
       else {

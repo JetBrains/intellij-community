@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,15 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class AnnotationTargetUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 
-  public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
+  public static final Set<TargetType> DEFAULT_TARGETS = Collections.unmodifiableSet(EnumSet.of(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
-    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE, TargetType.MODULE, TargetType.RECORD_COMPONENT);
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE, TargetType.MODULE, TargetType.RECORD_COMPONENT));
 
   private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
   private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};

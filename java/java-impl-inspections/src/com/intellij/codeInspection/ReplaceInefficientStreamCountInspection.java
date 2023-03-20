@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -68,7 +68,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
 
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
         if (STREAM_COUNT.test(methodCall)) {
           PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
           CountFix fix = FIX_MAPPER.mapFirst(qualifierCall);
@@ -131,8 +131,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
 
   static boolean doesFlatMapCallCollectionStream(PsiMethodCallExpression flatMapCall) {
     PsiElement function = flatMapCall.getArgumentList().getExpressions()[0];
-    if (function instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)function;
+    if (function instanceof PsiMethodReferenceExpression methodRef) {
       if (!STREAM_METHOD.equals(methodRef.getReferenceName())) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
       if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().isEmpty()) {
@@ -223,31 +222,17 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (!(element instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression countCall = (PsiMethodCallExpression)element;
+      if (!(element instanceof PsiMethodCallExpression countCall)) return;
       PsiElement countName = countCall.getMethodExpression().getReferenceNameElement();
       if (countName == null) return;
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       switch (mySimplificationMode) {
-        case SUM:
-          replaceFlatMap(countName, qualifierCall);
-          break;
-        case COLLECTION_SIZE:
-          replaceSimpleCount(countCall, qualifierCall);
-          break;
-        case ANY_MATCH:
-          replaceFilterCountComparison(qualifierCall, true);
-          break;
-        case NONE_MATCH:
-          replaceFilterCountComparison(qualifierCall, false);
-          break;
-        case IS_PRESENT:
-          replaceSimpleCountComparison(countCall, true);
-          break;
-        case NOT_IS_PRESENT:
-        case IS_EMPTY:
-          replaceSimpleCountComparison(countCall, false);
-          break;
+        case SUM -> replaceFlatMap(countName, qualifierCall);
+        case COLLECTION_SIZE -> replaceSimpleCount(countCall, qualifierCall);
+        case ANY_MATCH -> replaceFilterCountComparison(qualifierCall, true);
+        case NONE_MATCH -> replaceFilterCountComparison(qualifierCall, false);
+        case IS_PRESENT -> replaceSimpleCountComparison(countCall, true);
+        case NOT_IS_PRESENT, IS_EMPTY -> replaceSimpleCountComparison(countCall, false);
       }
     }
 
@@ -277,7 +262,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
         PsiTypeElement castElement = ((PsiTypeCastExpression)parent).getCastType();
         if (castElement != null && castElement.getType() instanceof PsiPrimitiveType) {
           addCast = false;
-          if (PsiType.INT.equals(castElement.getType())) {
+          if (PsiTypes.intType().equals(castElement.getType())) {
             toReplace = parent;
           }
         }
@@ -300,15 +285,12 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       if (flatMapName == null) return;
       PsiElement parameter = qualifierCall.getArgumentList().getExpressions()[0];
       PsiElement streamCallName = null;
-      if (parameter instanceof PsiMethodReferenceExpression) {
-        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)parameter;
+      if (parameter instanceof PsiMethodReferenceExpression methodRef) {
         streamCallName = methodRef.getReferenceNameElement();
       }
-      else if (parameter instanceof PsiLambdaExpression) {
-        PsiExpression expression = extractLambdaReturnExpression((PsiLambdaExpression)parameter);
-        if (expression instanceof PsiMethodCallExpression) {
-          streamCallName = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement();
-        }
+      else if (parameter instanceof PsiLambdaExpression lambda &&
+               extractLambdaReturnExpression(lambda) instanceof PsiMethodCallExpression call) {
+        streamCallName = call.getMethodExpression().getReferenceNameElement();
       }
       if (streamCallName == null || !streamCallName.getText().equals("stream")) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(qualifierCall.getProject());

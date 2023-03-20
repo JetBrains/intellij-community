@@ -122,7 +122,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && !getModel().isProjectScheme(currentScheme));
     }
-  }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+}
 
 
   private class CopyToIDEAction extends DumbAwareAction {
@@ -145,7 +150,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && getModel().isProjectScheme(currentScheme));
     }
-  }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+}
   
   private class ResetAction extends DumbAwareAction {
     
@@ -174,6 +184,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
         p.setEnabledAndVisible(false);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
   
   
@@ -199,6 +214,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDuplicateScheme(scheme));
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
   
   
@@ -218,6 +238,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canRenameScheme(scheme));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
   
@@ -246,6 +271,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       else {
         p.setEnabled(isEnabled);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

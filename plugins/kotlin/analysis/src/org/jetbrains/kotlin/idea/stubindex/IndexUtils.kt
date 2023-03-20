@@ -1,28 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
+import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
-import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
-    KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+    KotlinTopLevelExtensionsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
 fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
-    KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+    KotlinExtensionsInObjectsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
-private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeIndex.indexExtension(
+private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeStubIndexHelper.indexExtension(
     stub: KotlinCallableStubBase<TDeclaration>,
     sink: IndexSink
 ) {
@@ -32,10 +33,7 @@ private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTyp
     val callableName = declaration.name ?: return
     val containingTypeReference = declaration.receiverTypeReference!!
     containingTypeReference.typeElement?.index(declaration, containingTypeReference) { typeName ->
-        sink.occurrence(
-            key,
-            buildKey(typeName, callableName)
-        )
+        sink.occurrence(indexKey, buildKey(typeName, callableName))
     }
 }
 
@@ -44,7 +42,7 @@ fun indexTypeAliasExpansion(stub: KotlinTypeAliasStub, sink: IndexSink) {
     val typeReference = declaration.getTypeReference() ?: return
     val typeElement = typeReference.typeElement ?: return
     typeElement.index(declaration, typeReference) { typeName ->
-        sink.occurrence(KotlinTypeAliasByExpansionShortNameIndex.KEY, typeName)
+        sink.occurrence(KotlinTypeAliasByExpansionShortNameIndex.indexKey, typeName)
     }
 }
 
@@ -80,7 +78,7 @@ private fun KtTypeElement.index(
 
                 occurrence(referenceName)
 
-                aliasImportMap()[referenceName].forEach { occurrence(it) }
+                KotlinPsiHeuristics.unwrapImportAlias(this, referenceName).forEach { occurrence(it) }
             }
 
             is KtNullableType -> innerType?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)
@@ -96,6 +94,10 @@ private fun KtTypeElement.index(
             }
 
             is KtDynamicType -> occurrence("Any")
+
+            // Currently, the only possible intersection type is "T & Any". "Any" is allowed to be only on RHS
+            is KtIntersectionType ->
+                getLeftTypeRef()?.typeElement?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)
 
             else -> error("Unsupported type: $this")
         }
@@ -114,7 +116,7 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     if (stub.isTopLevel()) return
 
     if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.Instance.key, name)
+        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.indexKey, name)
     }
 }
 
@@ -141,17 +143,21 @@ fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     if (stub.getShortName() != JvmFileClassUtil.JVM_NAME_SHORT) return
 
     val jvmName = JvmFileClassUtil.stringFromAnnotation(stub.psi) ?: return
-    val annotatedElementName = when (val grandParentStub = stub.parentStub.parentStub) {
-        is KotlinFileStub -> grandParentStub.psi.name
-        is NamedStub -> grandParentStub.getName() ?: ""
-        is KotlinPropertyAccessorStub -> grandParentStub.parentStub.safeAs<KotlinPropertyStub>()?.name ?: ""
-        else -> return
-    }
+    val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
 
     if (annotatedElementName != jvmName) {
-        sink.occurrence(KotlinJvmNameAnnotationIndex.INSTANCE.key, jvmName)
+        sink.occurrence(KotlinJvmNameAnnotationIndex.indexKey, jvmName)
     }
 }
+
+private val StubElement<*>.annotatedJvmNameElementName: String?
+    get() = when (this) {
+        is KotlinFileStub -> psi.name
+        is NamedStub -> name ?: ""
+        is KotlinPropertyAccessorStub -> parentStub.safeAs<KotlinPropertyStub>()?.name ?: ""
+        is KotlinPlaceHolderStub -> parentStub?.annotatedJvmNameElementName
+        else -> null
+    }
 
 private val KotlinStubWithFqName<*>.modifierList: KotlinModifierListStub?
     get() = findChildStubByType(KtStubElementTypes.MODIFIER_LIST)

@@ -16,7 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +39,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public abstract class ResourceInspection extends BaseInspection {
 
@@ -60,13 +61,11 @@ public abstract class ResourceInspection extends BaseInspection {
     writeBooleanOption(node, "ignoreResourcesWithClose", true);
   }
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("allow.resource.to.be.opened.inside.a.try.block"), "insideTryAllowed");
-    panel.addCheckbox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), "anyMethodMayClose");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("insideTryAllowed", InspectionGadgetsBundle.message("allow.resource.to.be.opened.inside.a.try.block")),
+      checkbox("anyMethodMayClose", InspectionGadgetsBundle.message("any.method.may.close.resource.argument")));
   }
 
   @Override
@@ -140,13 +139,11 @@ public abstract class ResourceInspection extends BaseInspection {
   @Nullable
   public static PsiVariable getVariable(@NotNull PsiExpression expression) {
     final PsiElement parent = getParent(expression);
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignment) {
       final PsiExpression lhs = assignment.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement referent = referenceExpression.resolve();
       if (!(referent instanceof PsiVariable)) {
         return null;
@@ -172,8 +169,7 @@ public abstract class ResourceInspection extends BaseInspection {
     if (type == null) {
       return null;
     }
-    while (parent instanceof PsiReferenceExpression && grandParent instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+    while (parent instanceof PsiReferenceExpression && grandParent instanceof PsiMethodCallExpression methodCallExpression) {
       if (!type.equals(methodCallExpression.getType())) {
         return null;
       }
@@ -236,7 +232,7 @@ public abstract class ResourceInspection extends BaseInspection {
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         result.set(Boolean.FALSE);
         stopWalking();
@@ -260,29 +256,24 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   private boolean isResourceClose(PsiStatement statement, PsiVariable variable) {
-    if (statement instanceof PsiExpressionStatement) {
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+    if (statement instanceof PsiExpressionStatement expressionStatement) {
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       return isResourceClose(methodCallExpression, variable);
     }
-    if (statement instanceof PsiTryStatement) {
-      final PsiTryStatement tryStatement = (PsiTryStatement)statement;
+    if (statement instanceof PsiTryStatement tryStatement) {
       final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (isResourceClose(ControlFlowUtils.getFirstStatementInBlock(tryBlock), variable)) {
         return true;
       }
     }
-    else if (statement instanceof PsiIfStatement) {
-      final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    else if (statement instanceof PsiIfStatement ifStatement) {
       final PsiExpression condition = ifStatement.getCondition();
-      if (!(condition instanceof PsiBinaryExpression)) {
+      if (!(condition instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (JavaTokenType.NE != tokenType) {
         return false;
@@ -292,21 +283,19 @@ public abstract class ResourceInspection extends BaseInspection {
       if (rhs == null) {
         return false;
       }
-      if (PsiType.NULL.equals(lhs.getType())) {
-        if (!(rhs instanceof PsiReferenceExpression)) {
+      if (PsiTypes.nullType().equals(lhs.getType())) {
+        if (!(rhs instanceof PsiReferenceExpression referenceExpression)) {
           return false;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)rhs;
         final PsiElement target = referenceExpression.resolve();
         if (!variable.equals(target)) {
           return false;
         }
       }
-      else if (PsiType.NULL.equals(rhs.getType())) {
-        if (!(lhs instanceof PsiReferenceExpression)) {
+      else if (PsiTypes.nullType().equals(rhs.getType())) {
+        if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
           return false;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();
         if (!variable.equals(target)) {
           return false;
@@ -315,8 +304,7 @@ public abstract class ResourceInspection extends BaseInspection {
       final PsiStatement thenBranch = ifStatement.getThenBranch();
       return isResourceClose(thenBranch, variable);
     }
-    else if (statement instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement = (PsiBlockStatement)statement;
+    else if (statement instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       return isResourceClose(ControlFlowUtils.getFirstStatementInBlock(codeBlock), variable);
     }
@@ -334,18 +322,16 @@ public abstract class ResourceInspection extends BaseInspection {
     }
     if (resourcePotentiallyCreatedFromOther(resourceCreationExpression)) return true;
     final PsiElement parent = ExpressionUtils.getPassThroughParent(resourceCreationExpression);
-    if (parent instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)parent;
+    if (parent instanceof PsiLambdaExpression lambda) {
       PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
-      if (!PsiType.VOID.equals(returnType)) {
+      if (!PsiTypes.voidType().equals(returnType)) {
         return true;
       }
     }
     if (parent instanceof PsiReturnStatement) {
       return true;
     }
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       if (PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression()) != resourceCreationExpression) {
         return true; // non-sensical code
       }
@@ -381,8 +367,7 @@ public abstract class ResourceInspection extends BaseInspection {
         // resource was created from other, potentially leaking resource
         return true;
       }
-      if (resourceCreationExpression instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)resourceCreationExpression;
+      if (resourceCreationExpression instanceof PsiMethodCallExpression call) {
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
         if (qualifier != null && isResourceCreation(qualifier)) {
           return true;
@@ -394,26 +379,22 @@ public abstract class ResourceInspection extends BaseInspection {
 
   private static boolean assignedToField(PsiAssignmentExpression assignmentExpression) {
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-    if (!(lhs instanceof PsiReferenceExpression)) {
+    if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
       return false;
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
     final PsiElement target = referenceExpression.resolve();
     return target instanceof PsiField;
   }
 
   private static boolean isSystemErrOrOutUse(PsiExpression resourceCreationExpression) {
-    if (!(resourceCreationExpression instanceof PsiMethodCallExpression)) {
+    if (!(resourceCreationExpression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)resourceCreationExpression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-    if (qualifierExpression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
+    if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiField) {
-        final PsiField field = (PsiField)target;
+      if (target instanceof PsiField field) {
         final String fieldName = field.getName();
         if ("out".equals(fieldName) || "err".equals(fieldName)) {
           final PsiClass containingClass = field.getContainingClass();
@@ -457,7 +438,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
       // check if resource is closed in a method like IOUtils.silentClose()
       super.visitReferenceExpression(referenceExpression);
       if (containsClose) {
@@ -468,19 +449,17 @@ public abstract class ResourceInspection extends BaseInspection {
         return;
       }
       final PsiElement parent = referenceExpression.getParent();
-      if (!(parent instanceof PsiExpressionList)) {
+      if (!(parent instanceof PsiExpressionList argumentList)) {
         return;
       }
-      final PsiExpressionList argumentList = (PsiExpressionList)parent;
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (methodName == null || !methodName.contains(HardcodedMethodConstants.CLOSE)) {
@@ -512,10 +491,10 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
@@ -526,13 +505,12 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression value = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
-      if (!(value instanceof PsiReferenceExpression)) {
+      if (!(value instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
       final PsiElement target = referenceExpression.resolve();
       if (boundVariable.equals(target)) {
         escaped = true;
@@ -540,22 +518,20 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression rhs = PsiUtil.deparenthesizeExpression(expression.getRExpression());
-      if (!(rhs instanceof PsiReferenceExpression)) {
+      if (!(rhs instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)rhs;
       final PsiElement target = referenceExpression.resolve();
       if (!boundVariable.equals(target)) {
         return;
       }
       final PsiExpression lhs = PsiUtil.deparenthesizeExpression(expression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression lReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression lReferenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement lTarget = lReferenceExpression.resolve();
       if (lTarget instanceof PsiField) {
         escaped = true;
@@ -563,7 +539,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       // Case: variable.close()
       if (!ignoreResourcesWithClose) {
@@ -579,7 +555,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!ignoreResourcesWithClose) {
         return;
@@ -592,7 +568,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression callExpression) {
+    public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       if (!anyMethodMayClose) {
         return;
@@ -619,7 +595,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitResourceVariable(PsiResourceVariable variable) {
+    public void visitResourceVariable(@NotNull PsiResourceVariable variable) {
       super.visitResourceVariable(variable);
       if (ExpressionUtils.isReferenceTo(variable.getInitializer(), boundVariable)) {
         escaped = true;
@@ -627,7 +603,7 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitResourceExpression(PsiResourceExpression expression) {
+    public void visitResourceExpression(@NotNull PsiResourceExpression expression) {
       super.visitResourceExpression(expression);
       if (ExpressionUtils.isReferenceTo(expression.getExpression(), boundVariable)) {
         escaped = true;

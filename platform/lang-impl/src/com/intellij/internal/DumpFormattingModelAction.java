@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,6 +6,7 @@ import com.intellij.formatting.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -27,11 +28,23 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DumpFormattingModelAction extends AnAction implements DumbAware {
+final class DumpFormattingModelAction extends AnAction implements DumbAware {
+
   private static final Logger LOG = Logger.getInstance(DumpFormattingModelAction.class);
 
-  public DumpFormattingModelAction() {
+  DumpFormattingModelAction() {
     super(ActionsBundle.messagePointer("action.DumpFormattingModelAction.text"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null &&
+                                             e.getData(CommonDataKeys.PSI_FILE) != null);
   }
 
   @Override
@@ -51,7 +64,7 @@ public class DumpFormattingModelAction extends AnAction implements DumbAware {
       .map(documentWindow -> PsiDocumentManager.getInstance(project).getPsiFile(documentWindow))
       .filter(psi -> psi != null)
       .sorted(Comparator.comparingInt(psi -> injectedLanguageManager.injectedToHost(psi, psi.getTextRange()).getStartOffset()))
-      .collect(Collectors.toList());
+      .toList();
 
     for (PsiFile injectedFile : injectedFiles) {
       dumpModelForFile(injectedFile, output, injectedLanguageManager.injectedToHost(injectedFile, injectedFile.getTextRange()));

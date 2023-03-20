@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -9,29 +10,27 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET
 import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.EMPTY
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_CLASSIFIER
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_CONSTRUCTOR
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_EXPRESSION
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_LOCAL_VARIABLE
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_MEMBER_FUNCTION
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_MEMBER_PROPERTY
-import org.jetbrains.kotlin.resolve.AnnotationChecker.Companion.TargetLists.T_VALUE_PARAMETER_WITHOUT_VAL
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.resolve.constants.EnumValue
+import org.jetbrains.kotlin.resolve.constants.TypedArrayValue
+import org.jetbrains.kotlin.resolve.descriptorUtil.firstArgument
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -41,28 +40,34 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
 
     override fun getFamilyName() = text
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val annotationEntry = element ?: return
 
-        val annotationClass = annotationEntry.toAnnotationClass() ?: return
+        val (annotationClass, annotationClassDescriptor) = annotationEntry.toAnnotationClass() ?: return
 
-        val requiredAnnotationTargets = annotationEntry.getRequiredAnnotationTargets(annotationClass, project)
+        val requiredAnnotationTargets = annotationEntry.getRequiredAnnotationTargets(annotationClass, annotationClassDescriptor, project)
         if (requiredAnnotationTargets.isEmpty()) return
 
-        val psiFactory = KtPsiFactory(annotationEntry)
         annotationClass.runOnExpectAndAllActuals(useOnSelf = true) {
-            it.safeAs<KtClass>()?.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+            val ktClass = it.safeAs<KtClass>() ?: return@runOnExpectAndAllActuals
+            runWriteAction {
+                val psiFactory = KtPsiFactory(project)
+                ktClass.addAnnotationTargets(requiredAnnotationTargets, psiFactory)
+            }
         }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
-        private fun KtAnnotationEntry.toAnnotationClass(): KtClass? {
+        private fun KtAnnotationEntry.toAnnotationClass(): Pair<KtClass, ClassDescriptor>? {
             val context = analyze(BodyResolveMode.PARTIAL)
             val annotationDescriptor = context[BindingContext.ANNOTATION, this] ?: return null
-            val annotationTypeDescriptor = annotationDescriptor.type.constructor.declarationDescriptor ?: return null
-            return (DescriptorToSourceUtils.descriptorToDeclaration(annotationTypeDescriptor) as? KtClass)?.takeIf {
+            val annotationTypeDescriptor = annotationDescriptor.type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
+            val annotationClass = (DescriptorToSourceUtils.descriptorToDeclaration(annotationTypeDescriptor) as? KtClass)?.takeIf {
                 it.isAnnotation() && it.isWritable
-            }
+            } ?: return null
+            return annotationClass to annotationTypeDescriptor
         }
 
         override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtAnnotationEntry>? {
@@ -71,55 +76,86 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
             }
 
             val entry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
-            val annotationClass = entry.toAnnotationClass() ?: return null
-            if (entry.useSiteTarget != null && entry.getRequiredAnnotationTargets(annotationClass, entry.project).isEmpty()) return null
+            val (annotationClass, annotationClassDescriptor) = entry.toAnnotationClass() ?: return null
+            if (entry.getRequiredAnnotationTargets(annotationClass, annotationClassDescriptor, entry.project).isEmpty()) return null
 
             return AddAnnotationTargetFix(entry)
         }
     }
 }
 
-private fun KtAnnotationEntry.getRequiredAnnotationTargets(annotationClass: KtClass, project: Project): List<KotlinTarget> {
+private fun KtAnnotationEntry.getRequiredAnnotationTargets(
+    annotationClass: KtClass,
+    annotationClassDescriptor: ClassDescriptor,
+    project: Project
+): List<KotlinTarget> {
+    val ignoredTargets = if (annotationClassDescriptor.hasRequiresOptInAnnotation()) {
+        listOf(AnnotationTarget.EXPRESSION, AnnotationTarget.FILE, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER)
+            .map { it.name }
+            .toSet()
+    } else emptySet()
+
+    val existingTargets = annotationClassDescriptor.annotations
+        .firstOrNull { it.fqName == StandardNames.FqNames.target }
+        ?.firstArgument()
+        .safeAs<TypedArrayValue>()
+        ?.value
+        ?.mapNotNull { it.safeAs<EnumValue>()?.enumEntryName?.asString() }
+        ?.toSet()
+        .orEmpty()
+
+    val validTargets = AnnotationTarget.values()
+        .map { it.name }
+        .minus(ignoredTargets)
+        .minus(existingTargets)
+        .toSet()
+    if (validTargets.isEmpty()) return emptyList()
+
     val requiredTargets = getActualTargetList()
     if (requiredTargets.isEmpty()) return emptyList()
 
     val searchScope = GlobalSearchScope.allScope(project)
-    val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
-        if (reference.element is KtNameReferenceExpression) {
-            // Kotlin annotation
-            reference.element.getNonStrictParentOfType<KtAnnotationEntry>()?.takeIf { it != this }?.getActualTargetList()
-        } else {
-            // Java annotation
-            (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
-        }
-    }.flatten().toSet()
-    val annotationTargetValueNames = AnnotationTarget.values().map { it.name }
-    return (requiredTargets + otherReferenceRequiredTargets).asSequence()
-        .distinct()
-        .filter { it.name in annotationTargetValueNames }
-        .sorted()
-        .toList()
+    return project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.add.annotation.usage"), true) {
+        val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
+            if (reference.element is KtNameReferenceExpression) {
+                // Kotlin annotation
+                reference.element
+                    .getStrictParentOfType<KtConstructorCalleeExpression>()
+                    ?.parent.safeAs<KtAnnotationEntry>()
+                    ?.takeIf { it != this }
+                    ?.getActualTargetList()
+            } else {
+                // Java annotation
+                (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
+            }
+        }.flatten().toSet()
+
+        (requiredTargets + otherReferenceRequiredTargets).asSequence()
+            .distinct()
+            .filter { it.name in validTargets }
+            .sorted()
+            .toList()
+    } ?: emptyList()
 }
 
-private fun getActualTargetList(annotated: PsiTarget): AnnotationChecker.Companion.TargetList {
-    return when (annotated) {
-        is PsiClass -> T_CLASSIFIER
-        is PsiMethod ->
-            when {
-                annotated.isConstructor -> T_CONSTRUCTOR
-                else -> T_MEMBER_FUNCTION
-            }
-        is PsiExpression -> T_EXPRESSION
-        is PsiField -> T_MEMBER_PROPERTY(backingField = true, delegate = false)
-        is PsiLocalVariable -> T_LOCAL_VARIABLE
-        is PsiParameter -> T_VALUE_PARAMETER_WITHOUT_VAL
-        else -> EMPTY
-    }
-}
+private fun ClassDescriptor.hasRequiresOptInAnnotation() = annotations.any { it.fqName == FqName("kotlin.RequiresOptIn") }
 
 private fun PsiAnnotation.getActualTargetList(): List<KotlinTarget> {
-    val annotated = parent.parent as? PsiTarget ?: return emptyList()
-    return getActualTargetList(annotated).defaultTargets
+    val target = when (val annotated = this.parent.parent) {
+        is PsiClass -> KotlinTarget.CLASS
+        is PsiMethod -> when {
+            annotated.isConstructor -> KotlinTarget.CONSTRUCTOR
+            else -> KotlinTarget.FUNCTION
+        }
+        is PsiExpression -> KotlinTarget.EXPRESSION
+        is PsiField -> KotlinTarget.FIELD
+        is PsiLocalVariable -> KotlinTarget.LOCAL_VARIABLE
+        is PsiParameter -> KotlinTarget.VALUE_PARAMETER
+        is PsiTypeParameterList -> KotlinTarget.TYPE
+        is PsiReferenceList -> KotlinTarget.TYPE_PARAMETER
+        else -> null
+    }
+    return listOfNotNull(target)
 }
 
 private fun KtAnnotationEntry.getActualTargetList(): List<KotlinTarget> {

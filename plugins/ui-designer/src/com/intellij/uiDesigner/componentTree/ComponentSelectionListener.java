@@ -20,10 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public interface ComponentSelectionListener extends EventListener{
   void selectedComponentChanged(@NotNull GuiEditor source);
 }

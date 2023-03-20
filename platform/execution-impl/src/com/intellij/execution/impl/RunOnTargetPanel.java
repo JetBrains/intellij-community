@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -60,7 +61,7 @@ public class RunOnTargetPanel {
       .withComment(ExecutionBundle.message("edit.run.configuration.run.configuration.run.on.comment"))
       .addToPanel(addTo, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
                                                 GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                JBUI.emptyInsets(), 0, 0), false);
+                                                JBInsets.emptyInsets(), 0, 0), false);
     JLabel runOnLabel = UIUtil.findComponentOfType(addTo, JLabel.class);
     if (runOnLabel != null && nameLabel != null) {
       runOnLabel.setLabelFor(myRunOnComboBox);

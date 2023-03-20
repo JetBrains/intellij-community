@@ -1,5 +1,6 @@
 {
   "type": "FILE",
   "file": "resource.txt",
-  "newName": "new_resource.txt"
+  "newName": "new_resource.txt",
+  "enabledInK2": true
 }

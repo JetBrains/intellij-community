@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -12,21 +12,25 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 
-fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel = LanguageLevel.JDK_1_8): KotlinWithJdkAndRuntimeLightProjectDescriptor {
-    return object : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
-        private fun projectDescriptorByFileDirective(): LightProjectDescriptor {
-            val fileText = FileUtil.loadFile(testDataFile, true)
-            return if (InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK"))
-                INSTANCE_FULL_JDK
-            else INSTANCE
-        }
+fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel = LanguageLevel.JDK_1_8): LightProjectDescriptor {
+    val fileText = FileUtil.loadFile(testDataFile, true)
+    val descriptor = when {
+        InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK") ->
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
+        InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_STDLIB_JDK8") ->
+            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
+
+        else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
+
+    return object : KotlinWithJdkAndRuntimeLightProjectDescriptor(descriptor.libraryFiles, descriptor.librarySourceFiles) {
         override fun getSdk(): Sdk? {
-            val sdk = projectDescriptorByFileDirective().sdk ?: return null
+            val sdk = descriptor.sdk ?: return null
             runWriteAction {
                 val modificator: SdkModificator = (sdk.clone() as Sdk).sdkModificator
                 JavaSdkImpl.attachJdkAnnotations(modificator)

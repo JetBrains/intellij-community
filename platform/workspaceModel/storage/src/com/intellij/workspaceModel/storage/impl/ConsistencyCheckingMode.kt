@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import java.util.*
 
 /**
- * Defines how consistency checks after modifications of [com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder]
+ * Defines how consistency checks after modifications of [com.intellij.workspaceModel.storage.MutableEntityStorage]
  * will be performed.
  */
 enum class ConsistencyCheckingMode {

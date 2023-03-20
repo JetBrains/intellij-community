@@ -34,6 +34,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
+/** @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead. */
+@Deprecated(forRemoval = true)
 public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   public ProjectTreeBuilder(@NotNull Project project,
                             @NotNull JTree tree,
@@ -155,8 +157,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   private void updateNodesContaining(@NotNull Collection<? extends VirtualFile> filesToRefresh, @NotNull DefaultMutableTreeNode rootNode) {
-    if (!(rootNode.getUserObject() instanceof ProjectViewNode)) return;
-    ProjectViewNode node = (ProjectViewNode)rootNode.getUserObject();
+    if (!(rootNode.getUserObject() instanceof ProjectViewNode node)) return;
     Collection<VirtualFile> containingFiles = null;
     for (VirtualFile virtualFile : filesToRefresh) {
       if (!virtualFile.isValid()) {

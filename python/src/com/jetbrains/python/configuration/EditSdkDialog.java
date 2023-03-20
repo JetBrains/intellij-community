@@ -1,10 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
+import com.intellij.execution.target.BrowsableTargetEnvironmentType;
+import com.intellij.execution.target.TargetBrowserHints;
+import com.intellij.execution.target.TargetBasedSdkAdditionalData;
+import com.intellij.execution.target.TargetEnvironmentConfigurationKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.ClickListener;
@@ -15,13 +22,15 @@ import com.intellij.util.NullableFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
 
@@ -48,12 +57,20 @@ public class EditSdkDialog extends DialogWrapper {
     });
     final String homePath = sdk.getHomePath();
     myInterpreterPathTextField.setText(homePath);
-    myInterpreterPathTextField.addBrowseFolderListener(PyBundle.message("sdk.edit.dialog.specify.interpreter.path"), null, project,
-                                                       PythonSdkType.getInstance().getHomeChooserDescriptor());
+    var sdkAdditionalData = sdk.getSdkAdditionalData();
+    var label = PyBundle.message("sdk.edit.dialog.specify.interpreter.path");
+    var targetListener = createBrowseTargetListener(project, sdkAdditionalData, label);
+    if (targetListener != null) {
+      myInterpreterPathTextField.addActionListener(targetListener);
+    }
+    else {
+      myInterpreterPathTextField.addBrowseFolderListener(label, null, project,
+                                                         PythonSdkType.getInstance().getHomeChooserDescriptor());
+    }
     myRemoveAssociationLabel.setVisible(false);
     final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getPlatformIndependentFlavor(homePath);
     if ((sdkFlavor instanceof VirtualEnvSdkFlavor) || (sdkFlavor instanceof CondaEnvSdkFlavor)) {
-      PythonSdkAdditionalData data = (PythonSdkAdditionalData) sdk.getSdkAdditionalData();
+      PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
       if (data != null) {
         final String path = data.getAssociatedModulePath();
         if (path != null) {
@@ -84,6 +101,25 @@ public class EditSdkDialog extends DialogWrapper {
         return true;
       }
     }.installOn(myRemoveAssociationLabel);
+  }
+
+  /**
+   * @return action to call when user clicks on "browse" button if sdk is target SDK that supports browsing
+   */
+  private @Nullable ActionListener createBrowseTargetListener(@NotNull Project project, @NotNull SdkAdditionalData sdkAdditionalData,
+                                                              @NotNull @NlsContexts.DialogTitle String label) {
+    if (!(sdkAdditionalData instanceof TargetBasedSdkAdditionalData)) {
+      return null;
+    }
+    var configuration = ((TargetBasedSdkAdditionalData)sdkAdditionalData).getTargetEnvironmentConfiguration();
+    if (configuration != null) {
+      var type = TargetEnvironmentConfigurationKt.getTargetType(configuration);
+      if (type instanceof BrowsableTargetEnvironmentType) {
+        return ((BrowsableTargetEnvironmentType)type).createBrowser(project, label, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+                                                                    myInterpreterPathTextField.getTextField(), () -> configuration, new TargetBrowserHints(true, null));
+      }
+    }
+    return null;
   }
 
   @Override

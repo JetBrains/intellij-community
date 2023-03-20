@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.RecentProjectsManager
@@ -7,6 +7,7 @@ import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleManager
@@ -24,11 +25,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.EDT
-import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.StringValidators
@@ -50,6 +49,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardS
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
 import java.io.File
+import java.util.*
 import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -84,11 +84,11 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
 
     override fun isAvailable(): Boolean = isCreatingNewProject()
 
-    lateinit var wizardContext: WizardContext
+    private lateinit var wizardContext: WizardContext
     private var finishButtonClicked: Boolean = false
 
     override fun getModuleType(): ModuleType<*> = NewProjectWizardModuleType()
-    override fun getParentGroup(): String = KotlinTemplatesFactory.KOTLIN_PARENT_GROUP_NAME
+    override fun getParentGroup(): String = "Kotlin Group"
 
     override fun createWizardSteps(
         wizardContext: WizardContext,
@@ -107,12 +107,12 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         runWriteAction {
             wizard.jdk?.let { jdk -> JavaSdkUtil.applyJdkToProject(project, jdk) }
         }
-        val modulesModel = model ?: ModuleManager.getInstance(project).modifiableModel
+        val modulesModel = model ?: ModuleManager.getInstance(project).getModifiableModel()
         val success = wizard.apply(
             services = buildList {
                 +IdeaServices.createScopeDependent(project)
                 +IdeaServices.PROJECT_INDEPENDENT
-                +IdeaJpsWizardService(project, modulesModel, this@NewProjectWizardModuleBuilder, wizard, wizardContext)
+                +IdeaJpsWizardService(project, modulesModel, this@NewProjectWizardModuleBuilder, wizard)
             },
             phases = GenerationPhase.startingFrom(GenerationPhase.FIRST_STEP)
         ).onFailure { errors ->
@@ -179,7 +179,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             KotlinPlugin.modules.reference.settingValue
         }
         val projectCreationStats = ProjectCreationStats(
-            KotlinTemplatesFactory.KOTLIN_GROUP_NAME,
+            "Kotlin",
             wizard.projectTemplate!!.id,
             wizard.buildSystemType!!.id,
             modules.map { it.configurator.id },
@@ -298,7 +298,7 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard, disposable: Disposable) : Wiza
     private fun suggestGroupId(): String {
         val username = SystemProperties.getUserName() ?: return DEFAULT_GROUP_ID
         if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
-        val usernameAsGroupId = username.trim().toLowerCase().split("\\s+".toRegex()).joinToString(separator = ".")
+        val usernameAsGroupId = username.trim().toLowerCase(Locale.US).split("\\s+".toRegex()).joinToString(separator = ".")
         return "me.$usernameAsGroupId"
     }
 

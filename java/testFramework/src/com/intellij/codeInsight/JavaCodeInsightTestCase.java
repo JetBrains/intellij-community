@@ -189,6 +189,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
+  /**
+   * @deprecated use {@link #configureByFiles(File, VirtualFile...)} instead
+   */
+  @Deprecated
   public VirtualFile doConfigureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     return configureByFiles(rawProjectRoot, vFiles);
   }
@@ -199,7 +203,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
     VirtualFile toDir = createVirtualDirectoryForContentFile();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    Map<VirtualFile, EditorInfo> editorInfos = WriteAction.compute(() -> {
       try {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
@@ -209,23 +213,23 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
         // auxiliary files should be copied first
         VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
-        Map<VirtualFile, EditorInfo> editorInfos;
+        Map<VirtualFile, EditorInfo> editorInfos1;
         if (rawProjectRoot != null) {
           FileUtil.copyDir(rawProjectRoot, toDir.toNioPath().toFile());
           File projectRoot = rawProjectRoot.getCanonicalFile();
           VirtualFile aNull = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot));
-          editorInfos = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
+          editorInfos1 = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
             return s.getPath().substring(projectRoot.getPath().length());
           }));
 
           toDir.refresh(false, true);
         }
         else {
-          editorInfos = new LinkedHashMap<>();
+          editorInfos1 = new LinkedHashMap<>();
           for (VirtualFile vFile : reversed) {
             VirtualFile parent = vFile.getParent();
             assert parent.isDirectory() : parent;
-            editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
+            editorInfos1.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
           }
         }
 
@@ -242,13 +246,18 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
           sourceRootAdded(toDir);
         }
 
-        openEditorsAndActivateLast(editorInfos);
+        return editorInfos1;
       }
       catch (IOException e) {
         LOG.error(e);
+        return null;
       }
     });
 
+    if (editorInfos != null) {
+      List<Editor> list = openEditors(editorInfos);
+      setActiveEditor(ContainerUtil.getLastItem(list));
+    }
 
     return toDir;
   }
@@ -318,6 +327,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
+  /**
+   * @deprecated usages must be inlined
+   */
+  @Deprecated
   protected @NotNull List<Editor> openEditorsAndActivateLast(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     final List<Editor> list = openEditors(editorInfos);
     setActiveEditor(list.get(list.size() - 1));
@@ -370,6 +383,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     return false;
   }
 
+  /**
+   * @deprecated cursor and selection is automatically configured in {@code configureByFile*} methods 
+   */
+  @Deprecated
   protected void setupCursorAndSelection(final @NotNull Editor editor) {
     Document document = editor.getDocument();
     EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
@@ -377,6 +394,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  /**
+   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers} 
+   */
+  @Deprecated
   @Override
   protected void configure(@NotNull String path, String dataName) throws Exception {
     super.configure(path, dataName);
@@ -392,7 +413,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     int selectionStart = selectionEnd = myEditor.getCaretModel().getOffset();
 
     if (data.getSelectionStartColumnNumber() >= 0) {
-      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
+      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionStartLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
       selectionEnd = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionEndColumnNumber() - 1));
     }
 
@@ -449,7 +470,11 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     });
   }
 
+  /**
+   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers}
+   */
   @Override
+  @Deprecated
   protected void checkResult(String dataName) throws Exception {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     super.checkResult(dataName);
@@ -523,7 +548,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   }
 
   protected void deleteLine() {
-    LightPlatformCodeInsightTestCase.deleteLine(myEditor,getProject());
+    LightPlatformCodeInsightTestCase.deleteLine(myEditor, getProject());
   }
 
   protected void type(@NotNull String s) {

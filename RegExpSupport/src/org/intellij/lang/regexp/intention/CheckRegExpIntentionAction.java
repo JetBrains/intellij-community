@@ -29,7 +29,7 @@ final class CheckRegExpIntentionAction extends QuickEditAction implements Iconab
       return false;
     }
 
-    if (editor.getUserData(CheckRegExpForm.CHECK_REG_EXP_EDITOR) != null) {
+    if (editor.getUserData(CheckRegExpForm.Keys.CHECK_REG_EXP_EDITOR) != null) {
       // to disable intention inside CheckRegExpForm itself
       return false;
     }

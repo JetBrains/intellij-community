@@ -114,8 +114,7 @@ public class PyImportReference extends PyReferenceImpl {
       if (item instanceof LookupElementBuilder) {
         variants[i] = ((LookupElementBuilder)item).withInsertHandler(insertHandler);
       }
-      else if (item instanceof PsiNamedElement) {
-        final PsiNamedElement element = (PsiNamedElement)item;
+      else if (item instanceof PsiNamedElement element) {
         final String name = element.getName();
         assert name != null; // it can't really have null name
         variants[i] = LookupElementBuilder
@@ -131,8 +130,7 @@ public class PyImportReference extends PyReferenceImpl {
     if (item instanceof PsiElement) {
       itemElement = (PsiElement) item;
     }
-    else if (item instanceof LookupElement) {
-      LookupElement lookupElement = (LookupElement) item;
+    else if (item instanceof LookupElement lookupElement) {
       final PsiElement element = lookupElement.getPsiElement();
       if (element != null) {
         itemElement = element;
@@ -184,10 +182,9 @@ public class PyImportReference extends PyReferenceImpl {
           ResolveResult[] resolved = src.getReference().multiResolve(false);
           for (ResolveResult result : resolved) {
             PsiElement modCandidate = result.getElement();
-            if (modCandidate instanceof PyExpression) {
+            if (modCandidate instanceof PyExpression module) {
               addImportedNames(fromImport.getImportElements()); // don't propose already imported items
               // try to collect submodules
-              PyExpression module = (PyExpression)modCandidate;
               PyType qualifierType = myContext.getType(module);
               if (qualifierType != null) {
                 ProcessingContext ctx = new ProcessingContext();

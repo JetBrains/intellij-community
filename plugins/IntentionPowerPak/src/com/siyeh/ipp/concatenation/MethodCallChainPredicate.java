@@ -38,7 +38,6 @@ class MethodCallChainPredicate implements PsiElementPredicate {
   /**
    * Find root of the call chain
    *
-   * @param element
    * @return root of call chain or null if it's not a call chain
    */
   static PsiExpression getCallChainRoot(PsiElement element) {
@@ -58,8 +57,7 @@ class MethodCallChainPredicate implements PsiElementPredicate {
       PsiClassType expressionType = getQualifierExpressionType(qualifierExpression);
       if (!first) {
         if (expressionType == null) {
-          if (qualifierExpression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression call = (PsiMethodCallExpression)qualifierExpression;
+          if (qualifierExpression instanceof PsiMethodCallExpression call) {
             if (call.getMethodExpression().getQualifierExpression() == null) {
               PsiMethod method = call.resolveMethod();
               if (method == null || !method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -81,11 +79,10 @@ class MethodCallChainPredicate implements PsiElementPredicate {
 
   @Nullable
   private static PsiClassType getQualifierExpressionType(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
+    if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
       return null;
     }
 
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
     final PsiType type = qualifierExpression != null ? qualifierExpression.getType() : null;

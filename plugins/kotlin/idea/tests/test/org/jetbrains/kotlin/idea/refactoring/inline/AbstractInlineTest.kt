@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -6,23 +6,20 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.TargetElementUtil.ELEMENT_NAME_ACCEPTED
 import com.intellij.codeInsight.TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
 import com.intellij.lang.refactoring.InlineActionHandler
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 
 abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
     protected fun doTest(unused: String) {
-        val testDataFile = testDataFile()
-        val afterFile = testDataFile("${fileName()}.after")
+        val testDataFile = dataFile()
+        val afterFile = dataFile("${fileName()}.after")
 
         val mainFileName = testDataFile.name
         val mainFileBaseName = FileUtil.getNameWithoutExtension(mainFileName)
@@ -47,8 +44,12 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
                 null
 
             val expectedErrors = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// ERROR: ")
+            val inlinePropertyKeepValue = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "// INLINE_PROPERTY_KEEP: ")
+            val settings = KotlinRefactoringSettings.instance
+            val oldInlinePropertyKeepValue = settings.INLINE_PROPERTY_KEEP
             if (handler != null) {
                 try {
+                    inlinePropertyKeepValue?.let { settings.INLINE_PROPERTY_KEEP = it }
                     runWriteAction { handler.inlineElement(project, editor, targetElement) }
                     for ((extraPsiFile, extraFile) in allFiles) {
                         KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.after"), extraPsiFile.text)
@@ -61,6 +62,8 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
                     TestCase.assertFalse("Conflicts: ${e.message}", afterFileExists)
                     TestCase.assertEquals("Expected errors", 1, expectedErrors.size)
                     TestCase.assertEquals("Error message", expectedErrors[0].replace("\\n", "\n"), e.message)
+                } finally {
+                    settings.INLINE_PROPERTY_KEEP = oldInlinePropertyKeepValue
                 }
             } else {
                 TestCase.assertFalse("No refactoring handler available", afterFileExists)
@@ -68,7 +71,7 @@ abstract class AbstractInlineTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
 
 abstract class AbstractInlineTestWithSomeDescriptors : AbstractInlineTest() {

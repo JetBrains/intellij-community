@@ -1,4 +1,4 @@
-// "Put parameters on separate lines" "true"
+// "Put parameters on separate lines" "true-preview"
 // break after lparen
 // break before rparen
 

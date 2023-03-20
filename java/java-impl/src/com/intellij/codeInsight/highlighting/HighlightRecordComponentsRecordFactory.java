@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
@@ -23,9 +23,8 @@ public class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandl
     PsiElement parent = target.getParent();
     if (!(parent instanceof PsiReferenceExpression)) return null;
     PsiElement resolved = ((PsiReferenceExpression)parent).resolve();
-    if (!(resolved instanceof LightRecordMember)) return null;
+    if (!(resolved instanceof LightRecordMember member)) return null;
 
-    LightRecordMember member = (LightRecordMember)resolved;
     PsiRecordComponent component = member.getRecordComponent();
     return new RecordComponentHighlightUsagesHandler(editor, file, component);
   }
@@ -59,7 +58,7 @@ public class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandl
         Consumer<PsiExpression> onOccurence = (expr) -> addOccurrence(expr);
         JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (isReferenceToRecordComponent(name, expression)) {
               onOccurence.consume(expression);

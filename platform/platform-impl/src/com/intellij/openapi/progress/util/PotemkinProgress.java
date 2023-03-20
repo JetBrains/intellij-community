@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -31,13 +32,14 @@ import java.util.function.Consumer;
 /**
  * A progress indicator for write actions. Paints itself explicitly, without resorting to normal Swing's delayed repaint API.
  * Doesn't dispatch Swing events, except for handling manually those that can cancel it or affect the visual presentation.
- *
- * @author peter
  */
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();
   private final EventStealer myEventStealer;
+  private final PerformanceWatcher myWatcher = PerformanceWatcher.getInstanceOrNull();
   private long myLastUiUpdate = System.currentTimeMillis();
+  private long myLastInteraction = myLastUiUpdate;
+  private long myLastWatcherPing = myLastUiUpdate;
 
   public PotemkinProgress(@NotNull @NlsContexts.ProgressTitle String title,
                           @Nullable Project project,
@@ -50,8 +52,8 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this);
   }
 
-  static @NotNull EventStealer startStealingInputEvents(@NotNull Consumer<InputEvent> inputConsumer, @NotNull Disposable parent) {
-    return new EventStealer(inputConsumer, parent);
+  static @NotNull EventStealer startStealingInputEvents(@NotNull Consumer<? super InputEvent> inputConsumer, @NotNull Disposable parent) {
+    return new EventStealer(parent, inputConsumer);
   }
 
   private static boolean isUrgentInvocationEvent(AWTEvent event) {
@@ -63,8 +65,10 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
 
     //noinspection SpellCheckingInspection
-    return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
-           event instanceof MyInvocationEvent;
+    String eventString = event.toString();
+    return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
+           (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") // see JBR-4208
+           && !eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda")); // see IDEA-291469 Menu on macOs is invoked inside checkCanceled
   }
 
   @NotNull
@@ -73,17 +77,16 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     return Objects.requireNonNull(super.getDialog());
   }
 
-  private long myLastInteraction;
-
   @Override
   public void interact() {
     if (!myApp.isDispatchThread()) return;
-
     long now = System.currentTimeMillis();
     if (now == myLastInteraction) return;
-
     myLastInteraction = now;
-
+    if (myWatcher != null && now - myLastWatcherPing > myWatcher.getUnresponsiveInterval() / 2) {
+      myLastWatcherPing = now;
+      myWatcher.edtEventStarted();
+    }
     if (getDialog().getPanel().isShowing()) {
       myEventStealer.dispatchEvents(0);
     }
@@ -108,36 +111,19 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   }
 
   private void updateUI(long now) {
-    if (myApp.isUnitTestMode()) {
-      return;
-    }
+    if (myApp.isUnitTestMode()) return;
 
     JRootPane rootPane = getDialog().getPanel().getRootPane();
-    if (rootPane == null) {
-      rootPane = considerShowingDialog(now);
-    }
-
-    if (rootPane != null && timeToPaint(now)) {
-      paintProgress();
-    }
-  }
-
-  @Nullable
-  private JRootPane considerShowingDialog(long now) {
-    if (now - myLastUiUpdate > myDelayInMillis && myApp.isActive()) {
+    if (rootPane == null && now - myLastUiUpdate > myDelayInMillis && myApp.isActive()) {
       getDialog().getRepaintRunnable().run();
       showDialog();
-      return getDialog().getPanel().getRootPane();
+      rootPane = getDialog().getPanel().getRootPane();
     }
-    return null;
-  }
 
-  private boolean timeToPaint(long now) {
-    if (now - myLastUiUpdate <= ProgressDialog.UPDATE_INTERVAL) {
-      return false;
+    if (rootPane != null && now - myLastUiUpdate > ProgressDialog.UPDATE_INTERVAL) {
+      myLastUiUpdate = now;
+      paintProgress();
     }
-    myLastUiUpdate = now;
-    return true;
   }
 
   private void progressFinished() {
@@ -173,18 +159,18 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   /** Executes the action in a background thread, block Swing thread, handles selected input events and paints itself periodically. */
   public void runInBackground(@NotNull Runnable action) {
     myApp.assertIsDispatchThread();
-    enterModality();
 
     try {
-      ensureBackgroundThreadStarted(action);
+      executeInModalContext(() -> {
+        ensureBackgroundThreadStarted(action);
 
-      while (isRunning()) {
-        myEventStealer.dispatchEvents(10);
-        updateUI(System.currentTimeMillis());
-      }
+        while (isRunning()) {
+          myEventStealer.dispatchEvents(10);
+          updateUI(System.currentTimeMillis());
+        }
+      });
     }
     finally {
-      exitModality();
       progressFinished();
     }
   }
@@ -202,25 +188,15 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     started.waitFor();
   }
 
-  public static void invokeLaterNotBlocking(Object source, Runnable runnable) {
-    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(new MyInvocationEvent(source, runnable));
-  }
-
-  private static final class MyInvocationEvent extends InvocationEvent {
-    MyInvocationEvent(Object source, Runnable runnable) {
-      super(source, runnable);
-    }
-  }
-
   static final class EventStealer {
     private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
-    private final Consumer<InputEvent> myInputEventDispatcher;
+    private final @NotNull Consumer<? super InputEvent> myInputEventDispatcher;
 
-    private EventStealer(@NotNull Consumer<InputEvent> inputConsumer, @NotNull Disposable parent) {
+    private EventStealer(@NotNull Disposable parent, @NotNull Consumer<? super InputEvent> inputConsumer) {
       myInputEventDispatcher = inputConsumer;
       IdeEventQueue.getInstance().addPostEventListener(event -> {
-        if (event instanceof MouseEvent || event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE) {
+        if (event instanceof MouseEvent || event instanceof KeyEvent && event.getID() != KeyEvent.KEY_TYPED) {
           myInputEvents.offer((InputEvent)event);
           return true;
         }

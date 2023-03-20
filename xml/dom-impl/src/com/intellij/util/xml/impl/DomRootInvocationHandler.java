@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomRootInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance(DomRootInvocationHandler.class);
   private final DomFileElementImpl<?> myParent;
@@ -78,9 +75,8 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   public boolean equals(final Object obj) {
-    if (!(obj instanceof DomRootInvocationHandler)) return false;
+    if (!(obj instanceof DomRootInvocationHandler handler)) return false;
 
-    final DomRootInvocationHandler handler = (DomRootInvocationHandler)obj;
     return myParent.equals(handler.myParent);
   }
 

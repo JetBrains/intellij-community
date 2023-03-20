@@ -5,9 +5,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.idea.svn.api.Depth;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class SvnConfigurationState {
   @Property(surroundWithTag = false)
   public ConfigurationDirectory directory = new ConfigurationDirectory();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.application.runWriteAction
@@ -36,8 +36,15 @@ abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsight
   }
 
   override fun tearDown() {
-    Disposer.dispose(disposable)
-    super.tearDown()
+    try {
+      Disposer.dispose(disposable)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected fun setup(fileText: String) {
@@ -81,11 +88,11 @@ abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsight
       log.append("\n")
     }
 
-    override fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-      if (refactoringSupport.hasSyntaxError(declaration)) return
+    override fun nextSignature(anchor: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
+      if (refactoringSupport.hasSyntaxError(anchor)) return
 
       log.append("nextSignature: ")
-      log.appendSignature(declaration)
+      log.appendSignature(anchor)
       log.append("\n")
     }
 

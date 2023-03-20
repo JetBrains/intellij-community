@@ -1,4 +1,4 @@
-// "Implement methods" "true"
+// "Implement methods" "true-preview"
 enum E {
     A {
         @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,8 +14,6 @@ import java.util.StringTokenizer;
  * to the PSI root.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
 
@@ -23,7 +21,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
   private static final String TOP_LEVEL_CHILD_MARKER = "!!top";
   private static final String DOC_COMMENT_MARKER     = "!!doc";
   private static final String CODE_BLOCK_MARKER      = "!!block";
-  
+
   @Override
   protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                 @NotNull PsiElement parent,
@@ -71,7 +69,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
     }
     if (DOC_COMMENT_MARKER.equals(elementMarker)) {
       PsiElement candidate = parent.getFirstChild();
-      return candidate instanceof PsiComment ? candidate : null; 
+      return candidate instanceof PsiComment ? candidate : null;
     }
     if (CODE_BLOCK_MARKER.equals(elementMarker)) {
       int index = 0;
@@ -124,7 +122,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       if (b == null && buffer != null && current.getParent() instanceof PsiFile && canResolveTopLevelChild(current)) {
         buffer.append(TYPE_MARKER).append(ELEMENT_TOKENS_SEPARATOR).append(TOP_LEVEL_CHILD_MARKER).append(ELEMENTS_SEPARATOR);
         break;
-      } 
+      }
       buffer = b;
       if (buffer == null || length >= buffer.length()) {
         return null;
@@ -134,15 +132,15 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
 
     if (buffer == null) {
       return null;
-    } 
-    
+    }
+
     buffer.setLength(buffer.length() - 1);
     return buffer.toString();
   }
 
   /**
    * Allows to answer if it's possible to use {@link #TOP_LEVEL_CHILD_MARKER} for the given element.
-   * 
+   *
    * @param element  element to check
    * @return         {@code true} if {@link #TOP_LEVEL_CHILD_MARKER} can be used for the given element; {@code false} otherwise
    */
@@ -157,14 +155,14 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
       }
       if (child != element) {
         return false;
-      } 
+      }
     }
     return true;
   }
-  
+
   /**
    * Tries to produce signature for the exact given PSI element.
-   * 
+   *
    * @param element  target element
    * @param buffer   buffer to store the signature in
    * @return         buffer that contains signature of the given element if it was produced;
@@ -172,13 +170,14 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
    */
   @Nullable
   private static StringBuilder getSignature(@NotNull PsiElement element, @Nullable StringBuilder buffer) {
-    if (element instanceof PsiNamedElement) {
-      PsiNamedElement named = (PsiNamedElement)element;
+    if (element instanceof PsiNamedElement named) {
       final String name = named.getName();
       if (StringUtil.isEmpty(name)) {
         return null;
       }
-      int index = getChildIndex(named, element.getParent(), name, PsiNamedElement.class);
+      PsiElement parent = element.getParent();
+      if (parent == null) return null;
+      int index = getChildIndex(named, parent, name, PsiNamedElement.class);
       if (index < 0) return null;
       StringBuilder bufferToUse = buffer;
       if (bufferToUse == null) {
@@ -220,8 +219,8 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         }
         return bufferToUse;
       }
-    } 
-     
+    }
+
     return null;
   }
 

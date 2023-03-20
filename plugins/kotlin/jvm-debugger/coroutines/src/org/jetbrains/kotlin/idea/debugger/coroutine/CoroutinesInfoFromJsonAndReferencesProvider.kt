@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.google.gson.Gson
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineInfoProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutinesInfoFromJsonAndReferencesProvider(
@@ -34,7 +34,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
             ?: error("The first element of the result array must be a string")
         val lastObservedThreadRefs = array.getValue(1).safeAs<ArrayReference>()?.toTypedList<ThreadReference?>()
             ?: error("The second element of the result array must be an array")
-        val lastObservedFrameRefs = array.getValue(2).safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
+        val lastObservedFrameRefs = array.getValue(2).safeAs<ArrayReference>()?.toTypedList<ObjectReference?>()
             ?: error("The third element of the result array must be an array")
         val coroutineInfoRefs = array.getValue(3).safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
             ?: error("The fourth element of the result array must be an array")
@@ -53,7 +53,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
         coroutineInfos: Array<CoroutineInfoFromJson>,
         coroutineInfoRefs: List<ObjectReference>,
         lastObservedThreadRefs: List<ThreadReference?>,
-        lastObservedFrameRefs: List<ObjectReference>
+        lastObservedFrameRefs: List<ObjectReference?>
     ): List<CoroutineInfoData> {
         val result = mutableListOf<LazyCoroutineInfoData>()
         for ((i, info) in coroutineInfos.withIndex()) {

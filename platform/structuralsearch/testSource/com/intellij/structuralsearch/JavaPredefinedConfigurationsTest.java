@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -210,13 +210,10 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "class X {" +
            "  /** constructor */" +
            "  X() {}" +
-           "" +
            "  /** */" +
            "  void x() {}" +
-           "" +
            "  /** @deprecated */" +
            "  void y() {}" +
-           "" +
            "  /**" +
            "   * important" +
            "   * method" +
@@ -225,7 +222,6 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "   int z(int i) {" +
            "     return i;" +
            "   }" +
-           "" +
            "  void a() {}" +
            "}",
            "/** constructor */" +
@@ -262,45 +258,48 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "    default:" +
            "  }");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.comments.containing.word")),
-           "// bug\n" +
-           "/* bugs are here */\n" +
-           "/**\n" +
-           "* may\n" +
-           "* contain\n" +
-           "* one bug\n" +
-           "*/\n" +
-           "/* buggy */\n" +
-           "// bug?",
+           """
+             // bug
+             /* bugs are here */
+             /**
+             * may
+             * contain
+             * one bug
+             */
+             /* buggy */
+             // bug?""",
            "// bug",
-           "/**\n"+
-           "* may\n" +
-           "* contain\n" +
-           "* one bug\n" +
-           "*/",
+           """
+             /**
+             * may
+             * contain
+             * one bug
+             */""",
            "// bug?");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.fields.of.the.class")),
-           "interface I {\n" +
-           "  public static final String S = \"\";\n" +
-           "}\n" +
-           "enum E { A, B }\n" +
-           "class C extends ThreadLocal {\n" +
-           "  private int i = 0;\n" +
-           "}\n",
+           """
+             interface I {
+               public static final String S = "";
+             }
+             enum E { A, B }
+             class C extends ThreadLocal {
+               private int i = 0;
+             }
+             """,
            "private int i = 0;",
            "private final int threadLocalHashCode = nextHashCode();",
            "private static AtomicInteger nextHashCode = new AtomicInteger();",
            "private static final int HASH_INCREMENT = 1640531527;");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.fields.of.the.class")),
-           "interface I {\n" +
-           "  public static final String S = \"\";\n" +
-           "}\n" +
-           "enum E { A, B }\n" +
-           "record R(int i) {" +
-           "  private static final int X = 1;" +
-           "}" +
-           "class C extends ThreadLocal {\n" +
-           "  private int i = 0;\n" +
-           "}\n",
+           """
+             interface I {
+               public static final String S = "";
+             }
+             enum E { A, B }
+             record R(int i) {  private static final int X = 1;}class C extends ThreadLocal {
+               private int i = 0;
+             }
+             """,
            "private int i = 0;");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.records")),
            "class X {}" +
@@ -357,6 +356,54 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "class Y {" +
            "      int i;" +
            "    }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.instance.fields.of.the.class")),
+           "class X {" +
+           "  int a = 1;" +
+           "  int b = 2;" +
+           "  static int c = 3;" +
+           "}",
+           "int a = 1;",
+           "int b = 2;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.inner.classes")),
+           "class X {" +
+           "  class Inner1 {}" +
+           "  static class Inner2 {}" +
+           "}",
+           "class Inner1 {}",
+           "static class Inner2 {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.inner.classes.within.hierarchy")),
+           "class X {" +
+           "  class Inner {}" +
+           "}" +
+           "class Y extends X {}",
+           "class Inner {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.type.var.substitutions.in.instanceof.with.generic.types")),
+           "class X<T, U, V> {" +
+           "  void x(Object o) {" +
+           "    System.out.println(o instanceof X<Integer, Boolean, String>);" +
+           "  }" +
+           "}",
+           "Integer",
+           "Boolean",
+           "String");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.javadoc.annotated.fields")),
+           "class X {" +
+           "  /** comment */" +
+           "  int i;" +
+           "  int j;" +
+           "}",
+           "/** comment */  int i;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.javadoc.tags")),
+           """
+             class X {
+               /**
+                * comment
+                * @version 1
+                */
+               int i;
+               int j;
+             }""",
+           "@version");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }

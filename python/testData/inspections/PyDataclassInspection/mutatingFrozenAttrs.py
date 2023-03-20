@@ -1,4 +1,5 @@
 import attr
+import attrs
 
 
 @attr.s(auto_attribs=True)
@@ -47,3 +48,13 @@ b3 = B3(1, "2")
 del <error descr="'B3' object attribute 'x' is read-only">b3.x</error>
 del <error descr="'B3' object attribute 'y' is read-only">b3.y</error>
 del <error descr="'B3' object attribute 'z' is read-only">b3.z</error>
+
+
+@attrs.frozen
+class B4:
+    x: int
+    y: str
+
+b4 = B4(1, "2")
+<error descr="'B4' object attribute 'x' is read-only">b4.x</error> = 2
+del <error descr="'B4' object attribute 'x' is read-only">b4.x</error>

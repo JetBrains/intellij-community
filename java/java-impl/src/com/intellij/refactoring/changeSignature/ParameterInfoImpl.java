@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.changeSignature;
 
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ParameterInfoImpl implements JavaParameterInfo {
   private static final Logger LOG = Logger.getInstance(ParameterInfoImpl.class);
@@ -106,14 +107,11 @@ public class ParameterInfoImpl implements JavaParameterInfo {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ParameterInfoImpl)) return false;
-
-    ParameterInfoImpl parameterInfo = (ParameterInfoImpl) o;
-
-    if (oldParameterIndex != parameterInfo.oldParameterIndex) return false;
-    if (defaultValue != null ? !defaultValue.equals(parameterInfo.defaultValue) : parameterInfo.defaultValue != null) return false;
-    if (!getName().equals(parameterInfo.getName())) return false;
-    return getTypeText().equals(parameterInfo.getTypeText());
+    return o instanceof ParameterInfoImpl parameterInfo &&
+           oldParameterIndex == parameterInfo.oldParameterIndex &&
+           Objects.equals(defaultValue, parameterInfo.defaultValue) &&
+           getName().equals(parameterInfo.getName()) &&
+           getTypeText().equals(parameterInfo.getTypeText());
   }
 
   public int hashCode() {

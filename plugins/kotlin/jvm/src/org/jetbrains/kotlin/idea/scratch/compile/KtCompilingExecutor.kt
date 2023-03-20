@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.compile
 
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.idea.scratch.*
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutputType
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
@@ -41,20 +42,20 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
         }
     }
 
-    fun checkForErrors(psiFile: KtFile, expressions: List<ScratchExpression>): Boolean {
-        return runReadAction {
+    fun checkForErrors(psiFile: KtFile, expressions: List<ScratchExpression>): Boolean =
+        psiFile.project.runReadActionInSmartMode {
             try {
                 AnalyzingUtils.checkForSyntacticErrors(psiFile)
             } catch (e: IllegalArgumentException) {
                 errorOccurs(e.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name), isFatal = true)
-                return@runReadAction false
+                return@runReadActionInSmartMode false
             }
 
             val analysisResult = psiFile.analyzeWithAllCompilerChecks()
 
             if (analysisResult.isError()) {
                 errorOccurs(analysisResult.error.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name), isFatal = true)
-                return@runReadAction false
+                return@runReadActionInSmartMode false
             }
 
             val bindingContext = analysisResult.bindingContext
@@ -81,11 +82,10 @@ class KtCompilingExecutor(file: ScratchFile) : ScratchExecutor(file) {
                     }
                 }
                 handler.onFinish(file)
-                return@runReadAction false
+                return@runReadActionInSmartMode false
             }
-            return@runReadAction true
+            return@runReadActionInSmartMode true
         }
-    }
 
     fun parseOutput(processOutput: ProcessOutput, expressions: List<ScratchExpression>) {
         ProcessOutputParser(expressions).parse(processOutput)

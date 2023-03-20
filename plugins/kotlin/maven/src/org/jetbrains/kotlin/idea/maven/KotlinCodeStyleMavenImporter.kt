@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -27,24 +27,15 @@ internal class KotlinCodeStyleMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_
         return getCodeStyleString(mavenProject) != null
     }
 
-    override fun preProcess(
-        module: Module?,
-        mavenProject: MavenProject?,
-        changes: MavenProjectChanges?,
-        modifiableModelsProvider: IdeModifiableModelsProvider?
-    ) {
-        // Do nothing
-    }
-
     override fun process(
-        modifiableModelsProvider: IdeModifiableModelsProvider?,
-        module: Module,
-        rootModel: MavenRootModelAdapter?,
-        mavenModel: MavenProjectsTree,
-        mavenProject: MavenProject,
-        changes: MavenProjectChanges?,
-        mavenProjectToModuleName: MutableMap<MavenProject, String>?,
-        postTasks: MutableList<MavenProjectsProcessorTask>
+      modifiableModelsProvider: IdeModifiableModelsProvider,
+      module: Module,
+      rootModel: MavenRootModelAdapter,
+      mavenModel: MavenProjectsTree,
+      mavenProject: MavenProject,
+      changes: MavenProjectChanges,
+      mavenProjectToModuleName: MutableMap<MavenProject, String>,
+      postTasks: MutableList<MavenProjectsProcessorTask>
     ) {
         if (mavenProject !in mavenModel.rootProjects) return
 

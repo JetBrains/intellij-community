@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -21,7 +20,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   private final Project myProject;
@@ -99,14 +101,14 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return Collections.<DataProvider>singletonList(realDataId -> getSlowData(selected, realDataId));
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(selected, slowId);
     }
     return null;
   }
 
-  private static Object getSlowData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  private static Object getSlowData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       for (AbstractTreeNode<?> selectedElement : selected) {
         Object element = selectedElement.getValue();

@@ -15,43 +15,46 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
 import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
-  private static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
-    Pattern.compile(JavaErrorBundle.message("incompatible.types", "lombok.*AnyAnnotation\\[\\]", "__*"));
 
-  private final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFilter>>> registeredFilters;
-  private final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFixHook>>> registeredHooks;
+  private static final class Holder {
+    static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
+      Pattern.compile(JavaErrorBundle.message("incompatible.types", "lombok.*AnyAnnotation\\[\\]", "__*"));
+
+    static final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFilter>>> registeredFilters;
+    static final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFixHook>>> registeredHooks;
+
+    static {
+      registeredFilters = new HashMap<>();
+      registeredHooks = new HashMap<>();
+
+      for (LombokHighlightFilter highlightFilter : LombokHighlightFilter.values()) {
+        registeredFilters.computeIfAbsent(highlightFilter.severity, s -> new HashMap<>())
+          .computeIfAbsent(highlightFilter.key, k -> new ArrayList<>())
+          .add(highlightFilter);
+      }
+
+      for (LombokHighlightFixHook highlightFixHook : LombokHighlightFixHook.values()) {
+        registeredHooks.computeIfAbsent(highlightFixHook.severity, s -> new HashMap<>())
+          .computeIfAbsent(highlightFixHook.key, k -> new ArrayList<>())
+          .add(highlightFixHook);
+      }
+    }
+  }
 
   public LombokHighlightErrorFilter() {
-    registeredFilters = new HashMap<>();
-    registeredHooks = new HashMap<>();
-
-    for (LombokHighlightFilter highlightFilter : LombokHighlightFilter.values()) {
-      registeredFilters.computeIfAbsent(highlightFilter.severity, s -> new HashMap<>())
-        .computeIfAbsent(highlightFilter.key, k -> new ArrayList<>())
-        .add(highlightFilter);
-    }
-
-    for (LombokHighlightFixHook highlightFixHook : LombokHighlightFixHook.values()) {
-      registeredHooks.computeIfAbsent(highlightFixHook.severity, s -> new HashMap<>())
-        .computeIfAbsent(highlightFixHook.key, k -> new ArrayList<>())
-        .add(highlightFixHook);
-    }
   }
 
   @Override
@@ -71,7 +74,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     }
 
     // check exceptions for highlights
-    boolean acceptHighlight = registeredFilters
+    boolean acceptHighlight = Holder.registeredFilters
       .getOrDefault(highlightInfo.getSeverity(), Collections.emptyMap())
       .getOrDefault(highlightInfo.type.getAttributesKey(), Collections.emptyList())
       .stream()
@@ -89,13 +92,13 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       //Handling onX parameters
       if (OnXAnnotationHandler.isOnXParameterAnnotation(highlightInfo, file)
         || OnXAnnotationHandler.isOnXParameterValue(highlightInfo, file)
-        || (description != null && LOMBOK_ANY_ANNOTATION_REQUIRED.matcher(description).matches())) {
+        || (description != null && Holder.LOMBOK_ANY_ANNOTATION_REQUIRED.matcher(description).matches())) {
         return false;
       }
     }
 
     // register different quick fix for highlight
-    registeredHooks
+    Holder.registeredHooks
       .getOrDefault(highlightInfo.getSeverity(), Collections.emptyMap())
       .getOrDefault(highlightInfo.type.getAttributesKey(), Collections.emptyList())
       .stream()
@@ -112,7 +115,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       private final Pattern pattern2 = preparePattern(2);
 
       @NotNull
-      private Pattern preparePattern(int count) {
+      private static Pattern preparePattern(int count) {
         return Pattern.compile(JavaErrorBundle.message("unhandled.exceptions", ".*", count));
       }
 
@@ -204,7 +207,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
           }
 
           @Override
-          public QuickFix @Nullable [] getFixes() {
+          public @NotNull QuickFix @Nullable [] getFixes() {
             return null;
           }
         };

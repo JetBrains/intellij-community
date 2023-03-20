@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SystemExitInspection extends BaseInspection {
 
@@ -46,10 +47,10 @@ public class SystemExitInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("system.exit.call.problem.descriptor", className);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("system.exit.call.ignore.option"), this, "ignoreInMainMethod");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInMainMethod", InspectionGadgetsBundle.message("system.exit.call.ignore.option")));
   }
 
   @Override
@@ -67,9 +68,14 @@ public class SystemExitInspection extends BaseInspection {
       if (!"exit".equals(methodName) && !"halt".equals(methodName)) {
         return;
       }
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-      if (ignoreInMainMethod && PsiMethodUtil.isMainMethod(containingMethod)) {
-        return;
+      if (ignoreInMainMethod) {
+        final PsiMethod containingMethod =
+          PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+        if (containingMethod != null &&
+            HardcodedMethodConstants.MAIN.equals(containingMethod.getName()) &&
+            PsiMethodUtil.isMainMethod(containingMethod)) {
+          return;
+        }
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
@@ -81,7 +87,7 @@ public class SystemExitInspection extends BaseInspection {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiType parameterType = parameters[0].getType();
-      if (!parameterType.equals(PsiType.INT)) {
+      if (!parameterType.equals(PsiTypes.intType())) {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
@@ -89,10 +95,12 @@ public class SystemExitInspection extends BaseInspection {
         return;
       }
       final String className = aClass.getQualifiedName();
-      if (!"java.lang.System".equals(className) && !"java.lang.Runtime".equals(className)) {
-        return;
+      if (CommonClassNames.JAVA_LANG_SYSTEM.equals(className)) {
+        registerMethodCallError(expression, "System");
       }
-      registerMethodCallError(expression, "System");
+      else if ("java.lang.Runtime".equals(className)) {
+        registerMethodCallError(expression, "Runtime");
+      }
     }
   }
 }

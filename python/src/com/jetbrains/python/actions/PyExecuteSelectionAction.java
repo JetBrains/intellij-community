@@ -1,15 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
@@ -28,64 +31,27 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor instanceof EditorImpl) {
+      PyExecuteConsoleCustomizer.Companion.getInstance().notifySciCellGutterExecuted((EditorImpl)editor, "ExecuteInPyConsoleAction");
+    }
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (editor != null && project != null) {
       PythonRunConfiguration config = PyExecuteConsoleCustomizer.Companion.getInstance().getContextConfig(e.getDataContext());
       final String selectionText = getSelectionText(editor);
-      if (!PyExecuteInConsole.INSTANCE.checkIfAvailableAndShowHint(editor)) return;
+      if (!PyExecuteInConsole.checkIfAvailableAndShowHint(editor)) return;
       if (selectionText != null) {
         PyExecuteInConsole.executeCodeInConsole(project, selectionText, editor, true, true, false, config);
       }
       else {
-        String line = getLineUnderCaret(editor);
-        if (line != null) {
+        TextRange range = EditorUtil.calcCaretLineTextRange(editor);
+        if (!range.isEmpty()) {
+          String line = editor.getDocument().getText(range);
           PyExecuteInConsole.executeCodeInConsole(project, line.trim(), editor, true, true, false, config);
-          moveCaretDown(editor);
+          editor.getCaretModel().moveToOffset(range.getEndOffset());
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         }
       }
     }
-  }
-
-  private static void moveCaretDown(Editor editor) {
-    VisualPosition pos = editor.getCaretModel().getVisualPosition();
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, pos, pos);
-    int offset = editor.getCaretModel().getOffset();
-
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-
-    Document document = editor.getDocument();
-
-    if (nextLineStart.line < document.getLineCount()) {
-
-      int newOffset = end + offset - start;
-
-      int nextLineEndOffset = document.getLineEndOffset(nextLineStart.line);
-      if (newOffset >= nextLineEndOffset) {
-        newOffset = nextLineEndOffset;
-      }
-
-      editor.getCaretModel().moveToOffset(newOffset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-  }
-
-  private static String getLineUnderCaret(Editor editor) {
-    VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
-
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, caretPos, caretPos);
-
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-    if (end <= start) {
-      return null;
-    }
-    return editor.getDocument().getCharsSequence().subSequence(start, end).toString();
   }
 
   @Nullable
@@ -101,6 +67,11 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     Presentation presentation = e.getPresentation();
@@ -110,15 +81,12 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
       String text = getSelectionText(editor);
       if (text != null) {
         presentation.setText(PyBundle.message("python.execute.selection.action.execute.selection.in.console"));
+        enabled = !text.isEmpty();
       }
-      else {
-        text = getLineUnderCaret(editor);
-        if (text != null) {
-          presentation.setText(PyBundle.message("python.execute.selection.action.execute.line.in.console"));
-        }
+      else if (!EditorUtil.calcCaretLineTextRange(editor).isEmpty()) {
+        presentation.setText(PyBundle.message("python.execute.selection.action.execute.line.in.console"));
+        enabled = true;
       }
-
-      enabled = !StringUtil.isEmpty(text);
     }
 
     presentation.setEnabledAndVisible(enabled);

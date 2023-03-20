@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'Companion.baz'" "true"
 package p
 
 import p.BObject.baz

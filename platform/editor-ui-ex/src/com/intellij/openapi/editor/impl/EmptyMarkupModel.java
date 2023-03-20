@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -34,9 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * This is mock implementation to be used in null-object pattern where necessary.
- * @author max
  */
-public class EmptyMarkupModel implements MarkupModelEx {
+public final class EmptyMarkupModel implements MarkupModelEx {
   private final Document myDocument;
 
   public EmptyMarkupModel(final Document document) {
@@ -44,18 +29,16 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
   @Override
-  @NotNull
-  public RangeHighlighter addRangeHighlighter(@Nullable TextAttributesKey textAttributesKey,
-                                              int startOffset,
-                                              int endOffset,
-                                              int layer,
-                                              @NotNull HighlighterTargetArea targetArea) {
+  public @NotNull RangeHighlighter addRangeHighlighter(@Nullable TextAttributesKey textAttributesKey,
+                                                       int startOffset,
+                                                       int endOffset,
+                                                       int layer,
+                                                       @NotNull HighlighterTargetArea targetArea) {
     throw new ProcessCanceledException();
   }
 
@@ -68,15 +51,14 @@ public class EmptyMarkupModel implements MarkupModelEx {
     throw new ProcessCanceledException();
   }
 
-  @NotNull
   @Override
-  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
-                                                                   int startOffset,
-                                                                   int endOffset,
-                                                                   int layer,
-                                                                   @NotNull HighlighterTargetArea targetArea,
-                                                                   boolean isPersistent,
-                                                                   @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+  public @NotNull RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
+                                                                            int startOffset,
+                                                                            int endOffset,
+                                                                            int layer,
+                                                                            @NotNull HighlighterTargetArea targetArea,
+                                                                            boolean isPersistent,
+                                                                            @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     throw new ProcessCanceledException();
   }
 
@@ -86,8 +68,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  @NotNull
-  public RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int line, int layer) {
+  public @NotNull RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int line, int layer) {
     throw new ProcessCanceledException();
   }
 
@@ -142,7 +123,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, @NotNull final TextAttributes textAttributes) {
+  public void setRangeHighlighterAttributes(final @NotNull RangeHighlighter highlighter, final @NotNull TextAttributes textAttributes) {
 
   }
 
@@ -156,17 +137,15 @@ public class EmptyMarkupModel implements MarkupModelEx {
     return false;
   }
 
-  @NotNull
   @Override
-  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
+  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
     return MarkupIterator.EMPTY;
   }
 
-  @NotNull
   @Override
-  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                                int endOffset,
-                                                                boolean onlyRenderedInGutter) {
+  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                                         int endOffset,
+                                                                         boolean onlyRenderedInGutter) {
     return MarkupIterator.EMPTY;
   }
 

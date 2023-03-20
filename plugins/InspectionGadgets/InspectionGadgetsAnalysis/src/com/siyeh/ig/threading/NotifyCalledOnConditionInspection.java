@@ -16,7 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -46,10 +46,10 @@ public class NotifyCalledOnConditionInspection extends BaseInspection {
       @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!MethodCallUtils.isCallToMethod(expression,
-                                          "java.util.concurrent.locks.Condition", PsiType.VOID,
+                                          "java.util.concurrent.locks.Condition", PsiTypes.voidType(),
                                           HardcodedMethodConstants.NOTIFY) &&
           !MethodCallUtils.isCallToMethod(expression,
-                                          "java.util.concurrent.locks.Condition", PsiType.VOID,
+                                          "java.util.concurrent.locks.Condition", PsiTypes.voidType(),
                                           HardcodedMethodConstants.NOTIFY_ALL)) {
         return;
       }

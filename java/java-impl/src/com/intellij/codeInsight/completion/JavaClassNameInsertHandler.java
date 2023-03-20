@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.*;
 
-/**
-* @author peter
-*/
 class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
   static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new JavaClassNameInsertHandler();
 
@@ -194,20 +191,14 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
   private static boolean shouldInsertFqnInJavadoc(@NotNull JavaPsiClassReferenceElement item, @NotNull PsiFile file) {
     JavaCodeStyleSettings javaSettings = getInstance(file);
-    
-    switch (javaSettings.CLASS_NAMES_IN_JAVADOC) {
-      case FULLY_QUALIFY_NAMES_ALWAYS:
-        return true;
-      case SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT:
-        return false;
-      case FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED:
-        if (file instanceof PsiJavaFile) {
-          PsiJavaFile javaFile = ((PsiJavaFile)file);
-          return item.getQualifiedName() != null && !ImportHelper.isAlreadyImported(javaFile, item.getQualifiedName());
-        }
-      default:
-        return false;
-    }
+
+    return switch (javaSettings.CLASS_NAMES_IN_JAVADOC) {
+      case FULLY_QUALIFY_NAMES_ALWAYS -> true;
+      case FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED -> file instanceof PsiJavaFile javaFile &&
+                                                  item.getQualifiedName() != null &&
+                                                  !ImportHelper.isAlreadyImported(javaFile, item.getQualifiedName());
+      default -> false;
+    };
   }
 
   private static boolean shouldInsertParentheses(PsiElement position) {

@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
-public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
+public class PersistentEnumerator<Data> implements ScannableDataEnumeratorEx<Data>, Closeable, Forceable {
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
   public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
@@ -54,7 +55,7 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
                               final int initialSize,
                               @Nullable StorageLockContext lockContext,
                               int version) throws IOException {
-    myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version);
+    myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version, true);
   }
 
   @NotNull
@@ -62,13 +63,14 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
                                                                        @NotNull KeyDescriptor<Data> dataDescriptor,
                                                                        final int initialSize,
                                                                        @Nullable StorageLockContext lockContext,
-                                                                       int version) throws IOException {
-    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version, false);
+                                                                       int version,
+                                                                       boolean registerForStats) throws IOException {
+    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version, false, registerForStats);
   }
 
   @ApiStatus.Internal
   public static int getVersion() {
-    return PersistentBTreeEnumerator.VERSION;
+    return PersistentBTreeEnumerator.baseVersion();
   }
 
   @Override
@@ -131,5 +133,11 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
   @ApiStatus.Internal
   public Collection<Data> getAllDataObjects(@Nullable final PersistentEnumeratorBase.DataFilter filter) throws IOException {
     return myEnumerator.getAllDataObjects(filter);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean processAllDataObjects(@NotNull Processor<? super Data> processor) throws IOException {
+    return myEnumerator.iterateData(processor);
   }
 }

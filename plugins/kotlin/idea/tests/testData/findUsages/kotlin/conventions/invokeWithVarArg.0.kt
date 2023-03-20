@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun invoke(vararg Int)"
 package pack
 
 class P {
@@ -13,3 +14,6 @@ fun f(p: P) {
     p.invoke()
     p.invoke(1, 2, 3)
 }
+
+
+// IGNORE_FIR_LOG

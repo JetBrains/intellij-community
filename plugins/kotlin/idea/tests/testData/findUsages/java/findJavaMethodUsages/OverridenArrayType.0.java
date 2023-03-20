@@ -3,3 +3,4 @@
 abstract public class MyJavaCLass {
     public abstract void a<caret>rr(Integer[] i);
 }
+

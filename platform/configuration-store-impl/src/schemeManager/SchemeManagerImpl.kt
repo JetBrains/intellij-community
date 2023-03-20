@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
@@ -16,6 +17,7 @@ import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -23,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.*
 import com.intellij.util.containers.catch
-import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Document
@@ -39,15 +40,21 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import java.util.function.Predicate
 
-class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
-                                                       processor: SchemeProcessor<T, MUTABLE_SCHEME>,
-                                                       private val provider: StreamProvider?,
-                                                       internal val ioDirectory: Path,
-                                                       val roamingType: RoamingType = RoamingType.DEFAULT,
-                                                       val presentableName: String? = null,
-                                                       private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                       private val fileChangeSubscriber: FileChangeSubscriber? = null,
-                                                       private val virtualFileResolver: VirtualFileResolver? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
+class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
+  val fileSpec: String,
+  processor: SchemeProcessor<T, MUTABLE_SCHEME>,
+  private val provider: StreamProvider?,
+  internal val ioDirectory: Path,
+  val roamingType: RoamingType = RoamingType.DEFAULT,
+  val presentableName: String? = null,
+  private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
+  private val fileChangeSubscriber: FileChangeSubscriber? = null,
+  private val virtualFileResolver: VirtualFileResolver? = null,
+  private val settingsCategory: SettingsCategory = SettingsCategory.OTHER
+) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor),
+    SafeWriteRequestor,
+    StorageManagerFileWriteRequestor {
+
   private val isUseVfs: Boolean
     get() = fileChangeSubscriber != null || virtualFileResolver != null
 
@@ -89,7 +96,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     get() = ioDirectory.toFile()
 
   override val allSchemeNames: Collection<String>
-    get() = schemes.mapSmart { processor.getSchemeKey(it) }
+    get() = schemes.map { processor.getSchemeKey(it) }
 
   override val allSchemes: List<T>
     get() = Collections.unmodifiableList(schemes)
@@ -111,7 +118,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?) {
     try {
-      val bytes: ByteArray
+      val bytes: ByteArray?
       if (pluginDescriptor == null) {
         when (requestor) {
           is TempUIThemeBasedLookAndFeelInfo -> {
@@ -353,6 +360,10 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
+  override fun getSettingsCategory(): SettingsCategory {
+    return settingsCategory
+  }
+
   private fun removeDirectoryIfEmpty(errors: MutableList<Throwable>) {
     ioDirectory.directoryStreamIfExists {
       for (file in it) {
@@ -390,7 +401,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val element = processor.writeScheme(scheme)?.let { it as? Element ?: (it as Document).detachRootElement() }
-    if (element.isEmpty()) {
+    if (JDOMUtil.isEmpty(element)) {
       externalInfo?.scheduleDelete(filesToDelete, "empty")
       return
     }
@@ -431,7 +442,6 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     // if another new scheme uses old name of this scheme, we must not delete it (as part of rename operation)
-    @Suppress("SuspiciousEqualsCombination")
     val renamed = externalInfo != null && fileNameWithoutExtension !== currentFileNameWithoutExtension && currentFileNameWithoutExtension != null && nameGenerator.isUnique(currentFileNameWithoutExtension)
     if (providerPath == null) {
       if (isUseVfs) {
@@ -477,7 +487,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       if (renamed) {
         externalInfo!!.scheduleDelete(filesToDelete, "renamed")
       }
-      provider!!.write(providerPath, byteOut.internalBuffer, byteOut.size(), roamingType)
+      provider!!.write(providerPath, byteOut.toByteArray(), roamingType)
     }
 
     if (externalInfo == null) {

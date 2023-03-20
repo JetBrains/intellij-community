@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any
 
 from pyVmomi.vim import ManagedEntity
 
@@ -12,4 +12,4 @@ class ViewManager:
     # but in practice it seems to be `list[Type[ManagedEntity]]`
     # Source: https://pubs.vmware.com/vi-sdk/visdk250/ReferenceGuide/vim.view.ViewManager.html
     @staticmethod
-    def CreateContainerView(container: ManagedEntity, type: list[Type[ManagedEntity]], recursive: bool) -> ContainerView: ...
+    def CreateContainerView(container: ManagedEntity, type: list[type[ManagedEntity]], recursive: bool) -> ContainerView: ...

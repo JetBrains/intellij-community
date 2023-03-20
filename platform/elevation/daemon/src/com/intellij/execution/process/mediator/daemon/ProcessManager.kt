@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.ByteString
@@ -96,7 +96,7 @@ internal class ProcessManager : Closeable {
       else -> throw IllegalArgumentException("Unknown process output FD $fd for PID $handleId")
     }
     val buffer = ByteArray(8192)
-    @Suppress("BlockingMethodInNonBlockingContext", "EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
+    @Suppress("EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
     return flow<ByteString> {
       while (true) {
         val n = inputStream.read(buffer)
@@ -116,7 +116,6 @@ internal class ProcessManager : Closeable {
       STDIN -> process.outputStream
       else -> throw IllegalArgumentException("Unknown process input FD $fd for PID $handleId")
     }
-    @Suppress("BlockingMethodInNonBlockingContext")
     withContext(Dispatchers.IO) {
       outputStream.use { outputStream ->
         with(currentCoroutineContext()) {
@@ -167,7 +166,6 @@ internal class ProcessManager : Closeable {
         synchronized(this) {
           check(_process == null) { "Process has already been initialized" }
           lifetimeJob.ensureActive()
-          @Suppress("BlockingMethodInNonBlockingContext")
           _process = processBuilder.start()
         }
       }

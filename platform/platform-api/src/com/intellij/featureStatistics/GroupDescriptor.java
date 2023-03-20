@@ -16,32 +16,36 @@
 package com.intellij.featureStatistics;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 public class GroupDescriptor {
   private String myId;
-  private String myDisplayName;
+  @Nls private String myDisplayName;
   @NonNls protected static final String ID_ATTR = "id";
   @NonNls private static final String GROUP_PREFIX = "group.";
 
   GroupDescriptor() {
   }
 
-  public GroupDescriptor(String id, String displayName) {
+  public GroupDescriptor(String id, @Nls String displayName) {
     myId = id;
     myDisplayName = displayName;
   }
 
   public void readExternal(Element element) {
     myId = element.getAttributeValue(ID_ATTR);
-    myDisplayName = FeatureStatisticsBundle.message(GROUP_PREFIX + myId);
   }
 
   public String getId() {
     return myId;
   }
 
+  @Nls
   public String getDisplayName() {
+    if (myDisplayName == null) {
+      myDisplayName = FeatureStatisticsBundle.message(GROUP_PREFIX + myId);
+    }
     return myDisplayName;
   }
 }

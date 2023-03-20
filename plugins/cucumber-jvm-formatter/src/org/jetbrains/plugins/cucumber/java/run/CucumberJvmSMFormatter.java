@@ -47,8 +47,8 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   @SuppressWarnings("UnusedDeclaration")
   public CucumberJvmSMFormatter(Appendable appendable) {
     this.appendable = System.out;
-    queue = new ArrayDeque<String>();
-    currentSteps = new ArrayDeque<Step>();
+    queue = new ArrayDeque<>();
+    currentSteps = new ArrayDeque<>();
     outCommand(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime());
     outCommand(TEMPLATE_SCENARIO_COUNTING_STARTED, "0", getCurrentTime());
   }

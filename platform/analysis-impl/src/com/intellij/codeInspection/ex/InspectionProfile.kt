@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.profile.ProfileEx
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
+import com.intellij.profile.codeInspection.ProjectBasedInspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Element
@@ -52,12 +53,12 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     return initialized
   }
 
-  override abstract fun getDisplayName(): String
+  abstract override fun getDisplayName(): String
 
   protected val pathMacroManager: PathMacroManager
     get() {
       val profileManager = profileManager
-      return PathMacroManager.getInstance((profileManager as? ProjectInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
+      return PathMacroManager.getInstance((profileManager as? ProjectBasedInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
     }
 
   override fun toString(): String = name
@@ -71,11 +72,11 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   }
 
   /**
-   * If you need to enable multiple tools, please use [.modifyProfile]
+   * If you need to enable multiple tools, please use [InspectionProfileImpl.modifyProfile].
    */
   @JvmOverloads
   fun setToolEnabled(toolShortName: String, enabled: Boolean, project: Project? = null, fireEvents: Boolean = true) {
-    val tools = getTools(toolShortName, project ?: (profileManager as? ProjectInspectionProfileManager)?.project)
+    val tools = getTools(toolShortName, project ?: (profileManager as? ProjectBasedInspectionProfileManager)?.project)
     if (enabled) {
       if (tools.isEnabled && tools.defaultState.isEnabled) {
         return
@@ -103,7 +104,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
 
   @JvmOverloads
-  fun initInspectionTools(project: Project? = (profileManager as? ProjectInspectionProfileManager)?.project) {
+  fun initInspectionTools(project: Project? = (profileManager as? ProjectBasedInspectionProfileManager)?.project) {
     if (initialized || !forceInitInspectionTools()) {
       return
     }

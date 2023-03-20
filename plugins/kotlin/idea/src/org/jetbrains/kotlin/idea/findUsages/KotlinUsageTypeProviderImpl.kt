@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypeProvider
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum
+import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -21,7 +23,7 @@ class KotlinUsageTypeProviderImpl : KotlinUsageTypeProvider() {
 
         val context = refExpr.analyze(BodyResolveMode.PARTIAL)
 
-         fun getFunctionUsageTypeDescriptor(descriptor: FunctionDescriptor): UsageTypeEnum? {
+        fun getFunctionUsageTypeDescriptor(descriptor: FunctionDescriptor): UsageTypeEnum? {
             when (refExpr.mainReference) {
                 is KtArrayAccessReference -> {
                     return when {

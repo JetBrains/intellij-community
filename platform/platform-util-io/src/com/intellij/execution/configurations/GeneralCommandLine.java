@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.IllegalEnvVarException;
-import com.intellij.execution.Platform;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -19,7 +16,6 @@ import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +36,7 @@ import java.util.*;
  * <h3>Working directory</h3>
  * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
  * If child processes may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
- * are safe. When unsure, set it to something neutral - like user's home or a temp directory.
+ * are safe. When unsure, set it to something neutral - like a user's home or a temp directory.
  *
  * <h3>Parent Environment</h3>
  * {@link ParentEnvironmentType Three options here}.
@@ -182,8 +178,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }
@@ -202,14 +197,11 @@ public class GeneralCommandLine implements UserDataHolder {
    * @see #getEffectiveEnvironment()
    */
   public @NotNull Map<String, String> getParentEnvironment() {
-    switch (myParentEnvironmentType) {
-      case SYSTEM:
-        return System.getenv();
-      case CONSOLE:
-        return EnvironmentUtil.getEnvironmentMap();
-      default:
-        return Collections.emptyMap();
-    }
+    return switch (myParentEnvironmentType) {
+      case SYSTEM -> System.getenv();
+      case CONSOLE -> EnvironmentUtil.getEnvironmentMap();
+      default -> Collections.emptyMap();
+    };
   }
 
   /**
@@ -356,7 +348,7 @@ public class GeneralCommandLine implements UserDataHolder {
     catch (IOException e) {
       if (SystemInfo.isWindows) {
         String mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
-        SecurityManager sm = System.getSecurityManager();
+        @SuppressWarnings("removal") SecurityManager sm = System.getSecurityManager();
         if ("false".equalsIgnoreCase(mode) || sm != null) {
           e.addSuppressed(new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
         }
@@ -374,7 +366,7 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
-          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
+          throw new WorkingDirectoryNotFoundException(myWorkDirectory.toPath());
         }
         if (!myWorkDirectory.isDirectory()) {
           throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
@@ -457,7 +449,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * Executed with pre-filled ProcessBuilder as the param and
    * gives the last chance to configure starting process
    * parameters before a process is started
-   * @param builder filed ProcessBuilder
+   * @param builder filled ProcessBuilder
    */
   protected @NotNull ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
     return builder;

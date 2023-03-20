@@ -20,9 +20,6 @@ import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCase {
 
   @Test

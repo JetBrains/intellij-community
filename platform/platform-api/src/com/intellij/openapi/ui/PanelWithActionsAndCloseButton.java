@@ -93,6 +93,11 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myContentManager != null) {
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);

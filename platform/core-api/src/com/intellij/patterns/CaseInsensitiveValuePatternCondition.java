@@ -18,9 +18,6 @@ package com.intellij.patterns;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class CaseInsensitiveValuePatternCondition extends PatternCondition<String> {
   private final String[] myValues;
 

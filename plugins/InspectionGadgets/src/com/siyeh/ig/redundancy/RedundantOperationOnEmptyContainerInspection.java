@@ -54,7 +54,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiExpression container = null;
         if (ARRAY_METHODS.test(call)) {
           container = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
@@ -72,12 +72,12 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
           if (ExpressionUtils.isVoidContext(call)) {
             fix = new DeleteElementFix(call, InspectionGadgetsBundle.message("remove.call.fix.family.name"));
           }
-          holder.registerProblem(container, msg, fix, getFindCauseFix(container));
+          holder.registerProblem(container, msg, LocalQuickFix.notNullElements(fix, getFindCauseFix(container)));
         }
       }
 
       @Override
-      public void visitForeachStatement(PsiForeachStatement statement) {
+      public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         PsiExpression value = PsiUtil.skipParenthesizedExprDown(statement.getIteratedValue());
         if (value == null) return;
         String msg = getProblemMessage(value);

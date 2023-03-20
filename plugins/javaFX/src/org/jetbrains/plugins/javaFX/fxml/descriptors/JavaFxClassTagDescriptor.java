@@ -5,9 +5,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxClassTagDescriptor extends JavaFxClassTagDescriptorBase {
   private final PsiClass myPsiClass;
 

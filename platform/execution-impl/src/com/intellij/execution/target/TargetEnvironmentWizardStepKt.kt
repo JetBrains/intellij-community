@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.border.CompoundBorder
 
 abstract class TargetEnvironmentWizardStepKt(@NlsContexts.DialogTitle title: String) : TargetEnvironmentWizardStep(title) {
 
@@ -28,9 +30,9 @@ abstract class TargetEnvironmentWizardStepKt(@NlsContexts.DialogTitle title: Str
     it.isVisible = false
   }
 
-  protected var stepDescription: @Nls String
-    @Nls get() = stepDescriptionLabel.text
-    set(@Nls value) {
+  protected var stepDescription: @NlsContexts.Label String
+    @NlsContexts.Label get() = stepDescriptionLabel.text
+    set(@NlsContexts.Label value) {
       stepDescriptionLabel.text = value
     }
 
@@ -53,13 +55,20 @@ abstract class TargetEnvironmentWizardStepKt(@NlsContexts.DialogTitle title: Str
     val mainPanel = createMainPanel()
     val center = JPanel(BorderLayout())
     center.add(mainPanel, BorderLayout.CENTER)
-    center.border = JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 1, 0, 1, 0)
+    val lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 1, 0, 1, 0)
+    center.border = if (mainPanel is DialogPanel) {
+      val mainDialogPanelInsets = JBUI.Borders.empty(UIUtil.LARGE_VGAP, TargetEnvironmentWizard.defaultDialogInsets().right)
+      CompoundBorder(lineBorder, mainDialogPanelInsets)
+    }
+    else {
+      lineBorder
+    }
     result.add(center, BorderLayout.CENTER)
 
     return result
   }
 
-  protected fun createTopPanel(): JComponent {
+  private fun createTopPanel(): JComponent {
     return JPanel(HorizontalLayout(ICON_GAP)).also {
       val insets = TargetEnvironmentWizard.defaultDialogInsets()
       it.border = JBUI.Borders.merge(JBUI.Borders.emptyTop(LARGE_VGAP),

@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.SingleTargetElementInfo
+import com.intellij.codeInsight.navigation.*
+import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
-import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -28,7 +28,16 @@ private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int)
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
   for (handler in GotoDeclarationHandler.EP_NAME.extensionList) {
-    val fromProvider: Array<out PsiElement>? = handler.getGotoDeclarationTargets(leafElement, offset, editor)
+    val fromProvider: Array<out PsiElement>? = try {
+      handler.getGotoDeclarationTargets(leafElement, offset, editor)
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
+    catch (t: Throwable) {
+      LOG.error(t)
+      null
+    }
     if (fromProvider.isNullOrEmpty()) {
       continue
     }
@@ -47,6 +56,8 @@ private class GTDProviderData(
     require(targetElements.isNotEmpty())
   }
 
+  @Suppress("DEPRECATION")
+  @Deprecated("Unused in v2 implementation")
   override fun ctrlMouseInfo(): CtrlMouseInfo {
     val singleTarget = targetElements.singleOrNull()
     return if (singleTarget == null) {
@@ -54,6 +65,16 @@ private class GTDProviderData(
     }
     else {
       SingleTargetElementInfo(leafElement, singleTarget)
+    }
+  }
+
+  override fun ctrlMouseData(): CtrlMouseData {
+    val singleTarget = targetElements.singleOrNull()
+    if (singleTarget == null) {
+      return multipleTargetsCtrlMouseData(getReferenceRanges(leafElement))
+    }
+    else {
+      return psiCtrlMouseData(leafElement, singleTarget)
     }
   }
 

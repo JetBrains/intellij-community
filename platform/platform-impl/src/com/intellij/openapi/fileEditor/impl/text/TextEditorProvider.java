@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,31 +32,31 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public class TextEditorProvider implements DefaultPlatformFileEditorProvider, QuickDefinitionProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
+                                           TextBasedFileEditorProvider,
+                                           StructureViewFileEditorProvider,
+                                           QuickDefinitionProvider,
+                                           DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
 
-  @NonNls private static final String TYPE_ID                         = "text-editor";
-  @NonNls private static final String LINE_ATTR                       = "line";
-  @NonNls private static final String COLUMN_ATTR                     = "column";
-  @NonNls private static final String LEAN_FORWARD_ATTR               = "lean-forward";
-  @NonNls private static final String SELECTION_START_LINE_ATTR       = "selection-start-line";
-  @NonNls private static final String SELECTION_START_COLUMN_ATTR     = "selection-start-column";
-  @NonNls private static final String SELECTION_END_LINE_ATTR         = "selection-end-line";
-  @NonNls private static final String SELECTION_END_COLUMN_ATTR       = "selection-end-column";
-  @NonNls private static final String RELATIVE_CARET_POSITION_ATTR    = "relative-caret-position";
-  @NonNls private static final String CARET_ELEMENT                   = "caret";
+  private static final @NonNls String TYPE_ID = "text-editor";
+  private static final @NonNls String LINE_ATTR = "line";
+  private static final @NonNls String COLUMN_ATTR = "column";
+  private static final @NonNls String LEAN_FORWARD_ATTR = "lean-forward";
+  private static final @NonNls String SELECTION_START_LINE_ATTR = "selection-start-line";
+  private static final @NonNls String SELECTION_START_COLUMN_ATTR = "selection-start-column";
+  private static final @NonNls String SELECTION_END_LINE_ATTR = "selection-end-line";
+  private static final @NonNls String SELECTION_END_COLUMN_ATTR = "selection-end-column";
+  private static final @NonNls String RELATIVE_CARET_POSITION_ATTR = "relative-caret-position";
+  private static final @NonNls String CARET_ELEMENT = "caret";
 
-  @NotNull
-  public static TextEditorProvider getInstance() {
+  public static @NotNull TextEditorProvider getInstance() {
     return Objects.requireNonNull(FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findFirstAssignableExtension(TextEditorProvider.class));
   }
 
@@ -65,15 +66,13 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
+  public @NotNull FileEditor createEditor(@NotNull Project project, final @NotNull VirtualFile file) {
     LOG.assertTrue(accept(project, file));
     return new TextEditorImpl(project, file, this);
   }
 
   @Override
-  @NotNull
-  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
     if (JDOMUtil.isEmpty(element)) {
       return state;
@@ -81,7 +80,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
 
     List<Element> caretElements = element.getChildren(CARET_ELEMENT);
     if (caretElements.isEmpty()) {
-      state.CARETS = new TextEditorState.CaretState[] {readCaretInfo(element)};
+      state.CARETS = new TextEditorState.CaretState[]{readCaretInfo(element)};
     }
     else {
       state.CARETS = new TextEditorState.CaretState[caretElements.size()];
@@ -144,19 +143,16 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return TYPE_ID;
   }
 
   @Override
-  @NotNull
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;
   }
 
-  @NotNull
-  public TextEditor getTextEditor(@NotNull Editor editor) {
+  public @NotNull TextEditor getTextEditor(@NotNull Editor editor) {
     TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
     if (textEditor == null) {
       textEditor = createWrapperForEditor(editor);
@@ -166,31 +162,36 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     return textEditor;
   }
 
-  @NotNull
-  protected EditorWrapper createWrapperForEditor(@NotNull Editor editor) {
+  protected @NotNull EditorWrapper createWrapperForEditor(@NotNull Editor editor) {
     return new EditorWrapper(editor);
   }
 
   public static Document @NotNull [] getDocuments(@NotNull FileEditor editor) {
-    if (editor instanceof DocumentsEditor) {
-      DocumentsEditor documentsEditor = (DocumentsEditor)editor;
-      return documentsEditor.getDocuments();
+    Document[] result;
+    if (editor instanceof DocumentsEditor documentsEditor) {
+      result = documentsEditor.getDocuments();
     }
-
-    if (editor instanceof TextEditor) {
-      Document document = ((TextEditor)editor).getEditor().getDocument();
-      return new Document[]{document};
+    else if (editor instanceof TextEditor) {
+      result = new Document[]{((TextEditor)editor).getEditor().getDocument()};
     }
-
-    VirtualFile file = editor.getFile();
-    if (file != null) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) {
-        return new Document[]{document};
+    else {
+      result = Document.EMPTY_ARRAY;
+      VirtualFile file = editor.getFile();
+      if (file != null) {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          result = new Document[]{document};
+        }
       }
     }
-
-    return Document.EMPTY_ARRAY;
+    if (ArrayUtil.contains(null, result)) {
+      LOG.error("FileEditor returned null document for " + editor + " (" + editor.getClass() +
+                "); result='" + Arrays.toString(result) +
+                "'; editor instanceof DocumentsEditor: " + (editor instanceof DocumentsEditor) +
+                "; editor instanceof TextEditor: " + (editor instanceof TextEditor) +
+                "; editor.getFile():" + editor.getFile());
+    }
+    return result;
   }
 
   @ApiStatus.Internal
@@ -198,8 +199,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
-  @NotNull
-  protected TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level){
+  protected @NotNull TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
     List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
@@ -246,7 +246,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState){
+  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState) {
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);
@@ -280,22 +280,26 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     });
   }
 
+  @Override
+  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull Project project, @NotNull VirtualFile file) {
+    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
+  }
+
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
     private final Editor myEditor;
 
     EditorWrapper(@NotNull Editor editor) {
       myEditor = editor;
+      ClientFileEditorManager.assignClientId(this, ClientEditorManager.getClientId(editor));
     }
 
     @Override
-    @NotNull
-    public Editor getEditor() {
+    public @NotNull Editor getEditor() {
       return myEditor;
     }
 
     @Override
-    @NotNull
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return myEditor.getComponent();
     }
 
@@ -305,8 +309,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return IdeBundle.message("tab.title.text");
     }
 
@@ -317,12 +320,11 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
 
       final Project project = myEditor.getProject();
       if (project == null) return null;
-      return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
+      return TextEditorProvider.this.getStructureViewBuilder(project, file);
     }
 
     @Override
-    @NotNull
-    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
       return getStateImpl(null, myEditor, level);
     }
 
@@ -356,27 +358,16 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
-    public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return null;
-    }
-
-    @Override
-    public FileEditorLocation getCurrentLocation() {
-      return null;
-    }
-
-    @Override
-    public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
+    public boolean canNavigateTo(final @NotNull Navigatable navigatable) {
       return false;
     }
 
     @Override
-    public void navigateTo(@NotNull final Navigatable navigatable) {
+    public void navigateTo(final @NotNull Navigatable navigatable) {
     }
 
-    @Nullable
     @Override
-    public VirtualFile getFile() {
+    public @Nullable VirtualFile getFile() {
       return FileDocumentManager.getInstance().getFile(myEditor.getDocument());
     }
   }

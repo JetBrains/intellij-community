@@ -34,8 +34,7 @@ public final class GrSuperReferenceResolver {
     else if (qualifier instanceof GrReferenceExpression) {
       GroovyResolveResult result = ((GrReferenceExpression)qualifier).advancedResolve();
       PsiElement resolved = result.getElement();
-      if (resolved instanceof PsiClass) {
-        PsiClass superClass = (PsiClass)resolved;
+      if (resolved instanceof PsiClass superClass) {
 
         GrTypeDefinition scopeClass = PsiTreeUtil.getParentOfType(ref, GrTypeDefinition.class, true);
         if (scopeClass != null && GrTraitUtil.isTrait(superClass) && scopeClass.isInheritor(superClass, false)) {

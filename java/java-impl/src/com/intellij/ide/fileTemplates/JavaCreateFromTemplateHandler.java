@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -28,12 +28,11 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     if (extension == null) extension = JavaFileType.INSTANCE.getDefaultExtension();
     final String name = "myClass" + "." + extension;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, JavaLanguage.INSTANCE, content, false, false);
-    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_16_PREVIEW);
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_16);
 
-    if (!(psiFile instanceof PsiJavaFile)){
+    if (!(psiFile instanceof PsiJavaFile psiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
-    PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
     final PsiClass[] classes = psiJavaFile.getClasses();
     if (classes.length == 0) {
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
@@ -65,9 +64,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     }
     else {
       PsiFile containingFile = addedElement.getContainingFile();
-      throw new IncorrectOperationException("Selected class file name '" +
-                                            containingFile.getName() +  "' mapped to not java file type '"+
-                                            containingFile.getFileType().getDescription() + "'");
+      throw new IncorrectOperationException("The file '" + containingFile +  "' was expected to be of JAVA file type, but got: '"+ containingFile.getFileType() + "'");
     }
   }
 

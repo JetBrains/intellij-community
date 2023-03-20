@@ -19,8 +19,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 
-open class LazyFileHyperlinkInfo(project: Project, filePath: String, documentLine: Int, documentColumn: Int)
-  : FileHyperlinkInfoBase(project, documentLine, documentColumn) {
+open class LazyFileHyperlinkInfo
+@JvmOverloads
+constructor(project: Project, filePath: String, documentLine: Int, documentColumn: Int, useBrowser: Boolean = true)
+  : FileHyperlinkInfoBase(project, documentLine, documentColumn, useBrowser) {
 
   override val virtualFile: VirtualFile? by lazy {
     LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)

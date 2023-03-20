@@ -10,10 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class BooleanRenderer extends JCheckBox implements PropertyRenderer {
   @Override
   @NotNull

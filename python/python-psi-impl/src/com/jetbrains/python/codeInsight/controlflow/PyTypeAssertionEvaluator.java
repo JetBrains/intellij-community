@@ -50,8 +50,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   public void visitPyCallExpression(@NotNull PyCallExpression node) {
     if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ASSERT_IS_INSTANCE)) {
       final PyExpression[] args = node.getArguments();
-      if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
-        final PyReferenceExpression target = (PyReferenceExpression)args[0];
+      if (args.length == 2 && args[0] instanceof PyReferenceExpression target) {
         final PyExpression typeElement = args[1];
 
         pushAssertion(target, myPositive, false, context -> context.getType(typeElement), typeElement);
@@ -59,16 +58,14 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
     else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
       final PyExpression[] args = node.getArguments();
-      if (args.length == 1 && args[0] instanceof PyReferenceExpression) {
-        final PyReferenceExpression target = (PyReferenceExpression)args[0];
+      if (args.length == 1 && args[0] instanceof PyReferenceExpression target) {
 
         pushAssertion(target, myPositive, false, context -> PyTypingTypeProvider.createTypingCallableType(node), null);
       }
     }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
       final PyExpression[] args = node.getArguments();
-      if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
-        final PyReferenceExpression target = (PyReferenceExpression)args[0];
+      if (args.length == 2 && args[0] instanceof PyReferenceExpression target) {
         final PyExpression typeElement = args[1];
 
         pushAssertion(target, myPositive, true, context -> context.getType(typeElement), typeElement);
@@ -163,9 +160,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   @Nullable
   private static PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
                                                    @Nullable PyExpression typeElement) {
-    if (type instanceof PyTupleType) {
+    if (type instanceof PyTupleType tupleType) {
       final List<PyType> members = new ArrayList<>();
-      final PyTupleType tupleType = (PyTupleType)type;
       final int count = tupleType.getElementCount();
 
       final PyTupleExpression tupleExpression = PyUtil
@@ -193,8 +189,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         return transformTypeFromAssertion(typeFromTypingProvider.get(), transformToDefinition, context, null);
       }
     }
-    else if (type instanceof PyInstantiableType) {
-      final PyInstantiableType instantiableType = (PyInstantiableType)type;
+    else if (type instanceof PyInstantiableType instantiableType) {
       return transformToDefinition ? instantiableType.toClass() : instantiableType.toInstance();
     }
     return type;

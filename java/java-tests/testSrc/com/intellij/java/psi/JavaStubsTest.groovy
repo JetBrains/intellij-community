@@ -403,7 +403,10 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
   void "test remove modifier making a comment a class javadoc"() {
     def file = myFixture.addFileToProject("a.java", "import foo; final /** @deprecated */ public class A { }")
     WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.findClass("A").modifierList.children[0].delete()
+      def clazz = myFixture.findClass("A")
+      def children = clazz.modifierList.children
+      assert children.length != 0 : clazz.containingFile.text + ";" + clazz.containingFile.virtualFile.path
+      children[0].delete()
     }
     PsiTestUtil.checkFileStructure(file)
     PsiTestUtil.checkStubsMatchText(file)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -28,9 +14,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption {
   private final PsiArrayAccessExpression myArrayAccessExpression;
 
@@ -53,7 +36,7 @@ public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myArrayAccessExpression.isValid()) return false;
-    if (!TypeConversionUtil.areTypesAssignmentCompatible(PsiType.INT, myArrayAccessExpression.getIndexExpression())) {
+    if (!TypeConversionUtil.areTypesAssignmentCompatible(PsiTypes.intType(), myArrayAccessExpression.getIndexExpression())) {
       return false;
     }
     final PsiElement parent = myArrayAccessExpression.getParent();
@@ -96,9 +79,7 @@ public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     final PsiElement parent = myArrayAccessExpression.getParent();
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-
+    if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiExpression lExpression = assignmentExpression.getLExpression();
       final PsiExpression rExpression = assignmentExpression.getRExpression();
       if (lExpression.equals(myArrayAccessExpression) && parent.getParent() instanceof PsiExpressionStatement && rExpression != null) {

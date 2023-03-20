@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author db
- */
 public abstract class PsiAnchor {
   private static final Logger LOG = Logger.getInstance(PsiAnchor.class);
   @Nullable
@@ -256,6 +253,12 @@ public abstract class PsiAnchor {
     @Override
     public PsiElement retrieve() {
       return myElement.isValid() ? myElement : null;
+    }
+
+    @Override
+    public @NotNull PsiElement retrieveOrThrow() {
+      PsiUtilCore.ensureValid(myElement);
+      return super.retrieveOrThrow();
     }
 
     @Override

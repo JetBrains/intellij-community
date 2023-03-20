@@ -30,15 +30,11 @@ public class StaticFieldReferenceOnSubclassInspectionTest extends LightJavaInspe
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package a;" +
-      "public class A {" +
-      "  private static class AA {\n" +
-      "    public static final int VALUE = 5;\n" +
-      "  }" +
-      "  public static class AB extends AA {\n" +
-      "  }" +
-      "  public static final String S = \"\";" +
-      "}",
+      """
+package a;public class A {  private static class AA {
+    public static final int VALUE = 5;
+  }  public static class AB extends AA {
+  }  public static final String S = "";}""",
       "package a;" +
       "public class B extends A {}"
     };

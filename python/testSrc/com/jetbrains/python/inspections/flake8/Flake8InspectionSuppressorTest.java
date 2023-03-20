@@ -43,9 +43,10 @@ public class Flake8InspectionSuppressorTest extends PyTestCase {
   }
 
   public void testTopLevelCommentsIgnored() {
-    doTestByText("# flake8: noqa\n" +
-                 "def foo():\n" +
-                 "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 1",
+    doTestByText("""
+                   # flake8: noqa
+                   def foo():
+                       <weak_warning descr="Local variable 'x' value is not used">x</weak_warning> = 1""",
                  PyUnusedLocalInspection.class);
   }
 
@@ -56,34 +57,44 @@ public class Flake8InspectionSuppressorTest extends PyTestCase {
   }
 
   public void testUnrelatedCommentContainingNoqa() {
-    doTestByText("# noqa\n" +
-                 "\n" +
-                 "def foo():\n" +
-                 "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = 1\n",
+    doTestByText("""
+                   # noqa
+
+                   def foo():
+                       <weak_warning descr="Local variable 'x' value is not used">x</weak_warning> = 1
+                   """,
                  PyUnusedLocalInspection.class);
   }
 
   public void testSingleErrorCode() {
-    doTestByText("def func():\n" +
-                 "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = unresolved  # noqa: F821\n",
+    doTestByText("""
+                   def func():
+                       <weak_warning descr="Local variable 'x' value is not used">x</weak_warning> = unresolved  # noqa: F821
+                   """,
                  PyUnusedLocalInspection.class, PyUnresolvedReferencesInspection.class);
   }
 
   public void testMultipleErrorCodes() {
-    doTestByText("def func():\n" +
-                 "    x = unresolved  # noqa: F821, F841\n",
+    doTestByText("""
+                   def func():
+                       x = unresolved  # noqa: F821, F841
+                   """,
                  PyUnusedLocalInspection.class, PyUnresolvedReferencesInspection.class);
   }
 
   public void testCommonErrorCodePrefix() {
-    doTestByText("def func():\n" +
-                 "    x = unresolved  # noqa: F8\n",
+    doTestByText("""
+                   def func():
+                       x = unresolved  # noqa: F8
+                   """,
                  PyUnusedLocalInspection.class, PyUnresolvedReferencesInspection.class);
   }
 
   public void testUnrelatedErrorCode() {
-    doTestByText("def func():\n" +
-                 "    <weak_warning descr=\"Local variable 'x' value is not used\">x</weak_warning> = <error descr=\"Unresolved reference 'unresolved'\">unresolved</error>  # noqa: F631\n",
+    doTestByText("""
+                   def func():
+                       <weak_warning descr="Local variable 'x' value is not used">x</weak_warning> = <error descr="Unresolved reference 'unresolved'">unresolved</error>  # noqa: F631
+                   """,
                  PyUnusedLocalInspection.class, PyUnresolvedReferencesInspection.class);
   }
 
@@ -94,9 +105,10 @@ public class Flake8InspectionSuppressorTest extends PyTestCase {
 
   // PY-16067
   public void testComparingWithNoneSuppressedByPycodestyleCode() {
-    doTestByText("def func(p):\n" +
-                 "    if p == None:  # noqa: E711\n" +
-                 "        pass",
+    doTestByText("""
+                   def func(p):
+                       if p == None:  # noqa: E711
+                           pass""",
                  PyComparisonWithNoneInspection.class);
   }
 

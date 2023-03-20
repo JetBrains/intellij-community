@@ -2,7 +2,7 @@
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
@@ -18,7 +18,7 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
   private void doTest(@NotNull final String expected) {
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(getProject());
     final TestProjectTreeStructure structure = new TestProjectTreeStructure(getProject(), myFixture.getTestRootDisposable());
-    final AbstractProjectViewPSIPane pane = structure.createPane();
+    final AbstractProjectViewPane pane = structure.createPane();
     projectView.addProjectPane(pane);
     PlatformTestUtil.expandAll(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(),
@@ -52,9 +52,11 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
                             myFixture.addFileToProject("Foo.groovy", "");
                             myFixture.addFileToProject("Foo.txt", "");
 
-                            doTest("  -Foo.txt\n" +
-                                   "   Foo\n" +
-                                   "   Foo.groovy\n");
+                            doTest("""
+                                       -Foo.txt
+                                        Foo
+                                        Foo.groovy
+                                     """);
                           },
                           new NestingRule(".txt", ".java"),
                           new NestingRule(".txt", ".groovy"));
@@ -67,11 +69,13 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
                             myFixture.addFileToProject("Foo.groovy", "");
                             myFixture.addFileToProject("Foo.txt", "");
 
-                            doTest("  -Foo\n" +
-                                   "   Foo.txt\n" +
-                                   "   FooImpl\n" +
-                                   "  -Foo.groovy\n" +
-                                   "   Foo.txt\n");
+                            doTest("""
+                                       -Foo
+                                        Foo.txt
+                                        FooImpl
+                                       -Foo.groovy
+                                        Foo.txt
+                                     """);
                           },
                           new NestingRule(".java", ".txt"),
                           new NestingRule(".groovy", ".txt"),

@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message
 import java.util.*
 import kotlin.collections.HashMap
 
-/**
- * @author ilyas
- */
 open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean = element is GrField

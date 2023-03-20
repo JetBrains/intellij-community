@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.SelectionModel;
@@ -15,7 +17,6 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -30,12 +31,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +55,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   private final boolean myInheritFontFromLaF;
 
   /** @deprecated Use {@link EditorTextFieldCellRenderer#EditorTextFieldCellRenderer(Project, Language, Disposable)}*/
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
     this(project, fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType), true, parent);
   }
@@ -180,14 +178,14 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
                                 : colorsScheme.getDefaultBackground());
       if (inheritFontFromLaF) {
         ((EditorImpl)editor).setUseEditorAntialiasing(false);
-        Font font = UIUtil.getLabelFont();
+        Font font = StartupUiUtil.getLabelFont();
         colorsScheme.setEditorFontName(font.getFontName());
         colorsScheme.setEditorFontSize(font.getSize());
       }
       else {
         UISettings uiSettings = UISettings.getInstance();
         if (uiSettings.getPresentationMode()) {
-          editor.setFontSize(uiSettings.getPresentationModeFontSize());
+          editor.setFontSize(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
         }
       }
 
@@ -222,19 +220,20 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     void setTextToEditor(String text) {
-      myEditor.getMarkupModel().removeAllHighlighters();
-      myEditor.getDocument().setText(text);
-      ((EditorImpl)myEditor).resetSizes();
-      myEditor.getHighlighter().setText(text);
+      EditorImpl editor = (EditorImpl)myEditor;
+      editor.getMarkupModel().removeAllHighlighters();
+      editor.getDocument().setText(text);
+      editor.resetSizes();
+      editor.getHighlighter().setText(text);
       if (myTextAttributes != null) {
-        myEditor.getMarkupModel().addRangeHighlighter(0, myEditor.getDocument().getTextLength(),
+        editor.getMarkupModel().addRangeHighlighter(0, editor.getDocument().getTextLength(),
                                                       HighlighterLayer.ADDITIONAL_SYNTAX, myTextAttributes, HighlighterTargetArea.EXACT_RANGE);
       }
 
-      ((EditorImpl)myEditor).setPaintSelection(mySelected);
-      SelectionModel selectionModel = myEditor.getSelectionModel();
-      selectionModel.setSelection(0, mySelected ? myEditor.getDocument().getTextLength() : 0);
-      ObjectUtils.consumeIfCast(myEditor.getCaretModel(), CaretModelImpl.class, CaretModelImpl::updateVisualPosition);
+      editor.setPaintSelection(mySelected);
+      SelectionModel selectionModel = editor.getSelectionModel();
+      selectionModel.setSelection(0, mySelected ? editor.getDocument().getTextLength() : 0);
+      editor.getCaretModel().updateVisualPosition();
     }
   }
 
@@ -354,8 +353,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintChildren(Graphics g) {
-      updateText(g.getClipBounds());
-      super.paintChildren(g);
+      ReadAction.run(() -> {
+        updateText(g.getClipBounds());
+        super.paintChildren(g);
+      });
     }
 
     private void updateText(Rectangle clip) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -8,13 +8,15 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -25,8 +27,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
@@ -35,7 +37,6 @@ import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCallExpression>(
@@ -45,7 +46,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
         val callee = element.calleeExpression ?: return null
         val lambda = getLambdaExpression(element) ?: return null
         val functionLiteral = lambda.functionLiteral
-        val bindingContext = functionLiteral.analyze()
+        val bindingContext = functionLiteral.safeAnalyzeNonSourceRootCode()
         val sam = element.getSingleAbstractMethod(bindingContext) ?: return null
 
         val samValueParameters = sam.valueParameters
@@ -136,7 +137,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
             val functionParameterName: (ValueParameterDescriptor, Int) -> String = { parameter, index ->
                 val name = parameter.name
                 if (name.isSpecial) {
-                    KotlinNameSuggester.suggestNameByName((samParameters.getOrNull(index)?.name ?: name).asString(), nameValidator)
+                    Fe10KotlinNameSuggester.suggestNameByName((samParameters.getOrNull(index)?.name ?: name).asString(), nameValidator)
                 } else {
                     name.asString()
                 }
@@ -145,14 +146,15 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
             LambdaToAnonymousFunctionIntention.convertLambdaToFunction(
                 lambda,
                 functionDescriptor,
+                IdeDescriptorRenderers.SOURCE_CODE_TYPES_FOR_SAM_CONVERSION,
                 functionName,
                 functionParameterName,
                 typeParameters
             ) {
                 it.addModifier(KtTokens.OVERRIDE_KEYWORD)
-                (parentOfCall ?: call).replaced(
-                    KtPsiFactory(it).createExpression("object : $interfaceName$typeArgumentsText { ${it.text} }")
-                )
+                val psiFactory = KtPsiFactory(call.project)
+                val objectLiteral = psiFactory.createExpression("object : $interfaceName$typeArgumentsText { ${it.text} }")
+                (parentOfCall ?: call).replaced(objectLiteral)
             }
         }
 
@@ -213,7 +215,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
         }
 
         private fun Name.actualType(functionTypes: List<KotlinType>, lambdaTypes: List<KotlinType>): KotlinType? {
-            return functionTypes.zip(lambdaTypes).firstNotNullResult { actualType(it.first, it.second) }
+            return functionTypes.zip(lambdaTypes).firstNotNullOfOrNull { actualType(it.first, it.second) }
         }
 
         private fun Name.actualType(functionType: KotlinType?, lambdaType: KotlinType?): KotlinType? {

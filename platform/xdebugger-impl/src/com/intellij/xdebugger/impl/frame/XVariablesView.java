@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +32,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  protected JPanel myComponent;
+  protected final JPanel myComponent;
   protected final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
@@ -197,7 +196,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       @Override
       public int compareTo(Entry o) {
         if (myNode == o.myNode) return 0;
-        int res = Comparing.compare(myOffset, o.myOffset);
+        int res = Long.compare(myOffset, o.myOffset);
         if (res == 0) {
           return XValueNodeImpl.COMPARATOR.compare(myNode, o.myNode);
         }

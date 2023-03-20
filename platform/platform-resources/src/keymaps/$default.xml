@@ -24,9 +24,6 @@
   <action id="SplitChooser.SplitCenter">
     <keyboard-shortcut first-keystroke="SPACE"/>
   </action>
-  <action id="FileChooser.TogglePathShowing">
-    <keyboard-shortcut first-keystroke="control P"/>
-  </action>
   <action id="ShowSettings">
     <keyboard-shortcut first-keystroke="control alt S"/>
   </action>
@@ -279,6 +276,9 @@
   <action id="GotoAction">
     <keyboard-shortcut first-keystroke="control shift A"/>
   </action>
+  <action id="TextSearchAction">
+    <keyboard-shortcut first-keystroke="control shift alt E"/>
+  </action>
   <action id="RunInspection">
     <keyboard-shortcut first-keystroke="control shift alt I"/>
   </action>
@@ -479,6 +479,7 @@
     <keyboard-shortcut first-keystroke="control shift F6"/>
   </action>
   <action id="DebugClass"/>
+  <action id="RunCoverage"/>
   <action id="IntroduceField">
     <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
@@ -1059,11 +1060,15 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
-  <action id="AddToFavoritesPopup">
-    <keyboard-shortcut first-keystroke="alt shift F"/>
-  </action>
   <action id="CodeInspection.OnEditor">
     <keyboard-shortcut first-keystroke="alt shift I"/>
+  </action>
+
+  <action id="FileChooser.GoToParent">
+    <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+  </action>
+  <action id="FileChooser.GoToRoot">
+    <keyboard-shortcut first-keystroke="control BACK_SLASH"/>
   </action>
   <action id="FileChooser.GotoHome">
     <keyboard-shortcut first-keystroke="control 1"/>
@@ -1080,6 +1085,9 @@
   <action id="FileChooser.NewFolder">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
     <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+  <action id="FileChooser.TogglePathBar">
+    <keyboard-shortcut first-keystroke="control P"/>
   </action>
 
   <action id="PopupHector">
@@ -1151,6 +1159,14 @@
   <action id="Git.Rename.Local.Branch">
     <keyboard-shortcut first-keystroke="F2" />
     <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
+  <action id="GitNewBranchAction">
+    <keyboard-shortcut first-keystroke="control alt N"/>
+  </action>
+
+  <action id="Git.New.Branch.In.Log">
+    <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 
   <action id="ChangesView.SetDefault">
@@ -1267,5 +1283,25 @@
   </action>
   <action id="ActivateNuGetToolWindow">
     <keyboard-shortcut first-keystroke="alt shift 7"/>
+  </action>
+
+  <action id="MainMenuButton.ShowMenu">
+    <keyboard-shortcut first-keystroke="alt BACK_SLASH"/>
+  </action>
+
+  <action id="EditorDecreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="alt shift COMMA"/>
+  </action>
+  <action id="EditorIncreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="alt shift PERIOD"/>
+  </action>
+  <action id="ZoomInIdeAction">
+    <keyboard-shortcut first-keystroke="shift alt EQUALS"/>
+  </action>
+  <action id="ZoomOutIdeAction">
+    <keyboard-shortcut first-keystroke="shift alt MINUS"/>
+  </action>
+  <action id="ResetIdeScaleAction">
+    <keyboard-shortcut first-keystroke="shift alt 0"/>
   </action>
 </keymap>

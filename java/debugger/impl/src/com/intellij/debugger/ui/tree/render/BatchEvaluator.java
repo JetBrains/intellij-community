@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -12,9 +12,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
@@ -63,19 +63,19 @@ public final class BatchEvaluator {
       }
 
       ThreadReference threadReference = thread.getThreadReference();
-      if(threadReference == null) {
+      if (threadReference == null) {
         return false;
       }
 
       try {
         myBatchEvaluatorClass = (ClassType)myDebugProcess.findClass(evaluationContext, BatchEvaluatorServer.class.getName(),
-          evaluationContext.getClassLoader());
+                                                                    evaluationContext.getClassLoader());
       }
       catch (EvaluateException ignored) {
       }
 
       if (myBatchEvaluatorClass != null) {
-          myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
+        myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
       }
     }
     return myBatchEvaluatorMethod != null;
@@ -106,7 +106,7 @@ public final class BatchEvaluator {
   public static BatchEvaluator getBatchEvaluator(DebugProcess debugProcess) {
     BatchEvaluator batchEvaluator = debugProcess.getUserData(BATCH_EVALUATOR_KEY);
 
-    if(batchEvaluator == null) {
+    if (batchEvaluator == null) {
       batchEvaluator = new BatchEvaluator(debugProcess);
       debugProcess.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
     }
@@ -119,7 +119,7 @@ public final class BatchEvaluator {
         return false;
       }
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
-      List<Value> values = StreamEx.of(requests).map(ToStringCommand::getValue).toList();
+      List<Value> values = ContainerUtil.map(requests, ToStringCommand::getValue);
 
       ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
         evaluationContext,

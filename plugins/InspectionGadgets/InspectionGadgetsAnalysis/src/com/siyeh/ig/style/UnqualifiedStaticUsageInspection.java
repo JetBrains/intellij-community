@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,6 +32,8 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnqualifiedStaticUsageInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -61,19 +64,14 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unqualified.static.usage.ignore.field.option"),
-                             "m_ignoreStaticFieldAccesses");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unqualified.static.usage.ignore.method.option"),
-                             "m_ignoreStaticMethodCalls");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unqualified,static.usage.only.report.static.usages.option"),
-                             "m_ignoreStaticAccessFromStaticContext");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreStaticFieldAccesses", InspectionGadgetsBundle.message(
+        "unqualified.static.usage.ignore.field.option")),
+      checkbox("m_ignoreStaticMethodCalls", InspectionGadgetsBundle.message(
+        "unqualified.static.usage.ignore.method.option")),
+      checkbox("m_ignoreStaticAccessFromStaticContext", InspectionGadgetsBundle.message(
+        "unqualified,static.usage.only.report.static.usages.option")));
   }
 
   @Override
@@ -120,7 +118,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiMember member = (PsiMember)expression.resolve();
@@ -158,10 +156,9 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
         return;
       }
       final PsiElement element = expression.resolve();
-      if (!(element instanceof PsiField)) {
+      if (!(element instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)element;
       if (field.hasModifierProperty(PsiModifier.FINAL) &&
           PsiUtil.isOnAssignmentLeftHand(expression)) {
         return;

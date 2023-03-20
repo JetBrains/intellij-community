@@ -13,7 +13,7 @@ public class Test {
         };
     }
 
-    private String getString(String one) {
+    private static String getString(String one) {
         System.out.println();
         return one;
     }

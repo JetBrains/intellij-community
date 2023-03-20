@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
@@ -24,10 +24,8 @@ interface TitleInfoProvider {
     @JvmField
     val EP = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
 
-    @JvmStatic
     fun getProviders(): List<TitleInfoProvider> = EP.extensionList
 
-    @JvmStatic
     fun fireConfigurationChanged() {
       ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).configurationChanged()
     }

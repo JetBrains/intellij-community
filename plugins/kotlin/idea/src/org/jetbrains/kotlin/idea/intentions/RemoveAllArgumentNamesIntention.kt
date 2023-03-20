@@ -1,14 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
 import org.jetbrains.kotlin.idea.completion.ArgumentThatCanBeUsedWithoutName
 import org.jetbrains.kotlin.idea.completion.collectAllArgumentsThatCanBeUsedWithoutName
-import org.jetbrains.kotlin.idea.core.copied
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 
 class RemoveAllArgumentNamesIntention : SelfTargetingIntention<KtCallElement>(
@@ -35,28 +39,18 @@ class RemoveAllArgumentNamesIntention : SelfTargetingIntention<KtCallElement>(
         ) {
             val lastArgument = argumentsThatCanBeUsedWithoutName.lastOrNull()?.argument
             argumentsThatCanBeUsedWithoutName.reversed().forEach { (argument, parameter) ->
+                if (argument is KtLambdaArgument) return@forEach
                 val newArguments = if (!argument.isNamed() || (removeOnlyLastArgumentName && argument != lastArgument)) {
                     listOf(argument.copied())
                 } else {
-                    createArgumentWithoutName(argument, parameter)
+                    createArgumentWithoutName(
+                        argument,
+                        isVararg = parameter?.isVararg == true,
+                        isArrayOf = (argument.getArgumentExpression() as? KtCallExpression)?.isArrayOfFunction() == true
+                    )
                 }
                 removeArgument(argument)
                 newArguments.reversed().forEach { addArgumentBefore(it, arguments.firstOrNull()) }
-            }
-        }
-
-        private fun createArgumentWithoutName(argument: KtValueArgument, parameter: ValueParameterDescriptor): List<KtValueArgument> {
-            if (!argument.isNamed()) return listOf(argument.copied())
-            val argumentExpr = argument.getArgumentExpression() ?: return emptyList()
-            val psiFactory = KtPsiFactory(argument)
-            val isVararg = parameter.isVararg
-            return when {
-                isVararg && argumentExpr is KtCollectionLiteralExpression ->
-                    argumentExpr.getInnerExpressions().map { psiFactory.createArgument(it) }
-                isVararg && argumentExpr is KtCallExpression && argumentExpr.isArrayOfMethod() ->
-                    argumentExpr.valueArguments.map { psiFactory.createArgument(it.getArgumentExpression()) }
-                else ->
-                    listOf(psiFactory.createArgument(argumentExpr, null, isVararg))
             }
         }
     }

@@ -101,7 +101,6 @@ final class YAMLBlockScalarItemBlock implements Block {
     return true;
   }
 
-  /** @return null iff it is not block scalar item */
   @NotNull
   static Block createBlockScalarItem(@NotNull YAMLFormattingContext context, @NotNull ASTNode node) {
     ASTNode blockScalarNode = node.getTreeParent();

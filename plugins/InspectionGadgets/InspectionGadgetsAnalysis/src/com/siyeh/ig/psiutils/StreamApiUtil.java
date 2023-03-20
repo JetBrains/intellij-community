@@ -23,13 +23,13 @@ public final class StreamApiUtil {
     if(!(type instanceof PsiClassType)) return null;
     PsiClass aClass = ((PsiClassType)type).resolve();
     if(com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) {
-      return PsiType.INT;
+      return PsiTypes.intType();
     }
     if(com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) {
-      return PsiType.LONG;
+      return PsiTypes.longType();
     }
     if(com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) {
-      return PsiType.DOUBLE;
+      return PsiTypes.doubleType();
     }
     if(!com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, false, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
       return null;
@@ -48,8 +48,7 @@ public final class StreamApiUtil {
     if(ExpressionUtils.isNullLiteral(expression)) {
       return true;
     }
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (!(expression instanceof PsiMethodCallExpression call)) return false;
     String name = call.getMethodExpression().getReferenceName();
     if ((!"empty".equals(name) && !"of".equals(name)) || !call.getArgumentList().isEmpty()) {
       return false;
@@ -66,7 +65,7 @@ public final class StreamApiUtil {
   public static boolean isSupportedStreamElement(PsiType type) {
     if(type == null) return false;
     if(type instanceof PsiPrimitiveType) {
-      return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
+      return type.equals(PsiTypes.intType()) || type.equals(PsiTypes.longType()) || type.equals(PsiTypes.doubleType());
     }
     return true;
   }
@@ -83,9 +82,9 @@ public final class StreamApiUtil {
   public static String getStreamClassForType(@Nullable PsiType type) {
     if(type == null) return null;
     if(type instanceof PsiPrimitiveType) {
-      if(type.equals(PsiType.INT)) return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM;
-      if(type.equals(PsiType.LONG)) return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM;
-      if(type.equals(PsiType.DOUBLE)) return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM;
+      if(type.equals(PsiTypes.intType())) return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM;
+      if(type.equals(PsiTypes.longType())) return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM;
+      if(type.equals(PsiTypes.doubleType())) return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM;
       return null;
     }
     return CommonClassNames.JAVA_UTIL_STREAM_STREAM;

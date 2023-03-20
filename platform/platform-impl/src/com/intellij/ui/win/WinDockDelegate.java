@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.util.PathUtil;
-import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -26,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * @author Denis Fokin
  * @author Nikita Provotorov
  */
 public final class WinDockDelegate implements SystemDock.Delegate {
@@ -71,19 +69,17 @@ public final class WinDockDelegate implements SystemDock.Delegate {
 
 
   private static @NotNull JumpTask @NotNull [] convertToJumpTasks(final @NotNull List<AnAction> actions) {
-    final String launcherFileName = ApplicationNamesInfo.getInstance().getScriptName() + (CpuArch.isIntel64() ? "64" : "") + ".exe";
+    final String launcherFileName = ApplicationNamesInfo.getInstance().getScriptName() + "64.exe";
     final String launcherPath = Paths.get(PathManager.getBinPath(), launcherFileName).toString();
 
     final @NotNull JumpTask @NotNull [] result = new JumpTask[actions.size()];
 
     int i = 0;
     for (final var action : actions) {
-      if (!(action instanceof ReopenProjectAction)) {
+      if (!(action instanceof ReopenProjectAction reopenProjectAction)) {
         LOG.debug("Failed to convert an action \"" + action + "\" to Jump Task: the action is not ReopenProjectAction");
         continue;
       }
-
-      final ReopenProjectAction reopenProjectAction = (ReopenProjectAction)action;
 
       final @SystemIndependent String projectPath = reopenProjectAction.getProjectPath();
       final @SystemDependent String projectPathSystem = PathUtil.toSystemDependentName(projectPath);

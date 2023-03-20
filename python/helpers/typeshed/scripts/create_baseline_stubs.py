@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """Script to generate unannotated baseline stubs using stubgen.
 
 Basic usage:
@@ -13,6 +15,9 @@ import shutil
 import subprocess
 import sys
 from typing import Optional, Tuple
+
+if sys.version_info >= (3, 8):
+    from importlib.metadata import distribution
 
 PYRIGHT_CONFIG = "pyrightconfig.stricter.json"
 
@@ -42,7 +47,7 @@ def get_installed_package_info(project: str) -> Optional[Tuple[str, str]]:
 
 def run_stubgen(package: str) -> None:
     print(f"Running stubgen: stubgen -p {package}")
-    subprocess.run(["python", "-m", "mypy.stubgen", "-p", package], check=True)
+    subprocess.run(["stubgen", "-p", package], check=True)
 
 
 def copy_stubs(src_base_dir: str, package: str, stub_dir: str) -> None:
@@ -80,7 +85,14 @@ def create_metadata(stub_dir: str, version: str) -> None:
     assert not os.path.exists(fnam)
     print(f"Writing {fnam}")
     with open(fnam, "w") as f:
-        f.write(f'version = "{version}.*"\n')
+        f.write(
+            f"""\
+version = "{version}.*"
+
+[tool.stubtest]
+ignore_missing_stub = false
+"""
+        )
 
 
 def add_pyright_exclusion(stub_dir: str) -> None:
@@ -114,11 +126,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="""Generate baseline stubs automatically for an installed pip package
                        using stubgen. Also run black and isort. If the name of
-                       the project is different from the runtime Python package name, you must
-                       also use --package (example: --package yaml PyYAML)."""
+                       the project is different from the runtime Python package name, you may
+                       need to use --package (example: --package yaml PyYAML)."""
     )
     parser.add_argument("project", help="name of PyPI project for which to generate stubs under stubs/")
-    parser.add_argument("--package", help="generate stubs for this Python package (defaults to project)")
+    parser.add_argument("--package", help="generate stubs for this Python package (default is autodetected)")
     args = parser.parse_args()
     project = args.project
     package = args.package
@@ -127,7 +139,20 @@ def main() -> None:
         sys.exit(f"Invalid character in project name: {project!r}")
 
     if not package:
-        package = project  # TODO: infer from installed files
+        package = project  # default
+        # Try to find which packages are provided by the project
+        # Use default if that fails or if several packages are found
+        #
+        # The importlib.metadata module is used for projects whose name is different
+        # from the runtime Python package name (example: PyYAML/yaml)
+        if sys.version_info >= (3, 8):
+            dist = distribution(project).read_text("top_level.txt")
+            if dist is not None:
+                packages = [name for name in dist.split() if not name.startswith("_")]
+                if len(packages) == 1:
+                    package = packages[0]
+        print(f'Using detected package "{package}" for project "{project}"', file=sys.stderr)
+        print("Suggestion: Try again with --package argument if that's not what you wanted", file=sys.stderr)
 
     if not os.path.isdir("stubs") or not os.path.isdir("stdlib"):
         sys.exit("Error: Current working directory must be the root of typeshed repository")

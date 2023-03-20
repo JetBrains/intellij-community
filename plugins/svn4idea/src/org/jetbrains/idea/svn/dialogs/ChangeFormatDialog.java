@@ -65,16 +65,12 @@ public class ChangeFormatDialog extends UpgradeFormatDialog {
 
   @Override
   protected @NlsContexts.RadioButton @NotNull String getFormatText(@NotNull WorkingCopyFormat format) {
-    switch (format) {
-      case ONE_DOT_SIX:
-        return message("radio.configure.change.auto.16format");
-      case ONE_DOT_SEVEN:
-        return message("radio.configure.change.auto.17format");
-      case ONE_DOT_EIGHT:
-        return message("radio.configure.change.auto.18format");
-      default:
-        throw new IllegalArgumentException("unsupported format " + format);
-    }
+    return message(switch (format) {
+      case ONE_DOT_SIX -> "radio.configure.change.auto.16format";
+      case ONE_DOT_SEVEN -> "radio.configure.change.auto.17format";
+      case ONE_DOT_EIGHT -> "radio.configure.change.auto.18format";
+      default -> throw new IllegalArgumentException("unsupported format " + format);
+    });
   }
 
   @Override

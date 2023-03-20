@@ -35,6 +35,10 @@ public class ChangeList {
     myStorage.close();
   }
 
+  public synchronized void force() {
+    myStorage.force();
+  }
+
   public synchronized long nextId() {
     return myStorage.nextId();
   }
@@ -133,11 +137,11 @@ public class ChangeList {
             }
             else {
               synchronized (ChangeList.this) {
-                currentBlock = myStorage.readPrevious(currentBlock.id, recursionGuard);
+                currentBlock = myStorage.readPrevious(currentBlock.id(), recursionGuard);
               }
             }
             if (currentBlock == null) return null;
-            return currentBlock.changeSet;
+            return currentBlock.changeSet();
           }
 
           @Override

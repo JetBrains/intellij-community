@@ -5,7 +5,7 @@ class Main {
       case Integer i :
         System.out.println();
       case null:
-        System.out.println(i);
+        System.out.println(<error descr="Cannot resolve symbol 'i'">i</error>);
       case default:
     };
   }

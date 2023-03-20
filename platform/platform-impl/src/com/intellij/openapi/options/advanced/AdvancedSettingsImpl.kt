@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.openapi.options.advanced
 
 import com.intellij.BundleBase
@@ -25,10 +27,10 @@ import java.util.*
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   private var pluginDescriptor: PluginDescriptor? = null
 
-  val enumKlass: Class<Enum<*>>? by lazy {
+  val enumKlass: Class<out Enum<*>>? by lazy {
     @Suppress("UNCHECKED_CAST")
     if (enumClass.isNotBlank())
-      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<Enum<*>>
+      (pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader).loadClass(enumClass) as Class<out Enum<*>>
     else
       null
   }
@@ -53,7 +55,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   /**
    * The default value of the setting. Also determines the type of control used to display the setting. If [enumClass] is specified,
-   * the setting is shown as a combobox. If the default value is [true] or [false], the setting is shown as a checkbox. Otherwise, the
+   * the setting is shown as a combobox. If the default value is `true` or `false`, the setting is shown as a checkbox. Otherwise, the
    * setting is shown as a text field, and if the default value is an integer, only integers will be accepted as property values.
    */
   @Attribute("default")
@@ -141,14 +143,12 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
     return findBundle()?.let { BundleBase.message(it, groupKey) }
   }
 
-  @Nls
-  fun description(): String? {
+  fun description(): @Nls String? {
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.$id.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
   }
 
-  @Nls
-  fun trailingLabel(): String? {
+  fun trailingLabel(): @Nls String? {
     val trailingLabelKey = trailingLabelKey.ifEmpty { "advanced.setting.$id.trailingLabel" }
     return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.let { BundleBase.message(it, trailingLabelKey) }
   }
@@ -181,7 +181,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
                      ?: pluginDescriptor?.resourceBundleBaseName
                      ?: return null
     val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
-    return DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
+    return DynamicBundle.getResourceBundle(classLoader, bundleName)
   }
 
   val serviceInstance: Any? by lazy {
@@ -224,7 +224,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private var modificationCount = 0L
 
   init {
-    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean?> {
+    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
         defaultValueCache.remove(extension.id)
       }

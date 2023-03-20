@@ -56,10 +56,9 @@ class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
   }
 
   public boolean equals(Object obj){
-    if(!(obj instanceof IndexPatternOccurrenceImpl)){
+    if(!(obj instanceof IndexPatternOccurrenceImpl todoItem)){
       return false;
     }
-    IndexPatternOccurrenceImpl todoItem=(IndexPatternOccurrenceImpl)obj;
     return myFile.equals(todoItem.myFile) &&
            myStartOffset == todoItem.myStartOffset &&
            myEndOffset == todoItem.myEndOffset &&

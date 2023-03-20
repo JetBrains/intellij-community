@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -12,7 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -31,8 +31,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   @Override
   protected InspectionGadgetsFix buildFix(final Object... infos) {
     if (infos.length == 0) return null;
-    if (infos[0] instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)infos[0];
+    if (infos[0] instanceof PsiClass aClass) {
       final String signature = "@" + PARAMETERS_FQN + " public static java.lang.Iterable<java.lang.Object[]> parameters()";
       return new DelegatingFix(CreateMethodQuickFix.createFix(aClass, signature, "")) {
         @Override
@@ -54,12 +53,11 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
       }
 
       @Override
-      protected void doFix(final Project project, ProblemDescriptor descriptor) {
+      protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement().getParent();
-        if (!(element instanceof PsiMethod)) {
+        if (!(element instanceof PsiMethod method)) {
           return;
         }
-        final PsiMethod method = (PsiMethod)element;
         WriteAction.run(() -> {
           final VirtualFile vFile = method.getContainingFile().getVirtualFile();
           if (ReadonlyStatusHandler.getInstance(method.getProject()).ensureFilesWritable(List.of(vFile)).hasReadonlyFiles()) {
@@ -68,8 +66,9 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
           method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
         });
         final PsiType type = (PsiType)infos[1];
-        final ChangeSignatureProcessor csp =
-          new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), type, new ParameterInfoImpl[0]);
+        ParameterInfoImpl @NotNull [] parameterInfo = new ParameterInfoImpl[0];
+        var csp = JavaRefactoringFactory.getInstance(project)
+          .createChangeSignatureProcessor(method, false, PsiModifier.PUBLIC, method.getName(), type, parameterInfo, null, null, null, null);
         csp.run();
       }
 
@@ -102,7 +101,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (!TestUtils.isParameterizedTest(aClass)) {
           return;
         }

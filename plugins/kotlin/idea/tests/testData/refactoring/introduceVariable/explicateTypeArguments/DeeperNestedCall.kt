@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // WITH_STDLIB
 import java.util.ArrayList
 

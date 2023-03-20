@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -9,9 +9,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author dslomov
- */
 public abstract class PluggableFileWatcher {
   public static final ExtensionPointName<PluggableFileWatcher> EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableFileWatcher");
@@ -20,12 +17,20 @@ public abstract class PluggableFileWatcher {
 
   public abstract void dispose();
 
+  /**
+   * The method should return {@code true} if the watcher is ready to receive {@link #setWatchRoots} requests
+   * (e.g. if the watcher depends on some external helper, the latter should be present and possibly running).
+   *
+   * @implNote the method is expected to be fast; perform potentially long tasks in {@link #initialize} or {@link #setWatchRoots}.
+   */
   public abstract boolean isOperational();
 
   public abstract boolean isSettingRoots();
 
   /**
    * The inputs to this method must be absolute and free of symbolic links.
+   *
+   * @implNote An implementation <b>must report</b> paths it doesn't recognize via {@link FileWatcherNotificationSink#notifyManualWatchRoots}.
    */
   public abstract void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat);
 

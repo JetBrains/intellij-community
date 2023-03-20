@@ -28,33 +28,38 @@ public class ExportingModulesTest extends JavaProjectTestCase {
     assertNotNull(testRoot);
 
     Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
+
+    final Module[] moduleB = new Module[1];
+    final Module[] moduleC = new Module[1];
+
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
       Module moduleA = moduleModel.newModule(dir.resolve("A.iml"), StdModuleTypes.JAVA.getId());
-      Module moduleB = moduleModel.newModule(dir.resolve("B.iml"), StdModuleTypes.JAVA.getId());
-      Module moduleC = moduleModel.newModule(dir.resolve("C.iml"), StdModuleTypes.JAVA.getId());
+
+      moduleB[0] = moduleModel.newModule(dir.resolve("B.iml"), StdModuleTypes.JAVA.getId());
+      moduleC[0] = moduleModel.newModule(dir.resolve("C.iml"), StdModuleTypes.JAVA.getId());
       moduleModel.commit();
 
       configureModule(moduleA, testRoot, "A");
-      configureModule(moduleB, testRoot, "B");
-      configureModule(moduleC, testRoot, "C");
+      configureModule(moduleB[0], testRoot, "B");
+      configureModule(moduleC[0], testRoot, "C");
 
-      ModuleRootModificationUtil.addDependency(moduleB, moduleA, DependencyScope.COMPILE, true);
+      ModuleRootModificationUtil.addDependency(moduleB[0], moduleA, DependencyScope.COMPILE, true);
 
-      ModuleRootModificationUtil.addDependency(moduleC, moduleB);
-
-      final PsiClass pCClass =
-        JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));
-      assertNotNull(pCClass);
-
-      final PsiClass pAClass =
-        JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleB));
-      assertNotNull(pAClass);
-
-      final PsiClass pAClass2 =
-        JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));
-      assertNotNull(pAClass2);
+      ModuleRootModificationUtil.addDependency(moduleC[0], moduleB[0]);
     });
+
+    final PsiClass pCClass =
+      JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC[0]));
+    assertNotNull(pCClass);
+
+    final PsiClass pAClass =
+      JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleB[0]));
+    assertNotNull(pAClass);
+
+    final PsiClass pAClass2 =
+      JavaPsiFacade.getInstance(myProject).findClass("p.A", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC[0]));
+    assertNotNull(pAClass2);
   }
 
   private static void configureModule(final Module module, final VirtualFile testRoot, final String name) {

@@ -6,10 +6,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -109,12 +111,17 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
              byPlugin :
              StringUtil.naturalCompare(o1.getName(), o2.getName());
     });
-    PluginDescriptor current = null;
+    PluginId current = null;
     for (GutterIconDescriptor descriptor : myDescriptors) {
       PluginDescriptor pluginDescriptor = pluginDescriptorMap.get(descriptor);
-      if (pluginDescriptor != current) {
+      PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
+      // You get different plugin descriptors for `GutterIconDescriptor`s from the same plugin
+      // if they are located in different plugin modules.
+      // But there is no reason to put them into separate UI groups especially taking into account
+      // we sort `myDescriptors` only by plugin name, so compare plugin descriptors by their id
+      if (pluginId != null && !pluginId.equals(current)) {
         myFirstDescriptors.put(descriptor, pluginDescriptor);
-        current = pluginDescriptor;
+        current = pluginId;
       }
     }
 
@@ -214,7 +221,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     };
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myList.setBorder(BorderFactory.createEmptyBorder());
-    new ListSpeedSearch<>(myList, JCheckBox::getText);
+    ListSpeedSearch.installOn(myList, JCheckBox::getText);
   }
 
   @NotNull
@@ -239,6 +246,11 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), GutterIconsConfigurable.class);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -33,6 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Queue;
 
 /**
  * @author anna
@@ -195,7 +198,7 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
       }
       VirtualFile file = fileClass.getOriginalElement().getContainingFile().getVirtualFile();
       if (file != null) {
-        ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(aClass.getProject());
+        ProjectFileIndex index = ProjectFileIndex.getInstance(aClass.getProject());
         if (FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.CLASS)) {
           // compiled class; looking for the right .class file (inner class 'A.B' is "contained" in 'A.class', but we need 'A$B.class')
           String classFileName = StringUtil.getShortName(jvmClassName) + ".class";
@@ -266,17 +269,20 @@ public final class ByteCodeViewerManager extends DockablePopupManager<ByteCodeVi
     if (containingClass == null) {
       PsiFile containingFile = psiElement.getContainingFile();
       if (containingFile instanceof PsiClassOwner) {
-        PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
-        if (classes.length == 1) return classes[0];
-
         TextRange textRange = psiElement.getTextRange();
-        if (textRange != null) {
-          for (PsiClass aClass : classes) {
-            PsiElement navigationElement = aClass.getNavigationElement();
-            TextRange classRange = navigationElement != null ? navigationElement.getTextRange() : null;
-            if (classRange != null && classRange.contains(textRange)) return aClass;
+        PsiClass result = null;
+        Queue<PsiClass> queue = new ArrayDeque<>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
+        while (!queue.isEmpty()) {
+          PsiClass c = queue.remove();
+          PsiElement navigationElement = c.getNavigationElement();
+          TextRange classRange = navigationElement != null ? navigationElement.getTextRange() : null;
+          if (classRange != null && classRange.contains(textRange)) {
+            result = c;
+            queue.clear();
+            queue.addAll(Arrays.asList(c.getInnerClasses()));
           }
         }
+        return result;
       }
       return null;
     }

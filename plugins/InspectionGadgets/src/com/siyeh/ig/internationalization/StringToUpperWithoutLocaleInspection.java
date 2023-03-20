@@ -81,7 +81,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (!MATCHER.methodReferenceMatches(expression)) return;
       final PsiExpression qualifier = expression.getQualifierExpression();
       if (NonNlsUtils.isNonNlsAnnotatedUse(qualifier) || NonNlsUtils.isNonNlsAnnotated(qualifier)) return;

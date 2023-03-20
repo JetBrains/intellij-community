@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView;
 
@@ -7,7 +7,10 @@ import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 
 /**
- * Allows to modify the presentation of project view and package dependencies view nodes.
+ * Allows modifying the presentation of project view and package dependencies view nodes.
+ *
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/project-view.html#decorating-project-view-nodes">IntelliJ Platform Docs</a>
+ * for a high-level overview.
  *
  * @see TreeStructureProvider
  */
@@ -23,10 +26,9 @@ public interface ProjectViewNodeDecorator {
   void decorate(ProjectViewNode<?> node, PresentationData data);
 
   /**
-   * Modifies the presentation of a package dependencies view node.
-   *
-   * @param node the node to modify.
-   * @param cellRenderer the current renderer for the node, which you can modify as necessary.
+   * @deprecated This method is never called by the platform and should not be overridden.
    */
-  void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer);
+  @Deprecated(forRemoval = true)
+  default void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
+  }
 }

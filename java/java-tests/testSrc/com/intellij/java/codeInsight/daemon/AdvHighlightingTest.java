@@ -1,12 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -15,6 +21,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
@@ -22,20 +29,21 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.File;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class intended for "heavy-loaded" tests only, e.g. those need to setup separate project directory structure to run.
@@ -61,8 +69,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testScopeBased() {
-    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));
-    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.Scope.SOURCE, null));
+    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null));
     NamedScopeManager scopeManager = NamedScopeManager.getInstance(getProject());
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);
@@ -85,8 +93,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSharedScopeBased() {
-    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_ANY, null));
-    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.Scope.ANY, null));
+    NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null));
     NamedScopesHolder scopeManager = DependencyValidationManager.getInstance(getProject());
     scopeManager.addScope(xScope);
     scopeManager.addScope(utilScope);
@@ -130,8 +138,12 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
     Module java4 = moduleManager.findModuleByName("java4");
     Module java5 = moduleManager.findModuleByName("java5");
-    ModuleRootModificationUtil.setModuleSdk(java4, IdeaTestUtil.getMockJdk17("java 1.4"));
-    ModuleRootModificationUtil.setModuleSdk(java5, IdeaTestUtil.getMockJdk17("java 1.5"));
+    Sdk jdk17 = IdeaTestUtil.getMockJdk17("java 1.4");
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk17, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(java4, jdk17);
+    Sdk jdk171 = IdeaTestUtil.getMockJdk17("java 1.5");
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk171, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(java5, jdk171);
     ModuleRootModificationUtil.addDependency(java5, java4);
 
     configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));
@@ -181,5 +193,35 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     allowTreeAccessForAllFiles();
 
     doTest(BASE_PATH + "/unusedPublicMethodRefViaSubclass/x/I.java", BASE_PATH + "/unusedPublicMethodRefViaSubclass", true, false);
+  }
+
+  public void testJavaFileOutsideSourceRootsMustNotContainErrors() throws ExecutionException, InterruptedException {
+    VirtualFile root = createVirtualDirectoryForContentFile();
+    VirtualFile virtualFile = createChildData(root, "A.java");
+    @Language("JAVA")
+    String text = "class A { String f; }";
+    setFileText(virtualFile, text);
+
+    assertEquals(JavaFileType.INSTANCE, virtualFile.getFileType());
+    PsiFile psiFile = getPsiManager().findFile(virtualFile);
+    assertTrue(String.valueOf(psiFile), psiFile instanceof PsiJavaFile);
+    assertFalse(ProblemHighlightFilter.shouldHighlightFile(psiFile));
+
+    configureByExistingFile(virtualFile);
+
+    TrafficLightRenderer renderer = ReadAction.nonBlocking(()->new TrafficLightRenderer(getProject(), getDocument(psiFile))).submit(
+      AppExecutorUtil.getAppExecutorService()).get();
+    Disposer.register(getTestRootDisposable(), renderer);
+    while (true) {
+      TrafficLightRenderer.DaemonCodeAnalyzerStatus status = ReadAction.nonBlocking(() -> renderer.getDaemonCodeAnalyzerStatus()).submit(AppExecutorUtil.getAppExecutorService()).get();
+      assertNotNull(status.reasonWhyDisabled);
+      if (status.errorAnalyzingFinished) {
+        break;
+      }
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    Collection<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getDocument(psiFile), null, getProject());
+    assertEmpty(infos);
+    UIUtil.dispatchAllInvocationEvents();
   }
 }

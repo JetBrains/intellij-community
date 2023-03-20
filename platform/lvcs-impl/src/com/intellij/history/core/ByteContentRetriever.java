@@ -97,8 +97,7 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
   private void recordContentAndTimestamp(ChangeSet c) {
     // todo what if the path is being changed during changes?
     for (Change each : c.getChanges()) {
-      if (!(each instanceof ContentChange)) continue;
-      ContentChange cc = (ContentChange)each;
+      if (!(each instanceof ContentChange cc)) continue;
       if (!cc.affectsPath(myPath)) continue;
 
       myCurrentFileTimestamp = cc.getOldTimestamp();

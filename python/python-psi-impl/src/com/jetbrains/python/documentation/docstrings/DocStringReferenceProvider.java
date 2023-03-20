@@ -53,8 +53,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         final List<PsiReference> result = new ArrayList<>();
         // XXX: It does not work with multielement docstrings
         StructuredDocString docString = DocStringUtil.parse(text, element);
-        if (docString instanceof TagBasedDocString) {
-          final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
+        if (docString instanceof TagBasedDocString taggedDocString) {
           final Set<TextRange> nameReferenceRanges = new HashSet<>();
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments(TagBasedDocString.PARAM_TAGS),
@@ -83,12 +82,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                             ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
-        else if (docString instanceof SectionBasedDocString) {
-          final SectionBasedDocString sectioned = (SectionBasedDocString)docString;
+        else if (docString instanceof SectionBasedDocString sectioned) {
           result.addAll(referencesFromFields(expr, offset, sectioned.getParameterFields(), ReferenceType.PARAMETER));
           result.addAll(referencesFromFields(expr, offset, sectioned.getKeywordArgumentFields(), ReferenceType.KEYWORD));
-          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(), 
-                                             PyUtil.isTopLevel(element) ? ReferenceType.GLOBAL_VARIABLE : ReferenceType.INSTANCE_VARIABLE));
+          result.addAll(referencesFromFields(expr, offset, sectioned.getAttributeFields(),
+                                             PyUtil.isTopLevel(element) ? ReferenceType.GLOBAL_VARIABLE : ReferenceType.VARIABLE));
           result.addAll(referencesFromFields(expr, offset, sectioned.getReturnFields(), null));
         }
         return result.toArray(PsiReference.EMPTY_ARRAY);

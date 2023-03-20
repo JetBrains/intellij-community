@@ -18,15 +18,15 @@ import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public abstract class PerformFixesModalTask implements SequentialTask {
   @NotNull
   protected final Project myProject;
-  private final List<List<CommonProblemDescriptor>> myDescriptorPacks;
+  private final List<CommonProblemDescriptor[]> myDescriptorPacks;
   private final PsiDocumentManager myDocumentManager;
   private final PostprocessReformattingAspect myReformattingAspect;
   private final int myLength;
@@ -43,13 +43,8 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   protected PerformFixesModalTask(@NotNull Project project,
                                   @NotNull List<CommonProblemDescriptor[]> descriptorPacks) {
     myProject = project;
-
-    myDescriptorPacks = new ArrayList<>();
-    for (CommonProblemDescriptor[] pack : descriptorPacks) {
-      myDescriptorPacks.add(Arrays.stream(pack).distinct().collect(Collectors.toList()));
-    }
-
-    myLength = myDescriptorPacks.stream().mapToInt(ds -> ds.size()).sum();
+    myDescriptorPacks = descriptorPacks;
+    myLength = descriptorPacks.stream().mapToInt(ds -> ds.length).sum();
     myDocumentManager = PsiDocumentManager.getInstance(myProject);
     myReformattingAspect = PostprocessReformattingAspect.getInstance(myProject);
   }
@@ -133,10 +128,10 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   }
 
   private Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {
-    List<CommonProblemDescriptor> descriptors = myDescriptorPacks.get(myPackIdx);
-    CommonProblemDescriptor descriptor = descriptors.get(myDescriptorIdx++);
+    CommonProblemDescriptor[] descriptors = myDescriptorPacks.get(myPackIdx);
+    CommonProblemDescriptor descriptor = descriptors[myDescriptorIdx++];
     boolean shouldDoPostponedOperations = false;
-    if (myDescriptorIdx == descriptors.size()) {
+    if (myDescriptorIdx == descriptors.length) {
       shouldDoPostponedOperations = true;
       myPackIdx++;
       myDescriptorIdx = 0;

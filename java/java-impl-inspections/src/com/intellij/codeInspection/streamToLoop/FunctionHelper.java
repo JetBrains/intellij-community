@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,15 +143,14 @@ public abstract class FunctionHelper {
     PsiType returnType = interfaceMethod.getReturnType();
     if (returnType == null) return null;
     returnType = ((PsiClassType)type).resolveGenerics().getSubstitutor().substitute(returnType);
-    if (expression instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
+    if (expression instanceof PsiLambdaExpression lambda) {
       PsiParameterList list = lambda.getParameterList();
       if (list.getParametersCount() != paramCount) return null;
       String[] parameters = StreamEx.of(list.getParameters()).map(PsiVariable::getName).toArray(String[]::new);
       PsiElement body = lambda.getBody();
       PsiExpression lambdaExpression = LambdaUtil.extractSingleExpressionFromBody(body);
       if (lambdaExpression == null) {
-        if (PsiType.VOID.equals(returnType) && body instanceof PsiCodeBlock) {
+        if (PsiTypes.voidType().equals(returnType) && body instanceof PsiCodeBlock) {
           List<PsiReturnStatement> returns = getReturns(body);
           if (!allowReturns && (!returns.isEmpty() || !ControlFlowUtils.codeBlockMayCompleteNormally((PsiCodeBlock)body))) return null;
           // Return inside loop is not supported yet
@@ -166,8 +165,7 @@ public abstract class FunctionHelper {
       }
       return new LambdaFunctionHelper(returnType, lambdaExpression, parameters);
     }
-    if (expression instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+    if (expression instanceof PsiMethodReferenceExpression methodRef) {
       if (methodRef.resolve() == null) return null;
       String template = tryInlineMethodReference(paramCount, methodRef);
       if (template != null) {
@@ -178,8 +176,7 @@ public abstract class FunctionHelper {
     if (expression instanceof PsiReferenceExpression && ExpressionUtils.isSafelyRecomputableExpression(expression)) {
       return new SimpleReferenceFunctionHelper(returnType, expression, interfaceMethod.getName());
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (MethodCallUtils.isCallToStaticMethod(call, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, "identity", 0)) {
         return paramCount == 1 ? new InlinedFunctionHelper(returnType, 1, "{0}") : null;
       }
@@ -197,8 +194,7 @@ public abstract class FunctionHelper {
   @Nullable
   private static String tryInlineMethodReference(int paramCount, PsiMethodReferenceExpression methodRef) {
     PsiElement element = methodRef.resolve();
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       String name = method.getName();
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
@@ -299,7 +295,7 @@ public abstract class FunctionHelper {
       public void visitClass(@NotNull PsiClass psiClass) { }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) { }
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) { }
 
       @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
@@ -620,7 +616,7 @@ public abstract class FunctionHelper {
 
   private static class VoidBlockLambdaFunctionHelper extends LambdaFunctionHelper {
     VoidBlockLambdaFunctionHelper(PsiCodeBlock body, String[] parameters) {
-      super(PsiType.VOID, body, parameters);
+      super(PsiTypes.voidType(), body, parameters);
     }
 
     @Override

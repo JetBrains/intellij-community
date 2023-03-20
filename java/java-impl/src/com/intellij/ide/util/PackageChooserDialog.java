@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -26,15 +26,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.JavaReferenceEditorUtil;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -99,13 +95,12 @@ public class PackageChooserDialog extends PackageChooser {
           boolean hasFocus
         ) {
           super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-          setIcon(PlatformIcons.PACKAGE_ICON);
+          setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
 
-          if (value instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+          if (value instanceof DefaultMutableTreeNode node) {
             Object object = node.getUserObject();
-            if (object instanceof PsiPackage) {
-              String name = ((PsiPackage)object).getName();
+            if (object instanceof PsiPackage pkg) {
+              String name = pkg.getName();
               if (name != null && name.length() > 0) {
                 setText(name);
               }
@@ -122,7 +117,7 @@ public class PackageChooserDialog extends PackageChooser {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
 
-    new TreeSpeedSearch(myTree, path -> {
+    TreeSpeedSearch.installOn(myTree, false, path -> {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object object = node.getUserObject();
       if (object instanceof PsiPackage) return ((PsiPackage)object).getName();
@@ -323,11 +318,9 @@ public class PackageChooserDialog extends PackageChooser {
 
   private DefaultMutableTreeNode findNodeForPackage(String qualifiedPackageName) {
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myModel.getRoot();
-    Enumeration enumeration = root.depthFirstEnumeration();
+    Enumeration<TreeNode> enumeration = root.depthFirstEnumeration();
     while (enumeration.hasMoreElements()) {
-      Object o = enumeration.nextElement();
-      if (o instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
+      if (enumeration.nextElement() instanceof DefaultMutableTreeNode node) {
         PsiPackage nodePackage = (PsiPackage)node.getUserObject();
         if (nodePackage != null) {
           if (Objects.equals(nodePackage.getQualifiedName(), qualifiedPackageName)) return node;
@@ -362,9 +355,7 @@ public class PackageChooserDialog extends PackageChooser {
           String newQualifiedName = selectedPackage.getQualifiedName();
           if (!Comparing.strEqual(newQualifiedName,"")) newQualifiedName += ".";
           newQualifiedName += newPackageName;
-          final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
-          if (dir == null) return;
-          final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(dir);
+          final PsiPackage newPackage = getPsiPackage(newQualifiedName);
 
           if (newPackage != null) {
             DefaultMutableTreeNode newChild = addPackage(newPackage);
@@ -394,6 +385,13 @@ public class PackageChooserDialog extends PackageChooser {
                                                   null);
   }
 
+  @Nullable
+  protected PsiPackage getPsiPackage(String newQualifiedName) {
+    final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
+    if (dir == null) return null;
+    return JavaDirectoryService.getInstance().getPackage(dir);
+  }
+
   private class NewPackageAction extends AnAction {
     NewPackageAction() {
       super(IdeBundle.messagePointer("action.new.package"), IdeBundle.messagePointer("action.description.create.new.package"),
@@ -409,6 +407,11 @@ public class PackageChooserDialog extends PackageChooser {
     public void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(getTreeSelection() != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     public void enableInModalConext() {

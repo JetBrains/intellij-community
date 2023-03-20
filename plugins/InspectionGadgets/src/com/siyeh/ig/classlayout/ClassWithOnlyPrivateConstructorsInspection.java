@@ -39,7 +39,7 @@ public class ClassWithOnlyPrivateConstructorsInspection extends BaseInspection {
   private static class ClassWithOnlyPrivateConstructorsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;

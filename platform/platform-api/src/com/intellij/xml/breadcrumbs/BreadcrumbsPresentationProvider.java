@@ -20,9 +20,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class BreadcrumbsPresentationProvider {
   public static final ExtensionPointName<BreadcrumbsPresentationProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.breadcrumbsPresentationProvider");

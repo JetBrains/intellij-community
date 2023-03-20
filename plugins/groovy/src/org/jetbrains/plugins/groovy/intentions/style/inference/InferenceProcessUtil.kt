@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.lang.jvm.JvmParameter
@@ -80,7 +80,7 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superType: P
     superType != null -> listOf(superType)
     else -> emptyList()
   }
-  val filteredSupertypes = extendsTypes.filter { !it.equalsToText(JAVA_LANG_OBJECT) && !it.equalsToText(GROOVY_OBJECT) }
+  val filteredSupertypes = extendsTypes.filter { !it.equalsToText(JAVA_LANG_OBJECT) && !it.equalsToText(GROOVY_OBJECT) && !it.canonicalText.contains('-') }
 
   val extendsBound =
     if (filteredSupertypes.isNotEmpty()) {
@@ -102,7 +102,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
         val accepted = it.accept(this)
         when {
           accepted is PsiWildcardType -> accepted
-          accepted != null && accepted != PsiType.NULL -> PsiWildcardType.createExtends(manager, accepted)
+          accepted != null && accepted != PsiTypes.nullType() -> PsiWildcardType.createExtends(manager, accepted)
           else -> PsiWildcardType.createUnbounded(manager)
         }
       }
@@ -235,7 +235,6 @@ private fun buildVirtualEnvironmentForMethod(method: GrMethod, newTypeParameterL
   return header + resultMethodText + footer to (header.length)
 }
 
-@Suppress("UnnecessaryVariable")
 private fun insertTypeParameterList(method: GrMethod, methodText: String, newTypeParameterListText: String?): String {
   val methodStartOffset: Int = method.startOffset
   val typeParameterList: TextRange? = method.typeParameterList?.textRange?.takeIf { !it.isEmpty }
@@ -332,25 +331,25 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
 
   for ((typeParameter, type) in substitutionMap.entries) {
     typeParameters.add(typeParameter)
-    substitutions.add(type.accept(ForeignTypeParameterEraser()) ?: PsiType.NULL)
+    substitutions.add(type.accept(ForeignTypeParameterEraser()) ?: PsiTypes.nullType())
   }
   return PsiSubstitutor.EMPTY.putAll(typeParameters.toTypedArray(), substitutions.toTypedArray())
 }
 
 
-fun compress(types: List<PsiType>?): PsiType? {
+internal fun compress(types: List<PsiType>?): PsiType? {
   types ?: return null
   return when {
-    types.isEmpty() -> PsiType.NULL
+    types.isEmpty() -> PsiTypes.nullType()
     types.size == 1 -> types.single()
     else -> PsiIntersectionType.createIntersection(types)
   }
 }
 
-fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
+internal fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
   method.typeParameters.asList() + (getContainingClasses(method.containingClass).flatMap { it.typeParameters.asList() })
 
-fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
+internal fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
   val virtualTypeParameters = allOuterTypeParameters(virtualMethod)
   val originalTypeParameters = allOuterTypeParameters(originalMethod)
   var substitutor = PsiSubstitutor.EMPTY
@@ -362,14 +361,14 @@ fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: Gr
 }
 
 
-fun PsiTypeParameter.upperBound(): PsiType =
+internal fun PsiTypeParameter.upperBound(): PsiType =
   when (extendsListTypes.size) {
     0 -> getJavaLangObject(this)
     1 -> extendsListTypes.single()
     else -> PsiIntersectionType.createIntersection(*extendsListTypes)
   }
 
-fun PsiElement.properResolve(): GroovyResolveResult? {
+internal fun PsiElement.properResolve(): GroovyResolveResult? {
   return when (this) {
     is GrAssignmentExpression -> (lValue as? GrReferenceExpression)?.lValueReference?.advancedResolve()
     is GrConstructorInvocation -> advancedResolve()
@@ -392,7 +391,6 @@ private fun locateMethod(file: GroovyFileBase, method: GrMethod): GrMethod? {
   }
 }
 
-@Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
   return when (val originalFile = method.containingFile?.originalFile) {
     null -> method

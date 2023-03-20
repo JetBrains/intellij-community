@@ -20,18 +20,19 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Expands {@link SegmentArray} contract in providing ability to attach additional data to target segment,
- * i.e. holds mappings like {@code 'index <-> (data, (start; end))'}.
+ * Expands {@link SegmentArray} contract by providing ability to attach additional data to target segment,
+ * E.g., by holding mappings like {@code 'index <-> (data, (start; end))'}.
  * <p/>
  * Not thread-safe.
  */
 public class SegmentArrayWithData extends SegmentArray {
   private DataStorage myStorage;
 
-  public SegmentArrayWithData(DataStorage storage) {
+  public SegmentArrayWithData(@NotNull DataStorage storage) {
     myStorage = storage;
   }
 
+  @NotNull
   public DataStorage createStorage() {
     return myStorage.createStorage();
   }
@@ -86,11 +87,12 @@ public class SegmentArrayWithData extends SegmentArray {
     return myStorage.getData(index);
   }
 
-  protected static int @NotNull [] reallocateArray(int @NotNull [] array, int index) {
+  static int @NotNull [] reallocateArray(int @NotNull [] array, int index) {
     if (index < array.length) return array;
     return ArrayUtil.realloc(array, calcCapacity(array.length, index));
   }
 
+  @NotNull
   public SegmentArrayWithData copy() {
     final SegmentArrayWithData sa = new SegmentArrayWithData(createStorage());
     sa.mySegmentCount = mySegmentCount;
@@ -131,7 +133,7 @@ public class SegmentArrayWithData extends SegmentArray {
    * @param isRestartableState true if state is restartable
    * @return packed lexer state and tokenType in data
    */
-  public int packData(IElementType tokenType, int state, boolean isRestartableState) {
+  public int packData(@NotNull IElementType tokenType, int state, boolean isRestartableState) {
     return myStorage.packData(tokenType, state, isRestartableState);
   }
 }

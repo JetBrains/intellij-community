@@ -49,12 +49,11 @@ public class IndexedExpressionConversionIntention extends Intention {
 
         final PsiElement parent = element.getParent();
         final GrExpression arrayExpression = arrayIndexExpression.getInvokedExpression();
-        if (!(parent instanceof GrAssignmentExpression)) {
+        if (!(parent instanceof GrAssignmentExpression assignmentExpression)) {
             rewriteAsGetAt(arrayIndexExpression, arrayExpression, arguments[0]);
             return;
         }
-        final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression) parent;
-        final GrExpression rhs = assignmentExpression.getRValue();
+      final GrExpression rhs = assignmentExpression.getRValue();
         if (rhs.equals(element)) {
             rewriteAsGetAt(arrayIndexExpression, arrayExpression, arguments[0]);
         } else {

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -38,15 +37,12 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     myBaseDir = baseDir;
   }
 
-  @Nullable
-  protected static VirtualFile findDir(@Nullable String baseDir) {
+  protected static @Nullable VirtualFile findDir(@Nullable String baseDir) {
     if (StringUtil.isEmpty(baseDir)) {
       return null;
     }
-    return ReadAction.compute(() -> {
-      VirtualFile dir = LocalFileFinder.findFile(baseDir);
-      return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
-    });
+    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(baseDir);
+    return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
   }
 
   protected boolean supportVfsRefresh() {

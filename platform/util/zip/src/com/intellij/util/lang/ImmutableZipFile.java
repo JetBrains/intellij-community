@@ -1,47 +1,55 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
-import com.intellij.util.io.Murmur3_32Hash;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ikv.Ikv;
+import org.jetbrains.xxh3.Xxh3;
 
-import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.zip.ZipException;
 
 @ApiStatus.Internal
-public final class ImmutableZipFile implements AutoCloseable {
-  private static final int MIN_EOCD_SIZE = 22;
+public final class ImmutableZipFile implements ZipFile {
+  public static final int MIN_EOCD_SIZE = 22;
+  public static final int EOCD = 0x6054B50;
 
-  private final ImmutableZipEntry[] nameMap;
+  private static final int INDEX_FORMAT_VERSION = 4;
+  private static final int COMMENT_SIZE = 5;
 
-  // only file entries - directories are ignored
-  private final ImmutableZipEntry[] entries;
+  private final Ikv.SizeAwareIkv ikv;
+  private final int nameDataPosition;
+  private volatile String[] names;
+  public final long[] classPackages;
+  public final long[] resourcePackages;
 
-  ByteBuffer mappedBuffer;
-  final int fileSize;
-
-  private ImmutableZipFile(ImmutableZipEntry[] nameMap,
-                           ImmutableZipEntry[] entries,
-                           ByteBuffer mappedBuffer,
-                           int fileSize) {
-    this.mappedBuffer = mappedBuffer;
-    this.fileSize = fileSize;
-
-    this.nameMap = nameMap;
-    this.entries = entries;
+  private ImmutableZipFile(Ikv.SizeAwareIkv ikv,
+                           long[] classPackages,
+                           long[] resourcePackages,
+                           int nameDataPosition) {
+    this.ikv = ikv;
+    this.nameDataPosition = nameDataPosition;
+    this.classPackages = classPackages;
+    this.resourcePackages = resourcePackages;
   }
 
-  public static @NotNull ImmutableZipFile load(@NotNull Path file) throws IOException {
+  public static @NotNull ZipFile load(@NotNull Path file) throws IOException {
+    return load(file, false);
+  }
+
+  static @NotNull ZipFile load(@NotNull Path file, boolean forceNonIkv) throws IOException {
     // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
     // ability to read data without setting channel position, as setting channel position will require synchronization
     int fileSize;
@@ -65,49 +73,121 @@ public final class ImmutableZipFile implements AutoCloseable {
     }
 
     try {
-      return populateFromCentralDirectory(mappedBuffer, fileSize);
+      return populateFromCentralDirectory(mappedBuffer, fileSize, forceNonIkv);
     }
     catch (IOException e) {
       throw new IOException(file.toString(), e);
     }
   }
 
-  public ImmutableZipEntry[] getEntries() {
-    return entries;
+  public synchronized String[] getOrComputeNames() {
+    String[] names = this.names;
+    if (names != null) {
+      return names;
+    }
+
+    // read names
+    // assume that file name is not greater than ~4 KiB
+    byte[] tempNameBytes = new byte[4096];
+    int entryCount = ikv.getEntryCount();
+    names = new String[entryCount];
+    short[] nameLengthInBytes = new short[entryCount];
+    ByteBuffer buffer = ikv.getMappedBufferAt(nameDataPosition);
+    buffer.asShortBuffer().get(nameLengthInBytes);
+    buffer.position(buffer.position() + (entryCount * Short.BYTES));
+    for (int i = 0; i < entryCount; i++) {
+      short sizeInBytes = nameLengthInBytes[i];
+      buffer.get(tempNameBytes, 0, sizeInBytes);
+      names[i] = new String(tempNameBytes, 0, sizeInBytes, StandardCharsets.UTF_8);
+    }
+
+    this.names = names;
+    return names;
   }
 
-  public ImmutableZipEntry[] getRawNameSet() {
-    return nameMap;
-  }
-
-  /**
-   * Closes the archive.
-   *
-   * @throws IOException if an error occurs closing the archive.
-   */
   @Override
-  public void close() throws Exception {
-    ByteBuffer buffer = mappedBuffer;
-    if (buffer != null) {
-      mappedBuffer = null;
-      ByteBufferCleaner.unmapBuffer(buffer);
+  public void processResources(@NotNull String dir,
+                               @NotNull Predicate<? super String> nameFilter,
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
+    String[] names = this.names;
+    if (names == null) {
+      names = getOrComputeNames();
+    }
+
+    int minNameLength = dir.length() + 2;
+    for (String name : names) {
+      if (name.length() >= minNameLength && name.charAt(dir.length()) == '/' && name.startsWith(dir) && nameFilter.test(name)) {
+        // DirectByteBufferBackedInputStream is not pooled - no need to close
+        consumer.accept(name, getInputStream(name));
+      }
     }
   }
 
-  /**
-   * Returns a named entry, or {@code null} if no entry by that name exists. The name should not contain trailing slashes.
-   */
-  public @Nullable ImmutableZipEntry getEntry(String name) {
-    int index = probe(name, Murmur3_32Hash.MURMUR3_32.hashString(name, 0, name.length()), nameMap);
-    return index >= 0 ? nameMap[index] : null;
+  @Override
+  public @Nullable InputStream getInputStream(@NotNull String path) throws IOException {
+    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path));
+    return byteBuffer == null ? null : new DirectByteBufferBackedInputStream(byteBuffer, false);
   }
 
-  public @Nullable ImmutableZipEntry getEntry(String name, int murmur3HashCode) {
-    int index = probe(name, murmur3HashCode, nameMap);
-    return index >= 0 ? nameMap[index] : null;
+  @Override
+  public byte @Nullable [] getData(@NotNull String path) throws IOException {
+    return ikv.getByteArray(Xxh3.hash(path));
   }
 
-  private static @NotNull ImmutableZipFile populateFromCentralDirectory(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
+  @Override
+  public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
+    return ikv.getValue(Xxh3.hash(path));
+  }
+
+  @Override
+  public @Nullable ZipResource getResource(String path) {
+    long pair = ikv.getOffsetAndSize(Xxh3.hash(path));
+    return pair == -1 ? null : new MyZipResource(pair, ikv, path);
+  }
+
+  private static final class MyZipResource implements ZipResource {
+    private final long entry;
+    private final Ikv.SizeAwareIkv ikv;
+    private final String path;
+
+    MyZipResource(long pair, Ikv.SizeAwareIkv ikv, String path) {
+      this.entry = pair;
+      this.ikv = ikv;
+      this.path = path;
+    }
+
+    @Override
+    public int getUncompressedSize() {
+      return ikv.getSizeByValue(entry);
+    }
+
+    @Override
+    public @NotNull String getPath() {
+      return path;
+    }
+
+    @Override
+    public @NotNull ByteBuffer getByteBuffer() {
+      return ikv.getByteBufferByValue(entry);
+    }
+
+    @Override
+    public byte @NotNull [] getData() {
+      return ikv.getByteArrayByValue(entry);
+    }
+
+    @Override
+    public @NotNull InputStream getInputStream() {
+      return new DirectByteBufferBackedInputStream(ikv.getByteBufferByValue(entry), false);
+    }
+  }
+
+  @Override
+  public void releaseBuffer(ByteBuffer buffer) {
+    // data is never compressed, and buffer is always a mapped byte buffer - no need to release
+  }
+
+  private static @NotNull ZipFile populateFromCentralDirectory(ByteBuffer buffer, int fileSize, boolean forceNonIkv) throws IOException {
     // https://en.wikipedia.org/wiki/ZIP_(file_format)
     int offset = fileSize - MIN_EOCD_SIZE;
 
@@ -115,7 +195,7 @@ public final class ImmutableZipFile implements AutoCloseable {
 
     // first, EOCD
     for (; offset >= 0; offset--) {
-      if (buffer.getInt(offset) == 0x6054B50) {
+      if (buffer.getInt(offset) == EOCD) {
         finished = true;
         break;
       }
@@ -138,16 +218,16 @@ public final class ImmutableZipFile implements AutoCloseable {
     int centralDirPosition;
     int commentSize;
     int commentVersion;
-    int optimizedMetadataOffset = -1;
+    int indexDataEnd = -1;
     if (isZip64) {
       entryCount = (int)buffer.getLong(offset + 32);
       centralDirSize = (int)buffer.getLong(offset + 40);
       centralDirPosition = (int)buffer.getLong(offset + 48);
 
       commentSize = (int)(buffer.getLong(offset + 4) + 12) - 56;
-      commentVersion = commentSize == 5 ? buffer.get(offset + 56) : 0;
-      if (commentVersion == 1) {
-        optimizedMetadataOffset = buffer.getInt(offset + 56 + 1);
+      commentVersion = commentSize == COMMENT_SIZE ? buffer.get(offset + 56) : 0;
+      if (commentVersion == INDEX_FORMAT_VERSION) {
+        indexDataEnd = buffer.getInt(offset + 56 + 1);
       }
     }
     else {
@@ -156,201 +236,33 @@ public final class ImmutableZipFile implements AutoCloseable {
       centralDirPosition = buffer.getInt(offset + 16);
 
       commentSize = buffer.getShort(offset + 20);
-      commentVersion = commentSize == 9 ? buffer.get(offset + 22) : 0;
-      if (commentVersion == 1) {
-        entryCount = buffer.getInt(offset + 23);
-        optimizedMetadataOffset = buffer.getInt(offset + 27);
+      commentVersion = commentSize == COMMENT_SIZE ? buffer.get(offset + 22) : 0;
+      if (commentVersion == INDEX_FORMAT_VERSION) {
+        indexDataEnd = buffer.getInt(offset + 22 + Byte.BYTES /* index format version size */);
       }
     }
 
-    if (commentVersion == 1) {
-      int pos = buffer.position();
-
-      buffer.position(optimizedMetadataOffset);
-      IntBuffer intBuffer = buffer.asIntBuffer();
-
-      int[] sizes = new int[entryCount];
-      int[] dataOffsets = new int[entryCount];
-      int[] indexes = new int[entryCount];
-      intBuffer.get(sizes);
-      intBuffer.get(dataOffsets);
-      intBuffer.get(indexes);
-
-      buffer.position(pos);
-
-      ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
-
-      int entrySetLength = entryCount * 2 /* expand factor */;
-      ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
-
-      //long start = System.currentTimeMillis();
-      readCentralDirectoryUsingExtraMetadata(buffer, centralDirPosition, centralDirSize, entrySet, entries, sizes, dataOffsets, indexes);
-      //System.out.print("optimized read took " + (System.currentTimeMillis() - start) + " ms");
-      buffer.clear();
-      return new ImmutableZipFile(entrySet, entries, buffer, fileSize);
+    if (forceNonIkv || commentVersion != INDEX_FORMAT_VERSION || entryCount == 0) {
+      return HashMapZipFile.createHashMapZipFile(buffer, fileSize, entryCount, centralDirSize, centralDirPosition);
     }
 
-    // ensure table is even length
-    if (entryCount == 65535) {
-      // it means that more than 65k entries - estimate number of entries
-      entryCount = centralDirPosition / 47 /* min 46 for entry and 1 for filename */;
-    }
-    ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
+    buffer.position(indexDataEnd);
+    Ikv.SizeAwareIkv ikv = (Ikv.SizeAwareIkv)Ikv.loadIkv(buffer, indexDataEnd);
+    buffer.position(indexDataEnd);
+    // read package class and resource hashes
+    long[] classPackages = new long[buffer.getInt()];
+    long[] resourcePackages = new long[buffer.getInt()];
+    LongBuffer longBuffer = buffer.asLongBuffer();
+    longBuffer.get(classPackages);
+    longBuffer.get(resourcePackages);
 
-    int entrySetLength = entryCount * 2 /* expand factor */;
-    ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
-
-    int fileEntryCount = readCentralDirectory(buffer, centralDirPosition, centralDirSize, entrySet, entries);
-    if (entries.length != fileEntryCount) {
-      ImmutableZipEntry[] resizedEntries = new ImmutableZipEntry[fileEntryCount];
-      System.arraycopy(entries, 0, resizedEntries, 0, fileEntryCount);
-      entries = resizedEntries;
-    }
-
+    int nameDataPosition = indexDataEnd + Long.BYTES + (longBuffer.position() * Long.BYTES);
     buffer.clear();
-    return new ImmutableZipFile(entrySet, entries, buffer, fileSize);
+    return new ImmutableZipFile(ikv, classPackages, resourcePackages, nameDataPosition);
   }
 
-  private static int readCentralDirectory(ByteBuffer buffer,
-                                          int centralDirPosition,
-                                          int centralDirSize,
-                                          ImmutableZipEntry[] entrySet,
-                                          ImmutableZipEntry[] entries)
-    throws EOFException {
-    int offset = centralDirPosition;
-    int entryIndex = 0;
-
-    // assume that file name is not greater than ~2 KiB
-    // JDK impl cheats — it uses jdk.internal.misc.JavaLangAccess.newStringUTF8NoRepl (see ZipCoder.UTF8)
-    // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer and introduces char buffer allocation for each decode
-    byte[] tempNameBytes = new byte[4096];
-
-    ImmutableZipEntry prevEntry = null;
-    int prevEntryExpectedDataOffset = -1;
-    int endOffset = centralDirPosition + centralDirSize;
-    while (offset < endOffset) {
-      if (buffer.getInt(offset) != 33639248) {
-        throw new EOFException("Expected central directory size " + centralDirSize +
-                               " but only at " + offset + " no valid central directory file header signature");
-      }
-
-      int compressedSize = buffer.getInt(offset + 20);
-      int uncompressedSize = buffer.getInt(offset + 24);
-      int headerOffset = buffer.getInt(offset + 42);
-      byte method = (byte)(buffer.getShort(offset + 10) & 0xffff);
-
-      int nameLengthInBytes = buffer.getShort(offset + 28) & 0xffff;
-      int extraFieldLength = buffer.getShort(offset + 30) & 0xffff;
-      int commentLength = buffer.getShort(offset + 32) & 0xffff;
-
-      if (prevEntry != null && prevEntryExpectedDataOffset == (headerOffset - prevEntry.compressedSize)) {
-        prevEntry.setDataOffset(prevEntryExpectedDataOffset);
-      }
-
-      offset += 46;
-      buffer.position(offset);
-
-      int extraSuffixLength;
-      if (buffer.get((offset + nameLengthInBytes) - 1) == '/') {
-        // skip directory
-        uncompressedSize = -2;
-        compressedSize = -2;
-        extraSuffixLength = 1;
-      }
-      else {
-        extraSuffixLength = 0;
-      }
-
-      offset += nameLengthInBytes + extraFieldLength + commentLength;
-
-      buffer.get(tempNameBytes, 0, nameLengthInBytes);
-      String name = new String(tempNameBytes, 0, nameLengthInBytes - extraSuffixLength, StandardCharsets.UTF_8);
-
-      int entrySetIndex = probe(name, Murmur3_32Hash.MURMUR3_32.hashBytes(tempNameBytes, 0, nameLengthInBytes - extraSuffixLength), entrySet);
-      if (entrySetIndex >= 0) {
-        // duplicates in xmlbeans-2.6.0.jar for example, skip it
-        // throw new IllegalArgumentException("duplicate name: " + name);
-        prevEntry = null;
-        continue;
-      }
-
-      ImmutableZipEntry entry = new ImmutableZipEntry(name, compressedSize, uncompressedSize, headerOffset, nameLengthInBytes, method);
-      prevEntry = entry;
-      prevEntryExpectedDataOffset = headerOffset + 30 + nameLengthInBytes + extraFieldLength;
-
-      entrySet[-(entrySetIndex + 1)] = entry;
-      entries[entryIndex++] = entry;
-    }
-    return entryIndex;
-  }
-
-  @SuppressWarnings("DuplicatedCode")
-  private static void readCentralDirectoryUsingExtraMetadata(ByteBuffer buffer,
-                                                             int centralDirPosition,
-                                                             int centralDirSize,
-                                                             ImmutableZipEntry[] entrySet,
-                                                             ImmutableZipEntry[] entries,
-                                                             int[] sizes,
-                                                             int[] dataOffsets,
-                                                             int[] indexes)
-    throws EOFException {
-    int offset = centralDirPosition;
-    int entryIndex = 0;
-
-    // assume that file name is not greater than ~2 KiB
-    // JDK impl cheats — it uses jdk.internal.misc.JavaLangAccess.newStringUTF8NoRepl (see ZipCoder.UTF8)
-    // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer and introduces char buffer allocation for each decode
-    byte[] tempNameBytes = new byte[4096];
-
-    int endOffset = centralDirPosition + centralDirSize;
-    while (offset < endOffset) {
-      if (buffer.getInt(offset) != 33639248) {
-        throw new EOFException("Expected central directory size " + centralDirSize +
-                               " but only at " + offset + " no valid central directory file header signature");
-      }
-
-      int size = sizes[entryIndex];
-      int nameLengthInBytes = buffer.getShort(offset + 28) & 0xffff;
-
-      offset += 46;
-      buffer.position(offset);
-
-      int extraSuffixLength;
-      if (buffer.get((offset + nameLengthInBytes) - 1) == '/') {
-        size = -2;
-        extraSuffixLength = 1;
-      }
-      else {
-        extraSuffixLength = 0;
-      }
-
-      offset += nameLengthInBytes;
-
-      buffer.get(tempNameBytes, 0, nameLengthInBytes);
-      String name = new String(tempNameBytes, 0, nameLengthInBytes - extraSuffixLength, StandardCharsets.UTF_8);
-      int entrySetIndex = indexes[entryIndex];
-      // headerOffset and nameLengthInBytes are required only to compute data offset, but dataOffset is already known
-      ImmutableZipEntry entry = new ImmutableZipEntry(name, size, size, ImmutableZipEntry.STORED);
-      entry.setDataOffset(dataOffsets[entryIndex]);
-      entrySet[entrySetIndex] = entry;
-      entries[entryIndex++] = entry;
-    }
-  }
-
-  // returns index at which element is present; or if absent, (-i - 1) where i is location where element should be inserted
-  private static int probe(String key, int keyHash, ImmutableZipEntry[] set) {
-    int index = Math.floorMod(keyHash, set.length);
-    while (true) {
-      ImmutableZipEntry found = set[index];
-      if (found == null) {
-        return -index - 1;
-      }
-      else if (key.equals(found.name)) {
-        return index;
-      }
-      else if (++index == set.length) {
-        index = 0;
-      }
-    }
+  @Override
+  public void close() throws Exception {
+    ikv.close();
   }
 }

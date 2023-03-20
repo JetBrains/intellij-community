@@ -89,7 +89,7 @@ class CouplingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression exp) {
+  public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression exp) {
     super.visitClassObjectAccessExpression(exp);
     final PsiTypeElement operand = exp.getOperand();
     final PsiType classType = operand.getType();

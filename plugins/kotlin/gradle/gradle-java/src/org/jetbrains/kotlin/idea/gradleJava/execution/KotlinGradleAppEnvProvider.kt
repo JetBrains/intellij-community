@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.execution
 
@@ -55,9 +55,6 @@ class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<Kotl
                 FileUtil.toSystemIndependentName(it)
             }
 
-            val argsString = createEscapedParameters(params.programParametersList.parameters, "args") +
-                    createEscapedParameters(params.vmParametersList.parameters, "jvmArgs")
-
             // @formatter:off
             @Suppress("UnnecessaryVariable")
 //      @Language("Groovy")
@@ -89,7 +86,7 @@ class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<Kotl
                     }
     
                     main = mainClass
-                    $argsString
+                    ${argsString(params)}
                     if(_workingDir) workingDir = _workingDir
                     standardInput = System.in
                     if(javaModuleName) {

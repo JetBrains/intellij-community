@@ -41,9 +41,9 @@ public class TypeProvider {
       if (typeElement != null) return typeElement.getType();
     }
     final PsiType smartReturnType = PsiUtil.getSmartReturnType(method);
-    if (smartReturnType != null && !PsiType.NULL.equals(smartReturnType)) return smartReturnType;
+    if (smartReturnType != null && !PsiTypes.nullType().equals(smartReturnType)) return smartReturnType;
 
-    if (PsiType.NULL.equals(smartReturnType) && PsiUtil.isVoidMethod(method)) return PsiType.VOID;
+    if (PsiTypes.nullType().equals(smartReturnType) && PsiUtil.isVoidMethod(method)) return PsiTypes.voidType();
 
     //todo make smarter. search for usages and infer type from them
     return TypesUtil.getJavaLangObject(method);
@@ -129,7 +129,7 @@ public class TypeProvider {
       });
     }
     paramInds.forEach((IntConsumer)i -> {
-      if (types[i] == null || types[i] == PsiType.NULL) {
+      if (types[i] == null || types[i] == PsiTypes.nullType()) {
         types[i] = parameters[i].getType();
       }
     });
@@ -140,8 +140,8 @@ public class TypeProvider {
   @NotNull
   public PsiType getReturnType(GrClosableBlock closure) {
     final PsiType returnType = closure.getReturnType();
-    if (PsiType.NULL.equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
-      return PsiType.VOID;
+    if (PsiTypes.nullType().equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
+      return PsiTypes.voidType();
     }
 
     if (returnType == null) {

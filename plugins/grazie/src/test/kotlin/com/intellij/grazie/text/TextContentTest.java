@@ -8,6 +8,7 @@ import one.util.streamex.IntStreamEx;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,6 +102,8 @@ public class TextContentTest extends BasePlatformTestCase {
 
     assertEquals("| c|", unknownOffsets(joined.markUnknown(new TextRange(0, 1))));
     assertEquals("c|", unknownOffsets(joined.excludeRange(new TextRange(0, 1))));
+    
+    assertEquals(joined, TextContent.joinWithWhitespace(' ', List.of(f1, f2)));
   }
 
   public static String unknownOffsets(TextContent text) {
@@ -156,7 +159,7 @@ public class TextContentTest extends BasePlatformTestCase {
     TextContent result = initial;
     for (TextContent.Exclusion exclusion : ContainerUtil.reverse(ranges)) {
       TextRange range = new TextRange(exclusion.start, exclusion.end);
-      result = exclusion.markUnknown ? result.markUnknown(range) : result.excludeRange(range);
+      result = exclusion.kind == TextContent.ExclusionKind.unknown ? result.markUnknown(range) : result.excludeRange(range);
     }
     return result;
   }
@@ -179,5 +182,18 @@ public class TextContentTest extends BasePlatformTestCase {
       min = end;
     }
     return ranges;
+  }
+
+  public void testUnknownWinsOverMarkup() {
+    var file = myFixture.configureByText("a.txt", "ab");
+    var base = psiFragment(file, 0, 2);
+    for (int i = 0; i <= 2; i++) {
+      var withMarkup = base.excludeRanges(List.of(new TextContent.Exclusion(i, i, TextContent.ExclusionKind.markup)));
+      Assertions.assertArrayEquals(new int[]{i}, withMarkup.markupOffsets(), "Offset " + i);
+
+      var withUnknown = withMarkup.markUnknown(TextRange.from(i, 0));
+      assertTrue("Offset " + i, withUnknown.hasUnknownFragmentsIn(TextRange.from(i, 0)));
+      Assertions.assertArrayEquals(new int[0], withUnknown.markupOffsets(), "Offset " + i);
+    }
   }
 }

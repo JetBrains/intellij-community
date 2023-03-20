@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml">
   <id>com.intellij.searcheverywhere.ml</id>
   <name>Machine Learning in Search Everywhere</name>
   <vendor>JetBrains</vendor>
@@ -8,13 +8,19 @@
     making more relevant results appear higher up the list.
     </p>
     <br>
-    <i>Note that sorting by machine learning is currently available only for the Actions tab.</i>
+    <i>Machine learning ranking is currently available and switched on by default for the Classes, Files, and Actions tabs.
+    As an experiment, some portion of users will also have it enabled in the All tab.</i>
   ]]></description>
 
-  <depends optional="true" config-file="vcs-feature-provider.xml">Git4Idea</depends>
+  <content>
+    <module name="intellij.searchEverywhereMl.yaml"/>
+    <module name="intellij.searchEverywhereMl.vcs"/>
+  </content>
+
+  <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
+    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider"
       order="first"/>
@@ -22,7 +28,13 @@
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="false" id="searcheverywhere.ml.sort.files"
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlBundle"/>
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.classes"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlBundle"/>
+    <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlBundle"/>
 
@@ -33,11 +45,20 @@
                  description="When enabled ML experiments with files order won't be performed"
                  key="search.everywhere.force.disable.experiment.files.ml"/>
     <registryKey defaultValue="false"
+                 description="When enabled ML experiments with classes order won't be performed"
+                 key="search.everywhere.force.disable.experiment.classes.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments to order All tab items won't be performed"
+                 key="search.everywhere.force.disable.experiment.all.ml"/>
+    <registryKey defaultValue="false"
                  description="When enabled ML logs and experiments in Search Everywhere will be disabled"
                  key="search.everywhere.force.disable.logging.ml"/>
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
                  key="search.everywhere.ml.experiment.group"/>
+    <registryKey defaultValue="false"
+                 description="Mark position changes in Search Everywhere"
+                 key="search.everywhere.ml.show.diff"/>
 
     <registryKey defaultValue=""
                  description="Path to the local action-ranking model."
@@ -45,6 +66,27 @@
     <registryKey defaultValue=""
                  description="Path to the local file-ranking model."
                  key="search.everywhere.ml.files.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local class-ranking model."
+                 key="search.everywhere.ml.classes.model.path"/>
+    <registryKey defaultValue=""
+                 description="Path to the local all-ranking model."
+                 key="search.everywhere.ml.all.model.path"/>
+
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereFileStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereActionStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereSymbolStatistician"/>
+
+    <statistician key="searchEverywhereContributor"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereContributorStatistician"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector"/>
   </extensions>
 
   <extensionPoints>
@@ -56,40 +98,58 @@
                     interface="com.intellij.ide.actions.searcheverywhere.ml.id.ElementKeyForIdProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="rankingModelProvider"
-                    interface="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelProvider"
+    <extensionPoint name="rankingModelLoader"
+                    interface="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLRankingModelLoader"
                     dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
     <searchEverywhereElementFeaturesProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereGeneralActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereOptionFeaturesProvider"/>
-    <!-- TODO: Uncomment when there are enough features and we can start collecting the data
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassFeaturesProvider"/>
-    -->
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCommonFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereSymbolFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywherePsiElementFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ClassAndFileKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.PsiElementKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.RunConfigurationsKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.NavigationItemKeyProvider"/>
 
-    <rankingModelProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider"/>
-    <rankingModelProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereFilesRankingModelProvider"/>
+    <rankingModelLoader
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereFilesRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereClassesRankingModelLoader"/>
+    <rankingModelLoader
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereAllRankingModelLoader"/>
   </extensions>
 
   <applicationListeners>
     <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$ProjectClosureListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
   </applicationListeners>
+
   <projectListeners>
     <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$EditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
   <actions>
     <action id="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFileAction"
             class="com.intellij.ide.actions.searcheverywhere.ml.actions.OpenFeaturesInScratchFileAction">
@@ -97,5 +157,4 @@
       <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
     </action>
   </actions>
-  <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 </idea-plugin>

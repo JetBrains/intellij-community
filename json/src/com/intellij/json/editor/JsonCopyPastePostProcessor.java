@@ -35,46 +35,31 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
   static class DumbData implements TextBlockTransferableData {
     private static final DataFlavor DATA_FLAVOR = new DataFlavor(JsonCopyPastePostProcessor.class, "class: JsonCopyPastePostProcessor");
     @Override
-    public DataFlavor getFlavor()  {
+    public @Nullable DataFlavor getFlavor()  {
       return  DATA_FLAVOR;
-    }
-
-    @Override
-    public int getOffsetCount() {
-      return 0;
-    }
-
-    @Override
-    public int getOffsets(int[] offsets, int index) {
-      return index;
-    }
-
-    @Override
-    public int setOffsets(int[] offsets, int index) {
-      return index;
     }
   }
 
   @NotNull
   @Override
-  public List<TextBlockTransferableData> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public List<TextBlockTransferableData> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
     return ContainerUtil.emptyList();
   }
 
   @NotNull
   @Override
-  public List<TextBlockTransferableData> extractTransferableData(Transferable content) {
+  public List<TextBlockTransferableData> extractTransferableData(@NotNull Transferable content) {
     // if this list is empty, processTransferableData won't be called
     return DATA_LIST;
   }
 
   @Override
-  public void processTransferableData(Project project,
-                                      Editor editor,
-                                      RangeMarker bounds,
+  public void processTransferableData(@NotNull Project project,
+                                      @NotNull Editor editor,
+                                      @NotNull RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<? super Boolean> indented,
-                                      List<? extends TextBlockTransferableData> values) {
+                                      @NotNull Ref<? super Boolean> indented,
+                                      @NotNull List<? extends TextBlockTransferableData> values) {
     fixCommasOnPaste(project, editor, bounds);
   }
 

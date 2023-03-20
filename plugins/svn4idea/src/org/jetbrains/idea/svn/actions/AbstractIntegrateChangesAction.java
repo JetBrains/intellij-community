@@ -32,6 +32,11 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
   protected abstract T createChecker();
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public final void update(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     final CommittedChangesBrowserUseCase useCase = e.getData(CommittedChangesBrowserUseCase.DATA_KEY);

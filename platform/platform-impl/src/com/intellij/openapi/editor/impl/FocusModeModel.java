@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -52,7 +53,7 @@ public class FocusModeModel implements Disposable {
     myEditor = editor;
     myFocusMarkerTree = new RangeMarkerTree<>(editor.getDocument());
 
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> ReadAction.run(() -> {
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
       if (event instanceof MouseEvent && !EditorUtil.isPrimaryCaretVisible(myEditor)) {
         clearFocusMode(); // clear when scrolling with touchpad or mouse and primary caret is out the visible area
@@ -60,7 +61,7 @@ public class FocusModeModel implements Disposable {
       else {
         myEditor.applyFocusMode(); // apply the focus mode when jumping to the next line, e.g. Cmd+G
       }
-    });
+    }));
 
     CaretModelImpl caretModel = myEditor.getCaretModel();
     caretModel.addCaretListener(new CaretListener() {

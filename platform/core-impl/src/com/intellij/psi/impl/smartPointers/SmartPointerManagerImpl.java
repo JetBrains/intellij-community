@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.Disposable;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 public final class SmartPointerManagerImpl extends SmartPointerManager implements Disposable {
@@ -98,7 +99,10 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
 
   private void ensureMyProject(@NotNull Project project) {
     if (project != myProject) {
-      throw new IllegalArgumentException("Element from alien project: "+anonymize(project)+" expected: "+anonymize(myProject));
+      boolean basePathEquals = Objects.equals(myProject.getBasePath(), project.getBasePath());
+      boolean namesEquals = myProject.getName().equals(project.getName());
+      throw new IllegalArgumentException("Element from alien project: "+ anonymize(project) + " expected: " + anonymize(myProject) +
+                                         "; basePathEquals: " + basePathEquals + "; nameEquals: " + namesEquals);
     }
   }
 

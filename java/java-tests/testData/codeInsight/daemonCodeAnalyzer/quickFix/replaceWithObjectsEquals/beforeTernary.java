@@ -1,4 +1,4 @@
-// "Replace '(random() ? foo() : bar()).equals(...)' with 'Objects.equals(random() ? foo() : bar(), ...)'" "true"
+// "Replace '(random() ? foo() : bar()).equals(...)' with 'Objects.equals(random() ? foo() : bar(), ...)'" "true-preview"
 
 import org.jetbrains.annotations.*;
 

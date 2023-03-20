@@ -23,9 +23,23 @@ class Test {
       default:
         break;
     }
+
+    boolean flag1;
+    switch (o) {
+      case Integer i && <error descr="Variable 'flag1' might not have been initialized">flag1</error> -> System.out.println(1);
+      default -> System.out.println(0);
+    }
+
+    boolean flag2;
+    switch (o) {
+      case Double d && foo(<error descr="Variable 'flag2' might not have been initialized">flag2</error>) -> System.out.println(2);
+      default -> System.out.println(0);
+    }
   }
 
   private native boolean isBool();
 
   private native int isInt();
+
+  private native boolean foo(boolean blag);
 }

@@ -27,9 +27,9 @@ abstract class AbstractScriptBuilder(private val indent: Int = 0) : ScriptBuilde
         add(element.value, indent, false)
       }
       is AssignElement -> {
-        add(element.name, indent, isNewLine)
+        add(element.left, indent, isNewLine)
         add(" = ", indent, false)
-        add(element.value, indent, false)
+        add(element.right, indent, false)
       }
       is PlusAssignElement -> {
         add(element.name, indent, isNewLine)
@@ -71,6 +71,12 @@ abstract class AbstractScriptBuilder(private val indent: Int = 0) : ScriptBuilde
         add(element.name, indent, false)
         add(" ", indent, false)
         add(element.right, indent, false)
+      }
+      is IntElement -> {
+        add(element.value.toString(), indent, isNewLine)
+      }
+      is BooleanElement -> {
+        add(element.value.toString(), indent, isNewLine)
       }
       is StringElement -> {
         add(""""${element.value}"""", indent, isNewLine)

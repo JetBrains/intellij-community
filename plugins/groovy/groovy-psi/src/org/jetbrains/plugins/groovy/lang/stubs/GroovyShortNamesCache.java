@@ -1,6 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -8,6 +11,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexImpl;
+import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
@@ -25,11 +30,10 @@ import java.util.*;
 
 import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHORT_NAMES;
 
-/**
- * @author ilyas
- */
 public class GroovyShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
+  private volatile TopLevelFQNames myTopLevelFQNames;
+  private volatile TopLevelFQNames myTopLevelScriptFQNames;
 
   public GroovyShortNamesCache(Project project) {
     myProject = project;
@@ -38,6 +42,50 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   public static GroovyShortNamesCache getGroovyShortNamesCache(Project project) {
     return Objects
       .requireNonNull(ContainerUtil.findInstance(PsiShortNamesCache.EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
+  }
+
+  private @Nullable TopLevelFQNames getTopLevelNames() {
+    TopLevelFQNames topLevelFQNames = myTopLevelFQNames;
+    StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+    long timestamp = stubIndex.getIndexModificationStamp(GrFullClassNameStringIndex.KEY, myProject) +
+                     stubIndex.getIndexModificationStamp(GrFullScriptNameStringIndex.KEY, myProject);
+    if (topLevelFQNames != null && topLevelFQNames.timestamp == timestamp) {
+      return topLevelFQNames.useful ? topLevelFQNames : null;
+    }
+
+    TopLevelFQNames classTopLevelFQNames = new TopLevelFQNames(GrFullClassNameStringIndex.KEY, myProject);
+    TopLevelFQNames scriptTopLevelFQNames = new TopLevelFQNames(GrFullScriptNameStringIndex.KEY, myProject);
+    myTopLevelScriptFQNames = scriptTopLevelFQNames;
+
+    topLevelFQNames = classTopLevelFQNames.merge(scriptTopLevelFQNames);
+    myTopLevelFQNames = topLevelFQNames;
+    return topLevelFQNames;
+  }
+
+  private @Nullable TopLevelFQNames getScriptTopLevelNames() {
+    TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
+    if (names == null) return null;
+
+    TopLevelFQNames topLevelFQNames = myTopLevelScriptFQNames;
+    StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+    return (topLevelFQNames != null &&
+            topLevelFQNames.useful &&
+            topLevelFQNames.timestamp == stubIndex.getIndexModificationStamp(GrFullScriptNameStringIndex.KEY, myProject))
+           ? topLevelFQNames : null;
+  }
+
+  /**
+   * If <code>fqName</code> is smth like
+   * <ul>
+   *   <li><code>foo.bar.FooBar</code> it returns <code>foo</code>.</li>
+   *   <li><code>FooBar</code> it returns an empty string.</li>
+   * </ul>
+   *
+   * @return top level package name if it is available or string itself otherwise.
+   */
+  private static @NotNull String toTopLevelName(@NotNull String fqName) {
+    int index = fqName.indexOf('.');
+    return index >= 1 ? fqName.substring(0, index) : "";
   }
 
   @Override
@@ -49,38 +97,40 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   public List<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope, final boolean srcOnly) {
-    GlobalSearchScope actualScope = srcOnly ? new GrSourceFilterScope(scope) : scope;
-    final Collection<GroovyFile> files = StubIndex.getElements(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, actualScope,
-                                                               GroovyFile.class);
-    if (files.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    final ArrayList<PsiClass> result = new ArrayList<>();
-    for (GroovyFile file : files) {
-      if (file.isScript()) {
-        final PsiClass scriptClass = file.getScriptClass();
-        if (scriptClass != null && name.equals(scriptClass.getQualifiedName())) {
-          result.add(scriptClass);
-        }
+    TopLevelFQNames names = getScriptTopLevelNames();
+    if (names != null) {
+      String topLevelName = toTopLevelName(name);
+      if (!names.names.contains(topLevelName)) {
+        return Collections.emptyList();
       }
     }
-    return result;
+    GlobalSearchScope actualScope = srcOnly ? new GrSourceFilterScope(scope) : scope;
+    return ContainerUtil.map(
+      StubIndex.getElements(GrFullScriptNameStringIndex.KEY, name, myProject, actualScope, GroovyFile.class),
+      o -> Objects.requireNonNull(o.getScriptClass()));
   }
 
   @NotNull
   public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
-    final List<PsiClass> result = new ArrayList<>();
-
-    for (PsiClass psiClass : StubIndex.getElements(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
-                                                     inSource ? new GrSourceFilterScope(scope) : scope, PsiClass.class)) {
-      //hashcode doesn't guarantee equals
-      if (name.equals(psiClass.getQualifiedName())) {
-        result.add(psiClass);
+    if (scope.getModelBranchesAffectingScope().isEmpty()) {
+      TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
+      if (names != null) {
+        String topLevelName = toTopLevelName(name);
+        if (!names.names.contains(topLevelName)) {
+          return Collections.emptyList();
+        }
       }
     }
-    result.addAll(getScriptClassesByFQName(name, scope, inSource));
-    return result;
+    if (DumbService.getInstance(myProject).isAlternativeResolveEnabled()) {
+      return Collections.emptyList();
+    }
+    GlobalSearchScope actualScope = inSource ? new GrSourceFilterScope(scope) : scope;
+    return ReadAction.compute(() -> {
+      List<PsiClass> result = new ArrayList<>();
+      result.addAll(StubIndex.getElements(GrFullClassNameStringIndex.KEY, name, myProject, actualScope, PsiClass.class));
+      result.addAll(getScriptClassesByFQName(name, scope, inSource));
+      return result;
+    });
   }
 
   @Override
@@ -185,5 +235,52 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
       if (aClass != null && !processor.process(aClass)) return true;
     }
     return true;
+  }
+
+  private static class TopLevelFQNames {
+    final long timestamp;
+    final @NotNull Set<String> names;
+
+    final boolean useful;
+
+    private TopLevelFQNames(@NotNull StubIndexKey<String, ?> indexKey, @NotNull Project project) {
+      StubIndexImpl stubIndex = (StubIndexImpl) StubIndex.getInstance();
+      this.timestamp = stubIndex.getIndexModificationStamp(indexKey, project);
+
+      Set<String> names = new HashSet<>();
+      Processor<String> processor = fqName -> {
+        ProgressManager.checkCanceled();
+        String topLevelName = toTopLevelName(fqName);
+        if (names.add(topLevelName)) {
+          // TopLevelFQNames cache becomes useless if it gets too big
+          if (names.size() > 500) {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      boolean useful = stubIndex.processAllKeys(indexKey, project, processor);
+      this.names = useful ? names : Collections.emptySet();
+      this.useful = useful;
+    }
+
+    private TopLevelFQNames(long timestamp, @NotNull Set<String> names, boolean useful) {
+      this.timestamp = timestamp;
+      this.names = names;
+      this.useful = useful;
+    }
+
+    public TopLevelFQNames merge(TopLevelFQNames other) {
+      boolean mergedUseful = useful && other.useful;
+      Set<String> set;
+      if (mergedUseful) {
+        set = new HashSet<>(names);
+        set.addAll(other.names);
+      } else {
+        set = Collections.emptySet();
+      }
+      return new TopLevelFQNames(timestamp + other.timestamp, set, mergedUseful);
+    }
   }
 }

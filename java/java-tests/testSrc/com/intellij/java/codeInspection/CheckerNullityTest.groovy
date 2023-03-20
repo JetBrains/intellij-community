@@ -4,9 +4,6 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
-/**
- * @author peter
- */
 @CompileStatic
 class CheckerNullityTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
@@ -132,6 +129,22 @@ class Test {
 }"""
     assert !NullableNotNullManager.isNullable(clazz.methods[0])
     assert NullableNotNullManager.isNullable(clazz.methods[1])
+  }
+
+  void "test type parameter use"() {
+    def clazz = myFixture.addClass """
+import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.framework.qual.*;
+
+@DefaultQualifier(NonNull.class)
+interface Test<X> {
+  String test(X x);
+  X test(String x);
+}"""
+    assert NullableNotNullManager.isNotNull(clazz.methods[0])
+    assert !NullableNotNullManager.isNotNull(clazz.methods[1])
+    assert !NullableNotNullManager.isNotNull(clazz.methods[0].parameterList.parameters[0])
+    assert NullableNotNullManager.isNotNull(clazz.methods[1].parameterList.parameters[0])
   }
 
 }

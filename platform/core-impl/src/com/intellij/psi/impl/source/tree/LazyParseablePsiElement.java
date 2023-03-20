@@ -104,7 +104,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
 
   @Override
   public PsiElement getParent() {
-    final CompositeElement treeParent = getTreeParent();
+    CompositeElement treeParent = getTreeParent();
     if (treeParent == null) return null;
     if (treeParent instanceof PsiElement) return (PsiElement)treeParent;
     return treeParent.getPsi();
@@ -317,7 +317,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     if (project != null) {
       return project;
     }
-    final PsiManager manager = getManager();
+    PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 
     return manager.getProject();
@@ -335,7 +335,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     return this;
   }
 
-  private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  private PsiElement addInnerBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
@@ -344,7 +344,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return this == another;
   }
 }

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -28,18 +29,25 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
+abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
   protected static final Logger LOG = Logger.getInstance(QualifyThisOrSuperArgumentFix.class);
   protected final PsiExpression myExpression;
   protected final PsiClass myPsiClass;
   private @IntentionName String myText;
 
 
-  public QualifyThisOrSuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
+  QualifyThisOrSuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
     myExpression = expression;
     myPsiClass = psiClass;
   }
+
+  /**
+   * Must override in subclasses, as we store myExpression in the field, so default strategy won't work
+   */
+  @Override
+  abstract public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target);
 
   @Override
   public boolean startInWriteAction() {

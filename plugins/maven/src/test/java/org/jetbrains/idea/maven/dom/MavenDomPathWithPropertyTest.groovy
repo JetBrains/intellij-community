@@ -15,12 +15,10 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.psi.PsiManager
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenDomPathWithPropertyTest extends MavenDomTestCase {
 
   @Test

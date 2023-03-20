@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.actions.IndentSelectionAction;
 import com.intellij.openapi.editor.actions.UnindentSelectionAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -17,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class FileIndentProviderTest extends BasePlatformTestCase {
   private final FileIndentOptionsProvider TEST_FILE_INDENT_OPTIONS_PROVIDER = new TestIndentOptionsProvider();
   private CommonCodeStyleSettings.IndentOptions myTestIndentOptions;
@@ -60,7 +59,7 @@ public class FileIndentProviderTest extends BasePlatformTestCase {
   private class TestIndentOptionsProvider extends FileIndentOptionsProvider {
     @Nullable
     @Override
-    public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
+    public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull CodeStyleSettings settings, @NotNull VirtualFile file) {
       return myTestIndentOptions;
     }
 

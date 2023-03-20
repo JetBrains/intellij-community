@@ -2,6 +2,7 @@
 package com.intellij.application;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -20,5 +21,10 @@ final class ShowExperimentsAction extends DumbAwareAction implements LightEditCo
   public void update(@NotNull AnActionEvent e) {
     boolean hasExperimentalFeatures = Experiments.EP_NAME.getExtensions().length > 0;
     e.getPresentation().setEnabledAndVisible(hasExperimentalFeatures);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

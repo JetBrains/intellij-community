@@ -1,0 +1,3 @@
+// "Inline type parameter" "true"
+open class MyClass { val length = 0 }
+fun <T> test(p: T, q: Int) where T : MyClass = p.length + q

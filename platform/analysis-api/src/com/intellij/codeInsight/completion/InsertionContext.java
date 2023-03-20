@@ -11,9 +11,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class InsertionContext {
   public static final OffsetKey TAIL_OFFSET = OffsetKey.create("tailOffset", true);
 

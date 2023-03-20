@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.execution
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 
 class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
@@ -18,10 +20,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     createTestJavaClass("ClassE")
     createTestJavaClass("ClassF")
     createTestJavaClass("ClassG")
-    val buildScript = createBuildScriptBuilder()
-      .withJavaPlugin()
-      .withJUnit4()
-    importProject(buildScript.generate())
+    importProject {
+      withJavaPlugin()
+      withJUnit4()
+    }
 
     val wcCompletions = arrayOf(
       "gradle test --tests *ClassA",
@@ -71,11 +73,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test single project`() {
-    importProject(createBuildScriptBuilder().generate())
+    importProject {}
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
     }
-    importProject(createBuildScriptBuilder().withTask("my-task").generate())
+    importProject { withTask("my-task") }
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
       assertCollection(it, "my-task", ":my-task")
@@ -93,12 +95,12 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test multi-module project`() {
-    createProjectSubFile("build.gradle", createBuildScriptBuilder().withTask("taskP").generate())
-    createProjectSubFile("module/build.gradle", createBuildScriptBuilder().withTask("taskM").generate())
-    createProjectSubFile("composite/build.gradle", createBuildScriptBuilder().withTask("taskC").generate())
-    createProjectSubFile("composite/module/build.gradle", createBuildScriptBuilder().withTask("taskCM").generate())
-    createProjectSubFile("settings.gradle", GradleSettingScriptBuilder("project").withModule("module").withBuild("composite").generate())
-    createProjectSubFile("composite/settings.gradle", GradleSettingScriptBuilder("composite").withModule("module").generate())
+    createBuildFile { withTask("taskP") }
+    createBuildFile("module") { withTask("taskM") }
+    createBuildFile("composite") { withTask("taskC") }
+    createBuildFile("composite/module") { withTask("taskCM") }
+    createSettingsFile { include("module").includeBuild("composite") }
+    createSettingsFile("composite") { include("module") }
     importProject()
     withVariantsFor("") {
       assertCollection(it, getGradleOptions())
@@ -136,21 +138,20 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     }
     withVariantsFor("", "project.module") {
       assertCollection(it, getGradleOptions())
-      assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"))
+      assertCollection(it, !getRootProjectTasks(), getRootProjectTasks(":"))
       assertCollection(it, !getRootProjectTasks("module:"), !getRootProjectTasks(":module:"))
-      assertCollection(it, !getRootProjectTasks("composite:"), !getRootProjectTasks(":composite:"))
+      assertCollection(it, !getRootProjectTasks("composite:"), getRootProjectTasks(":composite:"))
       assertCollection(it, !getRootProjectTasks("composite:module:"), !getRootProjectTasks(":composite:module:"))
       assertCollection(it, getCommonTasks(), getCommonTasks(":"))
-      assertCollection(it, !getCommonTasks("module:"), !getCommonTasks(":module:"))
-      assertCollection(it, !getCommonTasks("composite:module:"), !getCommonTasks(":composite:module:"))
-      assertCollection(it, !getCommonTasks("composite:"), !getCommonTasks(":composite:"))
-      assertCollection(it, !getCommonTasks("composite:module:"), !getCommonTasks(":composite:module:"))
-      assertCollection(it, !"taskP", !":taskP", !"module:taskP", !":module:taskP")
-      assertCollection(it, "taskM", ":taskM", !"module:taskM", !":module:taskM")
+      assertCollection(it, !getCommonTasks("module:"), getCommonTasks(":module:"))
+      assertCollection(it, !getCommonTasks("composite:"), getCommonTasks(":composite:"))
+      assertCollection(it, !getCommonTasks("composite:module:"), getCommonTasks(":composite:module:"))
+      assertCollection(it, !"taskP", ":taskP", !"module:taskP", !":module:taskP")
+      assertCollection(it, "taskM", !":taskM", !"module:taskM", ":module:taskM")
       assertCollection(it, !"taskC", !":taskC", !"module:taskC", !":module:taskC")
       assertCollection(it, !"taskCM", !":taskCM", !"module:taskCM", !":module:taskCM")
-      assertCollection(it, !"composite:taskC", !":composite:taskC", !"composite:module:taskC", !":composite:module:taskC")
-      assertCollection(it, !"composite:taskCM", !":composite:taskCM", !"composite:module:taskCM", !":composite:module:taskCM")
+      assertCollection(it, !"composite:taskC", ":composite:taskC", !"composite:module:taskC", !":composite:module:taskC")
+      assertCollection(it, !"composite:taskCM", !":composite:taskCM", !"composite:module:taskCM", ":composite:module:taskCM")
     }
     withVariantsFor("", "composite") {
       assertCollection(it, getGradleOptions())
@@ -171,18 +172,18 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     }
     withVariantsFor("", "composite.module") {
       assertCollection(it, getGradleOptions())
-      assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"))
+      assertCollection(it, !getRootProjectTasks(), getRootProjectTasks(":"))
       assertCollection(it, !getRootProjectTasks("module:"), !getRootProjectTasks(":module:"))
       assertCollection(it, !getRootProjectTasks("composite:"), !getRootProjectTasks(":composite:"))
       assertCollection(it, !getRootProjectTasks("composite:module:"), !getRootProjectTasks(":composite:module:"))
       assertCollection(it, getCommonTasks(), getCommonTasks(":"))
-      assertCollection(it, !getCommonTasks("module:"), !getCommonTasks(":module:"))
+      assertCollection(it, !getCommonTasks("module:"), getCommonTasks(":module:"))
       assertCollection(it, !getCommonTasks("composite:"), !getCommonTasks(":composite:"))
       assertCollection(it, !getCommonTasks("composite:module:"), !getCommonTasks(":composite:module:"))
       assertCollection(it, !"taskP", !":taskP", !"module:taskP", !":module:taskP")
       assertCollection(it, !"taskM", !":taskM", !"module:taskM", !":module:taskM")
-      assertCollection(it, !"taskC", !":taskC", !"module:taskC", !":module:taskC")
-      assertCollection(it, "taskCM", ":taskCM", !"module:taskCM", !":module:taskCM")
+      assertCollection(it, !"taskC", ":taskC", !"module:taskC", !":module:taskC")
+      assertCollection(it, "taskCM", !":taskCM", !"module:taskCM", ":module:taskCM")
       assertCollection(it, !"composite:taskC", !":composite:taskC", !"composite:module:taskC", !":composite:module:taskC")
       assertCollection(it, !"composite:taskCM", !":composite:taskCM", !"composite:module:taskCM", !":composite:module:taskCM")
     }
@@ -190,144 +191,135 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test running commands with build options and tasks arguments`() {
-    importProject(
-      "tasks.create('taskWithArgs', ArgsTask) {\n" +
-      "    doLast {\n" +
-      "        println myArgs\n" +
-      "    }\n" +
-      "}\n" +
-      "class ArgsTask extends DefaultTask {\n" +
-      "    @Input\n" +
-      "    @Option(option = 'my_args', description = '')\n" +
-      "    String myArgs\n" +
-      "}"
-    )
+    importProject {
+      withTask("taskWithArgs", "ArgsTask") {
+        call("doLast") {
+          call("println", code("myArgs"))
+        }
+      }
+      addPostfix("""
+        class ArgsTask extends DefaultTask {
+            @Input
+            @Option(option = 'my_args', description = '')
+            String myArgs
+        }
+      """.trimIndent())
+    }
     executeAndWait("help")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :help"
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :help
+      """.trimMargin())
 
     executeAndWait("--unknown-option help")
-      .assertExecutionTree(
-        "-\n" +
-        " -failed\n" +
-        "  Task '--unknown-option' not found in root project 'project'."
-      )
+      .assertExecutionTree("""
+        |-
+        | -failed
+        |  Task '--unknown-option' not found in root project 'project'.
+      """.trimMargin())
 
     if (isGradleNewerOrSameAs("7.0")) {
       executeAndWait("taskWithArgs")
-        .assertExecutionTree(
-          "-\n" +
-          " -failed\n" +
-          "  :taskWithArgs\n" +
-          "  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask')."
-        )
+        .assertExecutionTree("""
+          |-
+          | -failed
+          |  :taskWithArgs
+          |  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask').
+        """.trimMargin())
     }
     else {
       executeAndWait("taskWithArgs")
-        .assertExecutionTree(
-          "-\n" +
-          " -failed\n" +
-          "  :taskWithArgs\n" +
-          "  No value has been specified for property 'myArgs'"
-        )
+        .assertExecutionTree("""
+          |-
+          | -failed
+          |  :taskWithArgs
+          |  No value has been specified for property 'myArgs'
+        """.trimMargin())
     }
 
     // test known build CLI option before tasks and with task quoted argument with apostrophe (')
     // (<build_option> <task> <arg>='<arg_value>')
     executeAndWait("-q taskWithArgs --my_args='test args'")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        "successful",
-        {
-          assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' -q'...\n" +
-            "\n" +
-            "(?:Starting Gradle Daemon...\n" +
-            "Gradle Daemon started in .* ms\n)?" +
-            "test args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' -q'.\n"
-          )
-        }
-      )
-      .assertExecutionTreeNode(
-        ":taskWithArgs",
-        {
-          assertEmpty(it) // tasks output routing is not available for quiet mode
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode("successful") {
+        assertThat(it).matches("""
+          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' -q'...
+          |
+          |(?:Starting Gradle Daemon...
+          |Gradle Daemon started in .* ms
+          |)?test args
+          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' -q'.
+          |
+        """.trimMargin())
+      }
+      .assertExecutionTreeNode(":taskWithArgs") {
+        assertEmpty(it) // tasks output routing is not available for quiet mode
+      }
 
     // test known build CLI option before tasks and with task quoted argument with quote (")
     // (<build_option> <task> <arg>="<arg_value>")
     executeAndWait("--info taskWithArgs --my_args=\"test args\"")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        ":taskWithArgs",
-        {
-          assertThat(it).matches(
-            "> Task :taskWithArgs\n" +
-            "Caching disabled for task ':taskWithArgs' because:\n" +
-            "  Build cache is disabled\n" +
-            "Task ':taskWithArgs' is not up-to-date because:\n" +
-            "  Task has not declared any outputs despite executing actions.\n" +
-            "test args\n" +
-            ":taskWithArgs \\(Thread\\[.*\\]\\) completed. Took (\\d+).(\\d+) secs.\n\n"
-          )
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode(":taskWithArgs") {
+        assertThat(it).matches("""
+          |> Task :taskWithArgs
+          |Caching disabled for task ':taskWithArgs' because:
+          | {2}Build cache is disabled
+          |Task ':taskWithArgs' is not up-to-date because:
+          | {2}Task has not declared any outputs despite executing actions.
+          |test args
+          |
+          |
+        """.trimMargin())
+      }
 
     // test with task argument and known build CLI option after tasks
     // (<task> <arg>=<arg_value> <build_option>)
     executeAndWait("taskWithArgs --my_args=test_args --quiet")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        "successful",
-        {
-          assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args=test_args --quiet'...\n" +
-            "\n" +
-            "(?:Starting Gradle Daemon...\n" +
-            "Gradle Daemon started in .* ms\n)?" +
-            "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args=test_args --quiet'.\n"
-          )
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode("successful") {
+        assertThat(it).matches("""
+          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args=test_args --quiet'...
+          |
+          |(?:Starting Gradle Daemon...
+          |Gradle Daemon started in .* ms
+          |)?test_args
+          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args=test_args --quiet'.
+          |
+        """.trimMargin())
+      }
 
     // test with task argument and known build CLI option after tasks
     // (<task> <arg> <arg_value> <build_option>)
     executeAndWait("taskWithArgs --my_args test_args --quiet")
-      .assertExecutionTree(
-        "-\n" +
-        " -successful\n" +
-        "  :taskWithArgs"
-      )
-      .assertExecutionTreeNode(
-        "successful",
-        {
-          assertThat(it).matches(
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Executing 'taskWithArgs --my_args test_args --quiet'...\n" +
-            "\n" +
-            "(?:Starting Gradle Daemon...\n" +
-            "Gradle Daemon started in .* ms\n)?" +
-            "test_args\n" +
-            "(\\d+):(\\d+):(\\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args test_args --quiet'.\n"
-          )
-        }
-      )
+      .assertExecutionTree("""
+        |-
+        | -successful
+        |  :taskWithArgs
+      """.trimMargin())
+      .assertExecutionTreeNode("successful") {
+        assertThat(it).matches("""
+          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args test_args --quiet'...
+          |
+          |(?:Starting Gradle Daemon...
+          |Gradle Daemon started in .* ms
+          |)?test_args
+          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args test_args --quiet'.
+          |
+        """.trimMargin())
+      }
   }
 }

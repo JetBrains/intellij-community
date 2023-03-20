@@ -24,9 +24,6 @@ import java.util.Set;
 
 import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
-/**
- * @author ven
- */
 public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   public void testParamSimple() {
     parameterPropagationTest();

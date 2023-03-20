@@ -16,11 +16,11 @@ public interface InspectResultsConsumer {
   ExtensionPointName<InspectResultsConsumer> EP_NAME =
     ExtensionPointName.create("com.intellij.inspectResultsConsumer");
 
-  void consume(@NotNull Map<String, Tools> tools,
+  void consume(@NotNull Map<String, ? extends Tools> tools,
                @NotNull List<? extends File> inspectionsResults,
                @NotNull Project project);
 
-  static void runConsumers(@NotNull Map<String, Tools> tools,
+  static void runConsumers(@NotNull Map<String, ? extends Tools> tools,
                            @NotNull List<? extends File> inspectionsResults,
                            @NotNull Project project) {
     for (InspectResultsConsumer extension : EP_NAME.getExtensions()) {

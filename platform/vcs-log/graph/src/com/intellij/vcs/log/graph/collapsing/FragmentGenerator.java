@@ -93,15 +93,13 @@ public class FragmentGenerator {
     Set<Integer> downPart =
       downRedNode != null ? getMiddleNodes(startNode, downRedNode, false) : getWalkNodes(startNode, false, createStopFunction(maxWalkSize));
 
-    Set<Integer> middleNodes = ContainerUtil.union(upPart, downPart);
-    if (upRedNode != null) middleNodes.remove(upRedNode);
-    if (downRedNode != null) middleNodes.remove(downRedNode);
-
+    Set<Integer> middleNodes = ContainerUtil.map2SetNotNull(ContainerUtil.union(upPart, downPart), i-> i.equals(upRedNode) ||
+                                                                                                       i.equals(downRedNode) ? null : i);
     return new GreenFragment(upRedNode, downRedNode, middleNodes);
   }
 
   @NotNull
-  private Set<Integer> getWalkNodes(int startNode, boolean isUp, Condition<Integer> stopFunction) {
+  private Set<Integer> getWalkNodes(int startNode, boolean isUp, Condition<? super Integer> stopFunction) {
     Set<Integer> walkNodes = new HashSet<>();
 
     TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, isUp);

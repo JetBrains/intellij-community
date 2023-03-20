@@ -94,7 +94,7 @@ public class EditorTypingAndNavigationUndoTest extends EditorUndoTestCase {
     moveCaret(getFirstEditor(), DOWN, false);
     executeEditorAction(getFirstEditor(), IdeActions.ACTION_MOVE_LINE_UP_ACTION);
     undoFirstEditor();
-    assertEquals(new TextRange(start, end), new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+    assertEquals(new TextRange(start, end), rangeMarker.getTextRange());
   }
 
   public void testEnter() {

@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -11,9 +13,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author pegov
- */
 public class ShowLogAction extends AnAction implements DumbAware {
   public static @NotNull @NlsActions.ActionText String getActionName() {
     return ActionsBundle.message("show.log.in.action.text", RevealFileAction.getFileManagerName());
@@ -32,7 +31,7 @@ public class ShowLogAction extends AnAction implements DumbAware {
   }
 
   public ShowLogAction() {
-    getTemplatePresentation().setText(getActionName());
+    getTemplatePresentation().setText(ActionsBundle.message("show.log.in.action.text", IdeBundle.message("action.file.manager.text")));
   }
 
   @Override
@@ -40,6 +39,11 @@ public class ShowLogAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(isSupported());
     presentation.setText(getActionName());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -23,7 +22,6 @@ import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -40,9 +38,6 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -54,7 +49,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -70,7 +64,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -501,9 +494,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     for (final PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
       final EditorEx editor = myEditors.get(propertiesFile.getVirtualFile());
       if (editor == null) continue;
-
-      final IProperty property = getPropertyInBgThread(propertiesFile, propertyName);
-
+      final IProperty property = propertiesFile.findPropertyByKey(propertyName);
       final Document document = editor.getDocument();
       CommandProcessor.getInstance().executeCommand(null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
         if (!checkIsUnderUndoRedoAction || !undoManager.isActive() || !undoManager.isUndoOrRedoInProgress()) {
@@ -514,17 +505,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
       titledPanel.repaint();
     }
-  }
-
-  @Contract(pure = true)
-  private IProperty getPropertyInBgThread(@NotNull PropertiesFile propertiesFile, @NotNull String propertyName) {
-    return ProgressManager.getInstance().run(
-      new Task.WithResult<>(myProject, ResourceBundleEditorBundle.message("progress.dialog.title.looking.for", propertyName), true) {
-        @Override
-        protected IProperty compute(@NotNull ProgressIndicator indicator) {
-          return ReadAction.nonBlocking(() -> propertiesFile.findPropertyByKey(propertyName)).executeSynchronously();
-        }
-      });
   }
 
   @NotNull
@@ -648,10 +628,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
     final Set<String> propertyKeys = ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete()).keySet();
     final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
-    final List<String> keysOrder = new ArrayList<>(propertyKeys);
-    if (isAlphaSorted) {
-      Collections.sort(keysOrder);
-    }
+    List<String> keysOrder = isAlphaSorted ? ContainerUtil.sorted(propertyKeys) : new ArrayList<>(propertyKeys);
 
     final String currentKey = selectedProperty.getKey();
     final int idx = keysOrder.indexOf(currentKey);
@@ -682,40 +659,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     if (SelectInContext.DATA_KEY.is(dataId)) {
       VirtualFile file = getSelectedPropertiesFile();
       return file == null ? null : new FileSelectInContext(myProject, file);
-    }
-    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return List.of((DataProvider)this::getSlowData);
-    }
-
-    return null;
-  }
-
-  private Object getSlowData(@NotNull String dataId) {
-    if (!CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return null;
-
-    for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-      if (entry.getValue() != mySelectedEditor) continue;
-
-      final String name = getSelectedPropertyName();
-      if (name == null) return null;
-
-      final VirtualFile virtualFile = entry.getKey();
-      final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(virtualFile, myProject);
-      LOG.assertTrue(file != null);
-
-      final List<IProperty> properties = file.findPropertiesByKey(name);
-
-      if (properties.isEmpty()) {
-        return new Navigatable[]{ file.getContainingFile() };
-      }
-
-      return properties
-        .stream()
-        .map(IProperty::getPsiElement)
-        .map(PsiElement::getNavigationElement)
-        .filter(Navigatable.class::isInstance)
-        .map(Navigatable.class::cast)
-        .toArray(Navigatable[]::new);
     }
     return null;
   }
@@ -772,11 +715,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  public void selectNotify() {
-
-  }
-
-  @Override
   public void deselectNotify() {
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
@@ -797,16 +735,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     return myHighlighter;
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
   }
 
   @Override
@@ -833,8 +761,9 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  public Document @NotNull [] getDocuments() {
-    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile));
+  public @NotNull Document @NotNull [] getDocuments() {
+    return ContainerUtil.mapNotNull(myEditors.keySet(), propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile))
+      .toArray(Document.EMPTY_ARRAY);
   }
 
   Map<VirtualFile, EditorEx> getTranslationEditors() {
@@ -888,8 +817,8 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       @Override
       public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.add(Objects.requireNonNull(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE)));
-        group.add(Objects.requireNonNull(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE)));
+        group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
+        group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
         group.addSeparator();
         group.add(new AnAction(ResourceBundleEditorBundle.messagePointer("action.PropagateValue.text")) {
           @Override

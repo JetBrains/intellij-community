@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,12 +14,6 @@ public class DfIntConstantType extends DfConstantType<Integer> implements DfIntT
   DfIntConstantType(int value, @Nullable LongRangeSet wideRange) {
     super(value);
     myWideRange = wideRange;
-  }
-
-  @NotNull
-  @Override
-  public PsiPrimitiveType getPsiType() {
-    return DfIntType.super.getPsiType();
   }
 
   @Override

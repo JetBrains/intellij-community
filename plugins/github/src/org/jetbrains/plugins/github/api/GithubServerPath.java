@@ -1,19 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.collaboration.api.ServerPath;
-import com.intellij.collaboration.hosting.GitHostingUrlUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import git4idea.remote.hosting.GitHostingUrlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubParseException;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +23,7 @@ import java.util.regex.Pattern;
  * Github server reference allowing to specify custom port and path to instance
  */
 @Tag("server")
-public class GithubServerPath implements ServerPath {
+public final class GithubServerPath implements ServerPath {
   public static final String DEFAULT_HOST = "github.com";
   public static final GithubServerPath DEFAULT_SERVER = new GithubServerPath(DEFAULT_HOST);
   private static final String API_PREFIX = "api.";
@@ -77,23 +78,12 @@ public class GithubServerPath implements ServerPath {
     return mySuffix;
   }
 
+  /**
+   * @deprecated use an util method directly
+   */
+  @Deprecated
   public boolean matches(@NotNull String gitRemoteUrl) {
-    URI uri = GitHostingUrlUtil.getUriFromRemoteUrl(gitRemoteUrl);
-    if (uri == null) return false;
-
-    String host = uri.getHost();
-    if (host == null) return false;
-
-    if (!myHost.equalsIgnoreCase(host)) return false;
-
-    if (mySuffix != null) {
-      String path = uri.getPath();
-      if (path == null) return false;
-
-      return StringUtil.startsWithIgnoreCase(path, mySuffix);
-    }
-
-    return true;
+    return GitHostingUrlUtil.match(toURI(), gitRemoteUrl);
   }
 
   // 1 - schema, 2 - host, 4 - port, 5 - path
@@ -131,7 +121,7 @@ public class GithubServerPath implements ServerPath {
 
   @NotNull
   public String toUrl() {
-    return getSchemaUrlPart() + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
+    return toUrl(true);
   }
 
   @NotNull
@@ -167,6 +157,18 @@ public class GithubServerPath implements ServerPath {
     return builder.toString();
   }
 
+  @Override
+  public @NotNull URI toURI() {
+    int port = getPort() == null ? -1 : getPort();
+    try {
+      return new URI(getSchema(), null, getHost(), port, getSuffix(), null, null);
+    }
+    catch (URISyntaxException e) {
+      // shouldn't happen, because we pre-validate the data
+      throw new RuntimeException(e);
+    }
+  }
+
   public boolean isGithubDotCom() {
     return myHost.equalsIgnoreCase(DEFAULT_HOST);
   }
@@ -194,8 +196,7 @@ public class GithubServerPath implements ServerPath {
 
   public boolean equals(Object o, boolean ignoreProtocol) {
     if (this == o) return true;
-    if (!(o instanceof GithubServerPath)) return false;
-    GithubServerPath path = (GithubServerPath)o;
+    if (!(o instanceof GithubServerPath path)) return false;
     return (ignoreProtocol || Objects.equals(myUseHttp, path.myUseHttp)) &&
            Objects.equals(myHost, path.myHost) &&
            Objects.equals(myPort, path.myPort) &&

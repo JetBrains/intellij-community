@@ -1,4 +1,15 @@
 // WITH_STDLIB
+sealed class MySealed
+object MyObject : MySealed()
+
+fun test(t: MySealed) {
+    // KTIJ-23727
+    when (t) {
+        is MyObject -> println() // 'when' branch is never reachable
+        MyObject -> println()
+    }
+}
+
 fun testUnit(<warning descr="[UNUSED_PARAMETER] Parameter 'x' is never used">x</warning>: Int) {
 
 }

@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectResolver
 import org.junit.Test
@@ -44,11 +44,21 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun importNewProject(file: VirtualFile) {
+    if (isNewImportingProcess) {
+      importProject(file)
+    }
+    else {
+      importNewProjectLegacyWay(file)
+    }
+
+  }
+
+  protected fun importNewProjectLegacyWay(file: VirtualFile) {
+
     val files = listOf(file)
 
     myProjectsManager.initForTests()
-    myProjectsTree = myProjectsManager.projectsTreeForTests
-    myProjectResolver = MavenProjectResolver(myProjectsTree)
+    myProjectResolver = MavenProjectResolver(getProjectsTree())
 
     myProjectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles(emptyList(), emptyList()), null)
 

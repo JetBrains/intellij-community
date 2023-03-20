@@ -18,7 +18,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
@@ -73,7 +73,7 @@ public abstract class MavenPerformanceTest extends MavenMultiVersionImportingTes
     r.run();
     long after = System.currentTimeMillis();
     long timing = after - before;
-    //System.out.println(getName() + ": " + timing + " ->" + ProfilingUtil.captureCPUSnapshot());
+    //System.out.println(getName() + ": " + timing + " ->\n" + ProfilingUtil.captureCPUSnapshot());
     //ProfilingUtil.stopCPUProfiling();
     assertTrue(timing < expected);
   }

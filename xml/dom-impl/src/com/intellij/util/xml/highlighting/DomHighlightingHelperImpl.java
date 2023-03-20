@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   public static final DomHighlightingHelperImpl INSTANCE = new DomHighlightingHelperImpl();
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
@@ -75,8 +72,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
       final DomGenericInfo info = element.getGenericInfo();
       for (final AbstractDomChildrenDescription description : info.getChildrenDescriptions()) {
-        if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
-          final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
+        if (description instanceof DomCollectionChildDescription childDescription && description.getValues(element).isEmpty()) {
           final Required annotation = description.getAnnotation(Required.class);
           if (annotation != null && annotation.value()) {
             list.add(holder.createProblem(element, childDescription, XmlDomBundle.message("dom.inspections.child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));

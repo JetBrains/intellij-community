@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -93,12 +94,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       Disposer.register(this, (Disposable)model);
     }
     foreground = Invoker.forEventDispatchThread(this);
-    if (model instanceof InvokerSupplier) {
-      InvokerSupplier supplier = (InvokerSupplier)model;
+    if (model instanceof InvokerSupplier supplier) {
       background = supplier.getInvoker();
     }
     else {
       background = foreground;
+    }
+    if (background instanceof Invoker.EDT && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error(new Throwable("Background invoker shall not be EDT. Please implement InvokerSupplier in your TreeModel"));
     }
     this.model = model;
     this.model.addTreeModelListener(listener);
@@ -231,16 +234,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    */
   @NotNull
   public Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
-    AbstractTreeWalker<Node> walker = new AbstractTreeWalker<>(visitor, node -> node.object) {
-      @Override
-      protected Collection<Node> getChildren(@NotNull Node node) {
-        if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
-        promiseChildren(node)
-          .onSuccess(parent -> setChildren(parent.getChildren()))
-          .onError(this::setError);
-        return null;
-      }
-    };
+    var walker = createWalker(visitor, allowLoading);
     if (allowLoading) {
       // start visiting on the background thread to ensure that root node is already invalidated
       background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
@@ -249,6 +243,36 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       onValidThread(() -> walker.start(tree.root));
     }
     return walker.promise();
+  }
+
+  private TreeWalkerBase<Node> createWalker(@NotNull TreeVisitor visitor, boolean allowLoading) {
+    if (visitor.visitThread() == TreeVisitor.VisitThread.BGT) {
+      return new BgtTreeWalker<>(visitor, background, foreground, node -> node.object) {
+        @Nullable
+        @Override
+        protected Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
+          return getChildrenForWalker(node, this, allowLoading);
+        }
+      };
+    }
+    else {
+      return new AbstractTreeWalker<>(visitor, node -> node.object) {
+        @Nullable
+        @Override
+        protected Collection<Node> getChildren(@NotNull Node node) {
+          return getChildrenForWalker(node, this, allowLoading);
+        }
+      };
+    }
+  }
+
+  @Nullable
+  private Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
+    if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
+    promiseChildren(node)
+      .onSuccess(parent -> walker.setChildren(parent.getChildren()))
+      .onError(walker::setError);
+    return null;
   }
 
   /**
@@ -502,7 +526,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       tree.root = loaded;
       if (loaded != null) {
         tree.map.put(loaded.object, loaded);
-        TreePath path = new TreePath(loaded.object);
+        TreePath path = new CachingTreePath(loaded.object);
         loaded.insertPath(path);
         treeStructureChanged(path, null, null);
         if (LOG.isTraceEnabled()) LOG.debug("new root: ", loaded.object);
@@ -540,8 +564,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
-      if (model instanceof ChildrenProvider) {
-        ChildrenProvider<?> provider = (ChildrenProvider<?>)model;
+      if (model instanceof ChildrenProvider<?> provider) {
         List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
@@ -689,7 +712,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   }
 
   private static final class CommandQueue<T extends Command> {
-    private final Deque<T> deque = new ArrayDeque<>();
+    private final Deque<T> deque = new LinkedList<>();
     private volatile boolean closed;
 
     T get() {
@@ -839,7 +862,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
 
     private void insertMapping(Node parent) {
       if (parent == null) {
-        insertPath(new TreePath(object));
+        insertPath(new CachingTreePath(object));
       }
       else if (parent.loading == this) {
         LOG.warn("insert loading node unexpectedly");
@@ -861,7 +884,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
 
     private void removeMapping(Node parent, @NotNull Tree tree) {
       if (parent == null) {
-        removePath(new TreePath(object));
+        removePath(new CachingTreePath(object));
         tree.removeEmpty(this);
       }
       else if (parent.loading == this) {
@@ -877,7 +900,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
-      if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
+      if (ContainerUtil.exists(paths, path -> contains(path, oldObject))) {
         // replace instance of user's object in all internal maps to avoid memory leaks
         List<TreePath> updated = ContainerUtil.map(paths, path -> update(path, oldObject, newObject));
         paths.clear();
@@ -968,7 +991,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   @Deprecated
   public void setRootImmediately(@NotNull Object object) {
     Node node = new Node(object, LeafState.NEVER);
-    node.insertPath(new TreePath(object));
+    node.insertPath(new CachingTreePath(object));
     tree.root = node;
     tree.map.put(object, node);
   }

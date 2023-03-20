@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +41,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +49,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
+@ApiStatus.Internal
+public class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
   private final List<? extends VirtualFile> myVirtualFiles;
   private final int myLineNumber;
   private final Project myProject;
@@ -119,7 +122,8 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
   }
 
   private void open(@NotNull VirtualFile file, Editor originalEditor) {
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = ProjectLocator.computeWithPreferredProject(file, myProject, () ->
+      FileDocumentManager.getInstance().getDocument(file));
     int offset = 0;
     if (document != null && myLineNumber >= 0 && myLineNumber < document.getLineCount()) {
       offset = document.getLineStartOffset(myLineNumber);
@@ -147,6 +151,10 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
   public OpenFileDescriptor getDescriptor() {
     VirtualFile file = getPreferredFile();
     return file != null ? new OpenFileDescriptor(myProject, file, myLineNumber, 0) : null;
+  }
+
+  public List<? extends VirtualFile> getFilesVariants() {
+    return myVirtualFiles;
   }
 
   @Nullable

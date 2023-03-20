@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -9,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 
@@ -16,7 +18,9 @@ import java.util.List;
  * See icon-loading-stat.svg to understand how icon loading is measured.
  */
 @ApiStatus.Internal
+@VisibleForTesting
 public final class IconsLoadTime extends DumbAwareAction {
+
   private static final Logger LOG = Logger.getInstance(IconsLoadTime.class);
 
   // load time per icon
@@ -52,6 +56,11 @@ public final class IconsLoadTime extends DumbAwareAction {
              ", isSvg=" + isSvg +
              "; number of icons: " + count;
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

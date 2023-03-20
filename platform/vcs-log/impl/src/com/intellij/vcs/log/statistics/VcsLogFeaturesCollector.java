@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -23,10 +24,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
@@ -36,8 +34,7 @@ import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumnsOrder;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
-@NonNls
-public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
+public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 3);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);
@@ -70,10 +67,11 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final VarargEventId COLUMN = GROUP.registerVarargEvent("column", EventFields.Enabled, COLUMN_NAME);
   private static final VarargEventId ADDITIONAL_TABS = GROUP.registerVarargEvent("additionalTabs", EventFields.Count);
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+  public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
+    if (!TrustedProjects.isTrusted(project)) return Collections.emptySet();
+
+    VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
     if (projectLog != null) {
       MainVcsLogUi ui = projectLog.getMainLogUi();
       if (ui != null) {
@@ -105,7 +103,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
           if (factory.showMenuItem()) {
             addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
-                             HIGHLIGHTER, List.of(LOG_HIGHLIGHTER_ID_FIELD.with(getFactoryIdSafe(factory))));
+                             HIGHLIGHTER, new ArrayList<>(List.of(LOG_HIGHLIGHTER_ID_FIELD.with(getFactoryIdSafe(factory)))));
           }
         }
 
@@ -121,7 +119,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         for (VcsLogDefaultColumn<?> column : getDefaultDynamicColumns()) {
           String columnName = column.getStableName();
           addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(modelIndices.getModelIndex(column)),
-                           COLUMN, List.of(COLUMN_NAME.with(columnName)));
+                           COLUMN, new ArrayList<>(List.of(COLUMN_NAME.with(columnName))));
         }
 
         Collection<String> tabs = projectLog.getTabsManager().getTabs();
@@ -133,30 +131,26 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     return Collections.emptySet();
   }
 
-  @NotNull
-  private static String getFactoryIdSafe(@NotNull VcsLogHighlighterFactory factory) {
+  private static @NotNull String getFactoryIdSafe(@NotNull VcsLogHighlighterFactory factory) {
     if (PluginInfoDetectorKt.getPluginInfo(factory.getClass()).isDevelopedByJetBrains()) {
       return UsageDescriptorKeyValidator.ensureProperKey(factory.getId());
     }
     return THIRD_PARTY;
   }
 
-  @NotNull
-  private static <T> Function1<VcsLogUiProperties, T> getter(@NotNull VcsLogUiProperty<? extends T> property) {
+  private static @NotNull <T> Function1<VcsLogUiProperties, T> getter(@NotNull VcsLogUiProperty<? extends T> property) {
     return p -> {
       if (!p.exists(property)) return null;
       return p.get(property);
     };
   }
 
-  @NotNull
-  private static VcsLogUiProperties createDefaultPropertiesInstance() {
-    return new VcsLogUiPropertiesImpl<>(new VcsLogApplicationSettings()) {
-      @NotNull private final State myState = new State();
+  private static @NotNull VcsLogUiProperties createDefaultPropertiesInstance() {
+    return new VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(new VcsLogApplicationSettings()) {
+      private final @NotNull State myState = new State();
 
-      @NotNull
       @Override
-      public State getState() {
+      protected @NotNull State getLogUiState() {
         return myState;
       }
 
@@ -165,14 +159,8 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         throw new UnsupportedOperationException();
       }
 
-      @NotNull
       @Override
-      public List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void loadState(@NotNull State state) {
+      public @NotNull List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
         throw new UnsupportedOperationException();
       }
     };

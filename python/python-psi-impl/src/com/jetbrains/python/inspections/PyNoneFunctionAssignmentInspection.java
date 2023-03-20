@@ -48,9 +48,8 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
     @Override
     public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression value = node.getAssignedValue();
-      if (value instanceof PyCallExpression) {
+      if (value instanceof PyCallExpression call) {
         final PyType type = myTypeEvalContext.getType(value);
-        final PyCallExpression call = (PyCallExpression)value;
         final PyExpression callee = call.getCallee();
 
         if (type instanceof PyNoneType && callee != null) {

@@ -151,6 +151,11 @@ public class CodeStyleConfigurableWrapper
     return myPanel.getOptionIndexer();
   }
 
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    selectTab(label);
+  }
+
   public void selectTab(@NotNull String tab) {
     createComponent();
     myPanel.showTabOnCurrentPanel(tab);

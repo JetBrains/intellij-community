@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,11 @@ public class ExtendableAction extends AnAction {
 
   public ExtendableAction(@NotNull ExtensionPointName<AnActionExtensionProvider> extensionPoint) {
     myExtensionPoint = extensionPoint;
+  }
+
+  @Override
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -23,7 +29,16 @@ public class ExtendableAction extends AnAction {
 
     AnActionExtensionProvider provider = getProvider(e);
     if (provider != null) {
-      provider.update(e);
+      ActionUpdateThread thread = provider.getActionUpdateThread();
+      if (thread == ActionUpdateThread.BGT || EDT.isCurrentThreadEdt()) {
+        provider.update(e);
+      }
+      else {
+        e.getUpdateSession().compute(provider, "update", thread, () -> {
+          provider.update(e);
+          return true;
+        });
+      }
     }
     else {
       defaultUpdate(e);

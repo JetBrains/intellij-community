@@ -6,22 +6,19 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.FormBuilder
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
-import java.awt.BorderLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * Inspection that warns plugin authors if they use IntelliJ Platform's APIs that aren't available
@@ -33,7 +30,7 @@ import javax.swing.JPanel
  *
  * *Implementation details*.
  * Info on when APIs were first introduced is obtained from "available since" artifacts.
- * They are are built on the build server for each IDE build and uploaded to
+ * They are built on the build server for each IDE build and uploaded to
  * [IntelliJ artifacts repository](https://www.jetbrains.com/intellij-repository/releases/),
  * containing external annotations [org.jetbrains.annotations.ApiStatus.AvailableSince]
  * where APIs' introduction versions are specified.
@@ -51,12 +48,12 @@ class MissingRecentApiInspection : LocalInspectionTool() {
    * differ from the actual values. For example, it is the case for gradle-intellij-plugin,
    * which allows to override "since" and "until" values during plugin build.
    */
-  var sinceBuildString: String? = null
+  private var sinceBuildString: String? = null
 
   /**
    * Actual "until" build constraint of the plugin under development.
    */
-  var untilBuildString: String? = null
+  private var untilBuildString: String? = null
 
   private val sinceBuild: BuildNumber?
     get() = sinceBuildString?.let { BuildNumber.fromStringOrNull(it) }
@@ -80,32 +77,10 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     )
   }
 
-  override fun createOptionsPanel(): JComponent {
-    val emptyBuildNumber = BuildNumber.fromString("1.0")!!
-
-    val sinceField = BuildNumberField("since", emptyBuildNumber)
-    sinceBuild?.also { sinceField.value = it }
-    sinceField.emptyText.text = DevKitBundle.message("inspections.missing.recent.api.settings.since.empty.text")
-    sinceField.valueEditor.addListener { value ->
-      sinceBuildString = value.takeIf { it != emptyBuildNumber }?.asString()
-    }
-
-    val untilField = BuildNumberField("until", untilBuild ?: emptyBuildNumber)
-    untilField.emptyText.text = DevKitBundle.message("inspections.missing.recent.api.settings.until.empty.text")
-    untilBuild?.also { untilField.value = it }
-    untilField.valueEditor.addListener { value ->
-      untilBuildString = value.takeIf { it != emptyBuildNumber }?.asString()
-    }
-
-    val formBuilder = FormBuilder.createFormBuilder()
-      .addComponent(JBLabel(DevKitBundle.message("inspections.missing.recent.api.settings.range")))
-      .addLabeledComponent(DevKitBundle.message("inspections.missing.recent.api.settings.since"), sinceField)
-      .addLabeledComponent(DevKitBundle.message("inspections.missing.recent.api.settings.until"), untilField)
-
-    val container = JPanel(BorderLayout())
-    container.add(formBuilder.panel, BorderLayout.NORTH)
-    return container
-  }
+  override fun getOptionsPane(): OptPane = pane(
+    group(DevKitBundle.message("inspections.missing.recent.api.settings.range"),
+          string("sinceBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.since"), BuildNumberValidator()),
+          string("untilBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.until"), BuildNumberValidator())))
 
   private fun getTargetedSinceUntilRanges(module: Module): List<SinceUntilRange> {
     if (sinceBuild == null && untilBuild == null) {

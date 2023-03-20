@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.core.entity
 
 import org.jetbrains.annotations.Nls
@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.tools.projectWizard.core.UNIT_SUCCESS
 import org.jetbrains.kotlin.tools.projectWizard.core.ValidationError
 
 
-inline class SettingValidator<V>(val validate: Reader.(V) -> ValidationResult) {
+@JvmInline
+value class SettingValidator<V>(val validate: Reader.(V) -> ValidationResult) {
     infix fun and(other: SettingValidator<V>) = SettingValidator<V> { value ->
         validate(value) and other.validate(this, value)
     }

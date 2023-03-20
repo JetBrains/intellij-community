@@ -407,6 +407,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (result == null) {
       return NODE_ICON_RUNNING;
     }
+
+    if (result instanceof MessageEventResult) {
+      return getIcon(((MessageEventResult) result).getKind());
+    }
+
     if (isFailed(result)) {
       return NODE_ICON_ERROR;
     }
@@ -417,19 +422,13 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   private static Icon getIcon(MessageEvent.Kind kind) {
-    switch (kind) {
-      case ERROR:
-        return NODE_ICON_ERROR;
-      case WARNING:
-        return NODE_ICON_WARNING;
-      case INFO:
-        return NODE_ICON_INFO;
-      case STATISTICS:
-        return NODE_ICON_STATISTICS;
-      case SIMPLE:
-        return NODE_ICON_SIMPLE;
-    }
-    return NODE_ICON_DEFAULT;
+    return switch (kind) {
+      case ERROR -> NODE_ICON_ERROR;
+      case WARNING -> NODE_ICON_WARNING;
+      case INFO -> NODE_ICON_INFO;
+      case STATISTICS -> NODE_ICON_STATISTICS;
+      case SIMPLE -> NODE_ICON_SIMPLE;
+    };
   }
 
   static private class HintData {

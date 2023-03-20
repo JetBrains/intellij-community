@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -8,10 +8,15 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -19,28 +24,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class DecompilerTestFixture {
-  private File testDataDir;
-  private File tempDir;
-  private File targetDir;
+  private Path testDataDir;
+  private Path tempDir;
+  private Path targetDir;
   private TestConsoleDecompiler decompiler;
 
-  public void setUp(String... optionPairs) throws IOException {
-    assertThat(optionPairs.length % 2).isEqualTo(0);
+  public void setUp(Map<String, String> customOptions) throws IOException {
+    testDataDir = Path.of("testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = Path.of("community/plugins/java-decompiler/engine/testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = Path.of("plugins/java-decompiler/engine/testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = Path.of("../community/plugins/java-decompiler/engine/testData");
+    if (!isTestDataDir(testDataDir)) testDataDir = Path.of("../plugins/java-decompiler/engine/testData");
+    assertTrue("cannot find the 'testData' directory relative to " + Path.of("").toAbsolutePath(), isTestDataDir(testDataDir));
+    testDataDir = testDataDir.toAbsolutePath();
 
-    testDataDir = new File("testData");
-    if (!isTestDataDir(testDataDir)) testDataDir = new File("community/plugins/java-decompiler/engine/testData");
-    if (!isTestDataDir(testDataDir)) testDataDir = new File("plugins/java-decompiler/engine/testData");
-    if (!isTestDataDir(testDataDir)) testDataDir = new File("../community/plugins/java-decompiler/engine/testData");
-    if (!isTestDataDir(testDataDir)) testDataDir = new File("../plugins/java-decompiler/engine/testData");
-    assertTrue("current dir: " + new File("").getAbsolutePath(), isTestDataDir(testDataDir));
-    testDataDir = testDataDir.getAbsoluteFile();
+    tempDir = Files.createTempDirectory("decompiler_test_dir_");
 
-    //noinspection SSBasedInspection
-    tempDir = File.createTempFile("decompiler_test_", "_dir");
-    assertThat(tempDir.delete()).isTrue();
-
-    targetDir = new File(tempDir, "decompiled");
-    assertThat(targetDir.mkdirs()).isTrue();
+    targetDir = Files.createDirectories(tempDir.resolve("decompiled"));
 
     Map<String, Object> options = new HashMap<>();
     options.put(IFernflowerPreferences.LOG_LEVEL, "warn");
@@ -49,28 +49,31 @@ public class DecompilerTestFixture {
     options.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
     options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
     options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
-    for (int i = 0; i < optionPairs.length; i += 2) {
-      options.put(optionPairs[i], optionPairs[i + 1]);
-    }
-    decompiler = new TestConsoleDecompiler(targetDir, options);
+    options.putAll(customOptions);
+
+    decompiler = new TestConsoleDecompiler(targetDir.toFile(), options);
   }
 
-  public void tearDown() {
-    if (tempDir != null) {
-      delete(tempDir);
+  public void tearDown() throws IOException {
+    try {
+      if (tempDir != null) {
+        deleteRecursively(tempDir);
+      }
     }
-    decompiler.close();
+    finally {
+      decompiler.close();
+    }
   }
 
-  public File getTestDataDir() {
+  public Path getTestDataDir() {
     return testDataDir;
   }
 
-  public File getTempDir() {
+  public Path getTempDir() {
     return tempDir;
   }
 
-  public File getTargetDir() {
+  public Path getTargetDir() {
     return targetDir;
   }
 
@@ -78,45 +81,50 @@ public class DecompilerTestFixture {
     return decompiler;
   }
 
-  private static boolean isTestDataDir(File dir) {
-    return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
+  private static boolean isTestDataDir(Path dir) {
+    return Files.isDirectory(dir) && Files.isDirectory(dir.resolve("classes")) && Files.isDirectory(dir.resolve("results"));
   }
 
-  private static void delete(File file) {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File f : files) delete(f);
+  private static void deleteRecursively(Path file) throws IOException {
+    Files.walkFileTree(file, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Files.delete(file);
+        return FileVisitResult.CONTINUE;
       }
-    }
-    assertTrue(file.delete());
+
+      @Override
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        Files.delete(dir);
+        return FileVisitResult.CONTINUE;
+      }
+    });
   }
 
-  public static void assertFilesEqual(File expected, File actual) {
-    if (expected.isDirectory()) {
-      String[] children = Objects.requireNonNull(expected.list());
-      assertThat(actual.list()).contains(children);
-      for (String name : children) {
-        assertFilesEqual(new File(expected, name), new File(actual, name));
+  public static void assertFilesEqual(Path expected, Path actual) {
+    if (Files.isDirectory(expected)) {
+      try {
+        Files.walkFileTree(expected, new SimpleFileVisitor<>() {
+          @Override
+          public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) {
+            Path actualFile = actual.resolve(expected.relativize(expectedFile));
+            assertThat(actualFile).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expectedFile, StandardCharsets.UTF_8);
+            return FileVisitResult.CONTINUE;
+          }
+        });
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
       }
     }
     else {
-      assertThat(getContent(actual)).isEqualTo(getContent(expected));
-    }
-  }
-
-  private static String getContent(File expected) {
-    try {
-      return new String(InterpreterUtil.getBytes(expected), StandardCharsets.UTF_8).replace("\r\n", "\n");
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+      assertThat(actual).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expected, StandardCharsets.UTF_8);
     }
   }
 
   // cache zip files
   private static class TestConsoleDecompiler extends ConsoleDecompiler {
-    private final HashMap<String, ZipFile> zipFiles = new HashMap<>();
+    private final Map<String, ZipFile> zipFiles = new HashMap<>();
 
     TestConsoleDecompiler(File destination, Map<String, Object> options) {
       super(destination, options, new PrintStreamLogger(System.out));

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,9 +13,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractParameterAsLocalVariableFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -43,10 +43,9 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.check.foreach.option"),
-                                          this, "m_checkForeachParameters");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_checkForeachParameters", InspectionGadgetsBundle.message("assignment.to.for.loop.parameter.check.foreach.option")));
   }
 
   @Override
@@ -89,15 +88,13 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
         return;
       }
       final PsiElement variableParent = variable.getParent();
-      if (!(variableParent instanceof PsiDeclarationStatement)) {
+      if (!(variableParent instanceof PsiDeclarationStatement declarationStatement)) {
         return;
       }
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)variableParent;
       final PsiElement parent = declarationStatement.getParent();
-      if (!(parent instanceof PsiForStatement)) {
+      if (!(parent instanceof PsiForStatement forStatement)) {
         return;
       }
-      final PsiForStatement forStatement = (PsiForStatement)parent;
       final PsiStatement initialization = forStatement.getInitialization();
       if (initialization == null ||
           !initialization.equals(declarationStatement) ||
@@ -113,10 +110,9 @@ public class AssignmentToForLoopParameterInspection extends BaseInspection {
         return;
       }
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       if (referenceExpression.getQualifierExpression() != null) {
         return;
       }

@@ -12,10 +12,11 @@ import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class MultipleSelectionHtmlLesson
+class MultipleSelectionHtmlLesson(private val helpUrl: String = "multicursor.html")
   : KLesson("Multiple selections", LessonsBundle.message("multiple.selections.lesson.name")) {
 
   override val languageId: String = "HTML"
+  override val sampleFilePath: String = "Learning.html"
 
   private val sample = parseLessonSample("""<!doctype html>
 <html lang="en">
@@ -72,6 +73,13 @@ class MultipleSelectionHtmlLesson
         stateCheck { checkMultiChange() }
         test { type("td") }
       }
+      task("EditorEscape") {
+        stateCheck {
+          editor.caretModel.caretCount < 2
+        }
+        text(LessonsBundle.message("multiple.selections.escape", action(it)))
+        test { actions(it) }
+      }
     }
 
   private fun TaskRuntimeContext.checkMultiChange(): Boolean {
@@ -90,6 +98,6 @@ class MultipleSelectionHtmlLesson
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("multiple.selections.help.multiple.carets"),
-         LessonUtil.getHelpLink("multicursor.html")),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

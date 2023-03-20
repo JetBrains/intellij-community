@@ -26,8 +26,6 @@ import javax.swing.*;
 /**
  * Provides default implementation for {@link EditorTextFieldProvider} service and applies available
  * {@link EditorCustomization customizations} if necessary.
- *
- * @author Denis Zhdanov
  */
 public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
   @NotNull

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Nikolay Matveev
- */
 public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElement> extends AnAction {
   @NotNull
   protected final Class<T> myClass;

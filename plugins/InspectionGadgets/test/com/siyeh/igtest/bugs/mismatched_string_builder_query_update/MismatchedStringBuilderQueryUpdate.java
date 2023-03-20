@@ -168,4 +168,20 @@ class Sample {
       currentIndex++;
     }
   }
+
+  private void stringJoinerTest() {
+    StringJoiner stringJoiner1 = new StringJoiner(",", "(", ")");
+    System.out.println(stringJoiner1.toString());
+
+    StringJoiner <warning descr="Contents of 'StringJoiner stringJoiner2' are queried, but never updated">stringJoiner2</warning> = new StringJoiner(","); //warn
+    System.out.println(stringJoiner2.toString());
+
+    StringJoiner <warning descr="Contents of 'StringJoiner stringJoiner3' are updated, but never queried">stringJoiner3</warning> = new StringJoiner(","); //warn
+    stringJoiner3.add("1").add("1");
+
+    StringJoiner stringJoiner4 = new StringJoiner(",");
+    StringJoiner <warning descr="Contents of 'StringJoiner stringJoiner5' are updated, but never queried">stringJoiner5</warning> = new StringJoiner(","); //warn
+    stringJoiner5.merge(stringJoiner4);
+    stringJoiner5.add("1");
+  }
 }

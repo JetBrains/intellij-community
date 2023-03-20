@@ -40,15 +40,13 @@ class VcsGeneralEditorOptionsExtension : UiDslUnnamedConfigurable.Simple() {
       indent {
         row {
           checkBox(cdShowLSTInErrorStripesCheckBox)
-            .enabledIf(showLstGutter.selected)
             .onApply(::fireLSTSettingsChanged)
         }
         row {
           checkBox(cdShowWhitespacesInLSTGutterCheckBox)
-            .enabledIf(showLstGutter.selected)
             .onApply(::fireLSTSettingsChanged)
         }
-      }
+      }.enabledIf(showLstGutter.selected)
     }
   }
 }

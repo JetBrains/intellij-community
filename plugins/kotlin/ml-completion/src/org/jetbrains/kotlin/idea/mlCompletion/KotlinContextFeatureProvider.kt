@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.mlCompletion
 
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 class KotlinContextFeatureProvider : ContextFeatureProvider {
     override fun getName(): String = "kotlin"
@@ -33,7 +33,7 @@ class KotlinContextFeatureProvider : ContextFeatureProvider {
 private enum class KotlinVersionFakeEnum {
     VERSION;
 
-    override fun toString(): String = KotlinPluginUtil.getPluginVersion()
+    override fun toString(): String = KotlinIdePlugin.version
 }
 
 enum class FileTypeStats {

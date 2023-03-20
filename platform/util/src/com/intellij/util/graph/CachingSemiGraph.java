@@ -5,9 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
   @NotNull
   public static <T> InboundSemiGraph<T> cache(@NotNull InboundSemiGraph<T> original) {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
@@ -43,6 +44,11 @@ public class WarnOnDeletion extends ToggleAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final DirDiffTableModel model = SetOperationToBase.getModel(e);
     e.getPresentation().setEnabled(model != null && model.isOperationsEnabled());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   public static boolean isWarnWhenDeleteItems() {

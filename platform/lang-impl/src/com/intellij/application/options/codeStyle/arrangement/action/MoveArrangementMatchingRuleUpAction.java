@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class MoveArrangementMatchingRuleUpAction extends AbstractMoveArrangementRuleAction {
   public MoveArrangementMatchingRuleUpAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.rule.move.up.text"));

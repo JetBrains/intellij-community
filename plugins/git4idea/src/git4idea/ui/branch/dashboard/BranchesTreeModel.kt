@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_REPOSITORY
+import com.intellij.dvcs.ui.BranchActionGroup
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
@@ -19,9 +20,6 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
-
-internal val GIT_BRANCHES = DataKey.create<List<BranchInfo>>("GitBranchKey")
-internal val GIT_BRANCH_FILTERS = DataKey.create<List<String>>("GitBranchFilterKey")
 
 internal data class RemoteInfo(val remoteName: String, val repository: GitRepository?)
 
@@ -45,7 +43,7 @@ internal enum class IncomingOutgoing {
     get() = when (this) {
       INCOMING -> DvcsImplIcons.Incoming
       OUTGOING -> DvcsImplIcons.Outgoing
-      INCOMING_AND_OUTGOING -> DvcsImplIcons.IncomingOutgoing
+      INCOMING_AND_OUTGOING -> BranchActionGroup.getIncomingOutgoingIcon()
     }
 }
 
@@ -173,7 +171,7 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
   }
 
   private fun addChild(parent: BranchNodeDescriptor, child: BranchNodeDescriptor) {
-    val directChildren = branchNodeDescriptors.computeIfAbsent(parent) { sortedSetOf(BRANCH_TREE_NODE_COMPARATOR) }
+    val directChildren = branchNodeDescriptors.computeIfAbsent(parent) { sortedSetOf(BranchTreeNodeComparator) }
     directChildren.add(child)
     branchNodeDescriptors[parent] = directChildren
   }
@@ -182,32 +180,4 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
   private fun GitRepository.isFavorite(branch: BranchInfo) =
     project.service<GitBranchManager>().isFavorite(if (branch.isLocal) GitBranchType.LOCAL else GitBranchType.REMOTE,
                                                    this, branch.branchName)
-}
-
-internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1, d2 ->
-  val b1 = d1.branchInfo
-  val b2 = d2.branchInfo
-  val displayText1 = d1.getDisplayText()
-  val displayText2 = d2.getDisplayText()
-  val b1GroupNode = d1.type == NodeType.GROUP_NODE
-  val b2GroupNode = d2.type == NodeType.GROUP_NODE
-  val b1Current = b1 != null && b1.isCurrent
-  val b2Current = b2 != null && b2.isCurrent
-  val b1Favorite = b1 != null && b1.isFavorite
-  val b2Favorite = b2 != null && b2.isFavorite
-  fun compareByDisplayTextOrType() =
-    if (displayText1 != null && displayText2 != null) displayText1.compareTo(displayText2) else d1.type.compareTo(d2.type)
-
-  when {
-    b1Current && b2Current -> compareByDisplayTextOrType()
-    b1Current -> -1
-    b2Current -> 1
-    b1Favorite && b2Favorite -> compareByDisplayTextOrType()
-    b1Favorite -> -1
-    b2Favorite -> 1
-    b1GroupNode && b2GroupNode -> compareByDisplayTextOrType()
-    b1GroupNode -> -1
-    b2GroupNode -> 1
-    else -> compareByDisplayTextOrType()
-  }
 }

@@ -30,16 +30,16 @@ class PsiPrimitiveType : PsiType() {
     if (this === second) {}
     if (second !== this) {}
 
-    if (<warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">first === second</warning>) {}
-    if (<warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">first !== second</warning>) {}
+    if (<warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">first === second</warning>) {}
+    if (<warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">first !== second</warning>) {}
 
-    if (<warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">second === first</warning>) {}
-    if (<warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">second !== first</warning>) {}
+    if (<warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">second === first</warning>) {}
+    if (<warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">second !== first</warning>) {}
 
     val third: MyPsiPrimitiveType = first
 
-    if (<warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">third === first</warning>) {}
-    if (<warning descr="'PsiPrimitiveType' instances should be compared by 'equals()', not '=='">third !== first</warning>) {}
+    if (<warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">third === first</warning>) {}
+    if (<warning descr="'PsiPrimitiveType' instances should be compared for equality, not identity">third !== first</warning>) {}
   }
 }
 

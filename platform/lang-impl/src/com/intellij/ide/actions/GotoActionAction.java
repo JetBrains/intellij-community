@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -12,12 +11,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,20 +23,13 @@ import java.awt.event.InputEvent;
 public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware, LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    String tabID = Registry.is("search.everywhere.group.contributors.by.type")
-                   ? SearchEverywhereTabDescriptor.IDE.getId()
-                   : ActionSearchEverywhereContributor.class.getSimpleName();
+    String tabID = ActionSearchEverywhereContributor.class.getSimpleName();
     showInSearchEverywherePopup(tabID, e, false, true);
   }
 
-  /** @deprecated please use {@link #openOptionOrPerformAction(Object, String, Project, Component, int)} instead */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static void openOptionOrPerformAction(@NotNull Object element,
-                                               String enteredText,
-                                               @Nullable Project project,
-                                               @Nullable Component component) {
-    openOptionOrPerformAction(element, enteredText, project, component, 0);
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return super.getActionUpdateThread();
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element,
@@ -54,8 +42,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project != null && project.isDisposed()) return;
 
-      if (element instanceof OptionDescription) {
-        OptionDescription optionDescription = (OptionDescription)element;
+      if (element instanceof OptionDescription optionDescription) {
         if (optionDescription.hasExternalEditor()) {
           optionDescription.invokeInternalEditor();
         }
@@ -73,43 +60,41 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     performAction(element, component, e, 0);
   }
 
-  private static void performAction(Object element,
+  private static void performAction(@NotNull Object element,
                                     @Nullable Component component,
                                     @Nullable AnActionEvent e,
                                     @JdkConstants.InputEventMask int modifiers) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
-    AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
-    InputEvent inputEvent = e != null ? e.getInputEvent() : null;
-    ApplicationManager.getApplication().invokeLater(() -> performActionImpl(action, component, inputEvent, modifiers));
+    ApplicationManager.getApplication().invokeLater(() -> performActionImpl(element, component, e, modifiers));
   }
 
-  private static void performActionImpl(@NotNull AnAction action,
+  private static void performActionImpl(@NotNull Object element,
                                         @NotNull Component component,
-                                        @Nullable InputEvent inputEvent,
-                                        int modifiers) {
+                                        @Nullable AnActionEvent e,
+                                        @JdkConstants.InputEventMask int modifiers) {
+    GotoActionModel.ActionWrapper wrapper = element instanceof AnAction ? null : (GotoActionModel.ActionWrapper)element;
+    AnAction action = element instanceof AnAction ? (AnAction)element : wrapper.getAction();
+    Presentation presentation = wrapper != null && wrapper.hasPresentation() ? wrapper.getPresentation() :
+                                action.getTemplatePresentation().clone();
+    InputEvent inputEvent = e != null ? e.getInputEvent() : null;
     DataManager dataManager = DataManager.getInstance();
     DataContext context = dataManager != null ? dataManager.getDataContext(component) : DataContext.EMPTY_CONTEXT;
-    Presentation presentation = action.getTemplatePresentation().clone();
     AnActionEvent event = new AnActionEvent(
       inputEvent, context, ActionPlaces.ACTION_SEARCH, presentation, ActionManager.getInstance(),
       inputEvent == null ? modifiers : inputEvent.getModifiers());
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
-        ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-          event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
-        Window window = SwingUtilities.getWindowAncestor(component);
-        if (window != null) {
-          popup.showInCenterOf(window);
-        }
-        else {
-          popup.showInFocusCenter();
-        }
-      }
-      else {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-      }
+      Window window = SwingUtilities.getWindowAncestor(component);
+      ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
+        ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
+          if (window != null) {
+            popup.showInCenterOf(window);
+          }
+          else {
+            popup.showInFocusCenter();
+          }
+        }));
     }
   }
 

@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 import java.util.Collection;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyMapContentProvider {
 
   public static final ExtensionPointName<GroovyMapContentProvider> EP_NAME = ExtensionPointName.create("org.intellij.groovy.mapContentProvider");

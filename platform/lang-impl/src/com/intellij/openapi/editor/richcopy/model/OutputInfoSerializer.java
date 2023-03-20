@@ -97,27 +97,18 @@ public class OutputInfoSerializer {
     public void read(MarkupHandler handler) throws Exception {
       int id = myInputStream.readByte();
       switch (id) {
-        case TEXT_ID:
+        case TEXT_ID -> {
           int startOffset = myCurrentOffset + myInputStream.readInt();
           myCurrentOffset = startOffset;
           int endOffset = myCurrentOffset + myInputStream.readInt();
           myCurrentOffset = endOffset;
           handler.handleText(startOffset, endOffset);
-          break;
-        case STYLE_ID:
-          handler.handleStyle(myInputStream.readInt());
-          break;
-        case FOREGROUND_ID:
-          handler.handleForeground(myInputStream.readInt());
-          break;
-        case BACKGROUND_ID:
-          handler.handleBackground(myInputStream.readInt());
-          break;
-        case FONT_ID:
-          handler.handleFont(myInputStream.readInt());
-          break;
-        default:
-          throw new IllegalStateException("Unknown tag id: " + id);
+        }
+        case STYLE_ID -> handler.handleStyle(myInputStream.readInt());
+        case FOREGROUND_ID -> handler.handleForeground(myInputStream.readInt());
+        case BACKGROUND_ID -> handler.handleBackground(myInputStream.readInt());
+        case FONT_ID -> handler.handleFont(myInputStream.readInt());
+        default -> throw new IllegalStateException("Unknown tag id: " + id);
       }
     }
 

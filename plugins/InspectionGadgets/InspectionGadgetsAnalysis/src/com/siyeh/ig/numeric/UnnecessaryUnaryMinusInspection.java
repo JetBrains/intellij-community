@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -55,7 +55,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element.getParent();
       final PsiExpression operand = prefixExpression.getOperand();
@@ -65,8 +65,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
       final PsiExpression parentExpression = (PsiExpression)prefixExpression.getParent();
       final CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();
-      if (parentExpression instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parentExpression;
+      if (parentExpression instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = assignmentExpression.getLExpression();
         newExpression.append(commentTracker.text(lhs));
         final IElementType tokenType = assignmentExpression.getOperationTokenType();
@@ -78,8 +77,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
         }
         newExpression.append(commentTracker.text(operand));
       }
-      else if (parentExpression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parentExpression;
+      else if (parentExpression instanceof PsiPolyadicExpression polyadicExpression) {
         int lastOperatorIndex = -1;
         IElementType lastOperator = null;
         for (PsiElement child = polyadicExpression.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -122,7 +120,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
       if (prefixExpr == null) {
         return;
@@ -156,7 +154,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
   private static class UnnecessaryUnaryMinusVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression prefixExpr) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpr) {
       super.visitPrefixExpression(prefixExpr);
       if (!ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression(prefixExpr, false)) {
         return;
@@ -172,15 +170,14 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
         ContainerUtil.addIfNotNull(fixes, createRemoveDoubleUnaryMinusFix(prefixExpr));
       }
       if (!fixes.isEmpty()) {
-        registerError(prefixExpr.getOperationSign(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+        registerError(prefixExpr.getOperationSign(),
                       (Object)fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY));
       }
     }
 
     private static InspectionGadgetsFix createReplaceParentOperatorFix(@NotNull PsiPrefixExpression prefixExpr) {
       final PsiElement parent = prefixExpr.getParent();
-      if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         if (ExpressionUtils.hasType(polyadicExpression, CommonClassNames.JAVA_LANG_STRING)) {
           return null;
         }
@@ -194,8 +191,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
         }
         return new ReplaceParentOperatorFix();
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         if (ExpressionUtils.hasType(assignmentExpression, CommonClassNames.JAVA_LANG_STRING)) {
           return null;
         }

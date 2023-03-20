@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import function 'cos'" "true"
 // JS
 package some
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -21,9 +21,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -67,21 +67,20 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       });
     }
     else {
-      executionManager.startRunProfile(environment, state, state1 -> SlowOperations.allowSlowOperations(() -> {
+      executionManager.startRunProfile(environment, state, state1 -> {
         return doExecute(state, environment);
-      }));
+      });
     }
   }
 
   // used externally
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    if (state instanceof JavaCommandLine && 
-        !JavaProgramPatcher.patchJavaCommandLineParamsUnderProgress(env.getProject(), 
-                                                                    () -> JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), 
-                                                                                                               env.getExecutor(), 
-                                                                                                               env.getRunProfile()))) {
-        return null;
+    if (state instanceof JavaCommandLine &&
+        !JavaProgramPatcher.patchJavaCommandLineParamsUnderProgress(env.getProject(), () -> {
+          JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
+        })) {
+      return null;
     }
     return createContentDescriptor(state, env);
   }
@@ -91,7 +90,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
                                                                    @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return state.prepareTargetToCommandExecution(env, LOG,"Failed to execute debug configuration async", () -> {
+    return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute debug configuration async", () -> {
       if (state instanceof JavaCommandLine) {
         JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
       }
@@ -100,7 +99,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   }
 
   @Nullable
-  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
+                                                         @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       boolean isPollConnection = true;
@@ -171,6 +171,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             return JavaDebugProcess.create(session, debuggerSession);
           }
         }).getRunContentDescriptor());
+      }
+      catch (ProcessCanceledException ignored) {
       }
       catch (ExecutionException e) {
         ex.set(e);

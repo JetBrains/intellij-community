@@ -47,7 +47,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
   public InplaceButton(IconButton source, ActionListener listener, Consumer<? super MouseEvent> consumer, TimedDeadzone.Length mouseDeadzone) {
     myListener = listener;
-    myBehavior = new BaseButtonBehavior(this, mouseDeadzone) {
+    myBehavior = new BaseButtonBehavior(this, mouseDeadzone, null) {
       @Override
       protected void execute(MouseEvent e) {
         doClick(e);
@@ -65,6 +65,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         }
       }
     };
+    myBehavior.setupListeners();
 
     setIcons(source);
 
@@ -180,12 +181,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     }
     else if ((myBehavior.isHovered() && myHoveringEnabled) || hasFocus()) {
       paintHover(g);
-      if (myBehavior.isPressedByMouse()) {
-        myHovered.paintIcon(this, g, 1, 1);
-      }
-      else {
-        myHovered.paintIcon(this, g, 0, 0);
-      }
+      myHovered.paintIcon(this, g, 0, 0);
     }
     else {
       myRegular.paintIcon(this, g, 0, 0);

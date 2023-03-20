@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -19,10 +19,10 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
@@ -957,6 +957,38 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
+  public void testParenthesizedPatternIntroduced() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testParenthesizedPatternIntroduced2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testParenthesizedPatternIntroduced3() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
+  public void testRecordPatternIntroduced() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced3() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced4() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced5() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");
@@ -1016,20 +1048,20 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testMakeVoidMethodReturnVariable() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testNoReturnTypesSuggested() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
     //return type should not be suggested but still
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testReassignFinalFieldInside() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testShortenClassRefsInNewReturnType() throws Exception {
@@ -1571,7 +1603,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
     if (elements.length == 0) {
-      final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      final PsiExpression expression = IntroduceVariableUtil.getSelectedExpression(project, file, startOffset, endOffset);
       if (expression != null) {
         elements = new PsiElement[]{expression};
       }

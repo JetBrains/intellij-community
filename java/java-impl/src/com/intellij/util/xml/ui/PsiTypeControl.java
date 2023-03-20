@@ -27,9 +27,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JvmPsiTypeConverterImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
 
   public PsiTypeControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {

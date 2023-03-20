@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
@@ -34,6 +35,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class NegatedConditionalInspection extends BaseInspection {
 
@@ -67,11 +70,10 @@ public class NegatedConditionalInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.null.option"), "m_ignoreNegatedNullComparison");
-    panel.addCheckbox(InspectionGadgetsBundle.message("negated.if.else.ignore.negated.zero.option"), "m_ignoreNegatedZeroComparison");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreNegatedNullComparison", InspectionGadgetsBundle.message("negated.if.else.ignore.negated.null.option")),
+      checkbox("m_ignoreNegatedZeroComparison", InspectionGadgetsBundle.message("negated.if.else.ignore.negated.zero.option")));
   }
 
   @Override
@@ -94,7 +96,7 @@ public class NegatedConditionalInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element.getParent();
       assert conditionalExpression != null;
@@ -113,7 +115,7 @@ public class NegatedConditionalInspection extends BaseInspection {
   private class NegatedConditionalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression thenBranch = expression.getThenExpression();
       if (thenBranch == null) {

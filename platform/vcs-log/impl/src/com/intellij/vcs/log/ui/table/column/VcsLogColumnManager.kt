@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.Disposable
@@ -142,11 +142,9 @@ internal class VcsLogColumnManager : Disposable {
    * Allows to handle currently available columns
    */
   interface CurrentColumnsListener : EventListener {
-    @JvmDefault
     fun columnAdded(column: VcsLogColumn<*>) {
     }
 
-    @JvmDefault
     fun columnRemoved(column: VcsLogColumn<*>) {
     }
   }

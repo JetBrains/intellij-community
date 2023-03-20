@@ -42,8 +42,7 @@ public class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Obje
     }
     // Re-register this interceptor to be able to intercept one more UI component if any
     UiInterceptors.register(this);
-    if (component instanceof JBPopup) {
-      JBPopup popup = (JBPopup)component;
+    if (component instanceof JBPopup popup) {
 
       // effective there is a chain of 3 nonBlockingRead actions
       for (int i = 0; i < 3; i++) {

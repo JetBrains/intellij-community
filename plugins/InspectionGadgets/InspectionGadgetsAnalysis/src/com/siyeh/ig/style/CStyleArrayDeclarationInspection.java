@@ -16,7 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -27,9 +27,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CStyleArrayDeclarationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -50,10 +50,10 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
     return InspectionGadgetsBundle.message("cstyle.array.variable.declaration.problem.descriptor", Integer.valueOf(choice));
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.c.style.array.declarations.option"), this, "ignoreVariables");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreVariables", JavaAnalysisBundle.message("inspection.c.style.array.declarations.option")));
   }
 
   @Override
@@ -95,7 +95,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiType returnType = method.getReturnType();
       if (returnType == null || returnType.getArrayDimensions() == 0) {
@@ -115,8 +115,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
         PsiJavaToken first = null;
         PsiJavaToken last = null;
         while (!(child instanceof PsiCodeBlock)) {
-          if (child instanceof PsiJavaToken) {
-            final PsiJavaToken token = (PsiJavaToken)child;
+          if (child instanceof PsiJavaToken token) {
             final IElementType tokenType = token.getTokenType();
             if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
               if (first == null) first = token;

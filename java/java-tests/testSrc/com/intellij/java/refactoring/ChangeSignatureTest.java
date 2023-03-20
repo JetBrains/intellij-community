@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
@@ -15,9 +16,6 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.HashSet;
 
-/**
- * @author dsl
- */
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   private CommonCodeStyleSettings getJavaSettings() {
     return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
@@ -57,7 +55,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testDuplicatedSignatureInInheritor() {
     try {
-      doTest(null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT)}, true);
+      doTest(null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())}, true);
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
@@ -99,7 +97,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testDefaultConstructor() {
     doTest(null,
            new ParameterInfoImpl[]{
-             ParameterInfoImpl.createNew().withName("j").withType(PsiType.INT).withDefaultValue("27")
+             ParameterInfoImpl.createNew().withName("j").withType(PsiTypes.intType()).withDefaultValue("27")
            }, false
     );
   }
@@ -107,7 +105,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testGenerateDelegate() {
     doTest(null,
            new ParameterInfoImpl[]{
-             ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+             ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
            }, true
     );
   }
@@ -115,7 +113,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testGenerateDelegateForAbstract() {
     doTest(null,
            new ParameterInfoImpl[]{
-             ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+             ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
            }, true
     );
   }
@@ -123,7 +121,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testGenerateDelegateWithReturn() {
     doTest(null,
            new ParameterInfoImpl[]{
-             ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+             ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
            }, true
     );
   }
@@ -132,8 +130,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null,
            new ParameterInfoImpl[]{
              ParameterInfoImpl.create(1),
-             ParameterInfoImpl.createNew().withName("c").withType(PsiType.CHAR).withDefaultValue("'a'"),
-             ParameterInfoImpl.create(0).withName("j").withType(PsiType.INT)
+             ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.charType()).withDefaultValue("'a'"),
+             ParameterInfoImpl.create(0).withName("j").withType(PsiTypes.intType())
            }, true
     );
   }
@@ -144,95 +142,109 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testGenerateDelegateDefaultConstructor() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("27")
+      ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27")
     }, true);
   }
 
   public void testSCR40895() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT),
-      ParameterInfoImpl.create(1).withName("b").withType(PsiType.BOOLEAN)
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.booleanType())
     }, false);
   }
 
   public void testJavadocGenericsLink() {
     doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.createNew().withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", null)),
-      ParameterInfoImpl.create(0).withName("a").withType(PsiType.BOOLEAN)
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType())
     }, false);
   }
 
   public void testParamNameSameAsFieldName() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("fieldName").withType(PsiType.INT)
+      ParameterInfoImpl.create(0).withName("fieldName").withType(PsiTypes.intType())
     }, false);
   }
 
   public void testParamNameNoConflict() {
     doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN)
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType())
     }, false);
   }
 
   public void testVarargMethodToNonVarag() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("i").withType(PsiType.INT),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN)
+      ParameterInfoImpl.create(0).withName("i").withType(PsiTypes.intType()),
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType())
     }, false);
   }
 
   public void testParamJavadoc() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(1).withName("z").withType(PsiType.INT),
-      ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT)
+      ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
     }, false);
   }
 
   public void testParamJavadoc0() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(1).withName("z").withType(PsiType.INT),
-      ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT)
+      ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
     }, false);
   }
 
   public void testParamJavadoc1() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("z").withType(PsiType.BOOLEAN)
+      ParameterInfoImpl.create(0).withName("z").withType(PsiTypes.booleanType())
     }, false);
   }
 
   public void testParamJavadoc2() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("z").withType(PsiType.BOOLEAN),
-      ParameterInfoImpl.create(0).withName("a").withType(PsiType.BOOLEAN),
+      ParameterInfoImpl.createNew().withName("z").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
     }, false);
   }
 
   public void testParamJavadoc3() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("a").withType(PsiType.BOOLEAN),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testParamJavadoc4() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("a").withType(PsiTypes.booleanType()),
     }, false);
   }
 
   public void testParamJavadocRenamedReordered() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("a").withType(PsiType.BOOLEAN),
-      ParameterInfoImpl.createNew().withName("c").withType(PsiType.BOOLEAN),
-      ParameterInfoImpl.create(1).withName("b1").withType(PsiType.BOOLEAN),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.create(1).withName("b1").withType(PsiTypes.booleanType()),
     }, false);
+  }
+  
+  public void testReturnJavadocAdded() {
+    doTest("int", new ParameterInfoImpl[0], false);
+  }
+  
+  public void testReturnJavadocUnchanged() {
+    doTest("int", new ParameterInfoImpl[0], false);
   }
 
   public void testJavadocNoNewLineInserted() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("newArgs").withType(PsiType.DOUBLE),
+      ParameterInfoImpl.create(0).withName("newArgs").withType(PsiTypes.doubleType()),
     }, false);
   }
 
   public void testSuperCallFromOtherMethod() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("nnn").withType(PsiType.INT).withDefaultValue("-222"),
+      ParameterInfoImpl.createNew().withName("nnn").withType(PsiTypes.intType()).withDefaultValue("-222"),
     }, false);
   }
 
@@ -262,27 +274,27 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testEnumConstructor() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("10")
+      ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("10")
     }, false);
   }
 
   public void testVarargs1() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN).withDefaultValue("true"),
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true"),
       ParameterInfoImpl.create(0)
     }, false);
   }
 
   public void testVarargs2() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(1).withName("i").withType(PsiType.INT),
-      ParameterInfoImpl.create(0).withName("b").withType(new PsiEllipsisType(PsiType.BOOLEAN))
+      ParameterInfoImpl.create(1).withName("i").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("b").withType(new PsiEllipsisType(PsiTypes.booleanType()))
     }, false);
   }
 
   public void testJavadocOfDeleted() {
     doTest(null, new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("role").withType(PsiType.INT),
+      ParameterInfoImpl.create(0).withName("role").withType(PsiTypes.intType()),
     }, false);
   }
 
@@ -355,7 +367,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testIntroduceParameterWithDefaultValueInHierarchy() {
-    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiType.INT).withDefaultValue("0")}, false);
+    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("0")}, false);
   }
 
   public void testReorderMultilineMethodParameters() {
@@ -375,28 +387,28 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testReplaceOldStyleArrayWithVarargs() {
-    doTest(null, new ParameterInfoImpl[] {ParameterInfoImpl.create(0).withName("a").withType(new PsiEllipsisType(PsiType.INT))}, false);
+    doTest(null, new ParameterInfoImpl[] {ParameterInfoImpl.create(0).withName("a").withType(new PsiEllipsisType(PsiTypes.intType()))}, false);
   }
 
   public void testReorderParamsOfFunctionalInterface() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(1).withName("b").withType(PsiType.INT),
-      ParameterInfoImpl.create(0).withName("a").withType(PsiType.BOOLEAN)
+      ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType())
     }, false);
   }
 
   public void testReorderParamsOfFunctionalInterfaceExpandMethodReference() {
     GenParams genParams = method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(1).withName("b").withType(PsiType.INT),
-      ParameterInfoImpl.create(0).withName("a").withType(PsiType.INT)
+      ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
     };
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
   public void testAddParenthesisForLambdaParameterList() {
     GenParams genParams = method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(0).withName("a").withType(PsiType.INT),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.INT)
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType()),
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.intType())
     };
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
@@ -412,7 +424,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testRenameMethodUsedInMethodReference() {
-    GenParams genParams = method -> new ParameterInfoImpl[] {ParameterInfoImpl.create(0).withName("a").withType(PsiType.INT)};
+    GenParams genParams = method -> new ParameterInfoImpl[] {ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())};
     doTest(PsiModifier.PRIVATE, "alwaysFalse", null, genParams, new SimpleExceptionsGen(), false, false);
   }
 
@@ -469,9 +481,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     propagateParametersMethods.add(caller);
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
-                                 CanonicalTypes.createTypeWrapper(PsiType.VOID), new ParameterInfoImpl[]{
+                                 CanonicalTypes.createTypeWrapper(PsiTypes.voidType()), new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName(parameters[0].getName()).withType(parameters[0].getType()),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN)}, null, propagateParametersMethods, null
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType())}, null, propagateParametersMethods, null
     ).run();
     checkResultByFile(basePath + "_after.java");
   }
@@ -491,9 +503,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     propagateParametersMethods.add(caller);
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
-                                 CanonicalTypes.createTypeWrapper(PsiType.VOID), new ParameterInfoImpl[]{
+                                 CanonicalTypes.createTypeWrapper(PsiTypes.voidType()), new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName(parameters[0].getName()).withType(parameters[0].getType()),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiType.BOOLEAN).withDefaultValue("true")}, null, propagateParametersMethods, null
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true")}, null, propagateParametersMethods, null
     ).run();
     checkResultByFile(basePath + "_after.java");
   }
@@ -522,17 +534,39 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testRecordHeaderDeleteRename() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(1).withName("yyy").withType(PsiType.LONG)
+        ParameterInfoImpl.create(1).withName("yyy").withType(PsiTypes.longType())
       };
     }, false);
   }
-  
+
+  public void testRecordHeaderDeleteRename2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("p2").withType(pointType)
+      };
+    }, false);
+  }
+
   public void testRecordCanonicalConstructorRename() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT),
-        ParameterInfoImpl.create(1).withName("z").withType(PsiType.INT),
-        ParameterInfoImpl.create(2).withName("x").withType(PsiType.INT)
+        ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(2).withName("x").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorRename2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType())
       };
     }, false);
   }
@@ -540,18 +574,50 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testRecordCanonicalConstructorReorder() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(1).withName("y").withType(PsiType.INT),
-        ParameterInfoImpl.create(2).withName("z").withType(PsiType.INT),
-        ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT)
+        ParameterInfoImpl.create(1).withName("y").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(2).withName("z").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorReorder2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorAddParameter() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(-1).withName("y").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorAddParameter2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(-1).withName("i").withType(PsiTypes.intType())
       };
     }, false);
   }
   
-  public void testRecordCanonicalConstructorAddParameter() {
+  public void testRecordComponentWithImportToBeAdded() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT),
-        ParameterInfoImpl.create(-1).withName("y").withType(PsiType.INT)
+        ParameterInfoImpl.create(-1).withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", method))
       };
     }, false);
   }
@@ -559,20 +625,52 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testRecordCanonicalConstructorMissingHeader() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(-1).withName("x").withType(PsiType.INT)
+        ParameterInfoImpl.create(-1).withName("x").withType(PsiTypes.intType())
       };
     }, false);
   }
   
   public void testRemoveAnnotation() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT)
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
       }, false);
       
   }
 
   public void testAddReturnAnnotation() {
     doTest(null, null, "@org.jetbrains.annotations.NotNull java.lang.String", method -> new ParameterInfoImpl[0], false);
+  }
+
+  public void testMultilineJavadoc() { // IDEA-281568
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
+  public void testMultilineJavadocWithoutFormatting() { // IDEA-281568
+    JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
+  public void testJavadocNotBrokenAfterDelete() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("i1")
+    }, false);
+  }
+
+  public void testNoGapsInParameterTags() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(1).withType(PsiTypes.longType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.booleanType()).withName("c"),
+      ParameterInfoImpl.createNew().withType(PsiTypes.shortType()).withName("d"),
+    }, false);
   }
 
   /* workers */

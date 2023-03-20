@@ -1,28 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author: Eugene Zhuravlev
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.impl.ExitStatus;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -30,6 +23,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +68,7 @@ public final class CompilerTask extends Task.Backgroundable {
     myContentId = new IDObject("content_id");
     mySessionId = myContentId; // by default sessionID should be unique, just as content ID
 
-    if (Registry.is("ide.jps.use.build.tool.window", true)) {
+    if (SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true)) {
       myBuildViewService = new BuildOutputService(project, contentName);
     } else {
       myBuildViewService = new CompilerMessagesService(project, myContentId, contentName, headlessMode);
@@ -241,17 +235,38 @@ public final class CompilerTask extends Task.Backgroundable {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      ReadAction.run(() -> informWolf(message));
+      informWolf(message);
     }
     myBuildViewService.addMessage(mySessionId, message);
   }
 
   private void informWolf(final CompilerMessage message) {
-    if (myProject.isDisposed()) return;
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    VirtualFile file = getVirtualFile(message);
-    if (file != null) {
-      wolf.queue(file);
+    if (myProject == null) {
+      return;
+    }
+
+    final Runnable task = () -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+      VirtualFile file = message.getVirtualFile();
+      if (file == null) {
+        Navigatable navigatable = message.getNavigatable();
+        if (navigatable instanceof OpenFileDescriptor) {
+          file = ((OpenFileDescriptor)navigatable).getFile();
+        }
+      }
+      if (file != null) {
+        WolfTheProblemSolver.getInstance(myProject).queue(file);
+      }
+    };
+
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      app.executeOnPooledThread(task);
+    }
+    else {
+      task.run();
     }
   }
 
@@ -262,7 +277,7 @@ public final class CompilerTask extends Task.Backgroundable {
   public void start(Runnable compileWork, Runnable restartWork) {
     myCompileWork = compileWork;
     myRestartWork = restartWork;
-    queue();
+    ProgressManager.getInstance().run(this);
   }
 
   public void run(Runnable compileWork, Runnable restartWork, ProgressIndicator progressIndicator) {
@@ -274,17 +289,6 @@ public final class CompilerTask extends Task.Backgroundable {
   @Override
   public boolean isHeadless() {
     return myHeadlessMode && !myForceAsyncExecution;
-  }
-
-  private static VirtualFile getVirtualFile(final CompilerMessage message) {
-    VirtualFile virtualFile = message.getVirtualFile();
-    if (virtualFile == null) {
-      Navigatable navigatable = message.getNavigatable();
-      if (navigatable instanceof OpenFileDescriptor) {
-        virtualFile = ((OpenFileDescriptor)navigatable).getFile();
-      }
-    }
-    return virtualFile;
   }
 
   public static TextRange getTextRange(final CompilerMessage message) {

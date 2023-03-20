@@ -1,15 +1,13 @@
 <html>
 <body>
-Reports instantiations of <code>java.util.Set</code> and <code>java.util.Map</code> that contain
+Reports <code>java.util.Set</code> and <code>java.util.Map</code> variables that contain
 <code>java.net.URL</code> objects.
+Such collections will call the <code>equals()</code> and <code>hashCode()</code> methods on inserted objects,
+which can cause performance problems on <code>URL</code> objects.
 <p>
-  Adding <code>URL</code> objects to such collections can cause performance problems because of calls to
-  the <code>equals()</code> and <code>hashCode()</code> methods of <code>URL</code>.
-</p>
-<p>
-  <code>URL</code>'s <code>equals()</code> and
-  <code>hashCode()</code> methods use a DNS lookup, which depending on the availability of the network and the speed of the DNS server can
-  cause significant delays.
+  <code>URL</code>'s <code>equals()</code> and <code>hashCode()</code> methods can perform a DNS lookup to resolve the host name.
+  This may cause significant delays, depending on the availability and speed of the network and the DNS server.
+  Using <code>java.net.URI</code> instead of <code>java.net.URL</code> will avoid the DNS lookup.
 </p>
 <p><b>Example:</b></p>
 <pre><code>

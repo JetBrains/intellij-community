@@ -20,8 +20,6 @@ import java.util.List;
  * ({@link GradleConnector#forProjectDirectory(File)}).
  * <p/>
  * That's why we need to provide special code which maps that directory to exact config file.
- *
- * @author Denis Zhdanov
  */
 public class GradleConfigLocator implements ExternalSystemConfigLocator {
 

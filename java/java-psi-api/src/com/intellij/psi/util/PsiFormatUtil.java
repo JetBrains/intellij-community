@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -31,6 +31,19 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     SHOW_MODIFIERS, SHOW_NAME, SHOW_ANONYMOUS_CLASS_VERBOSE, SHOW_FQ_NAME, MODIFIERS_AFTER,
     SHOW_EXTENDS_IMPLEMENTS, SHOW_REDUNDANT_MODIFIERS, JAVADOC_MODIFIERS_ONLY, SHOW_RAW_TYPE})
   public @interface FormatClassOptions { }
+
+  public static String formatSimple(@NotNull PsiNamedElement element) {
+    if (element instanceof PsiMethod) {
+      return formatMethod((PsiMethod)element, PsiSubstitutor.EMPTY, SHOW_NAME, 0);
+    }
+    else if (element instanceof PsiVariable) {
+      return formatVariable((PsiVariable)element, SHOW_NAME, PsiSubstitutor.EMPTY);
+    }
+    else if (element instanceof PsiClass) {
+      return formatClass((PsiClass)element, SHOW_NAME);
+    }
+    return element.getName();
+  }
 
   public static @NlsSafe String formatVariable(@NotNull PsiVariable variable, @FormatVariableOptions int options, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
@@ -162,8 +175,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         buffer.append(method.getName());
       }
     }
+    buffer.append('(');
     if (BitUtil.isSet(options, SHOW_PARAMETERS)) {
-      buffer.append('(');
       PsiParameter[] params = method.getParameterList().getParameters();
       for (int i = 0; i < Math.min(params.length, maxParametersToShow); i++) {
         if (i > 0) buffer.append(", ");
@@ -172,8 +185,8 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       if (params.length > maxParametersToShow) {
         buffer.append(", ...");
       }
-      buffer.append(')');
     }
+    buffer.append(')');
     if (BitUtil.isSet(options, SHOW_TYPE) && BitUtil.isSet(options, TYPE_AFTER)) {
       PsiType type = method.getReturnType();
       if (type != null) {

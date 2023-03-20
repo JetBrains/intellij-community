@@ -3,27 +3,41 @@ package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An instruction to eval unknown value (taking some operands from the stack)
  */
 public class EvalUnknownInstruction extends EvalInstruction {
+  private final @NotNull DfType myResult;
+
   /**
    * @param anchor   PsiExpression to anchor to
    * @param operands number of operands
    */
-  public EvalUnknownInstruction(DfaAnchor anchor, int operands) {
+  public EvalUnknownInstruction(@Nullable DfaAnchor anchor, int operands) {
+    this(anchor, operands, DfType.TOP);
+  }
+
+  /**
+   * @param anchor   PsiExpression to anchor to
+   * @param operands number of operands
+   * @param result result to push
+   */
+  public EvalUnknownInstruction(@Nullable DfaAnchor anchor, int operands, @NotNull DfType result) {
     super(anchor, operands);
+    myResult = result;
   }
 
   @Override
   public @NotNull DfaValue eval(@NotNull DfaValueFactory factory,
                                 @NotNull DfaMemoryState state,
                                 @NotNull DfaValue @NotNull ... arguments) {
-    return factory.getUnknown();
+    return factory.fromDfType(myResult);
   }
 
   @Override

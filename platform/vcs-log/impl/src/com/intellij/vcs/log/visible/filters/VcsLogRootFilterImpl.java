@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,21 +10,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 class VcsLogRootFilterImpl implements VcsLogRootFilter {
-  @NotNull private final Collection<VirtualFile> myRoots;
+  private final @NotNull Collection<VirtualFile> myRoots;
 
   VcsLogRootFilterImpl(@NotNull Collection<VirtualFile> roots) {
     myRoots = roots;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     return myRoots;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "roots:" + myRoots;
   }
 

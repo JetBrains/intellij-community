@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories
 
@@ -12,10 +12,10 @@ import com.intellij.psi.impl.light.LightElement
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
-import org.jetbrains.kotlin.idea.core.quoteIfNeeded
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.move.ContainerChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.move.ContainerInfo
@@ -59,7 +59,13 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         return ContainerChangeInfo(ContainerInfo.Package(oldPackageName), ContainerInfo.Package(newPackageName))
     }
 
-    fun initMoveProcessor(psiFile: PsiFile, newParent: PsiDirectory?, withConflicts: Boolean): MoveKotlinDeclarationsProcessor? {
+    fun initMoveProcessor(
+        psiFile: PsiFile,
+        newParent: PsiDirectory?,
+        withConflicts: Boolean,
+        searchInCommentsAndStrings: Boolean = true,
+        searchInNonCode: Boolean = true,
+    ): MoveKotlinDeclarationsProcessor? {
         if (psiFile !is KtFile) return null
         val packageNameInfo = psiFile.getPackageNameInfo(newParent, false) ?: return null
 
@@ -86,7 +92,9 @@ class MoveKotlinFileHandler : MoveFileHandler() {
                 moveTarget = moveTarget,
                 delegate = MoveDeclarationsDelegate.TopLevel,
                 allElementsToMove = psiFile.allElementsToMove,
-                analyzeConflicts = withConflicts
+                analyzeConflicts = withConflicts,
+                searchInCommentsAndStrings = searchInCommentsAndStrings,
+                searchInNonCode = searchInNonCode,
             )
         )
     }
@@ -102,18 +110,26 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         searchInComments: Boolean,
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
-        return findUsages(psiFile, newParent, true)
+        return findUsages(
+            psiFile,
+            newParent,
+            withConflicts = true,
+            searchInCommentsAndStrings = searchInComments,
+            searchInNonJavaFiles = searchInNonJavaFiles,
+        )
     }
 
     fun findUsages(
         psiFile: PsiFile,
         newParent: PsiDirectory?,
-        withConflicts: Boolean
+        withConflicts: Boolean,
+        searchInCommentsAndStrings: Boolean,
+        searchInNonJavaFiles: Boolean,
     ): List<UsageInfo> {
         if (psiFile !is KtFile) return emptyList()
 
         val usages = arrayListOf<UsageInfo>(FileInfo(psiFile))
-        initMoveProcessor(psiFile, newParent, withConflicts)?.let {
+        initMoveProcessor(psiFile, newParent, withConflicts, searchInCommentsAndStrings, searchInNonJavaFiles)?.let {
             usages += it.findUsages()
             usages += it.getConflictsAsUsages()
         }

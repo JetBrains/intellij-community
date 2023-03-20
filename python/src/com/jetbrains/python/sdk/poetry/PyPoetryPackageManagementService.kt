@@ -10,9 +10,6 @@ import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 
-/**
- * @author vlan
- */
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>

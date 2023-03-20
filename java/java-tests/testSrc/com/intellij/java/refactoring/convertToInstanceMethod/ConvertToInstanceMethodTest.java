@@ -27,9 +27,6 @@ import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodP
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   @NotNull
   @Override

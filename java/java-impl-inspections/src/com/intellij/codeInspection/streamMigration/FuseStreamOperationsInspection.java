@@ -2,16 +2,16 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.streamMigration.CollectMigration.CollectTerminal;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -20,9 +20,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -113,11 +114,10 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.fuse.stream.operations.option.strict.mode"), this,
-                                          "myStrictMode");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myStrictMode", JavaBundle.message("inspection.fuse.stream.operations.option.strict.mode")));
   }
 
   @NotNull
@@ -128,7 +128,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (STREAM_COLLECT.test(call)) {
           PsiMethodCallExpression arg =
             tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);
@@ -158,7 +158,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     PsiElement nextElement;
     if (var == null) {
       terminal = new StreamCollectChainNoVar(streamChain, collector);
-      nextElement = RefactoringUtil.getParentStatement(streamChain, false);
+      nextElement = CommonJavaRefactoringUtil.getParentStatement(streamChain, false);
     }
     else {
       PsiDeclarationStatement declaration = tryCast(var.getParent(), PsiDeclarationStatement.class);

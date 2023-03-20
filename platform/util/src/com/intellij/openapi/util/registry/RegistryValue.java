@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -256,6 +257,7 @@ public class RegistryValue {
     }
 
     myRegistry.getUserProperties().put(myKey, value);
+    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
 
     globalValueChangeListener.afterValueChanged(this);
     for (RegistryValueListener each : myListeners) {
@@ -267,7 +269,6 @@ public class RegistryValue {
     }
 
     myChangedSinceStart = true;
-    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
   }
 
   public void setValue(boolean value, @NotNull Disposable parentDisposable) {
@@ -293,7 +294,12 @@ public class RegistryValue {
   }
 
   public void resetToDefault() {
-    setValue(myRegistry.getBundleValue(myKey));
+    String value = myRegistry.getBundleValueOrNull(myKey);
+    if (value == null) {
+      myRegistry.getUserProperties().remove(myKey);
+    } else {
+      setValue(value);
+    }
   }
 
   public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {

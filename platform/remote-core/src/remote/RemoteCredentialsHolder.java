@@ -267,8 +267,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
     // true by default for all IDEs except DataGrip due to historical reasons
-    setOpenSshConfigUsageForced(Boolean.valueOf(StringUtil.defaultIfEmpty(element.getAttributeValue(USE_OPENSSH_CONFIG),
-                                                  String.valueOf(!PlatformUtils.isDataGrip()))));
+    setOpenSshConfigUsageForced(Boolean.parseBoolean(StringUtil.defaultIfEmpty(element.getAttributeValue(USE_OPENSSH_CONFIG),
+                                                                               String.valueOf(!PlatformUtils.isDataGrip()))));
     boolean useKeyPair = Boolean.parseBoolean(element.getAttributeValue(USE_KEY_PAIR));
     boolean useAuthAgent = Boolean.parseBoolean(element.getAttributeValue(USE_AUTH_AGENT));
     if (useKeyPair) {

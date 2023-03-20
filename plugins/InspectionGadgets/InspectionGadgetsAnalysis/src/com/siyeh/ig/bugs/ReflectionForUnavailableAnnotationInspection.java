@@ -106,14 +106,13 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
       if (arg == null) {
         return;
       }
-      if (!(arg instanceof PsiClassObjectAccessExpression)) {
+      if (!(arg instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
         return;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.lang.reflect.AnnotatedElement")) {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)arg;
       final PsiTypeElement operand = classObjectAccessExpression.getOperand();
 
       final PsiClass annotationClass = PsiTypesUtil.getPsiClass(operand.getType());

@@ -92,8 +92,7 @@ public final class RerunFailedActionsTestTools {
   @Nullable
   public static ExecutionEnvironment findRestartAction(@NotNull final RunContentDescriptor descriptor) {
     for (final AnAction action : descriptor.getRestartActions()) {
-      if (action instanceof PyRerunFailedTestsAction) {
-        final PyRerunFailedTestsAction rerunFailedTestsAction = (PyRerunFailedTestsAction)action;
+      if (action instanceof PyRerunFailedTestsAction rerunFailedTestsAction) {
         return getReRunEnvironment(rerunFailedTestsAction);
       }
     }

@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import com.intellij.codeInsight.intention.CustomizableIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
@@ -15,14 +16,10 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-internal class GrazieRuleSettingsAction(private val ruleName: String, private val rule: Rule)
-  : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction
+class GrazieRuleSettingsAction(private val ruleName: String, private val rule: Rule)
+  : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction, Comparable<IntentionAction>
 {
   override fun isShowSubmenu(): Boolean = false
-
-  override fun isSelectable(): Boolean = true
-
-  override fun isShowIcon(): Boolean = true
 
   override fun getIcon(flags: Int): Icon = AllIcons.Actions.Edit
 
@@ -31,6 +28,10 @@ internal class GrazieRuleSettingsAction(private val ruleName: String, private va
   override fun getFamilyName(): String = msg("grazie.grammar.quickfix.open.rule.family")
 
   override fun startInWriteAction() = false
+
+  override fun compareTo(other: IntentionAction): Int {
+    return if (other is GrazieAddExceptionQuickFix) 1 else 0
+  }
 
   override fun applyFix(project: Project, file: PsiFile?, editor: Editor?) {
     val state1 = GrazieConfig.get()

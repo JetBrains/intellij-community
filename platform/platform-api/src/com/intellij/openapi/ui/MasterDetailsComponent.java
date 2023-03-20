@@ -20,12 +20,12 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,8 +127,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         MasterDetailsComponent.this.addNotify();
 
         TreeModel m = myTree.getModel();
-        if (m instanceof DefaultTreeModel) {
-          DefaultTreeModel model = (DefaultTreeModel)m;
+        if (m instanceof DefaultTreeModel model) {
           for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {
             TreePath eachPath = myTree.getPathForRow(eachRow);
             Object component = eachPath.getLastPathComponent();
@@ -186,8 +185,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         //do nothing
       }
 
+      @RequiresEdt
       @Override
-      protected void scrollToSource(Component tree) {
+      protected void scrollToSource(@NotNull Component tree) {
         updateSelectionFromTree();
       }
 
@@ -221,8 +221,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       final Object lastPathComp = path.getLastPathComponent();
-      if (!(lastPathComp instanceof MyNode)) return;
-      final MyNode node = (MyNode)lastPathComp;
+      if (!(lastPathComp instanceof MyNode node)) return;
       setSelectedNode(node);
     } else {
       setSelectedNode(null);
@@ -527,8 +526,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @Nullable
   public Object getSelectedObject() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode) {
-      MyNode node = (MyNode)selectionPath.getLastPathComponent();
+    if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node) {
       final NamedConfigurable configurable = node.getConfigurable();
       LOG.assertTrue(configurable != null, "already disposed");
       return configurable.getEditableObject();
@@ -748,8 +746,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof MyNode) {
-        final MyNode node = (MyNode)value;
+      if (value instanceof MyNode node) {
         renderIcon(node, expanded);
         renderName(node);
       }
@@ -788,8 +785,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     /**
      * @deprecated Use {@link #MyDeleteAction(Predicate)}
      */
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public MyDeleteAction(@Nullable Condition<Object[]> availableCondition) {
       this(availableCondition == null ? null : (Predicate<Object[]>)availableCondition::value);
     }
@@ -819,6 +815,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         }
       }
       presentation.setEnabled(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

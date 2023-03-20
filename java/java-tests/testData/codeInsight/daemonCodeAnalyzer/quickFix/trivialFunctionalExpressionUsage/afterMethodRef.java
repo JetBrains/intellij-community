@@ -1,4 +1,4 @@
-// "Replace method call on method reference with corresponding method call" "true"
+// "Replace method call on method reference with corresponding method call" "true-preview"
 import java.util.function.Supplier;
 
 class Test {

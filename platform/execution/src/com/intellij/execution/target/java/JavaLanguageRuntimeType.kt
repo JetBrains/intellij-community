@@ -12,7 +12,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
@@ -63,8 +62,8 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
         }
 
         val versionPromise = if (config.javaVersionString.isBlank()) {
-          subject.promiseExecuteScript("java -version")
-            .thenApply { acceptJavaVersionOutput(it) }
+          subject.promiseExecuteScript(listOf("java", "-version"))
+            .thenApply { acceptJavaVersionOutput(it.stderr) }
         }
         else {
           Introspector.DONE
@@ -85,10 +84,9 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
       }
 
       private fun acceptJavaVersionOutput(output: String?) {
-        output?.let { StringUtil.splitByLines(output, true) }
-          ?.firstOrNull()
-          ?.let { JavaVersion.parse(it) }
-          ?.let { config.javaVersionString = it.toString() }
+        output?.lines()?.firstNotNullOf {
+          kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
+        }?.let { config.javaVersionString = it.toString() }
       }
     }
   }

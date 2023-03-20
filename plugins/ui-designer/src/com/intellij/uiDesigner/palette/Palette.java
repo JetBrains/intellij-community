@@ -44,10 +44,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(name = "Palette2",defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
 public final class Palette implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(Palette.class);
@@ -139,6 +135,16 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
     }
   }
 
+  @Override
+  public void noStateLoaded() {
+    try {
+      loadState(Objects.requireNonNull(loadDefaultPalette()));
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
   /**
    * Adds specified listener.
    */
@@ -156,7 +162,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
   private void upgradePalette() {
     // load new components from the predefined Palette2.xml
     try {
-      Element rootElement = JDOMUtil.load(getClass().getClassLoader().getResourceAsStream("Palette2.xml"));
+      Element rootElement = loadDefaultPalette();
       for (Element groupElement : Objects.requireNonNull(rootElement).getChildren(ELEMENT_GROUP)) {
         for (GroupItem group : myGroups) {
           if (group.getName().equals(groupElement.getAttributeValue(ATTRIBUTE_NAME))) {
@@ -169,6 +175,10 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  private @Nullable Element loadDefaultPalette() throws Exception {
+    return JDOMUtil.load(getClass().getClassLoader().getResourceAsStream("Palette2.xml"));
   }
 
   private void upgradeGroup(final GroupItem group, final Element groupElement) {

@@ -38,12 +38,14 @@ public class ThrowablePrintStackTraceInspectionTest extends LightJavaInspectionT
   }
 
   public void testPrintStacktraceOverridden() {
-    addEnvironmentClass("public class FException extends Exception {\n" +
-                        "    @Override\n" +
-                        "    public void printStackTrace() {\n" +
-                        "        super.printStackTrace();\n" +
-                        "    }\n" +
-                        "}\n");
+    addEnvironmentClass("""
+                          public class FException extends Exception {
+                              @Override
+                              public void printStackTrace() {
+                                  super.printStackTrace();
+                              }
+                          }
+                          """);
     doStatementTest("new FException()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");
   }
 

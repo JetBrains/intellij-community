@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -21,9 +21,6 @@ import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public final class ReferenceExpressionCompletionContributor {
   private static final Logger LOG = Logger.getInstance(ReferenceExpressionCompletionContributor.class);
 
@@ -86,7 +83,7 @@ public final class ReferenceExpressionCompletionContributor {
   private static boolean matchesExpectedType(LookupElement item, PsiType type) {
     Object object = item.getObject();
     if (object instanceof PsiClass) return false;
-    if (PsiType.VOID.equals(type)) return object instanceof PsiMethod;
+    if (PsiTypes.voidType().equals(type)) return object instanceof PsiMethod;
 
     PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
     return itemType != null && type.isAssignableFrom(itemType);
@@ -103,11 +100,10 @@ public final class ReferenceExpressionCompletionContributor {
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
         @Override
         public boolean isAcceptable(Object o, PsiElement context) {
-          if (o instanceof CandidateInfo) {
-            final CandidateInfo info = (CandidateInfo)o;
+          if (o instanceof CandidateInfo info) {
             final PsiElement member = info.getElement();
 
-            if (expectedType.equals(PsiType.VOID)) {
+            if (expectedType.equals(PsiTypes.voidType())) {
               return member instanceof PsiMethod;
             }
 

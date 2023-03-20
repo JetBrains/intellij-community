@@ -2,12 +2,20 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.testFramework.RunAll
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
 class LanguageLevelQuickFixTest : MavenDomTestCase() {
+
+  override fun tearDown() {
+    RunAll.runAll(
+      { stopMavenImportManager() },
+      { super.tearDown() }
+    )
+  }
 
   @Test
   fun `test property empty quick fix`() {

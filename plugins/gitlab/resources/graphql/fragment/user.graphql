@@ -1,0 +1,7 @@
+fragment user on User {
+  id
+  username
+  name
+  avatarUrl
+  webUrl
+}

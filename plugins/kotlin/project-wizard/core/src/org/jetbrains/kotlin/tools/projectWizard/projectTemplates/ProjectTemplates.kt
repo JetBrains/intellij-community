@@ -1,24 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.registry.Registry
+import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.*
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSettingReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingType
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
-import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
-import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
+import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesProvider
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.*
-import org.jetbrains.kotlin.tools.projectWizard.templates.compose.*
 import org.jetbrains.kotlin.tools.projectWizard.templates.mpp.MobileMppTemplate
+import javax.swing.Icon
 
 abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val title: String
@@ -27,6 +33,9 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     abstract val suggestedProjectName: String
     abstract val projectKind: ProjectKind
     abstract val id: String
+    open val icon: Icon? = null
+
+    open fun isVisible() = true
 
     private val setsDefaultValues: List<SettingWithValue<*, *>>
         get() = listOf(KotlinPlugin.projectKind.reference withValue projectKind)
@@ -57,7 +66,7 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-    protected inline fun <reified C: ModuleConfigurator> Module.withConfiguratorSettings(
+    protected inline fun <reified C : ModuleConfigurator> Module.withConfiguratorSettings(
         createSettings: ConfiguratorSettingsBuilder<C>.() -> Unit = {}
     ) = apply {
         check(configurator is C)
@@ -67,20 +76,22 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-
     companion object {
         val ALL = listOf(
-            ConsoleApplicationProjectTemplate,
+            FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
+            WasmApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
-            FullStackWebApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
-            ComposeDesktopApplicationProjectTemplate,
-            ComposeMultiplatformApplicationProjectTemplate,
-            ComposeWebApplicationProjectTemplate
-        )
+            ConsoleApplicationProjectTemplateWithSample
+        ) + extensionTemplates
+
+        private val extensionTemplates: List<ProjectTemplate>
+            get() = mutableListOf<ProjectTemplate>().also { list ->
+                ProjectTemplatesProvider.EP_NAME.extensionsIfPointIsRegistered.forEach { list.addAll(it.getTemplates()) }
+            }
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
             it.id.equals(id, ignoreCase = true)
@@ -91,10 +102,11 @@ abstract class ProjectTemplate : DisplayableSettingItem {
 private infix fun <V : Any, T : SettingType<V>> PluginSettingReference<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(this, value)
 
+@Suppress("unused")
 private inline infix fun <V : Any, reified T : SettingType<V>> PluginSetting<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(reference, value)
 
-private fun createDefaultSourceSets() =
+fun createDefaultSourceSets() =
     SourcesetType.values().map { sourceSetType ->
         Sourceset(
             sourceSetType,
@@ -106,7 +118,7 @@ private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTe
     MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
 
 
-object ConsoleApplicationProjectTemplate : ProjectTemplate() {
+open class ConsoleApplicationProjectTemplate(private val addSampleCode: Boolean) : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.description")
     override val id = "consoleApplication"
@@ -123,16 +135,24 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
                     createDefaultSourceSets(),
                     permittedTemplateIds = setOf(ConsoleJvmApplicationTemplate.id)
                 ).apply {
-                    withTemplate(ConsoleJvmApplicationTemplate)
+                    if (addSampleCode)
+                        withTemplate(ConsoleJvmApplicationTemplate)
                 }
             )
         )
+}
+
+object ConsoleApplicationProjectTemplateWithSample : ConsoleApplicationProjectTemplate(addSampleCode = true) {
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.CONSOLE
 }
 
 object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.lib.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.lib.description")
     override val id = "multiplatformLibrary"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.MULTIPLATFORM_LIBRARY
 
     @NonNls
     override val suggestedProjectName = "myMultiplatformLibrary"
@@ -144,20 +164,23 @@ object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
                 MultiplatformModule(
                     "library",
                     permittedTemplateIds = emptySet(),
-                    targets = listOf(
-                        ModuleType.common.createDefaultTarget(),
-                        ModuleType.jvm.createDefaultTarget(permittedTemplateIds = emptySet()),
-                        MultiplatformTargetModule(
-                            "js",
-                            MppLibJsBrowserTargetConfigurator,
-                            createDefaultSourceSets(),
-                            permittedTemplateIds = emptySet()
-                        )
-                            .withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
+                    targets = buildList {
+                        +ModuleType.common.createDefaultTarget()
+                        +ModuleType.jvm.createDefaultTarget(permittedTemplateIds = emptySet())
+
+                        if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
+                            +MultiplatformTargetModule(
+                                "js",
+                                MppLibJsBrowserTargetConfigurator,
+                                createDefaultSourceSets(),
+                                permittedTemplateIds = emptySet()
+                            ).withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
                                 JSConfigurator.kind withValue JsTargetKind.LIBRARY
-                            },
-                        ModuleType.native.createDefaultTarget(permittedTemplateIds = emptySet())
-                    )
+                            }
+                        }
+
+                        +ModuleType.native.createDefaultTarget(permittedTemplateIds = emptySet())
+                    }
                 )
             )
         )
@@ -167,6 +190,11 @@ object FullStackWebApplicationProjectTemplate : ProjectTemplate() {
     override val title: String = KotlinNewProjectWizardBundle.message("project.template.full.stack.title")
     override val description: String = KotlinNewProjectWizardBundle.message("project.template.full.stack.description")
     override val id = "fullStackWebApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.WEB
+
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName: String = "myFullStackApplication"
@@ -194,6 +222,8 @@ object NativeApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.native.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.native.console.description")
     override val id = "nativeApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.NATIVE
 
     @NonNls
     override val suggestedProjectName = "myNativeConsoleApp"
@@ -218,10 +248,45 @@ object NativeApplicationProjectTemplate : ProjectTemplate() {
         )
 }
 
+object WasmApplicationProjectTemplate : ProjectTemplate() {
+    override val title: String = KotlinNewProjectWizardBundle.message("project.template.wasm.browser.title")
+    override val description: String = KotlinNewProjectWizardBundle.message("project.template.wasm.browser.description")
+    override val id = "simpleWasmApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.WEB
+
+    override fun isVisible(): Boolean {
+        return Registry.`is`("kotlin.wasm.wizard")
+    }
+
+    @NonNls
+    override val suggestedProjectName: String = "myWasmApplication"
+    override val projectKind: ProjectKind = ProjectKind.Multiplatform
+    override val setsPluginSettings: List<SettingWithValue<*, *>> = listOf(
+        KotlinPlugin.modules.reference withValue listOf(
+            MultiplatformModule(
+                "application",
+                permittedTemplateIds = emptySet(),
+                targets = listOf(
+                    ModuleType.common.createDefaultTarget(),
+                    ModuleType.wasm.createDefaultTarget(permittedTemplateIds = setOf(SimpleWasmClientTemplate.id)).apply {
+                        withTemplate(SimpleWasmClientTemplate)
+                    }
+                )
+            )
+        )
+    )
+}
+
 object FrontendApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.browser.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.browser.description")
     override val id = "frontendApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.JS
+
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -248,6 +313,11 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.react.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.react.description")
     override val id = "reactApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.REACT_JS
+
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -273,14 +343,26 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
 abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.description")
+    override val icon: Icon
+        get() = KotlinBaseResourcesIcons.Wizard.MultiplatformMobile
 
     @NonNls
     override val suggestedProjectName = "myIOSApplication"
     override val projectKind = ProjectKind.Multiplatform
 
     override val setsModules: List<Module> = buildList {
+        val iosModule = Module(
+            "ios",
+            sharedIosConfigurator,
+            null,
+            permittedTemplateIds = emptySet(),
+            sourceSets = createDefaultSourceSets(),
+            subModules = emptyList(),
+            canBeRemoved = false
+        )
         val shared = MultiplatformModule(
             "shared",
+            canBeRemoved = false,
             template = MobileMppTemplate(),
             targets = listOf(
                 ModuleType.common.createDefaultTarget(),
@@ -289,18 +371,28 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                     AndroidTargetConfigurator,
                     null,
                     sourceSets = createDefaultSourceSets(),
-                    subModules = emptyList()
+                    subModules = emptyList(),
+                    canBeRemoved = false
                 ).withConfiguratorSettings<AndroidTargetConfigurator> {
                     configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
                 },
+                iosModule,
                 Module(
-                    "ios",
-                    RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios),
+                    "iosSimulatorArm64",
+                    RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosSimulatorArm64),
                     null,
                     permittedTemplateIds = emptySet(),
-                    sourceSets = createDefaultSourceSets(),
-                    subModules = emptyList()
-                )
+                    sourceSets = SourcesetType.values().map {
+                        Sourceset(
+                            sourcesetType = it,
+                            dependencies = emptyList(),
+                            createDirectory = false,
+                            dependsOnModules = listOf(iosModule),
+                        )
+                    },
+                    subModules = emptyList(),
+                    canBeRemoved = false
+                ),
             )
         )
         +iosAppModule(shared)
@@ -310,12 +402,19 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
 
     protected abstract fun iosAppModule(shared: Module): Module
     protected abstract fun androidAppModule(shared: Module): Module
+
+    open val sharedIosConfigurator get() = RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios)
 }
 
 object NodeJsApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.nodejs.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.nodejs.description")
     override val id = "nodejsApplication"
+    override val icon: Icon
+        get() = KotlinIcons.Wizard.NODE_JS
+
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -333,153 +432,6 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
                         Sourceset(type, dependencies = emptyList())
                     },
                     subModules = emptyList()
-                )
-            )
-        )
-}
-
-object ComposeDesktopApplicationProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.desktop.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.desktop.description")
-    override val id = "composeDesktopApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myComposeDesktopApplication"
-    override val projectKind = ProjectKind.COMPOSE
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
-            StructurePlugin.version withValue "1.0",
-        )
-
-    override val setsModules: List<Module>
-        get() = listOf(
-            Module(
-                "compose",
-                JvmSinglePlatformModuleConfigurator,
-                template = ComposeJvmDesktopTemplate(),
-                sourceSets = SourcesetType.ALL.map { type ->
-                    Sourceset(type, dependencies = emptyList())
-                },
-                subModules = emptyList()
-            ).withConfiguratorSettings<JvmSinglePlatformModuleConfigurator> {
-                JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
-            }
-        )
-}
-
-object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.multiplatform.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.multiplatform.description")
-    override val id = "composeMultiplatformApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myComposeMultiplatformApplication"
-    override val projectKind = ProjectKind.COMPOSE
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
-            StructurePlugin.version withValue "1.0",
-        )
-
-    override val setsModules: List<Module>
-        get() = buildList {
-            val common = MultiplatformModule(
-                "common",
-                template = ComposeMppModuleTemplate(),
-                listOf(
-                    ModuleType.common.createDefaultTarget().withConfiguratorSettings<CommonTargetConfigurator> {
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                    },
-                    Module(
-                        "android",
-                        AndroidTargetConfigurator,
-                        template = ComposeCommonAndroidTemplate(),
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList()
-                    ).withConfiguratorSettings<AndroidTargetConfigurator> {
-                        configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                    },
-                    Module(
-                        "desktop",
-                        JvmTargetConfigurator,
-                        template = null,
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList()
-                    ).withConfiguratorSettings<JvmTargetConfigurator> {
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                        JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
-                    }
-                )
-            )
-            +Module(
-                "android",
-                AndroidSinglePlatformModuleConfigurator,
-                template = ComposeAndroidTemplate(),
-                sourceSets = createDefaultSourceSets(),
-                subModules = emptyList(),
-                dependencies = mutableListOf(ModuleReference.ByModule(common))
-            ).withConfiguratorSettings<AndroidSinglePlatformModuleConfigurator> {
-                JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-            }
-            +Module(
-                "desktop",
-                MppModuleConfigurator,
-                template = null,
-                sourceSets = createDefaultSourceSets(),
-                subModules = listOf(
-                    Module(
-                        "jvm",
-                        JvmTargetConfigurator,
-                        template = ComposeJvmDesktopTemplate(),
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList(),
-                        dependencies = mutableListOf(ModuleReference.ByModule(common))
-                    ).withConfiguratorSettings<JvmTargetConfigurator> {
-                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
-                        JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
-                    }
-                ),
-            )
-            +common
-        }
-}
-
-object ComposeWebApplicationProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.compose.web.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.compose.web.description")
-    override val id = "composeWebApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myComposeWebApplication"
-    override val projectKind = ProjectKind.COMPOSE
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            GradlePlugin.gradleVersion withValue Versions.GRADLE_VERSION_FOR_COMPOSE,
-            StructurePlugin.version withValue "1.0",
-        )
-
-    override val setsModules: List<Module>
-        get() = listOf(
-            Module(
-                "web",
-                MppModuleConfigurator,
-                template = null,
-                sourceSets = createDefaultSourceSets(),
-                subModules = listOf(
-                    Module(
-                        "js",
-                        JsComposeMppConfigurator,
-                        template = ComposeWebModuleTemplate,
-                        permittedTemplateIds = setOf(ComposeWebModuleTemplate.id),
-                        sourceSets = createDefaultSourceSets(),
-                        subModules = emptyList()
-                    )
                 )
             )
         )

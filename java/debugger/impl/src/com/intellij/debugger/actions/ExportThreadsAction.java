@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.ide.util.ExportToFileUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -30,7 +31,7 @@ public class ExportThreadsAction extends AnAction {
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
     final DebuggerSession session = context.getDebuggerSession();
-    if(session != null && session.isAttached()) {
+    if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       if (process != null) {
         process.getManagerThread().invoke(new DebuggerCommandImpl() {
@@ -45,7 +46,7 @@ public class ExportThreadsAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (project == null) {
@@ -54,5 +55,10 @@ public class ExportThreadsAction extends AnAction {
     }
     DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
     presentation.setEnabled(debuggerSession != null && debuggerSession.isPaused());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

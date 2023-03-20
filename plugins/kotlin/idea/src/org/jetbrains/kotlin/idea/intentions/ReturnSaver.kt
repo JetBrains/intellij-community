@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -39,7 +39,7 @@ class ReturnSaver(val function: KtNamedFunction) {
     fun restore(lambda: KtLambdaExpression, label: Name) {
         clear()
 
-        val factory = KtPsiFactory(lambda)
+        val psiFactory = KtPsiFactory(lambda.project)
 
         val lambdaBody = lambda.bodyExpression!!
 
@@ -50,9 +50,9 @@ class ReturnSaver(val function: KtNamedFunction) {
             val replaceWith = if (value != null && returnExpression.isValueOfBlock(lambdaBody)) {
                 value
             } else if (value != null) {
-                factory.createExpressionByPattern("return@$0 $1", label, value)
+                psiFactory.createExpressionByPattern("return@$0 $1", label, value)
             } else {
-                factory.createExpressionByPattern("return@$0", label)
+                psiFactory.createExpressionByPattern("return@$0", label)
             }
 
             returnExpression.replace(replaceWith)

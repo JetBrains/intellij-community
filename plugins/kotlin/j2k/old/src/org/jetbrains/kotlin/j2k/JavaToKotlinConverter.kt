@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.progress.*
@@ -12,10 +13,9 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.DummyHolder
+import com.intellij.refactoring.suggested.range
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.core.util.range
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.ast.Element
 import org.jetbrains.kotlin.j2k.usageProcessing.ExternalCodeProcessor
 import org.jetbrains.kotlin.j2k.usageProcessing.UsageProcessing
@@ -122,7 +122,7 @@ class OldJavaToKotlinConverter(
             val (i, result) = pair
             try {
                 val kotlinFile = ApplicationManager.getApplication().runReadAction(Computable {
-                    KtPsiFactory(project).createAnalyzableFile("dummy.kt", result!!.text, files[i])
+                    KtPsiFactory.contextual(files[i]).createFile("dummy.kt", result!!.text)
                 })
 
                 result!!.importsToAdd.forEach { postProcessor.insertImport(kotlinFile, it) }
@@ -360,7 +360,7 @@ class ProgressPortionReporter(
     indicator: ProgressIndicator,
     private val start: Double,
     private val portion: Double
-) : DelegatingProgressIndicator(indicator) {
+) : J2KDelegatingProgressIndicator(indicator) {
 
     init {
         fraction = 0.0
@@ -390,7 +390,7 @@ class ProgressPortionReporter(
 }
 
 // Copied from com.intellij.ide.util.DelegatingProgressIndicator
-open class DelegatingProgressIndicator(indicator: ProgressIndicator) : WrappedProgressIndicator, StandardProgressIndicator {
+open class J2KDelegatingProgressIndicator(indicator: ProgressIndicator) : WrappedProgressIndicator, StandardProgressIndicator {
     protected val delegate: ProgressIndicator = indicator
 
     override fun start() = delegate.start()

@@ -39,7 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +50,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.refres
 
 /**
  * GoF builder for external system backed projects.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>
@@ -65,19 +62,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   @NotNull private final ProjectSystemId myExternalSystemId;
 
   private DataNode<ProjectData> myExternalProjectNode;
-
-  /**
-   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
-                                              @NotNull C control,
-                                              @NotNull ProjectSystemId externalSystemId) {
-    myProjectDataManager = projectDataManager;
-    myControlValue = NotNullLazyValue.createValue(() -> control);
-    myExternalSystemId = externalSystemId;
-  }
 
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
                                               @NotNull NotNullFactory<? extends C> controlFactory,
@@ -188,7 +172,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
 
     //noinspection unchecked
-    Set<ExternalProjectSettings> projects = new HashSet<>(systemSettings.getLinkedProjectsSettings());
+    Set<ExternalProjectSettings> projects = new HashSet<ExternalProjectSettings>(systemSettings.getLinkedProjectsSettings());
     // add current importing project settings to linked projects settings or replace if similar already exist
     projects.remove(projectSettings);
     projects.add(projectSettings);
@@ -223,7 +207,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                               boolean isFromUI,
                               final List<Module> modules,
                               IdeModifiableModelsProvider modelsProvider, final ExternalProjectSettings projectSettings) {
-    myProjectDataManager.importData(externalProjectNode, project, modelsProvider, true);
+    myProjectDataManager.importData(externalProjectNode, project, modelsProvider);
     myExternalProjectNode = null;
 
     // resolve dependencies
@@ -252,7 +236,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (externalProject == null) {
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, false);
+        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
       }
     };
   }

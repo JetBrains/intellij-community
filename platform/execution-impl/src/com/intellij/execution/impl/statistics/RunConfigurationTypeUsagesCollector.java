@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunTargetValidator;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.execution.target.local.LocalTargetType;
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -22,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -33,11 +34,13 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 10);
-  public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", "run_config_id");
-  public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory", "run_config_factory");
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 14);
+  public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
+  public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
+                                                                                               RunConfigurationUtilValidator.class);
   private static final IntEventField COUNT_FIELD = EventFields.Int("count");
-  private static final StringEventField FEATURE_NAME_FIELD = EventFields.StringValidatedByCustomRule("featureName", "plugin_info");
+  private static final StringEventField FEATURE_NAME_FIELD = EventFields.StringValidatedByCustomRule("featureName",
+                                                                                                     PluginInfoValidationRule.class);
   private static final BooleanEventField SHARED_FIELD = EventFields.Boolean("shared");
   private static final BooleanEventField EDIT_BEFORE_RUN_FIELD = EventFields.Boolean("edit_before_run");
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
@@ -50,13 +53,18 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
    * default value for the project default target is the local machine, it might be changed by the user.
    */
   private static final StringEventField TARGET_FIELD =
-    EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
+    EventFields.StringValidatedByCustomRule("target", RunTargetValidator.class);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
                               ACTIVATE_BEFORE_RUN_FIELD, TEMPORARY_FIELD, PARALLEL_FIELD, ADDITIONAL_FIELD, TARGET_FIELD);
   private static final VarargEventId FEATURE_USED_EVENT =
     GROUP.registerVarargEvent("feature.used", COUNT_FIELD, ID_FIELD, EventFields.PluginInfo, FEATURE_NAME_FIELD);
+
+  private static final IntEventField TOTAL_COUNT_FIELD = EventFields.Int("total_count");
+  private static final IntEventField TEMP_COUNT_FIELD = EventFields.Int("temp_count");
+
+  private static final EventId2<Integer, Integer> TOTAL_COUNT = GROUP.registerEvent("total.configurations.registered", TOTAL_COUNT_FIELD, TEMP_COUNT_FIELD);
 
   @Override
   public EventLogGroup getGroup() {
@@ -101,6 +109,12 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     for (Object2IntMap.Entry<Template> entry : Object2IntMaps.fastIterable(templates)) {
       metrics.add(entry.getKey().createMetricEvent(entry.getIntValue()));
     }
+
+
+    final int limitingBoundary = 500; // avoid reporting extreme values
+    metrics.add(TOTAL_COUNT.metric(Math.min(runManager.getAllSettings().size(), limitingBoundary),
+                                   runManager.getTempConfigurationsList().size()));
+
     return metrics;
   }
 
@@ -120,8 +134,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
       if (!info.isSafeToReport()) return;
       Object state = ((RunConfigurationBase<?>)runConfiguration).getState();
-      if (state instanceof RunConfigurationOptions) {
-        RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
+      if (state instanceof RunConfigurationOptions runConfigurationOptions) {
         List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
         for (StoredProperty<Object> property : properties) {
           String name = property.getName();
@@ -166,13 +179,13 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return pairs;
   }
 
-  private static @NotNull ArrayList<EventPair<Boolean>> getSettings(@NotNull RunnerAndConfigurationSettings settings,
+  private static @NotNull List<EventPair<Boolean>> getSettings(@NotNull RunnerAndConfigurationSettings settings,
                                                                     @NotNull RunConfiguration runConfiguration) {
-    return ContainerUtil.newArrayList(SHARED_FIELD.with(settings.isShared()),
-                                      EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
-                                      ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
-                                      PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
-                                      TEMPORARY_FIELD.with(settings.isTemporary()));
+    return List.of(SHARED_FIELD.with(settings.isShared()),
+                   EDIT_BEFORE_RUN_FIELD.with(settings.isEditBeforeRun()),
+                   ACTIVATE_BEFORE_RUN_FIELD.with(settings.isActivateToolWindowBeforeRun()),
+                   PARALLEL_FIELD.with(runConfiguration.isAllowRunningInParallel()),
+                   TEMPORARY_FIELD.with(settings.isTemporary()));
   }
 
   private static final class Template {
@@ -207,9 +220,15 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   }
 
   public static class RunConfigurationUtilValidator extends CustomValidationRule {
+    @NotNull
+    @Override
+    public String getRuleId() {
+      return "run_config_id";
+    }
+
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_config_id".equals(ruleId) || "run_config_factory".equals(ruleId);
+      return getRuleId().equals(ruleId) || "run_config_factory".equals(ruleId);
     }
 
     @NotNull

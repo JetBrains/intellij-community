@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
@@ -29,14 +15,13 @@ import java.util.Locale;
 import java.util.function.Predicate;
 
 /**
- * Created by Roman Ivanov.
+ * @author Roman Ivanov.
  */
 public class OperationReductionMigration extends BaseStreamApiMigration {
   private final ReductionOperation myReductionOperation;
 
-  protected OperationReductionMigration(boolean shouldWarn,
-                                        ReductionOperation context) {
-    super(shouldWarn, "reduce()");
+  protected OperationReductionMigration(boolean shouldWarn, ReductionOperation context) {
+    super(shouldWarn, "reduce");
     myReductionOperation = context;
   }
 
@@ -61,8 +46,8 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     String leftOperand = javaStyle.suggestUniqueVariableName("a", body, true);
     String rightOperand = javaStyle.suggestUniqueVariableName("b", body, true);
 
-    if(type.equals(PsiType.BOOLEAN)) {
-      type = PsiType.BOOLEAN.getBoxedType(body); // hack to avoid .map(b -> b) when boxing needed
+    if(type.equals(PsiTypes.booleanType())) {
+      type = PsiTypes.booleanType().getBoxedType(body); // hack to avoid .map(b -> b) when boxing needed
     }
 
     PsiExpression initializer = var.getInitializer();
@@ -78,15 +63,15 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
 
   static class ReductionOperation {
     private final IElementType myCompoundAssignmentOp;
-    private final Predicate<PsiExpression> myInitializerReplaceCondition;
-    private final Predicate<PsiVariable> myAccumulatorRestriction;
+    private final Predicate<? super PsiExpression> myInitializerReplaceCondition;
+    private final Predicate<? super PsiVariable> myAccumulatorRestriction;
     private final String myIdentity;
     private final String myOperation;
 
 
     ReductionOperation(IElementType compoundAssignmentOp,
-                              Predicate<PsiExpression> initializerReplaceCondition,
-                              Predicate<PsiVariable> accumulatorRestriction,
+                              Predicate<? super PsiExpression> initializerReplaceCondition,
+                              Predicate<? super PsiVariable> accumulatorRestriction,
                               String identity,
                               String operation) {
       myCompoundAssignmentOp = compoundAssignmentOp;
@@ -100,7 +85,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
       return myCompoundAssignmentOp;
     }
 
-    public Predicate<PsiExpression> getInitializerExpressionRestriction() {
+    Predicate<? super PsiExpression> getInitializerExpressionRestriction() {
       return myInitializerReplaceCondition;
     }
 
@@ -112,7 +97,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
       return myOperation;
     }
 
-    public Predicate<PsiVariable> getAccumulatorRestriction() {
+    Predicate<? super PsiVariable> getAccumulatorRestriction() {
       return myAccumulatorRestriction;
     }
   }
@@ -180,11 +165,11 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
 
   static boolean bitwiseTypeRestriction(@NotNull PsiVariable variable) {
     return variable.getType() instanceof PsiPrimitiveType
-           && (variable.getType().equals(PsiType.INT) || variable.getType().equals(PsiType.LONG));
+           && (variable.getType().equals(PsiTypes.intType()) || variable.getType().equals(PsiTypes.longType()));
   }
 
   static boolean arithmeticTypeRestriction(@NotNull PsiVariable variable) {
-    return variable.getType() instanceof PsiPrimitiveType && !variable.getType().equals(PsiType.FLOAT);
+    return variable.getType() instanceof PsiPrimitiveType && !variable.getType().equals(PsiTypes.floatType());
   }
 
   private static boolean booleanTypeRestriction(@NotNull PsiVariable variable) {

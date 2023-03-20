@@ -1,0 +1,5 @@
+// "Add '@JvmInline' annotation" "true"
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
+@JvmInline
+value class VC(val i: Int)

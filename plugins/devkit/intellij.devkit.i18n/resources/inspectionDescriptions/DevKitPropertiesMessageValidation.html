@@ -1,0 +1,60 @@
+<html>
+<body>
+Report next cases:
+<ul>
+  <li>
+    Unknown format type.
+    <p>
+      <code>MessageFormat</code> supports only next format types:
+    <ul>
+      <li>number</li>
+      <li>date</li>
+      <li>time</li>
+      <li>choice</li>
+    </ul>
+    Other format types will be warned.
+  </li>
+  <li>
+    Unpaired quote.
+    <p>
+      Single quotes are used to escape until the end of properties, and they will not be present in the result string.
+      Often it is a smell of mistakes.
+      If they should be visible, they must be duplicated.
+  </li>
+  <li>
+    Unmatched braces.
+    <p> It is expected that every placeholder must contain a closed brace.
+  </li>
+  <li>
+    Many quotes.
+    <p> In some cases (like <code>it's</code>), it is expected that only one quote is printed;
+      cases, when more quotes than one are printed, will be warned.
+  </li>
+  <li>
+    Incorrect lower bounds for nested <code>ChoiceFormat</code>.
+    <p> Lower bounds are expected to be numbers and to be sorted in ascending order.
+  </li>
+  <li>Wrong number of quotes around parameter in property value.
+    <p>
+      If parameters are present in the property value, then the value will be passed as a pattern to <code>java.text.MessageFormat</code>.
+      This means that single quotes are used for escaping.
+      Thus, to keep a quote visible, it must be duplicated:
+    <ul>
+      <li><code>'{0}'</code> &rarr; <code>{0}</code></li>
+      <li><code>''{0}''</code> &rarr; <code>'$value$'</code></li>
+    </ul>
+    <p>
+      When using choice format, nested formats are evaluated as formats themselves, and second double quotes are required.
+      When passing <code>1</code>:
+    <ul>
+      <li><code>{0, choice, 0#no|#1''{0}'' files}</code> &rarr; <code>{0} files</code></li>
+      <li><code>{0, choice, 0#no|#1''''{0}'''' files}</code> &rarr; <code>'$number_of_files$' files</code></li>
+    </ul>
+  </li>
+</ul>
+Property values are verified only it they contain <code>{0}</code>, <code>{0,</code>, <code>{1}</code>, <code>{1,</code>,
+This condition is used to check that these property values can be used as patterns for <code>MessageFormat</code>.
+<!-- tooltip end -->
+<p><small>New in 2023.2</small>
+</body>
+</html>

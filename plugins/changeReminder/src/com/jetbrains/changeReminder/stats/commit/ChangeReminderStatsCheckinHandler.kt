@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.changeReminder.stats.commit
 
 import com.intellij.openapi.components.service
@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.jetbrains.changeReminder.predict.PredictionService
 import com.jetbrains.changeReminder.stats.ChangeReminderChangesCommittedEvent
-import com.jetbrains.changeReminder.stats.logEvent
 import git4idea.GitVcs
 
 class ChangeReminderStatsCheckinHandler : VcsCheckinHandlerFactory(GitVcs.getKey()) {
@@ -21,7 +20,7 @@ class ChangeReminderStatsCheckinHandler : VcsCheckinHandlerFactory(GitVcs.getKey
       val committedFiles = panel.selectedChanges.map { ChangesUtil.getFilePath(it) }
 
       val curFiles = ChangeListManager.getInstance(project).defaultChangeList.changes.map { ChangesUtil.getFilePath(it) }
-      logEvent(project, ChangeReminderChangesCommittedEvent(curFiles, committedFiles, prediction))
+      ChangeReminderChangesCommittedEvent(curFiles, committedFiles, prediction).logEvent(project)
       return ReturnResult.COMMIT
     }
   }

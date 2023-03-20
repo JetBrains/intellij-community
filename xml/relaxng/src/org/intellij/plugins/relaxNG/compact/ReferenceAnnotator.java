@@ -73,8 +73,7 @@ public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
     for (PsiReference reference : references) {
       if (!reference.isSoft()) {
         if (reference.resolve() == null) {
-          if (reference instanceof PsiPolyVariantReference) {
-            final PsiPolyVariantReference pvr = (PsiPolyVariantReference)reference;
+          if (reference instanceof PsiPolyVariantReference pvr) {
             if (pvr.multiResolve(false).length == 0) {
               addError(reference);
             }

@@ -30,24 +30,16 @@ public final class AnnotationProcessingModelSerializationService implements Seri
   public byte[] write(AnnotationProcessingModel annotationProcessingModel, Class<? extends AnnotationProcessingModel> modelClazz)
     throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, annotationProcessingModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public AnnotationProcessingModel read(byte[] object, Class<? extends AnnotationProcessingModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -159,14 +151,14 @@ public final class AnnotationProcessingModelSerializationService implements Seri
 
   private static class WriteContext {
     private final ObjectCollector<AnnotationProcessingModel, IOException> objectCollector =
-      new ObjectCollector<AnnotationProcessingModel, IOException>();
+      new ObjectCollector<>();
 
     private final ObjectCollector<AnnotationProcessingConfig, IOException> configCollector =
-      new ObjectCollector<AnnotationProcessingConfig, IOException>();
+      new ObjectCollector<>();
   }
 
   private static class ReadContext {
-    private final IntObjectMap<AnnotationProcessingModelImpl> objectMap = new IntObjectMap<AnnotationProcessingModelImpl>();
-    private final IntObjectMap<AnnotationProcessingConfigImpl> configMap = new IntObjectMap<AnnotationProcessingConfigImpl>();
+    private final IntObjectMap<AnnotationProcessingModelImpl> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<AnnotationProcessingConfigImpl> configMap = new IntObjectMap<>();
   }
 }

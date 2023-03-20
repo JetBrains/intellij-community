@@ -14,9 +14,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class StubsTest extends LightJavaCodeInsightFixtureTestCase {
   
   public void testConfig_object() { doTest(); }

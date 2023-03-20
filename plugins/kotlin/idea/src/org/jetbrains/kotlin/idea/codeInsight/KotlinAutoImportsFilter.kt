@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.psi.KtFile
 @IntellijInternalApi
 interface KotlinAutoImportsFilter {
     /**
-     * Even if the option to perform auto import is disabled for Kotlin but [forceAutoImportForFile] is true, auto import must happen
+     * Even if the option to perform auto import is disabled for Kotlin but [forceAutoImportForElement] is true, auto import must happen
      */
-    fun forceAutoImportForFile(file: KtFile): Boolean
+    fun forceAutoImportForElement(file: KtFile, suggestions: Collection<FqName>): Boolean
 
     /**
      * Allows transforming suggested imports list by any rule.
@@ -21,9 +21,19 @@ interface KotlinAutoImportsFilter {
     companion object {
         val EP_NAME = ExtensionPointName.create<KotlinAutoImportsFilter>("org.jetbrains.kotlin.idea.codeInsight.unambiguousImports")
 
-        fun findRelevantExtension(file: KtFile): KotlinAutoImportsFilter? = EP_NAME.findFirstSafe { it.forceAutoImportForFile(file) }
+        private fun findRelevantExtension(file: KtFile, suggestions: Collection<FqName>): KotlinAutoImportsFilter? =
+            EP_NAME.findFirstSafe { it.forceAutoImportForElement(file, suggestions) }
 
-        fun filterSuggestionsIfApplicable(context: KtFile, suggestions: Collection<FqName>): Collection<FqName>? =
-            findRelevantExtension(context)?.filterSuggestions(suggestions)
+        fun filterSuggestionsIfApplicable(context: KtFile, suggestions: Collection<FqName>): Collection<FqName> {
+            val extension = findRelevantExtension(context, suggestions)
+
+            if (extension != null) return extension.filterSuggestions(suggestions)
+            
+            return if (KotlinCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly) {
+                suggestions
+            } else {
+                emptyList()
+            }
+        }
     }
 }

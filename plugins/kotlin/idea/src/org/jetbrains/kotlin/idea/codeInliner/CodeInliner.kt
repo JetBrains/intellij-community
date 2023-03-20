@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
@@ -8,19 +8,20 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.LocalSearchScope
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.findUsages.ReferencesSearchScopeHelper
+import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.inspections.RedundantLambdaOrAnonymousFunctionInspection
 import org.jetbrains.kotlin.idea.inspections.RedundantUnitExpressionInspection
-import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention
-import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
+import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -33,7 +34,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CodeInliner<TCallElement : KtElement>(
+    private val languageVersionSettings: LanguageVersionSettings,
     private val usageExpression: KtSimpleNameExpression?,
     private val bindingContext: BindingContext,
     private val resolvedCall: ResolvedCall<out CallableDescriptor>,
@@ -61,7 +63,11 @@ class CodeInliner<TCallElement : KtElement>(
         val descriptor = resolvedCall.resultingDescriptor
         val file = callElement.containingKtFile
 
-        val qualifiedElement = if (callElement is KtExpression) callElement.getQualifiedExpressionForSelectorOrThis() else callElement
+        val qualifiedElement = if (callElement is KtExpression) {
+            callElement.getQualifiedExpressionForSelector()
+                ?: callElement.callableReferenceExpressionForReference()
+                ?: callElement
+        } else callElement
         val assignment = (qualifiedElement as? KtExpression)
             ?.getAssignmentByLHS()
             ?.takeIf { it.operationToken == KtTokens.EQ }
@@ -88,7 +94,7 @@ class CodeInliner<TCallElement : KtElement>(
             codeToInline.mainExpression = null
         }
 
-        var receiver = usageExpression?.getReceiverExpression()
+        var receiver = usageExpression?.receiverExpression()
         receiver?.marked(USER_CODE_KEY)
         var receiverType = if (receiver != null) bindingContext.getType(receiver) else null
 
@@ -123,11 +129,18 @@ class CodeInliner<TCallElement : KtElement>(
 
         val lexicalScope = lexicalScopeElement.getResolutionScope(lexicalScopeElement.analyze(BodyResolveMode.PARTIAL_FOR_COMPLETION))
 
+        val importDescriptors = codeToInline.fqNamesToImport.mapNotNull { importPath ->
+            val importDescriptor = file.resolveImportReference(importPath.fqName).firstOrNull() ?: return@mapNotNull null
+            importPath to importDescriptor
+        }
+
         if (elementToBeReplaced is KtSafeQualifiedExpression && receiverType?.isMarkedNullable != false) {
             wrapCodeForSafeCall(receiver!!, receiverType, elementToBeReplaced)
         } else if (callElement is KtBinaryExpression && callElement.operationToken == KtTokens.IDENTIFIER) {
-            keepInfixFormIfPossible()
+            keepInfixFormIfPossible(importDescriptors.map { it.second })
         }
+
+        codeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced)
 
         if (elementToBeReplaced is KtExpression) {
             if (receiver != null) {
@@ -149,9 +162,9 @@ class CodeInliner<TCallElement : KtElement>(
             }
         }
 
-        codeToInline.fqNamesToImport
-            .flatMap { file.resolveImportReference(it) }
-            .forEach { ImportInsertHelper.getInstance(project).importDescriptor(file, it) }
+        for ((importPath, importDescriptor) in importDescriptors) {
+            ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.alias)
+        }
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
 
@@ -191,6 +204,24 @@ class CodeInliner<TCallElement : KtElement>(
         })
     }
 
+    private fun KtElement.callableReferenceExpressionForReference(): KtCallableReferenceExpression? =
+        parent.safeAs<KtCallableReferenceExpression>()?.takeIf { it.callableReference == callElement }
+
+    private fun KtSimpleNameExpression.receiverExpression(): KtExpression? =
+        getReceiverExpression() ?: parent.safeAs<KtCallableReferenceExpression>()?.receiverExpression
+
+    private fun MutableCodeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced: KtElement) {
+        if (elementToBeReplaced !is KtCallableReferenceExpression) return
+        val qualified = mainExpression?.safeAs<KtQualifiedExpression>() ?: return
+        val reference = qualified.callExpression?.calleeExpression ?: qualified.selectorExpression ?: return
+        val callableReference  = if (elementToBeReplaced.receiverExpression == null) {
+            psiFactory.createExpressionByPattern("::$0", reference)
+        } else {
+            psiFactory.createExpressionByPattern("$0::$1", qualified.receiverExpression, reference)
+        }
+        codeToInline.replaceExpression(qualified, callableReference)
+    }
+
     private fun findAndMarkNewDeclarations() {
         for (it in codeToInline.statementsBefore) {
             if (it is KtNamedDeclaration) {
@@ -204,11 +235,11 @@ class CodeInliner<TCallElement : KtElement>(
         lexicalScope: LexicalScope,
         endOfScope: Int,
     ) {
-        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope) }
+        val validator = CollectingNameValidator { !it.nameHasConflictsInScope(lexicalScope, languageVersionSettings) }
         for (declaration in declarations) {
             val oldName = declaration.name
-            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope)) {
-                val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
+            if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
+                val newName = Fe10KotlinNameSuggester.suggestNameByName(oldName, validator)
                 for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
                     if (reference.element.startOffset < endOfScope) {
                         reference.handleElementRename(newName)
@@ -359,13 +390,16 @@ class CodeInliner<TCallElement : KtElement>(
         }
     }
 
-    private fun keepInfixFormIfPossible() {
+    private fun keepInfixFormIfPossible(importDescriptors: List<DeclarationDescriptor>) {
         if (codeToInline.statementsBefore.isNotEmpty()) return
         val dotQualified = codeToInline.mainExpression as? KtDotQualifiedExpression ?: return
         val receiver = dotQualified.receiverExpression
         if (!receiver[RECEIVER_VALUE_KEY]) return
         val call = dotQualified.selectorExpression as? KtCallExpression ?: return
         val nameExpression = call.calleeExpression as? KtSimpleNameExpression ?: return
+        val functionDescriptor =
+            importDescriptors.firstOrNull { it.name.asString() == nameExpression.text } as? FunctionDescriptor ?: return
+        if (!functionDescriptor.isInfix) return
         val argument = call.valueArguments.singleOrNull() ?: return
         if (argument.isNamed()) return
         val argumentExpression = argument.getArgumentExpression() ?: return

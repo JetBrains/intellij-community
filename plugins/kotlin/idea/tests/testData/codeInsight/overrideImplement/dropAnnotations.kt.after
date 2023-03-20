@@ -1,0 +1,12 @@
+// FIR_IDENTICAL
+annotation class SomeAnnotation
+
+open class ParentTarget {
+    @SomeAnnotation open fun targetFun() {}
+}
+
+class ChildTarget : ParentTarget() {
+    override fun targetFun() {
+        <selection><caret>super.targetFun()</selection>
+    }
+}

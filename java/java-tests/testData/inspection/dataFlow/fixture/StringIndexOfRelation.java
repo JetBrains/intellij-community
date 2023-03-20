@@ -15,7 +15,7 @@ class Test {
     if (pos5 < s.length()) {}
     if (<warning descr="Condition 'pos5 <= s.length()' is always 'true'">pos5 <= s.length()</warning>) {}
 
-    if (pos != -1 && <warning descr="Condition '!s.isEmpty()' is always 'true' when reached">!<warning descr="Result of 's.isEmpty()' is always 'false'">s.isEmpty()</warning></warning>) {}
+    if (pos != -1 && <warning descr="Condition '!s.isEmpty()' is always 'true' when reached">!s.isEmpty()</warning>) {}
     if (s.isEmpty()) {
       if (<warning descr="Condition 'pos == -1' is always 'true'">pos == -1</warning>) {}
     }

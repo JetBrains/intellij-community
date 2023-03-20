@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -26,7 +27,7 @@ import org.jetbrains.kotlin.renderer.render
  * @param argumentClassFqName the fully qualified name of the argument class (e.g., `SomeExperimentalAnnotation`) (optional)
  * @param existingAnnotationEntry a smart pointer to the existing annotation entry with the same annotation class (optional)
  */
-class AddFileAnnotationFix(
+open class AddFileAnnotationFix(
     file: KtFile,
     private val annotationFqName: FqName,
     private val argumentClassFqName: FqName? = null,
@@ -50,7 +51,7 @@ class AddFileAnnotationFix(
             else -> "${annotationFqName.render()}($innerText)"
         }
 
-        val psiFactory = KtPsiFactory(fileToAnnotate)
+        val psiFactory = KtPsiFactory(project)
         if (fileToAnnotate.fileAnnotationList == null) {
             // If there are no existing file-level annotations, create an annotation list with the new annotation
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(annotationText)
@@ -81,7 +82,7 @@ class AddFileAnnotationFix(
     private fun addArgumentToExistingAnnotation(annotationEntry: SmartPsiElementPointer<KtAnnotationEntry>, argumentText: String) {
         val entry = annotationEntry.element ?: return
         val existingArgumentList = entry.valueArgumentList
-        val psiFactory = KtPsiFactory(entry)
+        val psiFactory = KtPsiFactory(entry.project)
         val newArgumentList = psiFactory.createCallArguments("($argumentText)")
         when {
             existingArgumentList == null -> // use the new argument list

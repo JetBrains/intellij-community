@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.psi.codeStyle
 
@@ -27,6 +13,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider
 import com.intellij.psi.codeStyle.TimeStampedIndentOptions
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
@@ -40,9 +27,15 @@ class IndentOptionsCacheDropTest: LightJavaCodeInsightFixtureTestCase() {
   }
 
   override fun tearDown() {
-    val instance = DetectableIndentOptionsProvider.getInstance()
-    instance?.setEnabledInTest(false)
-    super.tearDown()
+    try {
+      DetectableIndentOptionsProvider.getInstance()?.setEnabledInTest(false)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   val code = """
@@ -63,11 +56,12 @@ class Test {
     detectableOptionsProvider.setEnabledInTest(true)
 
     val settings = CodeStyle.getSettings(project)
-    val options = detectableOptionsProvider.getIndentOptions(settings, file)
+    val options = detectableOptionsProvider.getIndentOptions(file.project, settings, file.virtualFile)
 
     val document = PsiDocumentManager.getInstance(project).getDocument(file)!!
-    val indentOptions = detectableOptionsProvider.getValidCachedIndentOptions(file, document)!!
+    val indentOptions = detectableOptionsProvider.getValidCachedIndentOptions(file.project, file.virtualFile, document)!!
 
+    @Suppress("SuspiciousEqualsCombination")
     assert(options == indentOptions && options === indentOptions)
   }
 
@@ -89,30 +83,33 @@ class Test {
 
   fun testIndentOptionsCache_NotDroppedOnReinit() {
     myFixture.configureByText(JavaFileType.INSTANCE, code)
-    val before: IndentOptions = IndentOptions.retrieveFromAssociatedDocument(file)!!
+    val document = myFixture.getDocument(file);
+    val before: IndentOptions = IndentOptions.retrieveFromAssociatedDocument(document)!!
 
     reinitEditorSettings()
     
-    assertThat(before === IndentOptions.retrieveFromAssociatedDocument(file)).isTrue()
+    assertThat(before === IndentOptions.retrieveFromAssociatedDocument(document)).isTrue()
   }
   
   fun testIndentOptionsCache_NotDroppedOnChange() {
     myFixture.configureByText(JavaFileType.INSTANCE, code)
-    val before: IndentOptions = IndentOptions.retrieveFromAssociatedDocument(file)!!
+    val document = myFixture.getDocument(file);
+    val before: IndentOptions = IndentOptions.retrieveFromAssociatedDocument(document)!!
 
     myFixture.type(" abracadabra")
-    assertThat(before === IndentOptions.retrieveFromAssociatedDocument(file)).isTrue()
+    assertThat(before === IndentOptions.retrieveFromAssociatedDocument(document)).isTrue()
   }
-  
+
   fun testIndentOptionsDrop_OnDocumentChangeAndReinit() {
     myFixture.configureByText(JavaFileType.INSTANCE, code)
-    val before: IndentOptions = IndentOptions.retrieveFromAssociatedDocument(file)!!
+    val document = myFixture.getDocument(file);
+    val before: IndentOptions = IndentOptions.retrieveFromAssociatedDocument(document)!!
 
     myFixture.type(" abracadabra")
     
     reinitEditorSettings()
     
-    assertThat(before === IndentOptions.retrieveFromAssociatedDocument(file)).isFalse()
+    assertThat(before === IndentOptions.retrieveFromAssociatedDocument(document)).isFalse()
   }
   
   private fun reinitEditorSettings() = (myFixture.editor as EditorImpl).reinitSettings()

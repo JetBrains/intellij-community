@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
@@ -289,8 +290,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   private static boolean isDocComment(final PsiElement element, final CodeDocumentationAwareCommenter commenter) {
-    if (!(element instanceof PsiComment)) return false;
-    PsiComment comment = (PsiComment) element;
+    if (!(element instanceof PsiComment comment)) return false;
     return commenter.isDocumentationComment(comment);
   }
 
@@ -312,7 +312,7 @@ public class EnterHandler extends BaseEnterHandler {
     if (newIndent == null) {
       return -1;
     }
-    if (newIndent == LineIndentProvider.DO_NOT_ADJUST) {
+    if (Strings.areSameInstance(newIndent, LineIndentProvider.DO_NOT_ADJUST)) {
       return offset;
     }
     int delta = newIndent.length() - (indentEnd - indentStart);
@@ -369,6 +369,7 @@ public class EnterHandler extends BaseEnterHandler {
         boolean isBeforeEof = myOffset > 0 && myOffset == chars.length() && chars.charAt(myOffset - 1) == '\n';
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
+        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
         if (commentContext.docStart) {
           psiDocumentManager.commitDocument(myDocument);
           PsiElement element = myFile.findElementAt(commentContext.lineStart);
@@ -395,8 +396,12 @@ public class EnterHandler extends BaseEnterHandler {
                 }
                 commentContext.docStart = false;
               }
-              else {
+              else if (codeInsightSettings.CLOSE_COMMENT_ON_ENTER) {
                 generateJavadoc(commentContext.commenter);
+              }
+              else {
+                commentContext.docStart = false;
+                commentContext.docAsterisk = false;
               }
             }
           }
@@ -427,7 +432,6 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         boolean docIndentApplied = false;
-        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
         if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk) {
           final int offset = adjustLineIndentNoCommit(getLanguage(myDataContext), myDocument, myEditor, myOffset);
           if (offset >= 0) {

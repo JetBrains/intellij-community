@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration
 
 import com.intellij.execution.ExecutionException
@@ -211,20 +211,16 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   }
 
   protected inline fun processApplicableExtensions(configuration: U, handler: (T) -> Unit) {
-    for (extension in extensionPoint.iterable) {
-      if (extension != null && extension.isApplicableFor(configuration)) {
+    for (extension in extensionPoint.lazySequence()) {
+      if (extension.isApplicableFor(configuration)) {
         handler(extension)
       }
     }
   }
 
-  fun forEachApplicableExtension(configuration: U, handler: (T) -> Unit) {
-    processApplicableExtensions(configuration, handler)
-  }
-
   protected inline fun processEnabledExtensions(configuration: U, runnerSettings: RunnerSettings?, handler: (T) -> Unit) {
-    for (extension in extensionPoint.iterable) {
-      if (extension != null && extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
+    for (extension in extensionPoint.lazySequence()) {
+      if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
         handler(extension)
       }
     }

@@ -16,27 +16,24 @@ import java.util.function.Function;
 
 @ApiStatus.Experimental
 public final class JavaTargetDependentParameters {
-  private final List<Function<TargetEnvironmentRequest, JavaTargetParameter>> parameters = new ArrayList<>();
+  private final List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> parameters = new ArrayList<>();
   private TargetEnvironment myEnvironment;
 
-  public void addParameter(@NotNull Function<TargetEnvironmentRequest, JavaTargetParameter> parameter) {
+  public void addParameter(@NotNull Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter> parameter) {
     parameters.add(parameter);
   }
 
   @NotNull
   public List<String> toLocalParameters() {
-    return ContainerUtil.map(parameters, (f) -> f.apply(new LocalTargetEnvironmentRequest()).toLocalParameter());
+    return ContainerUtil.map(parameters, f -> f.apply(new LocalTargetEnvironmentRequest()).toLocalParameter());
   }
 
   @NotNull
-  public List<Function<TargetEnvironmentRequest, JavaTargetParameter>> asTargetParameters() {
+  public List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> asTargetParameters() {
     return parameters;
   }
 
   public void setTargetEnvironment(@NotNull TargetEnvironment environment) {
-    if (myEnvironment != null) {
-      throw new IllegalStateException("environment was provided twice");
-    }
     myEnvironment = environment;
   }
 

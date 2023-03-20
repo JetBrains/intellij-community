@@ -1,4 +1,4 @@
-// "Replace with collect" "false"
+// "Collapse loop with stream 'collect()'" "false"
 
 public class Test {
   public void test(int n) {

@@ -15,19 +15,17 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.Assertion;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests for {@link MostlySingularMultiMap}.
  */
 public class MostlySingularMultiMapTest extends TestCase {
-
-  private final Assertion CHECK = new Assertion();
-
   public void testAddRemove() {
     MostlySingularMultiMap<String, String> map = new MostlySingularMultiMap<>();
     assertEquals(Collections.emptyList(), map.get("key"));
@@ -50,17 +48,17 @@ public class MostlySingularMultiMapTest extends TestCase {
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
 
     map.add("multiKey", "multi2");
-    assertEquals(ContainerUtil.newArrayList("multi1", "multi2"), map.get("multiKey"));
+    assertEquals(List.of("multi1", "multi2"), map.get("multiKey"));
     assertEquals(Collections.singletonList("single"), map.get("key"));
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
 
     map.add("multiKey", "multi3");
-    assertEquals(ContainerUtil.newArrayList("multi1", "multi2", "multi3"), map.get("multiKey"));
+    assertEquals(List.of("multi1", "multi2", "multi3"), map.get("multiKey"));
     assertEquals(Collections.singletonList("single"), map.get("key"));
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
 
     map.remove("multiKey", "multi1");
-    assertEquals(ContainerUtil.newArrayList("multi2", "multi3"), map.get("multiKey"));
+    assertEquals(List.of("multi2", "multi3"), map.get("multiKey"));
     assertEquals(Collections.singletonList("single"), map.get("key"));
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
 
@@ -69,7 +67,7 @@ public class MostlySingularMultiMapTest extends TestCase {
     }
     assertEquals(2 + 20, ContainerUtil.newArrayList(map.get("multiKey")).size());
     assertEquals(2 + 20, map.valuesForKey("multiKey"));
-    CHECK.contains(ContainerUtil.newArrayList(map.get("multiKey")), "multi10");
+    assertThat(ContainerUtil.newArrayList(map.get("multiKey"))).contains("multi10");
     assertEquals(Collections.singletonList("single"), map.get("key"));
     assertEquals(1, map.valuesForKey("key"));
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
@@ -78,20 +76,20 @@ public class MostlySingularMultiMapTest extends TestCase {
     for (int i = 23; i >= 4; i--) {
       map.remove("multiKey", "multi" + i);
     }
-    assertEquals(ContainerUtil.newArrayList("multi2", "multi3"), map.get("multiKey"));
+    assertEquals(List.of("multi2", "multi3"), map.get("multiKey"));
     assertEquals(Collections.singletonList("single"), map.get("key"));
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
 
     assertTrue(map.removeAllValues("key"));
     assertEquals(Collections.emptyList(), map.get("key"));
     assertEquals(Collections.singletonList("single"), map.get("otherKey"));
-    assertEquals(ContainerUtil.newArrayList("multi2", "multi3"), map.get("multiKey"));
+    assertEquals(List.of("multi2", "multi3"), map.get("multiKey"));
     assertFalse(map.removeAllValues("key"));
 
     assertTrue(map.removeAllValues("otherKey"));
     assertEquals(Collections.emptyList(), map.get("key"));
     assertEquals(Collections.emptyList(), map.get("otherKey"));
-    assertEquals(ContainerUtil.newArrayList("multi2", "multi3"), map.get("multiKey"));
+    assertEquals(List.of("multi2", "multi3"), map.get("multiKey"));
 
     assertTrue(map.removeAllValues("multiKey"));
     assertEquals(Collections.emptyList(), map.get("key"));
@@ -140,38 +138,38 @@ public class MostlySingularMultiMapTest extends TestCase {
 
     map1.addAll(map2);
 
-    assertEquals(ContainerUtil.newArrayList("x", "y", "z"),
+    assertEquals(List.of("x", "y", "z"),
                  map1.get("k0a"));
-    assertEquals(ContainerUtil.newArrayList("x", "y"),
+    assertEquals(List.of("x", "y"),
                  map1.get("k0b"));
-    assertEquals(ContainerUtil.newArrayList("x"),
+    assertEquals(List.of("x"),
                  map1.get("k0c"));
 
-    assertEquals(ContainerUtil.newArrayList("x", "y", "z", "w"),
+    assertEquals(List.of("x", "y", "z", "w"),
                  map1.get("k1a"));
-    assertEquals(ContainerUtil.newArrayList("x", "y", "z"),
+    assertEquals(List.of("x", "y", "z"),
                  map1.get("k1b"));
-    assertEquals(ContainerUtil.newArrayList("x", "y"),
+    assertEquals(List.of("x", "y"),
                  map1.get("k1c"));
-    assertEquals(ContainerUtil.newArrayList("x"),
+    assertEquals(List.of("x"),
                  map1.get("k1d"));
 
-    assertEquals(ContainerUtil.newArrayList("x", "y", "a", "b", "c"),
+    assertEquals(List.of("x", "y", "a", "b", "c"),
                  map1.get("k2a"));
-    assertEquals(ContainerUtil.newArrayList("x", "y", "a", "b"),
+    assertEquals(List.of("x", "y", "a", "b"),
                  map1.get("k2b"));
-    assertEquals(ContainerUtil.newArrayList("x", "y", "a"),
+    assertEquals(List.of("x", "y", "a"),
                  map1.get("k2c"));
-    assertEquals(ContainerUtil.newArrayList("x", "y"),
+    assertEquals(List.of("x", "y"),
                  map1.get("k2d"));
 
-    assertEquals(ContainerUtil.newArrayList("x", "y", "z", "a", "b", "c"),
+    assertEquals(List.of("x", "y", "z", "a", "b", "c"),
                  map1.get("k3a"));
-    assertEquals(ContainerUtil.newArrayList("x", "y", "z", "a", "b"),
+    assertEquals(List.of("x", "y", "z", "a", "b"),
                  map1.get("k3b"));
-    assertEquals(ContainerUtil.newArrayList("x", "y", "z", "a"),
+    assertEquals(List.of("x", "y", "z", "a"),
                  map1.get("k3c"));
-    assertEquals(ContainerUtil.newArrayList("x", "y", "z"),
+    assertEquals(List.of("x", "y", "z"),
                  map1.get("k3d"));
   }
 

@@ -64,16 +64,17 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun assertInjected(vararg expectedInjections: InjectionAssertionData) {
+    runReadAction {
+      val expected = expectedInjections.toCollection(LinkedList())
+      val foundInjections = getAllInjections().toCollection(LinkedList())
 
-    val expected = expectedInjections.toCollection(LinkedList())
-    val foundInjections = getAllInjections().toCollection(LinkedList())
-
-    while (expected.isNotEmpty()) {
-      val (text, injectedLanguage) = expected.pop()
-      val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
-                   ?: Assert.fail(
-                     "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
-      foundInjections.remove(found)
+      while (expected.isNotEmpty()) {
+        val (text, injectedLanguage) = expected.pop()
+        val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
+                     ?: Assert.fail(
+                       "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
+        foundInjections.remove(found)
+      }
     }
   }
 
@@ -133,23 +134,25 @@ fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragme
   }
 }
 
-fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, vararg fragmentTexts: String) {
+fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, vararg referenceTexts: String) {
   runReadAction {
-    val doc = editor.document
     val provider = file.viewProvider
+    val documentText = editor.document.text
 
-    for (text in fragmentTexts) {
-      val pos = doc.text.indexOf(text) + text.length / 2
+    for (refText in referenceTexts) {
+      val pos = documentText.indexOf(refText) + refText.length / 2
 
       val element = provider.findElementAt(pos)
       assertNotNull("There should be element at $pos", element)
 
       val host = element as? PsiLanguageInjectionHost ?: element!!.parent as? PsiLanguageInjectionHost
-      assertNotNull("There should injection host at $pos", host)
+      assertNotNull("There should be injection host at $pos", host)
 
-      val reference = host!!.references.firstOrNull()
-      assertNotNull("There should be reference in element", reference)
-      assertEquals(referenceClass, reference!!.javaClass)
+      val references = host!!.references
+      assertTrue("There should be references in element", references.isNotEmpty())
+
+      val reference = references.find { referenceClass.isInstance(it) }
+      assertNotNull("There should be reference of type ${referenceClass} in element", reference)
     }
   }
 }

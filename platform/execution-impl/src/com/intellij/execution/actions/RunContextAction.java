@@ -10,6 +10,7 @@ import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollec
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunConfigurationStartHistory;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -85,6 +86,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
                        DataContext dataContext) {
     if (runManager.shouldSetRunConfigurationFromContext()) {
       runManager.setSelectedConfiguration(configuration);
+      RunConfigurationStartHistory.getInstance(configuration.getConfiguration().getProject()).register(configuration);
     }
 
     if (LOG.isDebugEnabled()) {

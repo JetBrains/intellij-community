@@ -36,14 +36,14 @@
     </extensionPoint>
     <extensionPoint name="documentWriteAccessGuard" interface="com.intellij.openapi.editor.impl.DocumentWriteAccessGuard" dynamic="true"/>
     <extensionPoint name="diagnostic.freezeProfiler" interface="com.intellij.diagnostic.FreezeProfiler" dynamic="true"/>
+    <extensionPoint name="elementsToHighlightFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+    <extensionPoint name="lang.treePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.templateLanguages.TreePatcher"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
-    <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
-                        serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl" preload="notHeadless"/>
-    <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON"/>
-
     <projectService serviceInterface="com.intellij.psi.PsiManager"
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
     <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
@@ -72,7 +72,11 @@
                     serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiReferenceService"
                         serviceImplementation="com.intellij.psi.PsiReferenceServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
+                        serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
     <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
     <projectService serviceImplementation="com.intellij.pom.tree.TreeAspect"/>
+    <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
+                    serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>
   </extensions>
 </idea-plugin>

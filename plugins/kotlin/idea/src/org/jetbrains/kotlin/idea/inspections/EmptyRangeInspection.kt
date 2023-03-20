@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -7,43 +7,63 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.inspections.collections.isIterable
 import org.jetbrains.kotlin.idea.intentions.getArguments
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getType
 
+/**
+ * Tests:
+ * [org.jetbrains.kotlin.idea.codeInsight.InspectionTestGenerated.Inspections.testEmptyRange_inspectionData_Inspections_test]
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.EmptyRange]
+ */
 class EmptyRangeInspection : AbstractRangeInspection() {
-    override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        val (startValue, endValue) = expression.startAndEndValue(context) ?: return
-        if (startValue > endValue) {
-            holder.registerProblem(expression, downTo = true)
+    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) =
+        visitRangeImpl<Nothing>(range, context, type, holder)
+
+    private fun <T> visitRangeImpl(
+        range: KtExpression,
+        context: Lazy<BindingContext>,
+        type: RangeKtExpressionType,
+        holder: ProblemsHolder
+    ) where T : Comparable<T> {
+        when (type) {
+            RANGE_TO -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                if (startValue > endValue) holder.registerProblem(range, context, downTo = true)
+            }
+
+            UNTIL, RANGE_UNTIL -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                when {
+                    startValue > endValue -> holder.registerProblem(range, context, downTo = true)
+                    startValue == endValue -> holder.registerProblem(range, context, downTo = false)
+                }
+            }
+
+            DOWN_TO -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                if (startValue < endValue) holder.registerProblem(range, context, downTo = false)
+            }
         }
     }
 
-    override fun visitUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        val (startValue, endValue) = expression.startAndEndValue(context) ?: return
-        when {
-            startValue > endValue -> holder.registerProblem(expression, downTo = true)
-            startValue == endValue -> holder.registerProblem(expression, downTo = false)
-        }
-    }
-
-    override fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        val (startValue, endValue) = expression.startAndEndValue(context) ?: return
-        if (startValue < endValue) {
-            holder.registerProblem(expression, downTo = false)
-        }
-    }
-
-    private fun ProblemsHolder.registerProblem(expression: KtExpression, downTo: Boolean) {
-        val (functionName, operator) = if (downTo) "downTo" to "downTo" else "rangeTo" to ".."
+    private fun ProblemsHolder.registerProblem(expression: KtExpression, context: Lazy<BindingContext>, downTo: Boolean) {
+        val (msg, fixes) =
+            if (!downTo || expression.getType(context.value)?.isIterable() == true) {
+                val (functionName, operator) = if (downTo) "downTo" to "downTo" else "rangeTo" to ".."
+                KotlinBundle.message("this.range.is.empty.did.you.mean.to.use.0", functionName) to arrayOf(ReplaceFix(operator))
+            } else {
+                KotlinBundle.message("this.range.is.empty") to emptyArray<LocalQuickFix>()
+            }
         registerProblem(
             expression,
-            KotlinBundle.message("this.range.is.empty.did.you.mean.to.use.0", functionName),
+            msg,
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            ReplaceFix(operator)
+            *fixes
         )
     }
 
@@ -57,22 +77,20 @@ class EmptyRangeInspection : AbstractRangeInspection() {
             val (left, right) = element.getArguments() ?: return
             if (left == null || right == null) return
 
-            element.replace(KtPsiFactory(element).createExpressionByPattern("$0 $rangeOperator $1", left, right))
+            element.replace(KtPsiFactory(project).createExpressionByPattern("$0 $rangeOperator $1", left, right))
         }
     }
 
-    private fun KtExpression.startAndEndValue(context: BindingContext): Pair<Long, Long>? {
+    private fun <T> KtExpression.getComparableArguments(context: Lazy<BindingContext>): Pair<T, T>? where T : Comparable<T> {
         val (start, end) = getArguments() ?: return null
-        val startValue = start?.longValueOrNull(context) ?: return null
-        val endValue = end?.longValueOrNull(context) ?: return null
-        return startValue to endValue
-    }
+        @Suppress("UNCHECKED_CAST")
+        fun KtExpression.value() = constantValueOrNull(context.value)?.boxedValue()
+            // Because it's possible to write such things `2L..0`
+            ?.let { if (it is Number && it !is Double && it !is Float) it.toLong() else it } as? T
 
-    private fun KtExpression.longValueOrNull(context: BindingContext): Long? {
-        return when (val constantValue = constantValueOrNull(context)?.value) {
-            is Number -> constantValue.toLong()
-            is Char -> constantValue.toLong()
-            else -> null
-        }
+        val startValue = start?.value() ?: return null
+        val endValue = end?.value() ?: return null
+        if (startValue::class != endValue::class) return null
+        return startValue to endValue
     }
 }

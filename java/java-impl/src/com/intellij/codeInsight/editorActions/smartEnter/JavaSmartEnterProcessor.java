@@ -4,7 +4,6 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
@@ -25,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,9 +37,6 @@ import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author spleaner
- */
 public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(JavaSmartEnterProcessor.class);
 
@@ -56,13 +53,12 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
             new DoWhileConditionFixer(),
             new BlockBraceFixer(),
             new MissingIfBranchesFixer(),
-            new MissingWhileBodyFixer(),
             new MissingTryBodyFixer(),
             new MissingSwitchBodyFixer(),
+            new MissingLambdaBodyFixer(),
             new MissingCatchBodyFixer(),
             new MissingSynchronizedBodyFixer(),
-            new MissingForBodyFixer(),
-            new MissingForeachBodyFixer(),
+            new MissingLoopBodyFixer(),
             new ParameterListFixer(),
             new MissingCommaFixer(),
             new MissingMethodBodyFixer(),
@@ -95,14 +91,12 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final int MAX_ATTEMPTS = 20;
   private static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
-  public static class TooManyAttemptsException extends Exception {}
+  private static class TooManyAttemptsException extends Exception {}
 
   private final JavadocFixer myJavadocFixer = new JavadocFixer();
 
   @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
-
     return invokeProcessor(editor, psiFile, false);
   }
 
@@ -273,7 +267,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (atCaret instanceof PsiWhiteSpace) return null;
-    if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) {
+    if (PsiUtil.isJavaToken(atCaret, JavaTokenType.RBRACE)) {
       atCaret = atCaret.getParent();
       boolean expressionEndingWithBrace = atCaret instanceof PsiAnonymousClass ||
                                           atCaret instanceof PsiArrayInitializerExpression ||
@@ -369,7 +363,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   private static final class FixerUsageCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 1);
+    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 3);
     private static final EventId1<String> USED = GROUP.registerEvent("fixer_used", new StringEventField.ValidatedByAllowedValues(
       "fixer_used",
       ContainerUtil.map(ourFixers, f -> f.getClass().getSimpleName())));

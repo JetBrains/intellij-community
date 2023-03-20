@@ -15,17 +15,23 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 public class MuteBreakpointAction extends ToggleAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public boolean isSelected(@NotNull final AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     if (project != null) {
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
         DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
@@ -39,7 +45,7 @@ public class MuteBreakpointAction extends ToggleAction {
 
   @Override
   public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     if (project != null) {
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
         DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();
@@ -54,7 +60,7 @@ public class MuteBreakpointAction extends ToggleAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     if (project != null) {
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
         DebuggerToggleActionHandler handler = support.getMuteBreakpointsHandler();

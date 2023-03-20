@@ -1,18 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "OVERRIDE_DEPRECATION")
 package com.intellij.ide.plugins
 
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.platform.util.plugins.DataLoader
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -22,11 +24,19 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
-private val checkCompatibilityFlag = System.getProperty("idea.plugin.check.compatibility", "true") != "false"
+fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
-fun Iterable<IdeaPluginDescriptor>.toPluginSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
+internal fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
+  val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+  return mapNotNull { pluginIdMap.get(it) }
+}
 
-fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull { PluginManagerCore.findPlugin(it) }
+internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
+  return joinToString(
+    prefix = "Plugins to $operation: [",
+    postfix = "]",
+  ) { it.idString }
+}
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
@@ -82,11 +92,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     pluginDependencies = list ?: Collections.emptyList()
   }
 
-  companion object {
-    @ApiStatus.Internal
-    @JvmField var disableNonBundledPlugins = false
-  }
-
   @Transient @JvmField var jarFiles: List<Path>? = null
   private var _pluginClassLoader: ClassLoader? = null
 
@@ -101,18 +106,15 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   @JvmField val content: PluginContentDescriptor = raw.contentModules?.let { PluginContentDescriptor(it) } ?: PluginContentDescriptor.EMPTY
   @JvmField val dependencies = raw.dependencies
-  @JvmField val modules: List<PluginId> = raw.modules ?: Collections.emptyList()
+  @JvmField var modules: List<PluginId> = raw.modules ?: Collections.emptyList()
 
   private val descriptionChildText = raw.description
 
   @JvmField val isUseIdeaClassLoader = raw.isUseIdeaClassLoader
-
   @JvmField val isBundledUpdateAllowed = raw.isBundledUpdateAllowed
-
   @JvmField internal val implementationDetail = raw.implementationDetail
-
+  @ApiStatus.Experimental @JvmField internal val onDemand = raw.onDemand && isOnDemandPluginEnabled
   @JvmField internal val isRestartRequired = raw.isRestartRequired
-
   @JvmField val packagePrefix = raw.`package`
 
   private val sinceBuild = raw.sinceBuild
@@ -121,7 +123,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   var isDeleted = false
 
-  @JvmField internal var isIncomplete = false
+  @JvmField internal var isIncomplete: PluginLoadingError? = null
 
   override fun getDescriptorPath() = descriptorPath
 
@@ -138,7 +140,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                         dataLoader: DataLoader,
                         moduleName: String?): IdeaPluginDescriptorImpl {
     raw.name = name
-    @Suppress("TestOnlyProblems")
     val result = IdeaPluginDescriptorImpl(raw, path = path, isBundled = isBundled, id = id, moduleName = moduleName,
                                           useCoreClassLoader = useCoreClassLoader)
     result.descriptorPath = descriptorPath
@@ -192,30 +193,28 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     if (!isSub) {
+      if (id == PluginManagerCore.CORE_ID) {
+        modules = modules + IdeaPluginPlatform.getHostPlatformModuleIds()
+      }
+
       if (context.isPluginDisabled(id)) {
-        markAsIncomplete(context, disabledDependency = null, shortMessage = null)
+        markAsIncomplete(disabledDependency = null, shortMessage = null)
       }
       else {
         checkCompatibility(context)
-        if (isIncomplete) {
+        if (isIncomplete != null) {
           return
         }
 
         for (pluginDependency in dependencies.plugins) {
           if (context.isPluginDisabled(pluginDependency.id)) {
-            markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
-          }
-          else if (context.result.isBroken(pluginDependency.id)) {
-            markAsIncomplete(context = context,
-                             disabledDependency = null,
-                             shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
-                             pluginId = pluginDependency.id)
+            markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
           }
         }
       }
     }
 
-    if (!isIncomplete && moduleName == null) {
+    if (isIncomplete == null && moduleName == null) {
       processOldDependencies(descriptor = this,
                              context = context,
                              pathResolver = pathResolver,
@@ -233,16 +232,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     for (dependency in dependencies) {
       // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
-        if (!dependency.isOptional && !isIncomplete) {
-          markAsIncomplete(context, dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
-        }
-      }
-      else if (context.result.isBroken(dependency.pluginId)) {
-        if (!dependency.isOptional && !isIncomplete) {
-          markAsIncomplete(context = context,
-                           disabledDependency = null,
-                           shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
-                           pluginId = dependency.pluginId)
+        if (!dependency.isOptional && isIncomplete == null) {
+          markAsIncomplete(dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
         }
       }
 
@@ -299,16 +290,15 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     fun markAsIncompatible(error: PluginLoadingError) {
-      if (isIncomplete) {
+      if (isIncomplete != null) {
         return
       }
 
-      isIncomplete = true
+      isIncomplete = error
       isEnabled = false
-      context.result.addIncompletePlugin(plugin = this, error = error)
     }
 
-    if (disableNonBundledPlugins) {
+    if (AppMode.isDisableNonBundledPlugins()) {
       markAsIncompatible(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },
@@ -318,15 +308,13 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       return
     }
 
-    if (checkCompatibilityFlag && (sinceBuild != null || untilBuild != null)) {
-      PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get())?.let {
-        markAsIncompatible(it)
-        return
-      }
+    PluginManagerCore.checkBuildNumberCompatibility(this, context.productBuildNumber())?.let {
+      markAsIncompatible(it)
+      return
     }
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve "Plugin Error" (IDEA-232675)"
-    if (context.result.isBroken(this)) {
+    if (context.isBroken(this)) {
       markAsIncompatible(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.marked.as.broken", name, version) },
@@ -335,34 +323,31 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
   }
 
-  private fun markAsIncomplete(context: DescriptorListLoadingContext,
-                               disabledDependency: PluginId?,
+  private fun markAsIncomplete(disabledDependency: PluginId?,
                                @PropertyKey(resourceBundle = CoreBundle.BUNDLE) shortMessage: String?,
                                pluginId: PluginId? = disabledDependency) {
-    if (isIncomplete) {
+    if (isIncomplete != null) {
       return
     }
 
-    isIncomplete = true
-    isEnabled = false
-
-    val pluginError = if (shortMessage == null) {
-      null
+    if (shortMessage == null) {
+      isIncomplete = PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED)
     }
     else {
-      PluginLoadingError(plugin = this,
-                         detailedMessageSupplier = null,
-                         shortMessageSupplier = { CoreBundle.message(shortMessage, pluginId!!) },
-                         isNotifyUser = false,
-                         disabledDependency = disabledDependency)
+      isIncomplete = PluginLoadingError(plugin = this,
+                                        detailedMessageSupplier = null,
+                                        shortMessageSupplier = { CoreBundle.message(shortMessage, pluginId!!) },
+                                        isNotifyUser = false,
+                                        disabledDependency = disabledDependency)
     }
-    context.result.addIncompletePlugin(this, pluginError)
+
+    isEnabled = false
   }
 
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>,
                          containerDescriptor: ContainerDescriptor,
-                         listenerCallbacks: List<Runnable>?) {
+                         listenerCallbacks: MutableList<in Runnable>?) {
     containerDescriptor.extensions?.let {
       if (!it.isEmpty()) {
         @Suppress("JavaMapForEach")
@@ -410,7 +395,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   private fun doRegisterExtensions(unsortedMap: Map<String, MutableList<ExtensionDescriptor>>,
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
-                                   listenerCallbacks: List<Runnable>?): Int {
+                                   listenerCallbacks: MutableList<in Runnable>?): Int {
     var registeredCount = 0
     for (entry in unsortedMap) {
       val point = nameToPoint.get(entry.key) ?: continue
@@ -430,7 +415,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     result = (resourceBundleBaseName?.let { baseName ->
       try {
         AbstractBundle.messageOrDefault(
-          DynamicBundle.INSTANCE.getResourceBundle(baseName, classLoader),
+          DynamicBundle.getResourceBundle(classLoader, baseName),
           "plugin.$id.description",
           descriptionChildText ?: "",
         )
@@ -524,6 +509,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun isImplementationDetail() = implementationDetail
 
+  override fun isOnDemand() = onDemand
+
   override fun isRequireRestart() = isRestartRequired
 
   override fun equals(other: Any?): Boolean {
@@ -570,3 +557,27 @@ private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String,
     i++
   }
 }
+
+private var isOnDemandEnabled: Boolean? = null
+private const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
+
+var isOnDemandPluginEnabled: Boolean
+  @ApiStatus.Experimental get() {
+    var result = isOnDemandEnabled
+    if (result == null) {
+      synchronized(IdeaPluginDescriptorImpl::class.java) {
+        if (isOnDemandEnabled == null) {
+          result = !AppMode.isHeadless() && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
+          isOnDemandEnabled = result
+        }
+      }
+    }
+
+    return result!!
+  }
+
+  @TestOnly set(value) {
+    synchronized(IdeaPluginDescriptorImpl::class.java) {
+      isOnDemandEnabled = value
+    }
+  }

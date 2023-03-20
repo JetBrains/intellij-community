@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.frame;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 /**
  * Provides implementation of 'Mark Object' feature. <p>
@@ -55,9 +57,26 @@ public abstract class XValueMarkerProvider<V extends XValue, M> {
   }
 
   /**
+   * Async version of the {@link #markValue(XValue)} method
+   * @return a promise with a marker for {@code value}
+   */
+  @NotNull
+  public Promise<M> markValueAsync(@NotNull V value) {
+    return Promises.resolvedPromise(markValue(value));
+  }
+
+  /**
    * This method is called when 'Unmark Object' action is invoked.
    */
   public void unmarkValue(@NotNull V value, @NotNull M marker) {
+  }
+
+  /**
+   * Async version of the {@link #unmarkValue(XValue, Object)} method
+   */
+  public Promise<Object> unmarkValueAsync(@NotNull V value, @NotNull M marker) {
+    unmarkValue(value, marker);
+    return Promises.resolvedPromise();
   }
 
   public final Class<V> getValueClass() {

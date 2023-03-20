@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
@@ -46,8 +49,20 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     chooseTargetClass(project, editor, this::invokeImpl);
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = PsiTreeUtil.findSameElementInCopy(getElement(), file);
+    List<PsiClass> targetClasses = filterTargetClasses(element, project);
+    if (targetClasses.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    invokeImpl(targetClasses.get(0));
+    return IntentionPreviewInfo.DIFF;
+  }
+
   private void invokeImpl(final PsiClass targetClass) {
     PsiNewExpression newExpression = getNewExpression();
+    if (!targetClass.isPhysical()) {
+      newExpression = PsiTreeUtil.findSameElementInCopy(newExpression, targetClass.getContainingFile());
+    }
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
     assert ref != null;
     String refName = ref.getReferenceName();

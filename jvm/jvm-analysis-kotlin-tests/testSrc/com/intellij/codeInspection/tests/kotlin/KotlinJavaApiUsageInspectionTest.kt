@@ -1,12 +1,13 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.JavaApiUsageInspectionTestBase
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
   fun `test constructor`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_4)
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       fun foo() {
           throw <error descr="Usage of API documented as @since 1.5+">IllegalArgumentException</error>("", RuntimeException());
       }
@@ -22,7 +23,7 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
         public void moveTo(int x, int y) { }
       }
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.awt.geom.GeneralPath
       
       fun foo() {
@@ -34,7 +35,7 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test qualified reference`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.nio.charset.StandardCharsets
       
       fun main() {
@@ -45,7 +46,7 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @file:Suppress("UNUSED_PARAMETER")
       
       class Annotation {
@@ -57,7 +58,7 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test override annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
       import java.util.Map
 
@@ -71,7 +72,7 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
 
   fun `test default methods`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNUSED_VARIABLE")
       import java.util.Iterator
 
@@ -111,6 +112,20 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
+  fun `test single method multiple overrides`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+        class CustomList : java.util.AbstractList<Int>() {
+          override val size: Int = 0
+
+          override fun get(index: Int): Int = 0
+
+          override fun <error descr="Usage of API documented as @since 1.8+">spliterator</error>(): java.util.<error descr="Usage of API documented as @since 1.8+">Spliterator</error><Int> =
+            java.util.<error descr="Usage of API documented as @since 1.8+">Spliterators</error>.spliterator(this, 0)
+        }
+    """.trimIndent())
+  }
+
   fun `test raw inherit from newly generified`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
@@ -118,7 +133,7 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       
       public class AbstractListModel<K> {}
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class RawInheritFromNewlyGenerified {
         private lateinit var myModel: AbstractCCM<String>
       }
@@ -139,7 +154,7 @@ class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       
       public class AbstractListModel<K> implements ListModel<E> { }
     """.trimIndent())
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import javax.swing.AbstractListModel
       
       abstract class AbstractCCM<T> : <error descr="Usage of generified after 1.6 API which would cause compilation problems with JDK 6">AbstractListModel</error><T>() { }

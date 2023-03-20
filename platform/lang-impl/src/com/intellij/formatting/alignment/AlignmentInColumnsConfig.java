@@ -25,7 +25,6 @@ import com.intellij.psi.tree.TokenSet;
  * <b>Note:</b> this class doesn't provide custom realization for {@link #hashCode()} and {@link #equals(Object)} at the moment.
  * Feel free to add them as necessary.
  *
- * @author Denis Zhdanov
  * @see AlignmentInColumnsHelper
  */
 public class AlignmentInColumnsConfig {

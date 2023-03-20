@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
@@ -42,12 +42,15 @@ object CreateBinaryOperationActionFactory : CreateCallableMemberFromUsageFactory
         }
         val parameters = Collections.singletonList(ParameterInfo(TypeInfo(argumentExpr, Variance.IN_VARIANCE)))
         val isOperator = token != KtTokens.IDENTIFIER
+
+        val psiFactory = KtPsiFactory(element.project)
+
         return FunctionInfo(
             operationName,
             receiverType,
             returnType,
             parameterInfos = parameters,
-            modifierList = KtPsiFactory(element).createModifierList(if (isOperator) KtTokens.OPERATOR_KEYWORD else KtTokens.INFIX_KEYWORD)
+            modifierList = psiFactory.createModifierList(if (isOperator) KtTokens.OPERATOR_KEYWORD else KtTokens.INFIX_KEYWORD)
         )
     }
 }

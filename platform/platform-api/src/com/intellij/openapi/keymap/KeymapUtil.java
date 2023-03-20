@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -55,12 +55,19 @@ public final class KeymapUtil {
     return getShortcutText(shortcut);
   }
 
+  @NlsSafe
+  @Nullable
+  public static String getShortcutTextOrNull(@NotNull @NonNls String actionId) {
+    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+    if (shortcut == null) return null;
+    return getShortcutText(shortcut);
+  }
+
   @NotNull
   public static @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
-    if (shortcut instanceof KeyboardShortcut) {
-      KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+    if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
 
       String acceleratorText = getKeystrokeText(keyboardShortcut.getFirstKeyStroke());
       if (!acceleratorText.isEmpty()) {
@@ -75,8 +82,7 @@ public final class KeymapUtil {
     else if (shortcut instanceof MouseShortcut) {
       s = getMouseShortcutText((MouseShortcut)shortcut);
     }
-    else if (shortcut instanceof KeyboardModifierGestureShortcut) {
-      final KeyboardModifierGestureShortcut gestureShortcut = (KeyboardModifierGestureShortcut)shortcut;
+    else if (shortcut instanceof KeyboardModifierGestureShortcut gestureShortcut) {
       s = gestureShortcut.getType() == KeyboardGestureAction.ModifierType.dblClick ? "Press, release and hold " : "Hold ";
       s += getKeystrokeText(gestureShortcut.getStroke());
     }
@@ -159,22 +165,23 @@ public final class KeymapUtil {
 
   @NotNull
   public static String getKeyText(int code) {
-    switch (code) {
-      case KeyEvent.VK_BACK_QUOTE:     return "`";
-      case KeyEvent.VK_SEPARATOR:      return ",";
-      case KeyEvent.VK_DECIMAL:        return ".";
-      case KeyEvent.VK_SLASH:          return "/";
-      case KeyEvent.VK_BACK_SLASH:     return "\\";
-      case KeyEvent.VK_PERIOD:         return ".";
-      case KeyEvent.VK_SEMICOLON:      return ";";
-      case KeyEvent.VK_CLOSE_BRACKET:  return "]";
-      case KeyEvent.VK_OPEN_BRACKET:   return "[";
-      case KeyEvent.VK_EQUALS:         return "=";
-    }
-
-    String result = isNativeMacShortcuts() ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
-    // [vova] this is dirty fix for bug #35092
-    return CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
+    return switch (code) {
+      case KeyEvent.VK_BACK_QUOTE    -> "`";
+      case KeyEvent.VK_SEPARATOR     -> ",";
+      case KeyEvent.VK_DECIMAL       -> ".";
+      case KeyEvent.VK_SLASH         -> "/";
+      case KeyEvent.VK_BACK_SLASH    -> "\\";
+      case KeyEvent.VK_PERIOD        -> ".";
+      case KeyEvent.VK_SEMICOLON     -> ";";
+      case KeyEvent.VK_CLOSE_BRACKET -> "]";
+      case KeyEvent.VK_OPEN_BRACKET  -> "[";
+      case KeyEvent.VK_EQUALS        -> "=";
+      default -> {
+        String result = isNativeMacShortcuts() ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
+        // [vova] this is dirty fix for bug #35092
+        yield CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
+      }
+    };
   }
 
   private static boolean isNativeMacShortcuts() {
@@ -234,84 +241,79 @@ public final class KeymapUtil {
   }
 
   private static String getSimplifiedMacKeyText(int code) {
-    switch(code) {
-      case KeyEvent.VK_ENTER: return "Enter";
-      case KeyEvent.VK_BACK_SPACE: return "Backspace";
-      case KeyEvent.VK_TAB: return "Tab";
-      case KeyEvent.VK_CANCEL: return "Cancel";
-      case KeyEvent.VK_CLEAR: return "Clear";
-      case KeyEvent.VK_COMPOSE: return "Compose";
-      case KeyEvent.VK_PAUSE: return "Pause";
-      case KeyEvent.VK_CAPS_LOCK: return "Caps Lock";
-      case KeyEvent.VK_ESCAPE: return "Escape";
-      case KeyEvent.VK_SPACE: return "Space";
-      case KeyEvent.VK_PAGE_UP: return "Page Up";
-      case KeyEvent.VK_PAGE_DOWN: return "Page Down";
-      case KeyEvent.VK_END: return "End";
-      case KeyEvent.VK_HOME: return "Home";
-      case KeyEvent.VK_LEFT: return "Left";
-      case KeyEvent.VK_UP: return "Up";
-      case KeyEvent.VK_RIGHT: return "Right";
-      case KeyEvent.VK_DOWN: return "Down";
-      case KeyEvent.VK_BEGIN: return "Begin";
+    return switch (code) {
+      case KeyEvent.VK_ENTER -> "Enter";
+      case KeyEvent.VK_BACK_SPACE -> "Backspace";
+      case KeyEvent.VK_TAB -> "Tab";
+      case KeyEvent.VK_CANCEL -> "Cancel";
+      case KeyEvent.VK_CLEAR -> "Clear";
+      case KeyEvent.VK_COMPOSE -> "Compose";
+      case KeyEvent.VK_PAUSE -> "Pause";
+      case KeyEvent.VK_CAPS_LOCK -> "Caps Lock";
+      case KeyEvent.VK_ESCAPE -> "Escape";
+      case KeyEvent.VK_SPACE -> "Space";
+      case KeyEvent.VK_PAGE_UP -> "Page Up";
+      case KeyEvent.VK_PAGE_DOWN -> "Page Down";
+      case KeyEvent.VK_END -> "End";
+      case KeyEvent.VK_HOME -> "Home";
+      case KeyEvent.VK_LEFT -> "Left";
+      case KeyEvent.VK_UP -> "Up";
+      case KeyEvent.VK_RIGHT -> "Right";
+      case KeyEvent.VK_DOWN -> "Down";
+      case KeyEvent.VK_BEGIN -> "Begin";
 
       // modifiers
-      case KeyEvent.VK_SHIFT: return "Shift";
-      case KeyEvent.VK_CONTROL: return "Control";
-      case KeyEvent.VK_ALT: return "Alt";
-      case KeyEvent.VK_META: return "Meta";
-      case KeyEvent.VK_ALT_GRAPH: return "Alt Graph";
+      case KeyEvent.VK_SHIFT -> "Shift";
+      case KeyEvent.VK_CONTROL -> "Control";
+      case KeyEvent.VK_ALT -> "Alt";
+      case KeyEvent.VK_META -> "Meta";
+      case KeyEvent.VK_ALT_GRAPH -> "Alt Graph";
 
       // numpad numeric keys handled below
-      case KeyEvent.VK_MULTIPLY: return "NumPad *";
-      case KeyEvent.VK_ADD: return "NumPad +";
-      case KeyEvent.VK_SEPARATOR: return "NumPad ,";
-      case KeyEvent.VK_SUBTRACT: return "NumPad -";
-      case KeyEvent.VK_DECIMAL: return "NumPad .";
-      case KeyEvent.VK_DIVIDE: return "NumPad /";
-      case KeyEvent.VK_DELETE: return "Delete";
-      case KeyEvent.VK_NUM_LOCK: return "Num Lock";
-      case KeyEvent.VK_SCROLL_LOCK: return "Scroll Lock";
-
-      case KeyEvent.VK_WINDOWS: return "Windows";
-      case KeyEvent.VK_CONTEXT_MENU: return "Context Menu";
-
-      case KeyEvent.VK_F1: return "F1";
-      case KeyEvent.VK_F2: return "F2";
-      case KeyEvent.VK_F3: return "F3";
-      case KeyEvent.VK_F4: return "F4";
-      case KeyEvent.VK_F5: return "F5";
-      case KeyEvent.VK_F6: return "F6";
-      case KeyEvent.VK_F7: return "F7";
-      case KeyEvent.VK_F8: return "F8";
-      case KeyEvent.VK_F9: return "F9";
-      case KeyEvent.VK_F10: return "F10";
-      case KeyEvent.VK_F11: return "F11";
-      case KeyEvent.VK_F12: return "F12";
-      case KeyEvent.VK_F13: return "F13";
-      case KeyEvent.VK_F14: return "F14";
-      case KeyEvent.VK_F15: return "F15";
-      case KeyEvent.VK_F16: return "F16";
-      case KeyEvent.VK_F17: return "F17";
-      case KeyEvent.VK_F18: return "F18";
-      case KeyEvent.VK_F19: return "F19";
-      case KeyEvent.VK_F20: return "F20";
-      case KeyEvent.VK_F21: return "F21";
-      case KeyEvent.VK_F22: return "F22";
-      case KeyEvent.VK_F23: return "F23";
-      case KeyEvent.VK_F24: return "F24";
-
-      case KeyEvent.VK_PRINTSCREEN: return "Print Screen";
-      case KeyEvent.VK_INSERT: return "Insert";
-      case KeyEvent.VK_HELP: return "Help";
-
-      case KeyEvent.VK_KP_UP: return "Up";
-      case KeyEvent.VK_KP_DOWN: return "Down";
-      case KeyEvent.VK_KP_LEFT: return "Left";
-      case KeyEvent.VK_KP_RIGHT: return "Right";
-    }
-
-    return getKeyText(code);
+      case KeyEvent.VK_MULTIPLY -> "NumPad *";
+      case KeyEvent.VK_ADD -> "NumPad +";
+      case KeyEvent.VK_SEPARATOR -> "NumPad ,";
+      case KeyEvent.VK_SUBTRACT -> "NumPad -";
+      case KeyEvent.VK_DECIMAL -> "NumPad .";
+      case KeyEvent.VK_DIVIDE -> "NumPad /";
+      case KeyEvent.VK_DELETE -> "Delete";
+      case KeyEvent.VK_NUM_LOCK -> "Num Lock";
+      case KeyEvent.VK_SCROLL_LOCK -> "Scroll Lock";
+      case KeyEvent.VK_WINDOWS -> "Windows";
+      case KeyEvent.VK_CONTEXT_MENU -> "Context Menu";
+      case KeyEvent.VK_F1 -> "F1";
+      case KeyEvent.VK_F2 -> "F2";
+      case KeyEvent.VK_F3 -> "F3";
+      case KeyEvent.VK_F4 -> "F4";
+      case KeyEvent.VK_F5 -> "F5";
+      case KeyEvent.VK_F6 -> "F6";
+      case KeyEvent.VK_F7 -> "F7";
+      case KeyEvent.VK_F8 -> "F8";
+      case KeyEvent.VK_F9 -> "F9";
+      case KeyEvent.VK_F10 -> "F10";
+      case KeyEvent.VK_F11 -> "F11";
+      case KeyEvent.VK_F12 -> "F12";
+      case KeyEvent.VK_F13 -> "F13";
+      case KeyEvent.VK_F14 -> "F14";
+      case KeyEvent.VK_F15 -> "F15";
+      case KeyEvent.VK_F16 -> "F16";
+      case KeyEvent.VK_F17 -> "F17";
+      case KeyEvent.VK_F18 -> "F18";
+      case KeyEvent.VK_F19 -> "F19";
+      case KeyEvent.VK_F20 -> "F20";
+      case KeyEvent.VK_F21 -> "F21";
+      case KeyEvent.VK_F22 -> "F22";
+      case KeyEvent.VK_F23 -> "F23";
+      case KeyEvent.VK_F24 -> "F24";
+      case KeyEvent.VK_PRINTSCREEN -> "Print Screen";
+      case KeyEvent.VK_INSERT -> "Insert";
+      case KeyEvent.VK_HELP -> "Help";
+      case KeyEvent.VK_KP_UP -> "Up";
+      case KeyEvent.VK_KP_DOWN -> "Down";
+      case KeyEvent.VK_KP_LEFT -> "Left";
+      case KeyEvent.VK_KP_RIGHT -> "Right";
+      default -> getKeyText(code);
+    };
   }
 
   /**
@@ -565,8 +567,7 @@ public final class KeymapUtil {
   @Nullable
   public static KeyStroke getKeyStroke(@NotNull final ShortcutSet shortcutSet) {
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut)) return null;
-    final KeyboardShortcut shortcut = (KeyboardShortcut)shortcuts[0];
+    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut shortcut)) return null;
     if (shortcut.getSecondKeyStroke() != null) {
       return null;
     }
@@ -581,10 +582,9 @@ public final class KeymapUtil {
     }
     Set<KeyStroke> result = new HashSet<>();
     for (Shortcut shortcut : shortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut)) {
+      if (!(shortcut instanceof KeyboardShortcut kbShortcut)) {
         continue;
       }
-      KeyboardShortcut kbShortcut = (KeyboardShortcut)shortcut;
       if (kbShortcut.getSecondKeyStroke() != null) {
         continue;
       }
@@ -620,8 +620,7 @@ public final class KeymapUtil {
                                                            @NotNull @NonNls String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
-      if (shortcut instanceof MouseShortcut) {
-        final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
+      if (shortcut instanceof MouseShortcut mouseShortcut) {
         if (mouseShortcut.getModifiers() == syntheticShortcut.getModifiers()) {
           return true;
         }
@@ -731,9 +730,20 @@ public final class KeymapUtil {
     return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
   }
 
+  /**
+   * @deprecated use {@link #getShortcutsForMnemonicChar} or {@link #getShortcutsForMnemonicCode} instead
+   */
+  @Deprecated
   @Nullable
   public static CustomShortcutSet getMnemonicAsShortcut(int mnemonic) {
-    mnemonic = KeyEvent.getExtendedKeyCodeForChar(mnemonic);
+    return getShortcutsForMnemonicCode(mnemonic);
+  }
+
+  public static @Nullable CustomShortcutSet getShortcutsForMnemonicChar(char mnemonic) {
+    return getShortcutsForMnemonicCode(KeyEvent.getExtendedKeyCodeForChar(mnemonic));
+  }
+
+  public static @Nullable CustomShortcutSet getShortcutsForMnemonicCode(int mnemonic) {
     if (mnemonic != KeyEvent.VK_UNDEFINED) {
       KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
       KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);

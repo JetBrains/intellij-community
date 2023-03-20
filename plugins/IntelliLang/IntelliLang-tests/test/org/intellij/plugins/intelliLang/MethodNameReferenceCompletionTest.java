@@ -13,58 +13,60 @@ public class MethodNameReferenceCompletionTest extends LightJavaCodeInsightFixtu
   }
 
   public void testMethodName() {
-    String input = "import org.intellij.lang.annotations.Language;\n" +
-                  "\n" +
-                  "class Scratch {\n" +
-                  "  @Language(\"jvm-method-name\")\n" +
-                  "  @interface MethodName {}\n" +
-                  "\n" +
-                  "  public @interface ComponentProperties {\n" +
-                  "    // ... various other attributes ...\n" +
-                  "\n" +
-                  "    @MethodName\n" +
-                  "    String waitForMethod() default \"\";\n" +
-                  "  }\n" +
-                  "\n" +
-                  "  public class MainComponent {\n" +
-                  "    @ComponentProperties(waitForMethod = \"<error descr=\"Cannot resolve symbol 'waitForB'\">waitForB<caret></error>\")\n" +
-                  "    public BlueComponent blueComponent;\n" +
-                  "\n" +
-                  "    private void waitForBlueComponent() {\n" +
-                  "      // ...\n" +
-                  "    }\n" +
-                  "  }\n" +
-                  "  \n" +
-                  "  interface BlueComponent {}\n" +
-                  "}";
+    String input = """
+      import org.intellij.lang.annotations.Language;
+
+      class Scratch {
+        @Language("jvm-method-name")
+        @interface MethodName {}
+
+        public @interface ComponentProperties {
+          // ... various other attributes ...
+
+          @MethodName
+          String waitForMethod() default "";
+        }
+
+        public class MainComponent {
+          @ComponentProperties(waitForMethod = "<error descr="Cannot resolve symbol 'waitForB'">waitForB<caret></error>")
+          public BlueComponent blueComponent;
+
+          private void waitForBlueComponent() {
+            // ...
+          }
+        }
+       \s
+        interface BlueComponent {}
+      }""";
     myFixture.configureByText("MethodName.java", input);
     myFixture.enableInspections(new InjectedReferencesInspection());
     myFixture.checkHighlighting();
     myFixture.completeBasic();
-    String result = "import org.intellij.lang.annotations.Language;\n" +
-                  "\n" +
-                  "class Scratch {\n" +
-                  "  @Language(\"jvm-method-name\")\n" +
-                  "  @interface MethodName {}\n" +
-                  "\n" +
-                  "  public @interface ComponentProperties {\n" +
-                  "    // ... various other attributes ...\n" +
-                  "\n" +
-                  "    @MethodName\n" +
-                  "    String waitForMethod() default \"\";\n" +
-                  "  }\n" +
-                  "\n" +
-                  "  public class MainComponent {\n" +
-                  "    @ComponentProperties(waitForMethod = \"waitForBlueComponent<caret>\")\n" +
-                  "    public BlueComponent blueComponent;\n" +
-                  "\n" +
-                  "    private void waitForBlueComponent() {\n" +
-                  "      // ...\n" +
-                  "    }\n" +
-                  "  }\n" +
-                  "  \n" +
-                  "  interface BlueComponent {}\n" +
-                  "}";
+    String result = """
+      import org.intellij.lang.annotations.Language;
+
+      class Scratch {
+        @Language("jvm-method-name")
+        @interface MethodName {}
+
+        public @interface ComponentProperties {
+          // ... various other attributes ...
+
+          @MethodName
+          String waitForMethod() default "";
+        }
+
+        public class MainComponent {
+          @ComponentProperties(waitForMethod = "waitForBlueComponent<caret>")
+          public BlueComponent blueComponent;
+
+          private void waitForBlueComponent() {
+            // ...
+          }
+        }
+       \s
+        interface BlueComponent {}
+      }""";
     myFixture.checkResult(result);
     PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
     assertTrue(element instanceof PsiJavaToken);

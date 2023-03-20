@@ -27,15 +27,11 @@ public interface CachedValueProvider<T> {
    * The object holding the value to cache and the dependencies indicating when that value will be outdated
    * @param <T> the type of the cached value
    */
-  class Result<T> {
+  final class Result<T> {
     private static final Logger LOG = Logger.getInstance(Result.class);
     private final T myValue;
     private final Object[] myDependencyItems;
 
-    /**
-     * Constructor
-     * @see #getDependencyItems()
-     */
     public Result(@Nullable T value, Object @NotNull ... dependencyItems) {
       myValue = value;
       myDependencyItems = dependencyItems;

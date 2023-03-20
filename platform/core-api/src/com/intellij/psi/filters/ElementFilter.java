@@ -36,7 +36,7 @@ public interface ElementFilter {
    * @param hintClass class for which we are looking for metadata
    * @return true if class matched
    */
-  boolean isClassAcceptable(Class hintClass);
+  boolean isClassAcceptable(Class<?> hintClass);
 
   // To be used only for debug purposes!
   String toString();

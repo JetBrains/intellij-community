@@ -6,7 +6,7 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalToolWindowManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
     <projectConfigurable groupId="tools" groupWeight="130"
@@ -21,17 +21,26 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
-    <statistics.counterUsagesCollector groupId="terminalShell" version="3"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.TerminalUsageTriggerCollector"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
 
-    <terminal.shellCommandHandler implementation="com.intellij.diff.actions.DiffCustomCommandHandler"/>
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
-    <notificationGroup id="Terminal" displayType="TOOL_WINDOW" toolWindowId="Terminal"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
+    <iconMapper mappingFile="TerminalIconMappings.json"/>
+    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
+
+    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
+                         id="terminalEnter" order="first"/>
+    <completion.contributor language="TEXT" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCompletionContributor"
+                            order="first"/>
+
+    <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
+    <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
+                        serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -46,4 +55,17 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.openPredefinedTerminalProvider"
                     interface="org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider" dynamic="true"/>
   </extensionPoints>
+
+  <actions>
+    <group id="TerminalToolwindowActionGroup">
+      <action id="Terminal.NewTab" class="org.jetbrains.plugins.terminal.action.TerminalNewTabAction">
+        <keyboard-shortcut first-keystroke="control shift T" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode OSX" replace-all="true"/>
+      </action>
+      <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"/>
+    </group>
+  </actions>
 </idea-plugin>

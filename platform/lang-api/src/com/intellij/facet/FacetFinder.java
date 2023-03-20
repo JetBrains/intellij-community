@@ -24,5 +24,6 @@ public abstract class FacetFinder {
   @NotNull
   public abstract <F extends Facet<?> & FacetRootsProvider> Collection<F> findFacets(VirtualFile file, FacetTypeId<F> type);
 
+  @NotNull
   public abstract <F extends Facet<?>> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type);
 }

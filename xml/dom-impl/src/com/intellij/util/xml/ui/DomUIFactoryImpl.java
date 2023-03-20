@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -12,19 +12,18 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +32,6 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public class DomUIFactoryImpl extends DomUIFactory {
 
   private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<>();
@@ -118,14 +114,8 @@ public class DomUIFactoryImpl extends DomUIFactory {
   @Override
   @Nullable
   public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
-    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ReflectionUtil.getRawType(type));
+    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ClassUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
-  }
-
-  @Override
-  public CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements) {
-    captionComponent.initErrorPanel(new DomElementsErrorPanel(elements));
-    return captionComponent;
   }
 
   @Override

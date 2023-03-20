@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ShortcutSet
@@ -10,9 +11,9 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.table.JBTable
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntryTable
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
@@ -32,7 +33,7 @@ open class BaseKotlinImportLayoutPanel(@Nls title: String) : JPanel(BorderLayout
         border = IdeBorderFactory.createTitledBorder(
             title,
             false,
-            JBUI.emptyInsets()
+            JBInsets.emptyInsets()
         )
     }
 
@@ -187,7 +188,7 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
 
         val importLayoutPanel = ToolbarDecorator.createDecorator(layoutTable)
             .addExtraAction(
-                object : DumbAwareActionButton(KotlinBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
+                object : DumbAwareActionButton(KotlinBundle.message("button.add.package"), IconUtil.addPackageIcon) {
                     override fun actionPerformed(event: AnActionEvent) {
                         addPackage()
                     }
@@ -195,6 +196,8 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
                     override fun getShortcut(): ShortcutSet {
                         return CommonShortcuts.getNewForDialogs()
                     }
+
+                    override fun getActionUpdateThread() = ActionUpdateThread.BGT
                 }
             )
             .setRemoveAction { removePackage() }

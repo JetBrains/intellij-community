@@ -1,21 +1,20 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.impl.RecordAugmentProvider;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 /**
  * Base lombok processor class for field annotations
@@ -47,11 +45,13 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = new ArrayList<>();
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+    Collection<PsiField> fields = psiClass.isRecord() ? RecordAugmentProvider.getFieldAugments(psiClass)
+                                                      : PsiClassUtil.collectClassFieldsIntern(psiClass);
+    for (PsiField psiField : fields) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
       if (null != psiAnnotation) {
         if (possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiField)
-            && validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
+            && validate(psiAnnotation, psiField, new ProblemProcessingSink())) {
 
           generatePsiElements(psiField, psiAnnotation, result);
         }
@@ -60,10 +60,22 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
-    return true;
+  private boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                 @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
+    if (null == nameHint) {
+      return true;
+    }
+    final Collection<String> namesOfGeneratedElements = getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation, psiField);
+    return namesOfGeneratedElements.isEmpty() || namesOfGeneratedElements.contains(nameHint);
   }
+
+  protected abstract Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
+                                                                   @NotNull PsiAnnotation psiAnnotation,
+                                                                   @NotNull PsiField psiField);
+
+  protected abstract void generatePsiElements(@NotNull PsiField psiField,
+                                              @NotNull PsiAnnotation psiAnnotation,
+                                              @NotNull List<? super PsiElement> target);
 
   @NotNull
   @Override
@@ -85,7 +97,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
     PsiField psiField = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class);
     if (null != psiField) {
-      ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+      ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
       validate(psiAnnotation, psiField, problemNewBuilder);
       result = problemNewBuilder.getProblems();
     }
@@ -93,90 +105,68 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
-  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder);
+  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemSink builder);
 
   protected void validateOnXAnnotations(@NotNull PsiAnnotation psiAnnotation,
                                         @NotNull PsiField psiField,
-                                        @NotNull ProblemBuilder builder,
+                                        @NotNull ProblemSink problemSink,
                                         @NotNull String parameterName) {
-    final @NotNull List<PsiAnnotation> copyableAnnotations = copyableAnnotations(psiField, LombokCopyableAnnotations.BASE_COPYABLE);
+    if (problemSink.deepValidation()) {
+      final @NotNull List<PsiAnnotation> copyableAnnotations = LombokCopyableAnnotations.BASE_COPYABLE.collectCopyableAnnotations(psiField);
 
-    if (!copyableAnnotations.isEmpty()) {
-      final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
-      List<String> copyableAnnotationsFQNs = ContainerUtil.map(copyableAnnotations, PsiAnnotation::getQualifiedName);
-      for (String copyableAnnotationFQN : copyableAnnotationsFQNs) {
-        for (String onXAnnotation : onXAnnotations) {
-          if (onXAnnotation.startsWith(copyableAnnotationFQN)) {
-            builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", copyableAnnotationFQN));
+      if (!copyableAnnotations.isEmpty()) {
+        final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
+        List<String> copyableAnnotationsFQNs = ContainerUtil.map(copyableAnnotations, PsiAnnotation::getQualifiedName);
+        for (String copyableAnnotationFQN : copyableAnnotationsFQNs) {
+          for (String onXAnnotation : onXAnnotations) {
+            if (onXAnnotation.startsWith(copyableAnnotationFQN)) {
+              problemSink.addErrorMessage("inspection.message.annotation.copy.duplicate", copyableAnnotationFQN);
+            }
           }
         }
       }
-    }
 
-    if (psiField.isDeprecated()) {
-      final Iterable<String> onMethodAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, "onMethod");
-      if (StreamSupport.stream(onMethodAnnotations.spliterator(), false).anyMatch(CommonClassNames.JAVA_LANG_DEPRECATED::equals)) {
-        builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", CommonClassNames.JAVA_LANG_DEPRECATED));
-      }
-    }
-  }
-
-  protected abstract void generatePsiElements(@NotNull PsiField psiField,
-                                              @NotNull PsiAnnotation psiAnnotation,
-                                              @NotNull List<? super PsiElement> target);
-
-  protected boolean validateExistingMethods(@NotNull PsiField psiField,
-                                            @NotNull ProblemBuilder builder,
-                                            boolean isGetter) {
-
-    boolean result = true;
-    final PsiClass psiClass = psiField.getContainingClass();
-    if (null != psiClass) {
-      final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
-      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
-      final String fieldName = psiField.getName();
-      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-
-      filterByAccessorName(isGetter, isBoolean, accessorsInfo, fieldName, classMethods);
-
-      filterToleratedElements(classMethods);
-
-      Collection<String> allAccessorsNames = isGetter ? LombokUtils.toAllGetterNames(accessorsInfo, fieldName, isBoolean)
-                                                      : LombokUtils.toAllSetterNames(accessorsInfo, fieldName, isBoolean);
-      for (String methodName : allAccessorsNames) {
-        if (PsiMethodUtil.hasSimilarMethod(classMethods, methodName, isGetter ? 0 : 1)) {
-          final String accessorName = isGetter ? LombokUtils.getGetterName(psiField)
-                                                   : LombokUtils.getSetterName(psiField, isBoolean);
-
-          builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"),
-                             accessorName, methodName);
-          result = false;
+      if (psiField.isDeprecated()) {
+        final Iterable<String> onMethodAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, "onMethod");
+        if (ContainerUtil.exists(onMethodAnnotations, CommonClassNames.JAVA_LANG_DEPRECATED::equals)) {
+          problemSink.addErrorMessage("inspection.message.annotation.copy.duplicate", CommonClassNames.JAVA_LANG_DEPRECATED);
         }
       }
     }
-    return result;
   }
 
-  private static void filterByAccessorName(boolean isGetter,
-                                           boolean isBoolean,
-                                           AccessorsInfo accessorsInfo,
-                                           String fieldName,
-                                           Collection<PsiMethod> classMethods) {
-    String baseFieldName = StringUtil.trimStart(accessorsInfo.removePrefix(fieldName), "is");
-    classMethods.removeIf(method -> {
-      String methodName = method.getName();
-      if (!StringUtil.containsIgnoreCase(methodName, baseFieldName)) {
-        return true;
+  protected boolean validateExistingMethods(@NotNull PsiField psiField,
+                                            @NotNull ProblemSink builder,
+                                            boolean isGetter) {
+
+    final PsiClass psiClass = psiField.getContainingClass();
+    if (null != psiClass) {
+      //cache signatures to speed up editing of big files, where getName goes in psi tree
+      List<MethodSignatureBackedByPsiMethod> ownSignatures = CachedValuesManager.getCachedValue(psiClass, () -> {
+        List<MethodSignatureBackedByPsiMethod> signatures =
+          ContainerUtil.map(PsiClassUtil.collectClassMethodsIntern(psiClass),
+                            m -> MethodSignatureBackedByPsiMethod.create(m, PsiSubstitutor.EMPTY));
+        return new CachedValueProvider.Result<>(signatures, PsiModificationTracker.MODIFICATION_COUNT);
+      });
+
+      final List<MethodSignatureBackedByPsiMethod> classMethods = new ArrayList<>(ownSignatures);
+
+      final boolean isBoolean = PsiTypes.booleanType().equals(psiField.getType());
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+      final String fieldName = psiField.getName();
+      String accessorName = isGetter ? LombokUtils.toGetterName(accessorsInfo, fieldName, isBoolean)
+                                     : LombokUtils.toSetterName(accessorsInfo, fieldName, isBoolean);
+      int paramCount = isGetter ? 0 : 1;
+      classMethods.removeIf(m -> m.getParameterTypes().length != paramCount || !accessorName.equals(m.getName()));
+
+      classMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod.getMethod(), LombokClassNames.TOLERATE));
+
+      if (!classMethods.isEmpty()) {
+        builder.addWarningMessage("inspection.message.not.generated.s.method.with.similar.name.s.already.exists",
+                                  accessorName, accessorName);
+        return false;
       }
-
-      return !accessorsInfo.isFluent() && !isAccessorName(isGetter, isBoolean, methodName);
-    });
-  }
-
-  private static boolean isAccessorName(boolean isGetter, boolean isBoolean, String methodName) {
-    if (isGetter) {
-      return isBoolean && methodName.startsWith("is") || methodName.startsWith("get");
     }
-    return methodName.startsWith("set");
+    return true;
   }
 }

@@ -1,4 +1,4 @@
-// "Replace with 'Objects.requireNonNull(getObject())'" "true"
+// "Replace with 'Objects.requireNonNull(getObject())'" "true-preview"
 
 import java.util.Objects;
 

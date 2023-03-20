@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'test.Bar'" "true"
+// "Add on-demand static import for 'test.Bar'" "true-preview"
 package test;
 
 class Bar {
@@ -8,7 +8,7 @@ class Bar {
 
 public class Foo {
     {
-        Bar.f();   // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
+        Bar.f();  // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
     }
 
     static class D {
@@ -16,19 +16,19 @@ public class Foo {
         }
 
         {
-            Bar.f();   // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
+            Bar.f();  // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
         }
     }
 
     {
-        Bar.f();   // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
+        Bar.f();  // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
     }
 
     {
-        Bar.f();   // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
+        Bar.f();  // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
     }
 
     {
-        <caret>Bar.f();   // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
+        <caret>Bar.f();  // invoke 'add on-demand static import' for Bar class here. The call is now done to other method.
     }
 }

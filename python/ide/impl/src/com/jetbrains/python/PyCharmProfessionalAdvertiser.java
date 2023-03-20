@@ -1,13 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
@@ -23,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class PyCharmProfessionalAdvertiser implements Annotator {
-  private static final NotificationGroup BALLOON_NOTIFICATIONS = new NotificationGroup("PyCharm Professional Advertiser",
-                                                                                       NotificationDisplayType.STICKY_BALLOON, false);
+  private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("PyCharm Professional Advertiser");
+
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
 
@@ -33,9 +30,8 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
       return;
     }
 
-    if (element instanceof PyFile) {
+    if (element instanceof PyFile pyFile) {
 
-      final PyFile pyFile = (PyFile)element;
       final VirtualFile vFile = pyFile.getVirtualFile();
       if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
         return;
@@ -112,6 +108,7 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
           notification.expire();
         }
       })
+      .setSuggestionType(true)
       .notify(project);
   }
 

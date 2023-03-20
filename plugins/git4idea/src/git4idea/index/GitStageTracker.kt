@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.*
 
 open class GitStageTracker(val project: Project) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val eventDispatcher = EventDispatcher.create(GitStageTrackerListener::class.java)
   private val dirtyScopeManager
     get() = VcsDirtyScopeManager.getInstance(project)
@@ -58,7 +60,7 @@ open class GitStageTracker(val project: Project) : Disposable {
       }
     })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
-      runInEdt(this) {
+      runInEdt(disposableFlag) {
         val roots = gitRoots()
         update { oldState -> State(roots.associateWith { oldState.rootStates[it] ?: RootState.empty(it) }) }
       }
@@ -68,6 +70,8 @@ open class GitStageTracker(val project: Project) : Disposable {
         doUpdateState(repository)
       }
     })
+
+    Disposer.register(this, disposableFlag)
 
     updateTrackerState()
   }
@@ -89,7 +93,7 @@ open class GitStageTracker(val project: Project) : Disposable {
    *   Ex: when unsaved unstaged changes are saved on disk. We remove file from tree immediately,
    *   but CLM is slow to notice new saved unstaged changes - so file is removed from thee and added again in a second.
    */
-  private fun markDirty(file: VirtualFile) {
+  internal fun markDirty(file: VirtualFile) {
     if (!isStagingAreaAvailable()) return
     val root = getRoot(project, file) ?: return
     if (!gitRoots().contains(root)) return
@@ -138,7 +142,7 @@ open class GitStageTracker(val project: Project) : Disposable {
 
     val newRootState = RootState(repository.root, true, status)
 
-    runInEdt(this) {
+    runInEdt(disposableFlag) {
       update { it.updatedWith(repository.root, newRootState) }
     }
   }
@@ -169,10 +173,8 @@ open class GitStageTracker(val project: Project) : Disposable {
     @JvmStatic
     fun getInstance(project: Project) = project.getService(GitStageTracker::class.java)
 
-    internal fun markDirty(file: VirtualFile) {
-      for (project in ProjectManager.getInstance().openProjects) {
-        project.serviceIfCreated<GitStageTracker>()?.markDirty(file)
-      }
+    internal fun getTrackers(): List<GitStageTracker> {
+      return ProjectManager.getInstance().openProjects.mapNotNull { it.serviceIfCreated() }
     }
   }
 
@@ -236,21 +238,23 @@ open class GitStageTracker(val project: Project) : Disposable {
 
 private val PROCESSED = Key.create<Boolean>("GitStageTracker.file.processed")
 
-internal class GitStageFileDocumentManagerListener : FileDocumentManagerListener {
+internal open class GitStageFileDocumentManagerListener : FileDocumentManagerListener {
+  protected open fun getTrackers() = GitStageTracker.getTrackers()
+
   override fun unsavedDocumentDropped(document: Document) {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
     file.putUserData(PROCESSED, null)
-    GitStageTracker.markDirty(file)
+    getTrackers().forEach { it.markDirty(file) }
   }
 
   override fun fileContentReloaded(file: VirtualFile, document: Document) {
     file.putUserData(PROCESSED, null)
-    GitStageTracker.markDirty(file)
+    getTrackers().forEach { it.markDirty(file) }
   }
 
   override fun fileWithNoDocumentChanged(file: VirtualFile) {
     file.putUserData(PROCESSED, null)
-    GitStageTracker.markDirty(file)
+    getTrackers().forEach { it.markDirty(file) }
   }
 
   override fun beforeDocumentSaving(document: Document) {
@@ -259,12 +263,14 @@ internal class GitStageFileDocumentManagerListener : FileDocumentManagerListener
   }
 }
 
-internal class GitStageDocumentListener : DocumentListener {
+internal open class GitStageDocumentListener : DocumentListener {
+  protected open fun getTrackers() = GitStageTracker.getTrackers()
+
   override fun documentChanged(event: DocumentEvent) {
     val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
     if (file.getUserData(PROCESSED) == null) {
       file.putUserData(PROCESSED, true)
-      GitStageTracker.markDirty(file)
+      getTrackers().forEach { it.markDirty(file) }
     }
   }
 }

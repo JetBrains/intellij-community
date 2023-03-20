@@ -14,16 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class CustomCodeStyleSettings implements Cloneable {
   private CodeStyleSettings myContainer;
   private final String myTagName;
 
   private final static Logger LOG  = Logger.getInstance(CustomCodeStyleSettings.class);
 
-  protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, CodeStyleSettings container) {
+  protected CustomCodeStyleSettings(@NonNls @NotNull String tagName, @NotNull CodeStyleSettings container) {
     myTagName = tagName;
     myContainer = container;
   }

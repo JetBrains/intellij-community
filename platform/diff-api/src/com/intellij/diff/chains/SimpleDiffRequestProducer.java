@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.chains;
 
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -10,29 +11,33 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SimpleDiffRequestProducer {
+public final class SimpleDiffRequestProducer {
   private static final Logger LOG = Logger.getInstance(SimpleDiffRequestProducer.class);
 
   @NotNull
   public static DiffRequestProducer create(@NotNull FilePath filePath,
-                                           @NotNull ThrowableComputable<DiffRequest, Throwable> producer) {
-    return create(filePath.getPath(), producer);
+                                           @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
+    return new MyDiffRequestProducer(filePath.getPath(), filePath.getFileType(), producer);
   }
 
   @NotNull
   public static DiffRequestProducer create(@NotNull @Nls String name,
-                                           @NotNull ThrowableComputable<DiffRequest, Throwable> producer) {
-    return new MyDiffRequestProducer(name, producer);
+                                           @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
+    return new MyDiffRequestProducer(name, null, producer);
   }
 
   private static class MyDiffRequestProducer implements DiffRequestProducer {
     @NotNull private final @Nls String myName;
-    @NotNull private final ThrowableComputable<DiffRequest, Throwable> myProducer;
+    @Nullable private final FileType myFileType;
+    private final @NotNull ThrowableComputable<? extends DiffRequest, Throwable> myProducer;
 
     private MyDiffRequestProducer(@NotNull @Nls String name,
-                                  @NotNull ThrowableComputable<DiffRequest, Throwable> producer) {
+                                  @Nullable FileType fileType,
+                                  @NotNull ThrowableComputable<? extends DiffRequest, Throwable> producer) {
       myName = name;
+      myFileType = fileType;
       myProducer = producer;
     }
 
@@ -41,6 +46,11 @@ public class SimpleDiffRequestProducer {
     @Override
     public String getName() {
       return myName;
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      return myFileType;
     }
 
     @NotNull

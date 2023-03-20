@@ -120,8 +120,7 @@ public final class InspectionDescriptionInfo {
           PsiElement parent = element.getParent();
           if (parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
             DomElement domElement = DomUtil.getDomElement(parent.getParent());
-            if (domElement instanceof Extension) {
-              Extension extension = (Extension)domElement;
+            if (domElement instanceof Extension extension) {
               ExtensionPoint extensionPoint = extension.getExtensionPoint();
               if (extensionPoint != null &&
                   InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {

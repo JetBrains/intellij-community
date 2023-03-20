@@ -1,0 +1,7 @@
+package ppp
+
+fun <T> foo(o: Any): T {
+    return o as T<caret>
+}
+
+// AUTOCOMPLETE_SETTING: true

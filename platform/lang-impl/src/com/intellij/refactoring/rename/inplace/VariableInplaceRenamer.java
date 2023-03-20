@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -41,6 +42,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -51,9 +53,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class VariableInplaceRenamer extends InplaceRefactoring {
   public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"
@@ -61,6 +60,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   private ResolveSnapshotProvider.ResolveSnapshot mySnapshot;
   private TextRange mySelectedRange;
   protected Language myLanguage;
+  private @Nullable SuggestedNameInfo mySuggestedNameInfo;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
                                 @NotNull Editor editor) {
@@ -92,26 +92,36 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull final List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(final @NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
+    processDefaultAdditionalElementsToRename(pair -> {
+      stringUsages.add(pair);
+      return true;
+    });
+  }
+
+  protected final boolean processDefaultAdditionalElementsToRename(@NotNull Processor<? super Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
-    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
-      TextOccurrencesUtil.processUsagesInStringsAndComments(
+      final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      return TextOccurrencesUtil.processUsagesInStringsAndComments(
         myElementToRename, GlobalSearchScope.projectScope(myElementToRename.getProject()),
         stringToSearch, false, (psiElement, textRange) -> {
           if (psiElement.getContainingFile() == currentFile) {
-            stringUsages.add(Pair.create(psiElement, textRange));
+            if (!stringUsages.process(Pair.create(psiElement, textRange))) {
+              return false;
+            }
           }
           return true;
         });
     }
+    return true;
   }
 
   @Override
-  protected boolean buildTemplateAndStart(final Collection<PsiReference> refs,
-                                          Collection<Pair<PsiElement, TextRange>> stringUsages,
-                                          final PsiElement scope,
-                                          final PsiFile containingFile) {
+  protected boolean buildTemplateAndStart(final @NotNull Collection<PsiReference> refs,
+                                          @NotNull Collection<Pair<PsiElement, TextRange>> stringUsages,
+                                          final @NotNull PsiElement scope,
+                                          final @NotNull PsiFile containingFile) {
     if (appendAdditionalElement(refs, stringUsages)) {
       return super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
     }
@@ -179,8 +189,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   private static boolean handleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
-    if (editor instanceof EditorWindow) {
-      EditorWindow editorWindow = (EditorWindow)editor;
+    if (editor instanceof EditorWindow editorWindow) {
       Editor hostEditor = editorWindow.getDelegate();
       PsiFile injected = editorWindow.getInjectedFile();
       TextRange hostSelectedRange = InjectedLanguageManager.getInstance(hostEditor.getProject()).injectedToHost(injected, selectedRange);
@@ -253,8 +262,16 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected void renameSynthetic(String newName) {
   }
 
-  protected void performRefactoringRename(final String newName,
-                                          final StartMarkAction markAction) {
+  @Override
+  protected MyLookupExpression createLookupExpression(PsiElement selectedElement) {
+    MyLookupExpression lookupExpression =
+      new MyLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, selectedElement, shouldSelectAll(),
+                             myAdvertisementText);
+    mySuggestedNameInfo = lookupExpression.getSuggestedNameInfo();
+    return lookupExpression;
+  }
+
+  protected void performRefactoringRename(String newName, StartMarkAction markAction) {
     final String refactoringId = getRefactoringId();
     try {
       PsiNamedElement elementToRename = getVariable();
@@ -313,7 +330,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       }
     }
     finally {
-
+      if (mySuggestedNameInfo != null) mySuggestedNameInfo.nameChosen(newName);
       if (refactoringId != null) {
         final RefactoringEventData afterData = new RefactoringEventData();
         afterData.addElement(getVariable());

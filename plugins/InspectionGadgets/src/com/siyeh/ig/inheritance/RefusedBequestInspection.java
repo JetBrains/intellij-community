@@ -1,15 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.util.AstLoadingFilter;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -38,16 +39,13 @@ public class RefusedBequestInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(annotations, null);
-
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"), "onlyReportWhenAnnotated");
-    panel.add(annotationsListControl, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"), "ignoreEmptySuperMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"), "ignoreDefaultSuperMethods");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportWhenAnnotated", InspectionGadgetsBundle.message("inspection.refused.bequest.super.annotated.option"),
+               stringList("annotations", "", new JavaClassValidator().annotationsOnly())),
+      checkbox("ignoreEmptySuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option")),
+      checkbox("ignoreDefaultSuperMethods", InspectionGadgetsBundle.message("refused.bequest.ignore.default.super.methods.option"))
+    );
   }
 
   @Nullable
@@ -97,7 +95,7 @@ public class RefusedBequestInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodName.getParent();
       assert method != null;
@@ -108,7 +106,7 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiType returnType = method.getReturnType();
       final @NonNls StringBuilder statementText = new StringBuilder();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+      if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
         if (JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_LOCALS) {
           statementText.append("final ");
         }
@@ -145,8 +143,7 @@ public class RefusedBequestInspection extends BaseInspection {
       final PsiElement element2 = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element1);
       if (isOnTheFly() && element2.isPhysical()) {
         HighlightUtils.highlightElement(element2);
-        if (element2 instanceof PsiDeclarationStatement) {
-          final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element2;
+        if (element2 instanceof PsiDeclarationStatement declarationStatement) {
           final PsiLocalVariable variable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
           HighlightUtils.showRenameTemplate(body, variable);
         }
@@ -198,12 +195,15 @@ public class RefusedBequestInspection extends BaseInspection {
       registerMethodError(method);
     }
 
-    private boolean isTrivial(PsiMethod method) {
+    private static boolean isTrivial(PsiMethod method) {
       final PsiElement element = method.getNavigationElement();
-      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, s -> s instanceof PsiThrowStatement);
+      return AstLoadingFilter.forceAllowTreeLoading(method.getContainingFile(),
+                                                    () -> MethodUtils.isTrivial(element instanceof PsiMethod
+                                                                                ? (PsiMethod)element
+                                                                                : method, s -> s instanceof PsiThrowStatement));
     }
 
-    private boolean isJUnitSetUpOrTearDown(PsiMethod method) {
+    private static boolean isJUnitSetUpOrTearDown(PsiMethod method) {
       final String name = method.getName();
       if (!"setUp".equals(name) && !"tearDown".equals(name)) {
         return false;

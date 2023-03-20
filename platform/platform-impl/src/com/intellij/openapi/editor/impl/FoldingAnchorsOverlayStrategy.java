@@ -43,6 +43,10 @@ final class FoldingAnchorsOverlayStrategy {
           }
         }
 
+        if (skipFoldingAnchor(region)) {
+          continue;
+        }
+
         int foldStart = myEditor.offsetToVisualLine(startOffset);
         if (!region.isExpanded()) {
           tryAdding(result, region, foldStart, 0,
@@ -90,5 +94,12 @@ final class FoldingAnchorsOverlayStrategy {
       }
     }
     resultsMap.put(visualLine, new DisplayedFoldingAnchor(region, visualLine, visualHeight, type));
+  }
+
+  private static boolean skipFoldingAnchor(@NotNull FoldRegion region) {
+    if (!region.isExpanded()) {
+      return Boolean.TRUE.equals(region.getUserData(FoldingModelImpl.HIDE_GUTTER_RENDERER_FOR_COLLAPSED));
+    }
+    return false;
   }
 }

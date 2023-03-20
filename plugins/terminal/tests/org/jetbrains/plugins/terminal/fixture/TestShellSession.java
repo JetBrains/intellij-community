@@ -3,15 +3,15 @@ package org.jetbrains.plugins.terminal.fixture;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.jediterm.pty.PtyProcessTtyConnector;
+import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider;
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
+import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
-import org.jetbrains.plugins.terminal.TerminalProcessOptions;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +29,7 @@ public class TestShellSession {
     myWidget = new ShellTerminalWidget(project, settingsProvider, parentDisposable);
 
     LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
-    PtyProcess process = runner.createProcess(new TerminalProcessOptions(project.getBasePath(), null, null), myWidget);
+    PtyProcess process = runner.createProcess(ShellStartupOptionsKt.shellStartupOptions(project.getBasePath()));
     TtyConnector connector = new PtyProcessTtyConnector(process, StandardCharsets.UTF_8);
     myWidget.start(connector);
     myWatcher = new TestTerminalBufferWatcher(myWidget.getTerminalTextBuffer(), myWidget.getTerminal());

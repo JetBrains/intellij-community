@@ -106,12 +106,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
     return ReadAction.compute(() -> {
       try {
         final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(myContainingClassName);
-        if (typeElement == null) return null;
 
-        final PsiType type = typeElement.getType();
-        if (!(type instanceof PsiClassType)) return null;
-
-        return ((PsiClassType)type).resolve();
+        return typeElement.getType() instanceof PsiClassType type ? type.resolve() : null;
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -141,9 +137,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
 
       Object root = model.getRoot();
 
-      if (!(root instanceof DefaultMutableTreeNode)) return;
+      if (!(root instanceof DefaultMutableTreeNode treeRoot)) return;
 
-      DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
       DefaultMutableTreeNode desiredNode;
 
       JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());

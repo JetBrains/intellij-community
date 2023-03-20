@@ -76,7 +76,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
   @Override
   public boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
-    return myResolveModulePerSourceSet;
+    return !myResolveModulePerSourceSet;
   }
 
   @Override

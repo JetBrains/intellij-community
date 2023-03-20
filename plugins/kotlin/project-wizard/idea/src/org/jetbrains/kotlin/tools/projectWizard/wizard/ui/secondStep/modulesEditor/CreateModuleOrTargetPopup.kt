@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -43,9 +44,11 @@ class CreateModuleOrTargetPopup private constructor(
         buildList {
             if (allowMultiplatform) +MppModuleConfigurator
             +JvmSinglePlatformModuleConfigurator
-            if (allowAndroid) +AndroidSinglePlatformModuleConfigurator
-            if (allowSinglePlatformJsBrowser) +BrowserJsSinglePlatformModuleConfigurator
-            if (allowSinglePlatformJsNode) +NodeJsSinglePlatformModuleConfigurator
+            if (allowAndroid) +AndroidWithoutComposeSinglePlatformModuleConfigurator
+            if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
+                if (allowSinglePlatformJsBrowser) +BrowserJsSinglePlatformModuleConfigurator
+                if (allowSinglePlatformJsNode) +NodeJsSinglePlatformModuleConfigurator
+            }
             if (allowIos) +IOSSinglePlatformModuleConfigurator
         }
     ) {

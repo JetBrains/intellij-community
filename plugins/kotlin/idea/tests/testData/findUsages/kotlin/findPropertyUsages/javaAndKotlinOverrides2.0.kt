@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: overrides
+// PSI_ELEMENT_AS_TITLE: "foo: T"
 open class A<T>(open var <caret>foo: T)
 
 open class B : A<String>("") {
@@ -24,3 +25,4 @@ open class D : A<String>("") {
 }
 
 open class E<T>(override var foo: T) : A<T>(foo)
+

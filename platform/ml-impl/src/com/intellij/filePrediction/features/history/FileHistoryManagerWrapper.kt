@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.filePrediction.features.history
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -10,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.SequentialTaskExecutor
@@ -25,14 +24,19 @@ class FileHistoryManagerWrapper(private val project: Project) : Disposable {
   }
 
   private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("NextFilePrediction")
-  private val manager = FileHistoryManager(FileHistoryPersistence.loadNGrams(project, MAX_NGRAM_SEQUENCE))
+  private val lazyManager: Lazy<FileHistoryManager> = lazy { FileHistoryManager(FileHistoryPersistence.loadNGrams(project, MAX_NGRAM_SEQUENCE)) }
 
-  fun calcNGramFeatures(candidates: List<VirtualFile>): FilePredictionNGramFeatures {
-    return manager.calcNGramFeatures(candidates.map { it.url })
+  private fun getManagerIfInitialized(): FileHistoryManager? {
+    return if (lazyManager.isInitialized()) lazyManager.value else null
+  }
+
+  fun calcNGramFeatures(candidates: List<VirtualFile>): FilePredictionNGramFeatures? {
+    val managerIfInitialized = getManagerIfInitialized()
+    return managerIfInitialized?.calcNGramFeatures(candidates.map { it.url })
   }
 
   fun calcNextFileProbability(file: VirtualFile): Double {
-    return manager.calcNextFileProbability(file.url)
+    return getManagerIfInitialized()?.calcNextFileProbability(file.url) ?: 0.0
   }
 
   private fun onFileOpened(file: VirtualFile) {
@@ -42,22 +46,20 @@ class FileHistoryManagerWrapper(private val project: Project) : Disposable {
 
     executor.submit {
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
-        manager.onFileOpened(file.url)
+        lazyManager.value.onFileOpened(file.url)
       })
     }
   }
 
   private fun onProjectClosed(project: Project) {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      manager.saveFileHistory(project)
-    }
+    getManagerIfInitialized()?.saveFileHistoryAsync(project)
   }
 
   override fun dispose() {
     executor.shutdown()
   }
 
-  internal class ProjectClosureListener : ProjectManagerListener {
+  internal class ProjectClosureListener : ProjectCloseListener {
     override fun projectClosing(project: Project) {
       getInstanceIfCreated(project)?.onProjectClosed(project)
     }

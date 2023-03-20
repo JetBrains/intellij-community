@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   private final ImaginaryCaretModel myCaretModel;
-  private int myStart, myEnd;
+  private int myStart, myPos, myEnd;
 
   public ImaginaryCaret(ImaginaryCaretModel caretModel) {
     myCaretModel = caretModel;
@@ -27,7 +27,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public boolean hasSelection() {
-    return false;
+    return myEnd > myStart;
   }
 
   @NotNull
@@ -44,17 +44,19 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public int getOffset() {
-    return myStart;
+    return myPos;
   }
 
   @Override
   public void moveToOffset(int offset) {
-    myStart = myEnd = offset;
+    moveToOffset(offset, false);
   }
 
   @Override
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
-    myStart = myEnd = offset;
+    if (offset < 0)
+      offset = 0;
+    myStart = myPos = myEnd = offset;
   }
 
   private RuntimeException notImplemented() {
@@ -68,7 +70,22 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
-    throw notImplemented();
+    if (lineShift == 0) {
+      myEnd += columnShift;
+      if (!withSelection) {
+        myStart = myPos = myEnd;
+      }
+    }
+    else {
+      var oldPos = myPos;
+      var currentPosition = getLogicalPosition();
+      moveToLogicalPosition(new LogicalPosition(currentPosition.line + lineShift, currentPosition.column + columnShift));
+      if (withSelection) {
+        var newPos = myPos;
+        myStart = Math.min(oldPos, newPos);
+        myEnd = Math.max(oldPos, newPos);
+      }
+    }
   }
 
   @Override
@@ -110,13 +127,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   @NotNull
   @Override
   public VisualPosition getSelectionStartPosition() {
-    throw notImplemented();
+    return getEditor().offsetToVisualPosition(myStart);
   }
 
   @NotNull
   @Override
   public VisualPosition getSelectionEndPosition() {
-    throw notImplemented();
+    return getEditor().offsetToVisualPosition(myEnd);
   }
 
   @Nullable
@@ -138,9 +155,28 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void setSelection(int startOffset, int endOffset) {
-    if (startOffset < 0 || startOffset > endOffset) throw new IllegalArgumentException();
-    myStart = startOffset;
-    myEnd = endOffset;
+    if (startOffset < 0) startOffset = 0;
+    if (endOffset < 0) endOffset = 0;
+    // mimicking CaretImpl's doSetSelection: removing selection if startOffset == endOffset
+    if (startOffset == endOffset) {
+      myStart = myPos;
+      myEnd = myPos;
+      return;
+    }
+
+    if (startOffset > endOffset) {
+      myStart = endOffset;
+      myEnd = startOffset;
+    } else {
+      myStart = startOffset;
+      myEnd = endOffset;
+    }
+    if (myPos < myStart) {
+      myPos = myStart;
+    }
+    else if (myPos > myEnd) {
+      myPos = myEnd;
+    }
   }
 
   @Override
@@ -169,7 +205,7 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void removeSelection() {
-    myStart = myEnd;
+    myStart = myPos = myEnd;
   }
 
   @Override

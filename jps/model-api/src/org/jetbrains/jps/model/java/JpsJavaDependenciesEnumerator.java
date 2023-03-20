@@ -94,7 +94,6 @@ public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator
 
   /**
    * Process only dependencies which should be included in the classpath specified by {@code classpathKind} parameter
-   * @param classpathKind
    * @return this instance
    */
   @NotNull

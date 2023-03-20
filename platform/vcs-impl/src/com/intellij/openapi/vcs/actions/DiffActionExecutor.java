@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -106,11 +107,17 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
+    public @Nullable FileType getContentType() {
+      return myFilePath.getFileType();
+    }
+
+    @Override
     public @NotNull DiffRequest process(@NotNull UserDataHolder context,
                                         @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       final ContentRevision contentRevision = getContentRevision();
-      if (contentRevision == null) throw new DiffRequestProducerException(
-        VcsBundle.message("diff.producer.error.cant.get.revision.content"));
+      if (contentRevision == null) {
+        throw new DiffRequestProducerException(VcsBundle.message("diff.producer.error.cant.get.revision.content"));
+      }
 
       try {
         DiffContent content1 = createRemote(contentRevision);

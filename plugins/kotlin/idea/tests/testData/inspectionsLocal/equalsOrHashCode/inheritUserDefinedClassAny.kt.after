@@ -1,0 +1,26 @@
+// ERROR: Unresolved reference: javaClass
+// ERROR: Unresolved reference: javaClass
+
+// IGNORE_FIR
+
+open class Any {
+    override fun hashCode(): Int = 0
+}
+
+class WithConstructor(x: Int, s: String) : Any() {
+    val x: Int = 0
+    val s: String = ""
+
+    override fun hashCode(): Int = 1
+    override fun equals(other: kotlin.Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as WithConstructor
+
+        if (x != other.x) return false
+        if (s != other.s) return false
+
+        return true
+    }
+}

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
@@ -95,11 +96,6 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   }
 
   @Override
-  public void doCancelAction() {
-    super.doCancelAction();
-  }
-
-  @Override
   public void dispose() {
     super.dispose();
   }
@@ -135,11 +131,9 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof CheckedTreeNode)) return;
-        CheckedTreeNode node = (CheckedTreeNode)value;
+        if (!(value instanceof CheckedTreeNode node)) return;
 
-        if (!(node.getUserObject() instanceof Pair)) return;
-        Pair pair = (Pair)node.getUserObject();
+        if (!(node.getUserObject() instanceof Pair pair)) return;
 
         ColoredTreeCellRenderer renderer = getTextRenderer();
         renderer.setIcon(myExternalSystemUiAware.getProjectIcon());
@@ -176,6 +170,11 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
       walkTree(node -> node.setChecked(true));
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private class UnselectAllButton extends AnActionButton {
@@ -187,6 +186,11 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     public void actionPerformed(@NotNull AnActionEvent e) {
       walkTree(node -> node.setChecked(false));
       ((DefaultTreeModel)myTree.getModel()).reload();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

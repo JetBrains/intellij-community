@@ -1,7 +1,7 @@
 import org.jetbrains.annotations.*;
 
 class Test {
-  void nullableWithTotalPatternLabel(@Nullable Integer i) {
+  void nullableWithUnconditionalPatternLabel(@Nullable Integer i) {
     switch (i) {
       case 1:
         break;
@@ -10,7 +10,7 @@ class Test {
     }
   }
 
-  void nullableSetNullWithTotalPatternLabel(@Nullable Integer i) {
+  void nullableSetNullWithUnconditionalPatternLabel(@Nullable Integer i) {
     i = null;
     switch (i) {
       case 1:
@@ -20,7 +20,7 @@ class Test {
     }
   }
 
-  void nullableSetNotNullWithTotalPatternLabel(@Nullable Integer i) {
+  void nullableSetNotNullWithUnconditionalPatternLabel(@Nullable Integer i) {
     i = 1;
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
@@ -30,7 +30,7 @@ class Test {
     }
   }
 
-  void unknownWithTotalPatternLabel(Integer i) {
+  void unknownWithUnconditionalPatternLabel(Integer i) {
     switch (i) {
       case 1:
         break;
@@ -39,7 +39,7 @@ class Test {
     }
   }
 
-  void unknownSetNullWithTotalPatternLabel(Integer i) {
+  void unknownSetNullWithUnconditionalPatternLabel(Integer i) {
     i = null;
     switch (i) {
       case 1:
@@ -49,7 +49,7 @@ class Test {
     }
   }
 
-  void unknownSetNotNullWithTotalPatternLabel(Integer i) {
+  void unknownSetNotNullWithUnconditionalPatternLabel(Integer i) {
     i = 1;
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
@@ -59,7 +59,7 @@ class Test {
     }
   }
 
-  void notNullWithTotalPatternLabel(@NotNull Integer i) {
+  void notNullWithUnconditionalPatternLabel(@NotNull Integer i) {
     switch (i) {
       case 1:
         break;
@@ -68,7 +68,7 @@ class Test {
     }
   }
 
-  void notNullSetNullWithTotalPatternLabel(@NotNull Integer i) {
+  void notNullSetNullWithUnconditionalPatternLabel(@NotNull Integer i) {
     i = null;
     switch (i) {
       case 1:
@@ -80,7 +80,7 @@ class Test {
     }
   }
 
-  void notNullSetNotNullWithTotalPatternLabel(@NotNull Integer i) {
+  void notNullSetNotNullWithUnconditionalPatternLabel(@NotNull Integer i) {
     i = 1;
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
@@ -90,7 +90,7 @@ class Test {
     }
   }
 
-  void nullableCallWithGuardedNotTotalPatternLabel() {
+  void nullableCallWithGuardedNotUnconditionalPatternLabel() {
     switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1:
         break;
@@ -101,7 +101,7 @@ class Test {
     }
   }
 
-  void nullableCallWithTotalPatternLabel() {
+  void nullableCallWithUnconditionalPatternLabel() {
     switch (createNullValue()) {
       case 1:
         break;
@@ -110,7 +110,7 @@ class Test {
     }
   }
 
-  void unknownCallWithTotalPatternLabel() {
+  void unknownCallWithUnconditionalPatternLabel() {
     switch (createValue()) {
       case 1:
         break;
@@ -119,7 +119,7 @@ class Test {
     }
   }
 
-  void notNullCallWithTotalPatternLabel() {
+  void notNullCallWithUnconditionalPatternLabel() {
     switch (createNotNullValue()) {
       case 1, 2:
         break;
@@ -130,14 +130,14 @@ class Test {
 
   // expressions
 
-  int nullableWithTotalPatternLabelExpr(@Nullable Integer i) {
+  int nullableWithUnconditionalPatternLabelExpr(@Nullable Integer i) {
     return switch (i) {
       case 1 -> 1;
       case (Integer ii && true) -> 2;
     };
   }
 
-  int nullableSetNullWithTotalPatternLabelExpr(@Nullable Integer i) {
+  int nullableSetNullWithUnconditionalPatternLabelExpr(@Nullable Integer i) {
     i = null;
     return switch (i) {
       case 1 -> 1;
@@ -145,7 +145,7 @@ class Test {
     };
   }
 
-  int nullableSetNotNullWithTotalPatternLabelExpr(@Nullable Integer i) {
+  int nullableSetNotNullWithUnconditionalPatternLabelExpr(@Nullable Integer i) {
     i = 1;
     return switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> 1;
@@ -153,14 +153,14 @@ class Test {
     };
   }
 
-  int unknownWithTotalPatternLabelExpr(Integer i) {
+  int unknownWithUnconditionalPatternLabelExpr(Integer i) {
     return switch (i) {
       case 1 -> 1;
       case Integer ii && true -> 2;
     };
   }
 
-  int unknownSetNullWithTotalPatternLabelExpr(Integer i) {
+  int unknownSetNullWithUnconditionalPatternLabelExpr(Integer i) {
     i = null;
     return switch (i) {
       case 1 -> 1;
@@ -168,7 +168,7 @@ class Test {
     };
   }
 
-  int unknownSetNotNullWithTotalPatternLabelExpr(Integer i) {
+  int unknownSetNotNullWithUnconditionalPatternLabelExpr(Integer i) {
     i = 1;
     return switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> 1;
@@ -176,14 +176,14 @@ class Test {
     };
   }
 
-  int notNullWithTotalPatternLabelExpr(@NotNull Integer i) {
+  int notNullWithUnconditionalPatternLabelExpr(@NotNull Integer i) {
     return switch (i) {
       case 1 -> 1;
       case Integer ii && true -> 2;
     };
   }
 
-  int notNullSetNullWithTotalPatternLabelExpr(@NotNull Integer i) {
+  int notNullSetNullWithUnconditionalPatternLabelExpr(@NotNull Integer i) {
     i = null;
     return switch (i) {
       case 1 -> 1;
@@ -192,7 +192,7 @@ class Test {
     };
   }
 
-  int notNullSetNotNullWithTotalPatternLabelExpr(@NotNull Integer i) {
+  int notNullSetNotNullWithUnconditionalPatternLabelExpr(@NotNull Integer i) {
     i = 1;
     return switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> 1;
@@ -200,7 +200,7 @@ class Test {
     };
   }
 
-  int nullableCallWithGuardedNotTotalPatternLabelExpr() {
+  int nullableCallWithGuardedNotUnconditionalPatternLabelExpr() {
     return switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1 -> 1;
       case <warning descr="Switch label '((Object o && false))' is unreachable">((Object o && false))</warning> -> 2;
@@ -208,21 +208,21 @@ class Test {
     };
   }
 
-  int nullableCallWithTotalPatternLabelExpr() {
+  int nullableCallWithUnconditionalPatternLabelExpr() {
     return switch (createNullValue()) {
       case 1 -> 1;
       case ((Object o)) -> 2;
     };
   }
 
-  int unknownCallWithTotalPatternLabelExpr() {
+  int unknownCallWithUnconditionalPatternLabelExpr() {
     return switch (createValue()) {
       case 1 -> 1;
       case Integer ii && true -> 2;
     };
   }
 
-  int notNullCallWithTotalPatternLabelExpr() {
+  int notNullCallWithUnconditionalPatternLabelExpr() {
     return switch (createNotNullValue()) {
       case 1, 2 -> 1;
       case Object o && true -> 2;

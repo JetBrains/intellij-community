@@ -3,8 +3,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.NonExtendable
 public abstract class HighlightingLevelManager {
   public static HighlightingLevelManager getInstance(Project project) {
     return project.getService(HighlightingLevelManager.class);
@@ -19,4 +21,9 @@ public abstract class HighlightingLevelManager {
    * >= Inspections level
    */
   public abstract boolean shouldInspect(@NotNull PsiElement psiRoot);
+
+  /**
+   * @return true if this {@code psiRoot} file is configured as "Highlight: Essential only" and the "Save all" action is not about to run
+   */
+  public abstract boolean runEssentialHighlightingOnly(@NotNull PsiElement psiRoot);
 }

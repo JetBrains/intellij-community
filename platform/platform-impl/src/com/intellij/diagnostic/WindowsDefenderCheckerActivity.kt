@@ -1,81 +1,101 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.IdeBundle
-import com.intellij.notification.*
-import com.intellij.notification.impl.NotificationFullContent
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.ide.actions.ShowLogAction
+import com.intellij.idea.ActionsBundle
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction.createSimple
+import com.intellij.notification.NotificationAction.createSimpleExpiring
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.ui.UIUtil
 import java.nio.file.Path
 
-class WindowsDefenderCheckerActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
-    val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode) return
+private val LOG = logger<WindowsDefenderCheckerActivity>()
 
-    val windowsDefenderChecker = WindowsDefenderChecker.getInstance()
-    if (windowsDefenderChecker.isVirusCheckIgnored(project)) return
-
-    val checkResult = windowsDefenderChecker.checkWindowsDefender(project)
-    if (checkResult.status == WindowsDefenderChecker.RealtimeScanningStatus.SCANNING_ENABLED &&
-        checkResult.pathStatus.any { !it.value }) {
-
-      val nonExcludedPaths = checkResult.pathStatus.filter { !it.value }.keys
-      val notification = WindowsDefenderNotification(
-        DiagnosticBundle.message("virus.scanning.warn.title"),
-        windowsDefenderChecker.getNotificationText(nonExcludedPaths),
-        nonExcludedPaths
-      )
-      notification.isImportant = true
-      notification.collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
-      windowsDefenderChecker.configureActions(project, notification)
-
-      app.invokeLater {
-        notification.notify(project)
-      }
+internal class WindowsDefenderCheckerActivity : ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
     }
   }
-}
 
-class WindowsDefenderNotification(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent text: String, val paths: Collection<Path>) :
-  Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")), title, text, NotificationType.WARNING), NotificationFullContent
+  override suspend fun execute(project: Project) {
+    val checker = WindowsDefenderChecker.getInstance()
+    if (checker.isStatusCheckIgnored(project)) {
+      LOG.info("status check is disabled")
+      WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
+      return
+    }
 
-class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction(DiagnosticBundle.message("virus.scanning.fix.action")) {
-  override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    val rc = Messages.showDialog(
-      e.project,
-      DiagnosticBundle.message("virus.scanning.fix.explanation", ApplicationNamesInfo.getInstance().fullProductName,
-                               WindowsDefenderChecker.getInstance().configurationInstructionsUrl),
-      DiagnosticBundle.message("virus.scanning.fix.title"),
-      arrayOf(
-        DiagnosticBundle.message("virus.scanning.fix.automatically"),
-        DiagnosticBundle.message("virus.scanning.fix.manually"),
-        CommonBundle.getCancelButtonText()
-      ),
-      0,
-      null)
-    when (rc) {
-      0 -> {
-        notification.expire()
-        ApplicationManager.getApplication().executeOnPooledThread {
-          if (WindowsDefenderChecker.getInstance().runExcludePathsCommand(e.project, paths)) {
-            UIUtil.invokeLaterIfNeeded {
-              Notifications.Bus.notifyAndHide(
-                Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")),
-                             "", DiagnosticBundle.message("virus.scanning.fix.success.notification"), NotificationType.INFORMATION), e.project)
-            }
-          }
-        }
+    val protection = checker.isRealTimeProtectionEnabled
+    if (protection != true) {
+      LOG.info("real-time protection: ${protection}")
+      WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
+      return
+    }
+
+    val paths = checker.getImportantPaths(project)
+    val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;") { it.toString() }
+    val notification = if (checker.canRunScript()) {
+      val auto = DiagnosticBundle.message("defender.config.auto")
+      val manual = DiagnosticBundle.message("defender.config.manual")
+      notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
+        .addAction(createSimpleExpiring(auto) { updateDefenderConfig(checker, project, paths) })
+        .addAction(createSimple(manual) { showInstructions(checker, project) })
+    }
+    else {
+      notification(DiagnosticBundle.message("defender.config.prompt.no.script", pathList), NotificationType.INFORMATION)
+        .addAction(createSimple(DiagnosticBundle.message("defender.config.instructions")) { showInstructions(checker, project) })
+    }
+    notification
+      .also {
+        it.isImportant = true
+        it.collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
       }
-      1 -> BrowserUtil.browse(WindowsDefenderChecker.getInstance().configurationInstructionsUrl)
+      .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
+      .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
+      .notify(project)
+  }
+
+  private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
+    WindowsDefenderStatisticsCollector.auto(project)
+    @Suppress("DialogTitleCapitalization")
+    runBackgroundableTask(DiagnosticBundle.message("defender.config.progress"), project, false) {
+      val success = checker.excludeProjectPaths(paths)
+      if (success) {
+        checker.ignoreStatusCheck(project, true)
+        notification(DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
+          .notify(project)
+      }
+      else {
+        notification(DiagnosticBundle.message("defender.config.failed"), NotificationType.WARNING)
+          .addAction(ShowLogAction.notificationAction())
+          .notify(project)
+      }
+      WindowsDefenderStatisticsCollector.configured(project, success)
     }
   }
+
+  private fun showInstructions(checker: WindowsDefenderChecker, project: Project) {
+    BrowserUtil.browse(checker.configurationInstructionsUrl)
+    WindowsDefenderStatisticsCollector.manual(project)
+  }
+
+  private fun suppressCheck(checker: WindowsDefenderChecker, project: Project, globally: Boolean) {
+    checker.ignoreStatusCheck(if (globally) null else project, true)
+    val action = ActionsBundle.message("action.ResetWindowsDefenderNotification.text")
+    notification(DiagnosticBundle.message("defender.config.restore", action), NotificationType.INFORMATION)
+      .notify(project)
+    WindowsDefenderStatisticsCollector.suppressed(project, globally)
+  }
+
+  private fun notification(@NlsContexts.NotificationContent content: String, type: NotificationType): Notification =
+    Notification("WindowsDefender", DiagnosticBundle.message("notification.group.defender.config"), content, type)
 }

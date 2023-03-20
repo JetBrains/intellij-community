@@ -16,9 +16,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor, DumbAware {
 
   @Override

@@ -19,9 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface ProjectAwareFileFilter extends VirtualFileFilter {
   @Nullable
   Project getProject();

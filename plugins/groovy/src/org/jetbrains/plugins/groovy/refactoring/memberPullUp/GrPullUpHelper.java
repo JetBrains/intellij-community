@@ -427,8 +427,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
     private boolean shouldFixSuper(PsiMethod method) {
       for (PsiMember element : myMembersAfterMove) {
-        if (element instanceof PsiMethod) {
-          PsiMethod member = (PsiMethod)element;
+        if (element instanceof PsiMethod member) {
           // if there is such member among moved members, super qualifier
           // should not be removed
           final PsiManager manager = method.getManager();

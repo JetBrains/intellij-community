@@ -1,7 +1,8 @@
 fun foo() {
     val a = try {
         "aaa"
-    } catch (e: <selection>Exception</selection>) {
+    } catch (e: <selection><caret>Exception</selection>) {
+        TODO("Not yet implemented")
     } finally {
     }
 }

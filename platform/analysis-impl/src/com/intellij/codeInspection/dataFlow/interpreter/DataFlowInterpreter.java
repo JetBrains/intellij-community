@@ -34,7 +34,7 @@ public interface DataFlowInterpreter {
    * @param startingStates initial states
    * @return result of interpretation
    */
-  @NotNull RunnerResult interpret(@NotNull List<DfaInstructionState> startingStates);
+  @NotNull RunnerResult interpret(@NotNull List<? extends DfaInstructionState> startingStates);
 
   /**
    * Call this method from the visitor to cancel analysis (e.g. if wanted fact is already established and subsequent analysis

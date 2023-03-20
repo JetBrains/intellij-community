@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.containers.SLRUCache;
@@ -6,24 +6,21 @@ import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
-/**
- * @author: db
- */
-public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
-  private static final Collection NULL_COLLECTION = Collections.emptySet();
+public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
+  private static final Collection<?> NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
-  private final SLRUCache<Integer, Collection> myCache;
+  private final SLRUCache<Integer, Collection<V>> myCache;
 
   public IntObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<Integer> keyExternalizer,
@@ -31,13 +28,14 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
                                         final Supplier<? extends Collection<V>> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
-    myCache = new SLRUCache<Integer, Collection>(CACHE_SIZE, CACHE_SIZE) {
+    myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
-      public Collection createValue(Integer key) {
+      public Collection<V> createValue(Integer key) {
         try {
           final Collection<V> collection = myMap.get(key);
-          return collection == null? NULL_COLLECTION : collection;
+          //noinspection unchecked
+          return collection == null? (Collection<V>)NULL_COLLECTION : collection;
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
@@ -105,7 +103,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   @Override
   public void removeAll(int key, Collection<V> values) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.removeAll(values)) {
@@ -114,7 +112,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }
@@ -127,7 +125,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   @Override
   public void removeFrom(final int key, final V value) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
@@ -136,7 +134,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }
@@ -159,24 +157,12 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   @Override
   public void putAll(IntObjectMultiMaplet<V> m) {
-    m.forEachEntry(new TIntObjectProcedure<Collection<V>>() {
-      @Override
-      public boolean execute(int key, Collection<V> value) {
-        put(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((vs, value) -> put(value, vs));
   }
 
   @Override
   public void replaceAll(IntObjectMultiMaplet<V> m) {
-    m.forEachEntry(new TIntObjectProcedure<Collection<V>>() {
-      @Override
-      public boolean execute(int key, Collection<V> value) {
-        replace(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((vs, value) -> replace(value, vs));
   }
 
   @Override
@@ -203,15 +189,16 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   }
 
   @Override
-  public void forEachEntry(final TIntObjectProcedure<Collection<V>> procedure) {
+  void forEachEntry(ObjIntConsumer<? super Collection<V>> procedure) {
     try {
       myMap.processKeysWithExistingMapping(key -> {
         try {
-          return procedure.execute(key, myMap.get(key));
+          procedure.accept(myMap.get(key), key);
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
         }
+        return true;
       });
     }
     catch (IOException e) {

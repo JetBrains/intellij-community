@@ -55,10 +55,9 @@ public class TodoItemImpl implements TodoItem {
   }
 
   public boolean equals(Object obj){
-    if(!(obj instanceof TodoItemImpl)){
+    if(!(obj instanceof TodoItemImpl todoItem)){
       return false;
     }
-    TodoItemImpl todoItem=(TodoItemImpl)obj;
     return myFile.equals(todoItem.myFile) &&
            myStartOffset == todoItem.myStartOffset &&
            myEndOffset == todoItem.myEndOffset &&

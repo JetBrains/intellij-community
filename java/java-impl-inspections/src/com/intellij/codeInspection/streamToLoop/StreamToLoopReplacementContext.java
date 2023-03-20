@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperation;
@@ -10,6 +10,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -36,7 +37,7 @@ class StreamToLoopReplacementContext extends ChainContext {
                                  @NotNull PsiExpression streamExpression,
                                  CommentTracker ct) {
     super(streamExpression);
-    myHasNestedLoops = records.stream().anyMatch(or -> or.myOperation instanceof FlatMapOperation);
+    myHasNestedLoops = ContainerUtil.exists(records, or -> or.myOperation instanceof FlatMapOperation);
     mySuffix = myHasNestedLoops ? "Outer" : "";
     myUsedLabels = StreamEx.iterate(statement, Objects::nonNull, PsiElement::getParent).select(PsiLabeledStatement.class)
       .map(PsiLabeledStatement::getName).toSet();
@@ -47,7 +48,7 @@ class StreamToLoopReplacementContext extends ChainContext {
     super(parentContext);
     myUsedLabels = parentContext.myUsedLabels;
     mySuffix = "Inner";
-    myHasNestedLoops = records.stream().anyMatch(or -> or.myOperation instanceof FlatMapOperation);
+    myHasNestedLoops = ContainerUtil.exists(records, or -> or.myOperation instanceof FlatMapOperation);
     myCommentTracker = parentContext.myCommentTracker;
   }
 
@@ -55,7 +56,7 @@ class StreamToLoopReplacementContext extends ChainContext {
     if (element == null) return;
     element.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         super.visitVariable(variable);
         myUsedNames.add(variable.getName());
       }
@@ -101,28 +102,25 @@ class StreamToLoopReplacementContext extends ChainContext {
                               String mostAbstractAllowedType,
                               String initializer,
                               @NotNull ResultKind kind) {
-    if (kind != ResultKind.UNKNOWN && myChainExpression.getParent() instanceof PsiVariable) {
-      PsiVariable var = (PsiVariable)myChainExpression.getParent();
-      if (isCompatibleType(var, type, mostAbstractAllowedType) &&
-          var.getParent() instanceof PsiDeclarationStatement &&
-          (kind == ResultKind.FINAL || VariableAccessUtils.canUseAsNonFinal(ObjectUtils.tryCast(var, PsiLocalVariable.class)))) {
-        PsiDeclarationStatement declaration = (PsiDeclarationStatement)var.getParent();
-        if (declaration.getDeclaredElements().length == 1) {
-          myChainExpression = declaration;
-          PsiVariable copy = (PsiVariable)var.copy();
-          if (kind == ResultKind.NON_FINAL) {
-            PsiModifierList modifierList = copy.getModifierList();
-            if (modifierList != null) {
-              modifierList.setModifierProperty(PsiModifier.FINAL, false);
-            }
-          }
-          PsiExpression oldInitializer = copy.getInitializer();
-          LOG.assertTrue(oldInitializer != null);
-          oldInitializer.replace(createExpression(initializer));
-          addBeforeStep(copy.getText());
-          return var.getName();
+    if (kind != ResultKind.UNKNOWN &&
+        myChainExpression.getParent() instanceof PsiVariable var &&
+        isCompatibleType(var, type, mostAbstractAllowedType) &&
+        var.getParent() instanceof PsiDeclarationStatement declaration &&
+        (kind == ResultKind.FINAL || VariableAccessUtils.canUseAsNonFinal(ObjectUtils.tryCast(var, PsiLocalVariable.class))) &&
+        declaration.getDeclaredElements().length == 1) {
+      myChainExpression = declaration;
+      PsiVariable copy = (PsiVariable)var.copy();
+      if (kind == ResultKind.NON_FINAL) {
+        PsiModifierList modifierList = copy.getModifierList();
+        if (modifierList != null) {
+          modifierList.setModifierProperty(PsiModifier.FINAL, false);
         }
       }
+      PsiExpression oldInitializer = copy.getInitializer();
+      LOG.assertTrue(oldInitializer != null);
+      oldInitializer.replace(createExpression(initializer));
+      addBeforeStep(copy.getText());
+      return var.getName();
     }
     String name = registerVarName(Arrays.asList(desiredName, "result"));
     addBeforeStep(type.getCanonicalText() + " " + name + " = " + initializer + ";");
@@ -153,7 +151,7 @@ class StreamToLoopReplacementContext extends ChainContext {
     if (EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(var.getType(), type)) return true;
     if (mostAbstractAllowedType == null) return false;
     PsiType[] superTypes = type.getSuperTypes();
-    return Arrays.stream(superTypes).anyMatch(superType -> InheritanceUtil.isInheritor(superType, mostAbstractAllowedType) &&
+    return ContainerUtil.exists(superTypes, superType -> InheritanceUtil.isInheritor(superType, mostAbstractAllowedType) &&
                                                            isCompatibleType(var, superType, mostAbstractAllowedType));
   }
 
@@ -218,19 +216,17 @@ class StreamToLoopReplacementContext extends ChainContext {
       return text;
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(myChainExpression.getParent());
-    if (parent instanceof PsiIfStatement && conditionalExpression instanceof ConditionalExpression.Boolean &&
-        !((ConditionalExpression.Boolean)conditionalExpression).isInverted()) {
-      PsiIfStatement ifStatement = (PsiIfStatement)parent;
-      if (ifStatement.getElseBranch() == null) {
-        PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-        if (thenStatement instanceof PsiReturnStatement || thenStatement instanceof PsiThrowStatement) {
-          myChainExpression = parent;
-          return thenStatement.getText();
-        }
-        if (thenStatement instanceof PsiExpressionStatement) {
-          myChainExpression = parent;
-          return thenStatement.getText() + "\n" + getBreakStatement();
-        }
+    if (parent instanceof PsiIfStatement ifStatement && ifStatement.getElseBranch() == null &&
+        conditionalExpression instanceof ConditionalExpression.Boolean boolCondition &&
+        !boolCondition.isInverted()) {
+      PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+      if (thenStatement instanceof PsiReturnStatement || thenStatement instanceof PsiThrowStatement) {
+        myChainExpression = parent;
+        return thenStatement.getText();
+      }
+      if (thenStatement instanceof PsiExpressionStatement) {
+        myChainExpression = parent;
+        return thenStatement.getText() + "\n" + getBreakStatement();
       }
     }
     if (conditionalExpression instanceof ConditionalExpression.Optional && myChainExpression instanceof PsiExpression) {
@@ -263,30 +259,27 @@ class StreamToLoopReplacementContext extends ChainContext {
 
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(myChainExpression.getParent());
       ConditionalExpression candidate = null;
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression expression) {
         PsiExpression[] operands = expression.getOperands();
         if (operands.length > 1 && PsiTreeUtil.isAncestor(operands[0], myChainExpression, false)) {
           IElementType type = expression.getOperationTokenType();
           if (type.equals(JavaTokenType.ANDAND)) {
             candidate = condition
-              .toPlain(PsiType.BOOLEAN, StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" && "), "false");
+              .toPlain(PsiTypes.booleanType(), StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" && "), "false");
           }
           else if (type.equals(JavaTokenType.OROR)) {
             candidate = condition
-              .toPlain(PsiType.BOOLEAN, "true", StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" || "));
+              .toPlain(PsiTypes.booleanType(), "true", StreamEx.of(operands, 1, operands.length).map(PsiExpression::getText).joining(" || "));
           }
         }
       }
-      else if (parent instanceof PsiConditionalExpression) {
-        PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
-        if (PsiTreeUtil.isAncestor(ternary.getCondition(), myChainExpression, false)) {
-          PsiType type = ternary.getType();
-          PsiExpression thenExpression = ternary.getThenExpression();
-          PsiExpression elseExpression = ternary.getElseExpression();
-          if (type != null && thenExpression != null && elseExpression != null) {
-            candidate = condition.toPlain(type, thenExpression.getText(), elseExpression.getText());
-          }
+      else if (parent instanceof PsiConditionalExpression ternary &&
+               PsiTreeUtil.isAncestor(ternary.getCondition(), myChainExpression, false)) {
+        PsiType type = ternary.getType();
+        PsiExpression thenExpression = ternary.getThenExpression();
+        PsiExpression elseExpression = ternary.getElseExpression();
+        if (type != null && thenExpression != null && elseExpression != null) {
+          candidate = condition.toPlain(type, thenExpression.getText(), elseExpression.getText());
         }
       }
       if (candidate != null &&

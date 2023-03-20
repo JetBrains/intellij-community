@@ -18,6 +18,10 @@ public final class InMemoryChangeListStorage implements ChangeListStorage {
   }
 
   @Override
+  public void force() {
+  }
+
+  @Override
   public long nextId() {
     return myCurrentId++;
   }

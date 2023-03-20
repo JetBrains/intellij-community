@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.DataManager;
@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  */
 public class UserFilterPopupComponent
   extends MultipleValueFilterPopupComponent<VcsLogUserFilter, FilterModel.SingleFilterModel<VcsLogUserFilter>> {
-  @NotNull private final VcsLogData myLogData;
+  private final @NotNull VcsLogData myLogData;
 
   UserFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                            @NotNull VcsLogData logData,
@@ -35,9 +35,8 @@ public class UserFilterPopupComponent
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     List<AnAction> group = new ArrayList<>();
-    group.add(createAllAction());
     group.add(createSelectMultipleValuesAction());
     if (!myLogData.getCurrentUser().isEmpty()) {
       group.add(new PredefinedValueAction(Collections.singletonList(VcsLogFilterObject.ME), () -> me(), true));
@@ -46,8 +45,7 @@ public class UserFilterPopupComponent
     return new DefaultActionGroup(group);
   }
 
-  @NotNull
-  protected ActionGroup createSpeedSearchActionGroup() {
+  protected @NotNull ActionGroup createSpeedSearchActionGroup() {
     List<AnAction> group = new ArrayList<>();
     group.add(new SpeedsearchPredefinedValueAction(VcsLogFilterObject.ME, () -> me()));
     group.add(Separator.getInstance());
@@ -57,15 +55,13 @@ public class UserFilterPopupComponent
     return new DefaultActionGroup(group);
   }
 
-  @NotNull
   @Override
-  protected List<String> getAllValues() {
+  protected @NotNull List<String> getAllValues() {
     return ContainerUtil.concat(Collections.singletonList(me()), collectUsers(myLogData));
   }
 
-  @NotNull
   @Override
-  protected ListPopup createPopupMenu() {
+  protected @NotNull ListPopup createPopupMenu() {
     ActionGroup actionGroup = createActionGroup();
     ActionGroup speedsearchGroup = createSpeedSearchActionGroup();
     return new UserLogSpeedSearchPopup(new DefaultActionGroup(actionGroup, speedsearchGroup),
@@ -73,14 +69,12 @@ public class UserFilterPopupComponent
   }
 
   @Override
-  @Nullable
-  protected VcsLogUserFilter createFilter(@NotNull List<String> values) {
+  protected @Nullable VcsLogUserFilter createFilter(@NotNull List<String> values) {
     return myFilterModel.createFilter(values);
   }
 
   @Override
-  @NotNull
-  protected List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
+  protected @NotNull List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
     return myFilterModel.getFilterValues(filter);
   }
 
@@ -94,13 +88,11 @@ public class UserFilterPopupComponent
     return ContainerUtil.map(values, user -> user.equals(VcsLogFilterObject.ME) ? me() : user);
   }
 
-  @NotNull
-  private static String me() {
+  private static @NotNull String me() {
     return VcsLogBundle.message("vcs.log.user.filter.me");
   }
 
-  @NotNull
-  private static List<String> collectUsers(@NotNull VcsLogData logData) {
+  private static @NotNull List<String> collectUsers(@NotNull VcsLogData logData) {
     List<String> users = ContainerUtil.map(logData.getAllUsers(), user -> {
       String shortPresentation = VcsUserUtil.getShortPresentation(user);
       Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);

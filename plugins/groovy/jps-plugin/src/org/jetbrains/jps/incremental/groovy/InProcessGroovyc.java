@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -25,6 +25,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -32,9 +33,6 @@ import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author peter
- */
 final class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance(InProcessGroovyc.class);
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
@@ -185,21 +183,20 @@ final class InProcessGroovyc implements GroovycFlavor {
     }
   }
 
-  @Nullable
-  private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws Exception {
+  private @Nullable JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws Exception {
     ClassLoader parent = obtainParentLoader(compilationClassPath);
 
     ClassLoader groovyClassLoader;
     try {
-      ClassLoader auxiliary = parent != null ? parent : buildCompilationClassLoader(compilationClassPath, null).get();
+      ClassLoader auxiliary = parent == null ? buildCompilationClassLoader(compilationClassPath, null).get() : parent;
       Class<?> gcl = auxiliary.loadClass("groovy.lang.GroovyClassLoader");
       groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class)
         .newInstance(parent != null ? parent : getPlatformLoaderParentIfOnJdk9());
     }
     catch (ClassNotFoundException e) {
+      LOG.warn(e);
       return null;
     }
-
     return new JointCompilationClassLoader(buildCompilationClassLoader(compilationClassPath, groovyClassLoader));
   }
 
@@ -239,11 +236,10 @@ final class InProcessGroovyc implements GroovycFlavor {
 
     List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, s -> {
       String fileName = PathUtilRt.getFileName(s);
-      return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
-    });
-    ContainerUtil.retainAll(groovyJars, s -> {
-      String fileName = PathUtilRt.getFileName(s);
-      return !GROOVY_ECLIPSE_BATCH_PATTERN.matcher(fileName).matches() && !GROOVY_JPS_PLUGIN_JARS_PATTERN.matcher(fileName).matches();
+      return (GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches())
+        && !GROOVY_ECLIPSE_BATCH_PATTERN.matcher(fileName).matches()
+             && !GROOVY_JPS_PLUGIN_JARS_PATTERN.matcher(fileName).matches()
+        ;
     });
 
     LOG.debug("Groovy jars: " + groovyJars);
@@ -357,7 +353,7 @@ final class InProcessGroovyc implements GroovycFlavor {
       boolean hasLineSeparator = false;
 
       @Override
-      public void write(int b) throws IOException {
+      public void write(int b) {
         if (overridden != null && Thread.currentThread() != thread) {
           overridden.write(b);
           return;
@@ -377,19 +373,19 @@ final class InProcessGroovyc implements GroovycFlavor {
       }
 
       @Override
-      public void flush() throws IOException {
+      public void flush() {
         if (overridden != null && Thread.currentThread() != thread) {
           overridden.flush();
           return;
         }
 
         if (line.size() > 0) {
-          parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString("UTF-8")), type);
+          parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString(StandardCharsets.UTF_8)), type);
           line = new ByteArrayOutputStream();
           hasLineSeparator = false;
         }
       }
     };
-    return new PrintStream(out, false, "UTF-8");
+    return new PrintStream(out, false, StandardCharsets.UTF_8);
   }
 }

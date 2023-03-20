@@ -25,7 +25,11 @@ abstract class IftModule(@NonNls val id: String,
     }
   }
 
-  abstract val sanitizedName: @NlsSafe String
+  /**
+   * Relative path to file in the learning project. Will be used existed or generated the new empty file.
+   * Has a second priority after [Lesson]'s `sampleFilePath`.
+   */
+  abstract val sampleFilePath: @NlsSafe String?
 
   abstract fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor
 

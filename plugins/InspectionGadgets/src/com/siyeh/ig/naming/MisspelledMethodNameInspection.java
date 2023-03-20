@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
@@ -29,9 +29,11 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MisspelledMethodNameInspection extends BaseInspection {
 
@@ -39,9 +41,9 @@ public class MisspelledMethodNameInspection extends BaseInspection {
   public boolean ignoreIfMethodIsOverride = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"),
-                                          this, "ignoreIfMethodIsOverride");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreIfMethodIsOverride", InspectionGadgetsBundle.message("ignore.methods.overriding.super.method")));
   }
 
   @Override
@@ -67,7 +69,7 @@ public class MisspelledMethodNameInspection extends BaseInspection {
 
   private class MethodNamesDifferOnlyByCaseVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       PsiMethod[] methods = aClass.getAllMethods();
       Map<String, PsiMethod> methodNames = CollectionFactory.createCaseInsensitiveStringMap();

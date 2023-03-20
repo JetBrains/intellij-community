@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl
@@ -6,90 +6,106 @@ package com.intellij.openapi.wm.impl
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.wm.RegisterToolWindowTask
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.WindowInfo
+import com.intellij.openapi.wm.*
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
-class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap()) {
+@Internal
+class DesktopLayout(
+  private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap(),
+  val unifiedWeights: UnifiedToolWindowWeights = UnifiedToolWindowWeights(),
+) {
   companion object {
-    @NonNls internal const val TAG = "layout"
-  }
-
-  fun copy(): DesktopLayout {
-    val map = HashMap<String, WindowInfoImpl>(idToInfo.size)
-    for (entry in idToInfo) {
-      map.put(entry.key, entry.value.copy())
-    }
-    return DesktopLayout(map)
+    @NonNls const val TAG = "layout"
   }
 
   /**
-   * Creates or gets `WindowInfo` for the specified `id`.
+   * @param paneId the ID of the tool window pane that this anchor is attached to
+   * @param anchor anchor of the stripe.
+   * @return maximum ordinal number in the specified stripe. Returns `-1` if there is no tool window with the specified anchor.
    */
-  internal fun getOrCreate(task: RegisterToolWindowTask): WindowInfoImpl {
-    return idToInfo.getOrPut(task.id) {
-      val info = createDefaultInfo(task.id)
-      info.anchor = task.anchor
-      info.isSplit = task.sideTool
-      info
-    }
+  internal fun getMaxOrder(paneId: String, anchor: ToolWindowAnchor): Int {
+    return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
   }
 
-  private fun createDefaultInfo(id: String): WindowInfoImpl {
+  fun copy() = DesktopLayout(
+    idToInfo.entries.associateTo(HashMap(idToInfo.size)) { e -> e.key to e.value.copy() },
+    unifiedWeights.copy(),
+  )
+
+  internal fun create(task: RegisterToolWindowTask, isNewUi: Boolean): WindowInfoImpl {
     val info = WindowInfoImpl()
-    info.id = id
+    info.id = task.id
     info.isFromPersistentSettings = false
-    info.order = getMaxOrder(idToInfo.values, info.anchor) + 1
+    if (isNewUi) {
+      info.isShowStripeButton = false
+    }
+    info.isSplit = task.sideTool
+
+    info.toolWindowPaneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+    info.anchor = task.anchor
+
+    task.contentFactory?.anchor?.let {
+      info.anchor = it
+    }
     return info
   }
 
   fun getInfo(id: String) = idToInfo.get(id)
+  fun getInfos() = idToInfo.toMap()
 
   internal fun addInfo(id: String, info: WindowInfoImpl) {
     val old = idToInfo.put(id, info)
     LOG.assertTrue(old == null)
   }
 
+  fun getUnifiedAnchorWeight(anchor: ToolWindowAnchor): Float = unifiedWeights[anchor]
+
+  fun setUnifiedAnchorWeight(anchor: ToolWindowAnchor, weight: Float) {
+    unifiedWeights[anchor] = weight
+  }
+
   /**
    * Sets new `anchor` and `id` for the specified tool window.
    * Also, the method properly updates order of all other tool windows.
    */
-  fun setAnchor(info: WindowInfoImpl, newAnchor: ToolWindowAnchor, suppliedNewOrder: Int) {
+  fun setAnchor(info: WindowInfoImpl,
+                newPaneId: String,
+                newAnchor: ToolWindowAnchor,
+                suppliedNewOrder: Int): List<WindowInfoImpl> {
     var newOrder = suppliedNewOrder
-    // if order isn't defined then the window will the last in the stripe
-    if (newOrder == -1) {
-      newOrder = getMaxOrder(idToInfo.values, newAnchor) + 1
-    }
+    val affected = ArrayList<WindowInfoImpl>()
 
-    val oldAnchor = info.anchor
-    // shift order to the right in the target stripe
-    val infos = getAllInfos(idToInfo.values, newAnchor)
-    for (i in infos.size - 1 downTo -1 + 1) {
-      val info2 = infos[i]
-      if (newOrder <= info2.order) {
-        info2.order = info2.order + 1
+    // if order isn't defined then the window will be the last in the stripe
+    if (newOrder == -1) {
+      newOrder = getMaxOrder(newPaneId, newAnchor) + 1
+    }
+    else {
+      // shift order to the right in the target stripe
+      for (otherInfo in idToInfo.values) {
+        if (otherInfo !== info && otherInfo.safeToolWindowPaneId == newPaneId && otherInfo.anchor == newAnchor
+            && otherInfo.order != -1 && otherInfo.order >= newOrder) {
+          otherInfo.order++
+          affected.add(otherInfo)
+        }
       }
     }
 
-    // "move" window into the target position
-    info.anchor = newAnchor
     info.order = newOrder
-    // normalize orders in the source and target stripes
-    normalizeOrder(getAllInfos(idToInfo.values, oldAnchor))
-    if (oldAnchor != newAnchor) {
-      normalizeOrder(getAllInfos(idToInfo.values, newAnchor))
-    }
+    info.toolWindowPaneId = newPaneId
+    info.anchor = newAnchor
+    return affected
   }
 
-  fun readExternal(layoutElement: Element, isNewUi: Boolean) {
+  fun readExternal(layoutElement: Element, isNewUi: Boolean, isFromPersistentSettings: Boolean = true) {
     val infoBinding = XmlSerializer.getBeanBinding(WindowInfoImpl::class.java)
 
     val list = mutableListOf<WindowInfoImpl>()
     for (element in layoutElement.getChildren(WindowInfoImpl.TAG)) {
       val info = WindowInfoImpl()
+      info.isFromPersistentSettings = isFromPersistentSettings
       infoBinding.deserializeInto(info, element)
       info.normalizeAfterRead()
       val id = info.id
@@ -98,27 +114,21 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
         continue
       }
 
-      // if order isn't defined then window's button will be the last one in the stripe
-      if (info.order == -1) {
-        info.order = getMaxOrder(list, info.anchor) + 1
-      }
-
-      if (info.isSplit && isNewUi) {
-        info.isSplit = false
-      }
-
       idToInfo.put(id, info)
       list.add(info)
     }
 
-    normalizeOrder(getAllInfos(list, ToolWindowAnchor.TOP))
-    normalizeOrder(getAllInfos(list, ToolWindowAnchor.LEFT))
-    normalizeOrder(getAllInfos(list, ToolWindowAnchor.BOTTOM))
-    normalizeOrder(getAllInfos(list, ToolWindowAnchor.RIGHT))
+    val unifiedWeightsElement = layoutElement.getChild(UnifiedToolWindowWeights.TAG)
+    if (unifiedWeightsElement != null) {
+      val unifiedWeightsBinding = XmlSerializer.getBeanBinding(UnifiedToolWindowWeights::class.java)
+      unifiedWeightsBinding.deserializeInto(unifiedWeights, unifiedWeightsElement)
+    }
 
+    normalizeOrder(list)
     for (info in list) {
       info.resetModificationCount()
     }
+    unifiedWeights.resetModificationCount()
   }
 
   val stateModificationCount: Long
@@ -139,14 +149,24 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
       return null
     }
 
-    val state = Element(tagName)
-    for (info in idToInfo.values.sortedWith(windowInfoComparator)) {
-      serialize(info)?.let {
-        state.addContent(it)
+    var state: Element? = null
+    for (info in getSortedList()) {
+      val child = serialize(info) ?: continue
+      if (state == null) {
+        state = Element(tagName)
+      }
+      state.addContent(child)
+    }
+    if (state != null) {
+      val serializedUnifiedWeights = serialize(unifiedWeights)
+      if (serializedUnifiedWeights != null) {
+        state.addContent(serializedUnifiedWeights)
       }
     }
     return state
   }
+
+  internal fun getSortedList(): List<WindowInfoImpl> = idToInfo.values.sortedWith(windowInfoComparator)
 }
 
 private val LOG = logger<DesktopLayout>()
@@ -162,46 +182,27 @@ private fun getAnchorWeight(anchor: ToolWindowAnchor): Int {
 }
 
 internal val windowInfoComparator: Comparator<WindowInfo> = Comparator { o1, o2 ->
-  val anchorWeight = getAnchorWeight(o1.anchor) - getAnchorWeight(o2.anchor)
-  if (anchorWeight == 0) o1.order - o2.order else anchorWeight
+  val weightDiff = getAnchorWeight(o1.anchor) - getAnchorWeight(o2.anchor)
+  if (weightDiff != 0) weightDiff else o1.order - o2.order
 }
 
 /**
- * Normalizes order of windows in the passed array. Note, that array should be
- * sorted by order (by ascending). Order of first window will be `0`.
+ * Normalizes order of windows in the array. Order of first window will be `0`.
  */
-private fun normalizeOrder(infos: List<WindowInfoImpl>) {
-  for (i in infos.indices) {
-    infos.get(i).order = i
-  }
-}
-
-/**
- * @param anchor anchor of the stripe.
- * @return maximum ordinal number in the specified stripe. Returns `-1`
- * if there is no tool window with the specified anchor.
- */
-private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): Int {
-  var result = -1
+private fun normalizeOrder(list: MutableList<WindowInfoImpl>) {
+  list.sortWith(windowInfoComparator)
+  var order = 0
+  var lastAnchor = ToolWindowAnchor.TOP
   for (info in list) {
-    if (anchor == info.anchor && result < info.order) {
-      result = info.order
+    if (info.order == -1) {
+      continue
     }
-  }
-  return result
-}
 
-/**
- * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
- * Returned infos are sorted by order.
- */
-private fun getAllInfos(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): List<WindowInfoImpl> {
-  val result = mutableListOf<WindowInfoImpl>()
-  for (info in list) {
-    if (anchor == info.anchor) {
-      result.add(info)
+    if (lastAnchor != info.anchor) {
+      lastAnchor = info.anchor
+      order = 0
     }
+
+    info.order = order++
   }
-  result.sortWith(windowInfoComparator)
-  return result
 }

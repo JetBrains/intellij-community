@@ -32,10 +32,10 @@ public abstract class StubTreeLoader {
   }
 
   @Nullable
-  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
+  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
   @Nullable
-  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
+  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
   @Nullable
   public abstract ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
@@ -58,10 +58,9 @@ public abstract class StubTreeLoader {
   }
 
   @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree stubTree,
+  public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
                                                      @NotNull PsiFileWithStubSupport psiFile,
                                                      @Nullable Throwable cause) {
-
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();
       StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
@@ -86,11 +85,7 @@ public abstract class StubTreeLoader {
         PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
         if (fromText.getLanguage().equals(psiFile.getLanguage())) {
           boolean consistent = DebugUtil.psiToString(psiFile, false).equals(DebugUtil.psiToString(fromText, false));
-          if (consistent) {
-            msg += "\n tree consistent";
-          } else {
-            msg += "\n AST INCONSISTENT, perhaps after incremental reparse; " + fromText;
-          }
+          msg += consistent ? "\n tree consistent" : "\n AST INCONSISTENT, perhaps after incremental reparse; " + fromText;
         }
       }
 
@@ -140,9 +135,9 @@ public abstract class StubTreeLoader {
     return new ManyProjectsStubIndexMismatch(message, cause, attachments);
   }
 
-  private static Attachment @NotNull [] createAttachments(@Nullable ObjectStubTree stubTree,
+  private static Attachment @NotNull [] createAttachments(@Nullable ObjectStubTree<?> stubTree,
                                                           @NotNull PsiFileWithStubSupport psiFile,
-                                                          VirtualFile file,
+                                                          @NotNull VirtualFile file,
                                                           @Nullable StubTree stubTreeFromIndex) {
     List<Attachment> attachments = new ArrayList<>();
     attachments.add(new Attachment(file.getPath() + "_file.txt", psiFile instanceof PsiCompiledElement ? "compiled" : psiFile.getText()));

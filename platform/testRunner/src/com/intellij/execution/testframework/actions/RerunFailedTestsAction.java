@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
@@ -13,10 +14,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class RerunFailedTestsAction extends AnAction {
+final class RerunFailedTestsAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
-   e.getPresentation().setEnabled(getAction(e, false));
+    e.getPresentation().setEnabled(getAction(e, false));
   }
 
   @Override
@@ -40,19 +47,16 @@ class RerunFailedTestsAction extends AnAction {
       return false;
     }
 
-    ExecutionEnvironment environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
-    if (environment == null) {
-      return false;
-    }
-
     AnAction[] actions = contentDescriptor.getRestartActions();
-    if (actions.length == 0) {
-      return false;
-    }
 
     for (AnAction action : actions) {
       if (action instanceof AbstractRerunFailedTestsAction) {
         if (execute) {
+          ExecutionEnvironment environment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
+          if (environment == null) {
+            return false;
+          }
+
           ((AbstractRerunFailedTestsAction)action).execute(e, environment);
           return true;
         }

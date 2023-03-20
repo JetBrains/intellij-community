@@ -40,9 +40,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Roman.Shein
- */
 public class ExtractedSettingsDialog extends DialogWrapper {
   protected CodeStyleSettingsNameProvider myNameProvider;
   protected List<Value> myValues;
@@ -73,8 +70,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
   protected boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull Value value) {
     for (Enumeration children = startNode.children(); children.hasMoreElements();) {
       Object child = children.nextElement();
-      if (child instanceof SettingsTreeNode) {
-        SettingsTreeNode settingsChild = (SettingsTreeNode) child;
+      if (child instanceof SettingsTreeNode settingsChild) {
         if (settingsChild.accepted && value.equals(settingsChild.myValue)) {
           return true;
         }
@@ -165,8 +161,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       if (table instanceof TreeTable) {
         table.setEnabled(true);
         DefaultMutableTreeNode valueNode = (DefaultMutableTreeNode)((TreeTable) table).getTree().getPathForRow(row).getLastPathComponent();
-        if (valueNode instanceof SettingsTreeNode) {
-          SettingsTreeNode settingsNode = (SettingsTreeNode) valueNode;
+        if (valueNode instanceof SettingsTreeNode settingsNode) {
           myLabel.setText(settingsNode.getValueString());
           myCheckBox.setEnabled(true);
           myCheckBox.setSelected(settingsNode.accepted);
@@ -210,8 +205,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
     protected void updateAncestorsUi(boolean accepted, SettingsTreeNode node) {
       TreeNode parent = node.getParent();
-      if (parent instanceof SettingsTreeNode) {
-        SettingsTreeNode settingsParent = (SettingsTreeNode) parent;
+      if (parent instanceof SettingsTreeNode settingsParent) {
         settingsParent.accepted = false;
         if (!accepted) {
           //propagate disabled settings upwards
@@ -230,8 +224,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     protected void updateChildrenUi(SettingsTreeNode node) {
       for (Enumeration children = node.children(); children.hasMoreElements(); ) {
         Object child = children.nextElement();
-        if (child instanceof SettingsTreeNode) {
-          SettingsTreeNode settingsChild = (SettingsTreeNode) child;
+        if (child instanceof SettingsTreeNode settingsChild) {
           settingsChild.accepted = node.accepted;
           updateChildrenUi(settingsChild);
         }
@@ -397,7 +390,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
         return editor == null ? super.getCellEditor(row, column) : editor;
       }
     };
-    new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
+    TreeTableSpeedSearch.installOn(treeTable).setComparator(new SpeedSearchComparator(false));
 
     treeTable.setRootVisible(false);
 
@@ -452,8 +445,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
-      if (value instanceof SettingsTreeNode) {
-        SettingsTreeNode node = (SettingsTreeNode) value;
+      if (value instanceof SettingsTreeNode node) {
         myLabel.setText(node.getTitle());
         myLabel.setFont(node.isGroupOrTypeNode() ? myLabel.getFont().deriveFont(Font.BOLD) : myLabel.getFont().deriveFont(Font.PLAIN));
       } else {

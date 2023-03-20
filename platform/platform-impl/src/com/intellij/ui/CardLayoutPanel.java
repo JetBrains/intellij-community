@@ -44,8 +44,6 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
    * Creates a component view from the temporary object.
    * This method is usually called on the EDT.
    *
-   * @param ui
-   * @return
    */
   protected abstract V create(UI ui);
 
@@ -106,8 +104,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
       for (Component component : getComponents()) {
         component.setVisible(component == value);
       }
-      if (value instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)value;
+      if (value instanceof JScrollPane pane) {
         JViewport viewport = pane.getViewport();
         if (viewport != null) {
           Component view = viewport.getView();

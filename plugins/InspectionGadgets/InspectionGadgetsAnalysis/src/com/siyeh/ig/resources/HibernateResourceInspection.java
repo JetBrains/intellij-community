@@ -32,10 +32,9 @@ public class HibernateResourceInspection extends ResourceInspection {
 
   @Override
   protected boolean isResourceCreation(PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final String methodName = methodExpression.getReferenceName();
     if (!HardcodedMethodConstants.OPEN_SESSION.equals(methodName)) {

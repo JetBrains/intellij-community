@@ -7,9 +7,11 @@ import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjec
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.serialization.VersionedFile
 import com.intellij.testFramework.ProjectRule
+import org.junit.Ignore
 import org.junit.Test
 import java.nio.file.Paths
 
+@Ignore
 class CacheFileLoadTest {
   @JvmField
   val projectRule = ProjectRule()

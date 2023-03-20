@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.EditorSearchSession;
+import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,12 +26,15 @@ public class SelectionManager {
     if (removeAllPreviousSelections) {
       editor.getCaretModel().removeSecondaryCarets();
     }
+    FindModel findModel = mySearchResults.getFindModel();
     final FindResult cursor = mySearchResults.getCursor();
     if (cursor == null) {
-      if (removePreviousSelection && !myHadSelectionInitially) editor.getSelectionModel().removeSelection();
+      if (removePreviousSelection && !myHadSelectionInitially && findModel.isGlobal()) {
+        editor.getSelectionModel().removeSelection();
+      }
       return;
     }
-    if (mySearchResults.getFindModel().isGlobal()) {
+    if (findModel.isGlobal()) {
       if (removePreviousSelection || removeAllPreviousSelections) {
         FoldingModel foldingModel = editor.getFoldingModel();
         final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
@@ -57,7 +46,7 @@ public class SelectionManager {
           myRegionsToRestore.clear();
           for (FoldRegion region : allRegions) {
             if (!region.isValid()) continue;
-            if (cursor.intersects(TextRange.create(region))) {
+            if (cursor.intersects(region)) {
               if (!region.isExpanded()) {
                 region.setExpanded(true);
                 myRegionsToRestore.add(region);
@@ -72,11 +61,13 @@ public class SelectionManager {
       else {
         FindUtil.selectSearchResultInEditor(editor, cursor, -1);
       }
-      if (adjustScrollPosition) editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      if (adjustScrollPosition) {
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_CENTER);
+      }
     } else {
       if (!SearchResults.insideVisibleArea(editor, cursor) && adjustScrollPosition) {
         LogicalPosition pos = editor.offsetToLogicalPosition(cursor.getStartOffset());
-        editor.getScrollingModel().scrollTo(pos, ScrollType.CENTER);
+        editor.getScrollingModel().scrollTo(pos, ScrollType.CENTER_CENTER);
       }
     }
   }

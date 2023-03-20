@@ -50,7 +50,7 @@ public class SamplingTask {
       if (myThreadInfos.size() >= myMaxDumps) {
         stop();
       }
-      dumpedThreads(ThreadDumper.getThreadDumpInfo(infos));
+      dumpedThreads(ThreadDumper.getThreadDumpInfo(infos, true));
     }
   }
 

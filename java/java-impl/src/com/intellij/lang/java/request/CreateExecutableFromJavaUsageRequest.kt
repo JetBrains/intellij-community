@@ -8,9 +8,10 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.components.service
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.util.parentOfTypes
-import com.intellij.refactoring.util.RefactoringUtil
+import com.intellij.util.CommonJavaRefactoringUtil
 
 internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   call: T,
@@ -20,7 +21,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   private val psiManager = call.manager
   private val project = psiManager.project
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
-  protected val call: T get() = callPointer.element ?: error("dead pointer")
+  internal val call: T get() = callPointer.element ?: error("dead pointer")
 
   override fun isValid() = callPointer.element != null
 
@@ -35,9 +36,9 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
     val scope = call.resolveScope
     val codeStyleManager: JavaCodeStyleManager = project.service()
     return argumentList.expressions.map { expression ->
-      val argType: PsiType? = RefactoringUtil.getTypeByExpression(expression)
+      val argType: PsiType? = CommonJavaRefactoringUtil.getTypeByExpression(expression)
       val type = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, scope)
-      val names = codeStyleManager.suggestSemanticNames(expression)
+      val names = codeStyleManager.suggestSemanticNames(expression, VariableKind.PARAMETER)
       val expectedTypes = expectedTypes(type, ExpectedType.Kind.SUPERTYPE)
       expectedParameter(expectedTypes, names)
     }

@@ -12,6 +12,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -92,7 +93,13 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   private void removeProfile(@NotNull InspectionProfileImpl profile) {
-    myProfilePanels.removeIf(panel -> panel.getProfile().equals(profile));
+    myProfilePanels.removeIf(panel -> {
+      if (panel.getProfile().equals(profile)) {
+        panel.disposeUI();
+        return true;
+      }
+      return false;
+    });
   }
 
   void updatePanel(@NotNull InspectionProfileSchemesPanel panel) {
@@ -184,6 +191,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   @NotNull
+  @Unmodifiable
   public static List<InspectionProfileImpl> getSortedProfiles(@NotNull InspectionProfileManager appManager,
                                                               @NotNull InspectionProfileManager projectManager) {
     return ContainerUtil.notNullize(ContainerUtil.concat(ContainerUtil.sorted(appManager.getProfiles()),

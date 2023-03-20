@@ -7,10 +7,13 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.ui.AppIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import javax.swing.JCheckBox
@@ -63,9 +66,13 @@ fun askCredentials(project: Project?,
     val rememberCheckBox = RememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
 
     val panel = panel {
-      row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
-      row { passwordField() }
-      row { rememberCheckBox() }
+      row {
+        label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:")
+      }
+      row {
+        cell(passwordField).resizableColumn().align(AlignX.FILL)
+      }
+      row { cell(rememberCheckBox) }
     }
 
     AppIcon.getInstance().requestAttention(project, true)
@@ -95,7 +102,7 @@ object RememberCheckBoxState {
     PasswordSafe.instance.isRememberPasswordByDefault = component.isSelected
   }
 
-  fun createCheckBox(toolTip: String?): JCheckBox {
+  fun createCheckBox(@Tooltip toolTip: String?): JCheckBox {
     return CheckBox(
       UIBundle.message("auth.remember.cb"),
       selected = isSelected,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.openapi.editor.Editor;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,16 +38,9 @@ public class StatementGroupSelectioner extends BasicSelectioner {
     while (startElement.getPrevSibling() != null) {
       PsiElement sibling = startElement.getPrevSibling();
 
-      if (sibling instanceof PsiJavaToken) {
-        PsiJavaToken token = (PsiJavaToken)sibling;
-        if (token.getTokenType() == JavaTokenType.LBRACE) {
-          break;
-        }
-      }
+      if (PsiUtil.isJavaToken(sibling, JavaTokenType.LBRACE)) break;
 
-      if (sibling instanceof PsiWhiteSpace) {
-        PsiWhiteSpace whiteSpace = (PsiWhiteSpace)sibling;
-
+      if (sibling instanceof PsiWhiteSpace whiteSpace) {
         String[] strings = LineTokenizer.tokenize(whiteSpace.getText().toCharArray(), false);
         if (strings.length > 2) {
           break;
@@ -65,16 +59,9 @@ public class StatementGroupSelectioner extends BasicSelectioner {
     while (endElement.getNextSibling() != null) {
       PsiElement sibling = endElement.getNextSibling();
 
-      if (sibling instanceof PsiJavaToken) {
-        PsiJavaToken token = (PsiJavaToken)sibling;
-        if (token.getTokenType() == JavaTokenType.RBRACE) {
-          break;
-        }
-      }
+      if (PsiUtil.isJavaToken(sibling, JavaTokenType.RBRACE)) break;
 
-      if (sibling instanceof PsiWhiteSpace) {
-        PsiWhiteSpace whiteSpace = (PsiWhiteSpace)sibling;
-
+      if (sibling instanceof PsiWhiteSpace whiteSpace) {
         String[] strings = LineTokenizer.tokenize(whiteSpace.getText().toCharArray(), false);
         if (strings.length > 2) {
           break;

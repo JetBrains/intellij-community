@@ -41,10 +41,10 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new BaseEqualsVisitor() {
       @Override
-      void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType type1, @NotNull PsiType type2) {
-        if (!checkType(expression, type1)) {
-          checkType(expression, type2);
-        }
+      boolean checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType type1, @NotNull PsiType type2) {
+        if (checkType(expression, type1)) return true;
+        if (checkType(expression, type2)) return true;
+        return false;
       }
 
       private boolean checkType(PsiReferenceExpression expression, PsiType type) {

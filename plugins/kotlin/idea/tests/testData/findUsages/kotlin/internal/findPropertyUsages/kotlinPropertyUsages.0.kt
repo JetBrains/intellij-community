@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages
-// FIR_IGNORE
+// PSI_ELEMENT_AS_TITLE: "var foo: T"
 
 package server
 
@@ -19,3 +19,4 @@ open class B : A<String>() {
             super<A>.foo = value
         }
 }
+

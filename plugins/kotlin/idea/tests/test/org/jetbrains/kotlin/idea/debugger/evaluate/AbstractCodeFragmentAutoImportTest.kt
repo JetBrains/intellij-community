@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -19,11 +19,11 @@ abstract class AbstractCodeFragmentAutoImportTest : AbstractKotlinHighlightVisit
         myFixture.checkResultByFile("${fileName()}.after")
 
         val fragment = myFixture.file as KtCodeFragment
-        fragment.checkImports(testDataFile())
+        fragment.checkImports(dataFile())
 
         val fixAfter = myFixture.availableIntentions.firstOrNull { it.familyName == "Import" }
         assertNull(fixAfter, "No import fix should be available after")
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }

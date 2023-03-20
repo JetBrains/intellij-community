@@ -87,9 +87,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof BasePsiNode)) return false;
-
-    final BasePsiNode methodNode = (BasePsiNode)o;
+    if (!(o instanceof BasePsiNode methodNode)) return false;
 
     if (!Comparing.equal(getPsiElement(), methodNode.getPsiElement())) return false;
 

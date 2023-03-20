@@ -174,7 +174,7 @@ public class PyExceptionBreakpointType
       notificationsBox.add(panel);
       panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
       panel.setBorder(JBUI.Borders.empty());
-      panel.add(myNotifyOnRaiseCheckBox, FlowLayout.LEFT);
+      panel.add(myNotifyOnRaiseCheckBox, Integer.valueOf(FlowLayout.LEFT));
       myWarningIcon = new JBLabel(AllIcons.General.BalloonWarning);
       IdeTooltipManager.getInstance().setCustomTooltip(
         myWarningIcon,

@@ -15,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
  * it to the {@link KillRingTransferable kill ring}.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class KillToWordEndAction extends TextComponentEditorAction {
 

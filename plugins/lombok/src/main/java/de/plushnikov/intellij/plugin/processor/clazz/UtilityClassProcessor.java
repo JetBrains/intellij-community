@@ -1,15 +1,14 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,28 +21,27 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    return null == nameHint || nameHint.equals(psiClass.getName());
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    return Collections.singleton(psiClass.getName());
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     return validateOnRightType(psiClass, builder) && validateNoConstructorsDefined(psiClass, builder);
   }
 
-  private boolean validateNoConstructorsDefined(PsiClass psiClass, ProblemBuilder builder) {
+  private static boolean validateNoConstructorsDefined(PsiClass psiClass, ProblemSink builder) {
     Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassConstructorIntern(psiClass);
     if (!psiMethods.isEmpty()) {
-      builder.addError(LombokBundle.message("inspection.message.utility.classes.cannot.have.declared.constructors"));
+      builder.addErrorMessage("inspection.message.utility.classes.cannot.have.declared.constructors");
       return false;
     }
     return true;
   }
 
-  public static boolean validateOnRightType(PsiClass psiClass, ProblemBuilder builder) {
+  public static boolean validateOnRightType(PsiClass psiClass, ProblemSink builder) {
     if (checkWrongType(psiClass)) {
-      builder.addError(LombokBundle.message("inspection.message.utility.class.only.supported.on.class"));
+      builder.addErrorMessage("inspection.message.utility.class.only.supported.on.class");
       return false;
     }
     PsiElement context = psiClass.getContext();
@@ -53,8 +51,7 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
     if (!(context instanceof PsiFile)) {
       PsiElement contextUp = context;
       while (true) {
-        if (contextUp instanceof PsiClass) {
-          PsiClass psiClassUp = (PsiClass) contextUp;
+        if (contextUp instanceof PsiClass psiClassUp) {
           if (psiClassUp.getContext() instanceof PsiFile) {
             return true;
           }
@@ -62,11 +59,11 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
           if (isStatic || checkWrongType(psiClassUp)) {
             contextUp = contextUp.getContext();
           } else {
-            builder.addError(LombokBundle.message("inspection.message.utility.class.automatically.makes.class.static"));
+            builder.addErrorMessage("inspection.message.utility.class.automatically.makes.class.static");
             return false;
           }
         } else {
-          builder.addError(LombokBundle.message("inspection.message.utility.class.cannot.be.placed"));
+          builder.addErrorMessage("inspection.message.utility.class.cannot.be.placed");
           return false;
         }
       }

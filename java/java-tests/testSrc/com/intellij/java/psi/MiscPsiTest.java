@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -210,11 +210,12 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDocCommentPrecededByLineComment() {
     final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("D.java",
-                                                                                                                      "////////////////////////////////////////\n" +
-                                                                                                                      "/** */\n" +
-                                                                                                                                 "/////////////////////////////////////////////////\n" +
-                                                                                                                                                                                       "class Usage {\n" +
-                                                                                                                                                                                                         "}");
+                                                                                                      """
+                                                                                                        ////////////////////////////////////////
+                                                                                                        /** */
+                                                                                                        /////////////////////////////////////////////////
+                                                                                                        class Usage {
+                                                                                                        }""");
     final PsiClass psiClass = file.getClasses()[0];
     assertNotNull(psiClass.getDocComment());
   }
@@ -258,7 +259,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiClass psiClass = file.getClasses()[0];
     try {
-      psiClass.addBefore(PsiParserFacade.SERVICE.getInstance(getProject()).createWhiteSpaceFromText(" "), psiClass.getLBrace());
+      psiClass.addBefore(PsiParserFacade.getInstance(getProject()).createWhiteSpaceFromText(" "), psiClass.getLBrace());
       fail();
     }
     catch (IllegalStateException e) {

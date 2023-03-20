@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.run
 
@@ -15,9 +15,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.gradle.run.KotlinGradleConfigurationProducer
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
@@ -34,7 +34,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
     abstract fun isApplicable(module: Module, platform: TargetPlatform): Boolean
 
     final override fun isApplicable(module: Module): Boolean {
-        if (!module.isNewMPPModule) {
+        if (!module.isNewMultiPlatformModule) {
             return false
         }
 
@@ -70,6 +70,16 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
         }
         if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, psiClass)) return
         chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, psiClass)
+    }
+
+    override fun getAllTestsTaskToRun(
+        context: ConfigurationContext,
+        element: PsiMethod,
+        chosenElements: List<PsiClass>
+    ): List<TestTasksToRun> {
+        val tasks = mppTestTasksChooser.listAvailableTasks(listOf(element))
+        val wildcardFilter = createTestFilterFrom(element.containingClass!!, element)
+        return tasks.map { TestTasksToRun(it, wildcardFilter) }
     }
 
     private fun chooseTestClassConfiguration(
@@ -143,7 +153,10 @@ abstract class AbstractKotlinTestMethodGradleConfigurationProducer
         if (GradleConstants.SYSTEM_ID != configuration.settings.externalSystemId) return false
         if (sourceElement.isNull) return false
 
-        (configuration as? GradleRunConfiguration)?.isScriptDebugEnabled = false
+        (configuration as? GradleRunConfiguration)?.apply {
+            isScriptDebugEnabled = false
+            isForceTestExecution = true
+        }
         return doSetupConfigurationFromContext(configuration, context, sourceElement)
     }
 

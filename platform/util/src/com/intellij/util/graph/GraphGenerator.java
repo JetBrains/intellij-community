@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class GraphGenerator<Node> implements Graph<Node> {
   @NotNull
   public static <T> Graph<T> generate(@NotNull InboundSemiGraph<T> graph) {

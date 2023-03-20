@@ -19,10 +19,12 @@
 
 package org.intellij.plugins.relaxNG.xml.dom;
 
+import com.intellij.util.xml.NamedEnum;
+
 /**
  * http://relaxng.org/ns/structure/1.0:combineAttrType enumeration.
  */
-public enum Combine implements com.intellij.util.xml.NamedEnum {
+public enum Combine implements NamedEnum {
   CHOICE("choice"),
   INTERLEAVE("interleave");
 

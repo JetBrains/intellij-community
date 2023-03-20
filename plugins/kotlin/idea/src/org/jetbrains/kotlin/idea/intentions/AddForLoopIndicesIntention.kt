@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -7,16 +7,18 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 
 class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
@@ -45,7 +47,7 @@ class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val loopRange = element.loopRange!!
         val loopParameter = element.loopParameter!!
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         loopRange.replace(createWithIndexExpression(loopRange, reformat = true))
 
@@ -87,7 +89,7 @@ class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     }
 
     private fun createWithIndexExpression(originalExpression: KtExpression, reformat: Boolean): KtExpression =
-        KtPsiFactory(originalExpression).createExpressionByPattern(
+        KtPsiFactory(originalExpression.project).createExpressionByPattern(
             "$0.$WITH_INDEX_NAME()", originalExpression,
             reformat = reformat
         )

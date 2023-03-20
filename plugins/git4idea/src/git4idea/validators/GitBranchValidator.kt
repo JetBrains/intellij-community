@@ -36,6 +36,13 @@ fun conflictsWithLocalBranch(repositories: Collection<GitRepository>, inputStrin
 fun conflictsWithRemoteBranch(repositories: Collection<GitRepository>, inputString: String): ValidationInfo? =
   conflictsWithLocalOrRemote(repositories, inputString, false, "new.branch.dialog.error.branch.clashes.with.remote")
 
+fun conflictsWithLocalBranchDirectory(directories: Set<String>, inputString: String): ValidationInfo? {
+  if (directories.contains(inputString)) {
+    return ValidationInfo(GitBundle.message("new.branch.dialog.error.branch.clashes.with.directory", inputString))
+  }
+  return null
+}
+
 private fun conflictsWithLocalOrRemote(repositories: Collection<GitRepository>,
                                        inputString: String,
                                        local: Boolean,

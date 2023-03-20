@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -47,18 +47,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
-public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider {
+public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider, PsiMemberReference {
   private static final Logger LOG = Logger.getInstance(JavaClassReference.class);
   protected final int myIndex;
   private TextRange myRange;
+  @NotNull
   private final String myText;
   private final boolean myInStaticImport;
   private final JavaClassReferenceSet myJavaClassReferenceSet;
 
-  public JavaClassReference(JavaClassReferenceSet referenceSet, TextRange range, int index, String text, boolean staticImport) {
+  public JavaClassReference(@NotNull JavaClassReferenceSet referenceSet, @NotNull TextRange range, int index, @NotNull String text, boolean staticImport) {
     super(referenceSet.getProvider());
     myInStaticImport = staticImport;
     LOG.assertTrue(range.getEndOffset() <= referenceSet.getElement().getTextLength());
@@ -173,8 +171,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-    PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
-    myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+    TextRange rangeInElement = getRangeInElement();
+    PsiElement element = manipulator.handleContentChange(getElement(), rangeInElement, newElementName);
+    myRange = new TextRange(rangeInElement.getStartOffset(), rangeInElement.getStartOffset() + newElementName.length());
     return element;
   }
 
@@ -186,8 +185,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     if (element instanceof PsiClass) {
       newName = getQualifiedClassNameToInsert((PsiClass)element);
     }
-    else if (element instanceof PsiPackage) {
-      PsiPackage psiPackage = (PsiPackage)element;
+    else if (element instanceof PsiPackage psiPackage) {
       newName = psiPackage.getQualifiedName();
     }
     else {
@@ -349,7 +347,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return (JavaResolveResult) resolveCache.resolveWithCaching(this, MyResolver.INSTANCE, false, false,file)[0];
   }
 
-  private PsiFile getJavaContextFile() {
+  private @NotNull PsiFile getJavaContextFile() {
     return myJavaClassReferenceSet.getProvider().getContextFile(getElement());
   }
 
@@ -371,13 +369,16 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         PsiElement member = doResolveMember((PsiClass)context, myText);
         return member == null ? JavaResolveResult.EMPTY : new CandidateInfo(member, PsiSubstitutor.EMPTY, false, false, psiElement);
       }
-      else if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames()) {
+      if (!myInStaticImport && myJavaClassReferenceSet.isAllowDollarInNames()) {
         return JavaResolveResult.EMPTY;
       }
     }
 
-    int endOffset = getRangeInElement().getEndOffset();
-    LOG.assertTrue(endOffset <= elementText.length(), elementText);
+    TextRange rangeInElement = getRangeInElement();
+    int endOffset = rangeInElement.getEndOffset();
+    if (endOffset > elementText.length()) {
+      LOG.error(elementText+": rangeInElement="+rangeInElement+"; "+getClass());
+    }
     int startOffset = myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset();
     String qName = elementText.substring(startOffset, endOffset);
     if (!qName.contains(".")) {
@@ -455,6 +456,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
            : JavaResolveResult.EMPTY;
   }
 
+  @NotNull
   private GlobalSearchScope getScope(@NotNull PsiFile containingFile) {
     Project project = containingFile.getProject();
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(project);
@@ -478,8 +480,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @NotNull
-  private List<? extends LocalQuickFix> registerFixes() {
-    List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(QuickFixActionRegistrar.IGNORE_ALL, this);
+  private List<? extends @NotNull LocalQuickFix> registerFixes() {
+    List<LocalQuickFix> list = QuickFixFactory.getInstance().registerOrderEntryFixes(this, new ArrayList<>());
 
     String extendClass = ContainerUtil.getFirstItem(getSuperClasses());
 
@@ -550,13 +552,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
-    List<? extends LocalQuickFix> list = registerFixes();
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
+    List<? extends @NotNull LocalQuickFix> list = registerFixes();
     return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Nullable
-  public static PsiElement resolveMember(String fqn, PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiElement resolveMember(@NotNull String fqn, @NotNull PsiManager manager, GlobalSearchScope resolveScope) {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, resolveScope);
     if (aClass != null) return aClass;
     int i = fqn.lastIndexOf('.');
@@ -569,7 +571,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Nullable
-  private static PsiElement doResolveMember(PsiClass aClass, String memberName) {
+  private static PsiElement doResolveMember(@NotNull PsiClass aClass, @NotNull String memberName) {
     PsiMember member = aClass.findFieldByName(memberName, true);
     if (member != null) return member;
 
@@ -577,6 +579,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return methods.length == 0 ? null : methods[0];
   }
 
+  @NotNull
   public JavaClassReferenceSet getJavaClassReferenceSet() {
     return myJavaClassReferenceSet;
   }

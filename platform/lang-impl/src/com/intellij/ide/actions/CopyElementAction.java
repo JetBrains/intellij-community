@@ -28,7 +28,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class CopyElementAction extends AnAction implements UpdateInBackground {
+public class CopyElementAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();

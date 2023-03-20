@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
@@ -29,9 +29,9 @@ abstract class KotlinExplicitReferenceUsage<T : KtElement>(element: T) : KotlinU
 }
 
 class KotlinParameterUsage(
-    element: KtElement,
-    private val parameterInfo: KotlinParameterInfo,
-    val containingCallable: KotlinCallableDefinitionUsage<*>
+  element: KtElement,
+  private val parameterInfo: KotlinParameterInfo,
+  private val containingCallable: KotlinCallableDefinitionUsage<*>
 ) : KotlinExplicitReferenceUsage<KtElement>(element) {
     override fun processReplacedElement(element: KtElement) {
         val qualifiedExpression = element.parent as? KtQualifiedExpression
@@ -61,15 +61,15 @@ class KotlinNonQualifiedOuterThisUsage(
 }
 
 class KotlinNonQualifiedOuterThisCallUsage(
-    element: KtCallExpression,
-    val parameterInfo: KotlinParameterInfo,
-    val containingCallable: KotlinCallableDefinitionUsage<*>,
-    val targetDescriptor: DeclarationDescriptor
+  element: KtCallExpression,
+  val parameterInfo: KotlinParameterInfo,
+  private val containingCallable: KotlinCallableDefinitionUsage<*>,
+  val targetDescriptor: DeclarationDescriptor
 ) : KotlinExplicitReferenceUsage<KtCallExpression>(element) {
     override fun getReplacementText(changeInfo: KotlinChangeInfo): String {
         val inheritedName = parameterInfo.getInheritedName(containingCallable)
         val receiver = targetDescriptor.explicateAsTextForReceiver()
-        element?.calleeExpression?.replace(KtPsiFactory(changeInfo.context).createExpression(receiver))
+        element?.calleeExpression?.replace(KtPsiFactory(changeInfo.context.project).createExpression(receiver))
         return "with($inheritedName) $inheritedName@{ ${element?.text} }"
     }
 }

@@ -34,22 +34,24 @@ public class TarjanTest {
   public void testResultGraph() {
     List<List<InferenceVariablesOrder.InferenceGraphNode<Integer>>> tarjan = InferenceVariablesOrder.tarjan(getNodes());
     String messages = StringUtil.join(tarjan, nodes -> StringUtil.join(nodes, node -> String.valueOf(node.getValue()), ", "), "\n");
-    assertEquals("[9]\n" +
-                 "[8], [7], [6]\n" +
-                 "[5]\n" +
-                 "[2], [1]\n" +
-                 "[4], [3]", messages);
+    assertEquals("""
+                   [9]
+                   [8], [7], [6]
+                   [5]
+                   [2], [1]
+                   [4], [3]""", messages);
   }
 
   @Test
   public void testAcyclic() {
     List<InferenceVariablesOrder.InferenceGraphNode<Integer>> acyclicNodes = InferenceVariablesOrder.initNodes(getNodes());
     String messages = StringUtil.join(acyclicNodes, node -> String.valueOf(node.getValue()), "\n");
-    assertEquals("[9]\n" +
-                 "[8, 7, 6]\n" +
-                 "[5]\n" +
-                 "[2, 1]\n" +
-                 "[4, 3]", messages);
+    assertEquals("""
+                   [9]
+                   [8, 7, 6]
+                   [5]
+                   [2, 1]
+                   [4, 3]""", messages);
   }
 
   //{1:[2],2:[1,5],3:[4],4:[3,5],5:[6],6:[7],7:[8],8:[6,9],9:[]}

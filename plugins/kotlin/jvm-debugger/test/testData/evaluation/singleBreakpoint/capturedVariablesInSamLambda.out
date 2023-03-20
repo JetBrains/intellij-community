@@ -1,0 +1,17 @@
+LineBreakpoint created at capturedVariablesInSamLambda.kt:28
+Run Java
+Connected to the target VM
+capturedVariablesInSamLambda.kt:28
+Compile bytecode for a
+Compile bytecode for b
+Compile bytecode for a.a
+Compile bytecode for b.b
+KotlinStackFrame (capturedVariablesInSamLambda.kt:28)
+    JavaValue[this] this: CapturedVariablesInSamLambdaKt$main$1@uniqueID = capturedVariablesInSamLambda.CapturedVariablesInSamLambdaKt$main$1@hashCode
+        JavaValue[field] $a: capturedVariablesInSamLambda.A = capturedVariablesInSamLambda.A@hashCode
+            JavaValue[field] a: int = 1 (capturedVariablesInSamLambda.kt:8)
+        JavaValue[field] $b: capturedVariablesInSamLambda.B = capturedVariablesInSamLambda.B@hashCode
+            JavaValue[field] b: int = 1 (capturedVariablesInSamLambda.kt:12)
+Disconnected from the target VM
+
+Process finished with exit code 0

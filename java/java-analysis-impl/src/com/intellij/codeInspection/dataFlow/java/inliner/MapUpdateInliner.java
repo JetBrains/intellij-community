@@ -4,9 +4,12 @@
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.problems.MutabilityProblem;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -35,21 +38,15 @@ public class MapUpdateInliner implements CallInliner {
       PsiExpression function = args[1];
       builder
         .pushExpression(qualifier) // stack: .. qualifier
+        .ensure(RelationType.IS, Mutability.MUTABLE.asDfType(), new MutabilityProblem(call, true), null)
         .pushExpression(key) // stack: .. qualifier; key
         .evaluateFunction(function);
       String name = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
       switch (name) {
-        case "computeIfAbsent":
-          inlineComputeIfAbsent(builder, function, type);
-          break;
-        case "computeIfPresent":
-          inlineComputeIfPresent(builder, function, type);
-          break;
-        case "compute":
-          inlineCompute(builder, function, type);
-          break;
-        default:
-          throw new IllegalStateException("Unsupported name: " + name);
+        case "computeIfAbsent" -> inlineComputeIfAbsent(builder, function, type);
+        case "computeIfPresent" -> inlineComputeIfPresent(builder, function, type);
+        case "compute" -> inlineCompute(builder, function, type);
+        default -> throw new IllegalStateException("Unsupported name: " + name);
       }
       builder.resultOf(call);
       return true;
@@ -65,6 +62,7 @@ public class MapUpdateInliner implements CallInliner {
       PsiExpression function = args[2];
       builder
         .pushExpression(qualifier) // stack: .. qualifier
+        .ensure(RelationType.IS, Mutability.MUTABLE.asDfType(), new MutabilityProblem(call, true), null)
         .pushExpression(key) // stack: .. qualifier; key
         .pop() // stack: .. qualifier
         .pushExpression(value) // stack: .. qualifier; value

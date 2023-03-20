@@ -5,9 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlArrangementParseInfo {
 
   private final List<XmlElementArrangementEntry> myEntries = new ArrayList<>();

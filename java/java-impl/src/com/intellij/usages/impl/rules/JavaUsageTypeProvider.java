@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -42,8 +42,7 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         final PsiExpression qualifier = referenceExpression.getQualifierExpression();
         final PsiElement p = referenceExpression.getParent();
-        if (p instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)p;
+        if (p instanceof PsiMethodCallExpression callExpression) {
           final PsiMethod calledMethod = callExpression.resolveMethod();
           if (calledMethod == containerMethod) {
             return UsageType.RECURSION;
@@ -142,12 +141,15 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.ANNOTATION;
     }
 
+    if (element.getParent() instanceof PsiTypeElement && element.getParent().getParent() instanceof PsiPattern) {
+      return UsageType.PATTERN;
+    }
+
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList != null) {
       PsiElement parent = referenceList.getParent();
-      if (parent instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)parent;
+      if (parent instanceof PsiClass aClass) {
         if (aClass.getExtendsList() == referenceList || aClass.getImplementsList() == referenceList) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
         if (aClass.getPermitsList() == referenceList) return UsageType.CLASS_PERMITS_LIST;
       }
@@ -179,11 +181,8 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.CLASS_NEW_OPERATOR;
     }
 
-    if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression expression = (PsiReferenceExpression)element;
-      if (expression.resolve() instanceof PsiClass) {
-        return UsageType.CLASS_STATIC_MEMBER_ACCESS;
-      }
+    if (element instanceof PsiReferenceExpression expression && expression.resolve() instanceof PsiClass) {
+      return UsageType.CLASS_STATIC_MEMBER_ACCESS;
     }
 
     final PsiParameter psiParameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);

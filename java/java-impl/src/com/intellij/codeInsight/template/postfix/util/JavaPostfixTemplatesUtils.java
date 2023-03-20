@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
@@ -13,11 +13,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,8 +84,8 @@ public final class JavaPostfixTemplatesUtils {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-        return new ArrayList<>(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document,
-                                                                        Math.max(offset - 1, 0), false));
+        return new ArrayList<>(CommonJavaRefactoringUtil.collectExpressions(context.getContainingFile(), document,
+                                                                            Math.max(offset - 1, 0), false));
       }
 
       @NotNull
@@ -136,7 +135,7 @@ public final class JavaPostfixTemplatesUtils {
   /**
    * @deprecated use {@link #isThrowable(PsiType)}
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final Condition<PsiElement> IS_THROWABLE =
     element -> element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
 
@@ -149,7 +148,7 @@ public final class JavaPostfixTemplatesUtils {
   /**
    * @deprecated use {@link #isIterable(PsiType)} / {@link #isArray(PsiType)}
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 
@@ -183,12 +182,12 @@ public final class JavaPostfixTemplatesUtils {
 
   @Contract("null -> false")
   public static boolean isBoolean(@Nullable PsiType type) {
-    return type != null && (PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type)));
+    return type != null && (PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type)));
   }
 
   @Contract("null -> false")
   public static boolean isNonVoid(@Nullable PsiType type) {
-    return type != null && !PsiType.VOID.equals(type);
+    return type != null && !PsiTypes.voidType().equals(type);
   }
 
   @Contract("null -> false")
@@ -196,19 +195,19 @@ public final class JavaPostfixTemplatesUtils {
     if (type == null) {
       return false;
     }
-    if (PsiType.INT.equals(type) || PsiType.BYTE.equals(type) || PsiType.LONG.equals(type)) {
+    if (PsiTypes.intType().equals(type) || PsiTypes.byteType().equals(type) || PsiTypes.longType().equals(type)) {
       return true;
     }
 
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
-    return PsiType.INT.equals(unboxedType) || PsiType.BYTE.equals(unboxedType) || PsiType.LONG.equals(unboxedType);
+    return PsiTypes.intType().equals(unboxedType) || PsiTypes.byteType().equals(unboxedType) || PsiTypes.longType().equals(unboxedType);
   }
 
   @NotNull
   public static Function<PsiElement, String> getRenderer() {
     return element -> {
       assert element instanceof PsiExpression;
-      return new PsiExpressionTrimRenderer.RenderFunction().fun((PsiExpression)element);
+      return PsiExpressionTrimRenderer.render((PsiExpression)element);
     };
   }
 

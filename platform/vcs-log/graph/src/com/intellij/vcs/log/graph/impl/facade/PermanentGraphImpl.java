@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.facade;
 
@@ -10,11 +10,14 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.api.printer.GraphColorGetter;
+import com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory;
 import com.intellij.vcs.log.graph.collapsing.BranchFilterController;
 import com.intellij.vcs.log.graph.collapsing.CollapsedController;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
+import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -35,52 +38,22 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
 
   @NotNull private final Supplier<BekIntMap> myBekIntMap;
 
-  @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
+  @NotNull private final GraphColorGetter myGraphColorGetter;
   @NotNull private final ReachableNodes myReachableNodes;
 
   private PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                              @NotNull GraphLayoutImpl permanentGraphLayout,
                              @NotNull PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo,
-                             @NotNull GraphColorManager<CommitId> graphColorManager,
+                             @NotNull GraphColorGetterFactory<CommitId> colorGetterFactory,
                              @NotNull Set<? extends CommitId> branchesCommitId) {
     myPermanentGraphLayout = permanentGraphLayout;
     myPermanentCommitsInfo = permanentCommitsInfo;
     myPermanentLinearGraph = permanentLinearGraph;
-    myGraphColorManager = graphColorManager;
+    myGraphColorGetter = colorGetterFactory.createColorGetter(this);
     myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
     myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
     myBekIntMap = Suppliers.memoize(
       () -> BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter()));
-  }
-
-  /**
-   * Create new instance of PermanentGraph.
-   *
-   * @param graphCommits      topologically sorted list of commits in the graph
-   * @param graphColorManager color manager for the graph
-   * @param branchesCommitId  commit ids of all the branch heads
-   * @param <CommitId>        commit id type
-   * @return new instance of PermanentGraph
-   */
-  @NotNull
-  public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                    @NotNull GraphColorManager<CommitId> graphColorManager,
-                                                                    @NotNull Set<? extends CommitId> branchesCommitId) {
-    PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
-    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<>();
-    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(idsGenerator);
-
-    final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
-      PermanentCommitsInfoImpl.newInstance(graphCommits, idsGenerator.getNotLoadedCommits());
-
-    GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (nodeIndex1, nodeIndex2) -> {
-      CommitId commitId1 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex1);
-      CommitId commitId2 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex2);
-      return graphColorManager.compareHeads(commitId1, commitId2);
-    });
-
-    return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
-                                    branchesCommitId);
   }
 
   @NotNull
@@ -121,7 +94,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
                                                    @NotNull BiConsumer<? super LinearGraphController, ? super PermanentGraphInfo<CommitId>> preprocessor) {
     LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
     preprocessor.accept(controller, this);
-    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
+    return new VisibleGraphImpl<>(controller, this, myGraphColorGetter);
   }
 
   @NotNull
@@ -204,6 +177,49 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
   @NotNull
   public Set<Integer> getBranchNodeIds() {
     return myBranchNodeIds;
+  }
+
+  /**
+   * Create new instance of PermanentGraph.
+   *
+   * @param graphCommits          topologically sorted list of commits in the graph
+   * @param colorGetterFactory    color generator factory for the graph
+   * @param headCommitsComparator compares two head commits, which represent graph branches, by expected positions of these branches in the graph,
+   *                              and thus by their "importance". If branch1 is more important than branch2,
+   *                              branch1 will be laid out more to the left from the branch2,
+   *                              and the color of branch1 will be reused by the subgraph below the point when these branches have diverged.
+   * @param branchesCommitId      commit ids of all the branch heads
+   * @param <CommitId>            commit id type
+   * @return new instance of PermanentGraph
+   * @see com.intellij.vcs.log.VcsLogRefManager#getBranchLayoutComparator()
+   */
+  @NotNull
+  public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
+                                                                    @NotNull GraphColorGetterFactory<CommitId> colorGetterFactory,
+                                                                    @NotNull Comparator<CommitId> headCommitsComparator,
+                                                                    @NotNull Set<? extends CommitId> branchesCommitId) {
+    PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
+    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<>();
+    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(idsGenerator);
+
+    PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo = PermanentCommitsInfoImpl.newInstance(graphCommits,
+                                                                                                   idsGenerator.getNotLoadedCommits());
+
+    GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (nodeIndex1, nodeIndex2) -> {
+      CommitId commitId1 = permanentCommitsInfo.getCommitId(nodeIndex1);
+      CommitId commitId2 = permanentCommitsInfo.getCommitId(nodeIndex2);
+      return headCommitsComparator.compare(commitId1, commitId2);
+    });
+
+    return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, permanentCommitsInfo, colorGetterFactory, branchesCommitId);
+  }
+
+  @NotNull
+  public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
+                                                                    @NotNull GraphColorManager<CommitId> colorManager,
+                                                                    @NotNull Comparator<CommitId> headCommitsComparator,
+                                                                    @NotNull Set<? extends CommitId> branchesCommitId) {
+    return newInstance(graphCommits, new GraphColorGetterByHeadFactory<>(colorManager), headCommitsComparator, branchesCommitId);
   }
 
   private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {

@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -436,13 +435,13 @@ public class DeclarationParser {
   }
 
   private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
-    return JavaLexer.isSealedAvailable(getLanguageLevel(builder)) &&
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) &&
            tokenType == JavaTokenType.IDENTIFIER &&
            PsiKeyword.SEALED.equals(builder.getTokenText());
   }
 
   private static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
-    if (!JavaLexer.isSealedAvailable(getLanguageLevel(builder)) ||
+    if (!getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) ||
         tokenType != JavaTokenType.IDENTIFIER ||
         !"non".equals(builder.getTokenText()) ||
         builder.lookAhead(1) != JavaTokenType.MINUS ||
@@ -1035,7 +1034,7 @@ public class DeclarationParser {
         builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
     }
     else {
-      result = myParser.getExpressionParser().parseConditional(builder, 0);
+      result = myParser.getExpressionParser().parseConditional(builder);
     }
 
     return result;

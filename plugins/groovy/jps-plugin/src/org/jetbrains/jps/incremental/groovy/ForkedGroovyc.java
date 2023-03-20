@@ -25,9 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 
-/**
- * @author peter
- */
 final class ForkedGroovyc implements GroovycFlavor {
   private final boolean myOptimizeClassLoading;
   private final ModuleChunk myChunk;
@@ -116,11 +113,11 @@ final class ForkedGroovyc implements GroovycFlavor {
   }
 
   private List<String> getProgramParams(File tempFile, JpsGroovySettings settings, boolean forStubs) {
-    List<String> programParams = ContainerUtil.newArrayList(myOptimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
+    List<String> programParams = List.of(myOptimizeClassLoading ? GroovyRtConstants.OPTIMIZE : "do_not_optimize",
                                                               forStubs ? "stubs" : "groovyc",
                                                             tempFile.getPath());
     if (settings.invokeDynamic) {
-      programParams.add("--indy");
+      programParams = ContainerUtil.append(programParams, "--indy");
     }
     return programParams;
   }

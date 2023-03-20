@@ -107,7 +107,7 @@ class WithNullable {
 
 class JUnit5Test {
 
-  private String myField;
+  private String <warning descr="Instance field 'myField' may not be initialized during object construction">myField</warning>;
 
   @org.<error descr="Cannot resolve symbol 'junit'">junit</error>.jupiter.api.BeforeEach
   void init() {

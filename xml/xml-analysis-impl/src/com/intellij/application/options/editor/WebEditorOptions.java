@@ -7,7 +7,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +50,7 @@ public final class WebEditorOptions implements PersistentStateComponent<WebEdito
   /**
    * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean isShowCssColorPreviewInGutter() {
     return myShowCssColorPreviewInGutter;
   }

@@ -66,7 +66,7 @@ public class TooBroadScope
     }
 
   String brokenCode() {
-    var n<error descr="';' expected"><error descr="Unexpected token">.</error></error> <error descr="Unexpected token">=</error> <error descr="Not a statement">"awesome[]";</error>
+    <error descr="Cannot infer type: 'var' on variable without initializer">var</error> n<error descr="';' expected"><error descr="Unexpected token">.</error></error> <error descr="Unexpected token">=</error> <error descr="Not a statement">"awesome[]";</error>
     return n;
   }
 
@@ -323,4 +323,12 @@ class TryWithResources {
         String s = "file.name";
         try (java.io.FileInputStream in = new java.io.FileInputStream(s)) {}
     }
+}
+class MyList extends ArrayList {
+
+  int boo() {
+    int size = size();
+    clear();
+    return size;
+  }
 }

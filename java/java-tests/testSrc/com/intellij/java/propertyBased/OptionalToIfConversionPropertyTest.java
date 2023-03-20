@@ -45,14 +45,15 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
   }
 
   public void testCompilabilityAfterConversion() {
-    myFixture.addClass("package com.jetbrains;\n" +
-                       "import java.util.Optional;\n" +
-                       "import java.util.stream.Stream;\n" +
-                       "\n" +
-                       "class A {\n" +
-                       "  void foo() {\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.jetbrains;
+                         import java.util.Optional;
+                         import java.util.stream.Stream;
+
+                         class A {
+                           void foo() {
+                           }
+                         }""");
     PropertyChecker.customized()
       .checkScenarios(() -> this::doTestCompilabilityAfterConversion);
   }

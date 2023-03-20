@@ -1,41 +1,36 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
-    override fun getVMArguments(): MutableList<String> {
+    override fun getVMArguments(): List<String> {
         val compilerWorkspaceSettings = KotlinCompilerWorkspaceSettings.getInstance(project)
+        val arguments = mutableListOf<String>()
 
-        val res = arrayListOf<String>()
         if (compilerWorkspaceSettings.preciseIncrementalEnabled) {
-            res.add("-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY + "=true")
+            arguments += "-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY + "=true"
         }
+
         if (compilerWorkspaceSettings.incrementalCompilationForJsEnabled) {
-            res.add("-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JS_PROPERTY + "=true")
+            arguments += "-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JS_PROPERTY + "=true"
         }
+
         if (compilerWorkspaceSettings.enableDaemon) {
-            res.add("-Dkotlin.daemon.enabled")
+            arguments += "-Dkotlin.daemon.enabled"
         }
-        if (Registry.`is`("kotlin.jps.instrument.bytecode", false)) {
-            res.add("-Dkotlin.jps.instrument.bytecode=true")
-        }
-        PluginStartupApplicationService.getInstance().aliveFlagPath.let {
+
+        PluginStartupApplicationService.getInstance().getAliveFlagPath().let {
             if (!it.isBlank()) {
                 // TODO: consider taking the property name from compiler/daemon/common (check whether dependency will be not too heavy)
-                res.add("-Dkotlin.daemon.client.alive.path=\"$it\"")
+                arguments += "-Dkotlin.daemon.client.alive.path=\"$it\""
             }
         }
-        return res
-    }
 
-    override fun getAdditionalPluginPaths(): Iterable<String> {
-        return listOf(KotlinArtifacts.instance.kotlincDirectory.path)
+        return arguments
     }
 }

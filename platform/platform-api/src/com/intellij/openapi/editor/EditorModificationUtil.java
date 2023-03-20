@@ -130,7 +130,7 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     FileDocumentManager.WriteAccessStatus writeAccess =
       FileDocumentManager.getInstance().requestWritingStatus(editor.getDocument(), editor.getProject());
     if (!writeAccess.hasWriteAccess()) {
-      HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage());
+      HintManager.getInstance().showInformationHint(editor, writeAccess.getReadOnlyMessage(), writeAccess.getHyperlinkListener());
       return false;
     }
     return true;
@@ -166,13 +166,6 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
     editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
   }
 
-  private static final class ReadOnlyHint {
-    @NotNull public final @NlsContexts.HintText String message;
-    @Nullable public final HyperlinkListener linkListener;
-
-    private ReadOnlyHint(@NotNull @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
-      this.message = message;
-      this.linkListener = linkListener;
-    }
+  private record ReadOnlyHint(@NotNull @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
   }
 }

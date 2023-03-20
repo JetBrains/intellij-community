@@ -1,4 +1,4 @@
-// "Create method 'makeOp'" "true"
+// "Create method 'makeOp'" "true-preview"
 class Base<T> {
     Base(Factory<T> factory, Operator<T> operator) {
     }

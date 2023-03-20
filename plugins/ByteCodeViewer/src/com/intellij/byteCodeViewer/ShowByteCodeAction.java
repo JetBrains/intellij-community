@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -33,7 +33,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-final class ShowByteCodeAction extends AnAction implements UpdateInBackground {
+final class ShowByteCodeAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
@@ -79,11 +85,14 @@ final class ShowByteCodeAction extends AnAction implements UpdateInBackground {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) &&
+        if (ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) &&
             isMarkedForCompilation(project, virtualFile)) {
           myErrorTitle = JavaByteCodeViewerBundle.message("class.file.may.be.out.of.date");
         }
-        myByteCode = ReadAction.compute(() -> ByteCodeViewerManager.getByteCode(psiElement));
+        myByteCode = ReadAction.compute(() -> {
+          PsiElement targetElement = element.getElement();
+          return targetElement != null ? ByteCodeViewerManager.getByteCode(targetElement) : null;
+        });
       }
 
       @Override

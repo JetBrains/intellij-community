@@ -1,4 +1,3 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 // PROBLEM: none
 // WITH_STDLIB
 

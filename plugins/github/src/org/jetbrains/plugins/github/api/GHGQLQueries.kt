@@ -3,9 +3,9 @@ package org.jetbrains.plugins.github.api
 
 object GHGQLQueries {
   const val findOrganizationTeams = "graphql/query/findOrganizationTeams.graphql"
+  const val findUser = "graphql/query/findUser.graphql"
   const val findRepository = "graphql/query/findRepository.graphql"
   const val getProtectionRules = "graphql/query/getProtectionRules.graphql"
-  const val commentBody = "graphql/query/commentBody.graphql"
   const val updateIssueComment = "graphql/query/updateIssueComment.graphql"
   const val deleteIssueComment = "graphql/query/deleteIssueComment.graphql"
   const val issueSearch = "graphql/query/issueSearch.graphql"

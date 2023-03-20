@@ -6,6 +6,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,8 +35,8 @@ public final class ActiveWindowsWatcher {
           ComponentUtil.isMinimized(window) ||
           AppUIUtil.isInFullScreen(window) ||
           (window instanceof Frame && ((Frame) window).isUndecorated()) ||
-          (window instanceof Dialog && ((Dialog) window).isUndecorated() ||
-          (!(window instanceof Dialog) && !(window instanceof Frame)))
+          (window instanceof Dialog && ((Dialog) window).isUndecorated()) ||
+           UIUtil.isSimpleWindow(window)
       ) {
         iter.remove();
       }

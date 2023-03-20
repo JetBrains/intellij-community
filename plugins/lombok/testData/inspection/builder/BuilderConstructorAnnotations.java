@@ -88,3 +88,16 @@ class BuilderInvalidConstructor4 {
     this.id = id;
   }
 }
+
+@lombok.experimental.SuperBuilder
+@lombok.NoArgsConstructor
+class WithSuperBuilder<T> {
+
+    private int someSubIntProperty;
+    private double dbl;
+
+    public static WithSuperBuilder<Integer> calculateSomething(String s, int i, double d) {
+        WithSuperBuilder<Integer> result = WithSuperBuilder.<Integer>builder().build();
+        return result;
+    }
+}

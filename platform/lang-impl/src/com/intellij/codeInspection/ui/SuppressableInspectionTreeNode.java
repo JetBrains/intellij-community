@@ -172,43 +172,8 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     }
   }
 
-  private static final class NodeState {
+  private record NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied, boolean isExcluded) {
     private static final Interner<NodeState> INTERNER = new HashSetInterner<>();
-    private final boolean isValid;
-    private final boolean isSuppressed;
-    private final boolean isFixApplied;
-    private final boolean isExcluded;
-
-    private NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied, boolean isExcluded) {
-      this.isValid = isValid;
-      this.isSuppressed = isSuppressed;
-      this.isFixApplied = isFixApplied;
-      this.isExcluded = isExcluded;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof NodeState)) return false;
-
-      NodeState state = (NodeState)o;
-
-      if (isValid != state.isValid) return false;
-      if (isSuppressed != state.isSuppressed) return false;
-      if (isFixApplied != state.isFixApplied) return false;
-      if (isExcluded != state.isExcluded) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = (isValid ? 1 : 0);
-      result = 31 * result + (isSuppressed ? 1 : 0);
-      result = 31 * result + (isFixApplied ? 1 : 0);
-      result = 31 * result + (isExcluded ? 1 : 0);
-      return result;
-    }
   }
 
   private NodeState calculateState() {

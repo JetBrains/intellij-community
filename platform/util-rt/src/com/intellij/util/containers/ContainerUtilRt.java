@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 
 /**
@@ -17,35 +15,9 @@ import java.util.*;
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  * @deprecated Use collection methods instead
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public final class ContainerUtilRt {
-  /**
-   * @deprecated Use {@link HashMap#HashMap()}
-   */
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static <K, V> HashMap<K, V> newHashMap() {
-    return new HashMap<K, V>();
-  }
-
-  /**
-   * @deprecated isn't used in the platform and the plugins anymore; use {@link LinkedList#LinkedList(Collection)} if {@code elements} is
-   * instance of {@link Collection}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
-    LinkedList<T> collection = new LinkedList<T>();
-    for (T element : elements) {
-      collection.add(element);
-    }
-    return collection;
-  }
 
   /**
    * @deprecated Use {@link ArrayList#ArrayList()} instead
@@ -54,66 +26,31 @@ public final class ContainerUtilRt {
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static <T> ArrayList<T> newArrayList() {
-    return new ArrayList<T>();
+    return new ArrayList<>();
   }
 
   /**
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Object[])} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
-    ArrayList<T> list = new ArrayList<T>(elements.length);
+    ArrayList<T> list = new ArrayList<>(elements.length);
     Collections.addAll(list, elements);
     return list;
-  }
-
-  /**
-   * @deprecated Use {@link HashSet#HashSet(int)}
-   */
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static <T> HashSet<T> newHashSet() {
-    return new HashSet<T>();
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Object[])}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
-    return new HashSet<T>(Arrays.asList(elements));
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Iterable)}
-   */
-  @Deprecated
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
-    Iterator<? extends T> iterator = elements.iterator();
-    HashSet<T> set = new HashSet<T>();
-    while (iterator.hasNext()) set.add(iterator.next());
-    return set;
   }
 
   /**
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newLinkedHashSet(Object[])}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
-    return new LinkedHashSet<T>(Arrays.asList(elements));
+    return new LinkedHashSet<>(Arrays.asList(elements));
   }
 
   /**
@@ -194,7 +131,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#emptyList()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> emptyList() {
@@ -209,10 +146,10 @@ public final class ContainerUtilRt {
   @Deprecated
   @NotNull
   @Contract(pure=true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return emptyList();
-    List<V> list = new ArrayList<V>(collection.size());
+    List<V> list = new ArrayList<>(collection.size());
     for (final T t : collection) {
       list.add(mapper.fun(t));
     }

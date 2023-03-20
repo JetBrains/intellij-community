@@ -1,24 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.actions
 
-import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.model.Pointer
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.Callable
 
-internal class DocumentationEditSourceAction : AnAction(), UpdateInBackground {
+internal class DocumentationEditSourceAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   private fun targetPointer(dc: DataContext): Pointer<out DocumentationTarget>? = documentationBrowser(dc)?.targetPointer
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = targetPointer(e.dataContext)?.dereference()?.navigatable != null
+    e.presentation.isEnabledAndVisible = targetPointer(e.dataContext)?.dereference()?.navigatable?.canNavigate() == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {

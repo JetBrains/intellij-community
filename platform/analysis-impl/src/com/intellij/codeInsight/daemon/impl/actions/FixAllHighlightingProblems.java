@@ -27,16 +27,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class FixAllHighlightingProblems implements IntentionAction {
+class FixAllHighlightingProblems implements IntentionAction {
   private final IntentionActionWithFixAllOption myAction;
 
-  public FixAllHighlightingProblems(IntentionActionWithFixAllOption action) {
+  FixAllHighlightingProblems(@NotNull IntentionActionWithFixAllOption action) {
     myAction = action;
   }
 
   @Override
   public @NotNull String getText() {
-    return AnalysisBundle.message("intention.name.apply.all.fixes.in.file", myAction.getFamilyName());
+    return myAction.getFixAllText();
   }
 
   @Override

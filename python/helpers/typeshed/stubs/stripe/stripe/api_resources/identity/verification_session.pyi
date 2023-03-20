@@ -1,5 +1,3 @@
-from typing import Any
-
 from stripe.api_resources.abstract import (
     CreateableAPIResource as CreateableAPIResource,
     ListableAPIResource as ListableAPIResource,
@@ -9,5 +7,5 @@ from stripe.api_resources.abstract import (
 
 class VerificationSession(CreateableAPIResource, ListableAPIResource, UpdateableAPIResource):
     OBJECT_NAME: str
-    def cancel(self, idempotency_key: Any | None = ..., **params): ...
-    def redact(self, idempotency_key: Any | None = ..., **params): ...
+    def cancel(self, idempotency_key: str | None = ..., **params): ...
+    def redact(self, idempotency_key: str | None = ..., **params): ...

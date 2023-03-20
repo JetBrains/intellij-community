@@ -31,7 +31,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
   private static class AtomicFieldUpdaterIssuesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final @NonNls String name = methodExpression.getReferenceName();
@@ -45,20 +45,17 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
       }
       final PsiExpression lastArgument = arguments[arguments.length - 1];
       final Object value = ExpressionUtils.computeConstantExpression(lastArgument);
-      if (!(value instanceof String)) {
+      if (!(value instanceof String fieldName)) {
         return;
       }
-      final String fieldName = (String)value;
       final PsiExpression firstArgument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-      if (!(firstArgument instanceof PsiClassObjectAccessExpression)) {
+      if (!(firstArgument instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)firstArgument;
       final PsiType operandType = classObjectAccessExpression.getOperand().getType();
-      if (!(operandType instanceof PsiClassType)) {
+      if (!(operandType instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)operandType;
       final PsiClass target = classType.resolve();
       if (target == null) {
         return;
@@ -84,7 +81,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
         if (arguments.length != 2) {
           return;
         }
-        if (!PsiType.LONG.equals(field.getType())) {
+        if (!PsiTypes.longType().equals(field.getType())) {
           registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor", fieldName, "long"));
           return;
         }
@@ -93,7 +90,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
         if (arguments.length != 2) {
           return;
         }
-        if (!PsiType.INT.equals(field.getType())) {
+        if (!PsiTypes.intType().equals(field.getType())) {
           registerError(lastArgument, InspectionGadgetsBundle.message("field.incorrect.type.problem.descriptor", fieldName, "int"));
           return;
         }
@@ -103,10 +100,9 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
           return;
         }
         final PsiExpression argument2 = arguments[1];
-        if (!(argument2 instanceof PsiClassObjectAccessExpression)) {
+        if (!(argument2 instanceof PsiClassObjectAccessExpression objectAccessExpression)) {
           return;
         }
-        final PsiClassObjectAccessExpression objectAccessExpression = (PsiClassObjectAccessExpression)argument2;
         final PsiType type = objectAccessExpression.getOperand().getType();
         final PsiType substFieldType = classType.resolveGenerics().getSubstitutor().substitute(field.getType());
         if (substFieldType == null) {

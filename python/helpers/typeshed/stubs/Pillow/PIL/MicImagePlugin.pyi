@@ -1,10 +1,10 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .TiffImagePlugin import TiffImageFile
 
 class MicImageFile(TiffImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["MIC"]]
     fp: Any
     frame: Any
     def seek(self, frame) -> None: ...

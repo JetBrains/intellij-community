@@ -40,33 +40,36 @@ public class MaskedAssertionInspectionTest extends LightJavaInspectionTestCase {
       " static public void fail() {}" +
       "}",
 
-      "package org.assertj.core.api;\n" +
-      "public class Assertions {\n" +
-      "  public static <T> ObjectAssert<T> assertThat(T actual);\n" +
-      "}",
+      """
+package org.assertj.core.api;
+public class Assertions {
+  public static <T> ObjectAssert<T> assertThat(T actual);
+}""",
 
       "package org.assertj.core.api;\n" +
       "public class ObjectAssert<T> extends Assert<ObjectAssert<T>, T> {}",
 
-      "package org.assertj.core.api;\n" +
-      "public class Assert<SELF extends Assert<SELF, ACTUAL>, ACTUAL> extends Descriptable<SELF> {\n" +
-      "  public SELF isEqualTo(Object expected);\n" +
-      "  public SELF isNotEqualTo(Object expected);\n" +
+      """
+package org.assertj.core.api;
+public class Assert<SELF extends Assert<SELF, ACTUAL>, ACTUAL> extends Descriptable<SELF> {
+  public SELF isEqualTo(Object expected);
+  public SELF isNotEqualTo(Object expected);
+  public SELF isSameAs(Object expected);
+  public SELF isNotSameAs(Object expected);
+}""",
 
-      "  public SELF isSameAs(Object expected);\n" +
-      "  public SELF isNotSameAs(Object expected);\n" +
-      "}",
+      """
+package org.assertj.core.api;
+public interface Descriptable<SELF> {
+  SELF describedAs(String description, Object... args);
+  default SELF as(String description, Object... args);
+  SELF isEqualTo(Object expected);
+}""",
 
-      "package org.assertj.core.api;\n" +
-      "public interface Descriptable<SELF> {\n" +
-      "  SELF describedAs(String description, Object... args);\n" +
-      "  default SELF as(String description, Object... args);\n" +
-      "  SELF isEqualTo(Object expected);\n" +
-      "}",
-
-      "package junit.framework;\n" +
-      "public class AssertionFailedError extends AssertionError {\n" +
-      "}"
+      """
+package junit.framework;
+public class AssertionFailedError extends AssertionError {
+}"""
     };
   }
 

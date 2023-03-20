@@ -21,6 +21,7 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class FormatterImpl extends FormatterEx
              FormattingModelFactory {
   private static final Logger LOG = Logger.getInstance(FormatterImpl.class);
 
-  private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<>();
+  private final AtomicReference<FormattingProgressCallback> myProgressTask = new AtomicReference<>();
 
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
@@ -78,7 +79,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public void setProgressTask(@NotNull FormattingProgressTask progressIndicator) {
+  public void setProgressTask(@NotNull FormattingProgressCallback progressIndicator) {
     if (!FormatterUtil.isFormatterCalledExplicitly()) {
       return;
     }
@@ -260,7 +261,7 @@ public class FormatterImpl extends FormatterEx
 
   private void execute(@NotNull SequentialTask task) {
     Application application = ApplicationManager.getApplication();
-    FormattingProgressTask progressTask = myProgressTask.getAndSet(null);
+    FormattingProgressCallback progressTask = myProgressTask.getAndSet(null);
     if (progressTask == null || !application.isDispatchThread() || application.isUnitTestMode()) {
       task.prepare();
       while (!task.isDone()) {
@@ -269,7 +270,9 @@ public class FormatterImpl extends FormatterEx
     }
     else {
       progressTask.setTask(task);
-      ProgressManager.getInstance().run(progressTask);
+      if (progressTask  instanceof SequentialModalProgressTask) {
+        ProgressManager.getInstance().run((SequentialModalProgressTask)progressTask);
+      }
     }
   }
 
@@ -738,5 +741,17 @@ public class FormatterImpl extends FormatterEx
   @NotNull
   public FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
     return new DummyFormattingModel(element);
+  }
+
+  @Override
+  public boolean isEligibleForVirtualFormatting(@NotNull PsiElement context) {
+    return VirtualFormattingImplKt.isEligibleForVirtualFormatting(context);
+  }
+
+  @Override
+  @Nullable
+  public FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
+                                                         @Nullable FormattingModelBuilder originalModel) {
+    return VirtualFormattingImplKt.wrapForVirtualFormatting(context, originalModel);
   }
 }

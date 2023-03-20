@@ -7,15 +7,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.SmartTypePointerManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ItemListener;
 
-/**
- * @author dsl
- */
 public class TypeSelector {
   private final PsiType myType;
   private final JComponent myComponent;
@@ -48,12 +46,9 @@ public class TypeSelector {
     }
     myComboBoxModel.setSuggestions(wrapToItems(types, myProject));
     if(oldType != null) {
-      for (int i = 0; i < types.length; i++) {
-        PsiType type = types[i];
-        if(type.equals(oldType)) {
-          ((JComboBox<?>) myComponent).setSelectedIndex(i);
-          return;
-        }
+      int i = ArrayUtil.indexOf(types, oldType);
+      if(i != -1) {
+        ((JComboBox<?>) myComponent).setSelectedIndex(i);
       }
     }
     if (types.length > 0) {

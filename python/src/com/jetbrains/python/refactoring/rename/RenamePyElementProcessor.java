@@ -14,8 +14,7 @@ public abstract class RenamePyElementProcessor extends RenamePsiElementProcessor
   @Override
   public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName, @NotNull MultiMap<PsiElement, String> conflicts) {
     PyElement container = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
-    if (container instanceof PyFile) {
-      PyFile pyFile = (PyFile)container;
+    if (container instanceof PyFile pyFile) {
       PyClass conflictingClass = pyFile.findTopLevelClass(newName);
       if (conflictingClass != null) {
         conflicts.putValue(conflictingClass, "A class named '" + newName + "' is already defined in " + pyFile.getName());
@@ -29,8 +28,7 @@ public abstract class RenamePyElementProcessor extends RenamePsiElementProcessor
         conflicts.putValue(conflictingFunction, "A variable named '" + newName + "' is already defined in " + pyFile.getName());
       }
     }
-    else if (container instanceof PyClass) {
-      PyClass pyClass = (PyClass)container;
+    else if (container instanceof PyClass pyClass) {
       PyClass conflictingClass = pyClass.findNestedClass(newName, true);
       if (conflictingClass != null) {
         conflicts.putValue(conflictingClass, "A class named '" + newName + "' is already defined in class '" + pyClass.getName() + "'");

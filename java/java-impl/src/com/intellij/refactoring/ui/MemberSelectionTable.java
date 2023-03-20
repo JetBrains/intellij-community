@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
@@ -31,10 +31,9 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
   @Nullable
   @Override
   protected Object getAbstractColumnValue(MemberInfo memberInfo) {
-    if (!(memberInfo.getMember() instanceof PsiMethod)) return null;
+    if (!(memberInfo.getMember() instanceof PsiMethod method)) return null;
     if (memberInfo.isStatic()) return null;
 
-    PsiMethod method = (PsiMethod)memberInfo.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final Boolean fixedAbstract = myMemberInfoModel.isFixedAbstract(memberInfo);
       if (fixedAbstract != null) return fixedAbstract;
@@ -51,10 +50,9 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
   @Override
   protected boolean isAbstractColumnEditable(int rowIndex) {
     MemberInfo info = myMemberInfos.get(rowIndex);
-    if (!(info.getMember() instanceof PsiMethod)) return false;
+    if (!(info.getMember() instanceof PsiMethod method)) return false;
     if (info.isStatic()) return false;
 
-    PsiMethod method = (PsiMethod)info.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       if (myMemberInfoModel.isFixedAbstract(info) != null) {
         return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 final class JavaFramesListRenderer {
   public static void customizePresentation(StackFrameDescriptorImpl descriptor,
-                                    @NotNull ColoredTextContainer component,
-                                    @Nullable StackFrameDescriptorImpl selectedDescriptor) {
+                                           @NotNull ColoredTextContainer component,
+                                           @Nullable StackFrameDescriptorImpl selectedDescriptor) {
     component.setIcon(descriptor.getIcon());
 
     final ValueMarkup markup = descriptor.getValueMarkup();

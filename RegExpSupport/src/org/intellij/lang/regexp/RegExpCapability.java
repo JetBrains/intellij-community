@@ -117,6 +117,16 @@ public enum RegExpCapability {
    * \g{[integer]} \g[unsigned integer]
    */
   PCRE_BACK_REFERENCES,
+
+  /**
+   * (?group_id)
+   */
+  PCRE_NUMBERED_GROUP_REF,
+
+  /**
+   * Allow PCRE conditions DEFINE and VERSION[>]?=n.m in conditional groups
+   */
+  PCRE_CONDITIONS,
   ;
   static final EnumSet<RegExpCapability> DEFAULT_CAPABILITIES = EnumSet.of(NESTED_CHARACTER_CLASSES,
                                                                            ALLOW_HORIZONTAL_WHITESPACE_CLASS,

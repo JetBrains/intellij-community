@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.HeadlessRule;
-import com.intellij.ui.scale.TestScaleHelper;
-import org.junit.*;
-import org.junit.rules.TestRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
-import static junit.framework.TestCase.*;
+import static com.intellij.ui.scale.TestScaleHelper.*;
+import static org.junit.Assert.*;
 
 /**
  * Tests ide.browser.jcef.headless.enabled and ide.browser.jcef.testMode.enabled registry keys
@@ -16,22 +17,26 @@ import static junit.framework.TestCase.*;
  * @author tav
  */
 public class JBCefTestModeTest {
-  @Rule public TestRule headless = new HeadlessRule();
+  static {
+    setSystemProperty("java.awt.headless", "true");
+  }
+
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
-    TestScaleHelper.assumeStandalone();
+    assumeStandalone();
   }
+
   @After
   public void after() {
-    TestScaleHelper.restoreRegistryProperties();
+    restoreProperties();
   }
 
   @Test
   public void test() {
-    TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "false");
-    TestScaleHelper.setRegistryProperty("ide.browser.jcef.testMode.enabled", "false");
+    setRegistryProperty("ide.browser.jcef.headless.enabled", "false");
+    setRegistryProperty("ide.browser.jcef.testMode.enabled", "false");
 
     assertFalse(JBCefApp.isSupported());
 
@@ -42,8 +47,8 @@ public class JBCefTestModeTest {
     catch (IllegalStateException ignore) {
     }
 
-    TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "true");
-    TestScaleHelper.setRegistryProperty("ide.browser.jcef.testMode.enabled", "true");
+    setRegistryProperty("ide.browser.jcef.headless.enabled", "true");
+    setRegistryProperty("ide.browser.jcef.testMode.enabled", "true");
 
     assertTrue(JBCefApp.isSupported());
     assertNotNull(JBCefApp.getInstance());

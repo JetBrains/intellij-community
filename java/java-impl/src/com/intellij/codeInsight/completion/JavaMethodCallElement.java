@@ -45,9 +45,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
   public static final Key<Boolean> COMPLETION_HINTS = Key.create("completion.hints");
@@ -71,7 +68,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     myContainingClass = method.getContainingClass();
     myHelper = helper;
     PsiType type = method.getReturnType();
-    myNegatable = type != null && PsiType.BOOLEAN.isAssignableFrom(type);
+    myNegatable = type != null && PsiTypes.booleanType().isAssignableFrom(type);
   }
 
   public JavaMethodCallElement(PsiMethod method, boolean shouldImportStatic, boolean mergedOverloads) {
@@ -507,7 +504,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
 
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));

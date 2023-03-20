@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class MavenRunnerParametersConfigurable extends MavenRunnerParametersPanel implements Configurable {
 
   public MavenRunnerParametersConfigurable(@NotNull Project project) {

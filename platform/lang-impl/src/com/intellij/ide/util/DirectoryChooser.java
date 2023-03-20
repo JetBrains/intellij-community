@@ -1,19 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.*;
@@ -328,15 +328,17 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
   public static class ItemWrapper {
-    final PsiDirectory myDirectory;
+    private final PsiDirectory myDirectory;
     private PathFragment[] myFragments;
     private final String myPostfix;
+    private final Icon myIcon;
 
     private String myRelativeToProjectPath = null;
 
     public ItemWrapper(PsiDirectory directory, String postfix) {
       myDirectory = directory;
       myPostfix = postfix != null && postfix.length() > 0 ? postfix : null;
+      myIcon = directory != null ? getIconInternal(directory) : PlatformIcons.FOLDER_ICON;
     }
 
     public PathFragment[] getFragments() { return myFragments; }
@@ -345,17 +347,30 @@ public class DirectoryChooser extends DialogWrapper {
       myFragments = fragments;
     }
 
-    public Icon getIcon(FileIndex fileIndex) {
-      if (myDirectory != null) {
-        VirtualFile virtualFile = myDirectory.getVirtualFile();
-        if (fileIndex.isInTestSourceContent(virtualFile)){
-          return PlatformIcons.MODULES_TEST_SOURCE_FOLDER;
-        }
-        else if (fileIndex.isInSourceContent(virtualFile)){
-          return PlatformIcons.MODULES_SOURCE_FOLDERS_ICON;
-        }
+    /**
+     * @deprecated use {@link #getIcon()} directly
+     */
+    @Deprecated
+    public Icon getIcon(@SuppressWarnings("unused") FileIndex fileIndex) {
+      return getIcon();
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
+
+    private Icon getIconInternal(@NotNull PsiDirectory directory) {
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
+      VirtualFile virtualFile = myDirectory.getVirtualFile();
+      if (fileIndex.isInTestSourceContent(virtualFile)) {
+        return PlatformIcons.MODULES_TEST_SOURCE_FOLDER;
       }
-      return PlatformIcons.FOLDER_ICON;
+      else if (fileIndex.isInSourceContent(virtualFile)) {
+        return PlatformIcons.MODULES_SOURCE_FOLDERS_ICON;
+      }
+      else {
+        return PlatformIcons.FOLDER_ICON;
+      }
     }
 
     public String getPresentableUrl() {
@@ -406,23 +421,17 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
   private void fillList(PsiDirectory[] directories, @Nullable PsiDirectory defaultSelection, Project project, String postfixToShow, Map<PsiDirectory,String> postfixes) {
-    if (myView.getItemsSize() > 0){
-      myView.clearItems();
-    }
+    ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> fillItems(directories, postfixToShow, postfixes)),
+                                           LangBundle.message("progress.title.validating"), true, project);
+
     if (defaultSelection == null) {
       defaultSelection = getDefaultSelection(directories, project);
       if (defaultSelection == null && directories.length > 0) {
         defaultSelection = directories[0];
       }
     }
-    int selectionIndex = -1;
-    for(int i = 0; i < directories.length; i++){
-      PsiDirectory directory = directories[i];
-      if (directory.equals(defaultSelection)) {
-        selectionIndex = i;
-        break;
-      }
-    }
+    int selectionIndex = ArrayUtil.indexOf(directories, defaultSelection);
     if (selectionIndex < 0 && directories.length == 1) {
       selectionIndex = 0;
     }
@@ -442,18 +451,18 @@ public class DirectoryChooser extends DialogWrapper {
       }
     }
 
+    updateView(defaultSelection, selectionIndex);
+  }
+
+  private void updateView(@Nullable PsiDirectory defaultSelection, int selectionIndex) {
+    if (myView.getItemsSize() > 0){
+      myView.clearItems();
+    }
     int existingIdx = 0;
-    for(int i = 0; i < directories.length; i++){
-      PsiDirectory directory = directories[i];
-      final String postfixForDirectory;
-      if (postfixes == null) {
-        postfixForDirectory = postfixToShow;
-      }
-      else {
-        postfixForDirectory = postfixes.get(directory);
-      }
-      final ItemWrapper itemWrapper = new ItemWrapper(directory, postfixForDirectory);
-      myItems.add(itemWrapper);
+    for(int i = 0; i < myItems.size(); i++){
+      ItemWrapper itemWrapper = myItems.get(i);
+      PsiDirectory directory = itemWrapper.getDirectory();
+      String postfixForDirectory = itemWrapper.myPostfix;
       if (myShowExisting) {
         if (selectionIndex == i) selectionIndex = -1;
         if (postfixForDirectory != null && directory.getVirtualFile().findFileByRelativePath(StringUtil.trimStart(postfixForDirectory, File.separator)) == null) {
@@ -484,6 +493,22 @@ public class DirectoryChooser extends DialogWrapper {
     }
     enableButtons();
     myView.getComponent().repaint();
+  }
+
+  private void fillItems(PsiDirectory[] directories,
+                         String postfixToShow,
+                         Map<PsiDirectory, String> postfixes) {
+    for (PsiDirectory directory : directories) {
+      ProgressManager.checkCanceled();
+      final String postfixForDirectory;
+      if (postfixes == null) {
+        postfixForDirectory = postfixToShow;
+      }
+      else {
+        postfixForDirectory = postfixes.get(directory);
+      }
+      myItems.add(new ItemWrapper(directory, postfixForDirectory));
+    }
   }
 
   @Nullable
@@ -548,14 +573,19 @@ public class DirectoryChooser extends DialogWrapper {
 
   private class FilterExistentAction extends CheckboxAction {
     FilterExistentAction() {
-      super(RefactoringBundle.messagePointer("directory.chooser.hide.non.existent.checkBox.text"),
-            () -> UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
+      super(RefactoringBundle.messagePointer("directory.chooser.hide.non.existing.checkBox.text"),
+            () -> UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existing.checkBox.text")),
             null);
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myShowExisting;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -566,33 +596,7 @@ public class DirectoryChooser extends DialogWrapper {
       if (directory == null && myDefaultSelection != null) {
         directory = myDefaultSelection;
       }
-      myView.clearItems();
-      int idx = 0;
-      int selectionId = -1;
-      for (ItemWrapper item : myItems) {
-        if (myShowExisting && item.myPostfix != null &&
-            item.getDirectory().getVirtualFile().findFileByRelativePath(StringUtil.trimStart(item.myPostfix, File.separator)) == null) {
-          continue;
-        }
-        if (item.getDirectory() == directory) {
-          selectionId = idx;
-        }
-        idx++;
-        myView.addItem(item);
-      }
-      buildFragments();
-      myView.listFilled();
-      if (selectionId < 0) {
-        myView.clearSelection();
-        if (myView.getItemsSize() > 0) {
-          myView.selectItemByIndex(0);
-        }
-      }
-      else {
-        myView.selectItemByIndex(selectionId);
-      }
-      enableButtons();
-      myView.getComponent().repaint();
+      updateView(directory, -1);
     }
   }
 }

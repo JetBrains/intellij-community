@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -47,6 +48,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane.Alignment;
@@ -144,7 +146,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleExecutionEditor.getComponent());
     myPanel.add(myScrollBar);
-    myPanel.setBackground(new JBColor(() -> myConsoleExecutionEditor.getEditor().getBackgroundColor()));
+    myPanel.setBackground(JBColor.lazy(() -> myConsoleExecutionEditor.getEditor().getBackgroundColor()));
     DataManager.registerDataProvider(myPanel, this);
   }
 
@@ -181,6 +183,11 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
     myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, myConsoleExecutionEditor);
+
+    if (ExperimentalUI.isNewUI()) {
+      getHistoryViewer().getSettings().setLineMarkerAreaShown(false);
+      getConsoleEditor().getSettings().setLineMarkerAreaShown(true);
+    }
   }
 
   @Override
@@ -487,7 +494,8 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     @NotNull
     public Document getDocument() {
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      Document document = ProjectLocator.computeWithPreferredProject(virtualFile, project, () ->
+        FileDocumentManager.getInstance().getDocument(virtualFile));
       if (document == null) {
         Language language = (virtualFile instanceof LightVirtualFile) ? ((LightVirtualFile)virtualFile).getLanguage() : null;
         throw new AssertionError(String.format("no document for: %s (fileType: %s, language: %s, length: %s, valid: %s)",

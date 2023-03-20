@@ -17,7 +17,7 @@ package com.intellij.util.graph;
 
 
 /**
- * <p><b>NOTE:</b> The class is a full copy of the {@code com.google.common.graph.EndpointPair}.
+ * <p><b>NOTE:</b> The class is a full copy of the {@code com.google.common.graph.MutableNetwork}.
  * We like Guava's implementation, but we cannot use Guava in our API because
  * we need additional abstraction layer on our side.</p>
  *

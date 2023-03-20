@@ -16,7 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,8 +28,8 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.siyeh.InspectionGadgetsBundle.message;
 
 public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
@@ -58,15 +58,15 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JCheckBox box = panel.addCheckboxEx(message("method.can.be.variable.arity.method.ignore.byte.short.option"), "ignoreByteAndShortArrayParameters");
-    panel.addDependentCheckBox(message("method.can.be.variable.arity.method.ignore.all.primitive.arrays.option"), "ignoreAllPrimitiveArrayParameters", box);
-    panel.addCheckbox(message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
-    panel.addCheckbox(message("only.report.public.methods.option"), "onlyReportPublicMethods");
-    panel.addCheckbox(message("method.can.be.variable.arity.method.ignore.multiple.arrays.option"), "ignoreMultipleArrayParameters");
-    panel.addCheckbox(message("method.can.be.variable.arity.method.ignore.multidimensional.arrays.option"), "ignoreMultiDimensionalArrayParameters");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreByteAndShortArrayParameters", message("method.can.be.variable.arity.method.ignore.byte.short.option"),
+               checkbox("ignoreAllPrimitiveArrayParameters", message("method.can.be.variable.arity.method.ignore.all.primitive.arrays.option"))),
+      checkbox("ignoreOverridingMethods", message("ignore.methods.overriding.super.method")),
+      checkbox("onlyReportPublicMethods", message("only.report.public.methods.option")),
+      checkbox("ignoreMultipleArrayParameters", message("method.can.be.variable.arity.method.ignore.multiple.arrays.option")),
+      checkbox("ignoreMultiDimensionalArrayParameters",
+               message("method.can.be.variable.arity.method.ignore.multidimensional.arrays.option")));
   }
 
   @Override
@@ -87,7 +87,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   private class MethodCanBeVariableArityMethodVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (onlyReportPublicMethods && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
@@ -102,20 +102,19 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       }
       final PsiParameter lastParameter = parameters[parameters.length - 1];
       final PsiType type = lastParameter.getType();
-      if (!(type instanceof PsiArrayType) || type instanceof PsiEllipsisType) {
+      if (!(type instanceof PsiArrayType arrayType) || type instanceof PsiEllipsisType) {
         return;
       }
       if (NullableNotNullManager.isNullable(lastParameter)) {
         return;
       }
-      final PsiArrayType arrayType = (PsiArrayType)type;
       final PsiType componentType = arrayType.getComponentType();
       if (ignoreMultiDimensionalArrayParameters && componentType instanceof PsiArrayType) {
         // don't report when it is multidimensional array
         return;
       }
       if (ignoreByteAndShortArrayParameters) {
-        if (PsiType.BYTE.equals(componentType) || PsiType.SHORT.equals(componentType)) {
+        if (PsiTypes.byteType().equals(componentType) || PsiTypes.shortType().equals(componentType)) {
           return;
         }
         if (ignoreAllPrimitiveArrayParameters && componentType instanceof PsiPrimitiveType) {

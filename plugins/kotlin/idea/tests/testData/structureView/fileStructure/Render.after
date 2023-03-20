@@ -29,6 +29,8 @@
   SECOND
  extension1() on String: Unit
  extension2() on Comparable<T>: Unit
+ Interface
+ Interface1
  test1(): Unit
  test2(String?): Unit
  test3(T, U): Unit
@@ -37,8 +39,6 @@
  test6(): Comparable<String>
  TestWithWhere
  testWithWhere(): Unit
- Trait
- Trait1
  withDefaulArgs(Int = ..., String = ...): Unit
  -WithDefaultArgs
   a: Int

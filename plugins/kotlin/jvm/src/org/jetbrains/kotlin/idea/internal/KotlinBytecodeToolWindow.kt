@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.internal
 
@@ -16,24 +16,27 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.util.Alarm
+import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.core.ClassFileOrigins
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.InfinitePeriodicalTask
 import org.jetbrains.kotlin.idea.util.LongRunningReadTask
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.join
 import java.awt.BorderLayout
 import java.awt.FlowLayout
+import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.*
@@ -67,7 +70,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
             }
 
             val file = location.kFile
-            return if (file == null || !ProjectRootsUtil.isInProjectSource(file)) {
+            return if (file == null || !RootKindFilter.projectSources.matches(file)) {
                 null
             } else location
 
@@ -160,57 +163,82 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         )
         add(myEditor.component)
 
-        val optionPanel = JPanel(FlowLayout())
-        add(optionPanel, BorderLayout.NORTH)
-
-        val decompilerFacade = KotlinJvmDecompilerFacade.getInstance()
-
         decompile = JButton(KotlinJvmBundle.message("button.text.decompile"))
-        if (decompilerFacade != null) {
-            optionPanel.add(decompile)
-            decompile.addActionListener {
-                val location = Location.fromEditor(FileEditorManager.getInstance(myProject).selectedTextEditor, myProject)
-                val file = location.kFile
-                if (file != null) {
-                    try {
-                        decompilerFacade.showDecompiledCode(file)
-                    } catch (ex: DecompileFailedException) {
-                        LOG.info(ex)
-                        Messages.showErrorDialog(
-                            myProject,
-                            KotlinJvmBundle.message("failed.to.decompile.0.1", file.name, ex),
-                            KotlinJvmBundle.message("kotlin.bytecode.decompiler")
-                        )
-                    }
-
-                }
-            }
-        }
-
         /*TODO: try to extract default parameter from compiler options*/
         enableInline = JCheckBox(KotlinJvmBundle.message("checkbox.text.inline"), true)
         enableOptimization = JCheckBox(KotlinJvmBundle.message("checkbox.text.optimization"), true)
         enableAssertions = JCheckBox(KotlinJvmBundle.message("checkbox.text.assertions"), true)
-        jvmTargets = ComboBox(JvmTarget.values().map { it.description }.toTypedArray())
+        jvmTargets = ComboBox(JvmTarget.supportedValues().map { it.description }.toTypedArray())
         @NlsSafe
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description
         ir = JCheckBox(KotlinJvmBundle.message("checkbox.text.ir"), false)
+
+        setText(DEFAULT_TEXT)
+        initOptionsPanel()
+        registerTasksToUpdateToolWindow()
+    }
+
+    private fun initOptionsPanel() {
+        val optionPanel = JPanel(FlowLayout())
+        add(optionPanel, BorderLayout.NORTH)
+
+        val decompilerFacade = KotlinJvmDecompilerFacade.getInstance()
+        if (decompilerFacade != null) {
+            optionPanel.add(decompile)
+            decompile.addActionListener {
+                decompileBytecode(decompilerFacade)
+            }
+        }
+
         optionPanel.add(enableInline)
         optionPanel.add(enableOptimization)
         optionPanel.add(enableAssertions)
         optionPanel.add(ir)
-
-        optionPanel.add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.target")))
+        optionPanel.add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.jvm.target")))
         optionPanel.add(jvmTargets)
+    }
 
+    private fun decompileBytecode(decompilerFacade: KotlinJvmDecompilerFacade) {
+        val location = Location.fromEditor(FileEditorManager.getInstance(myProject).selectedTextEditor, myProject)
+        val file = location.kFile
+        if (file == null) return
+        try {
+            decompilerFacade.showDecompiledCode(file)
+        } catch (ex: DecompileFailedException) {
+            LOG.info(ex)
+            Messages.showErrorDialog(
+                myProject,
+                KotlinJvmBundle.message("failed.to.decompile.0.1", file.name, ex),
+                KotlinJvmBundle.message("kotlin.bytecode.decompiler")
+            )
+        }
+    }
+
+    private fun registerTasksToUpdateToolWindow() {
         InfinitePeriodicalTask(
             UPDATE_DELAY.toLong(),
             Alarm.ThreadToUse.SWING_THREAD,
             this,
-            Computable<LongRunningReadTask<*, *>> { UpdateBytecodeToolWindowTask() }).start()
+            Computable<LongRunningReadTask<*, *>> { UpdateBytecodeToolWindowTask() }
+        ).start()
 
-        setText(DEFAULT_TEXT)
+        listOf(enableInline, enableOptimization, enableAssertions, ir).forEach { checkBox ->
+            checkBox.addActionListener {
+                updateToolWindowOnOptionChange()
+            }
+        }
+
+        jvmTargets.addActionListener {
+            updateToolWindowOnOptionChange()
+        }
+    }
+
+    private fun updateToolWindowOnOptionChange() {
+        val task = UpdateBytecodeToolWindowTask()
+        if (task.init()) {
+            task.run()
+        }
     }
 
     private fun setText(resultText: String) {
@@ -232,9 +260,8 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
 
         // public for tests
         fun getBytecodeForFile(ktFile: KtFile, configuration: CompilerConfiguration): BytecodeGenerationResult {
-            val state: GenerationState
-            try {
-                state = compileSingleFile(ktFile, configuration)
+            val (state, classFileOrigins) = try {
+                compileSingleFile(ktFile, configuration)
                     ?: return BytecodeGenerationResult.Error(KotlinJvmBundle.message("cannot.compile.0.to.bytecode", ktFile.name))
             } catch (e: ProcessCanceledException) {
                 throw e
@@ -259,8 +286,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
                 answer.append("// ================\n\n")
             }
 
-            val outputFiles = state.factory
-            for (outputFile in outputFiles.asList()) {
+            for (outputFile in getRelevantOutputFiles(state, classFileOrigins, ktFile)) {
                 answer.append("// ================")
                 answer.append(outputFile.relativePath)
                 answer.append(" =================\n")
@@ -270,9 +296,31 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
             return BytecodeGenerationResult.Bytecode(answer.toString())
         }
 
-        fun compileSingleFile(ktFile: KtFile, initialConfiguration: CompilerConfiguration): GenerationState? {
-            return KotlinCompilerIde(ktFile, initialConfiguration, ClassBuilderFactories.TEST).compile()
+        /**
+         * Returns a list of output files from [state] that should be shown to the user.
+         *
+         * An [OutputFile] is linked to its source [KtFile] via [OutputFile.sourceFiles]. However, all source files are physical, while a
+         * [KtFile] might not necessarily be physical. As a fallback for non-physical [KtFile]s, [classFileOrigins] are instead used to map
+         * the class file name to the original [KtFile]. [classFileOrigins] cannot be used on their own, because some class files are
+         * generated without an originating PSI file (see the explanation in [ClassFileOrigins]).
+         *
+         * If this approach for some reason filters out all output files, the full list is returned defensively.
+         */
+        private fun getRelevantOutputFiles(state: GenerationState, classFileOrigins: ClassFileOrigins, ktFile: KtFile): List<OutputFile> {
+            val sourceFile = File(ktFile.virtualFile.path)
+            val outputFiles = state.factory.asList()
+            return outputFiles.filter { outputFile ->
+                outputFile.sourceFiles.any { it == sourceFile } || classFileOrigins[outputFile.relativePath]?.contains(ktFile) == true
+            }.ifEmpty { outputFiles }
         }
+
+        fun compileSingleFile(ktFile: KtFile, initialConfiguration: CompilerConfiguration): Pair<GenerationState, ClassFileOrigins>? =
+            KotlinCompilerIde(
+                ktFile,
+                initialConfiguration,
+                ClassBuilderFactories.TEST,
+                shouldStubUnboundIrSymbols = true,
+            ).compileTracingOrigin()
 
         private fun mapLines(text: String, startLine: Int, endLine: Int): Pair<Int, Int> {
             @Suppress("NAME_SHADOWING")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.impl;
 
@@ -59,8 +59,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
@@ -69,9 +71,13 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
@@ -208,20 +214,32 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         ConsoleTokenUtil.updateAllTokenTextAttributes(getEditor(), project);
       });
     if (usePredefinedMessageFilter) {
-      updatePredefinedFiltersLater();
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      addAncestorListener(new AncestorListenerAdapter() {
         @Override
-        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-          updatePredefinedFiltersLater();
-        }
-
-        @Override
-        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          updatePredefinedFiltersLater();
+        public void ancestorAdded(AncestorEvent event) {
+          if (myPredefinedFilters.isEmpty()) {
+            updatePredefinedFiltersLater();
+          }
         }
       });
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+          @Override
+          public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+            updatePredefinedFiltersLater();
+          }
+
+          @Override
+          public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+            updatePredefinedFiltersLater();
+          }
+        });
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return OccurenceNavigator.super.getActionUpdateThread();
   }
 
   private void updatePredefinedFiltersLater() {
@@ -445,7 +463,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     getComponent(); // Make sure component exists
     component.setOpaque(false);
     component.setVisible(true);
-    myJLayeredPane.add(component, 0);
+    myJLayeredPane.add(component, null, 0);
   }
 
   @NotNull
@@ -475,9 +493,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.getScrollPane().getVerticalScrollBar().addMouseListener(mouseListener);
     editor.getScrollPane().getVerticalScrollBar().addMouseMotionListener(mouseListener);
     editor.getScrollingModel().addVisibleAreaListener(e -> {
-      // There is a possible case that the console text is populated while the console is not shown (e.g. we're debugging and
+      // There is a possible case that the console text is populated while the console is not shown (e.g., we're debugging and
       // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
-      // are soft wrapped. We want to update viewport position then when the console becomes visible.
+      // are soft-wrapped. We want to update viewport position then when the console becomes visible.
       Rectangle oldR = e.getOldRectangle();
 
       if (oldR != null && oldR.height <= 0 && e.getNewRectangle().height > 0 && isStickingToEnd(editor)) {
@@ -492,13 +510,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     JScrollBar scrollBar = editor.getScrollPane().getVerticalScrollBar();
     int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
                             editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
-    boolean vscrollAtBottom = scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
+    boolean vScrollAtBottom = scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
     boolean stickingToEnd = isStickingToEnd(editor);
 
-    if (!vscrollAtBottom && stickingToEnd) {
+    if (!vScrollAtBottom && stickingToEnd) {
       myCancelStickToEnd = true;
     } 
-    else if (vscrollAtBottom && !stickingToEnd) {
+    else if (vScrollAtBottom && !stickingToEnd) {
       scrollToEnd(editor);
     }
   }
@@ -512,6 +530,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @Override
   public void dispose() {
     myState = myState.dispose();
+    Arrays.stream(getAncestorListeners()).forEach(l -> removeAncestorListener(l));
     Editor editor = getEditor();
     if (editor != null) {
       cancelAllFlushRequests();
@@ -593,7 +612,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
-    text = StringUtil.convertLineSeparators(text, keepSlashR);
+    text = Strings.convertLineSeparators(text, keepSlashR);
     synchronized (LOCK) {
       boolean hasEditor = getEditor() != null;
       myDeferredBuffer.print(text, contentType, info);
@@ -779,6 +798,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     editor.getFoldingModel().runBatchFoldingOperation(() -> ((FoldingModelEx)editor.getFoldingModel()).clearFoldRegions());
+    editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength()).forEach(inlay -> Disposer.dispose(inlay));
 
     cancelHeavyAlarm();
   }
@@ -1027,7 +1047,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         (which basically does only one thing, gets a folding displayed).
         We do not want to process that empty string, but also we do not want to wait for another line
         which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
-        So therefore the condition, the last line(empty string) should still flush, but not be processed by
+        Thus, the condition: the last line(empty string) should still flush, but not be processed by
         com.intellij.execution.ConsoleFolding.
          */
         ConsoleFolding next = line < endLine ? foldingForLine(extensions, line, document) : null;
@@ -1117,8 +1137,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * @deprecated use {@link ClearConsoleAction} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static class ClearAllAction extends ClearConsoleAction {
   }
 
@@ -1141,7 +1160,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private void type(@NotNull Editor editor, @NotNull String text) {
+  void type(@NotNull Editor editor, @NotNull String text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     flushDeferredText();
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -1189,6 +1208,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void update(@NotNull AnActionEvent e) {
       ConsoleViewImpl console = getRunningConsole(e.getDataContext());
       e.getPresentation().setEnabled(console != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Nullable
@@ -1422,7 +1446,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     int newEndOffset = document.getTextLength() - oldDocLength + offset; // take care of trim document
 
     if (ConsoleTokenUtil.findTokenMarker(getEditor(), getProject(), newEndOffset) == null) {
-      ConsoleTokenUtil.createTokenRangeHighlighter(getEditor(), getProject(), ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset);
+      ConsoleTokenUtil.createTokenRangeHighlighter(getEditor(), getProject(), ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset, !text.equals("\n"));
     }
 
     moveScrollRemoveSelection(editor, newEndOffset);
@@ -1510,7 +1534,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private class FlushRunnable implements Runnable {
     // Does request of this class was myFlushAlarm.addRequest()-ed but not yet executed
     private final AtomicBoolean requested = new AtomicBoolean();
-    private final boolean adHoc; // true if requests of this class should not be merged (i.e they can be requested multiple times)
+    private final boolean adHoc; // true if requests of this class should not be merged (i.e., they can be requested multiple times)
 
     private FlushRunnable(boolean adHoc) {
       this.adHoc = adHoc;
@@ -1577,6 +1601,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getHyperlinks().getLinkNavigationRunnable(getEditor().getCaretModel().getLogicalPosition()) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

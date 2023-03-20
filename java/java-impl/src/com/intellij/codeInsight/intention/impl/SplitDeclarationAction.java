@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -34,8 +34,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   private boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement decl) {
     PsiElement[] declaredElements = decl.getDeclaredElements();
     if (declaredElements.length != 1) return false;
-    if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
-    PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
+    if (!(declaredElements[0] instanceof PsiLocalVariable var)) return false;
     if (var.getInitializer() == null) return false;
     if (var.getTypeElement().isInferredType() && !PsiTypesUtil.isDenotableType(var.getType(), var)) {
       return false;
@@ -49,10 +48,10 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         Ref<Boolean> conflictFound = new Ref<>(false);
         parent.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitClass(PsiClass aClass) { }
+          public void visitClass(@NotNull PsiClass aClass) { }
 
           @Override
-          public void visitVariable(PsiVariable variable) {
+          public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             if (varName.equals(variable.getName())) {
               conflictFound.set(true);

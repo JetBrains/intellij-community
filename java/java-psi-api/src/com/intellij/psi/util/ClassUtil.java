@@ -104,7 +104,7 @@ public final class ClassUtil {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (!jvmCompatible) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
@@ -128,7 +128,7 @@ public final class ClassUtil {
       }
 
       @Override
-      public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      public void visitTypeParameter(final @NotNull PsiTypeParameter classParameter) {
         if (!jvmCompatible) {
           super.visitTypeParameter(classParameter);
         }
@@ -266,7 +266,7 @@ public final class ClassUtil {
       signature.append(getBinaryPresentation(param.getType()));
     }
     signature.append(")");
-    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
+    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiTypes.voidType())));
     return signature.toString();
   }
 

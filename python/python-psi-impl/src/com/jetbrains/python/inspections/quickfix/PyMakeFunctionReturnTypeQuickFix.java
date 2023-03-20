@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,31 +38,44 @@ import static com.jetbrains.python.inspections.PyTypeCheckerInspection.Visitor.g
  * @author lada
  */
 public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
-  private final SmartPsiElementPointer<PyFunction> myFunction;
-  private final SmartPsiElementPointer<PyExpression> myReturnExpr;
-  private final SmartPsiElementPointer<PyAnnotation> myAnnotation;
-  private final SmartPsiElementPointer<PsiComment> myTypeCommentAnnotation;
+  private final @NotNull SmartPsiElementPointer<PyFunction> myFunction;
+  private final @Nullable SmartPsiElementPointer<PyExpression> myReturnExpr;
+  private final @Nullable SmartPsiElementPointer<PyAnnotation> myAnnotation;
+  private final @Nullable SmartPsiElementPointer<PsiComment> myTypeCommentAnnotation;
   private final String myReturnTypeName;
   private final boolean myHaveSuggestedType;
 
   public PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function,
                                           @Nullable PyExpression returnExpr,
-                                          @Nullable PyType returnTypeSuggested,
+                                          @Nullable PyType suggestedReturnType,
                                           @NotNull TypeEvalContext context) {
+    this(function,
+         returnExpr,
+         function.getAnnotation(),
+         function.getTypeComment(),
+         suggestedReturnType != null,
+         getReturnTypeName(function, suggestedReturnType, context));
+  }
+
+  @NotNull
+  private static String getReturnTypeName(@NotNull PyFunction function, @Nullable PyType returnType, @NotNull TypeEvalContext context) {
+    PyType type = returnType != null ? returnType : function.getReturnStatementType(context);
+    return PythonDocumentationProvider.getTypeHint(type, context);
+  }
+
+  private PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function,
+                                           @Nullable PyExpression returnExpr,
+                                           @Nullable PyAnnotation annotation,
+                                           @Nullable PsiComment typeComment,
+                                           boolean returnTypeSuggested,
+                                           @NotNull String returnTypeName) {
     SmartPointerManager manager = SmartPointerManager.getInstance(function.getProject());
     myFunction = manager.createSmartPsiElementPointer(function);
     myReturnExpr = returnExpr != null ? manager.createSmartPsiElementPointer(returnExpr) : null;
-
-    PyAnnotation annotation = function.getAnnotation();
     myAnnotation = annotation != null ? manager.createSmartPsiElementPointer(annotation) : null;
-
-    PsiComment typeCommentAnnotation = function.getTypeComment();
-    myTypeCommentAnnotation = typeCommentAnnotation != null ? manager.createSmartPsiElementPointer(typeCommentAnnotation) : null;
-
-    myHaveSuggestedType = returnTypeSuggested != null;
-    PyType returnType = myHaveSuggestedType ? returnTypeSuggested : function.getReturnStatementType(context);
-
-    myReturnTypeName = PythonDocumentationProvider.getTypeHint(returnType, context);
+    myTypeCommentAnnotation = typeComment != null ? manager.createSmartPsiElementPointer(typeComment) : null;
+    myHaveSuggestedType = returnTypeSuggested;
+    myReturnTypeName = returnTypeName;
   }
 
   @Override
@@ -125,5 +140,26 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
     else {
       return function.getReturnStatementType(context);
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PyFunction function = PyRefactoringUtil.findSameElementForPreview(myFunction, target);
+    if (function == null) {
+      return null;
+    }
+    @Nullable PyExpression returnExpr = PyRefactoringUtil.findSameElementForPreview(myReturnExpr, target);
+    if (myReturnExpr != null && returnExpr == null) {
+      return null;
+    }
+    @Nullable PyAnnotation annotation = PyRefactoringUtil.findSameElementForPreview(myAnnotation, target);
+    if (myAnnotation != null && annotation == null) {
+      return null;
+    }
+    @Nullable PsiComment typeComment = PyRefactoringUtil.findSameElementForPreview(myTypeCommentAnnotation, target);
+    if (myTypeCommentAnnotation != null && typeComment == null) {
+      return null;
+    }
+    return new PyMakeFunctionReturnTypeQuickFix(function, returnExpr, annotation, typeComment, myHaveSuggestedType, myReturnTypeName);
   }
 }

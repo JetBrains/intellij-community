@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -30,8 +31,6 @@ import static com.siyeh.ig.psiutils.VariableAccessUtils.variableIsUsed;
 
 /**
  * It's called "Java" inspection because the name without "Java" already exists.
- *
- * @author Pavel.Dolgov
  */
 public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -39,14 +38,14 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression assignmentExpression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
         super.visitAssignmentExpression(assignmentExpression);
 
         visitLocation(assignmentExpression);
       }
 
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         super.visitLocalVariable(variable);
 
         // At the "information" level only bare minimal set of elements are visited when the file is being edited.
@@ -88,12 +87,10 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       if (!(element instanceof PsiAssignmentExpression) && !(element instanceof PsiLocalVariable)) {
         element = element.getParent();
       }
-      if (element instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
+      if (element instanceof PsiAssignmentExpression assignment) {
         return getContext(findVariable(assignment), assignment);
       }
-      if (element instanceof PsiLocalVariable) {
-        PsiLocalVariable variable = (PsiLocalVariable)element;
+      if (element instanceof PsiLocalVariable variable) {
         return getContext(variable, findAssignment(variable));
       }
     }
@@ -121,21 +118,16 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   @Nullable
   private static PsiLocalVariable findVariable(@NotNull PsiAssignmentExpression assignmentExpression) {
     PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-    if (lExpression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)lExpression;
-      if (!reference.isQualified()) { // optimization: locals aren't qualified
-        PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiLocalVariable) {
-          PsiLocalVariable variable = (PsiLocalVariable)resolved;
-          PsiDeclarationStatement declarationStatement = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
-          PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(assignmentExpression.getParent(), PsiExpressionStatement.class);
-          if (declarationStatement != null && declarationStatement.getParent() instanceof PsiCodeBlock &&
-              expressionStatement != null && expressionStatement.getParent() == declarationStatement.getParent()) {
-            return findOccurrence(expressionStatement, variable,
-                                  PsiTreeUtil::skipWhitespacesAndCommentsBackward,
-                                  (candidate, unused) -> candidate == declarationStatement ? variable : null);
-          }
-        }
+    if (lExpression instanceof PsiReferenceExpression reference &&
+        !reference.isQualified() && // optimization: locals aren't qualified
+        reference.resolve() instanceof PsiLocalVariable variable) {
+      PsiDeclarationStatement declarationStatement = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
+      PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(assignmentExpression.getParent(), PsiExpressionStatement.class);
+      if (declarationStatement != null && declarationStatement.getParent() instanceof PsiCodeBlock &&
+          expressionStatement != null && expressionStatement.getParent() == declarationStatement.getParent()) {
+        return findOccurrence(expressionStatement, variable,
+                              PsiTreeUtil::skipWhitespacesAndCommentsBackward,
+                              (candidate, unused) -> candidate == declarationStatement ? variable : null);
       }
     }
     return null;
@@ -175,14 +167,10 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   @Contract("null,_ -> null")
   @Nullable
   private static PsiAssignmentExpression findAssignment(@Nullable PsiElement candidate, @NotNull PsiVariable variable) {
-    if (candidate instanceof PsiExpressionStatement) {
-      PsiExpression expression = ((PsiExpressionStatement)candidate).getExpression();
-      if (expression instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-        if (ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), variable)) {
-          return assignmentExpression;
-        }
-      }
+    if (candidate instanceof PsiExpressionStatement exprStatement &&
+        exprStatement.getExpression() instanceof PsiAssignmentExpression assignmentExpression &&
+        ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), variable)) {
+      return assignmentExpression;
     }
     return null;
   }
@@ -227,6 +215,17 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
 
         if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
         WriteAction.run(() -> DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment));
+      }
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      Context context = getContext(previewDescriptor.getPsiElement());
+      if (context != null) {
+        DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment);
+        return IntentionPreviewInfo.DIFF;
+      } else {
+        return IntentionPreviewInfo.EMPTY;
       }
     }
   }

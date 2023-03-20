@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.CacheSwitcher;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.mock.MockVirtualFile;
@@ -11,11 +12,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
@@ -29,16 +32,14 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.TestTimeOut;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,6 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -162,6 +164,39 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testSwitchingVfs() {
+    final var file = tempDir.newFile("myfile.txt");
+
+    // avoiding root resolve in tempDir
+    // otherwise there will be an exception on its remove using VirtualFile
+    final var pointer = myVirtualFilePointerManager.create(
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file),
+      disposable,
+      null
+    );
+
+    assertTrue(pointer.isValid());
+    assertNotNull(pointer.getFile());
+
+    CacheSwitcher.INSTANCE.switchIndexAndVfs(
+      null,
+      null,
+      "resetting vfs",
+      () -> {
+        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertUrlBasedPointers();
+
+        assertFalse(pointer.isValid());
+        assertNull(pointer.getFile());
+
+        return null;
+      }
+    );
+
+    assertTrue(pointer.isValid());
+    assertNotNull(pointer.getFile());
+  }
+
+  @Test
   public void testPointerAfterFileDeleteAndRecreateMustBeValid() {
     File fileToDelete = tempDir.newFile("toDelete.txt");
     LoggingListener fileToDeleteListener = new LoggingListener();
@@ -210,11 +245,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
     String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
-  }
-
-  @Test
-  public void testCreateVFPFromStrangeJarUrlMustCrash() throws IOException {
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->myVirtualFilePointerManager.create("jar://C:/!/java.base", disposable, null));
   }
 
   @Test
@@ -426,6 +456,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer[] pointersToWatch = {jarParentPointer, jarPointer};
     assertTrue(jarParentPointer.isValid());
     assertTrue(jarPointer.isValid());
+    assertEquals(jarUrl, jarPointer.getUrl());
+    assertEquals("x.jar", jarPointer.getFileName());
 
     assertTrue(jar.delete());
     assertTrue(jarParent.delete());
@@ -1259,7 +1291,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @NotNull
-  private VirtualFilePointer createPointer(String relativePath) {
+  private VirtualFilePointer createPointer(@NotNull String relativePath) {
     return myVirtualFilePointerManager.create(myDir().getUrl()+"/"+relativePath, disposable, null);
   }
 
@@ -1270,5 +1302,55 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
   private VirtualFile myDir() {
     return tempDir.getVirtualFileRoot();
+  }
+
+  @Test
+  public void testIncorrectRelativeUrlMustNotCrashVirtualPointers() {
+    String path = "$KOTLIN_BUNDLED$/lib/allopen-compiler-plugin.jar!/";
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create("jar://" + path, disposable, null);
+    assertTrue(pointer.getUrl(), pointer.getUrl().endsWith(path));
+    assertEquals("allopen-compiler-plugin.jar", pointer.getFileName());
+  }
+  @Test
+  public void testJarUrlContainingInvalidExclamationInTheMiddleMustNotCrashAnything() {
+    File root = tempDir.getRoot();
+    while (root.getParentFile() != null) root = root.getParentFile();
+    String diskRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(root.getPath()));
+
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("/", "!/", null, "_");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/", "!/", null, "_");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/xxx", "!/xxx", "xxx", "xxx");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/xxx/!/yyy", "!/xxx/!/yyy", "yyy", "xxx/!/yyy");
+    if (SystemInfo.isWindows) {
+      assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/!/abc", "jar://" + diskRoot + "!/abc", "abc");
+      assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "!/abc", "jar://" + diskRoot + "!/abc", "abc");
+    }
+  }
+
+  private void assertJarSeparatorParsedCorrectlyForFileInsideJar(@NotNull String relativePathInsideJar, @NotNull String expectedPointerRelativeUrl, @Nullable String expectedPointerFileName, @NotNull String expectedPathInsideJar) {
+    String abc = "abc" + new SecureRandom().nextLong()+".jar";
+    String tempRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(tempDir.getRoot().getPath()));
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create("jar://" + tempRoot + "/" + abc + relativePathInsideJar, disposable, null);
+    assertEquals(expectedPointerRelativeUrl, StringUtil.trimStart(pointer.getUrl(), "jar://" + tempRoot + "/" + abc));
+    String expectedPointerFileNameToCheck = expectedPointerFileName == null ? abc : expectedPointerFileName;
+    assertEquals(expectedPointerFileNameToCheck, pointer.getFileName());
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertFalse(pointer.isValid());
+
+    File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar));
+    
+    assertTrue(pointer.isValid());
+    VirtualFile virtualFile = pointer.getFile();
+    assertNotNull(virtualFile);
+    assertEquals(expectedPointerFileNameToCheck, virtualFile.getName());
+  }
+
+  private void assertJarSeparatorParsedCorrectly(@NotNull String sourceUrl, @NotNull String expectedPointerUrl, @NotNull String expectedPointerFileName) {
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
+    assertEquals(expectedPointerUrl, pointer.getUrl());
+    assertEquals(expectedPointerFileName, pointer.getFileName());
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertFalse(pointer.isValid());
   }
 }

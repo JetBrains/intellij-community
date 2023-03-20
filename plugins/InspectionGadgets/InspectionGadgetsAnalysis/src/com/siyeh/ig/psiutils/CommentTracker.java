@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -138,7 +138,7 @@ public final class CommentTracker {
 
   /**
    * Returns the comments which are located between the supplied element
-   * and the previous element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * and the previous element passed into {@link #textWithComments(PsiElement)} or {@code commentsBefore()}.
    * The used comments are deleted from the original document.
    *
    * <p>This method can be used if several parts of original code are reused in the generated replacement.
@@ -192,7 +192,7 @@ public final class CommentTracker {
 
   /**
    * Returns the text of the specified element, possibly prepended with comments which are located between the supplied element
-   * and the preceding element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * and the preceding element passed into {@code textWithComments()} or {@link #commentsBefore(PsiElement)}.
    * The used comments are deleted from the original document.
    *
    * <p>Note that if PsiExpression was passed, the resulting text may not parse as an PsiExpression,
@@ -276,10 +276,8 @@ public final class CommentTracker {
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
+    if (parent instanceof PsiPolyadicExpression parentPolyadic && replacement instanceof PsiPolyadicExpression childPolyadic) {
       // flatten nested polyadic expressions
-      PsiPolyadicExpression parentPolyadic = (PsiPolyadicExpression)parent;
-      PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
       IElementType parentTokenType = parentPolyadic.getOperationTokenType();
       IElementType childTokenType = childPolyadic.getOperationTokenType();
       if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType) &&
@@ -392,7 +390,7 @@ public final class CommentTracker {
     List<PsiElement> trailingComments = new SmartList<>();
     List<PsiElement> comments = grabCommentsBefore(PsiTreeUtil.lastChild(expression));
     if (!comments.isEmpty()) {
-      PsiParserFacade parser = PsiParserFacade.SERVICE.getInstance(expression.getProject());
+      PsiParserFacade parser = PsiParserFacade.getInstance(expression.getProject());
       for (PsiElement comment : comments) {
         PsiElement prev = comment.getPrevSibling();
         if (prev instanceof PsiWhiteSpace) {
@@ -441,7 +439,7 @@ public final class CommentTracker {
     boolean hasComment = false;
     while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
       hasComment |= lastChild instanceof PsiComment;
-      if (!(lastChild instanceof PsiComment) || !(shouldIgnore((PsiComment)lastChild))) {
+      if (!(lastChild instanceof PsiComment) || !shouldIgnore((PsiComment)lastChild)) {
         suffix.add(markUnchanged(lastChild).copy());
       }
       lastChild = lastChild.getPrevSibling();
@@ -457,7 +455,7 @@ public final class CommentTracker {
         if (nextSibling instanceof PsiWhiteSpace) {
           target.add(nextSibling);
         } else {
-          target.add(PsiParserFacade.SERVICE.getInstance(target.getProject()).createWhiteSpaceFromText("\n"));
+          target.add(PsiParserFacade.getInstance(target.getProject()).createWhiteSpaceFromText("\n"));
         }
       }
       StreamEx.ofReversed(suffix).forEach(target::add);
@@ -518,7 +516,6 @@ public final class CommentTracker {
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
-   * @param anchor
    */
   public void insertCommentsBefore(@NotNull PsiElement anchor) {
     checkState();

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.psi.*
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
@@ -20,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isNullLiteral
-import javax.swing.JComponent
 import kotlin.math.max
 
 class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
@@ -32,11 +32,8 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     shouldReportNulls = true
   }
 
-  override fun createGroovyOptionsPanel(): JComponent = panel {
-    row {
-      checkBox(GroovyBundle.message("checkbox.report.unmatched.null")).bindSelected(::shouldReportNulls)
-    }
-  }
+  override fun getGroovyOptionsPane(): OptPane = 
+    pane(checkbox("shouldReportNulls", GroovyBundle.message("checkbox.report.unmatched.null")))
 
   override fun buildVisitor(): BaseInspectionVisitor = object : BaseInspectionVisitor() {
     override fun visitSwitchExpression(switchExpression: GrSwitchExpression) {
@@ -49,11 +46,8 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
       if (cases.any { it.isDefault }) {
         return
       }
-      val conditionalType = switchElement.condition?.type ?: PsiType.NULL
+      val conditionalType = switchElement.condition?.type ?: PsiTypes.nullType()
       val patterns = cases.flatMap { it.expressions?.asList() ?: emptyList() }.filterNotNull()
-      if (patterns.isEmpty()) {
-        return
-      }
       when (conditionalType) {
         is PsiPrimitiveType -> handlePrimitiveType(switchElement, conditionalType, patterns)
         is PsiClassType -> {
@@ -136,7 +130,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     private fun handlePrimitiveType(switchElement: GrSwitchElement,
                                     conditionalType: PsiPrimitiveType,
                                     patterns: List<GrExpression>) = when (conditionalType) {
-      PsiType.BOOLEAN -> {
+      PsiTypes.booleanType() -> {
         val factory = GroovyPsiElementFactory.getInstance(switchElement.project)
         val patternTexts = patterns.map { it.text }
         val trueLiteral = if ("true" !in patternTexts) factory.createLiteralFromValue(true) else null
@@ -144,7 +138,7 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
         val necessaryPatterns = listOfNotNull(trueLiteral, falseLiteral)
         insertErrors(switchElement, necessaryPatterns.isNotEmpty(), necessaryPatterns)
       }
-      PsiType.BYTE, PsiType.SHORT, PsiType.INT, PsiType.LONG -> {
+      PsiTypes.byteType(), PsiTypes.shortType(), PsiTypes.intType(), PsiTypes.longType() -> {
         val definedRanges = glueRange(patterns)
         insertErrors(switchElement, definedRanges.size > 1, emptyList())
         val expectedRange = calculateActualRange(conditionalType)
@@ -160,10 +154,10 @@ class GrSwitchExhaustivenessCheckInspection : BaseInspection() {
     }
 
     private fun calculateActualRange(conditionalType: PsiPrimitiveType): Pair<Long, Long> = when (conditionalType) {
-      PsiType.BYTE -> Byte.MIN_VALUE.toLong() to Byte.MAX_VALUE.toLong()
-      PsiType.SHORT -> Short.MIN_VALUE.toLong() to Short.MAX_VALUE.toLong()
-      PsiType.INT -> Int.MIN_VALUE.toLong() to Int.MAX_VALUE.toLong()
-      PsiType.LONG -> Long.MIN_VALUE to Long.MAX_VALUE
+      PsiTypes.byteType() -> Byte.MIN_VALUE.toLong() to Byte.MAX_VALUE.toLong()
+      PsiTypes.shortType() -> Short.MIN_VALUE.toLong() to Short.MAX_VALUE.toLong()
+      PsiTypes.intType() -> Int.MIN_VALUE.toLong() to Int.MAX_VALUE.toLong()
+      PsiTypes.longType() -> Long.MIN_VALUE to Long.MAX_VALUE
       else -> error("unreachable")
     }
 

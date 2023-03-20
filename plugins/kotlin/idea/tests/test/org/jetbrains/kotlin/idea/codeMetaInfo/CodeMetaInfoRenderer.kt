@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeMetaInfo
 
 import com.intellij.util.containers.Stack
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.CodeMetaInfo
+import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoParser
 import java.io.File
 
 object CodeMetaInfoRenderer {
@@ -67,7 +68,11 @@ object CodeMetaInfoRenderer {
         checkOpenedAndCloseStringIfNeeded(opened, offset, builder)
     }
 
-    private val metaInfoComparator = (compareBy<CodeMetaInfo> { it.start } then compareByDescending { it.end }) then compareBy { it.tag }
+    private val metaInfoComparator =
+        compareBy<CodeMetaInfo> { it.start }
+            .thenByDescending { it.end }
+            .thenBy { it.tag }
+            .thenBy { it.asString() }
 
     private fun getSortedCodeMetaInfos(metaInfos: Collection<CodeMetaInfo>): List<CodeMetaInfo> {
         return metaInfos.sortedWith(metaInfoComparator)

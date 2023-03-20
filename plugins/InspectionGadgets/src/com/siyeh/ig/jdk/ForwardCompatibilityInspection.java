@@ -27,7 +27,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
     return new JavaElementVisitor() {
       @Override
-      public void visitIdentifier(PsiIdentifier identifier) {
+      public void visitIdentifier(@NotNull PsiIdentifier identifier) {
         String message = getIdentifierWarning(identifier);
         if (message != null) {
           holder.registerProblem(identifier, message, new RenameFix());
@@ -39,44 +39,44 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
         switch (name) {
-          case PsiKeyword.ASSERT:
+          case PsiKeyword.ASSERT -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_4) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("assert.identifier.warn");
             }
-            break;
-          case PsiKeyword.ENUM:
+          }
+          case PsiKeyword.ENUM -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_5) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("enum.identifier.warn");
             }
-            break;
-          case "_":
+          }
+          case "_" -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
               return JavaErrorBundle.message("underscore.identifier.warn");
             }
-            break;
-          case PsiKeyword.VAR:
+          }
+          case PsiKeyword.VAR -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_10) && parent instanceof PsiClass) {
               return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.VAR, 10);
             }
-            break;
-          case PsiKeyword.YIELD:
+          }
+          case PsiKeyword.YIELD -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_14) && parent instanceof PsiClass) {
               return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.YIELD, 14);
             }
-            break;
-          case PsiKeyword.RECORD:
+          }
+          case PsiKeyword.RECORD -> {
             if (languageLevel.isLessThan(LanguageLevel.JDK_16) && parent instanceof PsiClass) {
               return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.RECORD, 16);
             }
-            break;
+          }
         }
         return null;
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiReferenceExpression ref = expression.getMethodExpression();
         PsiElement nameElement = ref.getReferenceNameElement();
         if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
@@ -88,7 +88,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Override
-      public void visitKeyword(PsiKeyword keyword) {
+      public void visitKeyword(@NotNull PsiKeyword keyword) {
         super.visitKeyword(keyword);
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !languageLevel.isAtLeast(LanguageLevel.JDK_10)) {
           @PsiModifier.ModifierConstant String modifier = keyword.getText();

@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * An informational object for debugging stub-mismatch related issues. Should be as small as possible since it's stored in files's attributes.
- *
- * @author peter
  */
 class IndexingStampInfo {
   final long indexingFileStamp;

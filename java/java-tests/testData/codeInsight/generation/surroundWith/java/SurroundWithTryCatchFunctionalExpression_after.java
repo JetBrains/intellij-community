@@ -4,7 +4,7 @@ class Test {
       try {
           I i = ExceptionTest::foo;
       } catch (Exception e) {
-          e.printStackTrace();
+          throw new RuntimeException(e);
       }
   }
 

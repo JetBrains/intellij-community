@@ -44,7 +44,7 @@ public final class CodeEditUtil {
     }
 
     if (anchorBefore != null && isComment(anchorBefore.getElementType())) {
-      final ASTNode anchorPrev = anchorBefore.getTreePrev();
+      ASTNode anchorPrev = anchorBefore.getTreePrev();
       if (anchorPrev != null && anchorPrev.getElementType() == TokenType.WHITE_SPACE) {
         anchorBefore = anchorPrev;
       }
@@ -72,7 +72,7 @@ public final class CodeEditUtil {
   }
 
   private static boolean isComment(@NotNull IElementType type) {
-    final ParserDefinition def = LanguageParserDefinitions.INSTANCE.forLanguage(type.getLanguage());
+    ParserDefinition def = LanguageParserDefinitions.INSTANCE.forLanguage(type.getLanguage());
     return def != null && def.getCommentTokens().contains(type);
   }
 
@@ -83,7 +83,7 @@ public final class CodeEditUtil {
         if (current.getTreeNext() == first) return true;
         current = current.getTreeParent();
       }
-      final ASTNode parent = first.getTreeParent();
+      ASTNode parent = first.getTreeParent();
       if (parent != null && parent.getTextRange().equals(first.getTextRange())) {
         first = parent;
       }
@@ -110,13 +110,13 @@ public final class CodeEditUtil {
 
   public static int getOldIndentation(ASTNode node) {
     if (node == null) return -1;
-    final Integer stored = node.getCopyableUserData(INDENT_INFO);
+    Integer stored = node.getCopyableUserData(INDENT_INFO);
     return stored != null ? stored : -1;
   }
 
   public static void removeChildren(@NotNull ASTNode parent, @NotNull ASTNode first, @NotNull ASTNode last) {
-    final boolean tailingElement = last.getStartOffset() + last.getTextLength() == parent.getStartOffset() + parent.getTextLength();
-    final boolean forceReformat = needToForceReformat(parent, first, last);
+    boolean tailingElement = last.getStartOffset() + last.getTextLength() == parent.getStartOffset() + parent.getTextLength();
+    boolean forceReformat = needToForceReformat(parent, first, last);
     saveWhitespacesInfo(first);
 
     TreeElement child = (TreeElement)first;
@@ -127,8 +127,8 @@ public final class CodeEditUtil {
     }
     assert child == last : last + " is not a successor of " + first + " in the .getTreeNext() chain";
 
-    final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
-    final ASTNode nextLeaf = TreeUtil.nextLeaf(last);
+    ASTNode prevLeaf = TreeUtil.prevLeaf(first);
+    ASTNode nextLeaf = TreeUtil.nextLeaf(last);
     parent.removeRange(first, last.getTreeNext());
     ASTNode nextLeafToAdjust = nextLeaf;
     if (nextLeafToAdjust != null && prevLeaf != null && nextLeafToAdjust.getTreeParent() == null) {
@@ -138,14 +138,14 @@ public final class CodeEditUtil {
     makePlaceHolderBetweenTokens(prevLeaf, nextLeafToAdjust, forceReformat, tailingElement);
   }
 
-  private static boolean needToForceReformat(final ASTNode parent, final ASTNode first, final ASTNode last) {
+  private static boolean needToForceReformat(ASTNode parent, ASTNode first, ASTNode last) {
     return parent == null || first.getStartOffset() != parent.getStartOffset() ||
            parent.getText().trim().length() == getTrimmedTextLength(first, last) &&
            needToForceReformat(parent.getTreeParent(), parent, parent);
   }
 
-  private static int getTrimmedTextLength(ASTNode first, final ASTNode last) {
-    final StringBuilder buffer = new StringBuilder();
+  private static int getTrimmedTextLength(ASTNode first, ASTNode last) {
+    StringBuilder buffer = new StringBuilder();
     while (first != last.getTreeNext()) {
       buffer.append(first.getText());
       first = first.getTreeNext();
@@ -160,10 +160,10 @@ public final class CodeEditUtil {
     LeafElement oldFirst = TreeUtil.findFirstLeaf(oldChild);
 
     parent.replaceChild(oldChild, newChild);
-    final LeafElement firstLeaf = TreeUtil.findFirstLeaf(newChild);
-    final ASTNode prevToken = TreeUtil.prevLeaf(newChild);
+    LeafElement firstLeaf = TreeUtil.findFirstLeaf(newChild);
+    ASTNode prevToken = TreeUtil.prevLeaf(newChild);
     if (firstLeaf != null) {
-      final ASTNode nextLeaf = TreeUtil.nextLeaf(newChild);
+      ASTNode nextLeaf = TreeUtil.nextLeaf(newChild);
       makePlaceHolderBetweenTokens(prevToken, firstLeaf, isFormattingRequired(prevToken, newChild), false);
       if (nextLeaf != null && !CharArrayUtil.containLineBreaks(nextLeaf.getText())) {
         makePlaceHolderBetweenTokens(TreeUtil.prevLeaf(nextLeaf), nextLeaf, false, false);
@@ -185,7 +185,7 @@ public final class CodeEditUtil {
   @Nullable
   private static ASTNode findFirstLeaf(ASTNode first, ASTNode last) {
     do {
-      final LeafElement leaf = TreeUtil.findFirstLeaf(first);
+      LeafElement leaf = TreeUtil.findFirstLeaf(first);
       if (leaf != null) return leaf;
       first = first.getTreeNext();
       if (first == null) return null;
@@ -197,7 +197,7 @@ public final class CodeEditUtil {
   @Nullable
   private static ASTNode findLastLeaf(ASTNode first, ASTNode last) {
     do {
-      final ASTNode leaf = TreeUtil.findLastLeaf(last);
+      ASTNode leaf = TreeUtil.findLastLeaf(last);
       if (leaf != null) return leaf;
       last = last.getTreePrev();
       if (last == null) return null;
@@ -216,16 +216,16 @@ public final class CodeEditUtil {
     }
     else if (left.getElementType() == TokenType.WHITE_SPACE && left.getTreeNext() == null && normalizeTrailingWS) {
       // handle tailing whitespaces if element on the left has been removed
-      final ASTNode prevLeaf = TreeUtil.prevLeaf(left);
+      ASTNode prevLeaf = TreeUtil.prevLeaf(left);
       left.getTreeParent().removeChild(left);
       markToReformatBeforeOrInsertWhitespace(prevLeaf, right);
       left = right;
     }
     else if (left.getElementType() == TokenType.WHITE_SPACE && right.getElementType() == TokenType.WHITE_SPACE) {
-      final String text;
-      final int leftBlankLines = getBlankLines(left.getText());
-      final int rightBlankLines = getBlankLines(right.getText());
-      final boolean leaveRightText = leftBlankLines < rightBlankLines;
+      String text;
+      int leftBlankLines = getBlankLines(left.getText());
+      int rightBlankLines = getBlankLines(right.getText());
+      boolean leaveRightText = leftBlankLines < rightBlankLines;
       if (leftBlankLines == 0 && rightBlankLines == 0) {
         text = left.getText() + right.getText();
       }
@@ -236,7 +236,7 @@ public final class CodeEditUtil {
         text = left.getText();
       }
       if (leaveRightText || forceReformat) {
-        final LeafElement merged = ASTFactory.whitespace(text);
+        LeafElement merged = ASTFactory.whitespace(text);
         if (!leaveRightText) {
           left.getTreeParent().replaceChild(left, merged);
           right.getTreeParent().removeChild(right);
@@ -265,15 +265,15 @@ public final class CodeEditUtil {
     return left;
   }
 
-  private static void markWhitespaceForReformat(final ASTNode right) {
-    final String text = right.getText();
-    final LeafElement merged = ASTFactory.whitespace(text);
+  private static void markWhitespaceForReformat(ASTNode right) {
+    String text = right.getText();
+    LeafElement merged = ASTFactory.whitespace(text);
     right.getTreeParent().replaceChild(right, merged);
   }
 
-  private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right) {
-    final Language leftLang = left != null ? PsiUtilCore.getNotAnyLanguage(left) : null;
-    final Language rightLang = PsiUtilCore.getNotAnyLanguage(right);
+  private static void markToReformatBeforeOrInsertWhitespace(ASTNode left, @NotNull ASTNode right) {
+    Language leftLang = left != null ? PsiUtilCore.getNotAnyLanguage(left) : null;
+    Language rightLang = PsiUtilCore.getNotAnyLanguage(right);
 
     ASTNode generatedWhitespace = null;
     if (leftLang != null && leftLang.isKindOf(rightLang)) {
@@ -284,7 +284,7 @@ public final class CodeEditUtil {
     }
 
     if (generatedWhitespace != null) {
-      final TreeUtil.CommonParentState parentState = new TreeUtil.CommonParentState();
+      TreeUtil.CommonParentState parentState = new TreeUtil.CommonParentState();
       TreeUtil.prevLeaf((TreeElement)right, parentState);
       parentState.nextLeafBranchStart.getTreeParent().addChild(generatedWhitespace, parentState.nextLeafBranchStart);
     }
@@ -306,16 +306,16 @@ public final class CodeEditUtil {
     return result;
   }
 
-  public static boolean isNodeGenerated(final ASTNode node) {
+  public static boolean isNodeGenerated(ASTNode node) {
     return node == null || node.getCopyableUserData(GENERATED_FLAG) != null;
   }
 
-  public static void setNodeGenerated(final ASTNode next, final boolean value) {
+  public static void setNodeGenerated(ASTNode next, boolean value) {
     if (next == null) return;
     next.putCopyableUserData(GENERATED_FLAG, value ? true : null);
   }
 
-  public static void setNodeGeneratedRecursively(final ASTNode next, final boolean value) {
+  public static void setNodeGeneratedRecursively(ASTNode next, boolean value) {
     if (next == null) return;
     setNodeGenerated(next, value);
     for (ASTNode child = next.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -323,7 +323,7 @@ public final class CodeEditUtil {
     }
   }
 
-  public static void setOldIndentation(final TreeElement treeElement, final int oldIndentation) {
+  public static void setOldIndentation(TreeElement treeElement, int oldIndentation) {
     if (treeElement == null) return;
     treeElement.putCopyableUserData(INDENT_INFO, oldIndentation >= 0 ? oldIndentation : null);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
@@ -122,8 +122,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public String getTabName() {
-    if (myTabName != null) return myTabName;
-    return myDisplayName;
+    return myTabName == null ? myDisplayName : myTabName;
   }
 
   @Override
@@ -264,12 +263,12 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   @NonNls
   public String toString() {
-    StringBuilder sb = new StringBuilder("Content name=").append(myDisplayName);
-    if (myIsPinned)
-      sb.append(", pinned");
-    if (myExecutionId != 0)
-      sb.append(", executionId=").append(myExecutionId);
-    return sb.toString();
+    return "Content name="+getDisplayName()
+           + (getDescription() == null ? "" : "; description='"+getDescription()+"'")
+           + (getTabName() == null ? "" : "; tab name='"+getTabName()+"'")
+           + (getToolwindowTitle() == null ? "" : "; toolwindow='"+getToolwindowTitle()+"'")
+           + (isPinned() ? ", pinned" : "")
+           + (getExecutionId() == 0 ? "" : ", executionId=" + getExecutionId());
   }
 
   @Override

@@ -17,9 +17,6 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenDirectoryPathReferenceConverter extends MavenPathReferenceConverter {
 
   public MavenDirectoryPathReferenceConverter() {

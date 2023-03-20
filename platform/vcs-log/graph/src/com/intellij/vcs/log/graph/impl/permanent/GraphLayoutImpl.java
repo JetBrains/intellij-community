@@ -7,15 +7,14 @@ import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class GraphLayoutImpl implements GraphLayout {
   @NotNull private final IntList myLayoutIndex;
 
-  @NotNull private final List<Integer> myHeadNodeIndex;
+  @NotNull private final it.unimi.dsi.fastutil.ints.IntList myHeadNodeIndex;
   private final int @NotNull [] myStartLayoutIndexForHead;
 
-  public GraphLayoutImpl(int @NotNull [] layoutIndex, @NotNull List<Integer> headNodeIndex, int @NotNull [] startLayoutIndexForHead) {
+  public GraphLayoutImpl(int @NotNull [] layoutIndex, @NotNull it.unimi.dsi.fastutil.ints.IntList headNodeIndex, int @NotNull [] startLayoutIndexForHead) {
     myLayoutIndex = CompressedIntList.newInstance(layoutIndex);
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = startLayoutIndexForHead;
@@ -37,7 +36,7 @@ public class GraphLayoutImpl implements GraphLayout {
 
   @Override
   @NotNull
-  public List<Integer> getHeadNodeIndex() {
+  public it.unimi.dsi.fastutil.ints.IntList getHeadNodeIndex() {
     return myHeadNodeIndex;
   }
 

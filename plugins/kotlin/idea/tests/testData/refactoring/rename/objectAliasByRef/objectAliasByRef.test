@@ -3,5 +3,6 @@
   "mainFile": "test/test.kt",
   "newName": "AliasNew",
   "byRef": "true",
-  "withRuntime": "true"
+  "withRuntime": "true",
+  "enabledInK2": true
 }

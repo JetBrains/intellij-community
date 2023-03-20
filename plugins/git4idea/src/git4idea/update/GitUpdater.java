@@ -197,6 +197,6 @@ public abstract class GitUpdater {
     handler.addParameters("-1");
     handler.addParameters(HEAD + ".." + remoteBranch);
     String output = myGit.runCommand(handler).getOutputOrThrow();
-    return output != null && !output.isEmpty();
+    return !output.isEmpty();
   }
 }

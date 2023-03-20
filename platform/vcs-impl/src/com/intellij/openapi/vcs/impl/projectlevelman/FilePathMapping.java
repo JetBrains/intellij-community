@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -26,13 +27,13 @@ public final class FilePathMapping<T> {
   }
 
   public void add(@NotNull String filePath, @NotNull T value) {
-    String path = StringUtil.trimTrailing(filePath, '/');
+    String path = UriUtil.trimTrailingSlashes(filePath);
     myPathMap.put(path, value);
     myPathHashSet.add(pathHashCode(myCaseSensitive, path));
   }
 
   public void remove(@NotNull String filePath) {
-    String path = StringUtil.trimTrailing(filePath, '/');
+    String path = UriUtil.trimTrailingSlashes(filePath);
     myPathMap.remove(path);
     // We do not update myPathHashSet, so hash collisions might become worse over time.
   }
@@ -48,13 +49,13 @@ public final class FilePathMapping<T> {
   }
 
   public boolean containsKey(@NotNull String filePath) {
-    String path = StringUtil.trimTrailing(filePath, '/');
+    String path = UriUtil.trimTrailingSlashes(filePath);
     return myPathMap.containsKey(path);
   }
 
   @Nullable
   public T getMappingFor(@NotNull String filePath) {
-    String path = StringUtil.trimTrailing(filePath, '/');
+    String path = UriUtil.trimTrailingSlashes(filePath);
 
     int index = 0;
     int prefixHash = 0;

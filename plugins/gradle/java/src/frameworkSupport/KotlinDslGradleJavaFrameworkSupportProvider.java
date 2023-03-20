@@ -50,9 +50,10 @@ public class KotlinDslGradleJavaFrameworkSupportProvider extends KotlinDslGradle
     buildScriptData
       .addPluginDefinitionInPluginsGroup("java")
       .addRepositoriesDefinition("mavenCentral()")
-      .addOther("tasks.getByName<Test>(\"test\") {\n" +
-                "    useJUnitPlatform()\n" +
-                "}")
+      .addOther("""
+                  tasks.getByName<Test>("test") {
+                      useJUnitPlatform()
+                  }""")
       .addDependencyNotation("testImplementation(\"org.junit.jupiter:junit-jupiter-api:5.6.0\")")
       .addDependencyNotation("testRuntimeOnly(\"org.junit.jupiter:junit-jupiter-engine\")");
   }

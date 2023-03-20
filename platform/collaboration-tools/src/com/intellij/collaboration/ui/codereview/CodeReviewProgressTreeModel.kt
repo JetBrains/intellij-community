@@ -21,8 +21,7 @@ internal data class NodeCodeReviewProgressState(val isRead: Boolean, val discuss
 abstract class CodeReviewProgressTreeModel<T> {
   private val listeners = DisposableWrapperList<() -> Unit>()
 
-  private val defaultState: NodeCodeReviewProgressState
-    get() = NodeCodeReviewProgressState(true, 0)
+  private val defaultState: NodeCodeReviewProgressState = NodeCodeReviewProgressState(true, 0)
 
   private val stateCache = mutableMapOf<ChangesBrowserNode<*>, NodeCodeReviewProgressState>()
 

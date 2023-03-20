@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -42,23 +42,14 @@ public enum HighlightingFeature {
   PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
-  SEALED_CLASSES(LanguageLevel.JDK_16_PREVIEW, "feature.sealed.classes") {
-    @Override
-    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel == LanguageLevel.JDK_16_PREVIEW ||
-             useSiteLevel.isAtLeast(LanguageLevel.JDK_17);
-    }
-
-    @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_17;
-    }
-  },
+  SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
   PATTERNS_IN_SWITCH(LanguageLevel.JDK_17_PREVIEW, "feature.patterns.in.switch"),
-  GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns");
+  GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_17_PREVIEW, "feature.guarded.and.parenthesised.patterns"),
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.pattern.guard.and.record.patterns"),
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
@@ -97,20 +88,20 @@ public enum HighlightingFeature {
 
   @Nullable
   @Contract(value = "null -> null", pure = true)
-  public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable final PsiAnnotation annotation) {
+  public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable PsiAnnotation annotation) {
     if (annotation == null) return null;
     if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE) &&
         !annotation.hasQualifiedName(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)) {
       return null;
     }
 
-    final PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
+    PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
     if (feature == null) return null;
 
-    final PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);
+    PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);
     if (referenceExpression == null) return null;
 
-    final PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
+    PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
     if (enumConstant == null) return null;
 
     return convertFromPreviewFeatureName(enumConstant.getName());
@@ -118,49 +109,43 @@ public enum HighlightingFeature {
 
   @Nullable
   @Contract(pure = true)
-  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls final String feature) {
-    switch (feature) {
-      case "PATTERN_MATCHING_IN_INSTANCEOF":
-        return PATTERNS;
-      case "TEXT_BLOCKS":
-        return TEXT_BLOCKS;
-      case "RECORDS":
-        return RECORDS;
-      case "SEALED_CLASSES":
-        return SEALED_CLASSES;
-      default:
-        return null;
-    }
+  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
+    return switch (feature) {
+      case "PATTERN_MATCHING_IN_INSTANCEOF" -> PATTERNS;
+      case "TEXT_BLOCKS" -> TEXT_BLOCKS;
+      case "RECORDS" -> RECORDS;
+      case "SEALED_CLASSES" -> SEALED_CLASSES;
+      default -> null;
+    };
   }
 
   @Nullable
   @Contract(value = "null -> null", pure = true)
-  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable final PsiModifierListOwner owner) {
+  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable PsiModifierListOwner owner) {
     if (owner == null) return null;
 
-    final PsiAnnotation annotation = getAnnotation(owner);
+    PsiAnnotation annotation = getAnnotation(owner);
     if (annotation != null) return annotation;
 
-    if (owner instanceof PsiMember && !owner.hasModifier(JvmModifier.STATIC)) {
-      final PsiMember member = (PsiMember)owner;
-      final PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
+    if (owner instanceof PsiMember member && !owner.hasModifier(JvmModifier.STATIC)) {
+      PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
       if (result != null) return result;
     }
 
-    final PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
+    PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
     if (psiPackage  == null) return null;
 
-    final PsiAnnotation packageAnnotation = getAnnotation(psiPackage);
+    PsiAnnotation packageAnnotation = getAnnotation(psiPackage);
     if (packageAnnotation != null) return packageAnnotation;
 
-    final PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
+    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
     if (module == null) return null;
 
     return getAnnotation(module);
   }
 
   private static PsiAnnotation getAnnotation(@NotNull PsiModifierListOwner owner) {
-    final PsiAnnotation annotation = owner.getAnnotation(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE);
+    PsiAnnotation annotation = owner.getAnnotation(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE);
     if (annotation != null) return annotation;
 
     return owner.getAnnotation(JDK_INTERNAL_PREVIEW_FEATURE);

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,7 @@ public class CheckerQualExternalLibraryResolver extends ExternalLibraryResolver 
   public static final ExternalLibraryDescriptor CHECKER_QUAL =
     new ExternalLibraryDescriptor("org.checkerframework", "checker-qual", "3.19.0", "3.19.0");
 
-  private static final Set<String> CHECKER_ANNOS = ContainerUtil.set("Untainted", "Tainted", "PolyTainted");
+  private static final Set<String> CHECKER_ANNOS = Set.of("Untainted", "Tainted", "PolyTainted");
 
   @Nullable
   @Override

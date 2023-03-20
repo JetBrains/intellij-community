@@ -16,6 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class OverlyStrongTypeCastInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
@@ -46,10 +49,10 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("overly.strong.type.cast.ignore.in.matching.instanceof.option"),
-                                          this, "ignoreInMatchingInstanceof");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInMatchingInstanceof",
+               InspectionGadgetsBundle.message("overly.strong.type.cast.ignore.in.matching.instanceof.option")));
   }
 
   @Override
@@ -66,7 +69,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement castTypeElement = descriptor.getPsiElement();
       final PsiTypeCastExpression expression = (PsiTypeCastExpression)castTypeElement.getParent();
       if (expression == null) {
@@ -124,8 +127,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (TypeUtils.isTypeParameter(expectedType)) {
         return;
       }
-      if (expectedType instanceof PsiArrayType) {
-        final PsiArrayType arrayType = (PsiArrayType)expectedType;
+      if (expectedType instanceof PsiArrayType arrayType) {
         final PsiType componentType = arrayType.getDeepComponentType();
         if (TypeUtils.isTypeParameter(componentType)) {
           return;
@@ -137,14 +139,12 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (PsiPrimitiveType.getUnboxedType(type) != null || PsiPrimitiveType.getUnboxedType(expectedType) != null) {
         return;
       }
-      if (expectedType instanceof PsiClassType) {
-        final PsiClassType expectedClassType = (PsiClassType)expectedType;
+      if (expectedType instanceof PsiClassType expectedClassType) {
         final PsiClassType expectedRawType = expectedClassType.rawType();
         if (type.equals(expectedRawType)) {
           return;
         }
-        if (type instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)type;
+        if (type instanceof PsiClassType classType) {
           final PsiClassType rawType = classType.rawType();
           if (rawType.equals(expectedRawType)) {
             return;

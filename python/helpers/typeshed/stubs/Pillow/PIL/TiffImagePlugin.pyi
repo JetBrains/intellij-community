@@ -1,6 +1,7 @@
 from collections.abc import MutableMapping
 from numbers import Rational
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
@@ -121,8 +122,10 @@ class ImageFileDirectory_v2(MutableMapping[int, Any]):
 
 class ImageFileDirectory_v1(ImageFileDirectory_v2):
     def __init__(self, *args, **kwargs) -> None: ...
-    tags: Any
-    tagdata: Any
+    @property
+    def tags(self): ...
+    @property
+    def tagdata(self): ...
     tagtype: dict[int, int]
     @classmethod
     def from_v2(cls, original): ...
@@ -136,8 +139,8 @@ class ImageFileDirectory_v1(ImageFileDirectory_v2):
 ImageFileDirectory = ImageFileDirectory_v1
 
 class TiffImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["TIFF", "MIC"]]
+    format_description: ClassVar[str]
     tag_v2: Any
     tag: Any
     def __init__(self, fp: Any | None = ..., filename: Any | None = ...) -> None: ...

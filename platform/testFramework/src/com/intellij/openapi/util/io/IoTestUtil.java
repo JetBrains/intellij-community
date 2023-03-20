@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -11,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
@@ -24,8 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -39,14 +39,11 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public final class IoTestUtil {
-  @ReviseWhenPortedToJDK("13")
-  // `TRUE` == NIO, `FALSE` == "mklink", null == nothing works
-  private static final @Nullable Boolean symLinkMode = SystemInfo.isUnix ? Boolean.TRUE : canCreateSymlinks();
-  public static final boolean isSymLinkCreationSupported = symLinkMode != null;
+  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || canCreateSymlinks();
 
   private IoTestUtil() { }
 
-  @SuppressWarnings("SpellCheckingInspection")
+  @SuppressWarnings({"SpellCheckingInspection", "NonAsciiCharacters"})
   private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
 
   public static @Nullable String getUnicodeName() {
@@ -57,7 +54,7 @@ public final class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(Predicate<String> predicate) {
+  private static @Nullable String filterParts(Predicate<? super String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -78,52 +75,23 @@ public final class IoTestUtil {
   }
 
   public static @NotNull File createSymLink(@NotNull String target, @NotNull String link) {
-    return createSymLink(target, link, Boolean.TRUE);
+    return createSymLink(target, link, true);
   }
 
   public static @NotNull File createSymLink(@NotNull String target, @NotNull String link, boolean shouldExist) {
-    return createSymLink(target, link, Boolean.valueOf(shouldExist));
-  }
-
-  /** A drop-in replacement for `Files#createSymbolicLink`, needed until migrating to Java 13+ */
-  public static @NotNull Path createSymbolicLink(@NotNull Path link, @NotNull Path target) throws IOException {
-    try {
-      return createSymLink(target.toString(), link.toString(), null).toPath();
-    }
-    catch (UncheckedIOException e) {
-      throw e.getCause();
-    }
-  }
-
-  private static File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
     File linkFile = getFullLinkPath(link);
-    File targetFile = new File(target);
     try {
-      if (symLinkMode == Boolean.TRUE) {
-        Files.createSymbolicLink(linkFile.toPath(), targetFile.toPath());
-      }
-      else if (Files.isDirectory(targetFile.isAbsolute() ? targetFile.toPath() : linkFile.toPath().getParent().resolve(target))) {
-        runCommand("cmd", "/C", "mklink", "/D", linkFile.getPath(), targetFile.getPath());
-      }
-      else {
-        runCommand("cmd", "/C", "mklink", linkFile.getPath(), targetFile.getPath());
-      }
+      Files.createSymbolicLink(linkFile.toPath(), Path.of(target));
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    if (shouldExist != null) {
-      assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
-    }
+    assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
     return linkFile;
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
     assumeTrue("Can't create symlinks on " + SystemInfo.getOsNameAndVersion(), isSymLinkCreationSupported);
-  }
-
-  public static void assumeNioSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    assumeTrue("Can't create symlinks via NIO2 on " + SystemInfo.getOsNameAndVersion(), symLinkMode == Boolean.TRUE);
   }
 
   public static void assumeWindows() throws AssumptionViolatedException {
@@ -154,9 +122,9 @@ public final class IoTestUtil {
     assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
   }
 
-  public static @NotNull Path createWslTempDir(@NotNull String wsl, @NotNull String testName) throws IOException {
-    return Files.createTempDirectory(Paths.get("\\\\wsl$\\" + wsl + "\\tmp"),
-                                     UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
+  public static @NotNull Path createWslTempDir(@NotNull String wslVm, @NotNull String testName) throws IOException {
+    var parent = Path.of(WslConstants.UNC_PREFIX + wslVm + "\\tmp");
+    return Files.createTempDirectory(parent, UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
   }
 
   public static @NotNull File createJunction(@NotNull String target, @NotNull String junction) {
@@ -174,7 +142,10 @@ public final class IoTestUtil {
     assertTrue(new File(junction).delete());
   }
 
-  public static @NotNull File createSubst(@NotNull String target) {
+  /**
+   * Creates a "subst" drive for target, perform some tests on it, and deletes it. Windows-only.
+   */
+  public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<? super @NotNull File> createdSubstTester) {
     assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
@@ -182,11 +153,13 @@ public final class IoTestUtil {
     runCommand("subst", substRoot, targetFile.getPath());
     File rootFile = new File(substRoot + "\\");
     assertTrue("target=" + targetFile + ", subst=" + rootFile, rootFile.isDirectory());
-    return rootFile;
-  }
 
-  public static void deleteSubst(@NotNull String substRoot) {
-    runCommand("subst", StringUtil.trimEnd(substRoot, '\\'), "/d");
+    try {
+      createdSubstTester.accept(rootFile);
+    }
+    finally {
+      runCommand("subst", StringUtil.trimEnd(substRoot, '\\'), "/d");
+    }
   }
 
   public static void createFifo(@NotNull String path) {
@@ -234,20 +207,6 @@ public final class IoTestUtil {
     }
   }
 
-  public static void assertTimestampsEqual(long expected, long actual) {
-    long roundedExpected = (expected / 1000) * 1000;
-    long roundedActual = (actual / 1000) * 1000;
-    assertEquals("expected: " + expected + ", actual: " + actual,
-                 roundedExpected, roundedActual);
-  }
-
-  public static void assertTimestampsNotEqual(long expected, long actual) {
-    long roundedExpected = (expected / 1000) * 1000;
-    long roundedActual = (actual / 1000) * 1000;
-    assertTrue("(un)expected: " + expected + ", actual: " + actual,
-               roundedExpected != roundedActual);
-  }
-
   public static @NotNull File createTestJar(@NotNull File jarFile) {
     return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
   }
@@ -266,7 +225,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String, byte[]>> namesAndContents) {
+  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;
@@ -361,21 +320,14 @@ public final class IoTestUtil {
     }
   }
 
-  private static Boolean canCreateSymlinks() {
+  private static boolean canCreateSymlinks() {
     try {
       Path target = Files.createTempFile("IOTestUtil_link_target.", ".txt");
       try {
         Path link = target.getParent().resolve("IOTestUtil_link");
         try {
-          try {
-            Files.createSymbolicLink(link, target.getFileName());
-            return Boolean.TRUE;
-          }
-          catch (IOException e) {
-            Logger.getInstance(IoTestUtil.class).debug(e);
-            runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
-            return Boolean.FALSE;
-          }
+          Files.createSymbolicLink(link, target.getFileName());
+          return true;
         }
         finally {
           Files.deleteIfExists(link);
@@ -387,7 +339,7 @@ public final class IoTestUtil {
     }
     catch (Throwable t) {
       Logger.getInstance(IoTestUtil.class).debug(t);
-      return null;
+      return false;
     }
   }
 
@@ -431,6 +383,25 @@ public final class IoTestUtil {
     }
 
     return false;
+  }
+
+  public static @NotNull String assumeWorkingWslDistribution() {
+    assumeWindows();
+    assumeWslPresence();
+
+    var distributions = enumerateWslDistributions();
+    assumeTrue("No WSL distributions found", !distributions.isEmpty());
+
+    for (var distribution : distributions) {
+      if (reanimateWslDistribution(distribution)) {
+        return distribution;
+      }
+    }
+
+    //noinspection DataFlowIssue
+    assumeTrue("Cannot find a working distribution among " + distributions, false);
+    // making the compiler happy
+    return "";
   }
 
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {

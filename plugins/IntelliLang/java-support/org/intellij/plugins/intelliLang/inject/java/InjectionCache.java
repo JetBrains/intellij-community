@@ -56,7 +56,7 @@ public final class InjectionCache {
     GlobalSearchScope usageScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE);
 
     Set<String> result = new HashSet<>();
-    ArrayList<PsiClass> annoClasses = ContainerUtil.newArrayList(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope));
+    List<PsiClass> annoClasses = new ArrayList<>(List.of(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope)));
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
       Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true, PsiClass.class, PsiParameter.class, PsiMethod.class);
       AnnotatedElementsSearch.searchElements(parameters).forEach(element -> {

@@ -2,6 +2,7 @@
 package com.intellij.largeFilesEditor.actions;
 
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +19,11 @@ public class LfeActionDisabled extends LfeBaseProxyAction {
   @Override
   protected void updateForLfe(AnActionEvent e, @NotNull LargeFileEditor largeFileEditor) {
     e.getPresentation().setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

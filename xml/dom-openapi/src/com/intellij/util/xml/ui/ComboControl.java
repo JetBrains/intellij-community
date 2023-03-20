@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,9 +41,6 @@ import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, Icon>>, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
   private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;
@@ -114,8 +112,8 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
   }
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {
-    return () -> ContainerUtil.<Enum, Pair<String, Icon>>map2List(
-      aClass.getEnumConstants(), s -> Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
+    return () -> ContainerUtil.map(aClass.getEnumConstants(), s -> Pair.create(
+      NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
   }
 
   public static <T extends Enum<?>> JComboBox<Pair<String, Icon>> createEnumComboBox(final Class<T> type) {
@@ -178,7 +176,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
   }
 
   public boolean isValidValue(final String object) {
-    return myNullable && object == EMPTY.first || myIcons.containsKey(object);
+    return myNullable && Strings.areSameInstance(object, EMPTY.first) || myIcons.containsKey(object);
   }
 
   private boolean dataChanged(List<? extends Pair<String, Icon>> newData) {

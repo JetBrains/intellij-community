@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConstPropertyName")
+
 package org.jetbrains.intellij.build.io
 
 import java.nio.ByteBuffer
@@ -7,6 +9,7 @@ import java.nio.channels.FileChannel.MapMode
 import java.nio.channels.WritableByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.zip.CRC32
@@ -20,21 +23,38 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
-internal inline fun writeNewZip(file: Path, compress: Boolean = false, task: (ZipFileWriter) -> Unit) {
+fun transformZipUsingTempFile(file: Path, task: (ZipFileWriter) -> Unit) {
+  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
+  try {
+    ZipFileWriter(channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE))).use {
+      task(it)
+    }
+    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+  }
+  finally {
+    Files.deleteIfExists(tempFile)
+  }
+}
+
+
+inline fun writeNewZip(file: Path,
+                       compress: Boolean = false,
+                       withOptimizedMetadataEnabled: Boolean = !compress,
+                       task: (ZipFileWriter) -> Unit) {
   Files.createDirectories(file.parent)
   ZipFileWriter(channel = FileChannel.open(file, W_CREATE_NEW),
-                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use {
+                deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
+                withOptimizedMetadataEnabled = !compress && withOptimizedMetadataEnabled).use {
     task(it)
   }
 }
 
-// you must pass SeekableByteChannel if files will be written (`file` method)
-internal class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater? = null) : AutoCloseable {
-  constructor(channel: WritableByteChannel, compress: Boolean)
-    : this(channel = channel, deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null)
-
+// you must pass SeekableByteChannel if files are written (`file` method)
+class ZipFileWriter(channel: WritableByteChannel,
+                    private val deflater: Deflater? = null,
+                    withOptimizedMetadataEnabled: Boolean = deflater == null) : AutoCloseable {
   // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
-  private val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
+  internal val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = withOptimizedMetadataEnabled)
   private val crc32 = CRC32()
 
   private val bufferAllocator = ByteBufferAllocator()
@@ -173,7 +193,6 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
     return compressedSize
   }
 
-  @Suppress("DuplicatedCode")
   fun compressedData(nameString: String, data: ByteArray) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size
@@ -264,7 +283,7 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
   }
 
   fun dir(name: String) {
-    resultStream.addDirEntry((if (name.endsWith('/')) name else "$name/").toByteArray())
+    resultStream.addDirEntry(name)
   }
 
   override fun close() {
@@ -278,31 +297,4 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
       resultStream.close()
     }
   }
-}
-
-private fun writeLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuffer): Int {
-  buffer.putInt(0x04034b50)
-  // Version needed to extract (minimum)
-  buffer.putShort(0)
-  // General purpose bit flag
-  buffer.putShort(0)
-  // Compression method
-  buffer.putShort(method.toShort())
-  // File last modification time
-  buffer.putShort(0)
-  // File last modification date
-  buffer.putShort(0)
-  // CRC-32 of uncompressed data
-  buffer.putInt((crc32 and 0xffffffffL).toInt())
-  val compressedSizeOffset = buffer.position()
-  // Compressed size
-  buffer.putInt(compressedSize)
-  // Uncompressed size
-  buffer.putInt(size)
-  // File name length
-  buffer.putShort((name.size and 0xffff).toShort())
-  // Extra field length
-  buffer.putShort(0)
-  buffer.put(name)
-  return compressedSizeOffset
 }

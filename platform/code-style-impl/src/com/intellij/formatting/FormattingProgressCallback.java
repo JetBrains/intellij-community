@@ -23,8 +23,6 @@ import java.util.Collection;
 
 /**
  * Defines common interface for receiving events about formatting progress.
- * 
- * @author Denis Zhdanov
  */
 public interface FormattingProgressCallback {
 
@@ -78,15 +76,7 @@ public interface FormattingProgressCallback {
    */
   void setTask(@Nullable SequentialTask task);
 
-  /**
-   * Allows to register callback for the target event type.
-   * 
-   * @param eventType     target event type
-   * @param callback      callback to register for the given event type
-   * @return              {@code true} if given callback is successfully registered for the given event type;
-   *                      {@code false} otherwise
-   */
-  boolean addCallback(@NotNull EventType eventType, @NotNull Runnable callback);
+  void cancelled();
   
   /**
    * <a hrep="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link FormattingProgressCallback}. 
@@ -113,8 +103,7 @@ public interface FormattingProgressCallback {
     }
 
     @Override
-    public boolean addCallback(@NotNull EventType eventType, @NotNull Runnable callback) {
-      return false;
+    public void cancelled() {
     }
   };
 }

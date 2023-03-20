@@ -27,9 +27,10 @@ public abstract class MethodSignatureBase implements MethodSignature {
   private final PsiSubstitutor mySubstitutor;
   private final PsiType[] myParameterTypes;
   private volatile PsiType[] myErasedParameterTypes;
-  protected final PsiTypeParameter[] myTypeParameters;
+  final PsiTypeParameter[] myTypeParameters;
+  private transient int myHash;
 
-  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, PsiType @NotNull [] parameterTypes, PsiTypeParameter @NotNull [] typeParameters) {
+  MethodSignatureBase(@NotNull PsiSubstitutor substitutor, PsiType @NotNull [] parameterTypes, PsiTypeParameter @NotNull [] typeParameters) {
     mySubstitutor = substitutor;
     assert substitutor.isValid();
     myParameterTypes = PsiType.createArray(parameterTypes.length);
@@ -41,9 +42,9 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myTypeParameters = typeParameters;
   }
 
-  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor,
-                                @Nullable PsiParameterList parameterList,
-                                @Nullable PsiTypeParameterList typeParameterList) {
+  MethodSignatureBase(@NotNull PsiSubstitutor substitutor,
+                      @Nullable PsiParameterList parameterList,
+                      @Nullable PsiTypeParameterList typeParameterList) {
     mySubstitutor = substitutor;
     if (parameterList == null) {
       myParameterTypes = PsiType.EMPTY_ARRAY;
@@ -88,15 +89,19 @@ public abstract class MethodSignatureBase implements MethodSignature {
   }
 
   public int hashCode() {
-    int result = getName().hashCode();
-    final PsiType[] parameterTypes = getErasedParameterTypes();
-    result = 31 * result + parameterTypes.length;
-    for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
-      PsiType type = parameterTypes[i];
-      if (type == null) continue;
-      result = 31 * result + type.hashCode();
+    int hash = myHash;
+    if (hash == 0) {
+      hash = getName().hashCode();
+      final PsiType[] parameterTypes = getErasedParameterTypes();
+      hash = 31 * hash + parameterTypes.length;
+      for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
+        PsiType type = parameterTypes[i];
+        if (type == null) continue;
+        hash = 31 * hash + type.hashCode();
+      }
+      myHash = hash;
     }
-    return result;
+    return hash;
   }
 
   public String toString() {

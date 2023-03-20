@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-/**
- * @author ibessonov
- */
 public final class MavenCommandLineOptions {
 
   private static final Map<String, Option> ourOptionsIndexMap;

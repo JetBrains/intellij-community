@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.builtins.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.ClassifierNamePolicyEx
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.name.FqName
@@ -22,8 +24,10 @@ import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.declaresOrInheritsDefaultValue
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.ErrorUtils.UninferredParameterTypeConstructor
-import org.jetbrains.kotlin.types.TypeUtils.CANT_INFER_FUNCTION_PARAM_TYPE
+import org.jetbrains.kotlin.types.TypeUtils.CANNOT_INFER_FUNCTION_PARAM_TYPE
+import org.jetbrains.kotlin.types.error.*
+import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.typeUtil.isUnresolvedType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.*
 
@@ -93,7 +97,7 @@ open class KotlinIdeDescriptorRenderer(
     }
 
     /* FORMATTING */
-    protected fun renderKeyword(keyword: String): String {
+    private fun renderKeyword(keyword: String): String {
         val highlighted = highlight(keyword) { asKeyword }
         return when (textFormat) {
             RenderingFormat.PLAIN -> highlighted
@@ -186,6 +190,17 @@ open class KotlinIdeDescriptorRenderer(
     } else
         classifierNamePolicy.renderClassifier(klass, this)
 
+    fun renderClassifierNameWithType(klass: ClassifierDescriptor, type: KotlinType): String = if (ErrorUtils.isError(klass)) {
+        klass.typeConstructor.toString()
+    } else {
+        val policy = classifierNamePolicy
+        if (policy is ClassifierNamePolicyEx) {
+            policy.renderClassifierWithType(klass, this, type)
+        } else {
+            policy.renderClassifier(klass, this)
+        }
+    }
+
     /* TYPES RENDERING */
     override fun renderType(type: KotlinType): String = buildString {
         appendNormalizedType(typeNormalizer(type))
@@ -235,13 +250,13 @@ open class KotlinIdeDescriptorRenderer(
     }
 
     private fun StringBuilder.appendSimpleType(type: SimpleType) {
-        if (type == CANT_INFER_FUNCTION_PARAM_TYPE || TypeUtils.isDontCarePlaceholder(type)) {
+        if (type == CANNOT_INFER_FUNCTION_PARAM_TYPE || TypeUtils.isDontCarePlaceholder(type)) {
             appendHighlighted("???") { asError }
             return
         }
-        if (ErrorUtils.isUninferredParameter(type)) {
+        if (ErrorUtils.isUninferredTypeVariable(type)) {
             if (uninferredTypeParameterAsName) {
-                append(renderError((type.constructor as UninferredParameterTypeConstructor).typeParameterDescriptor.name.toString()))
+                append(renderError((type.constructor as ErrorTypeConstructor).getParam(0)))
             } else {
                 appendHighlighted("???") { asError }
             }
@@ -264,8 +279,11 @@ open class KotlinIdeDescriptorRenderer(
     }
 
     override fun renderFlexibleType(lowerRendered: String, upperRendered: String, builtIns: KotlinBuiltIns): String {
-        if (differsOnlyInNullability(lowerRendered, upperRendered)) {
-            if (upperRendered.startsWith("(")) {
+        val lowerType = escape(StringUtil.removeHtmlTags(lowerRendered))
+        val upperType = escape(StringUtil.removeHtmlTags(upperRendered))
+
+        if (differsOnlyInNullability(lowerType, upperType)) {
+            if (upperType.startsWith("(")) {
                 // the case of complex type, e.g. (() -> Unit)?
                 return buildString {
                     appendHighlighted("(") { asParentheses }
@@ -280,35 +298,39 @@ open class KotlinIdeDescriptorRenderer(
             }
         }
 
-        val kotlinCollectionsPrefix = classifierNamePolicy.renderClassifier(builtIns.collection, this).substringBefore("Collection")
+        val kotlinCollectionsPrefix = classifierNamePolicy.renderClassifier(builtIns.collection, this)
+            .let { escape(StringUtil.removeHtmlTags(it)) }
+            .substringBefore("Collection")
         val mutablePrefix = "Mutable"
         // java.util.List<Foo> -> (Mutable)List<Foo!>!
         val simpleCollection = replacePrefixes(
-            lowerRendered,
+            lowerType,
             kotlinCollectionsPrefix + mutablePrefix,
-            upperRendered,
+            upperType,
             kotlinCollectionsPrefix,
             "$kotlinCollectionsPrefix($mutablePrefix)"
         )
         if (simpleCollection != null) return simpleCollection
         // java.util.Map.Entry<Foo, Bar> -> (Mutable)Map.(Mutable)Entry<Foo!, Bar!>!
         val mutableEntry = replacePrefixes(
-            lowerRendered,
+            lowerType,
             kotlinCollectionsPrefix + "MutableMap.MutableEntry",
-            upperRendered,
+            upperType,
             kotlinCollectionsPrefix + "Map.Entry",
-            "$kotlinCollectionsPrefix(Mutable)Map.(Mutable)Entry"
+            "$kotlinCollectionsPrefix(Mutable)${highlight("Map") { asClassName }}.(Mutable)${highlight("Entry") { asClassName }}"
         )
         if (mutableEntry != null) return mutableEntry
 
-        val kotlinPrefix = classifierNamePolicy.renderClassifier(builtIns.array, this).substringBefore("Array")
+        val kotlinPrefix = classifierNamePolicy.renderClassifier(builtIns.array, this)
+            .let { escape(StringUtil.removeHtmlTags(it)) }
+            .substringBefore("Array")
         // Foo[] -> Array<(out) Foo!>!
         val array = replacePrefixes(
-            lowerRendered,
+            lowerType,
             kotlinPrefix + escape("Array<"),
-            upperRendered,
+            upperType,
             kotlinPrefix + escape("Array<out "),
-            kotlinPrefix + escape("Array<(out) ")
+            kotlinPrefix + highlight("Array") { asClassName } + escape("<(out) ")
         )
         if (array != null) return array
 
@@ -326,16 +348,16 @@ open class KotlinIdeDescriptorRenderer(
         appendAnnotations(type)
 
         if (type.isError) {
-            if (type is UnresolvedType && presentableUnresolvedTypes) {
-                appendHighlighted(type.presentableName) { asError }
+            if (isUnresolvedType(type) && presentableUnresolvedTypes) {
+                appendHighlighted(ErrorUtils.unresolvedTypeAsItIs(type)) { asError }
             } else {
                 if (type is ErrorType && !informativeErrorType) {
-                    appendHighlighted(type.presentableName) { asError }
+                    appendHighlighted(type.debugMessage) { asError }
                 } else {
                     appendHighlighted(type.constructor.toString()) { asError } // Debug name of an error type is more informative
                 }
+                appendHighlighted(renderTypeArguments(type.arguments)) { asError }
             }
-            appendHighlighted(renderTypeArguments(type.arguments)) { asError }
         } else {
             appendTypeConstructorAndArguments(type)
         }
@@ -344,8 +366,10 @@ open class KotlinIdeDescriptorRenderer(
             appendHighlighted("?") { asNullityMarker }
         }
 
-        if (type.isDefinitelyNotNullType) {
-            appendHighlighted("!!") { asNonNullAssertion }
+        if (classifierNamePolicy !is ClassifierNamePolicyEx) {
+            if (type.isDefinitelyNotNullType) {
+                appendHighlighted(" & Any") { asNonNullAssertion }
+            }
         }
     }
 
@@ -355,7 +379,7 @@ open class KotlinIdeDescriptorRenderer(
     ) {
         val possiblyInnerType = type.buildPossiblyInnerType()
         if (possiblyInnerType == null) {
-            append(renderTypeConstructor(typeConstructor))
+            append(renderTypeConstructorOfType(typeConstructor, type))
             append(renderTypeArguments(type.arguments))
             return
         }
@@ -377,9 +401,18 @@ open class KotlinIdeDescriptorRenderer(
         is TypeParameterDescriptor -> highlight(renderClassifierName(cd)) { asTypeParameterName }
         is ClassDescriptor -> highlight(renderClassifierName(cd)) { asClassName }
         is TypeAliasDescriptor -> highlight(renderClassifierName(cd)) { asTypeAlias }
-        null -> highlight(typeConstructor.toString()) { asClassName }
+        null -> highlight(escape(typeConstructor.toString())) { asClassName }
         else -> error("Unexpected classifier: " + cd::class.java)
     }
+
+    private fun renderTypeConstructorOfType(typeConstructor: TypeConstructor, type: KotlinType): String =
+        when (val cd = typeConstructor.declarationDescriptor) {
+            is TypeParameterDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asTypeParameterName }
+            is ClassDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asClassName }
+            is TypeAliasDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asTypeAlias }
+            null -> highlight(escape(typeConstructor.toString())) { asClassName }
+            else -> error("Unexpected classifier: " + cd::class.java)
+        }
 
     override fun renderTypeProjection(typeProjection: TypeProjection) = buildString {
         appendTypeProjections(listOf(typeProjection))
@@ -1187,8 +1220,7 @@ open class KotlinIdeDescriptorRenderer(
             }
             appendValueParameters(primaryConstructor.valueParameters, primaryConstructor.hasSynthesizedParameterNames())
             appendSuperTypes(klass, indent = "  ")
-        }
-        else {
+        } else {
             appendSuperTypes(klass, prefix = "\n    ")
         }
 
@@ -1345,11 +1377,10 @@ open class KotlinIdeDescriptorRenderer(
             val lowerWithoutPrefix = lowerRendered.substring(lowerPrefix.length)
             val upperWithoutPrefix = upperRendered.substring(upperPrefix.length)
             val flexibleCollectionName = foldedPrefix + lowerWithoutPrefix
-
-            if (lowerWithoutPrefix == upperWithoutPrefix) return flexibleCollectionName
-
-            if (differsOnlyInNullability(lowerWithoutPrefix, upperWithoutPrefix)) {
-                return "$flexibleCollectionName!"
+            return when {
+                lowerWithoutPrefix == upperWithoutPrefix -> flexibleCollectionName
+                differsOnlyInNullability(lowerWithoutPrefix, upperWithoutPrefix) -> "$flexibleCollectionName!"
+                else -> null
             }
         }
         return null

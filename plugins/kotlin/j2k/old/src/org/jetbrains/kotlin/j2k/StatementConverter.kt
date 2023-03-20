@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.j2k.ast.*
-import java.util.*
 
 interface StatementConverter {
     fun convertStatement(statement: PsiStatement, codeConverter: CodeConverter): Statement
@@ -105,7 +104,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
 
     override fun visitForeachStatement(statement: PsiForeachStatement) {
         val iterator = codeConverter.convertExpression(statement.iteratedValue, null, Nullability.NotNull)
-        val iterationParameter = statement.iterationParameter
+        val iterationParameter = statement.iterationParameter ?: TODO("iterationParameter is absent")
         result = ForeachStatement(iterationParameter.declarationIdentifier(),
                                   if (codeConverter.settings.specifyLocalVariableTypeByDefault) codeConverter.typeConverter.convertVariableType(iterationParameter) else null,
                                   iterator,
@@ -115,7 +114,7 @@ class DefaultStatementConverter : JavaElementVisitor(), StatementConverter {
 
     override fun visitIfStatement(statement: PsiIfStatement) {
         val condition = statement.condition
-        val expression = codeConverter.convertExpression(condition, PsiType.BOOLEAN)
+        val expression = codeConverter.convertExpression(condition, PsiTypes.booleanType())
         result = IfStatement(expression,
                              codeConverter.convertStatementOrBlock(statement.thenBranch),
                              codeConverter.convertStatementOrBlock(statement.elseBranch),

@@ -17,9 +17,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathsList;
-import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,18 +147,7 @@ public class JavaParameters extends SimpleJavaParameters {
       }
       return true;
     });
-    return findLatestVersion(moduleSdk, sdksFromDependencies);
-  }
-
-  @NotNull
-  private static Sdk findLatestVersion(@NotNull Sdk mainSdk, @NotNull Set<? extends Sdk> sdks) {
-    Sdk result = mainSdk;
-    for (Sdk sdk : sdks) {
-      if (VersionComparatorUtil.compare(result.getVersionString(), sdk.getVersionString()) < 0) {
-        result = sdk;
-      }
-    }
-    return result;
+    return sdksFromDependencies.stream().max(moduleSdk.getSdkType().versionComparator()).orElse(moduleSdk);
   }
 
   public void configureByProject(Project project,
@@ -194,8 +181,7 @@ public class JavaParameters extends SimpleJavaParameters {
     }
     OrderRootsEnumerator rootsEnumerator = enumerator.classes();
     if ((classPathType & JDK_ONLY) != 0) {
-      rootsEnumerator = rootsEnumerator.usingCustomRootProvider(
-        e -> e instanceof JdkOrderEntry ? jdkRoots(jdk) : e.getFiles(OrderRootType.CLASSES));
+      rootsEnumerator = rootsEnumerator.usingCustomSdkRootProvider(entry -> jdkRoots(jdk));
     }
     return rootsEnumerator;
   }

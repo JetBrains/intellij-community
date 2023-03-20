@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.RecordConstructorMember;
@@ -24,6 +9,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.ParameterClassMember;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
@@ -44,8 +30,9 @@ import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -53,10 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
@@ -74,7 +58,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Actions.RefactoringBulb;
+    return ExperimentalUI.isNewUI() ? null : AllIcons.Actions.RefactoringBulb;
   }
 
   @Override
@@ -83,16 +67,19 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       return false;
     }
     final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiCodeBlock.class);
-    if (!(parent instanceof PsiMethod)) {
+    if (!(parent instanceof PsiMethod method)) {
       return false;
     }
-    final PsiMethod method = (PsiMethod)parent;
     final PsiParameterList parameterList = method.getParameterList();
     if (parameterList.isEmpty()) {
       return false;
     }
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(method))) {
+      return false;
+    }
+    if (containingClass.isAnnotationType()) {
+      // Method with parameters in annotation is a compilation error; there's no sense to create overload
       return false;
     }
     setText(QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
@@ -120,11 +107,11 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       return;
     }
 
-    if (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+    if (!IntentionPreviewUtils.prepareElementForWrite(element)) return;
 
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
-      RefactoringUtil.fixJavadocsForParams(prototype, ContainerUtil.set(prototype.getParameterList().getParameters()));
+      CommonJavaRefactoringUtil.fixJavadocsForParams(prototype, Set.of(prototype.getParameterList().getParameters()));
 
 
       PsiCodeBlock body = prototype.getBody();
@@ -136,7 +123,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
       final String methodCall;
       if (method.getReturnType() == null) {
         methodCall = "this";
-      } else if (!PsiType.VOID.equals(method.getReturnType())) {
+      } else if (!PsiTypes.voidType().equals(method.getReturnType())) {
         methodCall = "return " + method.getName();
       } else {
         methodCall = method.getName();

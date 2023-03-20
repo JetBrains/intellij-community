@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +32,9 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   private static final Logger LOG = Logger.getInstance(MavenRepositoryServicesManager.class);
   private final List<String> myUrls = new ArrayList<>();
 
-  public static final List<String> DEFAULT_SERVICES = ContainerUtil
-    .immutableList("https://oss.sonatype.org/service/local/", "https://repo.jfrog.org/artifactory/api/",
-                   "https://repository.jboss.org/nexus/service/local/");
+  public static final List<String> DEFAULT_SERVICES =
+    List.of("https://oss.sonatype.org/service/local/", "https://repo.jfrog.org/artifactory/api/",
+            "https://repository.jboss.org/nexus/service/local/");
 
   public MavenRepositoryServicesManager() {
     myUrls.addAll(DEFAULT_SERVICES);

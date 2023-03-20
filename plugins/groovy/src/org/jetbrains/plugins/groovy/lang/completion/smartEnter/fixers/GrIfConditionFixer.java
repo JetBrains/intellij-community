@@ -28,9 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GrIfConditionFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
   @Override
   public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
-    if (psiElement instanceof GrIfStatement) {
+    if (psiElement instanceof GrIfStatement ifStatement) {
       final Document doc = editor.getDocument();
-      final GrIfStatement ifStatement = (GrIfStatement) psiElement;
       final PsiElement rParen = ifStatement.getRParenth();
       final PsiElement lParen = ifStatement.getLParenth();
       final GrExpression condition = ifStatement.getCondition();

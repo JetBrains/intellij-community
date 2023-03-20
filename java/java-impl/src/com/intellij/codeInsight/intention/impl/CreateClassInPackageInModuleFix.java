@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,9 +39,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Pavel.Dolgov
- */
 public final class CreateClassInPackageInModuleFix implements IntentionAction {
   public static final Key<Boolean> IS_INTERFACE = Key.create("CREATE_CLASS_IN_PACKAGE_IS_INTERFACE");
   public static final Key<PsiDirectory> ROOT_DIR = Key.create("CREATE_CLASS_IN_PACKAGE_ROOT_DIR");
@@ -71,6 +69,11 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return ModuleManager.getInstance(project).findModuleByName(myModuleName) != null;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(JavaBundle.message("intention.text.create.a.class.in.package.preview", myPackageName));
   }
 
   @Override
@@ -136,9 +139,9 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
     private final JBTextField myNameTextField = new JBTextField();
     private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
-    @Nullable private final Project myProject;
+    @NotNull private final Project myProject;
 
-    CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
+    CreateClassInPackageDialog(@NotNull Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
       setTitle(JavaBundle.message("dialog.title.create.class.in.package"));

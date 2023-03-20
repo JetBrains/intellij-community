@@ -19,6 +19,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -29,11 +31,13 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.GrInspectionUIUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class BaseInspection extends LocalInspectionTool implements FileTypeAwareInspection {
+/**
+ * For new inspections, please use {@link GroovyLocalInspectionTool}.
+ */
+public abstract class BaseInspection extends LocalInspectionTool {
 
   public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();
 
@@ -48,13 +52,20 @@ public abstract class BaseInspection extends LocalInspectionTool implements File
   }
 
   @Override
-  public final @Nullable JComponent createOptionsPanel() {
-    JComponent actualPanel = createGroovyOptionsPanel();
-    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, actualPanel);
+  public final @NotNull OptPane getOptionsPane() {
+    OptPane pane = getGroovyOptionsPane();
+    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, pane);
   }
 
-  protected @Nullable JComponent createGroovyOptionsPanel() {
-    return null;
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onPrefix(
+      "fileType", GrInspectionUIUtil.getFileTypeController(explicitlyEnabledFileTypes));
+  }
+
+  @NotNull
+  protected OptPane getGroovyOptionsPane() {
+    return OptPane.EMPTY;
   }
 
   @Nullable
@@ -72,7 +83,7 @@ public abstract class BaseInspection extends LocalInspectionTool implements File
     return new GroovyPsiElementVisitor(visitor) {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element)) {
+        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element, explicitlyEnabledFileTypes)) {
           super.visitElement(element);
         }
       }
@@ -85,11 +96,5 @@ public abstract class BaseInspection extends LocalInspectionTool implements File
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public static String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getDisableableFileTypeNamesContainer() {
-    return explicitlyEnabledFileTypes;
   }
 }

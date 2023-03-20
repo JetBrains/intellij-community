@@ -61,8 +61,7 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     }
 
     @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
-    if (descriptor instanceof XmlEnumerationDescriptor) {
-      XmlEnumerationDescriptor enumerationDescriptor = (XmlEnumerationDescriptor)descriptor;
+    if (descriptor instanceof XmlEnumerationDescriptor enumerationDescriptor) {
 
       if (enumerationDescriptor.isFixed() || enumerationDescriptor.isEnumerated((XmlElement)element)) {
         //noinspection unchecked

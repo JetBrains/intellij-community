@@ -18,30 +18,36 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BaseRevision {
   private final FilePath myPath;
   private final VcsRevisionNumber myRevision;
   private final AbstractVcs myVcs;
 
-  public BaseRevision(AbstractVcs vcs, VcsRevisionNumber revision, FilePath path) {
+  public BaseRevision(@Nullable AbstractVcs vcs, @NotNull VcsRevisionNumber revision, @NotNull FilePath path) {
     myVcs = vcs;
     myRevision = revision;
     myPath = path;
   }
 
+  @NotNull
   public String getPath() {
     return myPath.getPath();
   }
 
+  @NotNull
   public FilePath getFilePath() {
     return myPath;
   }
 
+  @NotNull
   public VcsRevisionNumber getRevision() {
     return myRevision;
   }
 
+  @Nullable
   public AbstractVcs getVcs() {
     return myVcs;
   }

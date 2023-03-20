@@ -15,7 +15,7 @@ class MoveLesson(private val caretText: String, private val sample: LessonSample
       prepareSample(sample)
 
       actionTask("MoveLineDown") {
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(sample)
         LessonsBundle.message("move.pull.down", action(it))
       }
       actionTask("MoveLineUp") {
@@ -36,8 +36,6 @@ class MoveLesson(private val caretText: String, private val sample: LessonSample
         LessonsBundle.message("move.whole.method.down", action(it))
       }
     }
-
-  override val suitableTips = listOf("MoveUpDown")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.lines.of.code"),

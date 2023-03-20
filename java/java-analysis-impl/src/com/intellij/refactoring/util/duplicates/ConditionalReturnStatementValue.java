@@ -24,9 +24,6 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class ConditionalReturnStatementValue implements ReturnValue {
   PsiExpression myReturnValue;
 

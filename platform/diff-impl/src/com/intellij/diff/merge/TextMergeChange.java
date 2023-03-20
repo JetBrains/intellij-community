@@ -39,12 +39,12 @@ import java.util.Collections;
 public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @NotNull private final TextMergeViewer myMergeViewer;
-  @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
+  @NotNull protected final MergeThreesideViewer myViewer;
 
   private final int myIndex;
   @NotNull private final MergeLineFragment myFragment;
 
-  private final boolean[] myResolved = new boolean[2];
+  protected final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
 
   @Nullable private MergeInnerDifferences myInnerFragments; // warning: might be out of date
@@ -84,7 +84,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @RequiresEdt
-  void setResolved(@NotNull Side side, boolean value) {
+  public void setResolved(@NotNull Side side, boolean value) {
     myResolved[side.getIndex()] = value;
 
     if (isResolved()) {
@@ -119,16 +119,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Override
   public boolean isResolved(@NotNull ThreeSide side) {
-    switch (side) {
-      case LEFT:
-        return isResolved(Side.LEFT);
-      case BASE:
-        return isResolved();
-      case RIGHT:
-        return isResolved(Side.RIGHT);
-      default:
-        throw new IllegalArgumentException(side.toString());
-    }
+    return switch (side) {
+      case LEFT -> isResolved(Side.LEFT);
+      case BASE -> isResolved();
+      case RIGHT -> isResolved(Side.RIGHT);
+    };
   }
 
   public int getStartLine() {
@@ -279,7 +274,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   @NotNull
-  State storeState() {
+  public State storeState() {
     return new State(
       myIndex,
       getStartLine(),
@@ -291,7 +286,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myOnesideAppliedConflict);
   }
 
-  void restoreState(@NotNull State state) {
+  public void restoreState(@NotNull State state) {
     myResolved[0] = state.myResolved1;
     myResolved[1] = state.myResolved2;
 

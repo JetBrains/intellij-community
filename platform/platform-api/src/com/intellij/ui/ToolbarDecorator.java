@@ -11,6 +11,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
@@ -30,7 +33,6 @@ import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
- *
  * @see #createDecorator(JList)
  * @see #createDecorator(JTable)
  * @see #createDecorator(JTree)
@@ -46,7 +48,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   protected boolean myRemoveActionEnabled;
   protected boolean myUpActionEnabled;
   protected boolean myDownActionEnabled;
-  private final List<AnActionButton> myExtraActions = new SmartList<>();
+  private final List<AnAction> myExtraActions = new SmartList<>();
   private ActionToolbarPosition myToolbarPosition;
   protected AnActionButtonRunnable myAddAction;
   protected AnActionButtonRunnable myEditAction;
@@ -66,7 +68,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   private Dimension myPreferredSize;
   private Dimension myMinimumSize;
   private CommonActionsPanel myActionsPanel;
-  private Comparator<? super AnActionButton> myButtonComparator;
+  private Comparator<? super AnAction> myButtonComparator;
   private Icon myAddIcon;
   private boolean myForcedDnD;
 
@@ -76,9 +78,9 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   protected abstract void updateButtons();
 
   protected void updateExtraElementActions(boolean someElementSelected) {
-    for (AnActionButton action : myExtraActions) {
-      if (action instanceof ElementActionButton) {
-        action.setEnabled(someElementSelected);
+    for (AnAction action : myExtraActions) {
+      if (action instanceof ElementActionButton elementActionButton) {
+        elementActionButton.setEnabled(someElementSelected);
       }
     }
   }
@@ -96,12 +98,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   /**
-   * @deprecated Equivalent to
-   * <pre>{@code decorator
-   * .setToolbarPosition(ActionToolbarPosition.TOP)
-   * .setPanelBorder(JBUI.Borders.empty())}</pre>
-   *
    * @see #setScrollPaneBorder(Border)
+   * @deprecated Use <code>setToolbarPosition(ActionToolbarPosition.TOP).setPanelBorder(JBUI.Borders.empty())</code> instead.
    */
   @Deprecated
   public ToolbarDecorator setAsUsualTopToolbar() {
@@ -162,7 +160,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   @NotNull
-  public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
+  public static <T> ToolbarDecorator createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
     return new TableToolbarDecorator(table, producer).initPosition();
   }
 
@@ -210,14 +208,29 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
+  /**
+   * Does nothing.
+   *
+   * @deprecated  Use {@link #setButtonComparator(String...)} instead
+   * @param buttonComparator ignored
+   * @return this ToolbarDecorator
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
   public ToolbarDecorator setButtonComparator(Comparator<? super AnActionButton> buttonComparator) {
-    myButtonComparator = buttonComparator;
     return this;
   }
 
+  /**
+   * Sorts actions according to the given order.
+   * <p>
+   * Must be called before {@link #createPanel()}.
+   *</p>
+   * @param actionNames ordered action names corresponding to the value of the {@code text} property of the action's template presentation
+   * @return this ToolbarDecorator
+   */
   @NotNull
-  public ToolbarDecorator setButtonComparator(@Nls String @NotNull ...actionNames) {
+  public ToolbarDecorator setButtonComparator(@Nls String @NotNull ... actionNames) {
     final List<String> names = Arrays.asList(actionNames);
     myButtonComparator = (o1, o2) -> {
       final String t1 = o1.getTemplatePresentation().getText();
@@ -233,12 +246,52 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
+  /**
+   * Adds an extra action to the toolbar.
+   * @param action the action to add
+   * @return this ToolbarDecorator
+   */
+  @NotNull
+  public ToolbarDecorator addExtraAction(@NotNull AnAction action) {
+    myExtraActions.add(action);
+    return this;
+  }
+
+  /**
+   * Adds an extra action to the toolbar.
+   * @deprecated use {@link #addExtraAction(AnAction)} instead
+   * @param action the action to add
+   * @return this ToolbarDecorator
+   */
+  @Deprecated
   @NotNull
   public ToolbarDecorator addExtraAction(@NotNull AnActionButton action) {
     myExtraActions.add(action);
     return this;
   }
 
+  /**
+   * Adds extra actions to the toolbar.
+   * @param actions the actions to add
+   * @return this ToolbarDecorator
+   */
+  @NotNull
+  public ToolbarDecorator addExtraActions(AnAction @NotNull ... actions) {
+    for (AnAction action : actions) {
+      if (action != null) {
+        addExtraAction(action);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Adds extra actions to the toolbar.
+   * @deprecated use {@link #addExtraActions(AnAction...)} instead
+   * @param actions the actions to add
+   * @return this ToolbarDecorator
+   */
+  @Deprecated
   @NotNull
   public ToolbarDecorator addExtraActions(AnActionButton @NotNull ... actions) {
     for (AnActionButton action : actions) {
@@ -354,7 +407,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   public ToolbarDecorator setForcedDnD() {
     myForcedDnD = true;
     return this;
-
   }
 
   @NotNull
@@ -400,11 +452,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     JComponent contextComponent = getComponent();
     UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
-                             myToolbarPosition,
-                             myExtraActions.toArray(new AnActionButton[0]),
-                             myButtonComparator,
-                             myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
-                             myAddIcon, buttons);
+                                            myToolbarPosition,
+                                            myExtraActions.toArray(AnAction.EMPTY_ARRAY),
+                                            myButtonComparator,
+                                            myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
+                                            myAddIcon, buttons);
     JScrollPane scrollPane = null;
     if (contextComponent instanceof JTree || contextComponent instanceof JTable || contextComponent instanceof JList) {
       // add scroll pane to supported components only
@@ -433,6 +485,12 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
         super.addNotify();
         updateButtons();
       }
+
+      @Override
+      public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        contextComponent.setEnabled(enabled);
+      }
     };
     panel.add(scrollPane != null ? scrollPane : contextComponent, BorderLayout.CENTER);
     panel.add(myActionsPanel, getPlacement(myToolbarPosition));
@@ -441,6 +499,9 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     installDnD();
     panel.putClientProperty(DECORATOR_KEY, Boolean.TRUE);
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
+    panel.putClientProperty(DslComponentProperty.LABEL_FOR, contextComponent);
+    panel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    panel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
 
     panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));
     Border scrollPaneBorder = null;
@@ -462,26 +523,30 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   private void installUpdaters() {
-    if (myAddActionEnabled && myAddAction != null && myAddActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.ADD).addCustomUpdater(myAddActionUpdater);
-    }
-    if (myEditActionEnabled && myEditAction != null && myEditActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.EDIT).addCustomUpdater(myEditActionUpdater);
-    }
-    if (myRemoveActionEnabled && myRemoveAction != null && myRemoveActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.REMOVE).addCustomUpdater(myRemoveActionUpdater);
-    }
-    if (myUpActionEnabled && myUpAction != null && myMoveUpActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.UP).addCustomUpdater(myMoveUpActionUpdater);
-    }
-    if (myDownActionEnabled && myDownAction != null && myMoveDownActionUpdater != null) {
-      myActionsPanel.getAnActionButton(CommonActionsPanel.Buttons.DOWN).addCustomUpdater(myMoveDownActionUpdater);
+    installUpdater(myAddActionEnabled, myAddAction, myAddActionUpdater, CommonActionsPanel.Buttons.ADD);
+    installUpdater(myEditActionEnabled, myEditAction, myEditActionUpdater, CommonActionsPanel.Buttons.EDIT);
+    installUpdater(myRemoveActionEnabled, myRemoveAction, myRemoveActionUpdater, CommonActionsPanel.Buttons.REMOVE);
+    installUpdater(myUpActionEnabled, myUpAction, myMoveUpActionUpdater, CommonActionsPanel.Buttons.UP);
+    installUpdater(myDownActionEnabled, myDownAction, myMoveDownActionUpdater, CommonActionsPanel.Buttons.DOWN);
+  }
+
+  private void installUpdater(
+    boolean isEnabled,
+    @Nullable AnActionButtonRunnable anActionButtonRunnable,
+    @Nullable AnActionButtonUpdater updater,
+    CommonActionsPanel.Buttons button
+  ) {
+    if (isEnabled && anActionButtonRunnable != null && updater != null) {
+      final var anActionButton = myActionsPanel.getAnActionButton(button);
+      if (anActionButton != null) {
+        anActionButton.addCustomUpdater(updater);
+      }
     }
   }
 
   protected void installDnD() {
-    if ((myForcedDnD || (myUpAction != null && myUpActionEnabled
-        && myDownAction != null && myDownActionEnabled))
+    if ((myForcedDnD || (myUpAction != null && myUpActionEnabled &&
+                         myDownAction != null && myDownActionEnabled))
         && !ApplicationManager.getApplication().isHeadlessEnvironment()
         && isModelEditable()) {
       installDnDSupport();
@@ -494,13 +559,12 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   @NotNull
   static Object getPlacement(@NotNull ActionToolbarPosition position) {
-    switch (position) {
-      case TOP: return BorderLayout.NORTH;
-      case LEFT: return BorderLayout.WEST;
-      case BOTTOM: return BorderLayout.SOUTH;
-      case RIGHT: return BorderLayout.EAST;
-    }
-    return BorderLayout.SOUTH;
+    return switch (position) {
+      case TOP -> BorderLayout.NORTH;
+      case LEFT -> BorderLayout.WEST;
+      case BOTTOM -> BorderLayout.SOUTH;
+      case RIGHT -> BorderLayout.EAST;
+    };
   }
 
   private CommonActionsPanel.Buttons @NotNull [] getButtons() {

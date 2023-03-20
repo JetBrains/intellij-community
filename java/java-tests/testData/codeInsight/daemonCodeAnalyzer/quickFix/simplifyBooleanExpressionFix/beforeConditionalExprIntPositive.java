@@ -1,4 +1,4 @@
-// "Simplify 'arg.isEmpty()' to false" "true"
+// "Simplify 'arg.isEmpty()' to false" "true-preview"
 class Test {
   void test() {
     String arg = "12";

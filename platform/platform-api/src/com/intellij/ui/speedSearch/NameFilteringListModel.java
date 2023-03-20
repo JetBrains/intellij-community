@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
@@ -40,8 +39,7 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   private final Computable<String> myPattern;
 
   /** @deprecated explicitly sets model for a list. Use other constructors instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public NameFilteringListModel(JList<T> list,
                                 Function<? super T, String> namer,
                                 Condition<? super String> filter,

@@ -5,13 +5,13 @@ import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -25,36 +25,52 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogMessage
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.layout.ValidationInfoBuilder
+import org.jetbrains.annotations.ApiStatus
 
+private val ANY_SDK_FILTER: ((Sdk) -> Boolean) = { true }
+private val ANY_SDK_TYPE_FILTER: ((SdkTypeId) -> Boolean) = { true }
+private val ANY_SUGGESTED_SDK_FILTER: ((SdkListItem.SuggestedItem) -> Boolean) = { true }
+private val NEW_SDK_CALLBACK_DEFAULT: ((Sdk) -> Unit) = {}
 
+@Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval
 fun Row.sdkComboBox(
-  sdkModel: ProjectSdksModel,
-  sdkProperty: GraphProperty<Sdk?>,
-  project: Project?,
-  moduleBuilder: ModuleBuilder
-): CellBuilder<JdkComboBox> {
-  return component(createSdkComboBox(project, sdkModel, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType))
-}
-
-fun com.intellij.ui.dsl.builder.Row.sdkComboBox(
   context: WizardContext,
   sdkProperty: GraphProperty<Sdk?>,
   sdkPropertyId: String,
-  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  sdkFilter: ((Sdk) -> Boolean)? = null,
-  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
-  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  onNewSdkAdded: ((Sdk) -> Unit)? = null
-): com.intellij.ui.dsl.builder.Cell<JdkComboBox> {
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  sdkFilter: ((Sdk) -> Boolean)? = ANY_SDK_FILTER,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = ANY_SUGGESTED_SDK_FILTER,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  onNewSdkAdded: ((Sdk) -> Unit)? = NEW_SDK_CALLBACK_DEFAULT
+) = sdkComboBox(
+  context, sdkProperty, sdkPropertyId,
+  sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded
+)
+
+fun Row.sdkComboBox(
+  context: WizardContext,
+  sdkProperty: ObservableMutableProperty<Sdk?>,
+  sdkPropertyId: String,
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  sdkFilter: ((Sdk) -> Boolean)? = ANY_SDK_FILTER,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = ANY_SUGGESTED_SDK_FILTER,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  onNewSdkAdded: ((Sdk) -> Unit)? = NEW_SDK_CALLBACK_DEFAULT
+): Cell<JdkComboBox> {
   val sdksModel = ProjectSdksModel()
 
   Disposer.register(context.disposable, Disposable {
     sdksModel.disposeUIResources()
   })
 
-  val comboBox = createSdkComboBox(context.project, sdksModel, sdkProperty, sdkPropertyId,
-    sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded)
+  val comboBox = createSdkComboBox(
+    context.project, sdksModel, sdkProperty, sdkPropertyId,
+    sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded
+  )
 
   return cell(comboBox)
     .validationOnApply { validateSdk(sdkProperty, sdksModel) }
@@ -64,15 +80,14 @@ fun com.intellij.ui.dsl.builder.Row.sdkComboBox(
 fun createSdkComboBox(
   project: Project?,
   sdkModel: ProjectSdksModel,
-  sdkProperty: GraphProperty<Sdk?>,
+  sdkProperty: ObservableMutableProperty<Sdk?>,
   sdkPropertyId: String,
-  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  sdkFilter: ((Sdk) -> Boolean)? = null,
-  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = null,
-  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = null,
-  onNewSdkAdded: ((Sdk) -> Unit)? = null
+  sdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  sdkFilter: ((Sdk) -> Boolean)? = ANY_SDK_FILTER,
+  suggestedSdkItemFilter: ((SdkListItem.SuggestedItem) -> Boolean)? = ANY_SUGGESTED_SDK_FILTER,
+  creationSdkTypeFilter: ((SdkTypeId) -> Boolean)? = ANY_SDK_TYPE_FILTER,
+  onNewSdkAdded: ((Sdk) -> Unit)? = NEW_SDK_CALLBACK_DEFAULT
 ): JdkComboBox {
-
   sdkModel.reset(project)
 
   val sdkComboBox = JdkComboBox(project, sdkModel, sdkTypeFilter, sdkFilter, suggestedSdkItemFilter, creationSdkTypeFilter, onNewSdkAdded)
@@ -105,15 +120,15 @@ private fun getTargetJdk(sdkComboBox: JdkComboBox, project: Project?): Sdk? {
   return null
 }
 
-fun ValidationInfoBuilder.validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): ValidationInfo? {
+fun ValidationInfoBuilder.validateSdk(sdkProperty: ObservableProperty<Sdk?>, sdkModel: ProjectSdksModel): ValidationInfo? {
   return validateAndGetSdkValidationMessage(sdkProperty, sdkModel)?.let { error(it) }
 }
 
-fun validateSdk(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): Boolean {
+fun validateSdk(sdkProperty: ObservableProperty<Sdk?>, sdkModel: ProjectSdksModel): Boolean {
   return validateAndGetSdkValidationMessage(sdkProperty, sdkModel) == null
 }
 
-private fun validateAndGetSdkValidationMessage(sdkProperty: GraphProperty<Sdk?>, sdkModel: ProjectSdksModel): @DialogMessage String? {
+private fun validateAndGetSdkValidationMessage(sdkProperty: ObservableProperty<Sdk?>, sdkModel: ProjectSdksModel): @DialogMessage String? {
   if (sdkProperty.get() == null) {
     if (Messages.showDialog(JavaUiBundle.message("prompt.confirm.project.no.jdk"),
                             JavaUiBundle.message("title.no.jdk.specified"),
@@ -137,7 +152,7 @@ private fun validateAndGetSdkValidationMessage(sdkProperty: GraphProperty<Sdk?>,
   return null
 }
 
-fun validateJavaVersion(sdkProperty: GraphProperty<Sdk?>, javaVersion: String?, technologyName: String? = null): Boolean {
+fun validateJavaVersion(sdkProperty: ObservableProperty<Sdk?>, javaVersion: String?, technologyName: String? = null): Boolean {
   val sdk = sdkProperty.get()
   if (sdk != null) {
     val wizardVersion = JavaSdk.getInstance().getVersion(sdk)
@@ -173,9 +188,10 @@ fun setupNewModuleJdk(modifiableRootModel: ModifiableRootModel, selectedJdk: Sdk
     return selectedJdk
   }
 
-  val sdk = selectedJdk ?: getProjectJdk(modifiableRootModel.project)
+  val projectJdk = getProjectJdk(modifiableRootModel.project)
+  val sdk = selectedJdk ?: projectJdk
   if (sdk != null) {
-    if (isCreatingNewProject || (!isCreatingNewProject && sdk == getProjectJdk(modifiableRootModel.project))) {
+    if (isCreatingNewProject || sdk == projectJdk) {
       modifiableRootModel.inheritSdk()
     }
     else {

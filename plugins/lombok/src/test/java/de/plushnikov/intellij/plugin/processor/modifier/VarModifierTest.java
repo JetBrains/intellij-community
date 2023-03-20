@@ -33,7 +33,7 @@ public class VarModifierTest extends AbstractLombokLightCodeInsightTestCase {
     myFixture.type('1');
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertTrue(var.isValid());
-    assertEquals(PsiType.INT, var.getType());
+    assertEquals(PsiTypes.intType(), var.getType());
 
     assertNotNull(var.getModifierList());
     boolean isFinal = var.getModifierList().hasModifierProperty(PsiModifier.FINAL);

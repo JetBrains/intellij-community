@@ -7,15 +7,16 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.roots.ModuleRootManagerTestCase.assertRoots
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase.*
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.util.ArrayUtilRt
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.junit.*
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
 class OrderEnumeratorTest {
   companion object {
@@ -45,7 +46,7 @@ class OrderEnumeratorTest {
       it.addRoot(librarySourcesZip, OrderRootType.SOURCES)
     }
     jdkJar = projectModel.baseProjectDir.newEmptyVirtualJarFile("jdk.jar")
-    sdk = projectModel.addSdk(projectModel.createSdk("my-jdk")) {
+    sdk = projectModel.addSdk("my-jdk") {
       it.addRoot(jdkJar, OrderRootType.CLASSES)
     }
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
@@ -237,7 +238,7 @@ class OrderEnumeratorTest {
     val dep = projectModel.createModule("dep")
     ModuleRootModificationUtil.addDependency(module, dep)
     val jdk2Jar = projectModel.baseProjectDir.newEmptyVirtualJarFile("jdk2.jar")
-    val sdk2 = projectModel.addSdk(projectModel.createSdk("my-jdk2")) {
+    val sdk2 = projectModel.addSdk("my-jdk2") {
       it.addRoot(jdk2Jar, OrderRootType.CLASSES)
     }
     ModuleRootModificationUtil.setModuleSdk(dep, sdk2)
@@ -315,7 +316,6 @@ class OrderEnumeratorTest {
 
   private fun assertEnumeratorRoots(rootsEnumerator: OrderRootsEnumerator, vararg files: VirtualFile) {
     assertOrderedEquals(runReadAction { rootsEnumerator.roots }, *files)
-    val expectedUrls = files.map { it.url }
     assertOrderedEquals(runReadAction { rootsEnumerator.urls }, *files.map { it.url }.toTypedArray())
   }
 }

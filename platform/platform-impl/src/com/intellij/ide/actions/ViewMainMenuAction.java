@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -30,5 +31,10 @@ public class ViewMainMenuAction extends ToggleAction implements DumbAware {
     super.update(e);
     boolean makesSense = SystemInfo.isWindows || (SystemInfo.isLinux && !GlobalMenuLinux.isPresented());
     e.getPresentation().setEnabledAndVisible(makesSense);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -23,3 +23,5 @@ public class MyJavaClass {
         runnable.run();
     }
 }
+
+// IGNORE_K2_SMART_STEP_INTO

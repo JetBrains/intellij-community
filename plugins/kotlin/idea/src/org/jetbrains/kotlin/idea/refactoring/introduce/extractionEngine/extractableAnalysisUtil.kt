@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.*
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.Instruction
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.InstructionVisitorWithResult
@@ -22,39 +23,48 @@ import org.jetbrains.kotlin.cfg.pseudocodeTraverser.TraverseInstructionResult
 import org.jetbrains.kotlin.cfg.pseudocodeTraverser.traverse
 import org.jetbrains.kotlin.cfg.pseudocodeTraverser.traverseFollowingInstructions
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
+import org.jetbrains.kotlin.idea.core.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.refactoring.createTempCopy
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult.ErrorMessage
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult.Status
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
-import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.isResolvableInScope
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
+import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.DFS.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 internal val KotlinBuiltIns.defaultReturnType: KotlinType get() = unitType
@@ -373,7 +383,7 @@ fun ExtractionData.createTemporaryDeclaration(pattern: String): KtNamedDeclarati
     val newTargetSibling = PsiTreeUtil.releaseMark(tmpFile, targetSiblingMarker)!!
     val newTargetParent = newTargetSibling.parent
 
-    val declaration = KtPsiFactory(originalFile).createDeclarationByPattern<KtNamedDeclaration>(
+    val declaration = KtPsiFactory(project).createDeclarationByPattern<KtNamedDeclaration>(
         pattern,
         PsiChildRange(originalElements.firstOrNull(), originalElements.lastOrNull())
     )
@@ -607,6 +617,74 @@ fun ExtractionData.getDefaultVisibility(): KtModifierKeywordToken? {
     return KtTokens.PRIVATE_KEYWORD
 }
 
+private data class ExperimentalMarkers(
+    val propagatingMarkerDescriptors: List<AnnotationDescriptor>,
+    val optInMarkers: List<FqName>
+) {
+    companion object {
+        val empty = ExperimentalMarkers(emptyList(), emptyList())
+    }
+}
+
+private fun ExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
+    fun AnnotationDescriptor.isExperimentalMarker(): Boolean {
+        if (fqName == null) return false
+        val annotations = annotationClass?.annotations ?: return false
+        return annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ||
+                annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME)
+    }
+
+    val bindingContext = bindingContext ?: return ExperimentalMarkers.empty
+    val container = commonParent.getStrictParentOfType<KtNamedFunction>() ?: return ExperimentalMarkers.empty
+
+    val propagatingMarkerDescriptors = mutableListOf<AnnotationDescriptor>()
+    val optInMarkerNames = mutableListOf<FqName>()
+    for (annotationEntry in container.annotationEntries) {
+        val annotationDescriptor = bindingContext[BindingContext.ANNOTATION, annotationEntry] ?: continue
+        val fqName = annotationDescriptor.fqName ?: continue
+
+        if (fqName in OptInNames.OPT_IN_FQ_NAMES) {
+            for (argument in annotationEntry.valueArguments) {
+                val argumentExpression = argument.getArgumentExpression()?.safeAs<KtClassLiteralExpression>() ?: continue
+                val markerFqName = bindingContext[
+                        BindingContext.REFERENCE_TARGET,
+                        argumentExpression.lhs?.safeAs<KtNameReferenceExpression>()
+                ]?.fqNameSafe ?: continue
+                optInMarkerNames.add(markerFqName)
+            }
+        } else if (annotationDescriptor.isExperimentalMarker()) {
+            propagatingMarkerDescriptors.add(annotationDescriptor)
+        }
+    }
+
+    val requiredMarkers = mutableSetOf<FqName>()
+    if (propagatingMarkerDescriptors.isNotEmpty() || optInMarkerNames.isNotEmpty()) {
+        originalElements.forEach { element ->
+            element.accept(object : KtTreeVisitorVoid() {
+                override fun visitReferenceExpression(expression: KtReferenceExpression) {
+                    val descriptor = bindingContext[BindingContext.REFERENCE_TARGET, expression]
+                    if (descriptor != null) {
+                        for (descr in setOf(descriptor, descriptor.getImportableDescriptor())) {
+                            for (ann in descr.annotations) {
+                                val fqName = ann.fqName ?: continue
+                                if (ann.isExperimentalMarker()) {
+                                    requiredMarkers.add(fqName)
+                                }
+                            }
+                        }
+                    }
+                    super.visitReferenceExpression(expression)
+                }
+            })
+        }
+    }
+
+    return ExperimentalMarkers(
+        propagatingMarkerDescriptors.filter { it.fqName in requiredMarkers },
+        optInMarkerNames.filter { it in requiredMarkers }
+    )
+}
+
 fun ExtractionData.performAnalysis(): AnalysisResult {
     if (originalElements.isEmpty()) return AnalysisResult(null, Status.CRITICAL_ERROR, listOf(ErrorMessage.NO_EXPRESSION))
 
@@ -681,6 +759,7 @@ fun ExtractionData.performAnalysis(): AnalysisResult {
     val receiverParameter = if (receiverCandidates.size == 1 && !options.canWrapInWith) receiverCandidates.first() else null
     receiverParameter?.let { adjustedParameters.remove(it) }
 
+    val experimentalMarkers = getExperimentalMarkers()
     var descriptor = ExtractableCodeDescriptor(
         this,
         bindingContext,
@@ -692,7 +771,9 @@ fun ExtractionData.performAnalysis(): AnalysisResult {
         paramsInfo.replacementMap,
         if (messages.isEmpty()) controlFlow else controlFlow.toDefault(),
         returnType,
-        emptyList()
+        emptyList(),
+        annotations = experimentalMarkers.propagatingMarkerDescriptors,
+        optInMarkers = experimentalMarkers.optInMarkers
     )
 
     val generatedDeclaration = ExtractionGeneratorConfiguration(
@@ -721,20 +802,22 @@ private fun ExtractionData.suggestFunctionNames(returnType: KotlinType): List<St
     val functionNames = LinkedHashSet<String>()
 
     val validator =
-        NewDeclarationNameValidator(
+        Fe10KotlinNewDeclarationNameValidator(
             targetSibling.parent,
             if (targetSibling is KtAnonymousInitializer) targetSibling.parent else targetSibling,
-            if (options.extractAsProperty) NewDeclarationNameValidator.Target.VARIABLES else NewDeclarationNameValidator.Target
-                .FUNCTIONS_AND_CLASSES
+            when {
+                options.extractAsProperty -> KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+                else -> KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION
+            }
         )
     if (!KotlinBuiltIns.isUnit(returnType)) {
-        functionNames.addAll(KotlinNameSuggester.suggestNamesByType(returnType, validator))
+        functionNames.addAll(Fe10KotlinNameSuggester.suggestNamesByType(returnType, validator))
     }
 
     expressions.singleOrNull()?.let { expr ->
         val property = expr.getStrictParentOfType<KtProperty>()
         if (property?.initializer == expr) {
-            property.name?.let { functionNames.add(KotlinNameSuggester.suggestNameByName("get" + it.capitalizeAsciiOnly(), validator)) }
+            property.name?.let { functionNames.add(Fe10KotlinNameSuggester.suggestNameByName("get" + it.capitalizeAsciiOnly(), validator)) }
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.openapi.project.processOpenedProjects
@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
 
-class RCInArbitraryFileListener : AsyncFileListener {
+private class RCInArbitraryFileListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): @org.jetbrains.annotations.Nullable com.intellij.openapi.vfs.AsyncFileListener.ChangeApplier? {
     val deletedRCFilePaths = mutableSetOf<String>()
     val updatedRCFilePaths = mutableSetOf<String>()

@@ -1,21 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Container
-import java.awt.Dimension
-import javax.accessibility.Accessible
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
+import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
-open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
-  private val component = ThreeStateCheckBox()
+open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
+  private val checkBox = ThreeStateCheckBox()
 
   init {
     buildLayout()
@@ -24,7 +21,7 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
   private fun buildLayout() {
     layout = BorderLayout()
 
-    add(component, BorderLayout.WEST)
+    add(checkBox, BorderLayout.WEST)
     add(textRenderer, BorderLayout.CENTER)
   }
 
@@ -40,7 +37,8 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
     tree as ChangesTree
     value as ChangesBrowserNode<*>
 
-    customize(this, selected)
+    background = null
+    isSelected = selected
 
     textRenderer.apply {
       isOpaque = false
@@ -48,14 +46,20 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
       toolTipText = null
       getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
     }
-    component.apply {
+    checkBox.apply {
       background = null
       isOpaque = false
 
-      isVisible = tree.run { isShowCheckboxes && isInclusionVisible(value) }
+      isVisible = tree.isShowCheckboxes &&
+                  (value is FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
+                   tree.isInclusionVisible(value))
       if (isVisible) {
         state = tree.getNodeStatus(value)
         isEnabled = tree.run { isEnabled && isInclusionEnabled(value) }
+      }
+      else {
+        state = ThreeStateCheckBox.State.NOT_SELECTED
+        isEnabled = false
       }
     }
 
@@ -63,15 +67,17 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
   }
 
   override fun getAccessibleContext(): AccessibleContext {
-    val accessibleComponent = component as? Accessible ?: return super.getAccessibleContext()
-
     if (accessibleContext == null) {
-      accessibleContext = object : AccessibleContextDelegate(accessibleComponent.accessibleContext) {
+      accessibleContext = object : AccessibleContextDelegateWithContextMenu(checkBox.accessibleContext) {
+        override fun doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
+        }
+
         override fun getDelegateParent(): Container? = parent
 
         override fun getAccessibleName(): String? {
-          accessibleComponent.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName
-          return accessibleComponent.accessibleContext.accessibleName
+          checkBox.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName
+          return checkBox.accessibleContext.accessibleName
         }
 
         override fun getAccessibleRole(): AccessibleRole {
@@ -85,17 +91,25 @@ open class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeR
   }
 
   /**
+   * In case of New UI background selection painting performs by [com.intellij.ui.tree.ui.DefaultTreeUI.paint],
+   * but in case of expansion popup painting it is necessary to fill the background in renderer.
+   *
+   * [setOpaque] for renderer is set in the tree UI and in [com.intellij.ui.TreeExpandableItemsHandler]
+   *
+   * @see [com.intellij.ui.tree.ui.DefaultTreeUI.setBackground] and its private overloading
+   * @see [com.intellij.ui.TreeExpandableItemsHandler.doPaintTooltipImage]
+   */
+  final override fun paintComponent(g: Graphics?) {
+    if (isOpaque) {
+      super.paintComponent(g)
+    }
+  }
+
+  /**
    * Otherwise incorrect node sizes are cached - see [com.intellij.ui.tree.ui.DefaultTreeUI.createNodeDimensions].
    * And [com.intellij.ui.ExpandableItemsHandler] does not work correctly.
    */
   override fun getPreferredSize(): Dimension = layout.preferredLayoutSize(this)
 
   override fun getToolTipText(): String? = textRenderer.toolTipText
-
-  companion object {
-    fun customize(panel: CellRendererPanel, selected: Boolean) {
-      panel.background = null
-      panel.isSelected = selected
-    }
-  }
 }

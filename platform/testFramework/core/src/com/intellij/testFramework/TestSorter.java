@@ -8,5 +8,5 @@ import java.util.function.ToIntFunction;
 
 public interface TestSorter {
   @NotNull
-  List<Class<?>> sorted(@NotNull List<Class<?>> tests, @NotNull ToIntFunction<? super Class<?>> ranker);
+  List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker);
 }

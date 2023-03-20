@@ -100,9 +100,9 @@ final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   @Override
   public Collection<V> values() {
     List<V> result = new ArrayList<>();
-    final Collection<ValueReference<K, V>> refs = mySoftKeyMap.values();
+    Collection<ValueReference<K, V>> refs = mySoftKeyMap.values();
     for (ValueReference<K, V> ref : refs) {
-      final V value = ref.get();
+      V value = ref.get();
       if (value != null) {
         result.add(value);
       }

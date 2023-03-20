@@ -9,15 +9,18 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.ReferenceRange
+import org.jetbrains.annotations.ApiStatus.Internal
 
 internal data class DeclaredReferencedData(
   val declaredData: TargetData.Declared?,
   val referencedData: TargetData.Referenced?,
 )
 
-internal data class SymbolWithProvider(val symbol: Symbol, val navigationProvider: Any?)
+@Internal
+data class SymbolWithProvider(val symbol: Symbol, val navigationProvider: Any?)
 
-internal sealed class TargetData(val drs: List<DeclarationOrReference>) {
+@Internal
+sealed class TargetData(val drs: List<DeclarationOrReference>) {
 
   init {
     require(drs.isNotEmpty())

@@ -1,7 +1,9 @@
 import threading
+from _typeshed import Self
+from collections.abc import Iterator
 from types import TracebackType
-from typing import Iterator, Type
-from typing_extensions import Literal, Protocol
+from typing import Protocol
+from typing_extensions import Literal
 
 __version__: str
 
@@ -10,7 +12,7 @@ class _Stream(Protocol):
     def flush(self) -> None: ...
     def write(self, s: str) -> int: ...
 
-class Spinner(object):
+class Spinner:
     spinner_cycle: Iterator[str]
     disable: bool
     beep: bool
@@ -22,9 +24,9 @@ class Spinner(object):
     def start(self) -> None: ...
     def stop(self) -> None: ...
     def init_spin(self) -> None: ...
-    def __enter__(self) -> Spinner: ...
+    def __enter__(self: Self) -> Self: ...
     def __exit__(
-        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> Literal[False]: ...
 
 def spinner(beep: bool, disable: bool, force: bool, stream: _Stream) -> Spinner: ...

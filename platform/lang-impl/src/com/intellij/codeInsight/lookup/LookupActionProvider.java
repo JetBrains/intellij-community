@@ -35,6 +35,6 @@ public interface LookupActionProvider {
    * @param lookup current lookup
    * @param consumer a consumer to pass the resulting actions to
    */
-  void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer);
+  void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer);
 
 }

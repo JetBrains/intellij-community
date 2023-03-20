@@ -1,56 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.preview;
 
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiReference;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
 /**
- * @author spleaner
+ * @deprecated see {@link PreviewHintProvider} deprecation notice
+ * Use {@link org.intellij.images.ui.ImageComponent} instead.
  */
-public final class ImagePreviewComponent extends JPanel implements PreviewHintComponent {
-  private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
-  private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
+@Deprecated(forRemoval = true)
+public final class ImagePreviewComponent extends JPanel  {
 
-  private static final List<String> supportedExtensions = Arrays.asList(ImageIO.getReaderFormatNames());
-  @NotNull
-  private final BufferedImage myImage;
+  private final @NotNull BufferedImage myImage;
 
   /**
-   * @param image buffered image
+   * @param image         buffered image
    * @param imageFileSize File length in bytes.
    */
-  private ImagePreviewComponent(@NotNull final BufferedImage image, final long imageFileSize) {
+  private ImagePreviewComponent(final @NotNull BufferedImage image, final long imageFileSize) {
     setLayout(new BorderLayout());
 
     myImage = (BufferedImage)ImageUtil.ensureHiDPI(image, ScaleContext.create(this));
@@ -61,28 +38,7 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
     setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(JBColor.BLACK), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
   }
 
-  @Override
-  @TestOnly
-  public boolean isEqualTo(@Nullable PreviewHintComponent other) {
-    if (!(other instanceof ImagePreviewComponent)) {
-      return false;
-    }
-    ImagePreviewComponent otherPreview = (ImagePreviewComponent)other;
-    if (myImage.getWidth() == otherPreview.myImage.getWidth() && myImage.getHeight() == otherPreview.myImage.getHeight()) {
-      for (int x = 0; x < myImage.getWidth(); x++) {
-        for (int y = 0; y < myImage.getHeight(); y++) {
-          if (myImage.getRGB(x, y) != otherPreview.myImage.getRGB(x, y)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
-  @NotNull
-  private static JLabel createLabel(@NotNull final BufferedImage image, long imageFileSize) {
+  private static @NotNull JLabel createLabel(final @NotNull BufferedImage image, long imageFileSize) {
     final int width = image.getWidth();
     final int height = image.getHeight();
     final ColorModel colorModel = image.getColorModel();
@@ -90,88 +46,10 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
     return new JLabel(LangBundle.message("image.preview.label", width, height, i, StringUtil.formatFileSize(imageFileSize)));
   }
 
-  private static boolean refresh(@NotNull VirtualFile file) throws IOException {
-    Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
-    SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-    if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || SoftReference.dereference(imageRef) == null) {
-      try {
-        final byte[] content = file.contentsToByteArray();
-        final BufferedImage image = readImageFromBytes(content);
-        file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<>(image));
-        return true;
-      }
-      finally {
-        // We perform loading no more needed
-        file.putUserData(TIMESTAMP_KEY, System.currentTimeMillis());
-      }
-    }
-    return false;
-  }
-
-  public static @NotNull BufferedImage readImageFromBytes(byte @NotNull [] content) throws IOException {
-    try {
-      return ImageUtil.toBufferedImage(SVGLoader.loadWithoutCache(content, JBUIScale.sysScale()));
-    }
-    catch (IOException ignored) {
-    }
-
-    InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
-    try (ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
-      Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
-      if (imageReaders.hasNext()) {
-        ImageReader imageReader = imageReaders.next();
-        try {
-          ImageReadParam param = imageReader.getDefaultReadParam();
-          imageReader.setInput(imageInputStream, true, true);
-          int minIndex = imageReader.getMinIndex();
-          return imageReader.read(minIndex, param);
-        }
-        catch (Exception e) {
-          throw new IOException("Can't read image from given content", e);
-        }
-        finally {
-          imageReader.dispose();
-        }
-      }
-    }
-    throw new IOException("Can't read image from given content");
-  }
-
-  public static JComponent getPreviewComponent(@Nullable final PsiElement parent) {
-    if (parent == null) {
-      return null;
-    }
-    final PsiReference[] references = parent.getReferences();
-    for (final PsiReference reference : references) {
-      final PsiElement fileItem = reference.resolve();
-      if (fileItem instanceof PsiFileSystemItem) {
-        final PsiFileSystemItem item = (PsiFileSystemItem)fileItem;
-        if (!item.isDirectory()) {
-          final VirtualFile file = item.getVirtualFile();
-          if (file != null && supportedExtensions.contains(file.getExtension())) {
-            try {
-              refresh(file);
-              SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-              final BufferedImage image = SoftReference.dereference(imageRef);
-              if (image != null) {
-                return new ImagePreviewComponent(image, file.getLength());
-              }
-            }
-            catch (IOException ignored) {
-              // nothing
-            }
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
   /**
    * This method doesn't use caching, so if you want to use it then you should consider implementing external cache.
    */
-  public static ImagePreviewComponent getPreviewComponent(@NotNull final BufferedImage image, final long imageFileSize) {
+  public static ImagePreviewComponent getPreviewComponent(final @NotNull BufferedImage image, final long imageFileSize) {
     return new ImagePreviewComponent(image, imageFileSize);
   }
 

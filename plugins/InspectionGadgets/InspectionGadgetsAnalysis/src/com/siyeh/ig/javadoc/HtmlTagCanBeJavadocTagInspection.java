@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
@@ -22,13 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -40,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
+public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -62,14 +61,11 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final TextRange range = descriptor.getTextRangeInElement();
       PsiElement element = descriptor.getPsiElement();
-      final PsiFile file = PsiTreeUtil.getParentOfType(element, PsiFile.class);
-      if (file == null) {
-        return;
-      }
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      Document document = file.getViewProvider().getDocument();
       if (document == null) {
         return;
       }
@@ -121,7 +117,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
   private static class HtmlTagCanBeJavaDocTagVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitDocToken(PsiDocToken token) {
+    public void visitDocToken(@NotNull PsiDocToken token) {
       super.visitDocToken(token);
       final IElementType tokenType = token.getTokenType();
       if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType)) {

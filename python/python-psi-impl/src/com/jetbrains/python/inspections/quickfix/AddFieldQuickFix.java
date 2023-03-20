@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonTemplateRunner;
@@ -28,16 +27,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * Available on self.my_something when my_something is unresolved.
- * User: dcheryasov
  */
-public class AddFieldQuickFix implements LocalQuickFix {
-
+public final class AddFieldQuickFix implements LocalQuickFix {
   private final String myInitializer;
   private final String myClassName;
   private final String myIdentifier;
-  private boolean replaceInitializer = false;
+  private final boolean replaceInitializer;
 
   public AddFieldQuickFix(@NotNull final String identifier, @NotNull final String initializer, final String className, boolean replace) {
     myIdentifier = identifier;
@@ -68,7 +67,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (params.length > 0) {
       selfName = params[0].getName();
     }
-    final PyStatement newStmt = callback.fun(selfName);
+    final PyStatement newStmt = callback.apply(selfName);
     final PsiElement result = PyPsiRefactoringUtil.addElementToStatementList(newStmt, statementList, true);
     PyPsiUtils.removeRedundantPass(statementList);
     return result;
@@ -240,7 +239,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
 
     @Override
-    public PyStatement fun(String selfName) {
+    public PyStatement apply(String selfName) {
       return PyElementGenerator.getInstance(myProject)
         .createFromText(LanguageLevel.getDefault(), PyStatement.class, selfName + "." + myItemName + " = " + myInitializer);
     }

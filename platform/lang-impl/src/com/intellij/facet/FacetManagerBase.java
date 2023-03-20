@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -140,8 +141,12 @@ public abstract class FacetManagerBase extends FacetManager {
       if (!invalidFacetManager.isIgnored(facet)) {
         FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
         ProjectLoadingErrorsNotifier.getInstance(project).registerError(description);
+
         if (unknownType) {
-          UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(FEATURE_TYPE, state.getFacetType(), ProjectBundle.message("plugins.advertiser.feature.facet"));
+          UnknownFeaturesCollector.getInstance(project)
+            .registerUnknownFeature(new UnknownFeature(description.getErrorType().getFeatureType(),
+                                                       ProjectBundle.message("plugins.advertiser.feature.facet"),
+                                                       state.getFacetType()));
         }
       }
     }

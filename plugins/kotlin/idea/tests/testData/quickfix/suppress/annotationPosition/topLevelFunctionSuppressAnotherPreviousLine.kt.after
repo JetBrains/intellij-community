@@ -2,3 +2,5 @@
 
 @Suppress("FOO", "REDUNDANT_NULLABLE")
 fun foo(): String?<caret>? = null
+
+// IGNORE_FIR

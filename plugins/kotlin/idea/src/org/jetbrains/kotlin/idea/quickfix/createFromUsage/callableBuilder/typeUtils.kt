@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
@@ -12,23 +12,29 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
 import org.jetbrains.kotlin.idea.util.withoutRedundantAnnotations
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 internal operator fun KotlinType.contains(inner: KotlinType): Boolean {
@@ -65,7 +71,7 @@ private fun KotlinType.renderSingle(typeParameterNameMap: Map<TypeParameterDescr
 
         val defaultType = typeParameter.defaultType
         val wrappingType = KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-            defaultType.annotations,
+            defaultType.annotations.toDefaultAttributes(),
             wrappingTypeConstructor,
             defaultType.arguments,
             defaultType.isMarkedNullable,
@@ -134,6 +140,13 @@ fun KtExpression.guessTypes(
     allowErrorTypes: Boolean = false
 ): Array<KotlinType> {
     fun isAcceptable(type: KotlinType) = allowErrorTypes || !ErrorUtils.containsErrorType(type)
+
+    val lambdaOrFunction = getParentOfTypes(strict = true, KtLambdaExpression::class.java, KtNamedFunction::class.java)
+    if (lambdaOrFunction.safeAs<KtLambdaExpression>()?.bodyExpression?.statements?.lastOrNull() == this ||
+        lambdaOrFunction.safeAs<KtNamedFunction>()?.initializer == this
+    ) {
+        lambdaOrFunction?.parent.safeAs<KtValueArgument>()?.expectedReturnType(context)?.let { return arrayOf(it) }
+    }
 
     if (coerceUnusedToUnit
         && this !is KtDeclaration
@@ -247,12 +260,21 @@ fun KtExpression.guessTypes(
             val lambdaTypes = functionalExpression.guessTypes(context, module, pseudocode?.parent, coerceUnusedToUnit)
             lambdaTypes.mapNotNull { it.getFunctionType()?.arguments?.lastOrNull()?.type }.toTypedArray()
         }
+        parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> {
+            parent.guessTypes(context, module, pseudocode, coerceUnusedToUnit)
+        }
         else -> {
             pseudocode?.getElementValue(this)?.let {
                 getExpectedTypePredicate(it, context, module.builtIns).getRepresentativeTypes().toTypedArray()
             } ?: arrayOf() // can't infer anything
         }
     }
+}
+
+private fun KtValueArgument.expectedReturnType(context: BindingContext): KotlinType? {
+    val call = getStrictParentOfType<KtCallExpression>() ?: return null
+    val parameter = call.getResolvedCall(context)?.getParameterForArgument(this)
+    return parameter?.type?.arguments?.lastOrNull()?.type
 }
 
 private fun KotlinType.getFunctionType() = if (isFunctionType) this else supertypes().firstOrNull { it.isFunctionType }
@@ -300,7 +322,7 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
             val (projection, typeParameter) = pair
             TypeProjectionImpl(Variance.INVARIANT, projection.type.substitute(substitution, typeParameter.variance))
         }
-        KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations, constructor, newArguments, isMarkedNullable, memberScope)
+        KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations.toDefaultAttributes(), constructor, newArguments, isMarkedNullable, memberScope)
     }
 }
 

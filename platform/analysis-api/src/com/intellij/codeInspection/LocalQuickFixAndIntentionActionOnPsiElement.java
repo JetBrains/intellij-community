@@ -65,7 +65,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
 
   /**
    * Performs the action.
-   * @param editor the editor where the action is invoked or {@code null} if it's invoked from batch inspections results' tool window.
+   * @param editor the editor where the action is invoked or {@code null} if it's invoked from batch inspection results' tool window.
    */
   public abstract void invoke(@NotNull Project project,
                               @NotNull PsiFile file,

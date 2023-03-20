@@ -98,8 +98,7 @@ public abstract class YamlMetaType {
 
     // TODO a case for sequence
 
-    if(value instanceof YAMLMapping) {
-      YAMLMapping mapping = (YAMLMapping)value;
+    if(value instanceof YAMLMapping mapping) {
 
       Collection<YAMLKeyValue> keyValues = mapping.getKeyValues();
 

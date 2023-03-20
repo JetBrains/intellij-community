@@ -1,4 +1,4 @@
-// "Collapse repeating annotations" "true"
+// "Collapse repeating annotations" "true-preview"
 
 @XYZ(data = {1, 2, 3, 4})
 @XYZ(5)

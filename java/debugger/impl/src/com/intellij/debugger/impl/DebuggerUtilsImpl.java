@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -22,6 +22,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -37,6 +38,7 @@ import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugSession;
@@ -62,14 +64,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class DebuggerUtilsImpl extends DebuggerUtilsEx{
+public class DebuggerUtilsImpl extends DebuggerUtilsEx {
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsImpl.class);
 
   @Override
-  public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
+  public PsiExpression substituteThis(PsiExpression expressionWithThis,
+                                      PsiExpression howToEvaluateThis,
+                                      Value howToEvaluateThisValue,
+                                      StackFrameContext context)
     throws EvaluateException {
     return DebuggerTreeNodeExpression.substituteThis(expressionWithThis, howToEvaluateThis, howToEvaluateThisValue);
   }
@@ -80,7 +86,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
 
@@ -90,14 +95,14 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public TextWithImports readTextWithImports(Element element) {
     LOG.assertTrue("TextWithImports".equals(element.getName()));
 
     String text = element.getAttributeValue("text");
     if ("expression".equals(element.getAttributeValue("type"))) {
       return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text);
-    } else {
+    }
+    else {
       return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, text);
     }
   }
@@ -224,13 +229,14 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static void logError(Throwable e) {
-    if (e instanceof VMDisconnectedException) {
-      throw (VMDisconnectedException)e;
+    if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
+      throw (RuntimeException)e;
     }
     LOG.error(e);
   }
 
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier, T defaultValue) throws E {
+  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
+                                                              T defaultValue) throws E {
     return suppressExceptions(supplier, defaultValue, true, null);
   }
 
@@ -246,8 +252,12 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
         throw e;
       }
     }
-    catch (VMDisconnectedException | ObjectCollectedException e) {throw e;}
-    catch (InternalException e) {LOG.info(e);}
+    catch (VMDisconnectedException | ObjectCollectedException e) {
+      throw e;
+    }
+    catch (InternalException e) {
+      LOG.info(e);
+    }
     catch (Exception | AssertionError e) {
       if (rethrow != null && rethrow.isInstance(e)) {
         throw e;
@@ -294,7 +304,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static Stream<? extends ReferenceType> supertypes(ReferenceType type) {
     if (type instanceof InterfaceType) {
       return ((InterfaceType)type).superinterfaces().stream();
-    } else if (type instanceof ClassType) {
+    }
+    else if (type instanceof ClassType) {
       return StreamEx.<ReferenceType>ofNullable(((ClassType)type).superclass()).prepend(((ClassType)type).interfaces());
     }
     return StreamEx.empty();
@@ -389,8 +400,30 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return res;
   }
 
+  private static CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<CompletableFuture<Boolean>> futures,
+                                                                            int index,
+                                                                            List<NodeRenderer> renderers) {
+    if (index >= futures.size()) {
+      return CompletableFuture.completedFuture(null);
+    }
+    return futures.get(index).thenCompose(res -> {
+      if (res) {
+        return CompletableFuture.completedFuture(renderers.get(index));
+      }
+      else {
+        return getFirstApplicableRenderer(futures, index + 1, renderers);
+      }
+    });
+  }
+
   @NotNull
-  public static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<NodeRenderer> renderers, Type type) {
+  public static CompletableFuture<NodeRenderer> getFirstApplicableRenderer(List<NodeRenderer> renderers, Type type) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    return getFirstApplicableRenderer(ContainerUtil.map(renderers, r -> r.isApplicableAsync(type)), 0, renderers);
+  }
+
+  @NotNull
+  public static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<? extends NodeRenderer> renderers, Type type) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     CompletableFuture<Boolean>[] futures = renderers.stream().map(r -> r.isApplicableAsync(type)).toArray(CompletableFuture[]::new);
     return CompletableFuture.allOf(futures).thenApply(__ -> {
@@ -420,13 +453,18 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return null;
   }
 
-  //TODO: use more general utils when available
-  public static <T> void forEachSafe(Iterable<T> iterable, Consumer<T> action) {
+  // do not catch VMDisconnectedException
+  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<? super T> action) {
+    forEachSafe(ep.getIterable(), action);
+  }
+
+  // do not catch VMDisconnectedException
+  public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
     for (T o : iterable) {
       try {
         action.accept(o);
       }
-      catch (ProcessCanceledException e) {
+      catch (VMDisconnectedException | ProcessCanceledException e) {
         throw e;
       }
       catch (Throwable e) {
@@ -435,10 +473,34 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
   }
 
+  // do not catch VMDisconnectedException
+  public static <T, R> R computeSafeIfAny(ExtensionPointName<T> ep, @NotNull Function<? super T, ? extends R> processor) {
+    for (T t : ep.getIterable()) {
+      if (t == null) {
+        return null;
+      }
+
+      try {
+        R result = processor.apply(t);
+        if (result != null) {
+          return result;
+        }
+      }
+      catch (VMDisconnectedException | ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    return null;
+  }
+
+
   @Nullable
   public static Range<Location> getLocalVariableBorders(@NotNull LocalVariable variable) {
-    if (!(variable instanceof LocalVariableImpl)) return null;
-    LocalVariableImpl variableImpl = (LocalVariableImpl)variable;
+    if (!(variable instanceof LocalVariableImpl variableImpl)) return null;
     return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
   }
 }

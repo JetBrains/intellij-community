@@ -98,10 +98,10 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     return findInvalidationTrace(element.getNode());
   }
 
-  private static String getMessageWithReason(@NotNull PsiElement element,
-                                             @Nullable String message,
-                                             boolean recursiveInvocation,
-                                             @Nullable Object trace) {
+  private static @NotNull String getMessageWithReason(@NotNull PsiElement element,
+                                                      @Nullable String message,
+                                                      boolean recursiveInvocation,
+                                                      @Nullable Object trace) {
     @NonNls String reason = "Element: " + element.getClass();
     if (!recursiveInvocation) {
       try {
@@ -154,7 +154,6 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     return null;
   }
 
-  @SuppressWarnings("StringConcatenationInLoop")
   @NonNls
   @NotNull
   public static String findOutInvalidationReason(@NotNull PsiElement root) {
@@ -182,41 +181,42 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
 
     String hierarchy = "";
     while (element != null && !(element instanceof PsiFile)) {
+      //noinspection StringConcatenationInLoop
       hierarchy += (hierarchy.isEmpty() ? "" : ", ") + element.getClass();
       lastParent = element;
       element = element.getParent();
     }
-    PsiFile file = (PsiFile)element;
-    if (file == null) {
+    PsiFile psiFile = (PsiFile)element;
+    if (psiFile == null) {
       PsiElement context = lastParent.getContext();
       return "containing file is null; hierarchy=" + hierarchy +
              ", context=" + context +
              ", contextFile=" + JBIterable.generate(context, PsiElement::getParent).find(e -> e instanceof PsiFile);
     }
 
-    FileViewProvider provider = file.getViewProvider();
+    FileViewProvider provider = psiFile.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
     if (!vFile.isValid()) {
       return vFile + " is invalid";
     }
     if (!provider.isPhysical()) {
-      PsiElement context = file.getContext();
+      PsiElement context = psiFile.getContext();
       if (context != null && !context.isValid()) {
         return "invalid context: " + findOutInvalidationReason(context);
       }
     }
 
-    PsiFile original = file.getOriginalFile();
-    if (original != file && !original.isValid()) {
+    PsiFile original = psiFile.getOriginalFile();
+    if (original != psiFile && !original.isValid()) {
       return "invalid original: " + findOutInvalidationReason(original);
     }
 
-    PsiManager manager = file.getManager();
+    PsiManager manager = psiFile.getManager();
     if (manager.getProject().isDisposed()) {
       return "project is disposed: " + manager.getProject();
     }
 
-    Language language = file.getLanguage();
+    Language language = psiFile.getLanguage();
     if (language != provider.getBaseLanguage()) {
       return "File language:" + language + " != Provider base language:" + provider.getBaseLanguage();
     }
@@ -233,7 +233,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     return "psi is outdated";
   }
 
-  private static String id(FileViewProvider provider) {
+  private static @NotNull String id(@Nullable FileViewProvider provider) {
     return Integer.toHexString(System.identityHashCode(provider));
   }
 

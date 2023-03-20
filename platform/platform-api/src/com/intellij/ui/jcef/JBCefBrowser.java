@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -38,9 +38,9 @@ import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
  * <p>
  * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
  *
+ * @author tav
  * @see #createBuilder
  * @see JBCefOsrHandlerBrowser
- * @author tav
  */
 public class JBCefBrowser extends JBCefBrowserBase {
   /**
@@ -49,14 +49,14 @@ public class JBCefBrowser extends JBCefBrowserBase {
   public static class Properties extends JBCefBrowserBase.Properties {
     /**
      * Defines whether the browser component should take focus on navigation (loading a new URL).
-     * <p></p>
+     * <p>
      * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
      */
     public static final @NotNull String FOCUS_ON_NAVIGATION = "JBCefBrowser.focusOnNavigation";
 
     /**
      * Defines whether the browser component should take focus on show.
-     * <p></p>
+     * <p>
      * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
      */
     public static final @NotNull String FOCUS_ON_SHOW ="JBCefBrowser.focusOnShow";
@@ -78,7 +78,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
       createAction("$Cut", CefFrame::cut),
       createAction("$Copy", CefFrame::copy),
       createAction("$Paste", CefFrame::paste),
-      createAction("$Delete", CefFrame::delete),
       createAction("$SelectAll", CefFrame::selectAll),
       createAction("$Undo", CefFrame::undo),
       createAction("$Redo", CefFrame::redo)
@@ -154,6 +153,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * Creates a browser with the initial URL.
    *
    * @see #createBuilder
+   * @see JBCefBrowserBuilder#setUrl(String)
    */
   public JBCefBrowser(@NotNull String url) {
     this(createBuilder().setUrl(url));
@@ -163,7 +163,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
    *
    * @see #createBuilder
+   * @see JBCefBrowserBuilder#setClient(JBCefClient)
+   * @see JBCefBrowserBuilder#setUrl(String)
+   * @deprecated use {@link JBCefBrowserBuilder} instead
    */
+  @Deprecated
   public JBCefBrowser(@NotNull JBCefClient client, @Nullable String url) {
     this(createBuilder().setClient(client).setUrl(url));
   }
@@ -172,7 +176,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
    * Creates a browser wrapping the provided {@link CefBrowser} with the provided {@link JBCefClient}.
    *
    * @see #createBuilder
+   * @see JBCefBrowserBuilder#setCefBrowser(CefBrowser)
+   * @see JBCefBrowserBuilder#setClient(JBCefClient)
+   * @deprecated use {@link JBCefBrowserBuilder} instead
    */
+  @Deprecated
   public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
     this(createBuilder().setCefBrowser(cefBrowser).setClient(client));
   }
@@ -184,7 +192,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
 
-    myComponent = createComponent();
+    myComponent = createComponent(builder.myMouseWheelEventEnable);
 
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
@@ -253,9 +261,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }, myCefBrowser);
   }
 
-  private @NotNull JPanel createComponent() {
+  private @NotNull JPanel createComponent(boolean isMouseWheelEventEnabled) {
     Component uiComp = getCefBrowser().getUIComponent();
-    JPanel resultPanel = new MyPanel(uiComp);
+    JPanel resultPanel = new MyPanel(uiComp, isMouseWheelEventEnabled);
 
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
@@ -380,11 +388,13 @@ public class JBCefBrowser extends JBCefBrowserBase {
   public class MyPanel extends JPanel {
     private final Component myUiComp;
 
-    private MyPanel(Component uiComp) {
+    private MyPanel(Component uiComp, boolean isMouseWheelEventEnabled) {
       super(new BorderLayout());
       myUiComp = uiComp;
       myUiComp.setBackground(getBackground());
-      enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      if (isMouseWheelEventEnabled) {
+        enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      }
     }
 
     @Override

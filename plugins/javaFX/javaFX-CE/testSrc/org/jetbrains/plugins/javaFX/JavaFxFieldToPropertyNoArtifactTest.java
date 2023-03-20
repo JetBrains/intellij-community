@@ -10,7 +10,6 @@ import java.io.IOException;
 
 /**
  * Same as the base test, but detects the presence of JavaFX using imports and FXMLs, not artifacts
- * @author Pavel.Dolgov
  */
 public class JavaFxFieldToPropertyNoArtifactTest extends JavaFxFieldToPropertyTest {
 

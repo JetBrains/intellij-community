@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
@@ -13,14 +13,14 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.nullability
+import org.jetbrains.kotlin.utils.IDEAPlatforms
+import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
 import java.util.*
 
 interface Parameter {
@@ -73,7 +75,7 @@ class RenameReplacement(override val parameter: Parameter) : ParameterReplacemen
         val parameterName = KtPsiUtil.unquoteIdentifier(parameter.nameForRef)
         val replacingName =
             if (e.text.startsWith('`') || !parameterName.isIdentifier()) "`$parameterName`" else parameterName
-        val psiFactory = KtPsiFactory(e)
+        val psiFactory = KtPsiFactory(e.project)
         val replacement = when {
             parameter == descriptor.receiverParameter -> psiFactory.createExpression("this")
             expressionToReplace is KtOperationReferenceExpression -> psiFactory.createOperationName(replacingName)
@@ -88,7 +90,7 @@ abstract class WrapInWithReplacement : Replacement {
 
     override fun invoke(descriptor: ExtractableCodeDescriptor, e: KtElement): KtElement {
         val call = (e as? KtSimpleNameExpression)?.getQualifiedElement() ?: return e
-        val replacingExpression = KtPsiFactory(e).createExpressionByPattern("with($0) { $1 }", argumentText, call)
+        val replacingExpression = KtPsiFactory(e.project).createExpressionByPattern("with($0) { $1 }", argumentText, call)
         val replace = call.replace(replacingExpression)
         return (replace as KtCallExpression).lambdaArguments.first().getLambdaExpression()!!.bodyExpression!!.statements.first()
     }
@@ -113,7 +115,7 @@ class AddPrefixReplacement(override val parameter: Parameter) : ParameterReplace
         if (descriptor.receiverParameter == parameter) return e
 
         val selector = (e.parent as? KtCallExpression) ?: e
-        val replacingExpression = KtPsiFactory(e).createExpressionByPattern("${parameter.nameForRef}.$0", selector)
+        val replacingExpression = KtPsiFactory(e.project).createExpressionByPattern("${parameter.nameForRef}.$0", selector)
         val newExpr = (selector.replace(replacingExpression) as KtQualifiedExpression).selectorExpression!!
         return (newExpr as? KtCallExpression)?.calleeExpression ?: newExpr
     }
@@ -123,7 +125,7 @@ class FqNameReplacement(val fqName: FqName) : Replacement {
     override fun invoke(descriptor: ExtractableCodeDescriptor, e: KtElement): KtElement {
         val thisExpr = e.parent as? KtThisExpression
         if (thisExpr != null) {
-            return thisExpr.replaced(KtPsiFactory(e).createExpression(fqName.asString())).getQualifiedElementSelector()!!
+            return thisExpr.replaced(KtPsiFactory(e.project).createExpression(fqName.asString())).getQualifiedElementSelector()!!
         }
 
         val newExpr = (e as? KtSimpleNameExpression)?.mainReference?.bindToFqName(fqName, ShorteningMode.NO_SHORTENING) as KtElement
@@ -346,11 +348,46 @@ data class ExtractableCodeDescriptor(
     val controlFlow: ControlFlow,
     val returnType: KotlinType,
     val modifiers: List<KtKeywordToken> = emptyList(),
-    val annotations: List<AnnotationDescriptor> = emptyList()
+    val annotations: List<AnnotationDescriptor> = emptyList(),
+    val optInMarkers: List<FqName> = emptyList()
 ) {
     val name: String get() = suggestedNames.firstOrNull() ?: ""
     val duplicates: List<DuplicateInfo> by lazy { findDuplicates() }
 }
+
+@IDEAPluginsCompatibilityAPI(
+    usedIn = [IDEAPlatforms._213],
+    message = "Provided for binary backward compatibility",
+    plugins = "Jetpack Compose plugin in IDEA"
+)
+fun ExtractableCodeDescriptor.copy(
+ extractionData: ExtractionData = this.extractionData,
+ originalContext: BindingContext = this.originalContext,
+ suggestedNames: List<String> = this.suggestedNames,
+ visibility: KtModifierKeywordToken? = this.visibility,
+ parameters: List<Parameter> = this.parameters,
+ receiverParameter: Parameter? = this.receiverParameter,
+ typeParameters: List<TypeParameter> = this.typeParameters,
+ replacementMap: MultiMap<KtSimpleNameExpression, Replacement> = this.replacementMap,
+ controlFlow: ControlFlow = this.controlFlow,
+ returnType: KotlinType = this.returnType,
+ modifiers: List<KtKeywordToken> = this.modifiers,
+ annotations: List<AnnotationDescriptor> = this.annotations
+) = copy(
+    extractionData,
+    originalContext,
+    suggestedNames,
+    visibility,
+    parameters,
+    receiverParameter,
+    typeParameters,
+    replacementMap,
+    controlFlow,
+    returnType,
+    modifiers,
+    annotations,
+    emptyList()
+)
 
 fun ExtractableCodeDescriptor.copy(
     newName: String,
@@ -383,7 +420,8 @@ fun ExtractableCodeDescriptor.copy(
         controlFlow.copy(oldToNewParameters),
         returnType ?: this.returnType,
         modifiers,
-        annotations
+        annotations,
+        optInMarkers
     )
 }
 
@@ -533,7 +571,10 @@ class AnalysisResult(
                 }
             )
 
-            return additionalInfo?.let { "$message\n\n${it.joinToString("\n") { msg -> StringUtil.htmlEmphasize(msg) }}" } ?: message
+            return additionalInfo?.let { "$message\n\n${it.joinToString("\n") { msg ->
+                @Suppress("HardCodedStringLiteral")
+                StringUtil.htmlEmphasize(msg)
+            }}" } ?: message
         }
     }
 }

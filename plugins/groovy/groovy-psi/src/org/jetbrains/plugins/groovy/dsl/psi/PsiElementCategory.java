@@ -31,9 +31,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author ilyas
- */
 public class PsiElementCategory implements PsiEnhancerCategory {
 
   @Nullable
@@ -64,8 +61,7 @@ public class PsiElementCategory implements PsiEnhancerCategory {
   }
 
   public static Object eval(PsiElement elem) {
-    if (elem instanceof GrLiteral) {
-      GrLiteral literal = (GrLiteral)elem;
+    if (elem instanceof GrLiteral literal) {
       return literal.getValue();
     }
     return elem;

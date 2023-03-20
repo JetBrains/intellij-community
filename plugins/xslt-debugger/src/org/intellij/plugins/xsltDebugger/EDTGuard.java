@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Utility class that tries to prevent hanging the whole IDE because some call on the EDT waits too long on the debugged
  * VM, which can especially happen when the VM has been paused (either manually or by a breakpoint on Java code).
  * <p/>
- * This is just the second best solution though as it would be better to avoid any interaction with the debuggee on the
+ * This is just the second-best solution though as it would be better to avoid any interaction with the debuggee on the
  * EDT, but, at least right now, it seems to be more reliable against bad surprises.
  */
 final class EDTGuard implements InvocationHandler {
@@ -105,13 +105,12 @@ final class EDTGuard implements InvocationHandler {
     try {
       return convert(method.invoke(myTarget, args));
     } catch (InvocationTargetException e) {
-      final Throwable t = e.getTargetException();
-      throw t;
+      throw e.getTargetException();
     }
   }
 
   @Nullable
-  @SuppressWarnings({ "unchecked" })
+  @SuppressWarnings("unchecked")
   private Object convert(@Nullable Object o) {
     if (o != null && !(o instanceof Serializable)) {
       synchronized (myInstanceCache) {
@@ -126,15 +125,15 @@ final class EDTGuard implements InvocationHandler {
         return instance;
       }
     } else if (o instanceof List) {
-      final List list = (List)o;
+      final List<Object> list = (List<Object>)o;
       for (int i = 0; i < list.size(); i++) {
         final Object e = list.remove(i);
         list.add(i, convert(e));
       }
     } else if (o instanceof Set) {
-      final Set set = (Set)o;
-      final List s2 = new ArrayList();
-      for (Iterator iterator = set.iterator(); iterator.hasNext(); ) {
+      final Set<Object> set = (Set<Object>)o;
+      final List<Object> s2 = new ArrayList<>();
+      for (Iterator<Object> iterator = set.iterator(); iterator.hasNext(); ) {
         Object o1 = iterator.next();
         final Object o2 = convert(o1);
         if (o1 != o2) {
@@ -158,9 +157,7 @@ final class EDTGuard implements InvocationHandler {
         try {
           while (!Thread.currentThread().isInterrupted()) {
             final Call call = queue.first.take();
-            if (call != null) {
-              queue.second.offer(call.invoke());
-            }
+            queue.second.offer(call.invoke());
           }
         } catch (InterruptedException e) {
           // break

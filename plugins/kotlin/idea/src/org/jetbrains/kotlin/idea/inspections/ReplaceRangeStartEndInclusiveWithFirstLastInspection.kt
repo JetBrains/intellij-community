@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -8,12 +8,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.intentions.isRange
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class ReplaceRangeStartEndInclusiveWithFirstLastInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -42,18 +44,6 @@ class ReplaceRangeStartEndInclusiveWithFirstLastInspection : AbstractKotlinInspe
     }
 }
 
-private val rangeTypes = setOf(
-    "kotlin.ranges.IntRange",
-    "kotlin.ranges.CharRange",
-    "kotlin.ranges.LongRange",
-    "kotlin.ranges.UIntRange",
-    "kotlin.ranges.ULongRange"
-)
-
-private fun ClassDescriptor.isRange(): Boolean {
-    return rangeTypes.any { this.fqNameUnsafe.asString() == it }
-}
-
 class ReplaceIntRangeStartWithFirstQuickFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("replace.int.range.start.with.first.quick.fix.text")
 
@@ -62,7 +52,7 @@ class ReplaceIntRangeStartWithFirstQuickFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as KtDotQualifiedExpression
         val selector = element.selectorExpression ?: return
-        selector.replace(KtPsiFactory(element).createExpression("first"))
+        selector.replace(KtPsiFactory(project).createExpression("first"))
     }
 }
 
@@ -74,6 +64,6 @@ class ReplaceIntRangeEndInclusiveWithLastQuickFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as KtDotQualifiedExpression
         val selector = element.selectorExpression ?: return
-        selector.replace(KtPsiFactory(element).createExpression("last"))
+        selector.replace(KtPsiFactory(project).createExpression("last"))
     }
 }

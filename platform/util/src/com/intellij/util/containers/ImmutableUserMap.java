@@ -4,9 +4,6 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class ImmutableUserMap {
   public static final ImmutableUserMap EMPTY = new ImmutableUserMap() {
     @Override

@@ -1,10 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
@@ -24,7 +27,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -46,10 +48,14 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     mySettings.writeSettings(node);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return mySettings.createOptionsPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return mySettings.getOptionPane();
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return mySettings.getOptionController();
   }
 
   @Override
@@ -64,7 +70,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
                                         @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiElement nameElement = methodExpression.getReferenceNameElement();
         final String methodName = methodExpression.getReferenceName();
@@ -107,25 +113,22 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
         PsiType type = assignmentExpression.getType();
         PsiClass collectionType = Objects.requireNonNull(PsiUtil.resolveClassInClassTypeOnly(type));
         String name = Objects.requireNonNull(collectionType.getQualifiedName());
-        switch (name) {
-          case "java.util.TreeSet":
-          case "java.util.concurrent.ConcurrentSkipListSet":
+        return switch (name) {
+          case "java.util.TreeSet", "java.util.concurrent.ConcurrentSkipListSet" ->
             // If declared arg type inherits SortedSet, the (SortedSet) copy constructor will be invoked, which inherits the comparator
-            return InheritanceUtil.isInheritor(argType, "java.util.SortedSet");
-          case "java.util.TreeMap":
-          case "java.util.concurrent.ConcurrentSkipListMap":
+            InheritanceUtil.isInheritor(argType, "java.util.SortedSet");
+          case "java.util.TreeMap", "java.util.concurrent.ConcurrentSkipListMap" ->
             // If declared arg type inherits SortedMap, the (SortedMap) copy constructor will be invoked, which inherits the comparator
-            return InheritanceUtil.isInheritor(argType, "java.util.SortedMap");
-          case "java.util.PriorityQueue":
-          case "java.util.concurrent.PriorityBlockingQueue":
+            InheritanceUtil.isInheritor(argType, "java.util.SortedMap");
+          case "java.util.PriorityQueue", "java.util.concurrent.PriorityBlockingQueue" -> {
             // Here even (Collection) copy constructor inherits the comparator using runtime type checks, so we should be more conservative
             TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(args[0]));
             PsiClassType sortedSet = JavaPsiFacade.getElementFactory(holder.getProject()).createTypeByFQClassName("java.util.SortedSet");
-            return constraint.meet(TypeConstraints.instanceOf(sortedSet)) != TypeConstraints.BOTTOM ||
-                   constraint.meet(TypeConstraints.instanceOf(type)) != TypeConstraints.BOTTOM;
-          default:
-            return false;
-        }
+            yield constraint.meet(TypeConstraints.instanceOf(sortedSet)) != TypeConstraints.BOTTOM ||
+                  constraint.meet(TypeConstraints.instanceOf(type)) != TypeConstraints.BOTTOM;
+          }
+          default -> false;
+        };
       }
     };
   }
@@ -146,12 +149,11 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
                                                       @NotNull PsiLocalVariable referent,
                                                       @NotNull String previousMethodName) {
     final PsiElement sibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
-    if (sibling instanceof PsiExpressionStatement) {
-      final PsiExpression siblingExpression = ((PsiExpressionStatement)sibling).getExpression();
-      if (siblingExpression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression siblingMethodCall = (PsiMethodCallExpression)siblingExpression;
+    if (sibling instanceof PsiExpressionStatement expressionStatement) {
+      final PsiExpression siblingExpression = expressionStatement.getExpression();
+      if (siblingExpression instanceof PsiMethodCallExpression siblingMethodCall) {
         final PsiExpression qualifier = siblingMethodCall.getMethodExpression().getQualifierExpression();
-        if (qualifier instanceof PsiReferenceExpression && referent.isEquivalentTo(((PsiReferenceExpression)qualifier).resolve())) {
+        if (qualifier instanceof PsiReferenceExpression ref && referent.isEquivalentTo(ref.resolve())) {
           final PsiMethod method = siblingMethodCall.resolveMethod();
           if (method != null && method.getName().equals(previousMethodName)) {
             return true;
@@ -163,10 +165,9 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
   }
 
   private boolean isCollectionConstructor(PsiExpression initializer) {
-    if (!(initializer instanceof PsiNewExpression)) {
+    if (!(initializer instanceof PsiNewExpression newExpression)) {
       return false;
     }
-    final PsiNewExpression newExpression = (PsiNewExpression)initializer;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (classReference == null) {
       return false;
@@ -207,7 +208,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
 
     addAllExpression.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
         if (PsiUtil.isJvmLocalVariable(resolved)) {
           PsiVariable variable = (PsiVariable) resolved;
@@ -232,6 +233,16 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
       myMethodCallExpression = smartPointerManager.createSmartPsiElementPointer(expression);
       myNewExpression = smartPointerManager.createSmartPsiElementPointer(newExpression);
       this.methodName = methodName;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiMethodCallExpression call = myMethodCallExpression.getElement();
+      PsiNewExpression newExpression = myNewExpression.getElement();
+      if (call == null || newExpression == null) return null;
+      return new ReplaceAddAllWithConstructorFix(PsiTreeUtil.findSameElementInCopy(newExpression, target),
+                                                 PsiTreeUtil.findSameElementInCopy(call, target),
+                                                 methodName);
     }
 
     @Nls
@@ -280,7 +291,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
           if (scope != null &&
               ReferencesSearch.search(variable).allMatch(ref -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
             PsiDeclarationStatement newDeclaration =
-              JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiType.INT, null, methodCallExpression);
+              JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiTypes.intType(), null, methodCallExpression);
             PsiVariable newVariable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(variable);
             ct.delete(variable);
             ct.replace(Objects.requireNonNull(newVariable.getInitializer()), replacement);

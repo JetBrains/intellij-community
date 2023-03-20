@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
 public final class DfBooleanConstantType extends DfConstantType<Boolean> implements DfBooleanType {
@@ -20,12 +19,6 @@ public final class DfBooleanConstantType extends DfConstantType<Boolean> impleme
   @Override
   public @NotNull DfType tryJoinExactly(@NotNull DfType other) {
     return join(other);
-  }
-
-  @NotNull
-  @Override
-  public PsiPrimitiveType getPsiType() {
-    return DfBooleanType.super.getPsiType();
   }
 
   @NotNull

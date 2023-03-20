@@ -1,13 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,17 +32,18 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.FileBasedIndexProjectHandler;
-import com.intellij.util.indexing.IndexingBundle;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
@@ -121,9 +119,6 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         if (file == null) continue;
         boolean isDirectory = file.isDirectory();
         List<FilePropertyPusher<?>> pushers = isDirectory ? FilePropertyPusher.EP_NAME.getExtensionList() : filePushers;
-        for (FilePropertyPusher<?> pusher : pushers) {
-          file.putUserData(pusher.getFileDataKey(), null);
-        }
         ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers));
       }
     }
@@ -141,7 +136,13 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       queueTasks(delayedTasks, "Push on VFS changes");
     }
     if (pushingSomethingSynchronously) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> scheduleDumbModeReindexingIfNeeded());
+      Application app = ApplicationManager.getApplication();
+      if (app.isDispatchThread()) {
+        scheduleDumbModeReindexingIfNeeded();
+      }
+      else {
+        app.invokeLater(this::scheduleDumbModeReindexingIfNeeded, myProject.getDisposed());
+      }
     }
   }
 
@@ -164,7 +165,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     });
   }
 
-  public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<IndexableFileScanner.IndexableFileVisitor> sessions) {
+  public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
     for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
       try {
         session.visitFile(fileOrDir);
@@ -196,7 +197,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   }
 
   private void doPushRecursively(@NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                 @NotNull List<IndexableFileScanner> scanners,
+                                 @NotNull List<? extends IndexableFileScanner> scanners,
                                  @NotNull IndexableFilesIterator indexableFilesIterator) {
     List<IndexableFileScanner.IndexableFileVisitor> sessions =
       ContainerUtil.mapNotNull(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator.getOrigin()));
@@ -205,36 +206,23 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       applyScannersToFile(fileOrDir, sessions);
       return true;
     }, IndexableFilesDeduplicateFilter.create());
+    finishVisitors(sessions);
+  }
+
+  public static void finishVisitors(List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
+    for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
+      session.visitingFinished();
+    }
   }
 
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
     actions.forEach(myTasks::offer);
-    DumbModeTask task = new DumbModeTask(this) {
-      @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-        ChangedFilesPushingStatistics statistics;
-        if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
-          statistics = new ChangedFilesPushingStatistics(reason);
-        }
-        else {
-          statistics = null;
-        }
-        ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
-        try {
-          performDelayedPushTasks(statistics);
-        }
-        finally {
-          ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
-        }
-      }
-    };
+    DumbModeTask task = new MyDumbModeTask(reason, this);
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        for (RootsChangeIndexingInfo info : ((ModuleRootEventImpl)event).getInfos()) {
-          if (info == RootsChangeIndexingInfo.TOTAL_REINDEX) {
+        for (RootsChangeRescanningInfo info : ((ModuleRootEventImpl)event).getInfos()) {
+          if (info == RootsChangeRescanningInfo.TOTAL_RESCAN) {
             DumbService.getInstance(myProject).cancelTask(task);
             return;
           }
@@ -308,7 +296,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static <T> T findNewPusherValueFromParent(Project project, VirtualFile fileOrDir, FilePropertyPusher<? extends T> pusher) {
     final VirtualFile parent = fileOrDir.getParent();
     if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) {
-      final T userValue = parent.getUserData(pusher.getFileDataKey());
+      final T userValue = pusher.getFilePropertyKey().getPersistentValue(parent);
       if (userValue != null) return userValue;
       return findNewPusherValue(project, parent, pusher, null);
     }
@@ -326,7 +314,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       final Object[] moduleValues = getModuleImmediateValues(pushers, module);
       return fileOrDir -> {
         applyPushersToFile(fileOrDir, pushers, moduleValues);
-        return ContentIteratorEx.Status.CONTINUE;
+        return TreeNodeProcessingResult.CONTINUE;
       };
     });
   }
@@ -341,28 +329,38 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     return moduleValues;
   }
 
+  public static Object @NotNull [] getImmediateValuesEx(@NotNull List<? extends FilePropertyPusherEx<?>> pushers,
+                                                        @NotNull IndexableSetOrigin origin) {
+    final Object[] moduleValues;
+    moduleValues = new Object[pushers.size()];
+    for (int i = 0; i < moduleValues.length; i++) {
+      moduleValues[i] = pushers.get(i).getImmediateValueEx(origin);
+    }
+    return moduleValues;
+  }
+
   public static void scanProject(@NotNull Project project,
-                                 @NotNull Function<Module, ? extends ContentIteratorEx> iteratorProducer) {
+                                 @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Stream<Runnable> tasksStream;
-    //noinspection deprecation
-    if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
+    if (StandardContributorsKt.shouldIndexProjectBasedOnIndexableEntityProviders()) {
       Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                    WorkspaceModel.getInstance(project).getEntityStorage().
-                                                                      getCurrent().entities(ModuleEntity.class));
+                                                                    WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
       List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
       IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
       tasksStream = moduleEntities.stream()
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
-            Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
+            EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+            Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
             if (module == null) {
               return Stream.empty();
             }
             ProgressManager.checkCanceled();
-            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, project), it -> new Object() {
-                final IndexableFilesIterator files = it;
-                final ContentIteratorEx iterator = iteratorProducer.apply(module);
-              })
+            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
+                                     it -> new Object() {
+                                       final IndexableFilesIterator files = it;
+                                       final ContentIteratorEx iterator = iteratorProducer.apply(module);
+                                     })
               .stream()
               .map(pair -> (Runnable)() -> {
                 pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
@@ -396,7 +394,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void invokeConcurrentlyIfPossible(@NotNull List<? extends Runnable> tasks) {
     if (tasks.isEmpty()) return;
-    if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed() || DumbServiceImpl.isSynchronousTaskExecution()) {
       for (Runnable r : tasks) r.run();
       return;
     }
@@ -441,15 +439,11 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   @Override
   public <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue) {
     T newValue = findNewPusherValue(myProject, fileOrDir, pusher, moduleValue);
-    T oldValue = fileOrDir.getUserData(pusher.getFileDataKey());
-    if (newValue != oldValue) {
-      fileOrDir.putUserData(pusher.getFileDataKey(), newValue);
-      try {
-        pusher.persistAttribute(myProject, fileOrDir, newValue);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    try {
+      pusher.persistAttribute(myProject, fileOrDir, newValue);
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 
@@ -476,5 +470,41 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   private static List<FilePropertyPusher<?>> getFilePushers() {
     return ContainerUtil.findAll(FilePropertyPusher.EP_NAME.getExtensionList(), pusher -> !pusher.pushDirectoriesOnly());
+  }
+
+  private static class MyDumbModeTask extends DumbModeTask {
+    private final @NotNull @NonNls String myReason;
+    private final PushedFilePropertiesUpdaterImpl myUpdater;
+
+    private MyDumbModeTask(@NotNull @NonNls String reason, @NotNull PushedFilePropertiesUpdaterImpl updater) {
+      myUpdater = updater;
+      myReason = reason;
+    }
+
+    @Override
+    public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
+      indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
+      ChangedFilesPushingStatistics statistics;
+      if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
+        statistics = new ChangedFilesPushingStatistics(myReason);
+      }
+      else {
+        statistics = null;
+      }
+      ((GistManagerImpl)GistManager.getInstance()).runWithMergingDependentCacheInvalidations(() ->
+        myUpdater.performDelayedPushTasks(statistics));
+    }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue instanceof MyDumbModeTask && ((MyDumbModeTask)taskFromQueue).myUpdater == myUpdater) return this;
+      return null;
+    }
+
+    @Override
+    public String toString() {
+      return super.toString() + " (reason: " + myReason + ")";
+    }
   }
 }

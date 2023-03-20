@@ -3,52 +3,26 @@ package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.*
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
-import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
-import java.awt.Component
+import org.jetbrains.plugins.github.util.GHCompatibilityUtil
 
 /**
  * Allows to acquire API executor without exposing the auth token to external code
  */
+@Deprecated("Use org.jetbrains.plugins.github.api.GithubApiRequestExecutor.Factory.Companion directly")
 class GithubApiRequestExecutorManager {
-  private val executors = mutableMapOf<GithubAccount, GithubApiRequestExecutor.WithTokenAuth>()
 
   companion object {
     @JvmStatic
     fun getInstance(): GithubApiRequestExecutorManager = service()
   }
 
-  internal fun tokenChanged(account: GithubAccount) {
-    val token = service<GHAccountManager>().findCredentials(account)
-    if (token == null) executors.remove(account)
-    else executors[account]?.token = token
-  }
-
-  @RequiresEdt
-  fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor.WithTokenAuth? {
-    return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, project) }
-  }
-
-  @RequiresEdt
-  fun getExecutor(account: GithubAccount, parentComponent: Component): GithubApiRequestExecutor.WithTokenAuth? {
-    return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, null, parentComponent) }
-  }
-
-  @RequiresEdt
-  @Throws(GithubMissingTokenException::class)
-  fun getExecutor(account: GithubAccount): GithubApiRequestExecutor.WithTokenAuth {
-    return getOrTryToCreateExecutor(account) { throw GithubMissingTokenException(account) }!!
-  }
-
-  private fun getOrTryToCreateExecutor(account: GithubAccount,
-                                       missingTokenHandler: () -> String?): GithubApiRequestExecutor.WithTokenAuth? {
-
-    return executors.getOrPut(account) {
-      (GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: missingTokenHandler())
-        ?.let(GithubApiRequestExecutor.Factory.getInstance()::create) ?: return null
-    }
+  @Deprecated("One-time use executor should not be persisted")
+  @RequiresBackgroundThread
+  fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor? {
+    val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return null
+    return Factory.getInstance().create(token)
   }
 }

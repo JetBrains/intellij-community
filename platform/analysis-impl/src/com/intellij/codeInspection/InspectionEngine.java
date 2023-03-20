@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.Divider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -15,7 +13,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
-import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -23,11 +20,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.SmartHashSet;
@@ -45,18 +44,19 @@ public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
   private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
-  public static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
-                                                                          @NotNull ProblemsHolder holder,
-                                                                          boolean isOnTheFly,
-                                                                          @NotNull LocalInspectionToolSession session,
-                                                                          @NotNull List<? extends PsiElement> elements) {
+  private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
+                                                     @NotNull ProblemsHolder holder,
+                                                     boolean isOnTheFly,
+                                                     @NotNull LocalInspectionToolSession session,
+                                                     @NotNull List<? extends PsiElement> elements) {
     PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned empty visitor then it should be skipped
-    if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
-      tool.inspectionStarted(session, isOnTheFly);
-      acceptElements(elements, visitor);
-    }
-    return visitor;
+    if (visitor == PsiElementVisitor.EMPTY_VISITOR) return false;
+
+    tool.inspectionStarted(session, isOnTheFly);
+    acceptElements(elements, visitor);
+    tool.inspectionFinished(session, holder);
+    return true;
   }
 
   @NotNull
@@ -75,7 +75,7 @@ public final class InspectionEngine {
     return visitor;
   }
 
-  public static void acceptElements(@NotNull List<? extends PsiElement> elements, @NotNull PsiElementVisitor elementVisitor) {
+  private static void acceptElements(@NotNull List<? extends PsiElement> elements, @NotNull PsiElementVisitor elementVisitor) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
@@ -114,7 +114,7 @@ public final class InspectionEngine {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
     List<Divider.DividedElements> allDivided = new ArrayList<>();
-    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, priorityRange, __ -> true, new CommonProcessors.CollectProcessor<>(allDivided));
+    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, priorityRange, Predicates.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
 
     List<PsiElement> elements = ContainerUtil.concat(
       (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
@@ -122,7 +122,7 @@ public final class InspectionEngine {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-      List<Pair<PsiFile, PsiElement>> injectedFiles = new ArrayList<>();
+      Set<Pair<PsiFile, PsiElement>> injectedFiles = new HashSet<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiLanguageInjectionHost) {
           List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
@@ -134,7 +134,7 @@ public final class InspectionEngine {
           }
         }
       }
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(injectedFiles, indicator, pair -> {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), indicator, pair -> {
         PsiFile injectedFile = pair.getFirst();
         PsiElement host = pair.getSecond();
         List<PsiElement> injectedElements = new ArrayList<>();
@@ -241,6 +241,7 @@ public final class InspectionEngine {
                                                                                                    @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
     withSession(file, restrictRange, restrictRange, isOnTheFly, session -> {
+      InspectListener publisher = file.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
       List<LocalInspectionToolWrapper> filtered = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(file.getProject()), file, isOnTheFly){
@@ -277,9 +278,16 @@ public final class InspectionEngine {
           }
         };
         LocalInspectionTool tool = toolWrapper.getTool();
-        createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
 
-        tool.inspectionFinished(session, holder);
+        long inspectionStartTime = System.nanoTime();
+        boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
+        long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
+
+        boolean needToReportStatsToQodana = inspectionWasRun && !isOnTheFly;
+        if (needToReportStatsToQodana) {
+          publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), holder.getResultCount(), toolWrapper,
+                                       InspectListener.InspectionKind.LOCAL, file, file.getProject());
+        }
 
         if (holder.hasResults()) {
           List<ProblemDescriptor> descriptors = ContainerUtil.filter(holder.getResults(), descriptor -> {
@@ -318,8 +326,7 @@ public final class InspectionEngine {
         }
         else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
-          if (globalTool instanceof GlobalSimpleInspectionTool) {
-            GlobalSimpleInspectionTool simpleTool = (GlobalSimpleInspectionTool)globalTool;
+          if (globalTool instanceof GlobalSimpleInspectionTool simpleTool) {
             ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
             ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
               @Override
@@ -401,51 +408,13 @@ public final class InspectionEngine {
     Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {
       String language = tool.getLanguage();
-      if (language == null) return true;
+      if (language == null || language.isBlank() || "any".equals(language)) return true;
 
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
       return map.computeIfAbsent(language, __ ->
-        ContainerUtil.intersects(elementDialectIds, getDialectIdsSpecifiedForTool(language, applyToDialects)));
+        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, language, applyToDialects));
     });
-  }
-
-  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
-    Language language = Language.findLanguageByID(langId);
-    Set<String> result;
-    if (language == null) {
-      // unknown language in plugin.xml, ignore
-      result = Collections.singleton(langId);
-    }
-    else if (language instanceof MetaLanguage) {
-      Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
-      result = new HashSet<>();
-      for (Language matchingLanguage : matchingLanguages) {
-        result.addAll(getLanguageWithDialects(matchingLanguage, applyToDialects));
-      }
-    }
-    else {
-      result = getLanguageWithDialects(language, applyToDialects);
-    }
-    return result;
-  }
-
-  private static @NotNull Set<String> getLanguageWithDialects(@NotNull Language language, boolean applyToDialects) {
-    List<Language> dialects = language.getDialects();
-    if (!applyToDialects || dialects.isEmpty()) return Collections.singleton(language.getID());
-
-    Set<String> result = new HashSet<>(1 + dialects.size());
-    result.add(language.getID());
-    addDialects(language, result);
-    return result;
-  }
-
-  private static void addDialects(@NotNull Language language, @NotNull Set<? super String> result) {
-    for (Language dialect : language.getDialects()) {
-      if (result.add(dialect.getID())) {
-        addDialects(dialect, result);
-      }
-    }
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {
@@ -456,7 +425,7 @@ public final class InspectionEngine {
     return dialectIds;
   }
 
-  public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
+  private static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
     Set<String> dialectIds = new HashSet<>();
     Set<Language> processedLanguages = new HashSet<>();
     addDialects(elements, processedLanguages, dialectIds);

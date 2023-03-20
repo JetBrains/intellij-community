@@ -97,7 +97,6 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
    * Method is designed to be overwritten and exception is used to simplify this process: children do not need parent's result.
    * They just call super.
    *
-   * @throws BadDataException
    */
   protected void validateView() throws BadDataException {
     if (myView.getSelectedMemberInfos().isEmpty()) {

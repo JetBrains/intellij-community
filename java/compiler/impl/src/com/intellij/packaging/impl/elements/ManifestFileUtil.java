@@ -16,8 +16,9 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -41,8 +42,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -110,12 +114,19 @@ public final class ManifestFileUtil {
   }
 
   @Nullable
-  public static VirtualFile suggestManifestFileDirectory(@NotNull Project project, @Nullable Module module) {
-    OrderEnumerator enumerator = module != null ? OrderEnumerator.orderEntries(module) : OrderEnumerator.orderEntries(project);
-    final VirtualFile[] files = enumerator.withoutDepModules().withoutLibraries().withoutSdk().productionOnly().sources().getRoots();
-    if (files.length > 0) {
-      return files[0];
+  public static VirtualFile suggestManifestFileDirectory(@NotNull Project project, @Nullable Module selectedModule) {
+    Module[] modules = selectedModule != null ? new Module[] {selectedModule} : ModuleManager.getInstance(project).getModules();
+    VirtualFile resourceRoot = null;
+    VirtualFile sourceRoot = null;
+    for (Module module : modules) {
+      if (resourceRoot == null) {
+        resourceRoot = ContainerUtil.getFirstItem(ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE));
+      }
+      if (ArtifactUtil.areResourceFilesFromSourceRootsCopiedToOutput(module) && sourceRoot == null)
+        sourceRoot = ContainerUtil.getFirstItem(ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.SOURCE));
     }
+    if (resourceRoot != null) return resourceRoot;
+    if (sourceRoot != null) return sourceRoot;
     return suggestBaseDir(project, null);
   }
 

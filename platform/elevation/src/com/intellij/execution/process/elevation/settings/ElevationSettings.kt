@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.elevation.settings
 
 import com.intellij.execution.process.elevation.ElevationBundle
@@ -12,8 +12,7 @@ import com.intellij.openapi.ui.Messages.CANCEL
 import com.intellij.openapi.ui.Messages.YES
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.messages.Topic
-import kotlin.time.ExperimentalTime
-import kotlin.time.minutes
+import kotlin.time.Duration.Companion.minutes
 
 @Service
 @State(name = "Elevation", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)])
@@ -22,9 +21,7 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
     @JvmStatic
     fun getInstance() = service<ElevationSettings>()
 
-    @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-    @OptIn(ExperimentalTime::class)
-    private val DEFAULT_GRACE_PERIOD_MS = 15.minutes.toLongMilliseconds()
+    private val DEFAULT_GRACE_PERIOD_MS = 15.minutes.inWholeMilliseconds
   }
 
   private val options = ElevationOptions()
@@ -117,7 +114,6 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
       val TOPIC = Topic.create("ElevationSettings.Listener", Listener::class.java)
     }
 
-    @JvmDefault
     fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) = Unit
   }
 

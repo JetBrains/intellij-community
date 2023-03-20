@@ -17,10 +17,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import static java.util.Collections.*;
 /**
  * @author Maxim.Mossienko
  */
-public class FileReferenceSet {
+public class FileReferenceSet implements FileReferenceSetParameters {
   private static final Logger LOG = Logger.getInstance(FileReferenceSet.class);
 
   private static final FileType[] EMPTY_FILE_TYPES = {};
@@ -116,16 +117,15 @@ public class FileReferenceSet {
    * This should be removed.
    * @deprecated use {@link FileReference#getContexts()} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected Collection<PsiFileSystemItem> getExtraContexts() {
     return emptyList();
   }
 
-  public static FileReferenceSet createSet(@NotNull PsiElement element,
-                                           final boolean soft,
-                                           boolean endingSlashNotAllowed,
-                                           final boolean urlEncoded) {
+  public static @NotNull FileReferenceSet createSet(@NotNull PsiElement element,
+                                                    final boolean soft,
+                                                    boolean endingSlashNotAllowed,
+                                                    final boolean urlEncoded) {
 
     final TextRange range = ElementManipulators.getValueTextRange(element);
     int offset = range.getStartOffset();
@@ -356,26 +356,29 @@ public class FileReferenceSet {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
-      final ArrayList<PsiFileSystemItem> list = new ArrayList<>();
+      final Collection<PsiFileSystemItem> result = new SmartList<>();
       final Project project = file.getProject();
-      boolean hasRealContexts = false;
+
+      CommonProcessors.CollectProcessor<PsiFileSystemItem> collector = new CommonProcessors.CollectProcessor<>(result);
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
-          if (!list.isEmpty() && helper.isFallback()) {
+          if (!result.isEmpty() && helper.isFallback()) {
             continue;
           }
-          Collection<PsiFileSystemItem> contexts = helper.getContexts(project, virtualFile);
-          for (PsiFileSystemItem context : contexts) {
-            list.add(context);
-            hasRealContexts |= !(context instanceof FileReferenceResolver);
+          if (!helper.processContexts(this, virtualFile, false, collector)) {
+            break;
           }
         }
       }
-      if (!list.isEmpty()) {
-        if (!hasRealContexts) {
-          list.addAll(getParentDirectoryContext());
+
+      if (!result.isEmpty()) {
+        if (!ContainerUtil.exists(result, el -> !(el instanceof FileReferenceResolver))) {
+          result.addAll(getParentDirectoryContext());
         }
-        return list;
+        return result
+          .stream()
+          .distinct()
+          .toList();
       }
       return getParentDirectoryContext();
     }
@@ -462,7 +465,7 @@ public class FileReferenceSet {
       if (value != null) {
         Collection<FileTargetContext> roots;
         if (value instanceof TargetContextEvaluator) {
-          roots = ((TargetContextEvaluator)value).getTargetContexts(file);
+          roots = ((TargetContextEvaluator)value).getTargetContexts(this, file);
         }
         else {
           Collection<PsiFileSystemItem> items = value.fun(file);
@@ -499,8 +502,8 @@ public class FileReferenceSet {
     Set<FileTargetContext> list = new LinkedHashSet<>();
 
     Project project = originalFile.getProject();
-    boolean hasRealContexts = false;
 
+    CommonProcessors.CollectProcessor<FileTargetContext> processor = new CommonProcessors.CollectProcessor<>(list);
     FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
     for (FileReferenceHelper helper : helpers) {
       if (helper.isMine(project, virtualFile)) {
@@ -508,17 +511,14 @@ public class FileReferenceSet {
           continue;
         }
 
-        Collection<FileTargetContext> contexts = helper.getTargetContexts(project, virtualFile, absolutePathReference);
-
-        for (FileTargetContext context : contexts) {
-          list.add(context);
-          hasRealContexts |= !(context.getFileSystemItem() instanceof FileReferenceResolver);
+        if (!helper.processTargetContexts(this, virtualFile, processor)) {
+          break;
         }
       }
     }
 
     if (!list.isEmpty()) {
-      if (!hasRealContexts) {
+      if (!ContainerUtil.exists(list, el -> !(el.getFileSystemItem() instanceof FileReferenceResolver))) {
         for (PsiFileSystemItem item : getParentDirectoryContext()) {
           list.add(new FileTargetContext(item));
         }
@@ -528,14 +528,19 @@ public class FileReferenceSet {
     return toTargetContexts(getParentDirectoryContext());
   }
 
-  public @NlsSafe String getPathString() {
+  @Override
+  public @NlsSafe @NotNull String getPathString() {
     return myPathString;
   }
 
+  @Override
   public boolean isAbsolutePathReference() {
     return myPathString.startsWith(getSeparatorString());
   }
 
+  /**
+   * @return true, if contexts from {@link FileContextProvider} can be used as the default
+   */
   protected boolean useIncludingFileAsContext() {
     return true;
   }
@@ -580,7 +585,8 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  private static Collection<FileTargetContext> getTargetAbsoluteTopLevelContexts(@NotNull PsiFile file) {
+  private static Collection<FileTargetContext> getTargetAbsoluteTopLevelContexts(@NotNull FileReferenceSetParameters parameters,
+                                                                                 @NotNull PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return emptyList();
 
@@ -590,13 +596,13 @@ public class FileReferenceSet {
 
     Set<FileTargetContext> result = new LinkedHashSet<>();
     Project project = file.getProject();
+    CommonProcessors.CollectProcessor<FileTargetContext> processor = new CommonProcessors.CollectProcessor<>(result);
     for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       if (helper.isMine(project, virtualFile)) {
         if (helper.isFallback() && !result.isEmpty()) {
           continue;
         }
-        Collection<FileTargetContext> roots = helper.getTargetContexts(project, virtualFile, true);
-        result.addAll(roots);
+        if (!helper.processTargetContexts(parameters, virtualFile, processor)) break;
       }
     }
     return new ArrayList<>(result);
@@ -656,14 +662,14 @@ public class FileReferenceSet {
      * Returns target file locations for "Create File" quick fixes.
      */
     @NotNull
-    Collection<FileTargetContext> getTargetContexts(@NotNull PsiFile file);
+    Collection<FileTargetContext> getTargetContexts(@NotNull FileReferenceSetParameters parameters, @NotNull PsiFile file);
   }
 
   private static class AbsoluteTopLevelEvaluator implements Function<PsiFile, Collection<PsiFileSystemItem>>, TargetContextEvaluator {
     @Override
     @NotNull
-    public Collection<FileTargetContext> getTargetContexts(@NotNull PsiFile file) {
-      return getTargetAbsoluteTopLevelContexts(file);
+    public Collection<FileTargetContext> getTargetContexts(@NotNull FileReferenceSetParameters parameters, @NotNull PsiFile file) {
+      return getTargetAbsoluteTopLevelContexts(parameters, file);
     }
 
     @Override

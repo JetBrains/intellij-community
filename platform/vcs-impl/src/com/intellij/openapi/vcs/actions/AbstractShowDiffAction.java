@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -18,12 +15,13 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractShowDiffAction extends DumbAwareAction {
@@ -32,12 +30,19 @@ public abstract class AbstractShowDiffAction extends DumbAwareAction {
     updateDiffAction(e.getPresentation(), e.getDataContext());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @CalledInAny
   protected static void updateDiffAction(@NotNull Presentation presentation,
                                          @NotNull DataContext context) {
     presentation.setEnabled(isEnabled(context, true));
     presentation.setVisible(isVisible(context));
   }
 
+  @CalledInAny
   protected static boolean isVisible(@NotNull DataContext context) {
     Project project = context.getData(CommonDataKeys.PROJECT);
     return project != null && hasDiffProviders(project);
@@ -46,9 +51,10 @@ public abstract class AbstractShowDiffAction extends DumbAwareAction {
   private static boolean hasDiffProviders(@NotNull Project project) {
     return Stream.of(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss())
       .map(AbstractVcs::getDiffProvider)
-      .anyMatch(Objects::nonNull);
+      .anyMatch(nonNull());
   }
 
+  @CalledInAny
   protected static boolean isEnabled(@NotNull DataContext context, boolean disableIfRunning) {
     Project project = context.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;

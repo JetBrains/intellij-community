@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
@@ -29,14 +29,13 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
@@ -51,14 +50,15 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 /**
  * @author Vladislav.Soroka
  */
-public class GradleAttachSourcesProvider implements AttachSourcesProvider {
-  @NotNull
-  @Override
-  public Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, PsiFile psiFile) {
-    Map<LibraryOrderEntry, Module> gradleModules = getGradleModules(orderEntries);
-    if (gradleModules.isEmpty()) return Collections.emptyList();
+final class GradleAttachSourcesProvider implements AttachSourcesProvider {
 
-    return Collections.singleton(new AttachSourcesAction() {
+  @Override
+  public @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
+                                                                       @NotNull PsiFile psiFile) {
+    Map<LibraryOrderEntry, Module> gradleModules = getGradleModules(orderEntries);
+    if (gradleModules.isEmpty()) return List.of();
+
+    return List.of(new AttachSourcesAction() {
       @Override
       public String getName() {
         return GradleBundle.message("gradle.action.download.sources");
@@ -70,7 +70,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
       }
 
       @Override
-      public ActionCallback perform(List<LibraryOrderEntry> orderEntries) {
+      public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
         Map<LibraryOrderEntry, Module> gradleModules = getGradleModules(orderEntries);
         if (gradleModules.isEmpty()) return ActionCallback.REJECTED;
         final ActionCallback resultWrapper = new ActionCallback();
@@ -91,10 +91,10 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
 
         final String gradlePath = gradleModuleData.getGradlePath();
 
-        String sourceArtifactNotation = getSourcesArtifactNotation(artifactIdCandidate -> {
+        String sourceArtifactNotation = getSourcesArtifactNotation(artifactCoordinates, artifactIdCandidate -> {
           VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
           return rootFiles.length == 0 || ContainerUtil.exists(rootFiles, file -> file.getName().startsWith(artifactIdCandidate));
-        }, artifactCoordinates);
+        });
         final String sourcesLocationFilePath;
         final File sourcesLocationFile;
         try {
@@ -152,7 +152,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
         ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
         settings.setExecutionName(getName());
         settings.setExternalProjectPath(gradleModuleData.getDirectoryToRunTask());
-        settings.setTaskNames(Collections.singletonList(gradleModuleData.getTaskPath(taskName, true)));
+        settings.setTaskNames(List.of(gradleModuleData.getTaskPath(taskName, true)));
         settings.setVmOptions(gradleVmOptions);
         settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
         ExternalSystemUtil.runTask(
@@ -160,7 +160,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
           new TaskCallback() {
             @Override
             public void onSuccess() {
-              VirtualFile classesFile = libraryOrderEntry.getFiles(OrderRootType.CLASSES)[0];
+              VirtualFile classesFile = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES)[0];
               File sourceJar = getSourceFile(artifactCoordinates, classesFile, project, settings.getExternalProjectPath());
               if (sourceJar == null) {
                 try {
@@ -201,9 +201,9 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
     });
   }
 
-  @NotNull
-  @ApiStatus.Internal
-  static String getSourcesArtifactNotation(@NotNull Predicate<String> artifactIdChecker, String artifactCoordinates) {
+  @VisibleForTesting
+  static @NotNull String getSourcesArtifactNotation(@NotNull String artifactCoordinates,
+                                                    @NotNull Predicate<String> artifactIdChecker) {
     String groupNameVersionCoordinates;
     String[] split = artifactCoordinates.split(":");
     if (split.length == 4) {
@@ -221,11 +221,10 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
     return groupNameVersionCoordinates + ":sources";
   }
 
-  @Nullable
-  private static File getSourceFile(@NotNull String artifactCoordinates,
-                                    VirtualFile classesFile,
-                                    @NotNull Project project,
-                                    @NotNull @NlsSafe String projectPath) {
+  private static @Nullable File getSourceFile(@NotNull String artifactCoordinates,
+                                              VirtualFile classesFile,
+                                              @NotNull Project project,
+                                              @NotNull @NlsSafe String projectPath) {
     LibraryData data = new LibraryData(GradleConstants.SYSTEM_ID, artifactCoordinates);
     data.addPath(LibraryPathType.BINARY, VfsUtil.getLocalFile(classesFile).getPath());
     BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.getInstance().guessBuildLayoutParameters(project, projectPath);
@@ -236,7 +235,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
     return iterator.hasNext() ? new File(iterator.next()) : null;
   }
 
-  private static Map<LibraryOrderEntry, Module> getGradleModules(List<LibraryOrderEntry> libraryOrderEntries) {
+  private static @NotNull Map<LibraryOrderEntry, Module> getGradleModules(@NotNull List<? extends LibraryOrderEntry> libraryOrderEntries) {
     Map<LibraryOrderEntry, Module> result = new HashMap<>();
     for (LibraryOrderEntry entry : libraryOrderEntries) {
       if (entry.isModuleLevel()) continue;

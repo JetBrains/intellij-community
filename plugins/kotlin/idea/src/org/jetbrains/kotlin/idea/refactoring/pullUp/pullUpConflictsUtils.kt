@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
@@ -16,8 +16,9 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
@@ -26,10 +27,11 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.search.useScope
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.base.util.useScope
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -38,9 +40,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
 fun checkConflicts(
@@ -88,7 +88,7 @@ private fun collectConflicts(
             checkClashWithSuperDeclaration(member, memberDescriptor, conflicts)
             checkAccidentalOverrides(member, memberDescriptor, conflicts)
             checkInnerClassToInterface(member, memberDescriptor, conflicts)
-            checkVisibility(memberInfo, memberDescriptor, conflicts)
+            checkVisibility(memberInfo, memberDescriptor, conflicts, resolutionFacade.languageVersionSettings)
         }
     }
     checkVisibilityInAbstractedMembers(memberInfos, pullUpData.resolutionFacade, conflicts)
@@ -224,12 +224,9 @@ private fun KotlinPullUpData.checkAccidentalOverrides(
 
             for (it in sequence) {
                 val subClassDescriptor = it.resolveToDescriptorWrapperAware(resolutionFacade) as ClassDescriptor
-                val substitutor = getTypeSubstitutor(
-                    targetClassDescriptor.defaultType,
-                    subClassDescriptor.defaultType
-                ) ?: TypeSubstitutor.EMPTY
+                val substitution = getTypeSubstitution(targetClassDescriptor.defaultType, subClassDescriptor.defaultType).orEmpty()
 
-                val memberDescriptorInSubClass = memberDescriptorInTargetClass.substitute(substitutor) as? CallableMemberDescriptor
+                val memberDescriptorInSubClass = memberDescriptorInTargetClass.substitute(substitution) as? CallableMemberDescriptor
                 val clashingMemberDescriptor = memberDescriptorInSubClass?.let {
                     subClassDescriptor.findCallableMemberBySignature(it)
                 } ?: continue
@@ -253,7 +250,7 @@ private fun KotlinPullUpData.checkInnerClassToInterface(
     conflicts: MultiMap<PsiElement, String>
 ) {
     if (isInterfaceTarget && memberDescriptor is ClassDescriptor && memberDescriptor.isInner) {
-        val message = KotlinBundle.message("text.inner.class.0.cannot.be.moved.to.intefrace", memberDescriptor.renderForConflicts())
+        val message = KotlinBundle.message("text.inner.class.0.cannot.be.moved.to.interface", memberDescriptor.renderForConflicts())
         conflicts.putValue(member, message.capitalize())
     }
 }
@@ -261,13 +258,14 @@ private fun KotlinPullUpData.checkInnerClassToInterface(
 private fun KotlinPullUpData.checkVisibility(
     memberInfo: KotlinMemberInfo,
     memberDescriptor: DeclarationDescriptor,
-    conflicts: MultiMap<PsiElement, String>
+    conflicts: MultiMap<PsiElement, String>,
+    languageVersionSettings: LanguageVersionSettings
 ) {
-    fun reportConflictIfAny(targetDescriptor: DeclarationDescriptor) {
+    fun reportConflictIfAny(targetDescriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) {
         if (targetDescriptor in memberDescriptors.values) return
         val target = (targetDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi() ?: return
         if (targetDescriptor is DeclarationDescriptorWithVisibility
-            && !DescriptorVisibilities.isVisibleIgnoringReceiver(targetDescriptor, targetClassDescriptor)
+            && !DescriptorVisibilityUtils.isVisibleIgnoringReceiver(targetDescriptor, targetClassDescriptor, languageVersionSettings)
         ) {
             val message = RefactoringBundle.message(
                 "0.uses.1.which.is.not.accessible.from.the.superclass",
@@ -286,7 +284,7 @@ private fun KotlinPullUpData.checkVisibility(
                 val typeInTargetClass = sourceToTargetClassSubstitutor.substitute(returnType, Variance.INVARIANT)
                 val descriptorToCheck = typeInTargetClass?.constructor?.declarationDescriptor as? ClassDescriptor
                 if (descriptorToCheck != null) {
-                    reportConflictIfAny(descriptorToCheck)
+                    reportConflictIfAny(descriptorToCheck, languageVersionSettings)
                 }
             }
         }
@@ -301,8 +299,7 @@ private fun KotlinPullUpData.checkVisibility(
                     val context = resolutionFacade.analyze(expression)
                     expression.references
                         .flatMap { (it as? KtReference)?.resolveToDescriptors(context) ?: emptyList() }
-                        .forEach(::reportConflictIfAny)
-
+                        .forEach { reportConflictIfAny(it, languageVersionSettings) }
                 }
             }
         )

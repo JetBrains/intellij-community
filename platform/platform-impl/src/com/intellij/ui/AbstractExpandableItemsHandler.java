@@ -9,10 +9,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
@@ -23,9 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   protected final ComponentType myComponent;
@@ -36,19 +39,22 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     @Override
     protected void paintComponent(Graphics g) {
       Insets insets = getInsets();
-      Graphics2D g2d = (Graphics2D)g;
+      Graphics2D g2d = (Graphics2D)g.create();
       double scale = JBUIScale.sysScale((Graphics2D)g);
       double devTop = insets.top * scale;
       // A workaround for IDEA-183253. If insets.top is *.5 in device space, then move up the image by one device pixel.
       if (devTop + 0.5 == Math.floor(devTop + 0.5)) {
-        g2d = (Graphics2D)g2d.create();
         double devPix = 1 / scale;
         g2d.translate(0, -devPix);
       }
       try {
+        if (transparentPopup) {
+          g2d.setComposite(AlphaComposite.Src);
+        }
         UIUtil.drawImage(g2d, myImage, insets.left, insets.top, null);
-      } finally {
-        if (g2d != g) g2d.dispose();
+      }
+      finally {
+        g2d.dispose();
       }
     }
   };
@@ -58,6 +64,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
+  private int borderArc = 0;
+  private boolean transparentPopup;
 
   public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
                                        @NotNull Component child, @NotNull Container validationParent) {
@@ -187,6 +195,10 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return myEnabled;
   }
 
+  protected void setBorderArc(int borderArc) {
+    this.borderArc = borderArc;
+  }
+
   @NotNull
   @Override
   public Collection<KeyType> getExpandedItems() {
@@ -194,7 +206,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private void updateCurrentSelectionOnMoveOrResize() {
-    if (UIUtil.isClientPropertyTrue(myComponent, IGNORE_ITEM_SELECTION)) {
+    if (ClientProperty.isTrue(myComponent, IGNORE_ITEM_SELECTION)) {
       hideHint();
     }
     else {
@@ -207,7 +219,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
-    if (UIUtil.isClientPropertyTrue(myComponent, IGNORE_MOUSE_HOVER)) return;
+    if (ClientProperty.isTrue(myComponent, IGNORE_MOUSE_HOVER)) return;
     KeyType selected = getCellKeyForPoint(e.getPoint());
     if (forceUpdate || !Comparing.equal(myKey, selected)) {
       handleSelectionChange(selected, true);
@@ -220,7 +232,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   protected void handleSelectionChange(KeyType selected) {
-    handleSelectionChange(UIUtil.isClientPropertyTrue(myComponent, IGNORE_ITEM_SELECTION) ? myKey : selected, false);
+    handleSelectionChange(ClientProperty.isTrue(myComponent, IGNORE_ITEM_SELECTION) ? myKey : selected, false);
   }
 
   protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
@@ -262,6 +274,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
     else {
       Rectangle bounds = new Rectangle(location, myTipComponent.getPreferredSize());
+      myPopup.setTransparent(transparentPopup);
       myPopup.setBounds(bounds);
       myPopup.onAncestorFocusLost(() -> onFocusLost());
       myPopup.setVisible(noIntersections(bounds));
@@ -271,9 +284,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected boolean isPopup() {
     Window window = SwingUtilities.getWindowAncestor(myComponent);
-    return window != null
-           && !(window instanceof Dialog || window instanceof Frame)
-           && !isHintsAllowed(window);
+    return UIUtil.isSimpleWindow(window) && !isHintsAllowed(window);
   }
 
   private static boolean isHintsAllowed(Window window) {
@@ -331,23 +342,40 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   }
 
+  private static SelectablePanel findSelectablePanel(@NotNull JComponent renderer) {
+    Component result = renderer;
+    while (result instanceof ExpandedItemRendererComponentWrapper) {
+      result = ExpandedItemRendererComponentWrapper.unwrap(result);
+    }
+
+    if (result instanceof GroupedElementsRenderer.MyComponent myComponent) {
+      result = myComponent.getRenderer().getItemComponent();
+    }
+
+    return result instanceof SelectablePanel selectablePanel ? selectablePanel : null;
+  }
+
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
-    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
+    ClientProperty.put(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
-    ComponentUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
+    ClientProperty.put(myComponent, EXPANDED_RENDERER, null);
     if (rendererAndBounds == null) return null;
 
     JComponent renderer = ObjectUtils.tryCast(rendererAndBounds.first, JComponent.class);
     if (renderer == null) return null;
-    if (UIUtil.isClientPropertyTrue(renderer, RENDERER_DISABLED)) return null;
-
-    if (UIUtil.isClientPropertyTrue(rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS)) {
-      rendererAndBounds.getSecond().translate(renderer.getX(), renderer.getY());
-      rendererAndBounds.getSecond().setSize(renderer.getSize());
-    }
+    if (ClientProperty.isTrue(renderer, RENDERER_DISABLED)) return null;
 
     myKeyItemBounds = rendererAndBounds.second;
+
+    if (ClientProperty.isTrue(renderer, USE_RENDERER_BOUNDS)) {
+      myKeyItemBounds.translate(renderer.getX(), renderer.getY());
+      myKeyItemBounds.setSize(renderer.getSize());
+    }
+
+    SelectablePanel selectablePanel = findSelectablePanel(renderer);
+    int arc = selectablePanel == null ? borderArc : selectablePanel.getSelectionArc();
+    transparentPopup = arc > 0;
 
     Rectangle cellBounds = myKeyItemBounds;
     Rectangle visibleRect = getVisibleRect(key);
@@ -366,34 +394,72 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     Rectangle screen = ScreenUtil.getScreenRectangle(location);
 
-    int borderWidth = isPaintBorder() ? 1 : 0;
-    int width = Math.min(screen.width + screen.x - location.x - borderWidth, cellMaxX - visMaxX);
+    // exclude case when myComponent touches screen boundary with its right edge, and popup would be displayed on adjacent screen
+    if (location.x == screen.x) return null;
+
+    int borderSize = isPaintBorder() ? 1 : 0;
+    int width = Math.min(screen.width + screen.x - location.x - borderSize, cellMaxX - visMaxX);
     int height = cellBounds.height;
 
     if (width <= 0 || height <= 0) return null;
 
-    Dimension size = getImageSize(width, height);
-    myImage = UIUtil.createImage(myComponent, size.width, size.height, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g;
+    if (arc > 0) {
+      width += borderSize;
+      height += borderSize * 2;
+      int clippedY = 0;
+      int clippedHeight = height;
+      if (selectablePanel != null) {
+        width -= selectablePanel.getSelectionInsets().right;
+        if (width <= 0) {
+          return null;
+        }
+        renderer.setBounds(cellBounds);
+        Rectangle rect = calcRectInParent(selectablePanel, renderer);
+        clippedY = rect.y;
+        clippedHeight = rect.height + borderSize * 2;
+      }
+      myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_ARGB);
+      g = myImage.createGraphics();
+      //noinspection GraphicsSetClipInspection
+      g.setClip(new RoundRectangle2D.Float(-arc, clippedY, width + arc, clippedHeight, arc, arc));
 
-    Graphics2D g = myImage.createGraphics();
-    g.setClip(null);
-    doFillBackground(height, width, g);
-    g.translate(cellBounds.x - visMaxX, 0);
-    doPaintTooltipImage(renderer, cellBounds, g, key);
+      if (borderSize > 0) {
+        location.y -= borderSize;
+        g.setColor(getBorderColor());
+        g.fillRect(0, 0, width, height);
+        //noinspection GraphicsSetClipInspection
+        g.setClip(new RoundRectangle2D.Float(-arc, clippedY + borderSize, width + arc - borderSize, clippedHeight - borderSize * 2, arc, arc));
+      }
+      doFillBackground(height, width, g);
+      g.translate(cellBounds.x - visMaxX, borderSize);
+      doPaintTooltipImage(renderer, cellBounds, g, key);
+      myTipComponent.setBorder(null);
+    }
+    else {
+      myImage = UIUtil.createImage(myComponent, width, height, BufferedImage.TYPE_INT_RGB);
+      g = myImage.createGraphics();
+      //noinspection GraphicsSetClipInspection
+      g.setClip(null);
+      doFillBackground(height, width, g);
 
-    CustomLineBorder border = null;
-    if (borderWidth > 0) {
-      border = new CustomLineBorder(getBorderColor(), borderWidth, 0, borderWidth, borderWidth);
-      Insets insets = border.getBorderInsets(myTipComponent);
-      location.y -= insets.top;
-      JBInsets.addTo(size, insets);
+      if (borderSize > 0) {
+        CustomLineBorder border = new CustomLineBorder(getBorderColor(), borderSize, 0, borderSize, borderSize);
+        location.y -= borderSize;
+        width += borderSize;
+        height += borderSize * 2;
+        myTipComponent.setBorder(border);
+      } else {
+        myTipComponent.setBorder(null);
+      }
+      g.translate(cellBounds.x - visMaxX, 0);
+      doPaintTooltipImage(renderer, cellBounds, g, key);
     }
 
     g.dispose();
     myRendererPane.remove(renderer);
 
-    myTipComponent.setBorder(border);
-    myTipComponent.setPreferredSize(size);
+    myTipComponent.setPreferredSize(new Dimension(width, height));
     return location;
   }
 
@@ -403,10 +469,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected Color getBorderColor() {
     return JBColor.border();
-  }
-
-  protected Dimension getImageSize(final int width, final int height) {
-    return new Dimension(width, height);
   }
 
   protected void doFillBackground(int height, int width, Graphics2D g) {
@@ -426,4 +488,27 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   protected abstract Pair<Component, Rectangle> getCellRendererAndBounds(KeyType key);
 
   protected abstract KeyType getCellKeyForPoint(Point point);
+
+  private static @NotNull Rectangle calcRectInParent(@NotNull Container child, @NotNull JComponent parent) {
+    List<Container> chain = new ArrayList<>();
+    Container container = child;
+    while (container != parent) {
+      chain.add(container);
+      container = container.getParent();
+      if (container == null) {
+        throw new IllegalArgumentException("Source is not part of " + parent);
+      }
+    }
+
+    Rectangle result = new Rectangle();
+    parent.doLayout();
+    for (int i = chain.size() - 1; i >= 0; i--) {
+      Container c = chain.get(i);
+      c.doLayout();
+      result.x += c.getX();
+      result.y += c.getY();
+    }
+    result.setSize(child.getSize());
+    return result;
+  }
 }

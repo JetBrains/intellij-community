@@ -1,17 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.ensureActive
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.merge.MergeStrategy
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.MutableUpdateResult
 import org.jetbrains.settingsRepository.UpdateResult
+import kotlin.coroutines.coroutineContext
 
-internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
+internal class Reset(manager: GitRepositoryManager) : Pull(manager) {
   suspend fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
     @NlsSafe val message = if (toTheirs)
       "Overwrite local to ${manager.repository.upstream}"
@@ -21,7 +22,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
     val resetResult = repository.resetHard()
     val result = MutableUpdateResult(resetResult.updated.keys, resetResult.removed)
 
-    indicator?.checkCanceled()
+    coroutineContext.ensureActive()
 
     val commitMessage = commitMessageFormatter.message(message)
     // grab added/deleted/renamed/modified files
@@ -78,7 +79,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
 
       // must be performed only after initial pull, so, local changes will be relative to remote files
       localRepositoryInitializer()
-      (manager as GitRepositoryManager).commit(indicator)
+      (manager as GitRepositoryManager).commit()
     }
     return result
   }

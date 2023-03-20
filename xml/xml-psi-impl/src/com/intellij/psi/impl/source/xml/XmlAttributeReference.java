@@ -66,8 +66,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String newName = newElementName;
-    if (getDescriptor() instanceof XmlAttributeDescriptorEx) {
-      final XmlAttributeDescriptorEx xmlAttributeDescriptorEx = (XmlAttributeDescriptorEx)getDescriptor();
+    if (getDescriptor() instanceof XmlAttributeDescriptorEx xmlAttributeDescriptorEx) {
       final String s = xmlAttributeDescriptorEx.handleTargetRename(newElementName);
       if (s != null) {
         final String prefix = myAttribute.getNamespacePrefix();
@@ -79,8 +78,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner owner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner owner) {
       if (owner.getMetaData() instanceof XmlElementDescriptor) {
         myAttribute.setName(owner.getMetaData().getName());
       }

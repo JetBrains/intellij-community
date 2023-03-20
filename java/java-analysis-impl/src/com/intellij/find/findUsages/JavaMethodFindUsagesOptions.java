@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isOverridingMethods;
   public boolean isImplementingMethods;

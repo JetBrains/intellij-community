@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -15,66 +15,61 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
+import java.util.List;
 
 public abstract class CloseEditorsActionBase extends AnAction implements DumbAware {
-  protected ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
-    final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<>();
-    final DataContext dataContext = event.getDataContext();
-    final Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
-    final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
-    final EditorWindow[] windows;
-    if (editorWindow != null){
-      windows = new EditorWindow[]{ editorWindow };
-    }
-    else {
-      windows = editorManager.getWindows ();
-    }
-    final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+  protected List<Pair<EditorComposite, EditorWindow>> getFilesToClose(@NotNull AnActionEvent event) {
+    List<Pair<EditorComposite, EditorWindow>> result = new ArrayList<>();
+    DataContext dataContext = event.getDataContext();
+    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
+    EditorWindow[] windows = editorWindow == null ? fileEditorManager.getWindows() : new EditorWindow[]{editorWindow};
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
     if (fileStatusManager != null) {
-      for (int i = 0; i != windows.length; ++ i) {
-        final EditorWindow window = windows [i];
-        final EditorComposite [] editors = window.getEditors ();
-        for (final EditorComposite editor : editors) {
-          if (isFileToClose(editor, window) || isFileToCloseInContext(event.getDataContext(), editor, window)) {
-            res.add(Pair.create(editor, window));
+      for (int i = 0; i != windows.length; ++i) {
+        EditorWindow window = windows[i];
+        for (EditorComposite composite : window.getAllComposites()) {
+          if (isFileToClose(composite, window, fileEditorManager) || isFileToCloseInContext(event.getDataContext(), composite, window)) {
+            result.add(new Pair<>(composite, window));
           }
         }
       }
     }
-    return res;
+    return result;
   }
 
-  protected abstract boolean isFileToClose(EditorComposite editor, EditorWindow window);
+  protected abstract boolean isFileToClose(@NotNull EditorComposite editor,
+                                           @NotNull EditorWindow window,
+                                           @NotNull FileEditorManagerEx fileEditorManager);
 
   protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite editor, EditorWindow window) {
     return false;
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, () -> {
-        final ArrayList<Pair<EditorComposite, EditorWindow>> filesToClose = getFilesToClose (e);
-        for (int i = 0; i != filesToClose.size (); ++ i) {
+        List<Pair<EditorComposite, EditorWindow>> filesToClose = getFilesToClose(e);
+        for (int i = 0; i != filesToClose.size(); ++i) {
           final Pair<EditorComposite, EditorWindow> we = filesToClose.get(i);
-          we.getSecond ().closeFile (we.getFirst ().getFile ());
+          we.getSecond().closeFile(we.getFirst().getFile());
         }
       }, IdeBundle.message("command.close.all.unmodified.editors"), null
     );
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event){
-    final Presentation presentation = event.getPresentation();
-    final DataContext dataContext = event.getDataContext();
-    final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
-    final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
+  public void update(@NotNull AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+    DataContext dataContext = event.getDataContext();
+    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
+    boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
     presentation.setText(getPresentationText(inSplitter));
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     boolean enabled = (project != null && isActionEnabled(project, event));
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setVisible(enabled);
@@ -84,7 +79,12 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     }
   }
 
-  protected boolean isActionEnabled(final Project project, final AnActionEvent event) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  protected boolean isActionEnabled(Project project, AnActionEvent event) {
     return getFilesToClose(event).size() > 0;
   }
 

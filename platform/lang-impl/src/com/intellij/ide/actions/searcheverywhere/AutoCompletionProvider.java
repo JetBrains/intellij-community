@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -54,7 +55,7 @@ final class AutoCompletionProvider {
     @Nls
     @Override
     public @NotNull String getGroupName() {
-      return "Autocompletion";
+      return IdeBundle.message("searcheverywhere.autocompletion.tab.name");
     }
 
     @Override

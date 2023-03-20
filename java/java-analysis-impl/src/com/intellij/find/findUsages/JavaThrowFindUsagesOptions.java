@@ -19,9 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class JavaThrowFindUsagesOptions extends JavaFindUsagesOptions {
   private ThrowSearchUtil.Root root;
 

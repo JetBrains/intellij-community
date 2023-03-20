@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.instrument;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
@@ -14,7 +14,7 @@ import static com.intellij.openapi.application.ex.ApplicationManagerEx.getApplic
 import static com.intellij.util.ui.EDT.isCurrentThreadEdt;
 
 public final class LockWrappingClassVisitor extends ClassVisitor {
-  private static final @NonNls Set<String> METHODS_TO_WRAP = ContainerUtil.set(
+  private static final @NonNls Set<String> METHODS_TO_WRAP = Set.of(
     "paint",
     "paintComponent",
     "paintChildren",
@@ -101,6 +101,8 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
     }
   }
 
+  private static final boolean ourImplicitReadOnEDTDisabled = StartupUtil.isImplicitReadOnEDTDisabled();
+
   /**
    * Acquires IW lock if it's not acquired by the current thread.
    * <p>
@@ -113,10 +115,11 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
     if (!isCurrentThreadEdt()) return false; // do not do anything for non-EDT calls
 
     ApplicationEx application = getApplicationEx();
-    if (application.isWriteThread()) return false;
+    // Don't need WriteIntent lock if implicit read is enabled: it is already
+    // taken on EDT (write thread is EDT now no matter what)
+    if (application.isWriteIntentLockAcquired() && !ourImplicitReadOnEDTDisabled) return false;
 
-    application.acquireWriteIntentLock(invokedClassFqn);
-    return true;
+    return application.acquireWriteIntentLock(invokedClassFqn);
   }
 
   /**

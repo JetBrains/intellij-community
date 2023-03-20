@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Handles tooltip links in format {@code #inspection/inspection_short_name}.
  * On a click or expend acton returns more detailed description for given inspection.
- *
- * @author peter
  */
 public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   private static final Logger LOG = Logger.getInstance(InspectionDescriptionLinkHandler.class);
@@ -40,7 +38,7 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   public String getDescription(@NotNull final String refSuffix, @NotNull final Editor editor) {
     final Project project = editor.getProject();
     if (project == null) {
-      LOG.error(editor);
+      LOG.error("Project is null for " + editor);
       return null;
     }
     if (project.isDisposed()) return null;

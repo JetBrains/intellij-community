@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.unassignedVariable;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -24,15 +25,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import javax.swing.*;
+import java.util.List;
 
-/**
- * @author ven
- */
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBase {
 
   @NotNull
@@ -45,22 +47,19 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
 
   public boolean myIgnoreBooleanExpressions = true;
 
-  @Nullable
   @Override
-  public JComponent createGroovyOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyBundle.message("ignore.boolean.expressions"), "myIgnoreBooleanExpressions");
-    return optionsPanel;
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(checkbox("myIgnoreBooleanExpressions", GroovyBundle.message("ignore.boolean.expressions")));
   }
 
   @Override
   protected void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder problemsHolder) {
-    Instruction[] flow = owner.getControlFlow();
-    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, true);
-    for (ReadWriteVariableInstruction read : reads) {
-      PsiElement element = read.getElement();
+    GroovyControlFlow flow = ControlFlowUtils.getGroovyControlFlow(owner);
+    List<Pair<ReadWriteVariableInstruction, VariableDescriptor>> reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, true);
+    for (Pair<ReadWriteVariableInstruction, VariableDescriptor> read : reads) {
+      PsiElement element = read.getFirst().getElement();
       if (element instanceof GroovyPsiElement && !(element instanceof GrClosableBlock)) {
-        String name = read.getDescriptor().getName();
+        String name = flow.getVarIndices()[read.getFirst().getDescriptor()].getName();
         GroovyPsiElement property = ResolveUtil.resolveProperty((GroovyPsiElement)element, name);
         if (property != null &&
             !(property instanceof PsiParameter) &&

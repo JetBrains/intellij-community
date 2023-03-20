@@ -10,8 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByInlineRegexp
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.impl.NotificationCollector.NotificationPlace
-import com.intellij.notification.impl.NotificationCollector.NotificationSeverity
+import com.intellij.notification.impl.NotificationCollector.*
 import java.util.stream.Collectors
 
 class NotificationsEventLogGroup : CounterUsagesCollector() {
@@ -19,7 +18,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("notifications", 64)
+    val GROUP = EventLogGroup("notifications", 66)
 
     @JvmField
     val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)
@@ -40,7 +39,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     val ADDITIONAL = ObjectEventField("additional", NOTIFICATION_ID)
 
     @JvmField
-    val NOTIFICATION_GROUP_ID = StringValidatedByCustomRule("notification_group", "notification_group")
+    val NOTIFICATION_GROUP_ID = StringValidatedByCustomRule("notification_group", NotificationGroupValidator::class.java)
 
     @JvmField
     val NOTIFICATION_PLACE: EnumEventField<NotificationPlace> = Enum("notification_place", NotificationPlace::class.java)
@@ -73,7 +72,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     @JvmField
     val BALLOON_COLLAPSED = registerNotificationEvent("balloon.collapsed")
 
-    fun registerNotificationEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
+    private fun registerNotificationEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
       return GROUP.registerVarargEvent(
         eventId,
         ID,

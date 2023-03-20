@@ -1,42 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.editor
 
-import com.intellij.application.options.editor.*
-import com.intellij.openapi.options.BeanConfigurable
-import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.layout.*
+import com.intellij.application.options.editor.CheckboxDescriptor
+import com.intellij.openapi.options.ConfigurableBuilder
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinBundle.message
-import javax.swing.JComponent
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 
 private val editorOptions = KotlinEditorOptions.getInstance()
 
 private val cbConvertPastedJavaToKotlin
     get() = CheckboxDescriptor(
         message("editor.checkbox.title.convert.pasted.java.code.to.kotlin"),
-        PropertyBinding(
-            editorOptions::isEnableJavaToKotlinConversion,
-            editorOptions::setEnableJavaToKotlinConversion
-        )
+        editorOptions::isEnableJavaToKotlinConversion, editorOptions::setEnableJavaToKotlinConversion
     )
 
 private val cbDontShowJavaToKotlinConversionDialog
     get() = CheckboxDescriptor(
         message("editor.checkbox.title.don.t.show.java.to.kotlin.conversion.dialog.on.paste"),
-        PropertyBinding(
-            editorOptions::isDonTShowConversionDialog,
-            editorOptions::setDonTShowConversionDialog
-        )
+        editorOptions::isDonTShowConversionDialog, editorOptions::setDonTShowConversionDialog
     )
 
 private val cbAutoAddValKeywordToCtorParameters
     get() = CheckboxDescriptor(
-        message("editor.checkbox.title.auto.add.val.keyword.to.data.inline.class.constructor.parameters"),
-        PropertyBinding(
-            editorOptions::isAutoAddValKeywordToDataClassParameters,
-            editorOptions::setAutoAddValKeywordToDataClassParameters
-        )
+        message("editor.checkbox.title.auto.add.val.keyword.to.data.value.class.constructor.parameters"),
+        editorOptions::isAutoAddValKeywordToDataClassParameters, editorOptions::setAutoAddValKeywordToDataClassParameters
     )
 
 @NonNls
@@ -49,13 +36,7 @@ internal val kotlinEditorOptionsDescriptors
         cbAutoAddValKeywordToCtorParameters
     ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
-class KotlinEditorOptionsConfigurable : BeanConfigurable<KotlinEditorOptions?>(KotlinEditorOptions.getInstance()),
-                                        UnnamedConfigurable {
-    override fun createComponent(): JComponent {
-        val component = super.createComponent()!!
-        component.border = IdeBorderFactory.createTitledBorder(message(ID))
-        return component
-    }
+class KotlinEditorOptionsConfigurable : ConfigurableBuilder(message(ID)) {
 
     init {
         checkBox(cbConvertPastedJavaToKotlin)
@@ -64,8 +45,6 @@ class KotlinEditorOptionsConfigurable : BeanConfigurable<KotlinEditorOptions?>(K
     }
 
     private fun checkBox(checkboxDescriptor: CheckboxDescriptor) {
-        checkBox(checkboxDescriptor.name, { checkboxDescriptor.binding.get() }) {
-            checkboxDescriptor.binding.set(it)
-        }
+        checkBox(checkboxDescriptor.name, checkboxDescriptor.getter, checkboxDescriptor.setter)
     }
 }

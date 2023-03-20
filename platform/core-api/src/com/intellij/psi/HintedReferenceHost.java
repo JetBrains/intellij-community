@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * may use the hints for performance optimizations, e.g. to avoid finding and creating references that won't intersect the given offset
  * ({@link PsiReferenceService.Hints#offsetInElement}) or that have no chance of resolving to a particular target
  * ({@link PsiReferenceService.Hints#target}).
- *
- * @author peter
  */
 public interface HintedReferenceHost extends PsiElement {
 

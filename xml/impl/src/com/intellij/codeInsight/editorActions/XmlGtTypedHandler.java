@@ -127,7 +127,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         element = element.getLastChild();
       }
       if (element == null) return Result.CONTINUE;
-      if (!(element instanceof XmlTag)) {
+      if (!(element instanceof XmlTag tag)) {
         if (element instanceof XmlTokenImpl &&
             element.getPrevSibling() !=null &&
             element.getPrevSibling().getText().equals("<")) {
@@ -137,7 +137,6 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
 
-      XmlTag tag = (XmlTag)element;
       if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return Result.CONTINUE;
       if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return Result.CONTINUE;
       final XmlToken startToken = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_START_TAG_START);

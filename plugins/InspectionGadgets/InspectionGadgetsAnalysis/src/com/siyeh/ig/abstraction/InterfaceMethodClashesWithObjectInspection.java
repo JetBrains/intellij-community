@@ -19,7 +19,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -50,7 +50,7 @@ public class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
   private static class InterfaceClashesWithObjectClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.getParameterList().isEmpty()) {
         return;
@@ -63,7 +63,7 @@ public class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
       if ("clone".equals(name) && !(method.getReturnType() instanceof PsiClassType)) {
         registerMethodError(method);
       }
-      else if ("finalize".equals(name) && !PsiType.VOID.equals(method.getReturnType())) {
+      else if ("finalize".equals(name) && !PsiTypes.voidType().equals(method.getReturnType())) {
         registerMethodError(method);
       }
     }

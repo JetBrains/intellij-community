@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.find.usages.api.SearchTarget
@@ -48,16 +48,15 @@ abstract class GradleProjectSymbol(
 
   protected abstract fun externalProject(rootProject: ExternalProject): ExternalProject?
 
-  override val usageHandler: UsageHandler<*> get() = UsageHandler.createEmptyUsageHandler(projectName)
+  override val usageHandler: UsageHandler get() = UsageHandler.createEmptyUsageHandler(projectName)
 
-  override val presentation: TargetPresentation
-    get() {
-      val presentation = symbolPresentation
-      return TargetPresentation
-        .builder(presentation.longDescription)
-        .icon(presentation.icon)
-        .presentation()
-    }
+  override fun presentation(): TargetPresentation {
+    val presentation = symbolPresentation
+    return TargetPresentation
+      .builder(presentation.longDescription)
+      .icon(presentation.icon)
+      .presentation()
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

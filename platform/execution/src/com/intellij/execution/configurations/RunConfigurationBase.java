@@ -185,8 +185,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     return getOptions().getPredefinedLogFiles();
   }
 
-  @NotNull
-  public ArrayList<LogFileOptions> getAllLogFiles() {
+  public @NotNull ArrayList<LogFileOptions> getAllLogFiles() {
     ArrayList<LogFileOptions> list = new ArrayList<>(getLogFiles());
     for (PredefinedLogFile predefinedLogFile : getOptions().getPredefinedLogFiles()) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
@@ -277,8 +276,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
       //noinspection unchecked
       return (Class<? extends RunConfigurationOptions>)result;
     }
-    else if (this instanceof PersistentStateComponent) {
-      PersistentStateComponent instance = (PersistentStateComponent)this;
+    else if (this instanceof PersistentStateComponent instance) {
       return ComponentSerializationUtil.getStateClass(instance.getClass());
     }
     else {
@@ -350,8 +348,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   /**
    * @deprecated Not used anymore.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected boolean isNewSerializationUsed() {
     return false;
   }

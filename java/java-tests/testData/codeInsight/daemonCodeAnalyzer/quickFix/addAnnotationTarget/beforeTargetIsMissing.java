@@ -1,4 +1,4 @@
-// "Make annotation applicable to type uses" "true"
+// "Make annotation applicable to type uses" "true-preview"
 import java.util.List;
 
 @interface Foo {}

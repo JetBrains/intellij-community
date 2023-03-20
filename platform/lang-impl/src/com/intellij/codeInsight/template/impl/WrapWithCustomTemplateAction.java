@@ -27,14 +27,14 @@ public class WrapWithCustomTemplateAction extends AnAction {
   public WrapWithCustomTemplateAction(CustomLiveTemplate template,
                                       final Editor editor,
                                       final PsiFile file,
-                                      final Set<Character> usedMnemonicsSet) {
+                                      final Set<? super Character> usedMnemonicsSet) {
     this(template, editor, file, usedMnemonicsSet, null);
   }
 
   public WrapWithCustomTemplateAction(CustomLiveTemplate template,
                                       final Editor editor,
                                       final PsiFile file,
-                                      final Set<Character> usedMnemonicsSet,
+                                      final Set<? super Character> usedMnemonicsSet,
                                       @Nullable Runnable afterExecutionCallback) {
     super(InvokeTemplateAction.extractMnemonic(template.getTitle(), usedMnemonicsSet));
     myTemplate = template;

@@ -2,34 +2,17 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
-import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+import org.jetbrains.annotations.ApiStatus
 
-abstract class AbstractObservableProperty<T> : ObservableClearableProperty<T> {
+@ApiStatus.NonExtendable
+abstract class AbstractObservableProperty<T> : ObservableProperty<T> {
 
-  private val changeListeners = DisposableWrapperList<(T) -> Unit>()
-  private val resetListeners = DisposableWrapperList<() -> Unit>()
+  private val changeDispatcher = SingleEventDispatcher.create<T>()
 
-  protected fun fireChangeEvent(value: T) {
-    changeListeners.forEach { it(value) }
-  }
+  protected fun fireChangeEvent(value: T) =
+    changeDispatcher.fireEvent(value)
 
-  protected fun fireResetEvent() {
-    resetListeners.forEach { it() }
-  }
-
-  override fun afterChange(listener: (T) -> Unit) {
-    changeListeners.add(listener)
-  }
-
-  override fun afterReset(listener: () -> Unit) {
-    resetListeners.add(listener)
-  }
-
-  override fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) {
-    changeListeners.add(listener, parentDisposable)
-  }
-
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
-    resetListeners.add(listener, parentDisposable)
-  }
+  override fun afterChange(parentDisposable: Disposable?, listener: (T) -> Unit) =
+    changeDispatcher.whenEventHappened(parentDisposable, listener)
 }

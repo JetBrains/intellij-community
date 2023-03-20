@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.json.JsonParserDefinition.JSON_COMMENTARIES;
+import static com.intellij.json.JsonTokenSets.JSON_COMMENTARIES;
 
 /**
  * Various helper methods for working with PSI of JSON language.
@@ -157,7 +157,6 @@ public final class JsonPsiUtil {
    * </ul>
    *
    * @param text presumably result of {@link JsonStringLiteral#getText()}
-   * @return
    */
   @NotNull
   public static String stripQuotes(@NotNull String text) {

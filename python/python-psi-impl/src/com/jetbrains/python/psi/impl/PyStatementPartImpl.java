@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Abstract statement part implementation; extracts the statements list.
- * User: dcheryasov
  */
 public abstract class PyStatementPartImpl extends PyElementImpl implements PyStatementPart {
   protected PyStatementPartImpl(ASTNode astNode) {

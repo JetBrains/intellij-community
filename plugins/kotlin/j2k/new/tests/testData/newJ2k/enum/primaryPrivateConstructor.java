@@ -2,6 +2,7 @@
 package demo;
 
 enum Color {
+    ;
     private int code;
 
     private Color(int c) {

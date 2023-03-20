@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +14,9 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.util.*;
 
 public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
@@ -28,7 +31,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
 
   private static void checkThreading() {
     Application app = ApplicationManager.getApplication();
-    app.assertIsWriteThread();
+    app.assertWriteIntentLockAcquired();
     if (!app.isWriteAccessAllowed()) return;
 
     if (app.isUnitTestMode() && Registry.is("tests.assert.clear.read.only.status.outside.write.action")) {
@@ -74,6 +77,9 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
       if (file instanceof VirtualFileWindow) {
         file = ((VirtualFileWindow)file).getDelegate();
       }
+      if (file instanceof BackedVirtualFile) {
+        file = ((BackedVirtualFile)file).getOriginFile();
+      }
       if (file != null) {
         realFiles.add(file);
       }
@@ -88,7 +94,9 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
           denied = provider.requestWriting(files);
         }
         if (!denied.isEmpty()) {
-          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), provider.getReadOnlyMessage());
+          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied),
+                                         provider.getReadOnlyMessage(),
+                                         provider.getHyperlinkListener());
         }
         return null;
       });
@@ -110,14 +118,22 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
   public static final class OperationStatusImpl extends OperationStatus {
     private final VirtualFile[] myReadonlyFiles;
     @NotNull private final @NlsContexts.DialogMessage String myReadOnlyReason;
+    @Nullable private final HyperlinkListener myHyperlinkListener;
 
     public OperationStatusImpl(VirtualFile @NotNull [] readonlyFiles) {
       this(readonlyFiles, "");
     }
 
     private OperationStatusImpl(VirtualFile[] readonlyFiles, @NotNull @NlsContexts.DialogMessage String readOnlyReason) {
+      this(readonlyFiles, readOnlyReason, null);
+    }
+
+    private OperationStatusImpl(VirtualFile[] readonlyFiles,
+                                @NotNull @NlsContexts.DialogMessage String readOnlyReason,
+                                @Nullable HyperlinkListener hyperlinkListener) {
       myReadonlyFiles = readonlyFiles;
       myReadOnlyReason = readOnlyReason;
+      myHyperlinkListener = hyperlinkListener;
     }
 
     @Override
@@ -151,6 +167,12 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
         }
       }
       throw new RuntimeException("No readonly files");
+    }
+
+    @Override
+    @Nullable
+    public HyperlinkListener getHyperlinkListener() {
+      return myHyperlinkListener;
     }
   }
 }

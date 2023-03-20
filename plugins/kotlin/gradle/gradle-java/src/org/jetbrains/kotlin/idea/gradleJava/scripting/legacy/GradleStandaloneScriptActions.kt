@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.legacy
 
@@ -18,8 +18,8 @@ class GradleStandaloneScriptActions(
     private val scriptDefinition
         get() = file.findScriptDefinition(project)
 
-    val isAutoReloadAvailable: Boolean
-    val isAutoReloadEnabled: Boolean
+    private val isAutoReloadAvailable: Boolean
+    private val isAutoReloadEnabled: Boolean
 
     init {
         val scriptDefinition = scriptDefinition

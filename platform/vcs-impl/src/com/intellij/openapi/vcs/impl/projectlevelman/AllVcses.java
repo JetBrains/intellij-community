@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
@@ -10,8 +10,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -22,13 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEP;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 public final class AllVcses implements AllVcsesI, Disposable {
-  private final Logger LOG = Logger.getInstance(AllVcses.class);
+  private static final Logger LOG = Logger.getInstance(AllVcses.class);
 
   private final Project myProject;
 
@@ -71,37 +67,33 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   @Override
   public void registerManually(@NotNull AbstractVcs vcs) {
-    ReadAction.run(() -> {
-      synchronized (myLock) {
-        String name = vcs.getName();
-        if (myVcses.containsKey(name)) {
-          LOG.error(String.format("vcs is already registered: %s", vcs), new Throwable());
-          return;
-        }
-        if (myExtensions.containsKey(name)) {
-          LOG.error(String.format("can't override vcs from EP. vcs: %s, ep: %s", vcs, myExtensions.get(name).vcsClass), new Throwable());
-          return;
-        }
-        myVcses.put(name, vcs);
-        registerVcs(vcs);
+    synchronized (myLock) {
+      String name = vcs.getName();
+      if (myVcses.containsKey(name)) {
+        LOG.error(String.format("vcs is already registered: %s", vcs), new Throwable());
+        return;
       }
-    });
+      if (myExtensions.containsKey(name)) {
+        LOG.error(String.format("can't override vcs from EP. vcs: %s, ep: %s", vcs, myExtensions.get(name).vcsClass), new Throwable());
+        return;
+      }
+      myVcses.put(name, vcs);
+    }
+    registerVcs(vcs);
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
   }
 
   @Override
   public void unregisterManually(@NotNull AbstractVcs vcs) {
-    ReadAction.run(() -> {
-      synchronized (myLock) {
-        String name = vcs.getName();
-        if (!myVcses.containsKey(name)) {
-          LOG.error(String.format("vcs is not registered: %s", vcs), new Throwable());
-          return;
-        }
-        myVcses.remove(name);
-        unregisterVcs(vcs);
+    synchronized (myLock) {
+      String name = vcs.getName();
+      if (!myVcses.containsKey(name)) {
+        LOG.error(String.format("vcs is not registered: %s", vcs), new Throwable());
+        return;
       }
-    });
+      myVcses.remove(name);
+    }
+    unregisterVcs(vcs);
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
   }
 
@@ -134,43 +126,43 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
     vcs.setupEnvironments();
 
-    return ReadAction.compute(() -> {
-      synchronized (myLock) {
-        if (myExtensions.get(name) != ep) return null;
+    synchronized (myLock) {
+      if (myExtensions.get(name) != ep) return null;
 
-        AbstractVcs oldVcs = myVcses.get(name);
-        if (oldVcs != null) {
-          return oldVcs;
-        }
-
-        myVcses.put(name, vcs);
-        registerVcs(vcs);
-        return vcs;
+      AbstractVcs oldVcs = myVcses.get(name);
+      if (oldVcs != null) {
+        return oldVcs;
       }
-    });
+
+      myVcses.put(name, vcs);
+    }
+    registerVcs(vcs);
+    return vcs;
   }
 
   @Nullable
   @Override
   public VcsDescriptor getDescriptor(String name) {
+    final VcsEP ep;
     synchronized (myLock) {
-      final VcsEP ep = myExtensions.get(name);
-      return ep == null ? null : ep.createDescriptor();
+      ep = myExtensions.get(name);
     }
+    return ep == null ? null : ep.createDescriptor();
   }
 
   @Override
   public void dispose() {
+    List<AbstractVcs> vcses;
     synchronized (myLock) {
-      for (AbstractVcs vcs : myVcses.values()) {
-        unregisterVcs(vcs);
-      }
+      vcses = new ArrayList<>(myVcses.values());
       myVcses.clear();
+    }
+    for (AbstractVcs vcs : vcses) {
+      unregisterVcs(vcs);
     }
   }
 
-  private void registerVcs(@NotNull AbstractVcs vcs) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  private static void registerVcs(@NotNull AbstractVcs vcs) {
     try {
       vcs.loadSettings();
       vcs.doStart();
@@ -181,8 +173,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
     }
   }
 
-  private void unregisterVcs(@NotNull AbstractVcs vcs) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  private static void unregisterVcs(@NotNull AbstractVcs vcs) {
     try {
       vcs.doShutdown();
     }
@@ -200,13 +191,12 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   @Override
   public VcsDescriptor[] getAll() {
-    final List<VcsDescriptor> result = new ArrayList<>();
+    Collection<VcsEP> eps;
     synchronized (myLock) {
-      for (VcsEP vcsEP : myExtensions.values()) {
-        result.add(vcsEP.createDescriptor());
-      }
+      eps = new ArrayList<>(myExtensions.values());
     }
-    result.sort(Comparator.comparing(VcsDescriptor::getName, String::compareTo));
+    List<VcsDescriptor> result = ContainerUtil.sorted(ContainerUtil.map(eps, ep -> ep.createDescriptor()),
+                                                      Comparator.comparing(VcsDescriptor::getName, String::compareTo));
     return result.toArray(new VcsDescriptor[0]);
   }
 
@@ -224,6 +214,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   private class MyExtensionPointListener implements ExtensionPointListener<VcsEP> {
     @Override
     public void extensionAdded(@NotNull VcsEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+      AbstractVcs oldVcs;
       synchronized (myLock) {
         String name = extension.name;
         VcsEP oldEp = myExtensions.put(name, extension);
@@ -231,29 +222,34 @@ public final class AllVcses implements AllVcsesI, Disposable {
           LOG.error(String.format("registering duplicated EP. name: %s, old: %s, new: %s", name, oldEp.vcsClass, extension.vcsClass));
         }
 
-        AbstractVcs oldVcs = myVcses.remove(name);
+        oldVcs = myVcses.remove(name);
         if (oldVcs != null) {
           LOG.error(String.format("overriding VCS with EP. name: %s, old: %s, new: %s", name, oldVcs.getClass(), extension.vcsClass));
-          unregisterVcs(oldVcs);
         }
+      }
+      if (oldVcs != null) {
+        unregisterVcs(oldVcs);
       }
       ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
     }
 
     @Override
     public void extensionRemoved(@NotNull VcsEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+      AbstractVcs oldVcs;
       synchronized (myLock) {
         String name = extension.name;
-        AbstractVcs oldVcs = myVcses.get(name);
+        oldVcs = myVcses.get(name);
         if (oldVcs != null) {
           myVcses.remove(name);
-          unregisterVcs(oldVcs);
         }
 
         boolean wasRemoved = myExtensions.remove(name, extension);
         if (!wasRemoved) {
           LOG.error(String.format("removing unregistered EP. name: %s, ep: %s", name, extension.vcsClass));
         }
+      }
+      if (oldVcs != null) {
+        unregisterVcs(oldVcs);
       }
       ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
     }
@@ -282,8 +278,9 @@ public final class AllVcses implements AllVcsesI, Disposable {
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
     String message = VcsBundle.message("impl.notification.content.plugin.was.unbundled.needs.to.be.installed.manually", vcs);
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(message, NotificationType.WARNING)
-      .setDisplayId("vcs.obsolete.plugin.unbundled")
-      .addAction(NotificationAction.createSimpleExpiring(VcsBundle.message("action.NotificationAction.AllVcses.text.install"), () -> installPlugin(vcs)))
+      .setDisplayId(VcsNotificationIdsHolder.OBSOLETE_PLUGIN_UNBUNDLED)
+      .addAction(NotificationAction.createSimpleExpiring(VcsBundle.message("action.NotificationAction.AllVcses.text.install"),
+                                                         () -> installPlugin(vcs)))
       .addAction(NotificationAction.createSimple(VcsBundle.message("action.NotificationAction.AllVcses.text.read.more"), () -> {
         BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
       }));
@@ -292,6 +289,8 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   private void installPlugin(@NotNull ObsoleteVcs vcs) {
     new Task.Backgroundable(myProject, VcsBundle.message("impl.progress.title.installing.plugin")) {
+
+      @RequiresBackgroundThread
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -300,7 +299,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              PluginEnabler.HEADLESS.enablePlugins(List.of(descriptor));
+              PluginEnabler.HEADLESS.enable(List.of(descriptor));
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }
@@ -318,7 +317,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
         String title = VcsBundle.message("impl.notification.title.failed.to.install.plugin");
         Notification notification = IMPORTANT_ERROR_NOTIFICATION
           .createNotification(title, message, NotificationType.ERROR)
-          .setDisplayId("plugin.install.failed")
+          .setDisplayId(VcsNotificationIdsHolder.SUGGESTED_PLUGIN_INSTALL_FAILED)
           .addAction(
             NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
               BrowserUtil.browse(vcs.pluginUrl);

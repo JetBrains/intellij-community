@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -213,7 +213,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       return !PsiUtil.isThisReference(expression) && ((GrReferenceExpression)expression).resolve() instanceof PsiClass;
     }
     if (expression instanceof GrClosableBlock && expression.getParent() instanceof GrStringInjection) return true;
-    if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiType.VOID.equals(expression.getType())) return true;
+    if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiTypes.voidType().equals(expression.getType())) return true;
 
     return false;
   }
@@ -549,8 +549,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrVariable findVariable(@NotNull GrStatement statement) {
-    if (!(statement instanceof GrVariableDeclaration)) return null;
-    final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)statement;
+    if (!(statement instanceof GrVariableDeclaration variableDeclaration)) return null;
     final GrVariable[] variables = variableDeclaration.getVariables();
 
     GrVariable var = null;
@@ -572,9 +571,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrExpression findExpression(GrStatement selectedExpr) {
-    if (!(selectedExpr instanceof GrExpression)) return null;
+    if (!(selectedExpr instanceof GrExpression selected)) return null;
 
-    GrExpression selected = (GrExpression)selectedExpr;
     while (selected instanceof GrParenthesizedExpression) selected = ((GrParenthesizedExpression)selected).getOperand();
 
     return selected;
@@ -696,8 +694,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @Nullable
   public static GrVariable resolveLocalVar(@Nullable GrExpression expression) {
-    if (expression instanceof GrReferenceExpression) {
-      final GrReferenceExpression ref = (GrReferenceExpression)expression;
+    if (expression instanceof GrReferenceExpression ref) {
 
       final PsiElement resolved = ref.resolve();
       if (PsiUtil.isLocalVariable(resolved)) {

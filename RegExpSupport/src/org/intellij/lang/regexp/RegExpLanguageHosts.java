@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.util.ClassExtension;
@@ -51,7 +51,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     final RegExpLanguageHost host = findRegExpHost(ch);
     if (host != null) {
       final char c = text.charAt(1);
-      return !host.characterNeedsEscaping(c);
+      return !host.characterNeedsEscaping(c, ch.getParent() instanceof RegExpClass);
     }
     else {
       return !("\\]".equals(text) || "\\}".equals(text));
@@ -66,7 +66,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean supportsExtendedHexCharacter(@Nullable RegExpChar regExpChar) {
     final RegExpLanguageHost host = findRegExpHost(regExpChar);
     try {
-      return host != null && host.supportsExtendedHexCharacter(regExpChar);
+      return host == null || host.supportsExtendedHexCharacter(regExpChar);
     } catch (AbstractMethodError e) {
       // supportsExtendedHexCharacter not present
       return false;
@@ -75,23 +75,23 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   public boolean supportsLiteralBackspace(@Nullable RegExpChar regExpChar) {
     final RegExpLanguageHost host = findRegExpHost(regExpChar);
-    return host != null && host.supportsLiteralBackspace(regExpChar);
+    return host == null || host.supportsLiteralBackspace(regExpChar);
   }
 
   public boolean supportsPropertySyntax(@NotNull PsiElement context) {
     RegExpLanguageHost host = findRegExpHost(context);
-    return host != null && host.supportsPropertySyntax(context);
+    return host == null || host.supportsPropertySyntax(context);
   }
 
   public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
-    return host != null && host.supportsNamedGroupSyntax(group);
+    return host == null || host.supportsNamedGroupSyntax(group);
   }
 
   public boolean supportsNamedGroupRefSyntax(@Nullable final RegExpNamedGroupRef ref) {
     final RegExpLanguageHost host = findRegExpHost(ref);
     try {
-      return host != null && host.supportsNamedGroupRefSyntax(ref);
+      return host == null || host.supportsNamedGroupRefSyntax(ref);
     } catch (AbstractMethodError e) {
       // supportsNamedGroupRefSyntax() not present
       return false;
@@ -108,27 +108,27 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   public boolean isValidGroupName(String name, @Nullable final RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
-    return host != null && host.isValidGroupName(name, group);
+    return host == null || host.isValidGroupName(name, group);
   }
 
   public boolean isDuplicateGroupNamesAllowed(@NotNull final RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
-    return host != null && host.isDuplicateGroupNamesAllowed(group);
+    return host == null || host.isDuplicateGroupNamesAllowed(group);
   }
 
   public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {
     final RegExpLanguageHost host = findRegExpHost(comment);
-    return host != null && host.supportsPerl5EmbeddedComments();
+    return host == null || host.supportsPerl5EmbeddedComments();
   }
 
   public boolean supportsConditionals(@Nullable final RegExpConditional conditional) {
     final RegExpLanguageHost host = findRegExpHost(conditional);
-    return host != null && host.supportsPythonConditionalRefs();
+    return host == null || host.supportsPythonConditionalRefs();
   }
 
   public boolean supportConditionalCondition(RegExpAtom condition) {
     final RegExpLanguageHost host = findRegExpHost(condition);
-    return host != null && host.supportConditionalCondition(condition);
+    return host == null || host.supportConditionalCondition(condition);
   }
 
   public boolean supportsPossessiveQuantifiers(@Nullable final RegExpElement context) {
@@ -163,12 +163,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   public boolean supportsNamedCharacters(@NotNull final RegExpNamedCharacter namedCharacter) {
     final RegExpLanguageHost host = findRegExpHost(namedCharacter);
-    return host != null && host.supportsNamedCharacters(namedCharacter);
+    return host == null || host.supportsNamedCharacters(namedCharacter);
   }
 
   public boolean isValidNamedCharacter(@NotNull final RegExpNamedCharacter namedCharacter) {
     final RegExpLanguageHost host = findRegExpHost(namedCharacter);
-    return host != null && host.isValidNamedCharacter(namedCharacter);
+    return host == null || host.isValidNamedCharacter(namedCharacter);
   }
 
   public RegExpLanguageHost.Lookbehind supportsLookbehind(RegExpGroup group) {

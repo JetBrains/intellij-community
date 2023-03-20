@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -32,7 +31,6 @@ import java.util.*;
 
 /**
  * Tests parameter info available via ^P at call sites.
- * <br/>User: dcheryasov
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
 
@@ -42,9 +40,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     return configureByFile(fname);
   }
 
-  private Map<String, PsiElement> loadTest(int expected_marks) {
+  private Map<String, PsiElement> loadTest(int expectedMarks) {
     Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), expected_marks);
+    assertEquals("Test data sanity", expectedMarks, marks.size());
     return marks;
   }
 
@@ -311,6 +309,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: A, a, b", new String[]{"b"}, new String[]{"self: A, "});
   }
 
+  // PY-53671
+  public void testUnboundMethodReassignedAndImportedWithQualifiedImport() {
+    Map<String, PsiElement> marks = loadMultiFileTest(1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: C, param", new String[]{"self: C, "}, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  // PY-53671
+  public void testBoundMethodReassignedAndImportedWithQualifiedImport() {
+    Map<String, PsiElement> marks = loadMultiFileTest(1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: C, param", new String[]{"param"}, new String[]{"self: C, "});
+  }
+
   public void testConstructorFactory() {
     Map<String, PsiElement> marks = loadTest(1);
 
@@ -468,8 +478,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("a: int, b: int", "a: str, b: str");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"a: int, "}, new String[]{"a: str, "});
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int, b: int");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int, "});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
@@ -487,8 +497,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("a: int", "a: str, b: str");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"a: int"}, new String[]{"a: str, "});
+    final List<String> texts = Arrays.asList("a: str, b: str", "a: int");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int"});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY));
   }
@@ -519,8 +529,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testOverloadsAndImplementationInImportedModule() {
     final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
 
-    final List<String> texts = Arrays.asList("value: str", "value: int", "value: None");
-    final List<String[]> highlighted = Arrays.asList(new String[]{"value: str"}, new String[]{"value: int"}, new String[]{"value: None"});
+    final List<String> texts = Arrays.asList("value: None", "value: int", "value: str");
+    final List<String[]> highlighted = Arrays.asList(new String[]{"value: None"}, new String[]{"value: int"}, new String[]{"value: str"});
 
     feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY,
                                                                ArrayUtilRt.EMPTY_STRING_ARRAY));
@@ -716,7 +726,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithAdditionalClassEntryInSdkRoots(
       "packages",
       () -> {
-        final Map<String, PsiElement> marks = loadTest(7);
+        final Map<String, PsiElement> marks = loadTest(8);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x, y, z: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x, y, z: int = ...", new String[]{"x, "});
@@ -725,6 +735,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str = ...", new String[]{"x, "});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int = ...", new String[]{"x: int = ..."});
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x, y, z: list = ...", new String[]{"x, "});
       }
     );
   }
@@ -880,7 +891,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithAdditionalClassEntryInSdkRoots(
       "packages",
       () -> {
-        final Map<String, PsiElement> marks = loadTest(8);
+        final Map<String, PsiElement> marks = loadTest(10);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("inst: A, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("inst: A, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
@@ -890,6 +901,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("inst: D, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
         feignCtrlP(marks.get("<arg8>").getTextOffset()).check("inst: D, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg9>").getTextOffset()).check("inst: E, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg10>").getTextOffset()).check("inst: E, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
       }
     );
   }
@@ -932,6 +945,23 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-47532
+  public void testAttrDataclassDecoratorAliases() {
+    final Map<String, PsiElement> marks = loadTest(11);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg8>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg9>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg10>").getTextOffset()).check("x: int, y: str", new String[]{"x: int, "});
+    feignCtrlP(marks.get("<arg11>").getTextOffset()).check("x, y", new String[]{"x, "});
+  }
+
   // EA-102450
   public void testKeywordOnlyWithFilledPositional() {
     final Map<String, PsiElement> test = loadTest(4);
@@ -947,7 +977,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingTypeVar() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check("self: TypeVar, name: str, *constraints: type, bound: None | type | str = ..., " +
+    feignCtrlP(offset).check("self: TypeVar, name: str, *constraints, bound: Any | None = ..., " +
                              "covariant: bool = ..., contravariant: bool = ...",
                              new String[]{"name: str, "},
                              new String[]{"self: TypeVar, "});
@@ -1014,6 +1044,89 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: CallableTest, arg=None",
                                                           new String[]{"arg=None"},
                                                           new String[]{"self: CallableTest, "});
+  }
+
+  // PY-53611
+  public void testTypedDictWithRequiredAndNotRequiredKeys() {
+    final Map<String, PsiElement> test = loadTest(2);
+
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, x: int, y: int = ...",
+                                                         new String[]{"x: int, "},
+                                                         ArrayUtilRt.EMPTY_STRING_ARRAY);
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, x: int, y: int = ...",
+                                                         new String[]{"x: int, "},
+                                                         ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  // PY-46053
+  public void testLongTypeHintReplaceWithAnnotation() {
+    final Map<String, PsiElement> test = loadTest(2);
+    // Long non-current type hints should be replaced with shorter annotation
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "file: str | bytes | PathLike[str] | PathLike[bytes] | int, mode: OpenTextMode, buffering: int = ...",
+      new String[]{"file: str | bytes | PathLike[str] | PathLike[bytes] | int, "});
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "file: _OpenFile, mode: Literal[\"w\", \"wt\", \"tw\", \"a\", \"at\", \"ta\", \"x\", \"xt\", \"tx\", \"r\", \"rt\", \"tr\", " +
+      "\"U\"] = ..., buffering: int = ...",
+      new String[]{
+        "mode: Literal[\"w\", \"wt\", \"tw\", \"a\", \"at\", \"ta\", \"x\", \"xt\", \"tx\", \"r\", \"rt\", \"tr\", \"U\"] = ..., "});
+  }
+
+  // PY-46053
+  public void testLongTypeHintWithoutAnnotation() {
+    final Map<String, PsiElement> test = loadTest(2);
+    // Long non-current type hints without annotation should stay without changes
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "parameter: MyClassWithVeryVeryVeryLongName | MyClassWithVeryVeryVeryLongNameNumberTwo | int, short_param: str",
+      new String[]{"short_param: str"});
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "p, u: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+      "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], l: Lower"
+      , new String[]{
+        "u: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", \"P\", " +
+        "\"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], "});
+  }
+
+  // PY-46053
+  public void testLongStarSlashParameter() {
+    final Map<String, PsiElement> test = loadTest(4);
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "a, /, b: Upper, *, c: Upper",
+      new String[]{""});
+
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "a, /, b: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+      "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], *, c: Upper"
+      , new String[]{
+        "b: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", \"P\", " +
+        "\"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], "});
+
+    feignCtrlP(test.get("<arg3>").getTextOffset()).check(
+      "a, /, b: Upper, *, c: Upper"
+      , new String[]{""});
+
+    feignCtrlP(test.get("<arg4>").getTextOffset()).check(
+      "a, /, b: Upper, *, c: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", " +
+      "\"N\", \"O\", \"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"]"
+      , new String[]{
+        "c: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", \"P\", " +
+        "\"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"]"});
+  }
+
+  // PY-46053
+  public void testLongTypeHintMultiline() {
+    final Map<String, PsiElement> test = loadTest(2);
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check(
+      "parameter: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+      "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"] | MyClassWithVeryVeryVeryLongName | int, " +
+      "short_param: str"
+      , new String[]{
+        "parameter: Literal[\"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\", \"H\", \"I\", \"J\", \"K\", \"L\", \"M\", \"N\", \"O\", " +
+        "\"P\", \"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"] | MyClassWithVeryVeryVeryLongName | int, "});
+
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check(
+      "parameter: MyClassWithVeryVeryVeryLongName | Upper | int, short_param: str"
+      , new String[]{"short_param: str"});
   }
 
   @NotNull
@@ -1281,7 +1394,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       final StringBuilder wrongs = new StringBuilder();
 
       // see if highlighted matches
-      final Set<String> highlightSet = ContainerUtil.set(highlighted);
+      final Set<String> highlightSet = Set.of(highlighted);
       for (int i = 0; i < hintText.length; i++) {
         if (hintFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(hintText[i])) {
           wrongs.append("Highlighted unexpected '").append(hintText[i]).append("'. ");
@@ -1294,7 +1407,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       }
 
       // see if disabled matches
-      final Set<String> disabledSet = ContainerUtil.set(disabled);
+      final Set<String> disabledSet = Set.of(disabled);
       for (int i = 0; i < hintText.length; i++) {
         if (hintFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(hintText[i])) {
           wrongs.append("Highlighted a disabled '").append(hintText[i]).append("'. ");

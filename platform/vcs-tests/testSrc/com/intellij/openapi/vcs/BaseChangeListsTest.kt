@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.runAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.io.createDirectories
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -250,11 +250,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
       try {
         for ((filePath, beforeRevision) in changes) {
-          val file = files.find { VcsUtil.getFilePath(it) == filePath }
-          val afterContent: ContentRevision? = when (file) {
-            null -> null
-            else -> CurrentContentRevision(filePath)
-          }
+          val afterContent: ContentRevision? =
+            if (files.find { VcsUtil.getFilePath(it) == filePath } == null)
+              null
+            else CurrentContentRevision(filePath)
 
           val change = Change(beforeRevision, afterContent)
 
@@ -278,7 +277,6 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
 
       dirtyScopeManager.markEverythingDirty()
-      clm.scheduleUpdate()
 
       markerSemaphore.acquireOrThrow()
       markerSemaphore.release()

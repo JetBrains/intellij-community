@@ -46,7 +46,7 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBu
         val text = editor.document.text
         text.contains("strings = arrayBlockingQueue;") || text.contains("strings = linkedList;")
       }
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       testSmartCompletion()
     }
     caret(20, 16)
@@ -71,8 +71,6 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBu
       }
     }
   }
-
-  override val suitableTips = listOf("SmartTypeCompletion", "SmartTypeAfterNew", "SecondSmartCompletionToar")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.code.completion"),

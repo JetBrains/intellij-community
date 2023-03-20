@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -74,6 +75,11 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
     XDebugSession session = DebuggerUIUtil.getSession(e);
     e.getPresentation().setEnabledAndVisible(session != null && session.getDebugProcess() instanceof JavaDebugProcess &&
                                              !((XDebugSessionImpl)session).isReadOnly() && session.isSuspended());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static final class BlockFilter implements MethodFilter {

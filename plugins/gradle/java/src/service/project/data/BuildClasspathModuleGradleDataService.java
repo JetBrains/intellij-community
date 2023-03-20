@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +25,7 @@ import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.DependencyAccessorsModel;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
@@ -88,7 +89,8 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
       return interner.intern(new ArrayList<>(gradleSdkLibraries));
     });
 
-    final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath = new HashMap<>(localSettings.getProjectBuildClasspath());
+    final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath =
+      new HashMap<>(localSettings.getProjectBuildClasspath());
 
     for (final DataNode<BuildScriptClasspathData> node : toImport) {
       if (GradleConstants.SYSTEM_ID.equals(node.getData().getOwner())) {
@@ -129,11 +131,22 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
 
         projectBuildClasspathPojo.getModulesBuildClasspath().put(externalModulePath,
                                                                  new ExternalModuleBuildClasspathPojo(externalModulePath, buildClasspath));
+
+        DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(moduleDataNode, ProjectKeys.PROJECT);
+        if (projectDataNode != null) {
+          DataNode<DependencyAccessorsModel> dependenciesAccessorsModelNode =
+            ExternalSystemApiUtil.find(projectDataNode, BuildScriptClasspathData.ACCESSORS);
+          if (dependenciesAccessorsModelNode != null) {
+            DependencyAccessorsModel accessorsModel = dependenciesAccessorsModelNode.getData();
+            buildClasspath.addAll(accessorsModel.getSources());
+            buildClasspath.addAll(accessorsModel.getClasses());
+          }
+        }
       }
     }
     localSettings.setProjectBuildClasspath(localProjectBuildClasspath);
 
-    if(!project.isDisposed()) {
+    if (!project.isDisposed()) {
       GradleBuildClasspathManager.getInstance(project).reload();
     }
   }

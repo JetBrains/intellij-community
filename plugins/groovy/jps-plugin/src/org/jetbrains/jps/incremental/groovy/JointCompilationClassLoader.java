@@ -1,17 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.util.lang.Loader;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
-import java.security.ProtectionDomain;
 
-/**
- * @author peter
- */
 final class JointCompilationClassLoader extends UrlClassLoader {
   private static final boolean isParallelCapable = registerAsParallelCapable();
 
@@ -20,12 +14,9 @@ final class JointCompilationClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name,
-                                   byte[] data,
-                                   Loader loader,
-                                   @Nullable ProtectionDomain protectionDomain) {
+  public Class<?> consumeClassData(@NotNull String name, byte[] data) {
     try {
-      return super.consumeClassData(name, data, loader, protectionDomain);
+      return super.consumeClassData(name, data);
     }
     catch (Exception e) {
       NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);
@@ -35,12 +26,9 @@ final class JointCompilationClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name,
-                                   ByteBuffer data,
-                                   Loader loader,
-                                   @Nullable ProtectionDomain protectionDomain) {
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data) {
     try {
-      return super.consumeClassData(name, data, loader, protectionDomain);
+      return super.consumeClassData(name, data);
     }
     catch (Exception e) {
       NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);
@@ -50,6 +38,6 @@ final class JointCompilationClassLoader extends UrlClassLoader {
   }
 
   void resetCache() {
-    getClassPath().reset(getFiles());
+    getClassPath().reset();
   }
 }

@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
-/**
- * @author ilyas
- */
 public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements GrDocFieldReference {
 
   public GrDocFieldReferenceImpl(@NotNull ASTNode node) {
@@ -41,8 +38,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final PsiElement resolved = resolve();
-    if (resolved instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) resolved;
+    if (resolved instanceof PsiMethod method) {
       final String oldName = getReferenceName();
       if (!method.getName().equals(oldName)) { //was property reference to accessor
         if (PropertyUtilBase.isSimplePropertyAccessor(method)) {
@@ -52,8 +48,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
           }
         }
       }
-    } else if (resolved instanceof GrField && ((GrField) resolved).isProperty()) {
-      final GrField field = (GrField) resolved;
+    } else if (resolved instanceof GrField field && ((GrField) resolved).isProperty()) {
       final String oldName = getReferenceName();
       if (oldName != null && oldName.equals(field.getName())) {
         if (oldName.startsWith("get")) {

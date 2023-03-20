@@ -1,8 +1,9 @@
-from typing import Callable
+from collections.abc import Callable
+from typing_extensions import TypeAlias
 
 from .dammit import EntitySubstitution as EntitySubstitution
 
-_EntitySubstitution = Callable[[str], str]
+_EntitySubstitution: TypeAlias = Callable[[str], str]
 
 class Formatter(EntitySubstitution):
     HTML: str
@@ -20,6 +21,7 @@ class Formatter(EntitySubstitution):
         void_element_close_prefix: str = ...,
         cdata_containing_tags: list[str] | None = ...,
         empty_attributes_are_booleans: bool = ...,
+        indent: int = ...,
     ) -> None: ...
     def substitute(self, ns: str) -> str: ...
     def attribute_value(self, value: str) -> str: ...

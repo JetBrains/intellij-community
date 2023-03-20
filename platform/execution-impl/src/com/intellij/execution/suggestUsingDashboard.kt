@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file: JvmName("SuggestUsingRunDashBoardUtil")
 package com.intellij.execution
 
@@ -28,7 +28,7 @@ fun promptUserToUseRunDashboard(project: Project, configurationTypes: Collection
   }
 }
 
-private const val suggestRunDashboardId = "Suggest Run Dashboard"
+private const val suggestRunDashboardId = "Services Tool Window"
 
 private class SuggestDashboardNotification(
   private val project: Project,

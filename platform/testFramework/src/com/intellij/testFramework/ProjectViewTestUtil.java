@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.ui.LafManager;
@@ -17,9 +17,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.ui.tree.TreeVisitor.Action;
 import com.intellij.util.Function;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -112,11 +112,11 @@ public final class ProjectViewTestUtil {
     Assert.assertEquals(expected.trim(), actual.trim());
   }
 
-  public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
+  public static boolean isExpanded(PsiElement element, AbstractProjectViewPane pane) {
     return null != getVisiblePath(element, pane);
   }
 
-  public static @Nullable TreePath getVisiblePath(@NotNull PsiElement element, @NotNull AbstractProjectViewPSIPane pane) {
+  public static @Nullable TreePath getVisiblePath(@NotNull PsiElement element, @NotNull AbstractProjectViewPane pane) {
     PlatformTestUtil.waitWhileBusy(pane.getTree());
     return TreeUtil.visitVisibleRows(pane.getTree(), path -> {
       AbstractTreeNode<?> node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);

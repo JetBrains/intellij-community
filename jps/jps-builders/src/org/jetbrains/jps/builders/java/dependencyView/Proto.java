@@ -13,9 +13,6 @@ import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author: db
- */
 class Proto implements RW.Savable, Streamable, ProtoEntity {
   public final int access;
   public final int signature;
@@ -156,7 +153,7 @@ class Proto implements RW.Savable, Streamable, ProtoEntity {
 
       @Override
       public boolean packageLocalOn() {
-        return (past.isPrivate() || past.isPublic() || past.isProtected()) && Proto.this.isPackageLocal();
+        return !past.isPackageLocal() && Proto.this.isPackageLocal();
       }
 
       @Override
@@ -167,6 +164,11 @@ class Proto implements RW.Savable, Streamable, ProtoEntity {
       @Override
       public boolean accessRestricted() {
         return Difference.weakerAccess(access, past.access);
+      }
+
+      @Override
+      public boolean accessExpanded() {
+        return Difference.weakerAccess(past.access, access);
       }
 
       @Override

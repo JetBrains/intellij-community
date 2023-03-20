@@ -46,6 +46,14 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   @NeedsIndex.ForStandardLibrary
   fun testRequiresQualifiedName() = complete("module M { requires lib.mult<caret> }", "module M { requires lib.multi.release;<caret> }")
 
+  @NeedsIndex.ForStandardLibrary
+  fun testRequiresWithNextLine() {
+    myFixture.configureByText("module-info.java", "module M { requires lib.mult<caret>\nrequires java.io;}")
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult("module M { requires lib.multi.release;  \nrequires java.io;}")
+  }
+
   fun testExportsBare() = variants("module M { exports <caret> }", "pkg")
   fun testExportsPrefixed() = complete("module M { exports p<caret> }", "module M { exports pkg.<caret> }")
   fun testExportsQualified() = variants("module M { exports pkg.<caret> }", "main", "other", "empty")
@@ -75,11 +83,18 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testProvidesWithUnambiguous() =
     complete("module M { provides pkg.main.MySvc with pkg.other.M<caret> }", "module M { provides pkg.main.MySvc with pkg.other.MySvcImpl<caret> }")
 
-  @NeedsIndex.Full // for inheritance check
+  @NeedsIndex.SmartMode(reason = "Smart mode is necessary for optimizing imports; full index is needed for inheritance check")
   fun testProvidesOrder() {
-    myFixture.configureByText("module-info.java", "import pkg.main.*;import pkg.other.*; module M {provides MySvc with <caret>}")
+    myFixture.configureByText("module-info.java", "import pkg.main.*; module M {provides MySvc with M<caret>}")
     myFixture.completeBasic()
-    assertEquals(listOf("MySvc", "MySvcImpl", "pkg", "MyAnno"), myFixture.lookupElementStrings)
+    assertEquals(listOf("MySvc", "MySvcImpl", "MyAnno"), myFixture.lookupElementStrings)
+    myFixture.lookup.currentItem = myFixture.lookupElements!![1]
+    myFixture.type('\n')
+    myFixture.checkResult("import pkg.main.*;\n" +
+                          "import pkg.other.MySvcImpl;\n" +
+                          "\n" +
+                          "module M {provides MySvc with MySvcImpl\n" +
+                          "}")
   }
 
   @NeedsIndex.Full

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.ProjectBasedInspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.filter.InspectionFilterAction;
 import com.intellij.profile.codeInspection.ui.filter.InspectionsFilter;
@@ -58,13 +60,16 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -114,6 +119,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private List<String> myInitialScopesOrder;
   private Disposable myDisposable = Disposer.newDisposable();
+  private ToolOptionsSeparator myOptionsSeparator;
 
   public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
                                       @NotNull InspectionProfileModifiableModel profile) {
@@ -149,7 +155,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
     if (profile.isProjectLevel()) {
-      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectInspectionProfileManager)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
+      return ProjectInspectionProfilesVisibleTreeState.getInstance(((ProjectBasedInspectionProfileManager)profile.getProfileManager()).getProject()).getVisibleTreeState(profile);
     }
     return AppInspectionProfilesVisibleTreeState.getInstance().getVisibleTreeState(profile);
   }
@@ -187,7 +193,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  public static @Nls String renderSeverity(HighlightSeverity severity) {
+  public static @Nls String renderSeverity(@NotNull HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
     return severity.getDisplayCapitalizedName();
   }
@@ -195,7 +201,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static boolean isDescriptorAccepted(Descriptor descriptor,
                                               @NonNls String filter,
                                               final boolean forceInclude,
-                                              final List<Set<String>> keySetList, final Set<String> quoted) {
+                                              final List<? extends Set<String>> keySetList, final Set<String> quoted) {
     filter = StringUtil.toLowerCase(filter);
     if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
@@ -237,16 +243,19 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
-    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
+    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel(myDisposable, getProject());
     if (additionalConfigPanel != null) {
       additionalConfigPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(additionalConfigPanel));
-      configPanelAnchor.add(InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel));
+      configPanelAnchor.add(
+        InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel),
+        new GridBag().next().weightx(1.0).weighty(1.0).fillCell().anchor(GridBagConstraints.NORTHWEST)
+      );
     }
 
     if (myOptionsLabel != null)
       myOptionsLabel.setText(
         AnalysisBundle.message("inspections.settings.options.title.specific.scope",
-                               state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
+                               state.getScopeName().equals(CustomScopesProviderEx.getAllScope().getScopeId())
                                  ? LangBundle.message("scopes.table.everywhere.else")
                                  : state.getScopeName()));
   }
@@ -353,7 +362,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       Element newConfig = Descriptor.createConfigElement(state.getTool());
       if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
+        myAlarm.addRequest(() -> {
+          myTreeTable.repaint();
+          if (myOptionsSeparator != null) myOptionsSeparator.setupResetLinkVisibility();
+        }, 300);
         return true;
       }
       return false;
@@ -467,6 +479,10 @@ public class SingleInspectionProfilePanel extends JPanel {
         e.getPresentation().setEnabled(!isDisposed() && myProfile.isExecutable(getProject()));
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myProfile.resetToEmpty(getProject());
@@ -595,7 +611,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    new TreeSpeedSearch(tree, o -> {
+    TreeSpeedSearch.installOn(tree, false, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
@@ -649,7 +665,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       });
     }
     group.add(Separator.getInstance());
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("InspectionProfilePanel", group);
     return menu.getComponent();
   }
 
@@ -659,7 +675,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return includeDoNotShow(myTreeTable.getSelectedToolNodes());
   }
 
-  private boolean includeDoNotShow(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean includeDoNotShow(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     return !ContainerUtil.exists(nodes, node -> {
       final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
@@ -703,8 +719,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   /**
    * @deprecated Use {@link DescriptionEditorPaneKt#readHTML(JEditorPane, String)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void readHTML(JEditorPane browser, String text) {
     DescriptionEditorPaneKt.readHTML(browser, text);
   }
@@ -712,8 +727,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   /**
    * @deprecated Use {@link DescriptionEditorPaneKt#toHTML(JEditorPane, String, boolean)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String toHTML(JEditorPane browser, @Nls String text, boolean miniFontSize) {
     return DescriptionEditorPaneKt.toHTML(browser, text, miniFontSize);
   }
@@ -735,28 +749,34 @@ public class SingleInspectionProfilePanel extends JPanel {
           // need this in order to correctly load plugin-supplied descriptions
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
           final String description = defaultDescriptor.loadDescription(); //NON-NLS
+          final InspectionProfileEntry tool = defaultDescriptor.getToolWrapper().getTool();
           try {
-            DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(DescriptionEditorPaneKt.toHTML(myDescription, description, false), myProfileFilter.getFilter()));
+            if (description == null) throw new NullPointerException();
+            String markedDescription = SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(description, tool.getClass().getClassLoader()), myProfileFilter.getFilter());
+            DescriptionEditorPaneKt.readHTML(myDescription, markedDescription);
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +
-                      defaultDescriptor.getToolWrapper().getTool().getClass() +
+                      tool.getClass() +
                       "; description: " +
                       description, t);
           }
 
         }
         else {
-          DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPaneKt.toHTML(myDescription, AnalysisBundle.message("inspections.settings.no.description.warning"), false));
+          DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.no.description.warning"));
         }
       }
       else {
-        DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPaneKt.toHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"), false));
+        DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"));
       }
 
       myOptionsPanel.removeAll();
       JPanel severityPanel = new JPanel(new GridBagLayout());
-      final JPanel configPanelAnchor = new JPanel(new GridLayout());
+      final JPanel configPanelAnchor = new JPanel(new GridBagLayout());
+
+      final boolean showOptionPanel;
+      final double severityPanelWeightY;
 
       final Set<String> scopesNames = new HashSet<>();
       for (final InspectionConfigTreeNode.Tool node : nodes) {
@@ -766,35 +786,16 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
 
-      final double severityPanelWeightY;
       ScopesAndSeveritiesTable scopesAndScopesAndSeveritiesTable;
       myOptionsLabel = new JBLabel(AnalysisBundle.message("inspections.settings.options.title"));
+
       if (scopesNames.isEmpty()) {
 
-        final LevelChooserAction severityLevelChooser =
-          new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
-                                 includeDoNotShow(nodes)) {
-            @Override
-            protected void onChosen(final HighlightSeverity severity) {
-              final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-              final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
-              for (final InspectionConfigTreeNode.Tool node : nodes) {
-                final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
-                final NamedScope scope = node.getDefaultDescriptor().getScope();
-                final boolean doUpdate = myProfile.getErrorLevel(key, scope, project) != level;
-                if (doUpdate) {
-                  myProfile.setErrorLevel(key, level, null, project);
-                  toUpdate.add(node);
-                }
-              }
-              updateRecursively(toUpdate, false);
-              myTreeTable.updateUI();
-            }
-          };
-        final HighlightSeverity severity =
-          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()));
-        severityLevelChooser.setChosen(severity);
+        final HighlightSeverity severity = ScopesAndSeveritiesTable.getSeverity(
+          ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState())
+        );
 
+        // Scope
         final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), myProfile, project, null) {
           @Override
           protected void onScopesOrderChanged() {
@@ -807,19 +808,62 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         };
 
-        JLabel severityLabel = new JLabel(InspectionsBundle.message("inspection.severity"));
-        severityPanel.add(severityLabel,
-                          new GridBagConstraints(0, 0, 1, 1, 0, 0,
-                                                 GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
-                                                 JBInsets.create(10, 0),
-                                                 0, 0));
+        final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
+          scopesChooser.getTemplatePresentation(),
+          ActionPlaces.UNKNOWN
+        );
+
+        // Highlighting
+        final HighlightingChooser highlightingChooser = new HighlightingChooser(myProfile.getProfileManager().getSeverityRegistrar()) {
+          @Override
+          void onKeyChosen(@NotNull TextAttributesKey key) {
+            final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
+            for (final InspectionConfigTreeNode.Tool node : nodes) {
+              final NamedScope scope = node.getDefaultDescriptor().getScope();
+              final boolean doUpdate = myProfile.getEditorAttributesKey(node.getKey(), scope, project) != key;
+              if (doUpdate) {
+                myProfile.setEditorAttributesKey(node.getKey().toString(), key.getExternalName(), null, project);
+                toUpdate.add(node);
+              }
+            }
+            updateRecursively(toUpdate, true);
+          }
+        };
+        final var highlightsChooserComponent = highlightingChooser.createCustomComponent(
+          highlightingChooser.getTemplatePresentation(),
+          ActionPlaces.UNKNOWN
+        );
+        updateHighlightingChooser(nodes, project, highlightingChooser);
+
+        // Severity
+        final LevelChooserAction severityLevelChooser =
+          new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
+                                 includeDoNotShow(nodes)) {
+            @Override
+            protected void onChosen(final @NotNull HighlightSeverity severity) {
+              final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+              final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
+              for (final InspectionConfigTreeNode.Tool node : nodes) {
+                final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
+                final NamedScope scope = node.getDefaultDescriptor().getScope();
+                final boolean doUpdate = myProfile.getErrorLevel(key, scope, project) != level
+                                         || myProfile.getEditorAttributesKey(key, scope, project) != null;
+                if (doUpdate) {
+                  myProfile.setErrorLevel(key, level, null, project);
+                  myProfile.setEditorAttributesKey(node.getKey().toString(), null, null, project);
+                  updateHighlightingChooser(nodes, project, highlightingChooser);
+                  toUpdate.add(node);
+                }
+              }
+              updateRecursively(toUpdate, false);
+            }
+          };
+        severityLevelChooser.setChosen(severity);
+
         final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
-          severityLevelChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
-        severityPanel.add(severityLevelChooserComponent,
-                          new GridBagConstraints(1, 0, 1, 1, 0, 1,
-                                                 GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                 JBInsets.create(10, 0),
-                                                 0, 0));
+          severityLevelChooser.getTemplatePresentation(),
+          ActionPlaces.UNKNOWN
+        );
         severityLevelChooserComponent.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
           KeyStroke.getKeyStroke(KeyEvent.VK_V, MnemonicHelper.getFocusAcceleratorKeyMask()),
           "changeSeverity"
@@ -827,38 +871,49 @@ public class SingleInspectionProfilePanel extends JPanel {
         severityLevelChooserComponent.getActionMap().put("changeSeverity", new AbstractAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            final var panel = (JPanel)severityLevelChooserComponent;
-            final var button = (ComboBoxAction.ComboBoxButton)panel.getComponent(0);
+            final var button = (ComboBoxAction.ComboBoxButton)severityLevelChooserComponent;
             button.showPopup();
           }
         });
 
-        final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
-          scopesChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
-        severityPanel.add(scopesChooserComponent,
-                          new GridBagConstraints(2, 0, 1, 1, 0, 1,
-                                                 GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                 JBInsets.create(10, 0),
-                                                 0, 0));
-        final JLabel label = new JLabel("", SwingConstants.RIGHT);
-        severityPanel.add(label,
-                          new GridBagConstraints(3, 0, 1, 1, 1, 0,
-                                                 GridBagConstraints.EAST, GridBagConstraints.BOTH,
-                                                 JBInsets.create(2, 0),
-                                                 0, 0));
-        severityPanelWeightY = 0.0;
+        final GridBag constraint = new GridBag()
+          .setDefaultInsets(0, 0, 0, UIUtil.DEFAULT_HGAP)
+          .setDefaultWeightX(1.0)
+          .setDefaultFill(GridBagConstraints.HORIZONTAL);
+
+        final var scopesChooserPanel = UI.PanelFactory.panel(scopesChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.scope"))
+          .moveLabelOnTop()
+          .createPanel();
+        severityPanel.add(scopesChooserPanel, constraint.next().weightx(0.0));
+
+        final var severityLevelChooserPanel = UI.PanelFactory.panel(severityLevelChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.severity"))
+          .moveLabelOnTop()
+          .createPanel();
+        severityLevelChooserPanel.setMinimumSize(severityLevelChooserPanel.getPreferredSize());
+        severityPanel.add(severityLevelChooserPanel, constraint.next());
+
+        final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.highlighting"))
+          .moveLabelOnTop()
+          .createPanel();
+        highlightChooserPanel.setMinimumSize(highlightChooserPanel.getPreferredSize());
+        severityPanel.add(highlightChooserPanel, constraint.next());
+
         if (toolState != null) {
           if (!showDefaultConfigurationOptions) {
-            severityLabel.setVisible(false);
-            severityLevelChooserComponent.setVisible(false);
-            scopesChooserComponent.setVisible(false);
-            label.setVisible(false);
+            severityLevelChooserPanel.setVisible(false);
+            scopesChooserPanel.setVisible(false);
           }
 
           setConfigPanel(configPanelAnchor, toolState);
           myOptionsLabel.setText(AnalysisBundle.message("inspections.settings.options.title"));
         }
         scopesAndScopesAndSeveritiesTable = null;
+
+        showOptionPanel = configPanelAnchor.getComponentCount() != 0;
+        severityPanelWeightY = 0;
       }
       else {
         if (singleNode != null) {
@@ -898,6 +953,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         final ToolbarDecorator wrappedTable = ToolbarDecorator
           .createDecorator(scopesAndScopesAndSeveritiesTable)
+          .setToolbarPosition(ActionToolbarPosition.LEFT)
           .disableUpDownActions()
           .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
           .setRemoveActionUpdater(
@@ -914,44 +970,36 @@ public class SingleInspectionProfilePanel extends JPanel {
                 tableSettings.onScopesOrderChanged();
               }
             }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
+            }
           });
-        final JPanel panel = wrappedTable.createPanel();
-        panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
-        severityPanel = UI.PanelFactory
-          .panel(panel)
-          .withLabel(InspectionsBundle.message("inspection.scopes.and.severities"))
-          .moveLabelOnTop()
-          .resizeY(true)
-          .createPanel();
-        severityPanelWeightY = 0.3;
+        severityPanel = wrappedTable.createPanel();
+        final Dimension panelSize = new Dimension(getMinimumSize().width, 81);
+        severityPanel.setMinimumSize(panelSize);
+        severityPanel.setPreferredSize(panelSize);
+        severityPanel.setMaximumSize(panelSize);
+        showOptionPanel = configPanelAnchor.getComponentCount() != 0;
+        severityPanelWeightY = showOptionPanel ? 0 : 1;
       }
-      myOptionsPanel
-        .add(severityPanel,
-             new GridBagConstraints(0, 0, 1, 1, 1.0, severityPanelWeightY,
-                                    GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                    JBUI.insetsTop(SECTION_GAP),
-                                    0, 0));
+
+      final GridBag constraint = new GridBag()
+        .setDefaultWeightX(1.0)
+        .setDefaultWeightY(1.0);
+      myOptionsPanel.add(severityPanel, constraint.nextLine().weighty(severityPanelWeightY).fillCell().insetTop(SECTION_GAP));
+
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
-      if (configPanelAnchor.getComponentCount() != 0) {
+      if (showOptionPanel) {
         if (showDefaultConfigurationOptions) {
-          myOptionsPanel.add(new ToolOptionsSeparator(configPanelAnchor, scopesAndScopesAndSeveritiesTable),
-                             new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
-                                                    GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                    JBUI.emptyInsets(),
-                                                    0, 0));
+          myOptionsSeparator = new ToolOptionsSeparator(scopesAndScopesAndSeveritiesTable);
+          myOptionsPanel.add(myOptionsSeparator, constraint.nextLine().weighty(0).fillCellHorizontally());
         }
-        myOptionsPanel.add(configPanelAnchor,
-                           new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0,
-                                                  GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.emptyInsets(),
-                                                  0, 0));
+        myOptionsPanel.add(configPanelAnchor, constraint.nextLine().fillCell());
       }
       else if (scopesNames.isEmpty()) {
-        myOptionsPanel.add(configPanelAnchor,
-                           new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0,
-                                                  GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                  JBUI.emptyInsets(),
-                                                  0, 0));
+        myOptionsPanel.add(configPanelAnchor, constraint.nextLine().fillCell());
       }
       myOptionsPanel.revalidate();
     }
@@ -959,6 +1007,16 @@ public class SingleInspectionProfilePanel extends JPanel {
       initOptionsAndDescriptionPanel();
     }
     myOptionsPanel.repaint();
+  }
+
+  private static void updateHighlightingChooser(Collection<? extends InspectionConfigTreeNode.Tool> nodes,
+                                                Project project,
+                                                HighlightingChooser highlightingChooser) {
+    final TextAttributesKey key = ScopesAndSeveritiesTable.getEditorAttributesKey(
+      ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()),
+      project
+    );
+    highlightingChooser.setChosen(key);
   }
 
   private void updateRecursively(Collection<? extends InspectionConfigTreeNode> nodes, boolean updateOptionsAndDescriptionPanel) {
@@ -969,7 +1027,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private boolean isThoughOneNodeEnabled(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean isThoughOneNodeEnabled(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     for (final InspectionConfigTreeNode.Tool node : nodes) {
       final String toolId = node.getKey().toString();
@@ -1017,14 +1075,16 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void disposeUI() {
-    if (myInspectionProfilePanel == null) {
-      return;
-    }
     myAlarm.cancelAllRequests();
-    myProfileFilter.dispose();
-    for (ScopeToolState state : myProfile.getAllTools()) {
-      state.resetConfigPanel();
+    if (myProfileFilter != null) {
+      myProfileFilter.dispose();
     }
+    if (myInspectionProfilePanel != null) {
+      for (ScopeToolState state : myProfile.getAllTools()) {
+        state.resetConfigPanel();
+      }
+    }
+    myProfile.cleanup(myProjectProfileManager.getProject());
     Disposer.dispose(myDisposable);
     myDisposable = null;
   }
@@ -1032,7 +1092,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public static HyperlinkAdapter createSettingsHyperlinkListener(Project project){
     return new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         try {
           URI url = new URI(e.getDescription());
           if (url.getScheme().equals("settings")) {
@@ -1040,7 +1100,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             if (context != null) {
               Settings settings = Settings.KEY.getData(context);
               SearchTextField searchTextField = SearchTextField.KEY.getData(context);
-              String configId = url.getHost();
+              String configId = url.getAuthority(); //using `getAuthority` instead of `getHost` to support white spaces in configId
               String search = url.getQuery();
               if (settings != null) {
                 Configurable configurable = settings.find(configId);
@@ -1071,8 +1131,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     initToolStates();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
 
-    JBSplitter rightSplitter =
-      new JBSplitter(true, "SingleInspectionProfilePanel.HORIZONTAL_DIVIDER_PROPORTION", DIVIDER_PROPORTION_DEFAULT);
+    OnePixelSplitter rightSplitter = new OnePixelSplitter(true,
+                                                    "SingleInspectionProfilePanel.HORIZONTAL_DIVIDER_PROPORTION",
+                                                    DIVIDER_PROPORTION_DEFAULT);
 
     JBScrollPane descriptionPanel = new JBScrollPane(myDescription);
     descriptionPanel.setBorder(JBUI.Borders.empty());
@@ -1081,30 +1142,22 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel = new JPanel(new GridBagLayout());
     initOptionsAndDescriptionPanel();
     rightSplitter.setSecondComponent(myOptionsPanel);
-    rightSplitter.setHonorComponentsMinimumSize(true);
 
     final JScrollPane tree = initTreeScrollPane();
 
     final JPanel northPanel = new JPanel(new GridBagLayout());
     northPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0));
     myProfileFilter.setPreferredSize(new Dimension(20, myProfileFilter.getPreferredSize().height));
-    northPanel.add(myProfileFilter,
-                    new GridBagConstraints(0, 0, 1, 1, 0.5, 1,
-                                           GridBagConstraints.BASELINE_TRAILING, GridBagConstraints.HORIZONTAL,
-                                           JBUI.emptyInsets(),
-                                           0, 0));
-    northPanel.add(createTreeToolbarPanel().getComponent(),
-                   new GridBagConstraints(1, 0, 1, 1, 1, 1,
-                                          GridBagConstraints.BASELINE_LEADING, GridBagConstraints.HORIZONTAL,
-                                          JBUI.emptyInsets(),
-                                          0, 0));
+    final GridBag constraint = new GridBag()
+      .setDefaultWeightY(1.0);
+    northPanel.add(myProfileFilter, constraint.next().weightx(0.5).fillCellHorizontally().anchor(GridBagConstraints.BASELINE_TRAILING));
+    northPanel.add(createTreeToolbarPanel().getComponent(), constraint.next().weightx(1.0).anchor(GridBagConstraints.WEST));
 
-    JBSplitter mainSplitter = new JBSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.01f, 0.99f);
+    JBSplitter mainSplitter = new JBSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.35f, 0.65f);
     mainSplitter.setSplitterProportionKey("SingleInspectionProfilePanel.VERTICAL_DIVIDER_PROPORTION");
     mainSplitter.setFirstComponent(tree);
     mainSplitter.setSecondComponent(rightSplitter);
-    mainSplitter.setHonorComponentsMinimumSize(false);
-    mainSplitter.setDividerWidth(20);
+    mainSplitter.setDividerWidth(SECTION_GAP);
 
     final JPanel inspectionTreePanel = new JPanel(new BorderLayout());
     inspectionTreePanel.add(northPanel, BorderLayout.NORTH);
@@ -1114,7 +1167,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       AnalysisBundle.message("inspections.settings.disable.new.inspections.by.default.checkbox"),
       getProfile().isProfileLocked());
 
-    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.LARGE_VGAP));
+    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     panel.add(inspectionTreePanel, BorderLayout.CENTER);
     panel.add(disableNewInspectionsCheckBox, BorderLayout.SOUTH);
     disableNewInspectionsCheckBox.addItemListener(__ -> {
@@ -1192,12 +1245,20 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (profile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {
       return true;
     }
+    if (!Objects.equals(profile.getEditorAttributesKey(desc.getKey(), desc.getScope(), project),
+                        desc.getEditorAttributesKey())) {
+      return true;
+    }
     final List<Descriptor> descriptors = toolDescriptors.getNonDefaultDescriptors();
     for (Descriptor descriptor : descriptors) {
       if (profile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), project) != descriptor.isEnabled()) {
         return true;
       }
       if (profile.getErrorLevel(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getLevel()) {
+        return true;
+      }
+      if (!Objects.equals(profile.getEditorAttributesKey(descriptor.getKey(), descriptor.getScope(), project),
+                          descriptor.getEditorAttributesKey())) {
         return true;
       }
     }
@@ -1306,31 +1367,15 @@ public class SingleInspectionProfilePanel extends JPanel {
     @Nullable
     private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
-    ToolOptionsSeparator(JComponent options, @Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
+    ToolOptionsSeparator(@Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
       setBorder(JBUI.Borders.emptyTop(IdeBorderFactory.TITLED_BORDER_INDENT));
-      GridBagConstraints optionsLabelConstraints =
-        new GridBagConstraints(0, 0, 1, 1, 0, 1,
-                               GridBagConstraints.WEST, GridBagConstraints.NONE,
-                               JBUI.emptyInsets(),
-                               0, 0);
-      add(myOptionsLabel, optionsLabelConstraints);
-      GridBagConstraints separatorConstraints =
-        new GridBagConstraints(1, 0, 1, 1, 1, 1,
-                               GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               JBUI.insets(2, TitledSeparator.SEPARATOR_LEFT_INSET, 0, TitledSeparator.SEPARATOR_RIGHT_INSET),
-                               0, 0);
-      add(new JSeparator(SwingConstants.HORIZONTAL), separatorConstraints);
-      GridBagConstraints resetLabelConstraints =
-        new GridBagConstraints(2, 0, 0, 1, 0, 1,
-                               GridBagConstraints.EAST, GridBagConstraints.NONE,
-                               JBUI.insets(0, 6, 0, 0),
-                               0, 0);
+      final GridBag constraint = new GridBag()
+        .setDefaultWeightY(1.0);
+      add(myOptionsLabel, constraint.next().anchor(GridBagConstraints.LINE_START));
+      add(new JSeparator(SwingConstants.HORIZONTAL), constraint.next().weightx(1.0).anchor(GridBagConstraints.CENTER).fillCellHorizontally().insets(2, TitledSeparator.SEPARATOR_LEFT_INSET, 0, TitledSeparator.SEPARATOR_RIGHT_INSET));
 
-      UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
-      userActivityWatcher.addUserActivityListener(() -> setupResetLinkVisibility());
-      userActivityWatcher.register(options);
       myResetLink = new ActionLink(IdeBundle.message("reset.action.text"), e -> {
         ScopeToolState state = getSelectedState();
         if (state != null) {
@@ -1340,7 +1385,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           updateOptionsAndDescriptionPanel();
         }
       });
-      add(myResetLink, resetLabelConstraints);
+      add(myResetLink, constraint.next().anchor(GridBagConstraints.LINE_END).insetLeft(6));
       setupResetLinkVisibility();
     }
 

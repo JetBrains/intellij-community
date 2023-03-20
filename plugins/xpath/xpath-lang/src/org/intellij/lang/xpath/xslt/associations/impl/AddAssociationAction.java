@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -38,7 +39,12 @@ class AddAssociationAction extends AnAction {
         myManager = manager;
     }
 
-    @Override
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         final PsiFile psiFile = AssociationsGroup.getPsiFile(e);
         if (psiFile == null) return;
@@ -60,7 +66,6 @@ class AddAssociationAction extends AnAction {
         };
 
         final VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, psiFile.getProject(), psiFile.getVirtualFile());
-        if (virtualFiles.length == 0) return; // cancel
 
         for (VirtualFile file : virtualFiles) {
             assert !virtualFile.equals(file);

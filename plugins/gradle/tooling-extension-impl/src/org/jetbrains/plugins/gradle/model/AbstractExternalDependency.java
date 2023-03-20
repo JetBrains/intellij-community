@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
+import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
@@ -8,7 +9,7 @@ import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.tooling.util.BiFunction;
 import org.jetbrains.plugins.gradle.tooling.util.BooleanBiFunction;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
-import org.gradle.internal.impldep.com.google.common.base.Objects;
+
 import java.io.File;
 import java.util.*;
 
@@ -185,13 +186,13 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
 
   private static final class DependenciesIterator implements Iterator<AbstractExternalDependency> {
     private final Set<AbstractExternalDependency> mySeenDependencies;
-    private final LinkedList<ExternalDependency> myToProcess;
-    private final LinkedList<Integer> myProcessedStructure;
+    private final ArrayDeque<ExternalDependency> myToProcess;
+    private final ArrayList<Integer> myProcessedStructure;
 
     private DependenciesIterator(@NotNull Collection<ExternalDependency> dependencies) {
       mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<AbstractExternalDependency, Boolean>());
-      myToProcess = new LinkedList<ExternalDependency>(dependencies);
-      myProcessedStructure = new LinkedList<Integer>();
+      myToProcess = new ArrayDeque<>(dependencies);
+      myProcessedStructure = new ArrayList<>();
     }
 
     @Override
@@ -202,7 +203,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
         myToProcess.removeFirst();
         return hasNext();
       }
-      return !myToProcess.isEmpty();
+      return true;
     }
 
     @Override

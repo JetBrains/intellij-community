@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
@@ -9,8 +9,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -29,7 +27,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -41,16 +39,19 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
@@ -64,13 +65,13 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
   private ScopeViewTreeModel myTreeModel;
-  private LinkedHashMap<String, NamedScopeFilter> myFilters;
+  private final AtomicReference<Map<String, NamedScopeFilter>> myFilters = new AtomicReference<>();
   private JScrollPane myScrollPane;
 
   private static Project checkApplicability(@NotNull Project project) {
     // TODO: make a proper extension point here
     if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isRider()) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
     return project;
   }
@@ -80,7 +81,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
     myDependencyValidationManager = DependencyValidationManager.getInstance(project);
     myNamedScopeManager = NamedScopeManager.getInstance(project);
-    myFilters = map(myDependencyValidationManager, myNamedScopeManager);
+    myFilters.set(map(myDependencyValidationManager, myNamedScopeManager));
 
     NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
       private final AtomicLong counter = new AtomicLong();
@@ -102,7 +103,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
           if (view == null) {
             return;
           }
-          myFilters = map(myDependencyValidationManager, myNamedScopeManager);
+          myFilters.set(map(myDependencyValidationManager, myNamedScopeManager));
           String currentId = view.getCurrentViewId();
           String currentSubId = getSubId();
           // update changes subIds if needed
@@ -185,7 +186,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       EditSourceOnDoubleClickHandler.install(myTree);
       EditSourceOnEnterKeyHandler.install(myTree);
       CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
-      new TreeSpeedSearch(myTree);
+      TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
       enableDnD();
       myTree.getEmptyText()
         .setText(IdeBundle.message("scope.view.empty.text"))
@@ -308,8 +309,9 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
+  @CalledInAny
   public String @NotNull [] getSubIds() {
-    LinkedHashMap<String, NamedScopeFilter> map = myFilters;
+    Map<String, NamedScopeFilter> map = myFilters.get();
     if (map == null || map.isEmpty()) {
       return EMPTY_STRING_ARRAY;
     }
@@ -328,11 +330,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   public Icon getPresentableSubIdIcon(@NotNull String subId) {
     NamedScopeFilter filter = getFilter(subId);
     return filter != null ? filter.getScope().getIcon() : getIcon();
-  }
-
-  @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    // comparator is always set in init
   }
 
   @Nullable
@@ -372,17 +369,21 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return filter == null ? null : filter.getScope();
   }
 
-  @NotNull Iterable<NamedScopeFilter> getFilters() {
-    return myFilters.values();
+  @CalledInAny
+  @NotNull
+  Iterable<NamedScopeFilter> getFilters() {
+    Map<String, NamedScopeFilter> map = myFilters.get();
+    return map == null ? Collections.emptyList() : map.values();
   }
 
+  @CalledInAny
   @Nullable
   NamedScopeFilter getFilter(@Nullable String subId) {
-    LinkedHashMap<String, NamedScopeFilter> map = myFilters;
+    Map<String, NamedScopeFilter> map = myFilters.get();
     return map == null || subId == null ? null : map.get(subId);
   }
 
-  private static @NotNull LinkedHashMap<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
+  private static @NotNull Map<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
     LinkedHashMap<String, NamedScopeFilter> map = new LinkedHashMap<>();
     for (NamedScopeFilter filter : NamedScopeFilter.list(holders)) {
       NamedScopeFilter old = map.put(filter.toString(), filter);
@@ -390,7 +391,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
         LOG.warn("DUPLICATED: " + filter);
       }
     }
-    return map;
+    return Collections.unmodifiableMap(map);
   }
 
   @Override

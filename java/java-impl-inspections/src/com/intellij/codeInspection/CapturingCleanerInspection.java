@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -32,7 +32,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!CLEANER_REGISTER.test(call)) return;
         PsiExpression[] expressions = call.getArgumentList().getExpressions();
         PsiExpression trackedObject = ExpressionUtils.resolveExpression(expressions[0]);
@@ -73,10 +73,9 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
 
 
       @Nullable
-      private PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
-                                                 @NotNull PsiClass trackedClass) {
-        if (runnableExpr instanceof PsiMethodReferenceExpression) {
-          PsiMethodReferenceExpression methodReference = (PsiMethodReferenceExpression)runnableExpr;
+      private static PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
+                                                        @NotNull PsiClass trackedClass) {
+        if (runnableExpr instanceof PsiMethodReferenceExpression methodReference) {
           if (PsiMethodReferenceUtil.isStaticallyReferenced(methodReference)) return null;
 
           PsiElement qualifier = methodReference.getQualifier();
@@ -87,22 +86,30 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           }
           return null;
         }
-        if (runnableExpr instanceof PsiLambdaExpression) {
-          PsiLambdaExpression lambda = (PsiLambdaExpression)runnableExpr;
+        if (runnableExpr instanceof PsiLambdaExpression lambda) {
           if (!lambda.getParameterList().isEmpty()) return null;
           PsiElement lambdaBody = lambda.getBody();
           if (lambdaBody == null) return null;
-          return getLambdaElementCapturingThis(lambdaBody, trackedClass).orElse(null);
+          return getLambdaOrInnerClassElementCapturingThis(lambdaBody, trackedClass);
         }
-        if (runnableExpr instanceof PsiNewExpression) {
-          PsiNewExpression newExpression = (PsiNewExpression)runnableExpr;
-          if (newExpression.getAnonymousClass() != null) return newExpression;
+        if (runnableExpr instanceof PsiNewExpression newExpression) {
+          if (newExpression.getAnonymousClass() != null) {
+            if (PsiUtil.isLanguageLevel18OrHigher(trackedClass)) {
+              PsiElement elementCapturingThis = getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass);
+              if (elementCapturingThis != null) {
+                return elementCapturingThis;
+              }
+            } else {
+              return newExpression;
+            }
+          }
           PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
           if (classReference == null) return null;
           PsiClass aClass = tryCast(classReference.resolve(), PsiClass.class);
           if (aClass == null) return null;
           if (aClass.getContainingClass() != trackedClass) return null;
           if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
+          if (PsiUtil.isLanguageLevel18OrHigher(trackedClass) && getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
           return classReference;
         }
         return null;
@@ -110,16 +117,19 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
     };
   }
 
-  private static Optional<PsiElement> getLambdaElementCapturingThis(@NotNull PsiElement lambdaBody, @NotNull PsiClass containingClass) {
+  @Contract(pure = true)
+  private static @Nullable PsiElement getLambdaOrInnerClassElementCapturingThis(@NotNull PsiElement lambdaBody, @NotNull PsiClass containingClass) {
     return StreamEx.ofTree(lambdaBody, el -> StreamEx.of(el.getChildren()))
-      .findAny(element -> isThisCapturingElement(containingClass, element));
+      .findAny(element -> isThisCapturingElement(containingClass, element))
+      .orElse(null);
   }
 
+  @Contract(pure = true)
   private static boolean isThisCapturingElement(@NotNull PsiClass containingClass, PsiElement element) {
     if (element instanceof PsiThisExpression) {
       return PsiUtil.resolveClassInType(((PsiThisExpression)element).getType()) == containingClass;
     }
-    else if (element instanceof PsiReferenceExpression) {
+    if (element instanceof PsiReferenceExpression) {
       PsiReferenceExpression qualifierReference =
         tryCast(((PsiReferenceExpression)element).getQualifierExpression(), PsiReferenceExpression.class);
       if (qualifierReference != null) return false;
@@ -129,7 +139,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
     return false;
   }
 
-  @Contract("_, null -> false")
+  @Contract(value = "_, null -> false", pure = true)
   private static boolean memberBringsThisRef(@NotNull PsiClass containingClass, PsiMember member) {
     if (member == null) return false;
     PsiClass memberContainingClass = member.getContainingClass();
@@ -141,7 +151,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
     return !member.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  @Contract("_, null -> false")
+  @Contract(value = "_, null -> false", pure = true)
   private static boolean isInnerClassOf(@Nullable PsiClass inner, @Nullable PsiClass outer) {
     if (inner == null || inner.hasModifierProperty(PsiModifier.STATIC)) return false;
     return PsiTreeUtil.isAncestor(outer, inner, false);

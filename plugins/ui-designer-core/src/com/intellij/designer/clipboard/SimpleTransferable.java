@@ -2,6 +2,7 @@
 package com.intellij.designer.clipboard;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -44,18 +45,17 @@ public class SimpleTransferable implements Transferable {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     try {
-      if (!myFlavor.equals(flavor)) {
-        return null;
+      if (myFlavor.equals(flavor)) {
+        return myData;
       }
-      return myData;
     }
     catch (Exception e) {
       LOG.error(e);
-      return null;
     }
+    throw new UnsupportedFlavorException(flavor);
   }
 
   @Nullable

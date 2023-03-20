@@ -1,77 +1,67 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.internal
 
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValueProvider.Result
-import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.returnIfNoDescriptorForDeclarationException
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.resolveCandidates
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
+import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.resolveToDeclarationImpl
 
 class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
+    @Deprecated(
+        "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
+                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+        replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
+    )
     override fun getBindingContext(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
 
-    override fun getBindingContextIfAny(element: KtElement): BindingContext? = try {
-        getBindingContext(element)
-    } catch (e: Exception) {
-        e.returnIfNoDescriptorForDeclarationException { null }
-    }
-
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper = KotlinTypeMapper(
-        getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
-        JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
-        useOldInlineClassesManglingScheme = false
+    @Deprecated(
+        "Do not use the old frontend, retroactively named as FE1.0, since K2 with the new frontend is coming.\n" +
+                "Please use analysis API: https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md",
+        replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
     )
+    override fun getBindingContextIfAny(element: KtElement): BindingContext? =
+        element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
-    override fun isJvmElement(psiElement: PsiElement): Boolean {
-        if (allModulesSupportJvm(psiElement.project)) return true
-
-        val containingFile = psiElement.containingFile
-        if (containingFile is KtFile) {
-            return TargetPlatformDetector.getPlatform(containingFile).isJvm()
-        }
-
-        val module = psiElement.module
-        return module == null || TargetPlatformDetector.getPlatform(module).isJvm()
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
+    override fun getTypeMapper(element: KtElement): KotlinTypeMapper {
+        return KotlinTypeMapper(
+            getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
+            JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
+            useOldInlineClassesManglingScheme = false
+        )
     }
+
+    override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
 
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings = element.languageVersionSettings
 
-    override fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor> {
-        val resolutionFacade = ktElement.getResolutionFacade()
-        val bindingContext = ktElement.analyze()
-        val call = ktElement.getCall(bindingContext) ?: return emptySequence()
-        return call.resolveCandidates(bindingContext, resolutionFacade).map { it.candidateDescriptor }.asSequence()
-    }
-
-    private fun allModulesSupportJvm(project: Project): Boolean = CachedValuesManager.getManager(project).getCachedValue(project) {
-        Result.create(
-            ModuleManager.getInstance(project).modules.all { module ->
-                ProgressManager.checkCanceled()
-                TargetPlatformDetector.getPlatform(module).isJvm()
-            },
-            ProjectRootModificationTracker.getInstance(project),
-        )
+    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
+        val resolutionFacade = ktExpression.getResolutionFacade()
+        val bindingContext = ktExpression.safeAnalyzeNonSourceRootCode(resolutionFacade)
+        return sequence {
+            // Use logic (shared with CLI) about handling compound assignments
+            yieldAll(super.getReferenceVariants(ktExpression, nameHint))
+            // Then, look for other candidates with a name hint
+            val call = ktExpression.getCall(bindingContext) ?: return@sequence
+            call.resolveCandidates(bindingContext, resolutionFacade)
+                .forEach {resolvedCall ->
+                    resolveToDeclarationImpl(ktExpression, resolvedCall.candidateDescriptor)?.let { yield(it) }
+                }
+        }
     }
 }

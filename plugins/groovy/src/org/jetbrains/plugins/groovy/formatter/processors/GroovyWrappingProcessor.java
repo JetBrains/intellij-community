@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Wrap;
@@ -70,7 +70,7 @@ public class GroovyWrappingProcessor {
     GroovyTokenTypes.mBNOT, GroovyTokenTypes.mLNOT, GroovyTokenTypes.mMINUS, GroovyTokenTypes.mDEC, GroovyTokenTypes.mPLUS,
     GroovyTokenTypes.mINC,
 
-    GroovyTokenTypes.mSPREAD_DOT, GroovyTokenTypes.mOPTIONAL_DOT, GroovyTokenTypes.mMEMBER_POINTER, GroovyTokenTypes.mDOT,
+    GroovyTokenTypes.mSPREAD_DOT, GroovyTokenTypes.mOPTIONAL_DOT, GroovyTokenTypes.mMEMBER_POINTER, GroovyTokenTypes.mOPTIONAL_CHAIN_DOT, GroovyTokenTypes.mDOT,
 
     GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN,
 

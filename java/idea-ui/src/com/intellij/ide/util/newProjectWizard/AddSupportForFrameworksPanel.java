@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.newProjectWizard;
 
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +55,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private JPanel myFrameworksPanel;
   private JLabel myLabel;
 
-  private List<FrameworkSupportInModuleProvider> myProviders;
+  private List<? extends FrameworkSupportInModuleProvider> myProviders;
   private List<FrameworkSupportNodeBase> myRoots;
 
   private final LibrariesContainer myLibrariesContainer;
@@ -81,9 +82,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myFrameworksTree = new FrameworksTree(model) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
-        if (!(node instanceof FrameworkSupportNode)) return;
+        if (!(node instanceof FrameworkSupportNode frameworkSupportNode)) return;
 
-        final FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
         if (frameworkSupportNode == getSelectedNode()) {
           updateOptionsPanel();
         }
@@ -123,11 +123,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
     setProviders(providers);
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers) {
     setProviders(providers, Collections.emptySet(), Collections.emptySet());
   }
 
-  public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
+  public void setProviders(List<? extends FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {
     myProviders = providers;
 
     myAssociatedFrameworks = createNodes(myProviders, associated, preselected);
@@ -163,7 +163,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private static void addAssociatedFrameworkComponent(JPanel component, JPanel panel) {
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
   }
 
   protected void onFrameworkStateChanged() {}
@@ -199,8 +199,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private void updateOptionsPanel() {
     final FrameworkSupportNodeBase node = getSelectedNode();
-    if (node instanceof FrameworkSupportNode) {
-      FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
+    if (node instanceof FrameworkSupportNode frameworkSupportNode) {
       initializeOptionsPanel(frameworkSupportNode, true);
       showCard(frameworkSupportNode.getId());
       UIUtil.setEnabled(myOptionsPanel, frameworkSupportNode.isChecked(), true);
@@ -297,7 +296,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
 
     FrameworkSupportNodeBase.sortByName(roots,
-                                        (o1, o2) -> Comparing.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId())));
+                                        (o1, o2) -> Boolean.compare(preselected.contains(o2.getId()), preselected.contains(o1.getId())));
     myRoots = roots;
     return associatedNodes.values();
   }

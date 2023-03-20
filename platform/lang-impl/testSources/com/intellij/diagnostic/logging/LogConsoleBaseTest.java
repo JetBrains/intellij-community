@@ -25,9 +25,10 @@ public final class LogConsoleBaseTest {
   @Test
   public void resizeBufferIndexToDeleteToIsInFirstMessage() {
     StringBuffer buffer = new StringBuffer(
-      "06-05 17:59:30.211 1664-1680/? W/zygote: kill(-7199, 9) failed: No such process\n" +
-      "06-05 17:59:30.214 6745-6745/? I/zygote: Deoptimizing void com.google.android.finsky.af.a.o.a(com.google.android.finsky.af.d) due " +
-      "to JIT inline cache\n");
+      """
+        06-05 17:59:30.211 1664-1680/? W/zygote: kill(-7199, 9) failed: No such process
+        06-05 17:59:30.214 6745-6745/? I/zygote: Deoptimizing void com.google.android.finsky.af.a.o.a(com.google.android.finsky.af.d) due to JIT inline cache
+        """);
 
     LogConsoleBase.resizeBuffer(buffer, 190);
 
@@ -40,9 +41,10 @@ public final class LogConsoleBaseTest {
   @Test
   public void resizeBufferIndexToDeleteToIsEqualToIndexOfNewline() {
     StringBuffer buffer = new StringBuffer(
-      "06-05 17:59:30.211 1664-1680/? W/zygote: kill(-7199, 9) failed: No such process\n" +
-      "06-05 17:59:30.214 6745-6745/? I/zygote: Deoptimizing void com.google.android.finsky.af.a.o.a(com.google.android.finsky.af.d) due " +
-      "to JIT inline cache\n");
+      """
+        06-05 17:59:30.211 1664-1680/? W/zygote: kill(-7199, 9) failed: No such process
+        06-05 17:59:30.214 6745-6745/? I/zygote: Deoptimizing void com.google.android.finsky.af.a.o.a(com.google.android.finsky.af.d) due to JIT inline cache
+        """);
 
     LogConsoleBase.resizeBuffer(buffer, 151);
 

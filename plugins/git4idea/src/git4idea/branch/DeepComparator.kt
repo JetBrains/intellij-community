@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
+import com.intellij.diagnostic.telemetry.TraceManager
+import com.intellij.diagnostic.telemetry.computeWithSpan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -26,7 +28,6 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
-import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.util.subgraphDifference
@@ -62,7 +63,10 @@ class DeepComparator(private val project: Project,
     Disposer.register(parent, this)
   }
 
-  override fun getStyle(commitId: Int, commitDetails: VcsShortCommitDetails, isSelected: Boolean): VcsLogHighlighter.VcsCommitStyle {
+  override fun getStyle(commitId: Int,
+                        commitDetails: VcsShortCommitDetails,
+                        column: Int,
+                        isSelected: Boolean): VcsLogHighlighter.VcsCommitStyle {
     if (nonPickedCommits == null || nonPickedCommits!!.contains(commitId)) return VcsLogHighlighter.VcsCommitStyle.DEFAULT
     else return VcsCommitStyleFactory.foreground(MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND)
   }
@@ -225,7 +229,7 @@ class DeepComparator(private val project: Project,
     private fun getCommitsByPatch(root: VirtualFile,
                                   targetBranch: String,
                                   sourceBranch: String): IntSet {
-      return measureTimeMillis(root, "Getting non picked commits with git") {
+      return recordSpan(root, "Getting non picked commits with git") {
         getCommitsFromGit(root, targetBranch, sourceBranch)
       }
     }
@@ -235,7 +239,7 @@ class DeepComparator(private val project: Project,
       val resultFromGit = getCommitsByPatch(root, targetBranch, sourceBranch)
       if (dataPack == null || !dataPack.isFull) return resultFromGit
 
-      val resultFromIndex = measureTimeMillis(root, "Getting non picked commits with index reliable") {
+      val resultFromIndex = recordSpan(root, "Getting non picked commits with index reliable") {
         val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return resultFromGit
         val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return resultFromGit
         getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, resultFromGit, true)
@@ -247,7 +251,7 @@ class DeepComparator(private val project: Project,
     private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String): IntSet? {
       if (!vcsLogData.index.isIndexed(root) || dataPack == null || !dataPack.isFull) return null
 
-      return measureTimeMillis(root, "Getting non picked commits with index fast") {
+      return recordSpan(root, "Getting non picked commits with index fast") {
         val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return null
         val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
         val sourceBranchCommits = dataPack.subgraphDifference(sourceBranchRef, targetBranchRef, storage) ?: return null
@@ -352,12 +356,10 @@ class DeepComparator(private val project: Project,
     }
   }
 
-  private inline fun <R> measureTimeMillis(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
-    val start = System.currentTimeMillis()
-    val result = block()
-    if (result != null) {
-      LOG.debug("$actionName took ${StopWatch.formatTime(System.currentTimeMillis() - start)} for ${root.name}")
+  private inline fun <R> recordSpan(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
+    return computeWithSpan(TraceManager.getTracer("vcs"), actionName) { span ->
+      span.setAttribute("rootName", root.name)
+      block()
     }
-    return result
   }
 }

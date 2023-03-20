@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.google.common.collect.ImmutableList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
@@ -38,9 +37,9 @@ import kotlin.concurrent.write
 
 /** describes vendor + product part of the UI **/
 data class JdkProduct(
-  val vendor: String,
-  val product: String?,
-  val flavour: String?
+  val vendor: @NlsSafe String,
+  val product: @NlsSafe String?,
+  val flavour: @NlsSafe String?
 ) {
   val packagePresentationText: String
     get() = buildString {
@@ -70,7 +69,7 @@ data class JdkItem(
   val jdkMajorVersion: Int,
   @NlsSafe
   val jdkVersion: String,
-  private val jdkVendorVersion: String?,
+  val jdkVendorVersion: String?,
   val suggestedSdkName: String,
 
   val os: String,
@@ -131,7 +130,7 @@ data class JdkItem(
     return installDir.resolve(packageToBinJavaPrefix)
   }
 
-  val vendorPrefix
+  private val vendorPrefix
     get() = suggestedSdkName.split("-").dropLast(1).joinToString("-")
 
   fun matchesVendor(predicate: String) : Boolean {
@@ -179,23 +178,19 @@ data class JdkItem(
 
   val fullPresentationText: @NlsSafe String
     get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
+
+  val fullPresentationWithVendorText: @NlsSafe String
+    get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
-  @Suppress("unused")
   ZIP("zip") {
-    override fun openDecompressor(archiveFile: Path): Decompressor {
-      val decompressor = Decompressor.Zip(archiveFile)
-      return when {
-        SystemInfo.isWindows -> decompressor
-        else -> decompressor.withZipExtensions()
-      }
-    }
+    override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
   },
 
-  @Suppress("SpellCheckingInspection", "unused")
+  @Suppress("SpellCheckingInspection")
   TAR_GZ("targz") {
-    override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile)
+    override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Tar(archiveFile)
   };
 
   abstract fun openDecompressor(archiveFile: Path): Decompressor
@@ -211,41 +206,34 @@ data class JdkPlatform(
 )
 
 data class JdkPredicate(
-  private val ideBuildNumber: BuildNumber,
+  private val ideBuildNumber: BuildNumber?,
   private val supportedPlatforms: Set<JdkPlatform>,
 ) {
 
   companion object {
-    fun none() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, emptySet())
+    fun none() = JdkPredicate(null, emptySet())
 
     fun default() = createInstance(forWsl = false)
-    fun forWSL() = createInstance(forWsl = true)
+    fun forWSL(buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build) = createInstance(forWsl = true, buildNumber)
 
     /**
      * Selects only JDKs that are for the same OS and CPU arch as the current Java process.
      */
-    fun forCurrentProcess() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, setOf(JdkPlatform(currentOS, currentArch)))
+    fun forCurrentProcess() = JdkPredicate(null, setOf(JdkPlatform(currentOS, currentArch)))
 
-    private fun createInstance(forWsl: Boolean = false): JdkPredicate {
+    private fun createInstance(forWsl: Boolean = false, buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build): JdkPredicate {
       val x86_64 = "x86_64"
       val defaultPlatform = JdkPlatform(currentOS, x86_64)
       val platforms = when {
-        (SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1") -> {
-          listOf(defaultPlatform, defaultPlatform.copy(arch = "aarch64"))
-        }
-
-        SystemInfo.isWindows && forWsl -> {
-          listOf(defaultPlatform.copy(os = "linux"))
-        }
-
-        !SystemInfo.isWindows && forWsl -> {
-          listOf()
-        }
-
+        SystemInfo.isWindows && forWsl && CpuArch.isArm64() -> listOf(defaultPlatform.copy(os = "linux", arch = "aarch64"))
+        SystemInfo.isWindows && forWsl && !CpuArch.isArm64() -> listOf(defaultPlatform.copy(os = "linux"))
+        SystemInfo.isLinux && CpuArch.isArm64() -> listOf(defaultPlatform.copy(arch = "aarch64"))
+        (SystemInfo.isMac || SystemInfo.isWindows) && CpuArch.isArm64() -> listOf(defaultPlatform, defaultPlatform.copy(arch = "aarch64"))
+        !SystemInfo.isWindows && forWsl -> listOf()
         else -> listOf(defaultPlatform)
       }
 
-      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, platforms.toSet())
+      return JdkPredicate(buildNumber, platforms.toSet())
     }
 
     val currentOS = when {
@@ -256,7 +244,7 @@ data class JdkPredicate(
     }
 
     val currentArch = when {
-      (SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1") -> "aarch64"
+      CpuArch.isArm64() -> "aarch64"
       else -> "x86_64"
     }
   }
@@ -318,7 +306,7 @@ data class JdkPredicate(
       return filter["value"]?.asBoolean()
     }
 
-    if (type == "build_number_range") {
+    if (type == "build_number_range" && ideBuildNumber != null) {
       val fromBuild = filter["since"]?.asText()
       val untilBuild = filter["until"]?.asText()
 
@@ -549,7 +537,7 @@ private class RawJdkListImpl(
   private fun parseJson(predicate: JdkPredicate) : () -> List<JdkItem> {
     val result = runCatching {
       try {
-        ImmutableList.copyOf(JdkListParser.parseJdkList(json, predicate))
+        java.util.List.copyOf(JdkListParser.parseJdkList(json, predicate))
       }
       catch (t: Throwable) {
         throw RuntimeException("Failed to process the downloaded list of available JDKs from $feedUrl. ${t.message}", t)

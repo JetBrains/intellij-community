@@ -1,0 +1,30 @@
+public final class ReturnsKt {
+    public static final fun foo() : void {
+        run({
+            return
+        })
+    }
+    public static final fun lambdaWithLabel() : void {
+        listOf(1, 2, 3, 4).forEach(l@ { var it: int ->
+
+            if (it % 2 == 0) return
+            print(it)
+        })
+    }
+    public static final fun implicitLabel() : void {
+        listOf(1, 2, 3, 4).forEach({ var it: int ->
+
+            if (it % 2 == 0) return
+            print(it)
+        })
+    }
+    public static final fun simulateBreak() : void {
+        run(loop@ {
+            listOf(1, 2, 3, 4).forEach({ var it: int ->
+
+                if (it == 3) return
+                print(it)
+            })
+        })
+    }
+}

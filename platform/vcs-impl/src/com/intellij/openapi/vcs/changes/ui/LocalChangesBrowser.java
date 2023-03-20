@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -18,10 +19,9 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-public abstract class LocalChangesBrowser extends ChangesBrowserBase implements Disposable {
+public abstract class LocalChangesBrowser extends AsyncChangesBrowserBase implements Disposable {
   @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
 
   public LocalChangesBrowser(@NotNull Project project) {
@@ -37,6 +37,7 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
   @Override
   public void dispose() {
+    shutdown();
   }
 
   @NotNull
@@ -48,7 +49,7 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
     );
   }
 
-  public void setIncludedChanges(@NotNull Collection<? extends Change> changes) {
+  public void setIncludedChangesBy(@NotNull Collection<? extends Change> changes) {
     List<Change> changesToInclude = new ArrayList<>(changes);
 
     Set<Change> otherChanges = new HashSet<>();
@@ -95,6 +96,11 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
@@ -134,6 +140,24 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
     }
   }
 
+  public static class NonEmptyChangeLists extends LocalChangesBrowser {
+    public NonEmptyChangeLists(@NotNull Project project) {
+      super(project);
+      myViewer.rebuildTree();
+    }
+
+    @NotNull
+    @Override
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
+        List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> !list.getChanges().isEmpty());
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists,
+                                                     Registry.is("vcs.skip.single.default.changelist"));
+      });
+    }
+  }
+
   public static class SelectedChangeLists extends LocalChangesBrowser {
     @NotNull private final Set<String> myChangeListNames;
 
@@ -145,11 +169,13 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel() {
-      List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
-      List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> myChangeListNames.contains(list.getName()));
-      return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), selectedLists,
-                                                   Registry.is("vcs.skip.single.default.changelist"));
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        List<LocalChangeList> allLists = ChangeListManager.getInstance(myProject).getChangeLists();
+        List<LocalChangeList> selectedLists = ContainerUtil.filter(allLists, list -> myChangeListNames.contains(list.getName()));
+        return TreeModelBuilder.buildFromChangeLists(myProject, grouping, selectedLists,
+                                                     Registry.is("vcs.skip.single.default.changelist"));
+      });
     }
   }
 
@@ -161,9 +187,11 @@ public abstract class LocalChangesBrowser extends ChangesBrowserBase implements 
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel() {
-      Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
-      return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), allChanges, null);
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
+        return TreeModelBuilder.buildFromChanges(myProject, grouping, allChanges, null);
+      });
     }
   }
 }

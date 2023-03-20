@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.Language;
@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   private static final String WHITESPACE = " \t";
 
-  public IndexPatternSearcher() {
+  IndexPatternSearcher() {
     super(true);
   }
 
@@ -52,7 +52,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       return;
     }
 
-    final TodoCacheManager cacheManager = TodoCacheManager.SERVICE.getInstance(file.getProject());
+    final TodoCacheManager cacheManager = TodoCacheManager.getInstance(file.getProject());
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)
@@ -217,11 +217,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                                                                            commentEnd + commentSuffixLength));
       Matcher matcher = pattern.matcher(input);
       while (true) {
-        //long time1 = System.currentTimeMillis();
         boolean found = matcher.find();
-        //long time2 = System.currentTimeMillis();
-        //System.out.println("scanned text of length " + (lexer.getTokenEnd() - lexer.getTokenStart() + " in " + (time2 - time1) + " ms"));
-
         if (!found) break;
         int suffixStartOffset = input.length() - commentSuffixLength;
         int start = fitToRange(matcher.start(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
@@ -235,7 +231,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
               continue;
             }
             matches.add(start);
-            IndexPatternOccurrenceImpl occurrence = new IndexPatternOccurrenceImpl(file, start, end, indexPattern, additionalRanges);
+            IndexPatternOccurrence occurrence = new IndexPatternOccurrenceImpl(file, start, end, indexPattern, additionalRanges);
             if (!consumer.process(occurrence)) {
               return false;
             }

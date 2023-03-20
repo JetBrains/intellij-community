@@ -50,8 +50,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * @deprecated please use {@link KillableProcessHandler#KillableProcessHandler(GeneralCommandLine)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     this(mediate(commandLine, withMediator, false));
   }
@@ -82,8 +81,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * @deprecated just don't use this method
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
@@ -140,16 +138,6 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   @Override
-  protected void notifyProcessTerminated(int exitCode) {
-    try {
-      super.closeStreams();
-    }
-    finally {
-      super.notifyProcessTerminated(exitCode);
-    }
-  }
-
-  @Override
   protected void doDestroyProcess() {
     boolean gracefulTerminationAttempted = shouldKillProcessSoftly() && canDestroyProcessGracefully() && destroyProcessGracefully();
     if (!gracefulTerminationAttempted) {
@@ -166,8 +154,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * @deprecated graceful termination with WinP is enabled by default; please don't use this method
    */
   @ApiStatus.Experimental
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public void setShouldKillProcessSoftlyWithWinP(boolean shouldKillProcessSoftlyWithWinP) {
     myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP;
   }
@@ -198,10 +185,12 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   protected boolean destroyProcessGracefully() {
-    if (hasPty() && sendInterruptToPtyProcess()) {
-      return true;
-    }
+    ProcessService processService = getProcessService();
     if (SystemInfo.isWindows) {
+      if (processService.hasControllingTerminal(myProcess) &&
+          WinProcessTerminator.terminateWinProcessGracefully(this, processService, this::sendInterruptToPtyProcess)) {
+        return true;
+      }
       if (myMediatedProcess) {
         return WinRunnerMediator.destroyProcess(myProcess, true);
       }
@@ -211,7 +200,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          return WinProcessTerminator.terminateWinProcessGracefully(this, getProcessService());
+          return WinProcessTerminator.terminateWinProcessGracefully(this, processService);
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
@@ -239,6 +228,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       }
     }
     else if (SystemInfo.isUnix) {
+      if (processService.hasControllingTerminal(myProcess) && sendInterruptToPtyProcess()) {
+        return true;
+      }
       if (shouldDestroyProcessRecursively()) {
         return UnixProcessManager.sendSigIntToProcessTree(myProcess);
       }
@@ -249,9 +241,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   private static @NotNull ProcessService getProcessService() {
     // Without non-cancelable section "ProcessService.getInstance()" will fail under a canceled progress.
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      return ProcessService.getInstance();
-    });
+    return ProgressManager.getInstance().computeInNonCancelableSection(ProcessService::getInstance);
   }
 
   /**
@@ -266,9 +256,6 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * @return true if the character has been written successfully
    */
   private boolean sendInterruptToPtyProcess() {
-    if (!getProcessService().hasControllingTerminal(myProcess)) {
-      return false;
-    }
     OutputStream outputStream = myProcess.getOutputStream();
     if (outputStream != null) {
       try {

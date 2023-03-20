@@ -28,9 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 class AsyncFilterRunner {
   private static final Logger LOG = Logger.getInstance(AsyncFilterRunner.class);
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Console Filters");
@@ -46,18 +43,20 @@ class AsyncFilterRunner {
 
   void highlightHyperlinks(@NotNull Project project,
                            @NotNull Filter customFilter,
-                           final int startLine,
-                           final int endLine) {
+                           int startLine,
+                           int endLine) {
     if (endLine < 0) return;
 
-    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, myEditor.getDocument()));
+    Document document = myEditor.getDocument();
+    long startStamp = document.getModificationStamp();
+    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, document));
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runTasks();
       highlightAvailableResults();
       return;
     }
 
-    Promise<?> promise = ReadAction.nonBlocking(this::runTasks).submit(ourExecutor);
+    Promise<?> promise = ReadAction.nonBlocking(this::runTasks).expireWhen(() -> document.getModificationStamp() != startStamp).submit(ourExecutor);
 
     if (isQuick(promise)) {
       highlightAvailableResults();
@@ -113,7 +112,7 @@ class AsyncFilterRunner {
     }
   }
 
-  boolean waitForPendingFilters(long timeoutMs) {
+  void waitForPendingFilters(long timeoutMs) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     
     long started = System.currentTimeMillis();
@@ -121,7 +120,7 @@ class AsyncFilterRunner {
       if (myQueue.isEmpty()) {
         // results are available before queue is emptied, so process the last results, if any, and exit
         highlightAvailableResults();
-        return true;
+        return;
       }
 
       if (hasResults()) {
@@ -130,7 +129,7 @@ class AsyncFilterRunner {
       }
 
       if (System.currentTimeMillis() - started > timeoutMs) {
-        return false;
+        return;
       }
       TimeoutUtil.sleep(1);
     }

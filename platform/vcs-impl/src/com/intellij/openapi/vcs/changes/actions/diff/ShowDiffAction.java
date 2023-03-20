@@ -5,10 +5,7 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -24,6 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 public class ShowDiffAction implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return true; // order="last"
@@ -58,7 +60,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
 
-    List<Change> result = ContainerUtil.newArrayList(changes);
+    List<Change> result = List.of(changes);
     showDiffForChange(project, result, 0);
   }
 
@@ -99,10 +101,11 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   public static void showDiffForChange(@Nullable Project project,
                                        @NotNull ListSelection<? extends Change> changes,
                                        @NotNull ShowDiffContext context) {
-    ListSelection<ChangeDiffRequestProducer> presentables = changes.map(change -> ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change)));
+    ListSelection<ChangeDiffRequestProducer> presentables =
+      changes.map(change -> ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change)));
     if (presentables.isEmpty()) return;
 
-    DiffRequestChain chain = new ChangeDiffRequestChain(presentables.getList(), presentables.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(presentables);
 
     for (Map.Entry<Key<?>, Object> entry : context.getChainContext().entrySet()) {
       //noinspection unchecked,rawtypes

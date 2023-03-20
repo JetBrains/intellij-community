@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.popup.JBPopup
@@ -18,32 +19,29 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.actions.ShowCommitOptionsAction
 import com.intellij.openapi.vcs.changes.InclusionListener
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.awt.RelativePoint.getNorthEastOf
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
-import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
-import java.awt.LayoutManager
+import java.awt.Color
 import java.awt.Point
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
-
-private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
 
 abstract class NonModalCommitPanel(
   val project: Project,
@@ -60,17 +58,45 @@ abstract class NonModalCommitPanel(
   private val dataProviders = mutableListOf<DataProvider>()
   private var needUpdateCommitOptionsUi = false
 
-  protected val centerPanel = simplePanel()
-  protected var bottomPanel: JBPanel<*>.() -> Unit = { }
+  protected val centerPanel = JBUI.Panels.simplePanel()
+
+  @Suppress("JoinDeclarationAndAssignment", "UNNECESSARY_LATEINIT") // used in super constructor.
+  protected lateinit var bottomPanel: JPanel
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
-    setTargetComponent(this@NonModalCommitPanel)
+    targetComponent = this@NonModalCommitPanel
     component.isOpaque = false
   }
 
-  val commitMessage: CommitMessage = LoggingCommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
+  val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
+  }
+
+  init {
+    bottomPanel = JBPanel<JBPanel<*>>(VerticalLayout(0))
+
+    commitActionsPanel.apply {
+      border = getButtonPanelBorder()
+
+      setTargetComponent(this@NonModalCommitPanel)
+    }
+    centerPanel
+      .addToCenter(commitMessage)
+      .addToBottom(bottomPanel)
+
+    addToCenter(centerPanel)
+    withPreferredHeight(85)
+    commitMessage.editorField.setDisposedWith(this)
+    bottomPanel.background = getButtonPanelBackground()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+
+    if (this::bottomPanel.isInitialized) {
+      bottomPanel.background = getButtonPanelBackground()
+    }
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
@@ -79,7 +105,12 @@ abstract class NonModalCommitPanel(
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
   override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
-  fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
+  fun getDataFromProviders(dataId: String): Any? {
+    for (dataProvider in dataProviders) {
+      return dataProvider.getData(dataId) ?: continue
+    }
+    return null
+  }
 
   override fun addDataProvider(provider: DataProvider) {
     dataProviders += provider
@@ -91,7 +122,7 @@ abstract class NonModalCommitPanel(
   protected fun fireInclusionChanged() = inclusionEventDispatcher.multicaster.inclusionChanged()
 
   override fun startBeforeCommitChecks() = Unit
-  override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
+  override fun endBeforeCommitChecks(result: CommitChecksResult) = Unit
 
   override fun dispose() = Unit
 
@@ -100,59 +131,70 @@ abstract class NonModalCommitPanel(
     commitActionsPanel.border = getButtonPanelBorder()
   }
 
-  protected fun buildLayout() {
-    commitActionsPanel.apply {
-      border = getButtonPanelBorder()
-      background = getButtonPanelBackground()
-
-      setTargetComponent(this@NonModalCommitPanel)
-    }
-    centerPanel
-      .addToCenter(commitMessage)
-      .addToBottom(panel(VerticalLayout(0)).apply {
-        background = getButtonPanelBackground()
-        bottomPanel()
-      })
-
-    addToCenter(centerPanel)
-    withPreferredHeight(85)
+  private fun getButtonPanelBorder(): Border {
+    @Suppress("UseDPIAwareBorders")
+    return EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
   }
 
-  private fun getButtonPanelBorder(): Border =
-    EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
+  private fun getButtonPanelBackground(): Color? {
+    return commitMessage.editorField.getEditor(true)?.backgroundColor
+  }
 
-  private fun getButtonPanelBackground() =
-    JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
+  override fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext) {
+    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false)
+    commitOptionsPanel.setOptions(options)
 
-  override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {
+    val commitOptionsComponent = commitOptionsPanel.component.apply {
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
       isFocusCycleRoot = true
 
-      setOptions(options)
-      border = empty(0, 10)
-
-      // to reflect LaF changes as commit options components are created once per commit
-      if (needUpdateCommitOptionsUi) {
-        needUpdateCommitOptionsUi = false
-        updateComponentTreeUI(this)
-      }
+      border = empty(0, 10, 10, 10)
     }
-    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
+    // to reflect LaF changes as commit options components are created once per commit
+    if (needUpdateCommitOptionsUi) {
+      needUpdateCommitOptionsUi = false
+      updateComponentTreeUI(commitOptionsComponent)
+    }
+
+    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsComponent)
     val commitOptionsPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
+      .createComponentPopupBuilder(commitOptionsComponent, focusComponent)
       .setRequestFocus(true)
+      .addListener(object : JBPopupListener {
+        override fun beforeShown(event: LightweightWindowEvent) {
+          options.restoreState()
+        }
+
+        override fun onClosed(event: LightweightWindowEvent) {
+          options.saveState()
+        }
+      })
       .createPopup()
+      .apply { clickSource = getClickSourceFromLastMouseEvent() }
 
     showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)
   }
 
+  private fun getClickSourceFromLastMouseEvent(): JComponent? {
+    val me = IdeEventQueue.getInstance().trueCurrentEvent
+    if (me is MouseEvent) {
+      val comp = SwingUtilities.getDeepestComponentAt(me.component, me.x, me.y)
+      if (comp is JComponent) {
+        return comp
+      }
+    }
+    return null
+  }
+
   protected open fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
-    if (isFromToolbar) popup.show(getNorthEastOf(toolbar.getShowCommitOptionsButton() ?: toolbar.component))
+    if (isFromToolbar) {
+      popup.showAbove(commitActionsPanel.getShowCommitOptionsButton() ?: commitActionsPanel)
+    }
     else popup.showInBestPositionFor(dataContext)
 
   companion object {
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
+    internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
 
     fun JBPopup.showAbove(component: JComponent) {
       val northWest = RelativePoint(component, Point())
@@ -170,37 +212,7 @@ abstract class NonModalCommitPanel(
   }
 }
 
-private fun ActionToolbar.getShowCommitOptionsButton(): JComponent? =
-  uiTraverser(component)
+private fun CommitActionsPanel.getShowCommitOptionsButton(): JComponent? =
+  uiTraverser(this)
     .filter(ActionButton::class.java)
     .find { it.action is ShowCommitOptionsAction }
-
-private class LoggingCommitMessage(
-  project: Project,
-  withSeparator: Boolean,
-  showToolbar: Boolean,
-  runInspections: Boolean,
-  messagePlaceholder: @Nls String?
-) : CommitMessage(project, withSeparator, showToolbar, runInspections, messagePlaceholder) {
-  private var isDuringModelUpdate = false
-
-  init {
-    editorField.addDocumentListener(object : DocumentListener {
-      override fun beforeDocumentChange(event: DocumentEvent) {
-        if (!isDuringModelUpdate) {
-          CommitSessionCollector.getInstance(project).logCommitMessageTyped()
-        }
-      }
-    })
-  }
-
-  override fun setText(text: String?) {
-    isDuringModelUpdate = true
-    try {
-      super.setText(text)
-    }
-    finally {
-      isDuringModelUpdate = false
-    }
-  }
-}

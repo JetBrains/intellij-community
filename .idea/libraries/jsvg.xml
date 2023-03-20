@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="jsvg" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:0.1.0-jb.7" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/0.1.0-jb.7/jsvg-0.1.0-jb.7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/0.1.0-jb.7/jsvg-0.1.0-jb.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

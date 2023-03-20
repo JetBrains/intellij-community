@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -10,21 +10,27 @@ import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.DOUBLE_COLON_LHS
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DEPRECATION")
 class ConvertReferenceToLambdaInspection : IntentionBasedInspection<KtCallableReferenceExpression>(
@@ -71,7 +77,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
                 (context[DOUBLE_COLON_LHS, it] as? DoubleColonLHS.Type)?.type
             }
 
-            val acceptsReceiverAsParameter = receiverType != null && !matchingParameterIsExtension &&
+            val acceptsReceiverAsParameter = receiverType != null && !matchingParameterIsExtension && !targetDescriptor.inCompanion() &&
                     (targetDescriptor.dispatchReceiverParameter != null || targetDescriptor.extensionReceiverParameter != null)
 
             val parameterNamesAndTypes = targetDescriptor.valueParameters.map { it.name.asString() to it.type }.let {
@@ -84,12 +90,12 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
             }
 
             val receiverNameAndType = receiverType?.let {
-                KotlinNameSuggester.suggestNamesByType(it, validator = { name ->
+                Fe10KotlinNameSuggester.suggestNamesByType(it, validator = { name ->
                     name !in parameterNamesAndTypes.map { pair -> pair.first }
                 }, defaultName = "receiver").first() to it
             }
 
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val targetName = reference.text
             val lambdaParameterNamesAndTypes = if (acceptsReceiverAsParameter)
                 listOf(receiverNameAndType!!) + parameterNamesAndTypes
@@ -113,7 +119,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
                     "$receiverPrefix$targetName(${if (matchingParameterIsExtension) "this" else "it"})"
                 }
 
-                factory.createLambdaExpression(parameters = "", body = body)
+                psiFactory.createLambdaExpression(parameters = "", body = body)
             } else {
                 val isExtension = matchingParameterIsExtension && resolvedCall?.resultingDescriptor?.isExtension == true
                 val (params, args) = if (isExtension) {
@@ -123,7 +129,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
                     lambdaParameterNamesAndTypes to parameterNamesAndTypes.map { it.first }
                 }
 
-                factory.createLambdaExpression(
+                psiFactory.createLambdaExpression(
                     parameters = params.joinToString(separator = ", ") {
                         if (valueArgumentParent != null) it.first
                         else it.first + ": " + SOURCE_RENDERER.renderType(it.second)
@@ -142,7 +148,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
             }
 
             val wrappedExpression = if (needParentheses)
-                factory.createExpressionByPattern("($0)", lambdaExpression)
+                psiFactory.createExpressionByPattern("($0)", lambdaExpression)
             else
                 lambdaExpression
 
@@ -153,5 +159,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
             lastLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible()
             return callGrandParent.lambdaArguments.lastOrNull()?.getArgumentExpression() ?: lastLambdaExpression
         }
+
+        private fun CallableMemberDescriptor.inCompanion() = containingDeclaration.safeAs<ClassDescriptor>()?.isCompanionObject == true
     }
 }

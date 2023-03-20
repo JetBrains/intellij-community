@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +34,8 @@ import java.util.function.Supplier;
  * @author tav
  */
 @SuppressWarnings("ConcatenationWithEmptyString")
-public final class HidpiInfo extends AnAction implements DumbAware {
+final class HidpiInfo extends AnAction implements DumbAware {
+
   private static final boolean ENABLED = JreHiDpiUtil.isJreHiDPIEnabled();
 
   private static final String JRE_HIDPI_MODE_TEXT = "Per-monitor DPI-aware";
@@ -47,7 +49,7 @@ public final class HidpiInfo extends AnAction implements DumbAware {
   // must be not constant to avoid call to JBUIScale
   public static String getUsrScaleDesc() {
     return "<html><span style='font-size:x-small'>The global IDE scale factor" +
-           (JBUIScale.DEBUG_USER_SCALE_FACTOR.get() != null ?
+           (JBUIScale.DEBUG_USER_SCALE_FACTOR.getValue() != null ?
             ", overridden by the debug property." :
      ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
      (ENABLED ? "pt" : "px") + "</code><br>" +
@@ -55,6 +57,7 @@ public final class HidpiInfo extends AnAction implements DumbAware {
      "> Appearance & Behaviour > Appearance > Override default font") +
            "</code></span></html>";
   }
+
   private JBPopup popup;
 
   private final int myCopyIconSize = AllIcons.General.CopyHovered.getIconWidth();
@@ -64,18 +67,25 @@ public final class HidpiInfo extends AnAction implements DumbAware {
   private boolean myIsCopyIconActive;
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
-    if (activeFrame == null) return;
-    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
+    if (activeFrame == null) {
+      return;
+    }
 
+    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
     String _USR_SCALE_DESC = getUsrScaleDesc().replace("$LABEL_FONT_SIZE", "" + StartupUiUtil.getLabelFont().getSize());
 
-    String[] columns = new String[] {
+    String[] columns = new String[]{
       "Property", "Value", "Description"
     };
 
-    String[][] data = new String[][] {
+    String[][] data = new String[][]{
       {JRE_HIDPI_MODE_TEXT, ENABLED ? "enabled" : "disabled",
         "<html><span style='font-size:x-small'>When enabled, the IDE UI scaling honors per-monitor DPI.<br>" +
             (SystemInfo.isWindows ?
@@ -97,7 +107,7 @@ public final class HidpiInfo extends AnAction implements DumbAware {
 
     if (SystemInfo.isLinux && SystemInfo.isJetBrainsJvm) {
       try {
-        Class cls = Class.forName("sun.awt.X11GraphicsDevice");
+        Class<?> cls = Class.forName("sun.awt.X11GraphicsDevice");
         MethodInvocator getDpiInfo = new MethodInvocator(cls, "getDpiInfo");
         if (getDpiInfo.isAvailable()) {
           GraphicsDevice gd = null;

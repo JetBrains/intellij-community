@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -345,7 +345,19 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testStringPlusOverload() {
     doTest();
   }
-  
+
+  public void testConcatenationInConcatenation() {
+    doTest();
+  }
+
+  public void testConcatenationTurnsIntoAddition() {
+    doTest();
+  }
+
+  public void testAdditionTurnsIntoConcatenation() {
+    doTest();
+  }
+
   public void testReturnStatementWithoutBraces() {
     doTestInlineThisOnly();
   }
@@ -553,6 +565,17 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testAnonymousCall() { doTest(); }
   public void testInSwitchExpression() { doTest(); }
   public void testInSwitchExpressionYield() { doTest(); }
+
+  public void testAndChain() { doTest(); }
+  public void testAndChainLambda() { doTest(); }
+  public void testAndChainLambdaSingleLine() { doTest(); }
+
+  public void testTernaryBranch() { doTest(); }
+  public void testTernaryBranchCollapsible() { doTest(); }
+
+  public void testNewWithSideEffect() { doTest(); }
+  
+  public void testSplitIfAndCollapseBack() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

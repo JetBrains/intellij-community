@@ -1,21 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView.impl;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.*;
@@ -25,7 +23,9 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,19 +33,32 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class UsageViewContentManagerImpl extends UsageViewContentManager {
-  private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
-  private final Key<Boolean> NOT_REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.NOT_REUSABLE_CONTENT_KEY");        //todo[myakovlev] dont use it
-  private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
-  private final ContentManager myFindContentManager;
 
+  private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
+  //todo[myakovlev] dont use it
+  private final Key<Boolean> NOT_REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.NOT_REUSABLE_CONTENT_KEY");
+  private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
+  private final @NotNull ContentManager myFindContentManager;
+
+  @SuppressWarnings("unused") // instantiated reflectively
+  @RequiresEdt
   public UsageViewContentManagerImpl(@NotNull Project project) {
     this(project, ToolWindowManager.getInstance(project));
   }
 
+  @RequiresEdt
   @NonInjectable
-  public UsageViewContentManagerImpl(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager) {
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(
-      ToolWindowId.FIND, UIBundle.messagePointer("tool.window.name.find"), AllIcons.Toolwindows.ToolWindowFind));
+  public UsageViewContentManagerImpl(@NotNull Project project,
+                                     @NotNull ToolWindowManager toolWindowManager) {
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
+      ToolWindowId.FIND,
+      builder -> {
+        builder.stripeTitle = UIBundle.messagePointer("tool.window.name.find");
+        builder.icon = AllIcons.Toolwindows.ToolWindowFind;
+        builder.shouldBeAvailable = false;
+        return Unit.INSTANCE;
+      }
+    );
     toolWindow.setHelpId(UsageViewImpl.HELP_ID);
     toolWindow.setToHideOnEmptyContent(true);
 
@@ -53,6 +66,11 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return FindSettings.getInstance().isShowResultsInSeparateView();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -69,6 +87,11 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         }
 
         @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+
+        @Override
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
           UsageViewSettings.getInstance().setSortAlphabetically(state);
           project.getMessageBus().syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run();
@@ -76,11 +99,16 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
       };
 
     DumbAwareToggleAction toggleAutoscrollAction = new DumbAwareToggleAction(UIBundle.message("autoscroll.to.source.action.name"),
-                                                             UIBundle.message("autoscroll.to.source.action.description"),
-                                                             AllIcons.General.AutoscrollToSource) {
+                                                                             UIBundle.message("autoscroll.to.source.action.description"),
+                                                                             AllIcons.General.AutoscrollToSource) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return UsageViewSettings.getInstance().isAutoScrollToSource();
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -91,7 +119,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
     DefaultActionGroup gearActions = DefaultActionGroup.createPopupGroup(IdeBundle.messagePointer("group.view.options"));
     gearActions.addAll(toggleAutoscrollAction, toggleSortAction, toggleNewTabAction);
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(gearActions);
+    toolWindow.setAdditionalGearActions(gearActions);
 
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerListener() {
@@ -100,19 +128,25 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         event.getContent().release();
       }
     });
-    ContentManagerWatcher.watchContentManager(toolWindow, myFindContentManager);
   }
 
-  @NotNull
   @Override
-  public Content addContent(@NotNull String contentName, boolean reusable, @NotNull final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
+  public @NotNull Content addContent(@NotNull String contentName,
+                                     boolean reusable,
+                                     final @NotNull JComponent component,
+                                     boolean toOpenInNewTab,
+                                     boolean isLockable) {
     return addContent(contentName, null, null, reusable, component, toOpenInNewTab, isLockable);
   }
 
-  @NotNull
   @Override
-  public Content addContent(@NotNull String contentName, String tabName, String toolwindowTitle, boolean reusable, @NotNull final JComponent component,
-                            boolean toOpenInNewTab, boolean isLockable) {
+  public @NotNull Content addContent(@NotNull String contentName,
+                                     String tabName,
+                                     String toolwindowTitle,
+                                     boolean reusable,
+                                     final @NotNull JComponent component,
+                                     boolean toOpenInNewTab,
+                                     boolean isLockable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
     Content selectedContent = getSelectedContent();
     toOpenInNewTab |= selectedContent != null && selectedContent.isPinned();
@@ -120,10 +154,10 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
     Content contentToDelete = null;
     int indexToAdd = -1;
     if (!toOpenInNewTab && reusable) {
-      List<Content> contents = ContainerUtil.newArrayList(myFindContentManager.getContents());
+      List<Content> contents = Arrays.asList(myFindContentManager.getContents());
       if (selectedContent != null) {
-        contents.remove(selectedContent);
-        contents.add(selectedContent);// Selected content has to be the last (and the best) candidate to be deleted
+        contents = ContainerUtil.append(contents, selectedContent);
+        // Selected content has to be the last (and the best) candidate to be deleted
       }
 
       for (Content content : contents) {
@@ -136,7 +170,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         }
       }
     }
-    Content content = ContentFactory.SERVICE.getInstance().createContent(component, contentName, isLockable);
+    Content content = ContentFactory.getInstance().createContent(component, contentName, isLockable);
     content.setTabName(tabName);
     content.setToolwindowTitle(toolwindowTitle);
     content.putUserData(contentKey, Boolean.TRUE);
@@ -171,7 +205,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   @Override
   public Content getSelectedContent() {
-    return myFindContentManager == null ? null : myFindContentManager.getSelectedContent();
+    return myFindContentManager.getSelectedContent();
   }
 
   @Override

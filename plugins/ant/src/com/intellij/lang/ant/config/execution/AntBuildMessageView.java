@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.ide.CommonActionsManager;
@@ -244,7 +244,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     // check if there are running instances of the same build file
 
-    MessageView ijMessageView = MessageView.SERVICE.getInstance(project);
+    MessageView ijMessageView = MessageView.getInstance(project);
     Content[] contents = ijMessageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.isPinned()) {
@@ -268,14 +268,15 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
                                                   AntBundle.message("starting.ant.build.dialog.title"), Messages.getQuestionIcon());
 
       switch (result) {
-        case Messages.YES:  // yes
+        case Messages.YES -> {  // yes
           buildMessageView.stopProcess();
           ijMessageView.getContentManager().removeContent(content, true);
-          continue;
-        case Messages.NO: // no
-          continue;
-        default: // cancel
+        }
+        case Messages.NO -> { // no
+        }
+        default -> { // cancel
           return null;
+        }
       }
     }
 
@@ -283,12 +284,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     String contentName = buildFile.getPresentableName();
     contentName = getBuildContentName() + " (" + contentName + ")";
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(messageView.getComponent(), contentName, true);
+    final Content content = ContentFactory.getInstance().createContent(messageView.getComponent(), contentName, true);
     content.putUserData(KEY, messageView);
     ijMessageView.getContentManager().addContent(content);
     ijMessageView.getContentManager().setSelectedContent(content);
     content.setDisposer(() -> Disposer.dispose(messageView));
-    new CloseListener(content, ijMessageView.getContentManager(), project);
+    new CloseListener(content, ijMessageView.getContentManager(), project).setupListeners();
 
     if (!buildFile.isRunInBackground()) {
       final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
@@ -323,7 +324,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private void close() {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MessageView messageView = MessageView.getInstance(myProject);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.getComponent() == this) {
@@ -423,10 +424,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     updateErrorAndWarningCounters(priority);
     final AntMessage message = createErrorMessage(priority, error);
     addCommand(new AddMessageCommand(message));
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = message.getFile();
     if (file != null) {
-      wolf.queue(file);
+      queueToWolf(file);
     }
   }
 
@@ -434,10 +434,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     updateErrorAndWarningCounters(PRIORITY_ERR);
     AntMessage message = createErrorMessage(PRIORITY_ERR, exception);
     addCommand(new AddExceptionCommand(message));
-    WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
     VirtualFile file = message.getFile();
     if (file != null) {
-      wolf.queue(file);
+      queueToWolf(file);
     }
   }
 
@@ -513,9 +512,25 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     final AntMessage message = new AntMessage(type, priority, text, file, line, column);
     addCommand(new AddJavacMessageCommand(message, url));
     if (type == MessageType.ERROR && file != null) {
-      WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-      wolf.queue(file);
+      queueToWolf(file);
     }
+  }
+
+  private void queueToWolf(@NotNull VirtualFile file) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> doQueueToWolf(file));
+    }
+    else {
+      doQueueToWolf(file);
+    }
+  }
+
+  private void doQueueToWolf(@NotNull VirtualFile file) {
+    ReadAction.run(() -> {
+      if (!myProject.isDisposed()) {
+        WolfTheProblemSolver.getInstance(myProject).queue(file);
+      }
+    });
   }
 
   private JComponent getComponent() {
@@ -549,10 +564,13 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       myContent = content;
       myContentManager = contentManager;
       myProject = project;
-      contentManager.addContentManagerListener(this);
+    }
+
+    private void setupListeners() {
+      myContentManager.addContentManagerListener(this);
       ProjectManager.getInstance().addProjectManagerListener(myProject, this);
 
-      Disposer.register(content, () -> {
+      Disposer.register(myContent, () -> {
         myContentManager.removeContentManagerListener(this);
         ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
       });
@@ -928,8 +946,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         return;
       }
       // proceed messages in a special way
-      if (command instanceof AddMessageCommand) {
-        AddMessageCommand addMessageCommand = (AddMessageCommand)command;
+      if (command instanceof AddMessageCommand addMessageCommand) {
         myDelayedMessages.add(addMessageCommand.getMessage());
       }
       else {

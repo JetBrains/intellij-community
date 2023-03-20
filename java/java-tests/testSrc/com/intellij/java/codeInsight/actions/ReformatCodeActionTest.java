@@ -17,7 +17,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -30,34 +29,36 @@ import java.util.List;
 public class ReformatCodeActionTest extends JavaPsiTestCase {
   private static final String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
   private static final String[] IMPORTS_LIST = new String[]{"import java.util.List;", "import java.util.Set;", "import java.util.Map"};
-  private static final String TEST_SOURCE = "%s" +
-                                            "public class %s {\n" +
-                                            "\n" +
-                                            "public void start(String str) {\n" +
-                                            "}\n" +
-                                            "\n" +
-                                            "public static void staticComesSecond(String[] args) {\n" +
-                                            "}\n" +
-                                            "\n" +
-                                            "int firstInt;\n" +
-                                            "static int notFirstStatic;\n" +
-                                            "final static String t = \"T\";\n" +
-                                            "\n" +
-                                            "}\n";
-  private static final String FORMATTED_SOURCE = "%s" +
-                                                 "public class %s {\n" +
-                                                 "\n" +
-                                                 "    public void start(String str) {\n" +
-                                                 "    }\n" +
-                                                 "\n" +
-                                                 "    public static void staticComesSecond(String[] args) {\n" +
-                                                 "    }\n" +
-                                                 "\n" +
-                                                 "    int firstInt;\n" +
-                                                 "    static int notFirstStatic;\n" +
-                                                 "    final static String t = \"T\";\n" +
-                                                 "\n" +
-                                                 "}\n";
+  private static final String TEST_SOURCE = """
+    %spublic class %s {
+
+    public void start(String str) {
+    }
+
+    public static void staticComesSecond(String[] args) {
+    }
+
+    int firstInt;
+    static int notFirstStatic;
+    final static String t = "T";
+
+    }
+    """;
+  private static final String FORMATTED_SOURCE = """
+    %spublic class %s {
+
+        public void start(String str) {
+        }
+
+        public static void staticComesSecond(String[] args) {
+        }
+
+        int firstInt;
+        static int notFirstStatic;
+        final static String t = "T";
+
+    }
+    """;
   private static final String TEMP_DIR_NAME = "dir";
   private PsiDirectory myWorkingDirectory;
 
@@ -70,8 +71,8 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
 
   public void testOptimizeAndReformatOnlySelectedFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-    List<PsiFile> forProcessing = ContainerUtil.newArrayList(files.get(0), files.get(1));
-    List<PsiFile> noProcessing = ContainerUtil.newArrayList(files.get(2), files.get(3));
+    List<PsiFile> forProcessing = List.of(files.get(0), files.get(1));
+    List<PsiFile> noProcessing = List.of(files.get(2), files.get(3));
 
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
@@ -87,7 +88,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     List<PsiFile> files = createTestFiles(srcDir, classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
-    performReformatActionOnModule(module, ContainerUtil.newArrayList(srcDir));
+    performReformatActionOnModule(module, List.of(srcDir));
 
     checkFormationAndImportsOptimizationFor(files);
   }

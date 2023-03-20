@@ -8,9 +8,6 @@ import com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBloc
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class SwitchLabeledRuleCanBeCodeBlockTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlock"
 

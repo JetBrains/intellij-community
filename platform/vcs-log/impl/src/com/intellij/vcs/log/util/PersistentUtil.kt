@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.indexing.impl.MapIndexStorage
@@ -27,19 +12,19 @@ import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
 import org.jetbrains.annotations.NonNls
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
 object PersistentUtil {
   @JvmField
-  val LOG_CACHE = File(PathManager.getSystemPath(), "vcs-log")
+  val LOG_CACHE: Path = Path.of(PathManager.getSystemPath(), "vcs-log")
+
   @NonNls
-  private const val CORRUPTION_MARKER = "corruption.marker"
+  private const val CORRUPTION_MARKER: String = "corruption.marker"
 
   @JvmStatic
-  val corruptionMarkerFile: File
-    get() = File(LOG_CACHE, CORRUPTION_MARKER)
+  val corruptionMarkerFile: Path
+    get() = LOG_CACHE.resolve(CORRUPTION_MARKER)
 
   @JvmStatic
   fun calcLogId(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>): String {
@@ -55,16 +40,21 @@ object PersistentUtil {
 
   private fun <T> calcHash(logProviders: Map<VirtualFile, T>, mapping: (T) -> String): Int {
     val sortedRoots = logProviders.keys.sortedBy { it.path }
-    return StringUtil.join(sortedRoots, { root -> root.path + "." + mapping(logProviders.getValue(root)) }, ".").hashCode()
+    return sortedRoots.joinToString(separator = ".") { root -> "${root.path}.${mapping(logProviders.getValue(root))}" }.hashCode()
+  }
+
+  @JvmStatic
+  fun getProjectLogDataDirectoryName(projectName: String, logId: String): String {
+    return PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
   }
 }
 
-class StorageId(@NonNls private val projectName: String,
-                @NonNls private val subdirName: String,
-                private val logId: String,
-                val version: Int) {
-  private val safeProjectName = PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
-  val projectStorageDir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }
+internal class StorageId(@NonNls private val projectName: String,
+                         @NonNls private val subdirName: String,
+                         private val logId: String,
+                         val version: Int) {
+  private val safeProjectName = PersistentUtil.getProjectLogDataDirectoryName(projectName, logId)
+  val projectStorageDir: Path by lazy { LOG_CACHE.resolve(safeProjectName).resolve(subdirName) }
 
   @JvmOverloads
   fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {
@@ -75,7 +65,7 @@ class StorageId(@NonNls private val projectName: String,
         IOUtil.deleteAllFilesStartingWith(oldStorageFile)
       }
     }
-    return doGetStorageFile(kind) // MapIndexStorage itself adds ".storage" suffix to the given file, so we wont do it here
+    return doGetStorageFile(kind) // MapIndexStorage itself adds ".storage" suffix to the given file, so we won't do it here
   }
 
   private fun doGetRealStorageFile(kind: String, forMapIndexStorage: Boolean): Path {
@@ -85,7 +75,7 @@ class StorageId(@NonNls private val projectName: String,
   }
 
   private fun doGetStorageFile(kind: String): Path {
-    return File(projectStorageDir, "$kind.$version").toPath()
+    return projectStorageDir.resolve("$kind.$version")
   }
 
   fun cleanupAllStorageFiles(): Boolean {

@@ -17,9 +17,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
   protected abstract void fillActions(DefaultActionGroup group);

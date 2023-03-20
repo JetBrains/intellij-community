@@ -6,9 +6,8 @@ import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.util.io.systemIndependentPath
 import javax.swing.JLabel
 
 class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
@@ -16,14 +15,14 @@ class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
   val peer = template.createLazyPeer()
 
   override fun setupUI(builder: Panel) {
-    peer.value.buildUI(PanelBuilderSettingsStep(parent.context, builder))
+    peer.value.buildUI(PanelBuilderSettingsStep(parent.context, builder, parent))
 
     val errorLabel = JLabel("")
     errorLabel.foreground = JBColor.RED
 
     //legacy error handling
     builder.row {
-      cell(errorLabel).horizontalAlign(HorizontalAlign.FILL).validationOnApply {
+      cell(errorLabel).align(AlignX.FILL).validationOnApply {
         peer.value.validate()
       }
     }
@@ -36,8 +35,8 @@ class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
 
   override fun setupProject(project: Project) {
     val builder = WebModuleBuilder(template, peer)
-    builder.moduleFilePath = parent.projectPath.systemIndependentPath
-    builder.contentEntryPath = parent.projectPath.systemIndependentPath
+    builder.moduleFilePath = "${parent.path}/${parent.name}"
+    builder.contentEntryPath = "${parent.path}/${parent.name}"
     builder.name = parent.name
     builder.commitModule(project, null)
   }

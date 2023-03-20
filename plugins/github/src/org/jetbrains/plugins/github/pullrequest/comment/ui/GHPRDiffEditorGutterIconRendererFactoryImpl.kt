@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
 import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
@@ -15,7 +16,6 @@ import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
 class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel: GHPRReviewProcessModel,
@@ -54,7 +54,9 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
 
     private inner class FocusInlayAction : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let {
+            CollaborationToolsUIUtil.focusPanel(it.first)
+          } != null) return
       }
     }
 
@@ -75,7 +77,9 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
       : DumbAwareAction(actionName) {
 
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let {
+            CollaborationToolsUIUtil.focusPanel(it.first)
+          } != null) return
 
         val (side, line, startLine, realEditorLine) = lineLocationCalculator(editorLine) ?: return
 
@@ -90,7 +94,7 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
           createComponent(side, line, line, hideCallback)
 
         val disposable = inlaysManager.insertAfter(realEditorLine, component) ?: return
-        GHUIUtil.focusPanel(component)
+        CollaborationToolsUIUtil.focusPanel(component)
         inlay = component to disposable
       }
 

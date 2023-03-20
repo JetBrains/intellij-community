@@ -34,15 +34,15 @@ public class MavenExecutionResult {
   private final DependencyResolutionResult myDependencyResolutionResult;
 
   public MavenExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
-    this(mavenProject, null, exceptions, Collections.<ModelProblem>emptyList());
+    this(mavenProject, null, exceptions, Collections.emptyList());
   }
 
   public MavenExecutionResult(List<Exception> exceptions) {
-    this(null, null, exceptions, Collections.<ModelProblem>emptyList());
+    this(null, null, exceptions, Collections.emptyList());
   }
 
   public MavenExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
-    this(null, null, exceptions, Collections.<ModelProblem>emptyList());
+    this(null, null, exceptions, Collections.emptyList());
     myPomFile = pomFile;
   }
 
@@ -55,7 +55,7 @@ public class MavenExecutionResult {
     if (mavenProject != null) {
       myPomFile = mavenProject.getFile();
     }
-    myExceptions = exceptions == null ? new ArrayList<Exception>() : exceptions;
+    myExceptions = exceptions;
     myDependencyResolutionResult = dependencyResolutionResult;
     if(myDependencyResolutionResult != null && myDependencyResolutionResult.getCollectionErrors() != null) {
       myExceptions.addAll(myDependencyResolutionResult.getCollectionErrors());

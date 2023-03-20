@@ -19,14 +19,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 import java.util.Objects;
 
-/**
- * @author ilyas
- */
 public class NewGantScriptAction extends NewGroovyActionBase {
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
+    return GroovyBundle.message("new.gant.script.dialog.title");
   }
 
   @Override

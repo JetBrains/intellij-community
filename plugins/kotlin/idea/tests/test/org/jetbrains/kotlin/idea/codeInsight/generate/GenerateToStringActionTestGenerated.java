@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -35,63 +35,68 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
         public void testInterface() throws Exception {
             runTest("testData/codeInsight/generate/toString/common/interface.kt");
         }
-
-        @TestMetadata("object.kt")
-        public void testObject() throws Exception {
-            runTest("testData/codeInsight/generate/toString/common/object.kt");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/generate/toString/multipeTemplates")
-    public static class MultipeTemplates extends AbstractGenerateToStringActionTest {
+    @TestMetadata("testData/codeInsight/generate/toString/multipleTemplates")
+    public static class MultipleTemplates extends AbstractGenerateToStringActionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("abstractSuper.kt")
+        public void testAbstractSuper() throws Exception {
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/abstractSuper.kt");
+        }
+
         @TestMetadata("arrays.kt")
         public void testArrays() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/arrays.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/arrays.kt");
         }
 
         @TestMetadata("customAccessors.kt")
         public void testCustomAccessors() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/customAccessors.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/customAccessors.kt");
         }
 
         @TestMetadata("dataClass.kt")
         public void testDataClass() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/dataClass.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/dataClass.kt");
         }
 
         @TestMetadata("keepQuotes.kt")
         public void testKeepQuotes() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/keepQuotes.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/keepQuotes.kt");
         }
 
         @TestMetadata("multipleVars.kt")
         public void testMultipleVars() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/multipleVars.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/multipleVars.kt");
         }
 
         @TestMetadata("multipleVarsWithSuperClass.kt")
         public void testMultipleVarsWithSuperClass() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/multipleVarsWithSuperClass.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/multipleVarsWithSuperClass.kt");
         }
 
         @TestMetadata("noVars.kt")
         public void testNoVars() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/noVars.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/noVars.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/object.kt");
         }
 
         @TestMetadata("singleVar.kt")
         public void testSingleVar() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/singleVar.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/singleVar.kt");
         }
 
         @TestMetadata("superClassNoVars.kt")
         public void testSuperClassNoVars() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/superClassNoVars.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/superClassNoVars.kt");
         }
     }
 
@@ -100,6 +105,11 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
     public static class SingleTemplate extends AbstractGenerateToStringActionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractSuper.kt")
+        public void testAbstractSuper() throws Exception {
+            runTest("testData/codeInsight/generate/toString/singleTemplate/abstractSuper.kt");
         }
 
         @TestMetadata("arrays.kt")
@@ -145,6 +155,11 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
         @TestMetadata("nullableArrays.kt")
         public void testNullableArrays() throws Exception {
             runTest("testData/codeInsight/generate/toString/singleTemplate/nullableArrays.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/codeInsight/generate/toString/singleTemplate/object.kt");
         }
 
         @TestMetadata("singleVar.kt")

@@ -1,5 +1,5 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
-
+// IGNORE_FIR
+// Here K2 has Disabled: true instead
 class A {
     operator fun get(x: Int) {}
     operator fun set(x: String, value: Int) {}
@@ -10,5 +10,5 @@ class A {
 }
 
 /*
-Text: (x: String), Disabled: true, Strikeout: false, Green: true
+Text: (x: String), Disabled: false, Strikeout: false, Green: true
 */

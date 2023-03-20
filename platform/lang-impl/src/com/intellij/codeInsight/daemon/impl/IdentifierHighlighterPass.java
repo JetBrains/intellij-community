@@ -52,9 +52,9 @@ public class IdentifierHighlighterPass {
 
   private final PsiFile myFile;
   private final Editor myEditor;
-  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedSet(new LinkedHashSet<>());
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
@@ -110,9 +110,17 @@ public class IdentifierHighlighterPass {
    * Collects code block markers ranges to highlight. E.g. if/elsif/else. Collected ranges will be highlighted the same way as braces
    */
   private void collectCodeBlockMarkerRanges() {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
+
     PsiElement contextElement = myFile.findElementAt(
       TargetElementUtil.adjustOffset(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
-    myCodeBlockMarkerRanges.addAll(CodeBlockSupportHandler.findMarkersRanges(contextElement));
+    if (contextElement == null) {
+      return;
+    }
+
+    for (TextRange range : CodeBlockSupportHandler.findMarkersRanges(contextElement)) {
+      myCodeBlockMarkerRanges.add(manager.injectedToHost(contextElement, range));
+    }
   }
 
   /**
@@ -223,13 +231,13 @@ public class IdentifierHighlighterPass {
              "virtual file: " + myFile.getVirtualFile());
   }
 
-  private static volatile int id;
+  private static int id;
   private int getId() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int id = IdentifierHighlighterPass.id;
     if (id == 0) {
       IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
-        myFile.getProject())).getNextAvailableId().incrementAndGet();
+        myFile.getProject())).getNextAvailableId();
     }
     return id;
   }
@@ -279,7 +287,7 @@ public class IdentifierHighlighterPass {
     }
     Set<Pair<Object, TextRange>> existingMarkupTooltips = new HashSet<>();
     for (RangeHighlighter highlighter : myEditor.getMarkupModel().getAllHighlighters()) {
-      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset())));
+      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), highlighter.getTextRange()));
     }
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());

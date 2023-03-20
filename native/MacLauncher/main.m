@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #import "Launcher.h"
 #include "rosetta.h"
@@ -8,7 +8,7 @@
 static void timer_empty(__unused CFRunLoopTimerRef timer, __unused void *info) {
 }
 
-static void parkRunLoop() {
+static void parkRunLoop(void) {
     CFRunLoopTimerRef t = CFRunLoopTimerCreate(kCFAllocatorDefault, FOREVER, (CFTimeInterval)0.0, 0, 0, timer_empty, NULL);
     CFRunLoopAddTimer(CFRunLoopGetCurrent(), t, kCFRunLoopDefaultMode);
     CFRelease(t);
@@ -31,7 +31,6 @@ static void launchInNewThread(Launcher *launcher) {
    NSThread *thread = [[[NSThread alloc] initWithTarget:launcher selector:@selector(launch) object:nil] autorelease];
    makeSameStackSize(thread);
    [thread start];
-
 }
 
 int main(int argc, char *argv[]) {
@@ -43,7 +42,7 @@ int main(int argc, char *argv[]) {
     }
 
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    if (validationJavaVersion()){
+    if (validationJavaVersion()) {
         launchInNewThread([[[Launcher alloc] initWithArgc:argc argv:argv] autorelease]);
         parkRunLoop();
     }

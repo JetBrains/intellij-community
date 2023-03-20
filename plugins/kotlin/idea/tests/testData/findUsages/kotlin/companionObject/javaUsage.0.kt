@@ -13,3 +13,4 @@ class Foo {
         const val CONST = 42
     }
 }
+

@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.*;
 
@@ -185,15 +187,16 @@ public final class TestsPresentationUtil {
     renderer.append(testProxy.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  @NotNull
-  public static String getPresentableName(final SMTestProxy testProxy) {
-    final SMTestProxy parent = testProxy.getParent();
-    final String name = testProxy.getName();
+  public static @NotNull String getPresentableName(final @NotNull SMTestProxy testProxy) {
+    return getPresentableName(testProxy, testProxy.getName());
+  }
 
+  public static @NotNull String getPresentableName(final @NotNull SMTestProxy testProxy, final @Nullable String name) {
     if (name == null) {
       return Holder.getNoNameTest();
     }
 
+    final SMTestProxy parent = testProxy.getParent();
     String presentationCandidate = name;
     if (parent != null && !testProxy.isSuite()) {
       String parentName = parent.getName();
@@ -236,51 +239,38 @@ public final class TestsPresentationUtil {
     return presentationCandidate;
   }
 
-  @NotNull
-  public static String getPresentableNameTrimmedOnly(@NotNull SMTestProxy testProxy) {
-    String name = testProxy.getName();
-    if (name != null) {
-      name = name.trim();
-    }
-    if (name == null || name.isEmpty()) {
-      name = Holder.getNoNameTest();
-    }
-    return name;
+  public static @NotNull String getPresentableNameTrimmedOnly(final @Nullable String name) {
+    return (name == null || name.isBlank()) ? Holder.getNoNameTest()
+                                            : name.trim();
   }
 
-  @Nullable
-  private static Icon getIcon(final SMTestProxy testProxy,
-                              final TestConsoleProperties consoleProperties) {
+  /**
+   * @see TestIconMapper#getToolbarIcon(TestStateInfo.Magnitude, boolean, BooleanSupplier)
+   */
+  private static @NotNull Icon getIcon(final SMTestProxy testProxy,
+                                       final TestConsoleProperties consoleProperties) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final boolean hasErrors = testProxy.hasErrors();
     final boolean hasPassedTests = testProxy.hasPassedTests();
 
-    switch (magnitude) {
-      case ERROR_INDEX:
-        return ERROR_ICON;
-      case FAILED_INDEX:
-        return hasErrors ? FAILED_E_ICON : FAILED_ICON;
-      case IGNORED_INDEX:
-        return hasErrors ? IGNORED_E_ICON : (hasPassedTests ? PASSED_IGNORED : IGNORED_ICON);
-      case NOT_RUN_INDEX:
-        return NOT_RAN;
-      case COMPLETE_INDEX:
-      case PASSED_INDEX:
-        return hasErrors ? PASSED_E_ICON : PASSED_ICON;
-      case RUNNING_INDEX:
+    return switch (magnitude) {
+      case ERROR_INDEX -> ERROR_ICON;
+      case FAILED_INDEX -> hasErrors ? FAILED_E_ICON : FAILED_ICON;
+      case IGNORED_INDEX -> hasErrors ? IGNORED_E_ICON : (hasPassedTests ? PASSED_IGNORED : IGNORED_ICON);
+      case NOT_RUN_INDEX -> NOT_RAN;
+      case COMPLETE_INDEX, PASSED_INDEX -> hasErrors ? PASSED_E_ICON : PASSED_ICON;
+      case RUNNING_INDEX -> {
         if (consoleProperties.isPaused()) {
-          return hasErrors ? PAUSED_E_ICON : AllIcons.RunConfigurations.TestPaused;
+          yield hasErrors ? PAUSED_E_ICON : AllIcons.RunConfigurations.TestPaused;
         }
         else {
-          return hasErrors ? RUNNING_E_ICON : RUNNING_ICON;
+          yield hasErrors ? RUNNING_E_ICON : RUNNING_ICON;
         }
-      case SKIPPED_INDEX:
-        return hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
-      case TERMINATED_INDEX:
-        return hasErrors ? TERMINATED_E_ICON : TERMINATED_ICON;
-    }
-    return null;
+      }
+      case SKIPPED_INDEX -> hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
+      case TERMINATED_INDEX -> hasErrors ? TERMINATED_E_ICON : TERMINATED_ICON;
+    };
   }
 
   @Nullable

@@ -17,8 +17,9 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -27,6 +28,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,9 +40,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassMayBeInterfaceInspection extends BaseInspection {
 
@@ -53,11 +57,10 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("class.may.be.interface.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.may.be.interface.java8.option"), this,
-                                          "reportClassesWithNonAbstractMethods");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportClassesWithNonAbstractMethods", InspectionGadgetsBundle.message("class.may.be.interface.java8.option")));
   }
 
   @Override
@@ -86,7 +89,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier classNameIdentifier = (PsiIdentifier)descriptor.getPsiElement();
       final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
       final SearchScope searchScope = interfaceClass.getUseScope();
@@ -103,6 +106,20 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
         changeClassToInterface(interfaceClass);
         moveImplementsToExtends(interfaceClass);
       });
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiIdentifier classNameIdentifier = (PsiIdentifier)previewDescriptor.getPsiElement();
+      final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
+      // In preview, limit search to current file only
+      List<PsiClass> inheritorsInThisFile = SyntaxTraverser.psiTraverser(classNameIdentifier.getContainingFile()).filter(PsiClass.class)
+        .filter(cls -> cls.isInheritor(interfaceClass, false))
+        .toList();
+      moveSubClassExtendsToImplements(ContainerUtil.prepend(inheritorsInThisFile, interfaceClass));
+      changeClassToInterface(interfaceClass);
+      moveImplementsToExtends(interfaceClass);
+      return IntentionPreviewInfo.DIFF;
     }
 
     private static void changeClassToInterface(PsiClass aClass) {

@@ -32,9 +32,6 @@ import com.intellij.xml.util.CheckEmptyTagInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(XmlSmartEnterProcessor.class);
 

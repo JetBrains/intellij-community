@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.actions.BaseCommitExecutorAction
 
 private val IS_ONLY_RUN_COMMIT_CHECKS_KEY = Key.create<Boolean>("Vcs.Commit.IsOnlyRunCommitChecks")
-internal var CommitContext.isOnlyRunCommitChecks: Boolean by commitProperty(IS_ONLY_RUN_COMMIT_CHECKS_KEY)
+internal var CommitContext.isOnlyRunCommitChecks: Boolean by commitExecutorProperty(IS_ONLY_RUN_COMMIT_CHECKS_KEY)
 
 internal object RunCommitChecksExecutor : CommitExecutor {
   const val ID = "Vcs.RunCommitChecks.Executor"

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -19,7 +19,6 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestRunnerBundle;
@@ -51,6 +50,9 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
   implements InputRedirectAware, TargetEnvironmentAwareRunProfile {
@@ -188,7 +190,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    final RefactoringElementListener listener = getTestObject().getListener(element, this);
+    final RefactoringElementListener listener = getTestObject().getListener(element);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
@@ -218,18 +220,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String suggestedName() {
-    String repeat;
-    switch (getRepeatMode()) {
-      case RepeatCount.UNLIMITED :
-      case RepeatCount.UNTIL_FAILURE :
-        repeat = " [*]";
-        break;
-      case RepeatCount.N:
-        repeat = " [" + getRepeatCount() + "]";
-        break;
-      default:
-        repeat = "";
-    }
+    String repeat = switch (getRepeatMode()) {
+      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE -> " [*]";
+      case RepeatCount.N -> " [" + getRepeatCount() + "]";
+      default -> "";
+    };
     String generatedName = myData.getGeneratedName(getConfigurationModule());
     if (generatedName == null) return null;
     return generatedName + repeat;
@@ -305,7 +300,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) 
+    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH)
                                         : null;
   }
 
@@ -338,6 +333,21 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
     setGeneratedName();
+  }
+
+  @Override
+  public void withNestedClass(PsiClass aClass) {
+    String className = aClass.getName();
+    myData.MAIN_CLASS_NAME += "$" + className;
+    Set<@NlsSafe String> patterns = myData.getPatterns();
+    if (!patterns.isEmpty()) {
+      myData.setPatterns(patterns.stream().map(name -> {
+        if (name.contains(",")) {
+          return StringUtil.getPackageName(name, ',') + "$" + className + "," + StringUtil.getShortName(name, ',');
+        }
+        return name + "$" + className;
+      }).collect(Collectors.toCollection(() -> new LinkedHashSet<>())));
+    }
   }
 
   @Override
@@ -426,7 +436,10 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     if (patternsElement != null) {
       final LinkedHashSet<String> tests = new LinkedHashSet<>();
       for (Element patternElement : patternsElement.getChildren(PATTERN_EL_NAME)) {
-        tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
+        String value = patternElement.getAttributeValue(TEST_CLASS_ATT_NAME);
+        if (value != null) {
+          tests.add(value);
+        }
       }
       myData.setPatterns(tests);
     }
@@ -571,15 +584,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();
-    final String methodSufiix;
+    final String methodSuffix;
     if (method != null) {
       myData.METHOD_NAME = Data.getMethodPresentation(method);
-      methodSufiix = "," + myData.METHOD_NAME;
+      methodSuffix = "," + myData.METHOD_NAME;
     } else {
-      methodSufiix = "";
+      methodSuffix = "";
     }
     for (PsiClass pattern : classes) {
-      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSuffix);
     }
     myData.setPatterns(patterns);
     final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
@@ -650,6 +663,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   public static class Data implements Cloneable {
+    private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
     public String PACKAGE_NAME;
     public @NlsSafe String MAIN_CLASS_NAME;
     public String METHOD_NAME;
@@ -672,8 +686,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
     @Override
     public boolean equals(final Object object) {
-      if (!(object instanceof Data)) return false;
-      final Data second = (Data)object;
+      if (!(object instanceof Data second)) return false;
       return Objects.equals(TEST_OBJECT, second.TEST_OBJECT) &&
              Objects.equals(getMainClassName(), second.getMainClassName()) &&
              Objects.equals(getPackageName(), second.getPackageName()) &&
@@ -770,7 +783,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
-    
+
     public void setTestMethodName(String methodName) {
       METHOD_NAME = methodName;
     }
@@ -784,11 +797,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
 
     public static @NlsSafe String getMethodPresentation(PsiMethod method) {
-      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
-        return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
+      String methodName = method.getName();
+      if ((!method.getParameterList().isEmpty() || methodName.contains("(") || methodName.contains(")")) && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION_LIST)) {
+        return methodName + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {
-        return method.getName();
+        return methodName;
       }
     }
 
@@ -839,18 +853,36 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
         return TAGS != null && TAGS.length() > 0
-               ? JUnitBundle.message("default.junit.config.name.tags", StringUtil.join(TAGS, " "))
+               ? JUnitBundle.message("default.junit.config.name.tags", TAGS)
                : JUnitBundle.message("default.junit.config.name.temp.suite");
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
-        return className + '.' + getMethodName();
+        Integer index = getIndexFromParameters(PARAMETERS);
+        String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
+        return className + '.' + getMethodName() + indexStr;
       }
 
       return className;
     }
 
-    public @NlsSafe String getMainClassName() {
+    public static Integer getIndexFromParameters(String parameters) {
+      Integer index = null;
+      if (parameters != null && !parameters.isEmpty()) {
+        Matcher matcher = VALUE_SOURCE_PATTERN.matcher(parameters);
+        if (matcher.find()) {
+          String group = matcher.group(1);
+          try {
+            index = Integer.parseInt(group);
+          }
+          catch (NumberFormatException ignored) {
+          }
+        }
+      }
+      return index;
+    }
+
+    public @NlsSafe @NotNull String getMainClassName() {
       return MAIN_CLASS_NAME != null ? MAIN_CLASS_NAME : "";
     }
 

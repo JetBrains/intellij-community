@@ -1,7 +1,8 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import operators 'Some.component1', 'Some.component2'" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Some must have a 'component2()' function
+/* IGNORE_FIR */
 
 package testing
 
@@ -36,9 +37,10 @@ operator fun Some.component2() = 3
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import operators 'Some.component1', 'Some.component2'" "true"
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
 // ERROR: Destructuring declaration initializer of type Some must have a 'component2()' function
+/* IGNORE_FIR */
 
 package testing
 
@@ -50,5 +52,3 @@ fun testing() {
     val (a, b) = <caret>Some()
 }
 //-----------------------
-
-

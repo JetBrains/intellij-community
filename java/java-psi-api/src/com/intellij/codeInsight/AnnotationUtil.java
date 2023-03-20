@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.*;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -121,47 +121,61 @@ public class AnnotationUtil {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, nonTypeUse) != null;
   }
 
+  private static final ParameterizedCachedValueProvider<Map<Collection<String>, List<PsiAnnotation>>, PsiModifierListOwner> NON_CODE_ANNOTATIONS_PROVIDER =
+    (PsiModifierListOwner listOwner) -> {
+      Map<Collection<String>, List<PsiAnnotation>> value = ConcurrentFactoryMap.createMap(
+        annotationNames1 -> {
+          PsiUtilCore.ensureValid(listOwner);
+          final Project project = listOwner.getProject();
+          List<PsiAnnotation> annotations = null;
+          final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
+          for (String annotationName : annotationNames1) {
+            List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationName);
+            if (!externalAnnotations.isEmpty()) {
+              if (annotations == null) {
+                annotations = new SmartList<>();
+              }
+              annotations.addAll(externalAnnotations);
+            }
+          }
+
+          final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
+          for (String annotationName : annotationNames1) {
+            final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
+            if (annotation != null) {
+              if (annotations == null) {
+                annotations = new SmartList<>();
+              }
+              annotations.add(annotation);
+            }
+          }
+          return annotations;
+        }
+      );
+      return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
+    };
+
+  private static final Key<ParameterizedCachedValue<Map<Collection<String>, List<PsiAnnotation>>, PsiModifierListOwner>> NON_CODE_ANNOTATIONS_KEY =
+    Key.create("NON_CODE_ANNOTATIONS");
+
   @Nullable
-  private static List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner element, @NotNull Collection<String> annotationNames) {
+  private static List<PsiAnnotation> findNonCodeAnnotations(@NotNull PsiModifierListOwner element,
+                                                            @NotNull Collection<String> annotationNames) {
     if (element instanceof PsiLocalVariable) {
       // Non-code annotations for local variables are not supported: don't bother to search them
       return null;
     }
     PsiModifierListOwner listOwner = AnnotationCacheOwnerNormalizer.normalize(element);
-    Map<Collection<String>, List<PsiAnnotation>> map = CachedValuesManager.getCachedValue(
-      listOwner,
-      () -> {
-        Map<Collection<String>, List<PsiAnnotation>> value = ConcurrentFactoryMap.createMap(
-          annotationNames1 -> {
-            PsiUtilCore.ensureValid(listOwner);
-            final Project project = listOwner.getProject();
-            List<PsiAnnotation> annotations = null;
-            final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
-            for (String annotationName : annotationNames1) {
-              List<PsiAnnotation> externalAnnotations = externalAnnotationsManager.findExternalAnnotations(listOwner, annotationName);
-              if (!externalAnnotations.isEmpty()) {
-                if (annotations == null) {
-                  annotations = new SmartList<>();
-                }
-                annotations.addAll(externalAnnotations);
-              }
-            }
 
-            final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
-            for (String annotationName : annotationNames1) {
-              final PsiAnnotation annotation = inferredAnnotationsManager.findInferredAnnotation(listOwner, annotationName);
-              if (annotation != null) {
-                if (annotations == null) {
-                  annotations = new SmartList<>();
-                }
-                annotations.add(annotation);
-              }
-            }
-            return annotations;
-          }
-        );
-        return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
-      });
+    Map<Collection<String>, List<PsiAnnotation>> map = CachedValuesManager.getManager(element.getProject())
+      .getParameterizedCachedValue(
+        listOwner,
+        NON_CODE_ANNOTATIONS_KEY,
+        NON_CODE_ANNOTATIONS_PROVIDER,
+        false,
+        listOwner
+      );
+
     return map.get(annotationNames);
   }
 
@@ -172,7 +186,8 @@ public class AnnotationUtil {
     final PsiAnnotation[] annotations = modifierList.getAnnotations();
     ArrayList<PsiAnnotation> result = null;
     for (final PsiAnnotation psiAnnotation : annotations) {
-      if (annotationNames.contains(psiAnnotation.getQualifiedName())) {
+      String qualifiedName = psiAnnotation.getQualifiedName();
+      if (qualifiedName != null && annotationNames.contains(qualifiedName)) {
         if (result == null) result = new ArrayList<>();
         result.add(psiAnnotation);
       }
@@ -302,7 +317,7 @@ public class AnnotationUtil {
   private @interface Flags { }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations, @Flags int flags) {
-    return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, flags, null));
+    return ContainerUtil.exists(annotations, annotation -> isAnnotated(listOwner, annotation, flags, null));
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFqn, @Flags int flags) {
@@ -494,7 +509,7 @@ public class AnnotationUtil {
           HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
 
           final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-          PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
+          PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(aClass.getProject());
           for (final HierarchicalMethodSignature superSignature : superSignatures) {
             final PsiMethod superMethod = superSignature.getMethod();
             if (visited == null) {
@@ -519,7 +534,7 @@ public class AnnotationUtil {
             HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
 
             final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-            PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
+            PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(aClass.getProject());
             for (final HierarchicalMethodSignature superSignature : superSignatures) {
               final PsiMethod superMethod = superSignature.getMethod();
               if (visited == null) {
@@ -595,8 +610,7 @@ public class AnnotationUtil {
     PsiAnnotation annotation = findAnnotationInHierarchy(listOwner, Collections.singleton(annotationClass.getName()));
     if (annotation == null) return null;
     AnnotationInvocationHandler handler = new AnnotationInvocationHandler(annotationClass, annotation);
-    @SuppressWarnings("unchecked") T t = (T)Proxy.newProxyInstance(annotationClass.getClassLoader(), new Class<?>[]{annotationClass}, handler);
-    return t;
+    return ReflectionUtil.proxy(annotationClass, handler);
   }
 
   /**
@@ -673,12 +687,7 @@ public class AnnotationUtil {
       if (initializers1.length != initializers2.length) {
         return false;
       }
-      for (int i = 0; i < initializers1.length; i++) {
-        if (!equal(initializers1[i], initializers2[i])) {
-          return false;
-        }
-      }
-      return true;
+      return ArrayUtil.areEqual(initializers1, initializers2, AnnotationUtil::equal);
     }
     if (value1 != null && value2 != null) {
       final PsiConstantEvaluationHelper constantEvaluationHelper =
@@ -723,7 +732,7 @@ public class AnnotationUtil {
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   /** @deprecated simple name is not enough for reliable identification */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
@@ -731,21 +740,21 @@ public class AnnotationUtil {
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, CHECK_TYPE);
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
     return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull String annotationFQN,
                                     boolean checkHierarchy,

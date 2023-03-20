@@ -40,13 +40,12 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
 
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
-    if (!(element instanceof PsiClass)) {
+    if (!(element instanceof PsiClass inspectionClass)) {
       return false;
     }
     if (!PsiUtil.isPluginProject(element.getProject())) {
       return false;
     }
-    PsiClass inspectionClass = (PsiClass)element;
     String inspectionClassName = inspectionClass.getName();
     return inspectionClassName != null &&
            inspectionClassName.endsWith(INSPECTION_CLASS_SUFFIX) &&
@@ -176,7 +175,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
     public void findUsages(List<UsageInfo> result,
                            boolean searchInStringsAndComments,
                            boolean searchInNonJavaFiles,
-                           List<UnresolvableCollisionUsageInfo> unresolvedUsages,
+                           List<? super UnresolvableCollisionUsageInfo> unresolvedUsages,
                            Map<PsiElement, String> allRenames) {
       super.findUsages(result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages, allRenames);
       if (allRenames == null) {
@@ -185,7 +184,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
 
       for (Map.Entry<PsiElement, String> entry : allRenames.entrySet()) {
         PsiElement element = entry.getKey();
-        if (!(element instanceof PsiClass)) {
+        if (!(element instanceof PsiClass inspectionClass)) {
           continue;
         }
 
@@ -193,7 +192,6 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
         if (module == null) {
           continue;
         }
-        PsiClass inspectionClass = (PsiClass)element;
         InspectionDescriptionInfo descriptionInfo = InspectionDescriptionInfo.create(module, inspectionClass);
         PsiFile descriptionFile = descriptionInfo.getDescriptionFile();
         if (descriptionFile == null) {

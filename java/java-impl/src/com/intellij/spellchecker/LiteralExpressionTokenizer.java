@@ -22,7 +22,7 @@ import java.util.Arrays;
  */
 public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiteralExpression> {
   @Override
-  public void tokenize(@NotNull PsiLiteralExpression expression, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiLiteralExpression expression, @NotNull TokenConsumer consumer) {
     String text;
     if (!ExpressionUtils.hasStringType(expression)) {
       text = null;
@@ -72,7 +72,7 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
   }
 
   public static void processTextWithEscapeSequences(PsiLiteralExpression element, String text, TokenConsumer consumer) {
-    StringBuilder unescapedText = new StringBuilder();
+    StringBuilder unescapedText = new StringBuilder(text.length());
     int[] offsets = new int[text.length() + 1];
     CodeInsightUtilCore.parseStringCharacters(text, unescapedText, offsets);
 

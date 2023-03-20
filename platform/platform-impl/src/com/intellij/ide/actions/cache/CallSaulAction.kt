@@ -1,52 +1,78 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.cache
 
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.SystemProperties
 
 internal class CallSaulAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) = service<Saul>().sortThingsOut(e.project!!)
+  override fun actionPerformed(e: AnActionEvent) = service<Saul>().sortThingsOut(RecoveryScope.createInstance(e))
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null
+    val isEnabled = e.project != null
+    e.presentation.isEnabledAndVisible = isEnabled
+    if (isEnabled) {
+      val recoveryScope = RecoveryScope.createInstance(e)
+      if (recoveryScope is FilesRecoveryScope) {
+        e.presentation.text = ActionsBundle.message("action.CallSaul.on.file.text", recoveryScope.files.size)
+      }
+    }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 
-internal class CacheRecoveryActionGroup: ComputableActionGroup() {
-  override fun createChildrenProvider(actionManager: ActionManager): CachedValueProvider<Array<AnAction>> {
-    return CachedValueProvider {
-      isPopup = ApplicationManager.getApplication().isInternal
-      val actions = if (isSaulHere) {
-        val baseActions = arrayListOf<AnAction>(actionManager.getAction("CallSaul"))
+internal class CacheRecoveryActionGroup: ActionGroup(), DumbAware {
+  init {
+    templatePresentation.isPopupGroup = ApplicationManager.getApplication().isInternal
+    templatePresentation.isHideGroupIfEmpty = true
+  }
 
-        if (isPopup) {
-          baseActions.add(Separator.getInstance())
-        }
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    if (e == null) return emptyArray()
+    return if (isSaulHere) {
+      val baseActions = arrayListOf<AnAction>(e.actionManager.getAction("CallSaul"))
 
-        (baseActions + service<Saul>().sortedActions.map {
-          it.toAnAction()
-        }).toTypedArray()
+      if (isPopup) {
+        baseActions.add(Separator.getInstance())
       }
-      else emptyArray()
-      CachedValueProvider.Result.create(actions, service<Saul>().modificationRecoveryActionTracker)
+
+      (baseActions + service<Saul>().sortedActions.map {
+        it.toAnAction()
+      }).toTypedArray()
     }
+    else emptyArray()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   private fun RecoveryAction.toAnAction(): AnAction {
     val recoveryAction = this
     return object: DumbAwareAction(recoveryAction.presentableName) {
       override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project!!
-        recoveryAction.performUnderProgress(project, false)
+        val scope = RecoveryScope.createInstance(e)
+        recoveryAction.performUnderProgress(scope,false)
       }
 
       override fun update(e: AnActionEvent) {
-        val project = e.project
-        e.presentation.isEnabledAndVisible = project != null && recoveryAction.canBeApplied(project) && ApplicationManager.getApplication().isInternal
+        if (e.project == null) {
+          e.presentation.isEnabledAndVisible = false
+          return
+        }
+        val scope = RecoveryScope.createInstance(e)
+        e.presentation.isEnabledAndVisible = recoveryAction.canBeApplied(scope) && ApplicationManager.getApplication().isInternal
+      }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
       }
     }
   }

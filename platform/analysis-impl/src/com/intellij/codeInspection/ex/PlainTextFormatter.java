@@ -44,7 +44,7 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
                       @Nullable final String outputPath,
                       @NotNull final Map<String, Tools> tools,
                       @NotNull final List<? extends File> inspectionsResults) throws ConversionException {
-    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
 
     Source xslSource;
     Transformer transformer;
@@ -215,10 +215,8 @@ public final class PlainTextFormatter implements InspectionsReportConverter {
 
     final String trimmedDesc = descrWriter.toString().trim();
     final String[] descLines = StringUtil.splitByLines(trimmedDesc);
-    if (descLines.length > 0) {
-      for (String descLine : descLines) {
-        w.append("  ").append(descLine.trim()).append("\n");
-      }
+    for (String descLine : descLines) {
+      w.append("  ").append(descLine.trim()).append("\n");
     }
   }
 

@@ -47,9 +47,8 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
   @Override
   public PsiElement getElementToRefactor(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
-      final PsiElement target = referenceExpression.resolve();
+    if (parent instanceof PsiReferenceExpression ref) {
+      final PsiElement target = ref.resolve();
       assert target instanceof PsiField;
       return target;
     }

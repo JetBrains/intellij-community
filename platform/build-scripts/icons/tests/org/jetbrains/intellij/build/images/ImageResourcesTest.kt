@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -148,7 +148,7 @@ abstract class ImageResourcesTestBase {
       val model = JpsElementFactory.getInstance().createModel()
 
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-      JpsProjectLoader.loadProject(model.project, pathVariables, home.path)
+      JpsProjectLoader.loadProject(model.project, pathVariables, home.toPath())
 
       return model
     }
@@ -201,7 +201,7 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
     val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag, moduleConfig = config.getConfigForModule(module.name)).collect(module)
     allImages.parallelStream().filter { it.basicFile != null }.forEach { image ->
       image.files.parallelStream().forEach { file ->
-        val optimized = ImageSizeOptimizer.optimizeImage(file)
+        val optimized = optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
           failures.add(FailedTest(module, "image size can be optimized using " +
                                           "\"Icons processing | Generate icon classes\" run configuration: " +

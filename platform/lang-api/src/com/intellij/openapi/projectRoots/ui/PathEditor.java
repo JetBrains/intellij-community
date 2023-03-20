@@ -66,7 +66,7 @@ public class PathEditor {
     return myModified;
   }
 
-  public VirtualFile[] getRoots() {
+  public VirtualFile @NotNull [] getRoots() {
     final int count = getRowCount();
     if (count == 0) {
       return VirtualFile.EMPTY_ARRAY;
@@ -201,13 +201,13 @@ public class PathEditor {
     }
   }
 
-  public void removePaths(VirtualFile... paths) {
-    final Set<VirtualFile> pathsSet = ContainerUtil.set(paths);
+  public void removePaths(@NotNull VirtualFile @NotNull ... paths) {
+    final Set<VirtualFile> pathsSet = Set.of(paths);
     int size = getRowCount();
     IntArrayList indicesToRemove = new IntArrayList(paths.length);
     for (int idx = 0; idx < size; idx++) {
       VirtualFile path = getValueAt(idx);
-      if (pathsSet.contains(path)) {
+      if (path != null && pathsSet.contains(path)) {
         indicesToRemove.add(idx);
       }
     }

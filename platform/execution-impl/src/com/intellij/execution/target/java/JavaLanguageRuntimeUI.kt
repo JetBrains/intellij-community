@@ -2,29 +2,36 @@
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle.message
-import com.intellij.execution.target.*
+import com.intellij.execution.target.LanguageRuntimeConfigurable
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.project.Project
-import com.intellij.ui.layout.*
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.*
 import java.util.function.Supplier
 
 class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
-                            private val targetType: TargetEnvironmentType<*>,
-                            private val targetProvider: Supplier<TargetEnvironmentConfiguration>,
-                            private val project: Project) :
+                            targetType: TargetEnvironmentType<*>,
+                            targetProvider: Supplier<out TargetEnvironmentConfiguration>,
+                            project: Project) :
   LanguageRuntimeConfigurable(config, targetType, targetProvider, project) {
 
-  override fun RowBuilder.addMainPanelUI() {
-    row(message("java.language.runtime.jdk.home.path")) {
-      val cellBuilder = browsableTextField(message("java.language.runtime.jdk.home.path.title"), config::homePath.toBinding())
-      cellBuilder.comment(message("java.language.runtime.text.path.to.jdk.on.target"))
-    }
-    row(message("java.language.runtime.jdk.version")) {
-      textField(config::javaVersionString)
-    }
-  }
+  override fun createPanel(): DialogPanel {
+    return panel {
+      row(message("java.language.runtime.jdk.home.path")) {
+        browsableTextField(message("java.language.runtime.jdk.home.path.title"), config::homePath.toMutableProperty())
+          .comment(message("java.language.runtime.text.path.to.jdk.on.target"))
+      }
+      row(message("java.language.runtime.jdk.version")) {
+        textField()
+          .align(AlignX.FILL)
+          .bindText(config::javaVersionString)
+      }
 
-  override fun RowBuilder.addAdditionalPanelUI() {
-    addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
-    addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)
+      collapsibleGroup(message("java.language.runtime.separator.advanced.volume.settings")) {
+        addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
+        addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)
+      }.topGap(TopGap.NONE)
+    }
   }
 }

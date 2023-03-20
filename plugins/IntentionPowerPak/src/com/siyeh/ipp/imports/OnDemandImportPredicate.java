@@ -27,10 +27,9 @@ class OnDemandImportPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof PsiImportStatementBase)) {
+    if (!(element instanceof PsiImportStatementBase importStatement)) {
       return false;
     }
-    PsiImportStatementBase importStatement = (PsiImportStatementBase)element;
     if (!importStatement.isOnDemand() || ErrorUtil.containsError(element)) {
       return false;
     }

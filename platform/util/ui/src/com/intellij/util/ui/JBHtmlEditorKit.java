@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +30,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final @NotNull ViewFactory myViewFactory;
   private final @NotNull StyleSheet myStyle;
 
+  private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
 
@@ -49,8 +50,10 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    */
   @Deprecated
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
-    this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.createJBDefaultStyleSheet(), false);
-    if (noGapsBetweenParagraphs) getStyleSheet().addStyleSheet(UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE);
+    this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.getDefaultStyleSheet(), false);
+    if (noGapsBetweenParagraphs) {
+      getStyleSheet().addStyleSheet(StyleSheetUtil.INSTANCE.getNO_GAPS_BETWEEN_PARAGRAPHS_STYLE());
+    }
   }
 
   /**
@@ -137,9 +140,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       LinkController oldLinkController = listeners1.get(0);
       pane.removeMouseListener(oldLinkController);
       pane.removeMouseMotionListener(oldLinkController);
-      MouseExitSupportLinkController newLinkController = new MouseExitSupportLinkController();
-      pane.addMouseListener(newLinkController);
-      pane.addMouseMotionListener(newLinkController);
+      pane.addMouseListener(myLinkController);
+      pane.addMouseMotionListener(myLinkController);
     }
   }
 
@@ -155,6 +157,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   @Override
   public void deinstall(@NotNull JEditorPane c) {
+    c.removeMouseListener(myLinkController);
+    c.removeMouseMotionListener(myLinkController);
     c.removeHyperlinkListener(myHyperlinkListener);
     super.deinstall(c);
   }
@@ -169,7 +173,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  // Workaround for https://bugs.openjdk.java.net/browse/JDK-8202529
+  // Workaround for https://bugs.openjdk.org/browse/JDK-8202529
   private static class MouseExitSupportLinkController extends HTMLEditorKit.LinkController {
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
@@ -290,8 +294,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     private static void setUnderlined(boolean underlined, @NotNull Element element) {
       AttributeSet attributes = element.getAttributes();
       Object attribute = attributes.getAttribute(HTML.Tag.A);
-      if (attribute instanceof MutableAttributeSet) {
-        MutableAttributeSet a = (MutableAttributeSet)attribute;
+      if (attribute instanceof MutableAttributeSet a) {
 
         Object href = a.getAttribute(HTML.Attribute.HREF);
         Pair<Integer, Integer> aRange = findRangeOfParentTagWithGivenAttribute(element, href, HTML.Tag.A, HTML.Attribute.HREF);

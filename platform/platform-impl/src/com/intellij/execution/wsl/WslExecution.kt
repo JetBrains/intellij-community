@@ -43,10 +43,15 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
   if (index < 0) {
     val application = ApplicationManager.getApplication()
     if (application == null || application.isInternal || application.isUnitTestMode) {
-      LOG.error("Cannot find '$prefixText' in stdout: $output")
+      LOG.error("Cannot find '$prefixText' in stdout: $output, command: ${commandLine.commandLineString}")
     }
     else {
-      LOG.info("Cannot find '$prefixText' in stdout")
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Cannot find '$prefixText' in stdout: $output, command: ${commandLine.commandLineString}")
+      }
+      else {
+        LOG.info("Cannot find '$prefixText' in stdout")
+      }
     }
     return output
   }

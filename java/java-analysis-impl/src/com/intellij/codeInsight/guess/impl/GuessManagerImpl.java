@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -107,8 +107,7 @@ public final class GuessManagerImpl extends GuessManager {
 
   @Nullable
   private static PsiType getGenericElementType(PsiType collectionType) {
-    if (collectionType instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType) collectionType;
+    if (collectionType instanceof PsiClassType classType) {
       PsiType[] parameters = classType.getParameters();
       if (parameters.length == 1) {
         return parameters[0];
@@ -309,12 +308,11 @@ public final class GuessManagerImpl extends GuessManager {
   }
 
   private void addExprTypesWhenContainerElement(LinkedHashSet<? super PsiType> set, PsiExpression expr) {
-    if (expr instanceof PsiMethodCallExpression){
-      PsiMethodCallExpression callExpr = (PsiMethodCallExpression)expr;
+    if (expr instanceof PsiMethodCallExpression callExpr){
       PsiReferenceExpression methodExpr = callExpr.getMethodExpression();
       String methodName = methodExpr.getReferenceName();
       MethodPattern pattern = myMethodPatternMap.findPattern(methodName, callExpr.getArgumentList().getExpressionCount());
-      if (pattern != null && pattern.parameterIndex < 0/* return value */){
+      if (pattern != null && pattern.parameterIndex() < 0/* return value */){
         PsiExpression qualifier = methodExpr.getQualifierExpression();
         if (qualifier != null) {
           PsiType[] types = guessContainerElementType(qualifier, null);
@@ -355,8 +353,7 @@ public final class GuessManagerImpl extends GuessManager {
         }
 
         if (BitUtil.isSet(flags, CHECK_DOWN)) {
-          if (ref.getParent() instanceof PsiExpressionList && ref.getParent().getParent() instanceof PsiMethodCallExpression) { //TODO : new
-            PsiExpressionList list = (PsiExpressionList)ref.getParent();
+          if (ref.getParent() instanceof PsiExpressionList list && ref.getParent().getParent() instanceof PsiMethodCallExpression) { //TODO : new
             int argIndex = ArrayUtil.indexOf(list.getExpressions(), ref);
 
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
@@ -374,32 +371,19 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     if (BitUtil.isSet(flags, CHECK_UP)){
-      if (var instanceof PsiParameter && var.getParent() instanceof PsiParameterList && var.getParent().getParent() instanceof PsiMethod){
-        PsiParameterList list = (PsiParameterList)var.getParent();
+      if (var instanceof PsiParameter &&
+          var.getParent() instanceof PsiParameterList list &&
+          var.getParent().getParent() instanceof PsiMethod method){
         PsiParameter[] parameters = list.getParameters();
-        int argIndex = -1;
-        for(int i = 0; i < parameters.length; i++){
-          PsiParameter parameter = parameters[i];
-          if (parameter.equals(var)){
-            argIndex = i;
-            break;
-          }
-        }
+        int argIndex = ArrayUtil.indexOf(parameters, var);
 
-        PsiMethod method = (PsiMethod)var.getParent().getParent();
-        //System.out.println("analyzing usages of " + method + " in file " + scopeFile);
         for (PsiReference methodRef : ReferencesSearch.search(method, searchScope, false)) {
-          PsiElement ref = methodRef.getElement();
-          if (ref.getParent() instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
+          if (methodRef.getElement().getParent() instanceof PsiMethodCallExpression methodCall) {
             PsiExpression[] args = methodCall.getArgumentList().getExpressions();
             if (args.length <= argIndex) continue;
             PsiExpression arg = args[argIndex];
-            if (arg instanceof PsiReferenceExpression) {
-              PsiElement refElement = ((PsiReferenceExpression)arg).resolve();
-              if (refElement instanceof PsiVariable) {
-                addTypesByVariable(typesSet, (PsiVariable)refElement, scopeFile, checkedVariables, flags | CHECK_USAGE, rangeToIgnore);
-              }
+            if (arg instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable variable) {
+              addTypesByVariable(typesSet, variable, scopeFile, checkedVariables, flags | CHECK_USAGE, rangeToIgnore);
             }
             //TODO : constructor
           }
@@ -413,23 +397,21 @@ public final class GuessManagerImpl extends GuessManager {
                                                        PsiElement ref,
                                                        TextRange rangeToIgnore) {
     PsiElement refParent = ref.getParent();
-    if (refParent instanceof PsiReferenceExpression){
-      PsiReferenceExpression parentExpr = (PsiReferenceExpression)refParent;
-      if (ref.equals(parentExpr.getQualifierExpression()) && parentExpr.getParent() instanceof PsiMethodCallExpression){
-        String methodName = parentExpr.getReferenceName();
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parentExpr.getParent();
-        PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-        MethodPattern pattern = methodPatternMap.findPattern(methodName, args.length);
-        if (pattern != null){
-          if (pattern.parameterIndex < 0){ // return value
-            if (methodCall.getParent() instanceof PsiTypeCastExpression &&
-                (rangeToIgnore == null || !rangeToIgnore.contains(methodCall.getTextRange()))) {
-              return ((PsiTypeCastExpression)methodCall.getParent()).getType();
-            }
+    if (refParent instanceof PsiReferenceExpression parentExpr &&
+        ref.equals(parentExpr.getQualifierExpression()) &&
+        parentExpr.getParent() instanceof PsiMethodCallExpression methodCall) {
+      String methodName = parentExpr.getReferenceName();
+      PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+      MethodPattern pattern = methodPatternMap.findPattern(methodName, args.length);
+      if (pattern != null) {
+        if (pattern.parameterIndex() < 0) { // return value
+          if (methodCall.getParent() instanceof PsiTypeCastExpression cast &&
+              (rangeToIgnore == null || !rangeToIgnore.contains(methodCall.getTextRange()))) {
+            return cast.getType();
           }
-          else{
-            return args[pattern.parameterIndex].getType();
-          }
+        }
+        else {
+          return args[pattern.parameterIndex()].getType();
         }
       }
     }
@@ -517,7 +499,7 @@ public final class GuessManagerImpl extends GuessManager {
         type = ((PsiPrimitiveType)type).getBoxedType(expression);
       }
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
-      if (rawType == null || rawType.equals(PsiType.NULL)) return;
+      if (rawType == null || rawType.equals(PsiTypes.nullType())) return;
       if (mySpecificType == null) {
         mySpecificType = rawType;
       }
@@ -527,7 +509,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), myPlace)) {
         handleAssignment(expression.getRExpression());
       }
@@ -535,7 +517,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       if (ExpressionUtils.isReferenceTo(myPlace, variable)) {
         myDeclared = true;
         handleAssignment(variable.getInitializer());
@@ -544,7 +526,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       PsiExpression operand = expression.getOperand();
       if (operand != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
         myNeedDfa = true;
@@ -553,7 +535,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (OBJECT_GET_CLASS.test(call)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
         if (qualifier != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(qualifier, myPlace)) {
@@ -564,7 +546,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
         myNeedDfa = true;
       }

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.findUsages
 
 import com.intellij.find.findUsages.CustomUsageSearcher
 import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.usageView.UsageInfo
@@ -12,7 +13,6 @@ import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

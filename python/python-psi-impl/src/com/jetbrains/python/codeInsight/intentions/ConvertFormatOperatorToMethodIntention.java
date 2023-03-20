@@ -32,7 +32,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Replaces expressions like {@code "%s" % values} with likes of {@code "{0:s}".format(values)}.
  * <br/>
- * Author: Alexey.Ivanov, dcheryasov
  */
 public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionAction {
 
@@ -227,8 +226,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     if (binaryExpression == null) {
       return false;
     }
-    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression && binaryExpression.getOperator() == PyTokenTypes.PERC) {
-      final PyStringLiteralExpression str = (PyStringLiteralExpression)binaryExpression.getLeftExpression();
+    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression str && binaryExpression.getOperator() == PyTokenTypes.PERC) {
       if ((str.getText().length() > 0 && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
         return false;
       }
@@ -279,8 +277,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     if (rhs instanceof PyReferenceExpression && rhsType instanceof PyTupleType) {
       target.append("(*").append(paramText).append(")");
     }
-    else if (rhs instanceof PyCallExpression) { // potential dict(foo=1) -> format(foo=1)
-      final PyCallExpression callExpression = (PyCallExpression)rhs;
+    else if (rhs instanceof PyCallExpression callExpression) { // potential dict(foo=1) -> format(foo=1)
       final PyExpression callee = callExpression.getCallee();
       final PyClassType classType = PyUtil.as(rhsType, PyClassType.class);
       if (classType != null && callee != null && isDictCall(callee, classType, context)) {

@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun P.invoke()"
 package pack
 
 class P
@@ -10,3 +11,6 @@ fun f(p: P) {
     p()
     p.invoke()
 }
+
+
+// IGNORE_FIR_LOG

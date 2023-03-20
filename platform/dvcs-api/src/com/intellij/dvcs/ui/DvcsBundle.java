@@ -24,13 +24,4 @@ public final class DvcsBundle extends DynamicBundle {
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
-
-  /**
-   * @deprecated prefer {@link #message(String, Object...)} instead
-   */
-  @NotNull
-  @Deprecated
-  public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
-    return message(key);
-  }
 }

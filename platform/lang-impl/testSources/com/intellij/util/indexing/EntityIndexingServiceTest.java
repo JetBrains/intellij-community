@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -14,20 +12,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
-import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
 import kotlin.Pair;
@@ -35,14 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
 
-public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
+public class EntityIndexingServiceTest extends EntityIndexingServiceTestBase {
 
   public void testIndexingModule() throws Exception {
     doTest(this::createModuleAndSourceRoot, this::removeModule,
-           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(),
-                                                                           Collections.singletonList(pair.getSecond())));
+           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(), Collections.singletonList(pair.getSecond())));
   }
 
   @NotNull
@@ -63,7 +51,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingProjectLibrary() throws Exception {
-    doTest(this::createProjectLibrary, this::removeProjectLibrary, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createProjectLibrary, this::removeProjectLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
   }
 
   @NotNull
@@ -98,7 +86,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
   public void testIndexingGlobalLibrary() throws Exception {
     doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
-           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(), pair.getSecond()));
+           pair -> LibraryIndexableFilesIteratorImpl.createIteratorList(pair.getFirst()));
   }
 
   @NotNull
@@ -113,7 +101,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingModuleLibrary() throws Exception {
-    doTest(this::createModuleLibrary, this::removeModuleLibrary, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createModuleLibrary, this::removeModuleLibrary, LibraryIndexableFilesIteratorImpl::createIteratorList);
   }
 
   private void removeModuleLibrary(Library library) {
@@ -135,7 +123,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
   }
 
   public void testIndexingSdk() throws Exception {
-    doTest(this::createSdk, this::removeSdk, IndexableEntityProviderMethods.INSTANCE::createIterators);
+    doTest(this::createSdk, this::removeSdk, sdk -> IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
   }
 
   @NotNull
@@ -154,68 +142,5 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
     model.setSdk(null);
     model.commit();
     ProjectJdkTable.getInstance().removeJdk(sdk);
-  }
-
-  private <T> void doTest(ThrowableComputable<T, Exception> generator,
-                          ThrowableConsumer<T, Exception> remover,
-                          Function<T, Collection<IndexableFilesIterator>> expectedIteratorsProducer)
-    throws Exception {
-    MyWorkspaceModelChangeListener listener = new MyWorkspaceModelChangeListener();
-    WorkspaceModelTopics.getInstance(getProject())
-      .subscribeAfterModuleLoading(getProject().getMessageBus().connect(getTestRootDisposable()), listener);
-    T createdEntities = WriteAction.compute(generator);
-
-    List<IndexableFilesIterator> iterators;
-    try {
-      List<EntityChange<?>> changes = new ArrayList<>();
-      for (VersionedStorageChange event : listener.myEvents) {
-        Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
-        while (iterator.hasNext()) {
-          EntityChange<?> next = iterator.next();
-          changes.add(next);
-        }
-      }
-      iterators = EntityIndexingServiceImpl.getIterators(getProject(), changes);
-      Collection<IndexableFilesIterator> expectedIterators = expectedIteratorsProducer.fun(createdEntities);
-
-      assertSameIterators(iterators, expectedIterators);
-    }
-    finally {
-      WriteAction.run(() -> remover.consume(createdEntities));
-    }
-
-    DumbService.getInstance(getProject()).queueTask(new UnindexedFilesUpdater(getProject(), iterators, getTestName(false)));
-  }
-
-
-  private static void assertSameIterators(List<IndexableFilesIterator> actualIterators,
-                                          Collection<IndexableFilesIterator> expectedIterators) {
-    assertEquals(expectedIterators.size(), actualIterators.size());
-    Collection<IndexableSetOrigin> expectedOrigins = collectOrigins(expectedIterators);
-    Collection<IndexableSetOrigin> actualOrigins = collectOrigins(actualIterators);
-    assertSameElements(actualOrigins, expectedOrigins);
-  }
-
-  private static Collection<IndexableSetOrigin> collectOrigins(Collection<IndexableFilesIterator> iterators) {
-    Set<IndexableSetOrigin> origins = new HashSet<>();
-    for (IndexableFilesIterator iterator : iterators) {
-      IndexableSetOrigin origin = iterator.getOrigin();
-      assertTrue("Origins should be unique", origins.add(origin));
-    }
-    return origins;
-  }
-
-  private static class MyWorkspaceModelChangeListener implements WorkspaceModelChangeListener {
-    final List<VersionedStorageChange> myEvents = new ArrayList<>();
-
-    @Override
-    public void beforeChanged(@NotNull VersionedStorageChange event) {
-      //ignore
-    }
-
-    @Override
-    public void changed(@NotNull VersionedStorageChange event) {
-      myEvents.add(event);
-    }
   }
 }

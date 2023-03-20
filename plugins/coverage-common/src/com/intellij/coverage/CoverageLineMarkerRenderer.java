@@ -40,6 +40,7 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +49,10 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
-/**
- * @author ven
- */
 public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
@@ -98,8 +95,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
     if (bgColor != null) {
       g.setColor(bgColor);
+      g.fillRect(r.x, r.y, r.width, r.height);
     }
-    g.fillRect(r.x, r.y, r.width, r.height);
     final LineData lineData = getLineData(getCurrentLineNumber(editor, new Point(0, r.y)));
     if (lineData != null && lineData.isCoveredByOneTest()) {
       AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
@@ -124,23 +121,18 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   }
 
   private static TextAttributesKey getAttributesKey(LineData lineData) {
-    if (lineData != null) {
-      switch (lineData.getStatus()) {
-        case LineCoverage.FULL:
-          return CodeInsightColors.LINE_FULL_COVERAGE;
-        case LineCoverage.PARTIAL:
-          return CodeInsightColors.LINE_PARTIAL_COVERAGE;
-      }
-    }
-
-    return CodeInsightColors.LINE_NONE_COVERAGE;
+    int status = lineData == null ? LineCoverage.NONE : lineData.getStatus();
+    return switch (status) {
+      case LineCoverage.FULL -> CodeInsightColors.LINE_FULL_COVERAGE;
+      case LineCoverage.PARTIAL -> CodeInsightColors.LINE_PARTIAL_COVERAGE;
+      default -> CodeInsightColors.LINE_NONE_COVERAGE;
+    };
   }
 
   @Override
   public boolean canDoAction(@NotNull final MouseEvent e) {
     Component component = e.getComponent();
-    if (component instanceof EditorGutterComponentEx) {
-      EditorGutterComponentEx gutter = (EditorGutterComponentEx)component;
+    if (component instanceof EditorGutterComponentEx gutter) {
       return e.getX() > gutter.getLineMarkerAreaOffset() && e.getX() < gutter.getIconAreaOffset();
     }
     return false;
@@ -163,9 +155,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final LineData lineData = getLineData(lineNumber);
     final EditorImpl uEditor;
-    if (lineData != null && lineData.getStatus() != LineCoverage.NONE && !mySubCoverageActive) {
+    final String report;
+    if (lineData != null && lineData.getStatus() != LineCoverage.NONE && !mySubCoverageActive &&
+        (report = getReport(editor, lineNumber)) != null) {
       final EditorFactory factory = EditorFactory.getInstance();
-      final Document doc = factory.createDocument(getReport(editor, lineNumber));
+      final Document doc = factory.createDocument(report);
       doc.setReadOnly(true);
       uEditor = (EditorImpl)factory.createEditor(doc, editor.getProject());
       panel.add(EditorFragmentComponent.createEditorFragmentComponent(uEditor, 0, doc.getLineCount(), false, false), BorderLayout.CENTER);
@@ -198,6 +192,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
                                                      HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING, -1, false, new HintHint(editor, point));
   }
 
+  @Nullable
   private String getReport(final Editor editor, final int lineNumber) {
     final LineData lineData = getLineData(lineNumber);
 
@@ -206,7 +201,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     assert project != null;
 
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    assert psiFile != null;
+    if (psiFile == null) return null;
 
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final int lineEndOffset = document.getLineEndOffset(lineNumber);
@@ -234,7 +229,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final LineData lineData = getLineData(lineNumber);
     if (myCoverageByTestApplicable) {
-      group.add(new ShowCoveringTestsAction(myClassName, lineData));
+      group.add(new ShowCoveringTestsAction(editor.getProject(), myClassName, lineData));
     }
     final AnAction byteCodeViewAction = ActionManager.getInstance().getAction("ByteCodeViewer");
     if (byteCodeViewAction != null) {
@@ -244,6 +239,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     group.add(new HideCoverageInfoAction());
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageHintToolbar", group, true);
+    toolbar.setTargetComponent(editorComponent);
     final JComponent toolbarComponent = toolbar.getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
@@ -346,8 +342,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     @Nullable
     private Integer getLineEntry() {
-      final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
-      Collections.sort(list);
+      List<Integer> list = ContainerUtil.sorted(myLines.keySet());
       int size = list.size();
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;
@@ -379,14 +374,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
       if (entry != null) {
         final LineData lineData = getLineData(entry);
         if (lineData != null) {
-          switch (lineData.getStatus()) {
-            case LineCoverage.NONE:
-              return CoverageBundle.message("coverage.next.change.uncovered");
-            case LineCoverage.PARTIAL:
-              return CoverageBundle.message("coverage.next.change.partial.covered");
-            case LineCoverage.FULL:
-              return CoverageBundle.message("coverage.next.change.fully.covered");
-          }
+          return switch (lineData.getStatus()) {
+            case LineCoverage.NONE -> CoverageBundle.message("coverage.next.change.uncovered");
+            case LineCoverage.PARTIAL -> CoverageBundle.message("coverage.next.change.partial.covered");
+            case LineCoverage.FULL -> CoverageBundle.message("coverage.next.change.fully.covered");
+            default -> null;
+          };
         }
       }
       return null;
@@ -395,6 +388,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     @Override
     public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(getLineEntry() != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -455,6 +453,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
         }
         colorAndFontOptions.disposeUIResources();
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

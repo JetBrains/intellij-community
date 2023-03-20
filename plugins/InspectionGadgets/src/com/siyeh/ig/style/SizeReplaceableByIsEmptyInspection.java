@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -24,13 +23,12 @@ import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
@@ -45,19 +43,12 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final var panel = new MultipleCheckboxOptionsPanel(this);
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("options.title.ignored.classes")));
-    JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(
-      InspectionGadgetsBundle.message("choose.class.type.to.ignore"),
-      InspectionGadgetsBundle.message("options.label.ignored.classes"),
-      table,
-      true);
-    panel.addGrowing(tablePanel);
-    panel.addCheckbox(InspectionGadgetsBundle.message("size.replaceable.by.isempty.negation.ignore.option"), "ignoreNegations");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignoredTypes", InspectionGadgetsBundle.message("options.label.ignored.classes"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("choose.class.type.to.ignore"))),
+      checkbox("ignoreNegations", InspectionGadgetsBundle.message("size.replaceable.by.isempty.negation.ignore.option"))
+    );
   }
 
   @Override
@@ -86,16 +77,15 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
       PsiExpression operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
       if (!(operand instanceof PsiMethodCallExpression)) {
         operand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       }
-      if (!(operand instanceof PsiMethodCallExpression)) {
+      if (!(operand instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression == null) {
@@ -121,7 +111,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       if (!ComparisonUtils.isComparison(expression)) {
         return;

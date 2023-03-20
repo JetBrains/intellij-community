@@ -18,9 +18,6 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-/**
- * @author peter
- */
 public final class JavaLightTreeUtil {
   @Nullable
   @Contract("_,null->null")

@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingModelBuilder{
   @Override
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {

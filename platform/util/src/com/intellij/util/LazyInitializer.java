@@ -3,7 +3,6 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -63,57 +62,5 @@ public final class LazyInitializer {
     public String toString() {
       return String.valueOf(value);
     }
-  }
-
-  /**
-   * @deprecated Use {@link #create(Supplier)}
-   */
-  @Deprecated
-  public abstract static class NullableValue<T> {
-    @SuppressWarnings("unchecked")
-    private volatile T value = (T)UNINITIALIZED_VALUE;
-
-    @Nullable
-    public abstract T initialize();
-
-    /**
-     * Initializes the value if necessary and returns it.
-     */
-    @Nullable
-    public T get() {
-      T v = value;
-      if (v != UNINITIALIZED_VALUE) {
-        return value;
-      }
-
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        v = value;
-        if (v != UNINITIALIZED_VALUE) {
-          return value;
-        }
-
-        v = initialize();
-        value = v;
-      }
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #create(Supplier)}
-   */
-  @Deprecated
-  public static abstract class NotNullValue<T> extends NullableValue<T> implements Supplier<T> {
-    public NotNullValue() {
-    }
-
-    @Override
-    public abstract @NotNull T initialize();
   }
 }

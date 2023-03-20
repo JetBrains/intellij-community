@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -54,8 +53,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private final ModifiableRootModel myRootModel;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
-  private final ProjectModelExternalSource myExternalSource;
+  private ProjectModelExternalSource myExternalSource;
   private final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);
+  private LibraryRootPointerListener myRootPointerListener;
 
   LibraryImpl(LibraryTable table, @NotNull Element element, ModifiableRootModel rootModel) throws InvalidDataException {
     this(table, rootModel, null, null, findPersistentLibraryKind(element), findExternalSource(element));
@@ -116,7 +116,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private static PersistentLibraryKind<?> findPersistentLibraryKind(@NotNull Element element) {
     String typeString = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeString == null) return null;
-    LibraryKind kind = LibraryKind.findById(typeString);
+    LibraryKind kind = LibraryKindRegistry.getInstance().findKindById(typeString);
     if (kind == null) {
       return UnknownLibraryKind.getOrCreate(typeString);
     }
@@ -129,7 +129,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @NotNull
   private Set<OrderRootType> getAllRootTypes() {
-    Set<OrderRootType> rootTypes = ContainerUtil.set(OrderRootType.getAllTypes());
+    Set<OrderRootType> rootTypes = ContainerUtil.newHashSet(OrderRootType.getAllTypes());
     if (myKind != null) {
       rootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
     }
@@ -234,10 +234,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @NotNull
   private VirtualFilePointerListener getListener() {
-    Project project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
-    return project != null
-           ? ProjectRootManagerImpl.getInstanceImpl(project).getRootsValidityChangedListener()
-           : ProjectJdkImpl.getGlobalVirtualFilePointerListener();
+    if (myRootPointerListener == null) {
+      myRootPointerListener = new LibraryRootPointerListener();
+    }
+    return myRootPointerListener;
   }
 
   @Nullable
@@ -300,7 +300,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     final String typeId = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeId == null) return;
 
-    myKind = (PersistentLibraryKind<?>) LibraryKind.findById(typeId);
+    myKind = (PersistentLibraryKind<?>)LibraryKindRegistry.getInstance().findKindById(typeId);
     final Element propertiesElement = element.getChild(JpsLibraryTableSerializer.PROPERTIES_TAG);
     if (myKind == null) {
       myKind = UnknownLibraryKind.getOrCreate(typeId);
@@ -452,6 +452,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
+  public void setExternalSource(@NotNull ProjectModelExternalSource externalSource) {
+    myExternalSource = externalSource;
+  }
+
+  @Override
   public void forgetKind() {
     if (myKind == null) return;
 
@@ -470,7 +475,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public void restoreKind() {
     if (myKind == null || !(myKind instanceof UnknownLibraryKind)) return;
-    myKind = (PersistentLibraryKind<?>)LibraryKind.findById(myKind.getKindId());
+    myKind = (PersistentLibraryKind<?>)LibraryKindRegistry.getInstance().findKindById(myKind.getKindId());
     Element configuration = ((UnknownLibraryKind.UnknownLibraryProperties)myProperties).getConfiguration();
     myProperties = myKind.createDefaultProperties();
     if (configuration != null) {
@@ -514,11 +519,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
-  public void setKind(@NotNull PersistentLibraryKind<?> kind) {
+  public void setKind(@Nullable PersistentLibraryKind<?> kind) {
     LOG.assertTrue(isWritable());
-    LOG.assertTrue(myKind == null || myKind == kind, "Library kind cannot be changed from " + myKind + " to " + kind);
     myKind = kind;
-    myProperties = kind.createDefaultProperties();
+    myProperties = kind != null ? kind.createDefaultProperties() : null;
   }
 
   @Override
@@ -788,5 +792,18 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       return PathUtil.getFileName(PathUtil.toPresentableUrl(urls[0]));
     }
     return ProjectModelBundle.message("empty.library.title");
+  }
+
+  private class LibraryRootPointerListener implements VirtualFilePointerListener {
+    @Override
+    public void beforeValidityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
+      ProjectJdkImpl.getGlobalVirtualFilePointerListener().beforeValidityChanged(pointers);
+    }
+
+    @Override
+    public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
+      ProjectJdkImpl.getGlobalVirtualFilePointerListener().validityChanged(pointers);
+      fireRootSetChanged();
+    }
   }
 }

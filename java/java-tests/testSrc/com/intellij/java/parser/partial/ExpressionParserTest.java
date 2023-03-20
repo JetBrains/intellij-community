@@ -22,6 +22,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testCond1() { doParserTest("cond ?"); }
   public void testCond2() { doParserTest("cond ? true"); }
   public void testCond3() { doParserTest("cond ? true :"); }
+  public void testCond4() { doParserTest("cond ? true : false ? true : false"); }
 
   public void testCondOr0() { doParserTest("a || b || c"); }
   public void testCondOr1() { doParserTest("a ||"); }
@@ -72,6 +73,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testNew16() { doParserTest("new C<>()"); }
   public void testNew17() { doParserTest("new Map<String, >()"); }
   public void testNew18() { doParserTest("new int @A [2] @B"); }
+  public void testNew19() { doParserTest("new A(f; o)"); }
 
   public void testExprList0() { doParserTest("f(1,2)"); }
   public void testExprList1() { doParserTest("f("); }

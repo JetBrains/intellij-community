@@ -10,36 +10,28 @@ import com.intellij.dvcs.ui.BranchActionGroupPopup;
 import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.popup.PopupDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import git4idea.actions.GitFetch;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.config.GitVcsSettings;
-import git4idea.fetch.GitFetchResult;
-import git4idea.fetch.GitFetchSupport;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Optional;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_NUM;
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
@@ -57,7 +49,7 @@ import static java.util.stream.Collectors.toList;
  * <p/>
  */
 public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
-  @NonNls private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
+  @NonNls public static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
   @NonNls static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
   @NonNls static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
   @NonNls static final String SHOW_ALL_REPOSITORIES = "Git.Branch.Popup.ShowAllRepositories";
@@ -95,8 +87,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   @Nullable
   private static GitBranchPopupActions.LocalBranchActions getBranchAction(@NotNull AnAction action) {
-    AnAction resultAction =
-      action instanceof EmptyAction.MyDelegatingActionGroup ? ((EmptyAction.MyDelegatingActionGroup)action).getDelegate() : action;
+    AnAction resultAction = action instanceof ActionGroupWrapper ? ((ActionGroupWrapper)action).getDelegate() : action;
     return tryCast(resultAction, GitBranchPopupActions.LocalBranchActions.class);
   }
 
@@ -112,52 +103,11 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
       myPopup.addToolbarAction(createUnsupportedIncomingAction(myProject), false);
     }
-    myPopup.addToolbarAction(createFetchAction(myProject), false);
+    myPopup.addToolbarAction(new GitBranchPopupFetchAction<>(BranchActionGroupPopup.class), false);
     MessageBusConnection connection = myProject.getMessageBus().connect(myPopup);
     connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, () -> {
       ApplicationManager.getApplication().invokeLater(() -> myPopup.update(), o -> myPopup.isDisposed());
     });
-  }
-
-  @NotNull
-  private static AnAction createFetchAction(@NotNull Project project) {
-    return new GitFetch() {
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (isBusy(project)) return;
-        super.actionPerformed(e);
-      }
-
-      @Override
-      protected void onFetchFinished(@NotNull GitFetchResult result) {
-        GitBranchIncomingOutgoingManager.getInstance(project)
-          .forceUpdateBranches(() -> ActivityTracker.getInstance().inc());
-        showNotificationIfNeeded(result);
-      }
-
-      private void showNotificationIfNeeded(@NotNull GitFetchResult result) {
-        Optional<JBPopup> popupOptional =
-          StreamEx.of(PopupDispatcher.getInstance().getPopupStream()).findFirst(BranchActionGroupPopup.class::isInstance);
-        if (popupOptional.isPresent()) {
-          result.showNotificationIfFailed();
-        }
-        else {
-          result.showNotification();
-        }
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setIcon(isBusy(project) ? LOADING_ICON : AllIcons.Vcs.Fetch);
-        e.getPresentation().setText(isBusy(project) ? GitBundle.message("fetching") : GitBundle.message("action.fetch.text"));
-      }
-
-      private boolean isBusy(@NotNull Project project) {
-        return GitFetchSupport.fetchSupport(project).isFetchRunning() || GitBranchIncomingOutgoingManager.getInstance(project).isUpdating();
-      }
-    };
   }
 
   @NotNull
@@ -182,7 +132,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     }
     popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
 
-    if (!ExperimentalUI.isNewVcsBranchPopup()) {
+    if (!ExperimentalUI.isNewUI()) {
       popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
     }
 

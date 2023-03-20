@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
@@ -161,8 +161,7 @@ public class BuildOutputService implements BuildViewService {
     else if (virtualFile != null) {
       File file = virtualToIoFile(virtualFile);
       FilePosition filePosition;
-      if (navigatable instanceof OpenFileDescriptor) {
-        OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
+      if (navigatable instanceof OpenFileDescriptor fileDescriptor) {
         int column = fileDescriptor.getColumn();
         int line = fileDescriptor.getLine();
         filePosition = new FilePosition(file, line, column);
@@ -201,13 +200,18 @@ public class BuildOutputService implements BuildViewService {
         ExecutionBundle.messagePointer("rerun.configuration.action.name", escapeMnemonics(myContentName)),
         Presentation.NULL_STRING, AllIcons.Actions.Compile) {
         @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          restartWork.run();
+        }
+
+        @Override
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(!indicator.isRunning());
         }
 
         @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          restartWork.run();
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
       };
       restartActions.add(restartAction);
@@ -221,6 +225,11 @@ public class BuildOutputService implements BuildViewService {
       @Override
       public void update(@NotNull AnActionEvent event) {
         event.getPresentation().setEnabled(indicator.isRunning());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     restartActions.add(stopAction);
@@ -322,18 +331,12 @@ public class BuildOutputService implements BuildViewService {
 
   @NotNull
   private static MessageEvent.Kind convertCategory(@NotNull CompilerMessageCategory category) {
-    switch (category) {
-      case ERROR:
-        return MessageEvent.Kind.ERROR;
-      case WARNING:
-        return MessageEvent.Kind.WARNING;
-      case INFORMATION:
-        return MessageEvent.Kind.INFO;
-      case STATISTICS:
-        return MessageEvent.Kind.STATISTICS;
-      default:
-        return MessageEvent.Kind.SIMPLE;
-    }
+    return switch (category) {
+      case ERROR -> MessageEvent.Kind.ERROR;
+      case WARNING -> MessageEvent.Kind.WARNING;
+      case INFORMATION -> MessageEvent.Kind.INFO;
+      case STATISTICS -> MessageEvent.Kind.STATISTICS;
+    };
   }
 
   private static class ConsolePrinter {

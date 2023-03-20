@@ -1,28 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.intentions.callExpression
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SimplifyCallChainFix(
-    private val conversion: AbstractCallChainChecker.Conversion,
+    @SafeFieldForPreview private val conversion: AbstractCallChainChecker.Conversion,
     private val removeReceiverOfFirstCall: Boolean = false,
     private val runOptimizeImports: Boolean = false,
-    private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
+    @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
 ) : LocalQuickFix {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
 
@@ -31,7 +32,7 @@ class SimplifyCallChainFix(
     override fun getFamilyName() = name
 
     fun apply(qualifiedExpression: KtQualifiedExpression) {
-        val factory = KtPsiFactory(qualifiedExpression)
+        val psiFactory = KtPsiFactory(qualifiedExpression.project)
         val firstExpression = qualifiedExpression.receiverExpression
 
         val operationSign = if (removeReceiverOfFirstCall) "" else when (firstExpression) {
@@ -44,7 +45,7 @@ class SimplifyCallChainFix(
             if (!removeReceiverOfFirstCall && firstExpression is KtQualifiedExpression) firstExpression.receiverExpression.text else ""
 
         val firstCallExpression = AbstractCallChainChecker.getCallExpression(firstExpression) ?: return
-        factory.modifyArguments(firstCallExpression)
+        psiFactory.modifyArguments(firstCallExpression)
         val firstCallArgumentList = firstCallExpression.valueArgumentList
 
         val secondCallExpression = qualifiedExpression.selectorExpression as? KtCallExpression ?: return
@@ -69,7 +70,7 @@ class SimplifyCallChainFix(
         ).joinToString(separator = ",")
 
         val newCallText = conversion.replacement
-        val newQualifiedOrCallExpression = factory.createExpression(
+        val newQualifiedOrCallExpression = psiFactory.createExpression(
             "$receiverExpressionOrEmptyString$operationSign$newCallText($argumentsText)"
         )
 
@@ -86,11 +87,11 @@ class SimplifyCallChainFix(
             callExpression?.moveFunctionLiteralOutsideParentheses()
         }
         if (secondCallTrailingComma != null && !firstCallHasArguments) {
-            val call = result.safeAs<KtQualifiedExpression>()?.callExpression ?: result.safeAs()
-            call?.valueArgumentList?.arguments?.lastOrNull()?.add(factory.createComma())
+            val call = result.safeAs<KtQualifiedExpression>()?.callExpression ?: result.safeAs<KtCallExpression>()
+            call?.valueArgumentList?.arguments?.lastOrNull()?.add(psiFactory.createComma())
         }
         if (conversion.addNotNullAssertion) {
-            result = result.replaced(factory.createExpressionByPattern("$0!!", result))
+            result = result.replaced(psiFactory.createExpressionByPattern("$0!!", result))
         }
         if (conversion.removeNotNullAssertion) {
             val parent = result.parent

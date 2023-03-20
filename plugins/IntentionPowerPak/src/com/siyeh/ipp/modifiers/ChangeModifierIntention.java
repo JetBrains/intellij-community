@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -42,17 +43,16 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,6 +72,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private AccessModifier myTarget;
 
   // Necessary to register an extension
+  @SuppressWarnings("unused")
   public ChangeModifierIntention() {
     this(false);
   }
@@ -91,11 +92,13 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (modifiers.isEmpty()) return false;
     if (!myErrorFix && !ContainerUtil.exists(modifiers, mod -> mod.hasModifier(member))) return false;
     modifiers.removeIf(mod -> mod.hasModifier(member));
-    AccessModifier target = null;
     if (modifiers.isEmpty()) return false;
+    AccessModifier target = null;
     if (modifiers.size() == 1) {
       target = modifiers.get(0);
-      setText(IntentionPowerPackBundle.message("change.modifier.text", identifier.getText(), target));
+      String name = identifier.getText();
+      if (member instanceof PsiMethod) name += "()";
+      setText(IntentionPowerPackBundle.message("change.modifier.text", name, target));
     }
     else {
       setText(getFamilyName());
@@ -135,7 +138,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     List<AccessModifier> modifiers = AccessModifier.getAvailableModifiers(member);
     if (modifiers.isEmpty()) return;
     AccessModifier target = myTarget;
-    if (modifiers.contains(target)) {
+    if (target != null && modifiers.contains(target)) {
       setModifier(member, target);
       return;
     }
@@ -247,10 +250,11 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
     void undoChange() {
       Project project = myFile.getProject();
+      VirtualFile virtualFile = myFile.getVirtualFile();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-      FileEditor fileEditor = fileEditorManager.getSelectedEditor(myFile.getVirtualFile());
+      FileEditor fileEditor = virtualFile != null ? fileEditorManager.getSelectedEditor(virtualFile) : null;
       UndoManager manager = UndoManager.getInstance(project);
-      if (manager.isUndoAvailable(fileEditor)) {
+      if (fileEditor != null && manager.isUndoAvailable(fileEditor)) {
         manager.undo(fileEditor);
       }
       else {
@@ -293,10 +297,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Nullable
-  private static PsiKeyword getAnchorKeyword(PsiModifierList modifierList) {
+  private static PsiKeyword getAnchorKeyword(@NotNull PsiModifierList modifierList) {
     for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (AccessModifier.ALL_MODIFIERS.contains(AccessModifier.fromKeyword(ObjectUtils.tryCast(child, PsiKeyword.class)))) {
-        return (PsiKeyword)child;
+      if (child instanceof PsiKeyword keyword && AccessModifier.fromKeyword(keyword)!=null) {
+        return keyword;
       }
     }
     return null;
@@ -346,18 +350,17 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static void changeModifier(PsiModifierList modifierList, AccessModifier modifier, boolean hasConflicts) {
     Project project = modifierList.getProject();
     PsiElement parent = modifierList.getParent();
-    if (parent instanceof PsiMethod && hasConflicts) {
-      PsiMethod method = (PsiMethod)parent;
+    if (parent instanceof PsiMethod method && hasConflicts) {
       //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
-      new ChangeSignatureProcessor(project,
-                                   method,
-                                   false,
-                                   modifier.toPsiModifier(),
-                                   method.getName(),
-                                   method.getReturnType(),
-                                   ParameterInfoImpl.fromMethod(method),
-                                   JavaThrownExceptionInfo.extractExceptions(method))
-        .run();
+      var csp = JavaRefactoringFactory.getInstance(project).createChangeSignatureProcessor(
+                                                                   method,
+                                                                   false,
+                                                                   modifier.toPsiModifier(),
+                                                                   method.getName(),
+                                                                   method.getReturnType(),
+                                                                   ParameterInfoImpl.fromMethod(method),
+                                                                   JavaThrownExceptionInfo.extractExceptions(method),null, null, null);
+      csp.run();
       return;
     }
     PsiFile file = modifierList.getContainingFile();
@@ -366,7 +369,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       .run(() -> {
         VisibilityUtil.setVisibility(modifierList, modifier.toPsiModifier());
         if (modifier != AccessModifier.PACKAGE_LOCAL) {
-          final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
+          final PsiElement whitespace = PsiParserFacade.getInstance(project).createWhiteSpaceFromText(" ");
           final PsiElement sibling = modifierList.getNextSibling();
           if (sibling instanceof PsiWhiteSpace) {
             sibling.replace(whitespace);
@@ -380,13 +383,11 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
 
   @Nullable
   private static MultiMap<PsiElement, String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
-    if (member instanceof PsiClass && modifier == AccessModifier.PUBLIC) {
-      final PsiClass aClass = (PsiClass)member;
+    if (member instanceof PsiClass aClass && modifier == AccessModifier.PUBLIC) {
       final PsiElement parent = aClass.getParent();
-      if (!(parent instanceof PsiJavaFile)) {
+      if (!(parent instanceof PsiJavaFile javaFile)) {
         return MultiMap.empty();
       }
-      final PsiJavaFile javaFile = (PsiJavaFile)parent;
       final String name = FileUtilRt.getNameWithoutExtension(javaFile.getName());
       final String className = aClass.getName();
       if (name.equals(className)) {
@@ -412,7 +413,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       copy.setModifierProperty(modifier.toPsiModifier(), true);
 
       if (member instanceof PsiMethod) {
-        JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, modifier.toPsiModifier());
+        RefactoringConflictsUtil.getInstance().analyzeHierarchyConflictsAfterMethodModifierChange((PsiMethod)member,
+                                                                                                  modifier.toPsiModifier(), conflicts);
       }
 
       final Query<PsiReference> search = ReferencesSearch.search(member, useScope);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.doc;
 
 import com.intellij.lang.ant.AntFilesProvider;
@@ -33,8 +33,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class AntDomDocumentationProvider implements DocumentationProvider {
-
+final class AntDomDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(AntDomDocumentationProvider.class);
 
   @Override
@@ -179,8 +178,7 @@ public class AntDomDocumentationProvider implements DocumentationProvider {
       final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
       if (pomTarget instanceof DomTarget) {
         final DomElement domElement = ((DomTarget)pomTarget).getDomElement();
-        if (domElement instanceof AntDomTarget) {
-          final AntDomTarget antTarget = (AntDomTarget)domElement;
+        if (domElement instanceof AntDomTarget antTarget) {
           final String description = antTarget.getDescription().getRawText();
           if (description != null && description.length() > 0) {
             final String targetName = antTarget.getName().getRawText();

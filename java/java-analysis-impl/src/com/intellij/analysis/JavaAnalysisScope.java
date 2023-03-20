@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -54,8 +40,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     if (myType == FILE) {
-      if (myElement instanceof PsiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
-        PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
+      if (myElement instanceof PsiJavaFile psiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
         final PsiClass[] classes = psiJavaFile.getClasses();
         boolean onlyPackLocalClasses = true;
         for (final PsiClass aClass : classes) {
@@ -104,7 +89,7 @@ public class JavaAnalysisScope extends AnalysisScope {
 
   @NotNull
   @Override
-  protected Set<VirtualFile> createFilesSet() {
+  protected VirtualFileSet createFilesSet() {
     if (myType == PACKAGE) {
       VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
       accept(createFileSearcher(fileSet));
@@ -116,8 +101,7 @@ public class JavaAnalysisScope extends AnalysisScope {
 
   @Override
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
-    if (myElement instanceof PsiPackage) {
-      final PsiPackage pack = (PsiPackage)myElement;
+    if (myElement instanceof PsiPackage pack) {
       final Set<PsiDirectory> dirs = new HashSet<>();
       ApplicationManager.getApplication().runReadAction(() -> {
         ContainerUtil.addAll(dirs, pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject())));

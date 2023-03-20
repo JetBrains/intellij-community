@@ -1,11 +1,15 @@
-from _typeshed import SupportsItems
-from typing import IO, Any, Callable, Iterable, List, Mapping, MutableMapping, Optional, Text, Tuple, TypeVar, Union
+from _typeshed import Self, SupportsItems, SupportsRead
+from collections.abc import Callable, Iterable, Mapping, MutableMapping
+from typing import IO, Any, Union
+from typing_extensions import TypeAlias, TypedDict
 
-from . import adapters, auth as _auth, compat, cookies, exceptions, hooks, models, status_codes, structures, utils
+from urllib3._collections import RecentlyUsedContainer
+
+from . import adapters, auth as _auth, compat, cookies, exceptions, hooks, models, status_codes, utils
 from .models import Response
-from .packages.urllib3 import _collections
+from .structures import CaseInsensitiveDict as CaseInsensitiveDict
 
-BaseAdapter = adapters.BaseAdapter
+_BaseAdapter: TypeAlias = adapters.BaseAdapter
 OrderedDict = compat.OrderedDict
 cookiejar_from_dict = cookies.cookiejar_from_dict
 extract_cookies_to_jar = cookies.extract_cookies_to_jar
@@ -23,8 +27,6 @@ TooManyRedirects = exceptions.TooManyRedirects
 InvalidSchema = exceptions.InvalidSchema
 ChunkedEncodingError = exceptions.ChunkedEncodingError
 ContentDecodingError = exceptions.ContentDecodingError
-RecentlyUsedContainer = _collections.RecentlyUsedContainer
-CaseInsensitiveDict = structures.CaseInsensitiveDict
 HTTPAdapter = adapters.HTTPAdapter
 requote_uri = utils.requote_uri
 get_environ_proxies = utils.get_environ_proxies
@@ -43,195 +45,238 @@ class SessionRedirectMixin:
     def rebuild_proxies(self, prepared_request, proxies): ...
     def should_strip_auth(self, old_url, new_url): ...
 
-_Data = Union[None, Text, bytes, Mapping[str, Any], Mapping[Text, Any], Iterable[Tuple[Text, Optional[Text]]], IO[Any]]
+_Data: TypeAlias = str | bytes | Mapping[str, Any] | Iterable[tuple[str, str | None]] | IO[Any]
+_Auth: TypeAlias = Union[tuple[str, str], _auth.AuthBase, Callable[[PreparedRequest], PreparedRequest]]
+_Cert: TypeAlias = Union[str, tuple[str, str]]
+# Files is passed to requests.utils.to_key_val_list()
+_FileName: TypeAlias = str | None
+_FileContent: TypeAlias = SupportsRead[str | bytes] | str | bytes
+_FileContentType: TypeAlias = str
+_FileCustomHeaders: TypeAlias = Mapping[str, str]
+_FileSpecTuple2: TypeAlias = tuple[_FileName, _FileContent]
+_FileSpecTuple3: TypeAlias = tuple[_FileName, _FileContent, _FileContentType]
+_FileSpecTuple4: TypeAlias = tuple[_FileName, _FileContent, _FileContentType, _FileCustomHeaders]
+_FileSpec: TypeAlias = _FileContent | _FileSpecTuple2 | _FileSpecTuple3 | _FileSpecTuple4
+_Files: TypeAlias = Mapping[str, _FileSpec] | Iterable[tuple[str, _FileSpec]]
+_Hook: TypeAlias = Callable[[Response], Any]
+_HooksInput: TypeAlias = Mapping[str, Iterable[_Hook] | _Hook]
 
-_Hook = Callable[[Response], Any]
-_Hooks = MutableMapping[Text, List[_Hook]]
-_HooksInput = MutableMapping[Text, Union[Iterable[_Hook], _Hook]]
-
-_ParamsMappingKeyType = Union[Text, bytes, int, float]
-_ParamsMappingValueType = Union[Text, bytes, int, float, Iterable[Union[Text, bytes, int, float]], None]
-_Params = Union[
+_ParamsMappingKeyType: TypeAlias = str | bytes | int | float
+_ParamsMappingValueType: TypeAlias = str | bytes | int | float | Iterable[str | bytes | int | float] | None
+_Params: TypeAlias = Union[
     SupportsItems[_ParamsMappingKeyType, _ParamsMappingValueType],
-    Tuple[_ParamsMappingKeyType, _ParamsMappingValueType],
-    Iterable[Tuple[_ParamsMappingKeyType, _ParamsMappingValueType]],
-    Union[Text, bytes],
+    tuple[_ParamsMappingKeyType, _ParamsMappingValueType],
+    Iterable[tuple[_ParamsMappingKeyType, _ParamsMappingValueType]],
+    str | bytes,
 ]
-_TextMapping = MutableMapping[Text, Text]
-_SessionT = TypeVar("_SessionT", bound=Session)
+_TextMapping: TypeAlias = MutableMapping[str, str]
+_HeadersMapping: TypeAlias = Mapping[str, str | bytes]
+_HeadersUpdateMapping: TypeAlias = Mapping[str, str | bytes | None]
+_Timeout: TypeAlias = Union[float, tuple[float, float], tuple[float, None]]
+_Verify: TypeAlias = bool | str
+
+class _Settings(TypedDict):
+    verify: _Verify | None
+    proxies: _TextMapping
+    stream: bool
+    cert: _Cert | None
 
 class Session(SessionRedirectMixin):
     __attrs__: Any
-    headers: CaseInsensitiveDict[Text]
-    auth: None | tuple[Text, Text] | _auth.AuthBase | Callable[[PreparedRequest], PreparedRequest]
+    headers: CaseInsensitiveDict[str | bytes]
+    auth: _Auth | None
     proxies: _TextMapping
-    hooks: _Hooks
+    # Don't complain if:
+    #   - value is assumed to be a list (which it is by default)
+    #   - a _Hook is assigned directly, without wrapping it in a list (also works)
+    hooks: dict[str, list[_Hook] | Any]
     params: _Params
     stream: bool
-    verify: None | bool | Text
-    cert: None | Text | tuple[Text, Text]
+    verify: _Verify | None
+    cert: _Cert | None
     max_redirects: int
     trust_env: bool
     cookies: RequestsCookieJar
     adapters: MutableMapping[Any, Any]
     redirect_cache: RecentlyUsedContainer[Any, Any]
     def __init__(self) -> None: ...
-    def __enter__(self: _SessionT) -> _SessionT: ...
+    def __enter__(self: Self) -> Self: ...
     def __exit__(self, *args) -> None: ...
     def prepare_request(self, request: Request) -> PreparedRequest: ...
     def request(
         self,
-        method: str,
-        url: str | bytes | Text,
+        method: str | bytes,
+        url: str | bytes,
         params: _Params | None = ...,
-        data: _Data = ...,
-        headers: _TextMapping | None = ...,
+        data: _Data | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
         cookies: None | RequestsCookieJar | _TextMapping = ...,
-        files: MutableMapping[Text, IO[Any]]
-        | MutableMapping[Text, tuple[Text, IO[Any]]]
-        | MutableMapping[Text, tuple[Text, IO[Any], Text]]
-        | MutableMapping[Text, tuple[Text, IO[Any], Text, _TextMapping]]
-        | None = ...,
-        auth: None | tuple[Text, Text] | _auth.AuthBase | Callable[[PreparedRequest], PreparedRequest] = ...,
-        timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
-        allow_redirects: bool | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
+        allow_redirects: bool = ...,
         proxies: _TextMapping | None = ...,
         hooks: _HooksInput | None = ...,
         stream: bool | None = ...,
-        verify: None | bool | Text = ...,
-        cert: Text | tuple[Text, Text] | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
     def get(
         self,
-        url: Text | bytes,
+        url: str | bytes,
+        *,
         params: _Params | None = ...,
-        data: Any | None = ...,
-        headers: Any | None = ...,
-        cookies: Any | None = ...,
-        files: Any | None = ...,
-        auth: Any | None = ...,
-        timeout: Any | None = ...,
+        data: _Data | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
+        cookies: RequestsCookieJar | _TextMapping | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
         allow_redirects: bool = ...,
-        proxies: Any | None = ...,
-        hooks: Any | None = ...,
-        stream: Any | None = ...,
-        verify: Any | None = ...,
-        cert: Any | None = ...,
+        proxies: _TextMapping | None = ...,
+        hooks: _HooksInput | None = ...,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
     def options(
         self,
-        url: Text | bytes,
+        url: str | bytes,
+        *,
         params: _Params | None = ...,
-        data: Any | None = ...,
-        headers: Any | None = ...,
-        cookies: Any | None = ...,
-        files: Any | None = ...,
-        auth: Any | None = ...,
-        timeout: Any | None = ...,
+        data: _Data | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
+        cookies: RequestsCookieJar | _TextMapping | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
         allow_redirects: bool = ...,
-        proxies: Any | None = ...,
-        hooks: Any | None = ...,
-        stream: Any | None = ...,
-        verify: Any | None = ...,
-        cert: Any | None = ...,
+        proxies: _TextMapping | None = ...,
+        hooks: _HooksInput | None = ...,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
     def head(
         self,
-        url: Text | bytes,
+        url: str | bytes,
+        *,
         params: _Params | None = ...,
-        data: Any | None = ...,
-        headers: Any | None = ...,
-        cookies: Any | None = ...,
-        files: Any | None = ...,
-        auth: Any | None = ...,
-        timeout: Any | None = ...,
+        data: _Data | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
+        cookies: RequestsCookieJar | _TextMapping | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
         allow_redirects: bool = ...,
-        proxies: Any | None = ...,
-        hooks: Any | None = ...,
-        stream: Any | None = ...,
-        verify: Any | None = ...,
-        cert: Any | None = ...,
+        proxies: _TextMapping | None = ...,
+        hooks: _HooksInput | None = ...,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
     def post(
         self,
-        url: Text | bytes,
-        data: _Data = ...,
+        url: str | bytes,
+        data: _Data | None = ...,
         json: Any | None = ...,
+        *,
         params: _Params | None = ...,
-        headers: Any | None = ...,
-        cookies: Any | None = ...,
-        files: Any | None = ...,
-        auth: Any | None = ...,
-        timeout: Any | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
+        cookies: RequestsCookieJar | _TextMapping | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
         allow_redirects: bool = ...,
-        proxies: Any | None = ...,
-        hooks: Any | None = ...,
-        stream: Any | None = ...,
-        verify: Any | None = ...,
-        cert: Any | None = ...,
+        proxies: _TextMapping | None = ...,
+        hooks: _HooksInput | None = ...,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
     ) -> Response: ...
     def put(
         self,
-        url: Text | bytes,
-        data: _Data = ...,
+        url: str | bytes,
+        data: _Data | None = ...,
+        *,
         params: _Params | None = ...,
-        headers: Any | None = ...,
-        cookies: Any | None = ...,
-        files: Any | None = ...,
-        auth: Any | None = ...,
-        timeout: Any | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
+        cookies: RequestsCookieJar | _TextMapping | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
         allow_redirects: bool = ...,
-        proxies: Any | None = ...,
-        hooks: Any | None = ...,
-        stream: Any | None = ...,
-        verify: Any | None = ...,
-        cert: Any | None = ...,
+        proxies: _TextMapping | None = ...,
+        hooks: _HooksInput | None = ...,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
     def patch(
         self,
-        url: Text | bytes,
-        data: _Data = ...,
+        url: str | bytes,
+        data: _Data | None = ...,
+        *,
         params: _Params | None = ...,
-        headers: Any | None = ...,
-        cookies: Any | None = ...,
-        files: Any | None = ...,
-        auth: Any | None = ...,
-        timeout: Any | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
+        cookies: RequestsCookieJar | _TextMapping | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
         allow_redirects: bool = ...,
-        proxies: Any | None = ...,
-        hooks: Any | None = ...,
-        stream: Any | None = ...,
-        verify: Any | None = ...,
-        cert: Any | None = ...,
+        proxies: _TextMapping | None = ...,
+        hooks: _HooksInput | None = ...,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
     def delete(
         self,
-        url: Text | bytes,
+        url: str | bytes,
+        *,
         params: _Params | None = ...,
-        data: Any | None = ...,
-        headers: Any | None = ...,
-        cookies: Any | None = ...,
-        files: Any | None = ...,
-        auth: Any | None = ...,
-        timeout: Any | None = ...,
+        data: _Data | None = ...,
+        headers: _HeadersUpdateMapping | None = ...,
+        cookies: RequestsCookieJar | _TextMapping | None = ...,
+        files: _Files | None = ...,
+        auth: _Auth | None = ...,
+        timeout: _Timeout | None = ...,
         allow_redirects: bool = ...,
-        proxies: Any | None = ...,
-        hooks: Any | None = ...,
-        stream: Any | None = ...,
-        verify: Any | None = ...,
-        cert: Any | None = ...,
+        proxies: _TextMapping | None = ...,
+        hooks: _HooksInput | None = ...,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        cert: _Cert | None = ...,
         json: Any | None = ...,
     ) -> Response: ...
-    def send(self, request: PreparedRequest, **kwargs) -> Response: ...
-    def merge_environment_settings(self, url, proxies, stream, verify, cert): ...
-    def get_adapter(self, url: str) -> BaseAdapter: ...
+    def send(
+        self,
+        request: PreparedRequest,
+        *,
+        stream: bool | None = ...,
+        verify: _Verify | None = ...,
+        proxies: _TextMapping | None = ...,
+        cert: _Cert | None = ...,
+        timeout: _Timeout | None = ...,
+        allow_redirects: bool = ...,
+        **kwargs: Any,
+    ) -> Response: ...
+    def merge_environment_settings(
+        self,
+        url: str | bytes | None,
+        proxies: _TextMapping | None,
+        stream: bool | None,
+        verify: _Verify | None,
+        cert: _Cert | None,
+    ) -> _Settings: ...
+    def get_adapter(self, url: str) -> _BaseAdapter: ...
     def close(self) -> None: ...
-    def mount(self, prefix: Text | bytes, adapter: BaseAdapter) -> None: ...
+    def mount(self, prefix: str | bytes, adapter: _BaseAdapter) -> None: ...
 
 def session() -> Session: ...

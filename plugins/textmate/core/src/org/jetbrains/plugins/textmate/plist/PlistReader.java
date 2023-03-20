@@ -2,12 +2,14 @@ package org.jetbrains.plugins.textmate.plist;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 public interface PlistReader {
-  Plist read(@NotNull File file) throws IOException;
+  default Plist read(@NotNull File file) throws IOException {
+    try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+      return read(in);
+    }
+  }
 
   Plist read(@NotNull InputStream inputStream) throws IOException;
 }

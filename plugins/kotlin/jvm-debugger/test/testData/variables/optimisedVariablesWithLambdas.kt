@@ -86,3 +86,5 @@ inline fun noinlineBlock(noinline block: () -> Unit) = block()
 fun block(block: () -> Unit) = block()
 
 suspend fun suspendBlock(block: suspend () -> Unit) = block()
+
+// IGNORE_K2

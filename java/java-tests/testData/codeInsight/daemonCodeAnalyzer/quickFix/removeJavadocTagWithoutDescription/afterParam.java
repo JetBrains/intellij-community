@@ -1,4 +1,4 @@
-// "Remove '@param someInt' tag" "true"
+// "Remove '@param someInt' tag" "true-preview"
 
 class Foo {
   /**

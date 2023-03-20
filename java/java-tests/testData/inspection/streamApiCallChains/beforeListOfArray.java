@@ -1,4 +1,4 @@
-// "Replace List.of().stream() with Stream.of()" "true"
+// "Replace List.of().stream() with Stream.of()" "true-preview"
 
 import java.util.List;
 

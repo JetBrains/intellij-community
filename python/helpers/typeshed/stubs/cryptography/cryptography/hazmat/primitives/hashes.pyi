@@ -2,12 +2,17 @@ from abc import ABCMeta, abstractmethod
 
 from cryptography.hazmat.backends.interfaces import HashBackend
 
+# These are actually abstractproperties on HashAlgorithm,
+# but let's not worry too much about that.
 class HashAlgorithm(metaclass=ABCMeta):
-    digest_size: int
-    name: str
+    @property
+    def digest_size(self) -> int: ...
+    @property
+    def name(self) -> str: ...
 
 class HashContext(metaclass=ABCMeta):
-    algorithm: HashAlgorithm
+    @property
+    def algorithm(self) -> HashAlgorithm: ...
     @abstractmethod
     def copy(self) -> HashContext: ...
     @abstractmethod

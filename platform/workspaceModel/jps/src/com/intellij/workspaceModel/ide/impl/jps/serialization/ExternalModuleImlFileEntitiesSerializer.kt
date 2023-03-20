@@ -1,15 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.util.PathUtilRt
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -23,17 +27,17 @@ private val MODULE_OPTIONS_TO_CHECK = setOf(
 
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
-                                                       virtualFileManager: VirtualFileUrlManager,
+                                                       context: SerializationContext,
                                                        internalEntitySource: JpsFileEntitySource,
                                                        internalModuleListSerializer: JpsModuleListSerializer)
-  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, virtualFileManager, internalModuleListSerializer) {
+  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, context, internalModuleListSerializer) {
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
-  override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
-                            reader: JpsFileContentReader,
+  override fun loadEntities(reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager) {
+                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
+    return LoadingResult(emptyMap(), null)
   }
 
   override fun acceptsSource(entitySource: EntitySource): Boolean {
@@ -47,15 +51,14 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return Pair(options, options["externalSystem"])
   }
 
-  override fun loadExternalSystemOptions(builder: WorkspaceEntityStorageBuilder,
-                                         module: ModuleEntity,
+  override fun loadExternalSystemOptions(module: ModuleEntity,
                                          reader: JpsFileContentReader,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,
                                          entitySource: EntitySource) {
     if (!shouldCreateExternalSystemModuleOptions(externalSystemId, externalSystemOptions, MODULE_OPTIONS_TO_CHECK)) return
-    val optionsEntity = builder.getOrCreateExternalSystemModuleOptions(module, entitySource)
-    builder.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, optionsEntity) {
+    ExternalSystemModuleOptionsEntity(entitySource) {
+      this.module = module
       externalSystem = externalSystemId
       externalSystemModuleVersion = externalSystemOptions["externalSystemModuleVersion"]
       linkedProjectPath = externalSystemOptions["linkedProjectPath"]
@@ -106,11 +109,11 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun createExternalEntitySource(externalSystemId: String) =
     JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
 
-  override fun createFacetSerializer(): FacetEntitiesSerializer {
-    return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true)
+  override fun createFacetSerializer(): FacetsSerializer {
+    return FacetsSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true, context)
   }
 
-  override fun getBaseDirPath(): String? {
+  override fun getBaseDirPath(): String {
     return modulePath.path
   }
 
@@ -118,8 +121,8 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 }
 
 internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl,
-                                            private val virtualFileManager: VirtualFileUrlManager) :
-  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url, virtualFileManager) {
+                                            context: SerializationContext) :
+  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url, context) {
   override val isExternalStorage: Boolean
     get() = true
 
@@ -129,8 +132,8 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
   override val entitySourceFilter: (EntitySource) -> Boolean
     get() = { it is JpsImportedEntitySource && it.storedExternally }
 
-  override fun getSourceToSave(module: ModuleEntity): JpsFileEntitySource.FileInDirectory? {
-    return (module.entitySource as? JpsImportedEntitySource)?.internalFile as? JpsFileEntitySource.FileInDirectory
+  override fun getSourceToSave(module: ModuleEntity): JpsProjectFileEntitySource.FileInDirectory? {
+    return (module.entitySource as? JpsImportedEntitySource)?.internalFile as? JpsProjectFileEntitySource.FileInDirectory
   }
 
   override fun getFileName(entity: ModuleEntity): String {
@@ -138,15 +141,15 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
-    val fileName = PathUtil.getFileName(fileUrl.url)
-    val actualFileUrl = if (PathUtil.getFileExtension(fileName) == "iml") {
+    val fileName = PathUtilRt.getFileName(fileUrl.url)
+    val actualFileUrl = if (PathUtilRt.getFileExtension(fileName) == "iml") {
       externalStorageRoot.append("modules/${fileName.substringBeforeLast('.')}.xml")
     }
     else {
       fileUrl
     }
     val filePath = JpsPathUtil.urlToPath(fileUrl.url)
-    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, virtualFileManager, internalSource, this)
+    return ExternalModuleImlFileEntitiesSerializer(ModulePath(filePath, moduleGroup), actualFileUrl, context, internalSource, this)
   }
 
   // Component DeprecatedModuleOptionManager removed by ModuleStateStorageManager.beforeElementSaved from .iml files
@@ -156,6 +159,7 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
       writer.saveComponent(fileUrl, "ExternalSystem", null)
       writer.saveComponent(fileUrl, "ExternalFacetManager", null)
       writer.saveComponent(fileUrl, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
+      writer.saveComponent(fileUrl, TEST_MODULE_PROPERTIES_COMPONENT_NAME, null)
     }
   }
 

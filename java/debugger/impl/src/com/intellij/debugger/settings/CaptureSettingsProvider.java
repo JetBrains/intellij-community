@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -50,8 +50,7 @@ public final class CaptureSettingsProvider {
           method = (PsiMethod)e;
           keyProvider = THIS_KEY;
         }
-        else if (e instanceof PsiParameter) {
-          PsiParameter psiParameter = (PsiParameter)e;
+        else if (e instanceof PsiParameter psiParameter) {
           method = (PsiMethod)psiParameter.getDeclarationScope();
           keyProvider = param(method.getParameterList().getParameterIndex(psiParameter));
         }

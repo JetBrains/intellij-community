@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -50,10 +51,10 @@ import java.util.function.Function;
 public final class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
   @NonNls public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
-  private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
-  private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
-  private static final int MINIMUM_WIDTH = JBUIScale.scale(600);
-  private static final int MINIMUM_HEIGHT = JBUIScale.scale(450);
+  private static int getDefaultWidth() { return JBUIScale.scale(700); }
+  private static int getDefaultHeight() { return JBUIScale.scale(530); }
+  private static int getMinimumWidth() { return JBUIScale.scale(600); }
+  private static int getMinimumHeight() { return JBUIScale.scale(450); }
 
   static final class Holder {
     private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
@@ -85,8 +86,8 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
                                @NotNull @NlsContexts.PopupTitle String title1,
                                @NotNull @NlsContexts.PopupTitle String title2,
                                @NotNull @NlsContexts.StatusText String emptyText,
-                               @Nullable Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
-                               @Nullable Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
+                               @Nullable Function<? super Boolean, ? extends List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
+                               @Nullable Consumer<? super List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
     RecentLocationsDataModel model = new RecentLocationsDataModel(project, supplier, remover);
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged)));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
@@ -134,7 +135,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
       .setMovable(true)
       .setBorderColor(borderColor)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
-      .setMinSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT))
+      .setMinSize(new Dimension(getMinimumWidth(), getMinimumHeight()))
       .setLocateWithinScreenBounds(false)
       .createPopup();
     Disposer.register(popup, renderer);
@@ -154,7 +155,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     });
 
     if (DimensionService.getInstance().getSize(LOCATION_SETTINGS_KEY, project) == null) {
-      popup.setSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+      popup.setSize(new Dimension(getDefaultWidth(), getDefaultHeight()));
     }
 
     list.addMouseListener(new MouseAdapter() {
@@ -233,6 +234,11 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static void showPopup(@NotNull Project project, @NotNull JBPopup popup) {

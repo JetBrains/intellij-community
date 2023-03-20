@@ -13,7 +13,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext
 import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleSourcePackagingElementEntity
 import org.jetbrains.annotations.NonNls
@@ -40,7 +40,7 @@ class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
 
   override fun getFilesKind(context: PackagingElementResolvingContext) = PackagingElementOutputKind.OTHER
 
-  override fun getOrAddEntity(diff: WorkspaceEntityStorageBuilder, source: EntitySource, project: Project): WorkspaceEntity {
+  override fun getOrAddEntity(diff: MutableEntityStorage, source: EntitySource, project: Project): WorkspaceEntity {
     val existingEntity = getExistingEntity(diff)
     if (existingEntity != null) return existingEntity
 

@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -188,7 +187,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
       JavaResolveUtil.substituteResults(expression, result);
 
-      ObjectUtils.reachabilityFence(qualifiers);
+      ObjectUtilsRt.reachabilityFence(qualifiers);
 
       return result;
     }
@@ -204,7 +203,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       boolean physical = containingFile.isPhysical();
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           if (!(expression instanceof PsiReferenceExpressionImpl)) {
             return;
           }
@@ -225,13 +224,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         // walk only qualifiers, not their arguments and other associated stuff
 
         @Override
-        public void visitExpressionList(PsiExpressionList list) { }
+        public void visitExpressionList(@NotNull PsiExpressionList list) { }
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) { }
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) { }
 
         @Override
-        public void visitClass(PsiClass aClass) { }
+        public void visitClass(@NotNull PsiClass aClass) { }
       });
       return qualifiers;
     }
@@ -368,7 +367,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           if (qualifier != null && ElementType.EXPRESSION_BIT_SET.contains(qualifier.getElementType())) {
             PsiType type = SourceTreeToPsiMap.<PsiExpression>treeToPsiNotNull(qualifier).getType();
             if (type instanceof PsiArrayType) {
-              return PsiType.INT;
+              return PsiTypes.intType();
             }
           }
         }
@@ -537,8 +536,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return aClass instanceof PsiCompiledElement && seemsScrambledByStructure(aClass);
   }
 
-  @VisibleForTesting
-  public static boolean seemsScrambledByStructure(@NotNull PsiClass aClass) {
+  static boolean seemsScrambledByStructure(@NotNull PsiClass aClass) {
     PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null && !seemsScrambledByStructure(containingClass)) {
       return false;
@@ -643,6 +641,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       String qName = ((PsiClass)element).getQualifiedName();
       if (qName == null) {
         qName = ((PsiClass)element).getName();
+        LOG.assertTrue(qName != null, element);
       }
       else if (JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, getResolveScope()) == null && !preserveQualification) {
         return this;
@@ -650,7 +649,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       else if (facade.getResolveHelper().resolveReferencedClass(qName, this) == null &&
                facade.getResolveHelper().resolveReferencedClass(StringUtil.getPackageName(qName), this) != null) {
         qName = ((PsiClass)element).getName();
-        assert qName != null : element;
+        LOG.assertTrue(qName != null, element);
       }
       PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
@@ -670,10 +669,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       return ref;
     }
     else if ((element instanceof PsiField || element instanceof PsiMethod) && ((PsiMember) element).hasModifierProperty(PsiModifier.STATIC)) {
-      if (!isPhysical()) {
-        // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
-        return this;
-      }
       PsiMember member = (PsiMember) element;
       PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();

@@ -12,7 +12,10 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListe
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware
 import org.jetbrains.plugins.gradle.util.GradleBundle.message
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -28,17 +31,20 @@ class GradleRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val conf
   override fun createPanel(): DialogPanel {
     return panel {
       row(message("gradle.target.configurable.home.path.label")) {
-        val cellBuilder: CellBuilder<*>
         if (targetType is BrowsableTargetEnvironmentType) {
-          cellBuilder = textFieldWithBrowseTargetButton(this, targetType, targetSupplier,
-                                                        project,
-                                                        message("gradle.target.configurable.home.path.title"),
-                                                        config::homePath.toBinding())
+          textFieldWithBrowseTargetButton(targetType, targetSupplier,
+                                          project,
+                                          message("gradle.target.configurable.home.path.title"),
+                                          config::homePath.toMutableProperty())
+            .align(AlignX.FILL)
+            .comment(message("gradle.target.configurable.home.path.comment"))
         }
         else {
-          cellBuilder = textField(config::homePath)
+          textField()
+            .bindText(config::homePath)
+            .align(AlignX.FILL)
+            .comment(message("gradle.target.configurable.home.path.comment"))
         }
-        cellBuilder.comment(message("gradle.target.configurable.home.path.comment"))
       }
     }
   }
@@ -61,7 +67,7 @@ class GradleRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val conf
           val configuration = configurationProvider.environmentConfiguration
           val targetType = configuration.getTargetType() as? BrowsableTargetEnvironmentType ?: break
           addTargetActionListener(configurationProvider.pathMapper,
-                                  targetType.createBrowser(project, title, TEXT_FIELD_WHOLE_TEXT, textField) { configuration })
+                                  targetType.createBrowser(project, title, TEXT_FIELD_WHOLE_TEXT, textField, { configuration }, TargetBrowserHints(true)))
           return this
         }
       }

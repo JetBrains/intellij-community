@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkOrGroup;
@@ -68,7 +68,7 @@ public class FrameworksTree extends CheckboxTree {
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, path -> {
+    TreeSpeedSearch.installOn(this, false, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof FrameworkSupportNodeBase) {
         return ((FrameworkSupportNodeBase<?>)node).getTitle();
@@ -93,8 +93,7 @@ public class FrameworksTree extends CheckboxTree {
 
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof FrameworkSupportNodeBase) {
-        FrameworkSupportNodeBase<?> node = (FrameworkSupportNodeBase<?>)value;
+      if (value instanceof FrameworkSupportNodeBase<?> node) {
         SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ?
                                           SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
         getTextRenderer().append(node.getTitle(), attributes);

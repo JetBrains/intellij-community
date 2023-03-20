@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.execution.ui.InvalidRunConfigurationIcon
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -21,7 +22,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.ui.*
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
@@ -55,34 +58,35 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
    */
   private val bottomPanel: DialogPanel = panel {
     row(ExecutionBundle.message("targets.details.project.default.target")) {
-      cell {
-        projectDefaultTargetComboBox = comboBox(
-          model = DefaultComboBoxModel(),
-          getter = { TargetEnvironmentsManager.getInstance(project).defaultTarget },
-          setter = { value -> TargetEnvironmentsManager.getInstance(project).defaultTarget = value },
-          renderer = SimpleListCellRenderer.create { label, value, _ ->
-            if (value == null) {
-              label.text = ExecutionBundle.message("local.machine")
-              label.icon = AllIcons.Nodes.HomeFolder
-            }
-            else {
-              label.text = value.displayName
-              label.icon = value.getTargetType().icon
-            }
+      projectDefaultTargetComboBox = comboBox(
+        DefaultComboBoxModel<TargetEnvironmentConfiguration?>(),
+        SimpleListCellRenderer.create { label, value, _ ->
+          if (value == null) {
+            label.text = ExecutionBundle.message("local.machine")
+            label.icon = AllIcons.Nodes.HomeFolder
           }
-        ).component
-        val helpButton = ContextHelpLabel.createWithLink(
-          null,
-          generateProjectDefaultHelpHtml(),
-          ExecutionBundle.message("targets.details.project.default.target.help.documentation.link"),
-          true
-        ) {
-          HelpManager.getInstance().invokeHelp("reference.run.targets")
-        }.apply {
-          horizontalTextPosition = SwingConstants.LEFT
+          else {
+            label.text = value.displayName
+            label.icon = value.getTargetType().icon
+          }
         }
-        helpButton()
+      ).bindItem(
+        { TargetEnvironmentsManager.getInstance(project).defaultTarget },
+        { value -> TargetEnvironmentsManager.getInstance(project).defaultTarget = value },
+      ).gap(RightGap.SMALL)
+        .component
+
+      val helpButton = ContextHelpLabel.createWithLink(
+        null,
+        generateProjectDefaultHelpHtml(),
+        ExecutionBundle.message("targets.details.project.default.target.help.documentation.link"),
+        true
+      ) {
+        HelpManager.getInstance().invokeHelp("reference.run.targets")
+      }.apply {
+        horizontalTextPosition = SwingConstants.LEFT
       }
+      cell(helpButton)
     }
   }.withTopLineBorder()
 
@@ -101,14 +105,9 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       SwingUtilities.convertPointToScreen(containerScreenPoint, myTree)
       val targetPoint = Point(containerScreenPoint.x + (myTree.width - size.width) / 2, containerScreenPoint.y + textY + size.height)
 
-      JBPopupFactory.getInstance().createActionGroupPopup(null, CreateNewTargetGroup(), object : DataContext {
-        override fun getData(dataId: String): Any? {
-          if (CONTEXT_COMPONENT.`is`(dataId)) {
-            return myTree
-          }
-          return null
-        }
-      }, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).showInScreenCoordinates(myTree, targetPoint)
+      JBPopupFactory.getInstance().createActionGroupPopup(null, CreateNewTargetGroup(), DataManager.getInstance().getDataContext(myTree),
+                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+        .showInScreenCoordinates(myTree, targetPoint)
     }
     val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD))
     myTree.emptyText.appendSecondaryText(" $shortcutText", StatusText.DEFAULT_ATTRIBUTES, null)
@@ -285,8 +284,10 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     }
 
     override fun update(e: AnActionEvent) {
-      templatePresentation.isEnabled = getSelectedTarget() != null
+      e.presentation.isEnabled = getSelectedTarget() != null
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun actionPerformed(e: AnActionEvent) {
       duplicateSelected()?.let { copy ->
@@ -323,7 +324,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       catch (e: RuntimeConfigurationException) {
         false
       }
-      return if (valid) rawIcon else LayeredIcon.create(rawIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer)
+      return if (valid) rawIcon else InvalidRunConfigurationIcon(rawIcon)
     }
   }
 

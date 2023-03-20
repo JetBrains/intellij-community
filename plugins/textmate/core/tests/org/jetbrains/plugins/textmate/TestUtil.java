@@ -2,16 +2,21 @@ package org.jetbrains.plugins.textmate;
 
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.textmate.bundles.Bundle;
-import org.jetbrains.plugins.textmate.bundles.BundleFactory;
+import org.jetbrains.plugins.textmate.bundles.BundleType;
+import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class TestUtil {
+import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readSublimeBundle;
+import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readTextMateBundle;
+import static org.jetbrains.plugins.textmate.bundles.VSCBundleReaderKt.readVSCBundle;
+
+public final class TestUtil {
   @NonNls public static final String BAT = "bat";
   @NonNls public static final String JAVA = "java";
   @NonNls public static final String LOG = "log";
@@ -39,17 +44,32 @@ public class TestUtil {
   @NonNls public static final String PHP_VSC = "php_vsc";
   @NonNls public static final String SMARTY = "smarty";
   @NonNls public static final String TURTLE = "turtle";
+  @NonNls public static final String GIT = "git";
 
-  public static File getBundleDirectory(String bundleName) {
-    File bundleDirectory = new File(getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);
-    if (bundleDirectory.exists()) {
+  public static Path getBundleDirectory(String bundleName) {
+    Path bundleDirectory = Path.of(getCommunityHomePath() + "/plugins/textmate/testData/bundles", bundleName);
+    if (Files.exists(bundleDirectory)) {
       return bundleDirectory;
     }
-    return new File(getCommunityHomePath() + "/plugins/textmate/lib/bundles", bundleName);
+    return Path.of(getCommunityHomePath() + "/plugins/textmate/lib/bundles", bundleName);
   }
 
-  public static Bundle getBundle(String bundleName) throws IOException {
-    return new BundleFactory(new CompositePlistReader()).fromDirectory(getBundleDirectory(bundleName));
+  public static TextMateBundleReader readBundle(String bundleName) {
+    Path bundleDirectory = getBundleDirectory(bundleName);
+    BundleType bundleType = BundleType.detectBundleType(bundleDirectory);
+    return switch (bundleType) {
+      case TEXTMATE -> readTextMateBundle(bundleDirectory);
+      case SUBLIME -> readSublimeBundle(bundleDirectory);
+      case VSCODE -> readVSCBundle(relativePath -> {
+        try {
+          return Files.newInputStream(bundleDirectory.resolve(relativePath));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
+      case UNDEFINED -> throw new RuntimeException("Unknown bundle type: " + bundleName);
+    };
   }
 
   public static TextMateScope scopeFromString(String scopeString) {

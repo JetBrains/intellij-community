@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.console
 
@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.cli.common.repl.replNormalizeLineBreaks
 import org.jetbrains.kotlin.cli.common.repl.replUnescapeLineBreaks
 import org.jetbrains.kotlin.console.actions.logError
@@ -69,15 +70,16 @@ class ReplOutputHandler(
             REPL_RESULT -> outputProcessor.printResultWithGutterIcon(content)
             READLINE_START -> runner.isReadLineMode = true
             READLINE_END -> runner.isReadLineMode = false
-            REPL_INCOMPLETE,
-            COMPILE_ERROR -> outputProcessor.highlightCompilerErrors(createCompilerMessages(content))
+            REPL_INCOMPLETE -> outputProcessor.highlightCompilerErrors(createCompilerMessages(content))
+            COMPILE_ERROR,
             RUNTIME_ERROR -> outputProcessor.printRuntimeError("${content.trim()}\n")
             INTERNAL_ERROR -> outputProcessor.printInternalErrorMessage(content)
+            ERRORS_REPORTED -> {}
             SUCCESS -> runner.commandHistory.lastUnprocessedEntry()?.entryText?.let { runner.successfulLine(it) }
-            null -> logError(ReplOutputHandler::class.java, "Unexpected output type:\n$outputType")
+            else -> logError(ReplOutputHandler::class.java, "Unexpected output type:\n$outputType")
         }
 
-        if (outputType in setOf(SUCCESS, COMPILE_ERROR, INTERNAL_ERROR, RUNTIME_ERROR, READLINE_END)) {
+        if (outputType in setOf(SUCCESS, ERRORS_REPORTED, READLINE_END)) {
             runner.commandHistory.entryProcessed()
         }
     }
@@ -86,6 +88,10 @@ class ReplOutputHandler(
         if (!isBuildInfoChecked) {
             outputProcessor.printBuildInfoWarningIfNeeded()
             isBuildInfoChecked = true
+        }
+        // there are several INITIAL_PROMPT messages, the 1st starts with `Welcome to Kotlin version ...`
+        if (content.startsWith("Welcome")) {
+            outputProcessor.printUserOutput(KotlinIdeaReplBundle.message("kotlin.repl.is.experimental") + "\n")
         }
         outputProcessor.printInitialPrompt(content)
     }

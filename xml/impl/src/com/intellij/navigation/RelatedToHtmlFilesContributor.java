@@ -22,9 +22,6 @@ import com.intellij.psi.xml.XmlFile;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class RelatedToHtmlFilesContributor {
   public static final ExtensionPointName<RelatedToHtmlFilesContributor> EP_NAME =
     ExtensionPointName.create("com.intellij.xml.relatedToHtmlFilesContributor");

@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,6 @@ public interface SMTRunnerEventsListener {
 
   /**
    * On start testing, before tests and suits launching
-   * @param testsRoot
    */
   void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot);
 
@@ -30,7 +30,6 @@ public interface SMTRunnerEventsListener {
   /**
    * After test framework finish testing.
    * @see #onBeforeTestingFinished(SMTestProxy.SMRootTestProxy)
-   * @param testsRoot
    */
   void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot);
   /*
@@ -80,14 +79,25 @@ public interface SMTRunnerEventsListener {
   default void onSuiteTreeNodeAdded(SMTestProxy testProxy, boolean isSuite, @Nullable String nodeId, @Nullable String parentNodeId) {
     onSuiteTreeNodeAdded(testProxy);
   }
-  default void onSuiteTreeEnded(SMTestProxy.SMRootTestProxy testsRootProxy, String suiteName) {}
+
+  default void onSuiteTreeEnded(SMTestProxy.SMRootTestProxy testsRootProxy, String suiteName) { }
+
   void onSuiteTreeStarted(SMTestProxy suite);
+
   default void onSuiteTreeStarted(SMTestProxy suite, @Nullable String nodeId, @Nullable String parentNodeId) {
     onSuiteTreeStarted(suite);
   }
-  default void onBuildTreeEnded(SMTestProxy.SMRootTestProxy testsRootProxy) {}
-  default void onRootPresentationAdded(@NotNull SMTestProxy.SMRootTestProxy testsRoot, String rootName, String comment, String rootLocation) {}
 
-  default void onTestOutput(@NotNull SMTestProxy proxy, @NotNull TestOutputEvent event) {}
+  default void onBuildTreeEnded(SMTestProxy.SMRootTestProxy testsRootProxy) { }
+
+  default void onRootPresentationAdded(@NotNull SMTestProxy.SMRootTestProxy testsRoot,
+                                       String rootName,
+                                       String comment,
+                                       String rootLocation) { }
+
+  default void onTestOutput(@NotNull SMTestProxy proxy, @NotNull TestOutputEvent event) { }
+
   default void onUncapturedOutput(@NotNull SMTestProxy activeProxy, String text, Key type) { }
+
+  default void onSetNodeProperty(@NotNull SMTestProxy nodeProxy, @NotNull TestSetNodePropertyEvent event) { }
 }

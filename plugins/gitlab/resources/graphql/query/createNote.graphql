@@ -1,0 +1,10 @@
+mutation($noteableId: NoteableID!, $body: String!) {
+  createNote(input: {noteableId: $noteableId, body: $body}){
+    note {
+      discussion {
+        ...discussion
+      }
+    }
+    errors
+  }
+}

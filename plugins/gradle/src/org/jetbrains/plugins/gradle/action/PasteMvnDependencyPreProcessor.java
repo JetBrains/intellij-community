@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -37,7 +37,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     if (isApplicable(file) && isMvnDependency(text)) {
-      GradleActionsUsagesCollector.trigger(project, GradleActionsUsagesCollector.ActionID.PasteMvnDependency);
+      GradleActionsUsagesCollector.trigger(project, GradleActionsUsagesCollector.PASTE_MAVEN_DEPENDENCY);
       GradleVersion gradleVersion = GradleUtil.getGradleVersion(project, file);
       return toGradleDependency(text, gradleVersion);
     }
@@ -92,17 +92,13 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   private static String getScope(@NotNull Document document, @NotNull GradleVersion gradleVersion) {
     String scope = firstOrEmpty(document.getElementsByTagName("scope"));
     boolean isSupportedImplementation = GradleUtil.isSupportedImplementationScope(gradleVersion);
-    switch (scope) {
-      case "test":
-        return isSupportedImplementation ? "testImplementation" : "testCompile";
-      case "provided":
-        return "compileOnly";
-      case "runtime":
-        return "runtime";
-      case "compile":
-      default:
-        return isSupportedImplementation ? "implementation" : "compile";
-    }
+    return switch (scope) {
+      case "test" -> isSupportedImplementation ? "testImplementation" : "testCompile";
+      case "provided" -> "compileOnly";
+      case "runtime" -> "runtime";
+      case "compile" -> isSupportedImplementation ? "implementation" : "compile";
+      default -> isSupportedImplementation ? "implementation" : "compile";
+    };
   }
 
   private static String getVersion(@NotNull Document document) {

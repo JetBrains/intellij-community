@@ -20,9 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class PostfixTemplateLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {
-    if (element instanceof PostfixTemplateLookupElement) {
-      final PostfixTemplateLookupElement templateLookupElement = (PostfixTemplateLookupElement)element;
+  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
+    if (element instanceof PostfixTemplateLookupElement templateLookupElement) {
       final PostfixTemplate template = templateLookupElement.getPostfixTemplate();
 
       consumer.consume(new LookupElementAction(PlatformIcons.EDIT, CodeInsightBundle.message("action.text.edit.postfix.templates.settings")) {

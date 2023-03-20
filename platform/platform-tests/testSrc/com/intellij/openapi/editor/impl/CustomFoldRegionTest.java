@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -9,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CustomFoldRegionTest extends AbstractEditorTest {
@@ -247,6 +251,38 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
     assertNotNull(addCustomFoldRegion(1, 1));
     backspace();
     checkResultByText("line1\n<caret>\nline4");
+  }
+
+  public void testOverText() {
+    initText("text");
+    assertNotNull(addCustomFoldRegion(0, 0, 321, 123));
+    List<Boolean> results = new ArrayList<>();
+    getEditor().addEditorMouseMotionListener(new EditorMouseMotionListener() {
+      @Override
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
+        results.add(e.isOverText());
+      }
+    });
+    mouse().moveToXY(400, 100);
+    assertEquals(List.of(Boolean.FALSE), results);
+  }
+
+  public void testOverlappingAfterDocumentChange() {
+    initText("line1\nline2");
+    assertNotNull(addCustomFoldRegion(0, 0));
+    assertNotNull(addCollapsedFoldRegion(6, 11, "..."));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(5, 6));
+    verifyFoldingState("[FoldRegion +(5:10), placeholder='...']");
+  }
+
+  public void testOverlappingAfterDocumentChangeComplexLineBreaks() {
+    initText("");
+    ((DocumentImpl)getEditor().getDocument()).setAcceptSlashR(true);
+    runWriteCommand(() -> getEditor().getDocument().insertString(0, "a\rb\nc"));
+    assertNotNull(addCustomFoldRegion(0, 0));
+    addCollapsedFoldRegion(3, 5, "...");
+    runWriteCommand(() -> getEditor().getDocument().deleteString(2, 3));
+    verifyFoldingState("[FoldRegion +(1:4), placeholder='...']");
   }
 
   private void checkOverlapWithNormalRegion(int regionStartOffset,

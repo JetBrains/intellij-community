@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -17,7 +17,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +34,7 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         if (!SET_REMOVE_ALL.test(call)) return;
         final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
@@ -52,13 +51,13 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         final LongRangeSet listSizeRange = getSizeRangeOfCollection(arg);
         if (listSizeRange.isEmpty() || listSizeRange.max() <= 2) return;
         if (setSizeRange.min() > listSizeRange.max()) return;
-        final String replacement;
-        final LocalQuickFix fix;
+        final LocalQuickFix[] fix;
         if (PsiUtil.isLanguageLevel8OrHigher(call) && ExpressionUtils.isVoidContext(call)) {
-          replacement = ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
-          fix = new ReplaceWithListForEachFix(replacement);
+          final String replacement =
+            ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
+          fix = new LocalQuickFix[]{new ReplaceWithListForEachFix(replacement)};
         } else {
-          fix = null;
+          fix = LocalQuickFix.EMPTY_ARRAY;
         }
         final PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
@@ -71,10 +70,17 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     };
   }
 
+
+  /**
+   * Returns the set of possible values for the collection size
+   *
+   * @param collection a collection to get the range of possible values for its size
+   * @return the set of possible values for the collection size
+   */
   @NotNull
-  private static LongRangeSet getSizeRangeOfCollection(PsiExpression expression) {
+  public static LongRangeSet getSizeRangeOfCollection(PsiExpression collection) {
     final SpecialField lengthField = SpecialField.COLLECTION_SIZE;
-    final DfType origType = CommonDataflow.getDfType(expression);
+    final DfType origType = CommonDataflow.getDfType(collection);
     final DfType length = lengthField.getFromQualifier(origType);
     final DfIntegralType dfType = ObjectUtils.tryCast(length, DfIntegralType.class);
     if (dfType == null) return LongRangeSet.all();

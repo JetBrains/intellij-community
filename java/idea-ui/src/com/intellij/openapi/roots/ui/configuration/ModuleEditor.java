@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -21,9 +21,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,8 +108,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   @Nullable
   public Module getModule() {
     final Module[] all = myModulesProvider.getModules();
-    for (Module each : all) {
-      if (each == myModule) return myModule;
+    if (ArrayUtil.contains(myModule, all)) {
+      return myModule;
     }
 
     return myModulesProvider.getModule(myName);
@@ -117,7 +119,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModel == null) {
       final Module module = getModule();
       if (module != null) {
-        WorkspaceEntityStorageBuilder builder = myModulesProvider.getWorkspaceEntityStorageBuilder();
+        MutableEntityStorage builder = myModulesProvider.getWorkspaceEntityStorageBuilder();
         myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(new UIRootConfigurationAccessor(myProject, builder));
       }
     }
@@ -135,8 +137,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModelProxy == null) {
       final ModifiableRootModel rootModel = getModifiableRootModel();
       if (rootModel != null) {
-        myModifiableRootModelProxy = (ModifiableRootModel)Proxy.newProxyInstance(
-          getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(rootModel)
+        myModifiableRootModelProxy = ReflectionUtil.proxy(
+          getClass().getClassLoader(), ModifiableRootModel.class, new ModifiableRootModelInvocationHandler(rootModel)
         );
       }
     }
@@ -337,8 +339,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
-    @NonNls private final Set<String> myCheckedNames = ContainerUtil
-      .set("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
+    @NonNls private final Set<String> myCheckedNames = Set.of("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
            "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries");
 
     ModifiableRootModelInvocationHandler(@NotNull ModifiableRootModel model) {
@@ -350,9 +351,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = myCheckedNames.contains(method.getName());
       try {
         final Object result = method.invoke(myDelegateModel, unwrapParams(params));
-        if (result instanceof LibraryTable) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTable.class},
-                                        new LibraryTableInvocationHandler((LibraryTable)result));
+        if (result instanceof LibraryTable table) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), LibraryTable.class,
+                                      new LibraryTableInvocationHandler(table));
         }
         return result;
       }
@@ -385,21 +386,20 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = myCheckedNames.contains(method.getName());
       try {
         final Object result = method.invoke(myDelegateTable, unwrapParams(params));
-        if (result instanceof Library) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{result instanceof LibraryEx ? LibraryEx.class : Library.class},
-                                        new LibraryInvocationHandler((Library)result));
+        if (result instanceof Library library) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), result instanceof LibraryEx ? LibraryEx.class : Library.class,
+                                      new LibraryInvocationHandler(library));
         }
-        if (result instanceof LibraryTable.ModifiableModel) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTable.ModifiableModel.class},
-                                        new LibraryTableModelInvocationHandler((LibraryTable.ModifiableModel)result));
+        if (result instanceof LibraryTable.ModifiableModel model) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), LibraryTable.ModifiableModel.class,
+                                      new LibraryTableModelInvocationHandler(model));
         }
-        if (result instanceof Library[]) {
-          Library[] libraries = (Library[])result;
+        if (result instanceof Library[] libraries) {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
             libraries[idx] =
-            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{library instanceof LibraryEx ? LibraryEx.class : Library.class},
-                                            new LibraryInvocationHandler(library));
+              ReflectionUtil.proxy(getClass().getClassLoader(), library instanceof LibraryEx ? LibraryEx.class : Library.class,
+                                   new LibraryInvocationHandler(library));
           }
         }
         return result;
@@ -431,9 +431,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       try {
         final Object result = method.invoke(myDelegateLibrary, unwrapParams(params));
-        if (result instanceof LibraryEx.ModifiableModelEx) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.ModifiableModelEx.class},
-                                        new LibraryModifiableModelInvocationHandler((LibraryEx.ModifiableModelEx)result));
+        if (result instanceof LibraryEx.ModifiableModelEx model) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), LibraryEx.ModifiableModelEx.class,
+                                      new LibraryModifiableModelInvocationHandler(model));
         }
         return result;
       }
@@ -489,19 +489,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
         Object result = method.invoke(myDelegateModel, unwrapParams(params));
-        if (result instanceof Library[]) {
-          Library[] libraries = (Library[])result;
+        if (result instanceof Library[] libraries) {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
-            libraries[idx] =
-            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.class},
-                                            new LibraryInvocationHandler(library));
+            libraries[idx] = ReflectionUtil.proxy(getClass().getClassLoader(), LibraryEx.class, new LibraryInvocationHandler(library));
           }
         }
-        if (result instanceof Library) {
-          result =
-          Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.class},
-                                 new LibraryInvocationHandler((Library)result));
+        if (result instanceof Library library) {
+          result = ReflectionUtil.proxy(getClass().getClassLoader(), LibraryEx.class, new LibraryInvocationHandler(library));
         }
         return result;
       }

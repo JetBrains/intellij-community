@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * Tests statement parts.
- * User: dcheryasov
  */
 public class PyStatementPartsTest extends LightMarkedTestCase {
 

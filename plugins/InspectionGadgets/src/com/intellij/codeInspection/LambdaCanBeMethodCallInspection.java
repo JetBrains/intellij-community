@@ -33,7 +33,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
     boolean java11 = PsiUtil.isLanguageLevel11OrHigher(holder.getFile());
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
         PsiElement body = lambda.getBody();
         if (body == null) return;
@@ -50,8 +50,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
           if (ExpressionUtils.isReferenceTo(expression, parameter)) {
             handleFunctionIdentity(lambda, (PsiClassType)type);
           }
-          if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+          if (expression instanceof PsiMethodCallExpression call) {
             PsiClass aClass = ((PsiClassType)type).resolve();
             if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE.equals(aClass.getQualifiedName())) {
               handlePredicateIsEqual(lambda, parameter, call);

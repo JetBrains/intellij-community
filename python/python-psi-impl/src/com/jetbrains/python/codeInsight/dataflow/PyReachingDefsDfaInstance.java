@@ -55,8 +55,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
 
     String name = null;
     // Process readwrite instruction
-    if (instruction instanceof ReadWriteInstruction) {
-      ReadWriteInstruction rwInstruction = (ReadWriteInstruction) instruction;
+    if (instruction instanceof ReadWriteInstruction rwInstruction) {
       if (rwInstruction.getAccess().isWriteAccess()) {
         name = ((ReadWriteInstruction)instruction).getName();
       }

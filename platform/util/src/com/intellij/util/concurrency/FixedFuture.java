@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 /** @deprecated use {@link java.util.concurrent.CompletableFuture#completedFuture} */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public class FixedFuture<T> implements Future<T> {
   private final T myValue;
   private final Throwable myThrowable;

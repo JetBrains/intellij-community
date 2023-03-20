@@ -250,6 +250,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
 
       @Override
       public void install() {
+        //noinspection ResultOfObjectAllocationIgnored
         new DnDSupport(myComponent,
                           beanProvider.get(),
                           imageProvider.get(),

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -10,14 +10,12 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Fokin
- */
 final class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   private static LibNotifyWrapper ourInstance;
 
-  public static synchronized LibNotifyWrapper getInstance() {
+  static synchronized @Nullable LibNotifyWrapper getInstance() {
     if (ourInstance == null && JnaLoader.isLoaded()) {
       ourInstance = new LibNotifyWrapper();
     }
@@ -38,6 +36,7 @@ final class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   private boolean myDisposed = false;
 
   private LibNotifyWrapper() {
+    //noinspection SpellCheckingInspection
     myLibNotify = Native.load("libnotify.so.4", LibNotify.class);
 
     String appName = ApplicationNamesInfo.getInstance().getProductName();

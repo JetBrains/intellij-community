@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
@@ -59,19 +59,19 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>5.8.1</junit.version>
+              <junit.version>5.9.1</junit.version>
           </properties>
 
           <dependencies>
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-controls</artifactId>
-                  <version>11.0.2</version>
+                  <version>17.0.2</version>
               </dependency>
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-fxml</artifactId>
-                  <version>11.0.2</version>
+                  <version>17.0.2</version>
               </dependency>
 
               <dependency>
@@ -93,7 +93,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.apache.maven.plugins</groupId>
                       <artifactId>maven-compiler-plugin</artifactId>
-                      <version>3.8.1</version>
+                      <version>3.10.1</version>
                       <configuration>
                           <source>11</source>
                           <target>11</target>
@@ -155,8 +155,9 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       plugins {
           id 'java'
           id 'application'
-          id 'org.openjfx.javafxplugin' version '0.0.10'
-          id 'org.beryx.jlink' version '2.24.1'
+          id 'org.javamodularity.moduleplugin' version '1.8.12'
+          id 'org.openjfx.javafxplugin' version '0.0.13'
+          id 'org.beryx.jlink' version '2.25.0'
       }
 
       group 'com.example'
@@ -179,13 +180,13 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
 
       javafx {
-          version = '11.0.2'
+          version = '17.0.2'
           modules = ['javafx.controls', 'javafx.fxml']
       }
 
       dependencies {
 
-          testImplementation('org.testng:testng:7.4.0')
+          testImplementation('org.testng:testng:7.6')
       }
 
       test {

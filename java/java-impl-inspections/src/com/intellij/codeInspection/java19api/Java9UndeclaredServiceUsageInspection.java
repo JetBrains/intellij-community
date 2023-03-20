@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
 
-/**
- * @author Pavel.Dolgov
- */
 public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -24,7 +21,7 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
       return new JavaElementVisitor() {
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           checkMethodCall(expression, holder);
           super.visitMethodCallExpression(expression);
         }
@@ -36,14 +33,11 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
   private static void checkMethodCall(@NotNull PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
     String referenceName = methodCall.getMethodExpression().getReferenceName();
     if ("load".equals(referenceName) || "loadInstalled".equals(referenceName)) {
-      PsiElement resolved = methodCall.getMethodExpression().resolve();
-      if (resolved instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)resolved;
-        if (method.hasModifierProperty(PsiModifier.STATIC)) {
-          PsiClass containingClass = method.getContainingClass();
-          if (containingClass != null && "java.util.ServiceLoader".equals(containingClass.getQualifiedName())) {
-            checkServiceUsage(methodCall, holder);
-          }
+      PsiMethod method = methodCall.resolveMethod();
+      if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && "java.util.ServiceLoader".equals(containingClass.getQualifiedName())) {
+          checkServiceUsage(methodCall, holder);
         }
       }
     }

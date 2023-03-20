@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UseOfConcreteClassInspection extends BaseInspection {
   private static final CallMatcher OBJECT_GET_CLASS =
@@ -58,18 +61,17 @@ public class UseOfConcreteClassInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    var panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.ignore.abstract"), "ignoreAbstractClasses");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.ignore.records"), "ignoreRecords");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.method.returns"), "reportMethodReturns");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.parameter"), "reportMethodParameters");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.local.variable"), "reportLocalVariables");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.static.fields"), "reportStaticFields");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.instance.fields"), "reportInstanceFields");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.instanceof"), "reportInstanceOf");
-    panel.addCheckbox(InspectionGadgetsBundle.message("use.of.concrete.class.option.report.cast"), "reportCast");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreAbstractClasses", InspectionGadgetsBundle.message("use.of.concrete.class.option.ignore.abstract")),
+      checkbox("ignoreRecords", InspectionGadgetsBundle.message("use.of.concrete.class.option.ignore.records")),
+      checkbox("reportMethodReturns", InspectionGadgetsBundle.message("use.of.concrete.class.option.report.method.returns")),
+      checkbox("reportMethodParameters", InspectionGadgetsBundle.message("use.of.concrete.class.option.report.parameter")),
+      checkbox("reportLocalVariables", InspectionGadgetsBundle.message("use.of.concrete.class.option.report.local.variable")),
+      checkbox("reportStaticFields", InspectionGadgetsBundle.message("use.of.concrete.class.option.report.static.fields")),
+      checkbox("reportInstanceFields", InspectionGadgetsBundle.message("use.of.concrete.class.option.report.instance.fields")),
+      checkbox("reportInstanceOf", InspectionGadgetsBundle.message("use.of.concrete.class.option.report.instanceof")),
+      checkbox("reportCast", InspectionGadgetsBundle.message("use.of.concrete.class.option.report.cast")));
   }
 
   @Override
@@ -169,7 +171,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (reportInstanceOf && OBJECT_GET_CLASS.test(call)) {
         PsiExpression other = ExpressionUtils.getExpressionComparedTo(call);
         if (other instanceof PsiClassObjectAccessExpression) {

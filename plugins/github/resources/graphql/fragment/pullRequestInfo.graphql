@@ -1,20 +1,17 @@
 fragment pullRequestInfo on PullRequest {
   ...pullRequestInfoShort
 
-  bodyHTML
+  body
 
   author {
     ...actorInfo
   }
   createdAt
 
-  reviewRequests(first: 100) {
+  reviewDecision
+  reviews(last: 100) {
     nodes {
-      ... on ReviewRequest {
-        requestedReviewer {
-          ...pullRequestReviewerInfo
-        }
-      }
+      ...pullRequestReview
     }
   }
 

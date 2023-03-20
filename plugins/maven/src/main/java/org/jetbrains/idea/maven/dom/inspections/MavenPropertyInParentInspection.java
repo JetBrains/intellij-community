@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -32,9 +30,6 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.findInstance;
 
-/**
- * @author ibessonov
- */
 public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTool {
 
   @Override
@@ -50,12 +45,6 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
-  }
-
-  @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file instanceof XmlFile && file.isPhysical()) {
       DomManager domManager = DomManager.getDomManager(file.getProject());
@@ -65,7 +54,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
       if (model != null) {
         MavenDistribution distribution =
           MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
-        boolean maven35 = distribution == null || StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
+        boolean maven35 = StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 
         MavenDomParent mavenParent = model.getRootElement().getMavenParent();

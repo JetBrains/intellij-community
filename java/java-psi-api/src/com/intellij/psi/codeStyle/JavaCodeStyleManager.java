@@ -247,6 +247,15 @@ public abstract class JavaCodeStyleManager {
   @NotNull
   public abstract Collection<String> suggestSemanticNames(@NotNull PsiExpression expression);
 
+  /**
+   * This method is not actually tied to Java Code Style and work similarly to {@link #suggestSemanticNames(PsiExpression)}
+   * Additionally, this method adds new names from the context, based on VariableKind
+   * <p>
+   * Should be used with {@link #suggestNames(Collection, VariableKind, PsiType)}.
+   */
+  @NotNull
+  public abstract Collection<String> suggestSemanticNames(@NotNull PsiExpression expression, @NotNull VariableKind kind);
+
   @NotNull
   public abstract SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames,
                                                  @NotNull VariableKind kind,

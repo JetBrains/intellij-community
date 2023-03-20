@@ -1730,42 +1730,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "Hm",
-    "name": "intellij.jboss.seam",
-    "n": "i.jboss.seam",
-    "package": "com.intellij.seam",
-    "sourceModule": "intellij.jboss.seam",
-    "descriptor": "plugins/frameworks/jboss/seam/seam-core/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.seam",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "Ng",
-    "name": "intellij.jboss.seam.navigation",
-    "n": "i.jboss.seam.navigation",
-    "package": "com.intellij.seam.pages",
-    "sourceModule": "intellij.jboss.seam.navigation",
-    "descriptor": "plugins/frameworks/jboss/seam/seam-navigation/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.seam.pages",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "vY",
-    "name": "intellij.jboss.seam.pageflow",
-    "n": "i.jboss.seam.pageflow",
-    "package": "com.intellij.seam.pageflow",
-    "sourceModule": "intellij.jboss.seam.pageflow",
-    "descriptor": "plugins/frameworks/jboss/seam/seam-pageflow/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.seam.pageflow",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "v4",
     "name": "intellij.less",
     "n": "i.less",
@@ -2135,30 +2099,6 @@
     "descriptor": "plugins/performanceTesting/resources/intellij.performanceTesting.profilers.xml",
     "parent": "cT41",
     "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "kP",
-    "name": "intellij.performanceTesting.gradle",
-    "n": "i.performanceTesting.gradle",
-    "package": "com.jetbrains.performancePlugin.gradle",
-    "sourceModule": "intellij.performanceTesting.gradle",
-    "descriptor": "plugins/performanceTesting/gradle/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.performancePlugin.gradle",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "jU",
-    "name": "intellij.performanceTesting.maven",
-    "n": "i.performanceTesting.maven",
-    "package": "com.jetbrains.performancePlugin.maven",
-    "sourceModule": "intellij.performanceTesting.maven",
-    "descriptor": "plugins/performanceTesting/maven/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.performancePlugin.maven",
-    "type": 1
   }
 }, {
   "group": "nodes",
@@ -2939,18 +2879,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "p3",
-    "name": "intellij.smart.update",
-    "n": "i.smart.update",
-    "package": "com.intellij.smartUpdate",
-    "sourceModule": "intellij.smart.update",
-    "descriptor": "plugins/smart-update/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.idea.smartUpdate",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cmA",
     "n": "com.jetbrains.space"
   }
@@ -3666,18 +3594,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "TO",
-    "name": "intellij.vcs.git/terminal",
-    "n": "i.vcs.git/terminal",
-    "package": "git4idea.terminal",
-    "sourceModule": "intellij.vcs.git",
-    "descriptor": "community/plugins/git4idea/resources/intellij.vcs.git.terminal.xml",
-    "parent": "cJP",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cIV",
     "n": "org.jetbrains.plugins.github"
   }
@@ -3796,11 +3712,11 @@
   "group": "nodes",
   "data": {
     "id": "ZR",
-    "name": "intellij.wsl",
+    "name": "intellij.wsl.remoteSdk",
     "n": "i.wsl",
-    "package": "com.intellij.wsl",
-    "sourceModule": "intellij.wsl",
-    "descriptor": "plugins/WSL/resources/META-INF/plugin.xml",
+    "package": "com.intellij.wsl.remoteSdk",
+    "sourceModule": "intellij.wsl.remoteSdk",
+    "descriptor": "plugins/wsl-remote-sdk/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.wsl",
     "type": 1
   }
@@ -4159,18 +4075,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "8B",
-    "name": "intellij.externalSystem.dependencyUpdater",
-    "n": "i.externalSystem.dependencyUpdater",
-    "package": null,
-    "sourceModule": "intellij.externalSystem.dependencyUpdater",
-    "descriptor": "community/plugins/dependency-updater/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.externalSystem.dependencyUpdater",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "RP1",
     "name": "kotlin.idea",
     "n": "kotlin.idea",
@@ -4283,18 +4187,6 @@
     "sourceModule": "intellij.xpath",
     "descriptor": "community/plugins/xpath/xpath-view/src/META-INF/plugin.xml",
     "pluginId": "XPathView",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "QD1",
-    "name": "intellij.jps.cache",
-    "n": "i.jps.cache",
-    "package": null,
-    "sourceModule": "intellij.jps.cache",
-    "descriptor": "community/plugins/jps-cache/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.jps.cache",
     "type": 1
   }
 }, {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.i18n;
 
@@ -36,18 +36,17 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -66,10 +65,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,6 +103,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "equals", "equalsIgnoreCase").parameterCount(1);
+  private static final int FIELD_PANEL_COLUMNS = 18;
 
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
@@ -340,7 +338,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     panel.add(exceptionConstructorCheck);
 
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    panel.add(new FieldPanel(specifiedExceptions,
+    panel.addGrowingX(new FieldPanel(specifiedExceptions,
                              null,
                              JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
                              openProjects.length == 0 ? null :
@@ -350,7 +348,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
                                  createIgnoreExceptionsConfigurationDialog(openProjects[0], specifiedExceptions).show();
                                }
                              },
-                             null), "growx, wrap");
+                             null));
 
     panel.add(classRef);
     panel.add(propertyRef);
@@ -364,7 +362,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       new FieldPanel(commentPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null,
                      () -> setNonNlsCommentPattern(commentPattern.getText()));
-    panel.add(nonNlsCommentPatternComponent, "growx, wrap");
+    panel.addGrowingX(nonNlsCommentPatternComponent);
 
     final JTextField literalPattern = new ExpandableTextField(text -> Collections.singletonList(text),
                                                               strings -> StringUtil.join(strings, "|"));
@@ -373,16 +371,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       new FieldPanel(literalPattern, JavaI18nBundle.message("inspection.i18n.option.ignore.string.pattern"),
                      JavaI18nBundle.message("inspection.i18n.option.ignore.string.title"), null,
                      () -> setNonNlsLiteralPattern(literalPattern.getText()));
-    panel.add(nonNlsStringPatternComponent, "growx, wrap");
+    panel.addGrowingX(nonNlsStringPatternComponent);
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setBorder(null);
-    scrollPane.setPreferredSize(new Dimension(panel.getPreferredSize().width + scrollPane.getVerticalScrollBar().getPreferredSize().width,
-                                              panel.getPreferredSize().height +
-                                              scrollPane.getHorizontalScrollBar().getPreferredSize().height));
-    return scrollPane;
+    return panel;
   }
 
   private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
@@ -453,27 +444,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   @NotNull
   private static LocalQuickFix createIntroduceConstantFix() {
-    return new LocalQuickFix() {
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return IntroduceConstantHandler.getRefactoringNameText();
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return false;
-      }
-
-      @Override
-      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiExpression)) return;
-
-        PsiExpression[] expressions = {(PsiExpression)element};
-        new IntroduceConstantHandler().invoke(project, expressions);
-      }
-    };
+    return new IntroduceConstantFix();
   }
 
   @Nullable
@@ -504,9 +475,8 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     PsiElement psiVar = uVar.getSourcePsi();
     PsiElement psi = passThrough.getSourcePsi();
     if (psi != null && psiVar != null) {
-      if (psiVar instanceof PsiLocalVariable) {
+      if (psiVar instanceof PsiLocalVariable local) {
         // Java
-        PsiLocalVariable local = (PsiLocalVariable)psiVar;
         PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
         if (codeBlock instanceof PsiCodeBlock) {
           List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
@@ -553,8 +523,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           return true;
         }
       }
-      if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
-        UQualifiedReferenceExpression parent = (UQualifiedReferenceExpression)ref.getUastParent();
+      if (ref.getUastParent() instanceof UQualifiedReferenceExpression parent) {
         if (STRING_BUILDER_TO_STRING.methodMatches(target)) {
           UExpression receiver = parent.getReceiver();
           if (receiver instanceof UResolvable) {
@@ -917,8 +886,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   private static boolean isSafeStringMethod(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    if (parent instanceof UBinaryExpression) {
-      UBinaryExpression binOp = (UBinaryExpression)parent;
+    if (parent instanceof UBinaryExpression binOp) {
       if (STRING_COMPARISON_OPS.contains(binOp.getOperator())) {
         UResolvable left = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), UResolvable.class);
         UResolvable right = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getRightOperand()), UResolvable.class);
@@ -928,8 +896,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     }
     if (!(parent instanceof UQualifiedReferenceExpression)) return false;
     UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
-    if (!(selector instanceof UCallExpression)) return false;
-    UCallExpression call = (UCallExpression)selector;
+    if (!(selector instanceof UCallExpression call)) return false;
     if (STRING_EQUALS.uCallMatches(call)) {
       final List<UExpression> expressions = call.getValueArguments();
       if (expressions.size() != 1) return false;
@@ -952,15 +919,14 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (parent instanceof UResolvable && isNonNlsCall((UResolvable)parent, nonNlsTargets)) {
       return true;
     }
-    if (parent != null && UastExpressionUtils.isAssignment(parent)) {
+    if (UastExpressionUtils.isAssignment(parent)) {
       UExpression operand = ((UBinaryExpression)parent).getLeftOperand();
       if (operand instanceof UReferenceExpression &&
           isNonNlsCall((UReferenceExpression)operand, nonNlsTargets)) return true;
     }
     if (parent instanceof UCallExpression) {
       UElement parentOfNew = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
-      if (parentOfNew instanceof ULocalVariable) {
-        final ULocalVariable newVariable = (ULocalVariable)parentOfNew;
+      if (parentOfNew instanceof ULocalVariable newVariable) {
         if (annotatedAsNonNls(newVariable.getPsi())) {
           return true;
         }
@@ -977,8 +943,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
   private static boolean isNonNlsCall(UResolvable qualifier, Set<? super PsiModifierListOwner> nonNlsTargets) {
     final PsiElement resolved = qualifier.resolve();
-    if (resolved instanceof PsiModifierListOwner) {
-      final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
+    if (resolved instanceof PsiModifierListOwner modifierListOwner) {
       if (annotatedAsNonNls(modifierListOwner)) {
         return true;
       }

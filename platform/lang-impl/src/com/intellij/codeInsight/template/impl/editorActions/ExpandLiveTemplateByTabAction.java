@@ -18,9 +18,6 @@ package com.intellij.codeInsight.template.impl.editorActions;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 
-/**
- * @author peter
- */
 public class ExpandLiveTemplateByTabAction extends EditorAction {
   public ExpandLiveTemplateByTabAction() {
     super(ExpandLiveTemplateCustomAction.createExpandTemplateHandler(TemplateSettings.TAB_CHAR));

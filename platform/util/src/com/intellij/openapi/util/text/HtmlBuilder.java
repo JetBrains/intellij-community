@@ -183,6 +183,12 @@ public final class HtmlBuilder {
    * @return a fragment chunk that contains all the chunks of this builder.
    */
   public HtmlChunk toFragment() {
+    if (myChunks.isEmpty()) {
+      return HtmlChunk.empty();
+    }
+    if (myChunks.size() == 1) {
+      return myChunks.get(0);
+    }
     return new HtmlChunk.Fragment(new ArrayList<>(myChunks));
   }
   
@@ -197,5 +203,14 @@ public final class HtmlBuilder {
       chunk.appendTo(sb);
     }
     return sb.toString();
+  }
+
+  public void clear() {
+    myChunks.clear();
+  }
+
+  public void clearAndAppend(@NotNull HtmlChunk chunk) {
+    clear();
+    append(chunk);
   }
 }

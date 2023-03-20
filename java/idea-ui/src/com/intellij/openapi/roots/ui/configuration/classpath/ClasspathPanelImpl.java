@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -133,7 +133,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    new SpeedSearchBase<>(myEntryTable) {
+    SpeedSearchBase<JBTable> search = new SpeedSearchBase<>(myEntryTable, null) {
       @Override
       public int getSelectedIndex() {
         return myEntryTable.getSelectedRow();
@@ -167,6 +167,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
+    search.setupListeners();
     setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.getExportColumnName());
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
     myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space
@@ -208,6 +209,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isDumbAware() {
         return true;
       }
@@ -244,6 +250,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           }
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(),
                                              myEntryTable);
@@ -262,15 +273,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   @NotNull
   private static SortOrder getNextSortOrder(@NotNull SortOrder order) {
-    switch (order) {
-      case ASCENDING:
-        return SortOrder.DESCENDING;
-      case DESCENDING:
-        return SortOrder.UNSORTED;
-      case UNSORTED:
-      default:
-        return SortOrder.ASCENDING;
-    }
+    return switch (order) {
+      case ASCENDING -> SortOrder.DESCENDING;
+      case DESCENDING -> SortOrder.UNSORTED;
+      case UNSORTED -> SortOrder.ASCENDING;
+    };
   }
 
   private ClasspathTableItem<?> getItemAt(int selectedRow) {
@@ -384,7 +391,6 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             }
           });
         final RelativePoint point = button.getPreferredPopupPoint();
-        if (point == null) return;
         popup.show(point);
       }
     })
@@ -673,8 +679,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
-      if (value instanceof ClasspathTableItem<?>) {
-        final ClasspathTableItem<?> tableItem = (ClasspathTableItem<?>)value;
+      if (value instanceof ClasspathTableItem<?> tableItem) {
         getCellAppearance(tableItem, myContext, selected).customize(this);
         setToolTipText(tableItem.getTooltipText());
       }
@@ -697,6 +702,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     @Override
     protected boolean isEnabled() {
       return getSelectedElement() != null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

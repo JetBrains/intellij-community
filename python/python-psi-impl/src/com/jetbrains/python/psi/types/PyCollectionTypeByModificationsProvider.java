@@ -24,11 +24,10 @@ public final class PyCollectionTypeByModificationsProvider extends PyTypeProvide
     if (qualifiedName != null &&
         PyCollectionTypeUtil.INSTANCE.getCollectionConstructors(LanguageLevel.forElement(callSite)).contains(qualifiedName)) {
       PyExpression target = PyCollectionTypeUtil.INSTANCE.getTargetForValueInAssignment(callSite);
-      if (target instanceof PyTargetExpression) {
+      if (target instanceof PyTargetExpression element) {
         List<PyExpression> arguments = callSite.getArguments(null);
         List<PyType> argumentTypes = getTypesFromConstructorArguments(context, arguments);
 
-        PyTargetExpression element = (PyTargetExpression)target;
         ScopeOwner owner = ScopeUtil.getScopeOwner(element);
         if (owner != null) {
           final List<PyType> typesByModifications =
@@ -80,9 +79,8 @@ public final class PyCollectionTypeByModificationsProvider extends PyTypeProvide
   private static List<PyType> extractTypesForDict(@NotNull List<PyType> argumentTypes, @NotNull List<PyType> typesByModifications) {
     if (argumentTypes.size() == 1) {
       final PyType type = ContainerUtil.getFirstItem(argumentTypes);
-      if (type instanceof PyTupleType) {
-        PyTupleType tuple = (PyTupleType)type;
-        argumentTypes = tuple.getElementTypes();
+      if (type instanceof PyTupleType tuple) {
+        argumentTypes = new ArrayList<>(tuple.getElementTypes());
       }
       else if (type == null) {
         argumentTypes.add(null);

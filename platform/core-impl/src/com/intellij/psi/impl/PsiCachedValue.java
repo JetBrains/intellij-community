@@ -26,12 +26,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CachedValueBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -46,8 +46,8 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   }
 
   @Override
-  protected Object @NotNull [] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
-    Object[] dependencies = super.normalizeDependencies(result);
+  protected Object @NotNull [] normalizeDependencies(@Nullable T value, Object @NotNull [] dependencyItems) {
+    Object[] dependencies = super.normalizeDependencies(value, dependencyItems);
     if (ContainerUtil.exists(dependencies, PsiCachedValue::isPsiModificationCount)) {
       for (Object dependency : dependencies) {
         if (dependency instanceof PsiElement) {

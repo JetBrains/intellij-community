@@ -9,3 +9,5 @@ fun main() {
         else -> println(0)
     }
 }
+
+/* IGNORE_FIR */

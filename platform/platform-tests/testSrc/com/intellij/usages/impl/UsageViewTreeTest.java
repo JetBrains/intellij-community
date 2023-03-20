@@ -59,11 +59,13 @@ public class UsageViewTreeTest extends UsefulTestCase {
   public void testSimpleModule() throws Exception {
     addModule("main");
     PsiFile file = myFixture.addFileToProject("main/A.txt", "hello");
-    assertUsageViewStructureEquals(new UsageInfo(file), "<root> (1)\n" +
-                                                        " Non-code usages in (1)\n" +
-                                                        "  main (1)\n" +
-                                                        "   A.txt (1)\n" +
-                                                        "    1hello\n");
+    assertUsageViewStructureEquals(new UsageInfo(file), """
+      <root> (1)
+       Non-code usages in (1)
+        main (1)
+         A.txt (1)
+          1hello
+      """);
   }
 
   public void testModuleWithQualifiedName() throws Exception {
@@ -71,12 +73,14 @@ public class UsageViewTreeTest extends UsefulTestCase {
     PsiFile file = myFixture.addFileToProject("xxx.main/A.txt", "hello");
     UsageViewSettings.getInstance().setFlattenModules(false);
     ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> {
-      assertUsageViewStructureEquals(new UsageInfo(file), "<root> (1)\n" +
-                                                          " Non-code usages in (1)\n" +
-                                                          "  xxx (1)\n" +
-                                                          "   main (1)\n" +
-                                                          "    A.txt (1)\n" +
-                                                          "     1hello\n");
+      assertUsageViewStructureEquals(new UsageInfo(file), """
+        <root> (1)
+         Non-code usages in (1)
+          xxx (1)
+           main (1)
+            A.txt (1)
+             1hello
+        """);
       return null;
     });
   }
@@ -87,16 +91,18 @@ public class UsageViewTreeTest extends UsefulTestCase {
     UsageViewSettings.getInstance().setGroupByDirectoryStructure(true); // must ignore group by package
     PsiFile file = myFixture.addFileToProject("xxx.main/x/i1/A.txt", "hello");
     PsiFile file2 = myFixture.addFileToProject("xxx.main/y/B.txt", "hello");
-    assertEquals("<root> (2)\n" +
-                 " Non-code usages in (2)\n" +
-                 "  xxx.main (2)\n" +
-                 "   x (1)\n" +
-                 "    i1 (1)\n" +
-                 "     A.txt (1)\n" +
-                 "      1hello\n" +
-                 "   y (1)\n" +
-                 "    B.txt (1)\n" +
-                 "     1hello\n"
+    assertEquals("""
+                   <root> (2)
+                    Non-code usages in (2)
+                     xxx.main (2)
+                      x (1)
+                       i1 (1)
+                        A.txt (1)
+                         1hello
+                      y (1)
+                       B.txt (1)
+                        1hello
+                   """
       , myFixture.getUsageViewTreeTextRepresentation(Arrays.asList(new UsageInfo(file), new UsageInfo(file2))));
   }
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.java.JavaBundle;
@@ -13,9 +14,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
@@ -57,6 +57,19 @@ public class MakeVoidQuickFix implements LocalQuickFix {
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiMethod.class);
+    if (method == null) return IntentionPreviewInfo.EMPTY;
+    PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+    if (returnTypeElement == null) return IntentionPreviewInfo.EMPTY;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiTypeElement typeElement = factory.createTypeElement(PsiTypes.voidType());
+    returnTypeElement.replace(typeElement);
+    replaceReturnStatements(method);
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -75,19 +88,14 @@ public class MakeVoidQuickFix implements LocalQuickFix {
       return;
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodsToModify)) return;
-    final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
-                                                                      psiMethod,
-                                                                      false, null, psiMethod.getName(),
-                                                                      PsiType.VOID,
-                                                                      ParameterInfoImpl.fromMethod(psiMethod)) {
-      @Override
-      protected void performRefactoring(UsageInfo @NotNull [] usages) {
-        super.performRefactoring(usages);
-        for (final PsiMethod method: methodsToModify) {
-          replaceReturnStatements(method);
-        }
-      }
-    };
+    var csp = JavaRefactoringFactory.getInstance(project)
+      .createChangeSignatureProcessor(psiMethod, false, null, psiMethod.getName(), PsiTypes.voidType(),
+                                      ParameterInfoImpl.fromMethod(psiMethod), null, null, null,
+                                      infos -> {
+                                        for (final PsiMethod method : methodsToModify) {
+                                          replaceReturnStatements(method);
+                                        }
+                                      });
     csp.run();
   }
 

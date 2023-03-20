@@ -1,4 +1,10 @@
 class Test {
+  int testIncomplete(Object obj) {
+    return switch(obj) {
+      case String s &&<EOLError descr="Expression expected"></EOLError><EOLError descr="':' or '->' expected"></EOLError>
+    };
+  }
+
   void test1(Object o) {
     int a;
     switch (o) {
@@ -75,8 +81,8 @@ class Test {
   void test7() {
     String s = "abc";
     switch (s) {
-      case <error descr="'switch' has both a total pattern and a default label">Object o</error> -> System.out.println("total");
-      case <error descr="'switch' has both a total pattern and a default label">default</error> -> System.out.println("default");
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object o</error> -> System.out.println("total");
+      case <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("default");
     }
   }
 
@@ -84,8 +90,8 @@ class Test {
     String s = "abc";
     switch (s) {
       case <warning descr="Switch label '\"\"' is unreachable">""</warning> -> System.out.println("abc");
-      case <error descr="'switch' has both a total pattern and a default label">Object o</error> -> System.out.println("total");
-      case <error descr="'switch' has both a total pattern and a default label">default</error> -> System.out.println("default");
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object o</error> -> System.out.println("total");
+      case <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> System.out.println("default");
     }
   }
 

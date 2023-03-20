@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -29,10 +29,10 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
 
   public boolean ADD_MATH_MAX = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("label.add.math.max.0.count.to.avoid.possible.semantics.change"), this, "ADD_MATH_MAX");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ADD_MATH_MAX", JavaBundle.message("label.add.math.max.0.count.to.avoid.possible.semantics.change")));
   }
 
   @NotNull
@@ -41,7 +41,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
     if (!PsiUtil.isLanguageLevel11OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitForStatement(PsiForStatement statement) {
+      public void visitForStatement(@NotNull PsiForStatement statement) {
         PsiMethodCallExpression call = findAppendCall(statement);
         if (call == null) return;
         PsiReferenceExpression qualifier = tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()),
@@ -50,7 +50,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
         CountingLoop loop = CountingLoop.from(statement);
         if (loop == null) return;
         PsiLocalVariable var = loop.getCounter();
-        if (var.getType().equals(PsiType.LONG) || VariableAccessUtils.variableIsUsed(var, call)) return;
+        if (var.getType().equals(PsiTypes.longType()) || VariableAccessUtils.variableIsUsed(var, call)) return;
         PsiExpression arg = call.getArgumentList().getExpressions()[0];
         if (SideEffectChecker.mayHaveSideEffects(arg)) return;
         holder.registerProblem(statement.getFirstChild(), JavaBundle.message(
@@ -150,8 +150,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
 
     @NotNull
     private static String getRepeatQualifier(PsiExpression arg, CommentTracker ct) {
-      if (arg instanceof PsiLiteralExpression && !TypeUtils.isJavaLangString(arg.getType())) {
-        PsiLiteralExpression literal = (PsiLiteralExpression)arg;
+      if (arg instanceof PsiLiteralExpression literal && !TypeUtils.isJavaLangString(arg.getType())) {
         Object value = literal.getValue();
         if (value instanceof Character) {
           return PsiLiteralUtil.stringForCharLiteral(literal.getText());

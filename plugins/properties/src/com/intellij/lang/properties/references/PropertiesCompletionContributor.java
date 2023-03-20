@@ -45,9 +45,6 @@ import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class PropertiesCompletionContributor extends CompletionContributor {
   public PropertiesCompletionContributor() {
     extend(null, psiElement(), new CompletionProvider<>() {

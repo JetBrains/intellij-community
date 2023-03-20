@@ -41,7 +41,6 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
  *   }
  * }
  * </pre>
- * @author Rustam Vishnyakov
  */
 public class RightMarginForm {
   private IntegerField myRightMarginField;

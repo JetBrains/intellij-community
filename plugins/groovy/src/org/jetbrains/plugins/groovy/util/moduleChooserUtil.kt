@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ModuleChooserUtil")
 
 package org.jetbrains.plugins.groovy.util
@@ -15,13 +15,14 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.Consumer
 import com.intellij.util.Function
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 
 private const val GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen"
 
 fun selectModule(project: Project,
                  modules: List<Module>,
-                 version: Function<Module, String>,
+                 version: Function<Module, @Nls String>,
                  consumer: Consumer<Module>) {
   modules.singleOrNull()?.let {
     consumer.consume(it)
@@ -32,7 +33,7 @@ fun selectModule(project: Project,
 
 fun createSelectModulePopup(project: Project,
                             modules: List<Module>,
-                            version: (Module) -> String,
+                            version: (Module) -> @Nls String,
                             consumer: (Module) -> Unit): ListPopup {
   val step = createSelectModulePopupStep(project, modules.sortedWith(ModulesAlphaComparator.INSTANCE), consumer)
   return object : ListPopupImpl(project, step) {

@@ -84,12 +84,11 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiClass)) {
+      if (!(element instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)element;
       @NonNls final StringBuilder methodText = new StringBuilder();
       if (PsiUtil.isLanguageLevel5OrHigher(aClass) &&
           JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
@@ -166,7 +165,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     private final List<PsiMethodCallExpression> cloneCalls = new SmartList<>();
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (CloneUtils.isCallToClone(expression)) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -181,7 +180,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     private List<PsiMethodCallExpression> getCloneCalls() {
       return cloneCalls;

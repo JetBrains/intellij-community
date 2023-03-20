@@ -8,12 +8,21 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -25,6 +34,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +43,6 @@ import java.util.Map;
  * A more flexible cousin of SdkVersionUtil.
  * Needs not to be instantiated and only holds static methods.
  *
- * @author dcheryasov
  * @see PythonSdkUtil for Pyhton SDK utilities with no run-time dependencies
  */
 //TODO: rename to PySdkExecuteUtil or PySdkRuntimeUtil
@@ -137,7 +146,9 @@ public final class PySdkUtil {
       if (SwingUtilities.isEventDispatchThread()) {
         final ProgressManager progressManager = ProgressManager.getInstance();
         final Application application = ApplicationManager.getApplication();
-        assert application.isUnitTestMode() || application.isHeadlessEnvironment() || !application.isWriteAccessAllowed() : "Background task can't be run under write action";
+        assert application.isUnitTestMode() ||
+               application.isHeadlessEnvironment() ||
+               !application.isWriteAccessAllowed() : "Background task can't be run under write action";
         return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout),
                                                                    PySdkBundle.message("python.sdk.run.wait"), false, null);
       }
@@ -190,13 +201,26 @@ public final class PySdkUtil {
     if (cached != null) return cached;
 
     final String sdkHome = sdk.getHomePath();
-    if (sdkHome == null) return Collections.emptyMap();
+    if (sdkHome == null || sdkHome.trim().isEmpty()) {
+      // homePath is empty (not null) by default.
+      // If we cache values when path is empty, we would stuck with empty env and never reread it once path set
+      LOG.warn("homePath is null or empty, skipping env loading for " + sdk.getName());
+      return Collections.emptyMap();
+    }
 
+    var additionalData = ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
+    if (additionalData == null) {
+      return Collections.emptyMap();
+    }
     final Map<String, String> environment = activateVirtualEnv(sdkHome);
     sdk.putUserData(ENVIRONMENT_KEY, environment);
     return environment;
   }
 
+  /**
+   * @deprecated doesn't support targets
+   */
+  @Deprecated
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
     PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
@@ -210,5 +234,61 @@ public final class PySdkUtil {
     }
 
     return Collections.emptyMap();
+  }
+
+  @NotNull
+  public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+    if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      if (flavor != null) {
+        return flavor.getLanguageLevel(sdk);
+      }
+    }
+    return LanguageLevel.getDefault();
+  }
+
+  /**
+   * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
+   */
+  @NotNull
+  @NonNls
+  public static String getBuiltinsFileName(@NotNull Sdk sdk) {
+    return PyBuiltinCache.getBuiltinsFileName(getLanguageLevelForSdk(sdk));
+  }
+
+  /**
+   * Finds sdk for provided directory. Takes into account both project and module SDK
+   *
+   * @param allowRemote - indicates whether remote interpreter is acceptable
+   */
+  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, @NotNull Path workingDirectory, boolean allowRemote) {
+    VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(workingDirectory);
+    if (workingDirectoryVirtualFile != null) {
+      Sdk sdk = getLocalSdkForFile(project, workingDirectoryVirtualFile, allowRemote);
+      if (sdk != null) {
+        return sdk;
+      }
+    }
+
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(m);
+      if (sdk != null && (allowRemote || !PythonSdkUtil.isRemote(sdk))) {
+        return sdk;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Sdk getLocalSdkForFile(@NotNull Project project, @NotNull VirtualFile workingDirectoryVirtualFile, boolean allowRemote) {
+    Module module = ModuleUtilCore.findModuleForFile(workingDirectoryVirtualFile, project);
+    if (module != null) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+      if (sdk != null && (allowRemote || !PythonSdkUtil.isRemote(sdk))) {
+        return sdk;
+      }
+    }
+    return null;
   }
 }

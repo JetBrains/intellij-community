@@ -1,12 +1,8 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.conditional;
 
-import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -23,18 +19,27 @@ import static com.siyeh.ig.psiutils.ParenthesesUtils.AND_PRECEDENCE;
  */
 public class ReplaceConditionalWithBooleanExpressionIntention extends Intention {
 
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("replace.conditional.with.boolean.expression.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("replace.conditional.with.boolean.expression.intention.name");
+  }
+
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiConditionalExpression)) {
+        if (!(element instanceof PsiConditionalExpression conditionalExpression)) {
           return false;
         }
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
         final PsiType type = conditionalExpression.getType();
-        return PsiType.BOOLEAN.equals(type) || type != null && type.equalsToText(JAVA_LANG_BOOLEAN);
+        return PsiTypes.booleanType().equals(type) || type != null && type.equalsToText(JAVA_LANG_BOOLEAN);
       }
     };
   }

@@ -17,12 +17,18 @@ public class EditorModificationUtilEx {
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
 
-    VisualPosition selectionStartPosition = selectionModel.getSelectionStartPosition();
-    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && selectionStartPosition != null) {
-      editor.getCaretModel().moveToVisualPosition(selectionStartPosition);
+    CaretModel caretModel = editor.getCaretModel();
+    if (editor.isColumnMode() && caretModel.supportsMultipleCarets()) {
+      VisualPosition selectionStartPosition = selectionModel.getSelectionStartPosition();
+      if (selectionStartPosition != null) {
+        caretModel.moveToVisualPosition(selectionStartPosition);
+      }
+      else {
+        caretModel.moveToOffset(selectionStart);
+      }
     }
     else {
-      editor.getCaretModel().moveToOffset(selectionStart);
+      caretModel.moveToOffset(selectionStart);
     }
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);

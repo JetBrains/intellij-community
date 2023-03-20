@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
-/**
- * @author ilyas
- */
 public interface GrCaseSection extends GroovyPsiElement, GrVariableDeclarationOwner, GrStatementOwner, GrDeclarationHolder {
   /**
    * Returns expressions that are listed between case label and arrow/colon.

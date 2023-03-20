@@ -23,6 +23,9 @@ _T_contra = TypeVar("_T_contra", contravariant=True)
 #   def __enter__(self: Self) -> Self: ...
 Self = TypeVar("Self")  # noqa Y001
 
+# covariant version of typing.AnyStr, useful for protocols
+AnyStr_co = TypeVar("AnyStr_co", str, bytes, covariant=True)  # noqa: Y001
+
 # stable
 class IdentityFunction(Protocol):
     def __call__(self, __x: _T) -> _T: ...
@@ -178,7 +181,7 @@ ReadableBuffer = Union[ReadOnlyBuffer, WriteableBuffer]  # stable
 
 # stable
 if sys.version_info >= (3, 10):
-    from types import NoneType as NoneType
+    pass
 else:
     # Used by type checkers for checks involving None (does not exist at runtime)
     @final

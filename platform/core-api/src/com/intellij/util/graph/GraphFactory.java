@@ -11,11 +11,20 @@ public abstract class GraphFactory {
     return ApplicationManager.getApplication().getService(GraphFactory.class);
   }
 
-  /** Returns a {@link NetworkBuilder} for building directed networks. */
+  /**
+   * Returns a {@link NetworkBuilder} for building directed networks.
+   */
   public abstract @NotNull NetworkBuilder<Object, Object> directedNetwork();
 
-  /** Returns a {@link NetworkBuilder} for building undirected networks. */
+  /**
+   * Returns a {@link NetworkBuilder} for building undirected networks.
+   */
   public abstract @NotNull NetworkBuilder<Object, Object> undirectedNetwork();
+
+  /**
+   * @return Empty immutable network
+   */
+  public abstract <N, E> @NotNull Network<N, E> emptyNetwork();
 
   /**
    * Returns a {@link NetworkBuilder} initialized with all properties queryable from {@code
@@ -25,5 +34,16 @@ public abstract class GraphFactory {
    * such as {@link Network#isDirected()}. Other properties, such as {@link
    * NetworkBuilder#expectedNodeCount(int)}, are not set in the new builder.
    */
-  public abstract <N, E> @NotNull NetworkBuilder<N, E> from(@NotNull Network<N, E> network);
+  public abstract <N, E> @NotNull NetworkBuilder<N, E> newNetworkWithSameProperties(@NotNull Network<N, E> network);
+
+  /**
+   * Creates a mutable copy of the given network with the same nodes and edges.
+   */
+  public abstract <N, E> @NotNull MutableNetwork<N, E> copyOf(@NotNull Network<N, E> network);
+
+  /**
+   * Converts given {@code graph} to the {@link MutableNetwork}
+   * assuming that edges will be represented by {@link EndpointPair}s.
+   */
+  public abstract <N> @NotNull MutableNetwork<N, EndpointPair<N>> toNetwork(@NotNull Graph<N> graph);
 }

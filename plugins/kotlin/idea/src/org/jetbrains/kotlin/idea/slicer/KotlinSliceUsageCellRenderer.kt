@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.slicer
 
@@ -7,8 +7,9 @@ import com.intellij.slicer.SliceUsageCellRendererBase
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -51,12 +52,14 @@ object KotlinSliceUsageCellRenderer : SliceUsageCellRendererBase() {
             append(behaviour.slicePresentationPrefix, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
         }
 
-        containerSuffix(sliceUsage)?.let {
+        val containerSuffix = containerSuffix(sliceUsage)
+        if (containerSuffix != null) {
             append(" ")
-            append(it, SimpleTextAttributes.GRAY_ATTRIBUTES)
+            append(containerSuffix, SimpleTextAttributes.GRAY_ATTRIBUTES)
         }
     }
 
+    @Nls
     fun containerSuffix(sliceUsage: SliceUsage): String? {
         val element = sliceUsage.element ?: return null
         var declaration = element.parents.firstOrNull {
@@ -73,6 +76,7 @@ object KotlinSliceUsageCellRenderer : SliceUsageCellRendererBase() {
             declaration = declaration.containingClassOrObject!!
         }
 
+        @Suppress("HardCodedStringLiteral")
         return buildString {
             append(KotlinBundle.message("slicer.text.in", ""))
             append(" ")

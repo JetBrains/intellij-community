@@ -9,10 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -26,10 +23,12 @@ public final class ReflectedProject {
 
   private static final ReentrantLock ourProjectsLock = new ReentrantLock();
   public static final String ANT_PROJECT_CLASS = "org.apache.tools.ant.Project";
+  public static final String COMPONENT_HELPER_CLASS = "org.apache.tools.ant.ComponentHelper";
 
   private final Object myProject;
   private Map<String, Class<?>> myTaskDefinitions;
   private Map<String, Class<?>> myDataTypeDefinitions;
+  private Map<String, Collection<Class<?>>> myRestrictedDefinitions;
   private Map<String, String> myProperties;
   private Class<?> myTargetClass;
 
@@ -69,21 +68,43 @@ public final class ReflectedProject {
     Object project = null;
     try {
       final Class<?> projectClass = classLoader.loadClass(ANT_PROJECT_CLASS);
-      if (projectClass != null) {
-        project = projectClass.getConstructor().newInstance();
-        Method method = projectClass.getMethod("init");
-        method.invoke(project);
-        method = projectClass.getMethod("getTaskDefinitions");
-        //noinspection unchecked
-        myTaskDefinitions = (Map<String, Class<?>>)method.invoke(project);
-        method = projectClass.getMethod( "getDataTypeDefinitions");
-        //noinspection unchecked
-        myDataTypeDefinitions = (Map<String, Class<?>>)method.invoke(project);
-        method = projectClass.getMethod( "getProperties");
-        //noinspection unchecked
-        myProperties = (Map<String, String>)method.invoke(project);
-        myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
+      project = projectClass.getConstructor().newInstance();
+      Method method = projectClass.getMethod("init");
+      method.invoke(project);
+      method = projectClass.getMethod("getTaskDefinitions");
+      //noinspection unchecked
+      myTaskDefinitions = (Map<String, Class<?>>)method.invoke(project);
+      method = projectClass.getMethod( "getDataTypeDefinitions");
+      //noinspection unchecked
+      myDataTypeDefinitions = (Map<String, Class<?>>)method.invoke(project);
+      method = projectClass.getMethod( "getProperties");
+      //noinspection unchecked
+      myProperties = (Map<String, String>)method.invoke(project);
+      myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
+
+      try {
+        myRestrictedDefinitions = new HashMap<>();
+        final Class<?> componentHelperClass = classLoader.loadClass(COMPONENT_HELPER_CLASS);
+        final Object helper = componentHelperClass.getMethod("getComponentHelper", projectClass).invoke(null, project);
+        componentHelperClass.getMethod("getDefinition", String.class).invoke(helper, "ant"); // this will initialize restricted definitions
+        final Method getRestrictedDef = componentHelperClass.getDeclaredMethod("getRestrictedDefinition");
+        getRestrictedDef.setAccessible(true);
+        final Map<String, ? extends Collection<?>> restrictedDefinitions = (Map<String, ? extends Collection<?>>)getRestrictedDef.invoke(helper);
+        for (Map.Entry<String, ? extends Collection<?>> entry : restrictedDefinitions.entrySet()) {
+          final List<Class<?>> classes = new ArrayList<>();
+          for (Object /* org.apache.tools.ant.AntTypeDefinition */ typeDef : entry.getValue()) {
+            try {
+              classes.add((Class<?>)typeDef.getClass().getMethod("getTypeClass", projectClass).invoke(typeDef, project));
+            }
+            catch (Throwable ignored) {
+            }
+          }
+          myRestrictedDefinitions.put(entry.getKey(), classes);
+        }
       }
+      catch (Throwable ignored) {
+      }
+
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -108,6 +129,10 @@ public final class ReflectedProject {
   @Nullable
   public Map<String, Class<?>> getDataTypeDefinitions() {
     return myDataTypeDefinitions;
+  }
+
+  public Map<String, Collection<Class<?>>> getRestrictedDefinitions() {
+    return myRestrictedDefinitions;
   }
 
   public Map<String, String> getProperties() {

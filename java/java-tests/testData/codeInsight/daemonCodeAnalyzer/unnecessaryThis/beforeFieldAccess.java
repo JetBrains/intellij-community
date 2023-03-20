@@ -1,4 +1,4 @@
-// "Remove unnecessary 'this' qualifier" "true"
+// "Remove unnecessary 'this' qualifier" "true-preview"
 class Main {
   int x = 42;
   void test() {

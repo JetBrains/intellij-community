@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -20,13 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PsiTypeCodeFragmentImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -71,9 +74,7 @@ class CompoundRendererConfigurable extends JPanel {
   CompoundRendererConfigurable(@NotNull Disposable parentDisposable) {
     super(new CardLayout());
 
-    if (myProject == null) {
-      myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    }
+    myProject = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
 
     myRbDefaultLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionLabel = new JRadioButton(JavaDebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
@@ -147,7 +148,7 @@ class CompoundRendererConfigurable extends JPanel {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(JavaDebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     JBUI.emptyInsets(), 0, 0));
+                                     JBInsets.emptyInsets(), 0, 0));
     panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                        GridBagConstraints.HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
@@ -265,9 +266,9 @@ class CompoundRendererConfigurable extends JPanel {
       }
     };
     editorComponent.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     editorComponent.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+                                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
     exprColumn.setCellEditor(editor);
@@ -393,9 +394,8 @@ class CompoundRendererConfigurable extends JPanel {
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
     }
-    else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+    else if (childrenRenderer instanceof ExpressionChildrenRenderer exprRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
-      final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpression()));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpandable()));
     }
@@ -403,8 +403,7 @@ class CompoundRendererConfigurable extends JPanel {
       myRbListChildrenRenderer.setSelected(true);
       myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
-      if (childrenRenderer instanceof EnumerationChildrenRenderer) {
-        EnumerationChildrenRenderer enumerationRenderer = (EnumerationChildrenRenderer)childrenRenderer;
+      if (childrenRenderer instanceof EnumerationChildrenRenderer enumerationRenderer) {
         getTableModel().init(enumerationRenderer.getChildren());
         myAppendDefaultChildren.setSelected(enumerationRenderer.isAppendDefaultChildren());
       }
@@ -448,17 +447,13 @@ class CompoundRendererConfigurable extends JPanel {
 
     @NotNull
     @Override
-    public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return String.class;
-        case EXPRESSION_TABLE_COLUMN:
-          return TextWithImports.class;
-        case ONDEMAND_TABLE_COLUMN:
-          return Boolean.class;
-        default:
-          return super.getColumnClass(columnIndex);
-      }
+    public Class<?> getColumnClass(int columnIndex) {
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> String.class;
+        case EXPRESSION_TABLE_COLUMN -> TextWithImports.class;
+        case ONDEMAND_TABLE_COLUMN -> Boolean.class;
+        default -> super.getColumnClass(columnIndex);
+      };
     }
 
     @Override
@@ -467,16 +462,12 @@ class CompoundRendererConfigurable extends JPanel {
         return null;
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return row.myName;
-        case EXPRESSION_TABLE_COLUMN:
-          return row.myExpression;
-        case ONDEMAND_TABLE_COLUMN:
-          return row.myOnDemand;
-        default:
-          return null;
-      }
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> row.myName;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand;
+        default -> null;
+      };
     }
 
     @Override
@@ -486,31 +477,21 @@ class CompoundRendererConfigurable extends JPanel {
       }
       final EnumerationChildrenRenderer.ChildInfo row = myData.get(rowIndex);
       switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          row.myName = (String)aValue;
-          break;
-        case EXPRESSION_TABLE_COLUMN:
-          row.myExpression = (TextWithImports)aValue;
-          break;
-        case ONDEMAND_TABLE_COLUMN:
-          row.myOnDemand = (Boolean)aValue;
-          break;
+        case NAME_TABLE_COLUMN -> row.myName = (String)aValue;
+        case EXPRESSION_TABLE_COLUMN -> row.myExpression = (TextWithImports)aValue;
+        case ONDEMAND_TABLE_COLUMN -> row.myOnDemand = (Boolean)aValue;
       }
     }
 
     @NotNull
     @Override
     public String getColumnName(int columnIndex) {
-      switch (columnIndex) {
-        case NAME_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
-        case EXPRESSION_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
-        case ONDEMAND_TABLE_COLUMN:
-          return JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
-        default:
-          return "";
-      }
+      return switch (columnIndex) {
+        case NAME_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
+        case EXPRESSION_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
+        case ONDEMAND_TABLE_COLUMN -> JavaDebuggerBundle.message("label.compound.renderer.configurable.table.header.ondemand");
+        default -> "";
+      };
     }
 
     public void addRow(final String name, final TextWithImports expressionWithImports) {
@@ -533,16 +514,6 @@ class CompoundRendererConfigurable extends JPanel {
 
     public List<EnumerationChildrenRenderer.ChildInfo> getExpressions() {
       return myData;
-    }
-
-    private static final class Row {
-      public String name;
-      public TextWithImports value;
-
-      Row(final String name, final TextWithImports value) {
-        this.name = name;
-        this.value = value;
-      }
     }
   }
 

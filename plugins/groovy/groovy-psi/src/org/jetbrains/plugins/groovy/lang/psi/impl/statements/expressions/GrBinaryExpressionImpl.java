@@ -17,9 +17,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERA
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 import static org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference.hasOperatorReference;
 
-/**
- * @author ilyas
- */
 public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl implements GrBinaryExpression {
 
   private final GroovyCallReference myReference = new GrOperatorReference(this);

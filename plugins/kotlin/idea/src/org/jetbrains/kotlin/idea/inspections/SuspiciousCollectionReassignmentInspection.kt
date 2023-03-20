@@ -1,17 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -23,17 +26,17 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
 
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+
 class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
-
-    private val targetOperations: List<KtSingleValueToken> = listOf(KtTokens.PLUSEQ, KtTokens.MINUSEQ)
-
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         binaryExpressionVisitor(fun(binaryExpression) {
             if (binaryExpression.right == null) return
@@ -59,20 +62,20 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             when {
                 ReplaceWithAssignmentFix.isApplicable(binaryExpression, property, context) -> fixes.add(ReplaceWithAssignmentFix())
                 JoinWithInitializerFix.isApplicable(binaryExpression, property) -> fixes.add(JoinWithInitializerFix(operationToken))
-                else -> fixes.add(IntentionWrapper(ReplaceWithOrdinaryAssignmentIntention()))
             }
+            if (fixes.isEmpty()) return
 
-            val typeText = leftDefaultType.toString().takeWhile { it != '<' }.toLowerCase()
+            val typeText = leftDefaultType.toString().takeWhile { it != '<' }.lowercase()
             val operationReference = binaryExpression.operationReference
             holder.registerProblem(
                 operationReference,
-                KotlinBundle.message("0.creates.new.1.under.the.hood", operationReference.text, typeText),
+                KotlinBundle.message("0.on.a.readonly.1.creates.a.new.1.under.the.hood", operationReference.text, typeText),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 *fixes.toTypedArray()
             )
         })
 
-    private class ChangeTypeToMutableFix(private val type: KotlinType) : LocalQuickFix {
+    private class ChangeTypeToMutableFix(@SafeFieldForPreview private val type: KotlinType) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("change.type.to.mutable.fix.text")
 
         override fun getFamilyName() = name
@@ -83,7 +86,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val left = binaryExpression.left ?: return
             val property = left.mainReference?.resolve() as? KtProperty ?: return
             ChangeToMutableCollectionFix.applyFix(property, type)
-            property.valOrVarKeyword.replace(KtPsiFactory(property).createValKeyword())
+            property.valOrVarKeyword.replace(KtPsiFactory(project).createValKeyword())
             binaryExpression.findExistingEditor()?.caretModel?.moveToOffset(property.endOffset)
         }
 
@@ -104,7 +107,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val right = binaryExpression.right ?: return
-            val psiFactory = KtPsiFactory(operationReference)
+            val psiFactory = KtPsiFactory(project)
             operationReference.replace(psiFactory.createOperationName(KtTokens.EQ.value))
             right.replace(psiFactory.createExpressionByPattern("$0.filter { it !in $1 }", left, right))
         }
@@ -125,7 +128,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val operationReference = descriptor.psiElement as? KtOperationReferenceExpression ?: return
-            val psiFactory = KtPsiFactory(operationReference)
+            val psiFactory = KtPsiFactory(project)
             operationReference.replace(psiFactory.createOperationName(KtTokens.EQ.value))
         }
 
@@ -158,7 +161,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class JoinWithInitializerFix(private val op: KtSingleValueToken) : LocalQuickFix {
+    private class JoinWithInitializerFix(@SafeFieldForPreview private val op: KtSingleValueToken) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("join.with.initializer.fix.text")
 
         override fun getFamilyName() = name
@@ -171,7 +174,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val property = left.mainReference?.resolve() as? KtProperty ?: return
             val initializer = property.initializer ?: return
 
-            val psiFactory = KtPsiFactory(operationReference)
+            val psiFactory = KtPsiFactory(project)
             val newOp = if (op == KtTokens.PLUSEQ) KtTokens.PLUS else KtTokens.MINUS
             val replaced = initializer.replaced(psiFactory.createExpressionByPattern("$0 $1 $2", initializer, newOp.value, right))
             binaryExpression.delete()
@@ -186,6 +189,8 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 }
+
+private val targetOperations: List<KtSingleValueToken> = listOf(KtTokens.PLUSEQ, KtTokens.MINUSEQ)
 
 private fun KotlinType.classDescriptor() = constructor.declarationDescriptor as? ClassDescriptor
 

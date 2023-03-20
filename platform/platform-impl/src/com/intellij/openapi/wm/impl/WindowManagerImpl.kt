@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -6,6 +6,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
@@ -14,11 +15,12 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.createNewProjectFrame
-import com.intellij.openapi.util.Computable
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
@@ -33,9 +35,11 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.function.Supplier
+import java.awt.event.ComponentListener
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
+import javax.swing.JOptionPane
 import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
@@ -45,88 +49,67 @@ private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
 @NonNls
 private const val FRAME_ELEMENT = "frame"
 
-@State(
-  name = "WindowManager",
-  defaultStateAsResource = true,
-  storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)]
-)
+@State(name = "WindowManager", storages = [
+  Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED, usePathMacroManager = false)
+])
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
   private var alphaModeSupported: Boolean? = null
   internal val windowWatcher = WindowWatcher()
 
-  // default layout
-  private var layout = DesktopLayout()
+  internal var oldLayout: DesktopLayout? = null
+    private set
 
-  // null keys must be supported
-  // null key - root frame
-  private val projectToFrame: MutableMap<Project?, ProjectFrameHelper> = HashMap()
+  private class ProjectItem(@JvmField val frameHelper: ProjectFrameHelper, private val listener: ComponentListener?) {
+    fun release() {
+      listener?.let {
+        frameHelper.frame.removeComponentListener(it)
+      }
+    }
+  }
+
+  private val projectToFrame = HashMap<Project, ProjectItem>()
+  // read from any thread, write from EDT
+  private val frameToReuse = AtomicReference<IdeFrameImpl?>()
 
   internal val defaultFrameInfoHelper = FrameInfoHelper()
 
   private var frameReuseEnabled = false
 
-  private val frameStateListener = object : ComponentAdapter() {
-    override fun componentMoved(e: ComponentEvent) {
-      update(e)
-    }
-
-    override fun componentResized(e: ComponentEvent) {
-      update(e)
-    }
-
-    private fun update(e: ComponentEvent) {
-      val frame = e.component as IdeFrameImpl
-      val rootPane = frame.rootPane
-      if (rootPane != null && (rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) == true
-          || rootPane.getClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS) == true)) {
-        return
-      }
-
-      val extendedState = frame.extendedState
-      val bounds = frame.bounds
-      if (extendedState == Frame.NORMAL && rootPane != null) {
-        rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds)
-      }
-
-      val frameHelper = ProjectFrameHelper.getFrameHelper(frame) ?: return
-      val project = frameHelper.project
-      if (project == null) {
-        // Component moved during project loading - update myDefaultFrameInfo directly.
-        // Cannot mark as dirty and compute later, because to convert user space info to device space,
-        // we need graphicsConfiguration, but we can get graphicsConfiguration only from frame,
-        // but later, when getStateModificationCount or getState is called, may be no frame at all.
-        defaultFrameInfoHelper.updateFrameInfo(frameHelper, frame)
-      }
-      else if (!project.isDisposed) {
-        ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) null else bounds)
-      }
-    }
-  }
-
   init {
     val app = ApplicationManager.getApplication()
+    val connection = app.messageBus.simpleConnect()
     if (!app.isUnitTestMode) {
       Disposer.register(app, Disposable { disposeRootFrame() })
-      app.messageBus.connect().subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
+      connection.subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
         override fun configurationChanged() {
-          for (frameHelper in projectToFrame.values) {
-            frameHelper.updateTitle()
+          for ((project, item) in projectToFrame) {
+            item.frameHelper.updateTitle(project)
           }
         }
       })
     }
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
+
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosed(project: Project) {
+        val helper = getFrameHelper(project)
+        LOG.info("=== Release(${helper != null}) frame on closed project ===")
+        helper?.let {
+          releaseFrame(it)
+        }
+      }
+    })
   }
 
-  override fun getAllProjectFrames() = projectToFrame.values.toTypedArray()
+  override fun getAllProjectFrames() = projectToFrame.values.map { it.frameHelper }.toTypedArray()
 
-  override fun getProjectFrameHelpers() = projectToFrame.values.toList()
+  override fun getProjectFrameHelpers() = projectToFrame.values.map { it.frameHelper }
 
   override fun findVisibleFrame(): JFrame? {
-    return projectToFrame.values.firstOrNull()?.frame ?: WelcomeFrame.getInstance() as? JFrame
+    return projectToFrame.values.firstOrNull()?.frameHelper?.frame ?: WelcomeFrame.getInstance() as? JFrame
   }
 
-  override fun findFirstVisibleFrameHelper() = projectToFrame.values.firstOrNull()
+  override fun findFirstVisibleFrameHelper() = projectToFrame.values.asSequence().map { it.frameHelper }.firstOrNull()
 
   override fun getScreenBounds() = ScreenUtil.getAllScreensRectangle()
 
@@ -226,13 +209,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getStatusBar(project: Project) = getFrameHelper(project)?.statusBar
 
   override fun getStatusBar(component: Component, project: Project?): StatusBar? {
-    val parent = ComponentUtil.findUltimateParent(component)
-    if (parent is IdeFrame) {
-      return parent.statusBar!!.findChild(component)
+    var parent: Component? = component
+    while (parent != null) {
+      if (parent is IdeFrame) {
+        return parent.statusBar
+      }
+      parent = parent.parent
     }
-
-    val frame = findFrameFor(project) ?: return null
-    return frame.statusBar!!.findChild(component)
+    return null
   }
 
   override fun findFrameFor(project: Project?): IdeFrame? {
@@ -244,20 +228,20 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun getFrame(project: Project?): IdeFrameImpl? {
-    // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
+    // no assert! otherwise, WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return getFrameHelper(project)?.frame
   }
 
   @ApiStatus.Internal
-  override fun getFrameHelper(project: Project?) = projectToFrame.get(project)
+  override fun getFrameHelper(project: Project?) = projectToFrame.get(project)?.frameHelper
 
   override fun findFrameHelper(project: Project?): ProjectFrameHelper? {
     return getFrameHelper(project ?: IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null)
   }
 
   @ApiStatus.Internal
-  fun getProjectFrameRootPane(project: Project?) = projectToFrame.get(project)?.rootPane
+  fun getProjectFrameRootPane(project: Project?): IdeRootPane? = projectToFrame.get(project)?.frameHelper?.rootPane
 
   override fun getIdeFrame(project: Project?): IdeFrame? {
     if (project != null) {
@@ -279,111 +263,59 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return null
   }
 
-  internal fun removeAndGetRootFrame() = projectToFrame.remove(null)
+  internal fun removeAndGetRootFrame(): IdeFrameImpl? {
+    return frameToReuse.getAndSet(null)
+  }
 
   fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
     LOG.assertTrue(!projectToFrame.containsKey(project))
-    projectToFrame.put(project, frameHelper)
+
+    val listener = FrameStateListener(defaultFrameInfoHelper)
+    frameHelper.frame.addComponentListener(listener)
+    projectToFrame.put(project, ProjectItem(frameHelper, listener))
+  }
+
+  internal suspend fun lightFrameAssign(project: Project, frameHelper: ProjectFrameHelper) {
+    projectToFrame.put(project, ProjectItem(frameHelper, null))
     frameHelper.setProject(project)
-    val frame = frameHelper.frame!!
-    // set only if not previously set (we remember previous project name and set it on frame creation)
-    //if (Strings.isEmpty(frame.title)) {
-      frame.title = FrameTitleBuilder.getInstance().getProjectTitle(project)
-    //}
-    frame.addComponentListener(frameStateListener)
+    frameHelper.installDefaultProjectStatusBarWidgets(project)
+    frameHelper.updateTitle(project)
   }
 
-  /**
-   * This method is not used in a normal conditions. Only in case of violation and early access to ToolWindowManager.
-   */
-  fun allocateFrame(project: Project,
-                    projectFrameHelperFactory: Supplier<out ProjectFrameHelper> = Supplier {
-                      ProjectFrameHelper(createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), null)
-                    }): ProjectFrameHelper {
-    var frame = getFrameHelper(project)
-    if (frame != null) {
-      return frame
-    }
+  override fun releaseFrame(releasedFrameHelper: ProjectFrameHelper) {
+    val project = releasedFrameHelper.project
+    if (project != null) {
+      projectToFrame.remove(project)?.release()
 
-    frame = removeAndGetRootFrame()
-    if (frame == null) {
-      frame = projectFrameHelperFactory.get()
-      allocateNewFrame(project, frame)
-    }
-    else {
-      projectToFrame.put(project, frame)
-      frame.setProject(project)
-    }
-    return frame
-  }
-
-  private fun allocateNewFrame(project: Project, frameHelper: ProjectFrameHelper) {
-    frameHelper.init()
-
-    var frameInfo: FrameInfo? = null
-    val lastFocusedProjectFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project?.let { getFrameHelper(it) }
-    if (lastFocusedProjectFrame != null) {
-      frameInfo = getFrameInfoByFrameHelper(lastFocusedProjectFrame)
-      if (frameInfo?.bounds == null) {
-        frameInfo = defaultFrameInfoHelper.info
+      if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible) {
+        releasedFrameHelper.storeStateForReuse()
+        frameToReuse.set(releasedFrameHelper.frame)
+        releasedFrameHelper.frame.doSetRootPane(null)
+        releasedFrameHelper.frame.setFrameHelper(null)
+        if (JOptionPane.getRootFrame() === releasedFrameHelper.frame) {
+          JOptionPane.setRootFrame(null)
+        }
       }
     }
 
-    if (frameInfo?.bounds != null) {
-      // update default frame info - newly opened project frame should be the same as last opened
-      if (frameInfo !== defaultFrameInfoHelper.info) {
-        defaultFrameInfoHelper.copyFrom(frameInfo)
-      }
-      val bounds = frameInfo.bounds
-      if (bounds != null) {
-        frameHelper.frame!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
-      }
+    try {
+      Disposer.dispose(releasedFrameHelper)
     }
-
-    projectToFrame.put(project, frameHelper)
-    frameHelper.setProject(project)
-    val uiFrame = frameHelper.frame!!
-    if (frameInfo != null) {
-      uiFrame.extendedState = frameInfo.extendedState
-    }
-    uiFrame.isVisible = true
-    if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
-      frameHelper.toggleFullScreen(true)
-    }
-
-    uiFrame.addComponentListener(frameStateListener)
-    IdeMenuBar.installAppMenuIfNeeded(uiFrame)
-  }
-
-  override fun releaseFrame(frameHelper: ProjectFrameHelper) {
-    val project = frameHelper.project!!
-    frameHelper.frameReleased()
-    projectToFrame.remove(project)
-    if (frameReuseEnabled && !projectToFrame.containsKey(null) && project !is LightEditCompatible) {
-      projectToFrame.put(null, frameHelper)
-    }
-    else {
-      Disposer.dispose(frameHelper)
+    catch (e: Exception) {
+      LOG.error(e)
     }
   }
+
+  override fun isFrameReused(helper: ProjectFrameHelper): Boolean = helper.frame === frameToReuse.get()
 
   fun disposeRootFrame() {
-    if (projectToFrame.size == 1) {
-      removeAndGetRootFrame()?.let {
-        Disposer.dispose(it)
-      }
-    }
+    frameToReuse.getAndSet(null)?.doDispose()
   }
 
-  fun <T> runWithFrameReuseEnabled(task: Computable<T>): T {
-    val savedValue = frameReuseEnabled
+  fun withFrameReuseEnabled(): AutoCloseable {
+    val oldValue = frameReuseEnabled
     frameReuseEnabled = true
-    try {
-      return task.compute()
-    }
-    finally {
-      frameReuseEnabled = savedValue
-    }
+    return AutoCloseable { frameReuseEnabled = oldValue }
   }
 
   override fun getMostRecentFocusedWindow() = windowWatcher.focusedWindow
@@ -391,49 +323,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getFocusedComponent(window: Window) = windowWatcher.getFocusedComponent(window)
 
   override fun getFocusedComponent(project: Project?) = windowWatcher.getFocusedComponent(project)
-
-  override fun noStateLoaded() {
-    var anchor = ToolWindowAnchor.LEFT
-    var order = 0
-    fun info(id: String, weight: Float = -1f, contentUiType: ToolWindowContentUiType? = null): WindowInfoImpl {
-      val result = WindowInfoImpl()
-      result.id = id
-      result.anchor = anchor
-      if (weight != -1f) {
-        result.weight = weight
-      }
-      contentUiType?.let {
-        result.contentUiType = it
-      }
-      result.order = order++
-      result.isFromPersistentSettings = false
-      result.resetModificationCount()
-      return result
-    }
-
-    val list = mutableListOf<WindowInfoImpl>()
-
-    // left stripe
-    list.add(info(id = "Project", weight = 0.25f, contentUiType = ToolWindowContentUiType.COMBO))
-
-    // right stripe
-    anchor = ToolWindowAnchor.RIGHT
-    order = 0
-    list.add(info(id = "Notifications", weight = 0.25f))
-
-    // bottom stripe
-    anchor = ToolWindowAnchor.BOTTOM
-    order = 0
-    list.add(info(id = "Version Control"))
-    list.add(info(id = "Find"))
-    list.add(info(id = "Run"))
-    list.add(info(id = "Debug", weight = 0.4f))
-    list.add(info(id = "Inspection", weight = 0.4f))
-
-    for (info in list) {
-      layout.addInfo(info.id!!, info)
-    }
-  }
 
   override fun loadState(state: Element) {
     val frameElement = state.getChild(FRAME_ELEMENT)
@@ -447,12 +336,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       defaultFrameInfoHelper.copyFrom(info)
     }
     state.getChild(DesktopLayout.TAG)?.let {
+      val layout = DesktopLayout()
       layout.readExternal(it, ExperimentalUI.isNewUI())
+      oldLayout = layout
     }
   }
 
   override fun getStateModificationCount(): Long {
-    return defaultFrameInfoHelper.getModificationCount() + layout.stateModificationCount
+    return defaultFrameInfoHelper.getModificationCount()
   }
 
   override fun getState(): Element {
@@ -460,26 +351,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     defaultFrameInfoHelper.info?.let { serialize(it) }?.let {
       state.addContent(it)
     }
-
-    // save default layout
-    layout.writeExternal(DesktopLayout.TAG)?.let {
-      state.addContent(it)
-    }
     return state
-  }
-
-  override fun getLayout() = layout
-
-  override fun setLayout(layout: DesktopLayout) {
-    this.layout = layout.copy()
   }
 
   override fun isFullScreenSupportedInCurrentOS() = isFullScreenSupportedInCurrentOs()
 
   override fun updateDefaultFrameInfoOnProjectClose(project: Project) {
     val frameHelper = getFrameHelper(project) ?: return
-    val frameInfo = getFrameInfoByFrameHelper(frameHelper) ?: return
-    defaultFrameInfoHelper.copyFrom(frameInfo)
+    defaultFrameInfoHelper.copyFrom(getFrameInfoByFrameHelper(frameHelper))
   }
 }
 
@@ -488,6 +367,10 @@ private fun calcAlphaModelSupported(): Boolean {
   if (device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.TRANSLUCENT)) {
     return true
   }
+
+  // GTW-3304 WindowUtils crashes on X11-enabled RD hosts
+  if (AppMode.isRemoteDevHost())
+    return false
 
   return try {
     WindowUtils.isWindowAlphaSupported()
@@ -551,6 +434,44 @@ private fun getIdeFrame(component: Component): IdeFrame? {
   }
 }
 
-private fun getFrameInfoByFrameHelper(frameHelper: ProjectFrameHelper): FrameInfo? {
-  return updateFrameInfo(frameHelper, frameHelper.frame ?: return null, null, null)
+internal fun getFrameInfoByFrameHelper(frameHelper: ProjectFrameHelper): FrameInfo {
+  return updateFrameInfo(frameHelper = frameHelper, frame = frameHelper.frame, lastNormalFrameBounds = null, oldFrameInfo = null)
+}
+
+internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoHelper) : ComponentAdapter() {
+  override fun componentMoved(e: ComponentEvent) {
+    update(e)
+  }
+
+  override fun componentResized(e: ComponentEvent) {
+    update(e)
+  }
+
+  private fun update(e: ComponentEvent) {
+    val frame = e.component as IdeFrameImpl
+    val rootPane = frame.rootPane
+    if (rootPane != null && (rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) == true || frame.togglingFullScreenInProgress)) {
+      return
+    }
+
+    val extendedState = frame.extendedState
+    val bounds = frame.bounds
+    if (extendedState == Frame.NORMAL && rootPane != null) {
+      frame.normalBounds = bounds
+    }
+
+    val frameHelper = frame.frameHelper?.helper as? ProjectFrameHelper ?: return
+
+    val project = frameHelper.project
+    if (project == null) {
+      // Component moved during project loading - update myDefaultFrameInfo directly.
+      // Cannot mark as dirty and compute later, because to convert user space info to device space,
+      // we need graphicsConfiguration, but we can get graphicsConfiguration only from frame,
+      // but later, when getStateModificationCount or getState is called, may be no frame at all.
+      defaultFrameInfoHelper.updateFrameInfo(frameHelper, frame)
+    }
+    else if (!project.isDisposed) {
+      ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) null else bounds)
+    }
+  }
 }

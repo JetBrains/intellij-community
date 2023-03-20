@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -116,15 +116,8 @@ final class AbstractValues {
     if (prev instanceof NotNullValue) {
       return curr instanceof NotNullValue;
     }
-    if (prev instanceof CallResultValue) {
-      if (curr instanceof CallResultValue) {
-        CallResultValue prevCall = (CallResultValue) prev;
-        CallResultValue currCall = (CallResultValue) curr;
-        return prevCall.inters.equals(currCall.inters);
-      }
-      else {
-        return false;
-      }
+    if (prev instanceof CallResultValue prevCall) {
+      return curr instanceof CallResultValue currCall && prevCall.inters.equals(currCall.inters);
     }
     return true;
   }

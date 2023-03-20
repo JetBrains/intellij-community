@@ -2,6 +2,8 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -31,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   private boolean myNeedToAddDependency;
 
@@ -60,13 +59,21 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         String presentation = StreamEx.of(annotations)
           .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
           .joining(" ");
-        setText(JavaBundle.message("intention.text.insert.0.annotation", presentation));
-        myNeedToAddDependency = needToAddDependency(file, annotations);
+        setText(CommonQuickFixBundle.message("fix.insert.x", presentation));
         return true;
       }
     }
     
     return false;
+  }
+
+  private List<PsiAnnotation> filterAnnotations(PsiFile file, List<PsiAnnotation> annotations) {
+    if (annotations.isEmpty() || !needToAddDependency(file, annotations)) return annotations;
+    if (InferNullityAnnotationsAction.maySuggestAnnotationDependency(file.getProject())) {
+      myNeedToAddDependency = true;
+      return annotations;
+    }
+    return ContainerUtil.filter(annotations, anno -> !isJetBrainsAnnotation(anno));
   }
 
   private static @NotNull String getAnnotationPresentation(PsiAnnotation annotation) {
@@ -95,6 +102,16 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     }
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+    if (leaf == null) return IntentionPreviewInfo.EMPTY;
+    PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
+    if (owner == null) return IntentionPreviewInfo.EMPTY;
+    doMakeAnnotationExplicit(project, owner, getAnnotationsToAdd(owner));
+    return IntentionPreviewInfo.DIFF;
+  }
+
   /**
    * Explicitly adds inferred annotations to the code (if any). Creates write action inside, so should be run in write-thread.
    *
@@ -112,9 +129,10 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     if (needToAddDependency(file, annotations)) {
       SmartPsiElementPointer<PsiModifierListOwner> ownerPointer = SmartPointerManager.createPointer(owner);
       InferNullityAnnotationsAction.addAnnotationsDependency(project, Collections.singleton(module), AnnotationUtil.NOT_NULL, getFamilyName())
-        .onSuccess(__ -> ApplicationManager.getApplication().invokeLater(() -> doStartWriteAction(project, file, ownerPointer.getElement(), annotations),
-                                                                         ModalityState.NON_MODAL, 
-                                                                         module.getDisposed()));
+        .onSuccess(__ -> ApplicationManager.getApplication()
+          .invokeLater(() -> doStartWriteAction(project, file, ownerPointer.getElement(), annotations),
+                       ModalityState.NON_MODAL,
+                       module.getDisposed()));
       return;
     }
 
@@ -122,10 +140,13 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   private static boolean needToAddDependency(PsiFile file, List<PsiAnnotation> annotations) {
-    return ContainerUtil.exists(annotations, anno -> {
-      String qualifiedName = anno.getQualifiedName();
-      return qualifiedName != null && qualifiedName.startsWith("org.jetbrains.annotations.");
-    }) && JavaPsiFacade.getInstance(file.getProject()).findClass(AnnotationUtil.NOT_NULL, file.getResolveScope()) == null;
+    return ContainerUtil.exists(annotations, MakeInferredAnnotationExplicit::isJetBrainsAnnotation) &&
+           JavaPsiFacade.getInstance(file.getProject()).findClass(AnnotationUtil.NOT_NULL, file.getResolveScope()) == null;
+  }
+
+  private static boolean isJetBrainsAnnotation(PsiAnnotation anno) {
+    String qualifiedName = anno.getQualifiedName();
+    return qualifiedName != null && qualifiedName.startsWith("org.jetbrains.annotations.");
   }
 
   private void doStartWriteAction(@NotNull Project project,
@@ -138,11 +159,12 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
                                                () -> doMakeAnnotationExplicit(project, owner, annotations)), file);
   }
 
-  private static List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
-    return StreamEx.of(InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner))
+  private @NotNull List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
+    List<PsiAnnotation> allAnnotations = StreamEx.of(InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner))
       .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)
       .map(MakeInferredAnnotationExplicit::correctAnnotation)
       .toList();
+    return filterAnnotations(owner.getContainingFile(), allAnnotations);
   }
 
   private static void doMakeAnnotationExplicit(@NotNull Project project, @NotNull PsiModifierListOwner owner, @NotNull List<PsiAnnotation> annotations) {

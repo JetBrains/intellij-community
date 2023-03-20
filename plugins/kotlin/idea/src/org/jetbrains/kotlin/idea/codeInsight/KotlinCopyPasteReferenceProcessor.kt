@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -13,6 +15,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -26,8 +29,9 @@ import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -35,16 +39,11 @@ import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports.reviewAddedImpor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.util.end
-import org.jetbrains.kotlin.idea.core.util.range
-import org.jetbrains.kotlin.idea.core.util.start
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
@@ -59,7 +58,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findFunction
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -264,8 +263,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
             val kind = KotlinReferenceData.Kind.fromDescriptor(descriptor) ?: continue
             val isQualifiable = KotlinReferenceData.isQualifiable(ktElement, descriptor)
-            val relativeStart = ktElement.range.start
-            val relativeEnd = ktElement.range.end
+            val relativeStart = ktElement.textRange.startOffset
+            val relativeEnd = ktElement.textRange.endOffset
             add(KotlinReferenceData(relativeStart, relativeEnd, fqName, isQualifiable, kind))
         }
     }
@@ -437,8 +436,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                             val itTextRange = it.element.textRange
                             val refTextRange = mainReference.element.textRange
                             val originalTextRange = elementByTextRange.originalTextRange
-                            val offset = originalTextRange.start - refTextRange.start
-                            val range = TextRange(itTextRange.start + offset, itTextRange.end + offset)
+                            val offset = originalTextRange.startOffset - refTextRange.startOffset
+                            val range = TextRange(itTextRange.startOffset + offset, itTextRange.endOffset + offset)
                             range to it
                         }
                     }
@@ -472,12 +471,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         }
 
         val dummyOriginalFile = runReadAction {
-            KtPsiFactory(project)
-                .createAnalyzableFile(
-                    "dummy-original.$extension",
-                    "$dummyOrigFileProlog${transferableData.sourceText}",
-                    ctxFile
-                )
+            KtPsiFactory.contextual(ctxFile).createFile("dummy-original.$extension", "$dummyOrigFileProlog${transferableData.sourceText}")
         }
 
         if (script) {
@@ -548,13 +542,16 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
         val project = file.project
         val dummyImportsFile = runReadAction {
-            KtPsiFactory(project)
-                .createAnalyzableFile(
+            KtPsiFactory.contextual(ctxFile)
+                .createFile(
                     "dummy-imports.kt",
-                    "package $fakePkgName\n" +
-                            "${joinLines(fakePkgImports)}\n" +
-                            transferableData.sourceText,
-                    ctxFile
+                    buildString {
+                        appendLine("package $fakePkgName")
+                        for (pkgImport in fakePkgImports) {
+                            appendLine(pkgImport)
+                        }
+                        append(transferableData.sourceText)
+                    }
                 )
         }
 
@@ -671,7 +668,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun findReference(element: PsiElement, desiredRange: TextRange): KtReference? = runReadAction {
         for (current in element.parentsWithSelf) {
-            val range = current.range
+            val range = current.textRange
             if (current is KtElement && range == desiredRange) {
                 current.mainReference?.let { return@runReadAction it }
             }
@@ -823,7 +820,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun PsiElement.isInCopiedArea(fileCopiedFrom: KtFile, textRanges: List<TextRange>): Boolean =
         runReadAction {
-            if (containingFile != fileCopiedFrom) false else textRanges.any { this.range in it }
+            if (containingFile != fileCopiedFrom) false else textRanges.any { this.textRange in it }
         }
 
     companion object {

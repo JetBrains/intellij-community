@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.google.gson.reflect.TypeToken
@@ -16,26 +16,25 @@ import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.intellij.util.io.getHostName
-import com.intellij.util.io.origin
-import com.intellij.util.net.NetUtils
-import com.intellij.util.text.nullize
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import java.io.OutputStream
-import java.net.URI
-import java.net.URISyntaxException
 
-@Suppress("HardCodedStringLiteral")
 internal class InstallPluginService : RestService() {
   override fun getServiceName() = "installPlugin"
 
   override fun isOriginAllowed(request: HttpRequest) = OriginCheckResult.ASK_CONFIRMATION
 
   var isAvailable = true
-  private val trustedHosts = System.getProperty("idea.api.install.hosts.trusted", "").split(",")
+
+  private val trustedPredefinedHosts = setOf(
+    "marketplace.jetbrains.com",
+    "plugins.jetbrains.com",
+    "package-search.services.jetbrains.com",
+    "package-search.jetbrains.com"
+  )
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val pluginId = getStringParameter("pluginId", urlDecoder)
@@ -100,7 +99,7 @@ internal class InstallPluginService : RestService() {
       val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       ApplicationManager.getApplication().invokeLater(Runnable {
         AppIcon.getInstance().requestAttention(effectiveProject, true)
-        installAndEnable(effectiveProject, plugins.toSet()) { }
+        installAndEnable(effectiveProject, plugins.toSet(), true) { }
         isAvailable = true
       }, effectiveProject.disposed)
     }
@@ -139,23 +138,7 @@ internal class InstallPluginService : RestService() {
   }
 
   override fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
-    val origin = request.origin
-    val originHost = try {
-      if (origin == null) null else URI(origin).host.nullize()
-    }
-    catch (ignored: URISyntaxException) {
-      return false
-    }
-
-    val hostName = getHostName(request)
-    if (hostName != null && !NetUtils.isLocalhost(hostName)) {
-      LOG.error("Expected 'request.hostName' to be localhost. hostName='$hostName', origin='$origin'")
-    }
-
-    return (originHost != null && (
-      listOf("plugins.jetbrains.com", "package-search.services.jetbrains.com", "package-search.jetbrains.com").contains(originHost) ||
-      trustedHosts.contains(originHost) ||
-      originHost.endsWith(".dev.marketplace.intellij.net") ||
-      NetUtils.isLocalhost(originHost))) || super.isHostTrusted(request, urlDecoder)
+    return isHostInPredefinedHosts(request, trustedPredefinedHosts, "idea.api.install.hosts.trusted")
+           || super.isHostTrusted(request, urlDecoder)
   }
 }

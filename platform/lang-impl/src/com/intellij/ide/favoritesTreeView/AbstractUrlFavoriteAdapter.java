@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@Deprecated(forRemoval = true)
 public class AbstractUrlFavoriteAdapter extends AbstractUrl {
   private static final Logger LOG = Logger.getInstance(AbstractUrlFavoriteAdapter.class);
 
@@ -27,8 +28,7 @@ public class AbstractUrlFavoriteAdapter extends AbstractUrl {
   }
 
   @Nullable Bookmark createBookmark(@NotNull Project project) {
-    if (myNodeProvider instanceof AbstractUrlFavoriteConverter) {
-      var converter = (AbstractUrlFavoriteConverter)myNodeProvider;
+    if (myNodeProvider instanceof AbstractUrlFavoriteConverter converter) {
       var bookmark = converter.createBookmark(project, url, moduleName);
       if (bookmark != null) return bookmark;
       var id = myNodeProvider.getFavoriteTypeId();

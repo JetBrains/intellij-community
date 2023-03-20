@@ -1,4 +1,4 @@
-// "Simplify 'test(...) || obj == null' to true extracting side effects" "true"
+// "Simplify 'test(...) || obj == null' to true extracting side effects" "true-preview"
 import org.jetbrains.annotations.Contract;
 
 class X {

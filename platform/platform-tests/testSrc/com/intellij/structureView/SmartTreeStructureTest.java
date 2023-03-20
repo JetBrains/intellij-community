@@ -44,34 +44,36 @@ public class SmartTreeStructureTest extends BasePlatformTestCase {
   }
 
   public void testGrouping() {
-    assertStructureEqual("root\n" +
-                         ".Group:a\n" +
-                         "..Group:d\n" +
-                         "...ade\n" +
-                         "....Group:a\n" +
-                         ".....Group:d\n" +
-                         "......aed\n" +
-                         "..abc\n" +
-                         "...Group:a\n" +
-                         "....Group:d\n" +
-                         ".....abc_de\n" +
-                         ".Group:b\n" +
-                         "..Group:d\n" +
-                         "...bcd\n" +
-                         "....Group:b\n" +
-                         ".....bhg_yt\n" +
-                         "..Group:f\n" +
-                         "...bft\n" +
-                         "....ttt\n" +
-                         ".Group:d\n" +
-                         "..eed\n" +
-                         "...zzz\n" +
-                         ".xxx\n" +
-                         ".xxx\n" +
-                         "..Group:a\n" +
-                         "...aaa\n" +
-                         "....Group:b\n" +
-                         ".....bbb\n", PlatformTestUtil.createComparator(myPrintInfo));
+    assertStructureEqual("""
+                           root
+                           .Group:a
+                           ..Group:d
+                           ...ade
+                           ....Group:a
+                           .....Group:d
+                           ......aed
+                           ..abc
+                           ...Group:a
+                           ....Group:d
+                           .....abc_de
+                           .Group:b
+                           ..Group:d
+                           ...bcd
+                           ....Group:b
+                           .....bhg_yt
+                           ..Group:f
+                           ...bft
+                           ....ttt
+                           .Group:d
+                           ..eed
+                           ...zzz
+                           .xxx
+                           .xxx
+                           ..Group:a
+                           ...aaa
+                           ....Group:b
+                           .....bbb
+                           """, PlatformTestUtil.createComparator(myPrintInfo));
   }
 
   public void testFiltering() {
@@ -99,20 +101,22 @@ public class SmartTreeStructureTest extends BasePlatformTestCase {
       }
     });
 
-    assertStructureEqual("root\n" +
-                         ".Group:b\n" +
-                         "..Group:d\n" +
-                         "...bcd\n" +
-                         "....Group:b\n" +
-                         ".....bhg_yt\n" +
-                         "..Group:f\n" +
-                         "...bft\n" +
-                         "....ttt\n" +
-                         ".Group:d\n" +
-                         "..eed\n" +
-                         "...zzz\n" +
-                         ".xxx\n" +
-                         ".xxx\n", PlatformTestUtil.createComparator(myPrintInfo));
+    assertStructureEqual("""
+                           root
+                           .Group:b
+                           ..Group:d
+                           ...bcd
+                           ....Group:b
+                           .....bhg_yt
+                           ..Group:f
+                           ...bft
+                           ....ttt
+                           .Group:d
+                           ..eed
+                           ...zzz
+                           .xxx
+                           .xxx
+                           """, PlatformTestUtil.createComparator(myPrintInfo));
   }
 
   public void testSorting() {
@@ -170,34 +174,36 @@ public class SmartTreeStructureTest extends BasePlatformTestCase {
       }
     });
 
-    assertStructureEqual("root\n" +
-                     ".Group:a\n" +
-                     "..Group:d\n" +
-                     "...ade\n" +
-                     "....Group:a\n" +
-                     ".....Group:d\n" +
-                     "......aed\n" +
-                     "..abc\n" +
-                     "...Group:a\n" +
-                     "....Group:d\n" +
-                     ".....abc_de\n" +
-                     ".Group:b\n" +
-                     "..Group:d\n" +
-                     "...bcd\n" +
-                     "....Group:b\n" +
-                     ".....bhg_yt\n" +
-                     "..Group:f\n" +
-                     "...bft\n" +
-                     "....ttt\n" +
-                     ".Group:d\n" +
-                     "..eed\n" +
-                     "...zzz\n" +
-                     ".xxx\n" +
-                     ".xxx\n" +
-                     "..Group:a\n" +
-                     "...aaa\n" +
-                     "....Group:b\n" +
-                     ".....bbb\n", null);
+    assertStructureEqual("""
+                           root
+                           .Group:a
+                           ..Group:d
+                           ...ade
+                           ....Group:a
+                           .....Group:d
+                           ......aed
+                           ..abc
+                           ...Group:a
+                           ....Group:d
+                           .....abc_de
+                           .Group:b
+                           ..Group:d
+                           ...bcd
+                           ....Group:b
+                           .....bhg_yt
+                           ..Group:f
+                           ...bft
+                           ....ttt
+                           .Group:d
+                           ..eed
+                           ...zzz
+                           .xxx
+                           .xxx
+                           ..Group:a
+                           ...aaa
+                           ....Group:b
+                           .....bbb
+                           """, null);
   }
 
   public void testUnsorted(){
@@ -210,18 +216,20 @@ public class SmartTreeStructureTest extends BasePlatformTestCase {
     root.addChild("aaa");
     root.addChild("aaa").addChild("zzz");
     root.addChild("xxx");
-    assertStructureEqual("root\n" +
-                         ".xxx\n" +
-                         ".Group:b\n" +
-                         "..bbb\n" +
-                         "..bbb\n" +
-                         ".zzz\n" +
-                         "..ttt\n" +
-                         ".Group:a\n" +
-                         "..aaa\n" +
-                         "..aaa\n" +
-                         "...zzz\n" +
-                         ".xxx\n", null);
+    assertStructureEqual("""
+                           root
+                           .xxx
+                           .Group:b
+                           ..bbb
+                           ..bbb
+                           .zzz
+                           ..ttt
+                           .Group:a
+                           ..aaa
+                           ..aaa
+                           ...zzz
+                           .xxx
+                           """, null);
   }
 
   private void assertStructureEqual(@NonNls String expected, @Nullable Comparator comparator) {

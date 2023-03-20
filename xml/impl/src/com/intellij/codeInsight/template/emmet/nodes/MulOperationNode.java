@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class MulOperationNode extends ZenCodingNode {
   private final ZenCodingNode myLeftOperand;
   private final int myRightOperand;

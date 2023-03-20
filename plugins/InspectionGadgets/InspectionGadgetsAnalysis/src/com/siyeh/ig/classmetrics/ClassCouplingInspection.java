@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ClassCouplingInspection
   extends ClassMetricInspection {
@@ -62,19 +62,12 @@ public class ClassCouplingInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final String configurationLabel = getConfigurationLabel();
-    final JLabel label = new JLabel(configurationLabel);
-    final JFormattedTextField valueField = prepareNumberEditor("m_limit");
-
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addRow(label, valueField);
-
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-        "include.java.system.classes.option"), "m_includeJavaClasses");
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-        "include.library.classes.option"), "m_includeLibraryClasses");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", getConfigurationLabel(), 1, 1000),
+      checkbox("m_includeJavaClasses", InspectionGadgetsBundle.message("include.java.system.classes.option")),
+      checkbox("m_includeLibraryClasses", InspectionGadgetsBundle.message("include.library.classes.option"))
+    );
   }
 
   @Override

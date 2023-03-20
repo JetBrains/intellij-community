@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -12,12 +13,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarCentralWidget;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +33,12 @@ import java.util.Map;
 
 public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
-  private final DesktopLayout myLayout = new DesktopLayout();
 
   @Override
-  public void doNotSuggestAsParent(final Window window) { }
+  public void doNotSuggestAsParent(Window window) { }
 
   @Override
-  public Window suggestParentWindow(final @Nullable Project project) {
+  public Window suggestParentWindow(@Nullable Project project) {
     return null;
   }
 
@@ -96,7 +96,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public Component getFocusedComponent(@NotNull Window window) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override
@@ -112,16 +112,6 @@ public final class TestWindowManager extends WindowManagerEx {
   @Override
   public IdeFrame findFrameFor(@Nullable Project project) {
     return null;
-  }
-
-  @Override
-  public @NotNull DesktopLayout getLayout() {
-    return myLayout;
-  }
-
-  @Override
-  public void setLayout(@NotNull DesktopLayout layout) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -183,17 +173,12 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public @Nullable StatusBar createChild(@NotNull IdeFrame frame) {
+    public @Nullable StatusBar createChild(@NotNull IdeFrame frame, @NotNull Function0<? extends FileEditor> editorProvider) {
       return null;
     }
 
     @Override
-    public IdeFrame getFrame() {
-      return null;
-    }
-
-    @Override
-    public StatusBar findChild(Component c) {
+    public StatusBar findChild(@NotNull Component c) {
       return null;
     }
 
@@ -204,12 +189,6 @@ public final class TestWindowManager extends WindowManagerEx {
     public boolean isVisible() {
       return false;
     }
-
-    @Override
-    public void addCustomIndicationComponent(@NotNull JComponent c) { }
-
-    @Override
-    public void removeCustomIndicationComponent(@NotNull JComponent c) { }
 
     @Override
     public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) { }
@@ -242,16 +221,10 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public void setCentralWidget(@NotNull StatusBarCentralWidget widget) { }
-
-    @Override
-    public void dispose() { }
-
-    @Override
     public void updateWidget(@NotNull String id) { }
 
     @Override
-    public StatusBarWidget getWidget(String id) {
+    public StatusBarWidget getWidget(@NotNull String id) {
       return myWidgetMap.get(id);
     }
 
@@ -300,11 +273,21 @@ public final class TestWindowManager extends WindowManagerEx {
                                                   @Nullable HyperlinkListener listener) {
       return () -> { };
     }
+
+    @Override
+    public @NotNull Function0<FileEditor> getCurrentEditor() {
+      return () -> null;
+    }
   }
 
   @Override
   public void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
     frameHelper.getFrame().dispose();
+  }
+
+  @Override
+  public boolean isFrameReused(@NotNull ProjectFrameHelper frameHelper) {
+    return false;
   }
 
   @Override

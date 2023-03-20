@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui;
 
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
 import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject;
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject;
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject;
 import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
@@ -153,8 +153,8 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                     codeFragment,
                     lookupElement -> {
                         Object lookupObject = lookupElement.getObject();
-                        if (!(lookupObject instanceof DeclarationLookupObject)) return false;
-                        PsiElement psiElement = ((DeclarationLookupObject) lookupObject).getPsiElement();
+                        if (!(lookupObject instanceof DescriptorBasedDeclarationLookupObject)) return false;
+                        PsiElement psiElement = ((DescriptorBasedDeclarationLookupObject) lookupObject).getPsiElement();
                         if (lookupObject instanceof PackageLookupObject) return true;
                         return (psiElement instanceof KtClassOrObject) && KotlinRefactoringUtilKt.canRefactor(psiElement);
                     }
@@ -201,9 +201,8 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
             return !((KtObjectDeclaration) classOrObject).isObjectLiteral();
         }
 
-        if (classOrObject instanceof KtClass) {
-            KtClass ktClass = (KtClass) classOrObject;
-            return !(ktClass.isInner() || ktClass.isAnnotation());
+        if (classOrObject instanceof KtClass ktClass) {
+          return !(ktClass.isInner() || ktClass.isAnnotation());
         }
 
         return false;
@@ -213,10 +212,9 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
         List<KotlinMemberInfo> memberInfos = CollectionsKt.mapNotNull(
                 originalClass.getDeclarations(),
                 declaration -> {
-                    if (!(declaration instanceof KtClassOrObject)) return null;
-                    KtClassOrObject classOrObject = (KtClassOrObject) declaration;
+                    if (!(declaration instanceof KtClassOrObject classOrObject)) return null;
 
-                    if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
+                  if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
                     if (classOrObject instanceof KtObjectDeclaration && ((KtObjectDeclaration) classOrObject).isCompanion()) {
                         return null;
                     }

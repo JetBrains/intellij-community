@@ -354,8 +354,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
         @Override
         public boolean report(@NotNull CommittedChangeList list) {
-          if (list instanceof SvnChangeList) {
-            final SvnChangeList svnList = (SvnChangeList)list;
+          if (list instanceof SvnChangeList svnList) {
             final String wcPath = svnList.getWcPath();
             if (wcPath != null) {
               final CommittedChangeListsListener refresher = refreshers.get(ensureEndsWithSeparator(wcPath));
@@ -388,6 +387,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       for (MergeInfoHolder holder : myHolders.values()) {
         if (holder.refreshEnabled(false)) {
@@ -417,6 +421,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull final AnActionEvent e) {
       return myHighlightingOn;
     }
@@ -437,6 +446,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     protected CommonFilter(@NotNull Supplier<@ActionText String> text) {
       super(text);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -603,10 +617,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private SvnMergeInfoRootPanelManual getPanelData(final List<CommittedChangeList> listsList) {
     for (CommittedChangeList list : listsList) {
-      if (!(list instanceof SvnChangeList)) {
+      if (!(list instanceof SvnChangeList svnList)) {
         return null;
       }
-      final SvnChangeList svnList = (SvnChangeList)list;
       final String wcPath = svnList.getWcPath();
       if (wcPath == null) {
         continue;
@@ -618,11 +631,10 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   @Nullable
   public ListMergeStatus getStatus(final CommittedChangeList list, final boolean ignoreEnabled) {
-    if (!(list instanceof SvnChangeList)) {
+    if (!(list instanceof SvnChangeList svnList)) {
       return null;
     }
 
-    final SvnChangeList svnList = (SvnChangeList)list;
     final String wcPath = svnList.getWcPath();
     MergeInfoHolder holder = null;
     if (wcPath == null) {

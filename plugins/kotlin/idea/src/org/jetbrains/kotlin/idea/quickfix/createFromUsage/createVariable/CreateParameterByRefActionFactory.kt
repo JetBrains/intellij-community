@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getExpressionForTypeGuess
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getTypeParameters
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.guessTypes
@@ -26,10 +27,11 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 object CreateParameterByRefActionFactory : CreateParameterFromUsageFactory<KtSimpleNameExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtSimpleNameExpression? {
-        val refExpr = QuickFixUtil.getParentElementOfType(diagnostic, KtNameReferenceExpression::class.java) ?: return null
+        val refExpr = diagnostic.psiElement.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
         if (refExpr.getQualifiedElement() != refExpr) return null
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return null
         return refExpr
@@ -71,7 +73,7 @@ object CreateParameterByRefActionFactory : CreateParameterFromUsageFactory<KtSim
                     when {
                         (it is KtNamedFunction || it is KtSecondaryConstructor) && varExpected ||
                                 it is KtPropertyAccessor -> chooseContainingClass(it)
-                        it is KtAnonymousInitializer -> it.parent.parent as? KtClass
+                        it is KtAnonymousInitializer -> it.parents.match(KtClassBody::class, last = KtClass::class)
                         it is KtSuperTypeListEntry -> {
                             val klass = it.getStrictParentOfType<KtClassOrObject>()
                             if (klass is KtClass && !klass.isInterface() && klass !is KtEnumEntry) klass else null

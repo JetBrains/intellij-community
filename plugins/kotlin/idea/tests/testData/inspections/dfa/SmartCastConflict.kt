@@ -125,3 +125,23 @@ fun negatedTypeTest(x: Any) {
     if (x !is String) return
     x.trim()
 }
+
+fun Any.receiver() {
+    val oldA = this
+    oldA as String
+    if (this is String) {
+        trim()
+    }
+    if (<warning descr="Condition 'this is String' is always true">this is String</warning>) {
+        hashCode()
+    }
+    if (<warning descr="Condition 'this is String' is always true">this is String</warning>) {
+        this.hashCode()
+    }
+    if (this is String) {
+        this.trim()
+    }
+    if (<warning descr="Condition 'this is String' is always true">this is String</warning>) {
+        println(this)
+    }
+}

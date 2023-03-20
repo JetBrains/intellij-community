@@ -5,6 +5,7 @@ package com.intellij.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.annotations.ApiStatus
 
 data class PathMapping(val localPath: String, val targetPath: String)
 
@@ -33,18 +34,20 @@ fun TargetEnvironment.getTargetPaths(localPath: String): List<String> {
 private fun TargetEnvironment.collectPathMappings(): List<PathMapping> =
   uploadVolumes.values.map { PathMapping(localPath = it.localRoot.toString(), targetPath = it.targetRoot) }
 
-private fun findPathVariants(mappings: Iterable<PathMapping>,
-                             sourcePath: String,
-                             sourcePathFun: (PathMapping) -> String,
-                             sourceFileSeparator: Char,
-                             destPathFun: (PathMapping) -> String,
-                             destFileSeparator: Char): List<String> {
+@ApiStatus.Internal
+fun findPathVariants(mappings: Iterable<PathMapping>,
+                     sourcePath: String,
+                     sourcePathFun: (PathMapping) -> String,
+                     sourceFileSeparator: Char,
+                     destPathFun: (PathMapping) -> String,
+                     destFileSeparator: Char): List<String> {
   return mappings.mapNotNull { mapping ->
     val sourceBase = sourcePathFun(mapping)
-    if (FileUtil.isAncestor(sourceBase, sourcePath, false)) {
+    if (isAncestor(sourceBase, sourcePath, sourceFileSeparator)) {
       val destBase = destPathFun(mapping)
       FileUtil.getRelativePath(sourceBase, sourcePath, sourceFileSeparator)?.let { relativeSourcePath ->
-        joinTargetPaths(destBase, relativeSourcePath, destFileSeparator)
+        val relativeDestPath = relativeSourcePath.replaceFileSeparator(sourceFileSeparator, destFileSeparator)
+        joinTargetPaths(destBase, relativeDestPath, fileSeparator = destFileSeparator)
       }
     }
     else {
@@ -53,21 +56,45 @@ private fun findPathVariants(mappings: Iterable<PathMapping>,
   }
 }
 
-fun joinTargetPaths(basePath: String, relativePath: String, fileSeparator: Char): String {
-  val normalizedBasePathForJoining = basePath
+private fun isAncestor(ancestor: String, file: String, fileSeparator: Char): Boolean =
+  if (fileSeparator == '\\') {
+    FileUtil.isAncestor(FileUtil.toSystemIndependentName(ancestor), FileUtil.toSystemIndependentName(file), false)
+  }
+  else {
+    FileUtil.isAncestor(ancestor, file, false)
+  }
+
+private fun String.replaceFileSeparator(currentFileSeparator: Char, newFileSeparator: Char): String =
+  if (currentFileSeparator == newFileSeparator) this else replace(currentFileSeparator, newFileSeparator)
+
+fun joinTargetPaths(vararg paths: String, fileSeparator: Char): String {
+  val iterator = paths.iterator()
+  var path = iterator.next()
     .normalizeFileSeparatorCharacter(fileSeparator)
     .removeRepetitiveFileSeparators(fileSeparator)
-    .ensureEndsWithFileSeparator(fileSeparator)
-  val normalizedRelativePath = relativePath
-    .normalizeFileSeparatorCharacter(fileSeparator)
-    .removeRepetitiveFileSeparators(fileSeparator)
-    .normalizeRelativePath(fileSeparator)
-  return "$normalizedBasePathForJoining$normalizedRelativePath"
+  while (iterator.hasNext()) {
+    val basePath = path
+      .ensureEndsWithFileSeparator(fileSeparator)
+    val normalizedRelativePath = iterator.next()
+      .normalizeFileSeparatorCharacter(fileSeparator)
+      .removeRepetitiveFileSeparators(fileSeparator)
+      .normalizeRelativePath(fileSeparator)
+    path = "$basePath$normalizedRelativePath"
+  }
+  return path
 }
 
-private fun String.normalizeFileSeparatorCharacter(fileSeparator: Char): String = if (fileSeparator == '\\') replace('/', fileSeparator) else this
+private fun String.normalizeFileSeparatorCharacter(fileSeparator: Char): String =
+  if (fileSeparator == '\\') replace('/', fileSeparator) else this
 
-private fun String.removeRepetitiveFileSeparators(fileSeparator: Char): String = replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+private fun String.removeRepetitiveFileSeparators(fileSeparator: Char): String =
+  if (fileSeparator == '\\' && startsWith("\\\\")) {
+    // keep leading double back slashes for Windows UNC paths (f.e. for WSL paths that starts with "\\wsl$" prefix)
+    "\\" + replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+  }
+  else {
+    replace("$fileSeparator$fileSeparator", fileSeparator.toString())
+  }
 
 private fun String.normalizeRelativePath(fileSeparator: Char): String =
   when {

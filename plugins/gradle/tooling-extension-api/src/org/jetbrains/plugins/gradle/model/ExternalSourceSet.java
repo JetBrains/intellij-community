@@ -27,6 +27,9 @@ public interface ExternalSourceSet extends Serializable {
   @Nullable
   String getTargetCompatibility();
 
+  @Nullable
+  String getJdkInstallationPath();
+
   Collection<ExternalDependency> getDependencies();
 
   @NotNull

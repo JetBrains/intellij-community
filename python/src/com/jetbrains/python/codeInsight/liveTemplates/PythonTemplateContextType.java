@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.liveTemplates;
 
-import com.intellij.codeInsight.template.EverywhereContextType;
+import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.PsiElementPattern;
@@ -21,29 +21,26 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-
 public abstract class PythonTemplateContextType extends TemplateContextType {
 
-  public PythonTemplateContextType(@NotNull String id,
-                                   @NotNull @NlsContexts.Label String presentableName,
-                                   @NotNull java.lang.Class<? extends TemplateContextType> baseContextType) {
-    super(id, presentableName, baseContextType);
+  public PythonTemplateContextType(@NotNull @NlsContexts.Label String presentableName) {
+    super(presentableName);
   }
 
   @Override
-  public boolean isInContext(@NotNull PsiFile file, int offset) {
-    if (isPythonLanguage(file, offset)) {
-      final PsiElement element = file.findElementAt(offset);
-
+  public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
+    PsiFile file = templateActionContext.getFile();
+    if (isPythonLanguage(file, templateActionContext.getStartOffset())) {
+      final PsiElement element = file.findElementAt(templateActionContext.getStartOffset());
       if (element != null) {
-        if (isAfterDot(element) || element instanceof PsiComment || isInsideStringLiteral(element) || isInsideParameterList(element)) {
-          return false;
+        if (!templateActionContext.isSurrounding()) {
+          if (isAfterDot(element) || element instanceof PsiComment || isInsideStringLiteral(element) || isInsideParameterList(element)) {
+            return false;
+          }
         }
-
         return isInContext(element);
       }
     }
-
     return false;
   }
 
@@ -70,7 +67,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
   public static class General extends PythonTemplateContextType {
 
     public General() {
-      super("Python", "Python", EverywhereContextType.class); //NON-NLS
+      super("Python"); //NON-NLS
     }
 
     @Override
@@ -80,9 +77,8 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
   }
 
   public static class Class extends PythonTemplateContextType {
-
     public Class() {
-      super("Python_Class", PyBundle.message("live.template.context.class"), General.class);
+      super(PyBundle.message("live.template.context.class"));
     }
 
     @Override
@@ -93,7 +89,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
 
   public static class TopLevel extends PythonTemplateContextType {
     public TopLevel() {
-      super("Python_Top_Level", PyBundle.message("live.template.context.top.level"), General.class);
+      super(PyBundle.message("live.template.context.top.level"));
     }
 
     @Override

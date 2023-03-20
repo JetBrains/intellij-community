@@ -1,16 +1,18 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
-import org.apache.log4j.Logger
+import com.intellij.util.JavaModuleOptions
+import com.intellij.util.system.OS
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.nio.file.Files
+import java.util.logging.Logger
 
 object Launcher {
 
-  private const val defaultDebugPort = 5050
-  private val logger = Logger.getLogger(Launcher::class.java)
+  private val logger = Logger.getLogger(Launcher::class.java.name)
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
@@ -41,7 +43,7 @@ object Launcher {
       "-Didea.suppress.statistics.report=true",
       "-Drsch.send.usage.stat=false",
       "-Duse.linux.keychain=false",
-      "-Didea.initially.ask.config=force-not",
+      "-Didea.initially.ask.config=never",
       "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
@@ -64,16 +66,23 @@ object Launcher {
       "-XX:HeapDumpPath=${paths.tempFolder.canonicalPath}",
       "-XX:MaxJavaStackTraceDepth=10000",
       "-XX:ReservedCodeCacheSize=240m",
-      "-XX:SoftRefLRUPolicyMSPerMB=50"
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:+BytecodeVerificationLocal",
+      "-Dshared.indexes.download.auto.consent=true"
     )
+
+    val optionsOpenedFile = paths.communityRootFolder.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+    val optionsOpenedPackages = JavaModuleOptions.readOptions(optionsOpenedFile.toPath(), OS.CURRENT)
+    cmd.addAll(optionsOpenedPackages)
 
     if (options.platformPrefix != null) {
       cmd.add("-Didea.platform.prefix=${options.platformPrefix}")
     }
 
-    if (!TeamCityHelper.isUnderTeamCity) {
+    if (!TeamCityHelper.isUnderTeamCity && options.debugPort != null) {
       val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
-      val port = if (options.debugPort > 0) options.debugPort else findFreeDebugPort()
+      val port = options.debugPort
 
       // changed in Java 9, now we have to use *: to listen on all interfaces
       val host = if (options.runInDocker) "*:" else ""
@@ -129,29 +138,12 @@ object Launcher {
   }
 
   fun findFreeDebugPort(): Int {
-    if (isDefaultPortFree()) {
-      return defaultDebugPort
-    }
-
-    val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
-    val result = socket.localPort
-    socket.reuseAddress = true
-    socket.close()
-    return result
-  }
-
-  private fun isDefaultPortFree(): Boolean {
-    var socket: ServerSocket? = null
-    try {
-      socket = ServerSocket(defaultDebugPort, 0, InetAddress.getByName("127.0.0.1"))
+    synchronized(this) {
+      val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
+      val result = socket.localPort
       socket.reuseAddress = true
-      return true
-    }
-    catch (e: Exception) {
-      return false
-    }
-    finally {
-      socket?.close()
+      socket.close()
+      return result
     }
   }
 }

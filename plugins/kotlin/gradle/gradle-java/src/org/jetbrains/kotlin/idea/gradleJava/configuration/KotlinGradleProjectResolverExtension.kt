@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -13,12 +13,19 @@ import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleSourceSetData
+import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataNodes
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
+import org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
+import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
+import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
@@ -31,6 +38,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
+import java.lang.reflect.Proxy
 import java.util.*
 
 val DataNode<out ModuleData>.kotlinGradleProjectDataNodeOrNull: DataNode<KotlinGradleProjectData>?
@@ -73,6 +81,9 @@ var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySo
     @Suppress("DEPRECATION_ERROR")
     get() = compilerArgumentsBySourceSet()
     set(value) = throw UnsupportedOperationException("Changing of compilerArguments is available only through GradleSourceSetData.")
+
+var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
+        by CopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 
 @Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION_ERROR")
 fun DataNode<out ModuleData>.compilerArgumentsBySourceSet(): CompilerArgumentsBySourceSet? =
@@ -154,7 +165,7 @@ var DataNode<out ModuleData>.pureKotlinSourceFolders: MutableCollection<String>
 
 
 class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() {
-    val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
+    private val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
     private val cacheManager = KotlinCompilerArgumentsCacheMergeManager
 
 
@@ -225,8 +236,9 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
     private fun initializeGradleSourceSetsData(kotlinModel: KotlinGradleModel, mainModuleNode: DataNode<ModuleData>) {
         kotlinModel.cachedCompilerArgumentsBySourceSet.forEach { (sourceSetName, cachedArgs) ->
             KotlinGradleSourceSetData(sourceSetName).apply {
-                cachedArgsInfo = cachedArgs
+                cachedArgsInfo = cachedArgs.copyIfNeeded() as CachedExtractedArgsInfo
                 additionalVisibleSourceSets = kotlinModel.additionalVisibleSourceSets.getValue(sourceSetName)
+                kotlinPluginVersion = kotlinModel.kotlinTaskProperties.getValue(sourceSetName).pluginVersion
                 mainModuleNode.kotlinGradleProjectDataNodeOrFail.createChild(KotlinGradleSourceSetData.KEY, this)
             }
         }
@@ -253,9 +265,9 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         .singleOrNull()
 
     private fun DataNode<out ModuleData>.getDependencies(ideProject: DataNode<ProjectData>): Collection<DataNode<out ModuleData>> {
-        val cache = kotlinGradleProjectDataOrFail.dependenciesCache
+        val cache = kotlinGradleProjectDataOrNull?.dependenciesCache ?: dependencyCacheFallback
         if (cache.containsKey(ideProject)) {
-            return cache[ideProject]!!
+            return cache.getValue(ideProject)
         }
         val outputToSourceSet = ideProject.getUserData(GradleProjectResolver.MODULES_OUTPUTS)
         val sourceSetByName = ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS) ?: return emptySet()
@@ -365,6 +377,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         if (!useModulePerSourceSet()) {
             super.populateModuleDependencies(gradleModule, ideModule, ideProject)
         }
+        ideModule.kotlinTaskPropertiesBySourceSet = gradleModel.kotlinTaskProperties
 
         addTransitiveDependenciesOnImplementedModules(gradleModule, ideModule, ideProject)
         addImplementedModuleNames(gradleModule, ideModule, ideProject, gradleModel)
@@ -465,5 +478,15 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             moduleDependencyData.isProductionOnTestDependency = targetModule.sourceSetName == "test"
             ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
         }
+
+        private var DataNode<out ModuleData>.dependencyCacheFallback by NotNullableCopyableDataNodeUserDataProperty(
+            Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
+            hashMapOf()
+        )
+
+        private fun CachedArgsInfo<*>.copyIfNeeded(): CachedArgsInfo<*> =
+            if (Proxy.isProxyClass(this.javaClass)) createCachedArgsInfo(this, HashMap<Any, Any>())
+            else this
+
     }
 }

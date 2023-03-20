@@ -1,0 +1,4 @@
+fun main() {}
+
+@Target(AnnotationTarget.TYPE)
+annotation class Anno

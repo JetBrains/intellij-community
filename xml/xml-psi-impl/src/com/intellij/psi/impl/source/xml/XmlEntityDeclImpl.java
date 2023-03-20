@@ -25,8 +25,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
   @Override
   public PsiElement getNameElement() {
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
-      if (e instanceof XmlTokenImpl) {
-        XmlTokenImpl xmlToken = (XmlTokenImpl)e;
+      if (e instanceof XmlTokenImpl xmlToken) {
 
         if (xmlToken.getTokenType() == XmlTokenType.XML_NAME) return xmlToken;
       }
@@ -80,12 +79,10 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     PsiElement dep = XmlElement.DEPENDING_ELEMENT.get(getParent());
     PsiElement dependsOnElement = getValueElement(dep instanceof PsiFile ? (PsiFile)dep : baseFile);
     String value = null;
-    if (dependsOnElement instanceof XmlAttributeValue) {
-      XmlAttributeValue attributeValue = (XmlAttributeValue)dependsOnElement;
+    if (dependsOnElement instanceof XmlAttributeValue attributeValue) {
       value = attributeValue.getValue();
     }
-    else if (dependsOnElement instanceof PsiFile) {
-      PsiFile file = (PsiFile)dependsOnElement;
+    else if (dependsOnElement instanceof PsiFile file) {
       value = file.getText();
     }
 

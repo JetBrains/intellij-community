@@ -31,8 +31,8 @@ public class MavenDuplicateDependenciesInspection extends DomElementsInspection<
   }
 
   @Override
-  public void checkFileElement(DomFileElement<MavenDomProjectModel> domFileElement,
-                               DomElementAnnotationHolder holder) {
+  public void checkFileElement(@NotNull DomFileElement<MavenDomProjectModel> domFileElement,
+                               @NotNull DomElementAnnotationHolder holder) {
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
     checkManagedDependencies(projectModel, holder);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.nj2k.printing
 
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
 import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Project) {
@@ -20,23 +21,30 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
 
     private fun JKSymbol.isFqNameExpected(owner: JKTreeElement?): Boolean {
         if (owner?.isSelectorOfQualifiedExpression() == true) return false
+        if (fqName == "kotlin.run") {
+            // Unfortunately, there are two overloads with FQN `kotlin.run`: with and without a receiver.
+            // So, if we generate a fully qualified call to `kotlin.run`, the reference shortener in a post-processing
+            // won't shorten the call to `run`, because it would change the resolution from one function to the other.
+            // In principle, it shouldn't matter, because we are generating the `run` calls to introduce a new scope,
+            // not to use a receiver. Both `run` and `kotlin.run` calls should work from the J2K point of view, but `run` is cleaner.
+            return false
+        }
+        if (this.safeAs<JKMultiverseFunctionSymbol>()?.isTopLevelBuiltInKotlinFunction == true) return true
         return this is JKClassSymbol || isStaticMember || isEnumConstant
     }
-
-    private fun JKSymbol.isFromJavaLangPackage() =
-        fqName.startsWith(JAVA_LANG_FQ_PREFIX)
 
     fun renderSymbol(symbol: JKSymbol, owner: JKTreeElement?): String {
         val name = symbol.name.escaped()
         if (!symbol.isFqNameExpected(owner)) return name
         val fqName = symbol.getDisplayFqName().escapedAsQualifiedName()
-        if (owner is JKClassAccessExpression && symbol.isFromJavaLangPackage()) return fqName
+        if (symbol.isFromJavaLangPackage()) return fqName
 
         return when {
             symbol is JKClassSymbol && canBeShortenedClassNameCache.canBeShortened(symbol) -> {
                 importStorage.addImport(fqName)
                 name
             }
+
             symbol.isStaticMember && symbol.containingClass?.isUnnamedCompanion == true -> {
                 val containingClass = symbol.containingClass ?: return fqName
                 val classContainingCompanion = containingClass.containingClass ?: return fqName
@@ -56,11 +64,20 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
         }
     }
 
-    private fun JKTreeElement.isSelectorOfQualifiedExpression() =
-        parent?.safeAs<JKQualifiedExpression>()?.selector == this
-
     companion object {
         private const val JAVA_LANG_FQ_PREFIX = "java.lang"
+
+        private val JKMultiverseFunctionSymbol.isTopLevelBuiltInKotlinFunction: Boolean
+            get() = fqName.isKotlinPackagePrefix && target.parent is KtFile
+
+        private val String.isKotlinPackagePrefix: Boolean
+            get() = this == "kotlin" || this.startsWith("kotlin.")
+
+        private fun JKSymbol.isFromJavaLangPackage(): Boolean =
+            fqName.startsWith(JAVA_LANG_FQ_PREFIX)
+
+        private fun JKTreeElement.isSelectorOfQualifiedExpression(): Boolean =
+            parent?.safeAs<JKQualifiedExpression>()?.selector == this
     }
 }
 

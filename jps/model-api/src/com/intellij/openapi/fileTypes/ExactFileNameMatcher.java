@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ExactFileNameMatcher implements FileNameMatcher {
@@ -20,7 +20,7 @@ public class ExactFileNameMatcher implements FileNameMatcher {
 
   @Override
   public boolean acceptsCharSequence(@NotNull CharSequence fileName) {
-    return Comparing.equal(fileName, myFileName, !myIgnoreCase);
+    return StringUtil.equal(fileName, myFileName, !myIgnoreCase);
   }
 
   @Override

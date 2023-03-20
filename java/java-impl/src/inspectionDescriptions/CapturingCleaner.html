@@ -1,10 +1,11 @@
 <html>
 <body>
-Reports <code>Runnable</code> passed to a <code>Cleaner.register()</code> capturing reference that leads to a memory leak.
+Reports <code>Runnable</code> passed to a <code>Cleaner.register()</code> capturing reference being registered.
+If the reference is captured, it will never be phantom reachable and the cleaning action will never be invoked.
 <p>Possible sources of this problem:</p>
 <ul>
   <li>Lambda using non-static methods, fields, or <code>this</code> itself</li>
-  <li>Non-static inner class (anonymous or not) always captures this reference</li>
+  <li>Non-static inner class (anonymous or not) always captures this reference in java up to 18 version</li>
   <li>Instance method reference</li>
   <li>Access to outer class non-static members from non-static inner class</li>
 </ul>

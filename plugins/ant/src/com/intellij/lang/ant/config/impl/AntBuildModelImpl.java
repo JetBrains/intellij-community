@@ -8,7 +8,6 @@ import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.dom.TargetResolver;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -35,13 +34,10 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   public AntBuildModelImpl(final AntBuildFile buildFile) {
     myFile = buildFile;
-    final Project project = myFile.getProject();
-
-    myTargets = new PsiCachedValueImpl<>(PsiManager.getInstance(project), () -> {
+    myTargets = new PsiCachedValueImpl<>(PsiManager.getInstance(myFile.getProject()), ()-> ReadAction.compute(()-> {
       final Pair<List<AntBuildTargetBase>, Collection<Object>> result = getTargetListImpl(this);
-      final Collection<Object> deps = result.getSecond();
-      return CachedValueProvider.Result.create(result.getFirst(), ArrayUtil.toObjectArray(deps));
-    });
+      return CachedValueProvider.Result.create(result.getFirst(), ArrayUtil.toObjectArray(result.getSecond()));
+    }));
   }
 
   @Override
@@ -63,14 +59,13 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Override
   public AntBuildTarget[] getTargets() {
-    final List<AntBuildTargetBase> list = getTargetsList();
-    return list.toArray(AntBuildTargetBase.EMPTY_ARRAY);
+    return myTargets.getValue().toArray(AntBuildTargetBase.EMPTY_ARRAY);
   }
 
   @Override
   public AntBuildTarget[] getFilteredTargets() {
     final List<AntBuildTargetBase> filtered = new ArrayList<>();
-    for (final AntBuildTargetBase buildTarget : getTargetsList()) {
+    for (final AntBuildTargetBase buildTarget : myTargets.getValue()) {
       if (myFile.isTargetVisible(buildTarget)) {
         filtered.add(buildTarget);
       }
@@ -89,7 +84,6 @@ public class AntBuildModelImpl implements AntBuildModelBase {
       return null;
     }
     return AntConfiguration.getActionIdPrefix(getBuildFile().getProject()) + modelName;
-
   }
 
   @Override
@@ -100,7 +94,12 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   @Override
   @Nullable
   public AntBuildTargetBase findTarget(final String name) {
-    return ReadAction.compute(() -> findTargetImpl(name, AntBuildModelImpl.this));
+    for (AntBuildTargetBase target : myTargets.getValue()) {
+      if (Comparing.strEqual(target.getName(), name)) {
+        return target;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -117,22 +116,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Override
   public boolean hasTargetWithActionId(final String id) {
-    return StreamEx.of(getTargetsList()).map(AntBuildTargetBase::getActionId).has(id);
-  }
-
-  private List<AntBuildTargetBase> getTargetsList() {
-    return ReadAction.compute(() -> myTargets.getValue());
-  }
-
-  @Nullable
-  private static AntBuildTargetBase findTargetImpl(final String name, final AntBuildModelImpl model) {
-    final List<AntBuildTargetBase> buildTargetBases = model.myTargets.getValue();
-    for (AntBuildTargetBase targetBase : buildTargetBases) {
-      if (Comparing.strEqual(targetBase.getName(), name)) {
-        return targetBase;
-      }
-    }
-    return null;
+    return StreamEx.of(myTargets.getValue()).map(AntBuildTargetBase::getActionId).has(id);
   }
 
   // todo: return list of dependent psi files as well

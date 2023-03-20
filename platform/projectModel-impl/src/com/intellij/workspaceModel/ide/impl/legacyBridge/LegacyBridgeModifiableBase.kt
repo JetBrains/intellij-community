@@ -2,14 +2,19 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.configurationStore.serialize
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.DummyVersionedEntityStorage
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 
 //todo restore internal visibility for members of this class after other classes will be moved to this module
-abstract class LegacyBridgeModifiableBase(val diff: WorkspaceEntityStorageBuilder, cacheStorageResult: Boolean) {
+abstract class LegacyBridgeModifiableBase(val diff: MutableEntityStorage, cacheStorageResult: Boolean) {
+  init {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+  }
+
   val entityStorageOnDiff = if (cacheStorageResult) VersionedEntityStorageOnBuilder(diff)
   else DummyVersionedEntityStorage(diff)
 

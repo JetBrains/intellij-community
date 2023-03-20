@@ -11,7 +11,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -21,6 +20,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -31,6 +32,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -60,6 +62,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
       setAutoScroll(state);
     }
   };
+  private final StructureTreeModel<SliceTreeStructure> myStructureTreeModel;
   private UsagePreviewPanel myUsagePreviewPanel;
   private final Project myProject;
   private boolean isDisposed;
@@ -92,28 +95,16 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
       }
     });
 
+    SliceTreeStructure treeStructure = new SliceTreeStructure(project, (SliceRootNode)rootNode);
+    myBuilder = new SliceTreeBuilder(treeStructure, dataFlowToThis, splitByLeafExpressions);
+
+    myStructureTreeModel = new StructureTreeModel<>(treeStructure, SliceTreeBuilder.SLICE_NODE_COMPARATOR, this);
+    final AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myStructureTreeModel, this);
+
     myTree = createTree();
+    myTree.setModel(asyncTreeModel);
 
-    myBuilder = new SliceTreeBuilder(myTree, project, dataFlowToThis, rootNode, splitByLeafExpressions);
-    myBuilder.setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
-
-    Disposer.register(this, myBuilder);
-
-    myBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), () -> {
-      if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
-      final SliceNode rootNode1 = myBuilder.getRootSliceNode();
-      myBuilder.expand(rootNode1, new Runnable() {
-        @Override
-        public void run() {
-          if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
-          List<SliceNode> children = rootNode1.myCachedChildren;
-          if (!children.isEmpty()) {
-            myBuilder.select(children.get(0)); //first there is ony one child
-          }
-        }
-      });
-      treeSelectionChanged();
-    });
+    TreeUtil.promiseSelectFirst(myTree);
 
     layoutPanel();
   }
@@ -223,11 +214,9 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     tree.setShowsRootHandles(true);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setSelectionPath(new TreePath(root.getPath()));
-    //ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
-    //PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(tree);
 
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
     ToolTipManager.sharedInstance().registerComponent(tree);
 
@@ -266,7 +255,9 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
       public void treeWillExpand(TreeExpansionEvent event) {
         TreePath path = event.getPath();
         SliceNode node = fromPath(path);
-        node.calculateDupNode();
+        if (node != null) {
+          node.calculateDupNode();
+        }
       }
     });
 
@@ -285,8 +276,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
 
   private static SliceNode fromPath(TreePath path) {
     Object lastPathComponent = path.getLastPathComponent();
-    if (lastPathComponent instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+    if (lastPathComponent instanceof DefaultMutableTreeNode node) {
       Object userObject = node.getUserObject();
       if (userObject instanceof SliceNode) {
         return (SliceNode)userObject;
@@ -303,7 +293,10 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     for (TreePath path : paths) {
       SliceNode sliceNode = fromPath(path);
       if (sliceNode != null) {
-        result.add(sliceNode.getValue().getUsageInfo());
+        final SliceUsage sliceUsage = sliceNode.getValue();
+        if (sliceUsage != null) {
+          result.add(sliceUsage.getUsageInfo());
+        }
       }
     }
     if (result.isEmpty()) return null;
@@ -330,8 +323,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     final ArrayList<Navigatable> navigatables = new ArrayList<>();
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+      if (lastPathComponent instanceof DefaultMutableTreeNode node) {
         Object userObject = node.getUserObject();
         if (userObject instanceof Navigatable) {
           navigatables.add((Navigatable)userObject);
@@ -358,6 +350,11 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
           return isPreview();
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
 
         @Override
@@ -391,10 +388,6 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
   public abstract void setPreview(boolean preview);
 
   protected void close() {
-    final ProgressIndicator progress = myBuilder.getUi().getProgress();
-    if (progress != null) {
-      progress.cancel();
-    }
   }
 
   private final class MyRefreshAction extends RefreshAction {
@@ -405,9 +398,9 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      SliceNode rootNode = (SliceNode)myBuilder.getRootNode().getUserObject();
+      SliceNode rootNode = myBuilder.getRootSliceNode();
       rootNode.setChanged();
-      myBuilder.addSubtreeToUpdate(myBuilder.getRootNode());
+      myStructureTreeModel.invalidateAsync();
     }
 
     @Override
@@ -418,6 +411,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public SliceTreeBuilder getBuilder() {
     return myBuilder;
   }

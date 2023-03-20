@@ -101,8 +101,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof RedmineRepository)) return false;
-    RedmineRepository that = (RedmineRepository)o;
+    if (!(o instanceof RedmineRepository that)) return false;
     if (!Objects.equals(getAPIKey(), that.getAPIKey())) return false;
     if (!Comparing.equal(getCurrentProject(), that.getCurrentProject())) return false;
     if (isAssignedToMe() != that.isAssignedToMe()) return false;

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchExpression;
 import com.intellij.psi.PsiSwitchStatement;
@@ -25,7 +25,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection {
 
@@ -35,11 +36,10 @@ public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "if.statement.with.too.many.branches.max.option"),
-      this, "m_limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message(
+        "if.statement.with.too.many.branches.max.option"), 0, 1000));
   }
 
   @Override
@@ -58,7 +58,7 @@ public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection
 
   private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       processSwitch(expression);
     }
 

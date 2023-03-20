@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.openapi.paths.GlobalPathReferenceProvider
@@ -20,6 +20,10 @@ internal class KotlinWebReferenceContributor : PsiReferenceContributor() {
         registrar.registerReferenceProvider(
             psiElement(KtStringTemplateExpression::class.java),
             object : PsiReferenceProvider() {
+                override fun acceptsTarget(target: PsiElement): Boolean {
+                    return false // web references do not point to any real PsiElement
+                }
+
                 override fun getReferencesByElement(
                     element: PsiElement,
                     context: ProcessingContext

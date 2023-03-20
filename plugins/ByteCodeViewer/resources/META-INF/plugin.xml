@@ -19,7 +19,6 @@ To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
-    <notificationGroup id="Package File" displayType="BALLOON"/>
   </extensions>
 
   <actions>

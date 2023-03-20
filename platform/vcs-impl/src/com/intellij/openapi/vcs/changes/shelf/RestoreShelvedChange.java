@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -35,6 +36,11 @@ public class RestoreShelvedChange extends DumbAwareAction {
     presentation
       .setDescription(VcsBundle.messagePointer("vcs.shelf.action.restore.description", deletedLists.size()));
     presentation.setEnabled(!isEmpty(deletedLists));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

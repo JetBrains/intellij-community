@@ -1,3 +1,4 @@
+// IGNORE_FE10_BINDING_BY_FIR
 // PROBLEM: none
 // WITH_STDLIB
 fun test(listOne: List<String>, listTwo: List<String>) {

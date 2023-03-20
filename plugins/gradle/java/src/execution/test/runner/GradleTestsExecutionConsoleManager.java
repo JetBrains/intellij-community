@@ -59,16 +59,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
-import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
+import org.jetbrains.plugins.gradle.service.execution.GradleTestExecutionUtil;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import java.io.File;
 
 import static org.jetbrains.plugins.gradle.util.GradleConstants.RUN_TASK_AS_TEST;
 
@@ -109,8 +106,7 @@ public class GradleTestsExecutionConsoleManager
     else {
       configuration = settings.getConfiguration();
     }
-    if (!(configuration instanceof ExternalSystemRunConfiguration)) return null;
-    ExternalSystemRunConfiguration externalSystemRunConfiguration = (ExternalSystemRunConfiguration)configuration;
+    if (!(configuration instanceof ExternalSystemRunConfiguration externalSystemRunConfiguration)) return null;
 
     if (consoleProperties == null) {
       consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
@@ -165,10 +161,6 @@ public class GradleTestsExecutionConsoleManager
     }
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
-      final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
-      if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), GradleConstants.TESTS_ARG_NAME)) {
-        executeTask.appendArguments("--tests *");
-      }
       consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
     }
 
@@ -266,36 +258,18 @@ public class GradleTestsExecutionConsoleManager
 
   @Override
   public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
-    if (task instanceof ExternalSystemExecuteTaskTask) {
-      final ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
-      if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
-
-      boolean isApplicable;
-
-      final String arguments = taskTask.getArguments();
-      isApplicable = arguments != null && StringUtil.contains(arguments, GradleConstants.TESTS_ARG_NAME);
-
-      isApplicable = isApplicable || ContainerUtil.find(taskTask.getTasksToExecute(), taskToExecute -> {
-        String projectPath = taskTask.getExternalProjectPath();
-        File file = new File(projectPath);
-        if (file.isFile()) {
-          projectPath = StringUtil.trimEnd(projectPath, "/" + file.getName());
+    if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
+      if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
+        var project = taskTask.getIdeProject();
+        var externalProjectPath = taskTask.getExternalProjectPath();
+        var tasksAndArguments = taskTask.getTasksToExecute();
+        var arguments = StringUtil.notNullize(taskTask.getArguments());
+        var commandLine = GradleTestExecutionUtil.parseCommandLine(tasksAndArguments, arguments);
+        if (GradleTestExecutionUtil.hasTestTasks(commandLine, project, externalProjectPath)) {
+          taskTask.putUserData(RUN_TASK_AS_TEST, true);
+          return true;
         }
-        var tasksIndices = GradleTasksIndices.getInstance(taskTask.getIdeProject());
-        var tasks = tasksIndices.findTasks(projectPath, taskToExecute);
-        var taskData = ContainerUtil.getFirstItem(tasks);
-        return taskData != null &&
-               (taskData.isTest() ||
-                "check".equals(taskData.getName()) &&
-                "verification".equals(taskData.getGroup())
-               );
-      }) != null;
-
-      if (isApplicable) {
-        taskTask.putUserData(RUN_TASK_AS_TEST, true);
       }
-
-      return isApplicable;
     }
     return false;
   }

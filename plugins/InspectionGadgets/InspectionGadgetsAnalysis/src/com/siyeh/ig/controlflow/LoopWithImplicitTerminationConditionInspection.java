@@ -61,7 +61,7 @@ public class LoopWithImplicitTerminationConditionInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiConditionalLoopStatement parent = ObjectUtils.tryCast(element.getParent(), PsiConditionalLoopStatement.class);
       if (parent == null) return;
@@ -70,8 +70,7 @@ public class LoopWithImplicitTerminationConditionInspection
       final PsiStatement body = parent.getBody();
       final boolean firstStatement = !(parent instanceof PsiDoWhileStatement);
       final PsiStatement statement;
-      if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      if (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 0) {
@@ -87,10 +86,9 @@ public class LoopWithImplicitTerminationConditionInspection
       else {
         statement = body;
       }
-      if (!(statement instanceof PsiIfStatement)) {
+      if (!(statement instanceof PsiIfStatement ifStatement)) {
         return;
       }
-      final PsiIfStatement ifStatement = (PsiIfStatement)statement;
       final PsiExpression ifCondition = ifStatement.getCondition();
       if (ifCondition == null) {
         return;
@@ -120,12 +118,10 @@ public class LoopWithImplicitTerminationConditionInspection
         replacedStatement.delete();
         return;
       }
-      if (!(replacingStatement instanceof PsiBlockStatement)) {
+      if (!(replacingStatement instanceof PsiBlockStatement blockStatement)) {
         replacedStatement.replace(replacingStatement);
         return;
       }
-      final PsiBlockStatement blockStatement =
-        (PsiBlockStatement)replacingStatement;
       final PsiCodeBlock codeBlock =
         blockStatement.getCodeBlock();
       final PsiElement[] children = codeBlock.getChildren();
@@ -151,19 +147,19 @@ public class LoopWithImplicitTerminationConditionInspection
   private static class LoopWithImplicitTerminationConditionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
       check(statement, false);
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
       check(statement, true);
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       check(statement, false);
     }
@@ -182,8 +178,7 @@ public class LoopWithImplicitTerminationConditionInspection
     private static boolean isLoopWithImplicitTerminationCondition(PsiLoopStatement statement, boolean firstStatement) {
       final PsiStatement body = statement.getBody();
       final PsiStatement bodyStatement;
-      if (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+      if (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 0) {
@@ -203,10 +198,9 @@ public class LoopWithImplicitTerminationConditionInspection
     }
 
     private static boolean isImplicitTerminationCondition(@Nullable PsiStatement statement) {
-      if (!(statement instanceof PsiIfStatement)) {
+      if (!(statement instanceof PsiIfStatement ifStatement)) {
         return false;
       }
-      final PsiIfStatement ifStatement = (PsiIfStatement)statement;
       final PsiStatement thenBranch = ifStatement.getThenBranch();
       if (containsUnlabeledBreakStatement(thenBranch)) {
         return true;
@@ -217,10 +211,9 @@ public class LoopWithImplicitTerminationConditionInspection
   }
 
   static boolean containsUnlabeledBreakStatement(@Nullable PsiStatement statement) {
-    if (!(statement instanceof PsiBlockStatement)) {
+    if (!(statement instanceof PsiBlockStatement blockStatement)) {
       return isUnlabeledBreakStatement(statement);
     }
-    final PsiBlockStatement blockStatement = (PsiBlockStatement)statement;
     final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
     final PsiStatement firstStatement = ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
     return isUnlabeledBreakStatement(firstStatement);
@@ -228,11 +221,9 @@ public class LoopWithImplicitTerminationConditionInspection
 
   private static boolean isUnlabeledBreakStatement(
     @Nullable PsiStatement statement) {
-    if (!(statement instanceof PsiBreakStatement)) {
+    if (!(statement instanceof PsiBreakStatement breakStatement)) {
       return false;
     }
-    final PsiBreakStatement breakStatement =
-      (PsiBreakStatement)statement;
     final PsiIdentifier identifier =
       breakStatement.getLabelIdentifier();
     return identifier == null;

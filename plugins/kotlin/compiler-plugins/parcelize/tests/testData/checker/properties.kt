@@ -22,7 +22,7 @@ class A(val firstName: String) : Parcelable {
 
 @Parcelize
 @Suppress("WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET")
-class B(<warning descr="[INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY] '@IgnoredOnParcel' is inapplicable to properties declared in the primary constructor">@IgnoredOnParcel</warning> val firstName: String) : Parcelable {
+class B(<warning descr="[INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY] '@IgnoredOnParcel' is inapplicable to properties without default value declared in the primary constructor">@IgnoredOnParcel</warning> val firstName: String) : Parcelable {
     @IgnoredOnParcel
     var a: String = ""
 

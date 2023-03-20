@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiJavaModuleReferenceElement;
-import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaPackageAccessibilityStatementElementType;
 import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -16,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.NotNullLazyValue.atomicLazy;
+import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsiElement<PsiPackageAccessibilityStatementStub> implements PsiPackageAccessibilityStatement {
@@ -24,16 +23,21 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
 
   public ClsPackageAccessibilityStatementImpl(PsiPackageAccessibilityStatementStub stub) {
     super(stub);
-    myPackageReference = new AtomicNullableLazyValue<PsiJavaCodeReferenceElement>() {
-      @Override
-      protected PsiJavaCodeReferenceElement compute() {
+    myPackageReference = atomicLazyNullable(() -> {
         String packageName = getPackageName();
-        return packageName != null ? new ClsJavaCodeReferenceElementImpl(ClsPackageAccessibilityStatementImpl.this, packageName) : null;
-      }
-    };
-    myModuleReferences = NotNullLazyValue.atomicLazy(() -> {
-      return ContainerUtil.map(getStub().getTargets(), target -> new ClsJavaModuleReferenceElementImpl(this, target));
+        return packageName != null ? new ClsJavaCodeReferenceElementImpl(this, packageName) : null;
     });
+    myModuleReferences = atomicLazy(() -> ContainerUtil.map(getStub().getTargets(), target -> new ClsJavaModuleReferenceElementImpl(this, target)));
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitPackageAccessibilityStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NotNull

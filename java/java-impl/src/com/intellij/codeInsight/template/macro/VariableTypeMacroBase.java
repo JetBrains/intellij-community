@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public abstract class VariableTypeMacroBase extends Macro {
   protected abstract PsiElement @Nullable [] getVariables(Expression[] params, final ExpressionContext context);
 

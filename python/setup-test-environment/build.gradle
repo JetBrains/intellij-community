@@ -3,6 +3,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 plugins {
@@ -39,8 +40,9 @@ envs {
   String python36version = "3.6.8"
   String python37version = "3.7.9"
   String python38version = "3.8.10"
-  String python39version = "3.9.5"
-  String python310version = "3.10.0"
+  String python39version = "3.9.13"
+  String python310version = "3.10.8"
+  String python311version = "3.11.0"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -51,7 +53,7 @@ envs {
     zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
     shouldUseZipsFromRepository = isWindows
   }
-  Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", false)
+  Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", "false").toBoolean()
 
   Closure createPython = { String pythonName,
                            String version,
@@ -82,7 +84,7 @@ envs {
                                                        : versionMinor
           String linkName = "python$versionMajor.$versionMinor"
 
-          Closure createLinkClosure = { java.nio.file.Path link, java.nio.file.Path existing ->
+          Closure createLinkClosure = { Path link, Path existing ->
             if (!link.toFile().exists()) Files.createLink(link, existing)
           }
 
@@ -105,11 +107,11 @@ envs {
      return
    }
 
-  createPython("py27_django11_full",
+  createPython("py27",
                python27version,
-               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages", "django-nose",
+               ["tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages",
                 "untangle"] + ( isWindows ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
+               "python2.7\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py38_django22_full",
@@ -117,7 +119,7 @@ envs {
                // The version of Jinja2 is fixed due to a bug in recent versions which breaks the debugging.
                // See: https://github.com/pallets/jinja/pull/1178.
                // The version of NumPy is fixed due to https://tinyurl.com/y3dm3h86.
-               ["ipython==7.8", "django==2.2", "behave", "jinja2==2.10.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
+               ["ipython==7.8", "django==2.2", "behave", "jinja2==3.1.2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                 "pytest-xdist", "untangle", "numpy==1.19.3", "pandas"],
                "python3.8\npython3\nipython\nipython780\nskeletons\ndjango\nbehave\nbehave-django\ntox\njinja2\npackaging" +
                "\npytest\nnose\ndjango-nose\nbehave-django\ndjango2\nxdist\nuntangle\npandas",
@@ -133,6 +135,12 @@ envs {
                python310version,
                [],
                "python3.10",
+               true)
+
+  createPython("python3.11",
+               python311version,
+               [],
+               "python3.11",
                true)
 
   // For tox
@@ -209,3 +217,4 @@ task build {
   mustRunAfter prepare
   dependsOn prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
 }
+

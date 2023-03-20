@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.plugins
 
@@ -20,7 +20,6 @@ class AndroidPlugin(context: Context) : Plugin(context) {
 
     override val settings: List<PluginSetting<*, *>> = listOf(
         androidSdkPath,
-        addAndroidExtensionPlugin,
     )
     override val pipelineTasks: List<PipelineTask> = listOf(
         addAndroidSdkToLocalProperties
@@ -37,15 +36,8 @@ class AndroidPlugin(context: Context) : Plugin(context) {
             tooltipText=KotlinNewProjectWizardBundle.message("plugin.android.setting.sdk.tooltip")
             isSavable = true
             isAvailable = isAndroidContainingProject
+            defaultValue = dynamic { AndroidSdkProvider.EP_NAME.extensions.firstNotNullOfOrNull { it.getSdkPath() } }
             shouldExists()
-        }
-
-        val addAndroidExtensionPlugin by booleanSetting(
-            "<ADD_ANDROID_EXTENSIONS_PLUGIN>>",
-            neededAtPhase = GenerationPhase.PROJECT_GENERATION,
-        ) {
-            isAvailable = isAndroidContainingProject
-            defaultValue = value(true)
         }
 
         private val isAndroidContainingProject = checker {

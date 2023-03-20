@@ -18,18 +18,37 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 
+import static com.intellij.testFramework.EditorTestUtil.*;
+
 public class CopyActionTest extends LightPlatformCodeInsightTestCase {
+
+  public static @NotNull String maybeSelection(@NotNull String line) {
+    if (!CopyAction.isCopyFromEmptySelectionToSelectLine()) {
+      return line;
+    }
+    return SELECTION_START_TAG + line + SELECTION_END_TAG;
+  }
+
+  public static @NotNull String maybeCaretOnLineStart(@NotNull String line) {
+    if (!CopyAction.isCopyFromEmptySelectionToMoveCaretToLineStart() || !line.contains(CARET_TAG)) {
+      return line;
+    }
+    return CARET_TAG + line.replace(CARET_TAG, "");
+  }
+
   public void testCopyWithoutSelection() {
-    prepare("first line\n" +
-            "second<caret> line\n" +
-            "third line");
+    prepare("""
+              first line
+              second<caret> line
+              third line""");
     copy();
     verifyResult("first line\n" +
-                 "<caret><selection>second line\n" +
-                 "</selection>third line",
+                 maybeCaretOnLineStart(maybeSelection("second<caret> line\n")) +
+                 "third line",
                  "second line\n"
     );
   }
@@ -41,8 +60,8 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
     assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(getEditor(), 6));
     copy();
     verifyResult("first line\n" +
-                 "<caret><selection>second line\n" +
-                 "</selection>third line",
+                 maybeCaretOnLineStart(maybeSelection("second line<caret>\n")) +
+                 "third line",
                  "second line\n"
     );
   }

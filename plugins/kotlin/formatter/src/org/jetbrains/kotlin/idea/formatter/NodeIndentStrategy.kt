@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -8,7 +8,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.NonNls
-import kotlin.collections.ArrayList
 
 abstract class NodeIndentStrategy {
 
@@ -16,7 +15,7 @@ abstract class NodeIndentStrategy {
 
     class ConstIndentStrategy(private val indent: Indent) : NodeIndentStrategy() {
 
-        override fun getIndent(node: ASTNode, settings: CodeStyleSettings): Indent? {
+        override fun getIndent(node: ASTNode, settings: CodeStyleSettings): Indent {
             return indent
         }
     }

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @autor: ilyas
- */
 public interface GrIfStatement extends GrStatement, GrControlStatement {
 
     @Nullable

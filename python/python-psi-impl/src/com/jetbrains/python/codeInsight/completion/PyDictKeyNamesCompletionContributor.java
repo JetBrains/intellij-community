@@ -12,7 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -32,6 +33,8 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * Complete known keys for dictionaries
  */
 public class PyDictKeyNamesCompletionContributor extends CompletionContributor implements DumbAware {
+  private static final String DEFAULT_QUOTE = "\"";
+
   public PyDictKeyNamesCompletionContributor() {
     extend(
       CompletionType.BASIC,
@@ -49,7 +52,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor i
           final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
           if (subscription == null) return;
           final PyExpression operand = subscription.getOperand();
-          if (addCompletionIfOperandIsTypedDict(operand, dictCompletion)) {
+          if (addCompletionIfOperandIsTypedDict(operand, subscription.getIndexExpression(), dictCompletion)) {
             return;
           }
           if (operand instanceof PyReferenceExpression) {
@@ -74,12 +77,17 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor i
    * @return true if an operand is a TypedDict
    */
   private static boolean addCompletionIfOperandIsTypedDict(@NotNull final PyExpression operand,
+                                                           @Nullable final PyExpression index,
                                                            @NotNull final CompletionResultSet dictCompletion) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(operand.getProject(), operand.getContainingFile());
     final PyType type = typeEvalContext.getType(operand);
     if (type instanceof PyTypedDictType && !((PyTypedDictType)type).isInferred()) {
+      String quote = DEFAULT_QUOTE;
+      if (index instanceof PyStringLiteralExpression) {
+        quote = ((PyStringLiteralExpression)index).getStringElements().get(0).getQuote();
+      }
       for (String key : ((PyTypedDictType)type).getFields().keySet()) {
-        dictCompletion.addElement(createElement("'" + key + "'"));
+        dictCompletion.addElement(createElement(quote + key + quote));
       }
       return true;
     }
@@ -91,8 +99,6 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor i
    *
    * @param original is original element
    * @param result   is initial completion result
-   * @param offset
-   * @return
    */
   private static CompletionResultSet createResult(@NotNull final PsiElement original,
                                                   @NotNull final CompletionResultSet result,
@@ -146,7 +152,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor i
         final PyExpression[] argumentList = list.getArguments();
         for (final PyExpression argument : argumentList) {
           if (argument instanceof PyKeywordArgument) {
-            result.addElement(createElement("'" + ((PyKeywordArgument)argument).getKeyword() + "'"));
+            result.addElement(createElement(DEFAULT_QUOTE + ((PyKeywordArgument)argument).getKeyword() + DEFAULT_QUOTE));
           }
         }
       }
@@ -203,7 +209,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor i
     item = LookupElementBuilder
       .create(key)
       .withTypeText("dict key")
-      .withIcon(PlatformIcons.PARAMETER_ICON);
+      .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter));
 
     if (addHandler) {
       item = item.withInsertHandler(new InsertHandler<>() {

@@ -1,3 +1,0 @@
-version = "7.1.*"
-python2 = true
-obsolete_since = "8.0"

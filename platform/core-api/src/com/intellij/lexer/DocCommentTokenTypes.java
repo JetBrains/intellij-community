@@ -29,4 +29,7 @@ public interface DocCommentTokenTypes {
   default IElementType tagValueQuote() {
     return commentData();
   }
+  default IElementType tagValueColon() {
+    return commentData();
+  }
 }

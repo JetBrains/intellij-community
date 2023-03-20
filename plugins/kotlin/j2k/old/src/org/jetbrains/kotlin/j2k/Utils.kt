@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -112,7 +112,7 @@ fun PsiMember.isImported(file: PsiJavaFile): Boolean {
     }
 }
 
-fun PsiExpression.isNullLiteral() = this is PsiLiteralExpression && type == PsiType.NULL
+fun PsiExpression.isNullLiteral() = this is PsiLiteralExpression && type == PsiTypes.nullType()
 
 // TODO: set origin for facade classes in library
 fun isFacadeClassFromLibrary(element: PsiElement?) = element is KtLightClass && element.kotlinOrigin == null

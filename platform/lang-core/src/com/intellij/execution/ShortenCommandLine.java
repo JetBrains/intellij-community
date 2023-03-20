@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -64,22 +62,5 @@ public enum ShortenCommandLine {
     if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) return ARGS_FILE;
     if (JdkUtil.useClasspathJar()) return MANIFEST;
     return CLASSPATH_FILE;
-  }
-
-  /** @deprecated do not use in a new code */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static ShortenCommandLine readShortenClasspathMethod(@NotNull Element element) {
-    Element mode = element.getChild("shortenClasspath");
-    return mode != null ? valueOf(mode.getAttributeValue("name")) : null;
-  }
-
-  /** @deprecated do not use in a new code */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void writeShortenClasspathMethod(@NotNull Element element, ShortenCommandLine shortenCommandLine) {
-    if (shortenCommandLine != null) {
-      element.addContent(new Element("shortenClasspath").setAttribute("name", shortenCommandLine.name()));
-    }
   }
 }

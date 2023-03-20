@@ -9,27 +9,29 @@ import com.siyeh.ipp.IPPTestCase;
 public class MergeParallelIfsIntentionTest extends IPPTestCase {
 
   public void testCommentsAreKept() {
-    doTest("class C {\n" +
-           "    void m(boolean b) {\n" +
-           "        if/*_Merge 'if's*/ (b) //simple end comment\n" +
-           "                {\n" +
-           "                        System.out.println(2); //1\n" +
-           "    }\n" +
-           "        if (b) {//2\n" +
-           "            System.out.println(/*3*/1);//4\n" +
-           "        }//5\n" +
-           "    }\n" +
-           "}",
+    doTest("""
+             class C {
+                 void m(boolean b) {
+                     if/*_Merge 'if's*/ (b) //simple end comment
+                             {
+                                     System.out.println(2); //1
+                 }
+                     if (b) {//2
+                         System.out.println(/*3*/1);//4
+                     }//5
+                 }
+             }""",
 
-           "class C {\n" +
-           "    void m(boolean b) {\n" +
-           "        //simple end comment\n" +
-           "        if (b) {\n" +
-           "            System.out.println(2); //1\n" +
-           "            //2\n" +
-           "            System.out.println(/*3*/1);//4\n" +
-           "        }\n" +
-           "    }\n" +
-           "}");
+           """
+             class C {
+                 void m(boolean b) {
+                     //simple end comment
+                     if (b) {
+                         System.out.println(2); //1
+                         //2
+                         System.out.println(/*3*/1);//4
+                     }
+                 }
+             }""");
   }
 }

@@ -44,7 +44,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
   private JPanel myPanel;
   private JPanel myServersPanel;
   private final JBList<TaskRepository> myRepositoriesList;
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   private JPanel myToolbarPanel;
   private JPanel myRepositoryEditor;
   private JBLabel myServersLabel;
@@ -57,10 +57,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   private final Consumer<TaskRepository> myChangeListener;
   private int count;
-  private final Map<TaskRepository, String> myRepoNames = ConcurrentFactoryMap.createMap(repository->
-      Integer.toString(count++)
-
-  );
+  private final Map<TaskRepository, String> myRepoNames = ConcurrentFactoryMap.createMap(repository -> Integer.toString(count++));
   private final TaskManagerImpl myManager;
 
   public TaskRepositoriesConfigurable(final Project project) {
@@ -68,7 +65,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     myProject = project;
     myManager = (TaskManagerImpl)TaskManager.getManager(project);
 
-    myRepositoriesList = new JBList();
+    myRepositoriesList = new JBList<>();
     myRepositoriesList.getEmptyText().setText(TaskBundle.message("settings.no.servers"));
 
     myServersLabel.setLabelFor(myRepositoriesList);
@@ -79,8 +76,8 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     groups.sort(null);
 
     final List<AnAction> createActions = new ArrayList<>();
-    for (final TaskRepositoryType repositoryType : groups) {
-      for (final TaskRepositorySubtype subtype : (List<TaskRepositorySubtype>)repositoryType.getAvailableSubtypes()) {
+    for (final TaskRepositoryType<?> repositoryType : groups) {
+      for (final TaskRepositorySubtype subtype : repositoryType.getAvailableSubtypes()) {
         createActions.add(new AddServerAction(subtype) {
           @Override
           protected TaskRepository getRepository() {
@@ -102,7 +99,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
           group.add(aMyAdditional);
         }
         Set<TaskRepository> repositories = RecentTaskRepositories.getInstance().getRepositories();
-        repositories.removeAll(myRepositories);
+        myRepositories.forEach(repositories::remove);
         if (!repositories.isEmpty()) {
           group.add(Separator.getInstance());
           for (final TaskRepository repository : repositories) {
@@ -128,7 +125,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
         TaskRepository repository = getSelectedRepository();
         if (repository != null) {
 
-          CollectionListModel model = (CollectionListModel)myRepositoriesList.getModel();
+          CollectionListModel<TaskRepository> model = getListModel();
           model.remove(repository);
           myRepositories.remove(repository);
 
@@ -164,12 +161,16 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
       label.setText(value.getPresentableName());
     }));
 
-    myChangeListener = repository -> ((CollectionListModel)myRepositoriesList.getModel()).contentsChanged(repository);
+    myChangeListener = repository -> getListModel().contentsChanged(repository);
+  }
+
+  private CollectionListModel<TaskRepository> getListModel() {
+    return (CollectionListModel<TaskRepository>)myRepositoriesList.getModel();
   }
 
   private void addRepository(TaskRepository repository) {
     myRepositories.add(repository);
-    ((CollectionListModel)myRepositoriesList.getModel()).add(repository);
+    getListModel().add(repository);
     addRepositoryEditor(repository);
     myRepositoriesList.setSelectedIndex(myRepositoriesList.getModel().getSize() - 1);
   }
@@ -210,7 +211,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   @Override
   public boolean isModified() {
-    return !myRepositories.equals(getReps());
+    return !myRepositories.equals(Arrays.asList(myManager.getAllRepositories()));
   }
 
   @Override
@@ -229,7 +230,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 //    ((CardLayout)myRepositoryEditor.getLayout()).show(myRepositoryEditor, );
     myRepositories.clear();
 
-    CollectionListModel listModel = new CollectionListModel(new ArrayList());
+    CollectionListModel<TaskRepository> listModel = new CollectionListModel<>(new ArrayList<>());
     for (TaskRepository repository : myManager.getAllRepositories()) {
       TaskRepository clone = repository.clone();
       assert clone.equals(repository) : repository.getClass().getName();
@@ -248,10 +249,6 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     }
   }
 
-  private List<TaskRepository> getReps() {
-    return Arrays.asList(myManager.getAllRepositories());
-  }
-
   @Override
   public void disposeUIResources() {
     for (TaskRepositoryEditor editor : myEditors) {
@@ -268,8 +265,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
   @Nullable
   @Override
   public Runnable enableSearch(String option) {
-    TaskRepository matched =
-      myRepositories.stream().filter(repository -> repository.getRepositoryType().getName().contains(option)).findFirst().orElse(null);
+    TaskRepository matched = ContainerUtil.find(myRepositories, repository -> repository.getRepositoryType().getName().contains(option));
     return matched == null ? null : () -> myRepositoriesList.setSelectedValue(matched, true);
   }
 

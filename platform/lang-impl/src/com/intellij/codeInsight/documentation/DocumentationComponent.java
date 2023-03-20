@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,12 +11,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.actions.WindowAction;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ide.DocumentationUtil;
-import com.intellij.lang.documentation.impl.DocumentationRequest;
-import com.intellij.lang.documentation.impl.ImplKt;
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.model.Pointer;
 import com.intellij.navigation.TargetPresentation;
@@ -44,6 +41,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest;
+import com.intellij.platform.backend.documentation.impl.ImplKt;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -74,6 +73,15 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
+
+/**
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationUI
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+ * @see com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
+ * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
+ */
+@Deprecated
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =
@@ -93,10 +101,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private DocumentationManager myManager;
   private SmartPsiElementPointer<PsiElement> myElement;
   private long myModificationCount;
-
-  private static final String QUICK_DOC_FONT_SIZE_V1_PROPERTY = "quick.doc.font.size"; // 2019.3 or earlier versions
-  private static final String QUICK_DOC_FONT_SIZE_V2_PROPERTY = "quick.doc.font.size.v2"; // 2020.1 EAP
-  private static final String QUICK_DOC_FONT_SIZE_V3_PROPERTY = "quick.doc.font.size.v3"; // 2020.1 or later versions
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
@@ -126,16 +130,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
    * To migrate: compute pointer and presentation on a BG thread, then transfer to the EDT
    * and call {@link DocumentationUtil#documentationComponent(Project, Pointer, TargetPresentation, Disposable)} with the prepared data.
    */
+  @SuppressWarnings("TestOnlyProblems") // KTIJ-19938
   @Deprecated
   public static @NotNull JComponent createAndFetch(
     @NotNull Project project,
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    if (Registry.is("documentation.v2") && Registry.is("documentation.v2.component")) {
+    if (isDocumentationV2Enabled()) {
       DocumentationRequest request;
-      try (AccessToken ignored = SlowOperations.allowSlowOperations("old API fallback")) {
-        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element));
+      try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
+        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
       }
       return DocumentationUtil.documentationComponent(project, request, disposable);
     }
@@ -302,8 +307,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     else if (myManager.myToolWindow != null) {
       Disposer.register(myManager.myToolWindow.getContentManager(), this);
     }
-    myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, HELP_DATA_PROVIDER);
-    myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, HELP_DATA_PROVIDER);
+    DataManager.registerDataProvider(myEditorPane, HELP_DATA_PROVIDER);
+    DataManager.registerDataProvider(myScrollPane, HELP_DATA_PROVIDER);
 
     updateControlState();
   }
@@ -376,48 +381,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @NotNull
   public static FontSize getQuickDocFontSize() {
-    FontSize v1 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V1_PROPERTY, true);
-    FontSize v2 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V2_PROPERTY, true);
-    FontSize v3 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V3_PROPERTY, false);
-    if (v3 != null) {
-      return v3;
-    }
-    if (v2 != null) {
-      v3 = migrateV2ToV3(v2);
-      setQuickDocFontSize(v3);
-      return v3;
-    }
-    if (v1 != null) {
-      v3 = migrateV2ToV3(migrateV1ToV2(v1));
-      setQuickDocFontSize(v3);
-      return v3;
-    }
-    return FontSize.SMALL;
-  }
-
-  private static @NotNull FontSize migrateV1ToV2(@NotNull FontSize size) {
-    return size == FontSize.X_LARGE ? FontSize.XX_LARGE : size == FontSize.LARGE ? FontSize.X_LARGE : size;
-  }
-
-  private static @NotNull FontSize migrateV2ToV3(@NotNull FontSize size) {
-    return size == FontSize.X_SMALL ? FontSize.XX_SMALL : size == FontSize.SMALL ? FontSize.X_SMALL : size;
-  }
-
-  @Nullable
-  private static FontSize readFontSizeFromSettings(@NotNull String propertyName, boolean unsetAfterReading) {
-    String strValue = PropertiesComponent.getInstance().getValue(propertyName);
-    if (strValue != null) {
-      if (unsetAfterReading) PropertiesComponent.getInstance().unsetValue(propertyName);
-      try {
-        return FontSize.valueOf(strValue);
-      }
-      catch (IllegalArgumentException ignored) {}
-    }
-    return null;
+    return DocumentationFontSize.getDocumentationFontSize();
   }
 
   public static void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_V3_PROPERTY, fontSize.toString());
+    DocumentationFontSize.setDocumentationFontSize(fontSize);
   }
 
   public boolean isEmpty() {
@@ -463,7 +431,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private long getCurrentModificationCount() {
-    return myElement != null ? PsiModificationTracker.SERVICE.getInstance(myElement.getProject()).getModificationCount() : -1;
+    return myElement != null ? PsiModificationTracker.getInstance(myElement.getProject()).getModificationCount() : -1;
   }
 
   public void setText(@NotNull @Nls String text, @Nullable PsiElement element, @Nullable DocumentationProvider provider) {
@@ -751,6 +719,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         presentation.setVisible(presentation.isEnabled());
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   protected class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -770,6 +743,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (!isToolbar(e)) {
         presentation.setVisible(presentation.isEnabled());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -829,6 +807,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(hasExternalDoc());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private boolean hasExternalDoc() {
@@ -859,28 +842,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myHint = null;
   }
 
-  private static class Context {
-    final SmartPsiElementPointer<PsiElement> element;
-    final @Nls String text;
-    final String externalUrl;
-    final DocumentationProvider provider;
-    final Rectangle viewRect;
-    final int highlightedLink;
-
-    Context(SmartPsiElementPointer<PsiElement> element,
-            @Nls String text,
-            String externalUrl,
-            DocumentationProvider provider,
-            Rectangle viewRect,
-            int highlightedLink) {
-      this.element = element;
-      this.text = text;
-      this.externalUrl = externalUrl;
-      this.provider = provider;
-      this.viewRect = viewRect;
-      this.highlightedLink = highlightedLink;
-    }
-
+  private record Context(SmartPsiElementPointer<PsiElement> element,
+                         @Nls String text,
+                         String externalUrl,
+                         DocumentationProvider provider,
+                         Rectangle viewRect, int highlightedLink) {
     @NotNull
     Context withText(@NotNull @Nls String text) {
       return new Context(element, text, externalUrl, provider, viewRect, highlightedLink);
@@ -914,6 +880,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Registry.get("documentation.show.toolbar").setValue(state);
       updateControlState();
@@ -927,10 +898,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       var project = e.getProject();
       e.getPresentation().setEnabledAndVisible(project != null && LookupManager.getInstance(project).getActiveLookup() != null);
       super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -962,6 +938,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myToolwindowCallback.run();
     }
@@ -975,6 +956,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(myHint != null && (myManuallyResized || myHint.getDimensionServiceKey() != null));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

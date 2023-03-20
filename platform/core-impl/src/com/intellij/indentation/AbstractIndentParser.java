@@ -22,6 +22,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,12 +93,7 @@ public abstract class AbstractIndentParser implements PsiParser {
   }
 
   protected static boolean tokenIn(@Nullable final IElementType elementType, IElementType... tokens) {
-    for (IElementType token : tokens) {
-      if (elementType == token) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(tokens, elementType) != -1;
   }
 
   protected boolean currentTokenIn(IElementType... tokens) {

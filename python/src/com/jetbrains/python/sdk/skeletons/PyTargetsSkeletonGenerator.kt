@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.VolumeCopyingRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
@@ -16,17 +17,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.InvalidSdkException
+import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.div
+import kotlin.io.path.exists
 
 class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder: String?, project: Project?)
   : PySkeletonGenerator(skeletonPath, pySdk, currentFolder) {
@@ -40,6 +42,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
 
   private val foundBinaries: MutableSet<String> = HashSet()
 
+  @Deprecated("There should be no difference in your code between local and remote")
   private fun isLocalTarget() = targetEnvRequest is LocalTargetEnvironmentRequest
 
   override fun commandBuilder(): Builder {
@@ -69,6 +72,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
         targetRootPath = TargetEnvironment.TargetPath.Temporary()
       )
       targetEnvRequest.downloadVolumes += skeletonsDownloadRoot
+      (targetEnvRequest as? VolumeCopyingRequest)?.shouldCopyVolumes = true
       generatorScriptExecution.addParameter(skeletonsDownloadRoot.getTargetDownloadPath())
       if (myAssemblyRefs.isNotEmpty()) {
         generatorScriptExecution.addParameter("-c")
@@ -91,6 +95,7 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
           generatorScriptExecution.addParameter(myTargetModulePath)
         }
       }
+      // TODO: Unify code
       if (!isLocalTarget()) {
         val existingStateFile = Paths.get(skeletonsPath) / STATE_MARKER_FILE
         if (existingStateFile.exists()) {
@@ -107,22 +112,28 @@ class PyTargetsSkeletonGenerator(skeletonPath: String, pySdk: Sdk, currentFolder
           generatorScriptExecution.addParameter("--init-state-file")
         }
       }
+      generatorScriptExecution.addEnvironmentVariable(PythonEnvUtil.PYTHONDONTWRITEBYTECODE, "1")
 
       val targetEnvironment = targetEnvRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
+      try {
 
-      // XXX Make it automatic
-      targetEnvironment.uploadVolumes.values.forEach { it.upload(".", TargetProgressIndicator.EMPTY) }
+        // XXX Make it automatic
+        targetEnvironment.uploadVolumes.values.forEach { it.upload(".", TargetProgressIndicator.EMPTY) }
 
-      val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, sdk, emptyList())
-      val process = targetEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
-      val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
-      val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
-      listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
-      val result = capturingProcessHandler.runProcess()
+        val targetedCommandLine = generatorScriptExecution.buildTargetedCommandLine(targetEnvironment, sdk, emptyList())
+        val process = targetEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
+        val commandPresentation = targetedCommandLine.getCommandPresentation(targetEnvironment)
+        val capturingProcessHandler = CapturingProcessHandler(process, targetedCommandLine.charset, commandPresentation)
+        listener?.let { capturingProcessHandler.addProcessListener(LineWiseProcessOutputListener.Adapter(it)) }
+        val result = capturingProcessHandler.runProcess()
 
-      // XXX Make it automatic
-      targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }
-      return result
+        // XXX Make it automatic
+        targetEnvironment.downloadVolumes.values.forEach { it.download(".", EmptyProgressIndicator()) }
+        return result
+      }
+      finally {
+        targetEnvironment.shutdown()
+      }
     }
   }
 

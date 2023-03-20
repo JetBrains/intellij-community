@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @TestDataPath("/testData/codeInspection/nonExtendableApiUsage")
 class NonExtendableApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-
   private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
@@ -36,7 +35,11 @@ class NonExtendableApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase(
   override fun tearDown() {
     try {
       myFixture.disableInspections(inspection)
-    } finally {
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
       super.tearDown()
     }
   }

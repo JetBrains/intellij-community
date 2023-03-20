@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -17,23 +19,20 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.refactoring.suggested.range
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceData
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
-import org.jetbrains.kotlin.idea.core.util.range
-import org.jetbrains.kotlin.idea.core.util.start
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -44,7 +43,6 @@ import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
 
 class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
-    @Suppress("PrivatePropertyName")
     private val LOG = Logger.getInstance(ConvertJavaCopyPasteProcessor::class.java)
 
     override fun extractTransferableData(content: Transferable): List<TextBlockTransferableData> {
@@ -119,7 +117,8 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             rangeMarker.isGreedyToLeft = true
             rangeMarker.isGreedyToRight = true
 
-            KotlinCopyPasteReferenceProcessor().processReferenceData(project, editor, targetFile, bounds.start, referenceData.toTypedArray())
+            KotlinCopyPasteReferenceProcessor()
+                .processReferenceData(project, editor, targetFile, bounds.startOffset, referenceData.toTypedArray())
 
             runWriteAction {
                 explicitImports.forEach { fqName ->
@@ -147,7 +146,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             return true
         }
 
-        val textLength = data.startOffsets.indices.sumBy { data.endOffsets[it] - data.startOffsets[it] }
+        val textLength = data.startOffsets.indices.sumOf { data.endOffsets[it] - data.startOffsets[it] }
         // if the text to convert is short enough, try to do conversion without permission from user and skip the dialog if nothing converted
         if (textLength < 1000 && doConversionAndInsertImportsIfUnchanged()) return
 
@@ -212,7 +211,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             append(contextSuffix)
         }
 
-        val dummyFile = KtPsiFactory(targetFile.project).createAnalyzableFile("dummy.kt", fileText, targetFile)
+        val dummyFile = KtPsiFactory.contextual(targetFile).createFile("dummy.kt", fileText)
         val startOffset = blockStart
         val endOffset = blockEnd
         return KotlinCopyPasteReferenceProcessor().collectReferenceData(dummyFile, intArrayOf(startOffset), intArrayOf(endOffset)).map {
@@ -259,7 +258,7 @@ internal fun ElementAndTextList.convertCodeToKotlin(project: Project, targetModu
                 runReadAction { converter.elementsToKotlin(inputElements) }
             },
             JavaToKotlinAction.title,
-            false,
+            true,
             project
         )
 
@@ -332,7 +331,7 @@ internal fun confirmConvertJavaOnPaste(project: Project, isPlainText: Boolean): 
 fun ElementAndTextList.linesCount() =
     toList()
         .filterIsInstance<PsiElement>()
-        .sumBy { StringUtil.getLineBreakCount(it.text) }
+        .sumOf { StringUtil.getLineBreakCount(it.text) }
 
 fun checkUseNewJ2k(targetFile: KtFile): Boolean {
     if (targetFile is KtCodeFragment) return false
@@ -351,7 +350,7 @@ fun runPostProcessing(
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             {
                 val processor =
-                    J2kConverterExtension.extension(useNewJ2k).createWithProgressProcessor(
+                    J2kConverterExtension.extension(useNewJ2k = true).createWithProgressProcessor(
                         ProgressManager.getInstance().progressIndicator!!,
                         emptyList(),
                         postProcessor.phasesCount

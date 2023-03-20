@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.diff.FrameDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -9,7 +8,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.util.ui.tree.TreeUtil
 import java.beans.PropertyChangeListener
-import java.util.stream.Stream
 import javax.swing.JTree
 import javax.swing.SwingUtilities
 
@@ -36,11 +34,11 @@ class SimpleTreeDiffRequestProcessor(
     SwingUtilities.invokeLater { if (!isDisposed) updatePreview(component.isShowing, modelUpdateInProgress) }
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper> {
+  override fun iterateSelectedChanges(): Iterable<Wrapper> {
     return wrap(VcsTreeModelData.selected(tree))
   }
 
-  override fun getAllChanges(): Stream<Wrapper> {
+  override fun iterateAllChanges(): Iterable<Wrapper> {
     return wrap(VcsTreeModelData.all(tree))
   }
 
@@ -49,7 +47,7 @@ class SimpleTreeDiffRequestProcessor(
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
   }
 
-  private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return treeModelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
+  private fun wrap(treeModelData: VcsTreeModelData): Iterable<Wrapper> {
+    return treeModelData.iterateUserObjects(Change::class.java).map { ChangeWrapper(it) }
   }
 }

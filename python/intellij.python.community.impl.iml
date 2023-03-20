@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="libthrift" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
@@ -77,7 +78,7 @@
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="jcef" level="project" />
-    <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module-library">
@@ -105,7 +106,18 @@
     </orderEntry>
     <orderEntry type="library" name="jsr305" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.ml" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.python.community.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.python.psi" />
   </component>
 </module>

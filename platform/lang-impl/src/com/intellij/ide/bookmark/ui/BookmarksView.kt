@@ -1,37 +1,43 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
+import com.intellij.execution.Location
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
+import com.intellij.ide.bookmark.actions.registerNavigateOnEnterAction
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
+import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
 import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
 import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.preview.DescriptorPreview
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -41,19 +47,27 @@ import java.awt.event.FocusListener
 class BookmarksView(val project: Project, showToolbar: Boolean?)
   : Disposable, DataProvider, OccurenceNavigator, OnePixelSplitter(false, .3f, .1f, .9f) {
 
+  companion object {
+    val BOOKMARKS_VIEW: DataKey<BookmarksView> = DataKey.create("BOOKMARKS_VIEW")
+  }
+
   val isPopup = showToolbar == null
+
+  fun interface EditSourceListener { fun onEditSource() }
+  private val editSourceListeners: MutableList<EditSourceListener> = mutableListOf()
 
   private val state = BookmarksViewState.getInstance(project)
   private val preview = DescriptorPreview(this, false, null)
 
-  private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, stateForComponent(this), this)
+  private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
 
   private val structure = BookmarksTreeStructure(this)
-  val model = StructureTreeModel(structure, this)
+  val model = StructureTreeModel(structure, FolderNodeComparator(project), this)
   val tree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
   private val updater = FolderNodeUpdater(this)
+  private val ideView = IdeViewForBookmarksView(this)
 
   val selectedNode
     get() = TreeUtil.getAbstractTreeNode(TreeUtil.getSelectedPathIfOne(tree))
@@ -77,9 +91,24 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun dispose() = preview.close()
 
   override fun getData(dataId: String): Any? = when {
+    BOOKMARKS_VIEW.`is`(dataId) -> this
+    LangDataKeys.IDE_VIEW.`is`(dataId) -> ideView
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
+    PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
+      val selectedNodes = selectedNodes
+      DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
+    }
+    else -> null
+  }
+
+  @RequiresBackgroundThread
+  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?): Any? = when {
+    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile
+    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile }?.ifEmpty { null }?.toTypedArray()
+    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selection?.firstOrNull()?.module
+    Location.DATA_KEY.`is`(dataId) -> selection?.firstOrNull()?.location
     else -> null
   }
 
@@ -126,7 +155,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     override fun isSelected() = isEnabled && state.groupLineBookmarks
     override fun setSelected(selected: Boolean) {
       state.groupLineBookmarks = selected
-      model.invalidate()
+      model.invalidateAsync()
     }
   }
   val autoScrollFromSource = object : Option {
@@ -147,9 +176,9 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
   val openInPreviewTab = object : Option {
     override fun isEnabled() = isVertical || !state.showPreview
-    override fun isSelected() = UISettings.instance.openInPreviewTabIfPossible
+    override fun isSelected() = UISettings.getInstance().openInPreviewTabIfPossible
     override fun setSelected(selected: Boolean) {
-      UISettings.instance.openInPreviewTabIfPossible = selected
+      UISettings.getInstance().openInPreviewTabIfPossible = selected
       selectionAlarm.cancelAndRequest()
     }
   }
@@ -177,8 +206,13 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   private fun navigateToSource(requestFocus: Boolean) {
     val node = selectedNode ?: return
+    if (node.asVirtualFile?.fileType == FileTypes.UNKNOWN) { return }
     val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
     ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
+  }
+
+  fun addEditSourceListener(listener: EditSourceListener) {
+    editSourceListeners.add(listener)
   }
 
   init {
@@ -209,57 +243,60 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       override fun focusGained(event: FocusEvent?) = selectionAlarm.cancelAndRequest()
     })
 
-    TreeSpeedSearch(tree)
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
-    EditSourceOnEnterKeyHandler.install(tree)
-    EditSourceOnDoubleClickHandler.install(tree)
-    CustomizationUtil.installPopupHandler(tree, "Bookmarks.ToolWindow.PopupMenu", "popup@BookmarksView")
+    tree.registerNavigateOnEnterAction { editSourceListeners.forEach { it.onEditSource() } }
+    EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }
+
+    val group = ContextMenuActionGroup(tree)
+    val handler = PopupHandler.installPopupMenu(tree, group, ActionPlaces.BOOKMARKS_VIEW_POPUP)
+    PopupMenuPreloader.install(tree, ActionPlaces.BOOKMARKS_VIEW_POPUP, handler) { group }
 
     project.messageBus.connect(this).subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun groupsSorted() {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun groupAdded(group: BookmarkGroup) {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun groupRemoved(group: BookmarkGroup) {
-        model.invalidate() //TODO: node removed
+        model.invalidateAsync() //TODO: node removed
       }
 
       override fun groupRenamed(group: BookmarkGroup) {
-        model.invalidate() //TODO: node updated
+        model.invalidateAsync() //TODO: node updated
       }
 
       override fun bookmarksSorted(group: BookmarkGroup) {
-        model.invalidate() //TODO: node inserted
+        model.invalidateAsync() //TODO: node inserted
       }
 
       override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node inserted
+        model.invalidateAsync() //TODO: child node inserted
       }
 
       override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node removed
+        model.invalidateAsync() //TODO: child node removed
       }
 
       override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark) {
-        model.invalidate() //TODO: child node updated
+        model.invalidateAsync() //TODO: child node updated
       }
 
       override fun bookmarkTypeChanged(bookmark: Bookmark) {
-        model.invalidate() //TODO: child node updated for every group
+        model.invalidateAsync() //TODO: child node updated for every group
       }
 
       override fun defaultGroupChanged(oldGroup: BookmarkGroup?, newGroup: BookmarkGroup?) {
-        model.invalidate() //TODO: node updated or node moved?
+        model.invalidateAsync() //TODO: node updated or node moved?
       }
 
       override fun structureChanged(node: Any?) {
         when (node) {
-          null -> model.invalidate()
-          else -> model.invalidate(node, true)
+          null -> model.invalidateAsync()
+          else -> model.invalidateAsync(node, true)
         }
       }
     })

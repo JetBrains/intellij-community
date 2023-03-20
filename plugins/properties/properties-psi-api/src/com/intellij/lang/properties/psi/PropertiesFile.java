@@ -25,10 +25,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +48,7 @@ public interface PropertiesFile {
    * @return All properties found in this file.
    */
   @NotNull
+  @Unmodifiable
   List<IProperty> getProperties();
 
   /**
@@ -81,7 +82,6 @@ public interface PropertiesFile {
    * @see #addProperty(String, String)
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @NotNull
   PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
 

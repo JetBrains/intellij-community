@@ -5,21 +5,16 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
 public class RunDashboardComponentWrapper extends NonOpaquePanel {
   public static final Key<Integer> CONTENT_ID_KEY = Key.create("RunDashboardContentId");
 
-  private final Integer myContentId;
-
-  public RunDashboardComponentWrapper(JComponent component, @Nullable Integer contentId) {
-    super(new BorderLayout());
-    add(component, BorderLayout.CENTER);
-    myContentId = contentId;
-  }
+  private Integer myContentId;
 
   public @Nullable Integer getContentId() {
     return myContentId;
+  }
+
+  public void setContentId(@Nullable Integer contentId) {
+    myContentId = contentId;
   }
 }

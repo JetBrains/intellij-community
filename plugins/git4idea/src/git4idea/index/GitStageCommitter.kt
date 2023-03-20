@@ -13,10 +13,7 @@ import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
 import git4idea.GitUtil.getRepositoryForFile
-import git4idea.checkin.GitCommitOptions
-import git4idea.checkin.GitPushAfterCommitDialog
-import git4idea.checkin.GitRepositoryCommitter
-import git4idea.checkin.isPushAfterCommit
+import git4idea.checkin.*
 import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import git4idea.util.GitFileUtils.addPaths
@@ -27,49 +24,48 @@ internal class GitStageCommitter(
   project: Project,
   private val commitState: GitStageCommitState,
   private val toStage: Map<VirtualFile, Collection<FilePath>>,
-  commitContext: CommitContext
-) : AbstractCommitter(project, emptyList(), commitState.commitMessage, commitContext) {
+  val commitContext: CommitContext
+) : AbstractCommitter(project, commitState.commitMessage, false) {
 
   val successfulRepositories = mutableSetOf<GitRepository>()
   val failedRoots = mutableMapOf<VirtualFile, VcsException>()
 
   override fun commit() {
-    val roots = commitState.roots + commitContext.commitWithoutChangesRoots.map { it.path }
+    try {
+      val roots = commitState.roots + commitContext.commitWithoutChangesRoots.map { it.path }
 
-    for (root in roots) {
-      try {
-        val toStageInRoot = toStage[root]
-        if (toStageInRoot?.isNotEmpty() == true) {
-          addPaths(project, root, toStageInRoot, true)
+      for (root in roots) {
+        try {
+          val toStageInRoot = toStage[root]
+          if (toStageInRoot?.isNotEmpty() == true) {
+            addPaths(project, root, toStageInRoot, true)
+          }
+
+          val repository = getRepositoryForFile(project, root)
+          commitRepository(repository)
+          successfulRepositories.add(repository)
         }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          val rootError = e.asVcsException()
 
-        val repository = getRepositoryForFile(project, root)
-        commitRepository(repository)
-        successfulRepositories.add(repository)
+          addException(rootError)
+          failedRoots[root] = rootError
+        }
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        val rootError = e.asVcsException()
 
-        addException(rootError)
-        failedRoots[root] = rootError
+      if (failedRoots.isEmpty() && commitContext.isPushAfterCommit) {
+        GitPushAfterCommitDialog.showOrPush(project, successfulRepositories)
       }
+    }
+    finally {
+      refreshChanges()
     }
   }
 
-  override fun afterCommit() = Unit
-
-  override fun onSuccess() {
-    if (commitContext.isPushAfterCommit) {
-      GitPushAfterCommitDialog.showOrPush(project, successfulRepositories)
-    }
-  }
-
-  override fun onFailure() = Unit
-
-  override fun onFinish() {
+  private fun refreshChanges() {
     for (repository in successfulRepositories) {
       GitUtil.getRepositoryManager(project).updateRepository(repository.root)
       if (repository.isSubmodule()) {
@@ -84,5 +80,6 @@ internal class GitStageCommitter(
   private fun commitRepository(repository: GitRepository) {
     val committer = GitRepositoryCommitter(repository, GitCommitOptions(commitContext))
     committer.commitStaged(commitMessage)
+    GitPostCommitChangeConverter.markRepositoryCommit(commitContext, repository)
   }
 }

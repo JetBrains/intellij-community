@@ -20,7 +20,7 @@ public final class ConcurrencyUtil {
   public static final long DEFAULT_TIMEOUT_MS = 10;
 
   /**
-   * Invokes and waits all tasks using threadPool, avoiding thread starvation on the way
+   * Invokes and waits for all tasks using {@code executorService}, avoiding thread starvation on the way.
    * (see <a href="http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html">"A Thread Pool Puzzler"</a>).
    */
   public static <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks, ExecutorService executorService) throws Throwable {
@@ -38,7 +38,7 @@ public final class ConcurrencyUtil {
         Future<T> future = executorService.submit(t);
         futures.add(future);
       }
-      // force not started futures to execute using the current thread
+      // force not yet started futures to execute using the current thread
       for (Future<?> f : futures) {
         ((Runnable)f).run();
       }
@@ -68,7 +68,7 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * @return defaultValue if there is no entry in the map (in that case defaultValue is placed into the map),
+   * @return defaultValue if there is no entry in the map (in that case, defaultValue is placed into the map),
    *         or corresponding value if entry already exists.
    */
   @NotNull
@@ -114,7 +114,7 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * Service which executes tasks synchronously immediately after they submitted
+   * Service, which executes tasks synchronously, immediately after they submitted
    */
   @NotNull
   public static ExecutorService newSameThreadExecutorService() {
@@ -193,6 +193,21 @@ public final class ConcurrencyUtil {
       future.get();
     }
   }
+  public static void getAll(long timeout, @NotNull TimeUnit timeUnit, @NotNull Collection<? extends @NotNull Future<?>> futures)
+    throws ExecutionException, InterruptedException, TimeoutException {
+    long deadline = System.nanoTime() + timeUnit.toNanos(timeout);
+    for (Future<?> future : futures) {
+      long toWait = deadline - System.nanoTime();
+      if (toWait < 0) {
+        throw new TimeoutException();
+      }
+      try {
+        future.get(toWait, TimeUnit.NANOSECONDS);
+      }
+      catch (CancellationException ignored) {
+      }
+    }
+  }
 
   @NotNull
   @Contract(pure = true)
@@ -248,9 +263,10 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * Rethrow exception (wrapped in RuntimeException if necessary) if it's the completion result of the {@code task}
+   * Complete the {@code task} and rethrow exceptions (wrapped in RuntimeException if necessary), if any.
+   * Useful when the result of the Future is otherwise abandoned.
    */
-  public static void manifestExceptionsIn(@NotNull Future<?> task) {
+  public static void manifestExceptionsIn(@NotNull Future<?> task) throws RuntimeException, Error {
     try {
       task.get();
     }

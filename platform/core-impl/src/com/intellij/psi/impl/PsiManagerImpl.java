@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -60,7 +61,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
     myProject = project;
     myFileIndex = NotNullLazyValue.createValue(() -> FileIndexFacade.getInstance(project));
-    myModificationTracker = PsiModificationTracker.SERVICE.getInstance(project);
+    myModificationTracker = PsiModificationTracker.getInstance(project);
 
     myFileManager = new FileManagerImpl(this, myFileIndex);
 
@@ -179,7 +180,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  public void addPsiTreeChangeListener(@NotNull final PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
+  public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
     addPsiTreeChangeListener(listener);
     Disposer.register(parentDisposable, () -> removePsiTreeChangeListener(listener));
   }
@@ -190,7 +191,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   private static @NonNls String logPsi(@Nullable PsiElement element) {
-    return element == null ? " null" : element.getClass().getName();
+    return element == null ? "null" : element.getClass().getName();
   }
 
   @Override
@@ -413,7 +414,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       }
     }
     catch (Throwable e) {
-      LOG.error(e);
+      if (e instanceof ControlFlowException) {
+        LOG.warn(e);
+      }
+      else {
+        LOG.error(e);
+      }
     }
   }
 

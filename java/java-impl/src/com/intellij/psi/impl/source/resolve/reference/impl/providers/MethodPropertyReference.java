@@ -11,9 +11,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public class MethodPropertyReference extends BasicAttributeValueReference {
   private final boolean myReadable;
 

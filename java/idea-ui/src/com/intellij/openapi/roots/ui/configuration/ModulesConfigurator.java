@@ -38,12 +38,12 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +75,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ModifiableModuleModel myModuleModel;
   private boolean myModuleModelCommitted = false;
   private ProjectFacetsConfigurator myFacetsConfigurator;
-  private WorkspaceEntityStorageBuilder myWorkspaceEntityStorageBuilder;
+  private MutableEntityStorage myMutableEntityStorage;
 
   private StructureConfigurableContext myContext;
   private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<>();
@@ -83,8 +83,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   /**
    * @deprecated use {@link ModuleManager} to access modules instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ModulesConfigurator(Project project) {
     this(project, ProjectStructureConfigurable.getInstance(project));
   }
@@ -98,17 +97,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private void initModuleModel() {
     ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     if (moduleManager instanceof ModuleManagerBridgeImpl) {
-      myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
-      myModuleModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
+      myMutableEntityStorage = MutableEntityStorage.from(WorkspaceModel.getInstance(myProject).getCurrentSnapshot());
+      myModuleModel = ((ModuleManagerBridgeImpl)moduleManager).getModifiableModel(myMutableEntityStorage);
     }
     else {
       myModuleModel = moduleManager.getModifiableModel();
-      myWorkspaceEntityStorageBuilder = null;
+      myMutableEntityStorage = null;
     }
   }
 
-  public @Nullable WorkspaceEntityStorageBuilder getWorkspaceEntityStorageBuilder() {
-    return myWorkspaceEntityStorageBuilder;
+  public @Nullable MutableEntityStorage getWorkspaceEntityStorageBuilder() {
+    return myMutableEntityStorage;
   }
 
   public void setContext(final StructureConfigurableContext context) {
@@ -134,7 +133,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (myModuleModel != null) {
         myModuleModel.dispose();
       }
-      myWorkspaceEntityStorageBuilder = null;
+      myMutableEntityStorage = null;
 
       if (myFacetsConfigurator != null) {
         myFacetsConfigurator.disposeEditors();
@@ -172,7 +171,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @NotNull
   public ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
-    LOG.assertTrue(getModule(module.getName()) != null, "Module has been deleted");
+    String moduleName = module.getName();
+    LOG.assertTrue(getModule(moduleName) != null, "Module " + moduleName + " has been deleted");
     ModuleEditor editor = getModuleEditor(module);
     if (editor == null) {
       editor = doCreateModuleEditor(module);
@@ -216,10 +216,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         myModuleEditors.clear();
       }
       final Module[] modules = myModuleModel.getModules();
-      if (modules.length > 0) {
-        for (Module module : modules) {
-          getOrCreateModuleEditor(module);
-        }
+      for (Module module : modules) {
+        getOrCreateModuleEditor(module);
       }
     });
     myFacetsConfigurator.resetEditors();
@@ -382,31 +380,53 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public List<Module> addModule(Component parent, boolean anImport, String defaultModuleName) {
-    if (myProject.isDefault()) return null;
-    final ProjectBuilder builder = runModuleWizard(parent, anImport, defaultModuleName);
-    if (builder != null ) {
-      final List<Module> modules = new ArrayList<>();
-      final List<Module> committedModules;
-      if (builder instanceof ProjectImportBuilder<?>) {
-        final ModifiableArtifactModel artifactModel =
-          myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
-        committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
-      }
-      else {
-        committedModules = builder.commit(myProject, myModuleModel, this);
-      }
-      if (committedModules != null) {
-        modules.addAll(committedModules);
-      }
+  private List<Module> addModule(Producer<@Nullable AbstractProjectWizard> createWizardAction) {
+    var wizard = createWizardAction.produce();
+    if (null == wizard) return null;
+
+    try {
+      return doAddModule(wizard);
+    }
+    finally {
+      Disposer.dispose(wizard.getDisposable());
+    }
+  }
+
+  @Nullable
+  private List<Module> doAddModule(@NotNull AbstractProjectWizard wizard) {
+    var builder = runWizard(wizard);
+    if (null == builder) return null;
+
+    List<Module> modules;
+    if (builder instanceof ProjectImportBuilder<?>) {
+      var artifactModel = myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
+      modules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
+    }
+    else {
+      modules = builder.commit(myProject, myModuleModel, this);
+    }
+    if (null != modules && !modules.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         for (Module module : modules) {
-          getOrCreateModuleEditor(module);
+          if (module != null && getModule(module.getName()) != null) {
+            getOrCreateModuleEditor(module);
+          }
         }
       });
-      return modules;
     }
-    return null;
+    return modules;
+  }
+
+  @Nullable
+  public List<Module> addImportModule(Component parent) {
+    if (myProject.isDefault()) return null;
+    return addModule(() -> createImportModuleWizard(parent));
+  }
+
+  @Nullable
+  public List<Module> addNewModule() {
+    if (myProject.isDefault()) return null;
+    return addModule(this::createNewModuleWizard);
   }
 
   private Module createModule(final ModuleBuilder builder) {
@@ -435,30 +455,32 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  private ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport, String defaultModuleName) {
-    AbstractProjectWizard wizard;
-    if (anImport) {
-      wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
-      if (wizard == null) return null;
-      if (wizard.getStepCount() == 0) {
-        ProjectBuilder builder = getProjectBuilder(wizard);
-        Disposer.dispose(wizard.getDisposable());
-        return builder;
+  private ProjectBuilder runWizard(@Nullable AbstractProjectWizard wizard) {
+    if (wizard == null) return null;
+
+    if (wizard.getStepCount() == 0) {
+      var builder = wizard.getProjectBuilder();
+      if (!builder.validate(myProject, myProject)) {
+        builder = null;
       }
+      return builder;
     }
-    else {
-      wizard = new NewProjectWizard(myProject, dialogParent, this, defaultModuleName);
-    }
+
     if (!wizard.showAndGet()) {
       return null;
     }
     return wizard.getBuilder(myProject);
   }
 
-  private ProjectBuilder getProjectBuilder(@NotNull AbstractProjectWizard wizard) {
-    ProjectBuilder builder = wizard.getProjectBuilder();
-    if (!builder.validate(myProject, myProject)) return null;
-    return builder;
+  @Nullable
+  private AbstractProjectWizard createImportModuleWizard(Component dialogParent) {
+    return ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
+  }
+
+  @NotNull
+  private AbstractProjectWizard createNewModuleWizard() {
+    var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
+    return wizardFactory.create(myProject, this);
   }
 
   public void deleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
@@ -559,5 +581,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public StructureConfigurableContext getContext() {
     return myContext;
+  }
+
+  @ApiStatus.Internal
+  public interface NewProjectWizardFactory {
+    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider);
+  }
+
+  @ApiStatus.Internal
+  public static class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
+
+    @Override
+    public @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider) {
+      return new NewProjectWizard(project, modulesProvider, null);
+    }
   }
 }

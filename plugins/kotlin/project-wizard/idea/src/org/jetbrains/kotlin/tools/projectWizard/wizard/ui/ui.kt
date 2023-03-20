@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui
 
 import com.intellij.icons.AllIcons
@@ -13,7 +13,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -33,7 +33,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 internal inline fun label(@NlsContexts.Label text: String, bold: Boolean = false, init: JBLabel.() -> Unit = {}) = JBLabel().apply {
-    font = UIUtil.getLabelFont().deriveFont(if (bold) Font.BOLD else Font.PLAIN)
+    font = StartupUiUtil.getLabelFont().deriveFont(if (bold) Font.BOLD else Font.PLAIN)
     this.text = text
     init()
 }
@@ -72,6 +72,7 @@ val ModuleType.icon: Icon
     get() = when (this) {
         ModuleType.jvm -> KotlinIcons.Wizard.JVM
         ModuleType.js -> KotlinIcons.Wizard.JS
+        ModuleType.wasm -> KotlinIcons.Wizard.WEB
         ModuleType.native -> KotlinIcons.Wizard.NATIVE
         ModuleType.common -> KotlinIcons.SMALL_LOGO
         ModuleType.android -> KotlinIcons.Wizard.ANDROID
@@ -85,8 +86,10 @@ val ModuleSubType.icon: Icon
     get() = when (this) {
         ModuleSubType.jvm -> KotlinIcons.Wizard.JVM
         ModuleSubType.js -> KotlinIcons.Wizard.JS
+        ModuleSubType.wasm -> KotlinIcons.Wizard.WEB
         ModuleSubType.android, ModuleSubType.androidNativeArm32, ModuleSubType.androidNativeArm64 -> KotlinIcons.Wizard.ANDROID
-        ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.ios -> KotlinIcons.Wizard.IOS
+        ModuleSubType.iosArm32, ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.iosSimulatorArm64,
+        ModuleSubType.ios, ModuleSubType.iosCocoaPods -> KotlinIcons.Wizard.IOS
         ModuleSubType.linuxArm32Hfp, ModuleSubType.linuxMips32, ModuleSubType.linuxMipsel32, ModuleSubType.linuxX64 ->
             KotlinIcons.Wizard.LINUX
         ModuleSubType.macosX64 -> KotlinIcons.Wizard.MAC_OS
@@ -102,6 +105,7 @@ val ModuleKind.icon: Icon
         ModuleKind.singlePlatformJvm -> KotlinIcons.Wizard.JVM
         ModuleKind.target -> AllIcons.Nodes.Module
         ModuleKind.singlePlatformAndroid -> KotlinIcons.Wizard.ANDROID
+        ModuleKind.ios -> KotlinIcons.Wizard.IOS
     }
 
 val ModuleConfigurator.icon: Icon

@@ -21,14 +21,13 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
@@ -40,11 +39,13 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -62,10 +63,9 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.option"),
-                                          this, "ignoreSwitchStatementsWithDefault");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSwitchStatementsWithDefault", InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.option")));
   }
 
   @NotNull
@@ -78,7 +78,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       }
 
       @Override
-      public void visitSwitchExpression(PsiSwitchExpression expression) {
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
         processSwitchBlock(expression);
       }
 
@@ -166,15 +166,11 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   }
 
   private static boolean isDefaultOrNull(@Nullable PsiCaseLabelElement labelElement) {
-    return labelElement instanceof PsiDefaultCaseLabelElement ||
-           ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElement, PsiExpression.class));
+    return labelElement instanceof PsiDefaultCaseLabelElement || ExpressionUtils.isNullLiteral(labelElement);
   }
 
   private static boolean hasMatchingNull(@NotNull PsiSwitchLabelStatementBase label) {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
-    if (labelElementList == null) return false;
-    return ContainerUtil.exists(labelElementList.getElements(),
-                                element -> ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(element, PsiExpression.class))
-    );
+    return labelElementList != null && ContainerUtil.exists(labelElementList.getElements(), ExpressionUtils::isNullLiteral);
   }
 }

@@ -41,7 +41,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   private DescriptorTreeSearcher myDescriptorSearcher;
   private DescriptorTreeSearcher myDisplayDescriptorSearcher;
 
-  protected final Project      myProject;
+  protected final Project myProject;
 
   public NodeDescriptorFactoryImpl(Project project) {
     myProject = project;
@@ -61,12 +61,12 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
     final T oldDescriptor = findDescriptor(parent, descriptor, key);
 
-    if(oldDescriptor != null && oldDescriptor.getClass() == descriptor.getClass()) {
+    if (oldDescriptor != null && oldDescriptor.getClass() == descriptor.getClass()) {
       descriptor.setAncestor(oldDescriptor);
     }
     else {
       T displayDescriptor = findDisplayDescriptor(parent, descriptor, key.getDisplayKey());
-      if(displayDescriptor != null) {
+      if (displayDescriptor != null) {
         descriptor.displayAs(displayDescriptor);
       }
     }
@@ -77,7 +77,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
 
   @Nullable
-  protected <T extends NodeDescriptor>T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
+  protected <T extends NodeDescriptor> T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
     return myDisplayDescriptorSearcher.search(parent, descriptor, key);
   }
 
@@ -122,10 +122,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
         final ThreadReferenceProxy threadReferenceProxy = frameProxy.threadProxy();
         frameCount = threadReferenceProxy.frameCount();
         frameIndex = frameProxy.getFrameIndex();
-       }
-       catch (EvaluateException e) {
-         // ignored
-       }
+      }
+      catch (EvaluateException e) {
+        // ignored
+      }
     }
     final boolean isInitial = !fromTree.frameIdEquals(frameCount, frameIndex);
     DescriptorTree descriptorTree = new DescriptorTree(isInitial);
@@ -142,7 +142,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   @Override
   public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
     final DescriptorData<FieldDescriptorImpl> descriptorData;
-    if (objRef == null ) {
+    if (objRef == null) {
       if (!field.isStatic()) {
         LOG.error("Object reference is null for non-static field: " + field);
       }
@@ -196,10 +196,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, data);
   }
 
-  public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value){
+  public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value) {
     return getDescriptor(parent, new WatchItemData(text, value));
   }
-  
+
   private static class DescriptorTreeSearcher {
     private final MarkedDescriptorTree myDescriptorTree;
 
@@ -212,14 +212,14 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     @Nullable
     public <T extends NodeDescriptor> T search(NodeDescriptor parent, T descriptor, DescriptorKey<T> key) {
       final T result;
-      if(parent == null) {
+      if (parent == null) {
         result = myDescriptorTree.getChild(null, key);
       }
       else {
         final NodeDescriptor parentDescriptor = getSearched(parent);
         result = parentDescriptor != null ? myDescriptorTree.getChild(parentDescriptor, key) : null;
       }
-      if(result != null) {
+      if (result != null) {
         mySearchedDescriptors.put(descriptor, result);
       }
       return result;
@@ -243,7 +243,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     @Override
     protected NodeDescriptor getSearched(NodeDescriptor parent) {
       NodeDescriptor searched = super.getSearched(parent);
-      if(searched == null) {
+      if (searched == null) {
         return myDescriptorSearcher.getSearched(parent);
       }
       return searched;

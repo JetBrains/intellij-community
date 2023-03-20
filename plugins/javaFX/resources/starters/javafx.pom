@@ -5,20 +5,28 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>7.3</gradle.version>
-    <junit.version>5.8.1</junit.version>
-    <kotlin.version>1.5.31</kotlin.version>
+    <gradle.version>7.6</gradle.version>
+    <maven.version>3.8.5</maven.version>
+    <maven.wrapper.version>3.1.0</maven.wrapper.version>
+    <junit.version>5.9.1</junit.version>
+    <kotlin.version>1.7.20</kotlin.version>
+    <javamodularity.version>1.8.12</javamodularity.version>
 
     <!-- OpenJFX release trains -->
-    <fx.default.version>11.0.2</fx.default.version>
-    <fx11.version>11.0.2</fx11.version>
-    <fx12.version>12.0.2</fx12.version>
-    <fx13.version>13.0.2</fx13.version>
-    <fx14.version>14.0.2.1</fx14.version>
-    <fx15.version>15.0.1</fx15.version>
-    <fx16.version>16</fx16.version>
-    <fx17.version>17.0.1</fx17.version>
-    <fx18.version>18-ea+6</fx18.version>
+    <fx.default.version>17.0.2</fx.default.version>
+    <fx11.version>17.0.2</fx11.version>
+    <fx12.version>17.0.2</fx12.version>
+    <fx13.version>17.0.2</fx13.version>
+    <fx14.version>17.0.2</fx14.version>
+    <fx15.version>17.0.2</fx15.version>
+    <fx16.version>17.0.2</fx16.version>
+    <fx17.version>17.0.2</fx17.version>
+    <fx18.version>18.0.2</fx18.version>
+    <fx19.version>19</fx19.version>
+    <fx20.version>20-ea+4</fx20.version>
+
+    <fxgl11.version>11.17</fxgl11.version>
+    <fxgl17.version>17.2</fxgl17.version>
   </properties>
 
   <dependencyManagement>
@@ -31,38 +39,38 @@
       <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafxplugin</artifactId>
-        <version>0.0.10</version>
+        <version>0.0.13</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.10.1</version>
       </dependency>
       <dependency>
         <groupId>org.beryx</groupId>
         <artifactId>badass-jlink-plugin</artifactId>
-        <version>2.24.1</version>
+        <version>2.25.0</version>
       </dependency>
 
       <dependency>
         <groupId>org.controlsfx</groupId>
         <artifactId>controlsfx</artifactId>
-        <version>11.1.0</version>
+        <version>11.1.2</version>
       </dependency>
       <dependency>
         <groupId>com.dlsc.formsfx</groupId>
         <artifactId>formsfx-core</artifactId>
-        <version>11.3.2</version>
+        <version>11.5.0</version>
       </dependency>
       <dependency>
         <groupId>net.synedra</groupId>
         <artifactId>validatorfx</artifactId>
-        <version>0.1.13</version>
+        <version>0.4.0</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.ikonli</groupId>
         <artifactId>ikonli-javafx</artifactId>
-        <version>12.2.0</version>
+        <version>12.3.1</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.bootstrapfx</groupId>
@@ -72,7 +80,12 @@
       <dependency>
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
-        <version>11.48</version>
+        <version>17.1.15</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.almasb</groupId>
+        <artifactId>fxgl</artifactId>
+        <version>${fxgl17.version}</version>
       </dependency>
 
       <dependency>
@@ -88,7 +101,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.4.0</version>
+        <version>7.6</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
@@ -101,14 +114,14 @@
         <version>${kotlin.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.codehaus.groovy</groupId>
+        <groupId>org.apache.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>3.0.9</version>
+        <version>4.0.7</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>1.13.0</version>
+        <version>2.1.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

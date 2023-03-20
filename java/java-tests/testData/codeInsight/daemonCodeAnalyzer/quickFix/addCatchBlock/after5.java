@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 import java.io.IOException;
 
 class Test {
@@ -9,7 +9,7 @@ class Test {
     void m() {
         try (MyResource r = new MyResource()) {
         } catch (IOException e) {
-            <selection>e.printStackTrace();</selection>
+            <selection>throw new RuntimeException(e);</selection>
         }
     }
 }

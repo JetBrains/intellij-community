@@ -5,7 +5,7 @@ class B implements A, Z {
     }
 
     @Override
-    public void getFoo(String value) {
+    public void setFoo(String value) {
 
     }
 }

@@ -22,9 +22,31 @@ public abstract class PyPackageManager implements Disposable {
   @Topic.AppLevel
   public static final Topic<Listener> PACKAGE_MANAGER_TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
+  /**
+   * @param sdk must not be disposed if {@link Disposable}
+   */
   @NotNull
   public static PyPackageManager getInstance(@NotNull Sdk sdk) {
     return PyPackageManagers.getInstance().forSdk(sdk);
+  }
+
+  @NotNull
+  private final Sdk mySdk;
+
+  protected PyPackageManager(@NotNull Sdk sdk) {
+    mySdk = sdk;
+  }
+
+  /**
+   * @return if manager must be subscribed to SDK path changes
+   */
+  protected boolean shouldSubscribeToLocalChanges() {
+    return true;
+  }
+
+  @NotNull
+  protected final Sdk getSdk() {
+    return mySdk;
   }
 
   public abstract void installManagement() throws ExecutionException;

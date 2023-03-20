@@ -30,6 +30,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   /**
    * This method is left to preserve binary compatibility.
    */
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public FoldingBuilder forLanguage(@NotNull Language l) {
     return super.forLanguage(l);
@@ -81,7 +82,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
                                                                                    boolean quick) {
     try {
       if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
-        return FoldingDescriptor.EMPTY;
+        return FoldingDescriptor.EMPTY_ARRAY;
       }
 
       if (builder instanceof FoldingBuilderEx) {
@@ -89,7 +90,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
       }
       final ASTNode astNode = root.getNode();
       if (astNode == null || builder == null) {
-        return FoldingDescriptor.EMPTY;
+        return FoldingDescriptor.EMPTY_ARRAY;
       }
 
       return builder.buildFoldRegions(astNode, document);
@@ -99,7 +100,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     }
     catch (Exception e) {
       LOG.error(e);
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
   }
 }

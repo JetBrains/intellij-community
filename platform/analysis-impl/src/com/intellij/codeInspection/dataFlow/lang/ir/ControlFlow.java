@@ -18,8 +18,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents code block IR (list of instructions)
@@ -53,7 +52,13 @@ public final class ControlFlow {
     myElementToEndOffsetMap = flow.myElementToEndOffsetMap;
     myElementToStartOffsetMap = flow.myElementToStartOffsetMap;
     myLoopNumbers = flow.myLoopNumbers;
-    myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> instruction.bindToFactory(factory)).toImmutableList();
+    myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> {
+      Instruction updated = instruction.bindToFactory(factory);
+      if (updated.getIndex() == -1) {
+        updated.setIndex(instruction.getIndex());
+      }
+      return updated;
+    }).toImmutableList();
   }
 
   public @NotNull PsiElement getPsiAnchor() {
@@ -145,6 +150,23 @@ public final class ControlFlow {
   }
 
   /**
+   * @param reached set of reached instructions
+   * @return elements that were not reached (no instruction between element start and end was reached)
+   */
+  public @NotNull Set<PsiElement> computeUnreachable(@NotNull BitSet reached) {
+    Set<PsiElement> result = new HashSet<>();
+    myElementToStartOffsetMap.forEach((element, start) -> {
+      int end = myElementToEndOffsetMap.getOrDefault(element, -1);
+      if (end == -1) return;
+      int nextReached = reached.nextSetBit(start);
+      if (nextReached == -1 || nextReached >= end) {
+        result.add(element);
+      }
+    });
+    return result;
+  }
+
+  /**
    * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(DfType)}
    *
    * @param variable to check
@@ -168,8 +190,7 @@ public final class ControlFlow {
     int startOffset = getStartOffset(element).getInstructionOffset();
     List<DfaVariableValue> synthetics = new ArrayList<>();
     for (DfaValue value : myFactory.getValues()) {
-      if (value instanceof DfaVariableValue) {
-        DfaVariableValue var = (DfaVariableValue)value;
+      if (value instanceof DfaVariableValue var) {
         VariableDescriptor descriptor = var.getDescriptor();
         if (descriptor instanceof Synthetic && ((Synthetic)descriptor).myLocation >= startOffset) {
           synthetics.add(var);

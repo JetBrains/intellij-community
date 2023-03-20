@@ -63,6 +63,8 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   public static final TextAttributesKey JSON_INVALID_ESCAPE =
     TextAttributesKey.createTextAttributesKey("JSON.INVALID_ESCAPE", INVALID_STRING_ESCAPE);
 
+  public static final TextAttributesKey JSON_PARAMETER = TextAttributesKey.createTextAttributesKey("JSON.PARAMETER", KEYWORD);
+
 
   @NotNull
   @Override

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
-import java.lang.IllegalArgumentException
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 sealed class MethodEvaluator<T>(val method: Method?) {
     fun value(value: ObjectReference?, context: DefaultExecutionContext, vararg values: Value): T? {
@@ -37,7 +36,7 @@ sealed class MethodEvaluator<T>(val method: Method?) {
     }
 }
 
-sealed class FieldEvaluator<T>(val field: Field?, val thisRef: ReferenceTypeProvider) {
+sealed class FieldEvaluator<T>(val field: Field?, private val thisRef: ReferenceTypeProvider) {
     @Suppress("UNCHECKED_CAST")
     fun value(value: ObjectReference): T? =
             field?.let { value.getValue(it) as T? }

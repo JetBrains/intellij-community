@@ -64,8 +64,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (userObject instanceof MyUserObject) {
-        MyUserObject node = (MyUserObject)userObject;
+      if (userObject instanceof MyUserObject node) {
         setIcon(ModuleType.get(node.myModule).getIcon());
         append(node.myModule.getName(), node.myInCycle ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
@@ -214,7 +213,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.installActions(tree);
 
-    new TreeSpeedSearch(tree, o -> o.getLastPathComponent().toString(), true);
+    TreeSpeedSearch.installOn(tree, true, o -> o.getLastPathComponent().toString());
 
     DefaultActionGroup group = new DefaultActionGroup();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
@@ -259,6 +258,11 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       public void update(@NotNull AnActionEvent e) {
         analyzeDepsAction.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return analyzeDepsAction.getActionUpdateThread();
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.direction")) {
@@ -278,12 +282,22 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         e.getPresentation().setIcon(myState.forwardDirection ? AllIcons.Hierarchy.Subtypes : AllIcons.Hierarchy.Supertypes);
         super.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.tests"), null, AllIcons.Nodes.TestSourceFolder) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myState.includeTests;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -413,8 +427,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       }
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
           if (node.getUserObject() instanceof MyUserObject) {
             return ((MyUserObject)node.getUserObject()).myModule;
           }
@@ -425,8 +438,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       }
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
           if (node.getUserObject() instanceof MyUserObject) {
             return node.getUserObject();
           }

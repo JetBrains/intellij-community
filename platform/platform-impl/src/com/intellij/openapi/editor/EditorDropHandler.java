@@ -3,15 +3,17 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
 
 public interface EditorDropHandler {
-  boolean canHandleDrop(DataFlavor[] transferFlavors);
-  void handleDrop(Transferable t, final Project project, EditorWindow editorWindow);
-  default void handleDrop(Transferable t, final Project project, EditorWindow editorWindow, @SuppressWarnings("unused") int dropAction) {
+  boolean canHandleDrop(@NotNull DataFlavor @NotNull [] transferFlavors);
+  void handleDrop(@NotNull Transferable t, @Nullable Project project, @Nullable EditorWindow editorWindow);
+  default void handleDrop(@NotNull Transferable t, @Nullable Project project, @Nullable EditorWindow editorWindow, @SuppressWarnings("unused") int dropAction) {
     handleDrop(t, project, editorWindow);
   }
 }

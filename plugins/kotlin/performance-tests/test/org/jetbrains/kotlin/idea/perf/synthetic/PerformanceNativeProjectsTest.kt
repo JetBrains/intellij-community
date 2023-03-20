@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
@@ -10,10 +10,10 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfoRt.*
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.testFramework.Stats
@@ -21,11 +21,11 @@ import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
 import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestProject.*
 import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestTarget.*
-import org.jetbrains.kotlin.idea.perf.util.TeamCity.suite
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction.GRADLE_PROJECT
 import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.library.KOTLIN_STDLIB_NAME
@@ -151,7 +151,7 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
         assertTrue("Target $testTarget is not allowed on your host OS", testTarget.enabled)
 
         val projectName = projectName(testTarget, testProject, enableCommonizer)
-        suite(projectName) {
+        TeamCity.suite(projectName) {
             Stats(projectName).use { stats ->
                 myProject = perfOpenTemplateGradleProject(stats, testTarget, testProject, enableCommonizer)
 
@@ -288,14 +288,10 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
     // goal: make sure that the project imported from Gradle is valid
     private fun runProjectSanityChecks(project: Project) {
 
-        val isNativeDependencyPropagationEnabled by lazy {
-            readGradleProperty(project, "kotlin.native.enableDependencyPropagation")?.toBoolean() == true
-        }
-
         val nativeModules: Map<Module, Set<String>> = runReadAction {
             project.allModules().mapNotNull { module ->
                 val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return@mapNotNull null
-                if (!facetSettings.isMPPModule || !facetSettings.targetPlatform.isNative()) return@mapNotNull null
+                if (!facetSettings.isMultiPlatformModule || !facetSettings.targetPlatform.isNative()) return@mapNotNull null
 
                 // ex: "myProject.commonTest" -> "commonTest"
                 val moduleName = module.name.removePrefix(project.name).removePrefix(".")
@@ -308,18 +304,13 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
                     .asSequence()
                     .filterIsInstance<LibraryOrderEntry>()
                     .mapNotNull { it.library }
-                    .filter { detectLibraryKind(it.getFiles(OrderRootType.CLASSES)) == NativeLibraryKind }
+                    .filter { detectLibraryKind(it, module.project) == KotlinNativeLibraryKind }
                     .mapNotNull inner@{ library ->
                         val libraryNameParts = parseIDELibraryName(library.name.orEmpty()) ?: return@inner null
                         val (_, pureLibraryName, platformPart) = libraryNameParts
                         pureLibraryName + if (platformPart != null) " [$platformPart]" else ""
                     }
                     .toSet()
-
-                // workaround to skip common Linux modules in "enabled dependency propagation" mode that do not
-                // get any Kotlin/Native KLIB libraries
-                if (nativeLibraries.isEmpty() && moduleName.startsWith("linux") && isNativeDependencyPropagationEnabled)
-                    return@mapNotNull null
 
                 module to nativeLibraries
             }.toMap()

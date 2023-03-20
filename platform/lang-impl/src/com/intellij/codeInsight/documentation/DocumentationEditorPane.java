@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.DocumentationImageResolver;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -11,7 +12,10 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
@@ -30,12 +34,12 @@ import java.awt.event.KeyEvent;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.prepareCSS;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.addDocumentationPaneDefaultCssRules;
+import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 
 @Internal
-public abstract class DocumentationEditorPane extends JEditorPane {
-
-  private static final Color BACKGROUND_COLOR = new JBColor(() -> {
+public abstract class DocumentationEditorPane extends JEditorPane implements Disposable  {
+  private static final Color BACKGROUND_COLOR = JBColor.lazy(() -> {
     ColorKey colorKey = DocumentationComponent.COLOR_KEY;
     EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(null);
     Color color;
@@ -57,7 +61,7 @@ public abstract class DocumentationEditorPane extends JEditorPane {
   protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
     @NotNull DocumentationImageResolver imageResolver,
-    @NotNull Function<@NotNull String, @Nullable Icon> iconResolver
+    @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver
   ) {
     myKeyboardActions = keyboardActions;
     myImageResolver = imageResolver;
@@ -73,14 +77,17 @@ public abstract class DocumentationEditorPane extends JEditorPane {
     }
     setBackground(BACKGROUND_COLOR);
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
-      .withViewFactoryExtensions(DocumentationHtmlUtil.getHiDPIImagesExtension(this),
-                                 ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
-                                 DocumentationHtmlUtil.getModuleIconsExtension())
+      .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver), Extensions.BASE64_IMAGES)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
-    prepareCSS(editorKit);
+    addDocumentationPaneDefaultCssRules(editorKit);
 
     setEditorKit(editorKit);
     setBorder(JBUI.Borders.empty());
+  }
+
+  @Override
+  public void dispose() {
+    getCaret().setVisible(false); // Caret, if blinking, has to be deactivated.
   }
 
   @Override

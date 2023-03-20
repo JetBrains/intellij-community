@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
@@ -38,7 +39,7 @@ public final class PostfixTemplatesUtils {
   }
 
   /**
-   * Returns all templates registered in the provider, including the edited templates and builtin templates in their current state
+   * @return all templates registered in the given provider, including the edited templates and builtin templates in their current state.
    */
   @NotNull
   public static Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
@@ -52,6 +53,10 @@ public final class PostfixTemplatesUtils {
     return result;
   }
 
+  /**
+   * Surrounds a given expression with the provided surrounder.
+   * @return range to select/position the caret
+   */
   @Nullable
   public static TextRange surround(@NotNull Surrounder surrounder,
                                    @NotNull Editor editor,
@@ -72,6 +77,9 @@ public final class PostfixTemplatesUtils {
                                         CodeInsightBundle.message("error.hint.can.t.expand.postfix.template"), "");
   }
 
+  /**
+   * Generates a unique in the scope of a given provider template ID.
+   */
   @NotNull
   public static String generateTemplateId(@NotNull String templateKey, @NotNull PostfixTemplateProvider provider) {
     Set<String> usedIds = new HashSet<>();
@@ -84,6 +92,12 @@ public final class PostfixTemplatesUtils {
     return UniqueNameGenerator.generateUniqueName(templateKey + "@userDefined", usedIds);
   }
 
+  /**
+   * Stores a given editable template in the given parent DOM element.
+   * The given template must be an instance of {@link EditablePostfixTemplate}.
+   * If the given template is {@link EditablePostfixTemplateWithMultipleExpressions},
+   * then all data like usage of the topmost expression flag and expression conditions are stored.
+   */
   public static void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
     if (template instanceof EditablePostfixTemplateWithMultipleExpressions) {
       parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((EditablePostfixTemplateWithMultipleExpressions<?>)template).isUseTopmostExpression()));
@@ -131,7 +145,8 @@ public final class PostfixTemplatesUtils {
     Element templateChild = template.getChild(TemplateSettings.TEMPLATE);
     if (templateChild == null) return null;
 
-    return TemplateSettings.readTemplateFromElement("", templateChild, provider.getClass().getClassLoader());
+    return TemplateSettings.readTemplateFromElement("", templateChild, provider.getClass().getClassLoader(),
+                                                    LiveTemplateContextService.getInstance());
   }
 
   public static boolean readExternalTopmostAttribute(@NotNull Element template) {

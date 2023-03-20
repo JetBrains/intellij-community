@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -10,7 +10,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
-import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.PlainSimplePatchApplier;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -19,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionPro
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static java.util.Objects.requireNonNull;
 
-public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer {
+public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
   private final Project myProject;
   private final ShelvedWrapper myChange;
 
@@ -119,8 +120,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer {
     }
 
     String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
-    CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class)
-      .provideContent(myProject, path, commitContext);
+    CharSequence baseContents = BaseRevisionTextPatchEP.getBaseContent(myProject, path, commitContext);
     if (baseContents != null) {
       String patchedContent = PlainSimplePatchApplier.apply(baseContents, patch.getHunks());
       if (patchedContent != null) {
@@ -134,6 +134,16 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer {
     }
 
     return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+  }
+
+  @Override
+  public @NotNull FilePath getFilePath() {
+    return myChange.getFilePath();
+  }
+
+  @Override
+  public @NotNull FileStatus getFileStatus() {
+    return myChange.getFileStatus();
   }
 
   @NotNull

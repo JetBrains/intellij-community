@@ -5,11 +5,12 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ui.Gray;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.geom.Path2D;
@@ -20,7 +21,7 @@ import java.awt.geom.RoundRectangle2D;
  */
 public class MacIntelliJTextBorder extends DarculaTextBorder {
   private static final Color OUTLINE_COLOR = Gray.xBC;
-  private static final Insets PADDINGS = JBUI.emptyInsets();
+  private static final Insets PADDINGS = JBInsets.emptyInsets();
 
   static final JBValue MINIMUM_HEIGHT = new JBValue.Float(21);
   static final JBValue BW = new JBValue.Float(3);
@@ -51,7 +52,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     paintMacSearchArea(g, r, c, fillBackground);
   }
 
-  public static void paintMacSearchArea(Graphics2D g, Rectangle r, JTextComponent c, boolean fillBackground) {
+  public static void paintMacSearchArea(Graphics2D g, Rectangle r, JComponent c, boolean fillBackground) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -77,9 +78,9 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       g2.fill(path);
 
       if (c.hasFocus()) {
-        Object op = c.getClientProperty("JComponent.outline");
+        DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(c);
         if (op != null) {
-          DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.valueOf(op.toString()));
+          DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, op);
         }
         else {
           DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);

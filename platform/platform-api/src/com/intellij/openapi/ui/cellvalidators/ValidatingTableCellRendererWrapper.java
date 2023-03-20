@@ -45,7 +45,6 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     this.cellValidator = cellValidator;
     return this;
   }
-
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();

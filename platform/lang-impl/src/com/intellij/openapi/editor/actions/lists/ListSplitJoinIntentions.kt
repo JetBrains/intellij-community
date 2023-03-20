@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions.lists
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.idea.LoggerFactory
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -15,15 +15,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 
 abstract class SplitJoinIntention : PsiElementBaseIntentionAction(), LowPriorityAction {
-  companion object {
-    fun extractDocument(project: Project, editor: Editor?, element: PsiElement): Document? {
-      val documentManager = PsiDocumentManager.getInstance(project)
-      return editor?.document ?: documentManager.getDocument(element.containingFile)
-    }
-    
-    val logger = Logger.getInstance(SplitJoinIntention::class.java)
-  }
-
   protected abstract fun operation(): JoinOrSplit
 
   @IntentionName
@@ -52,8 +43,13 @@ abstract class SplitJoinIntention : PsiElementBaseIntentionAction(), LowPriority
     }
     documentManager.commitDocument(document)
     if (marker.isValid) {
-      splitJoinContext.reformatRange(containingFile, TextRange.create(marker), operation())
+      splitJoinContext.reformatRange(containingFile, marker.textRange, operation())
     }
+  }
+
+  private fun extractDocument(project: Project, editor: Editor?, element: PsiElement): Document? {
+    val documentManager = PsiDocumentManager.getInstance(project)
+    return editor?.document ?: documentManager.getDocument(element.containingFile)
   }
   
   protected open fun validateOrder(replacements: List<Pair<TextRange, String>>) {
@@ -61,7 +57,7 @@ abstract class SplitJoinIntention : PsiElementBaseIntentionAction(), LowPriority
     for ((range, _) in replacements) {
       if (prev != null) {
         if (range.startOffset < prev.endOffset) {
-          logger.error("Incorrect replacements order. The ranges must be sorted")
+          logger<SplitJoinIntention>().error("Incorrect replacements order. The ranges must be sorted")
           break
         }  
       }

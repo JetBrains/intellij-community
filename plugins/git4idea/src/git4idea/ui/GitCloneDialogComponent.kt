@@ -43,7 +43,7 @@ class GitCloneDialogComponent(project: Project,
   private val checkVersionAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private var versionCheckState: VersionCheckState = VersionCheckState.NOT_CHECKED // accessed only on EDT
 
-  override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
+  override fun doClone(listener: CheckoutProvider.Listener) {
     val parent = Paths.get(getDirectory()).toAbsolutePath().parent
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {

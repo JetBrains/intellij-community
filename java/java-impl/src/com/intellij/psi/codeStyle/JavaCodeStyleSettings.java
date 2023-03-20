@@ -3,7 +3,6 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -26,7 +25,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   private static final String DO_NOT_IMPORT_INNER_ITEM = "CLASS";
   private static final String COLLECTION_ITEM_ATTRIBUTE = "name";
 
-  public JavaCodeStyleSettings(CodeStyleSettings container) {
+  public JavaCodeStyleSettings(@NotNull CodeStyleSettings container) {
     super("JavaCodeStyleSettings", container);
     initImportsByDefault();
   }
@@ -80,11 +79,11 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean REPLACE_INSTANCEOF = false;
   /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean REPLACE_CAST = false;
   public boolean REPLACE_INSTANCEOF_AND_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;
@@ -114,6 +113,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean NEW_LINE_AFTER_LPAREN_IN_ANNOTATION = false;
   public boolean RPAREN_ON_NEW_LINE_IN_ANNOTATION = false;
 
+  public boolean SPACE_AROUND_ANNOTATION_EQ = true;
+
   public boolean ALIGN_MULTILINE_TEXT_BLOCKS = false;
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
@@ -125,6 +126,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
   public boolean SPACE_BEFORE_COLON_IN_FOREACH = true;
   public boolean SPACE_INSIDE_ONE_LINE_ENUM_BRACES = false;
+
 
   public boolean useFqNamesInJavadocAlways() {
     return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
@@ -153,6 +155,34 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
    * "record R(String s)"
    */
   public boolean SPACE_WITHIN_RECORD_HEADER = false;
+
+
+  /**
+   * <pre>
+   * case Rec(int x, int y, int z) -> {}
+   *               ^      ^
+   * </pre>
+   */
+  @WrapConstant
+  public int DECONSTRUCTION_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS = true;
+  public boolean NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN = true;
+  public boolean RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN = true;
+  /**
+   * <pre>
+   * case A( int x ) -> {}
+   *        ^     ^
+   * </pre>
+   */
+  public boolean SPACE_WITHIN_DECONSTRUCTION_LIST = false;
+
+  /**
+   * <pre>
+   * case A (int x) -> {}
+   *       ^
+   * </pre>
+   */
+  public boolean SPACE_BEFORE_DECONSTRUCTION_LIST = false;
 
   @WrapConstant
   public int MULTI_CATCH_TYPES_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;

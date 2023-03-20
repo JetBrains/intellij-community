@@ -44,7 +44,7 @@ abstract class SourceOperation extends Operation {
   static SourceOperation createSource(PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiType callType = call.getType();
-    if(callType == null || PsiType.VOID.equals(callType)) return null;
+    if(callType == null || PsiTypes.voidType().equals(callType)) return null;
     PsiMethod method = call.resolveMethod();
     if(method == null) return null;
     String name = method.getName();
@@ -114,8 +114,8 @@ abstract class SourceOperation extends Operation {
         args.length == 3 &&
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className) &&
         args[0].getType() != null &&
-        PsiType.INT.equals(args[1].getType()) &&
-        PsiType.INT.equals(args[2].getType())) {
+        PsiTypes.intType().equals(args[1].getType()) &&
+        PsiTypes.intType().equals(args[2].getType())) {
       return new ArraySliceSource(args[0], args[1], args[2]);
     }
     if (supportUnknownSources) {
@@ -426,16 +426,12 @@ abstract class SourceOperation extends Operation {
     }
 
     static String getIteratorType(String type) {
-      switch(type) {
-        case "int":
-          return "java.util.PrimitiveIterator.OfInt";
-        case "long":
-          return "java.util.PrimitiveIterator.OfLong";
-        case "double":
-          return "java.util.PrimitiveIterator.OfDouble";
-        default:
-          return CommonClassNames.JAVA_UTIL_ITERATOR+"<"+type+">";
-      }
+      return switch (type) {
+        case "int" -> "java.util.PrimitiveIterator.OfInt";
+        case "long" -> "java.util.PrimitiveIterator.OfLong";
+        case "double" -> "java.util.PrimitiveIterator.OfDouble";
+        default -> CommonClassNames.JAVA_UTIL_ITERATOR + "<" + type + ">";
+      };
     }
 
     @Override

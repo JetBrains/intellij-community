@@ -7,30 +7,6 @@ import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import org.jetbrains.annotations.*;
 
 public final class PredefinedConfigurationUtil {
-
-  /**
-   * @deprecated Predefined templates can be reference in other pattern by name, but their name can be translated.
-   * Use {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
-   */
-  @Deprecated
-  @NotNull
-  public static Configuration createSearchTemplateInfo(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                       @NonNls @NotNull String criteria,
-                                                       @NotNull String category,
-                                                       @NotNull LanguageFileType fileType,
-                                                       @Nullable PatternContext context) {
-    final SearchConfiguration config = new SearchConfiguration(name, category);
-    config.setPredefined(true);
-
-    final MatchOptions options = config.getMatchOptions();
-    options.fillSearchCriteria(criteria);
-    options.setFileType(fileType);
-    options.setCaseSensitiveMatch(true);
-    options.setPatternContext(context);
-
-    return config;
-  }
-
   @NotNull
   public static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                   @NotNull @NonNls String refName,
@@ -62,9 +38,8 @@ public final class PredefinedConfigurationUtil {
                                                   @NotNull String category,
                                                   @NotNull LanguageFileType fileType,
                                                   @Nullable PatternContext context) {
-    final Configuration config = createSearchTemplateInfo(name, criteria, category, fileType, context);
-    config.setRefName(refName + " (" + config.getFileType().getLanguage().getDisplayName() + ")");
-    return config;
+    return createLegacyConfiguration(name, refName + " (" + fileType.getLanguage().getDisplayName() + ")",
+                                     criteria, category, fileType, context);
   }
 
   /**
@@ -79,8 +54,16 @@ public final class PredefinedConfigurationUtil {
                                                   @NotNull String category,
                                                   @NotNull LanguageFileType fileType,
                                                   @Nullable PatternContext context) {
-    final Configuration config = createSearchTemplateInfo(name, criteria, category, fileType, context);
+    final SearchConfiguration config = new SearchConfiguration(name, category);
+    config.setPredefined(true);
     config.setRefName(refName);
+
+    final MatchOptions options = config.getMatchOptions();
+    options.fillSearchCriteria(criteria);
+    options.setFileType(fileType);
+    options.setCaseSensitiveMatch(true);
+    options.setPatternContext(context);
+
     return config;
   }
 }

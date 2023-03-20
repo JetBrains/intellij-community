@@ -26,19 +26,17 @@ class StringConcatPredicate implements PsiElementPredicate {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final IElementType tokenType = token.getTokenType();
     if (!tokenType.equals(JavaTokenType.PLUS)) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiPolyadicExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiType type = polyadicExpression.getType();
     if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return false;

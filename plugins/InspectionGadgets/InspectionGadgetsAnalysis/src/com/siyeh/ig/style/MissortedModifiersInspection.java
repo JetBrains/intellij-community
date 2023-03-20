@@ -18,7 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -34,13 +34,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MissortedModifiersInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
@@ -103,12 +105,10 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JCheckBox box = panel.addCheckboxEx(InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
-                                              "m_requireAnnotationsFirst");
-    panel.addDependentCheckBox(InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"), "typeUseWithType", box);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_requireAnnotationsFirst", InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
+               checkbox("typeUseWithType", InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"))));
   }
 
   private class SortModifiersFix extends InspectionGadgetsFix {
@@ -120,7 +120,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiModifierList)) {
         element = element.getParent();
@@ -135,7 +135,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     }
 
     @Nullable
-    private PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
+    private static PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(oldModifierList.getProject());
       PsiElement parent = oldModifierList.getParent();
       if (parent instanceof PsiRequiresStatement) {
@@ -170,8 +170,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       if (child instanceof PsiJavaToken) {
         modifiers.add(child.getText());
       }
-      else if (child instanceof PsiAnnotation) {
-        final PsiAnnotation annotation = (PsiAnnotation)child;
+      else if (child instanceof PsiAnnotation annotation) {
         if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
           final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
           if (typeUseWithType || !modifiers.isEmpty() ||
@@ -233,7 +232,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     }
 
     @Override
-    public void visitRequiresStatement(PsiRequiresStatement statement) {
+    public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
       super.visitRequiresStatement(statement);
       checkForMissortedModifiers(statement);
     }
@@ -270,8 +269,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           }
           modifiers.add(child);
         }
-        if (child instanceof PsiAnnotation) {
-          final PsiAnnotation annotation = (PsiAnnotation)child;
+        if (child instanceof PsiAnnotation annotation) {
           if (m_requireAnnotationsFirst) {
             if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !isMethodWithVoidReturnType(modifierList.getParent())) {
               // type annotations go next to the type
@@ -300,7 +298,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   static boolean isMethodWithVoidReturnType(PsiElement element) {
-    return element instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)element).getReturnType());
+    return element instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)element).getReturnType());
   }
 
   private static class ModifierComparator implements Comparator<String> {

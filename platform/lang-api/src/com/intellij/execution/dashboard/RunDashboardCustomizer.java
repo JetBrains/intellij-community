@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.util.Map;
 /**
  * Register this extension to customize Run Dashboard.
  */
-@ApiStatus.Experimental
 public abstract class RunDashboardCustomizer {
   public static final Key<Map<Object, Object>> NODE_LINKS = new Key<>("RunDashboardNodeLink");
 

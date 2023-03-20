@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
-import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -79,12 +80,14 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabled(project != null &&
-                                   VcsProjectLog.getInstance(project) != null &&
-                                   getRevisionNumber(e) != null &&
-                                   Comparing.equal(getVcsKey(e), GitVcs.getKey()));
+    e.getPresentation().setEnabled(project != null && getRevisionNumber(e) != null && Comparing.equal(getVcsKey(e), GitVcs.getKey()));
   }
 
   static void jumpToRevision(@NotNull Project project, @NotNull Hash hash) {
@@ -94,7 +97,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   private static void jumpToRevisionUnderProgress(@NotNull Project project,
                                                   @NotNull VcsLogUiEx logUi,
                                                   @NotNull Hash hash) {
-    Future<Boolean> future = logUi.getVcsLog().jumpToReference(hash.asString());
+    Future<Boolean> future = VcsLogNavigationUtil.jumpToHash(logUi, hash.asString(), false, true);
     if (!future.isDone()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project,
                                                                 GitBundle.message("git.log.show.commit.in.log.process", hash.asString()),

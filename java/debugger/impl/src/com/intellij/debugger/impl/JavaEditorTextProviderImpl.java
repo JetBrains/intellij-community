@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -30,14 +30,13 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (element instanceof PsiMethod) {
       result = ((PsiMethod)element).getName() + "()";
     }
-    else if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)element;
+    else if (element instanceof PsiReferenceExpression reference) {
       result = qualifyEnumConstant(reference.resolve(), element.getText());
     }
     else {
       result = element.getText();
     }
-    return result != null? new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, result) : null;
+    return result != null ? new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, result) : null;
   }
 
   @Nullable
@@ -145,7 +144,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     if (expression != null) {
       try {
         PsiElement context = element;
-        if(parent instanceof PsiParameter) {
+        if (parent instanceof PsiParameter) {
           try {
             context = ((PsiMethod)((PsiParameter)parent).getDeclarationScope()).getBody();
           }
@@ -153,12 +152,13 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
           }
         }
         else {
-          while(context != null  && !(context instanceof PsiStatement) && !(context instanceof PsiClass)) {
+          while (context != null && !(context instanceof PsiStatement) && !(context instanceof PsiClass)) {
             context = context.getParent();
           }
         }
         TextRange textRange = expression.getTextRange();
-        PsiElement psiExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), context);
+        PsiElement psiExpression = JavaPsiFacade.getElementFactory(expression.getProject())
+          .createExpressionFromText(expression.getText(), context);
         return Pair.create(psiExpression, textRange);
       }
       catch (IncorrectOperationException e) {
@@ -170,8 +170,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
 
   @Nullable
   private static String qualifyEnumConstant(PsiElement resolved, @Nullable String def) {
-    if (resolved instanceof PsiEnumConstant) {
-      final PsiEnumConstant enumConstant = (PsiEnumConstant)resolved;
+    if (resolved instanceof PsiEnumConstant enumConstant) {
       final PsiClass enumClass = enumConstant.getContainingClass();
       if (enumClass != null) {
         return enumClass.getName() + "." + enumConstant.getName();

@@ -42,7 +42,6 @@ import static com.intellij.patterns.StandardPatterns.or;
  * <b>NOTE: many matchers here use original tree, not the grafted identifier in the copied tree.</b>
  * This should not lead to any problems, because all such code is private, and the user data used to pass the original
  * element is cleared after matching.
- * User: dcheryasov
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
 public class PyKeywordCompletionContributor extends CompletionContributor implements DumbAware {
@@ -57,10 +56,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
 
     @Override
     public boolean isAcceptable(Object element, PsiElement context) {
-      if (element instanceof PsiElement) {
+      if (element instanceof PsiElement p) {
         final ASTNode ctxNode = context.getNode();
         if (ctxNode != null && PyTokenTypes.STRING_NODES.contains(ctxNode.getElementType())) return false; // no sense inside string
-        PsiElement p = (PsiElement)element;
         int firstOffset = p.getTextRange().getStartOffset();
         // we must be a stmt ourselves, not a part of another stmt
         // try to climb to the stmt level with the same offset
@@ -148,8 +146,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
   private static class StartOfLineFilter implements ElementFilter {
     @Override
     public boolean isAcceptable(Object what, PsiElement context) {
-      if (!(what instanceof PsiElement)) return false;
-      PsiElement p = (PsiElement)what;
+      if (!(what instanceof PsiElement p)) return false;
       if (p instanceof PsiComment) return false; // just in case
       int point = p.getTextOffset();
       PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
@@ -204,10 +201,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
 
     @Override
     public boolean isAcceptable(Object element, PsiElement context) {
-      if (!(element instanceof PsiElement)) {
+      if (!(element instanceof PsiElement psiElement)) {
         return false;
       }
-      PsiElement psiElement = (PsiElement) element;
       PsiElement definition = PsiTreeUtil.getParentOfType(psiElement, PyDocStringOwner.class, false, PyStatementList.class);
       if (definition != null) {
         if (PsiTreeUtil.getParentOfType(psiElement, PyParameterList.class) == null) {

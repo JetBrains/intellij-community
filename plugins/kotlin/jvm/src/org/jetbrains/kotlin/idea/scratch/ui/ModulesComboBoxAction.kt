@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.ui
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
@@ -14,20 +12,20 @@ import com.intellij.openapi.vcs.changes.committed.LabeledComboBoxAction
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.isKotlinWorksheet
 import javax.swing.JComponent
 
 class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
     LabeledComboBoxAction(KotlinJvmBundle.message("scratch.module.combobox")) {
-    override fun createPopupActionGroup(button: JComponent): DefaultActionGroup {
+    override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val actionGroup = DefaultActionGroup()
         actionGroup.add(ModuleIsNotSelectedAction(KotlinJvmBundle.message("list.item.no.module")))
 
         val modules = ModuleManager.getInstance(scratchFile.project).modules.filter {
-            it.productionSourceInfo() != null || it.testSourceInfo() != null
+            it.productionSourceInfo != null || it.testSourceInfo != null
         }
 
         actionGroup.addAll(modules.map { SelectModuleAction(it) })
@@ -56,6 +54,8 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
 
         e.presentation.isVisible = isModuleSelectorVisible()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     @TestOnly
     fun isModuleSelectorVisible(): Boolean {

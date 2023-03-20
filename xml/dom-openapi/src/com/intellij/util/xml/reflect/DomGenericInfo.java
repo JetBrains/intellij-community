@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public interface DomGenericInfo {
 
   @Nullable

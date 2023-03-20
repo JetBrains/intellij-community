@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -18,7 +18,6 @@ import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -26,15 +25,17 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 
 public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
   // To quickly filter out most of the non-interesting method calls
-  private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
+  private static final Set<String> SUPPORTED_TERMINALS = Set.of(
     "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
     "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet", "toImmutableList", "toImmutableSet");
 
@@ -46,10 +47,10 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator"), this, "SUPPORT_UNKNOWN_SOURCES");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUPPORT_UNKNOWN_SOURCES", JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator")));
   }
 
   @NotNull
@@ -60,7 +61,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiReferenceExpression expression = call.getMethodExpression();
         PsiElement nameElement = expression.getReferenceNameElement();
@@ -126,7 +127,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       return false;
     }
     if(elementType instanceof PsiImmediateClassType) {
-      PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(context.getProject());
+      PsiResolveHelper helper = PsiResolveHelper.getInstance(context.getProject());
       if (helper.resolveReferencedClass(elementType.getCanonicalText(), context) == null) {
         return false;
       }
@@ -173,13 +174,13 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     PsiType keyType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, false);
     PsiType valueType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, false);
     if (!isValidElementType(keyType, terminalCall, true) || !isValidElementType(valueType, terminalCall, true)) return null;
-    keyType = GenericsUtil.getVariableTypeByExpressionType(keyType);
-    valueType = GenericsUtil.getVariableTypeByExpressionType(valueType);
     Project project = terminalCall.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiClass entryClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, terminalCall.getResolveScope());
     if (entryClass == null || entryClass.getTypeParameters().length != 2) return null;
     PsiType entryType = JavaPsiFacade.getElementFactory(project).createType(entryClass, keyType, valueType);
+    keyType = GenericsUtil.getVariableTypeByExpressionType(keyType);
+    valueType = GenericsUtil.getVariableTypeByExpressionType(valueType);
     TerminalOperation terminal = new TerminalOperation.MapForEachTerminalOperation(fn, keyType, valueType);
     SourceOperation source = new SourceOperation.ForEachSource(qualifier, true);
     OperationRecord terminalRecord = new OperationRecord();
@@ -263,8 +264,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if(!(element instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)element;
+      if(!(element instanceof PsiMethodCallExpression terminalCall)) return;
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(terminalCall);
       if (surrounder == null) return;
       CodeBlockSurrounder.SurroundResult surroundResult = surrounder.surround();

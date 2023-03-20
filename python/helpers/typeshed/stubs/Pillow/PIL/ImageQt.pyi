@@ -1,10 +1,10 @@
 from typing import Any
-from typing_extensions import Literal
+from typing_extensions import Literal, TypeAlias
 
 from .Image import Image
 
-QImage = Any  # imported from either of {PyQt6,PySide6,PyQt5,PySide2}.QtGui
-QPixmap = Any
+QImage: TypeAlias = Any  # imported from either of {PyQt6,PySide6,PyQt5,PySide2}.QtGui
+QPixmap: TypeAlias = Any
 
 qt_versions: Any
 qt_is_installed: bool
@@ -15,7 +15,7 @@ def fromqimage(im: Image | QImage) -> Image: ...
 def fromqpixmap(im: Image | QImage) -> Image: ...
 def align8to32(bytes: bytes, width: int, mode: Literal["1", "L", "P"]) -> bytes: ...
 
-class ImageQt(QImage):  # type: ignore
+class ImageQt(QImage):
     def __init__(self, im: Image) -> None: ...
 
 def toqimage(im: Image) -> ImageQt: ...

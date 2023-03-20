@@ -21,9 +21,6 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import groovy.transform.CompileStatic
 
-/**
- * @author Denis Zhdanov
- */
 @CompileStatic
 class FixDocCommentTest extends AbstractEditorTest {
 

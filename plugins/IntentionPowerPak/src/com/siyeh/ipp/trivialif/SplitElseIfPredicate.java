@@ -24,19 +24,17 @@ class SplitElseIfPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
     @NonNls final String text = element.getText();
     if (!PsiKeyword.ELSE.equals(text)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final PsiElement parent = token.getParent();
-    if (!(parent instanceof PsiIfStatement)) {
+    if (!(parent instanceof PsiIfStatement ifStatement)) {
       return false;
     }
-    final PsiIfStatement ifStatement = (PsiIfStatement)parent;
     final PsiStatement thenBranch = ifStatement.getThenBranch();
     final PsiStatement elseBranch = ifStatement.getElseBranch();
     if (thenBranch == null) {

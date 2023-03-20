@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -10,22 +11,21 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.references.findPsiDeclarations
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.search.fileScope
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.checkWithAttachment
 
 object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
-    val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
+    private val REFACTORING_NAME = KotlinBundle.message("name.introduce.import.alias")
 
     @get:TestOnly
     var suggestedImportAliasNames: Collection<String> = emptyList()
@@ -83,7 +83,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
             }
         }
 
-        val suggestionsName = KotlinNameSuggester.suggestNamesByFqName(
+        val suggestionsName = Fe10KotlinNameSuggester.suggestNamesByFqName(
             fqName,
             validator = validator,
             defaultName = { fqName.asString().replace('.', '_') })
@@ -92,11 +92,13 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
         }
         val newName = suggestionsName.first()
         suggestedImportAliasNames = suggestionsName
-        project.executeWriteCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
-            val newDirective = ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName))
+        project.executeCommand(KotlinBundle.message("intention.add.import.alias.group.name"), groupId = null) {
+            val newDirective = runWriteAction { ImportInsertHelperImpl.addImport(project, file, fqName, false, Name.identifier(newName)) }
 
             replaceUsages(usages, newName)
-            cleanImport(file, fqName)
+            runWriteAction {
+                cleanImport(file, fqName)
+            }
 
             if (elementInImportDirective) editor.moveCaret(newDirective.alias?.nameIdentifier?.textOffset ?: newDirective.endOffset)
 
@@ -106,7 +108,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
         if (file !is KtFile) return
-        selectElement(editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
+        selectElement(editor, file, ElementKind.EXPRESSION) {
             doRefactoring(project, editor, it as KtNameReferenceExpression)
         }
     }
@@ -137,21 +139,23 @@ private fun invokeRename(
 
 private fun replaceUsages(usages: List<UsageContext>, newName: String) {
     // case: inner element
-    for (usage in usages.asReversed()) {
-        val reference = usage.pointer.element?.safeAs<KtElement>()?.mainReference?.takeUnless { it.isImportUsage() } ?: continue
-        val newExpression = reference.handleElementRename(newName) as? KtNameReferenceExpression ?: continue
-        if (usage.isExtension) {
-            newExpression.getQualifiedElementSelector()?.replace(newExpression)
-            continue
-        }
+    runWriteAction {
+        for (usage in usages.asReversed()) {
+            val reference = usage.pointer.element?.safeAs<KtElement>()?.mainReference?.takeUnless { it.isImportUsage() } ?: continue
+            val newExpression = reference.handleElementRename(newName) as? KtNameReferenceExpression ?: continue
+            if (usage.isExtension) {
+                newExpression.getQualifiedElementSelector()?.replace(newExpression)
+                continue
+            }
 
-        val qualifiedElement = newExpression.getQualifiedElement()
-        if (qualifiedElement != newExpression) {
-            val parent = newExpression.parent
-            if (parent is KtCallExpression || parent is KtUserType) {
-                newExpression.siblings(forward = false, withItself = false).forEach(PsiElement::delete)
-                qualifiedElement.replace(parent)
-            } else qualifiedElement.replace(newExpression)
+            val qualifiedElement = newExpression.getQualifiedElement()
+            if (qualifiedElement != newExpression) {
+                val parent = newExpression.parent
+                if (parent is KtCallExpression || parent is KtUserType) {
+                    newExpression.siblings(forward = false, withItself = false).forEach(PsiElement::delete)
+                    qualifiedElement.replace(parent)
+                } else qualifiedElement.replace(newExpression)
+            }
         }
     }
 }

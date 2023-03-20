@@ -11,4 +11,3 @@ fun test() {
     val a = A.<caret>Companion
 }
 
-// FIR_IGNORE

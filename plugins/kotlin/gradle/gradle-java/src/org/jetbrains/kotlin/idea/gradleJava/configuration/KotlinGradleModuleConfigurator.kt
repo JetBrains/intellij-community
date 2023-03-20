@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -6,10 +6,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.base.projectStructure.allModules
+import org.jetbrains.kotlin.idea.base.projectStructure.getWholeModuleGroup
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.core.isAndroidModule
-import org.jetbrains.kotlin.idea.versions.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
@@ -21,9 +26,6 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.unspecifiedJvmPlatform
 
-    @Suppress("DEPRECATION_ERROR")
-    override fun getTargetPlatform() = JvmPlatforms.CompatJvmPlatform
-
     override val presentableText: String
         get() = KotlinIdeaGradleBundle.message("presentable.text.java.with.gradle")
 
@@ -33,7 +35,7 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override fun getKotlinPluginExpression(forKotlinDsl: Boolean): String =
         if (forKotlinDsl) "kotlin(\"jvm\")" else "id 'org.jetbrains.kotlin.jvm'"
 
-    override fun getJvmTarget(sdk: Sdk?, version: String) = getDefaultJvmTarget(sdk, version)?.description
+    override fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion) = getDefaultJvmTarget(sdk, version)?.description
 
     override fun isApplicable(module: Module): Boolean {
         return super.isApplicable(module) && !module.isAndroidModule()
@@ -43,7 +45,8 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         module: Module,
         file: PsiFile,
         isTopLevelProjectFile: Boolean,
-        version: String, collector: NotificationMessageCollector,
+        version: IdeKotlinVersion,
+        collector: NotificationMessageCollector,
         filesToOpen: MutableCollection<PsiFile>
     ) {
         super.configureModule(module, file, isTopLevelProjectFile, version, collector, filesToOpen)

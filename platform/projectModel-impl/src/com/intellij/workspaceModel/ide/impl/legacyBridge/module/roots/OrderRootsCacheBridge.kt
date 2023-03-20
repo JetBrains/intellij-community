@@ -32,7 +32,7 @@ class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) 
   }
 
   override fun clearCache() {
-    ApplicationManager.getApplication().assertIsWriteThread()
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     myRootUrls.set(null)
     myRootVirtualFiles.set(null)
   }

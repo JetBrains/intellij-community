@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -11,10 +11,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
+import com.intellij.openapi.startup.ProjectActivity
 import java.awt.Component
 import java.io.File
 import java.io.FileOutputStream
@@ -22,7 +21,7 @@ import java.io.OutputStreamWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-
+import kotlin.io.path.exists
 
 open class HeapDumpAnalysisSupport {
   companion object {
@@ -70,13 +69,15 @@ open class HeapDumpAnalysisSupport {
   }
 }
 
-internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
-  override fun runActivity(project: Project) {
+internal class AnalyzePendingSnapshotActivity: ProjectActivity {
+  init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      return
+      throw ExtensionNotApplicableException.create()
     }
+  }
 
-    val jsonPath = Paths.get(PathManager.getSystemPath(), "pending-snapshot.json")
+  override suspend fun execute(project: Project) {
+    val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
     if (!Files.isRegularFile(jsonPath)) {
       return
     }
@@ -98,10 +99,9 @@ internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
         it.endObject()
       }
 
-      FileUtil.delete(jsonPath)
+      Files.deleteIfExists(jsonPath)
     }
-    catch (e: Exception) {
-      // ignore
+    catch (ignore: Exception) {
     }
 
     path?.let {

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleBraceInitializationInspection extends BaseInspection {
+public class DoubleBraceInitializationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -65,29 +52,25 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiAnonymousClass)) {
+      if (!(element instanceof PsiAnonymousClass aClass)) {
         return;
       }
-      final PsiAnonymousClass aClass = (PsiAnonymousClass)element;
       final PsiElement parent = aClass.getParent();
-      if (!(parent instanceof PsiNewExpression)) {
+      if (!(parent instanceof PsiNewExpression newExpression)) {
         return;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)parent;
       final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(newExpression, PsiParenthesizedExpression.class);
       final String qualifierText;
       if (ancestor instanceof PsiVariable) {
         qualifierText = ((PsiVariable)ancestor).getName();
       }
-      else if (ancestor instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)ancestor;
+      else if (ancestor instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-        if (!(lhs instanceof PsiReferenceExpression)) {
+        if (!(lhs instanceof PsiReferenceExpression referenceExpression)) {
           return;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiVariable)) {
           return;
@@ -116,8 +99,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
       if (anchor == null) {
         return;
       }
-      if (anchor instanceof PsiMember) {
-        final PsiMember member = (PsiMember)anchor;
+      if (anchor instanceof PsiMember member) {
         final PsiClassInitializer newInitializer = factory.createClassInitializer();
         if (member.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiModifierList modifierList = newInitializer.getModifierList();
@@ -148,16 +130,15 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
       element.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           if (expression.getQualifierExpression() != null) {
             return;
           }
           final PsiElement expressionTarget = expression.resolve();
-          if (!(expressionTarget instanceof PsiMember)) {
+          if (!(expressionTarget instanceof PsiMember member)) {
             return;
           }
-          final PsiMember member = (PsiMember)expressionTarget;
           final PsiClass containingClass = member.getContainingClass();
           if (!InheritanceUtil.isInheritorOrSelf(target, containingClass, true)) {
             return;
@@ -177,7 +158,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
   private static class DoubleBraceInitializationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
       super.visitAnonymousClass(aClass);
       if (ClassUtils.getDoubleBraceInitializer(aClass) == null) return;
       registerClassError(aClass, aClass);

@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.ide.FrameStateListener;
+import com.intellij.application.Topics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -27,6 +29,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.messages.MessageBusConnection;
@@ -91,27 +94,19 @@ public final class SvnVcs extends AbstractVcs {
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
 
-  private final SvnEntriesFileListener myEntriesFileListener;
-  private SvnFileSystemListener myFileOperationsHandler;
-
   private CheckinEnvironment myCheckinEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
   private UpdateEnvironment mySvnUpdateEnvironment;
   private UpdateEnvironment mySvnIntegrateEnvironment;
   private AnnotationProvider myAnnotationProvider;
   private DiffProvider mySvnDiffProvider;
-  private final VcsShowConfirmationOption myAddConfirmation;
-  private final VcsShowConfirmationOption myDeleteConfirmation;
   private EditFileProvider myEditFilesProvider;
   private SvnCommittedChangesProvider myCommittedChangesProvider;
-  private final VcsShowSettingOption myCheckoutOptions;
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
-  private final SvnChangelistListener myChangeListListener;
-
-  private Disposable myFrameStateListenerDisposable;
+  private Disposable myDisposable;
 
   //Consumer<Boolean>
   public static final Topic<Consumer> ROOTS_RELOADED = new Topic<>("ROOTS_RELOADED", Consumer.class);
@@ -127,20 +122,6 @@ public final class SvnVcs extends AbstractVcs {
     super(project, VCS_NAME);
 
     cmdClientFactory = new CmdClientFactory(this);
-
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
-    myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
-    myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
-
-    if (myProject.isDefault()) {
-      myChangeListListener = null;
-      myEntriesFileListener = null;
-    }
-    else {
-      myEntriesFileListener = new SvnEntriesFileListener(project);
-      myChangeListListener = new SvnChangelistListener(this);
-    }
 
     Application app = ApplicationManager.getApplication();
     myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());
@@ -234,28 +215,28 @@ public final class SvnVcs extends AbstractVcs {
 
   @Override
   public void activate() {
-    MessageBusConnection busConnection = myProject.getMessageBus().connect();
-    if (!myProject.isDefault()) {
-      busConnection.subscribe(ChangeListListener.TOPIC, myChangeListListener);
-      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> invokeRefreshSvnRoots());
-    }
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
 
-    myFileOperationsHandler = new SvnFileSystemListener(this);
-    if (myEntriesFileListener != null) {
-      VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
-    }
+
+    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    busConnection.subscribe(ChangeListListener.TOPIC, new SvnChangelistListener(this));
+    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> invokeRefreshSvnRoots());
+
+    SvnFileSystemListener fileOperationsHandler = new SvnFileSystemListener(this);
+    Disposer.register(disposable, fileOperationsHandler);
+
+    VirtualFileManager.getInstance().addVirtualFileListener(new SvnEntriesFileListener(myProject), disposable);
+
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
-    if (myFrameStateListenerDisposable == null && !myProject.isDefault()) {
-      myFrameStateListenerDisposable = Disposer.newDisposable();
-      busConnection.subscribe(FrameStateListener.TOPIC, new MyFrameStateListener(ChangeListManager.getInstance(myProject),
-                                                                                 VcsDirtyScopeManager.getInstance(myProject)));
-    }
+    Topics.subscribe(ApplicationActivationListener.TOPIC, disposable,
+                     new MyFrameStateListener(ChangeListManager.getInstance(myProject), VcsDirtyScopeManager.getInstance(myProject)));
 
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      checkCommandLineVersion();
+      BackgroundTaskUtil.executeOnPooledThread(disposable, () -> checkCommandLineVersion());
     }
 
     RootsToWorkingCopies.getInstance(myProject);
@@ -267,21 +248,14 @@ public final class SvnVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    Disposable frameStateListenerDisposable = myFrameStateListenerDisposable;
-    if (frameStateListenerDisposable != null) {
-      myFrameStateListenerDisposable = null;
-      Disposer.dispose(frameStateListenerDisposable);
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
     }
 
-    if (myEntriesFileListener != null) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
-    }
-    if (myFileOperationsHandler != null) {
-      Disposer.dispose(myFileOperationsHandler);
-      myFileOperationsHandler = null;
-    }
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
+      myCommittedChangesProvider = null;
     }
     RootsToWorkingCopies.getInstance(myProject).clear();
     SvnAuthenticationNotifier.getInstance(myProject).clear();
@@ -289,18 +263,6 @@ public final class SvnVcs extends AbstractVcs {
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
     SvnLoadedBranchesStorage.getInstance(myProject).deactivate();
-  }
-
-  public VcsShowConfirmationOption getAddConfirmation() {
-    return myAddConfirmation;
-  }
-
-  public VcsShowConfirmationOption getDeleteConfirmation() {
-    return myDeleteConfirmation;
-  }
-
-  public VcsShowSettingOption getCheckoutOptions() {
-    return myCheckoutOptions;
   }
 
   @Override
@@ -408,6 +370,16 @@ public final class SvnVcs extends AbstractVcs {
       mySvnDiffProvider = new SvnDiffProvider(this);
     }
     return mySvnDiffProvider;
+  }
+
+  @Override
+  public void loadSettings() {
+    super.loadSettings();
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
+    vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
+    vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
   }
 
   @Nullable
@@ -718,7 +690,7 @@ public final class SvnVcs extends AbstractVcs {
     }
   }
 
-  private static final class MyFrameStateListener implements FrameStateListener {
+  private static final class MyFrameStateListener implements ApplicationActivationListener {
     private final ChangeListManager myClManager;
     private final VcsDirtyScopeManager myDirtyScopeManager;
 
@@ -728,7 +700,7 @@ public final class SvnVcs extends AbstractVcs {
     }
 
     @Override
-    public void onFrameActivated() {
+    public void applicationActivated(@NotNull IdeFrame ideFrame) {
       final List<VirtualFile> folders = ((ChangeListManagerImpl)myClManager).getLockedFolders();
       if (!folders.isEmpty()) {
         myDirtyScopeManager.filesDirty(null, folders);
@@ -775,7 +747,6 @@ public final class SvnVcs extends AbstractVcs {
    * For instance, when working copies of several formats are presented in project
    * (though it seems to be rather unlikely case).
    *
-   * @return
    */
   @NotNull
   public ClientFactory getFactory() {

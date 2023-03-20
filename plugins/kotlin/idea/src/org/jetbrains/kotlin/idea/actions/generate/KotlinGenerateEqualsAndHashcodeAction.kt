@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.generate
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -14,21 +14,21 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.insertMembersAfter
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -38,15 +38,21 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun ClassDescriptor.findDeclaredEquals(checkSupers: Boolean): FunctionDescriptor? {
     return findDeclaredFunction("equals", checkSupers) {
-        it.valueParameters.singleOrNull()?.type == it.builtIns.nullableAnyType && it.typeParameters.isEmpty()
+        it.modality != Modality.ABSTRACT &&
+                it.valueParameters.singleOrNull()?.type == it.builtIns.nullableAnyType &&
+                it.typeParameters.isEmpty()
+
     }
 }
 
 fun ClassDescriptor.findDeclaredHashCode(checkSupers: Boolean): FunctionDescriptor? {
-    return findDeclaredFunction("hashCode", checkSupers) { it.valueParameters.isEmpty() && it.typeParameters.isEmpty() }
+    return findDeclaredFunction("hashCode", checkSupers) {
+        it.modality != Modality.ABSTRACT && it.valueParameters.isEmpty() && it.typeParameters.isEmpty()
+    }
 }
 
 class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<KotlinGenerateEqualsAndHashcodeAction.Info>() {
@@ -68,11 +74,15 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
                 && !targetClass.isEnum()
                 && !targetClass.isAnnotation()
                 && !targetClass.isInterface()
+                && !targetClass.isInlineOrValue()
     }
 
     override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor?): Info? {
-        if (klass !is KtClass) throw AssertionError("Not a class: ${klass.getElementTextWithContext()}")
+        val asClass = klass.safeAs<KtClass>() ?: return null
+        return prepareMembersInfo(asClass, project, true)
+    }
 
+    fun prepareMembersInfo(klass: KtClass, project: Project, askDetails: Boolean): Info? {
         val context = klass.analyzeWithContent()
         val classDescriptor = context.get(BindingContext.CLASS, klass) ?: return null
 
@@ -81,7 +91,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
         var needEquals = equalsDescriptor == null
         var needHashCode = hashCodeDescriptor == null
-        if (!needEquals && !needHashCode) {
+        if (!needEquals && !needHashCode && askDetails) {
             if (!confirmMemberRewrite(klass, equalsDescriptor!!, hashCodeDescriptor!!)) return null
 
             runWriteAction {
@@ -98,7 +108,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
         val properties = getPropertiesToUseInGeneratedMember(klass)
 
-        if (properties.isEmpty() || isUnitTestMode()) {
+        if (properties.isEmpty() || isUnitTestMode() || !askDetails) {
             val descriptors = properties.map { context[BindingContext.DECLARATION_TO_DESCRIPTOR, it] as VariableDescriptor }
             return Info(needEquals, needHashCode, classDescriptor, descriptors, descriptors)
         }
@@ -170,7 +180,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
         }
     }
 
-    private fun generateEquals(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
+    fun generateEquals(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
         with(info) {
             if (!needEquals) return null
 
@@ -243,7 +253,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
         }
     }
 
-    private fun generateHashCode(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
+    fun generateHashCode(project: Project, info: Info, targetClass: KtClassOrObject): KtNamedFunction? {
         fun VariableDescriptor.genVariableHashCode(parenthesesNeeded: Boolean): String {
             val ref = (DescriptorToSourceUtilsIde.getAnyDeclaration(project, this) as PsiNameIdentifierOwner).nameIdentifier!!.text
             val isNullable = TypeUtils.isNullableType(type)
@@ -290,7 +300,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
             val bodyText = if (propertyIterator.hasNext()) {
                 val validator = CollectingNameValidator(variablesForEquals.map { it.name.asString().quoteIfNeeded() })
-                val resultVarName = KotlinNameSuggester.suggestNameByName("result", validator)
+                val resultVarName = Fe10KotlinNameSuggester.suggestNameByName("result", validator)
                 StringBuilder().apply {
                     append("var $resultVarName = $initialValue\n")
                     propertyIterator.forEach { append("$resultVarName = 31 * $resultVarName + ${it.genVariableHashCode(true)}\n") }
@@ -312,6 +322,6 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
                 addIfNotNull(generateHashCode(project, info, targetClass))
             }
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
-        return insertMembersAfter(editor, targetClass, prototypes, anchor)
+        return insertMembersAfterAndReformat(editor, targetClass, prototypes, anchor)
     }
 }

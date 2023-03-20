@@ -19,14 +19,14 @@ import java.util.Collection;
 public final class SearchScopeProvider {
 
   /** @deprecated Use {@link ExecutionSearchScopes#executionScope(Collection)}*/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
     return ExecutionSearchScopes.executionScope(project, runProfile);
   }
 
   /** @deprecated Use {@link ExecutionSearchScopes#executionScope(Collection)}*/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static GlobalSearchScope createSearchScope(Module @NotNull [] modules) {
     return ExecutionSearchScopes.executionScope(Arrays.asList(modules));

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.actions.VcsAnnotateUtil
 import com.intellij.openapi.vcs.annotate.AnnotationsPreloader
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -58,6 +59,7 @@ internal fun refreshCodeAuthorInlayHints(project: Project, file: VirtualFile) {
   if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
 }
 
+@Deprecated("Use VcsCodeVisionLanguageContext instead")
 abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> {
   override val group: InlayGroup
     get() = InlayGroup.CODE_AUTHOR_GROUP
@@ -65,11 +67,15 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     if (!isCodeAuthorEnabledForApplication()) return null
 
+    val authorAspect = getAspect(file, editor) ?: return null
+    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
+  }
+
+  private fun getAspect(file: PsiFile, editor: Editor): LineAnnotationAspect? {
+    if (hasPreviewInfo(file)) return LineAnnotationAspectAdapter.NULL_ASPECT
     val virtualFile = file.virtualFile ?: return null
     val annotation = getAnnotation(file.project, virtualFile, editor) ?: return null
-    val authorAspect = annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR } ?: return null
-
-    return VcsCodeAuthorInlayHintsCollector(editor, authorAspect, this::isAccepted, this::getClickHandler)
+    return annotation.aspects.find { it.id == LineAnnotationAspect.AUTHOR }
   }
 
   override fun getPlaceholdersCollectorFor(
@@ -97,6 +103,11 @@ abstract class VcsCodeAuthorInlayHintsProvider : InlayHintsProvider<NoSettings> 
   override val name: String get() = message("label.code.author.inlay.hints")
   override val key: SettingsKey<NoSettings> get() = KEY
   override val previewText: String? get() = null
+  override fun getProperty(key: String): String? = message(key)
+
+  override fun preparePreview(editor: Editor, file: PsiFile, settings: NoSettings) {
+    addPreviewInfo(file)
+  }
 
   override fun createConfigurable(settings: NoSettings): ImmediateConfigurable =
     object : ImmediateConfigurable {
@@ -118,7 +129,7 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   val annotation = provider.getFromCache(file) ?: return null
 
   val annotationDisposable = Disposable {
-    unregisterAnnotation(file, annotation)
+    unregisterAnnotation(annotation)
     annotation.dispose()
   }
   annotation.setCloser {
@@ -130,14 +141,14 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   annotation.setReloader { annotation.close() }
 
   editor.putUserData(VCS_CODE_AUTHOR_ANNOTATION, annotation)
-  registerAnnotation(file, annotation)
+  registerAnnotation(annotation)
   disposeWithEditor(editor, annotationDisposable)
 
   return annotation
 }
 
-private fun registerAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(file, annotation)
+private fun registerAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.registerAnnotation(annotation)
 
-private fun unregisterAnnotation(file: VirtualFile, annotation: FileAnnotation) =
-  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(file, annotation)
+private fun unregisterAnnotation(annotation: FileAnnotation) =
+  ProjectLevelVcsManager.getInstance(annotation.project).annotationLocalChangesListener.unregisterAnnotation(annotation)

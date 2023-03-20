@@ -1,4 +1,4 @@
-// "Replace with forEach" "INFORMATION"
+// "Collapse loop with stream 'forEach()'" "INFORMATION"
 import java.util.*;
 
 class A {

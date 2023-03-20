@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.List;
@@ -58,19 +57,15 @@ public final class PendingEventDispatcher <T extends EventListener> {
       @NonNls public Object invoke(Object proxy, final Method method, final Object[] args) {
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
           @NonNls String methodName = method.getName();
-          if (methodName.equals("toString")) {
-            return "Multicaster";
-          }
-          else if (methodName.equals("hashCode")) {
-            return Integer.valueOf(System.identityHashCode(proxy));
-          }
-          else if (methodName.equals("equals")) {
-            return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
-          }
-          else {
-            LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
-            return null;
-          }
+          return switch (methodName) {
+            case "toString" -> "Multicaster";
+            case "hashCode" -> Integer.valueOf(System.identityHashCode(proxy));
+            case "equals" -> proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
+            default -> {
+              LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
+              yield null;
+            }
+          };
         }
         else {
           dispatch(method, args);
@@ -79,10 +74,7 @@ public final class PendingEventDispatcher <T extends EventListener> {
       }
     };
 
-    myMulticaster = (T)Proxy.newProxyInstance(listenerClass.getClassLoader(),
-                                              new Class[]{listenerClass},
-                                              handler
-    );
+    myMulticaster = ReflectionUtil.proxy(listenerClass, handler);
   }
 
   public boolean hasListeners() {

@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -12,14 +11,10 @@ import java.util.Objects;
 
 @Internal
 public final class EditorHoverInfo {
+  private final @Nullable HighlightHoverInfo highlightHoverInfo;
+  private final @Nullable DocumentationHoverInfo documentationHoverInfo;
 
-  public final @Nullable HighlightHoverInfo highlightHoverInfo;
-  public final @Nullable DocumentationHoverInfo documentationHoverInfo;
-
-  public EditorHoverInfo(
-    @Nullable HighlightHoverInfo highlightHoverInfo,
-    @Nullable DocumentationHoverInfo documentationHoverInfo
-  ) {
+  EditorHoverInfo(@Nullable HighlightHoverInfo highlightHoverInfo, @Nullable DocumentationHoverInfo documentationHoverInfo) {
     assert highlightHoverInfo != null || documentationHoverInfo != null;
     this.highlightHoverInfo = highlightHoverInfo;
     this.documentationHoverInfo = documentationHoverInfo;
@@ -41,16 +36,5 @@ public final class EditorHoverInfo {
     if (c1 != null) p.add(c1);
     if (c2 != null) p.add(c2);
     return p;
-  }
-
-  public @NotNull EditorHoverInfo withQuickDoc(@Nullable DocumentationPsiHoverInfo documentationPsiHoverInfo) {
-    return new EditorHoverInfo(highlightHoverInfo, documentationPsiHoverInfo);
-  }
-
-  public @NotNull EditorHoverInfo withTooltip(@NotNull TooltipAction tooltipAction) {
-    if (highlightHoverInfo == null) {
-      return this;
-    }
-    return new EditorHoverInfo(highlightHoverInfo.override(tooltipAction), documentationHoverInfo);
   }
 }

@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
@@ -20,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -68,7 +67,6 @@ public final class FindInProjectUtil {
   private FindInProjectUtil() {}
 
   public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
-    PsiElement psiElement = null;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -76,6 +74,7 @@ public final class FindInProjectUtil {
       EditorSearchSession session = EditorSearchSession.SESSION_KEY.getData(dataContext);
       if (session != null) editor = session.getEditor();
     }
+    PsiElement psiElement = null;
     if (project != null && editor == null && !DumbServiceImpl.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -90,7 +89,7 @@ public final class FindInProjectUtil {
     }
 
     if (directoryName == null && psiElement instanceof PsiDirectoryContainer) {
-      final PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
+      PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
       directoryName = directories.length == 1 ? directories[0].getVirtualFile().getPresentableUrl():null;
     }
 
@@ -99,12 +98,14 @@ public final class FindInProjectUtil {
       if (virtualFile != null) {
         if (virtualFile.isDirectory()) {
           directoryName = virtualFile.getPresentableUrl();
-        } else {
+        }
+        else {
           VirtualFile parent = virtualFile.getParent();
           if (parent != null && parent.isDirectory()) {
             if (editor == null) {
               directoryName = parent.getPresentableUrl();
-            } else {
+            }
+            else {
               FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
             }
           }
@@ -180,7 +181,7 @@ public final class FindInProjectUtil {
 
     String pattern = "";
     String negativePattern = "";
-    final List<String> masks = StringUtil.split(filter, ",");
+    List<String> masks = StringUtil.split(filter, ",");
 
     for(String mask:masks) {
       mask = mask.trim();
@@ -193,8 +194,8 @@ public final class FindInProjectUtil {
     }
 
     if (pattern.isEmpty()) pattern = PatternUtil.convertToRegex("*");
-    final String finalPattern = pattern;
-    final String finalNegativePattern = negativePattern;
+    String finalPattern = pattern;
+    String finalNegativePattern = negativePattern;
 
     return new Condition<>() {
       final Pattern regExp = Pattern.compile(finalPattern, Pattern.CASE_INSENSITIVE);
@@ -209,19 +210,19 @@ public final class FindInProjectUtil {
   }
 
   public static void findUsages(@NotNull FindModel findModel,
-                                @NotNull final Project project,
-                                @NotNull final Processor<? super UsageInfo> consumer,
+                                @NotNull Project project,
+                                @NotNull Processor<? super UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
     findUsages(findModel, project, processPresentation, Collections.emptySet(), consumer);
   }
 
-  public static void findUsages(@NotNull final FindModel findModel,
-                                @NotNull final Project project,
-                                @NotNull final FindUsagesProcessPresentation processPresentation,
-                                @NotNull final Set<? extends VirtualFile> filesToStart,
-                                @NotNull final Processor<? super UsageInfo> consumer) {
-    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
-    if (ProgressManager.getGlobalProgressIndicator() == null) {
+  public static void findUsages(@NotNull FindModel findModel,
+                                @NotNull Project project,
+                                @NotNull FindUsagesProcessPresentation processPresentation,
+                                @NotNull Set<? extends @NotNull VirtualFile> filesToStart,
+                                @NotNull Processor<? super UsageInfo> consumer) {
+    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart, true).findUsages(processPresentation, consumer);
+    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
       ProgressManager.getInstance().runProcess(runnable, new EmptyProgressIndicator());
     }
     else {
@@ -229,27 +230,36 @@ public final class FindInProjectUtil {
     }
   }
 
-  static boolean processUsagesInFile(@NotNull final PsiFile psiFile,
-                                     @NotNull final VirtualFile virtualFile,
-                                     @NotNull final FindModel findModel,
-                                     @NotNull final Processor<? super UsageInfo> consumer) {
+  public static void findUsages(@NotNull FindModel findModel,
+                                @NotNull Project project,
+                                @NotNull ProgressIndicator progressIndicator,
+                                @NotNull FindUsagesProcessPresentation processPresentation,
+                                @NotNull Set<? extends @NotNull VirtualFile> filesToStart,
+                                @NotNull Processor<? super UsageInfo> consumer) {
+    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart, false).findUsages(processPresentation, consumer);
+    ProgressManager.getInstance().executeProcessUnderProgress(runnable, progressIndicator);
+  }
+
+  static boolean processUsagesInFile(@NotNull PsiFile psiFile,
+                                     @NotNull VirtualFile virtualFile,
+                                     @NotNull FindModel findModel,
+                                     @NotNull Processor<? super UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
       return ReadAction.compute(() -> consumer.process(new UsageInfo(psiFile)));
     }
     if (virtualFile.getFileType().isBinary()) return true; // do not decompile .class files
-    final Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+    Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
     if (document == null) return true;
-    final int[] offsetRef = {0};
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
     if (current == null) throw new IllegalStateException("must find usages under progress");
     ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     int before;
+    int[] offsetRef = {0};
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
       before = offsetRef[0];
-      boolean success = ReadAction.compute(() ->
-                                             !psiFile.isValid() ||
+      boolean success = ReadAction.compute(() -> !psiFile.isValid() ||
                                              processSomeOccurrencesInFile(document, findModel, psiFile, offsetRef, consumer));
       if (!success) {
         return false;
@@ -261,7 +271,7 @@ public final class FindInProjectUtil {
 
   private static boolean processSomeOccurrencesInFile(@NotNull Document document,
                                                       @NotNull FindModel findModel,
-                                                      @NotNull final PsiFile psiFile,
+                                                      @NotNull PsiFile psiFile,
                                                       int @NotNull [] offsetRef,
                                                       @NotNull Processor<? super UsageInfo> consumer) {
     CharSequence text = document.getCharsSequence();
@@ -276,17 +286,16 @@ public final class FindInProjectUtil {
       FindResult result = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
       if (!result.isStringFound()) break;
 
-      final int prevOffset = offset;
+      int prevOffset = offset;
       offset = result.getEndOffset();
       if (prevOffset == offset || offset == result.getStartOffset()) {
         // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
         ++offset;
       }
 
-      final SearchScope customScope = findModel.getCustomScope();
+      SearchScope customScope = findModel.getCustomScope();
       if (customScope instanceof LocalSearchScope) {
-        final TextRange range = new TextRange(result.getStartOffset(), result.getEndOffset());
-        if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) continue;
+        if (!((LocalSearchScope)customScope).containsRange(psiFile, result)) continue;
       }
       UsageInfo info = new FindResultUsageInfo(findManager, psiFile, prevOffset, findModel, result);
       if (!consumer.process(info)) {
@@ -303,7 +312,7 @@ public final class FindInProjectUtil {
   }
 
   @NotNull
-  private static @Nls String getTitleForScope(@NotNull final FindModel findModel) {
+  private static @Nls String getTitleForScope(@NotNull FindModel findModel) {
     String scopeName;
     if (findModel.isProjectScope()) {
       scopeName = FindBundle.message("find.scope.project.title");
@@ -332,20 +341,20 @@ public final class FindInProjectUtil {
   }
 
   @NotNull
-  public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull FindModel findModel) {
-    final UsageViewPresentation presentation = new UsageViewPresentation();
+  public static UsageViewPresentation setupViewPresentation(boolean toOpenInNewTab, @NotNull FindModel findModel) {
+    UsageViewPresentation presentation = new UsageViewPresentation();
     setupViewPresentation(presentation, toOpenInNewTab, findModel);
     return presentation;
   }
 
-  public static void setupViewPresentation(UsageViewPresentation presentation, @NotNull FindModel findModel) {
+  public static void setupViewPresentation(@NotNull UsageViewPresentation presentation, @NotNull FindModel findModel) {
     setupViewPresentation(presentation, FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
   }
 
-  public static void setupViewPresentation(UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
+  public static void setupViewPresentation(@NotNull UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
     String scope = getTitleForScope(findModel);
-    final String stringToFind = findModel.getStringToFind();
-    final String stringToReplace = findModel.getStringToReplace();
+    String stringToFind = findModel.getStringToFind();
+    String stringToReplace = findModel.getStringToReplace();
     presentation.setScopeText(scope);
     if (stringToFind.isEmpty()) {
       if (!scope.isEmpty()) {
@@ -359,12 +368,13 @@ public final class FindInProjectUtil {
       FindModel.SearchContext searchContext = findModel.getSearchContext();
       String contextText = "";
       if (searchContext != FindModel.SearchContext.ANY) {
-        contextText = FindBundle.message("find.context.presentation.scope.label", FindInProjectUtil.getPresentableName(searchContext));
+        contextText = FindBundle.message("find.context.presentation.scope.label", getPresentableName(searchContext));
       }
       if (!findModel.isReplaceState()) {
         presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind, contextText));
         presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope, contextText));
-      } else {
+      }
+      else {
         presentation.setTabText(FindBundle.message("replace.usage.view.tab.text", stringToFind, stringToReplace, contextText));
         presentation.setToolwindowTitle(FindBundle.message("replace.usage.view.toolwindow.title", stringToFind, stringToReplace, scope, contextText));
       }
@@ -376,30 +386,27 @@ public final class FindInProjectUtil {
     presentation.setUsageTypeFilteringAvailable(true);
     if (findModel.isReplaceState() && findModel.isRegularExpressions()) {
       presentation.setSearchPattern(findModel.compileRegExp());
-      try {
-        presentation.setReplacePattern(Pattern.compile(findModel.getStringToReplace()));
-      }
-      catch (Exception e) {
-        presentation.setReplacePattern(null);
-      }
-    } else {
-      presentation.setSearchPattern(null);
-      presentation.setReplacePattern(null);
+      presentation.setReplaceString(findModel.getStringToReplace());
     }
+    else {
+      presentation.setSearchPattern(null);
+      presentation.setReplaceString(null);
+    }
+    presentation.setCaseSensitive(findModel.isCaseSensitive());
+    presentation.setPreserveCase(findModel.isPreserveCase());
     presentation.setReplaceMode(findModel.isReplaceState());
   }
 
   @NotNull
-  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull final Project project,
-
-                                                                       @NotNull final UsageViewPresentation presentation) {
+  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull Project project,
+                                                                       @NotNull UsageViewPresentation presentation) {
     return setupProcessPresentation(project, !FindSettings.getInstance().isSkipResultsWithOneUsage(), presentation);
   }
 
   @NotNull
-  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull final Project project,
-                                                                       final boolean showPanelIfOnlyOneUsage,
-                                                                       @NotNull final UsageViewPresentation presentation) {
+  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull Project project,
+                                                                       boolean showPanelIfOnlyOneUsage,
+                                                                       @NotNull UsageViewPresentation presentation) {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
@@ -413,7 +420,7 @@ public final class FindInProjectUtil {
 
     PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(regexFileName, regexFileType, regExpText);
     List<PsiElement> result = null;
-    final PsiElement[] children = file.getChildren();
+    PsiElement[] children = file.getChildren();
 
     for (PsiElement child:children) {
       PsiElement[] grandChildren = child.getChildren();
@@ -430,12 +437,12 @@ public final class FindInProjectUtil {
   @NotNull
   public static String extractStringToFind(@NotNull String regexp, @NotNull Project project) {
     return ReadAction.compute(() -> {
-      final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
+      List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
       if (topLevelRegExpChars.size() != 1) return " ";
 
       // leave only top level regExpChars
 
-      final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
+      Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
       return getTopLevelRegExpChars(regexp, project)
         .stream()
         .map(psi -> {
@@ -536,9 +543,15 @@ public final class FindInProjectUtil {
       return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
+      }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
       if (UsageView.USAGE_SCOPE.is(dataId)) {
         return getScopeFromModel(myProject, myFindModel);
       }
@@ -549,7 +562,7 @@ public final class FindInProjectUtil {
   private static void addSourceDirectoriesFromLibraries(@NotNull Project project,
                                                         @NotNull VirtualFile directory,
                                                         @NotNull Collection<? super VirtualFile> outSourceRoots) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     // if we already are in the sources, search just in this directory only
     if (!index.isInLibraryClasses(directory)) return;
     VirtualFile classRoot = index.getClassRootForFile(directory);
@@ -614,7 +627,7 @@ public final class FindInProjectUtil {
     return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
   }
 
-  public static void initFileFilter(@NotNull final JComboBox<? super String> fileFilter, @NotNull final JCheckBox useFileFilter) {
+  public static void initFileFilter(@NotNull JComboBox<? super String> fileFilter, @NotNull JCheckBox useFileFilter) {
     fileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
     for (int i = fileMasks.length - 1; i >= 0; i--) {
@@ -637,27 +650,14 @@ public final class FindInProjectUtil {
   }
 
   public static @Nls(capitalization = Title) @NotNull String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
-    @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
-    switch (searchContext) {
-      case ANY:
-        messageKey = "find.context.anywhere.scope.label";
-        break;
-      case EXCEPT_COMMENTS:
-        messageKey = "find.context.except.comments.scope.label";
-        break;
-      case EXCEPT_STRING_LITERALS:
-        messageKey = "find.context.except.literals.scope.label";
-        break;
-      case EXCEPT_COMMENTS_AND_STRING_LITERALS:
-        messageKey = "find.context.except.comments.and.literals.scope.label";
-        break;
-      case IN_COMMENTS:
-        messageKey = "find.context.in.comments.scope.label";
-        break;
-      case IN_STRING_LITERALS:
-        messageKey = "find.context.in.literals.scope.label";
-        break;
-    }
+    @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = switch (searchContext) {
+      case ANY -> "find.context.anywhere.scope.label";
+      case EXCEPT_COMMENTS -> "find.context.except.comments.scope.label";
+      case EXCEPT_STRING_LITERALS -> "find.context.except.literals.scope.label";
+      case EXCEPT_COMMENTS_AND_STRING_LITERALS -> "find.context.except.comments.and.literals.scope.label";
+      case IN_COMMENTS -> "find.context.in.comments.scope.label";
+      case IN_STRING_LITERALS -> "find.context.in.literals.scope.label";
+    };
     return FindBundle.message(messageKey);
   }
 }

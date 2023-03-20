@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.impl.DebuggerTaskImpl;
 import org.jetbrains.annotations.Async;
 
-/**
- * @author lex
- */
 public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
   private final Priority myPriority;
 
@@ -37,8 +34,8 @@ public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
     }
   }
 
-  @Async.Execute()
-  public final void run() throws Exception{
+  @Async.Execute
+  public final void run() throws Exception {
     try {
       action();
     }

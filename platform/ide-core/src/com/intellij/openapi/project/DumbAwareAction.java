@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -15,6 +15,8 @@ import java.util.function.Supplier;
 
 /**
  * An action allowed to be performed in dumb mode.
+ *
+ * @see DumbAware
  */
 public abstract class DumbAwareAction extends AnAction implements DumbAware {
 
@@ -27,6 +29,21 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   public static DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
                                        @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new SimpleDumbAwareAction(text, actionPerformed);
+  }
+
+  @NotNull
+  public static DumbAwareAction create(@Nullable Icon icon,
+                                       @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+    return new SimpleDumbAwareAction(icon, actionPerformed);
+  }
+
+  @NotNull
+  public static DumbAwareAction create(@Nullable @NlsActions.ActionText String text,
+                                       @Nullable Icon icon,
+                                       @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+    DumbAwareAction action = new SimpleDumbAwareAction(text, actionPerformed);
+    action.getTemplatePresentation().setIcon(icon);
+    return action;
   }
 
   protected DumbAwareAction() {
@@ -72,6 +89,12 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     SimpleDumbAwareAction(@NlsActions.ActionText String text,
                           Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
+      myActionPerformed = actionPerformed;
+    }
+
+    SimpleDumbAwareAction(@Nullable Icon icon,
+                          Consumer<? super AnActionEvent> actionPerformed) {
+      super(icon);
       myActionPerformed = actionPerformed;
     }
 

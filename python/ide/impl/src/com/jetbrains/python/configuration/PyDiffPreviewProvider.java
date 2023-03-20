@@ -13,54 +13,60 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
     return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, PythonFileType.INSTANCE);
   }
 
-  @NonNls private static final String LEFT_TEXT =   "class MyClass\n" +
-                                                    "  value = 123\n" +
-                                                    "\n" +
-                                                    "  def left_only(self):\n" +
-                                                    "    bar(123)\n" +
-                                                    "\n" +
-                                                    "  def foo(self):\n" +
-                                                    "    # Left changes\n" +
-                                                    "    pass\n" +
-                                                    "\n" +
-                                                    "  def bar(self, a, b)\n" +
-                                                    "\n" +
-                                                    "    print a\n" +
-                                                    "    print b\n" +
-                                                    "\n" +
-                                                    "\n" +
-                                                    "\n";
-  @NonNls private static final String CENTER_TEXT = "class MyClass\n" +
-                                                    "  value = 123\n" +
-                                                    "\n" +
-                                                    "  def foo(self):\n" +
-                                                    "    pass\n" +
-                                                    "\n" +
-                                                    "  def removed_from_left(self):\n" +
-                                                    "    bar('PyCharmRulezzz')\n" +
-                                                    "\n" +
-                                                    "  def bar(self, a, b)\n" +
-                                                    "\n" +
-                                                    "    print a\n" +
-                                                    "    print b\n" +
-                                                    "\n" +
-                                                    "\n" +
-                                                    "\n";
-  @NonNls private static final String RIGHT_TEXT =  "class MyClass\n" +
-                                                    "  value = -123\n" +
-                                                    "\n" +
-                                                    "  def foo(self):\n" +
-                                                    "    # Right changes\n" +
-                                                    "    pass\n" +
-                                                    "\n" +
-                                                    "  def removed_from_left(self):\n" +
-                                                    "    bar('PyCharmRulezzz')\n" +
-                                                    "\n" +
-                                                    "  def bar(self, a, b)\n" +
-                                                    "    print a\n" +
-                                                    "\n" +
-                                                    "    print b\n" +
-                                                    "\n" +
-                                                    "\n" +
-                                                    "\n";
+  @NonNls private static final String LEFT_TEXT = """
+    class MyClass
+      value = 123
+
+      def left_only(self):
+        bar(123)
+
+      def foo(self):
+        # Left changes
+        pass
+
+      def bar(self, a, b)
+
+        print a
+        print b
+
+
+
+    """;
+  @NonNls private static final String CENTER_TEXT = """
+    class MyClass
+      value = 123
+
+      def foo(self):
+        pass
+
+      def removed_from_left(self):
+        bar('PyCharmRulezzz')
+
+      def bar(self, a, b)
+
+        print a
+        print b
+
+
+
+    """;
+  @NonNls private static final String RIGHT_TEXT = """
+    class MyClass
+      value = -123
+
+      def foo(self):
+        # Right changes
+        pass
+
+      def removed_from_left(self):
+        bar('PyCharmRulezzz')
+
+      def bar(self, a, b)
+        print a
+
+        print b
+
+
+
+    """;
 }

@@ -20,6 +20,7 @@ public class Strings {
         String s3 = " world ";
         String s4 = s2 + s3;
         String s5 = s4 + 2016;
+        String s6 = "Hello again " + s1 + " world";
         String empty = ""
         return s5;
     }

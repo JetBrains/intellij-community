@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import java.util.function.Supplier
 
 class GHPRReloadDetailsAction
@@ -19,6 +20,11 @@ class GHPRReloadDetailsAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER).detailsData.reloadDetails()
+    val dataProvider: GHPRDataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    dataProvider.detailsData.reloadDetails()
+    dataProvider.stateData.reloadMergeabilityState()
+    dataProvider.reviewData.resetPendingReview()
+    dataProvider.changesData.reloadChanges()
+    dataProvider.viewedStateData.reset()
   }
 }

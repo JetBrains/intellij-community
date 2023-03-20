@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test.util
 
-import org.jetbrains.kotlin.test.KotlinBaseTest.TestFile
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 
 enum class SteppingInstructionKind(val directiveName: String) {
     StepInto("STEP_INTO"),
@@ -11,7 +11,9 @@ enum class SteppingInstructionKind(val directiveName: String) {
     ForceStepOver("STEP_OVER_FORCE"),
     SmartStepInto("SMART_STEP_INTO"),
     SmartStepIntoByIndex("SMART_STEP_INTO_BY_INDEX"),
-    Resume("RESUME")
+    Resume("RESUME"),
+    // Mock instruction to check the number of smart step targets in various stepping scenarios
+    SmartStepTargetsExpectedNumber("SMART_STEP_TARGETS_EXPECTED_NUMBER")
 }
 
 class SteppingInstruction(val kind: SteppingInstructionKind, val arg: Int) {

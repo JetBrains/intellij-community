@@ -2,9 +2,13 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 class A {
-    void constructors() throws Exception {
+    void constructors(String s) throws Exception {
         new String();
-        // TODO: new String("original");
+
+        new String("original");
+        new String(s);
+        new String(s).length();
+
         new String(new char[] {'a', 'b', 'c'});
         new String(new char[] {'b', 'd'}, 1, 1);
         new String(new int[] {32, 65, 127}, 0, 3);
@@ -40,12 +44,16 @@ class A {
         s.startsWith("st", 2);
         s.indexOf("st");
         s.indexOf("st", 5);
-        s.lastIndexOf("st");
-        s.lastIndexOf("st", 4);
         s.indexOf('t');
         s.indexOf('t', 5);
+        s.indexOf(32);
+        s.indexOf(32, 2);
+        s.lastIndexOf("st");
+        s.lastIndexOf("st", 4);
         s.lastIndexOf('t');
         s.lastIndexOf('t', 5);
+        s.lastIndexOf(32);
+        s.lastIndexOf(32, 2);
         s.substring(1);
         s.substring(0, 4);
         s.subSequence(0, 4);
@@ -56,7 +64,6 @@ class A {
         s.toLowerCase(Locale.FRENCH);
         s.toUpperCase();
         s.toUpperCase(Locale.FRENCH);
-
         s.toString();
         s.toCharArray();
     }
@@ -78,15 +85,16 @@ class A {
         s.regionMatches(0, "st", 1, 2);
         s.replaceAll("\\w+", "---")
                 .replaceFirst("([s-t])", "A$1");
-        /* TODO
-        s.matches("\\w+");
         useSplit(s.split("\\s+"));
         useSplit(s.split("\\s+", 0));
         useSplit(s.split("\\s+", -1));
         useSplit(s.split("\\s+", 2));
+        String pattern = "\\s+";
+        useSplit(s.split(pattern));
         int limit = 5;
         useSplit(s.split("\\s+", limit));
-        */
+        useSplit(s.split("\\s+", (limit + 5)));
+        s.matches("\\w+");
         s.trim();
         s.concat(" another");
 
@@ -123,15 +131,6 @@ class A {
         Comparator<String> order = String.CASE_INSENSITIVE_ORDER;
     }
 
-    void unsupportedMethods() {
-        String s = "test string";
-        /* TODO:
-        s.indexOf(32);
-        s.indexOf(32, 2);
-        s.lastIndexOf(32);
-        s.lastIndexOf(32, 2);
-        */
-    }
-
     void useSplit(String[] result) {
     }
+}

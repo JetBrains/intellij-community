@@ -1,4 +1,4 @@
-// "Add foo to custom tags" "true"
+// "Add '@foo' to custom tags" "true"
 
 class Foo {
 

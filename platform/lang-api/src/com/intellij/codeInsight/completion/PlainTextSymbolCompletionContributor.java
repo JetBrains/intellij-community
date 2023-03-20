@@ -8,21 +8,24 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
- * A language-specific completion contributor which provides reasonable amount of symbols declared in given file
- * (likely only top-level declarations). Such contributor could be used in plain text editors like VCS commit message field
- * to help users referring to code symbols from the text.
+ * A language-specific completion contributor that should provide a reasonable number of symbols declared in a given file, e.g.,
+ * only top-level declarations.
+ * Such contributors can also help to complete words in plain text editors like VCS commit messages.
+ *
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/code-completion.html#contributor-based-completion">IntelliJ Platform Docs</a>
+ * for a high-level overview of contributor-based completion.
  *
  * @see PlainTextSymbolCompletionContributorEP
  */
 public interface PlainTextSymbolCompletionContributor {
   /**
-   * Adds lookup elements from given file.
+   * Collects lookup elements from a given file.
    *
-   * @param file file to add elements from.
+   * @param file file for extracting lookup elements.
    * @param invocationCount number of times the completion was invoked (see {@link CompletionParameters#getInvocationCount()}).
-   * @param prefix a prefix string. It's not required to return only matches starting with prefix, but this may be used to improve
-   *               performance.
-   * @return a collection of {@link LookupElement}'s to suggest.
+   * @param prefix prefix string that can be used to filter candidates.
+   *              It's not required to return only matches starting with prefix, but it can improve performance.
+   * @return collection of suggestions used for completion.
    */
   @NotNull
   Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix);

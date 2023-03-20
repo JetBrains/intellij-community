@@ -30,9 +30,6 @@ import java.util.function.Function;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class JavaCompletionStatistician extends CompletionStatistician{
   private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.SUPER));
 
@@ -61,14 +58,17 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         return StatisticsInfo.EMPTY;
       }
 
-      if (!(o instanceof PsiMember)) {
-        return null;
+      if (o instanceof CustomStatisticsInfoProvider) {
+        return ((CustomStatisticsInfoProvider)o).getStatisticsInfo();
       }
 
       if (o instanceof PsiClass) {
         return getClassInfo((PsiClass)o, position, firstInfo);
       }
-      return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+      if (o instanceof PsiField || o instanceof PsiMethod) {
+        return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+      }
+      return null;
     };
   }
 
@@ -116,5 +116,15 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     return new StatisticsInfo(contextPrefix, JavaStatisticsManager.getMemberUseKey2(member));
+  }
+
+  /**
+   * An interface for LookupElement objects that provide custom StatisticsInfo
+   */
+  public interface CustomStatisticsInfoProvider {
+    /**
+     * @return a statistics info for the current object; null if the statistics should not be collected for this item.
+     */
+    @Nullable StatisticsInfo getStatisticsInfo();
   }
 }

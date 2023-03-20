@@ -1,20 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereContributorStatistician
+import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
 
-internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
+internal class SearchEverywhereMLSearchSession(project: Project?,
+                                               val mixedListInfo: SearchEverywhereMixedListInfo,
+                                               private val sessionId: Int,
+                                               private val loggingRandomisation: FeaturesLoggingRandomisation) {
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
-  private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
+  private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
+  private val modelProviderWithCache: SearchEverywhereModelProvider = SearchEverywhereModelProvider()
 
   // context features are calculated once per Search Everywhere session
   val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
@@ -26,63 +36,83 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
   private val performanceTracker = PerformanceTracker()
 
-  init {
-    providersCaches = SearchEverywhereElementFeaturesProvider.getFeatureProviders()
-      .associate { it::class.java to it.getDataToCache(project) }
-      .mapNotNull { it.value?.let { value -> it.key to value } }
-      .toMap()
-  }
-
-  fun onSearchRestart(project: Project?, previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+  fun onSearchRestart(project: Project?,
+                      experimentStrategy: SearchEverywhereMlExperiment,
                       reason: SearchRestartReason,
                       tabId: String,
+                      orderByMl: Boolean,
                       keysTyped: Int,
                       backspacesTyped: Int,
-                      searchQuery: String) {
+                      searchQuery: String,
+                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                      searchScope: ScopeDescriptor?,
+                      isSearchEverywhere: Boolean) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
       val startTime = System.currentTimeMillis()
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
+      val experimentGroup = experimentStrategy.experimentGroup
+      val projectIsDumb = project?.let { DumbService.isDumb(it) }
       performanceTracker.start()
 
-      SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-        searchQuery, providersCaches)
+      SearchEverywhereMlSearchState(
+        sessionStartTime, startTime, nextSearchIndex, searchReason,
+        tabId, experimentGroup, orderByMl,
+        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache,
+        projectIsDumb, searchScope, isSearchEverywhere
+      )
     }
 
-    if (prevState != null && isMLSupportedTab(prevState.tabId)) {
-      logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState,
-        prevTimeToResult, previousElementsProvider)
+    if (prevState != null && experimentStrategy.isLoggingEnabledForTab(prevState.tabId)) {
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(prevState.tabId)
+      logger.onSearchRestarted(
+        project, sessionId, prevState.searchIndex,
+        shouldLogFeatures, itemIdProvider, cachedContextInfo,
+        prevState, prevTimeToResult, mixedListInfo, previousElementsProvider
+      )
     }
   }
 
   fun onItemSelected(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                      indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val state = getCurrentSearchState()
-    if (state != null && isMLSupportedTab(state.tabId)) {
-      val orderByMl = orderedByMl(state.tabId)
+    if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
+      if (project != null) {
+        val statisticianService = service<SearchEverywhereStatisticianService>()
+        selectedItems.forEach { statisticianService.increaseUseCount(it) }
+
+        if (state.tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID) {
+          elementsProvider.invoke()
+            .slice(indexes.asIterable())
+            .forEach { SearchEverywhereContributorStatistician.increaseUseCount(it.contributor.searchProviderId) }
+        }
+      }
+
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
       logger.onItemSelected(
         project, sessionId, state.searchIndex,
-        experimentStrategy.experimentGroup, orderByMl,
-        itemIdProvider, cachedContextInfo, state,
-        indexes, selectedItems, closePopup,
-        performanceTracker.timeElapsed, elementsProvider
+        shouldLogFeatures, state.experimentGroup,
+        state.orderByMl, itemIdProvider, cachedContextInfo,
+        state, indexes, selectedItems,
+        closePopup, performanceTracker.timeElapsed, mixedListInfo, elementsProvider
       )
     }
   }
 
-  fun onSearchFinished(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
-                       elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+  fun onSearchFinished(project: Project?,
+                       experimentStrategy: SearchEverywhereMlExperiment,
+                       elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val state = getCurrentSearchState()
-    if (state != null && isMLSupportedTab(state.tabId)) {
-      val orderByMl = orderedByMl(state.tabId)
+    if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
       logger.onSearchFinished(
         project, sessionId, state.searchIndex,
-        experimentStrategy.experimentGroup, orderByMl,
-        itemIdProvider, cachedContextInfo, state,
-        performanceTracker.timeElapsed, elementsProvider
+        shouldLogFeatures, state.experimentGroup,
+        state.orderByMl, itemIdProvider, cachedContextInfo,
+        state, performanceTracker.timeElapsed, mixedListInfo, elementsProvider
       )
     }
   }
@@ -91,29 +121,17 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     performanceTracker.stop()
   }
 
-  fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
-    val state = getCurrentSearchState()
-    if (state != null && isMLSupportedTab(state.tabId)) {
-      val id = itemIdProvider.getId(element)
-      return state.getMLWeight(id, element, contributor, cachedContextInfo, matchingDegree)
-    }
-    return -1.0
-  }
-
-  private fun orderedByMl(tabId: String): Boolean {
-    return SearchEverywhereMlSessionService.getService().shouldOrderByMl(tabId)
-  }
-
-  fun isMLSupportedTab(tabId: String): Boolean {
-    return SearchEverywhereElementFeaturesProvider.isTabSupported(tabId)
-  }
-
   fun getCurrentSearchState() = currentSearchState.get()
 }
 
 internal class SearchEverywhereMLContextInfo(project: Project?) {
-  val features: Map<String, Any> by lazy {
-    val featuresProvider = SearchEverywhereContextFeaturesProvider()
-    return@lazy featuresProvider.getContextFeatures(project)
+  val features: List<EventPair<*>> by lazy {
+    SearchEverywhereContextFeaturesProvider().getContextFeatures(project)
+  }
+
+  init {
+    NonUrgentExecutor.getInstance().execute {
+      features  // We don't care about the value, we just want the features to be computed
+    }
   }
 }

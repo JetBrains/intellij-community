@@ -1,12 +1,15 @@
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 {
   "note": "May https://vega.github.io/vega/docs/ be with you",
   "$schema": "https://vega.github.io/schema/vega/v4.3.0.json",
   "description": "Whole project highlighting",
   "title": "Whole project highlighting",
-  "width": 800,
-  "height": 500,
   "padding": 5,
-  "autosize": {"type": "pad", "resize": true},
+  "autosize": {"type": "fit", "contains": "padding"},
   "signals": [
     {
       "name": "clear",
@@ -528,6 +531,11 @@
         },
         {
           "type": "formula",
+          "as": "projectName",
+          "expr": "replace(datum.benchmark, /allKtFilesIn(-emptyProfile)?-?(\\w+)/, '$2$1')"
+        },
+        {
+          "type": "formula",
           "as": "branch",
           "expr": "'master'"
         },
@@ -536,6 +544,14 @@
     },
     {
       "name": "selected",      "on": [
+        {"trigger": "clear", "remove": true},
+        {"trigger": "!shift", "remove": true},
+        {"trigger": "!shift && clicked", "insert": "clicked"},
+        {"trigger": "shift && clicked", "toggle": "clicked"}
+      ]
+    },
+    {
+      "name": "selectedProject",      "on": [
         {"trigger": "clear", "remove": true},
         {"trigger": "!shift", "remove": true},
         {"trigger": "!shift && clicked", "insert": "clicked"},
@@ -597,7 +613,13 @@
       "domain": {"data": "table", "field": "metricValue"}
     },
     {
-      "name": "color",
+      "name": "projectColor",
+      "type": "ordinal",
+      "range": {"scheme": "category10"},
+      "domain": {"data": "table", "field": "projectName"}
+    },
+    {
+      "name": "caseColor",
       "type": "ordinal",
       "range": {"scheme": "category10"},
       "domain": {"data": "table", "field": "metricName"}
@@ -620,8 +642,50 @@
   ],
   "legends": [
     {
+      "title": "Project",
+      "stroke": "projectColor",
+      "strokeColor": "#ccc",
+      "padding": 8,
+      "cornerRadius": 4,
+      "symbolLimit": 50,
+      "labelLimit": 300,
+      "encode": {
+        "symbols": {
+          "name": "legendSymbol",
+          "interactive": true,
+          "update": {
+            "fill": {"value": "transparent"},
+            "strokeWidth": {"value": 2},
+            "opacity": [
+              {
+                "comment": "here `datum` is `selectedProject` data set",
+                "test": "!length(data('selectedProject')) || indata('selectedProject', 'value', datum.value)",
+                "value": 0.7
+              },
+              {"value": 0.15}
+            ],
+            "size": {"value": 64}
+          }
+        },
+        "labels": {
+          "name": "legendLabel",
+          "interactive": true,
+          "update": {
+            "opacity": [
+              {
+                "comment": "here `datum` is `selectedProject` data set",
+                "test": "!length(data('selectedProject')) || indata('selectedProject', 'value', datum.value)",
+                "value": 1
+              },
+              {"value": 0.25}
+            ]
+          }
+        }
+      }
+    },
+    {
       "title": "Cases",
-      "stroke": "color",
+      "stroke": "caseColor",
       "strokeColor": "#ccc",
       "padding": 8,
       "cornerRadius": 4,
@@ -758,15 +822,15 @@
               "strokeWidth": {"value": 2},
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 0.7
                 },
                 {"value": 0.15}
               ],
               "stroke": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
-                  "scale": "color",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
+                  "scale": "caseColor",
                   "field": "metricName"
                 },
                 {"value": "#ccc"}
@@ -788,7 +852,7 @@
               "strokeWidth": {"value": 1},
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && datum.hasError && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && datum.hasError && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 1
                 },
                 {"value": 0.15}
@@ -797,7 +861,7 @@
             "update": {
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain))  && datum.hasError && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain))  && datum.hasError && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 1
                 },
                 {"value": 0.15}
@@ -820,12 +884,12 @@
               "x": {"scale": "x", "field": {"signal": "timestamp ? 'timestamp' : 'buildId'"}},
               "y": {"scale": "y", "field": "metricValue"},
               "strokeWidth": {"value": 1},
-              "fill": {"scale": "color", "field": "metricName"}
+              "fill": {"scale": "caseColor", "field": "metricName"}
             },
             "update": {
               "opacity": [
                 {
-                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selected')) || indata('selected', 'value', datum.metricName))",
+                  "test": "(!domain || inrange(datum.buildId, domain)) && (!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 1
                 },
                 {"value": 0.15}

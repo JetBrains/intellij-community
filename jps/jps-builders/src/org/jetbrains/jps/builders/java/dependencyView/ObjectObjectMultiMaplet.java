@@ -9,9 +9,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 
-/**
- * @author: db
- */
 abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final K key);
 

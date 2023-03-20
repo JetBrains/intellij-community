@@ -1,4 +1,4 @@
-// "Initialize variable 'i'" "true"
+// "Initialize variable 'i'" "true-preview"
 
 class AClass
 {

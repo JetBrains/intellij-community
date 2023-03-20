@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -26,11 +26,6 @@ public interface ApplicationEx extends Application {
   int ELEVATE = 0x08;
 
   /**
-   * Loads the application configuration.
-   */
-  void load();
-
-  /**
    * @return true if this thread is inside read action.
    * @see #runReadAction(Runnable)
    */
@@ -52,9 +47,12 @@ public interface ApplicationEx extends Application {
    * Acquires IW lock if it's not acquired by the current thread.
    *
    * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
+   * @return {@code true} if lock was acquired by this call, {@code false} if lock was taken already.
    */
   @ApiStatus.Internal
-  default void acquireWriteIntentLock(@NotNull String invokedClassFqn) { }
+  default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
+    return false;
+  }
 
   /**
    * Releases IW lock.
@@ -111,7 +109,8 @@ public interface ApplicationEx extends Application {
   void restart(boolean exitConfirmed, boolean elevate);
 
   /**
-   * Runs modal process. For internal use only, see {@link Task}
+   * Runs modal process. For internal use only, see {@link Task}.
+   * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
   default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
@@ -123,7 +122,8 @@ public interface ApplicationEx extends Application {
 
   /**
    * Runs modal or non-modal process.
-   * For internal use only, see {@link Task}
+   * For internal use only, see {@link Task}.
+   * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
@@ -136,6 +136,10 @@ public interface ApplicationEx extends Application {
 
   void assertIsDispatchThread(@Nullable JComponent component);
 
+  /**
+   * Use {@link #assertIsNonDispatchThread()}
+   */
+  @Deprecated
   void assertTimeConsuming();
 
   /**
@@ -212,4 +216,11 @@ public interface ApplicationEx extends Application {
   default boolean isComponentCreated() {
     return true;
   }
+
+  // in some cases we cannot get service by class
+  /**
+   * Light service is not supported.
+   */
+  @ApiStatus.Internal
+  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 }

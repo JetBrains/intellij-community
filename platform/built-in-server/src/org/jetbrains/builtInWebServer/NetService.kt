@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.execution.ExecutionException
@@ -118,7 +118,6 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
       if (result != null && result == osProcessHandler) {
         processHandler.reset()
       }
-      @Suppress("HardCodedStringLiteral")
       print("${getConsoleToolWindowId()} terminated\n", ConsoleViewContentType.SYSTEM_OUTPUT)
     }
 

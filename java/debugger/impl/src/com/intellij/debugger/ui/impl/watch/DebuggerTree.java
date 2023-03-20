@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerTree
@@ -49,7 +49,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   private static final Logger LOG = Logger.getInstance(DebuggerTree.class);
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
-  public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree"); 
+  public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree");
 
   protected final NodeManagerImpl myNodeManager;
 
@@ -90,7 +90,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
 
     setModel(model);
 
-    final TreeSpeedSearch search = new TreeSpeedSearch(this);
+    final TreeSpeedSearch search = TreeSpeedSearch.installOn(this);
     search.setComparator(new SpeedSearchComparator(false));
   }
 
@@ -164,7 +164,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
       }
     }
 
-    for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
+    for (Enumeration e = node.rawChildren(); e.hasMoreElements(); ) {
       DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
       saveState(child);
     }
@@ -213,7 +213,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   private void restoreStateImpl(DebuggerTreeNodeImpl node) {
     restoreNodeState(node);
     if (node.getDescriptor().myIsExpanded) {
-      for (Enumeration e = node.rawChildren(); e.hasMoreElements();) {
+      for (Enumeration e = node.rawChildren(); e.hasMoreElements(); ) {
         DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
         restoreStateImpl(child);
       }
@@ -366,7 +366,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
             LOG.debug(e);
             //LOG.assertTrue(false);
             // if we pause during evaluation of this method the exception is thrown
-            //  private static void longMethod(){
+            //  private static void longMethod() {
             //    try {
             //      Thread.sleep(100000);
             //    } catch (InterruptedException e) {
@@ -398,7 +398,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
 
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
       final SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
-      final EvaluationContextImpl evaluationContext = suspendContext != null && !suspendContext.isResumed()? debuggerContext.createEvaluationContext() : null;
+      final EvaluationContextImpl evaluationContext = suspendContext != null && !suspendContext.isResumed() ? debuggerContext.createEvaluationContext() : null;
 
       boolean showCurrent = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD;
 

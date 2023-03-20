@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.options.JavaInspectionButtons
+import com.intellij.codeInsight.options.JavaInspectionControls
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.packageDependencies.DependenciesBuilder
 import com.intellij.packageDependencies.DependencyRule
 import com.intellij.packageDependencies.DependencyValidationManager
@@ -14,21 +15,11 @@ import com.intellij.packageDependencies.ui.DependencyConfigurable
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import com.intellij.util.containers.FactoryMap
-import java.awt.FlowLayout
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
-  override fun createOptionsPanel(): JComponent = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-    add(JButton(JvmAnalysisBundle.message("jvm.inspections.dependency.configure.button.text")).apply {
-      addActionListener {
-        val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))
-                      ?: ProjectManager.getInstance().defaultProject
-        ShowSettingsUtil.getInstance().editConfigurable(this, DependencyConfigurable(project))
-      }
-    })
-  }
+  override fun getOptionsPane(): OptPane = OptPane.pane(
+    JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.DEPENDENCY_CONFIGURATION),
+  )
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val validationManager = DependencyValidationManager.getInstance(file.project)
@@ -38,9 +29,8 @@ class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
       validationManager.getViolatorDependencyRules(file, dependencyFile!!)
     }
     DependenciesBuilder.analyzeFileDependencies(file) { place, dependency ->
-      val dependencyFile = dependency.containingFile
-      if (dependencyFile != null && dependencyFile.isPhysical && dependencyFile.virtualFile != null) {
-        for (dependencyRule in violations[dependencyFile]!!) {
+      dependency.containingFile?.let { dependencyFile ->
+        violations[dependencyFile]?.forEach { dependencyRule ->
           val message = JvmAnalysisBundle.message("jvm.inspections.dependency.violator.problem.descriptor", dependencyRule.displayText)
           val fixes = arrayOf(EditDependencyRulesAction(dependencyRule))
           problems.add(manager.createProblemDescriptor(place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
@@ -60,6 +50,10 @@ class DependencyInspection : AbstractBaseUastLocalInspectionTool() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       ShowSettingsUtil.getInstance().editConfigurable(project, DependencyConfigurable(project))
+    }
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      return IntentionPreviewInfo.Html(JvmAnalysisBundle.message("jvm.inspections.dependency.intention.description"))
     }
   }
 }

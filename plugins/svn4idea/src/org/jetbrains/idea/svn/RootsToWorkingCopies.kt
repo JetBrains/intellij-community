@@ -54,7 +54,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
 
   @RequiresBackgroundThread
   fun getMatchingCopy(url: Url?): WorkingCopy? {
-    assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (url == null) return null
 
     val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)
@@ -71,7 +71,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
 
   @RequiresBackgroundThread
   fun getWcRoot(root: VirtualFile): WorkingCopy? {
-    assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     synchronized(myLock) {
       if (myUnversioned.contains(root)) return null

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -80,7 +81,7 @@ public final class RelativeFont implements PropertyChangeListener {
   }
 
   /**
-   * @return a new instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
+   * @return an instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
    * over the current instance.
    */
   public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset) {
@@ -88,16 +89,27 @@ public final class RelativeFont implements PropertyChangeListener {
   }
 
   /**
-   * @return a new instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
+   * @return an instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
    * over the current instance. Use custom minimum font size limit.
    */
   public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset, float minSize) {
     int offset = JBUI.getInt(propertyName, defaultOffset);
-    if (offset == 0) return this;
-    else {
-      float multiplier = (float)Math.pow(MULTIPLIER, offset);
-      return new RelativeFont(myFamily, myStyle, mySize != null ? mySize * multiplier : multiplier, minSize);
-    }
+    return offset == 0 ? this : scale(offset, minSize);
+  }
+
+  /**
+   * @see #scale(int, float)
+   */
+  public RelativeFont scale(int offset) {
+    return scale(offset, MINIMUM_FONT_SIZE);
+  }
+
+  /**
+   * Returns an instance that represents larger (>0) or smaller (<0) font over the current instance
+   */
+  public RelativeFont scale(int offset, float minSize) {
+    float multiplier = (float)Math.pow(MULTIPLIER, offset);
+    return new RelativeFont(myFamily, myStyle, mySize != null ? mySize * multiplier : multiplier, minSize);
   }
 
   /**
@@ -143,27 +155,36 @@ public final class RelativeFont implements PropertyChangeListener {
    * @return a new font, or the specified one if a change is not needed
    */
   public Font derive(Font font) {
-    if (font != null) {
-      if (null != myFamily && !myFamily.equals(font.getFamily(ENGLISH))) {
-        int style = null != myStyle ? myStyle : font.getStyle();
-        font = new Font(myFamily, style, font.getSize());
-      }
-      else if (null != myStyle && myStyle != font.getStyle()) {
-        return mySize != null
-               ? font.deriveFont(myStyle, Math.max(mySize * font.getSize2D(), myMinimumSize))
-               : font.deriveFont(myStyle);
-      }
-      if (mySize != null) {
-        return font.deriveFont(Math.max(mySize * font.getSize2D(), myMinimumSize));
-      }
+    if (font == null) return null;
+
+    boolean isSizeConsidered = false;
+    boolean isOriginalFontUIResource = font instanceof UIResource;
+
+    if (null != myFamily && !myFamily.equals(font.getFamily(ENGLISH))) {
+      int style = null != myStyle ? myStyle : font.getStyle();
+      font = new Font(myFamily, style, font.getSize());
     }
+    else if (null != myStyle && myStyle != font.getStyle()) {
+      isSizeConsidered = true;
+      font = mySize != null
+             ? font.deriveFont(myStyle, Math.max(mySize * font.getSize2D(), myMinimumSize))
+             : font.deriveFont(myStyle);
+    }
+
+    if (mySize != null && !isSizeConsidered) {
+      font = font.deriveFont(Math.max(mySize * font.getSize2D(), myMinimumSize));
+    }
+
+    if (font != null && isOriginalFontUIResource && !(font instanceof UIResource)) {
+      font = new FontUIResource(font);
+    }
+
     return font;
   }
 
   @Override
   public void propertyChange(PropertyChangeEvent event) {
-    if (!(event.getNewValue() instanceof MyFont) && (event.getSource() instanceof Component) && PROPERTY.equals(event.getPropertyName())) {
-      Component component = (Component)event.getSource();
+    if (!(event.getNewValue() instanceof MyFont) && (event.getSource() instanceof Component component) && PROPERTY.equals(event.getPropertyName())) {
       Font font = derive(event.getNewValue() instanceof Font ? (Font)event.getNewValue() : component.getFont());
       if (font != null) {
         component.setFont(new MyFont(font));

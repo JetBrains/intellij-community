@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -12,9 +11,10 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 private val counterpartNames = mapOf(
     "apply" to "also",
@@ -46,6 +47,7 @@ private val counterpartNames = mapOf(
     "also" to "apply",
     "let" to "run"
 )
+
 
 class ScopeFunctionConversionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -76,7 +78,7 @@ private fun getCounterpart(expression: KtCallExpression): String? {
         if (lambdaExpression.valueParameters.isNotEmpty()) {
             return null
         }
-        val bindingContext = callee.analyze(BodyResolveMode.PARTIAL)
+        val bindingContext = callee.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
         val resolvedCall = callee.getResolvedCall(bindingContext) ?: return null
         val descriptor = resolvedCall.resultingDescriptor
         if (descriptor.dispatchReceiverParameter == null && descriptor.extensionReceiverParameter == null) return null
@@ -291,9 +293,9 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         }
 
         return if (parameterType != null)
-            KotlinNameSuggester.suggestNamesByType(parameterType, ::isNameUnique).first()
+            Fe10KotlinNameSuggester.suggestNamesByType(parameterType, ::isNameUnique).first()
         else {
-            KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
+            Fe10KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
         }
     }
 }

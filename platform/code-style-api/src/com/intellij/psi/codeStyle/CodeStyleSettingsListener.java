@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.psi.PsiFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.application.options.CodeStyle#getSettings(PsiFile)
  */
 public interface CodeStyleSettingsListener {
+  Topic<CodeStyleSettingsListener> TOPIC = new Topic<>(CodeStyleSettingsListener.class, Topic.BroadcastDirection.NONE, true);
+
   /**
    * Invoked when the code style settings change.
    *

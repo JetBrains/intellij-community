@@ -14,15 +14,10 @@ public class GrWildcardTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
-    switch (position) {
-      case METHOD_PARAMETER:
-      case GENERIC_PARAMETER:
-      case ASSIGNMENT:
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+    return switch (position) {
+      case METHOD_PARAMETER, GENERIC_PARAMETER, ASSIGNMENT, RETURN_VALUE -> true;
+      default -> false;
+    };
   }
 
   @Override

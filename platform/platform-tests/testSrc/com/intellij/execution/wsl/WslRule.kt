@@ -2,27 +2,39 @@
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.util.io.IoTestUtil
-import org.junit.Assume
-import org.junit.AssumptionViolatedException
+import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
 
 /**
- * Gives access to [WSLDistribution] as [wsl], skips test if WSL not available.
- * Depends on [com.intellij.testFramework.fixtures.TestFixtureRule], so make sure enable it before this class
- * @see WslTestBase
+ * Provides access to installed and active [distributions][WSLDistribution];
+ * skips the test if none are available (unless the `assume` parameter is set to `false`).
+ *
+ * Given that the rule is rather slow to initialize, it makes sense to use it on a class level.
+ *
+ * Depends on the application, so make sure [com.intellij.testFramework.fixtures.TestFixtureRule] is initialized beforehand.
  */
-internal class WslRule : ExternalResource() {
-  lateinit var wsl: WSLDistribution
+class WslRule(private val assume: Boolean = true) : ExternalResource() {
+  lateinit var vms: List<WSLDistribution>
     private set
 
-  override fun before() {
-    Assume.assumeTrue("Windows only test", WSLUtil.isSystemCompatible())
-    IoTestUtil.assumeWindows()
-    IoTestUtil.assumeWslPresence()
+  val wsl: WSLDistribution
+    get() = if (vms.isNotEmpty()) vms[0] else throw IllegalStateException("No WSL VMs are available")
 
-    val distro = WslDistributionManager.getInstance().installedDistributions.firstOrNull { it !is WSLDistributionLegacy }
-                 ?: throw AssumptionViolatedException("No WSL installed")
-    Assume.assumeTrue("Can't reanimate WSL", IoTestUtil.reanimateWslDistribution(distro.id))
-    this.wsl = distro
+  override fun before() {
+    if (assume) {
+      IoTestUtil.assumeWindows()
+      IoTestUtil.assumeWslPresence()
+    }
+
+    if (assume || WSLUtil.isSystemCompatible() && WSLDistribution.findWslExe() != null) {
+      val candidates = WslDistributionManager.getInstance().installedDistributions
+      vms = candidates.filter { it !is WSLDistributionLegacy && IoTestUtil.reanimateWslDistribution(it.id) }
+      if (assume) {
+        assumeTrue("No alive WSL WMs among ${candidates.map(WSLDistribution::getId)}", vms.isNotEmpty())
+      }
+    }
+    else {
+      vms = emptyList()
+    }
   }
 }

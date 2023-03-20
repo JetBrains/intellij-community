@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.util.Processor;
@@ -9,13 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
-* @author irengrig
- *
  * We can have only limited number of nodes selected in a tree;
  * and children of selected nodes (any level) cannot change their state
  * used together with {@link SelectionManager}
 */
-public class SelectedState<T> {
+public final class SelectedState<T> {
   private final Set<T> mySelected;
   private final SLRUMap<T, TreeNodeState> myCache;
   private final int mySelectedSize;
@@ -27,8 +25,7 @@ public class SelectedState<T> {
     myCache = new SLRUMap<>(queueSize, queueSize);
   }
 
-  @Nullable
-  public TreeNodeState get(final T node) {
+  public @Nullable TreeNodeState get(final T node) {
     if (mySelected.contains(node)) return TreeNodeState.SELECTED;
     return myCache.get(node);
   }
@@ -52,8 +49,7 @@ public class SelectedState<T> {
     myCache.remove(node);
   }
 
-  @NotNull
-  public TreeNodeState putAndPass(final T node, @NotNull final TreeNodeState state) {
+  public @NotNull TreeNodeState putAndPass(final T node, final @NotNull TreeNodeState state) {
     if (TreeNodeState.SELECTED.equals(state)) {
       mySelected.add(node);
       myCache.remove(node);

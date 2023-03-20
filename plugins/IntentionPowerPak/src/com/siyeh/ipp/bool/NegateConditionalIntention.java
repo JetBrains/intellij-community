@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.bool;
 
-import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -16,6 +14,16 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class NegateConditionalIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("negate.conditional.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("negate.conditional.intention.name");
+  }
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
@@ -40,12 +48,11 @@ public class NegateConditionalIntention extends Intention {
 
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (!(element instanceof PsiConditionalExpression)) {
+      if (!(element instanceof PsiConditionalExpression conditionalExpression)) {
         return false;
       }
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
       final PsiType type = conditionalExpression.getType();
-      return PsiType.BOOLEAN.equals(type);
+      return PsiTypes.booleanType().equals(type);
     }
   }
 }

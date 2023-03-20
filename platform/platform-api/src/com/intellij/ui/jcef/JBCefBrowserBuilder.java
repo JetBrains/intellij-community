@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.util.registry.RegistryManager;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,25 +9,26 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A builder for creating {@link JBCefBrowser}.
  *
- * @see JBCefBrowser#createBuilder
  * @author tav
+ * @see JBCefBrowser#createBuilder
  */
 public class JBCefBrowserBuilder {
   @Nullable JBCefClient myClient;
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
-  boolean myIsOffScreenRendering;
+  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
+  boolean myMouseWheelEventEnable = true;
 
   /**
    * Sets whether the browser is rendered off-screen.
-   * <p></p>
-   * When set to true a buffered rendering is used onto a lightweight Swing component.
-   * To override - use {@link #setOSRHandlerFactory(JBCefOSRHandlerFactory)}.
-   * <p></p>
-   * When not set (or false) the windowed mode is used to render the browser.
+   * <p>
+   * When set to {@code true} a buffered rendering is used onto a lightweight Swing component.
+   * To override, use {@link #setOSRHandlerFactory(JBCefOSRHandlerFactory)}.
+   * <p>
+   * When not set (or {@code false}) the windowed mode is used to render the browser.
    *
    * @see #setOSRHandlerFactory(JBCefOSRHandlerFactory)
    */
@@ -37,8 +39,8 @@ public class JBCefBrowserBuilder {
 
   /**
    * Sets the client.
-   * <p></p>
-   * When not set the default client is created (which will be disposed automatically).
+   * <p>
+   * When not set, the default client is created (which will be disposed automatically).
    * <p>
    * The disposal of the provided client is the responsibility of the caller.
    */
@@ -49,8 +51,8 @@ public class JBCefBrowserBuilder {
 
   /**
    * Sets the initial URL to load.
-   * <p></p>
-   * When not set no initial URL is loaded.
+   * <p>
+   * When not set, no initial URL is loaded.
    *
    * @see JBCefBrowserBase#loadURL(String)
    */
@@ -61,8 +63,8 @@ public class JBCefBrowserBuilder {
 
   /**
    * Sets the browser to wrap.
-   * <p></p>
-   * When not set the default browser is created.
+   * <p>
+   * When not set, the default browser is created.
    * <p>
    * Use this option to set a browser like DevTools.
    *
@@ -75,8 +77,8 @@ public class JBCefBrowserBuilder {
 
   /**
    * Sets whether the native browser should be created immediately.
-   * <p></p>
-   * When not set (or false) the native browser is created when the browser's component is added to a UI hierarchy.
+   * <p>
+   * When not set (or {@code false{}}) the native browser is created when the browser's component is added to a UI hierarchy.
    *
    * @see CefBrowser#createImmediately
    * @see JBCefBrowserBase#getComponent
@@ -88,7 +90,7 @@ public class JBCefBrowserBuilder {
 
   /**
    * Sets the OSR handler factory.
-   * <p></p>
+   * <p>
    * When not set the {@link JBCefOSRHandlerFactory#DEFAULT} factory is used.
    * <p>
    * Used only with off-screen rendering, otherwise ignored.
@@ -102,8 +104,8 @@ public class JBCefBrowserBuilder {
 
   /**
    * Sets whether the "Open DevTools" item should be present in the context menu.
-   * <p></p>
-   * When not set the item is not present.
+   * <p>
+   * When not set, the item is not present.
    */
   public @NotNull JBCefBrowserBuilder setEnableOpenDevToolsMenuItem(boolean enableOpenDevToolsMenuItem) {
     myEnableOpenDevToolsMenuItem = enableOpenDevToolsMenuItem;
@@ -111,9 +113,28 @@ public class JBCefBrowserBuilder {
   }
 
   /**
-   * Creates the browser with the set parameters.
+   * @deprecated use {@link JBCefBrowserBuilder#build()} instead
    */
+  @Deprecated
   public @NotNull JBCefBrowser createBrowser() {
+    return build();
+  }
+
+  /**
+   * Creates and returns the browser with the set parameters.
+   */
+  public @NotNull JBCefBrowser build() {
     return JBCefBrowser.create(this);
+  }
+
+  /**
+   * If {@code true}, the browser will intercept mouse wheel events. Otherwise, the browser won't react on scrolling,
+   * and the parent component will handle scroll events.
+   * <p>
+   * Default is {@code true}.
+   */
+  public @NotNull JBCefBrowserBuilder setMouseWheelEventEnable(boolean mouseWheelEventEnable) {
+    myMouseWheelEventEnable = mouseWheelEventEnable;
+    return this;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -49,13 +49,17 @@ public final class QuickFixPreviewPanelFactory {
 
     QuickFixReadyPanel(@NotNull InspectionResultsView view) {
       myView = view;
-      myWrapper = view.getTree().getSelectedToolWrapper(true);
+      InspectionTree tree = view.getTree();
+      myWrapper = tree.getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);
-      QuickFixAction[] commonFixes = view.getProvider().getCommonQuickFixes(myWrapper, view.getTree());
+      QuickFixAction[] commonFixes = view.getProvider().getCommonQuickFixes(myWrapper,
+                                                                            tree,
+                                                                            tree.getSelectedDescriptors(),
+                                                                            tree.getSelectedElements());
       boolean multipleDescriptors = myView.getTree().getSelectedDescriptors().length > 1;
       QuickFixAction[] partialFixes = QuickFixAction.EMPTY;
       if (multipleDescriptors && commonFixes.length == 0) {
-        partialFixes = view.getProvider().getPartialQuickFixes(myWrapper, view.getTree());
+        partialFixes = view.getProvider().getPartialQuickFixes(myWrapper, tree, tree.getSelectedDescriptors());
       }
       myEmpty = fillPanel(commonFixes, partialFixes, multipleDescriptors, view);
     }
@@ -98,6 +102,7 @@ public final class QuickFixPreviewPanelFactory {
       }
 
       if (actions.getChildrenCount() != 0) {
+        view.setFixesAvailable(true);
         final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
         toolbar.setTargetComponent(view);
@@ -130,7 +135,7 @@ public final class QuickFixPreviewPanelFactory {
 
         @NotNull
         @Override
-        protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+        protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
           return group;
         }
       };
@@ -156,7 +161,7 @@ public final class QuickFixPreviewPanelFactory {
 
         @NotNull
         @Override
-        protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+        protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
           DefaultActionGroup group = new DefaultCompactActionGroup();
           group.addAll(availableSuppressors);
           return group;
@@ -182,7 +187,7 @@ public final class QuickFixPreviewPanelFactory {
 
           @NotNull
           @Override
-          protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+          protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
             final DefaultActionGroup actionGroup = new DefaultActionGroup();
             for (QuickFixAction fix : fixes) {
               actionGroup.add(fix);

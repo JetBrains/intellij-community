@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.facet;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +39,7 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
   }
 
   static Library addLibrary(Sdk sdk) {
-    final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+    final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.getInstance().getLibraryTableModifiableModel();
     final Library library = libraryTableModel.createLibrary(PythonFacetUtil.getFacetLibraryName(sdk.getName()));
     final Library.ModifiableModel model = library.getModifiableModel();
     for (String url : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
@@ -52,7 +52,7 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
   }
 
   static void updateLibrary(Sdk sdk) {
-    final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+    final LibraryTable.ModifiableModel libraryTableModel = ModifiableModelsProvider.getInstance().getLibraryTableModifiableModel();
     final Library library = libraryTableModel.getLibraryByName(PythonFacetUtil.getFacetLibraryName(sdk.getName()));
     if (library == null) return;
     final Library.ModifiableModel model = library.getModifiableModel();
@@ -73,7 +73,7 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
   private static void removeLibrary(final Sdk sdk) {
     ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       final LibraryTable.ModifiableModel libraryTableModel =
-        ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+        ModifiableModelsProvider.getInstance().getLibraryTableModifiableModel();
       final Library library = libraryTableModel.getLibraryByName(PythonFacetUtil.getFacetLibraryName(sdk.getName()));
       if (library != null) {
         libraryTableModel.removeLibrary(library);
@@ -85,7 +85,7 @@ public class PythonSdkTableListener implements ProjectJdkTable.Listener {
   private static void renameLibrary(final Sdk sdk, final String previousName) {
     ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       final LibraryTable.ModifiableModel libraryTableModel =
-        ModifiableModelsProvider.SERVICE.getInstance().getLibraryTableModifiableModel();
+        ModifiableModelsProvider.getInstance().getLibraryTableModifiableModel();
       final Library library = libraryTableModel.getLibraryByName(PythonFacetUtil.getFacetLibraryName(previousName));
       if (library != null) {
         final Library.ModifiableModel model = library.getModifiableModel();

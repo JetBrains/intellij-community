@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -7,8 +7,10 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestObject;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
@@ -201,6 +203,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
     AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor);
 
     Sdk mockJdk = IdeaTestUtil.getMockJdk9();
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(module, mockJdk);
 
     PsiClass aClass = findClass(module, "p.MyTest");

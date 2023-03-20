@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTargetElementEvaluator
+import org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator
 import org.jetbrains.kotlin.idea.util.isAnonymousFunction
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KotlinRainbowVisitor : RainbowVisitor() {
     companion object {
-        val KOTLIN_TARGET_ELEMENT_EVALUATOR = KotlinTargetElementEvaluator()
+        val KOTLIN_TARGET_ELEMENT_EVALUATOR = FE10KotlinTargetElementEvaluator()
     }
 
     override fun suitableForFile(file: PsiFile) = file is KtFile

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BinaryOperator;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -42,7 +43,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         IElementType type = expression.getOperationTokenType();
         boolean andChain = type.equals(JavaTokenType.ANDAND);
         if (!andChain && !type.equals(JavaTokenType.OROR)) return;
@@ -57,9 +58,15 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
             set = constraint.getFullRange().subtract(set);
           }
           Long value = set.getConstantValue();
+          boolean useHex = SyntaxTraverser.psiTraverser(expression).filter(PsiLiteralExpression.class)
+            .filter(c -> TypeConversionUtil.isIntegralNumberType(c.getType()) && c.getText().startsWith("0x")).isNotEmpty();
           if (value != null) {
+            String valueRepresentation = useHex ? "0x" + Long.toHexString(value).toUpperCase(Locale.ROOT) : Long.toString(value);
+            if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+              valueRepresentation += "L";
+            }
             String text = constraint.myExpression.getText() + constraint.getExpressionSuffix();
-            String replacement = text + ' ' + (andChain ? "==" : "!=") + ' ' + value;
+            String replacement = text + ' ' + (andChain ? "==" : "!=") + ' ' + valueRepresentation;
             String message = InspectionGadgetsBundle.message("inspection.excessive.range.check.message", replacement);
             holder.registerProblem(expression,
                                    new TextRange(constraint.myRange.getStartOffset(), run.get(run.size() - 1).myRange.getEndOffset()),
@@ -90,8 +97,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
         }
       }
     }
-    if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binOp) {
       RelationType rel = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
       if (rel == null) return null;
       PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
@@ -159,16 +165,12 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
 
     @NonNls String getExpressionSuffix() {
       if (myField == null) return "";
-      switch (myField) {
-        case ARRAY_LENGTH:
-          return ".length";
-        case STRING_LENGTH:
-          return ".length()";
-        case COLLECTION_SIZE:
-          return ".size()";
-        default:
-          return "";
-      }
+      return switch (myField) {
+        case ARRAY_LENGTH -> ".length";
+        case STRING_LENGTH -> ".length()";
+        case COLLECTION_SIZE -> ".size()";
+        default -> "";
+      };
     }
 
     @Nullable

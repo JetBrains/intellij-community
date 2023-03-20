@@ -11,9 +11,6 @@ import com.intellij.util.Consumer;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Fokin
- */
 public final class OwnerOptional {
   private static Window findOwnerByComponent(Component component) {
     if (component == null) component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
@@ -38,16 +35,13 @@ public final class OwnerOptional {
       if (!owner.isFocused() || !SystemInfo.isJetBrainsJvm) {
         owner = owner.getOwner();
 
-        while (owner != null
-               && !(owner instanceof Dialog)
-               && !(owner instanceof Frame)) {
+        while (UIUtil.isSimpleWindow(owner)) {
           owner = owner.getOwner();
         }
       }
     }
 
-    if (owner instanceof Dialog) {
-      Dialog ownerDialog = (Dialog)owner;
+    if (owner instanceof Dialog ownerDialog) {
       if (!ownerDialog.isModal() && !UIUtil.isPossibleOwner(ownerDialog)) {
         while (owner instanceof Dialog && !((Dialog)owner).isModal()) {
           owner = owner.getOwner();
@@ -60,7 +54,7 @@ public final class OwnerOptional {
     }
 
     // Window cannot be parent of JDialog ()
-    if (owner != null && !(owner instanceof Frame || owner instanceof Dialog)) {
+    if (UIUtil.isSimpleWindow(owner)) {
       owner = null;
     }
 
@@ -90,8 +84,7 @@ public final class OwnerOptional {
 
   public OwnerOptional ifFrame(Consumer<? super Frame> consumer) {
     if (myPermanentOwner instanceof Frame) {
-      if (myPermanentOwner instanceof IdeFrame.Child) {
-        IdeFrame.Child ideFrameChild = (IdeFrame.Child)myPermanentOwner;
+      if (myPermanentOwner instanceof IdeFrame.Child ideFrameChild) {
         myPermanentOwner = WindowManager.getInstance().getFrame(ideFrameChild.getProject());
       }
       consumer.consume((Frame)this.myPermanentOwner);

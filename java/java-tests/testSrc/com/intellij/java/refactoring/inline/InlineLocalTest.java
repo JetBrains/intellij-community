@@ -4,6 +4,7 @@ package com.intellij.java.refactoring.inline;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -24,9 +25,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
@@ -352,6 +350,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     else {
       performDefInline(getProject(), getEditor());
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(fileName + ".after");
   }
 

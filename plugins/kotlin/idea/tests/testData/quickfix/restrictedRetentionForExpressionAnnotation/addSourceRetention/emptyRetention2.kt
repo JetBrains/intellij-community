@@ -1,6 +1,6 @@
 // "Add SOURCE retention" "false"
 // DISABLE-ERRORS
-// ACTION: Change existent retention to SOURCE
+// ACTION: Change existing retention to SOURCE
 // ACTION: Make internal
 // ACTION: Make private
 // ACTION: Remove EXPRESSION target

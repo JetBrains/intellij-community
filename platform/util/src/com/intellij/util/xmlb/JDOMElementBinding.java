@@ -2,7 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
   }
 
   @Override
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
       myAccessor.set(context, elements.toArray(new Element[0]));
     }

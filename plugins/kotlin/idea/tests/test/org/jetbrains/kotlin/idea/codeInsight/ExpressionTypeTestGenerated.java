@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -61,6 +61,26 @@ public class ExpressionTypeTestGenerated extends AbstractExpressionTypeTest {
     @TestMetadata("Lambda.kt")
     public void testLambda() throws Exception {
         runTest("testData/codeInsight/expressionType/Lambda.kt");
+    }
+
+    @TestMetadata("LambdaParameterWithType.kt")
+    public void testLambdaParameterWithType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LambdaParameterWithType.kt");
+    }
+
+    @TestMetadata("LambdaParameterWithoutType.kt")
+    public void testLambdaParameterWithoutType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LambdaParameterWithoutType.kt");
+    }
+
+    @TestMetadata("LoopVariableWithType.kt")
+    public void testLoopVariableWithType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LoopVariableWithType.kt");
+    }
+
+    @TestMetadata("LoopVariableWithoutType.kt")
+    public void testLoopVariableWithoutType() throws Exception {
+        runTest("testData/codeInsight/expressionType/LoopVariableWithoutType.kt");
     }
 
     @TestMetadata("MethodName.kt")

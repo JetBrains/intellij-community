@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -17,7 +17,7 @@ internal class ModifiableModelCommitterServiceBridge : ModifiableModelCommitterS
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     // TODO Naive impl, check for existing contact in com.intellij.openapi.module.impl.ModuleManagerImpl.commitModelWithRunnable
-    val diffs = mutableSetOf<WorkspaceEntityStorageBuilder>()
+    val diffs = mutableSetOf<MutableEntityStorage>()
     diffs += (moduleModel as ModifiableModuleModelBridge).collectChanges()
     val committedModels = ArrayList<ModifiableRootModelBridge>()
     for (rootModel in rootModels) {
@@ -28,7 +28,7 @@ internal class ModifiableModelCommitterServiceBridge : ModifiableModelCommitterS
       else rootModel.dispose()
     }
 
-    WorkspaceModel.getInstance(moduleModel.project).updateProjectModel { builder ->
+    WorkspaceModel.getInstance(moduleModel.project).updateProjectModel("Multicommit for modifiable models") { builder ->
       diffs.forEach { builder.addDiff(it) }
     }
 

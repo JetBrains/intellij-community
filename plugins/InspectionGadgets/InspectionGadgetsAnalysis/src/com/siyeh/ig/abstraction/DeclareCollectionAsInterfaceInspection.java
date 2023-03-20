@@ -16,7 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -26,12 +26,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
@@ -60,17 +61,12 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "collection.declared.by.class.ignore.locals.option"),
-                             "ignoreLocalVariables");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "collection.declared.by.class.ignore.private.members.option"),
-                             "ignorePrivateMethodsAndFields");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreLocalVariables", InspectionGadgetsBundle.message(
+        "collection.declared.by.class.ignore.locals.option")),
+      checkbox("ignorePrivateMethodsAndFields", InspectionGadgetsBundle.message(
+        "collection.declared.by.class.ignore.private.members.option")));
   }
 
   @Override
@@ -100,14 +96,13 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+      if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;
       }
       final StringBuilder newElementText = new StringBuilder(typeString);
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
       final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null) {
         newElementText.append(parameterList.getText());
@@ -143,8 +138,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
           }
         }
       }
-      if (variable instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)variable;
+      if (variable instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
         if (scope instanceof PsiMethod) {
           if (ignorePrivateMethodsAndFields) {

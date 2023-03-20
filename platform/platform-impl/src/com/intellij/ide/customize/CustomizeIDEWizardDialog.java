@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.idea.SplashManager;
-import com.intellij.idea.StartupUtil;
+import com.intellij.idea.AppStarter;
+import com.intellij.idea.SplashManagerKt;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -26,6 +26,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
+@Deprecated
 public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCustomizeIDEWizardDialog {
   protected static final String BUTTONS = "BUTTONS";
   protected static final String NO_BUTTONS = "NO_BUTTONS";
@@ -49,7 +50,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
     this(stepsProvider, null, true, true);
   }
 
-  public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider, @Nullable StartupUtil.AppStarter appStarter,
+  public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider, @Nullable AppStarter appStarter,
                                   boolean beforeSplash, boolean afterSplash) {
     super(null, true, true);
     setTitle(IdeBundle.message("dialog.title.customize.0", ApplicationNamesInfo.getInstance().getFullProductName()));
@@ -84,7 +85,8 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
       throw new IllegalStateException("no steps provided");
     }
     CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
-    SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
+    SplashManagerKt.hideSplash();
+    super.show();
   }
 
   @Override

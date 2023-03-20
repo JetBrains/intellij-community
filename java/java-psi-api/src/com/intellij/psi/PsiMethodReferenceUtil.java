@@ -2,7 +2,6 @@
 package com.intellij.psi;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.MethodSignature;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiMethodReferenceUtil {
-  private static final Logger LOG = Logger.getInstance(PsiMethodReferenceUtil.class);
 
   public static boolean isSecondSearchPossible(PsiType[] parameterTypes,
                                                QualifierResolveResult qualifierResolveResult,
@@ -91,7 +89,8 @@ public final class PsiMethodReferenceUtil {
    * @param expression a method reference to get the return type of
    * @return an actual method reference return type
    */
-  public static PsiType getMethodReferenceReturnType(PsiMethodReferenceExpression expression) {
+  @Nullable
+  public static PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression) {
     return getMethodReferenceReturnType(expression, expression.advancedResolve(false));
   }
 
@@ -102,7 +101,8 @@ public final class PsiMethodReferenceUtil {
    * @param result the result of method reference resolution
    * @return an actual method reference return type
    */
-  private static PsiType getMethodReferenceReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result) {
+  @Nullable
+  private static PsiType getMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression, @NotNull JavaResolveResult result) {
     PsiSubstitutor subst = result.getSubstitutor();
 
     PsiType methodReturnType = null;
@@ -113,7 +113,7 @@ public final class PsiMethodReferenceUtil {
       methodReturnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, (PsiMethod)resolve);
       if (methodReturnType == null) {
         methodReturnType = ((PsiMethod)resolve).getReturnType();
-        if (PsiType.VOID.equals(methodReturnType)) {
+        if (PsiTypes.voidType().equals(methodReturnType)) {
           return methodReturnType;
         }
 
@@ -153,7 +153,7 @@ public final class PsiMethodReferenceUtil {
     if (interfaceMethod != null) {
       final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
 
-      if (PsiType.VOID.equals(interfaceReturnType) || interfaceReturnType == null) {
+      if (PsiTypes.voidType().equals(interfaceReturnType) || interfaceReturnType == null) {
         return true;
       }
 

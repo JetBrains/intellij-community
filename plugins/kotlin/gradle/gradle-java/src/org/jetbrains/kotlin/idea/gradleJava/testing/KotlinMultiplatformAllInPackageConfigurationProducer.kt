@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleJava.testing
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
+import com.intellij.openapi.project.modules
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
-import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
@@ -28,21 +28,14 @@ class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleCo
         chosenElements: List<PsiPackage>
     ): List<TestTasksToRun> {
 
-        if (context.project.allModules().none { it.isMPPModule })
+        if (context.project.modules.none { it.isMultiPlatformModule })
             return emptyList()
 
-        var result: List<TestTasksToRun> = emptyList()
+        val psiLocation = context.psiLocation ?: return emptyList()
+        val sourceElement = getSourceElement(context.module, psiLocation) ?: return emptyList()
+        val wildcardFilter = createTestFilterFrom(element)
+        val tasks = mppTestTasksChooser.listAvailableTasks(listOf(sourceElement))
 
-        val psiLocation = context.psiLocation ?: return result
-        val sourceElement = getSourceElement(context.module, psiLocation) ?: return result
-
-        mppTestTasksChooser.multiplatformChooseTasks(context.project, context.dataContext, listOf(sourceElement)) { tasks ->
-            val wildcardFilter = createTestFilterFrom(element)
-            val tasksToRuns = tasks
-                .flatMap { it.values }
-                .map { TestTasksToRun(it, wildcardFilter) }
-            result = tasksToRuns
-        }
-        return result
+        return tasks.map { TestTasksToRun(it, wildcardFilter) }
     }
 }

@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -17,23 +19,25 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 /**
  * @author Bas Leijdekkers
  */
-public class StringConcatenationArgumentToLogCallInspection extends BaseInspection {
+public class StringConcatenationArgumentToLogCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
   private static final Set<String> logNames = new HashSet<>();
@@ -48,27 +52,20 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
   }
   @SuppressWarnings("PublicField") public int warnLevel = 0;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final ComboBox<String> comboBox = new ComboBox<>(new String[]{
+  public @NotNull OptPane getOptionsPane() {
+    @Nls String[] options = {
       InspectionGadgetsBundle.message("all.levels.option"),
       InspectionGadgetsBundle.message("warn.level.and.lower.option"),
       InspectionGadgetsBundle.message("info.level.and.lower.option"),
       InspectionGadgetsBundle.message("debug.level.and.lower.option"),
       InspectionGadgetsBundle.message("trace.level.option")
-    });
-    comboBox.setSelectedIndex(warnLevel);
-    comboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        warnLevel = comboBox.getSelectedIndex();
-      }
-    });
-    return new FormBuilder()
-      .addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox)
-      .addVerticalGap(-1)
-      .getPanel();
+    };
+    return pane(
+      dropdown("warnLevel", InspectionGadgetsBundle.message("warn.on.label"),
+                       EntryStream.of(options).mapKeyValue((idx, name) -> option(String.valueOf(idx), name))
+                         .toArray(OptDropdown.Option.class))
+    );
   }
 
   @NotNull
@@ -109,13 +106,12 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
@@ -161,10 +157,13 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       final PsiExpression[] operands = polyadicExpression.getOperands();
       boolean addPlus = false;
       boolean inStringLiteral = false;
+      boolean isStringBlock = false;
+      StringBuilder logText = new StringBuilder();
+      int indent = 0;
       for (PsiExpression operand : operands) {
         if (ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
           final String text = operand.getText();
-          if (ExpressionUtils.hasStringType(operand) && operand instanceof PsiLiteralExpression) {
+          if (ExpressionUtils.hasStringType(operand) && operand instanceof PsiLiteralExpression literalExpression) {
             final int count = StringUtil.getOccurrenceCount(text, "{}");
             for (int i = 0; i < count && usedArguments + i < arguments.length; i++) {
               newArguments.add(PsiUtil.skipParenthesizedExprDown((PsiExpression)arguments[i + usedArguments].copy()));
@@ -174,20 +173,24 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
               if (addPlus) {
                 newMethodCall.append('+');
               }
-              newMethodCall.append('"');
               inStringLiteral = true;
             }
-            newMethodCall.append(text, 1, text.length() - 1);
+            if (!isStringBlock && literalExpression.isTextBlock()) {
+              indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
+            }
+            isStringBlock = isStringBlock || literalExpression.isTextBlock();
+            logText.append(literalExpression.getValue());
           }
-          else if (operand instanceof PsiLiteralExpression && PsiType.CHAR.equals(operand.getType()) && inStringLiteral) {
+          else if (operand instanceof PsiLiteralExpression && PsiTypes.charType().equals(operand.getType()) && inStringLiteral) {
             final Object value = ((PsiLiteralExpression)operand).getValue();
             if (value instanceof Character) {
-              newMethodCall.append(StringUtil.escapeStringCharacters(value.toString()));
+              logText.append(value);
             }
           }
           else {
             if (inStringLiteral) {
-              newMethodCall.append('"');
+              addLogStrings(newMethodCall, logText, isStringBlock, indent);
+              isStringBlock = false;
               inStringLiteral = false;
             }
             if (addPlus) {
@@ -202,10 +205,9 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             if (addPlus) {
               newMethodCall.append('+');
             }
-            newMethodCall.append('"');
             inStringLiteral = true;
           }
-          newMethodCall.append("{}");
+          logText.append("{}");
         }
         addPlus = true;
       }
@@ -213,7 +215,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
         newArguments.add(arguments[usedArguments++]);
       }
       if (inStringLiteral) {
-        newMethodCall.append('"');
+        addLogStrings(newMethodCall, logText, isStringBlock, indent);
       }
       if (!varArgs && newArguments.size() > 2) {
         newMethodCall.append(", new Object[]{");
@@ -243,11 +245,30 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       PsiReplacementUtil.replaceExpression(methodCallExpression, newMethodCall.toString());
     }
 
+    private static void addLogStrings(StringBuilder methodCall, StringBuilder logText, boolean isStringBlock, int indent) {
+      if (!isStringBlock) {
+        methodCall.append('"')
+          .append(StringUtil.escapeStringCharacters(logText.toString()))
+          .append('"');
+        logText.delete(0, logText.length());
+        return;
+      }
+      String delimiters = "\n" + " ".repeat(indent);
+
+      String preparedText = StreamEx.of(logText.toString().split("\n", -1))
+        .map(line -> line.endsWith(" ") ? line.substring(0, line.length() - 1) + "\\s" : line)
+        .joining(delimiters, delimiters, "");
+      preparedText = PsiLiteralUtil.escapeTextBlockCharacters(preparedText, true, true, false);
+      methodCall.append("\"\"\"")
+        .append(preparedText)
+        .append("\"\"\"");
+      logText.delete(0, logText.length());
+    }
+
     public static boolean isAvailable(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) {
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
         return false;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (PsiExpression operand : operands) {
         if (!ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
@@ -261,7 +282,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
   private class StringConcatenationArgumentToLogCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
@@ -305,13 +326,11 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       registerMethodCallError(expression, argument);
     }
 
-    private boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
+      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return containsNonConstantConcatenation(parenthesizedExpression.getExpression());
       }
-      else if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         if (!ExpressionUtils.hasStringType(polyadicExpression)) {
           return false;
         }

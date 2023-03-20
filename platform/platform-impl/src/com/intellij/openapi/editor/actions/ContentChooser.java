@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
@@ -111,8 +112,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     if (myUseIdeaEditor) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       myList.setFont(scheme.getFont(EditorFontType.PLAIN));
-      Color fg = ObjectUtils.chooseNotNull(scheme.getDefaultForeground(), new JBColor(UIUtil::getListForeground));
-      Color bg = ObjectUtils.chooseNotNull(scheme.getDefaultBackground(), new JBColor(UIUtil::getListBackground));
+      Color fg = ObjectUtils.chooseNotNull(scheme.getDefaultForeground(), JBColor.lazy(UIUtil::getListForeground));
+      Color bg = ObjectUtils.chooseNotNull(scheme.getDefaultBackground(), JBColor.lazy(UIUtil::getListBackground));
       myList.setForeground(fg);
       myList.setBackground(bg);
     }
@@ -392,14 +393,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       boolean hasSlashR = StringUtil.indexOf(longText, '\r', 0, Math.min(longText.length(), maxChars * 2 + 1)) > 0;
       if (!hasSlashR) {
         String s = StringUtil.first(longText, maxChars, true);
-        trimmed = s != longText;
+        trimmed = !Strings.areSameInstance(s, longText);
         shortText = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
       }
       else {
         String s = StringUtil.first(longText, maxChars * 2 + 1, false);
         String s2 = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
         shortText = StringUtil.first(s2, maxChars, true);
-        trimmed = s != longText || s2 != shortText;
+        trimmed = !Strings.areSameInstance(s, longText) || !Strings.areSameInstance(s2, shortText);
       }
       return shortText;
     }

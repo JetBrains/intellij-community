@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
@@ -171,7 +171,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   private PsiClass @NotNull [] getCachedClassesByName(@NotNull String name, GlobalSearchScope scope) {
     DumbService dumbService = DumbService.getInstance(getProject());
-    if (dumbService.isDumb() && dumbService.isAlternativeResolveEnabled()) {
+    if (dumbService.isAlternativeResolveEnabled()) {
       return getCachedClassesInDumbMode(name, scope);
     }
 
@@ -310,7 +310,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         if (classes.length == 0 && PsiUtil.isInsideJavadocComment(place)) {
           //extend scope for javadoc references when no classes are found in the resolve scope:
 
-          //always replacing the scope works bad for the case when multiple classes with the same FQName exist, because index return them in unpredictable order,
+          //always replacing the scope works bad for the case when multiple classes with the same FQName exist,
+          //because the index returns them in unpredictable order,
           //so class not accessible from `place` may be used instead of another accessible class
           classes = findClassByShortName(providedName, allScope());
         }

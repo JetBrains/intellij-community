@@ -2,8 +2,8 @@ class C {
   String x;
 
   C() {
-      String x = this.x;
-      x = "foo";
-    Runnable runnable = () -> x.trim();
+      String x1 = x;
+      x1 = "foo";
+    Runnable runnable = () -> x1.trim();
   }
 }

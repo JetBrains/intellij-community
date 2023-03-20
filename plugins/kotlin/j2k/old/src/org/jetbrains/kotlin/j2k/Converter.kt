@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -228,7 +228,7 @@ class Converter private constructor(
         if (constructor != null) {
             if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) return false
             if (constructor.parameterList.parameters.isNotEmpty()) return false
-            if (constructor.body?.statements?.isNotEmpty() ?: false) return false
+            if (constructor.body?.statements?.isNotEmpty() == true) return false
             if (constructor.modifierList.annotations.isNotEmpty()) return false
         }
 
@@ -382,7 +382,7 @@ class Converter private constructor(
                     else
                         PropertyAccessor(AccessorKind.GETTER, method.annotations, Modifiers.Empty, method.parameterList, method.body)
                     getter.assignPrototype(getMethod, CommentsAndSpacesInheritance.NO_SPACES)
-                } else if (propertyInfo.modifiers.contains(Modifier.OVERRIDE) && !(propertyInfo.superInfo?.isAbstract() ?: false)) {
+                } else if (propertyInfo.modifiers.contains(Modifier.OVERRIDE) && propertyInfo.superInfo?.isAbstract() != true) {
                     val superExpression = SuperExpression(Identifier.Empty).assignNoPrototype()
                     val superAccess = QualifiedExpression(superExpression, propertyInfo.identifier, null).assignNoPrototype()
                     val returnStatement = ReturnStatement(superAccess).assignNoPrototype()
@@ -423,7 +423,7 @@ class Converter private constructor(
                         PropertyAccessor(AccessorKind.SETTER, method.annotations, accessorModifiers, parameterList, method.body)
                     }
                     setter.assignPrototype(setMethod, CommentsAndSpacesInheritance.NO_SPACES)
-                } else if (propertyInfo.modifiers.contains(Modifier.OVERRIDE) && !(propertyInfo.superInfo?.isAbstract() ?: false)) {
+                } else if (propertyInfo.modifiers.contains(Modifier.OVERRIDE) && propertyInfo.superInfo?.isAbstract() != true) {
                     val superExpression = SuperExpression(Identifier.Empty).assignNoPrototype()
                     val superAccess = QualifiedExpression(superExpression, propertyInfo.identifier, null).assignNoPrototype()
                     val valueIdentifier = Identifier.withNoPrototype("value", isNullable = false)
@@ -482,7 +482,7 @@ class Converter private constructor(
             field.name == "serialVersionUID" &&
             field.hasModifierProperty(PsiModifier.FINAL) &&
             field.hasModifierProperty(PsiModifier.STATIC) &&
-            field.containingClass?.isInheritor(javaSerializableInterface, false) ?: false
+            field.containingClass?.isInheritor(javaSerializableInterface, false) == true
         ) {
             output.add(Modifier.CONST)
         }
@@ -819,6 +819,10 @@ class Converter private constructor(
         } else if (owner is PsiClass && owner.scope is PsiMethod) {
             // Local class should not have visibility modifiers
             modifiers = modifiers.without(modifiers.accessModifier())
+        }
+
+        if (settings.publicByDefault && modifiers.contains(Modifier.INTERNAL)) {
+            modifiers = modifiers.without(Modifier.INTERNAL).with(Modifier.PUBLIC)
         }
 
         return modifiers

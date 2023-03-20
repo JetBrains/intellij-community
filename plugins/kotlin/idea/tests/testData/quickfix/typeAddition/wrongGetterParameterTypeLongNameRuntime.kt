@@ -4,3 +4,4 @@ class A() {
     val i: java.util.HashSet<Int>
         get(): <caret>Any = java.util.LinkedHashSet<Int>()
 }
+/* IGNORE_FIR */

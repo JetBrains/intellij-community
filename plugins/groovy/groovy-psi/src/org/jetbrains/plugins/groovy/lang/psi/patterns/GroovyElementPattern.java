@@ -46,10 +46,9 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
       @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
-        if (parent instanceof GrArgumentList) {
+        if (parent instanceof GrArgumentList psiExpressionList) {
           if (!(literal instanceof GrExpression)) return false;
 
-          final GrArgumentList psiExpressionList = (GrArgumentList)parent;
           if (psiExpressionList.getExpressionArgumentIndex((GrExpression)literal) != index) return false;
 
           final PsiElement element = psiExpressionList.getParent();
@@ -60,8 +59,7 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
               null;
 
 
-            if (expression instanceof GrReferenceElement) {
-              final GrReferenceElement ref = (GrReferenceElement)expression;
+            if (expression instanceof GrReferenceElement ref) {
 
               if (nameCondition != null && "withName".equals(nameCondition.getDebugMethodName())) {
                 final String methodName = ref.getReferenceName();

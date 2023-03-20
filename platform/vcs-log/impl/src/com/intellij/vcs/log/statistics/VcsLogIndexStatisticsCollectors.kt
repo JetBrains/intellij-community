@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -16,13 +17,14 @@ import java.util.concurrent.TimeUnit
 
 @NonNls
 internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
-  companion object  {
+  companion object {
     private val GROUP = EventLogGroup("vcs.log.index.application", 3)
     private val INDEX_DISABLED_IN_REGISTRY = GROUP.registerEvent("index.disabled.in.registry", EventFields.Boolean("value"))
     private val INDEX_FORCED_IN_REGISTRY = GROUP.registerEvent("index.forced.in.registry", EventFields.Boolean("value"))
     private val BIG_REPOSITORIES = GROUP.registerEvent("big.repositories", EventFields.Count)
 
   }
+
   override fun getMetrics(): MutableSet<MetricEvent> {
     val metricEvents = mutableSetOf<MetricEvent>()
     if (!Registry.`is`("vcs.log.index.git")) {
@@ -34,8 +36,8 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
     }
 
     getBigRepositoriesList()?.let { bigRepositoriesList ->
-      if (bigRepositoriesList.repositoriesCount > 0) {
-        metricEvents.add(BIG_REPOSITORIES.metric(bigRepositoriesList.repositoriesCount))
+      if (bigRepositoriesList.repositoryCount > 0) {
+        metricEvents.add(BIG_REPOSITORIES.metric(bigRepositoriesList.repositoryCount))
       }
     }
 
@@ -56,7 +58,9 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
     private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
   }
 
-  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
+  override fun getMetrics(project: Project): Set<MetricEvent> {
+    if (!project.isTrusted()) return emptySet()
+
     val usages = mutableSetOf<MetricEvent>()
 
     getIndexCollector(project)?.state?.let { indexCollectorState ->
@@ -105,7 +109,7 @@ class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState>
     }
   }
 
-  override fun getState(): VcsLogIndexCollectorState? {
+  override fun getState(): VcsLogIndexCollectorState {
     synchronized(lock) {
       return state.copy()
     }

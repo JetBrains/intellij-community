@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiElement;
@@ -15,9 +15,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class InstructionImpl implements Instruction {
   private final Set<Instruction> myPredecessors = new ObjectArraySet<>(1);
   private final Set<Instruction> mySuccessors = new ObjectArraySet<>(1);

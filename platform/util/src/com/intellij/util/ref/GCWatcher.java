@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -40,8 +41,57 @@ public final class GCWatcher {
 
   @NotNull
   @Contract(pure = true)
+  public static GCWatcher tracking(Object o1) {
+    return new GCWatcher(Collections.singletonList(o1));
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static GCWatcher tracking(Object o1, Object o2) {
+    return tracking(Arrays.asList(o1, o2));
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static GCWatcher tracking(Object o1, Object o2, Object o3) {
+    return tracking(Arrays.asList(o1, o2, o3));
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static GCWatcher tracking(Object o1, Object o2, Object o3, Object o4) {
+    return tracking(Arrays.asList(o1, o2, o3, o4));
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static GCWatcher tracking(Object o1, Object o2, Object o3, Object o4, Object o5) {
+    return tracking(Arrays.asList(o1, o2, o3, o4, o5));
+  }
+
+  /**
+   * <p>Always throws {@link UnsupportedOperationException}.</p>
+   *
+   * <p>Do not use this method since vararg creates an Object
+   * array that will live during the caller method.</p>
+   *
+   * <p>For example consider this clean and wait logic:
+   *
+   * <pre>
+   * val watcher = tracking(lastHardLinkToAnObject)  // As it was a vararg, local variable of type
+   *                                                 // Object[] is created here and is being kept
+   *                                                 // until the end of the method
+   * lastHardLinkToAnObject = null                   // Actually not last anymore
+   * watcher.tryCollect(timout)                      // Never succeeds since vararg is still keeping a link
+   * </pre>
+   * </p>
+   *
+   * <p>Use methods with a fixed number of arguments instead.</p>
+   */
+  @NotNull
+  @Contract(pure = true)
   public static GCWatcher tracking(Object... objects) {
-    return tracking(Arrays.asList(objects));
+    throw new UnsupportedOperationException("Use a method with fixed number of arguments instead");
   }
 
   @NotNull
@@ -73,8 +123,14 @@ public final class GCWatcher {
   public boolean tryCollect(int timeoutMs) {
     return LowMemoryWatcher.runWithNotificationsSuppressed(() -> {
       long startTime = System.currentTimeMillis();
-      GCUtil.allocateTonsOfMemory(new StringBuilder(), EmptyRunnable.getInstance(),
-                                  () -> isEverythingCollected() || System.currentTimeMillis() - startTime > timeoutMs);
+      try {
+        GCUtil.allocateTonsOfMemory(new StringBuilder(), EmptyRunnable.getInstance(),
+                                    () -> isEverythingCollected() || System.currentTimeMillis() - startTime > timeoutMs);
+      } catch (OutOfMemoryError e) {
+        // IDEA-310426
+        // Ignore possible OOME that can raise during GC forcing
+        // It's already been logged within GCUtil in case it appears.
+      }
       return isEverythingCollected();
     });
   }

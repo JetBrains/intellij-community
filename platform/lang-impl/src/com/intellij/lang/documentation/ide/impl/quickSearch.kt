@@ -1,19 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
-import com.intellij.lang.documentation.impl.DocumentationRequest
-import com.intellij.lang.documentation.impl.documentationRequest
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.ui.popup.HintUpdateSupply
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.channels.BufferOverflow
@@ -21,22 +25,36 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import java.awt.Component
+import javax.swing.JComponent
 
-internal fun quickSearchComponent(project: Project): QuickSearchComponent? {
-  val focusedComponent: Component? = WindowManagerEx.getInstanceEx().getFocusedComponent(project)
-  return ComponentUtil.getParentOfType(QuickSearchComponent::class.java, focusedComponent)
+internal fun quickSearchPopupContext(project: Project): PopupContext? {
+  val focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project)
+                         ?: return null
+  return quickSearchPopupContext(project, focusedComponent)
+         ?: hintUpdateSupplyPopupContext(project, focusedComponent)
 }
 
-internal class QuickSearchPopupContext(
+private fun quickSearchPopupContext(project: Project, focusedComponent: Component): PopupContext? {
+  val quickSearchComponent = ComponentUtil.getParentOfType(QuickSearchComponent::class.java, focusedComponent)
+                             ?: return null
+  return QuickSearchPopupContext(project, quickSearchComponent)
+}
+
+private fun hintUpdateSupplyPopupContext(project: Project, focusedComponent: Component): PopupContext? {
+  val hintUpdateSupply = HintUpdateSupply.getSupply(focusedComponent as JComponent)
+                         ?: return null
+  return HintUpdateSupplyPopupContext(project, focusedComponent, hintUpdateSupply)
+}
+
+private abstract class UpdatingPopupContext(
   private val project: Project,
-  private val searchComponent: QuickSearchComponent,
 ) : SecondaryPopupContext() {
 
   private val items = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override val referenceComponent: Component get() = searchComponent as Component
+  final override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
 
-  override fun preparePopup(builder: ComponentPopupBuilder) {
+  final override fun preparePopup(builder: ComponentPopupBuilder) {
     super.preparePopup(builder)
     builder.addUserData(object : PopupUpdateProcessor(project) {
       override fun updatePopup(lookupItemObject: Any?) {
@@ -44,6 +62,15 @@ internal class QuickSearchPopupContext(
       }
     })
   }
+}
+
+private class QuickSearchPopupContext(
+  project: Project,
+  private val searchComponent: QuickSearchComponent,
+) : UpdatingPopupContext(project) {
+
+  // otherwise, selecting SE items by mouse would close the popup
+  override val closeOnClickOutside: Boolean get() = false
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
@@ -53,7 +80,29 @@ internal class QuickSearchPopupContext(
     }
   }
 
-  override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
+  override fun baseBoundsHandler(): PopupBoundsHandler {
+    return AdjusterPopupBoundsHandler(searchComponent as Component)
+  }
+}
+
+private class HintUpdateSupplyPopupContext(
+  project: Project,
+  private val referenceComponent: Component,
+  private val hintUpdateSupply: HintUpdateSupply,
+) : UpdatingPopupContext(project) {
+
+  override val closeOnClickOutside: Boolean get() = true
+
+  override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
+    super.setUpPopup(popup, popupUI)
+    hintUpdateSupply.registerHint(popup)
+  }
+
+  override fun baseBoundsHandler(): PopupBoundsHandler {
+    return DataContextPopupBoundsHandler {
+      DataManager.getInstance().getDataContext(referenceComponent)
+    }
+  }
 }
 
 private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {

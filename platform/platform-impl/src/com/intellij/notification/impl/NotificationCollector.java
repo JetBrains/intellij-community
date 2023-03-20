@@ -40,9 +40,7 @@ public final class NotificationCollector {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(displayType));
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     data.add(IS_EXPANDABLE.with(isExpandable));
     SHOWN.log(project, data);
   }
@@ -52,33 +50,24 @@ public final class NotificationCollector {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(DISPLAY_TYPE.with(NotificationDisplayType.TOOL_WINDOW));
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     SHOWN.log(project, data);
   }
 
   public void logNotificationLoggedInEventLog(@NotNull Project project, @NotNull Notification notification) {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     NotificationSeverity severity = getType(notification);
-    if (severity != null) {
-      data.add(SEVERITY.with(severity));
-    }
+    data.add(SEVERITY.with(severity));
     LOGGED.log(project, data);
   }
 
-  private static @Nullable NotificationSeverity getType(@NotNull Notification notification) {
+  private static @NotNull NotificationSeverity getType(@NotNull Notification notification) {
     NotificationType type = notification.getType();
-    switch (type) {
-      case ERROR:
-        return NotificationSeverity.ERROR;
-      case WARNING:
-        return NotificationSeverity.WARNING;
-      case INFORMATION:
-      case IDE_UPDATE:
-        return NotificationSeverity.INFORMATION;
-    }
-    return null;
+    return switch (type) {
+      case ERROR -> NotificationSeverity.ERROR;
+      case WARNING -> NotificationSeverity.WARNING;
+      case INFORMATION, IDE_UPDATE -> NotificationSeverity.INFORMATION;
+    };
   }
 
   public void logNotificationBalloonClosedByUser(@Nullable Project project,
@@ -96,7 +85,7 @@ public final class NotificationCollector {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(NOTIFICATION_PLACE.with(notificationPlace));
     if (action instanceof NotificationAction.Simple) {
-      Object actionInstance = ((NotificationAction.Simple)action).getActionInstance();
+      Object actionInstance = ((NotificationAction.Simple)action).getDelegate();
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(actionInstance.getClass());
       String actionId = info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID;
       data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));
@@ -173,14 +162,18 @@ public final class NotificationCollector {
   }
 
   static final class NotificationGroupValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_group".equals(ruleId);
+    public String getRuleId() {
+      return "notification_group";
     }
 
     @Override
     protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      if (UNKNOWN.equals(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
+
       NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup(data);
       if (group != null && getPluginInfoById(group.getPluginId()).isDevelopedByJetBrains()) {
         return ValidationResultType.ACCEPTED;
@@ -190,9 +183,10 @@ public final class NotificationCollector {
   }
 
   static final class NotificationIdValidator extends CustomValidationRule {
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "notification_display_id".equals(ruleId);
+    public String getRuleId() {
+      return "notification_display_id";
     }
 
     @Override

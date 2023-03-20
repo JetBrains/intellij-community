@@ -1,11 +1,6 @@
 <idea-plugin>
   <actions>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
-    <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesPopupAction"/>
-    <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesActionGroup" popup="true"/>
-    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
-    <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
-    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
@@ -15,9 +10,9 @@
       <!-- A dynamic group filled with executor actions -->
       <group id="RunContextGroupInner">
         <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
-          <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+          <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
           <separator/>
-          <action id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
+          <group id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
         </group>
       </group>
       <separator/>
@@ -40,7 +35,6 @@
       <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
-      <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction"/>
       <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
@@ -89,10 +83,6 @@
 
     <group id="NewProjectOrModuleGroup">
     </group>
-
-    <reference ref="AddToFavorites">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PrintExportGroup"/>
-    </reference>
 
     <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction">
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileOtherSettingsGroup"/>
@@ -161,12 +151,17 @@
       <action id="ToggleBookmark" class="com.intellij.ide.bookmark.actions.ToggleBookmarkAction"/>
       <action id="ToggleBookmarkWithMnemonic" class="com.intellij.ide.bookmark.actions.ChooseBookmarkTypeAction"/>
       <action id="DeleteMnemonicFromBookmark" class="com.intellij.ide.bookmark.actions.DeleteBookmarkTypeAction"/>
+      <action id="BookmarkOpenTabs" class="com.intellij.ide.bookmark.actions.BookmarkOpenTabsAction"/>
       <action id="ShowBookmarks" class="com.intellij.ide.bookmark.actions.ShowLineBookmarksAction"/>
       <action id="ShowTypeBookmarks" class="com.intellij.ide.bookmark.actions.ShowTypeBookmarksAction"/>
       <action id="GotoNextBookmark" icon="AllIcons.Actions.NextOccurence"
               class="com.intellij.ide.bookmark.actions.NextBookmarkAction"/>
+      <action id="GotoNextBookmarkInEditor" icon="AllIcons.Actions.NextOccurence"
+              class="com.intellij.ide.bookmark.actions.NextBookmarkInEditorAction"/>
       <action id="GotoPreviousBookmark" icon="AllIcons.Actions.PreviousOccurence"
               class="com.intellij.ide.bookmark.actions.PreviousBookmarkAction"/>
+      <action id="GotoPreviousBookmarkInEditor" icon="AllIcons.Actions.PreviousOccurence"
+              class="com.intellij.ide.bookmark.actions.PreviousBookmarkInEditorAction"/>
 
       <group id="Bookmarks.Goto" popup="true">
         <action id="GotoBookmark0" class="com.intellij.ide.bookmark.actions.GotoBookmark0Action"/>
@@ -262,6 +257,8 @@
                 class="com.intellij.ide.bookmark.actions.NodeMoveDownAction"/>
         <action id="BookmarksView.SortGroupBookmarks"
                 class="com.intellij.ide.bookmark.actions.SortGroupBookmarksAction"/>
+        <action id="OpenBookmarkGroup" icon="AllIcons.Actions.MenuOpen" use-shortcut-of="EditSource"
+                class="com.intellij.ide.bookmark.actions.OpenBookmarkedFilesAction"/>
       </group>
 
       <group id="Bookmarks.ToolWindow.TitleActions">
@@ -269,6 +266,7 @@
                 class="com.intellij.ide.bookmark.actions.GroupCreateAction"/>
         <reference ref="BookmarksView.Rename"/>
         <separator/>
+        <reference ref="SelectInProjectView"/>
         <reference ref="ExpandAll"/>
         <reference ref="CollapseAll"/>
         <action id="BookmarksView.ShowPreview" icon="AllIcons.Actions.PreviewDetails"
@@ -280,6 +278,8 @@
                 class="com.intellij.ide.bookmark.actions.GroupLineBookmarksToggleAction"/>
         <action id="BookmarksView.RewriteBookmarkType"
                 class="com.intellij.ide.bookmark.actions.RewriteBookmarkTypeToggleAction"/>
+        <action id="BookmarksView.AskBeforeDeletingLists"
+                class="com.intellij.ide.bookmark.actions.AskBeforeDeletingListsToggleAction"/>
         <separator/>
         <action id="BookmarksView.OpenInPreviewTab"
                 class="com.intellij.ide.bookmark.actions.OpenInPreviewTabToggleAction"/>
@@ -304,11 +304,20 @@
       <add-to-group group-id="EditorGutterPopupMenu" anchor="after" relative-to-action="EditorGutterVcsPopupMenu"/>
     </group>
 
-    <group id="popup@ExpandableBookmarkContextMenu" popup="true">
-      <reference ref="popup@BookmarkContextMenu"/>
+    <group id="popup@ExpandableBookmarkContextMenu" popup="true" searchable="false">
+      <reference ref="AddAnotherBookmark"/>
+      <reference ref="EditBookmark"/>
+      <reference ref="ToggleBookmark"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="ReopenClosedTab"/>
     </group>
 
-    <group id="EditBookmarksGroup" popup="true">
+    <group id="BookmarkOpenTabsGroup" popup="false" searchable="false">
+      <reference ref="BookmarkOpenTabs"/>
+      <separator/>
+      <add-to-group group-id="EditorTabsEntryPoint" anchor="before" relative-to-action="ConfigureEditorTabs"/>
+    </group>
+
+    <group id="EditBookmarksGroup" popup="true" searchable="false">
       <reference ref="popup@BookmarkContextMenu"/>
       <separator/>
       <reference ref="GotoPreviousBookmark"/>
@@ -341,6 +350,8 @@
               class="com.intellij.lang.documentation.ide.actions.DocumentationForwardAction"/>
       <action id="Documentation.EditSource" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"
               class="com.intellij.lang.documentation.ide.actions.DocumentationEditSourceAction"/>
+      
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
             class="com.intellij.lang.documentation.ide.actions.DocumentationViewExternalAction"/>
@@ -349,6 +360,7 @@
       These actions are added to the context menu, to the popup menu, and to the toolbar.
       This group should be used to register additional documentation actions.
       -->
+      <reference ref="QuickDocCopy"/>
       <reference ref="Documentation.Navigation"/>
       <reference ref="Documentation.ViewExternal"/>
     </group>
@@ -377,7 +389,7 @@
     </group>
 
     <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
-      <add-to-group group-id="EditorGutterPopupMenu"/>
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="last"/>
       <add-to-group group-id="DocCommentGutterIconContextMenu"/>
     </action>
 
@@ -386,18 +398,31 @@
       <keyboard-shortcut first-keystroke="SPACE" keymap="$default"/>
     </action>
 
-    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
+    <action id="ViewNavigationBar" class="com.intellij.ide.actions.navbar.ViewNavigationBarAction">
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
       <override-text place="NavBar"/>
     </action>
 
+    <group id="NavbarLocationGroup" popup="true" class="com.intellij.ide.actions.navbar.NavBarLocationGroup">
+      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
+      <action id="NavBarLocationTop" class="com.intellij.ide.actions.navbar.NavBarTopLocationAction"/>
+      <action id="NavBarLocationBottom" class="com.intellij.ide.actions.navbar.NavBarBottomLocationAction"/>
+      <action id="NavBarLocationHide" class="com.intellij.ide.actions.navbar.HideNavBarAction"/>
+      <separator/>
+      <action id="ShowMembersInNavigationBar" class="com.intellij.ide.actions.ShowNavigationBarMembersAction"/>
+    </group>
+
     <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
-      <add-to-group group-id="UIToggleActions" relative-to-action="ViewNavigationBar" anchor="after"/>
+      <add-to-group group-id="UIToggleActions" relative-to-action="NavbarLocationGroup" anchor="after"/>
       <override-text place="NavBar"/>
     </action>
 
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
-      <add-to-group group-id="EditorToggleActions"/>
+      <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
+    </action>
+
+    <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction">
+      <add-to-group group-id="UIToggleActions" anchor="after" relative-to-action="ViewStatusBarWidgetsGroup"/>
     </action>
 
 
@@ -412,6 +437,7 @@
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
         <override-text place="MainMenu"/>
       </action>
+      <action id="TextSearchAction" class="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchAction"/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GotoLine"/>
 
@@ -544,6 +570,8 @@
           <action id="CollapseDocComments" class="com.intellij.codeInsight.folding.impl.actions.CollapseDocCommentsAction"/>
         </group>
         <separator/>
+        <action id="ExpandCollapseToggleAction" class="com.intellij.codeInsight.folding.impl.actions.ExpandCollapseToggleAction" />
+        <separator/>
         <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
         <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
       </group>
@@ -573,6 +601,8 @@
       <action id="MoveLineDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineDownAction"/>
       <action id="MoveLineUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineUpAction"/>
       <separator/>
+
+      <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 
@@ -582,6 +612,10 @@
       <action id="ShowParameterHintsSettings" class="com.intellij.codeInsight.hints.ShowParameterHintsSettings"/>
       <separator/>
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
+    </group>
+
+    <group id="InlayMenu"  popup="true" >
+      <action id="DisableDeclarativeInlayAction" class="com.intellij.codeInsight.hints.declarative.impl.DisableDeclarativeInlayAction" />
     </group>
 
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
@@ -630,7 +664,10 @@
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="ManageTargets" class="com.intellij.execution.target.ManageTargetEnvironmentsAction"/>
       <separator/>
-      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
+      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend">
+        <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Rerun"/>
+        <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Rerun"/>
+      </action>
       <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
 
@@ -643,10 +680,7 @@
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
-
       <add-to-group group-id="ToolsMenu" anchor="first"/>
-
-      <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction"/>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
@@ -660,16 +694,16 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-
     <group id="NewGroup" popup="true" searchable="false">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <reference id="NewScratchFile"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
-      <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
+      <group id="NewWebDevelopment"/>
+      <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
-    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" searchable="false"/>
+    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" popup="true" searchable="false"/>
     <reference ref="AssociateWithFileType"/>
 
     <reference id="OpenInRightSplit">
@@ -713,37 +747,15 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <action id="SmallSpacer" class="com.intellij.ide.navigationToolbar.experimental.SmallSpacerAction"/>
-    <action id="BigSpacer" class="com.intellij.ide.navigationToolbar.experimental.BigSpacerAction"/>
-    <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
-
     <group id="NewToolbarActions">
-      <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
+      <group id="LeftToolbarSideGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
-        <reference id="BigSpacer"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
-        <reference id="SmallSpacer"/>
         <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
       </group>
-      <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
-        <group id="CustomActions"/>
-      </group>
-      <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
-        <reference id="TinySpacer"/>
-        <reference id="BigSpacer"/>
+      <group id="RightToolbarSideGroup">
         <reference id="RunToolbarWidgetAction"/>
-        <reference id="SmallSpacer"/>
-        <reference id="SettingsEntryPoint"/>
-      </group>
-    </group>
-
-    <group id="NewToolbarActionsWithoutRight">
-      <reference ref="LeftToolbarSideGroup"/>
-      <reference ref="CenterToolbarSideGroup"/>
-      <group id="RightToolbarSideGroupNoRunWidget">
-        <reference id="ToolbarRunGroup"/>
-        <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
@@ -760,7 +772,7 @@
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
         <action id="OverrideFileTypeAction" class="com.intellij.openapi.file.exclude.OverrideFileTypeAction"/>
-        <action id="RevertOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.RevertOverrideFileTypeAction"/>
+        <action id="ReverteOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.ReverteOverrideFileTypeAction"/>
       </group>
     </group>
 
@@ -794,6 +806,7 @@
       <reference ref="ProjectViewPopupMenuRunGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
+      <reference ref="CacheRecovery"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
       <separator/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
@@ -836,48 +849,12 @@
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuSettingsGroup"/>
-    </group>
-
-    <group id="FavoritesViewPopupMenu">
-      <reference ref="NewGroup"/>
-      <reference ref="AssociateWithFileType"/>
-      <separator/>
-      <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="FindInPath"/>
-      <reference ref="ReplaceInPath"/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
-      <separator/>
-      <action id="EditFavorites" class="com.intellij.ide.favoritesTreeView.actions.EditFavoritesAction"/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="SendToFavoritesGroup"/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuModifyGroup"/>
-      <separator/>
-      <reference ref="ProjectViewPopupMenuRunGroup"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <reference ref="SynchronizeCurrentFile"/>
-      <separator/>
-      <reference ref="ShowFilePath"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>
@@ -903,6 +880,8 @@
         <action id="ProjectView.ShowLibraryContents"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
                 icon="AllIcons.ObjectBrowser.ShowLibraryContents"/>
+        <action id="ProjectView.ShowScratchesAndConsoles"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowScratchesAndConsoles"/>
         <separator/>
         <action id="ProjectView.FlattenModules"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
@@ -941,6 +920,8 @@
               icon="AllIcons.Ide.LocalScope"/>
       <action id="ProjectView.FileNesting"
               class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="StructureViewPopupMenu">
@@ -948,8 +929,6 @@
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
@@ -961,15 +940,6 @@
 
     <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="FoldingGroup"/>
-
-      <add-to-group group-id="EditorPopupMenu1"/>
-    </group>
-
-    <group id="EditorLangPopupMenu">
-      <separator/>
       <group id="EditorPopupMenu.GoTo" popup="true">
         <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
@@ -979,6 +949,15 @@
         <reference ref="GotoRelated"/>
         <reference ref="GotoTest"/>
       </group>
+      <separator/>
+      <reference ref="FoldingGroup"/>
+
+      <add-to-group group-id="EditorPopupMenu1"/>
+    </group>
+
+    <group id="EditorLangPopupMenu">
+      <separator/>
+      <reference ref="RefactoringMenu"/>
       <reference ref="Generate"/>
       <separator/>
 
@@ -995,10 +974,9 @@
 
     <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
+      <reference ref="Scratch.ChangeLanguage"/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="MarkFileAs"/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="AddAllToFavorites"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -1023,8 +1001,6 @@
       <action id="UsageView.Remove" class="com.intellij.usages.actions.RemoveUsageAction" use-shortcut-of="$Cut"/>
       <separator/>
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" use-shortcut-of="ShowSearchHistory"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="RunContextGroup"/>
       <separator/>
@@ -1062,7 +1038,7 @@
       <reference ref="CallHierarchy.BaseOnThisMethod"/>
     </group>
 
-    <group>
+    <group id="HierarchyPopupMenu.Common" searchable="false">
       <add-to-group group-id="TypeHierarchyPopupMenu"/>
       <add-to-group group-id="MethodHierarchyPopupMenu"/>
       <add-to-group group-id="CallHierarchyPopupMenu"/>
@@ -1071,8 +1047,6 @@
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -1102,6 +1076,7 @@
         <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
         <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
         <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="PlatformDebuggerImplIcons.Actions.Force_run_to_cursor"/>
+        <action id="Debugger.PopFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
         <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
         <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
         <separator/>
@@ -1133,7 +1108,6 @@
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
-        <override-text place="XDebuggerTreeInlayPopup"/>
       </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
@@ -1185,7 +1159,6 @@
       <separator/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
-      <reference ref="ForceStepInto"/>
       <reference ref="StepOut"/>
       <reference ref="RunToCursor"/>
       <separator/>
@@ -1216,6 +1189,8 @@
       <separator/>
       <reference ref="ShowExecutionPoint"/>
       <separator/>
+      <reference ref="EvaluateExpression" />
+      <reference ref="Debugger.PopFrame" />
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1251,6 +1226,7 @@
     </group>
 
     <group id="XDebugger.Frames.Tree.Popup">
+      <reference ref="Debugger.PopFrame" />
       <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
     </group>
 
@@ -1280,16 +1256,10 @@
       <reference ref="XDebugger.MoveWatchUp"/>
       <reference ref="XDebugger.MoveWatchDown"/>
       <reference ref="XDebugger.CopyWatch"/>
-      <group id="XDebugger.Watches.Presentation" icon="AllIcons.General.InspectionsEye" popup="true">
-        <reference ref="XDebugger.ToggleEvaluateExpressionField"/>
-        <reference ref="XDebugger.SwitchWatchesInVariables"/>
-      </group>
     </group>
 
     <group id="XDebugger.Watches.Inline.Popup" popup="true">
-      <reference ref="XDebugger.SetValue"/>
     </group>
-
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
@@ -1312,6 +1282,7 @@
     </group>
 
     <group id="RunnerLayoutActions">
+      <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
       <group id="Runner.Layout">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
                 icon="AllIcons.Debugger.RestoreLayout"/>
@@ -1337,6 +1308,9 @@
     </group>
 
     <group id="TestTreePopupMenu">
+      <!--suppress PluginXmlCapitalization -->
+      <action id="openAssertEqualsDiff" class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" use-shortcut-of="Diff.ShowDiff"/>
+      <separator/>
       <reference ref="RunContextGroup"/>
       <reference ref="EditSource"/>
     </group>
@@ -1349,12 +1323,6 @@
 
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
 
-    <group>
-      <!--suppress PluginXmlCapitalization -->
-      <action id="openAssertEqualsDiff" class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" use-shortcut-of="Diff.ShowDiff"/>
-      <separator/>
-      <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
-    </group>
     <group id="RunTestGroup">
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
     </group>
@@ -1451,14 +1419,16 @@
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
 
+    <action class="com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction" id="CodeVision.ShowMore" />
+
     <group id="InspectionToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>
       <reference ref="FindUsages"/>
       <reference ref="TreeNodeExclusion"/>
       <separator/>
-      <action id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
+      <group id="QuickFixes" class="com.intellij.codeInspection.ui.actions.QuickFixesViewActionGroup"/>
       <separator/>
-      <action id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
+      <group id="SuppressFixes" class="com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper"/>
       <separator/>
       <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
       <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
@@ -1549,14 +1519,14 @@
     </reference>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
-      <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </action>
     <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction">
       <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>
 
-    <group id="TouchBar">
+    <group id="TouchBar" searchable="false">
       <group id="TouchBarEditorSearch">
         <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
         <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
@@ -1624,7 +1594,13 @@
           <separator text="type.small"/>
         </group>
       </group>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
+
+    <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction">
+      <add-to-group group-id="MaintenanceGroup"/>
+    </action>
 
     <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true">
       <add-to-group group-id="Internal.Performance" anchor="last"/>
@@ -1643,13 +1619,41 @@
     </action>
     <group id="TodoMainGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
-      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" icon="AllIcons.Actions.GroupBy"
-             popup="true">
+      <group id="TodoViewGroupByGroup" icon="AllIcons.Actions.GroupBy" popup="true">
         <separator text="Group By"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
+    </group>
+
+
+    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
+      <add-to-group group-id="MainToolbarRight" anchor="first"/>
+    </action>
+
+    <action id="StopWithDropDown" class="com.intellij.execution.ui.StopWithDropDownAction">
+      <add-to-group group-id="MainToolbarRight" relative-to-action="NewUiRunWidget" anchor="after"/>
+    </action>
+
+    <group id="ContrastRunToolbarMainActionGroup">
+      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
+      <separator/>
+      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
+      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
+    </group>
+
+    <group id="RunToolbarMainActionGroup">
+      <reference ref="RedesignedRunConfigurationSelector"/>
+      <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <reference ref="Stop"/>
+      <reference ref="MoreRunToolbarActions"/>
+      <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
+    </group>
+
+    <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
+      <reference id="ExecutionTargets"/>
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"
@@ -1676,5 +1680,34 @@
 
     <action id="ForceIndexRescanning" internal="true" class="com.intellij.util.indexing.ForceIndexRescanningAction" icon="AllIcons.Actions.Refresh"/>
     <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
+
+    <group id="Internal.Dump" internal="true" popup="true">
+      <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
+      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
+      <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
+      <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
+      <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
+      <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
+      <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
+      <action id="DumpLoadedInspectionsAction" internal="true" class="com.intellij.internal.DumpLoadedInspectionsAction"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+    <group id="Internal.VFS" popup="true" internal="true">
+      <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
+      <separator/>
+      <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
+      <action id="MarkVfsCorrupted" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.MarkVfsCorruptedAction"/>
+      <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
+      <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
+      <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
+      <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
+      <action id="DumpWatchedRoots" internal="true" class="com.intellij.openapi.roots.impl.DumpWatchedRootsAction"/>
+      <separator/>
+      <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
+      <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
+      <separator/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+    <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
   </actions>
 </idea-plugin>

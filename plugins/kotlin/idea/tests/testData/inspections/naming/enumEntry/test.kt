@@ -10,4 +10,6 @@ enum class Foo {
     GoodName,
     _Foo,
     quuxDoo,
+    `With bad char`,
+    Camel_Underscore_Case
 }

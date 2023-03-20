@@ -1,22 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
+import com.intellij.AppTopics
+import com.intellij.idea.Bombed
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.vcsUtil.VcsUtil
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
 import org.apache.commons.lang.RandomStringUtils
+import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -29,17 +34,30 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     super.setUp()
     VcsConfiguration.StandardConfirmation.ADD.doNothing()
     repo.untrackedFilesHolder.createWaiter().waitFor()
-    _tracker = object: GitStageTracker(project) {
+    _tracker = object : GitStageTracker(project) {
       override fun isStagingAreaAvailable() = true
     }
+    project.messageBus.connect(tracker).subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : GitStageFileDocumentManagerListener() {
+      override fun getTrackers(): List<GitStageTracker> = listOf(tracker)
+    })
+    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : GitStageDocumentListener() {
+      override fun getTrackers(): List<GitStageTracker> = listOf(tracker)
+    }, tracker)
   }
 
   override fun tearDown() {
-    val t = _tracker
-    _tracker = null
-    t?.let { Disposer.dispose(it) }
-    repo.untrackedFilesHolder.createWaiter().waitFor()
-    super.tearDown()
+    try {
+      val t = _tracker
+      _tracker = null
+      t?.let { Disposer.dispose(it) }
+      repo.untrackedFilesHolder.createWaiter().waitFor()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test unstaged`() {
@@ -86,7 +104,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
 
     val file = projectRoot.findChild(fileName)!!
     val indexFile = project.service<GitIndexFileSystemRefresher>().getFile(projectRoot, VcsUtil.getFilePath(file))!!
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!!}
+    val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!! }
 
     runWithTrackerUpdate("setText") {
       invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
@@ -105,15 +123,17 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     }
   }
 
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Julia.Beliaeva")
   fun `test untracked`() {
     val fileName = "file.txt"
     val file = runWithTrackerUpdate("createChildData") {
-      invokeAndWaitIfNeeded { runWriteAction { projectRoot.createChildData(this, fileName) }}
+      invokeAndWaitIfNeeded { runWriteAction { projectRoot.createChildData(this, fileName) } }
+        .also { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() }
     }
     TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
                           trackerState().statuses.getValue(VcsUtil.getFilePath(projectRoot, fileName)))
 
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!!}
+    val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
 
     runWithTrackerUpdate("setText") {
       invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
@@ -137,6 +157,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   private fun <T> runWithTrackerUpdate(name: String, function: () -> T): T {
     return tracker.futureUpdate(name).let { futureUpdate ->
       val result = function()
+      changeListManager.waitEverythingDoneInTestMode()
       futureUpdate.waitOrCancel()
       return@let result
     }

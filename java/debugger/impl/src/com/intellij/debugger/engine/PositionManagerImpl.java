@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -28,6 +29,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -40,9 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author lex
- */
 public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
   private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
 
@@ -114,13 +113,13 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   @Nullable
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(location == null) {
+    if (location == null) {
       return null;
     }
 
     Project project = getDebugProcess().getProject();
     PsiFile psiFile = getPsiFileByLocation(project, location);
-    if(psiFile == null ) {
+    if (psiFile == null) {
       return null;
     }
 
@@ -206,7 +205,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     private PsiElement remapElement(PsiElement element) {
-      String name = JVMNameUtil.getClassVMName(getEnclosingClass(element));
+      String name = JVMNameUtil.getClassVMName(ClassUtils.getContainingClass(element));
       if (name != null && !name.equals(myExpectedClassName)) {
         return null;
       }
@@ -281,7 +280,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     Set<PsiClass> res = new HashSet<>();
     if (document != null) {
       XDebuggerUtil.getInstance().iterateLine(file.getProject(), document, lineNumber, element -> {
-        PsiClass aClass = getEnclosingClass(element);
+        PsiClass aClass = ClassUtils.getContainingClass(element);
         if (aClass != null) {
           res.add(aClass);
         }
@@ -403,8 +402,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     return ReadAction.compute(() -> StreamEx.of(getLineClasses(position.getFile(), position.getLine()))
-                                            .flatMap(aClass -> getClassReferences(aClass, position))
-                                            .toList());
+      .flatMap(aClass -> getClassReferences(aClass, position))
+      .toList());
   }
 
   private StreamEx<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
@@ -451,48 +450,19 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   private static Pair<PsiClass, Integer> getTopOrStaticEnclosingClass(PsiClass aClass) {
     int depth = 0;
-    PsiClass enclosing = getEnclosingClass(aClass);
+    PsiClass enclosing = ClassUtils.getContainingClass(aClass);
     while (enclosing != null) {
       depth++;
       if (enclosing.hasModifierProperty(PsiModifier.STATIC)) {
         break;
       }
-      PsiClass next = getEnclosingClass(enclosing);
+      PsiClass next = ClassUtils.getContainingClass(enclosing);
       if (next == null) {
         break;
       }
       enclosing = next;
     }
     return Pair.create(enclosing, depth);
-  }
-
-  /**
-   * See IDEA-121739
-   * Anonymous classes inside other anonymous class parameters list should belong to parent class
-   * Inner in = new Inner(new Inner2(){}) {};
-   * Parent of Inner2 sub class here is not Inner sub class
-   */
-  @Nullable
-  private static PsiClass getEnclosingClass(@Nullable PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-
-    element = element.getParent();
-    PsiElement previous = null;
-
-    while (element != null) {
-      if (element instanceof PsiClass && !(previous instanceof PsiExpressionList)) {
-        return (PsiClass)element;
-      }
-      if (element instanceof PsiFile) {
-        return null;
-      }
-      previous = element;
-      element = element.getParent();
-    }
-
-    return null;
   }
 
   @Nullable
@@ -552,16 +522,9 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return null;
         }
         Set<PsiClass> lineClasses = getLineClasses(position.getFile(), rangeEnd);
-        if (lineClasses.size() > 1) {
-          // if there's more than one class on the line - try to match by name
-          for (PsiClass aClass : lineClasses) {
-            if (classToFind.equals(aClass)) {
-              return fromClass;
-            }
-          }
-        }
-        else if (!lineClasses.isEmpty()){
-          return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
+        // if there's more than one class on the line - try to match by name
+        if (lineClasses.contains(classToFind)) {
+          return fromClass;
         }
         return null;
       }
@@ -590,7 +553,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       myMethodSignature = methodSignature;
     }
 
-    @Override public void visitClass(PsiClass aClass) {
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
       if (myCompiledMethod == null) {
         if (getClassReferences(aClass, SourcePosition.createFromElement(aClass)).anyMatch(referenceType -> referenceType.name().equals(myClassName))) {
           myCompiledClass = aClass;
@@ -600,22 +564,31 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    @Override public void visitMethod(PsiMethod method) {
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
       if (myCompiledMethod == null) {
         try {
-          String methodName = JVMNameUtil.getJVMMethodName(method);
           PsiClass containingClass = method.getContainingClass();
 
           if (containingClass != null &&
               containingClass.equals(myCompiledClass) &&
-              methodName.equals(myMethodName) &&
-              JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature)) {
+              JVMNameUtil.getJVMMethodName(method).equals(myMethodName) &&
+              checkSignature(method)) {
             myCompiledMethod = method;
           }
         }
         catch (EvaluateException e) {
           LOG.debug(e);
         }
+      }
+    }
+
+    private boolean checkSignature(@NotNull PsiMethod method) throws EvaluateException {
+      try {
+        return JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature);
+      }
+      catch (IndexNotReadyException e) {
+        return true; // fallback: do not care about the signature
       }
     }
 

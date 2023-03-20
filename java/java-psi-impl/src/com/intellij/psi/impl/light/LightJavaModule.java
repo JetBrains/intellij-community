@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -12,9 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
@@ -44,6 +41,15 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     myRefElement = new LightJavaModuleReferenceElement(manager, name);
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitModule(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   public @NotNull VirtualFile getRootVirtualFile() {
     return myRoot;
   }
@@ -164,6 +170,15 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     }
 
     @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitModuleReferenceElement(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
+    @Override
     public @NotNull String getReferenceText() {
       return myText;
     }
@@ -187,6 +202,15 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
       myPackageName = packageName;
     }
 
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitPackageAccessibilityStatement(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
     @Override
     public @NotNull Role getRole() {
       return Role.EXPORTS;
@@ -215,34 +239,6 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     @Override
     public String toString() {
       return "PsiPackageAccessibilityStatement";
-    }
-  }
-
-  /** @deprecated caching problems; please consider using {@code JavaModuleGraphUtil} methods instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
-    PsiElement directory = manager.findDirectory(root);
-    if (directory == null) return null;
-    if (root.isInLocalFileSystem()) {
-      return CachedValuesManager.getCachedValue(directory, () -> {
-        VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-        if (manifest != null) {
-          PsiElement file = manager.findFile(manifest);
-          if (file != null) {
-            String name = claimedModuleName(manifest);
-            LightJavaModule module = name != null ? new LightJavaModule(manager, root, name) : null;
-            return CachedValueProvider.Result.create(module, file);
-          }
-        }
-        return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    }
-    else {
-      return CachedValuesManager.getCachedValue(directory, () -> {
-        LightJavaModule module = new LightJavaModule(manager, root, moduleName(root));
-        return CachedValueProvider.Result.create(module, directory);
-      });
     }
   }
 
@@ -280,7 +276,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
    * <p>Please note that the result may not be a valid module name when the source contains a sequence that starts with a digit
    * (e.g. "org.7gnomes..."). One may validate the result with {@link PsiNameHelper#isValidModuleName}.</p>
    *
-   * @param name a .jar file name without extension
+   * @param name a .jar file name without the extension
    * @see <a href="http://docs.oracle.com/javase/9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
    */
   public static @NotNull String moduleName(@NotNull String name) {
@@ -303,7 +299,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
 
   private static class Patterns {
     private static final Pattern VERSION = Pattern.compile("-(\\d+(\\.|$))");
-    private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
+    private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z\\d]");
     private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
   }
 }

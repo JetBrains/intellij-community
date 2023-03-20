@@ -17,9 +17,6 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 
-/**
- * @author lex
- */
 public interface JVMName {
   String getName(DebugProcessImpl process) throws EvaluateException;
 

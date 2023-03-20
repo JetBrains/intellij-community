@@ -11,10 +11,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -78,6 +82,22 @@ public final class DocumentMarkupModel {
     }
 
     return model;
+  }
+
+  /**
+   * Returns a list of markup models previously created for the specified document
+   * by {@link #forDocument} with {@code create=true}. The result is identical to iterating
+   * over all opened projects and calling {@link #forDocument} with {@code create=false}.
+   */
+  @ApiStatus.Experimental
+  public static @NotNull List<? extends MarkupModel> getExistingMarkupModels(@NotNull Document document) {
+    if (document instanceof DocumentWindow documentWindow) {
+      Document delegate = documentWindow.getDelegate();
+      List<? extends MarkupModel> baseMarkupModels = getExistingMarkupModels(delegate);
+      return ContainerUtil.map(baseMarkupModels, model -> new MarkupModelWindow((MarkupModelEx)model, documentWindow));
+    }
+    ConcurrentMap<Project, MarkupModelImpl> markupModelMap = document.getUserData(MARKUP_MODEL_MAP_KEY);
+    return markupModelMap != null ? List.copyOf(markupModelMap.values()) : Collections.emptyList();
   }
 
   private static @NotNull ConcurrentMap<Project, MarkupModelImpl> getMarkupModelMap(@NotNull Document document) {

@@ -15,7 +15,7 @@ import com.intellij.task.ExecuteRunConfigurationTask
 /**
  * @author Vladislav.Soroka
  */
-internal class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<ApplicationConfiguration>() {
+open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<ApplicationConfiguration>() {
   override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean = task.runProfile is ApplicationConfiguration
 
   override fun generateInitScript(applicationConfiguration: ApplicationConfiguration,
@@ -30,9 +30,6 @@ internal class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvir
     val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
       FileUtil.toSystemIndependentName(it)
     }
-
-    val argsString = createEscapedParameters(params.programParametersList.parameters, "args") +
-                     createEscapedParameters(params.vmParametersList.parameters, "jvmArgs")
 
     val useManifestJar = applicationConfiguration.shortenCommandLine === ShortenCommandLine.MANIFEST
     val useArgsFile = applicationConfiguration.shortenCommandLine === ShortenCommandLine.ARGS_FILE
@@ -55,34 +52,46 @@ internal class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvir
     val initScript = """
     def gradlePath = '$gradleTaskPath'
     def runAppTaskName = '$runAppTaskName'
-    def mainClass = '${mainClass.qualifiedName}'
+    def mainClassToRun = '${mainClass.qualifiedName}'
     def javaExePath = mapPath('$javaExePath')
     def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "mapPath('$workingDir')\n"}
     def sourceSetName = '$sourceSetName'
     def javaModuleName = ${if (javaModuleName == null) "null\n" else "'$javaModuleName'\n"}
+    def isOlderThan64 = GradleVersion.current().baseVersion < GradleVersion.version("6.4")
+    def isOlderThan33 = GradleVersion.current().baseVersion < GradleVersion.version("3.3")
     ${if (useManifestJar) "gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
-    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, mapPath('$intelliJRtPath')))\n " else ""}
+    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClassToRun, mapPath('$intelliJRtPath')))\n " else ""}
 
     import org.gradle.util.GradleVersion
 
     allprojects {
       afterEvaluate { project ->
-        if(project.path == gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {
+        def projectPath
+        if (isOlderThan33) {
+          projectPath = project.path
+        } else {
+          projectPath = project.identityPath.toString()
+        }
+        if(projectPath == gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {
           def overwrite = project.tasks.findByName(runAppTaskName) != null
           project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
             if (javaExePath) executable = javaExePath
-            main = mainClass
-            $argsString
+            if (isOlderThan64) {
+              main = mainClassToRun
+            } else {
+              mainClass = mainClassToRun
+            }
+            ${argsString(params)}
             if (_workingDir) workingDir = _workingDir
             standardInput = System.in
             if (javaModuleName) {
               classpath = tasks[sourceSets[sourceSetName].jarTaskName].outputs.files + project.sourceSets[sourceSetName].runtimeClasspath;
-              if (GradleVersion.current().baseVersion < GradleVersion.version("6.4")) {
+              if (isOlderThan64) {
                 doFirst {
                   jvmArgs += [
                     '--module-path', classpath.asPath,
-                    '--module', javaModuleName + '/' + mainClass
+                    '--module', javaModuleName + '/' + mainClassToRun
                   ]
                   classpath = files()
                 }

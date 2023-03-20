@@ -28,7 +28,7 @@ public abstract class JavaSourceTransformer {
   
   public abstract CharSequence transform(File sourceFile, CharSequence content) throws TransformError;
 
-  private static final ExtensionsSupport<JavaSourceTransformer> ourExtSupport = new ExtensionsSupport<JavaSourceTransformer>(JavaSourceTransformer.class);
+  private static final ExtensionsSupport<JavaSourceTransformer> ourExtSupport = new ExtensionsSupport<>(JavaSourceTransformer.class);
 
   public static Collection<JavaSourceTransformer> getTransformers() {
     return ourExtSupport.getExtensions();

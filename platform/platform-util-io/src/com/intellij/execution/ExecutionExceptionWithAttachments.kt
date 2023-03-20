@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -12,22 +12,23 @@ abstract class ExecutionExceptionWithAttachments : ExecutionException, Exception
   val stdout: @NlsSafe String
   val stderr: @NlsSafe String
 
-  constructor(@NlsContexts.DialogMessage s: String, rawStdout: ByteArray?, rawStderr: ByteArray?) : super(s) {
+  constructor(@NlsContexts.DialogMessage s: String?, rawStdout: ByteArray?, rawStderr: ByteArray?) : super(s) {
     stdout = decode(rawStdout)
     stderr = decode(rawStderr)
   }
 
-  constructor(@NlsContexts.DialogMessage s: String, throwable: Throwable, rawStdout: ByteArray?, rawStderr: ByteArray?) : super(s, throwable) {
+  constructor(@NlsContexts.DialogMessage s: String?, throwable: Throwable, rawStdout: ByteArray?, rawStderr: ByteArray?) :
+    super(s, throwable) {
     stdout = decode(rawStdout)
     stderr = decode(rawStderr)
   }
 
-  constructor(@NlsContexts.DialogMessage s: String, stdout: String?, stderr: String?) : super(s) {
+  constructor(@NlsContexts.DialogMessage s: String?, stdout: String?, stderr: String?) : super(s) {
     this.stdout = stdout ?: ""
     this.stderr = stderr ?: ""
   }
 
-  constructor(@NlsContexts.DialogMessage s: String, throwable: Throwable, stdout: String?, stderr: String?) : super(s, throwable) {
+  constructor(@NlsContexts.DialogMessage s: String?, throwable: Throwable, stdout: String?, stderr: String?) : super(s, throwable) {
     this.stdout = stdout ?: ""
     this.stderr = stderr ?: ""
   }

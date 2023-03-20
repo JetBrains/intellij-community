@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerImpl
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
@@ -17,26 +16,25 @@ import com.intellij.refactoring.inline.InlineMethodHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.MadTestingUtil
+import com.intellij.testFramework.propertyBased.RandomActivityInterceptor
+import com.intellij.ui.UiInterceptors
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
 import org.jetbrains.plugins.groovy.lang.psi.util.isWhiteSpaceOrNewLine
-import org.junit.Assume
 
 @SkipSlowTestLocally
 class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
 
-  fun testInlineExtractMethodCompilation() {
-    val facade = JavaPsiFacade.getInstance(myProject)
-    val allScope = GlobalSearchScope.allScope(myProject)
-    Assume.assumeTrue("Maven import failed",
-                      facade.findClass("org.testng.Assert", allScope) != null &&
-                      facade.findClass("com.univocity.test.OutputTester", allScope) != null)
+  override fun setUp() {
+    super.setUp()
+    (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerImpl).disableBackgroundCommit(testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+  }
 
-    val documentManger = PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerImpl
-    documentManger.disableBackgroundCommit(testRootDisposable)
-    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+  fun testInlineExtractMethodCompilation() {
     initCompiler()
+    myCompilerTester.rebuild()
 
     val fileGenerator = psiJavaFiles()
     PropertyChecker.customized().withIterationCount(30)
@@ -44,6 +42,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
   }
 
   private fun inlineExtractMethodCompilation(javaFiles: Generator<PsiJavaFile>) = ImperativeCommand { env ->
+    UiInterceptors.register(RandomActivityInterceptor(env, testRootDisposable))
     val file = env.generateValue(javaFiles, null)
 
     env.logMessage("Open file in editor: ${file.virtualFile.path}")
@@ -54,6 +53,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
     val methodCalls = methodCalls(file) ?: return@ImperativeCommand
     val methodCall = env.generateValue(methodCalls, null)
     val method = methodCall.resolveMethod() ?: return@ImperativeCommand
+    if (method.isConstructor) return@ImperativeCommand
     val parentStatement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement::class.java) ?: return@ImperativeCommand
     val rangeToExtract = createGreedyMarker(editor.document, parentStatement)
 
@@ -67,18 +67,20 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
       ignoreRefactoringErrorHints {
         env.logMessage("Inline method call: ${methodCall.text}")
         InlineMethodHandler.performInline(myProject, editor, method, true)
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
         val range = TextRange(rangeToExtract.startOffset, rangeToExtract.endOffset)
         env.logMessage("Extract inlined lines: ${editor.document.getText(range)}")
         MethodExtractor().doExtract(file, range)
         require(numberOfMethods != countMethodsInsideFile(file)) { "Method is not extracted" }
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
         checkCompiles(myCompilerTester.make())
       }
     }
   }
 
-  private fun ignoreRefactoringErrorHints(runnable: Runnable){
+  private fun ignoreRefactoringErrorHints(runnable: Runnable) {
     try {
       runnable.run()
     } catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {

@@ -2,7 +2,6 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getCurrentHourInUTC
@@ -22,35 +21,6 @@ import kotlin.test.assertEquals
 @Suppress("SameParameterValue")
 @RunWith(JUnit4::class)
 class StatisticsUtilTest : LightPlatformTestCase() {
-  @Test
-  fun test_counting_usage() {
-    val steps = listOf(0, 1, 2, 10, 1000, 10 * 1000, 1000 * 1000)
-    assertCountingUsage("test.value.count", "0", 0, steps)
-    assertCountingUsage("test.value.count", "1", 1, steps)
-    assertCountingUsage("test.value.count", "2+", 2, steps)
-    assertCountingUsage("test.value.count", "2+", 3, steps)
-    assertCountingUsage("test.value.count", "2+", 9, steps)
-    assertCountingUsage("test.value.count", "10+", 10, steps)
-    assertCountingUsage("test.value.count", "10+", 500, steps)
-    assertCountingUsage("test.value.count", "1K+", 1000, steps)
-    assertCountingUsage("test.value.count", "10K+", 200 * 1000, steps)
-    assertCountingUsage("test.value.count", "10K+", 999999, steps)
-    assertCountingUsage("test.value.count", "1M+", 1000 * 1000, steps)
-    assertCountingUsage("test.value.count", "1M+", 2000 * 1000, steps)
-  }
-
-  @Test
-  fun `test counting usage on empty list`() {
-    val emptySteps = listOf<Int>()
-    assertCountingUsage("test.value.count", "1", 1, emptySteps)
-  }
-
-  @Test
-  fun `test counting usage if value is less than the first step`() {
-    val steps = listOf(1, 5, 10)
-    assertCountingUsage("test.value.count", "<1", 0, steps)
-  }
-
   @Test
   fun `test next power of two`() {
     testPowerOfTwo(0, 1)
@@ -335,18 +305,9 @@ class StatisticsUtilTest : LightPlatformTestCase() {
     assertEquals("Hashing algorithm was changed for '$data'", expected, actual)
   }
 
-  private fun assertCountingUsage(expectedKey: String, expectedValue: String, actualValue: Int, steps: List<Int>) {
-    val metric = getCountingUsage("test.value.count", actualValue, steps)
-    assertUsage(expectedKey, expectedValue, metric, "Incorrect key for value '$actualValue'")
-  }
-
   private fun assertUsage(key: String, value: String, metric: MetricEvent, message: String? = null) {
     assertEquals(message, key, metric.eventId)
     assertEquals(message, value, metric.data.build()["value"])
-  }
-
-  private fun getCountingUsage(key: String, value: Int, steps: List<Int>) : MetricEvent {
-    return newMetric(key, StatisticsUtil.getCountingStepName(value, steps))
   }
 
   private fun assertRoundedValue(raw: Int, expected: Long) {

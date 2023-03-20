@@ -92,7 +92,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.lambda.call"));
       return;
     }
-    if (!(element instanceof PyFunction)) {
+    if (!(element instanceof PyFunction function)) {
       showCannotRefactorErrorHint(project, editor, PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name"));
       return;
     }
@@ -113,7 +113,6 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       }
     }
 
-    final PyFunction function = (PyFunction)element;
     final PyParameter[] parameters = function.getParameterList().getParameters();
     for (PyParameter p : parameters) {
       if (p instanceof PyTupleParameter) {
@@ -158,14 +157,11 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
                                               baseClassName);
       final int choice = Messages.showYesNoCancelDialog(function.getProject(), message, 
                                                         RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon());
-      switch (choice) {
-        case Messages.YES:
-          return deepestSuperMethod;
-        case Messages.NO:
-          return function;
-        default:
-          return null;
-      }
+      return switch (choice) {
+        case Messages.YES -> deepestSuperMethod;
+        case Messages.NO -> function;
+        default -> null;
+      };
     }
     return function;
   }

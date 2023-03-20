@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
  * Invitation-only service for running short-lived computing-intensive IO-free tasks on all available CPU cores.
@@ -20,6 +21,7 @@ import java.util.concurrent.Future;
  * {@link com.intellij.openapi.application.Application#executeOnPooledThread},
  * {@link com.intellij.execution.process.ProcessIOExecutorService} and {@link com.intellij.util.concurrency.NonUrgentExecutor} for that.
  */
+@ApiStatus.Internal
 public abstract class JobLauncher {
   public static JobLauncher getInstance() {
     return ApplicationManager.getApplication().getService(JobLauncher.class);
@@ -64,11 +66,12 @@ public abstract class JobLauncher {
    * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    PluginException.reportDeprecatedUsage("invokeConcurrentlyUnderProgress", "do not use");
     return invokeConcurrentlyUnderProgress(things, progress, ApplicationManager.getApplication().isReadAccessAllowed(),
                                            failFastOnAcquireReadAction, thingProcessor);
   }

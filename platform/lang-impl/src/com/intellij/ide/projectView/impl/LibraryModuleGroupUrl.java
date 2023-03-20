@@ -45,8 +45,7 @@ public class LibraryModuleGroupUrl extends AbstractUrl {
 
   @Override
   public AbstractUrl createUrlByElement(Object element) {
-    if (element instanceof LibraryGroupElement) {
-      LibraryGroupElement libraryGroupElement = (LibraryGroupElement)element;
+    if (element instanceof LibraryGroupElement libraryGroupElement) {
       return new LibraryModuleGroupUrl(libraryGroupElement.getModule() != null ? libraryGroupElement.getModule().getName() : null);
     }
     return null;

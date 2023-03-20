@@ -62,8 +62,8 @@ public class PreferCommitDateAction extends BooleanPropertyToggleAction implemen
     }
   }
 
-  private static boolean isCommitDateSupported(@NotNull Collection<VcsLogProvider> providers) {
-    return providers.stream().anyMatch(VcsLogProperties.HAS_COMMITTER::getOrDefault);
+  private static boolean isCommitDateSupported(@NotNull Collection<? extends VcsLogProvider> providers) {
+    return ContainerUtil.exists(providers, VcsLogProperties.HAS_COMMITTER::getOrDefault);
   }
 
   private static boolean isDateDisplayed(@Nullable VcsLogUiProperties properties) {

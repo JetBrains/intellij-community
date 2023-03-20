@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -45,7 +31,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +39,6 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class InspectionValidatorWrapper implements Validator {
   private final InspectionValidator myValidator;
   private final PsiManager myPsiManager;
@@ -67,9 +49,12 @@ public class InspectionValidatorWrapper implements Validator {
 
   private static final ThreadLocal<Boolean> ourCompilationThreads = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  public InspectionValidatorWrapper(CompilerManager compilerManager, InspectionManager inspectionManager,
-                                    InspectionProjectProfileManager profileManager, PsiDocumentManager psiDocumentManager,
-                                    PsiManager psiManager, InspectionValidator validator) {
+  private InspectionValidatorWrapper(@NotNull CompilerManager compilerManager,
+                                     @NotNull InspectionManager inspectionManager,
+                                     @NotNull InspectionProjectProfileManager profileManager,
+                                     @NotNull PsiDocumentManager psiDocumentManager,
+                                     @NotNull PsiManager psiManager,
+                                     @NotNull InspectionValidator validator) {
     myCompilerManager = compilerManager;
     myInspectionManager = inspectionManager;
     myProfileManager = profileManager;
@@ -79,7 +64,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @NotNull
-  public static InspectionValidatorWrapper create(Project project, InspectionValidator validator) {
+  public static InspectionValidatorWrapper create(@NotNull Project project, @NotNull InspectionValidator validator) {
     return new InspectionValidatorWrapper(
       CompilerManager.getInstance(project),
       InspectionManager.getInstance(project),
@@ -317,7 +302,7 @@ public class InspectionValidatorWrapper implements Validator {
   private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(PsiFile file,
                                                                                  LocalInspectionTool inspectionTool,
                                                                                  HighlightDisplayLevel level) {
-    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
+    Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new java.util.LinkedHashMap<>();
     for (ProblemDescriptor descriptor : runInspectionOnFile(file, inspectionTool)) {
       ProblemHighlightType highlightType = descriptor.getHighlightType();
 

@@ -1,18 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
+
 
 import com.intellij.codeInsight.generation.GenerateEqualsHelper.getEqualsSignature
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtil
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.j2k.ClassKind
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.isNullLiteral
 import org.jetbrains.kotlin.name.Name
@@ -20,8 +20,6 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-
-
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -70,9 +68,8 @@ internal fun PsiMember.visibility(
         }
     }?.firstOrNull() ?: JKVisibilityModifierElement(Visibility.INTERNAL)
 
-
-fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?) =
-    modifierList?.children?.mapNotNull { child ->
+fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {
+    val modalityFromModifier = modifierList?.children?.mapNotNull { child ->
         if (child !is PsiKeyword) return@mapNotNull null
         when (child.text) {
             PsiModifier.FINAL -> Modality.FINAL
@@ -84,14 +81,20 @@ fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -
         }?.also { modifier ->
             assignNonCodeElements?.let { it(modifier, child) }
         }
-    }?.firstOrNull() ?: JKModalityModifierElement(Modality.OPEN)
+    }?.firstOrNull()
 
+    return when {
+        modalityFromModifier != null -> modalityFromModifier
+        this is PsiField && containingClass?.isInterface == true -> JKModalityModifierElement(Modality.FINAL)
+        else -> JKModalityModifierElement(Modality.OPEN)
+    }
+}
 
 fun JvmClassKind.toJk() = when (this) {
     JvmClassKind.CLASS -> JKClass.ClassKind.CLASS
-    JvmClassKind.INTERFACE ->  JKClass.ClassKind.INTERFACE
-    JvmClassKind.ANNOTATION ->  JKClass.ClassKind.ANNOTATION
-    JvmClassKind.ENUM ->  JKClass.ClassKind.ENUM
+    JvmClassKind.INTERFACE -> JKClass.ClassKind.INTERFACE
+    JvmClassKind.ANNOTATION -> JKClass.ClassKind.ANNOTATION
+    JvmClassKind.ENUM -> JKClass.ClassKind.ENUM
 }
 
 private fun PsiMember.handleProtectedVisibility(referenceSearcher: ReferenceSearcher): Visibility {
@@ -133,6 +136,7 @@ fun PsiClass.classKind(): JKClass.ClassKind =
         isAnnotationType -> JKClass.ClassKind.ANNOTATION
         isEnum -> JKClass.ClassKind.ENUM
         isInterface -> JKClass.ClassKind.INTERFACE
+        isRecord -> JKClass.ClassKind.RECORD
         else -> JKClass.ClassKind.CLASS
     }
 

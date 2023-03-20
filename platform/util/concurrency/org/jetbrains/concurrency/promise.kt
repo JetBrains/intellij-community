@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmMultifileClass
 @file:JvmName("Promises")
+
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
@@ -10,8 +11,10 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import java.util.*
-import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -71,8 +74,9 @@ fun <T> rejectedPromise(error: Throwable?): Promise<T> {
   }
 }
 
-fun <T> rejectedCancellablePromise(error: String): CancellablePromise<T> =
-  DonePromise(PromiseValue.createRejected(createError(error, true)))
+fun <T> rejectedCancellablePromise(error: String): CancellablePromise<T> {
+  return DonePromise(PromiseValue.createRejected(createError(error, true)))
+}
 
 @Suppress("RemoveExplicitTypeArguments")
 private val CANCELLED_PROMISE: Promise<Any?> by lazy {
@@ -105,7 +109,7 @@ inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) 
   override fun accept(param: T) = handler(param)
 })
 
-inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?>? {
+inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?> {
   @Suppress("UNCHECKED_CAST")
   return (this as Promise<Any?>)
     .onProcessed(object : ObsolescentConsumer<Any?>(node) {
@@ -166,7 +170,6 @@ fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = fals
       if (ignoreErrors) {
         list.removeIf { it == null }
       }
-      @Suppress("UNCHECKED_CAST")
       result.setResult(list as List<T>)
     }
   }
@@ -235,6 +238,43 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   }
 
   return false
+}
+
+fun <T> CompletableFuture<T>.asPromise(): Promise<T> {
+  val promise = AsyncPromise<T>()
+  whenComplete { result, throwable ->
+    if (throwable == null) {
+      promise.setResult(result)
+    }
+    else {
+      promise.setError(throwable)
+    }
+  }
+  return promise
+}
+
+/**
+ * @see [kotlinx.coroutines.future.asCompletableFuture]
+ * @see [kotlinx.coroutines.future.setupCancellation]
+ */
+fun Job.asPromise(): Promise<*> {
+  val promise = AsyncPromise<Any?>()
+
+  promise.onError { throwable ->
+    val cancellationException = throwable as? CancellationException
+                                ?: CancellationException("Promise was completed exceptionally", throwable)
+    cancel(cancellationException)
+  }
+
+  invokeOnCompletion { throwable ->
+    if (throwable == null) {
+      promise.setResult(null)
+    }
+    else {
+      promise.setError(throwable)
+    }
+  }
+  return promise
 }
 
 fun ActionCallback.toPromise(): Promise<Any?> {
@@ -324,7 +364,7 @@ private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, F
 
   override fun getState() = value.state
 
-  override fun isCancelled() = this.value.isCancelled
+  override fun isCancelled() = false
 
   override fun get() = blockingGet(-1)
 
@@ -354,7 +394,12 @@ private class DonePromise<T>(private val value: PromiseValue<T>) : Promise<T>, F
   @Suppress("UNCHECKED_CAST")
   override fun processed(child: Promise<in T?>): Promise<T> {
     if (child is CompletablePromise<*>) {
-      (child as CompletablePromise<T>).setResult(value.result)
+      if (value.error != null) {
+        child.setError(value.error)
+      }
+      else {
+        (child as CompletablePromise<T>).setResult(value.result)
+      }
     }
     return this
   }

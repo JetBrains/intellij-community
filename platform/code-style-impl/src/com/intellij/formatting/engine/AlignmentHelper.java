@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.engine;
 
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -59,10 +59,10 @@ public class AlignmentHelper {
   }
 
   private static void reportAlignmentProcessingError(BlockAlignmentProcessor.Context context) {
-    ASTNode node = context.targetBlock.getNode();
+    ASTNode node = context.targetBlock().getNode();
     Language language = node != null ? node.getPsi().getLanguage() : null;
-    String message = (language != null ? language.getDisplayName() + ": " : "") + "Can't align block " + context.targetBlock;
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(context.document));
+    String message = (language != null ? language.getDisplayName() + ": " : "") + "Can't align block " + context.targetBlock();
+    LOG.error(message, new Throwable(), CoreAttachmentFactory.createAttachment(context.document()));
   }
 
   LeafBlockWrapper applyAlignment(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {
@@ -77,39 +77,38 @@ public class AlignmentHelper {
       myBlockIndentOptions.getIndentOptions(currentBlock));
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(currentBlock);
     if (offsetResponsibleBlock != null) {
-      myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
+      if (!myCyclesDetector.registerRealignment(offsetResponsibleBlock, currentBlock)) {
+        reportAlignmentProcessingError(context);
+        return null;
+      }
     }
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
-    switch (result) {
-      case TARGET_BLOCK_PROCESSED_NOT_ALIGNED:
-        return null;
-      case TARGET_BLOCK_ALIGNED:
+    return switch (result) {
+      case TARGET_BLOCK_PROCESSED_NOT_ALIGNED -> null;
+      case TARGET_BLOCK_ALIGNED -> {
         storeAlignmentMapping(currentBlock);
-        return null;
-      case BACKWARD_BLOCK_ALIGNED:
+        yield null;
+      }
+      case BACKWARD_BLOCK_ALIGNED -> {
         if (offsetResponsibleBlock == null) {
-          return null;
+          yield null;
         }
         Set<LeafBlockWrapper> blocksCausedRealignment = new HashSet<>();
         myBackwardShiftedAlignedBlocks.clear();
         myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment);
         blocksCausedRealignment.add(currentBlock);
         storeAlignmentMapping(currentBlock, offsetResponsibleBlock);
-        if (myCyclesDetector.isCycleDetected()) {
-          reportAlignmentProcessingError(context);
-          return null;
-        }
-        myCyclesDetector.registerBlockRollback(currentBlock);
-        return offsetResponsibleBlock.getNextBlock();
-      case RECURSION_DETECTED:
+        yield offsetResponsibleBlock.getNextBlock();
+      }
+      case RECURSION_DETECTED -> {
         myAlignmentsToSkip.add(alignment);
-        return offsetResponsibleBlock; // Fall through to the 'register alignment to skip'.
-      case UNABLE_TO_ALIGN_BACKWARD_BLOCK:
+        yield offsetResponsibleBlock; // Fall through to the 'register alignment to skip'.
+      }
+      case UNABLE_TO_ALIGN_BACKWARD_BLOCK -> {
         myAlignmentsToSkip.add(alignment);
-        return null;
-      default:
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   boolean shouldSkip(AlignmentImpl alignment) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScope
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 
 class DebuggerFieldExpressionCodegenExtension : ExpressionCodegenExtension {
     override fun applyProperty(receiver: StackValue, resolvedCall: ResolvedCall<*>, c: ExpressionCodegenExtension.Context): StackValue? {
@@ -31,7 +32,12 @@ class DebuggerFieldExpressionCodegenExtension : ExpressionCodegenExtension {
             val containingClass = propertyDescriptor.containingDeclaration as? JavaClassDescriptor
             if (containingClass != null) {
                 val correspondingGetter =
-                    JavaSyntheticPropertiesScope(LockBasedStorageManager.NO_LOCKS, LookupTracker.DO_NOTHING, supportJavaRecords = true)
+                    JavaSyntheticPropertiesScope(
+                        LockBasedStorageManager.NO_LOCKS,
+                        LookupTracker.DO_NOTHING,
+                        KotlinTypeRefiner.Default,
+                        supportJavaRecords = true
+                    )
                         .getSyntheticExtensionProperties(listOf(containingClass.defaultType), NoLookupLocation.FROM_BACKEND)
                         .firstOrNull { it.name == propertyDescriptor.name }
 

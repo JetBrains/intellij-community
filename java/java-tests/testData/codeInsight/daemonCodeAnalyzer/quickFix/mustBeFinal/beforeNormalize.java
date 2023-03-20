@@ -1,4 +1,4 @@
-// "Transform variables into final one element array" "true"
+// "Transform variables into final one element array" "true-preview"
 
 class aa {
   void f() {

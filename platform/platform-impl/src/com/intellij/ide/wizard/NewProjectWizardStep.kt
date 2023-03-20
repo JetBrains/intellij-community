@@ -1,17 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.dsl.builder.Panel
 
 /**
- * Vertical step in new project wizard.
- * Represents small part of UI [setupUI] and rules how this UI applies [setupProject] on new project.
- * All steps form tree of steps that applies in order from root to leaf.
+ * Defines vertical step in new project wizard. It is step which
+ * selects by controls on one wizard view. NPW step is small part
+ * of UI [setupUI] and rules how this UI applies [setupProject] on
+ * new project or new module. All steps form tree of steps are
+ * applying in order from root to leaf.
  *
+ * Wizard type (NPW or NMW) can be determined by [context] property
+ * [WizardContext.isCreatingNewProject].
+ *
+ * @see com.intellij.ide.wizard.NewProjectWizardChainStep
  * @see AbstractNewProjectWizardStep
  * @see AbstractNewProjectWizardMultiStep
  * @see NewProjectWizardMultiStepFactory
@@ -31,6 +39,11 @@ interface NewProjectWizardStep {
   val propertyGraph: PropertyGraph
 
   /**
+   * The keywords that are used for search field input pattern matching
+   */
+  val keywords: Keywords
+
+  /**
    * Data holder that needed to share step data.
    *
    * Convention:
@@ -46,20 +59,57 @@ interface NewProjectWizardStep {
   val data: UserDataHolder
 
   /**
-   * Setups UI using Kotlin DSL. Use [context] to get [propertyGraph] or UI properties from parent steps.
-   * ```
-   * override fun setupUI(builder: Panel) {
-   *   with(builder) {
-   *     ...UI definitions...
-   *   }
-   * }
-   * ```
+   * Setups UI using Kotlin DSL.
+   *
+   * Wizard type (NPW or NMW) can be determined by [context] property
+   * [WizardContext.isCreatingNewProject].
+   *
+   * Style suggestions: If you need to create abstract step with
+   * common UI then create small protected UI segments like
+   * `setupJdkUi` and `setupSampleCodeUi` and reuse them in `setupUi`
+   * for each implementation. Don't override `setupUi` in abstract
+   * steps, because later UI customization for only one consumer is
+   * hard with abstract `setupUi`.
+   *
    * See also: `https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html`
    */
-  fun setupUI(builder: Panel)
+  fun setupUI(builder: Panel) {}
 
   /**
-   * Applies data from UI into project model or settings.
+   * Applies data from UI into project model or settings. It executes
+   * for new project and new module.
+   *
+   * Wizard type (NPW or NMW) can be determined by [context] property
+   * [WizardContext.isCreatingNewProject].
    */
-  fun setupProject(project: Project)
+  fun setupProject(project: Project) {}
+
+  /**
+   * See related doc for [NewProjectWizardStep.keywords].
+   */
+  class Keywords {
+    private val keywords = HashMap<Any, Set<String>>()
+
+    fun toSet(): Set<String> {
+      return keywords.values.flatten().toSet()
+    }
+
+    fun add(owner: Any, keywords: Iterable<String>) {
+      this.keywords[owner] = keywords.toSet()
+    }
+  }
+
+  companion object {
+
+    const val GIT_PROPERTY_NAME = "NewProjectWizard.gitState"
+
+    const val ADD_SAMPLE_CODE_PROPERTY_NAME = "NewProjectWizard.addSampleCodeState"
+
+    const val GROUP_ID_PROPERTY_NAME = "NewProjectWizard.groupIdState"
+
+    const val GENERATE_ONBOARDING_TIPS_NAME = "NewProjectWizard.generateOnboardingTips"
+
+    val MODIFIABLE_MODULE_MODEL_KEY = Key.create<ModifiableModuleModel>("MODIFIABLE_MODULE_MODEL_KEY")
+
+  }
 }

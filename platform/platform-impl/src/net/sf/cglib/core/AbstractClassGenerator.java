@@ -34,7 +34,7 @@ abstract public class AbstractClassGenerator
 implements ClassGenerator
 {
     private static final Object NAME_KEY = new Object();
-    private static final ThreadLocal CURRENT = new ThreadLocal();
+    private static final ThreadLocal<AbstractClassGenerator> CURRENT = new ThreadLocal<>();
 
     private GeneratorStrategy strategy = DefaultGeneratorStrategy.INSTANCE;
     private NamingPolicy namingPolicy = DefaultNamingPolicy.INSTANCE;
@@ -50,7 +50,7 @@ implements ClassGenerator
     protected static class Source {
       //change by Peter: made fields final
         final String name;
-        final Map cache = new WeakHashMap();
+        final Map cache = new WeakHashMap<>();
         public Source(String name) {
             this.name = name;
         }
@@ -165,7 +165,7 @@ implements ClassGenerator
      * that is being used to generate a class in the current thread.
      */
     public static AbstractClassGenerator getCurrent() {
-        return (AbstractClassGenerator)CURRENT.get();
+        return CURRENT.get();
     }
 
     public ClassLoader getClassLoader() {
@@ -196,15 +196,15 @@ implements ClassGenerator
                 Map cache2 = null;
                 cache2 = (Map)source.cache.get(loader);
                 if (cache2 == null) {
-                    cache2 = new HashMap();
-                    cache2.put(NAME_KEY, new HashSet());
+                    cache2 = new HashMap<>();
+                    cache2.put(NAME_KEY, new HashSet<>());
                     source.cache.put(loader, cache2);
                 } else if (useCache) {
                     Reference ref = (Reference)cache2.get(key);
                     gen = (Class) SoftReference.dereference(ref);
                 }
                 if (gen == null) {
-                    Object save = CURRENT.get();
+                    AbstractClassGenerator save = CURRENT.get();
                     CURRENT.set(this);
                     try {
                         this.key = key;
@@ -224,7 +224,7 @@ implements ClassGenerator
                         }
 
                         if (useCache) {
-                            cache2.put(key, new WeakReference(gen));
+                            cache2.put(key, new WeakReference<>(gen));
                         }
                         return firstInstance(gen);
                     } finally {

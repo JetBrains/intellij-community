@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Roman.Shein
- */
 public class ValuesExtractionResultImpl implements ValuesExtractionResult {
   @NotNull
   protected final List<Value> myValues;

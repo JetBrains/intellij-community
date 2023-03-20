@@ -35,7 +35,7 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
       task {
         text(LessonsBundle.message("basic.completion.start.typing",
                                    code(item1Completion)))
-        triggerByUiComponentAndHighlight(false, false) { ui: JList<*> ->
+        triggerUI().component { ui: JList<*> ->
           isTheFirstVariant(ui)
         }
         proposeRestore {
@@ -68,7 +68,7 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
       task("CodeCompletion") {
         text(LessonsBundle.message("basic.completion.activate.explicitly", action(it)))
         trigger(it)
-        triggerByListItemAndHighlight { item ->
+        triggerAndBorderHighlight().listItem { item ->
           item.isToStringContains(item2Completion)
         }
         proposeRestore {
@@ -97,8 +97,6 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
 
   private fun isTheFirstVariant(it: JList<*>) =
     it.model.size >= 1 && it.model.getElementAt(0).isToStringContains(item1Completion)
-
-  override val suitableTips = listOf("CodeCompletion")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("basic.completion.help.code.completion"),

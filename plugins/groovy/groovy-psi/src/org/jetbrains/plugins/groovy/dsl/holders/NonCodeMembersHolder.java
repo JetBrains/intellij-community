@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,8 +10,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +29,6 @@ import java.util.function.Consumer;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessProperties;
 
-/**
- * @author peter
- */
 public class NonCodeMembersHolder implements CustomMembersHolder {
 
   private static final Logger LOG = Logger.getInstance(NonCodeMembersHolder.class);
@@ -47,7 +43,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public static NonCodeMembersHolder generateMembers(@NotNull List<? extends Descriptor> methods, @NotNull PsiFile file) {
     Map<List<? extends Descriptor>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
       file, () -> {
-        final Map<List<? extends Descriptor>, NonCodeMembersHolder> map1 = ContainerUtil.createConcurrentSoftMap();
+        final Map<List<? extends Descriptor>, NonCodeMembersHolder> map1 = CollectionFactory.createConcurrentSoftMap();
         return CachedValueProvider.Result.create(map1, PsiModificationTracker.MODIFICATION_COUNT);
       });
 
@@ -169,12 +165,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   private static PsiType convertToPsiType(String type, PsiElement place) {
-    try {
-      return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
-    } catch (IncorrectOperationException e) {
-      LOG.error(e.getMessage(), e);
-      return PsiType.NULL;
-    }
+    return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
   }
 
   @Override

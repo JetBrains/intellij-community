@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -24,8 +24,6 @@ import static com.intellij.psi.CommonClassNames.*;
  * {@code Comparable.compareTo()}, and {@code Comparator.compare()} are considered safe because of their contract.
  * Immutable classes like {@code String}, {@code BigDecimal}, etc, and utility classes like
  * {@code Objects}, {@code Math} (except {@code random()}) are OK too.
- *
- *  @author Pavel.Dolgov
  */
 final class SideEffectCalculator {
   private final Object2IntMap<PsiExpression> myCache = new Object2IntOpenHashMap<>();
@@ -43,7 +41,6 @@ final class SideEffectCalculator {
     "java.math.BigDecimal",
     "java.math.BigInteger",
     "java.math.MathContext",
-    "java.util.UUID",
     JAVA_UTIL_OBJECTS);
 
   SideEffectCalculator() {
@@ -66,34 +63,30 @@ final class SideEffectCalculator {
   }
 
   boolean calculateSideEffect(@Nullable PsiExpression e) {
-    if (e instanceof PsiParenthesizedExpression) {
-      return mayHaveSideEffect(((PsiParenthesizedExpression)e).getExpression());
+    if (e instanceof PsiParenthesizedExpression paren) {
+      return mayHaveSideEffect(paren.getExpression());
     }
     if (e instanceof PsiUnaryExpression) {
       return PsiUtil.isIncrementDecrementOperation(e) || mayHaveSideEffect(((PsiUnaryExpression)e).getOperand());
     }
-    if (e instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
+    if (e instanceof PsiPolyadicExpression polyadic) {
       return ContainerUtil.exists(polyadic.getOperands(), this::mayHaveSideEffect);
     }
-    if (e instanceof PsiConditionalExpression) {
-      PsiConditionalExpression conditional = (PsiConditionalExpression)e;
+    if (e instanceof PsiConditionalExpression conditional) {
       return mayHaveSideEffect(conditional.getCondition()) ||
              mayHaveSideEffect(conditional.getThenExpression()) ||
              mayHaveSideEffect(conditional.getElseExpression());
     }
-    if (e instanceof PsiMethodCallExpression) {
-      return calculateCallSideEffect((PsiMethodCallExpression)e);
+    if (e instanceof PsiMethodCallExpression call) {
+      return calculateCallSideEffect(call);
     }
-    if (e instanceof PsiReferenceExpression) {
-      return calculateReferenceSideEffect((PsiReferenceExpression)e);
+    if (e instanceof PsiReferenceExpression ref) {
+      return calculateReferenceSideEffect(ref);
     }
-    if (e instanceof PsiInstanceOfExpression) {
-      PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)e;
+    if (e instanceof PsiInstanceOfExpression instanceOf) {
       return mayHaveSideEffect(instanceOf.getOperand());
     }
-    if (e instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression access = (PsiArrayAccessExpression)e;
+    if (e instanceof PsiArrayAccessExpression access) {
       PsiExpression array = access.getArrayExpression();
       return mayHaveSideEffect(array) ||
              mayHaveSideEffect(access.getIndexExpression()) ||
@@ -102,8 +95,8 @@ final class SideEffectCalculator {
     if (e instanceof PsiLambdaExpression) {
       return false; // lambda itself (unless called) has no side effect
     }
-    if (e instanceof PsiNewExpression) {
-      return calculateNewSideEffect((PsiNewExpression)e);
+    if (e instanceof PsiNewExpression newExpression) {
+      return calculateNewSideEffect(newExpression);
     }
     return true;
   }
@@ -113,15 +106,14 @@ final class SideEffectCalculator {
       return true;
     }
     PsiElement resolved = ref.resolve();
-    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter || resolved instanceof PsiClass) {
+    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter || 
+        resolved instanceof PsiClass || resolved instanceof PsiPackage) {
       return false;
     }
-    if (resolved instanceof PsiField) {
-      PsiField field = (PsiField)resolved;
+    if (resolved instanceof PsiField field) {
       return !field.hasModifierProperty(PsiModifier.FINAL);
     }
-    if (resolved instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)resolved;
+    if (resolved instanceof PsiMethod method) {
       return methodMayHaveSideEffect(method);
     }
     return true;
@@ -139,15 +131,8 @@ final class SideEffectCalculator {
       return true;
     }
     PsiJavaCodeReferenceElement ref = newExpr.getClassReference();
-    if (ref != null) {
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)resolved;
-        return !ClassUtils.isImmutableClass(psiClass) ||
-               calculateSideEffect(newExpr, newExpr.getQualifier());
-      }
-    }
-    return true;
+    return ref == null || !(ref.resolve() instanceof PsiClass psiClass) || 
+           !ClassUtils.isImmutableClass(psiClass) || calculateSideEffect(newExpr, newExpr.getQualifier());
   }
 
   private boolean calculateSideEffect(@NotNull PsiCallExpression call, @Nullable PsiExpression qualifier) {
@@ -180,6 +165,9 @@ final class SideEffectCalculator {
       return false;
     }
 
+    if ("java.util.UUID".equals(className)) {
+      return "randomUUID".equals(method.getName());
+    }
     if (JAVA_LANG_MATH.equals(className) ||
         JAVA_LANG_STRICT_MATH.equals(className)) {
       return "random".equals(method.getName()); // it's the only exception
@@ -187,6 +175,12 @@ final class SideEffectCalculator {
     if (JAVA_UTIL_COLLECTIONS.equals(className)) {
       String name = method.getName();
       return !name.equals("min") && !name.equals("max") && !name.startsWith("unmodifiable");
+    }
+    if ("java.nio.file.Path".equals(className)) {
+      return !"of".equals(method.getName());
+    }
+    if ("java.nio.file.Paths".equals(className)) {
+      return !"get".equals(method.getName());
     }
     return true;
   }

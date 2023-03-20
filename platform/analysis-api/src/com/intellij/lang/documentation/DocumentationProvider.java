@@ -1,27 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +19,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.jetbrains.annotations.ApiStatus.Obsolete;
+
 /**
+ * <b>PSA</b>
+ * <p>
+ * The new code is expected to implement {@link com.intellij.platform.backend.documentation.DocumentationTarget DocumentationTarget} instead.
+ * {@code DocumentationProvider} interface is not <b>yet</b> deprecated to avoid warnings in the existing code.
+ * Existing implementations are supported as is
+ * via {@link com.intellij.lang.documentation.psi.PsiElementDocumentationTarget PsiElementDocumentationTarget},
+ * you can take inspiration for migration there, but <b>do not use it</b>.
+ * Consider migrating to {@code DocumentationTarget} if you need to fix something in your implementation of this interface.
+ * </p>
+ * <br/>
  * Contributes content to the following IDE features:
  * <ul>
  *   <li>Quick Documentation (invoked via explicit action or shown on mouse hover)</li>
@@ -48,12 +50,12 @@ import java.util.function.Consumer;
  * @see ExternalDocumentationProvider
  * @see ExternalDocumentationHandler
  */
+@Obsolete
 public interface DocumentationProvider {
-
   /**
    * Please use {@code com.intellij.lang.documentationProvider} instead of this for language-specific documentation.
    */
-  ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
+  ExtensionPointName<DocumentationProvider> EP_NAME = new ExtensionPointName<>("com.intellij.documentationProvider");
 
   /**
    * Returns the text to show in the Ctrl-hover popup for the specified element.
@@ -126,23 +128,12 @@ public interface DocumentationProvider {
   }
 
   /**
-   * @deprecated Override {@link #generateRenderedDoc(PsiDocCommentBase)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default @Nls @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
-    return null;
-  }
-
-  /**
    * This is used to display rendered documentation in editor, in place of corresponding documentation comment's text.
    *
    * @see #collectDocComments(PsiFile, Consumer)
    */
-  @ApiStatus.Experimental
   default @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
-    PsiElement target = comment.getOwner();
-    return generateRenderedDoc(target == null ? comment : target);
+    return null;
   }
 
   /**
@@ -154,7 +145,6 @@ public interface DocumentationProvider {
    * a case, {@link #findDocComment(PsiFile, TextRange)} should also be implemented by the documentation provider, for the rendered
    * documentation view to work correctly.
    */
-  @ApiStatus.Experimental
   default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) { }
 
   /**
@@ -165,7 +155,6 @@ public interface DocumentationProvider {
    *
    * @see #collectDocComments(PsiFile, Consumer)
    */
-  @ApiStatus.Experimental
   default @Nullable PsiDocCommentBase findDocComment(@NotNull PsiFile file, @NotNull TextRange range) {
     PsiDocCommentBase comment = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiDocCommentBase.class, false);
     return comment == null || !range.equals(comment.getTextRange()) ? null : comment;

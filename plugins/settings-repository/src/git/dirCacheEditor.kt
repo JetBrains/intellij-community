@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.deleteWithParentsIfEmpty
-import com.intellij.util.io.exists
 import com.intellij.util.io.toByteArray
 import org.eclipse.jgit.dircache.BaseDirCacheEditor
 import org.eclipse.jgit.dircache.DirCache
@@ -16,7 +15,7 @@ import org.eclipse.jgit.lib.Repository
 import java.io.File
 import java.io.FileInputStream
 import java.text.MessageFormat
-import java.util.*
+import kotlin.io.path.exists
 
 private val EDIT_CMP = Comparator<PathEdit> { o1, o2 ->
   val a = o1.path
@@ -152,22 +151,21 @@ class AddFile(private val pathString: String) : PathEditBase(encodePath(pathStri
   }
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(
+class AddLoadedFile(path: String, private val content: ByteArray, private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(
     encodePath(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     entry.fileMode = FileMode.REGULAR_FILE
-    entry.length = size
+    entry.length = content.size
     entry.lastModified = lastModified
 
     val inserter = repository.newObjectInserter()
     inserter.use {
-      entry.setObjectId(it.insert(Constants.OBJ_BLOB, content, 0, size))
+      entry.setObjectId(it.insert(Constants.OBJ_BLOB, content))
       it.flush()
     }
   }
 }
 
-@Suppress("FunctionName")
 fun DeleteFile(path: String): DeleteFile = DeleteFile(encodePath(path))
 
 class DeleteFile(path: ByteArray) : PathEditBase(path) {
@@ -230,9 +228,9 @@ fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fromWorkin
   }
 }
 
-fun Repository.writePath(path: String, bytes: ByteArray, size: Int = bytes.size) {
-  edit(AddLoadedFile(path, bytes, size))
-  FileUtil.writeToFile(File(workTree, path), bytes, 0, size)
+fun Repository.writePath(path: String, bytes: ByteArray) {
+  edit(AddLoadedFile(path, bytes))
+  FileUtil.writeToFile(File(workTree, path), bytes)
 }
 
 fun Repository.deletePath(path: String, isFile: Boolean = true, fromWorkingTree: Boolean = true) {

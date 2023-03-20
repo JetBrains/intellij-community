@@ -17,7 +17,7 @@ import java.util.*;
 public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry implements Disposable {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectorRegistryImpl.class);
 
-  private volatile Map<String, FrameworkDetector> myDetectorById;
+  private volatile Map<String, FrameworkDetector> myDetectorsById;
   private volatile MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> myDetectorsMap;
   private volatile MultiMap<FileType, String> myDetectorsByFileType;
   private volatile FileType[] myAcceptedTypes;
@@ -40,12 +40,12 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
   }
 
   private void loadDetectors() {
-    myDetectorById = new HashMap<>();
+    myDetectorsById = new HashMap<>();
     myDetectorsByFileType = new MultiMap<>();
     myDetectorsMap = new MultiMap<>();
 
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
-      myDetectorById.put(detector.getDetectorId(), detector);
+      myDetectorsById.put(detector.getDetectorId(), detector);
       myDetectorsByFileType.putValue(detector.getFileType(), detector.getDetectorId());
 
       myDetectorsMap.putValue(detector.getFileType(), Pair.create(detector.createSuitableFilePattern(), detector.getDetectorId()));
@@ -74,6 +74,7 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
       myAcceptedTypes = null;
       myDetectorsMap = null;
       myDetectorsByFileType = null;
+      myDetectorsById = null;
       myLoaded = false;
     }
   }
@@ -100,7 +101,7 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
   @Override
   public FrameworkDetector getDetectorById(@NotNull String id) {
     ensureDetectorsLoaded();
-    return myDetectorById.get(id);
+    return myDetectorsById.get(id);
   }
 
   @NotNull
@@ -114,7 +115,7 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
   @Override
   public Collection<String> getAllDetectorIds() {
     ensureDetectorsLoaded();
-    return myDetectorById.keySet();
+    return myDetectorsById.keySet();
   }
 
   @Override

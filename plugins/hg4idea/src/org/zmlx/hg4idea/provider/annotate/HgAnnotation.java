@@ -5,16 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
-import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,12 +57,8 @@ public class HgAnnotation extends FileAnnotation {
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
   public LineAnnotationAspect[] getAspects() {
-    return new LineAnnotationAspect[] {
+    return new LineAnnotationAspect[]{
       revisionAnnotationAspect,
       dateAnnotationAspect,
       userAnnotationAspect
@@ -88,7 +80,7 @@ public class HgAnnotation extends FileAnnotation {
   @Nls
   @Nullable
   private String getToolTip(int lineNumber, boolean asHtml) {
-    if ( myLines.size() <= lineNumber || lineNumber < 0 ) {
+    if (myLines.size() <= lineNumber || lineNumber < 0) {
       return null;
     }
     HgAnnotationLine info = myLines.get(lineNumber);
@@ -112,7 +104,9 @@ public class HgAnnotation extends FileAnnotation {
   public String getAnnotatedContent() {
     if (myContentBuffer == null) {
       myContentBuffer = new StringBuilder();
-      for (HgAnnotationLine line : myLines) {
+      for (int i = 0; i < myLines.size(); i++) {
+        HgAnnotationLine line = myLines.get(i);
+        if (i > 0) myContentBuffer.append("\n");
         myContentBuffer.append(line.get(FIELD.CONTENT));
       }
     }
@@ -150,29 +144,21 @@ public class HgAnnotation extends FileAnnotation {
 
   @Nullable
   private static String id(FIELD field) {
-    switch (field) {
-      case USER:
-        return LineAnnotationAspect.AUTHOR;
-      case REVISION:
-        return LineAnnotationAspect.REVISION;
-      case DATE:
-        return LineAnnotationAspect.DATE;
-      default:
-        return null;
-    }
+    return switch (field) {
+      case USER -> LineAnnotationAspect.AUTHOR;
+      case REVISION -> LineAnnotationAspect.REVISION;
+      case DATE -> LineAnnotationAspect.DATE;
+      default -> null;
+    };
   }
 
   private static @NlsContexts.ListItem @Nullable String displayName(FIELD field) {
-    switch (field) {
-      case USER:
-        return VcsBundle.message("line.annotation.aspect.author");
-      case REVISION:
-        return VcsBundle.message("line.annotation.aspect.revision");
-      case DATE:
-        return VcsBundle.message("line.annotation.aspect.date");
-      default:
-        return null;
-    }
+    return switch (field) {
+      case USER -> VcsBundle.message("line.annotation.aspect.author");
+      case REVISION -> VcsBundle.message("line.annotation.aspect.revision");
+      case DATE -> VcsBundle.message("line.annotation.aspect.date");
+      default -> null;
+    };
   }
 
   private static boolean isShowByDefault(FIELD aspectType) {
@@ -194,8 +180,8 @@ public class HgAnnotation extends FileAnnotation {
       }
       HgAnnotationLine annotationLine = myLines.get(lineNumber);
       return myAspectType == FIELD.REVISION
-        ? annotationLine.getVcsRevisionNumber().asString()
-        : annotationLine.get(myAspectType).toString();
+             ? annotationLine.getVcsRevisionNumber().asString()
+             : annotationLine.get(myAspectType).toString();
     }
 
     @Override
@@ -224,5 +210,11 @@ public class HgAnnotation extends FileAnnotation {
   @Override
   public VirtualFile getFile() {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile.getFile());
+  }
+
+  @Nullable
+  @Override
+  public LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return DefaultLineModificationDetailsProvider.create(this);
   }
 }

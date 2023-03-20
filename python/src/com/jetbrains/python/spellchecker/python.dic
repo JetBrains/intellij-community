@@ -1264,7 +1264,9 @@ maxstring
 maybesave
 mbcs
 mbstate
+mcls
 mcontext
+mcs
 mdays
 mdiff
 memmove
@@ -1273,6 +1275,7 @@ memset
 menubutton
 menudefs
 metaclass
+metacls
 metas
 metastrings
 metavar

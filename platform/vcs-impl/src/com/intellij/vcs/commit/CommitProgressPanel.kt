@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.icons.AllIcons
@@ -7,15 +7,21 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.AppUIExecutor.onUiThread
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.plus
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
 import com.intellij.openapi.vcs.changes.InclusionListener
@@ -26,24 +32,23 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.HtmlPanel
+import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.UIUtil.getErrorForeground
-import com.intellij.util.ui.UIUtil.getLabelFont
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.jetbrains.annotations.Nls
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.event.*
 import javax.swing.BoxLayout
 import javax.swing.JComponent
+import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 import kotlin.properties.Delegates.observable
 import kotlin.properties.ReadWriteProperty
@@ -51,7 +56,7 @@ import kotlin.properties.ReadWriteProperty
 private fun JBLabel.setError(@NlsContexts.Label errorText: String) {
   text = errorText
   icon = AllIcons.General.Error
-  foreground = getErrorForeground()
+  foreground = NamedColorUtil.getErrorForeground()
   isVisible = true
 }
 
@@ -62,12 +67,15 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
   isVisible = true
 }
 
-open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgressUi, InclusionListener, DocumentListener, Disposable {
-  private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
-    .also { Disposer.register(this) { it.cancel() } }
+open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
 
-  private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
-  private var progress: CommitChecksProgressIndicator? by progressFlow::value
+  private val taskInfo = CommitChecksTaskInfo()
+  private val progressFlow = MutableStateFlow<InlineCommitChecksProgressIndicator?>(null)
+  private var progress: InlineCommitChecksProgressIndicator? by progressFlow::value
+
+  private val panel = NonOpaquePanel(VerticalLayout(4))
+  private val scrollPane = FixedSizeScrollPanel(panel, JBDimension(400, 150))
 
   private val failuresPanel = FailuresPanel()
   private val label = JBLabel().apply { isVisible = false }
@@ -83,36 +91,31 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
   }
 
-  fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) {
-    add(label)
-    add(failuresPanel)
+  val component: JComponent get() = scrollPane
+
+  fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent, border: Border) {
+    panel.add(label)
+    panel.add(failuresPanel)
+    panel.border = border
 
     Disposer.register(commitWorkflowUi, this)
     commitMessage.addDocumentListener(this)
     commitWorkflowUi.addInclusionListener(this, this)
 
-    setupShowProgressInStatusBar()
     setupProgressVisibilityDelay()
     setupProgressSpinnerTooltip()
+    MyVisibilitySynchronizer().install()
   }
-
-  private fun setupShowProgressInStatusBar() =
-    Disposer.register(this, UiNotifyConnector(this, object : Activatable {
-      override fun showNotify() {
-        progress?.let { removeFromStatusBar(it) }
-      }
-
-      override fun hideNotify() {
-        progress?.let { addToStatusBar(it) }
-      }
-    }))
 
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun setupProgressVisibilityDelay() {
     progressFlow
       .debounce(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
       .onEach { indicator ->
-        if (indicator?.isRunning == true && failuresPanel.isEmpty()) indicator.component.isVisible = true
+        if (indicator?.isRunning == true && failuresPanel.isEmpty()) {
+          indicator.component.isVisible = true
+          revalidatePanel()
+        }
       }
       .launchIn(scope + CoroutineName("Commit checks indicator visibility"))
   }
@@ -122,59 +125,87 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     tooltip.installOn(failuresPanel.iconLabel, this)
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    scope.cancel()
+  }
 
-  override fun startProgress(): ProgressIndicatorEx {
+  override suspend fun <T> runWithProgress(isOnlyRunCommitChecks: Boolean, action: suspend CoroutineScope.() -> T): T {
     check(progress == null) { "Commit checks indicator already created" }
 
-    val indicator = InlineCommitChecksProgressIndicator()
+    val indicator = InlineCommitChecksProgressIndicator(isOnlyRunCommitChecks)
     Disposer.register(this, indicator)
+    progress = indicator
 
+    val context = currentCoroutineContext()
     indicator.component.isVisible = false
     indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun start() = progressStarted()
-      override fun stop() = progressStopped()
+      override fun start() = progressStarted(indicator)
+      override fun stop() = progressStopped(indicator)
+      override fun cancel() = context.cancel() // cancel coroutine
     })
-
-    progress = indicator
     indicator.start()
-    return indicator
-  }
-
-  private fun progressStarted() {
-    add(progress!!.component)
-    // we assume `isShowing == true` here - so we do not need to add progress to status bar
-    failuresPanel.clearFailures()
-  }
-
-  private fun progressStopped() {
-    progress!!.let {
-      remove(it.component)
-      removeFromStatusBar(it)
-      Disposer.dispose(it)
+    try {
+      return withContext(IndeterminateProgressSink(indicator).asContextElement(), block = action)
     }
+    finally {
+      indicator.stop()
+    }
+  }
+
+  private fun progressStarted(indicator: InlineCommitChecksProgressIndicator) {
+    logger<CommitProgressPanel>().assertTrue(progress == indicator)
+
+    panel.add(indicator.component)
+    addToStatusBar(indicator.statusBarDelegate)
+
+    failuresPanel.clearFailures()
+    revalidatePanel()
+  }
+
+  private fun progressStopped(indicator: InlineCommitChecksProgressIndicator) {
+    logger<CommitProgressPanel>().assertTrue(progress == indicator)
     progress = null
 
+    panel.remove(indicator.component)
+    removeFromStatusBar(indicator.statusBarDelegate)
+    Disposer.dispose(indicator)
+
     failuresPanel.endProgress()
+    revalidatePanel()
   }
 
-  private fun addToStatusBar(progress: CommitChecksProgressIndicator) {
+  private fun revalidatePanel() {
+    component.parent?.let {
+      it.revalidate()
+      it.repaint()
+    }
+  }
+
+  private fun addToStatusBar(progress: ProgressIndicatorEx) {
     val frame = WindowManagerEx.getInstanceEx().findFrameFor(null) ?: return
     val statusBar = frame.statusBar as? StatusBarEx ?: return
-
-    statusBar.addProgress(progress, CommitChecksTaskInfo())
+    statusBar.addProgress(progress, taskInfo)
   }
 
-  private fun removeFromStatusBar(progress: CommitChecksProgressIndicator) =
+  private fun removeFromStatusBar(progress: ProgressIndicatorEx) {
     // `finish` tracks list of finished `TaskInfo`-s - so we pass new instance to remove from status bar
-    progress.finish(CommitChecksTaskInfo())
-
-  override fun addCommitCheckFailure(text: String, detailsViewer: () -> Unit) {
-    progress?.component?.isVisible = false
-    failuresPanel.addFailure(CommitCheckFailure(text, detailsViewer))
+    progress.finish(taskInfo)
   }
 
-  override fun clearCommitCheckFailures() = failuresPanel.clearFailures()
+  override fun addCommitCheckFailure(failure: CommitCheckFailure) {
+    progress?.component?.isVisible = false
+    failuresPanel.addFailure(failure)
+    revalidatePanel()
+  }
+
+  override fun clearCommitCheckFailures() {
+    failuresPanel.clearFailures()
+    revalidatePanel()
+  }
+
+  override fun getCommitCheckFailures(): List<CommitCheckFailure> {
+    return failuresPanel.getFailures()
+  }
 
   override fun documentChanged(event: DocumentEvent) = clearError()
   override fun inclusionChanged() = clearError()
@@ -187,6 +218,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
       isDumbMode -> label.setWarning(message("label.commit.checks.not.available.during.indexing"))
       else -> label.isVisible = false
     }
+    revalidatePanel()
   }
 
   protected open fun clearError() {
@@ -202,9 +234,57 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
       isEmptyMessage -> message("error.no.commit.message")
       else -> null
     }
+
+  private inner class MyVisibilitySynchronizer : ContainerListener {
+    private val childListener = object : ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent) {
+        syncVisibility()
+      }
+
+      override fun componentHidden(e: ComponentEvent) {
+        syncVisibility()
+      }
+    }
+
+    fun install() {
+      panel.addContainerListener(this)
+
+      for (child in panel.components) {
+        child.addComponentListener(childListener)
+      }
+      syncVisibility()
+    }
+
+    override fun componentAdded(e: ContainerEvent) {
+      e.child.addComponentListener(childListener)
+      syncVisibility()
+    }
+
+    override fun componentRemoved(e: ContainerEvent) {
+      e.child.removeComponentListener(childListener)
+      syncVisibility()
+    }
+
+    private fun syncVisibility() {
+      val isVisible = panel.components.any { it.isVisible }
+      if (scrollPane.isVisible != isVisible) {
+        scrollPane.isVisible = isVisible
+        revalidatePanel()
+      }
+    }
+  }
 }
 
-private class CommitCheckFailure(@Nls val text: String, val detailsViewer: () -> Unit)
+sealed class CommitCheckFailure {
+  object Unknown : CommitCheckFailure()
+
+  open class WithDescription(val text: @NlsContexts.NotificationContent String) : CommitCheckFailure()
+
+  class WithDetails(text: @NlsContexts.NotificationContent String,
+                    val viewDetailsLinkText: @NlsContexts.NotificationContent String?,
+                    val viewDetailsActionText: @NlsContexts.NotificationContent String,
+                    val viewDetails: (place: CommitSessionCounterUsagesCollector.CommitProblemPlace) -> Unit) : WithDescription(text)
+}
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -244,6 +324,8 @@ private class FailuresPanel : JBPanel<FailuresPanel>() {
     if (isVisible) iconLabel.icon = AllIcons.General.Warning
   }
 
+  fun getFailures() = failures.values.toList()
+
   private fun update() {
     description.failures = failures
     description.update()
@@ -263,22 +345,37 @@ private class FailuresDescriptionPanel : HtmlPanel() {
     return Dimension(size).apply { width = preferredSize.width }
   }
 
-  override fun getBodyFont(): Font = getLabelFont()
+  override fun getBodyFont(): Font = StartupUiUtil.getLabelFont()
   override fun getBody(): String = if (isInitialized) buildDescription().toString() else ""
   override fun hyperlinkUpdate(e: HyperlinkEvent) = showDetails(e)
 
   private fun buildDescription(): HtmlChunk {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
-    val failuresLinks = formatNarrowAndList(failures.map { HtmlChunk.link(it.key.toString(), it.value.text) })
-    return HtmlChunk.raw(message("label.commit.checks.failed", failuresLinks))
+    val failureLinks = formatNarrowAndList(failures.mapNotNull {
+      when (val failure = it.value) {
+        is CommitCheckFailure.WithDetails -> {
+          if (failure.viewDetailsLinkText != null) {
+            HtmlChunk.text(failure.text).plus(HtmlChunk.nbsp())
+              .plus(HtmlChunk.link(it.key.toString(), failure.viewDetailsLinkText))
+          }
+          else {
+            HtmlChunk.link(it.key.toString(), failure.text)
+          }
+        }
+        is CommitCheckFailure.WithDescription -> HtmlChunk.text(failure.text)
+        else -> null
+      }
+    })
+    if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
+    return HtmlChunk.raw(failureLinks)
   }
 
   private fun showDetails(event: HyperlinkEvent) {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
 
-    val failure = failures[event.description.toInt()] ?: return
-    failure.detailsViewer()
+    val failure = failures[event.description.toInt()] as? CommitCheckFailure.WithDetails ?: return
+    failure.viewDetails(CommitSessionCounterUsagesCollector.CommitProblemPlace.COMMIT_TOOLWINDOW)
   }
 }
 
@@ -299,7 +396,7 @@ private fun createCommitChecksToolbar(target: JComponent): ActionToolbar =
   }
 
 private class RerunCommitChecksAction :
-  EmptyAction.MyDelegatingAction(ActionManager.getInstance().getAction("Vcs.RunCommitChecks")),
+  AnActionWrapper(ActionManager.getInstance().getAction("Vcs.RunCommitChecks")),
   TooltipDescriptionProvider {
 
   init {
@@ -310,5 +407,43 @@ private class RerunCommitChecksAction :
       icon = AllIcons.General.InlineRefresh
       hoveredIcon = AllIcons.General.InlineRefreshHover
     }
+  }
+}
+
+private class IndeterminateProgressSink(private val indicator: ProgressIndicator) : ProgressSink {
+
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    if (text != null) {
+      indicator.text = text
+    }
+    if (details != null) {
+      indicator.text2 = details
+    }
+    // ignore fraction updates
+  }
+}
+
+internal class FixedSizeScrollPanel(view: Component, private val fixedSize: Dimension) : JBScrollPane(view) {
+  init {
+    border = empty()
+    viewportBorder = empty()
+    isOpaque = false
+    horizontalScrollBar.isOpaque = false
+    verticalScrollBar.isOpaque = false
+    viewport.isOpaque = false
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val size = super.getPreferredSize()
+    if (size.width > fixedSize.width) {
+      size.width = fixedSize.width
+      if (size.height < horizontalScrollBar.height * 2) {
+        size.height = horizontalScrollBar.height * 2 // better handling of a transparent scrollbar for a single text line
+      }
+    }
+    if (size.height > fixedSize.height) {
+      size.height = fixedSize.height
+    }
+    return size
   }
 }

@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-/**
- * @author lex
- */
 public interface ProgressIndicatorListener {
   default void cancelled() { }
 
@@ -45,7 +42,7 @@ public interface ProgressIndicatorListener {
     });
   }
 
-  static void whenProgressFractionChanged(@NotNull ProgressIndicator progress, @NotNull Consumer<Double> consumer) {
+  static void whenProgressFractionChanged(@NotNull ProgressIndicator progress, @NotNull Consumer<? super Double> consumer) {
     ProgressIndicatorListener listener = new ProgressIndicatorListener() {
       @Override
       public void onFractionChanged(double fraction) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.generate
 
@@ -24,18 +24,20 @@ import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils.MethodKind
 import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.insertMember
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.BodyType
+import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateUnsupportedOrSuperCall
 import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.setupEditorSelection
 import org.jetbrains.kotlin.idea.testIntegration.findSuitableFrameworks
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.publicByDefault
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
@@ -58,10 +60,10 @@ abstract class KotlinGenerateTestSupportActionBase(
 
             if (isUnitTestMode()) return consumer(frameworks.first())
 
-            val list = JBList<TestFramework>(*frameworks.toTypedArray())
+            val list = JBList(*frameworks.toTypedArray())
             list.cellRenderer = TestFrameworkListCellRenderer()
 
-            PopupChooserBuilder<TestFramework>(list).setFilteringEnabled { (it as TestFramework).name }
+            PopupChooserBuilder(list).setFilteringEnabled { (it as TestFramework).name }
                 .setTitle(KotlinBundle.message("action.generate.test.support.choose.framework"))
                 .setItemChoosenCallback { consumer(list.selectedValue as TestFramework) }
                 .setMovable(true)
@@ -69,8 +71,8 @@ abstract class KotlinGenerateTestSupportActionBase(
                 .showInBestPositionFor(editor)
         }
 
-        private val BODY_VAR = "\${BODY}"
-        private val NAME_VAR = "\${NAME}"
+        private const val BODY_VAR = "\${BODY}"
+        private const val NAME_VAR = "\${NAME}"
 
         private val NAME_VALIDATOR = object : InputValidator {
             override fun checkInput(inputString: String) = inputString.quoteIfNeeded().isIdentifier()
@@ -151,28 +153,28 @@ abstract class KotlinGenerateTestSupportActionBase(
         }
 
         try {
-            var errorHint: String? = null
+            @Nls var errorHint: String? = null
             project.executeWriteCommand(commandName) {
                 PsiDocumentManager.getInstance(project).commitAllDocuments()
 
                 val factory = PsiElementFactory.getInstance(project)
                 val psiMethod = factory.createMethodFromText(templateText, null)
                 psiMethod.throwsList.referenceElements.forEach { it.delete() }
-                var function = psiMethod.j2k() as? KtNamedFunction ?: run {
+                var function = psiMethod.j2k(settings = publicByDefault) as? KtNamedFunction ?: run {
                     errorHint = KotlinBundle.message("action.generate.test.support.error.cant.convert.java.template")
                     return@executeWriteCommand
                 }
                 name?.let {
                     function = substituteNewName(function, it)
                 }
-                val functionInPlace = insertMember(editor, klass, function)
+                val functionInPlace = insertMembersAfterAndReformat(editor, klass, function)
 
                 val functionDescriptor = functionInPlace.unsafeResolveToDescriptor() as FunctionDescriptor
                 val overriddenDescriptors = functionDescriptor.overriddenDescriptors
                 val bodyText = when (overriddenDescriptors.size) {
-                    0 -> generateUnsupportedOrSuperCall(project, functionDescriptor, BodyType.FROM_TEMPLATE)
-                    1 -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.single(), BodyType.SUPER)
-                    else -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.first(), BodyType.QUALIFIED_SUPER)
+                    0 -> generateUnsupportedOrSuperCall(project, functionDescriptor, BodyType.FromTemplate)
+                    1 -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.single(), BodyType.Super)
+                    else -> generateUnsupportedOrSuperCall(project, overriddenDescriptors.first(), BodyType.QualifiedSuper)
                 }
                 functionInPlace.bodyExpression?.delete()
                 functionInPlace.add(KtPsiFactory(project).createBlock(bodyText))
@@ -183,7 +185,10 @@ abstract class KotlinGenerateTestSupportActionBase(
 
                 setupEditorSelection(editor, functionInPlace)
             }
-            errorHint?.let { HintManager.getInstance().showErrorHint(editor, it) }
+            errorHint?.let {
+                @Suppress("HardCodedStringLiteral")
+                HintManager.getInstance().showErrorHint(editor, it)
+            }
         } catch (e: IncorrectOperationException) {
             val message = KotlinBundle.message("action.generate.test.support.error.cant.generate.method", e.message.toString())
             HintManager.getInstance().showErrorHint(editor, message)
@@ -191,7 +196,7 @@ abstract class KotlinGenerateTestSupportActionBase(
     }
 
     private fun substituteNewName(function: KtNamedFunction, name: String): KtNamedFunction {
-        val psiFactory = KtPsiFactory(function)
+        val psiFactory = KtPsiFactory(function.project)
 
         // First replace all DUMMY_NAME occurrences in names as they need special treatment due to quotation
         var function1 = function

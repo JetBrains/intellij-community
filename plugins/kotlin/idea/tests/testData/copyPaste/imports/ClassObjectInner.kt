@@ -3,7 +3,7 @@ package a
 import a.Outer.Companion.Nested
 import a.Outer.Companion.NestedEnum
 import a.Outer.Companion.NestedObj
-import a.Outer.Companion.NestedTrait
+import a.Outer.Companion.NestedInterface
 import a.Outer.Companion.NestedAnnotation
 
 class Outer {
@@ -14,11 +14,11 @@ class Outer {
         }
         object NestedObj {
         }
-        interface NestedTrait {
+        interface NestedInterface {
         }
         annotation class NestedAnnotation
     }
 }
 
-<selection>fun f(n: Nested, e: NestedEnum, o: NestedObj, t: NestedTrait, a: NestedAnnotation) {
+<selection>fun f(n: Nested, e: NestedEnum, o: NestedObj, t: NestedInterface, a: NestedAnnotation) {
 }</selection>

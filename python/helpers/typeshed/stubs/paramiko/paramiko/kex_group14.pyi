@@ -1,13 +1,8 @@
-import sys
 from _typeshed import ReadableBuffer
-from typing import Callable
+from collections.abc import Callable
+from hashlib import _Hash
 
 from paramiko.kex_group1 import KexGroup1 as KexGroup1
-
-if sys.version_info >= (3, 0):
-    from hashlib import _Hash
-else:
-    from hashlib import _hash as _Hash
 
 class KexGroup14(KexGroup1):
     P: int

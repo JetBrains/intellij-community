@@ -12,9 +12,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 @ApiStatus.Internal
 public final class LibraryTableImplUtil {
   @NonNls public static final String MODULE_LEVEL = "module";

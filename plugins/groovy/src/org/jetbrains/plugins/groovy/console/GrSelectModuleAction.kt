@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.groovy.console
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,7 +20,9 @@ class GrSelectModuleAction(
   message("select.module.action.text"),
   message("select.module.action.description"),
   AllIcons.Nodes.Module
-), UpdateInBackground {
+) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   private val consoleService by lazy {
     GroovyConsoleStateService.getInstance(project)

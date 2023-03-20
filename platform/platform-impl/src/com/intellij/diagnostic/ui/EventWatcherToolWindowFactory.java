@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.ui;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -6,6 +6,7 @@ import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -29,10 +30,8 @@ import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
-
   @Override
-  public void createToolWindowContent(@NotNull Project project,
-                                      @NotNull ToolWindow toolWindow) {
+  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     TableProvidingListener listener = new TableProvidingListener();
 
     project.getMessageBus()
@@ -40,17 +39,15 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       .subscribe(listener.TOPIC, listener);
 
     ContentManager manager = toolWindow.getContentManager();
-    ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+    ContentFactory contentFactory = ContentFactory.getInstance();
     listener.createNamedPanels()
       .map(entry -> {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(entry.getValue(),
-                  BorderLayout.CENTER);
+        panel.add(entry.getValue(), BorderLayout.CENTER);
 
-        return contentFactory.createContent(panel,
-                                            entry.getKey(),
-                                            false);
-      }).forEach(manager::addContent);
+        return contentFactory.createContent(panel, entry.getKey(), false);
+      })
+      .forEach(manager::addContent);
   }
 
   @Override
@@ -60,11 +57,10 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
 
   @Override
   public boolean isApplicable(@NotNull Project project) {
-    return EventWatcher.isEnabled();
+    return EventWatcher.isDetailedWatcherEnabled();
   }
 
-  private static class TableProvidingListener implements RunnablesListener {
-
+  private static final class TableProvidingListener implements RunnablesListener {
     private final @NotNull ListTableModel<InvocationsInfo> myInvocationsModel;
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
@@ -154,6 +150,11 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
             Objects.requireNonNull(EventWatcher.getInstanceOrNull())
               .reset();
             setItems(tableModel, List.of());
+          }
+
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.BGT;
           }
         }).createPanel();
     }

@@ -69,7 +69,7 @@ public final class ConditionalExpressionGenerator {
     PsiExpression condition = model.getCondition();
     PsiExpression thenExpression = model.getThenExpression();
     PsiExpression elseExpression = model.getElseExpression();
-    if (PsiType.BOOLEAN.equals(model.getType()) || model.getType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+    if (PsiTypes.booleanType().equals(model.getType()) || model.getType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
       PsiLiteralExpression thenLiteral = ExpressionUtils.getLiteral(thenExpression);
       PsiLiteralExpression elseLiteral = ExpressionUtils.getLiteral(elseExpression);
       Boolean thenValue = thenLiteral == null ? null : tryCast(thenLiteral.getValue(), Boolean.class);
@@ -84,7 +84,7 @@ public final class ConditionalExpressionGenerator {
         }
         return new ConditionalExpressionGenerator("", ct -> BoolUtils.getNegatedExpressionText(condition, ct));
       }
-      if ((thenValue != null || elseValue != null) && PsiType.BOOLEAN.equals(model.getType())) {
+      if ((thenValue != null || elseValue != null) && PsiTypes.booleanType().equals(model.getType())) {
         return getAndOrGenerator(condition, thenExpression, elseExpression, thenValue, elseValue);
       }
       if (BoolUtils.areExpressionsOpposite(thenExpression, elseExpression)) {
@@ -195,20 +195,20 @@ public final class ConditionalExpressionGenerator {
     final PsiType thenType = thenValue.getType();
     final PsiType elseType = elseValue.getType();
     if (thenType instanceof PsiPrimitiveType &&
-        !PsiType.NULL.equals(thenType) &&
+        !PsiTypes.nullType().equals(thenType) &&
         !(elseType instanceof PsiPrimitiveType) &&
         !(type instanceof PsiPrimitiveType)) {
-      // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
+      // prevent unboxing of boxed value to preserve semantics (IDEA-48267, IDEA-310641)
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)thenType;
       conditional.append(primitiveType.getBoxedTypeName());
       conditional.append(".valueOf(").append(ct.text(thenValue)).append("):");
       conditional.append(ct.text(elseValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
     }
     else if (elseType instanceof PsiPrimitiveType &&
-             !PsiType.NULL.equals(elseType) &&
+             !PsiTypes.nullType().equals(elseType) &&
              !(thenType instanceof PsiPrimitiveType) &&
              !(type instanceof PsiPrimitiveType)) {
-      // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
+      // prevent unboxing of boxed value to preserve semantics (IDEA-48267, IDEA-310641)
       conditional.append(ct.text(thenValue, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
       conditional.append(':');
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)elseType;

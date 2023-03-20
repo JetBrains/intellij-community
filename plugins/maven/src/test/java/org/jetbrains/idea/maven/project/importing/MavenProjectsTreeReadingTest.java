@@ -18,9 +18,9 @@ package org.jetbrains.idea.maven.project.importing;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -30,23 +30,26 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testTwoRootProjects() {
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     updateAll(m1, m2);
     List<MavenProject> roots = myTree.getRootProjects();
@@ -58,23 +61,23 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testModulesWithWhiteSpaces() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>" +
-                     "" +
-                     "  m" +
-                     "" +
-                     "  </module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>
+                         m  </module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom);
     List<MavenProject> roots = myTree.getRootProjects();
@@ -88,19 +91,22 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDoNotImportChildAsRootProject() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom, m);
     List<MavenProject> roots = myTree.getRootProjects();
@@ -118,14 +124,18 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(listener, getTestRootDisposable());
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     updateAll(m1, m2, m1);
     List<MavenProject> roots = myTree.getRootProjects();
@@ -134,7 +144,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m1, roots.get(0).getFile());
     assertEquals(m2, roots.get(1).getFile());
 
-    assertEquals("updated: m1 m2 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "m1", "m2").add("deleted"), listener.log);
   }
 
   @Test 
@@ -143,63 +153,69 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(listener, getTestRootDisposable());
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<properties>" +
-                                     " <childId>m2</childId>" +
-                                     "</properties>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <properties>
+                                        <childId>m2</childId>
+                                       </properties>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>${childId}</artifactId>" +
-                                     "<version>1</version>" +
-
-                                     "<parent>" +
-                                     "  <groupId>test</groupId>" +
-                                     "  <artifactId>m1</artifactId>" +
-                                     "  <version>1</version>" +
-                                     "</parent>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>${childId}</artifactId>
+                                       <version>1</version>
+                                       <parent>
+                                         <groupId>test</groupId>
+                                         <artifactId>m1</artifactId>
+                                         <version>1</version>
+                                       </parent>
+                                       """);
 
     updateAll(m2, m1);
 
     List<MavenProject> roots = myTree.getRootProjects();
     assertEquals(2, roots.size());
-    assertEquals(m2, roots.get(0).getFile());
-    assertEquals(m1, roots.get(1).getFile());
-    assertEquals("m2", roots.get(0).getMavenId().getArtifactId());
-    assertEquals("m1", roots.get(1).getMavenId().getArtifactId());
+    assertEquals(m1, roots.get(0).getFile());
+    assertEquals(m2, roots.get(1).getFile());
+    assertEquals("m1", roots.get(0).getMavenId().getArtifactId());
+    assertEquals("m2", roots.get(1).getMavenId().getArtifactId());
 
-    assertEquals("updated: m2 m1 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "m2", "m1").add("deleted"), listener.log);
   }
 
   @Test 
   public void testSameProjectAsModuleOfSeveralProjects() {
     VirtualFile p1 = createModulePom("project1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>../module</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>../module</module>
+                                       </modules>
+                                       """);
 
     VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>../module</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project2</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>../module</module>
+                                       </modules>
+                                       """);
 
     VirtualFile m = createModulePom("module",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>module</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>module</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(p1, p2);
     List<MavenProject> roots = myTree.getRootProjects();
@@ -216,57 +232,71 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testSameProjectAsModuleOfSeveralProjectsInHierarchy() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>module1</module>" +
-                     "  <module>module1/module2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>module1</module>
+                         <module>module1/module2</module>
+                       </modules>
+                       """);
 
     VirtualFile m1 = createModulePom("module1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>module1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>module2</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>module1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>module2</module>
+                                       </modules>
+                                       """);
 
     VirtualFile m2 = createModulePom("module1/module2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>module2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>module2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     updateAll(myProjectPom);
     List<MavenProject> roots = myTree.getRootProjects();
 
     assertEquals(1, roots.size());
-    assertEquals(1, myTree.getModules(roots.get(0)).size());
-    assertEquals(m1, myTree.getModules(roots.get(0)).get(0).getFile());
+    var allModules = collectAllModulesRecursively(myTree, roots.get(0));
+    assertEquals(2, allModules.size());
+    assertSameElements(Set.of(m1, m2), ContainerUtil.map(allModules, m -> m.getFile()));
+  }
 
-    assertEquals(1, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).size());
-    assertEquals(m2, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).get(0).getFile());
+  private static List<MavenProject> collectAllModulesRecursively(MavenProjectsTree tree, MavenProject aggregator) {
+    var directModules = new ArrayList<>(tree.getModules(aggregator));
+    var allModules = new ArrayList<>(directModules);
+    for (var directModule : directModules) {
+      allModules.addAll(collectAllModulesRecursively(tree, directModule));
+    }
+    return allModules;
   }
 
   @Test 
   public void testRemovingChildProjectFromRootProjects() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     // all projects are processed in the specified order
     // if we have imported a child project as a root one,
@@ -283,25 +313,30 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testSendingNotificationsWhenAggregationChanged() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     updateAll(myProjectPom, m1, m2);
 
@@ -309,14 +344,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(1, roots.size());
     assertEquals(2, myTree.getModules(roots.get(0)).size());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
     MyLoggingListener listener = new MyLoggingListener();
     myTree.addListener(listener, getTestRootDisposable());
@@ -326,24 +362,27 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(2, roots.size());
     assertEquals(1, myTree.getModules(roots.get(0)).size());
 
-    assertEquals("updated: project m2 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "project", "m2").add("deleted"), listener.log);
   }
 
   @Test 
   public void testUpdatingWholeModel() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom);
 
@@ -352,18 +391,21 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenProject parentNode = roots.get(0);
     MavenProject childNode = myTree.getModules(roots.get(0)).get(0);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project1</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project1</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m1</artifactId>" +
-                         "<version>1</version>");
+    createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
     updateAll(myProjectPom);
 
@@ -384,98 +426,109 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testForceUpdatingWholeModel() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     MyLoggingListener l = new MyLoggingListener();
     myTree.addListener(l, getTestRootDisposable());
 
     updateAll(myProjectPom);
-    assertEquals("updated: project m deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
+    l.log.clear();
 
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("", l.log);
-    l.log = "";
+    assertEquals(log(), l.log);
+    l.log.clear();
 
     myTree.updateAll(true, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("updated: project m deleted: <none> ", l.log);
+    assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
   }
 
   @Test 
   public void testForceUpdatingSingleProject() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     MyLoggingListener l = new MyLoggingListener();
     myTree.addListener(l, getTestRootDisposable());
 
     update(myProjectPom);
-    assertEquals("updated: project m deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
+    l.log.clear();
 
     myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("", l.log);
-    l.log = "";
+    assertEquals(log(), l.log);
+    l.log.clear();
 
     myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("updated: project deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "project").add("deleted"), l.log);
+    l.log.clear();
   }
 
   @Test 
   public void testUpdatingModelWithNewProfiles() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <modules>" +
-                     "      <module>m1</module>" +
-                     "    </modules>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <modules>" +
-                     "      <module>m2</module>" +
-                     "    </modules>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <modules>
+                             <module>m1</module>
+                           </modules>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <modules>
+                             <module>m2</module>
+                           </modules>
+                         </profile>
+                       </profiles>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     updateAll(Collections.singletonList("one"), myProjectPom);
 
@@ -498,25 +551,30 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingParticularProject() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom);
 
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m1</artifactId>" +
-                         "<version>1</version>");
+    createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
     update(m);
 
@@ -526,35 +584,38 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingInheritance() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <childName>child</childName>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <childName>child</childName>
+                       </properties>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>${childName}</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     updateAll(myProjectPom, child);
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <childName>child2</childName>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <childName>child2</childName>
+                       </properties>
+                       """);
 
     update(myProjectPom);
 
@@ -563,47 +624,51 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingInheritanceHierarhically() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <subChildName>subChild</subChildName>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <subChildName>subChild</subChildName>
+                       </properties>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     VirtualFile subChild = createModulePom("subChild",
-                                           "<groupId>test</groupId>" +
-                                           "<artifactId>${subChildName}</artifactId>" +
-                                           "<version>1</version>" +
-
-                                           "<parent>" +
-                                           "  <groupId>test</groupId>" +
-                                           "  <artifactId>child</artifactId>" +
-                                           "  <version>1</version>" +
-                                           "</parent>");
+                                           """
+                                             <groupId>test</groupId>
+                                             <artifactId>${subChildName}</artifactId>
+                                             <version>1</version>
+                                             <parent>
+                                               <groupId>test</groupId>
+                                               <artifactId>child</artifactId>
+                                               <version>1</version>
+                                             </parent>
+                                             """);
 
     updateAll(myProjectPom, child, subChild);
 
     assertEquals("subChild", myTree.findProject(subChild).getMavenId().getArtifactId());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <subChildName>subChild2</subChildName>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <subChildName>subChild2</subChildName>
+                       </properties>
+                       """);
 
     update(myProjectPom);
 
@@ -615,21 +680,23 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MyLoggingListener listener = new MyLoggingListener();
     myTree.addListener(listener, getTestRootDisposable());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>m1</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>m1</artifactId>
+                       <version>1</version>
+                       """);
     updateAll(myProjectPom);
 
-    assertEquals("updated: m1 deleted: <none> ", listener.log);
+    assertEquals(log().add("updated", "m1").add("deleted"), listener.log);
   }
 
   @Test 
   public void testSendingNotificationsWhenResolveFailed() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<name");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name""");
 
     updateAll(myProjectPom);
 
@@ -659,7 +726,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       embeddersManager.releaseInTests();
     }
 
-    assertEquals("resolved: project ", listener.log);
+    assertEquals(log().add("resolved", "project"), listener.log);
     assertTrue(project.hasReadingProblems());
     assertSize(1, nativeProject);
     assertNull(nativeProject.get(0));
@@ -667,20 +734,23 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDoNotUpdateChildAfterParentWasResolved() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     MyLoggingListener listener = new MyLoggingListener();
     myTree.addListener(listener, getTestRootDisposable());
@@ -706,7 +776,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                 NULL_MAVEN_CONSOLE,
                                 getMavenProgressIndicator()
       );
-      myProjectResolver.resolvePlugins(myProject, parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator(), false);
+      myProjectResolver.resolvePlugins(parentProject, nativeProject[0], embeddersManager, NULL_MAVEN_CONSOLE,
+                                       getMavenProgressIndicator(), false, false);
       myProjectResolver
         .resolveFolders(parentProject, getMavenImporterSettings(), embeddersManager, NULL_MAVEN_CONSOLE, getMavenProgressIndicator());
     }
@@ -714,35 +785,51 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       embeddersManager.releaseInTests();
     }
 
-    assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
+    assertEquals(
+      log()
+        .add("updated", "parent", "child")
+        .add("deleted")
+        .add("resolved", "parent")
+        .add("plugins", "parent")
+        .add("folders", "parent"),
+      listener.log);
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
-    assertEquals("updated: parent child deleted: <none> resolved: parent plugins: parent folders: parent ", listener.log);
+    assertEquals(
+      log()
+        .add("updated", "parent", "child")
+        .add("deleted")
+        .add("resolved", "parent")
+        .add("plugins", "parent")
+        .add("folders", "parent"),
+      listener.log);
   }
 
   @Test 
   public void testAddingInheritanceParent() {
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>${childName}</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     updateAll(child);
     assertEquals("${childName}", myTree.findProject(child).getMavenId().getArtifactId());
 
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<version>1</version>" +
-
-                                         "<properties>" +
-                                         "  <childName>child</childName>" +
-                                         "</properties>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <properties>
+                                             <childName>child</childName>
+                                           </properties>
+                                           """);
 
     update(parent);
 
@@ -752,58 +839,92 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testAddingInheritanceChild() {
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<version>1</version>" +
-
-                                         "<properties>" +
-                                         "  <childName>child</childName>" +
-                                         "</properties>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <properties>
+                                             <childName>child</childName>
+                                           </properties>
+                                           """);
 
     updateAll(parent);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>${childName}</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     update(child);
 
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
-  @Test 
+  @Test
+  public void testParentPropertyInterpolation() {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <properties>
+                         <childName>child</childName>
+                       </properties>
+                       """);
+    update(myProjectPom);
+
+    VirtualFile child = createModulePom("child",
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
+
+    update(child);
+
+    assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
+  }
+
+  @Test
   public void testAddingInheritanceChildOnParentUpdate() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <childName>child</childName>" +
-                     "</properties>" +
-
-                     "<modules>" +
-                     " <module>child</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <properties>
+                         <childName>child</childName>
+                       </properties>
+                       <modules>
+                         <module>child</module>
+                       </modules>
+                       """);
 
     updateAll(myProjectPom);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>${childName}</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     update(myProjectPom);
 
@@ -812,24 +933,26 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDoNotReAddInheritanceChildOnParentModulesRemoval() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     " <module>child</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <modules>
+                        <module>child</module>
+                       </modules>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
     updateAll(myProjectPom);
 
     List<MavenProject> roots = myTree.getRootProjects();
@@ -838,9 +961,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(1, myTree.getModules(roots.get(0)).size());
     assertEquals(child, myTree.getModules(roots.get(0)).get(0).getFile());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       """);
 
     update(myProjectPom);
 
@@ -853,46 +978,50 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testChangingInheritance() {
     VirtualFile parent1 = createModulePom("parent1",
-                                          "<groupId>test</groupId>" +
-                                          "<artifactId>parent1</artifactId>" +
-                                          "<version>1</version>" +
-
-                                          "<properties>" +
-                                          "  <childName>child1</childName>" +
-                                          "</properties>");
+                                          """
+                                            <groupId>test</groupId>
+                                            <artifactId>parent1</artifactId>
+                                            <version>1</version>
+                                            <properties>
+                                              <childName>child1</childName>
+                                            </properties>
+                                            """);
 
     VirtualFile parent2 = createModulePom("parent2",
-                                          "<groupId>test</groupId>" +
-                                          "<artifactId>parent2</artifactId>" +
-                                          "<version>1</version>" +
-
-                                          "<properties>" +
-                                          "  <childName>child2</childName>" +
-                                          "</properties>");
+                                          """
+                                            <groupId>test</groupId>
+                                            <artifactId>parent2</artifactId>
+                                            <version>1</version>
+                                            <properties>
+                                              <childName>child2</childName>
+                                            </properties>
+                                            """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>${childName}</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent1</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent1</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     updateAll(parent1, parent2, child);
     assertEquals("child1", myTree.findProject(child).getMavenId().getArtifactId());
 
-    createModulePom("child", "<groupId>test</groupId>" +
-                             "<artifactId>${childName}</artifactId>" +
-                             "<version>1</version>" +
-
-                             "<parent>" +
-                             "  <groupId>test</groupId>" +
-                             "  <artifactId>parent2</artifactId>" +
-                             "  <version>1</version>" +
-                             "</parent>");
+    createModulePom("child", """
+      <groupId>test</groupId>
+      <artifactId>${childName}</artifactId>
+      <version>1</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>parent2</artifactId>
+        <version>1</version>
+      </parent>
+      """);
 
     update(child);
 
@@ -901,35 +1030,38 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testChangingInheritanceParentId() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <childName>child</childName>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <childName>child</childName>
+                       </properties>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>${childName}</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     updateAll(myProjectPom, child);
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent2</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <childName>child</childName>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent2</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <childName>child</childName>
+                       </properties>
+                       """);
 
     update(myProjectPom);
 
@@ -938,15 +1070,16 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testHandlingSelfInheritance() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                       </parent>
+                       """);
 
     updateAll(myProjectPom); // shouldn't hang
 
@@ -959,30 +1092,31 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testHandlingRecursiveInheritance() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>child</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>" +
-
-                     "<modules>" +
-                     "  <module>child</module>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>child</artifactId>
+                         <version>1</version>
+                       </parent>
+                       <modules>
+                         <module>child</module>
+                       </properties>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     updateAll(myProjectPom, child); // shouldn't hang
 
@@ -999,24 +1133,26 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testDeletingInheritanceParent() {
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<version>1</version>" +
-
-                                         "<properties>" +
-                                         "  <childName>child</childName>" +
-                                         "</properties>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <properties>
+                                             <childName>child</childName>
+                                           </properties>
+                                           """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>${childName}</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     updateAll(parent, child);
 
@@ -1029,35 +1165,38 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDeletingInheritanceChild() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <subChildName>subChild</subChildName>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <subChildName>subChild</subChildName>
+                       </properties>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
 
     VirtualFile subChild = createModulePom("subChild",
-                                           "<groupId>test</groupId>" +
-                                           "<artifactId>${subChildName}</artifactId>" +
-                                           "<version>1</version>" +
-
-                                           "<parent>" +
-                                           "  <groupId>test</groupId>" +
-                                           "  <artifactId>child</artifactId>" +
-                                           "  <version>1</version>" +
-                                           "</parent>");
+                                           """
+                                             <groupId>test</groupId>
+                                             <artifactId>${subChildName}</artifactId>
+                                             <version>1</version>
+                                             <parent>
+                                               <groupId>test</groupId>
+                                               <artifactId>child</artifactId>
+                                               <version>1</version>
+                                             </parent>
+                                             """);
 
     updateAll(myProjectPom, child, subChild);
     assertEquals("subChild", myTree.findProject(subChild).getMavenId().getArtifactId());
@@ -1068,24 +1207,26 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testRecursiveInheritanceAndAggregation() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-                     "" +
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>child</artifactId>" +
-                     "  <version>1</version>" +
-                     "</parent>" +
-
-                     "<modules>" +
-                     " <module>child</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>child</artifactId>
+                         <version>1</version>
+                       </parent>
+                       <modules>
+                        <module>child</module>
+                       </modules>
+                       """);
 
     VirtualFile child = createModulePom("child",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>child</artifactId>" +
-                                        "<version>1</version>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>child</artifactId>
+                                          <version>1</version>
+                                          """);
     updateAll(myProjectPom); // should not recurse
 
     updateTimestamps(myProjectPom, child);
@@ -1094,15 +1235,19 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingAddsModules() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom);
 
@@ -1111,14 +1256,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(myProjectPom, roots.get(0).getFile());
     assertEquals(0, myTree.getModules(roots.get(0)).size());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     update(myProjectPom);
 
@@ -1131,38 +1277,43 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingUpdatesModulesIfProjectIsChanged() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom);
 
     assertEquals("m", myTree.findProject(m).getMavenId().getArtifactId());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <name>foo</name>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<name>foo</name>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m2</artifactId>" +
-                         "<version>1</version>");
+    createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
     update(myProjectPom);
 
     assertEquals("m2", myTree.findProject(m).getMavenId().getArtifactId());
@@ -1170,27 +1321,32 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingDoesNotUpdateModulesIfProjectIsNotChanged() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom);
 
     assertEquals("m", myTree.findProject(m).getMavenId().getArtifactId());
 
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m2</artifactId>" +
-                         "<version>1</version>");
+    createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>1</version>
+      """);
 
     update(myProjectPom);
 
@@ -1200,14 +1356,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testAddingProjectAsModuleToExistingOne() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     updateAll(myProjectPom);
 
@@ -1216,9 +1373,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(0, myTree.getModules(roots.get(0)).size());
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     update(m);
 
@@ -1231,9 +1390,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testAddingProjectAsAggregatorForExistingOne() {
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(m);
 
@@ -1242,14 +1403,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m, roots.get(0).getFile());
     assertEquals(0, myTree.getModules(roots.get(0)).size());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     update(myProjectPom);
 
@@ -1262,10 +1424,12 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testAddingProjectWithModules() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       """);
 
     updateAll(myProjectPom);
 
@@ -1274,19 +1438,22 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(0, myTree.getModules(roots.get(0)).size());
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>m2</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>m2</module>
+                                       </modules>
+                                       """);
 
     VirtualFile m2 = createModulePom("m1/m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     update(m1);
 
@@ -1300,15 +1467,19 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingAddsModulesFromRootProjects() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom, m);
 
@@ -1319,14 +1490,15 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("m", roots.get(1).getMavenId().getArtifactId());
     assertEquals(0, myTree.getModules(roots.get(0)).size());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     update(myProjectPom);
 
@@ -1339,29 +1511,34 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testMovingModuleToRootsWhenAggregationChanged() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
     updateAll(myProjectPom, m);
 
     List<MavenProject> roots = myTree.getRootProjects();
     assertEquals(1, roots.size());
     assertEquals(1, myTree.getModules(roots.get(0)).size());
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       """);
 
     update(myProjectPom);
 
@@ -1373,19 +1550,22 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDeletingProject() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      """);
 
     updateAll(myProjectPom);
 
@@ -1402,29 +1582,33 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDeletingProjectWithModules() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>m2</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>m2</module>
+                                       </modules>
+                                       """);
 
     createModulePom("m1/m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
 
     updateAll(myProjectPom);
 
@@ -1443,29 +1627,33 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testSendingNotificationsWhenProjectDeleted() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>m2</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>m2</module>
+                                       </modules>
+                                       """);
 
     createModulePom("m1/m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
 
     updateAll(myProjectPom);
 
@@ -1474,34 +1662,38 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     deleteProject(m1);
 
-    assertEquals("updated: <none> deleted: m2 m1 ", listener.log);
+    assertEquals(log().add("updated").add("deleted", "m2", "m1"), listener.log);
   }
 
   @Test 
   public void testReconnectModuleOfDeletedProjectIfModuleIsManaged() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                       </modules>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>" +
-                                     "<packaging>pom</packaging>" +
-
-                                     "<modules>" +
-                                     "  <module>m2</module>" +
-                                     "</modules>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       <packaging>pom</packaging>
+                                       <modules>
+                                         <module>m2</module>
+                                       </modules>
+                                       """);
 
     VirtualFile m2 = createModulePom("m1/m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     updateAll(myProjectPom, m2);
 
@@ -1522,23 +1714,29 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(m2, roots.get(1).getFile());
     assertEquals(0, myTree.getModules(roots.get(1)).size());
 
-    assertEquals("updated: m2 deleted: m1 ", listener.log);
+    assertEquals(log().add("updated", "m2").add("deleted", "m1"), listener.log);
   }
 
   @Test 
   public void testAddingProjectsOnUpdateAllWhenManagedFilesChanged() {
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
     VirtualFile m3 = createModulePom("m3",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m3</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m3</artifactId>
+                                       <version>1</version>
+                                       """);
     updateAll(m1, m2);
     assertEquals(2, myTree.getRootProjects().size());
 
@@ -1549,17 +1747,23 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testDeletingProjectsOnUpdateAllWhenManagedFilesChanged() {
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
     VirtualFile m3 = createModulePom("m3",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m3</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m3</artifactId>
+                                       <version>1</version>
+                                       """);
     updateAll(m1, m2, m3);
     assertEquals(3, myTree.getRootProjects().size());
 
@@ -1569,24 +1773,29 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testSendingNotificationsWhenAddingOrDeletingManagedFiles() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     MyLoggingListener l = new MyLoggingListener();
     myTree.addListener(l, getTestRootDisposable());
@@ -1594,59 +1803,58 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
 
-    assertEquals("updated: parent m1 m2 deleted: <none> ", l.log);
-    l.log = "";
+    assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log);
+    l.log.clear();
 
     myTree.removeManagedFiles(Arrays.asList(myProjectPom));
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
 
-    assertEquals("updated: <none> deleted: m1 m2 parent ", l.log);
+    assertEquals(log().add("updated").add("deleted", "m1", "m2", "parent"), l.log);
   }
 
   @Test 
   public void testUpdatingModelWhenActiveProfilesChange() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "    <properties>" +
-                     "      <prop>value1</prop>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <properties>" +
-                     "      <prop>value2</prop>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "</profiles>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>" +
-
-                     "<build>" +
-                     "  <sourceDirectory>${prop}</sourceDirectory>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <prop>value1</prop>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <properties>
+                             <prop>value2</prop>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       <build>
+                         <sourceDirectory>${prop}</sourceDirectory>
+                       </build>
+                       """);
 
     createModulePom("m",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>project</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>" +
-
-                    "<build>" +
-                    "  <sourceDirectory>${prop}</sourceDirectory>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      <build>
+                        <sourceDirectory>${prop}</sourceDirectory>
+                      </build>
+                      """);
 
     updateAll(Arrays.asList("one"), myProjectPom);
 
@@ -1666,24 +1874,27 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingModelWhenProfilesXmlChange() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <build>
+                         <sourceDirectory>${prop}</sourceDirectory>
+                       </build>
+                       """);
 
-                     "<build>" +
-                     "  <sourceDirectory>${prop}</sourceDirectory>" +
-                     "</build>");
-
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value1</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXmlOldStyle("""
+                                <profile>
+                                  <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                    <prop>value1</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     updateAll(myProjectPom);
 
@@ -1692,15 +1903,17 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenProject project = roots.get(0);
     assertUnorderedPathsAreEqual(project.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value2</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXmlOldStyle("""
+                                <profile>
+                                  <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                    <prop>value2</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     updateAll(myProjectPom);
 
@@ -1710,54 +1923,61 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testUpdatingModelWhenParentProfilesXmlChange() {
     VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<version>1</version>" +
-                                         "<packaging>pom</packaging>");
+                                         """
+                                           <groupId>test</groupId>
+                                           <artifactId>parent</artifactId>
+                                           <version>1</version>
+                                           <packaging>pom</packaging>
+                                           """);
 
     createProfilesXmlOldStyle("parent",
-                              "<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value1</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+                              """
+                                <profile>
+                                  <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                    <prop>value1</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     VirtualFile child = createModulePom("m",
-                                        "<groupId>test</groupId>" +
-                                        "<artifactId>m</artifactId>" +
-                                        "<version>1</version>" +
-
-                                        "<parent>" +
-                                        "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
-                                        "  <version>1</version>" +
-                                        "</parent>" +
-
-                                        "<build>" +
-                                        "  <sourceDirectory>${prop}</sourceDirectory>" +
-                                        "</build>");
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>m</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          <build>
+                                            <sourceDirectory>${prop}</sourceDirectory>
+                                          </build>
+                                          """);
 
     updateAll(parent, child);
 
     List<MavenProject> roots = myTree.getRootProjects();
 
-    MavenProject childProject = roots.get(1);
+    assertEquals(2, roots.size());
+    MavenProject childProject = roots.get(0);
     assertUnorderedPathsAreEqual(childProject.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     createProfilesXmlOldStyle("parent",
-                              "<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value2</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+                              """
+                                <profile>
+                                  <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                    <prop>value2</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     update(parent);
     assertUnorderedPathsAreEqual(childProject.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
@@ -1765,54 +1985,59 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testUpdatingModelWhenParentProfilesXmlChangeAndItIsAModuleAlso() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
-
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value1</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXmlOldStyle("""
+                                <profile>
+                                  <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                    <prop>value1</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     createModulePom("m",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>project</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>" +
-
-                    "<build>" +
-                    "  <sourceDirectory>${prop}</sourceDirectory>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m</artifactId>
+                      <version>1</version>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      <build>
+                        <sourceDirectory>${prop}</sourceDirectory>
+                      </build>
+                      """);
 
     updateAll(myProjectPom);
 
     MavenProject childNode = myTree.getModules(myTree.getRootProjects().get(0)).get(0);
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value2</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXmlOldStyle("""
+                                <profile>
+                                  <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                    <prop>value2</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     updateAll(myProjectPom);
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
@@ -1820,45 +2045,51 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDoNotUpdateModelWhenAggregatorProfilesXmlChange() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     createModulePom("m",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m</artifactId>" +
-                    "<version>1</version>" +
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m</artifactId>
+                      <version>1</version>
+                      <build>
+                        <sourceDirectory>${prop}</sourceDirectory>
+                      </build>
+                      """);
 
-                    "<build>" +
-                    "  <sourceDirectory>${prop}</sourceDirectory>" +
-                    "</build>");
-
-    createProfilesXmlOldStyle("<profile>" +
-                              " <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value1</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXmlOldStyle("""
+                                <profile>
+                                 <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                    <prop>value1</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     updateAll(myProjectPom);
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              " <prop>value2</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    createProfilesXmlOldStyle("""
+                                <profile>
+                                  <id>one</id>
+                                  <activation>
+                                    <activeByDefault>true</activeByDefault>
+                                  </activation>
+                                  <properties>
+                                 <prop>value2</prop>
+                                  </properties>
+                                </profile>
+                                """);
 
     updateAll(myProjectPom);
 
@@ -1870,43 +2101,46 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testSaveLoad() throws Exception {
     //todo: move to resolver test
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>" +
-
-                     // stripping down plugins
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "      <configuration>" +
-                     "        <source>1.4</source>" +
-                     "      </configuration>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
-                     "</build>" +
-
-                     // stripping down Xpp3Dom fields
-                     "<reports>" +
-                     "  <someTag/>" +
-                     "</reports>");
+    // stripping down plugins
+    // stripping down Xpp3Dom fields
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       <build>
+                         <plugins>
+                           <plugin>
+                             <groupId>org.apache.maven.plugins</groupId>
+                             <artifactId>maven-compiler-plugin</artifactId>
+                             <configuration>
+                               <source>1.4</source>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                       </build>
+                       <reports>
+                         <someTag/>
+                       </reports>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     updateAll(myProjectPom);
 
@@ -1943,24 +2177,30 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testCollectingProfilesFromSettingsXmlAndPluginsXml() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                         </profile>
+                       </profiles>
+                       """);
 
-    createProfilesXml("<profile>" +
-                      "  <id>two</id>" +
-                      "</profile>");
+    createProfilesXml("""
+                        <profile>
+                          <id>two</id>
+                        </profile>
+                        """);
 
-    updateSettingsXml("<profiles>" +
-                      "  <profile>" +
-                      "    <id>three</id>" +
-                      "  </profile>" +
-                      "</profiles>");
+    updateSettingsXml("""
+                        <profiles>
+                          <profile>
+                            <id>three</id>
+                          </profile>
+                        </profiles>
+                        """);
 
     updateAll(myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getAvailableProfiles(), "one", "two", "three");
@@ -1968,24 +2208,30 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testCollectingProfilesFromSettingsXmlAndPluginsXmlAfterResolve() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                         </profile>
+                       </profiles>
+                       """);
 
-    createProfilesXml("<profile>" +
-                      "  <id>two</id>" +
-                      "</profile>");
+    createProfilesXml("""
+                        <profile>
+                          <id>two</id>
+                        </profile>
+                        """);
 
-    updateSettingsXml("<profiles>" +
-                      "  <profile>" +
-                      "    <id>three</id>" +
-                      "  </profile>" +
-                      "</profiles>");
+    updateSettingsXml("""
+                        <profiles>
+                          <profile>
+                            <id>three</id>
+                          </profile>
+                        </profiles>
+                        """);
 
     updateAll(myProjectPom);
 
@@ -2009,72 +2255,81 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
   public void testCollectingProfilesFromParentsAfterResolve() throws Exception {
     createModulePom("parent1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>parent1</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
-
-                    "<profiles>" +
-                    "  <profile>" +
-                    "    <id>parent1Profile</id>" +
-                    "  </profile>" +
-                    "</profiles>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>parent1</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <profiles>
+                        <profile>
+                          <id>parent1Profile</id>
+                        </profile>
+                      </profiles>
+                      """);
 
     createProfilesXml("parent1",
-                      "<profile>" +
-                      "  <id>parent1ProfileXml</id>" +
-                      "</profile>");
+                      """
+                        <profile>
+                          <id>parent1ProfileXml</id>
+                        </profile>
+                        """);
 
     createModulePom("parent2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>parent2</artifactId>" +
-                    "<version>1</version>" +
-                    "<packaging>pom</packaging>" +
-
-                    "<parent>" +
-                    " <groupId>test</groupId>" +
-                    " <artifactId>parent1</artifactId>" +
-                    " <version>1</version>" +
-                    " <relativePath>../parent1/pom.xml</relativePath>" +
-                    "</parent>" +
-
-                    "<profiles>" +
-                    "  <profile>" +
-                    "    <id>parent2Profile</id>" +
-                    "  </profile>" +
-                    "</profiles>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>parent2</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <parent>
+                       <groupId>test</groupId>
+                       <artifactId>parent1</artifactId>
+                       <version>1</version>
+                       <relativePath>../parent1/pom.xml</relativePath>
+                      </parent>
+                      <profiles>
+                        <profile>
+                          <id>parent2Profile</id>
+                        </profile>
+                      </profiles>
+                      """);
 
     createProfilesXml("parent2",
-                      "<profile>" +
-                      "  <id>parent2ProfileXml</id>" +
-                      "</profile>");
+                      """
+                        <profile>
+                          <id>parent2ProfileXml</id>
+                        </profile>
+                        """);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <parent>
+                        <groupId>test</groupId>
+                        <artifactId>parent2</artifactId>
+                        <version>1</version>
+                        <relativePath>parent2/pom.xml</relativePath>
+                       </parent>
+                       <profiles>
+                         <profile>
+                           <id>projectProfile</id>
+                         </profile>
+                       </profiles>
+                       """);
 
-                     "<parent>" +
-                     " <groupId>test</groupId>" +
-                     " <artifactId>parent2</artifactId>" +
-                     " <version>1</version>" +
-                     " <relativePath>parent2/pom.xml</relativePath>" +
-                     "</parent>" +
+    createProfilesXml("""
+                        <profile>
+                          <id>projectProfileXml</id>
+                        </profile>
+                        """);
 
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>projectProfile</id>" +
-                     "  </profile>" +
-                     "</profiles>");
-
-    createProfilesXml("<profile>" +
-                      "  <id>projectProfileXml</id>" +
-                      "</profile>");
-
-    updateSettingsXml("<profiles>" +
-                      "  <profile>" +
-                      "    <id>settings</id>" +
-                      "  </profile>" +
-                      "</profiles>");
+    updateSettingsXml("""
+                        <profiles>
+                          <profile>
+                            <id>settings</id>
+                          </profile>
+                        </profiles>
+                        """);
 
     updateAll(Arrays.asList("projectProfileXml",
                             "projectProfile",
@@ -2118,18 +2373,22 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testDeletingAndRestoringActiveProfilesWhenAvailableProfilesChange() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                         </profile>
+                       </profiles>
+                       """);
 
-    createProfilesXml("<profile>" +
-                      "  <id>two</id>" +
-                      "</profile>");
+    createProfilesXml("""
+                        <profile>
+                          <id>two</id>
+                        </profile>
+                        """);
 
     updateAll(Arrays.asList("one", "two"), myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
@@ -2138,58 +2397,65 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     update(myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
 
     update(myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles());
 
-    createProfilesXml("<profile>" +
-                      "  <id>two</id>" +
-                      "</profile>");
+    createProfilesXml("""
+                        <profile>
+                          <id>two</id>
+                        </profile>
+                        """);
     update(myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "two");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "  </profile>" +
-                     "</profiles>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                         </profile>
+                       </profiles>
+                       """);
     update(myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
   }
 
   @Test 
   public void testDeletingAndRestoringActiveProfilesWhenProjectDeletes() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<profiles>" +
-                     "  <profile>" +
-                     "    <id>one</id>" +
-                     "  </profile>" +
-                     "</profiles>" +
-
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                         </profile>
+                       </profiles>
+                       <modules>
+                         <module>m</module>
+                       </modules>
+                       """);
 
     VirtualFile m = createModulePom("m",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>m</artifactId>" +
-                                    "<version>1</version>" +
-
-                                    "<profiles>" +
-                                    "  <profile>" +
-                                    "    <id>two</id>" +
-                                    "  </profile>" +
-                                    "</profiles>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>m</artifactId>
+                                      <version>1</version>
+                                      <profiles>
+                                        <profile>
+                                          <id>two</id>
+                                        </profile>
+                                      </profiles>
+                                      """);
 
     updateAll(Arrays.asList("one", "two"), myProjectPom);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
@@ -2203,44 +2469,46 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one");
 
     m = createModulePom("m",
-                        "<groupId>test</groupId>" +
-                        "<artifactId>m</artifactId>" +
-                        "<version>1</version>" +
-
-                        "<profiles>" +
-                        "  <profile>" +
-                        "    <id>two</id>" +
-                        "  </profile>" +
-                        "</profiles>");
+                        """
+                          <groupId>test</groupId>
+                          <artifactId>m</artifactId>
+                          <version>1</version>
+                          <profiles>
+                            <profile>
+                              <id>two</id>
+                            </profile>
+                          </profiles>
+                          """);
     update(m);
     assertUnorderedElementsAreEqual(myTree.getExplicitProfiles().getEnabledProfiles(), "one", "two");
   }
 
   @Test 
   public void testFindRootWithMultiLevelAggregator() {
-    VirtualFile p1 = createModulePom("project1", "<groupId>test</groupId>" +
-                                                 "<artifactId>project1</artifactId>" +
-                                                 "<version>1</version>" +
-                                                 "<packaging>pom</packaging>" +
-
-                                                 "<modules>" +
-                                                 "  <module>../project2</module>" +
-                                                 "</modules>"
+    VirtualFile p1 = createModulePom("project1", """
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>../project2</module>
+      </modules>"""
     );
 
-    VirtualFile p2 = createModulePom("project2", "<groupId>test</groupId>" +
-                                                 "<artifactId>project2</artifactId>" +
-                                                 "<version>1</version>" +
-                                                 "<packaging>pom</packaging>" +
-
-                                                 "<modules>" +
-                                                 "  <module>../module</module>" +
-                                                 "</modules>"
+    VirtualFile p2 = createModulePom("project2", """
+      <groupId>test</groupId>
+      <artifactId>project2</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>../module</module>
+      </modules>"""
     );
 
-    VirtualFile m = createModulePom("module", "<groupId>test</groupId>" +
-                                              "<artifactId>module</artifactId>" +
-                                              "<version>1</version>"
+    VirtualFile m = createModulePom("module", """
+      <groupId>test</groupId>
+      <artifactId>module</artifactId>
+      <version>1</version>"""
     );
 
     updateAll(p1, p2, m);
@@ -2267,12 +2535,14 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
   @Test 
   public void testOutputPathsAreBasedOnTargetPathWhenResolving() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<build>" +
-                     "  <directory>my-target</directory>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <directory>my-target</directory>
+                       </build>
+                       """);
 
     updateAll(myProjectPom);
 
@@ -2295,38 +2565,53 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
   }
 
+  private static ListenerLog log() {
+    return new ListenerLog();
+  }
+
+  private static class ListenerLog extends CopyOnWriteArrayList<Pair<String, Set<String>>> {
+    ListenerLog() { super(); }
+
+    ListenerLog(ListenerLog log) { super(log); }
+
+    ListenerLog add(String key, String... values) {
+      var log = new ListenerLog(this);
+      log.add(new Pair<>(key, Set.of(values)));
+      return log;
+    }
+  }
+
   private static class MyLoggingListener implements MavenProjectsTree.Listener {
-    String log = "";
+    List<Pair<String, Set<String>>> log = new CopyOnWriteArrayList<>();
+
+    private void add(String key, Set<String> value) {
+      log.add(new Pair<>(key, value));
+    }
 
     @Override
     public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-      append(MavenUtil.collectFirsts(updated), "updated:");
-      append(deleted, "deleted:");
+      append(MavenUtil.collectFirsts(updated), "updated");
+      append(deleted, "deleted");
     }
 
     private void append(List<MavenProject> updated, String text) {
-      log += text + " ";
-      if (updated.isEmpty()) {
-        log += "<none> ";
-        return;
-      }
-      log += StringUtil.join(updated, each -> each.getMavenId().getArtifactId(), " ") + " ";
+      add(text, updated.stream().map(each -> each.getMavenId().getArtifactId()).collect(Collectors.toSet()));
     }
 
     @Override
     public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 NativeMavenProjectHolder nativeMavenProject) {
-      log += "resolved: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
+      add("resolved", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
     }
 
     @Override
     public void pluginsResolved(@NotNull MavenProject project) {
-      log += "plugins: " + project.getMavenId().getArtifactId() + " ";
+      add("plugins", Set.of(project.getMavenId().getArtifactId()));
     }
 
     @Override
     public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-      log += "folders: " + projectWithChanges.first.getMavenId().getArtifactId() + " ";
+      add("folders", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
     }
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,11 +13,11 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
+import git4idea.remote.hosting.GitHostingUrlUtil.match
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import com.intellij.collaboration.ui.SimpleEventListener
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture
@@ -109,11 +110,6 @@ object GithubUtil {
   }
 
   object Delegates {
-    inline fun <T> equalVetoingObservable(initialValue: T, crossinline onChange: (newValue: T) -> Unit) =
-      object : ObservableProperty<T>(initialValue) {
-        override fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T) = newValue == null || oldValue != newValue
-        override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = onChange(newValue)
-      }
 
     fun <T> observableField(initialValue: T, dispatcher: EventDispatcher<SimpleEventListener>): ObservableProperty<T> {
       return object : ObservableProperty<T>(initialValue) {
@@ -125,12 +121,11 @@ object GithubUtil {
   @JvmStatic
   @Deprecated("{@link GithubGitHelper}", ReplaceWith("GithubGitHelper.findGitRepository(project, file)",
                                                      "org.jetbrains.plugins.github.util.GithubGitHelper"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun getGitRepository(project: Project, file: VirtualFile?): GitRepository? {
     return GithubGitHelper.findGitRepository(project, file)
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   @JvmStatic
   @Deprecated("{@link GithubGitHelper}")
   private fun findGithubRemoteUrl(repository: GitRepository): String? {
@@ -138,7 +133,6 @@ object GithubUtil {
     return remote.getSecond()
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}, {@link GithubGitHelper}")
   private fun findGithubRemote(repository: GitRepository): Pair<GitRemote, String>? {
@@ -147,7 +141,7 @@ object GithubUtil {
     var githubRemote: Pair<GitRemote, String>? = null
     for (gitRemote in repository.remotes) {
       for (remoteUrl in gitRemote.urls) {
-        if (server.matches(remoteUrl)) {
+        if (match(server.toURI(), remoteUrl)) {
           val remoteName = gitRemote.name
           if ("github" == remoteName || "origin" == remoteName) {
             return Pair.create(gitRemote, remoteUrl)
@@ -162,10 +156,9 @@ object GithubUtil {
     return githubRemote
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun isRepositoryOnGitHub(repository: GitRepository): Boolean {
     return findGithubRemoteUrl(repository) != null
   }

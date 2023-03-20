@@ -18,12 +18,13 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ModuleProblemDescriptorImpl extends CommonProblemDescriptorImpl implements ModuleProblemDescriptor {
+class ModuleProblemDescriptorImpl extends CommonProblemDescriptorImpl implements ModuleProblemDescriptor {
   private final Module myModule;
 
-  public ModuleProblemDescriptorImpl(QuickFix[] fixes, @NotNull @InspectionMessage String descriptionTemplate, @NotNull Module module) {
-    super(fixes, descriptionTemplate);
+  ModuleProblemDescriptorImpl(@NotNull Module module, @NotNull @InspectionMessage String descriptionTemplate, QuickFix<?> @Nullable [] fixes) {
+    super(descriptionTemplate, fixes);
     myModule = module;
   }
 

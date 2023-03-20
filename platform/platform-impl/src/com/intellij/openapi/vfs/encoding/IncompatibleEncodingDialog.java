@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.CommonBundle;
@@ -84,7 +84,6 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     if (!SystemInfo.isMac && safeToReload == EncodingUtil.Magic8.NO_WAY) {
       reloadAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
-    reloadAction.putValue(Action.MNEMONIC_KEY, (int)'R');
     DialogWrapperAction convertAction = new DialogWrapperAction(IdeBundle.message("button.convert")) {
       @Override
       protected void doAction(ActionEvent e) {
@@ -115,7 +114,6 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     if (!SystemInfo.isMac && safeToConvert == EncodingUtil.Magic8.NO_WAY) {
       convertAction.putValue(Action.SMALL_ICON, AllIcons.General.Warning);
     }
-    convertAction.putValue(Action.MNEMONIC_KEY, (int)'C');
     Action cancelAction = getCancelAction();
     cancelAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     return new Action[]{reloadAction, convertAction, cancelAction};

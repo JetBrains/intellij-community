@@ -62,12 +62,22 @@ public class PropertyUtilBase {
                                                         final boolean acceptStatic,
                                                         final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels,
                                                         PsiMethod[] methods) {
+    return getAllProperties(acceptSetters, acceptGetters, acceptStatic, false, visibilityLevels, methods);
+  }
+
+  @NotNull
+  public static Map<String, PsiMethod> getAllProperties(boolean acceptSetters,
+                                                        boolean acceptGetters,
+                                                        boolean acceptStatic,
+                                                        boolean acceptBoxedBooleanIsPrefix,
+                                                        final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels,
+                                                        PsiMethod[] methods) {
     final Map<String, PsiMethod> map = new HashMap<>();
 
     for (PsiMethod method : methods) {
       if (filterMethods(method, acceptStatic, visibilityLevels)) continue;
       if (acceptSetters && isSimplePropertySetter(method) ||
-          acceptGetters && isSimplePropertyGetter(method)) {
+          acceptGetters && isSimplePropertyGetter(method, acceptBoxedBooleanIsPrefix)) {
         map.put(getPropertyName(method), method);
       }
     }
@@ -262,6 +272,15 @@ public class PropertyUtilBase {
                                              @NotNull String propertyName,
                                              boolean isStatic,
                                              boolean checkSuperClasses) {
+    return findPropertyGetter(aClass, propertyName, isStatic, checkSuperClasses, false);
+  }
+
+  @Nullable
+  public static PsiMethod findPropertyGetter(PsiClass aClass,
+                                             @NotNull String propertyName,
+                                             boolean isStatic,
+                                             boolean checkSuperClasses,
+                                             boolean acceptBoxedBooleanIsPrefix) {
     if (aClass == null) return null;
     String[] getterCandidateNames = suggestGetterNames(propertyName);
 
@@ -270,7 +289,7 @@ public class PropertyUtilBase {
       for (PsiMethod method : getterCandidates) {
         if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
-        if (isSimplePropertyGetter(method)) {
+        if (isSimplePropertyGetter(method, acceptBoxedBooleanIsPrefix)) {
           if (getPropertyNameByGetter(method).equals(propertyName)) {
             return method;
           }
@@ -290,7 +309,11 @@ public class PropertyUtilBase {
   }
 
   public static boolean isSimplePropertyAccessor(PsiMethod method) {
-    return isSimplePropertyGetter(method) || isSimplePropertySetter(method);
+    return isSimplePropertyAccessor(method, false);
+  }
+
+  public static boolean isSimplePropertyAccessor(PsiMethod method, boolean acceptBoxedBooleanIsPrefix) {
+    return isSimplePropertyGetter(method, acceptBoxedBooleanIsPrefix) || isSimplePropertySetter(method);
   }
 
   public static PsiMethod findPropertySetterWithType(@NotNull String propertyName, boolean isStatic, PsiType type, @NotNull Collection<? extends PsiMethod> methods) {
@@ -324,11 +347,23 @@ public class PropertyUtilBase {
 
   @Contract("null -> false")
   public static boolean isSimplePropertyGetter(@Nullable PsiMethod method) {
-    return hasGetterName(method) && method.getParameterList().isEmpty();
+    return isSimplePropertyGetter(method, false);
   }
 
+  /**
+   * 'is' prefix is not allowed for java.lang.Boolean getters according to JavaBeans specification,
+   * however some frameworks (e.g. Spring Boot) accept such getters.
+   */
+  @Contract("null, _ -> false")
+  public static boolean isSimplePropertyGetter(@Nullable PsiMethod method, boolean acceptBoxedBooleanIsPrefix) {
+    return hasGetterName(method, acceptBoxedBooleanIsPrefix) && method.getParameterList().isEmpty();
+  }
 
   public static boolean hasGetterName(final PsiMethod method) {
+    return hasGetterName(method, false);
+  }
+
+  private static boolean hasGetterName(final PsiMethod method, boolean acceptBoxedBooleanIsPrefix) {
     if (method == null) return false;
 
     if (method.isConstructor()) return false;
@@ -338,9 +373,12 @@ public class PropertyUtilBase {
     switch (flavour) {
       case GENERIC:
         PsiType returnType = method.getReturnType();
-        return !PsiType.VOID.equals(returnType);
+        return !PsiTypes.voidType().equals(returnType);
       case BOOLEAN:
-        return isBoolean(method.getReturnType());
+        PsiType propertyType = method.getReturnType();
+        return isBoolean(propertyType) ||
+               (acceptBoxedBooleanIsPrefix && propertyType != null &&
+                CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyType.getCanonicalText()));
       case NOT_A_GETTER:
       default:
         return false;
@@ -349,7 +387,7 @@ public class PropertyUtilBase {
 
 
   private static boolean isBoolean(@Nullable PsiType propertyType) {
-    return PsiType.BOOLEAN.equals(propertyType);
+    return PsiTypes.booleanType().equals(propertyType);
   }
 
 
@@ -407,7 +445,7 @@ public class PropertyUtilBase {
 
     final PsiType returnType = method.getReturnType();
 
-    if (returnType == null || PsiType.VOID.equals(returnType)) {
+    if (returnType == null || PsiTypes.voidType().equals(returnType)) {
       return true;
     }
 
@@ -420,7 +458,12 @@ public class PropertyUtilBase {
 
   @Nullable
   public static String getPropertyName(@NotNull PsiMethod method) {
-    if (isSimplePropertyGetter(method)) {
+    return getPropertyName(method, false);
+  }
+
+  @Nullable
+  public static String getPropertyName(@NotNull PsiMethod method, boolean acceptBoxedBooleanIsPrefix) {
+    if (isSimplePropertyGetter(method, acceptBoxedBooleanIsPrefix)) {
       return getPropertyNameByGetter(method);
     }
     if (isSimplePropertySetter(method)) {
@@ -455,11 +498,11 @@ public class PropertyUtilBase {
     return new String[]{IS_PREFIX + str, GET_PREFIX + str};
   }
 
-  public static String suggestGetterName(@NonNls @NotNull String propertyName, @Nullable PsiType propertyType) {
+  public static @NotNull String suggestGetterName(@NonNls @NotNull String propertyName, @Nullable PsiType propertyType) {
     return suggestGetterName(propertyName, propertyType, null);
   }
 
-  public static String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType, @NonNls String existingGetterName) {
+  public static @NotNull String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType, @NonNls String existingGetterName) {
     @NonNls StringBuilder name =
       new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName)));
     if (isBoolean(propertyType)) {
@@ -554,7 +597,7 @@ public class PropertyUtilBase {
     String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
     String setName = suggestSetterName(field);
     PsiMethod setMethod = factory
-      .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
+      .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiTypes.voidType()).getText(),
                             field);
     String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
     PsiParameter param = factory.createParameter(parameterName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
@@ -634,7 +677,7 @@ public class PropertyUtilBase {
       final PsiStatement[] statements = body == null ? null : body.getStatements();
       final PsiStatement statement = statements == null || statements.length != 1 ? null : statements[0];
       final PsiElement target;
-      if (PsiType.VOID.equals(returnType)) {
+      if (PsiTypes.voidType().equals(returnType)) {
         final PsiExpression expression =
           statement instanceof PsiExpressionStatement ? ((PsiExpressionStatement)statement).getExpression() : null;
         target = expression instanceof PsiAssignmentExpression ? ((PsiAssignmentExpression)expression).getLExpression() : null;

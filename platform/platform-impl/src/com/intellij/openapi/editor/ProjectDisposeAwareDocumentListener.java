@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -15,7 +15,7 @@ public final class ProjectDisposeAwareDocumentListener implements DocumentListen
 
   public static @NotNull DocumentListener create(@NotNull Project project, @NotNull DocumentListener listener) {
     //noinspection TestOnlyProblems
-    return ProjectManagerImpl.isLight(project) ? new ProjectDisposeAwareDocumentListener(project, listener) : listener;
+    return ProjectManagerImpl.Companion.isLight(project) ? new ProjectDisposeAwareDocumentListener(project, listener) : listener;
   }
 
   private ProjectDisposeAwareDocumentListener(@NotNull Project project, @NotNull DocumentListener listener) {

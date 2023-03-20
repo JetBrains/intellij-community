@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -16,15 +16,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
-/**
- * @author ven
- */
 public class PullUpTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
 
-  private static final String IGNORE_CONFLICTS = "IGNORE"; 
+  private static final String IGNORE_CONFLICTS = "IGNORE";
 
   public void testQualifiedThis() {
     doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
@@ -32,6 +29,14 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testQualifiedSuper() {
     doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
+  }
+
+  public void testPullUpEnumMethodAndMakeAbstract() {
+    doTest(new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
+  }
+
+  public void testNoAbstractModifiersOnInterfaceMethods() {
+    doTest(new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   }
 
   public void testQualifiedReference() {     // IDEADEV-25008
@@ -79,14 +84,33 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
   }
 
+  public void testWarningsWithPrettyDescriptions() {
+    doTest(true,
+           """
+             Concrete anonymous class derived from <b><code>X</code></b> will inherit a new abstract method
+             Concrete class body of enum constant <b><code>F.A</code></b> will inherit a new abstract method
+             Concrete enum <b><code>E</code></b> will inherit a new abstract method
+             Concrete enum <b><code>F</code></b> will inherit a new abstract method
+             Concrete record <b><code>Z</code></b> will inherit a new abstract method""",
+           new RefactoringTestUtil.MemberDescriptor("x", PsiMethod.class, true));
+  }
+
+  public void testRecordAbstractMethodWarning() {
+    setLanguageLevel(LanguageLevel.JDK_16);
+    doTest(true, "Concrete record <b><code>R1</code></b> will inherit a new abstract method",
+           new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class, true));
+  }
+
   public void testNotFunctionalAnymore() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(true, "Functional expression demands functional interface to have exact one method", new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
+    doTest(true, "Functional expression demands functional interface to have exact one method",
+           new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
   }
 
   public void testPullToInterfaceAsDefault() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(true, "Method <b><code>mass()</code></b> uses field <b><code>SimplePlanet.mass</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("mass", PsiMethod.class, false));
+    doTest(true, "Method <b><code>mass()</code></b> uses field <b><code>SimplePlanet.mass</code></b>, which is not moved to the superclass",
+           new RefactoringTestUtil.MemberDescriptor("mass", PsiMethod.class, false));
   }
 
   public void testStillFunctional() {
@@ -157,7 +181,7 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   public void testConflictOnNewAbstractMethod() {
-    doTest(false, "Concrete 'class <b><code>C</code></b>' would inherit a new abstract method", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+    doTest(false, "Concrete class <b><code>C</code></b> will inherit a new abstract method", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
   public void testEscalateVisibility() {
@@ -193,7 +217,15 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   public void testOuterClassRefs() {
-    doTest(false, "Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass", new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
+    doTest(false,
+           """
+             Method <b><code>bar()</code></b> uses field <b><code>Outer.x</code></b>, which is not moved to the superclass
+             Method <b><code>bar()</code></b> uses method <b><code>Outer.foo()</code></b>, which is not moved to the superclass""",
+           new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
+  }
+
+  public void testClassInitializer() {
+    doTest();
   }
 
   public void testRenameConflictingTypeParameters() {
@@ -253,7 +285,9 @@ public class PullUpTest extends LightRefactoringTestCase {
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }
-    final MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
+    final MemberInfo[] infos = membersToFind.length == 0
+                               ? new MemberInfo[]{new MemberInfo(PsiTreeUtil.getParentOfType(elementAt, PsiMember.class))}
+                               : RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = {0};
     final MoveMemberListener listener = (aClass, member) -> {
@@ -282,13 +316,13 @@ public class PullUpTest extends LightRefactoringTestCase {
     }
 
     if (conflictMessage != null && !IGNORE_CONFLICTS.equals(conflictMessage)) {
-      TreeSet<String> conflicts = new TreeSet<>(conflictsMap.values());
-      assertEquals(conflictMessage, conflicts.iterator().next());
+      String actualMessage = conflictsMap.values().stream().sorted().collect(Collectors.joining("\n"));
+      assertEquals(conflictMessage, actualMessage);
       return;
     }
 
     if (checkMembersMovedCount) {
-      assertEquals(countMoved[0], membersToFind.length);
+      assertEquals(membersToFind.length == 0 ? 1 : membersToFind.length, countMoved[0]);
     }
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }

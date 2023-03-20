@@ -65,7 +65,7 @@ public interface CodeStyleSettingsModifier {
    * doesn't perform any UI operations by itself. {@code null} means that programmatic disabling is not available.
    */
   @Nullable
-  default Consumer<CodeStyleSettings> getDisablingFunction() {
+  default Consumer<CodeStyleSettings> getDisablingFunction(@NotNull Project project) {
     return null;
   }
 

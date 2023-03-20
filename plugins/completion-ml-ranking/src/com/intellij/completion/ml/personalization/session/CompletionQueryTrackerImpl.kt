@@ -17,7 +17,7 @@ class CompletionQueryTrackerImpl(sessionStartedTimestamp: Long) : CompletionQuer
     updateQuery("")
   }
 
-  override fun getUniqueQueriesCount(): Int = uniqueQueries.values.sumBy { it.size }
+  override fun getUniqueQueriesCount(): Int = uniqueQueries.values.sumOf { it.size }
 
   override fun getTotalQueriesCount(): Int = queriesCount
 

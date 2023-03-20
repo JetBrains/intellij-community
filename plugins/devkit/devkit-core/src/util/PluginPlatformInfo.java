@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.module.Module;
@@ -112,8 +112,14 @@ public final class PluginPlatformInfo {
     final String libraryName = entry.getPresentableName();
 
     String version = StringUtil.substringAfterLast(libraryName, ":");
-    if (version == null) {
+    if (StringUtil.isEmpty(version)) {
       return UNRESOLVED_INSTANCE;
+    }
+
+    // Gradle using 'localPath': strip product prefix
+    if (Character.isUpperCase(version.charAt(0))) {
+      version = StringUtil.substringAfter(version, "-");
+      assert version != null;
     }
 
     if (version.contains("-")) {
@@ -134,9 +140,11 @@ public final class PluginPlatformInfo {
         return UNRESOLVED_INSTANCE;
       }
       branch = version.substring(0, 3);
-    } else if (major.length() == 3) {
-        branch = version;
-    } else {
+    }
+    else if (major.length() == 3) {
+      branch = version;
+    }
+    else {
       return UNRESOLVED_INSTANCE;
     }
 

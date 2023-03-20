@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +19,9 @@ import com.intellij.webcore.packaging.*;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector;
+import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +112,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         if (selectedSdk == getSelectedSdk()) {
           myNotificationArea.hide();
           if (problem != null) {
-            final boolean invalid = PythonSdkUtil.isInvalid(selectedSdk);
+            final boolean invalid = !PySdkExtKt.getSdkSeemsValid(selectedSdk);
             if (!invalid) {
               HtmlBuilder builder = new HtmlBuilder();
               builder.append(problem.getMessage()).append(". ");
@@ -146,7 +150,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
     final Sdk sdk = getSelectedSdk();
     if (sdk == null) return false;
-    if (!PyPackageUtil.packageManagementEnabled(sdk)) return false;
+    if (!PyPackageUtil.packageManagementEnabled(sdk, false, false)) return false;
 
     if (PythonSdkUtil.isVirtualEnv(sdk) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
@@ -171,14 +175,14 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected boolean installEnabled() {
-    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk())) return false;
+    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk(), false, false)) return false;
 
     return myHasManagement;
   }
 
   @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
-    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk())) return false;
+    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk(), false, false)) return false;
 
     return myHasManagement && !PyCondaPackageManagerImpl.PYTHON.equals(pyPackage.getName());
   }
@@ -191,17 +195,18 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         @Override
         public boolean isSelected(AnActionEvent e) {
           final Sdk sdk = getSelectedSdk();
-          return sdk != null && PyPackageManager.getInstance(sdk) instanceof PyCondaPackageManagerImpl &&
-                 ((PyCondaPackageManagerImpl)PyPackageManager.getInstance(sdk)).useConda();
+          if (myPackageManagementService instanceof PythonPackageManagementServiceBridge bridge) {
+            return sdk != null && bridge.isConda() && bridge.getUseConda();
+          }
+          return false;
         }
 
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
           final Sdk sdk = getSelectedSdk();
-          if (sdk == null) return;
-          final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-          if (manager instanceof PyCondaPackageManagerImpl) {
-            ((PyCondaPackageManagerImpl)manager).useConda(state);
+          if (sdk == null || !(myPackageManagementService instanceof PythonPackageManagementServiceBridge bridge)) return;
+          if (bridge.isConda()) {
+            bridge.setUseConda(state);
           }
           updatePackages(myPackageManagementService);
         }
@@ -209,7 +214,15 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         @Override
         public boolean isVisible() {
           final Sdk sdk = getSelectedSdk();
-          return sdk != null && PythonSdkUtil.isConda(sdk);
+          if (myPackageManagementService instanceof PythonPackageManagementServiceBridge bridge) {
+            return sdk != null && bridge.isConda();
+          }
+          return false;
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
       };
 
@@ -225,6 +238,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           PyPackagingSettings.getInstance(myProject).earlyReleasesAsUpgrades = state;
           updatePackages(myPackageManagementService);
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
       };
 
     return new ToggleActionButton[]{useCondaButton, showEarlyReleasesButton};
@@ -239,5 +257,29 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   @Override
   protected @NotNull PackagesNotificationPanel createNotificationPanel() {
     return new PyPackagesNotificationPanel();
+  }
+
+
+  @Override
+  protected @NotNull ManagePackagesDialog createManagePackagesDialog() {
+    PythonPackagesDialogStatisticsCollector.getPackagingDialogEvent().log(myProject);
+    return new ManagePackagesDialog(myProject,
+                                    myPackageManagementService,
+                                    new PackageManagementService.Listener() {
+                                      @Override
+                                      public void operationStarted(String packageName) {
+                                        PythonPackagesDialogStatisticsCollector.getPackagingOperationEvent().log(myProject);
+                                        myNotificationArea.hide();
+                                        myPackagesTable.setPaintBusy(true);
+                                      }
+
+                                      @Override
+                                      public void operationFinished(String packageName,
+                                                                    @Nullable PackageManagementService.ErrorDescription errorDescription) {
+                                        myNotificationArea.showResult(packageName, errorDescription);
+                                        myPackagesTable.clearSelection();
+                                        doUpdatePackages(myPackageManagementService);
+                                      }
+                                    }, createNotificationPanel());
   }
 }

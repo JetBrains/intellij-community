@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven;
 
+import com.intellij.maven.testFramework.MavenTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;

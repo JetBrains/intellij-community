@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -8,21 +8,39 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
-import org.jetbrains.kotlin.test.TagsTestDataUtil
+import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
 import java.io.File
 
-class GradleTestRunConfigurationAndHighlightingTest : KotlinGradleImportingTestCase() {
-    @Test fun testExpectClassWithTests() = doTest()
-    @Test fun preferredConfigurations() = doTest()
-    @Test fun multiplatformTestsInObject() = doTest()
-    @Test fun testMultiProjectBuild() = doTest()
+class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
+    @Test
+    fun testExpectClassWithTests() {
+        enableExperimentalMPP(true)
+        doTest()
+    }
 
-    private fun doTest() {
+    @Test
+    fun preferredConfigurations() = doTest()
+
+    @Test
+    fun multiplatformTestsInObject() = doTest()
+
+    @Test
+    fun testMultiProjectBuild() = doTest()
+
+    @Test
+    fun kotlinJUnitSettings() = doTest()
+
+
+    protected fun doTest() {
         val files = importProjectFromTestData()
         val project = myTestFixture.project
 
@@ -41,14 +59,23 @@ class GradleTestRunConfigurationAndHighlightingTest : KotlinGradleImportingTestC
                     // Hacky way to check if it's test line-marker info. Can't rely on extractConfigurationsFromContext returning no
                     // suitable configurationsFromContext, because it basically works on offsets, so if for some range we have two
                     // line markers - one with tests, and one without, - then we'll get proper ConfigurationFromContext for both
+
+                    val extractConfigurationsFromContext = lineMarkerInfo.extractConfigurationsFromContext()
+                    val kotlinRunConfigsFromContext = extractConfigurationsFromContext
+                        .filter { it.configuration is KotlinRunConfiguration }
+                    kotlinRunConfigsFromContext.singleOrNull()?.let {
+                        return "mainClass=\"${it.configuration.cast<KotlinRunConfiguration>().runClass}\""
+                    }
+
                     if ("Run Test" !in lineMarkerInfo.lineMarkerTooltip.orEmpty()) return null
 
-                    val kotlinConfigsFromContext = lineMarkerInfo.extractConfigurationsFromContext()
+                    val kotlinGradleConfigsFromContext = extractConfigurationsFromContext
                         .filter { it.configuration is GradleRunConfiguration }
+                    if (kotlinRunConfigsFromContext.isNotEmpty()) return "settings=\"Nothing here\""
 
-                    if (kotlinConfigsFromContext.isEmpty()) return "settings=\"Nothing here\""
+                    if (kotlinGradleConfigsFromContext.isEmpty()) return "settings=\"Nothing here\""
 
-                    val configFromContext = kotlinConfigsFromContext.single() // can we have more than one?
+                    val configFromContext = kotlinGradleConfigsFromContext.single() // can we have more than one?
 
                     val tagsToRender = RunConfigurationsTags.getTagsToRender(lineMarkerInfo.element!!.containingFile)
 

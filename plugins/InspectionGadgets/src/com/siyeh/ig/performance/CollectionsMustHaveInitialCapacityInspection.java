@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
@@ -23,8 +25,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.JdomKt;
-import com.intellij.util.ui.CheckBox;
-import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,11 +32,11 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
 import java.util.TreeSet;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
 
 public class CollectionsMustHaveInitialCapacityInspection
   extends BaseInspection {
@@ -65,13 +65,11 @@ public class CollectionsMustHaveInitialCapacityInspection
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new FormBuilder()
-      .addComponentFillVertically(mySettings.createOptionsPanel(), 0)
-      .addComponent(new CheckBox(InspectionGadgetsBundle.message("inspection.collection.must.have.initial.capacity.initializers.option"), this, "myIgnoreFields"))
-      .getPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return mySettings.getOptionPane().prefix("mySettings")
+      .append(checkbox("myIgnoreFields", InspectionGadgetsBundle.message(
+      "inspection.collection.must.have.initial.capacity.initializers.option")));
   }
 
   @Pattern(VALID_ID_PATTERN)

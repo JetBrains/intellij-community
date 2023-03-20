@@ -15,9 +15,6 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- *  @author dsl
- */
 class MockIntroduceVariableHandler extends IntroduceVariableBase {
   private final String myName;
   private final boolean myReplaceAll;

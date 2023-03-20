@@ -69,24 +69,27 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
     });
     final Artifact artifact = addArtifact(root().module(module).moduleSource(module));
 
-    assertLayout(artifact, "<root>\n" +
-                           " module:myModule\n" +
-                           " module sources:myModule");
+    assertLayout(artifact, """
+      <root>
+       module:myModule
+       module sources:myModule""");
     WriteAction.runAndWait(() -> {
       final ModifiableModuleModel model = moduleManager.getModifiableModel();
       model.renameModule(module, "newName");
       model.commit();
     });
 
-    assertLayout(artifact, "<root>\n" +
-                           " module:newName\n" +
-                           " module sources:newName");
+    assertLayout(artifact, """
+      <root>
+       module:newName
+       module sources:newName""");
 
     moduleManager.disposeModule(module);
 
-    assertLayout(artifact, "<root>\n" +
-                           " module:newName\n" +
-                           " module sources:newName");
+    assertLayout(artifact, """
+      <root>
+       module:newName
+       module sources:newName""");
   }
 
   private void moveFile(final VirtualFile file, final VirtualFile newParent) {

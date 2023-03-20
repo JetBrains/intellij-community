@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetLoader;
@@ -18,7 +17,7 @@ import java.util.Map;
 public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<ModuleBuildTarget> {
   public static final JavaModuleBuildTargetType PRODUCTION = new JavaModuleBuildTargetType("java-production", false);
   public static final JavaModuleBuildTargetType TEST = new JavaModuleBuildTargetType("java-test", true);
-  public static final List<JavaModuleBuildTargetType> ALL_TYPES = ContainerUtil.immutableList(PRODUCTION, TEST);
+  public static final List<JavaModuleBuildTargetType> ALL_TYPES = List.of(PRODUCTION, TEST);
 
   private final boolean myTests;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
@@ -117,6 +118,13 @@ public interface ExtensionPoint extends DomElement {
   String getExtensionPointClassName();
 
   /**
+   * @return the EP DOM element that defines the instantiated extension class in implemented extensions.
+   * Determining the element follows the algorithm described in {@link #getExtensionPointClass()}.
+   */
+  @Nullable
+  DomElement getExtensionPointClassNameElement();
+
+  /**
    * Returns EP name prefix (Plugin ID).
    *
    * @return {@code null} if {@code qualifiedName} is set.
@@ -152,6 +160,8 @@ public interface ExtensionPoint extends DomElement {
 
       /**
        * Deprecated EP class.
+       *
+       * @see #SCHEDULED_FOR_REMOVAL_API
        */
       DEPRECATED,
 
@@ -161,23 +171,28 @@ public interface ExtensionPoint extends DomElement {
       ADDITIONAL_DEPRECATED,
 
       /**
+       * Obsolete API, should not be used for new code.
+       *
+       * @see ApiStatus.Obsolete
+       */
+      OBSOLETE,
+
+      /**
        * Internal API, should not be used outside of IntelliJ project.
        *
-       * @see org.jetbrains.annotations.ApiStatus.Internal
+       * @see ApiStatus.Internal
        */
       INTERNAL_API,
 
       /**
        * Experimental API, might be removed or break in future versions.
        *
-       * @see org.jetbrains.annotations.ApiStatus.Experimental
+       * @see ApiStatus.Experimental
        */
       EXPERIMENTAL_API,
 
       /**
-       * Scheduled for removal API.
-       *
-       * @see org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+       * Scheduled for removal API via {@code @Deprecated(forRemoval=true)} or {@link ApiStatus.ScheduledForRemoval}.
        */
       SCHEDULED_FOR_REMOVAL_API
     }
@@ -192,7 +207,7 @@ public interface ExtensionPoint extends DomElement {
      *
      * @return <ul>
      * <li>{@link Kind#ADDITIONAL_DEPRECATED} - replacement EP or {@code null} if none defined</li>
-     * <li>{@link Kind#SCHEDULED_FOR_REMOVAL_API} - {@code inVersion} attribute value</li>
+     * <li>{@link Kind#SCHEDULED_FOR_REMOVAL_API} - {@link ApiStatus.ScheduledForRemoval} {@code inVersion} attribute value</li>
      * </ul>
      */
     @Nullable

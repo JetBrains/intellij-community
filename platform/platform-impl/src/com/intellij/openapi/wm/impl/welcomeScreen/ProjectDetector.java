@@ -12,11 +12,11 @@ import java.util.function.Consumer;
 public abstract class ProjectDetector {
   public static final ExtensionPointName<ProjectDetector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.welcome.projectDetector");
 
-  public abstract void detectProjects(Consumer<List<String>> onFinish);
+  public abstract void detectProjects(Consumer<? super List<String>> onFinish);
 
   public void logRecentProjectOpened(@Nullable ProjectGroup projectGroup) {}
 
-  public static void runDetectors(Consumer<List<String>> onFinish) {
+  public static void runDetectors(Consumer<? super List<String>> onFinish) {
     ProjectDetector @NotNull [] extensions = EXTENSION_POINT_NAME.getExtensions();
     for (ProjectDetector detector : extensions) {
       detector.detectProjects(onFinish);

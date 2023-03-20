@@ -117,23 +117,9 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
     short state = 0;
 
     switch (context) {
-      case ELEMENT_CONTENT_SPEC:
-      case ATTRIBUTE_SPEC:
-      case ATTLIST_SPEC:
-      case ENUMERATED_TYPE:
-      case ENTITY_DECL_CONTENT:
-      {
-        state = _DtdLexer.DOCTYPE_MARKUP;
-        break;
-      }
-
-      case ATTR_VALUE:
-      case GENERIC_XML: {
-        break;
-      }
-
-
-      default: LOG.error("context: " + context);
+      case ELEMENT_CONTENT_SPEC, ATTRIBUTE_SPEC, ATTLIST_SPEC, ENUMERATED_TYPE, ENTITY_DECL_CONTENT -> state = _DtdLexer.DOCTYPE_MARKUP;
+      case ATTR_VALUE, GENERIC_XML -> {}
+      default -> LOG.error("context: " + context);
     }
 
     if (rootNodeType == XML_MARKUP_DECL && context == TYPE_FOR_MARKUP_DECL) {

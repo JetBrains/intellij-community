@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
@@ -31,7 +31,6 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 
 import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
@@ -80,6 +79,11 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
@@ -106,9 +110,9 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       return testProxy;
     }
 
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       TestFrameworkRunningModel model = myModel;
-      return Collections.<DataProvider>singletonList(dataId1 -> getSlowData(dataId1, testProxy, model));
+      return (DataProvider)slowId -> getSlowData(slowId, testProxy, model);
     }
     if (RunConfiguration.DATA_KEY.is(dataId)) {
       RunProfile configuration = myModel.getProperties().getConfiguration();
@@ -141,7 +145,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
         .filter(Objects::nonNull)
         .toArray(Location[]::new);
     }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       AbstractTestProxy[] proxies = AbstractTestProxy.DATA_KEYS.getData(this);
       return proxies == null ? null : Arrays.stream(proxies)
         .map(p -> p.getLocation(project, model.getProperties().getScope()))
@@ -181,11 +185,12 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   protected void installHandlers() {
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
-    new TreeSpeedSearch(this, path -> {
+    boolean canExpand = Registry.is("tests.view.node.expanding.search");
+    TreeSpeedSearch.installOn(this, canExpand, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
       return getPresentableName(testProxy);
-    }, Registry.is("tests.view.node.expanding.search"));
+    });
     TreeUtil.installActions(this);
     PopupHandler.installPopupMenu(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {

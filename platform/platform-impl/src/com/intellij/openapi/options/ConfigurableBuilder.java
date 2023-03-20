@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
 import com.intellij.ui.dsl.builder.Panel;
-import com.intellij.ui.layout.RowBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import kotlin.reflect.KMutableProperty0;
@@ -25,7 +24,7 @@ import java.util.function.Supplier;
  * See also {@link UiDslUnnamedConfigurable.Simple} for more flexible alternative.
  */
 public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
-  implements UiDslConfigurable, UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
+  implements UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private @NlsContexts.BorderTitle String myTitle;
 
   private interface PropertyAccessor<T> {
@@ -227,11 +226,6 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
         box.setAccessorValue(enabled);
       }
     });
-  }
-
-  @Override
-  public void createComponentRow(@NotNull RowBuilder builder) {
-    ConfigurableBuilderHelper.buildFieldsPanel$intellij_platform_ide_impl(builder, myTitle, myFields);
   }
 
   @Override

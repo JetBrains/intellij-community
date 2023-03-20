@@ -29,7 +29,7 @@ public class JavaRegExpModifierProvider implements RegExpModifierProvider {
     final PsiExpressionList list = PsiTreeUtil.getParentOfType(elementInHost, PsiExpressionList.class);
     if (list != null) {
       PsiExpression[] expressions = list.getExpressions();
-      if (expressions.length == 2 && PsiType.INT.equals(expressions[1].getType())) {
+      if (expressions.length == 2 && PsiTypes.intType().equals(expressions[1].getType())) {
         final Object result = JavaConstantExpressionEvaluator.computeConstantExpression(expressions[1], false);
         if (result instanceof Integer) {
           //noinspection MagicConstant

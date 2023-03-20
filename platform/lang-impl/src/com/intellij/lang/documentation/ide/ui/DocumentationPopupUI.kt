@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -30,6 +30,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emitAll
 import java.awt.BorderLayout
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -57,9 +58,6 @@ internal class DocumentationPopupUI(
   init {
     val editorPane = ui.editorPane
 
-    Disposer.register(this, ui.addContentListener {
-      popupUpdateFlow.tryEmit("content change")
-    })
     editorPane.addPropertyChangeListener(this, "font") {
       popupUpdateFlow.tryEmit("font change")
     }
@@ -96,6 +94,10 @@ internal class DocumentationPopupUI(
     openInToolwindowAction.registerCustomShortcutSet(component, this)
 
     showToolbar(Registry.get("documentation.show.toolbar").asBoolean())
+
+    coroutineScope.launch {
+      popupUpdateFlow.emitAll(ui.contentUpdates)
+    }
   }
 
   override fun dispose() {
@@ -180,6 +182,8 @@ internal class DocumentationPopupUI(
       return Registry.get("documentation.show.toolbar").asBoolean()
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       Registry.get("documentation.show.toolbar").setValue(state)
       showToolbar(state)
@@ -222,6 +226,8 @@ internal class DocumentationPopupUI(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = manuallyResized
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       restoreSize()

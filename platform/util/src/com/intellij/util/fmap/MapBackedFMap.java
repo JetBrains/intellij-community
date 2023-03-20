@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class MapBackedFMap<K, V> implements FMap<K, V> {
 
   private final @NotNull Map<K, V> myMap;
 
@@ -16,7 +16,7 @@ final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   }
 
   @Override
-  public @NotNull FMap<K, V> plus(K key, V value) {
+  public @NotNull FMap<K, V> plus(@NotNull K key, @NotNull V value) {
     if (value.equals(myMap.get(key))) {
       return this;
     }
@@ -26,7 +26,7 @@ final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   }
 
   @Override
-  public @NotNull FMap<K, V> minus(K key) {
+  public @NotNull FMap<K, V> minus(@NotNull K key) {
     if (!myMap.containsKey(key)) {
       return this;
     }
@@ -43,7 +43,7 @@ final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   }
 
   @Override
-  public @Nullable V get(K key) {
+  public @Nullable V get(@NotNull K key) {
     return myMap.get(key);
   }
 

@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 
-public class TreeLinkMouseListener extends LinkMouseListenerBase {
+public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
   private final ColoredTreeCellRenderer myRenderer;
   protected WeakReference<TreeNode> myLastHitNode;
 

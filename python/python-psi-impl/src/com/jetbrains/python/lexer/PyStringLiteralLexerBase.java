@@ -93,30 +93,13 @@ public abstract class PyStringLiteralLexerBase extends LexerBase {
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
 
-    switch (nextChar) {
-      case 'a':
-      case 'b':
-      case 'f':
-      case 'n':
-      case 'r':
-      case 't':
-      case 'v':
-      case '\'':
-      case '\"':
-      case '\\':
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-        return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
-    }
-
-    // other unrecognized escapes are just part of string, not an error
-    return myOriginalLiteralToken;
+    return switch (nextChar) {
+      case 'a', 'b', 'f', 'n', 'r', 't', 'v', '\'', '\"', '\\', '0', '1', '2', '3', '4', '5', '6', '7' ->
+        StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+      default ->
+        // other unrecognized escapes are just part of string, not an error
+        myOriginalLiteralToken;
+    };
   }
 
   protected boolean isEscape() {

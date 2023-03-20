@@ -15,10 +15,10 @@ public final class PluginId {
     assert this == second;
     assert second != this;
 
-    assert <warning descr="'PluginId' instances should be compared by 'equals()', not '=='">first == second</warning>;
-    assert <warning descr="'PluginId' instances should be compared by 'equals()', not '=='">first != second</warning>;
+    assert <warning descr="'PluginId' instances should be compared for equality, not identity">first == second</warning>;
+    assert <warning descr="'PluginId' instances should be compared for equality, not identity">first != second</warning>;
 
-    assert <warning descr="'PluginId' instances should be compared by 'equals()', not '=='">second == first</warning>;
-    assert <warning descr="'PluginId' instances should be compared by 'equals()', not '=='">second != first</warning>;
+    assert <warning descr="'PluginId' instances should be compared for equality, not identity">second == first</warning>;
+    assert <warning descr="'PluginId' instances should be compared for equality, not identity">second != first</warning>;
   }
 }

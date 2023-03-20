@@ -27,13 +27,10 @@ public class PyIntroduceFieldPanel {
 
   public IntroduceHandler.InitPlace getInitPlace() {
     final int index = myInitializerPlaceCombo.getSelectedIndex();
-    switch (index) {
-      case 1:
-        return IntroduceHandler.InitPlace.CONSTRUCTOR;
-      case 2:
-        return IntroduceHandler.InitPlace.SET_UP;
-      default:
-        return IntroduceHandler.InitPlace.SAME_METHOD;
-    }
+    return switch (index) {
+      case 1 -> IntroduceHandler.InitPlace.CONSTRUCTOR;
+      case 2 -> IntroduceHandler.InitPlace.SET_UP;
+      default -> IntroduceHandler.InitPlace.SAME_METHOD;
+    };
   }
 }

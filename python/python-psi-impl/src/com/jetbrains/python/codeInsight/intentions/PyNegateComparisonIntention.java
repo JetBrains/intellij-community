@@ -14,10 +14,6 @@ import com.jetbrains.python.psi.PyFile;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PyNegateComparisonIntention extends PyBaseIntentionAction {
 
 

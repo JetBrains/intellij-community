@@ -52,26 +52,10 @@ class ConflictingFileTypeMappingTracker {
     return result;
   }
 
-  static class ResolveConflictResult {
-    final @NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved;
-    final @NotNull @Nls String notification;
-    final @NotNull @Nls String explanation;
-    final boolean approved;
-
-    ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
-                          @NotNull @Nls String notification,
-                          @NotNull @Nls String explanation,
-                          boolean approved) {
-      this.resolved = resolved;
-      this.notification = notification;
-      this.explanation = explanation;
-      this.approved = approved;
-    }
-
-    @Override
-    public String toString() {
-      return "ResolveConflictResult: resolved="+resolved+"; explanation='"+explanation+"'; notification='" + notification+"'; approved="+approved;
-    }
+  record ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
+                               @NotNull @Nls String notification,
+                               @NotNull @Nls String explanation,
+                               boolean approved) {
   }
 
   @NotNull
@@ -150,8 +134,8 @@ class ConflictingFileTypeMappingTracker {
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = new Notification(
-        NotificationGroup.getGroupTitle("File type conflict"),
+      NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("File type conflict");
+      Notification notification = group.createNotification(
         notificationText,
         result.explanation,
         NotificationType.INFORMATION);

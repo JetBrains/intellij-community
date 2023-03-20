@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.bitwise;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -110,7 +107,7 @@ public class IncompatibleMaskInspection extends BaseInspection {
         maskExpression.getOperationTokenType();
       final Object constantValue =
         ConstantExpressionUtil.computeCastTo(constantExpression,
-                                             PsiType.LONG);
+                                             PsiTypes.longType());
       if (constantValue == null) {
         return false;
       }
@@ -121,7 +118,7 @@ public class IncompatibleMaskInspection extends BaseInspection {
       if (PsiUtil.isConstantExpression(maskRhs)) {
         final Object rhsValue =
           ConstantExpressionUtil.computeCastTo(maskRhs,
-                                               PsiType.LONG);
+                                               PsiTypes.longType());
         if (rhsValue == null) {
           return false; // Might indeed be the case with "null" literal
           // whoes constant value evaluates to null. Check out (a|null) case.
@@ -131,7 +128,7 @@ public class IncompatibleMaskInspection extends BaseInspection {
       else {
         final Object lhsValue =
           ConstantExpressionUtil.computeCastTo(maskLhs,
-                                               PsiType.LONG);
+                                               PsiTypes.longType());
         if (lhsValue == null) {
           return false;
         }
@@ -155,11 +152,9 @@ public class IncompatibleMaskInspection extends BaseInspection {
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof PsiBinaryExpression)) {
+      if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
       final IElementType tokenType =
         binaryExpression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.OR) &&

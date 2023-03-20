@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import git4idea.GitFormatException;
@@ -187,8 +186,10 @@ public class GitLogParser<R extends GitLogRecord> {
     if (myPathsParser.getErrorText() != null ||
         !myOptionsParser.hasCompleteOptionsList()) {
       if (myPathsParser.getErrorText() != null) LOG.debug("Creating record was skipped: " + myPathsParser.getErrorText());
-      if (!myOptionsParser.hasCompleteOptionsList()) LOG.debug("Parsed incomplete options " + myOptionsParser.myResult.getResult() + " for " +
-                                                               Arrays.toString(myOptionsParser.myOptions));
+      if (!myOptionsParser.hasCompleteOptionsList()) {
+        LOG.debug("Parsed incomplete options " + myOptionsParser.myResult.getResult() + " for " +
+                  Arrays.toString(myOptionsParser.myOptions));
+      }
       myOptionsParser.clear();
       myRecordBuilder.clear();
       myPathsParser.clear();
@@ -387,7 +388,7 @@ public class GitLogParser<R extends GitLogRecord> {
     }
 
     public void parseLine(@NotNull CharSequence line) {
-      if (line.length() == 0) return;
+      if (line.isEmpty()) return;
 
       List<String> match = parsePathsLine(line);
 
@@ -501,7 +502,7 @@ public class GitLogParser<R extends GitLogRecord> {
     }
 
     public boolean isEmpty() {
-      return myResult.isEmpty() && myCurrentItem.length() == 0;
+      return myResult.isEmpty() && myCurrentItem.isEmpty();
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -12,13 +12,16 @@ import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.WidthBasedLayout;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,18 +32,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.LOG;
 import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.validatePopupSize;
 
-final class HighlightHoverInfo {
-
+record HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAction tooltipAction) {
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
   private static final TooltipGroup EDITOR_INFO_GROUP = new TooltipGroup("EDITOR_INFO_GROUP", 0);
-
-  private final @Tooltip @NotNull String tooltip;
-  private final @Nullable TooltipAction tooltipAction;
-
-  private HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAction tooltipAction) {
-    this.tooltip = tooltip;
-    this.tooltipAction = tooltipAction;
-  }
 
   @Nullable JComponent createHighlightInfoComponent(
     @NotNull Editor editor,
@@ -64,6 +58,12 @@ final class HighlightHoverInfo {
     Ref<WrapperPanel> wrapperPanelRef = new Ref<>();
     Ref<LightweightHint> mockHintRef = new Ref<>();
     HintHint hintHint = new HintHint().setAwtTooltip(true).setRequestFocus(requestFocus);
+
+    if (ExperimentalUI.isNewUI()) {
+      hintHint.setTextFg(JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND).
+               setTextBg(JBUI.CurrentTheme.Editor.Tooltip.BACKGROUND);
+    }
+
     LightweightHint hint = renderer.createHint(editor, new Point(), false, EDITOR_INFO_GROUP, hintHint, highlightActions, false, expand -> {
       LineTooltipRenderer newRenderer = renderer.createRenderer(renderer.getText(), expand ? 1 : 0);
       JComponent newComponent = createHighlightInfoComponent(editor, newRenderer, highlightActions, popupBridge, requestFocus);
@@ -121,10 +121,6 @@ final class HighlightHoverInfo {
     hint.hide();
   }
 
-  @NotNull HighlightHoverInfo override(@NotNull TooltipAction tooltipAction) {
-    return new HighlightHoverInfo(tooltip, tooltipAction);
-  }
-
   static @Nullable HighlightHoverInfo highlightHoverInfo(@NotNull Editor editor, @Nullable HighlightInfo info) {
     if (info == null) {
       return null;
@@ -134,8 +130,9 @@ final class HighlightHoverInfo {
       return null;
     }
     try {
-      TooltipAction tooltipAction = ReadAction
-        .nonBlocking(() -> TooltipActionProvider.calcTooltipAction(info, editor))
+      Project project = editor.getProject();
+      TooltipAction tooltipAction = project == null ? null : ReadAction
+        .nonBlocking(() -> TooltipActionProvider.calcTooltipAction(info, project, editor))
         .executeSynchronously();
       return new HighlightHoverInfo(tooltip, tooltipAction);
     }

@@ -17,13 +17,15 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -33,27 +35,38 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.*;
 import com.intellij.ui.components.DropDownLink;
+import com.intellij.ui.components.panels.HorizontalLayout;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
@@ -61,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static com.intellij.codeInsight.hint.HintUtil.PROMOTION_PANE_KEY;
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
@@ -115,7 +129,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton additionalAction;
-    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+    if (Registry.get("python.use.targets.api").asBoolean()) {
       additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
                                             link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
     }
@@ -129,11 +143,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myProjectSdksModel = myInterpreterList.getModel();
   }
 
-  @NotNull
-  private static ListPopup createAddInterpreterPopup(@NotNull Project project,
-                                                     @Nullable Module module,
-                                                     @NotNull Component dataContextComponent,
-                                                     @NotNull Consumer<Sdk> onSdkCreated) {
+  @ApiStatus.Internal
+  public static @NotNull ListPopup createAddInterpreterPopup(@NotNull Project project,
+                                                             @Nullable Module module,
+                                                             @NotNull Component dataContextComponent,
+                                                             @NotNull Consumer<Sdk> onSdkCreated) {
     DataContext dataContext = DataManager.getInstance().getDataContext(dataContextComponent);
     List<AnAction> actions = AddInterpreterActions.collectAddInterpreterActions(project, module, onSdkCreated);
     return JBPopupFactory.getInstance().createActionGroupPopup(
@@ -150,7 +164,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   @NotNull
-  private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected, @NotNull Runnable onSdkSelected) {
+  private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected,
+                                                   @NotNull Runnable onSdkSelected) {
     final ComboBox<Object> result = new ComboBox<>() {
       @Override
       public void setSelectedItem(Object item) {
@@ -169,7 +184,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       }
     );
 
-    new ComboboxSpeedSearch(result);
+    ComboboxSpeedSearch.installOn(result);
     result.setPreferredSize(result.getPreferredSize()); // this line allows making `result` resizable
     return result;
   }
@@ -224,7 +239,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.gridy++;
     c.gridwidth = 3;
     c.weightx = 0.0;
-    result.add(new JLabel("  "), c);
+    result.add(buildToolWindowAdvertisement(project), c);
 
     c.gridx = 0;
     c.gridy++;
@@ -248,7 +263,13 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void onShowAllSelected() {
-    buildAllSdksDialog().show();
+    if (Registry.is("python.use.targets.api")) {
+      Sdk selectedSdk = PythonInterpreterConfigurable.openInDialog(myProject, myModule, getEditableSelectedSdk());
+      onShowAllInterpretersDialogClosed(selectedSdk);
+    }
+    else {
+      buildAllSdksDialog().show();
+    }
   }
 
   protected void onSdkSelected() {
@@ -267,35 +288,84 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                               detailsButton.getLocationOnScreen(), new SdkAddedCallback());
   }
 
+  /**
+   * To be deprecated.
+   * <p>
+   * The part of the legacy implementation for editing SDKs based on {@link com.jetbrains.python.remote.PyRemoteSdkAdditionalData}.
+   */
   @NotNull
   private PythonSdkDetailsDialog buildAllSdksDialog() {
     return new PythonSdkDetailsDialog(
       myProject,
       myModule,
-      selectedSdk -> {
-        if (selectedSdk != null) {
-          updateSdkListAndSelect(selectedSdk);
-        }
-        else {
-          // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
-          final Sdk currentSelectedSdk = getEditableSelectedSdk();
-
-          if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
-            // nothing has been selected but previously selected sdk still exists, stay with it
-            updateSdkListAndSelect(currentSelectedSdk);
-          }
-          else {
-            // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
-            updateSdkListAndSelect(null);
-          }
-        }
-      },
+      this::onShowAllInterpretersDialogClosed,
       reset -> {
         // data is invalidated on `model` resetting so we need to reload sdks to not stuck with outdated ones
         // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to resetting
         if (reset) updateSdkListAndSelect(getEditableSelectedSdk());
       }
     );
+  }
+
+  private static JComponent buildToolWindowAdvertisement(Project project) {
+    var promotionKey = "PY_PACKAGES_AD_HIDDEN";
+    if (PropertiesComponent.getInstance().isValueSet(promotionKey)) return new JLabel("  ");
+    var panel = new BorderLayoutPanel();
+    panel.setBorder(JBUI.Borders.empty(7));
+    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    JLabel label = new JLabel(PyBundle.message("python.packaging.toolwindow.advertisement"));
+    label.setIcon(AllIcons.Ide.Gift);
+    panel.addToCenter(label);
+    panel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getColor(PROMOTION_PANE_KEY));
+    panel.setMinimumSize(new Dimension(400, panel.getMinimumSize().height));
+
+    var linkPanel = new NonOpaquePanel(new HorizontalLayout(12));
+    HyperlinkLabel link = new HyperlinkLabel(PyBundle.message("python.packaging.open.toolwindow.link"));
+    link.addHyperlinkListener(new HyperlinkListener() {
+      @Override
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        Window window = ComponentUtil.getActiveWindow();
+        if (window instanceof DialogWrapperDialog dialog) {
+          dialog.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
+          ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Python Packages");
+          if (toolWindow != null) toolWindow.show();
+        }
+      }
+    });
+    linkPanel.add(link);
+    var closeAction = new InplaceButton(
+      new IconButton(IdeBundle.message("do.not.ask.me.again"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered),
+      e -> {
+        PropertiesComponent.getInstance().setValue(promotionKey, true);
+        panel.removeAll();
+        panel.setBackground(JBColor.background());
+      });
+    linkPanel.add(closeAction);
+    panel.addToRight(linkPanel);
+    return panel;
+  }
+
+  /**
+   * @param selectedSdk the selected Python SDK before closing "Python Interpreters" dialog if the user clicked "OK" and {@code null} if the
+   *                    user clicked "Cancel" button
+   */
+  private void onShowAllInterpretersDialogClosed(@Nullable Sdk selectedSdk) {
+    if (selectedSdk != null) {
+      updateSdkListAndSelect(selectedSdk);
+    }
+    else {
+      // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
+      final Sdk currentSelectedSdk = getEditableSelectedSdk();
+
+      if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
+        // nothing has been selected but previously selected sdk still exists, stay with it
+        updateSdkListAndSelect(currentSelectedSdk);
+      }
+      else {
+        // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
+        updateSdkListAndSelect(null);
+      }
+    }
   }
 
   @Override
@@ -358,7 +428,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected @NotNull List<Sdk> getAvailableSdks() {
-    return myInterpreterList.getAllPythonSdks(myProject);
+    return myInterpreterList.getAllPythonSdks(myProject, myModule);
   }
 
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
@@ -367,7 +437,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final List<Object> items = new ArrayList<>();
     items.add(null);
 
-    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes = groupModuleSdksByTypes(allPythonSdks, myModule, PythonSdkUtil::isInvalid);
+    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes =
+      groupModuleSdksByTypes(allPythonSdks, myModule, sdk -> !PySdkExtKt.getSdkSeemsValid(sdk));
 
     final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
     for (int i = 0; i < renderedSdkTypes.length; i++) {

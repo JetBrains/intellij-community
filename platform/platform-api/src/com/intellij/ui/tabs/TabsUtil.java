@@ -14,9 +14,6 @@ import java.awt.geom.GeneralPath;
 
 import static javax.swing.SwingConstants.*;
 
-/**
- * @author pegov
- */
 public final class TabsUtil {
   public static final int NEW_TAB_VERTICAL_PADDING = JBUIScale.scale(2);
 
@@ -37,7 +34,7 @@ public final class TabsUtil {
     UISettings uiSettings = UISettings.getInstance();
     Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
     if (uiSettings.getOverrideLafFonts()) {
-      return font.deriveFont((float)uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
+      return font.deriveFont(uiSettings.getFontSize2D() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
     }
 
     return font;
@@ -88,22 +85,18 @@ public final class TabsUtil {
   public static void updateBoundsWithDropSide(@NotNull Rectangle bounds,
                                               @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1}) int dropSide) {
     switch (dropSide) {
-      case TOP:
-        bounds.height /= 2;
-        break;
-      case LEFT:
-        bounds.width /= 2;
-        break;
-      case BOTTOM:
+      case TOP -> bounds.height /= 2;
+      case LEFT -> bounds.width /= 2;
+      case BOTTOM -> {
         int h = bounds.height / 2;
         bounds.height -= h;
         bounds.y += h;
-        break;
-      case RIGHT:
+      }
+      case RIGHT -> {
         int w = bounds.width / 2;
         bounds.width -= w;
         bounds.x += w;
-        break;
+      }
     }
   }
 }

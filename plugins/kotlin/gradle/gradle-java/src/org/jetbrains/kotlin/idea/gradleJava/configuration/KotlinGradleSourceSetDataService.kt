@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION_ERROR", "DEPRECATION", "TYPEALIAS_EXPANSION_DEPRECATION")
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -19,8 +21,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
-import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -28,27 +30,30 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
-import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
+import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
-import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
-import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
+import org.jetbrains.kotlin.idea.gradleJava.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
-import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.roots.findAll
-import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
@@ -56,6 +61,7 @@ import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
@@ -66,6 +72,9 @@ var Module.compilerArgumentsBySourceSet
 
 var Module.sourceSetName
         by UserDataProperty(Key.create<String>("SOURCE_SET_NAME"))
+
+private val logger = Logger.getInstance("#org.jetbrains.kotlin.idea.gradleJava.configuration")
+
 
 interface GradleProjectImportHandler {
     companion object : ProjectExtensionDescriptor<GradleProjectImportHandler>(
@@ -81,28 +90,14 @@ class KotlinGradleProjectSettingsDataService : AbstractProjectDataService<Projec
     override fun getTargetDataKey() = ProjectKeys.PROJECT
 
     override fun postProcess(
-        toImport: MutableCollection<out DataNode<ProjectData>>,
+        toImport: Collection<DataNode<ProjectData>>,
         projectData: ProjectData?,
         project: Project,
-        modelsProvider: IdeModifiableModelsProvider
+        modelsProvider: IdeModifiableModelsProvider,
     ) {
-        val allSettings = modelsProvider.modules.mapNotNull { module ->
-            if (module.isDisposed) return@mapNotNull null
-            val settings = modelsProvider
-                .getModifiableFacetModel(module)
-                .findFacet(KotlinFacetType.TYPE_ID, KotlinFacetType.INSTANCE.defaultFacetName)
-                ?.configuration
-                ?.settings ?: return@mapNotNull null
-            if (settings.useProjectSettings) null else settings
-        }
-        val languageVersion = allSettings.asSequence().mapNotNullTo(LinkedHashSet()) { it.languageLevel }.singleOrNull()
-        val apiVersion = allSettings.asSequence().mapNotNullTo(LinkedHashSet()) { it.apiLevel }.singleOrNull()
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
-            if (languageVersion != null) {
-                this.languageVersion = languageVersion.versionString
-            }
-            if (apiVersion != null) {
-                this.apiVersion = apiVersion.versionString
+        runInEdt {
+            runWriteAction {
+                KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project, modelsProvider.modules)
             }
         }
     }
@@ -112,18 +107,31 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
     override fun getTargetDataKey() = GradleSourceSetData.KEY
 
     override fun postProcess(
-        toImport: Collection<out DataNode<GradleSourceSetData>>,
+        toImport: Collection<DataNode<GradleSourceSetData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
     ) {
+        var maxCompilerVersion: IdeKotlinVersion? = null
         for (sourceSetNode in toImport) {
             val sourceSetData = sourceSetNode.data
             val ideModule = modelsProvider.findIdeModule(sourceSetData) ?: continue
 
             val moduleNode = ExternalSystemApiUtil.findParent(sourceSetNode, ProjectKeys.MODULE) ?: continue
             val kotlinFacet = configureFacetByGradleModule(ideModule, modelsProvider, moduleNode, sourceSetNode) ?: continue
+            val currentModuleCompilerVersion = ExternalCompilerVersionProvider.get(ideModule)
+            if (currentModuleCompilerVersion != null) {
+                maxCompilerVersion = maxOf(maxCompilerVersion ?: currentModuleCompilerVersion, currentModuleCompilerVersion)
+            }
             GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(kotlinFacet, sourceSetNode) }
+        }
+
+        if (maxCompilerVersion != null) {
+            KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
+                project,
+                maxCompilerVersion.rawVersion,
+                isDelegatedToExtBuild = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath)
+            )
         }
     }
 }
@@ -180,11 +188,8 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
             val modifiableModel = modelsProvider.getModifiableLibraryModel(ideLibrary) as LibraryEx.ModifiableModelEx
             if (anyNonJvmModules || ideLibrary.looksAsNonJvmLibrary()) {
-                detectLibraryKind(modifiableModel.getFiles(OrderRootType.CLASSES))?.let { modifiableModel.kind = it }
-            } else if (
-                ideLibrary is LibraryEx &&
-                (ideLibrary.kind === JSLibraryKind || ideLibrary.kind === NativeLibraryKind || ideLibrary.kind === CommonLibraryKind)
-            ) {
+                detectLibraryKind(ideLibrary, project)?.let { modifiableModel.kind = it }
+            } else if (ideLibrary is LibraryEx && ideLibrary.kind in NON_JVM_LIBRARY_KINDS) {
                 modifiableModel.forgetKind()
             }
         }
@@ -192,7 +197,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
     private fun Library.looksAsNonJvmLibrary(): Boolean {
         name?.let { name ->
-            if (nonJvmSuffixes.any { it in name } || name.startsWith(KOTLIN_NATIVE_LIBRARY_PREFIX))
+            if (NON_JVM_SUFFIXES.any { it in name } || name.startsWith(KOTLIN_NATIVE_LIBRARY_PREFIX))
                 return true
         }
 
@@ -202,7 +207,13 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     companion object {
         val LOG = Logger.getInstance(KotlinGradleLibraryDataService::class.java)
 
-        val nonJvmSuffixes = listOf("-common", "-js", "-native", "-kjsm", "-metadata")
+        val NON_JVM_LIBRARY_KINDS: List<PersistentLibraryKind<*>> = listOf(
+            KotlinJavaScriptLibraryKind,
+            KotlinNativeLibraryKind,
+            KotlinCommonLibraryKind
+        )
+
+        val NON_JVM_SUFFIXES = listOf("-common", "-js", "-native", "-kjsm", "-metadata")
     }
 }
 
@@ -234,7 +245,6 @@ private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatfo
     return detectedPlatforms.singleOrNull() ?: detectedPlatforms.firstOrNull { !it.isCommon }
 }
 
-@Suppress("unused") // Used in the Android plugin
 fun configureFacetByGradleModule(
     moduleNode: DataNode<ModuleData>,
     sourceSetName: String?,
@@ -265,15 +275,24 @@ fun configureFacetByGradleModule(
         return null
     }
 
-    val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode) ?: return null
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
+    val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
+        .firstOrNull { it.data.sourceSetName == sourceSetName }
+
+    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
+    // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
+        ?: KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(moduleNode)
+
+    if (compilerVersion == null) {
+        logger.error("[Kotlin Facet]: cannot create facet for module '${ideModule.name}' due to unknown compiler version. " +
+                             "Some functionality might become unavailable!")
+        return null
+    }
 
     // TODO there should be a way to figure out the correct platform version
     val platform = platformKind?.defaultPlatform
 
     val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
-    val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
-        .firstOrNull { it.data.sourceSetName == sourceSetName }
     kotlinFacet.configureFacet(
         compilerVersion = compilerVersion,
         platform = platform,
@@ -306,7 +325,10 @@ fun configureFacetByGradleModule(
     kotlinFacet.noVersionAutoAdvance()
 
     if (platformKind != null && !platformKind.isJvm) {
-        migrateNonJvmSourceFolders(modelsProvider.getModifiableRootModel(ideModule))
+        migrateNonJvmSourceFolders(
+            modelsProvider.getModifiableRootModel(ideModule),
+            ExternalSystemApiUtil.toExternalSource(moduleNode.data.owner)
+        )
     }
 
     return kotlinFacet
@@ -344,16 +366,6 @@ fun configureFacetByCachedCompilerArguments(
         applyCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
         adjustClasspath(kotlinFacet, dependencyClasspath.toList())
     }
-}
-
-fun configureFacetByCompilerArguments(kotlinFacet: KotlinFacet, argsInfo: ArgsInfo, modelsProvider: IdeModifiableModelsProvider?) {
-    val currentCompilerArguments = argsInfo.currentArguments
-    val defaultCompilerArguments = argsInfo.defaultArguments
-    val dependencyClasspath = argsInfo.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
-    if (currentCompilerArguments.isNotEmpty()) {
-        parseCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
-    }
-    adjustClasspath(kotlinFacet, dependencyClasspath)
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {

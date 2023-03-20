@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -25,10 +27,11 @@ import javax.swing.JPanel
 internal class GHPRTimelineFileEditor(private val project: Project,
                                       private val dataContext: GHPRDataContext,
                                       private val dataProvider: GHPRDataProvider,
-                                      private val file: GHRepoVirtualFile)
+                                      private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
 
   val securityService = dataContext.securityService
+  val repositoryDataService = dataContext.repositoryDataService
   val avatarIconsProvider = dataContext.avatarIconsProvider
 
   val detailsData = dataProvider.detailsData
@@ -44,13 +47,15 @@ internal class GHPRTimelineFileEditor(private val project: Project,
   override fun getComponent() = content
 
   private fun createContent(): JComponent {
-    return doCreateContent().also {
-      CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        isOpaque = true
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
+    return doCreateContent().apply {
+      isOpaque = true
+      background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+    }.also {
+      ApplicationManager.getApplication().messageBus.connect(this)
+        .subscribe(TOPIC, EditorColorsListener { scheme -> it.background = scheme?.defaultBackground })
 
       val prevProvider = DataManager.getDataProvider(it)
+      DataManager.removeDataProvider(it) // suppress warning - we're delegating to the old provider
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER.`is`(dataId) -> dataProvider

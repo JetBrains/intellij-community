@@ -105,7 +105,7 @@ public final class SharedImplUtil {
                                     ASTNode anchor,
                                     Boolean before) throws IncorrectOperationException {
     CheckUtil.checkWritable(thisElement);
-    final CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
+    CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
 
     TreeElement copyFirst = null;
     ASTNode copyLast = null;
@@ -139,7 +139,7 @@ public final class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(copyFirst);
   }
 
-  public static PsiManager getManagerByTree(final ASTNode node) {
+  public static PsiManager getManagerByTree(ASTNode node) {
     if(node instanceof FileElement) return node.getPsi().getManager();
     return node.getTreeParent().getPsi().getManager();
   }
@@ -149,7 +149,7 @@ public final class SharedImplUtil {
     if (count == 0) {
       return ASTNode.EMPTY_ARRAY;
     }
-    final ASTNode[] result = new ASTNode[count];
+    ASTNode[] result = new ASTNode[count];
     count = 0;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == elementType) {
@@ -175,7 +175,7 @@ public final class SharedImplUtil {
     ASTNode childNode = root.getFirstChildNode();
 
     while (childNode != null) {
-      final PsiElement psi;
+      PsiElement psi;
       if (childNode instanceof PsiElement) {
         psi = (PsiElement)childNode;
       }

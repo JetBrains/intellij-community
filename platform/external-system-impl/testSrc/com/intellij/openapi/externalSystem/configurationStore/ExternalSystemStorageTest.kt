@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -14,7 +14,6 @@ import com.intellij.facet.mock.MockSubFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -27,10 +26,7 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.project.ExternalStorageConfigurationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
-import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
@@ -52,13 +48,14 @@ import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder.Companion.from
+import com.intellij.workspaceModel.storage.MutableEntityStorage.Companion.from
 import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -114,7 +111,7 @@ class ExternalSystemStorageTest {
   fun `applying external system options twice`() {
     createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true, useDefaultProjectSettings = false) { project ->
       runBlocking {
-        withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
+        withContext(Dispatchers.EDT) {
           runWriteAction {
             val projectDir = project.stateStore.directoryStorePath!!.parent
             val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml").systemIndependentPath,
@@ -138,7 +135,7 @@ class ExternalSystemStorageTest {
             propertyManager.setExternalOptions(systemId, moduleData, projectData)
 
             val externalOptionsFromBuilder = modelsProvider.actualStorageBuilder
-              .entities(ModuleEntity::class.java).singleOrNull()?.externalSystemOptions
+              .entities(ModuleEntity::class.java).singleOrNull()?.exModuleOptions
             assertEquals("GRADLE", externalOptionsFromBuilder?.externalSystem)
           }
         }
@@ -230,7 +227,7 @@ class ExternalSystemStorageTest {
   fun `check mavenized will be applied to the single diff`() {
     loadProjectAndCheckResults("twoRegularModules") { project ->
       val moduleManager = ModuleManager.getInstance(project)
-      val initialStorage = getInstance(project).entityStorage.current
+      val initialStorage = getInstance(project).currentSnapshot
       val storageBuilder = from(initialStorage)
       for (module in moduleManager.modules) {
         val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)
@@ -277,6 +274,8 @@ class ExternalSystemStorageTest {
     assertThat(ExternalSystemModulePropertyManager.getInstance(module).isMavenized()).isTrue()
     val facet = FacetManager.getInstance(module).allFacets.single()
     assertThat(facet.name).isEqualTo("regular")
+    //suppressed until https://youtrack.jetbrains.com/issue/IDEA-294031 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertThat(facet.type).isEqualTo(MockFacetType.getInstance())
     assertThat(facet.externalSource).isNull()
   }
@@ -305,7 +304,7 @@ class ExternalSystemStorageTest {
   fun `save imported facet in imported module`() = saveProjectInExternalStorageAndCheckResult("importedFacetInImportedModule") { project, projectDir ->
     val imported = ModuleManager.getInstance(project).newModule(projectDir.resolve("imported.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE)
     val facetRoot = VfsUtilCore.pathToUrl(projectDir.resolve("facet").systemIndependentPath)
-    addFacet(imported, ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID, "imported", listOf(facetRoot))
+    addFacet(imported, SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID, "imported", listOf(facetRoot))
     ExternalSystemModulePropertyManager.getInstance(imported).setMavenized(true)
   }
 
@@ -375,7 +374,8 @@ class ExternalSystemStorageTest {
     assertThat(ExternalSystemModulePropertyManager.getInstance(module).isMavenized()).isTrue()
     val facet = FacetManager.getInstance(module).allFacets.single() as MockFacet
     assertThat(facet.name).isEqualTo("imported")
-    assertThat(facet.externalSource!!.id).isEqualTo(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID)
+    assertThat(facet.externalSource!!.id).isEqualTo(
+      SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID)
     val facetRoot = VfsUtil.pathToUrl(project.basePath!!) + "/facet"
     assertThat(facet.configuration.rootUrls).containsExactly(facetRoot)
   }
@@ -563,9 +563,9 @@ class ExternalSystemStorageTest {
       """.trimIndent())
       WriteAction.runAndWait<RuntimeException> {
         VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
-        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
       }
-      ApplicationManager.getApplication().invokeAndWait{
+      runBlocking { StoreReloadManager.getInstance().reloadChangedStorageFiles() }
+      ApplicationManager.getApplication().invokeAndWait {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
     }
@@ -584,8 +584,8 @@ class ExternalSystemStorageTest {
       """.trimIndent())
       WriteAction.runAndWait<RuntimeException> {
         VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
-        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
       }
+      runBlocking { StoreReloadManager.getInstance().reloadChangedStorageFiles() }
       ApplicationManager.getApplication().invokeAndWait{
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
@@ -595,7 +595,7 @@ class ExternalSystemStorageTest {
   @Test
   fun `external-system-id attributes are not removed from libraries, artifacts and facets on save`() {
     loadModifySaveAndCheck("elementsWithExternalSystemIdAttributes", "elementsWithExternalSystemIdAttributes") { project ->
-      JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
+      JpsProjectModelSynchronizer.getInstance(project).markAllEntitiesAsDirty()
     }
   }
 
@@ -711,6 +711,35 @@ class ExternalSystemStorageTest {
     checkFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
   }
 
+  @Test
+  fun `load module with test properties`() = loadProjectAndCheckResults("moduleWithTestProperties") { project ->
+    val mainModuleName = "foo"
+    val testModuleName = "foo.test"
+    val moduleManager = ModuleManager.getInstance(project)
+    val testModule = moduleManager.findModuleByName(testModuleName)
+    val mainModule = moduleManager.findModuleByName(mainModuleName)
+    assertNotNull(testModule)
+    assertNotNull(mainModule)
+    val testModuleProperties = TestModuleProperties.getInstance(testModule!!)
+    assertEquals(mainModuleName, testModuleProperties.productionModuleName)
+    assertSame(mainModule, testModuleProperties.productionModule)
+  }
+
+  @Test
+  fun `test property for module`() {
+    loadModifySaveAndCheck("twoModules", "moduleWithTestProperties") {project ->
+      val mainModuleName = "foo"
+      val testModuleName = "foo.test"
+      val moduleManager = ModuleManager.getInstance(project)
+      val testModule = moduleManager.findModuleByName(testModuleName)
+      assertNotNull(testModule)
+      val testModuleProperties = TestModuleProperties.getInstance(testModule!!)
+      runWriteActionAndWait {
+        testModuleProperties.productionModuleName = mainModuleName
+      }
+    }
+  }
+
   @Test(expected = Test.None::class)
   fun `get modifiable models of renamed module`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
     runWriteActionAndWait {
@@ -762,8 +791,8 @@ class ExternalSystemStorageTest {
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
-      FacetType.EP_NAME.getPoint().registerExtension(MockFacetType(), disposableRule.disposable)
-      FacetType.EP_NAME.getPoint().registerExtension(MockSubFacetType(), disposableRule.disposable)
+      FacetType.EP_NAME.point.registerExtension(MockFacetType(), disposableRule.disposable)
+      FacetType.EP_NAME.point.registerExtension(MockSubFacetType(), disposableRule.disposable)
     }
   }
 
@@ -790,8 +819,8 @@ class ExternalSystemStorageTest {
         cacheDir.delete()
 
         runBlocking {
-          withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-            runWriteAction {
+          withContext(Dispatchers.EDT) {
+            ApplicationManager.getApplication().runWriteAction {
               //we need to set language level explicitly because otherwise if some tests modifies language level in the default project, we'll
               // get different content in misc.xml
               LanguageLevelProjectExtension.getInstance(project)!!.languageLevel = LanguageLevel.JDK_1_8
@@ -815,14 +844,15 @@ class ExternalSystemStorageTest {
 
     val expectedDir = tempDirManager.newPath("expectedStorage")
     FileUtil.copyDir(testDataRoot.resolve("common").toFile(), expectedDir.toFile())
-    FileUtil.copyDir(testDataRoot.resolve(dataDirNameToCompareWith).toFile(), expectedDir.toFile())
+    val originalExpectedDir = testDataRoot.resolve(dataDirNameToCompareWith)
+    FileUtil.copyDir(originalExpectedDir.toFile(), expectedDir.toFile())
 
     val projectDir = project.stateStore.directoryStorePath!!.parent
-    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project")))
+    projectDir.toFile().assertMatches(directoryContentOf(expectedDir.resolve("project"), originalExpectedDir.resolve("project")))
 
     val expectedCacheDir = expectedDir.resolve("cache")
     if (Files.exists(expectedCacheDir)) {
-      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir), FileTextMatcher.ignoreBlankLines())
+      cacheDir.toFile().assertMatches(directoryContentOf(expectedCacheDir, originalExpectedDir.resolve("cache")), FileTextMatcher.ignoreBlankLines())
     }
     else {
       assertTrue("$cacheDir doesn't exist", !Files.exists(cacheDir) || isFolderWithoutFiles(cacheDir.toFile()))
@@ -841,20 +871,20 @@ class ExternalSystemStorageTest {
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: (Project) -> Unit) {
     @Suppress("RedundantSuspendModifier")
-    suspend fun copyProjectFiles(dir: VirtualFile): Path {
-      val projectDir = VfsUtil.virtualToIoFile(dir)
-      FileUtil.copyDir(testDataRoot.resolve("common/project").toFile(), projectDir)
+    fun copyProjectFiles(dir: VirtualFile): Path {
+      val projectDir = dir.toNioPath()
+      FileUtil.copyDir(testDataRoot.resolve("common/project").toFile(), projectDir.toFile())
       val testProjectFilesDir = testDataRoot.resolve(testDataDirName).resolve("project").toFile()
       if (testProjectFilesDir.exists()) {
-        FileUtil.copyDir(testProjectFilesDir, projectDir)
+        FileUtil.copyDir(testProjectFilesDir, projectDir.toFile())
       }
       val testCacheFilesDir = testDataRoot.resolve(testDataDirName).resolve("cache").toFile()
       if (testCacheFilesDir.exists()) {
-        val cachePath = appSystemDir.resolve("external_build_system").resolve(getProjectCacheFileName(dir.toNioPath()))
+        val cachePath = getProjectDataPathRoot(dir.toNioPath()).resolve("external_build_system")
         FileUtil.copyDir(testCacheFilesDir, cachePath.toFile())
       }
       VfsUtil.markDirtyAndRefresh(false, true, true, dir)
-      return projectDir.toPath()
+      return projectDir
     }
     doNotEnableExternalStorageByDefaultInTests {
       runBlocking {
@@ -869,8 +899,9 @@ class ExternalSystemStorageTest {
 
   private fun suppressLogs(action: () -> Unit) {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
-        message == null || !message.contains("Trying to load multiple modules with the same name.")
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+        if (message.contains("Trying to load multiple modules with the same name.")) Action.NONE
+        else Action.ALL
     }) {
       action()
     }

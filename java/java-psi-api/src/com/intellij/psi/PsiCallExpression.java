@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the call of a Java method or constructor.
  *
- * @author dsl
  * @see PsiResolveHelper#getReferencedMethodCandidates(PsiCallExpression, boolean) 
  */
 public interface PsiCallExpression extends PsiExpression, PsiCall {

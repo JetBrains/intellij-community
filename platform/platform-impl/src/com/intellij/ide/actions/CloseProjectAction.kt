@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -10,9 +11,9 @@ import com.intellij.ui.IdeUICustomization
 
 class CloseProjectAction : CloseProjectsActionBase() {
   init {
-    @Suppress("DialogTitleCapitalization")
-    templatePresentation.setText { IdeUICustomization.getInstance().projectMessage("action.close.project.text") }
-    templatePresentation.setDescription { IdeUICustomization.getInstance().projectMessage("action.close.project.description") }
+    val uiCustomization = IdeUICustomization.getInstance()
+    templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.project.text"))
+    templatePresentation.setDescription(uiCustomization.projectMessagePointer("action.close.project.description"))
   }
 
   override fun canClose(project: Project, currentProject: Project) = project === currentProject
@@ -26,9 +27,10 @@ class CloseProjectAction : CloseProjectsActionBase() {
       e.presentation.setText(IdeBundle.messagePointer("action.close.projects.in.current.window"))
     }
     else {
-      @Suppress("DialogTitleCapitalization")
-      e.presentation.text = IdeUICustomization.getInstance().projectMessage("action.close.project.text")
-      e.presentation.description = IdeUICustomization.getInstance().projectMessage("action.close.project.description")
+      e.presentation.setTextWithMnemonic(templatePresentation.textWithPossibleMnemonic)
+      e.presentation.description = templatePresentation.description
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

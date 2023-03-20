@@ -4,7 +4,7 @@ package org.jetbrains.builtInWebServer
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.PortField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.xml.XmlBundle
 import org.jetbrains.ide.BuiltInServerBundle
 import javax.swing.JCheckBox
@@ -17,27 +17,21 @@ class BuiltInServerConfigurableUi : ConfigurableUi<BuiltInServerOptions> {
 
   private val mainPanel: DialogPanel = panel {
     row(XmlBundle.message("setting.value.builtin.server.port.label")) {
-      cell {
-        component(PortField().also {
-          builtInServerPort = it
-          it.min = 1024
-          it.addChangeListener {
+      builtInServerPort = cell(PortField())
+        .applyToComponent {
+          min = 1024
+          addChangeListener {
             val isEnabled = builtInServerPort.number < BuiltInServerOptions.DEFAULT_PORT
             builtInServerAvailableExternallyCheckBox.isEnabled = isEnabled
             builtInServerAvailableExternallyCheckBox.toolTipText =
               if (isEnabled) null
               else BuiltInServerBundle.message("checkbox.tooltip.can.t.be.enabled.for.default.port")
           }
-        })
-        checkBox(XmlBundle.message("setting.value.can.accept.external.connections")).withLargeLeftGap().also {
-          builtInServerAvailableExternallyCheckBox = it.component
-        }
-      }
+        }.component
+      builtInServerAvailableExternallyCheckBox = checkBox(XmlBundle.message("setting.value.can.accept.external.connections")).component
     }
     row {
-      checkBox(XmlBundle.message("setting.value.builtin.server.allow.unsigned.requests")).also {
-        allowUnsignedRequestsCheckBox = it.component
-      }
+      allowUnsignedRequestsCheckBox = checkBox(XmlBundle.message("setting.value.builtin.server.allow.unsigned.requests")).component
     }
   }
 

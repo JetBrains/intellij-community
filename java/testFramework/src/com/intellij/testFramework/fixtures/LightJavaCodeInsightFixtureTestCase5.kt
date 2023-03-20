@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures
 
 import com.intellij.JavaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.junit5.EdtInterceptor
 import com.intellij.testFramework.rules.TestNameExtension
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -46,7 +45,4 @@ abstract class LightJavaCodeInsightFixtureTestCase5 (projectDescriptor: LightPro
   }
 
   protected val fixture: JavaCodeInsightTestFixture get() = testCase.fixture
-
-  @RegisterExtension
-  private val runInEdtRule = EdtInterceptor(true)
 }

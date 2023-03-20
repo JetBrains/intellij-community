@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -30,13 +17,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author peter
-*/
 public abstract class RenameableFakePsiElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
   private final PsiElement myParent;
 
-  protected RenameableFakePsiElement(final PsiElement parent) {
+  protected RenameableFakePsiElement(@Nullable PsiElement parent) {
     myParent = parent;
   }
 
@@ -45,9 +29,19 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
     return myParent;
   }
 
+  private @NotNull PsiElement getParentNotNull(@NotNull String methodName) {
+    if (myParent != null) {
+      return myParent;
+    }
+    throw PluginException.createByClass(
+      new AbstractMethodError("Elements initialized with `null` parent are expected to override `#" + methodName + "`"),
+      getClass()
+    );
+  }
+
   @Override
   public PsiFile getContainingFile() {
-    return myParent.getContainingFile();
+    return getParentNotNull("getContainingFile").getContainingFile();
   }
 
   @Override
@@ -62,7 +56,7 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   @Override
   @NotNull
   public Project getProject() {
-    return myParent.getProject();
+    return getParentNotNull("getProject").getProject();
   }
 
   @Override
@@ -83,17 +77,17 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
 
   @Override
   @NonNls
-  public String getName(final PsiElement context) {
+  public String getName(PsiElement context) {
     return getName();
   }
 
   @Override
-  public void init(final PsiElement element) {
+  public void init(PsiElement element) {
   }
 
   @Override
   @Nullable
-  public final Icon getIcon(final boolean open) {
+  public final Icon getIcon(boolean open) {
     return getIcon();
   }
 

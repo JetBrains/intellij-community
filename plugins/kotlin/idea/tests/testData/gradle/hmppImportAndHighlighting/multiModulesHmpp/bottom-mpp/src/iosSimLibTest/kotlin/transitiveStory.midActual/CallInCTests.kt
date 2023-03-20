@@ -8,9 +8,9 @@ import kotlin.test.assertEquals
 
 val callInCTests = BottomActualDeclarations()
 
-class <!LINE_MARKER{OSX}("descr='Run Test'")!>CallInCTests<!> {
+class <!LINE_MARKER("descr='Run Test'")!>CallInCTests<!> {
     @Test
-    fun <!LINE_MARKER{OSX}("descr='Run Test'")!>someTestCallingTransitiveDeps<!>() {
+    fun <!LINE_MARKER("descr='Run Test'")!>someTestCallingTransitiveDeps<!>() {
         // val call = callMe307563354
 //        println(call)
         assertEquals(true, true)

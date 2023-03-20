@@ -36,10 +36,9 @@ public class GrMemberSelectionTable extends AbstractMemberSelectionTable<GrMembe
   @Nullable
   @Override
   protected Object getAbstractColumnValue(GrMemberInfo memberInfo) {
-    if (!(memberInfo.getMember() instanceof PsiMethod)) return null;
+    if (!(memberInfo.getMember() instanceof PsiMethod method)) return null;
     if (memberInfo.isStatic()) return null;
 
-    PsiMethod method = (PsiMethod)memberInfo.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final Boolean fixedAbstract = myMemberInfoModel.isFixedAbstract(memberInfo);
       if (fixedAbstract != null) return fixedAbstract;
@@ -56,10 +55,9 @@ public class GrMemberSelectionTable extends AbstractMemberSelectionTable<GrMembe
   @Override
   protected boolean isAbstractColumnEditable(int rowIndex) {
     GrMemberInfo info = myMemberInfos.get(rowIndex);
-    if (!(info.getMember() instanceof PsiMethod)) return false;
+    if (!(info.getMember() instanceof PsiMethod method)) return false;
     if (info.isStatic()) return false;
 
-    PsiMethod method = (PsiMethod)info.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       if (myMemberInfoModel.isFixedAbstract(info) != null) {
         return false;

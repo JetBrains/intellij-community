@@ -27,8 +27,6 @@ import javax.swing.*;
 
 /**
  * Renders a list cell which contains a class.
- *
- * @author dsl
  */
 public class ClassCellRenderer extends ListCellRendererWrapper<PsiClass> {
   private final boolean myShowReadOnly;

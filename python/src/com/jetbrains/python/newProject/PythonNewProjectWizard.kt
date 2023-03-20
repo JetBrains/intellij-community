@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject
 
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.PYTHON
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -16,8 +16,8 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
@@ -28,7 +28,7 @@ import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.pythonSdk
-import kotlin.streams.toList
+import java.nio.file.Path
 
 /**
  * A wizard for creating new pure-Python projects in IntelliJ.
@@ -36,7 +36,11 @@ import kotlin.streams.toList
  * It suggests creating a new Python virtual environment for your new project to follow Python best practices.
  */
 class PythonNewProjectWizard : LanguageNewProjectWizard {
-  override val name: String = "Python"
+
+  override val name = PYTHON
+
+  override val ordinal = 600
+
   override fun createStep(parent: NewProjectWizardLanguageStep): NewProjectWizardStep = NewPythonProjectStep(parent)
 }
 
@@ -44,6 +48,7 @@ class PythonNewProjectWizard : LanguageNewProjectWizard {
  * Data for sharing among the steps of the new Python project wizard.
  */
 interface NewProjectWizardPythonData : NewProjectWizardBaseData {
+
   /**
    * A property for tracking changes in [pythonSdk].
    */
@@ -64,13 +69,12 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
   val module: Module?
 
   companion object {
+
     val KEY = Key.create<NewProjectWizardPythonData>(NewProjectWizardPythonData::class.java.name)
 
-    val NewProjectWizardStep.pythonData get() = data.getUserData(KEY)!!
-
-    val NewProjectWizardStep.pythonSdkProperty get() = pythonData.pythonSdkProperty
-    val NewProjectWizardStep.pythonSdk get() = pythonData.pythonSdk
-    val NewProjectWizardStep.module get() = pythonData.module
+    @JvmStatic
+    val NewProjectWizardStep.pythonData: NewProjectWizardPythonData?
+      get() = data.getUserData(KEY)
   }
 }
 
@@ -86,8 +90,8 @@ class NewPythonProjectStep<P>(parent: P)
     NewProjectWizardPythonData
   where P : NewProjectWizardStep, P : NewProjectWizardBaseData {
 
-  override val pythonSdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
-  override var pythonSdk: Sdk? by pythonSdkProperty
+  override val pythonSdkProperty = propertyGraph.property<Sdk?>(null)
+  override var pythonSdk by pythonSdkProperty
   override val module: Module?
     get() = intellijModule ?: context.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
@@ -106,12 +110,13 @@ class NewPythonProjectStep<P>(parent: P)
 
   private fun commitIntellijModule(project: Project) {
     val moduleName = name
+    val projectPath = Path.of(path, name)
     val moduleBuilder = PythonModuleTypeBase.getInstance().createModuleBuilder().apply {
       name = moduleName
       contentEntryPath = projectPath.toString()
       moduleFilePath = projectPath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION).toString()
     }
-    intellijModule = moduleBuilder.commit(project)?.firstOrNull()
+    intellijModule = setupProjectFromBuilder(project, moduleBuilder)
   }
 
   private fun setupSdk(project: Project) {
@@ -139,7 +144,7 @@ class NewPythonProjectStep<P>(parent: P)
 }
 
 /**
- * A new Python project wizard step that allows you to get or create a Python SDK for your [projectPath].
+ * A new Python project wizard step that allows you to get or create a Python SDK for your [path]/[name].
  *
  * The resulting SDK is available as [pythonSdk]. The SDK may have not been saved to the project JDK table yet.
  */
@@ -150,9 +155,9 @@ class PythonSdkStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment")
 
-  override val steps: Map<String, NewProjectWizardStep> by lazy {
-    val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), projectPath.toString(), null)
-    mapOf(
+  override fun initSteps(): Map<String, NewProjectWizardStep> {
+    val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), "$path/$name", null)
+    return mapOf(
       "New" to NewEnvironmentStep(this),
       // TODO: Handle remote project creation for remote SDKs
       "Existing" to PythonSdkPanelAdapterStep(this, existingSdkPanel),
@@ -190,18 +195,16 @@ private class NewEnvironmentStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment.type")
 
-  override val steps: Map<String, NewProjectWizardStep> by lazy {
+  override fun initSteps(): Map<String, PythonSdkPanelAdapterStep<NewEnvironmentStep<P>>> {
     val sdks = existingSdks(context)
-    val newProjectPath = projectPath.toString()
+    val newProjectPath = "$path/$name"
     val basePanels = listOf(
       PyAddNewVirtualEnvPanel(null, null, sdks, newProjectPath, context),
       PyAddNewCondaEnvPanel(null, null, sdks, newProjectPath),
     )
-    val providedPanels = PySdkProvider.EP_NAME.extensions()
-      .map { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
-      .toList()
+    val providedPanels = PySdkProvider.EP_NAME.extensionList.map { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
     val panels = basePanels + providedPanels
-    panels
+    return panels
       .associateBy { it.envName }
       .mapValues { (_, v) -> PythonSdkPanelAdapterStep(this, v) }
   }
@@ -226,21 +229,17 @@ private class PythonSdkPanelAdapterStep<P>(parent: P, val panel: PyAddSdkPanel)
     NewProjectWizardPythonData by parent
   where P : NewProjectWizardStep, P : NewProjectWizardPythonData {
 
-  val panelChangedProperty = propertyGraph.graphProperty {}
-  var panelChanged by panelChangedProperty
-
   override fun setupUI(builder: Panel) {
     with(builder) {
       row {
         cell(panel)
-          .graphProperty(panelChangedProperty)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .validationRequestor { panel.addChangeListener(it) }
+          .align(AlignX.FILL)
           .validationOnInput { panel.validateAll().firstOrNull() }
           .validationOnApply { panel.validateAll().firstOrNull() }
       }
     }
     panel.addChangeListener {
-      panelChanged = Unit
       pythonSdk = panel.sdk
     }
     nameProperty.afterChange { updateNewProjectPath() }
@@ -252,7 +251,7 @@ private class PythonSdkPanelAdapterStep<P>(parent: P, val panel: PyAddSdkPanel)
   }
 
   private fun updateNewProjectPath() {
-    panel.newProjectPath = projectPath.toString()
+    panel.newProjectPath = "$path/$name"
   }
 }
 

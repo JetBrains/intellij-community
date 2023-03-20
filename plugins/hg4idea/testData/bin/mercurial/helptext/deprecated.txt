@@ -1,0 +1,30 @@
+Mercurial evolves over time, some features, options, commands may be replaced by
+better and more secure alternatives. This topic will help you migrating your
+existing usage and/or configuration to newer features.
+
+Commands
+========
+
+The following commands are still available but their use are not recommended:
+
+``locate``
+
+This command has been replaced by `hg files`.
+
+``parents``
+
+This command can be replaced by `hg summary` or `hg log` with appropriate
+revsets. See `hg help revsets` for more information.
+
+``tip``
+
+The recommended alternative is `hg heads`.
+
+Options
+=======
+
+``web.allowpull``
+    Renamed to `allow-pull`.
+
+``web.allow_push``
+    Renamed to `allow-push`.

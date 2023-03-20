@@ -1,22 +1,38 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformTarget
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformType
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformTarget
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformType
 import javax.swing.BoxLayout
 
 internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
 
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        border = scaledEmptyBorder(top = 8)
-        background = PackageSearchUI.UsualBackgroundColor
+        border = emptyBorder(top = 8)
+        background = PackageSearchUI.Colors.panelBackground
     }
 
     fun display(platforms: List<ApiStandardPackage.ApiPlatform>) {
@@ -31,7 +47,7 @@ internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
                 HtmlChunk.li().addText(displayName).let { element ->
                     val canHaveTargets = type == PlatformType.JS || type == PlatformType.NATIVE
                     val targets = platform.targets
-                    if (canHaveTargets && targets != null && targets.isNotEmpty()) {
+                    if (canHaveTargets && !targets.isNullOrEmpty()) {
                         element.children(
                             HtmlChunk.br(),
                             HtmlChunk.span("font-style: italic;").addText(

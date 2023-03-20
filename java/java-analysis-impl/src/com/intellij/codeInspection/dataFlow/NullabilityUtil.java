@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
@@ -81,7 +81,7 @@ public final class NullabilityUtil {
   public static Nullability getExpressionNullability(@Nullable PsiExpression expression, boolean useDataflow) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return Nullability.UNKNOWN;
-    if (PsiType.NULL.equals(expression.getType())) return Nullability.NULLABLE;
+    if (PsiTypes.nullType().equals(expression.getType())) return Nullability.NULLABLE;
     if (expression instanceof PsiNewExpression ||
         expression instanceof PsiLiteralExpression ||
         expression instanceof PsiPolyadicExpression ||
@@ -115,8 +115,7 @@ public final class NullabilityUtil {
     if (expression instanceof PsiTypeCastExpression) {
       return getExpressionNullability(((PsiTypeCastExpression)expression).getOperand(), useDataflow);
     }
-    if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignment) {
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         return getExpressionNullability(assignment.getRExpression(), useDataflow);
       }

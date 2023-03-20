@@ -1,0 +1,52 @@
+buildscript {
+  ext.rdModelBaseDir = "${buildscript.sourceFile.parentFile.parentFile.parentFile}/../../../../../../build/rd-model"
+  apply from: "$rdModelBaseDir/model-buildscript.gradle"
+}
+
+apply from: "$rdModelBaseDir/model-base.gradle"
+
+String clientModelHome = buildscript.sourceFile.parent
+String clientModelGeneratedHome = clientModelHome + "/modelGenerated"
+String ideModelHome = clientModelHome + "/modelSources"
+String outputHome = "$clientModelGeneratedHome"
+
+rdgen {
+  sources "$ideModelHome"
+  verbose = true
+  clearOutput = true
+  packages = "com.intellij.remoteDev.tests.modelSources"
+  hashFolder = outputHome
+  lineNumbersInComments = false
+
+  generator {
+    language = "kotlin"
+    transform = "symmetric"
+    root = "com.intellij.remoteDev.tests.modelSources.TestRoot"
+    namespace = "com.intellij.remoteDev.tests.modelGenerated"
+    directory = outputHome
+  }
+}
+
+// Do not call rdgen every time. up-to-date call to rdgen takes 300ms, UP-TO-DATE task in gradle 5ms
+def rdGenTask = tasks.named("rdgen").get()
+rdGenTask.inputs.dir("$clientModelHome")
+rdGenTask.inputs.files(project.fileTree(dir: rdModelBaseDir, include: "*.gradle"))
+rdGenTask.outputs.dir(outputHome)
+
+static void updateLibrary(Task task, String path, String libraryName, String groupId, String name, String version) {
+  task.outputs.file(path)
+  task.doLast {
+    writeFileIfChanged(new File(path), generateLibraryXml(libraryName, groupId, name, version))
+  }
+}
+
+File ultimateHome = buildscript.sourceFile.parentFile.parentFile.parentFile
+String ultimateLibs = "$ultimateHome/.idea/libraries"
+String communityLibs = "$ultimateHome/community/.idea/libraries"
+
+tasks.register("updateRdLibVersion") { Task t ->
+  t.inputs.property("rd_version", rd_version)
+  t.inputs.property("code_version", 1) // increment if you change functions above
+
+  updateLibrary(t, "$communityLibs/rd_text.xml", "rd-text", rd_group, "rd-text", rd_version)
+}

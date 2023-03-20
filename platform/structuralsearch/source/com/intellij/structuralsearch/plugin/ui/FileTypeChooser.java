@@ -1,19 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.structuralsearch.PatternContext;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -37,6 +33,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
   private final List<FileTypeInfo> myFileTypeInfos;
   private FileTypeInfo mySelectedItem;
   private Consumer<? super FileTypeInfo> myConsumer;
+  private Consumer<? super FileTypeInfo> myUserActionConsumer;
 
   FileTypeChooser() {
     myFileTypeInfos = createFileTypeInfos();
@@ -46,6 +43,10 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
 
   public void setFileTypeInfoConsumer(@Nullable Consumer<? super FileTypeInfo> consumer) {
     myConsumer = consumer;
+  }
+
+  public void setUserActionFileTypeInfoConsumer(@Nullable Consumer<? super FileTypeInfo> consumer) {
+    myUserActionConsumer = consumer;
   }
 
   private static List<FileTypeInfo> createFileTypeInfos() {
@@ -99,7 +100,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
 
   private void setSelectedItem(FileTypeInfo info) {
     mySelectedItem = info;
-    if (myConsumer != null) {
+    if (myConsumer != null && info != null) {
       myConsumer.accept(info);
     }
   }
@@ -123,13 +124,8 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
-    return new ComboBoxButton(presentation) {
-      @Override
-      public int getDisplayedMnemonicIndex() {
-        return -1;
-      }
-    };
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @NotNull
@@ -139,8 +135,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     final ComboBoxButton button = createComboBoxButton(presentation);
     final String text = SSRBundle.message("search.dialog.file.type.label");
     final JLabel label = new JBLabel(text);
-    label.setLabelFor(button);
-    button.setMnemonic(TextWithMnemonic.parse(text).getMnemonic());
+    button.setLabel(label);
 
     panel.add(label, BorderLayout.WEST);
     panel.add(button, BorderLayout.CENTER);
@@ -149,7 +144,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
   }
 
   @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
     for (FileTypeInfo fileTypeInfo : myFileTypeInfos) {
       group.add(new FileTypeInfoAction(fileTypeInfo));
@@ -164,7 +159,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
 
   private class FileTypeInfoAction extends DumbAwareAction {
 
-    private final FileTypeInfo myFileTypeInfo;
+    private final @NotNull FileTypeInfo myFileTypeInfo;
 
     FileTypeInfoAction(FileTypeInfo fileTypeInfo) {
       myFileTypeInfo = fileTypeInfo;
@@ -176,9 +171,12 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setSelectedItem(myFileTypeInfo);
+      if (myUserActionConsumer != null) {
+        myUserActionConsumer.accept(myFileTypeInfo);
+      }
     }
 
-    FileTypeInfo getFileTypeInfo() {
+    @NotNull FileTypeInfo getFileTypeInfo() {
       return myFileTypeInfo;
     }
   }

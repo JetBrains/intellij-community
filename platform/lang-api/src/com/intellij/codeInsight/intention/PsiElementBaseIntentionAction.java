@@ -77,8 +77,15 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    */
   public abstract boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element);
 
+  /**
+   * Retrieves the element this intention was invoked on.
+   *
+   * @param editor the editor in which the intention was invoked, can be preview editor.
+   * @param file  the file in which the intention was invoked.
+   * @return the element under caret.
+   */
   @Nullable
-  private static PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  protected static PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     CaretModel caretModel = editor.getCaretModel();
     int position = caretModel.getOffset();
     return file.findElementAt(position);

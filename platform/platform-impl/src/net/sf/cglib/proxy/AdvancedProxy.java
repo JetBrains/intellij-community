@@ -15,9 +15,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public final class AdvancedProxy {
   public static final Method FINALIZE_METHOD;
   public static final Method EQUALS_METHOD;
@@ -127,8 +124,7 @@ public final class AdvancedProxy {
     }
     catch (CodeGenerationException e) {
       final Throwable throwable = e.getCause();
-      if (throwable instanceof InvocationTargetException) {
-        final InvocationTargetException targetException = (InvocationTargetException)throwable;
+      if (throwable instanceof InvocationTargetException targetException) {
         final Throwable cause = targetException.getCause();
         ExceptionUtil.rethrowUnchecked(cause);
       }

@@ -3,7 +3,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -34,10 +33,15 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction implements UpdateInBackground {
+public class ExternalJavaDocAction extends AnAction {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -70,7 +74,6 @@ public class ExternalJavaDocAction extends AnAction implements UpdateInBackgroun
         ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     final Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -94,8 +97,7 @@ public class ExternalJavaDocAction extends AnAction implements UpdateInBackgroun
       final List<String> finalUrls = urls;
       ApplicationManager.getApplication().invokeLater(() -> {
         if (ContainerUtil.isEmpty(finalUrls)) {
-          if (element != null && provider instanceof ExternalDocumentationProvider) {
-            ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
+          if (element != null && provider instanceof ExternalDocumentationProvider externalDocumentationProvider) {
             if (externalDocumentationProvider.canPromptToConfigureDocumentation(element)) {
               externalDocumentationProvider.promptToConfigureDocumentation(element);
             }
@@ -148,8 +150,7 @@ public class ExternalJavaDocAction extends AnAction implements UpdateInBackgroun
 
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
-    if (provider instanceof ExternalDocumentationProvider) {
-      final ExternalDocumentationProvider edProvider = (ExternalDocumentationProvider)provider;
+    if (provider instanceof ExternalDocumentationProvider edProvider) {
       enabled = CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {

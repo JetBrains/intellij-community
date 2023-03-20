@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -12,6 +12,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,32 +21,38 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import com.intellij.openapi.util.NlsContexts.DialogMessage;
-import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Native;
-import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.Ole32;
 import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinError;
+import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -59,12 +66,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-      URL url = e.getURL();
+      var url = e.getURL();
       if (url != null) {
         try {
-          openFile(new File(url.toURI()));
+          openFile(Path.of(url.toURI()));
         }
-        catch (URISyntaxException ex) {
+        catch (InvalidPathException | URISyntaxException ex) {
           LOG.warn("invalid URL: " + url, ex);
         }
       }
@@ -73,7 +80,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   };
 
   public RevealFileAction() {
-    getTemplatePresentation().setText(getActionName(null));
+    getTemplatePresentation().setText(ActionsBundle.message("action.RevealIn.name.other", IdeBundle.message("action.file.manager.text")));
   }
 
   @Override
@@ -88,14 +95,19 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile file = getFile(e);
+    var file = getFile(e);
     if (file != null) {
-      openFile(new File(file.getPresentableUrl()));
+      openFile(file.toNioPath());
     }
   }
 
-  private static @Nullable VirtualFile getFile(@NotNull AnActionEvent e) {
+  private static @Nullable VirtualFile getFile(AnActionEvent e) {
     return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
@@ -109,18 +121,21 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   public static @ActionText @NotNull String getActionName(@Nullable String place) {
-    if (ActionPlaces.EDITOR_TAB_POPUP.equals(place) ||
-        ActionPlaces.EDITOR_POPUP.equals(place) ||
-        ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
+    if (ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
       return getFileManagerName();
     }
-    return SystemInfo.isMac
-           ? ActionsBundle.message("action.RevealIn.name.mac")
-           : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    else if (SystemInfo.isMac) {
+      return ActionsBundle.message("action.RevealIn.name.mac");
+    }
+    else {
+      return ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
+    }
   }
 
-  public static @NlsSafe @NotNull String getFileManagerName() {
-    return Holder.fileManagerName;
+  public static @NotNull @ActionText String getFileManagerName() {
+    return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
+           SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
+           Objects.requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
   }
 
   public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
@@ -128,7 +143,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       return file;
     }
 
-    VirtualFileSystem fs = file.getFileSystem();
+    var fs = file.getFileSystem();
     if (fs instanceof ArchiveFileSystem && file.getParent() == null) {
       return ((ArchiveFileSystem)fs).getLocalByEntry(file);
     }
@@ -136,28 +151,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  public static void showDialog(Project project,
-                                @DialogMessage String message,
-                                @DialogTitle String title,
-                                @NotNull File file,
-                                @Nullable DialogWrapper.DoNotAskOption option) {
-    String ok = getActionName(null), cancel = IdeBundle.message("action.close");
-    if (Messages.showOkCancelDialog(project, message, title, ok, cancel, Messages.getInformationIcon(), option) == Messages.OK) {
-      openFile(file);
-    }
-  }
-
-  /**
-   * Opens a system file manager with given file's parent directory open and the file highlighted in it
-   * (note that not all platforms support highlighting).
-   */
+  /** @see #openFile(Path) */
   public static void openFile(@NotNull File file) {
     openFile(file.toPath());
   }
 
   /**
-   * Opens a system file manager with given file's parent directory open and the file highlighted in it
-   * (note that not all platforms support highlighting).
+   * Opens a system file manager with the given file's parent directory loaded and the file highlighted in it
+   * (note that some platforms do not support the file highlighting).
    */
   public static void openFile(@NotNull Path file) {
     Path parent = file.toAbsolutePath().getParent();
@@ -169,25 +170,16 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  /**
-   * Opens a system file manager with given directory open in it.
-   */
+  /** @see #openDirectory(Path) */
   public static void openDirectory(@NotNull File directory) {
     doOpen(directory.toPath(), null);
   }
 
   /**
-   * Opens a system file manager with given directory open in it.
+   * Opens a system file manager with the given directory loaded in it.
    */
   public static void openDirectory(@NotNull Path directory) {
     doOpen(directory, null);
-  }
-
-  /**
-   * Opens a system file manager with given directory selected in it.
-   */
-  public static void selectDirectory(@NotNull File directory) {
-    doOpen(directory.toPath(), directory.toPath());
   }
 
   private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
@@ -196,7 +188,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     String fmApp;
 
     if (SystemInfo.isWindows) {
-      spawn(toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"');
+      if (JnaLoader.isLoaded()) {
+        openViaShellApi(dir, toSelect);
+      }
+      else {
+        spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
+      }
     }
     else if (SystemInfo.isMac) {
       if (toSelect != null) {
@@ -207,8 +204,11 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       }
     }
     else if ((fmApp = Holder.fileManagerApp) != null) {
-      if (fmApp.endsWith("dolphin") && toSelect != null) {
+      if (toSelect != null && fmApp.endsWith("dolphin")) {
         spawn(fmApp, "--select", toSelect);
+      }
+      else if (toSelect != null && fmApp.endsWith("dde-file-manager")) {
+        spawn(fmApp, "--show-item", toSelect);
       }
       else {
         spawn(fmApp, toSelect != null ? toSelect : dir);
@@ -234,18 +234,36 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  private static String shortPath(String path) {
-    if (path.contains("  ") && JnaLoader.isLoaded()) {
-      // On the way from Runtime.exec() to CreateProcess(), a command line goes through couple rounds of merging and splitting
-      // which breaks paths containing a sequence of two or more spaces.
-      // Conversion to a short format is an ugly hack allowing to open such paths in Explorer.
-      char[] result = new char[WinDef.MAX_PATH];
-      if (Kernel32.INSTANCE.GetShortPathName(path, result, result.length) <= result.length) {
-        return Native.toString(result);
-      }
-    }
+  private static void openViaShellApi(String dir, String toSelect) {
+    if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
 
-    return path;
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
+      Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
+
+      Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+      Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
+      WinDef.UINT cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
+      try {
+        WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
+        if (!WinError.S_OK.equals(result)) {
+          LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+        }
+      }
+      finally {
+        if (apIdl != null) {
+          Shell32Ex.INSTANCE.ILFree(apIdl[0]);
+        }
+        Shell32Ex.INSTANCE.ILFree(pIdl);
+      }
+    });
+  }
+
+  private interface Shell32Ex extends StdCallLibrary {
+    Shell32Ex INSTANCE = Native.load("shell32", Shell32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
+
+    Pointer ILCreateFromPath(String path);
+    void ILFree(Pointer pIdl);
+    WinNT.HRESULT SHOpenFolderAndSelectItems(Pointer pIdlFolder, WinDef.UINT cIdl, Pointer[] apIdl, WinDef.DWORD dwFlags);
   }
 
   private static void spawn(String... command) {
@@ -255,7 +273,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {
-          assert command.length == 1;
+          assert command.length == 1 : Arrays.toString(command);
           Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
           handler = new CapturingProcessHandler.Silent(process, null, command[0]);
         }
@@ -271,47 +289,65 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static class Holder {
-    private static final String fileManagerApp =
-      readDesktopEntryKey("Exec")
-        .map(line -> line.split(" ")[0])
-        .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
-        .orElse(null);
+    private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
 
-    private static final String fileManagerName =
-      SystemInfo.isMac ? "Finder" :
-      SystemInfo.isWindows ? "Explorer" :
-      readDesktopEntryKey("Name").orElse("File Manager");
+    private static final @Nullable String fileManagerApp;
+    private static final @Nullable @NlsSafe String fileManagerName;
 
-    private static Optional<String> readDesktopEntryKey(String key) {
+    static {
+      String fmApp = null, fmName = null;
       if (SystemInfo.hasXdgMime()) {
-        String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-        if (appName != null && appName.endsWith(".desktop")) {
-          return Stream.of(getXdgDataDirectories().split(":"))
-            .map(dir -> new File(dir, "applications/" + appName))
-            .filter(File::exists)
-            .findFirst()
-            .map(file -> readDesktopEntryKey(file, key));
+        var desktopEntryName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
+        if (desktopEntryName != null && desktopEntryName.endsWith(".desktop")) {
+          var desktopFile = Stream.of(getXdgDataDirectories().split(":"))
+            .map(dir -> Path.of(dir, "applications", desktopEntryName))
+            .filter(Files::exists)
+            .findFirst();
+          if (desktopFile.isPresent()) {
+            try {
+              var lines = Files.readAllLines(desktopFile.get());
+              fmApp = lines.stream()
+                .filter(line -> line.startsWith("Exec="))
+                .map(line -> line.substring(5).split(" ")[0])
+                .filter(app -> ContainerUtil.exists(supportedFileManagers, supportedFileManager -> app.endsWith(supportedFileManager)))
+                .findFirst().orElse(null);
+              fmName = lines.stream()
+                .filter(line -> line.startsWith("Name="))
+                .map(line -> line.substring(5))
+                .findFirst().orElse(null);
+            }
+            catch (InvalidPathException | IOException e) {
+              LOG.error(e);
+            }
+          }
         }
       }
-
-      return Optional.empty();
+      fileManagerApp = fmApp;
+      fileManagerName = fmName;
     }
 
     private static String getXdgDataDirectories() {
       return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
              StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
     }
+  }
 
-    private static String readDesktopEntryKey(File file, String key) {
-      if (LOG.isDebugEnabled()) LOG.debug("looking for '" + key + "' in " + file);
-      String prefix = key + '=';
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-        return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
-      }
-      catch (IOException | UncheckedIOException e) {
-        LOG.info("Cannot read: " + file, e);
-        return null;
-      }
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated trivial to implement, just inline */
+  @Deprecated(forRemoval = true)
+  public static void showDialog(Project project,
+                                @NlsContexts.DialogMessage String message,
+                                @NlsContexts.DialogTitle String title,
+                                @NotNull File file,
+                                @SuppressWarnings("removal") @Nullable DialogWrapper.DoNotAskOption option) {
+    if (MessageDialogBuilder.okCancel(title, message)
+      .yesText(getActionName(null))
+      .noText(IdeBundle.message("action.close"))
+      .icon(Messages.getInformationIcon())
+      .doNotAsk(option)
+      .ask(project)) {
+      openFile(file);
     }
   }
+  //</editor-fold>
 }

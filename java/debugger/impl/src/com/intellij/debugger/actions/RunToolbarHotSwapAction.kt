@@ -1,17 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions
 
-import com.intellij.application.options.RegistryManager
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.HotSwapUI
 import com.intellij.debugger.ui.HotSwapUIImpl
 import com.intellij.execution.runToolbar.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import java.util.*
@@ -57,7 +58,7 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
       && HotSwapUIImpl.canHotSwap(session)
       && RegistryManager.getInstance().`is`("ide.widget.toolbar.hotswap")
 
-    if(e.presentation.isVisible) {
+    if (e.presentation.isVisible) {
       e.presentation.isEnabled = !e.isProcessTerminating()
     }
 
@@ -68,5 +69,9 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     }
 
     //LOG.info(getLog(e))
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

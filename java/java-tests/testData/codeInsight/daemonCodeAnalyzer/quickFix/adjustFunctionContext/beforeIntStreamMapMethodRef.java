@@ -1,4 +1,4 @@
-// "Replace 'map()' with 'mapToObj()'" "true"
+// "Replace 'map()' with 'mapToObj()'" "true-preview"
 import java.util.stream.*;
 
 class Test {

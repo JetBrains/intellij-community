@@ -1,6 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,24 +19,13 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class ThreadDumper {
-  private static final Comparator<ThreadInfo> THREAD_INFO_COMPARATOR =
-    Comparator.comparing((ThreadInfo o1) -> isEDT(o1.getThreadName()))
-      .thenComparing(o -> o.getThreadState() == Thread.State.RUNNABLE)
-      .thenComparingInt(o -> o.getStackTrace().length)
-      .reversed();
-
   private ThreadDumper() {
   }
 
   @NotNull
   public static String dumpThreadsToString() {
-    return dumpThreadsToString(getThreadInfos());
-  }
-
-  @NotNull
-  public static String dumpThreadsToString(@NotNull ThreadInfo[] threadInfos) {
     StringWriter writer = new StringWriter();
-    dumpThreadInfos(threadInfos, writer);
+    dumpThreadInfos(getThreadInfos(), writer);
     return writer.toString();
   }
 
@@ -47,15 +39,29 @@ public final class ThreadDumper {
     return writer.toString();
   }
 
-  public static ThreadInfo @NotNull [] getThreadInfos() {
+  public static @NotNull ThreadInfo @NotNull [] getThreadInfos() {
     return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
   }
 
+  /**
+   * @param stripCoroutineDump whether to remove stackframes from coroutine dump that have no useful debug information.
+   *                           Enabling this flag should significantly reduce coroutine dump size.
+   */
   @NotNull
-  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos) {
+  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos, boolean stripCoroutineDump) {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
+    String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, stripCoroutineDump);
+    if (coroutineDump != null) {
+      if (stripCoroutineDump) {
+        writer.write("\n---------- Coroutine dump (stripped) ----------\n");
+      }
+      else {
+        writer.write("\n---------- Coroutine dump ----------\n");
+      }
+      writer.write(coroutineDump);
+    }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 
@@ -67,6 +73,14 @@ public final class ThreadDumper {
     catch (Exception ignored) {
       threads = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE);
     }
+    int o = 0;
+    for (int i = 0; i < threads.length; i++) {
+      ThreadInfo info = threads[i];
+      if (info != null) {
+        threads[o++] = info;
+      }
+    }
+    threads = ArrayUtil.realloc(threads, o, ThreadInfo[]::new);
     if (sort) {
       sort(threads);
     }
@@ -78,10 +92,11 @@ public final class ThreadDumper {
   }
 
   public static boolean isEDT(@Nullable String threadName) {
-    return threadName != null && threadName.startsWith("AWT-EventQueue");
+    return threadName != null && (Boolean.getBoolean("jb.dispatching.on.main.thread")? threadName.contains("AppKit")
+                                                                                     : threadName.startsWith("AWT-EventQueue"));
   }
 
-  private static StackTraceElement[] dumpThreadInfos(ThreadInfo @NotNull [] threadInfo, @NotNull Writer f) {
+  private static StackTraceElement [] dumpThreadInfos(ThreadInfo @NotNull [] threadInfo, @NotNull Writer f) {
     StackTraceElement[] edtStack = null;
     for (ThreadInfo info : threadInfo) {
       if (info != null) {
@@ -94,12 +109,21 @@ public final class ThreadDumper {
     return edtStack;
   }
 
-  public static ThreadInfo @NotNull [] sort(ThreadInfo @NotNull [] threads) {
-    Arrays.sort(threads, THREAD_INFO_COMPARATOR);
+  public static ThreadInfo @NotNull [] sort(@NotNull ThreadInfo @NotNull [] threads) {
+    Arrays.sort(threads, Comparator
+      .comparing((ThreadInfo threadInfo) -> !isEDT(threadInfo.getThreadName())) // show EDT first
+      .thenComparing(threadInfo -> threadInfo.getThreadState() != Thread.State.RUNNABLE) // then all runnable
+      .thenComparingInt(threadInfo -> {
+        StackTraceElement[] trace = threadInfo.getStackTrace();
+        return trace == null ? 0 : -trace.length;
+      }) // show meaningful stacktraces first
+      .thenComparing(threadInfo -> StringUtilRt.notNullize(threadInfo.getThreadName())) // sorted by name among same stacktraces
+    );
     return threads;
   }
 
-  private static void dumpThreadInfo(@NotNull ThreadInfo info, @NotNull Writer f) {
+  @Internal
+  public static void dumpThreadInfo(@NotNull ThreadInfo info, @NotNull Writer f) {
     dumpCallStack(info, f, info.getStackTrace());
   }
 

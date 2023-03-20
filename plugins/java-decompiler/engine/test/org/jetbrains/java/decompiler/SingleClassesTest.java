@@ -1,21 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 import static org.junit.Assert.assertTrue;
 
@@ -32,14 +36,14 @@ public class SingleClassesTest {
   @Before
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
-    fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-                  IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1");
+    fixture.setUp(Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+                         IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                         IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1"));
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException {
     fixture.tearDown();
     fixture = null;
   }
@@ -59,7 +63,15 @@ public class SingleClassesTest {
   @Test public void testMethodParameters() { doTest("pkg/TestMethodParameters"); }
   @Test public void testMethodParametersAttr() { doTest("pkg/TestMethodParametersAttr"); }
   @Test public void testCodeConstructs() { doTest("pkg/TestCodeConstructs"); }
-  @Test public void testConstants() { doTest("pkg/TestConstants"); }
+  @Test public void testConstantsAsIs() { doTest("pkg/TestConstantsAsIs"); }
+  @Test public void testConstants() {
+    DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
+    doTest("pkg/TestConstants");
+  }
+  @Test public void testInteger() {
+    DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
+    doTest("java/lang/Integer");
+  }
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
   @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
   @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }
@@ -94,7 +106,6 @@ public class SingleClassesTest {
   @Test public void testConstructorReference() { doTest("pkg/TestConstructorReference"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
-  @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
@@ -112,6 +123,7 @@ public class SingleClassesTest {
           "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
           "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
   @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
+  @Test public void testSwitchOnEnumEclipse() { doTest("pkg/TestSwitchOnEnumEclipse"); }
   @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
   @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
   @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
@@ -131,8 +143,10 @@ public class SingleClassesTest {
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
   @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
+  @Test public void testSwitchOnStringsJavac() { doTest("pkg/TestSwitchOnStringsJavac"); }
+  @Test public void testSwitchOnStringsEcj() { doTest("pkg/TestSwitchOnStringsEcj"); }
+
   // TODO: fix all below
-  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
@@ -147,48 +161,115 @@ public class SingleClassesTest {
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
+  @Test public void testRootWithClassInner() { doTest("sealed/RootWithClassInner"); }
+  @Test public void testRootWithInterfaceInner() { doTest("sealed/RootWithInterfaceInner"); }
+  @Test public void testRootWithClassOuter() { doTest("sealed/RootWithClassOuter",
+    "sealed/ClassExtends", "sealed/ClassNonSealed", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testRootWithClassOuterUnresolvable() { doTest("sealed/RootWithClassOuter"); }
+  @Test public void testRootWithInterfaceOuter() { doTest("sealed/RootWithInterfaceOuter",
+    "sealed/ClassImplements", "sealed/InterfaceNonSealed", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testClassNonSealed() { doTest("sealed/ClassNonSealed",
+    "sealed/RootWithClassOuter", "sealed/ClassExtends", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testClassNonSealedExtendsImplements() { doTest("sealed/ClassNonSealedExtendsImplements",
+    "sealed/RootWithClassOuter", "sealed/ClassExtends", "sealed/ClassNonSealed");
+  }
+  @Test public void testInterfaceNonSealed() { doTest("sealed/InterfaceNonSealed",
+    "sealed/RootWithInterfaceOuter", "sealed/ClassImplements", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testRootWithModule() { doTest("sealed/foo/RootWithModule", "sealed/bar/BarClassExtends");}
+  @Test public void testRootWithInterfaceInnerAndOuter() { doTest("sealed/RootWithInterfaceInnerAndOuter", "sealed/ClassNonSealed");}
+  @Test public void testEnumWithOverride() { doTest("sealed/EnumWithOverride");}
+  @Test public void testArrayTypeAnnotations() { doTest("typeAnnotations/ArrayTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D");
+  }
+  @Test public void testGenericTypeAnnotations() { doTest("typeAnnotations/GenericTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E");
+  }
+  @Test public void testGenericArrayTypeAnnotations() {doTest("typeAnnotations/GenericArrayTypeAnnotations",
+      "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E", "typeAnnotations/F");
+  }
+  @Test public void testNestedTypeAnnotations() {doTest("typeAnnotations/NestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/F", "typeAnnotations/Z", "typeAnnotations/P", "typeAnnotations/S", "typeAnnotations/T");
+  }
+  @Test public void testArrayNestedTypeAnnotations() {doTest("typeAnnotations/ArrayNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/Z");
+  }
+  @Test public void testGenericNestedTypeAnnotations() {doTest("typeAnnotations/GenericNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/V");
+  }
+  @Test public void testGenericArrayNestedTypeAnnotations() {doTest("typeAnnotations/GenericArrayNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/F", "typeAnnotations/V");
+  }
+  @Test public void testClassSuperTypeAnnotations() {doTest("typeAnnotations/ClassSuperTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/F");
+  }
+  @Test public void testInterfaceSuperTypeAnnotations() {doTest("typeAnnotations/InterfaceSuperTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/F");
+  }
+  @Test public void testMemberDeclarationTypeAnnotations() {doTest("typeAnnotations/MemberDeclarationTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+                                                                   "typeAnnotations/K", "typeAnnotations/L");
+  }
+  @Test public void testNestedType() { doTest("pkg/NestedType"); }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
+  @Test public void testInstanceofWithPattern() {
+    doTest("patterns/TestInstanceofWithPattern");
+  }
+  @Test public void testInstanceofVarNotSupported() {
+    // the bytecode version of this test data doesn't support patterns in `instanceof`, so no modifications regarding that are applied
+    doTest("patterns/TestInstanceofPatternNotSupported");
+  }
 
   @Test(expected = ClassFormatException.class)
   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
 
   private void doTest(String testFile, String... companionFiles) {
-    ConsoleDecompiler decompiler = fixture.getDecompiler();
+    var decompiler = fixture.getDecompiler();
 
-    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
-    assertTrue(classFile.isFile());
-    for (File file : collectClasses(classFile)) {
-      decompiler.addSource(file);
+    var classFile = fixture.getTestDataDir().resolve("classes/" + testFile + ".class");
+    assertThat(classFile).isRegularFile();
+    for (var file : collectClasses(classFile)) {
+      decompiler.addSource(file.toFile());
     }
 
     for (String companionFile : companionFiles) {
-      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
-      assertTrue(companionClassFile.isFile());
-      for (File file : collectClasses(companionClassFile)) {
-        decompiler.addSource(file);
+      var companionClassFile = fixture.getTestDataDir().resolve("classes/" + companionFile + ".class");
+      assertThat(companionClassFile).isRegularFile();
+      for (var file : collectClasses(companionClassFile)) {
+        decompiler.addSource(file.toFile());
       }
     }
 
     decompiler.decompileContext();
 
-    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
-    File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
-    assertTrue(decompiledFile.isFile());
-    File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
-    assertTrue(referenceFile.isFile());
+    var decompiledFile = fixture.getTargetDir().resolve(classFile.getFileName().toString().replace(".class", ".java"));
+    assertThat(decompiledFile).isRegularFile();
+    assertTrue(Files.isRegularFile(decompiledFile));
+    var referenceFile = fixture.getTestDataDir().resolve("results/" + classFile.getFileName().toString().replace(".class", ".dec"));
+    assertThat(referenceFile).isRegularFile();
     assertFilesEqual(referenceFile, decompiledFile);
   }
 
-  private static List<File> collectClasses(File classFile) {
-    List<File> files = new ArrayList<>();
+  private static List<Path> collectClasses(Path classFile) {
+    var files = new ArrayList<Path>();
     files.add(classFile);
 
-    File parent = classFile.getParentFile();
+    var parent = classFile.getParent();
     if (parent != null) {
-      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
-      File[] inner = parent.listFiles((dir, name) -> name.matches(pattern));
-      if (inner != null) Collections.addAll(files, inner);
+      var glob = classFile.getFileName().toString().replace(".class", "$*.class");
+      try (DirectoryStream<Path> inner = Files.newDirectoryStream(parent, glob)) {
+        inner.forEach(files::add);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
 
     return files;

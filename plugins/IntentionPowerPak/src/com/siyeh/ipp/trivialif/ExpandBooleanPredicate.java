@@ -24,10 +24,9 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiStatement)) {
+    if (!(element instanceof PsiStatement statement)) {
       return false;
     }
-    final PsiStatement statement = (PsiStatement)element;
     final PsiElement lastLeaf = PsiTreeUtil.getDeepestLast(statement);
     if (PsiUtil.isJavaToken(lastLeaf, JavaTokenType.SEMICOLON) && PsiTreeUtil.prevLeaf(lastLeaf) instanceof PsiErrorElement) {
       return false;
@@ -36,58 +35,53 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
   }
 
   public static boolean isBooleanReturn(PsiStatement statement) {
-    if (!(statement instanceof PsiReturnStatement)) {
+    if (!(statement instanceof PsiReturnStatement returnStatement)) {
       return false;
     }
-    final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
     final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
     if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
       return false;
     }
     final PsiType returnType = returnValue.getType();
-    return PsiType.BOOLEAN.equals(returnType);
+    return PsiTypes.booleanType().equals(returnType);
   }
 
   public static boolean isBooleanAssignment(PsiStatement statement) {
-    if (!(statement instanceof PsiExpressionStatement)) {
+    if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
       return false;
     }
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
     if (expressionStatement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
       return false;
     }
     final PsiExpression expression = expressionStatement.getExpression();
-    if (!(expression instanceof PsiAssignmentExpression)) {
+    if (!(expression instanceof PsiAssignmentExpression assignment)) {
       return false;
     }
-    final PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
     if (rhs == null || rhs instanceof PsiLiteralExpression) {
       return false;
     }
     final PsiType assignmentType = rhs.getType();
-    return PsiType.BOOLEAN.equals(assignmentType);
+    return PsiTypes.booleanType().equals(assignmentType);
   }
 
   public static boolean isBooleanDeclaration(PsiStatement statement) {
-    if (!(statement instanceof PsiDeclarationStatement)) {
+    if (!(statement instanceof PsiDeclarationStatement declarationStatement)) {
       return false;
     }
-    final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
     final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
     if (declaredElements.length != 1) {
       return false;
     }
     final PsiElement element = declaredElements[0];
-    if (!(element instanceof PsiLocalVariable)) {
+    if (!(element instanceof PsiLocalVariable variable)) {
       return false;
     }
-    final PsiLocalVariable variable = (PsiLocalVariable)element;
     final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
     if (initializer == null || initializer instanceof PsiLiteralExpression) {
       return false;
     }
     final PsiType type = initializer.getType();
-    return PsiType.BOOLEAN.equals(type);
+    return PsiTypes.booleanType().equals(type);
   }
 }

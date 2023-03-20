@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.command
 
@@ -10,6 +10,7 @@ import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.execution.ui.layout.impl.RunnerContentUi
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfo
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
-@Suppress("ComponentNotRegistered")
 class CoroutineDumpAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -77,6 +77,8 @@ class CoroutineDumpAction : AnAction() {
         ui.selectAndFocus(content, true, true)
         Disposer.register(content, consoleView)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
         val presentation = e.presentation

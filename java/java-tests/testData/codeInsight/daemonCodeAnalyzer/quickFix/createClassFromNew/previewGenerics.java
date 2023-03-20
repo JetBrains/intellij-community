@@ -1,0 +1,2 @@
+public class Generic<T> {
+}

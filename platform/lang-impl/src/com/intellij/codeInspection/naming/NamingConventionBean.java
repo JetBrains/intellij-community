@@ -1,17 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.naming;
 
-import com.intellij.codeInspection.ui.ConventionOptionsPanel;
+import com.intellij.codeInspection.options.CommonOptionPanes;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @see NamingConventionWithFallbackBean for default fallbacks
@@ -54,8 +57,21 @@ public class NamingConventionBean {
     m_regexPattern = Pattern.compile(m_regex);
   }
 
-  public JComponent createOptionsPanel() {
-    return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern");
+  public @NotNull OptPane getOptionsPane() {
+    return CommonOptionPanes.conventions("m_minLength", "m_maxLength", "m_regex");
+  }
+  
+  public @NotNull OptionController getOptionController() {
+    return OptionController.fieldsOf(this)
+      .onValue("m_regex", () -> m_regex, val -> {
+        m_regex = val;
+        try {
+          initPattern();
+        }
+        catch(PatternSyntaxException ex) {
+          m_regex = m_regexPattern != null ? m_regexPattern.pattern() : "";
+        }
+      });
   }
 
   @Override

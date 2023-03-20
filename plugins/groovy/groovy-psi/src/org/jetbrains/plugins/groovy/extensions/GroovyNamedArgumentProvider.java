@@ -34,9 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyNamedArgumentProvider {
 
   public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME =
@@ -86,8 +83,7 @@ public abstract class GroovyNamedArgumentProvider {
         PsiElement element = result.getElement();
         if (element instanceof GrAccessorMethod) continue;
 
-        if (element instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)element;
+        if (element instanceof PsiMethod method) {
           PsiParameter[] parameters = method.getParameterList().getParameters();
 
           if (!method.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;

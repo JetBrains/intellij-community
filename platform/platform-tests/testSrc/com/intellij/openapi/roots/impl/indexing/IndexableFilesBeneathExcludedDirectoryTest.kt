@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SyntheticLibrary
+
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.search.FileTypeIndex
@@ -92,7 +93,7 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
       }
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdkName") { sdkModificator ->
       sdkModificator.addRoot(sdkRoot.file, OrderRootType.CLASSES)
     }
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
@@ -125,11 +126,11 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
 
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
-        SyntheticLibrary.newImmutableLibrary(
-          listOf(targetSources.file),
-          listOf(targetBinaries.file),
-          emptySet(),
-          null
+        SyntheticLibrary.newImmutableLibrary("test",
+                                             listOf(targetSources.file),
+                                             listOf(targetBinaries.file),
+                                             emptySet(),
+                                             null
         )
       )
     }
@@ -203,9 +204,9 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
     fileBasedIndex.assertHasDataInIndex(parentContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
     fileBasedIndex.assertNoDataInIndex(excludedFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
     assertContainsElements(FilenameIndex.getAllFilesByExt(project, "txt", GlobalSearchScope.projectScope(project)),
-                       parentContentRootFile.file, nestedContentRootFile.file)
+                           parentContentRootFile.file, nestedContentRootFile.file)
     assertContainsElements(FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.projectScope(project)),
-                       parentContentRootFile.file, nestedContentRootFile.file)
+                           parentContentRootFile.file, nestedContentRootFile.file)
 
     PsiTestUtil.removeContentEntry(module, nestedContentRoot.file)
     assertIndexableFiles(parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
@@ -214,9 +215,9 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
     fileBasedIndex.assertHasDataInIndex(excludedFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
 
     assertContainsElements(FilenameIndex.getAllFilesByExt(project, "txt", GlobalSearchScope.projectScope(project)),
-                       parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
+                           parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
     assertContainsElements(FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.projectScope(project)),
-                       parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
+                           parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
   }
 
   private fun FileBasedIndex.assertHasDataInIndex(file: VirtualFile, vararg indexIds: ID<*, *>) {

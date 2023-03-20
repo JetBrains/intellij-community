@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
@@ -13,6 +13,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -28,10 +29,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
-import com.intellij.util.io.exists
+import com.intellij.ui.layout.chooseFile
+import com.intellij.ui.layout.selected
 import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import java.io.File
@@ -39,6 +38,7 @@ import java.nio.file.Paths
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JRadioButton
+import kotlin.io.path.exists
 
 class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                              CredentialStoreBundle.message("password.safe.configurable"),
@@ -99,7 +99,6 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStore(isSave = false, isEvenMemoryOnly = providerType != ProviderType.MEMORY_ONLY)
 
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
-    @Suppress("CascadeIf")
     if (oldProviderType != providerType) {
       when (providerType) {
         ProviderType.MEMORY_ONLY -> {
@@ -191,63 +190,64 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
   override fun getComponent(): JPanel {
     myPanel = panel {
       buttonsGroup(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) {
-        if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
-          row {
-            radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
-          }
-        }
+        row {
+          radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
+        }.visible(CredentialStoreManager.getInstance().isSupported(ProviderType.KEYCHAIN))
 
         row {
           @Suppress("DialogTitleCapitalization") // KeePass is a proper noun
           keepassRadioButton = radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
-        }
+        }.visible(CredentialStoreManager.getInstance().isSupported(ProviderType.KEEPASS))
 
         indent {
-          rowsRange {
-            row(CredentialStoreBundle.message("settings.password.database")) {
-              val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
-                it.isDirectory || it.name.endsWith(".kdbx")
-              }
-              keePassDbFile = textFieldWithBrowseButton(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"),
-                fileChooserDescriptor = fileChooserDescriptor,
-                fileChosen = {
-                  val path = when {
-                    it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
-                    else -> it.path
-                  }
-                  return@textFieldWithBrowseButton File(path).path
-                })
-                .resizableColumn()
-                .horizontalAlign(HorizontalAlign.FILL)
-                .gap(RightGap.SMALL)
-                .apply {
-                  if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
-                }.component
-              actionsButton(
-                ClearKeePassDatabaseAction(),
-                ImportKeePassDatabaseAction(),
-                ChangeKeePassDatabaseMasterPasswordAction()
-              )
+          row(CredentialStoreBundle.message("settings.password.database")) {
+            val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
+              it.isDirectory || it.name.endsWith(".kdbx")
             }
-            row {
-              usePgpKey = checkBox(usePgpKeyText())
-                .bindSelected({ !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
-                  { if (!it) settings.state.pgpKeyId = null })
-                .gap(RightGap.SMALL)
-                .component
+            keePassDbFile = textFieldWithBrowseButton(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"),
+                                                      fileChooserDescriptor = fileChooserDescriptor,
+                                                      fileChosen = {
+                                                        val path = when {
+                                                          it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
+                                                          else -> it.path
+                                                        }
+                                                        return@textFieldWithBrowseButton File(path).path
+                                                      })
+              .resizableColumn()
+              .align(AlignX.FILL)
+              .gap(RightGap.SMALL)
+              .apply {
+                if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
+              }.component
+            actionsButton(
+              ClearKeePassDatabaseAction(),
+              ImportKeePassDatabaseAction(),
+              ChangeKeePassDatabaseMasterPasswordAction()
+            )
+          }
+          row {
+            usePgpKey = checkBox(usePgpKeyText())
+              .bindSelected({ !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
+                            { if (!it) settings.state.pgpKeyId = null })
+              .gap(RightGap.SMALL)
+              .component
 
-              pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer { value, _, _ -> setText("${value.userId} (${value.keyId})") }).
-              bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
-                { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
-                .columns(COLUMNS_MEDIUM)
-                .enabledIf(usePgpKey.selected)
-                .component
-            }
-          }.enabledIf(keepassRadioButton.selected)
+            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer {
+              text = "${it.userId} (${it.keyId})"
+            }).bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
+                        { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
+              .columns(COLUMNS_MEDIUM)
+              .enabledIf(usePgpKey.selected)
+              .component
+          }
         }
+          .enabledIf(keepassRadioButton.selected)
+          .visible(CredentialStoreManager.getInstance().isSupported(ProviderType.KEEPASS))
+
         row {
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
-        }
+        }.visible(CredentialStoreManager.getInstance().isSupported(ProviderType.MEMORY_ONLY))
+
       }.bind(settings::providerType)
     }
     return myPanel
@@ -295,6 +295,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = getNewDbFile()?.exists() ?: false
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 
   private inner class ImportKeePassDatabaseAction : DumbAwareAction(CredentialStoreBundle.message("action.text.password.safe.import")) {
@@ -327,6 +329,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = getNewDbFileAsString() != null
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 }
 

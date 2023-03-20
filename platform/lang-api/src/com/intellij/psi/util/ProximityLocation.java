@@ -24,9 +24,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class ProximityLocation implements UserDataHolder {
   private final PsiElement myPosition;
   private final Module myPositionModule;

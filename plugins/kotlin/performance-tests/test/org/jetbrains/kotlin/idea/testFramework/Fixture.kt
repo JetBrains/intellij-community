@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.testFramework
 
@@ -19,22 +19,16 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.search.IndexPatternBuilder
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.xml.XmlFileNSInfoProvider
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExpectedHighlightingData
@@ -46,7 +40,10 @@ import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.perf.suite.CursorConfig
+import org.jetbrains.kotlin.idea.perf.suite.TypingConfig
+import org.jetbrains.kotlin.idea.performance.tests.utils.*
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.openInEditor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
@@ -59,7 +56,11 @@ class Fixture(
 ) : AutoCloseable {
     private var delegate = EditorTestFixture(project, editor, vFile)
 
-    private var savedText: String? = null
+    var savedText: String? = null
+        get() = field
+        private set(value) {
+            field = value
+        }
 
     val document: Document
         get() = editor.document
@@ -71,6 +72,11 @@ class Fixture(
         storeText()
     }
 
+    fun simpleFilename(): String {
+        val lastIndexOf = fileName.lastIndexOf('/')
+        return if (lastIndexOf >= 0) fileName.substring(lastIndexOf + 1) else fileName
+    }
+
     fun doHighlighting(): List<HighlightInfo> = delegate.doHighlighting()
 
     fun findUsages(psiElement: PsiElement): Set<Usage> {
@@ -79,12 +85,35 @@ class Fixture(
         return findUsagesManager.doFindUsages(arrayOf(psiElement), emptyArray(), handler, handler.findUsagesOptions, false).usages
     }
 
+    fun type() {
+        val string = typingConfig.insertString ?: error("insertString has to be specified")
+        for (i in string.indices) {
+            type(string[i])
+            typingConfig.delayMs?.let(Thread::sleep)
+        }
+    }
+
     fun type(s: String) {
         delegate.type(s)
     }
 
     fun type(c: Char) {
         delegate.type(c)
+    }
+
+    fun typeAndHighlight(): List<HighlightInfo> {
+        type()
+        return doHighlighting()
+    }
+
+    fun moveCursor() {
+        val tasksIdx = cursorConfig.marker?.let { marker ->
+            text.indexOf(marker).also {
+                check(it > 0) { "marker '$marker' not found in ${fileName}" }
+            }
+        } ?: 0
+
+        editor.caretModel.moveToOffset(tasksIdx)
     }
 
     fun performEditorAction(actionId: String): Boolean {
@@ -144,10 +173,26 @@ class Fixture(
         dispatchAllInvocationEvents()
     }
 
+    fun openInEditor() {
+        openInEditor(project, vFile)
+    }
+
+    fun updateScriptDependenciesIfNeeded() {
+        if (isAKotlinScriptFile(fileName)) {
+            runAndMeasure("update script dependencies for $fileName") {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
+            }
+        }
+    }
+
     override fun close() {
         savedText = null
         project.close(vFile)
     }
+
+    val cursorConfig = CursorConfig(this)
+
+    val typingConfig = TypingConfig(this)
 
     companion object {
         // quite simple impl - good so far
@@ -195,7 +240,7 @@ class Fixture(
 
 
         fun openFixture(project: Project, fileName: String): Fixture {
-            val fileInEditor = openFileInEditor(project, fileName)
+            val fileInEditor = openInEditor(project, fileName)
             val file = fileInEditor.psiFile
             val editorFactory = EditorFactory.getInstance()
             val editor = editorFactory.getEditors(fileInEditor.document, project)[0]
@@ -203,70 +248,12 @@ class Fixture(
             return Fixture(fileName, project, editor, file)
         }
 
-        fun openFixture(project: Project, file: VirtualFile): Fixture {
-            val fileInEditor = openFileInEditor(project, file)
+        fun openFixture(project: Project, file: VirtualFile, fileName: String? = null): Fixture {
+            val fileInEditor = openInEditor(project, file)
             val psiFile = fileInEditor.psiFile
             val editorFactory = EditorFactory.getInstance()
             val editor = editorFactory.getEditors(fileInEditor.document, project)[0]
-            val fileName = project.relativePath(file)
-            return Fixture(fileName, project, editor, psiFile)
-        }
-
-        private fun baseName(name: String): String {
-            val index = name.lastIndexOf("/")
-            return if (index > 0) name.substring(index + 1) else name
-        }
-
-        internal fun projectFileByName(project: Project, name: String): PsiFile {
-            val fileManager = VirtualFileManager.getInstance()
-            val url = "${project.guessProjectDir()}/$name"
-            fileManager.refreshAndFindFileByUrl(url)?.let {
-                return it.toPsiFile(project)!!
-            }
-
-            val baseFileName = baseName(name)
-            val projectBaseName = baseName(project.name)
-
-            val virtualFiles = FilenameIndex.getVirtualFilesByName(
-                project,
-                baseFileName, true,
-                GlobalSearchScope.projectScope(project)
-            )
-                .filter { it.canonicalPath?.contains("/$projectBaseName/$name") ?: false }.toList()
-
-            assertEquals(
-                "expected the only file with name '$name'\n, it were: [${virtualFiles.map { it.canonicalPath }.joinToString("\n")}]",
-                1,
-                virtualFiles.size
-            )
-            return virtualFiles.iterator().next().toPsiFile(project)!!
-        }
-
-        fun openFileInEditor(project: Project, name: String): EditorFile {
-            val psiFile = projectFileByName(project, name)
-            return openFileInEditor(project, psiFile.virtualFile)
-        }
-
-        fun openFileInEditor(project: Project, vFile: VirtualFile): EditorFile {
-            val fileDocumentManager = FileDocumentManager.getInstance()
-            val fileEditorManager = FileEditorManager.getInstance(project)
-
-            val psiFile = vFile.toPsiFile(project) ?: error("Unable to find psi file for ${vFile.path}")
-
-            assertTrue("file $vFile is not indexed yet", FileIndexFacade.getInstance(project).isInContent(vFile))
-
-            runInEdtAndWait {
-                fileEditorManager.openFile(vFile, true)
-            }
-            val document = fileDocumentManager.getDocument(vFile) ?: error("no document for $vFile found")
-
-            assertNotNull("doc not found for $vFile", EditorFactory.getInstance().getEditors(document))
-            assertTrue("expected non empty doc", document.text.isNotEmpty())
-
-            val offset = psiFile.textOffset
-            assertTrue("side effect: to load the text", offset >= 0)
-
-            return EditorFile(psiFile = psiFile, document = document)
+            return Fixture(fileName ?: project.relativePath(file), project, editor, psiFile)
         }
 
         /**
@@ -281,7 +268,7 @@ class Fixture(
             lookupElements: List<String>,
             revertChangesAtTheEnd: Boolean = true
         ) {
-            val fileInEditor = openFileInEditor(project, fileName)
+            val fileInEditor = openInEditor(project, fileName)
             val editor = EditorFactory.getInstance().getEditors(fileInEditor.document, project)[0]
             val fixture = Fixture(fileName, project, editor, fileInEditor.psiFile)
 
@@ -324,7 +311,6 @@ class Fixture(
     }
 }
 
-data class EditorFile(val psiFile: PsiFile, val document: Document)
 
 fun KotlinLightCodeInsightFixtureTestCase.removeInfoMarkers() {
     ExpectedHighlightingData(editor.document, true, true).init()

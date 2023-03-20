@@ -35,7 +35,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
   }
 
   @Override
-  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(@NotNull Project project, @NotNull BaseAnalysisActionDialog dialog) {
     myConfigurable = new JavadocConfigurable(JavadocGenerationManager.getInstance(project).getConfiguration(), project);
     JComponent component = myConfigurable.createComponent();
     myConfigurable.reset();
@@ -87,10 +87,10 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
                                                              String scopeTitle,
                                                              boolean rememberScope,
                                                              AnalysisUIOptions uiOptions,
-                                                             List<ModelScopeItem> items) {
+                                                             List<? extends ModelScopeItem> items) {
     return new BaseAnalysisActionDialog(title, scopeTitle, project, items, uiOptions, rememberScope) {
       @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
+      protected JComponent getAdditionalActionSettings(@NotNull Project project) {
         return GenerateJavadocAction.this.getAdditionalActionSettings(project, this);
       }
 

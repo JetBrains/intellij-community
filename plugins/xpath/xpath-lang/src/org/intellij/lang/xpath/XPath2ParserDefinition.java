@@ -15,6 +15,8 @@ import org.intellij.lang.xpath.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
 
 public class XPath2ParserDefinition extends XPathParserDefinition {
+  public static final IFileElementType FILE = new IFileElementType("XPATH2_FILE", XPathFileType.XPATH2.getLanguage());
+
   @NotNull
   @Override
   public Lexer createLexer(Project project) {
@@ -23,7 +25,7 @@ public class XPath2ParserDefinition extends XPathParserDefinition {
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
-    return XPath2ElementTypes.FILE;
+    return FILE;
   }
 
   @Override

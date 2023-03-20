@@ -177,18 +177,13 @@ public class ConvertMapToClassIntention extends Intention {
   @Nullable
   private static GrParameter getParameterByArgument(GrExpression arg) {
     PsiElement parent = PsiUtil.skipParentheses(arg.getParent(), true);
-    if (!(parent instanceof GrArgumentList)) return null;
-    final GrArgumentList argList = (GrArgumentList)parent;
+    if (!(parent instanceof final GrArgumentList argList)) return null;
 
     parent = parent.getParent();
-    if (!(parent instanceof GrMethodCall)) return null;
+    if (!(parent instanceof final GrMethodCall methodCall)) return null;
+    if (!(methodCall.getInvokedExpression() instanceof GrReferenceExpression ref)) return null;
 
-    final GrMethodCall methodCall = (GrMethodCall)parent;
-    final GrExpression expression = methodCall.getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return null;
-
-    final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
-    if (resolveResult == null) return null;
+    final GroovyResolveResult resolveResult = ref.advancedResolve();
 
     GrClosableBlock[] closures = methodCall.getClosureArguments();
     final Map<GrExpression, Pair<PsiParameter, PsiType>> mapToParams = GrClosureSignatureUtil
@@ -206,8 +201,7 @@ public class ConvertMapToClassIntention extends Intention {
     final GrParameter parameter = getParameterByArgument(map);
     if (parameter == null) return null;
     final PsiElement parent = parameter.getParent().getParent();
-    if (!(parent instanceof PsiMethod)) return null;
-    final PsiMethod method = (PsiMethod)parent;
+    if (!(parent instanceof PsiMethod method)) return null;
     if (ApplicationManager.getApplication().isUnitTestMode() || Messages.showYesNoDialog(
       map.getProject(),
       GroovyBundle.message("do.you.want.to.change.type.of.parameter.in.method", parameter.getName(), method.getName()),
@@ -253,8 +247,7 @@ public class ConvertMapToClassIntention extends Intention {
 class MyPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrListOrMap)) return false;
-    final GrListOrMap map = (GrListOrMap)element;
+    if (!(element instanceof GrListOrMap map)) return false;
     final GrNamedArgument[] namedArguments = map.getNamedArguments();
     final GrExpression[] initializers = map.getInitializers();
     if (initializers.length != 0) return false;

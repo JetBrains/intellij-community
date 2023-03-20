@@ -26,15 +26,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.PsiFileStub;
-import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class SubstrateRef {
   private static final Logger LOG = Logger.getInstance(SubstrateRef.class);
 
@@ -57,7 +53,7 @@ public abstract class SubstrateRef {
   public abstract PsiFile getContainingFile();
 
   @NotNull
-  static SubstrateRef createInvalidRef(@NotNull final StubBasedPsiElementBase<?> psi) {
+  static SubstrateRef createInvalidRef(@NotNull StubBasedPsiElementBase<?> psi) {
     return new SubstrateRef() {
       @NotNull
       @Override
@@ -78,7 +74,7 @@ public abstract class SubstrateRef {
     };
   }
 
-  public static @NotNull SubstrateRef createAstStrongRef(@NotNull final ASTNode node) {
+  public static @NotNull SubstrateRef createAstStrongRef(@NotNull ASTNode node) {
     return new SubstrateRef() {
 
       @NotNull
@@ -127,7 +123,7 @@ public abstract class SubstrateRef {
     public boolean isValid() {
       StubElement<?> parent = myStub.getParentStub();
       if (parent == null) {
-        LOG.error("No parent for stub " + myStub + " of class " + myStub.getClass());
+        reportInvalidStubHierarchyError(myStub);
         return false;
       }
       PsiElement psi = parent.getPsi();
@@ -139,21 +135,32 @@ public abstract class SubstrateRef {
     public PsiFile getContainingFile() {
       StubElement<?> stub = myStub;
       while (!(stub instanceof PsiFileStub)) {
-        stub = stub.getParentStub();
+        StubElement<?> parentStub = stub.getParentStub();
+        if (parentStub == null) {
+          return reportInvalidStubHierarchyError(stub);
+        }
+        stub = parentStub;
       }
       PsiFile psi = (PsiFile)stub.getPsi();
       if (psi != null) {
         return psi;
       }
-      return reportError(stub);
+      return reportFileInvalidError((PsiFileStub<?>)stub);
     }
 
-    private PsiFile reportError(@NotNull StubElement<?> stub) {
+    private PsiFile reportInvalidStubHierarchyError(@NotNull StubElement<?> stub) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+      throw new PsiInvalidElementAccessException(myStub.getPsi(),
+                                                 "stub hierarchy is invalid: the parent of " + stub + " (" + stub.getClass() + ")" +
+                                                 " is null, even though it's not a PsiFileStub", null);
+    }
+
+    private PsiFile reportFileInvalidError(@NotNull PsiFileStub<?> stub) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
 
-      String reason = ((PsiFileStubImpl<?>)stub).getInvalidationReason();
+      String reason = stub.getInvalidationReason();
       PsiInvalidElementAccessException exception =
-        new PsiInvalidElementAccessException(myStub.getPsi(), "no psi for file stub " + stub + ", invalidation reason=" + reason, null);
+        new PsiInvalidElementAccessException(myStub.getPsi(), "no psi for file stub " + stub + " ("+stub.getClass()+"), invalidation reason=" + reason, null);
       if (PsiFileImpl.STUB_PSI_MISMATCH.equals(reason)) {
         // we're between finding stub-psi mismatch and the next EDT spot where the file is reparsed and stub rebuilt
         //    see com.intellij.psi.impl.source.PsiFileImpl.rebuildStub()

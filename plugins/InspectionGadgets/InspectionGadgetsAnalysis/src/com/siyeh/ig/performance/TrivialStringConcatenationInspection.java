@@ -15,11 +15,15 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,8 +35,11 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class TrivialStringConcatenationInspection extends BaseInspection {
+import java.util.stream.Stream;
+
+public class TrivialStringConcatenationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -46,68 +53,174 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("trivial.string.concatenation.problem.descriptor");
   }
 
-  @NonNls
-  static String calculateReplacementExpression(PsiLiteralExpression expression, CommentTracker commentTracker) {
-    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-    if (!(parent instanceof PsiPolyadicExpression)) {
-      return null;
+  private static void fixBinaryExpression(PsiPolyadicExpression expression) {
+    CommentTracker commentTracker = new CommentTracker();
+    PsiExpression[] operands = expression.getOperands();
+    final PsiExpression lOperand = PsiUtil.skipParenthesizedExprDown(operands[0]);
+    final PsiExpression rOperand = PsiUtil.skipParenthesizedExprDown(operands[1]);
+    final PsiExpression replacement;
+    if (ExpressionUtils.isEmptyStringLiteral(lOperand)) {
+      replacement = rOperand;
     }
-    if (parent instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-      final PsiExpression lOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
-      final PsiExpression rOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
-      final PsiExpression replacement;
-      if (ExpressionUtils.isEmptyStringLiteral(lOperand)) {
-        replacement = rOperand;
+    else {
+      replacement = lOperand;
+    }
+    String newText = replacement == null ? "" : buildReplacement(replacement, false, commentTracker);
+    PsiReplacementUtil.replaceExpression(expression, newText, commentTracker);
+  }
+
+  private static void fixLastExpression(PsiPolyadicExpression polyadicExpression, boolean seenStringBefore) {
+    PsiExpression[] operands = polyadicExpression.getOperands();
+    PsiExpression beforeLast = operands[operands.length - 2];
+    StringBuilder builder = new StringBuilder();
+    boolean meetBeforeLast = false;
+    boolean afterPlus = false;
+    CommentTracker generalCommentTracker = new CommentTracker();
+    CommentTracker beforeLastCommentTracker = new CommentTracker();
+    for (PsiElement child : polyadicExpression.getChildren()) {
+      if (!meetBeforeLast) {
+        if (beforeLast == child) {
+          meetBeforeLast = true;
+        }
+        builder.append(child.getText());
+        generalCommentTracker.markUnchanged(child);
       }
       else {
-        replacement = lOperand;
-      }
-      return replacement == null ? "" : buildReplacement(replacement, false, commentTracker);
-    }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-    final PsiExpression[] operands = polyadicExpression.getOperands();
-    final PsiClassType stringType = TypeUtils.getStringType(expression);
-    boolean seenString = false;
-    boolean seenEmpty = false;
-    boolean replaced = false;
-    PsiExpression operandToReplace = null;
-    final StringBuilder text = new StringBuilder();
-    for (PsiExpression operand : operands) {
-      if (operandToReplace != null && !replaced) {
-        if (ExpressionUtils.hasStringType(operand)) {
-          seenString = true;
+        if (child instanceof PsiJavaToken token && token.getTokenType() == JavaTokenType.PLUS) {
+          afterPlus = true;
         }
-        if (text.length() > 0) {
-          text.append(" + ");
+        if (!afterPlus) {
+          beforeLastCommentTracker.grabComments(child);
+          generalCommentTracker.markUnchanged(child);
         }
-        text.append(buildReplacement(operandToReplace, seenString, commentTracker));
-        text.append(" + ");
-        text.append(commentTracker.text(operand));
-        replaced = true;
-        continue;
       }
-      if (PsiUtil.skipParenthesizedExprDown(operand) == expression) {
-        seenEmpty = true;
-        continue;
-      }
-      if (seenEmpty && !replaced) {
-        operandToReplace = operand;
-        continue;
-      }
-      if (stringType.equals(operand.getType())) {
-        seenString = true;
-      }
-      if (text.length() > 0) {
-        text.append(" + ");
-      }
-      text.append(commentTracker.text(operand));
     }
-    if (!replaced && operandToReplace != null) {
-      text.append(" + ");
-      text.append(buildReplacement(operandToReplace, seenString, commentTracker));
+
+    String text = builder.toString().trim();
+    if(!seenStringBefore){
+      text = "String.valueOf(" + text + ')';
     }
-    return text.toString();
+
+    String finalText = text;
+    final PsiElement replacementExpression =
+      CodeStyleManager.getInstance(polyadicExpression.getProject()).performActionWithFormatterDisabled(new Computable<>() {
+        @Override
+        public PsiElement compute() {
+          return generalCommentTracker.replaceAndRestoreComments(polyadicExpression, finalText);
+        }
+      });
+
+    if (replacementExpression instanceof PsiPolyadicExpression psiPolyadicExpression) {
+      PsiExpression[] expressionOperands = psiPolyadicExpression.getOperands();
+      if (expressionOperands.length == 0) {
+        return;
+      }
+      PsiExpression lastOperand = expressionOperands[expressionOperands.length - 1];
+      beforeLastCommentTracker.insertCommentsBefore(lastOperand);
+    }
+  }
+
+  private static void fixExpressionInMiddle(PsiExpression expression, PsiPolyadicExpression polyadicExpression, boolean seenString) {
+    PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+    if (parent == null) {
+      return;
+    }
+
+    //might be null if expression is the first operand
+    @Nullable PsiElement previousPlus = expression.getPrevSibling();
+    while (previousPlus != null && !(previousPlus instanceof PsiJavaToken javaToken && javaToken.getTokenType() == JavaTokenType.PLUS)) {
+      previousPlus = previousPlus.getPrevSibling();
+    }
+
+    PsiElement nextPlus = expression.getNextSibling();
+    while (nextPlus != null && !(nextPlus instanceof PsiJavaToken javaToken && javaToken.getTokenType() == JavaTokenType.PLUS)) {
+      nextPlus = nextPlus.getNextSibling();
+    }
+    if (nextPlus == null) {
+      return;
+    }
+
+    int position = 0;
+    PsiExpression[] operands = polyadicExpression.getOperands();
+    for (int i = 0; i < operands.length; i++) {
+      if (operands[i] == expression) {
+        position = i;
+      }
+    }
+
+    if (position >= operands.length - 1) {
+      return;
+    }
+
+    PsiExpression nextExpression = operands[position + 1];
+    StringBuilder builder = new StringBuilder();
+
+    boolean isFirstOperand = operands[0] == expression;
+    boolean meetPreviousPlus = isFirstOperand;
+    boolean meetNextPlus = false;
+    boolean meetNextOperand = false;
+    CommentTracker generalTracker = new CommentTracker();
+    CommentTracker firstTracker = new CommentTracker();
+    //base case: ..expr_+_""_+_expr..
+    for (PsiElement child : polyadicExpression.getChildren()) {
+      if (!meetPreviousPlus) {
+        // .<here>.expr_+_""_+_expr..
+        if (previousPlus != child) {
+          builder.append(child.getText());
+          generalTracker.markUnchanged(child);
+        }
+        else {
+          // ..expr_+<here>_""_+_expr..
+          meetPreviousPlus = true;
+          builder.append(child.getText());
+        }
+      }
+      else if (!meetNextPlus) {
+        //skip elements between pluses
+        if (nextPlus == child) {
+          // ..expr_+_""_+<here>_expr..
+          meetNextPlus = true;
+        }
+      }
+      else if (!meetNextOperand) {
+        if (nextExpression != child) {
+          if (isFirstOperand) {
+            // ""_+_<here>expr - it is impossible to build expression with comments in the beginning
+            firstTracker.grabComments(child);
+            generalTracker.markUnchanged(child);
+          }
+          else {
+            // ..expr_+_""_+_<here>expr..
+            builder.append(child.getText());
+            generalTracker.markUnchanged(child);
+          }
+        }
+        else {
+          // ..expr_+_""_+_expr<here>..
+          builder.append(buildReplacement(nextExpression, seenString, generalTracker));
+          meetNextOperand = true;
+        }
+      }
+      else {
+        // ..expr_+_""_+_expr<here>..<here>
+        builder.append(child.getText());
+        generalTracker.markUnchanged(child);
+      }
+    }
+    final PsiElement replacementExpression =
+      CodeStyleManager.getInstance(polyadicExpression.getProject()).performActionWithFormatterDisabled(new Computable<>() {
+        @Override
+        public PsiElement compute() {
+          return generalTracker.replaceAndRestoreComments(polyadicExpression, builder.toString().trim());
+        }
+      });
+    if (replacementExpression instanceof PsiPolyadicExpression psiPolyadicExpression) {
+      PsiExpression[] expressionOperands = psiPolyadicExpression.getOperands();
+      if (expressionOperands.length - 1 < position) {
+        return;
+      }
+      firstTracker.insertCommentsBefore(replacementExpression);
+    }
   }
 
   @NonNls
@@ -119,26 +232,28 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         return "null";
       }
       else {
-        return "String.valueOf((Object)null)";
+        return "String.valueOf((Object) null)";
       }
     }
     if (seenString || ExpressionUtils.hasStringType(operandToReplace)) {
       return operandToReplace.getText();
     }
+    PsiExpression skipDown = PsiUtil.skipParenthesizedExprDown(operandToReplace);
+    operandToReplace = skipDown == null ? operandToReplace : skipDown;
     return "String.valueOf(" + commentTracker.text(operandToReplace) + ')';
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryTemporaryObjectFix((PsiLiteralExpression)infos[0]);
+    return new UnnecessaryTemporaryObjectFix();
   }
 
   private static class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
 
     private final @IntentionName String m_name;
 
-    UnnecessaryTemporaryObjectFix(PsiLiteralExpression expression) {
-      m_name = InspectionGadgetsBundle.message("string.replace.quickfix", calculateReplacementExpression(expression, new CommentTracker()));
+    UnnecessaryTemporaryObjectFix() {
+      m_name = InspectionGadgetsBundle.message("string.replace.quickfix");
     }
 
     @Override
@@ -154,15 +269,52 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();
-      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (!(parent instanceof PsiExpression)) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement current = descriptor.getPsiElement();
+      while (current != null && current.getParent() instanceof PsiParenthesizedExpression) {
+        current = current.getParent();
+      }
+      if (!(current instanceof PsiExpression expression)) {
         return;
       }
-      CommentTracker commentTracker = new CommentTracker();
-      final String newExpression = calculateReplacementExpression(expression, commentTracker);
-      PsiReplacementUtil.replaceExpression((PsiExpression)parent, newExpression, commentTracker);
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
+        return;
+      }
+      PsiType polyadicExpressionType = polyadicExpression.getType();
+      if (polyadicExpressionType == null || !polyadicExpressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return;
+      }
+
+      PsiExpression[] operands = polyadicExpression.getOperands();
+
+      //for fix all case, but I think, it is impossible
+      if (operands.length == 1) {
+        return;
+      }
+
+      if (operands.length == 2) {
+        fixBinaryExpression(polyadicExpression);
+        return;
+      }
+
+      boolean seenString = Stream.of(operands)
+        .takeWhile(t -> t != expression)
+        .anyMatch(t -> t.getType() != null && t.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING));
+
+      if (operands[0] == expression) {
+        PsiType type2 = operands[2].getType();
+        if (type2 != null && type2.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          seenString = true;
+        }
+      }
+
+      if (operands[operands.length - 1] == expression) {
+        fixLastExpression(polyadicExpression, seenString);
+      }
+      else {
+        fixExpressionInMiddle(expression, polyadicExpression, seenString);
+      }
     }
   }
 
@@ -174,7 +326,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
   private static class TrivialStringConcatenationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!ExpressionUtils.hasStringType(expression)) {
         return;
@@ -188,7 +340,8 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         if (!ExpressionUtils.isEmptyStringLiteral(operand)) {
           continue;
         }
-        if (PsiUtil.isConstantExpression(expression)) {
+        if (PsiUtil.isConstantExpression(expression) &&
+            ContainerUtil.exists(operands, o -> !TypeUtils.isJavaLangString(o.getType()))) {
           return;
         }
         registerError(operand, operand);

@@ -26,9 +26,6 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Collections;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgBranchCreateCommand {
 
   private final Project project;

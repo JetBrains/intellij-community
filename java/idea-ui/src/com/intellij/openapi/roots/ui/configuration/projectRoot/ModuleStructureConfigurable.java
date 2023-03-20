@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -50,7 +50,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,15 +215,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void updateModuleEditorSelection(final NamedConfigurable configurable) {
-    if (configurable instanceof ModuleConfigurable) {
-      final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
+    if (configurable instanceof ModuleConfigurable moduleConfigurable) {
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       if (editor != null) { //already deleted
         editor.init(myHistory);
       }
     }
-    if (configurable instanceof FacetConfigurable) {
-      ((FacetConfigurable)configurable).getEditor().onFacetSelected();
+    if (configurable instanceof FacetConfigurable facetConfigurable) {
+      facetConfigurable.getEditor().onFacetSelected();
     }
   }
 
@@ -340,8 +338,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     addItemsChangeListener(new ItemsChangeListener() {
       @Override
       public void itemChanged(@Nullable Object deletedItem) {
-        if (deletedItem instanceof Library) {
-          final Library library = (Library)deletedItem;
+        if (deletedItem instanceof Library library) {
           final MyNode node = findNodeByObject(myRoot, library);
           if (node != null) {
             final TreeNode parent = node.getParent();
@@ -472,8 +469,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   /**
    * @deprecated use {@link ProjectStructureConfigurable#getModulesConfig()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static ModuleStructureConfigurable getInstance(final Project project) {
     return ProjectStructureConfigurable.getInstance(project).getModulesConfig();
   }
@@ -542,8 +538,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  private void addModule(boolean anImport, String defaultModuleName) {
-    final List<Module> modules = myContext.myModulesConfigurator.addModule(myTree, anImport, defaultModuleName);
+  private void addModule(boolean anImport) {
+    final List<Module> modules;
+    if (anImport) {
+      modules = myContext.myModulesConfigurator.addImportModule(myTree);
+    } else {
+      modules = myContext.myModulesConfigurator.addNewModule();
+    }
     if (modules != null && !modules.isEmpty()) {
       //new module wizard may add yet another SDK to the project
       myProjectStructureConfigurable.getProjectJdksModel().syncSdks();
@@ -791,6 +792,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         .ifEq(LangDataKeys.MODULE_CONTEXT_ARRAY).thenGet(this::getModuleContexts)
         .ifEq(LangDataKeys.MODULE_CONTEXT).thenGet(() -> getSelectedModule())
         .ifEq(LangDataKeys.MODIFIABLE_MODULE_MODEL).thenGet(() -> myContext.myModulesConfigurator.getModuleModel())
+        .ifEq(PlatformCoreDataKeys.SELECTED_ITEM).thenGet(() -> getSelectedObject())
         .orNull();
     }
 
@@ -840,6 +842,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (myContext.myModulesConfigurator != null) {
         presentation.setVisible(myContext.myModulesConfigurator.getModuleModel().hasModuleGroups());
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1011,6 +1018,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   static final class CopiedModuleBuilder extends ModuleBuilder {
@@ -1072,15 +1084,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      String defaultModuleName = "untitled";
-      MyNode selectedNode = getSelectedNode();
-      if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && selectedNode instanceof ModuleGroupNodeImpl) {
-        ModuleGroup group = ((ModuleGroupNode)selectedNode).getModuleGroup();
-        if (group != null && !group.getGroupPathList().isEmpty()) {
-          defaultModuleName = StringUtil.join(group.getGroupPathList(), ".") + ".untitled";
-        }
-      }
-      addModule(myImport, defaultModuleName);
+      addModule(myImport);
     }
   }
 

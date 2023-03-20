@@ -43,7 +43,7 @@ public final class EditorEmbeddedComponentManager {
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
     return inlays.add(component, properties.resizePolicy, properties.rendererFactory,
-                      properties.relatesToPrecedingText, properties.showAbove, properties.showWhenFolded,
+                      properties.relatesToPrecedingText, properties.showAbove, properties.showWhenFolded, properties.fullWidth,
                       properties.priority, properties.offset);
   }
 
@@ -94,21 +94,28 @@ public final class EditorEmbeddedComponentManager {
     final boolean relatesToPrecedingText;
     final boolean showAbove;
     final boolean showWhenFolded;
+    final boolean fullWidth;
     final int priority;
     final int offset;
 
     public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
                       boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
-      this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, priority, offset);
+      this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
     }
 
     public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
                       boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
+      this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
+    }
+
+    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, boolean fullWidth, int priority, int offset) {
       this.resizePolicy = resizePolicy;
       this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.showAbove = showAbove;
       this.showWhenFolded = showWhenFolded;
+      this.fullWidth = fullWidth;
       this.priority = priority;
       this.offset = offset;
     }
@@ -126,7 +133,7 @@ public final class EditorEmbeddedComponentManager {
     private final Properties.RendererFactory myRendererFactory;
     private int myCustomWidth = UNDEFINED;
     private int myCustomHeight = UNDEFINED;
-    private final @NotNull JScrollPane myEditorScrollPane;
+    protected final @NotNull JScrollPane myEditorScrollPane;
     private final @NotNull ComponentInlays.ResizeListener myResizeListener;
     private @Nullable Inlay<MyRenderer> myInlay;
 
@@ -248,6 +255,22 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
+  public static class FullEditorWidthRenderer extends MyRenderer {
+
+    FullEditorWidthRenderer(@NotNull JComponent component,
+                            @NotNull ResizePolicy resizePolicy,
+                            Properties.@Nullable RendererFactory rendererFactory,
+                            @NotNull JScrollPane editorScrollPane,
+                            ComponentInlays.@NotNull ResizeListener resizeListener) {
+      super(component, resizePolicy, rendererFactory, editorScrollPane, resizeListener);
+    }
+
+    @Override
+    int getPreferredWidth() {
+      return myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth();
+    }
+  }
+
   private static class ComponentInlays implements Disposable {
     private static final Logger LOG = Logger.getInstance(ComponentInlays.class);
     private final EditorEx myEditor;
@@ -262,10 +285,11 @@ public final class EditorEmbeddedComponentManager {
 
     @Nullable
     Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
-                          boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, int priority, int offset) {
+                          boolean relatesToPrecedingText, boolean showAbove, boolean showWhenFolded, boolean fullWidth, int priority, int offset) {
       if (myEditor.isDisposed()) return null;
 
-      MyRenderer renderer = new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
+
+      MyRenderer renderer = fullWidth ? new FullEditorWidthRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener) : new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
       Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset,
                                                                          new InlayProperties()
                                                                            .relatesToPrecedingText(relatesToPrecedingText)
@@ -341,7 +365,7 @@ public final class EditorEmbeddedComponentManager {
       }, this);
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
-        public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+        public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
           if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer) {
             JComponent component = (JComponent)inlay.getRenderer();
             // This method can be called while validating the same component. Prevent resetting parent validation flags.
@@ -352,7 +376,7 @@ public final class EditorEmbeddedComponentManager {
         }
 
         @Override
-        public void onRemoved(@NotNull Inlay inlay) {
+        public void onRemoved(@NotNull Inlay<?> inlay) {
           Disposer.dispose(inlay);
         }
       }, this);

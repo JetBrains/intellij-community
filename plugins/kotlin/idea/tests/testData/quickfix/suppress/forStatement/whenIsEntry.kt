@@ -5,3 +5,5 @@ fun foo() {
         is Any?<caret>? -> {}
     }
 }
+
+// IGNORE_FIR

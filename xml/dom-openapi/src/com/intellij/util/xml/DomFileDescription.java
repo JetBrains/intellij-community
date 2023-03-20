@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,9 +12,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentInstanceMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,18 +26,23 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Use {@code com.intellij.dom.fileMetaData} extension point to register.
  *
- * @author peter
  * @see MergingFileDescription
  */
 public class DomFileDescription<T> {
-
   /**
    * @deprecated Register with {@code com.intellij.dom.fileMetaData} extension point instead.
    */
   @Deprecated
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
-  private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
+  private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentFactoryMap.createMap(key -> {
+    try {
+      return key.newInstance();
+    }
+    catch (InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Couldn't instantiate " + key, e);
+    }
+  });
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final String[] myAllPossibleRootTagNamespaces;
@@ -49,7 +53,7 @@ public class DomFileDescription<T> {
   private final Map<String, NotNullFunction<XmlTag, List<String>>> myNamespacePolicies =
     new ConcurrentHashMap<>();
 
-  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls String @NotNull ... allPossibleRootTagNamespaces) {
+  public DomFileDescription(final Class<T> rootElementClass, final @NonNls String rootTagName, @NonNls String @NotNull ... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY
@@ -58,20 +62,6 @@ public class DomFileDescription<T> {
 
   public String @NotNull [] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
-  }
-
-  /**
-   * Register an implementation class to provide additional functionality for DOM elements.
-   *
-   * @param domElementClass     interface class.
-   * @param implementationClass abstract implementation class.
-   * @see #initializeFileDescription()
-   * @deprecated use dom.implementation extension point instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public final <Dom extends DomElement> void registerImplementation(Class<Dom> domElementClass, Class<? extends Dom> implementationClass) {
-    myImplementations.put(domElementClass, implementationClass);
   }
 
   /**
@@ -115,8 +105,7 @@ public class DomFileDescription<T> {
    * index is rebuilt correctly.
    * @deprecated use "domVersion" attribute of {@code com.intellij.dom.fileMetaData} extension instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public int getVersion() {
     return myRootTagName.hashCode();
   }

@@ -1,12 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsListener
@@ -16,18 +15,18 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcs.log.runInEdt
-import git4idea.GitVcs
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.ui.isStashToolWindowEnabled
 import git4idea.ui.StashInfo
 import java.util.*
 
 class GitStashTracker(private val project: Project) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val eventDispatcher = EventDispatcher.create(GitStashTrackerListener::class.java)
   private val updateQueue = MergingUpdateQueue("GitStashTracker", 300, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
@@ -35,7 +34,7 @@ class GitStashTracker(private val project: Project) : Disposable {
     private set
 
   init {
-    val connection: MessageBusConnection = project.messageBus.connect(this)
+    val connection = project.messageBus.connect(this)
     connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         if (GitRepositoryManager.getInstance(project).repositories.any { repo ->
@@ -51,6 +50,9 @@ class GitStashTracker(private val project: Project) : Disposable {
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
       scheduleRefresh()
     })
+
+    Disposer.register(this, disposableFlag)
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       scheduleRefresh()
     }
@@ -67,11 +69,11 @@ class GitStashTracker(private val project: Project) : Disposable {
         }
         catch (e: VcsException) {
           newStashes[repo.root] = Stashes.Error(e)
-          LOG.warn(e)
+          logger<GitStashTracker>().warn(e)
         }
       }
 
-      runInEdt(this) {
+      runInEdt(disposableFlag) {
         stashes = newStashes
 
         eventDispatcher.multicaster.stashesUpdated()
@@ -92,10 +94,6 @@ class GitStashTracker(private val project: Project) : Disposable {
     stashes = emptyMap()
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(GitStashTracker::class.java)
-  }
-
   sealed class Stashes {
     class Loaded(val stashes: List<StashInfo>) : Stashes()
     class Error(val error: VcsException) : Stashes()
@@ -110,13 +108,6 @@ fun GitStashTracker.isNotEmpty(): Boolean {
   return stashes.values.any { (it is GitStashTracker.Stashes.Error) || (it is GitStashTracker.Stashes.Loaded && it.stashes.isNotEmpty()) }
 }
 
-fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
-fun isStashToolWindowEnabled(project: Project): Boolean {
-  return stashToolWindowRegistryOption().asBoolean() &&
-         ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.keyInstanceMethod == GitVcs.getKey() }
-}
-
-fun isStashToolWindowAvailable(project: Project): Boolean {
-  return isStashToolWindowEnabled(project) &&
-         project.serviceIfCreated<GitStashTracker>()?.isNotEmpty() == true
+fun GitStashTracker.allStashes(): List<StashInfo> {
+  return stashes.values.filterIsInstance<GitStashTracker.Stashes.Loaded>().flatMap { it.stashes }
 }

@@ -1,28 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.logging
 
+import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ui.ListTable
-import com.intellij.codeInspection.ui.ListWrappingTableModel
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
 import com.siyeh.ig.BaseInspection
-import com.siyeh.ig.ui.UiUtils
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import javax.swing.JComponent
 
 class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspection() {
     companion object {
@@ -53,16 +52,14 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
             { (className, methodName) -> FqName("${className}.${methodName}") }
         )
 
-    @Suppress("DialogTitleCapitalization")
-    override fun createOptionsPanel(): JComponent? {
-        val table = ListTable(
-            ListWrappingTableModel(
-                listOf(loggerFactoryClassNames, loggerFactoryMethodNames),
-                KotlinBundle.message("title.logger.factory.class.name"),
-                KotlinBundle.message("title.logger.factory.method.name")
+    override fun getOptionsPane(): OptPane {
+        return pane(
+            table("",
+                  column("loggerFactoryClassNames", KotlinBundle.message("title.logger.factory.class.name"),
+                             JavaClassValidator().withTitle(KotlinBundle.message("title.choose.logger.factory.class"))),
+                  column("loggerFactoryMethodNames", KotlinBundle.message("title.logger.factory.method.name"))
             )
         )
-        return UiUtils.createAddRemoveTreeClassChooserPanel(table, KotlinBundle.message("title.choose.logger.factory.class"))
     }
 
     override fun readSettings(element: Element) {
@@ -145,7 +142,7 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
                     as? KtDotQualifiedExpression ?: return
             val receiver = argument.receiverExpression
             val selector = argument.selectorExpression ?: return
-            val psiFactory = KtPsiFactory(argument)
+            val psiFactory = KtPsiFactory(project)
             val newArgument = when (receiver) {
                 is KtClassLiteralExpression -> {
                     psiFactory.createExpressionByPattern("${containingClassName}::class.$0", selector)

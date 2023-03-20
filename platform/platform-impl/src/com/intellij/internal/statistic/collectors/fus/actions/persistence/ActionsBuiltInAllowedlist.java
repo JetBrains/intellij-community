@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 final class ActionsBuiltInAllowedlist {
   private static final ActionsBuiltInAllowedlist ourInstance = new ActionsBuiltInAllowedlist();
@@ -24,7 +25,7 @@ final class ActionsBuiltInAllowedlist {
   }
 
   private final Object myLock = new Object();
-  private final Map<AnAction, String> myDynamicActionsToId = ContainerUtil.createWeakMap();
+  private final Map<AnAction, String> myDynamicActionsToId = new WeakHashMap<>();
 
   private final Set<String> ourXmlActionIds = new HashSet<>();
   private final Set<String> ourCustomActions = ContainerUtil.newHashSet(

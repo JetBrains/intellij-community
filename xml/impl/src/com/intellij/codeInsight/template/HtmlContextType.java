@@ -14,10 +14,9 @@ import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 public class HtmlContextType extends FileTypeBasedContextType {
   public HtmlContextType() {
-    super("HTML", XmlBundle.message("dialog.edit.template.checkbox.html"), HtmlFileType.INSTANCE);
+    super(XmlBundle.message("dialog.edit.template.checkbox.html"), HtmlFileType.INSTANCE);
   }
 
   @Override

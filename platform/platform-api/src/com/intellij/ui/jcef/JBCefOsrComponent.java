@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +34,7 @@ class JBCefOsrComponent extends JPanel {
   private @NotNull Alarm myAlarm;
   private @NotNull Disposable myDisposable;
 
-  JBCefOsrComponent() {
+  JBCefOsrComponent(boolean isMouseWheelEventEnabled) {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
     setBackground(JBColor.background());
     addPropertyChangeListener("graphicsConfiguration",
@@ -43,7 +42,7 @@ class JBCefOsrComponent extends JPanel {
 
     enableEvents(AWTEvent.KEY_EVENT_MASK |
                  AWTEvent.MOUSE_EVENT_MASK |
-                 AWTEvent.MOUSE_WHEEL_EVENT_MASK |
+                 (isMouseWheelEventEnabled ? AWTEvent.MOUSE_WHEEL_EVENT_MASK : 0L) |
                  AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
     setFocusable(true);
@@ -74,7 +73,7 @@ class JBCefOsrComponent extends JPanel {
   public void addNotify() {
     super.addNotify();
     myDisposable = Disposer.newDisposable();
-    myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     if (!JBCefBrowserBase.isCefBrowserCreated(myBrowser)) {
       myBrowser.createImmediately();
     }
@@ -106,6 +105,9 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
+    if (e.isConsumed()) {
+      return;
+    }
 
     double scale = myScale.getIdeBiased();
     myBrowser.sendMouseEvent(new MouseEvent(
@@ -129,6 +131,9 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     super.processMouseWheelEvent(e);
+    if (e.isConsumed()) {
+      return;
+    }
 
     double val = e.getPreciseWheelRotation() *
                  RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");

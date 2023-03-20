@@ -45,7 +45,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Does the actual job of adding an import statement into a file.
- * User: dcheryasov
  */
 public final class AddImportHelper {
   private static final Logger LOG = Logger.getInstance(AddImportHelper.class);
@@ -204,8 +203,7 @@ public final class AddImportHelper {
     final boolean isInjected = InjectedLanguageManager.getInstance(feeler.getProject()).isInjectedFragment(feeler.getContainingFile());
     PyImportStatementBase importAbove = null, importBelow = null;
     do {
-      if (feeler instanceof PyImportStatementBase && !isInjected) {
-        final PyImportStatementBase existingImport = (PyImportStatementBase)feeler;
+      if (feeler instanceof PyImportStatementBase existingImport && !isInjected) {
         if (priority != null && newImport != null) {
           if (shouldInsertBefore(newImport, existingImport, priority)) {
             importBelow = existingImport;
@@ -262,6 +260,14 @@ public final class AddImportHelper {
     if (newImport != null && (priorityAbove == null || priorityAbove.compareTo(priority) < 0)) {
       newImport.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true);
     }
+
+    if (feeler != null) {
+      var anchorComment = getTopmostBoundComment(feeler);
+      if (anchorComment != null) {
+        seeker = anchorComment;
+      }
+    }
+
     if (priorityBelow != null) {
       // actually not necessary because existing import with higher priority (i.e. lower import group)
       // probably should have IMPORT_GROUP_BEGIN flag already, but we add it anyway just for safety
@@ -273,6 +279,26 @@ public final class AddImportHelper {
       }
     }
     return seeker;
+  }
+
+  @Nullable
+  private static PsiComment getTopmostBoundComment(@NotNull PsiElement element) {
+    List<List<PsiComment>> commentBlocks = PyPsiUtils.getPrecedingCommentBlocks(element);
+    if (commentBlocks.isEmpty()) return null;
+
+    List<PsiComment> firstBlock = commentBlocks.get(0);
+    PsiComment firstComment = firstBlock.get(0);
+    if (firstComment.getPrevSibling() != null) {
+      return firstComment;
+    }
+
+    PsiComment lastCommentFirstBlock = firstBlock.get(firstBlock.size() - 1);
+    if (PyUtil.isNoinspectionComment(lastCommentFirstBlock)) {
+      return lastCommentFirstBlock;
+    }
+
+    if (commentBlocks.size() == 1) return null;
+    return ContainerUtil.getFirstItem(commentBlocks.get(1));
   }
 
   private static boolean shouldInsertBefore(@Nullable PyImportStatementBase newImport,
@@ -308,8 +334,7 @@ public final class AddImportHelper {
   static ImportPriorityChoice getImportPriorityWithReason(@NotNull PyImportStatementBase importStatement) {
     final PsiElement resolved;
     final PsiElement resolveAnchor;
-    if (importStatement instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)importStatement;
+    if (importStatement instanceof PyFromImportStatement fromImportStatement) {
       if (fromImportStatement.isFromFuture()) {
         return new ImportPriorityChoice(ImportPriority.FUTURE, "import from __future__");
       }
@@ -577,7 +602,7 @@ public final class AddImportHelper {
         final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority));
         PsiElement whitespace = element.getNextSibling();
         if (!(whitespace instanceof PsiWhiteSpace)) {
-          whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
+          whitespace = PsiParserFacade.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
         }
         insertParent.addBefore(whitespace, element);
       }
@@ -796,8 +821,7 @@ public final class AddImportHelper {
   }
 
   public static boolean isAssignmentToModuleLevelDunderName(@Nullable PsiElement element) {
-    if (element instanceof PyAssignmentStatement && PyUtil.isTopLevel(element)) {
-      PyAssignmentStatement statement = (PyAssignmentStatement)element;
+    if (element instanceof PyAssignmentStatement statement && PyUtil.isTopLevel(element)) {
       PyExpression[] targets = statement.getTargets();
       if (targets.length == 1) {
         String name = targets[0].getName();

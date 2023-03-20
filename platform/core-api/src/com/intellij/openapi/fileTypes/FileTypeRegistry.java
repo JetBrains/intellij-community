@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,16 +31,18 @@ import java.util.function.Supplier;
  * {@link com.intellij.openapi.application.ReadAction#nonBlocking}.
  */
 public abstract class FileTypeRegistry {
-  /** @deprecated critical internal API never intended to be used by plugins */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @SuppressWarnings("StaticNonFinalField")
-  public static Getter<FileTypeRegistry> ourInstanceGetter =
-    () -> ((ComponentManagerEx)ApplicationManager.getApplication()).getServiceByClassName("com.intellij.openapi.fileTypes.FileTypeManager");
+  private static Supplier<? extends FileTypeRegistry> instanceGetter;
 
   @ApiStatus.Internal
-  public static void setInstanceSupplier(@NotNull Supplier<? extends FileTypeRegistry> supplier) {
-    ourInstanceGetter = supplier::get;
+  public static Supplier<? extends FileTypeRegistry> setInstanceSupplier(@NotNull Supplier<? extends FileTypeRegistry> supplier) {
+    Supplier<? extends FileTypeRegistry> oldValue = instanceGetter;
+    instanceGetter = supplier;
+    return oldValue;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isInstanceSupplierSet() {
+    return instanceGetter != null;
   }
 
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
@@ -59,7 +59,13 @@ public abstract class FileTypeRegistry {
   }
 
   public static FileTypeRegistry getInstance() {
-    return ourInstanceGetter.get();
+    Supplier<? extends FileTypeRegistry> instanceGetter = FileTypeRegistry.instanceGetter;
+    if (instanceGetter == null) {
+      // in tests FileTypeManager service maybe not preloaded, so, ourInstanceGetter is not set
+      //noinspection deprecation
+      return ApplicationManager.getApplication().getServiceByClassName("com.intellij.openapi.fileTypes.FileTypeManager");
+    }
+    return instanceGetter.get();
   }
 
   /**
@@ -137,7 +143,7 @@ public abstract class FileTypeRegistry {
 
     /** @deprecated not used anymore, do not override */
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    @ApiStatus.ScheduledForRemoval
     default int getVersion() { return 0; }
   }
 }

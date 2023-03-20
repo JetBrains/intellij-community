@@ -1,4 +1,4 @@
-// "Add private no-args constructor to X" "true"
+// "Add private no-args constructor to X" "true-preview"
 class Z {
   private class X {
     X(int... a) {}

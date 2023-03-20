@@ -148,12 +148,14 @@ public final class Helpers {
         LOG.debug("SPHardwareDataType output:");
         for (String line: out.getStdoutLines(true)) {
           LOG.debug("\t"+line);
-          if (line.startsWith(MODEL_ID_PREFIX)) {
+          String tline = line.trim();
+          if (tline.startsWith(MODEL_ID_PREFIX)) {
             // FIXME: need to get output for 16-inch macbook and ensure correctness
-            ourIsPhysicalEsc = line.substring(MODEL_ID_PREFIX.length()).contains("16");
-            LOG.debug("\tourIsPhysicalEsc="+ourIsPhysicalEsc);
+            String model = tline.substring(MODEL_ID_PREFIX.length()).trim();
+            ourIsPhysicalEsc = model.contains("16") || model.equals("MacBookPro17,1");
           }
         }
+        LOG.debug("\tourIsPhysicalEsc="+ourIsPhysicalEsc);
       }
       catch (ExecutionException e) {
         LOG.debug(e);
@@ -186,14 +188,13 @@ public final class Helpers {
     return actionId == null ? action.toString() : actionId;
   }
 
-  static void collectLeafActions(@NotNull ActionGroup actionGroup, @NotNull Collection<AnAction> out) {
+  static void collectLeafActions(@NotNull ActionGroup actionGroup, @NotNull Collection<? super AnAction> out) {
     AnAction[] actions = actionGroup.getChildren(null);
     for (AnAction childAction : actions) {
       if (childAction == null) {
         continue;
       }
-      if (childAction instanceof ActionGroup) {
-        final ActionGroup childGroup = (ActionGroup)childAction;
+      if (childAction instanceof ActionGroup childGroup) {
         collectLeafActions(childGroup, out);
         continue;
       }

@@ -1,6 +1,6 @@
 <idea-plugin>
   <actions>
-    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
@@ -16,9 +16,15 @@
     <!-- File -->
 
     <group id="JavaNewProjectOrModuleGroup">
-      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
+      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction">
+        <override-text place="ProjectWidgetPopup"/>
+        <add-to-group group-id="ProjectWidget.Actions" anchor="first"/>
+      </action>
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction"/>
-      <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction"/>
+      <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
+        <override-text place="ProjectWidgetPopup"/>
+        <add-to-group group-id="ProjectWidget.Actions"/>
+      </action>>
       <separator/>
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
       <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction"/>
@@ -63,6 +69,16 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
+    <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
+    <action id="JavaControlBreak" class="com.intellij.execution.impl.DefaultJavaProgramRunner$ControlBreakAction">
+      <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
+      <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Stop"/>
+    </action>
+
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
@@ -78,12 +94,12 @@
 
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
 
     <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
+        <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
@@ -108,47 +124,15 @@
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
       <separator/>
-      <group id="Internal.Dump" internal="true" popup="true">
-        <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
-        <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
-        <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
-        <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
-        <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
-        <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
-        <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
-        <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
-      </group>
-
-      <separator/>
-      <group id="Internal.VFS" popup="true">
-        <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
-        <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"/>
-        <separator/>
-        <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
-        <action id="MarkVfsCorrupted" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.MarkVfsCorruptedAction"/>
-        <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
-        <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
-        <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
-        <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
-        <action id="DumpWatchedRoots" internal="true" class="com.intellij.openapi.roots.impl.DumpWatchedRootsAction"/>
-        <separator/>
-        <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
-        <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
-        <separator/>
-        <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction"/>
-      </group>
-
-      <separator/>
-
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
     <action internal="true" id="TestParseEventsSchemeAction"
-            class="com.intellij.internal.statistic.actions.TestParseEventsSchemeAction">
+            class="com.intellij.internal.statistic.devkit.actions.TestParseEventsSchemeAction">
     </action>
 
     <action internal="true" id="CollectFUStatisticsAction"
-            class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction">
+            class="com.intellij.internal.statistic.devkit.actions.CollectFUStatisticsAction">
       <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
@@ -191,7 +175,6 @@
     <action id="PackageFile" class="com.intellij.packaging.impl.ui.actions.PackageFileAction" use-shortcut-of="Compile">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Compile"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
       <add-to-group group-id="ScopeViewPopupMenu" anchor="before" relative-to-action="MakeModule"/>
     </action>
 
@@ -254,8 +237,6 @@
       <reference ref="ShowPackageDepsGroup"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -284,11 +265,10 @@
     </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
-      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="before" relative-to-action="LoadUnloadModules"/>
     </action>
 
-    <group>
+    <group id="Java.ImportFrom.Group" searchable="false">
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
       <action id="ExtractModuleFromPackage" class="com.intellij.ide.projectView.actions.ExtractModuleFromPackageAction" internal="true"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
@@ -303,9 +283,11 @@
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateSetUpMethod" class="com.intellij.testIntegration.GenerateSetUpMethodAction"/>
       <action id="GenerateTearDownMethod" class="com.intellij.testIntegration.GenerateTearDownMethodAction"/>
-      <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>       
-      <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/> 
+      <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>
+      <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/>
       <action id="GenerateDataMethod" class="com.intellij.testIntegration.GenerateDataMethodAction"/>
+      <action id="GenerateTestDataPathMethods" class="com.intellij.testIntegration.GenerateTestDataPathMethodAction"/>
+      <action id="GenerateTestDataPathFiles" class="com.intellij.testIntegration.GenerateTestDataPathFileAction"/>
       <separator/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
       <action id="GenerateGetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
@@ -375,7 +357,7 @@
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
     </group>
 
-    <group id="MigrationMenu" popup="true" searchable="false">
+    <group id="MigrationMenu" popup="true" searchable="true">
       <group id="MigrationMenu1" class="com.intellij.refactoring.migration.MigrationGroup" popup="false" searchable="false"/>
       <separator/>
       <action id="NewMigration" class="com.intellij.refactoring.actions.MigrateAction"/>
@@ -391,8 +373,6 @@
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <reference ref="MigrationMenu"/>
       <separator/>
-      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
-      <separator/>
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
@@ -407,13 +387,6 @@
 
     <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
       <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
-    </action>
-
-    <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
-      <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
 
     <group id="ToggleBreakpointAction">
@@ -455,6 +428,9 @@
     </group>
 
     <group id="JavaDebuggerActions">
+      <action id="Debugger.ShowCollectionHistory" class="com.intellij.debugger.actions.ShowCollectionHistoryAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
@@ -486,11 +462,9 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
-      <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
-      <reference ref="Debugger.PopFrame"/>
-      <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
+      <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
+      </group>
       <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
@@ -531,7 +505,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreeInlayPopup"/>
+        <override-text place="XDebuggerTreePopup"/>
       </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
@@ -640,10 +614,6 @@
       <reference ref="Debugger.CustomizeThreadsView"/>
     </group>
 
-    <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
-      <add-to-group group-id="FileChooserToolbar" anchor="last"/>
-    </action>
-
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>
@@ -656,4 +626,3 @@
     </action>
   </actions>
 </idea-plugin>
-

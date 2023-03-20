@@ -25,16 +25,21 @@ import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-internal class GeneralVcSettingsProviderEP(project: Project) : ConfigurableEP<UnnamedConfigurable>(project)
-
-private val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
+/**
+ * EP that allows appending options to the bottom of *File | Settings | Version Control | Confirmation* settings panel.
+ *
+ * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
+ */
+internal class GeneralVcsSettingsProviderEP(project: Project) : ConfigurableEP<UnnamedConfigurable>(project) {
+  companion object {
+    val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcsSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
+  }
+}
 
 class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
@@ -42,9 +47,9 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
 ), Configurable.WithEpDependencies {
 
   override fun createConfigurables(): List<UnnamedConfigurable> =
-    VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
+    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
 
-  override fun getDependencies() = listOf(VcsEP.EP_NAME, VCS_SETTINGS_EP_NAME)
+  override fun getDependencies() = listOf(VcsEP.EP_NAME, GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME)
 
   override fun createPanel(): DialogPanel {
     val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
@@ -71,15 +76,14 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .gap(RightGap.SMALL)
           val addComboBox = comboBox(
             EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-            renderer = listCellRenderer { value, _, _ ->
-              setText(when (value) {
-                        VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.creation.show.options")
-                        VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.creation.add.silently")
-                        VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.creation.do.not.add")
-                        else -> ""
-                      })
+            renderer = listCellRenderer {
+              text = when (it) {
+                VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.creation.show.options")
+                VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.creation.add.silently")
+                VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.creation.do.not.add")
+              }
             })
-            .bindItem({ addConfirmation.value }, { addConfirmation.value = it })
+            .bindItem(addConfirmation::getValue, addConfirmation::setValue)
             .withApplicableVcsesTooltip(addConfirmation, vcsListeners)
 
           checkBox(message("checkbox.including.files.created.outside.ide", ApplicationNamesInfo.getInstance().fullProductName))
@@ -94,22 +98,21 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
             .gap(RightGap.SMALL)
           comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-                   renderer = listCellRenderer { value, _, _ ->
-                     setText(when (value) {
-                               VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.deletion.show.options")
-                               VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.deletion.remove.silently")
-                               VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.deletion.do.not.remove")
-                               else -> ""
-                             })
+                   renderer = listCellRenderer {
+                     text = when (it) {
+                       VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.deletion.show.options")
+                       VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.deletion.remove.silently")
+                       VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.deletion.do.not.remove")
+                     }
                    })
-            .bindItem({ removeConfirmation.value }, { removeConfirmation.value = it })
+            .bindItem(removeConfirmation::getValue, removeConfirmation::setValue)
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
         }.layout(RowLayout.PARENT_GRID)
 
         row(message("settings.general.show.options.before.command.label")) {
           for (setting in vcsManager.allOptions) {
             checkBox(setting.displayName)
-              .bindSelected({ setting.value }, { setting.value = it })
+              .bindSelected(setting::getValue, setting::setValue)
               .withApplicableVcsesTooltip(setting, vcsListeners)
               .visibleIf(OptionVisibleForVcsesPredicate(project, setting, vcsListeners))
           }
@@ -126,6 +129,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
         row {
           val checkBox = checkBox(message("vcs.config.track.changed.on.server"))
             .bindSelected(vcsConfiguration::CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND)
+            .gap(RightGap.SMALL)
             .onApply {
               if (!project.isDefault) {
                 RemoteRevisionsCache.getInstance(project).updateAutomaticRefreshAlarmState(true)
@@ -140,11 +144,11 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
         }
         row {
           val checkBox = checkBox(message("settings.checkbox.show.changed.in.last"))
-            .bindSelected({ contentAnnotationSettings.isShow }, { contentAnnotationSettings.isShow = it })
+            .bindSelected(contentAnnotationSettings::isShow, contentAnnotationSettings::setShow)
             .comment(message("settings.checkbox.show.changed.in.last.comment"))
             .gap(RightGap.SMALL)
           spinner(1..VcsContentAnnotationSettings.ourMaxDays, 1)
-            .bindIntValue({ contentAnnotationSettings.limitDays }, { contentAnnotationSettings.limitDays = it })
+            .bindIntValue(contentAnnotationSettings::getLimitDays, contentAnnotationSettings::setLimitDays)
             .enabledIf(checkBox.selected)
             .gap(RightGap.SMALL)
           @Suppress("DialogTitleCapitalization")

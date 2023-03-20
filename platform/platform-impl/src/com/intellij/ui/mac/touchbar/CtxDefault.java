@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.Executor;
@@ -17,16 +17,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
 
-class CtxDefault {
+final class CtxDefault {
   private static final Logger LOG = Logger.getInstance(CtxDefault.class);
-  private static MessageBusConnection ourConnection = null;
+  private static SimpleMessageBusConnection ourConnection = null;
 
   static void initialize() {
     // 1. load default touchbar actions for all opened projects
@@ -35,7 +35,7 @@ class CtxDefault {
     }
 
     // 2. listen for projects
-    ourConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    ourConnection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
     ourConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
@@ -62,8 +62,9 @@ class CtxDefault {
   }
 
   static void disable() {
-    if (ourConnection != null)
+    if (ourConnection != null) {
       ourConnection.disconnect();
+    }
     ourConnection = null;
     // NOTE: all registered project actions will 'unregister' in manager.clearAll
     // no necessity to do it here
@@ -124,7 +125,7 @@ class CtxDefault {
       return;
     }
 
-    if (!(runButtons instanceof DefaultActionGroup)) {
+    if (!(runButtons instanceof DefaultActionGroup group)) {
       LOG.debug("RunnersGroup for touchbar isn't a group");
       return;
     }
@@ -134,7 +135,6 @@ class CtxDefault {
       return;
     }
 
-    DefaultActionGroup group = (DefaultActionGroup)runButtons;
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       if (executor.getId().equals(ToolWindowId.RUN) || executor.getId().equals(ToolWindowId.DEBUG)) {
         group.add(actionManager.getAction(executor.getId()), actionManager);

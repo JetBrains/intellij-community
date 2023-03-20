@@ -76,9 +76,7 @@ public class GrRedundantElseIntention extends Intention {
         if (!(element.getNode().getElementType() == GroovyTokenTypes.kELSE)) return false;
 
         final PsiElement parent = element.getParent();
-        if (!(parent instanceof GrIfStatement)) return false;
-
-        final GrIfStatement ifStatement = (GrIfStatement)parent;
+        if (!(parent instanceof GrIfStatement ifStatement)) return false;
 
         final GrStatement branch = ifStatement.getThenBranch();
         final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(ifStatement);

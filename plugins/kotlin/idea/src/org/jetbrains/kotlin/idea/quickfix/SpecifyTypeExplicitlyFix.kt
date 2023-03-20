@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -7,19 +7,23 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.asSimpleType
 import org.jetbrains.kotlin.types.isError
 
-class SpecifyTypeExplicitlyFix : PsiElementBaseIntentionAction() {
+class SpecifyTypeExplicitlyFix(private val convertToNullable: Boolean = false) : PsiElementBaseIntentionAction() {
     override fun getFamilyName() = KotlinBundle.message("specify.type.explicitly")
 
     override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val declaration = declarationByElement(element)!!
         val type = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(declaration)
+            .let { if (convertToNullable) it.convertToNullable() else it }
         SpecifyTypeExplicitlyIntention.addTypeAnnotation(editor, declaration, type)
     }
 
@@ -39,3 +43,5 @@ class SpecifyTypeExplicitlyFix : PsiElementBaseIntentionAction() {
         return PsiTreeUtil.getParentOfType(element, KtProperty::class.java, KtNamedFunction::class.java) as KtCallableDeclaration?
     }
 }
+
+fun KotlinType.convertToNullable(): KotlinType = KotlinTypeFactory.simpleType(asSimpleType(), nullable = true)

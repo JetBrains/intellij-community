@@ -18,31 +18,37 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataContextWrapper;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CaretSpecificDataContext extends DataContextWrapper {
+public final class CaretSpecificDataContext extends DataContextWrapper {
   private final Caret myCaret;
-  private final DataContext myCaretContext;
+  private final DataProvider myProvider;
 
+  public static @NotNull CaretSpecificDataContext create(@NotNull DataContext delegate, @NotNull Caret caret) {
+    if (delegate instanceof CaretSpecificDataContext && CommonDataKeys.CARET.getData(delegate) == caret) {
+      return (CaretSpecificDataContext)delegate;
+    }
+    return new CaretSpecificDataContext(delegate, caret);
+  }
+
+  /** @deprecated Use {@link #create(DataContext, Caret)} instead */
+  @Deprecated(forRemoval = true)
   public CaretSpecificDataContext(@NotNull DataContext delegate, @NotNull Caret caret) {
     super(delegate);
     myCaret = caret;
     Project project = super.getData(CommonDataKeys.PROJECT);
     FileEditorManager fm = project == null ? null : FileEditorManager.getInstance(project);
-    myCaretContext = fm == null ? null : dataId -> fm.getData(dataId, myCaret.getEditor(), myCaret);
+    myProvider = fm == null ? null : dataId -> fm.getData(dataId, myCaret.getEditor(), myCaret);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    Object data = myCaretContext == null ? null : myCaretContext.getData(dataId);
-    if (data != null) return data;
+  public @Nullable Object getRawCustomData(@NotNull String dataId) {
     if (CommonDataKeys.CARET.is(dataId)) return myCaret;
-    return super.getData(dataId);
+    return myProvider == null ? null : myProvider.getData(dataId);
   }
 }

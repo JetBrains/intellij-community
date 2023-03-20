@@ -27,7 +27,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -96,7 +95,7 @@ public class ImplementAbstractMethodHandler {
     final MyPsiElementListCellRenderer elementListCellRenderer = new MyPsiElementListCellRenderer();
     elementListCellRenderer.sort(elements);
     final IPopupChooserBuilder<PsiElement> builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
+      .createPopupChooserBuilder(List.of(elements))
       .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
       .setRenderer(elementListCellRenderer)
       .setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).

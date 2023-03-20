@@ -19,10 +19,10 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
   public void testModified() throws ConfigurationException {
     DependencyValidationManager manager = DependencyValidationManager.getInstance(getProject());
     final ScopeChooserConfigurable.ScopeChooserConfigurableState state = new ScopeChooserConfigurable.ScopeChooserConfigurableState();
-    NamedScope utilScope = new NamedScope("util", new PatternPackageSet( "java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope utilScope = new NamedScope("util", new PatternPackageSet( "java.util.*", PatternPackageSet.Scope.LIBRARY, null));
     manager.addScope(utilScope);
     state.myOrder.add(utilScope.getScopeId());
-    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("*..*", PatternPackageSet.SCOPE_ANY, null));
+    NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("*..*", PatternPackageSet.Scope.ANY, null));
     manager.addScope(xScope);
     state.myOrder.add(xScope.getScopeId());
     try {
@@ -41,7 +41,7 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
 
   public void testScopeConfigurablesModified() throws ConfigurationException {
     DependencyValidationManager manager = DependencyValidationManager.getInstance(getProject());
-    NamedScope utilscope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
+    NamedScope utilscope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null));
     manager.addScope(utilscope);
     try {
       for (NamedScope scope : manager.getScopes()) {
@@ -63,7 +63,7 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
     ScopeEditorPanel panel = new ScopeEditorPanel(getProject(), DependencyValidationManager.getInstance(getProject()));
     try {
       AtomicBoolean wasNotCanceled = new AtomicBoolean();
-      panel.reset(new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null), () -> wasNotCanceled.set(true));
+      panel.reset(new PatternPackageSet("java.util.*", PatternPackageSet.Scope.LIBRARY, null), () -> wasNotCanceled.set(true));
       Thread.sleep(2); //ensure that Future was not canceled non started
       panel.rebuild(false);
       //Wait for the 'rebuild' task to complete. 

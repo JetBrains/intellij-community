@@ -53,7 +53,7 @@ class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
     return myCandidatePerFile
       .entrySet()
       .stream()
-      .filter(e -> mySearchScope.contains(e.getKey()))
+      .filter(e -> ReadAction.compute(() -> mySearchScope.contains(e.getKey())))
       .flatMap(e -> {
         final VirtualFile file = e.getKey();
         final SearchId[] definitions = e.getValue();

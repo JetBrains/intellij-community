@@ -6,7 +6,7 @@ package com.intellij.ide.wizard
  * Needed to provide wizard data from parent into all descendant steps.
  * E.g. [context] and [propertyGraph] should be common for all steps from one wizard screen.
  *
- * @see chain
+ * @see com.intellij.ide.wizard.NewProjectWizardChainStep
  * @see AbstractNewProjectWizardMultiStep
  * @see NewProjectWizardMultiStepFactory
  */
@@ -17,4 +17,6 @@ abstract class AbstractNewProjectWizardStep(parentStep: NewProjectWizardStep) : 
   final override val propertyGraph by parentStep::propertyGraph
 
   final override val data by parentStep::data
+
+  final override val keywords by parentStep::keywords
 }

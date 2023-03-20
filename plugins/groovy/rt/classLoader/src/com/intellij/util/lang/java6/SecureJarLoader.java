@@ -46,8 +46,7 @@ final class SecureJarLoader extends JarLoader {
     public byte[] getBytes() throws IOException {
       JarFile file = (JarFile)getZipFile();
       try {
-        InputStream stream = file.getInputStream(myEntry);
-        try {
+        try (InputStream stream = file.getInputStream(myEntry)) {
           byte[] result = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
           synchronized (myProtectionDomainMonitor) {
             if (myProtectionDomain == null) {
@@ -57,9 +56,6 @@ final class SecureJarLoader extends JarLoader {
             }
           }
           return result;
-        }
-        finally {
-          stream.close();
         }
       }
       finally {

@@ -93,7 +93,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       }
 
       if (value != null) {
-        return new PsiReference[]{new MyPropertyReference(value, element, bundle, getFallbackBundleName())};
+        return new PsiReference[]{new MyPropertyReference(getFinalKeyValue(value), element, bundle, getFallbackBundleName())};
       }
     }
     return PsiReference.EMPTY_ARRAY;
@@ -102,6 +102,11 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   @Nullable
   protected String getFallbackBundleName() {
     return null;
+  }
+
+  @NotNull
+  protected String getFinalKeyValue(String keyValue) {
+    return keyValue;
   }
 
   private PsiReference[] getTagReferences(XmlTag element) {
@@ -161,9 +166,8 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       final DomElement domElement = DomUtil.getDomElement(element);
       if (domElement == null) return null;
       final DomElement rootElement = DomUtil.getFileElement(domElement).getRootElement();
-      if (!(rootElement instanceof IdeaPlugin)) return null;
+      if (!(rootElement instanceof IdeaPlugin plugin)) return null;
 
-      IdeaPlugin plugin = (IdeaPlugin)rootElement;
       final String resourceBundle = plugin.getResourceBundle().getStringValue();
       if (StringUtil.isNotEmpty(resourceBundle)) {
         return resourceBundle;

@@ -43,9 +43,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     if (element.equals(resolve())) {
       return element;
     }
-    if (myElement instanceof PyStringLiteralExpression && element instanceof PyClass) {
-      final PyStringLiteralExpression e = (PyStringLiteralExpression)myElement;
-      final PyClass cls = (PyClass)element;
+    if (myElement instanceof PyStringLiteralExpression e && element instanceof PyClass cls) {
       QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(cls, element);
       if (qname != null) {
         qname = qname.append(cls.getName());

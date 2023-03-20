@@ -39,7 +39,7 @@ public final class TypeWriter extends PsiTypeVisitor<Object> {
                                @Nullable PsiType type,
                                @NotNull final PsiElement context,
                                @NotNull final ClassNameProvider classNameProvider) {
-    if (type == null || PsiType.NULL.equals(type)) {
+    if (type == null || PsiTypes.nullType().equals(type)) {
       builder.append(CommonClassNames.JAVA_LANG_OBJECT);
       return;
     }

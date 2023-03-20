@@ -22,9 +22,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class SkipAutopopupInComments extends CompletionConfidence {
 
   @NotNull

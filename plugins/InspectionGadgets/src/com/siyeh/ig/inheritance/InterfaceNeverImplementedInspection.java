@@ -16,8 +16,8 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,7 +29,7 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class InterfaceNeverImplementedInspection extends BaseInspection {
 
@@ -52,15 +52,12 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-
-    panel.add(annotationsPanel, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("interface.never.implemented.option"), "ignoreInterfacesThatOnlyDeclareConstants");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("ignoreInterfacesThatOnlyDeclareConstants", InspectionGadgetsBundle.message("interface.never.implemented.option"))
+    );
   }
 
   @Override

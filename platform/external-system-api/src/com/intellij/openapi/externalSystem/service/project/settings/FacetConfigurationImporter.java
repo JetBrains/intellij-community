@@ -26,7 +26,6 @@ import java.util.Map;
 
 /**
  * Created by Nikita.Skvortsov
- * date: 12.09.2017.
  */
 public interface FacetConfigurationImporter<F extends Facet> {
   ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.facetConfigurationImporter");

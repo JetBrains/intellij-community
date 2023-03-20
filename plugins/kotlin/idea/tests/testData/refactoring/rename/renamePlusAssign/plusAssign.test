@@ -3,5 +3,6 @@
   "classId": "/A",
   "oldName": "plusAssign",
   "newName": "foo",
-  "mainFile": "plusAssign.kt"
+  "mainFile": "plusAssign.kt",
+  "enabledInK2": true
 }

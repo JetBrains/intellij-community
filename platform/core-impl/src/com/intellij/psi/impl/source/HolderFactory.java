@@ -40,6 +40,6 @@ public interface HolderFactory {
   @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context, CharTable table);
   @NotNull
-  DummyHolder createHolder(@NotNull PsiManager manager, final CharTable table, final Language language);
+  DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, Language language);
   
 }

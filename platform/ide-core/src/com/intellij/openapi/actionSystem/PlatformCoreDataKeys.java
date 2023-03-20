@@ -5,9 +5,16 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.SlowOperations;
 
 import java.awt.*;
 
+/**
+ * @see CommonDataKeys
+ * @see com.intellij.openapi.actionSystem.LangDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ */
 public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create("context.ProjectFileDirectory");
 
@@ -17,7 +24,9 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
 
   /**
    * Returns the text of currently selected file/file revision
+   * @deprecated Use what's needed from {@link com.intellij.ide.impl.dataRules.FileTextRule}
    */
+  @Deprecated(forRemoval = true)
   public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
 
   /**
@@ -30,7 +39,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   /**
    * Returns help id.
    *
-   * @see HelpManager#invokeHelp(String)
+   * @see com.intellij.openapi.help.HelpManager#invokeHelp(String)
    */
   public static final DataKey<String> HELP_ID = DataKey.create("helpId");
 
@@ -45,21 +54,52 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
 
   /**
-   * Use this key to split a data provider into two parts: the quick part to be queried on EDT,
-   * and the slow part to be queried on a background thread or under a progress.
-   * That slow part shall be returned when this data key is requested.
+   * A key to use to split a data provider into fast EDT and potentially slow BGT parts,
+   * and to avoid the {@link SlowOperations#assertSlowOperationsAreAllowed()} assertion.
+   * <p/>
+   * Also, it is now mandatory to provide PSI only on BGT, i.e. an assertion is now triggered on data validation.
+   * <p/>
+   * The general approach is as follows:
+   * <code><pre>
+   * public @Nullable Object getData(@NotNull String dataId) {
+   *   // called on EDT, no slow operations are allowed
+   *   if (BGT_DATA_PROVIDER.is(dataId)) {
+   *     var selection = // very important to capture the UI selection now
+   *     return (DataProvider)slowId -> getSlowData(slowId, selection);
+   *   }
+   *   ...
+   * }
+   *
+   * private static @Nullable Object getSlowData(@NotNull String dataId, selection) {
+   *   // called on BGT, no unsafe Swing state access is allowed
+   *   if (PSI_ELEMENT.is(dataId)) {
+   *     // extract PSI from selection and return it
+   *   }
+   *   ...
+   * }
+   * </pre></code>
+   *
+   * @see SlowOperations#assertSlowOperationsAreAllowed()
    */
+  public static final DataKey<DataProvider> BGT_DATA_PROVIDER = DataKey.create("bgtDataProvider");
+
+  /** @deprecated Use {@link #BGT_DATA_PROVIDER} and {@link CompositeDataProvider} */
+  @Deprecated
   public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
+
   /**
-   * Returns single selection item.
+   * Returns single UI selection item.
    *
    * @see #SELECTED_ITEMS
    */
   public static final DataKey<Object> SELECTED_ITEM = DataKey.create("selectedItem");
+
   /**
-   * Returns multi selection items.
+   * Returns multiple UI selection items.
    *
    * @see #SELECTED_ITEM
    */
   public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
+
+  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 }

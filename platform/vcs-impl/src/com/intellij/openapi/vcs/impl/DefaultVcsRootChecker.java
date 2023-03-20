@@ -5,11 +5,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 final class DefaultVcsRootChecker extends VcsRootChecker {
   @NotNull private final AbstractVcs myVcs;
@@ -27,15 +24,12 @@ final class DefaultVcsRootChecker extends VcsRootChecker {
   }
 
   @Override
-  public boolean isRoot(@NotNull String path) {
-    if (myVcsDescriptor == null) return false;
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-    if (file == null) return false;
-    return myVcsDescriptor.probablyUnderVcs(file, false);
+  public boolean isRoot(@NotNull VirtualFile file) {
+    return myVcsDescriptor.probablyUnderVcs(file);
   }
 
   @Override
-  public boolean validateRoot(@NotNull String path) {
+  public boolean validateRoot(@NotNull VirtualFile file) {
     return true;
   }
 

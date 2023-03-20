@@ -3,7 +3,7 @@ import java.util.Random;
 class SwitchExpressions {
   enum E { E1, E2 }
 
-  void m() {
+  void m(String s, Integer i) {
     System.out.println(switch (new Random().nextInt()) {
       default -> "whatever";
     });
@@ -45,6 +45,14 @@ class SwitchExpressions {
     System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">E.valueOf("E1")</error>) {
       case E1 -> 1;
     });
+    System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">s</error>) {
+      case "blah blah blah" -> 1;
+    });
+    System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case 42 -> 1;
+    });
+    System.out.println(switch (<error descr="'switch' expression does not have any case clauses">s</error>) {});
+    System.out.println(switch (<error descr="'switch' expression does not have any case clauses">i</error>) {});
     System.out.println(switch (E.valueOf("E1")) {
       case E1 -> 1;
       case E2 -> 2;

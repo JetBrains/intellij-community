@@ -1,14 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.navigation.NavigationRequest;
+import com.intellij.navigation.NavigationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -19,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +38,7 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -138,9 +145,9 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   private Stream<VirtualFile> findSourceRoots(VirtualFile file) {
-    Stream<VirtualFile> modelRoots = ProjectFileIndex.SERVICE.getInstance(myProject).getOrderEntriesForFile(file).stream()
+    Stream<VirtualFile> modelRoots = ProjectFileIndex.getInstance(myProject).getOrderEntriesForFile(file).stream()
       .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
-      .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
+      .flatMap(entry -> Stream.of(((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.SOURCES)));
 
     Stream<VirtualFile> synthRoots = AdditionalLibraryRootsProvider.EP_NAME.getExtensionList().stream()
       .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
@@ -334,6 +341,100 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
     catch (Exception e) {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+    }
+  }
+
+  @Override
+  public @Nullable PsiElement resolveSnippetRegion(@NotNull PsiElement context,
+                                                   @NotNull PsiSnippetDocTagValue snippet,
+                                                   @NotNull String region) {
+    SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+    if (markup == null) return null;
+    SnippetMarkup.MarkupNode start = markup.getRegionStart(region);
+    if (start == null) return null;
+    PsiElement markupContext = markup.getContext();
+    PsiFile file = markupContext.getContainingFile();
+    if (file == null) return null;
+    return new SnippetRegionTarget(file, start.range().shiftRight(markupContext.getTextRange().getStartOffset()));
+  }
+
+  public static final class SnippetRegionTarget extends FakePsiElement implements SyntheticElement {
+    private final @NotNull PsiFile myFile;
+    private final @NotNull TextRange myRangeInFile;
+    private final VirtualFile myVirtualFile;
+
+    private SnippetRegionTarget(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
+      myFile = file;
+      myRangeInFile = rangeInFile;
+      myVirtualFile = file.getVirtualFile();
+    }
+
+    @Override
+    public @NotNull Language getLanguage() {
+      return JavaLanguage.INSTANCE;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return myFile;
+    }
+
+    @Override
+    public @NotNull TextRange getTextRange() {
+      return myRangeInFile;
+    }
+
+    @Override
+    public @NotNull TextRange getTextRangeInParent() {
+      return myRangeInFile;
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return myRangeInFile.substring(myFile.getText());
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      new OpenFileDescriptor(myFile.getProject(), myVirtualFile, myRangeInFile.getStartOffset()).navigate(requestFocus);
+    }
+
+    @Override
+    public @Nullable NavigationRequest navigationRequest() {
+      return NavigationService.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
+    }
+
+    @Override
+    public String getPresentableText() {
+      return getText();
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return true;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return true;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) return true;
+      if (object == null || getClass() != object.getClass()) return false;
+      SnippetRegionTarget element = (SnippetRegionTarget)object;
+      return myRangeInFile == element.myRangeInFile && Objects.equals(myVirtualFile, element.myVirtualFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myVirtualFile, myRangeInFile);
+    }
+
+    @Override
+    public String toString() {
+      return getText();
     }
   }
 }

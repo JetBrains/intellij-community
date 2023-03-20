@@ -15,9 +15,14 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Deprecated. Use {@link java.util.function.Supplier} with {@code @NotNull} annotation on the type parameter instead.
+ */
 @FunctionalInterface
+@ApiStatus.Obsolete
 public interface NotNullProducer<T> extends Producer<T> {
   @Override
   @NotNull

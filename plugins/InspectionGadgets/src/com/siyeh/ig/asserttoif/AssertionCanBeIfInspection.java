@@ -53,7 +53,7 @@ public class AssertionCanBeIfInspection extends BaseInspection {
 
   private static class AssertToIfVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitAssertStatement(PsiAssertStatement assertStatement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement assertStatement) {
       super.visitAssertStatement(assertStatement);
       if (assertStatement.getAssertCondition() == null) {
         return;
@@ -81,7 +81,7 @@ public class AssertionCanBeIfInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       PsiAssertStatement assertStatement =
         element instanceof PsiKeyword ? (PsiAssertStatement)element.getParent() : (PsiAssertStatement)element;

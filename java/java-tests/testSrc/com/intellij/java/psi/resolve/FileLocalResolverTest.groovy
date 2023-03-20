@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve
 
 import com.intellij.lang.FCTSBackedLighterAST
@@ -14,21 +14,13 @@ import com.intellij.psi.impl.source.FileLocalResolver
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author peter
- */
 @CompileStatic
 class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16
-  }
-
+  
   void "test unknown variable"() {
     assertDoesNotResolve 'class C {{ <caret>a = 2; }}'
   }

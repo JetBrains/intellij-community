@@ -1,4 +1,4 @@
-// "Create inner class 'Generic'" "true"
+// "Create inner class 'Generic'" "true-preview"
 class Base {
   void foo(){}
 }

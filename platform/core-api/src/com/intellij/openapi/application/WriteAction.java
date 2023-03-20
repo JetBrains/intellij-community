@@ -7,6 +7,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   /**
    * @deprecated Use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} or similar method instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public WriteAction() {
   }
@@ -42,7 +43,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteThread()) {
+    if (application.isWriteIntentLockAcquired()) {
       try(AccessToken ignored = ApplicationManager.getApplication().acquireWriteActionLock(getClass())) {
         result.run();
       }
@@ -70,7 +71,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   public static AccessToken start() {
     // get useful information about the write action
     Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
@@ -79,8 +80,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Executes {@code action} inside write action.
-   * Must be called from the EDT.
    */
+  @RequiresEdt
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
     ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, E>)() -> {
       action.run();
@@ -90,8 +91,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Executes {@code action} inside write action and returns the result.
-   * Must be called from the EDT.
    */
+  @RequiresEdt
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
     return ApplicationManager.getApplication().runWriteAction(action);
   }
@@ -130,7 +131,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
-    if (application.isWriteThread()) {
+    if (application.isWriteIntentLockAcquired()) {
       return ApplicationManager.getApplication().runWriteAction(action);
     }
 

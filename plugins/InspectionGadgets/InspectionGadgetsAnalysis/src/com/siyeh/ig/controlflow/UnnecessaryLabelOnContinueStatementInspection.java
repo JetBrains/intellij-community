@@ -55,7 +55,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement continueKeywordElement = descriptor.getPsiElement();
       final PsiContinueStatement continueStatement = (PsiContinueStatement)continueKeywordElement.getParent();
       final PsiIdentifier labelIdentifier = continueStatement.getLabelIdentifier();
@@ -83,7 +83,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
       final PsiStatement labelEnabledParent = PsiTreeUtil.getParentOfType(statement, PsiLoopStatement.class);
       if (labelEnabledParent == null) return;
       if (!exitedStatement.equals(labelEnabledParent)) return;
-      registerStatementError(statement);
+      registerError(labelIdentifier);
     }
   }
 }

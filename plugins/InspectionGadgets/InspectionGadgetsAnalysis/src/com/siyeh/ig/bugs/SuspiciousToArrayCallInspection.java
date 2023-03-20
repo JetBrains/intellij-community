@@ -155,10 +155,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                                  @NotNull PsiMethodCallExpression expression,
                                  PsiType argumentType,
                                  PsiType itemType) {
-      if (!(argumentType instanceof PsiArrayType)) {
+      if (!(argumentType instanceof PsiArrayType arrayType)) {
         return;
       }
-      final PsiArrayType arrayType = (PsiArrayType)argumentType;
       final PsiType componentType = arrayType.getComponentType();
       PsiType actualType = getActualItemTypeIfMismatch(arrayType, expression, itemType);
       if (actualType != null) {
@@ -173,6 +172,12 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       itemType = GenericsUtil.getVariableTypeByExpressionType(itemType);
       final PsiType componentType = arrayType.getComponentType();
       if (itemType == null || componentType.isAssignableFrom(itemType)) return null;
+      PsiClass componentClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
+      if (componentClass instanceof PsiTypeParameter) {
+        final PsiReferenceList extendsList = ((PsiTypeParameter)componentClass).getExtendsList();
+        final PsiClassType[] types = extendsList.getReferencedTypes();
+        if (types.length == 0 || types.length == 1 && types[0].isAssignableFrom(itemType)) return null;
+      }
       if (itemType instanceof PsiClassType) {
         final PsiClass aClass = ((PsiClassType)itemType).resolve();
         if (aClass instanceof PsiTypeParameter) {
@@ -196,6 +201,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     @NonNls private final String myPresented;
     
     SuspiciousToArrayCallFix(PsiType wantedType, boolean isFunction) {
+      if (wantedType instanceof PsiClassType) {
+        wantedType = ((PsiClassType)wantedType).rawType();
+      }
       if (isFunction) {
         myReplacement = wantedType.getCanonicalText() + "[]::new";
         myPresented = wantedType.getPresentableText() + "[]::new";
@@ -208,7 +216,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
       if (expression == null) return;
       new CommentTracker().replaceAndRestoreComments(expression, myReplacement);

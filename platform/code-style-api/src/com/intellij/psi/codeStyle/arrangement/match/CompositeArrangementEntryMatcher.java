@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<>();

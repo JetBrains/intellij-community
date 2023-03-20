@@ -64,7 +64,12 @@ public class Java8Class {
             return f.invoke(i1, k1);
         };
 
-        Runnable runnable = () -> { };
+        Runnable runnable1 = () -> { };
+
+        Runnable runnable2 = () -> {
+            if (true) return;
+            System.out.println("false");
+        };
 
         foo1((Integer i) -> {
             if (i > 1) {

@@ -1,46 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
-import java.io.OutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.createFile
-import kotlin.io.path.name
-import kotlin.io.path.writeText
+import kotlin.io.path.readBytes
 
 @ApiStatus.Internal
-fun reportErrorAndAttachStorage(message: String, storage: WorkspaceEntityStorage) {
-  reportConsistencyIssue(message, IllegalStateException(), null, null, null, storage)
+fun reportErrorAndAttachStorage(message: String, storage: EntityStorage) {
+  reportConsistencyIssue(message = message,
+                         e = IllegalStateException(),
+                         sourceFilter = null,
+                         left = null,
+                         right = null,
+                         resulting = storage)
 }
 
-internal fun serializeContent(path: Path, howToSerialize: (EntityStorageSerializerImpl, OutputStream) -> Unit) {
+internal fun serializeContent(file: Path, howToSerialize: (EntityStorageSerializerImpl, Path) -> Unit) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  path.toFile().outputStream().use { howToSerialize(serializer, it) }
+  howToSerialize(serializer, file)
 }
 
-internal fun serializeEntityStorage(path: Path, storage: WorkspaceEntityStorage) {
-  serializeContent(path) { serializer, stream ->
-    serializer.serializeCache(stream, storage.makeSureItsStore())
+internal fun serializeEntityStorage(file: Path, storage: EntityStorage) {
+  serializeContent(file) { serializer, stream ->
+    serializer.serializeCache(stream, storage.toSnapshot())
   }
-}
-
-private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
-  return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage() else this
 }
 
 internal fun getStoreDumpDirectory(): Path {
@@ -63,7 +64,7 @@ private fun cleanOldFiles(parentDir: File) {
   Arrays.sort(children)
   for (i in children.indices) {
     val child = children[i]
-    // Store latest 30 items in the folder and not older than one week
+    // Store the latest 30 items in the folder and not older than one week
     if (i < children.size - 30 || ageInDays(child) > 7) FileUtil.delete(child)
   }
 }
@@ -72,33 +73,35 @@ private fun formatTime(timeMs: Long) = SimpleDateFormat("yyyyMMdd-HHmmss").forma
 
 private fun ageInDays(file: File) = TimeUnit.DAYS.convert(System.currentTimeMillis() - file.lastModified(), TimeUnit.MILLISECONDS)
 
-internal fun WorkspaceEntityStorage.serializeTo(stream: OutputStream) {
+internal fun EntityStorage.serializeTo(file: Path) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  serializer.serializeCache(stream, this.makeSureItsStore())
+  serializer.serializeCache(file, toSnapshot())
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.serializeDiff(stream: OutputStream) {
+internal fun MutableEntityStorageImpl.serializeDiff(file: Path) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  serializeDiff(serializer, stream)
+  serializeDiff(serializer, file)
 }
 
-private fun WorkspaceEntityStorageBuilderImpl.serializeDiff(serializer: EntityStorageSerializerImpl, stream: OutputStream) {
-  serializer.serializeDiffLog(stream, this.changeLog.changeLog.anonymize())
+private fun MutableEntityStorageImpl.serializeDiff(serializer: EntityStorageSerializerImpl, file: Path) {
+  serializer.serializeDiffLog(file, changeLog.changeLog.anonymize())
 }
 
-internal fun WorkspaceEntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): WorkspaceEntityStorage {
+internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): EntityStorage {
   if (!isWrapped()) return this
-  val builder = WorkspaceEntityStorageBuilder.from(this)
-  builder.entitiesBySource { true }.flatMap { it.value.flatMap { it.value } }.forEach { entity ->
-    builder.changeSource(entity, entity.entitySource.anonymize(sourceFilter))
+  val builder = MutableEntityStorage.from(this)
+  builder.entitiesBySource { true }.flatMap { entry -> entry.value.flatMap { it.value } }.forEach { entity ->
+    builder.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {
+      this.entitySource = entity.entitySource.anonymize(sourceFilter)
+    }
   }
-  return builder.toStorage()
+  return builder.toSnapshot()
 }
 
 internal fun ChangeLog.anonymize(): ChangeLog {
   if (!isWrapped()) return this
   val result = HashMap(this)
-  result.replaceAll { key, value ->
+  result.replaceAll { _, value ->
     when (value) {
       is ChangeEntry.AddEntity -> {
         val newEntityData = value.entityData.clone()
@@ -114,31 +117,35 @@ internal fun ChangeLog.anonymize(): ChangeLog {
       is ChangeEntry.ReplaceAndChangeSource -> {
         val newEntityData = value.sourceChange.newData.clone()
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        @Suppress("UNCHECKED_CAST")
         val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData)
 
-        @Suppress("UNCHECKED_CAST")
-        val changedData = value.dataChange.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        changedData.entitySource = changedData.entitySource.anonymize(null)
-        @Suppress("UNCHECKED_CAST")
-        val changedOldData = value.dataChange.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        changedOldData.entitySource = changedOldData.entitySource.anonymize(null)
-        val dataChange = ChangeEntry.ReplaceEntity(changedOldData,
-          value.dataChange.oldParents,
-          changedData,
-          value.dataChange.newChildren,
-          value.dataChange.removedChildren,
-          value.dataChange.modifiedParents)
+        val dataChange = if (value.dataChange.data != null) {
+          @Suppress("UNCHECKED_CAST")
+          val changedData = value.dataChange.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          changedData.entitySource = changedData.entitySource.anonymize(null)
+          @Suppress("UNCHECKED_CAST")
+          val changedOldData = value.dataChange.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          changedOldData.entitySource = changedOldData.entitySource.anonymize(null)
+          ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(changedOldData, changedData), value.dataChange.references?.copy())
+        }
+        else {
+          ChangeEntry.ReplaceEntity(null, value.dataChange.references?.copy())
+        }
         ChangeEntry.ReplaceAndChangeSource(dataChange, sourceChange)
       }
       is ChangeEntry.ReplaceEntity -> {
-        @Suppress("UNCHECKED_CAST")
-        val newEntityData = value.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        @Suppress("UNCHECKED_CAST")
-        val oldEntityData = value.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        oldEntityData.entitySource = oldEntityData.entitySource.anonymize(null)
-        ChangeEntry.ReplaceEntity(oldEntityData, value.oldParents, newEntityData, value.newChildren, value.removedChildren, value.modifiedParents)
+        if (value.data != null) {
+          @Suppress("UNCHECKED_CAST")
+          val newEntityData = value.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
+          @Suppress("UNCHECKED_CAST")
+          val oldEntityData = value.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          oldEntityData.entitySource = oldEntityData.entitySource.anonymize(null)
+          ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(oldEntityData, newEntityData), value.references?.copy())
+        }
+        else {
+          ChangeEntry.ReplaceEntity(null, value.references?.copy())
+        }
       }
     }
   }
@@ -164,52 +171,101 @@ data class MatchedEntitySource(val originalSourceDump: String) : EntitySource
 data class UnmatchedEntitySource(val originalSourceDump: String) : EntitySource
 
 private fun serializeContentToFolder(contentFolder: Path,
-                                     left: WorkspaceEntityStorage?,
-                                     right: WorkspaceEntityStorage?,
-                                     resulting: WorkspaceEntityStorage,
-                                     sourceFilter: ((EntitySource) -> Boolean)?): File? {
-  if (right is WorkspaceEntityStorageBuilder) {
-    serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
-      right as WorkspaceEntityStorageBuilderImpl
-      right.serializeDiff(serializer, stream)
+                                     left: EntityStorage?,
+                                     right: EntityStorage?,
+                                     resulting: EntityStorage,
+                                     sourceFilter: ((EntitySource) -> Boolean)?): Path? {
+  if (right is MutableEntityStorage) {
+    serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, file ->
+      right as MutableEntityStorageImpl
+      right.serializeDiff(serializer, file)
     }
   }
 
   left?.anonymize(sourceFilter)?.let { serializeEntityStorage(contentFolder.resolve("Left_Store"), it) }
   right?.anonymize(sourceFilter)?.let { serializeEntityStorage(contentFolder.resolve("Right_Store"), it) }
   serializeEntityStorage(contentFolder.resolve("Res_Store"), resulting.anonymize(sourceFilter))
-  serializeContent(contentFolder.resolve("ClassToIntConverter")) { serializer, stream -> serializer.serializeClassToIntConverter(stream) }
+  serializeContent(contentFolder.resolve("ClassToIntConverter"), EntityStorageSerializerImpl::serializeClassToIntConverter)
 
   val operationName = if (sourceFilter == null) "Add_Diff" else "Replace_By_Source"
   val operationFile = contentFolder.resolve(operationName)
-  operationFile.createFile()
+  Files.createFile(operationFile)
   if (!isWrapped()) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
       allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
       allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
     }
-    else ""
-    operationFile.writeText(entitySourceFilter)
+    else {
+      ""
+    }
+    Files.writeString(operationFile, entitySourceFilter)
   }
 
   if (isWrapped()) contentFolder.resolve("Report_Wrapped").createFile()
 
   return if (!executingOnTC()) {
-    val zipFile = contentFolder.parent.resolve(contentFolder.name + ".zip").toFile()
-    Compressor.Zip(zipFile).use { it.addDirectory(contentFolder.toFile()) }
-    FileUtil.delete(contentFolder)
+    val zipFile = contentFolder.parent.resolve("${contentFolder.fileName}.zip")
+    Compressor.Zip(zipFile).use { it.addDirectory(contentFolder) }
+    NioFiles.deleteRecursively(contentFolder)
     zipFile
   }
   else null
 }
 
+private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: ChangeLog) {
+  val output = createKryoOutput(file)
+  try {
+    val (kryo, _) = createKryo()
+
+    // Save version
+    output.writeString(serializerDataFormatVersion)
+    saveContributedVersions(kryo, output)
+
+    val entityDataSequence = log.values.mapNotNull {
+      when (it) {
+        is ChangeEntry.AddEntity -> it.entityData
+        is ChangeEntry.RemoveEntity -> null
+        is ChangeEntry.ReplaceEntity -> it.data?.newData
+        is ChangeEntry.ChangeEntitySource -> it.newData
+        is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.data?.newData
+      }
+    }.asSequence()
+
+    collectAndRegisterClasses(kryo, output, entityDataSequence)
+
+    kryo.writeClassAndObject(output, log)
+  }
+  finally {
+    closeOutput(output)
+  }
+}
+
+private fun EntityStorageSerializerImpl.serializeClassToIntConverter(file: Path) {
+  val converterMap = ClassToIntConverter.INSTANCE.getMap().toMap()
+  val output = createKryoOutput(file)
+  try {
+    val (kryo, _) = createKryo()
+
+    // Save version
+    output.writeString(serializerDataFormatVersion)
+    saveContributedVersions(kryo, output)
+
+    val mapData = converterMap.map { (key, value) -> key.typeInfo to value }
+
+    kryo.writeClassAndObject(output, mapData)
+  }
+  finally {
+    closeOutput(output)
+  }
+}
+
 internal fun reportConsistencyIssue(message: String,
                                     e: Throwable,
                                     sourceFilter: ((EntitySource) -> Boolean)?,
-                                    left: WorkspaceEntityStorage?,
-                                    right: WorkspaceEntityStorage?,
-                                    resulting: WorkspaceEntityStorage) {
+                                    left: EntityStorage?,
+                                    right: EntityStorage?,
+                                    resulting: EntityStorage) {
   var finalMessage = "$message\n\n"
   finalMessage += "\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 

@@ -16,7 +16,7 @@ import a.E.ENTRY
     }
     object NestedObj {
     }
-    interface NestedTrait {
+    interface NestedInterface {
     }
     annotation class NestedAnnotation
 }
@@ -25,5 +25,5 @@ enum class E {
     ENTRY
 }
 
-fun f2(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedTrait, a: NestedAnnotation) {
+fun f2(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedInterface, a: NestedAnnotation) {
 }</selection>

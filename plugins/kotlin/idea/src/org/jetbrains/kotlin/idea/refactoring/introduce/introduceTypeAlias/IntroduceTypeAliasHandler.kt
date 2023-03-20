@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias
 
@@ -12,10 +12,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.ElementKind.TYPE_CONSTRUCTOR
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.ElementKind.TYPE_ELEMENT
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_CONSTRUCTOR
+import org.jetbrains.kotlin.idea.util.ElementKind.TYPE_ELEMENT
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractIntroduceAction
@@ -91,8 +91,7 @@ open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
                 true
             )
         }
-        val analysisResult = introduceData.analyze()
-        when (analysisResult) {
+        when (val analysisResult = introduceData.analyze()) {
             is IntroduceTypeAliasAnalysisResult.Error -> {
                 return showErrorHint(project, editor, analysisResult.message, REFACTORING_NAME)
             }

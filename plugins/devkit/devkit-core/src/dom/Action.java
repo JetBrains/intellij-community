@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -49,12 +49,16 @@ public interface Action extends ActionOrGroup {
 
   @NotNull
   List<Synonym> getSynonyms();
+
   Synonym addSynonym();
 
   @NotNull
   @Convert(KeymapConverter.class)
   GenericAttributeValue<XmlFile> getKeymap();
 
+  /**
+   * @see com.intellij.openapi.project.ProjectTypeService
+   */
   @NotNull
   GenericAttributeValue<String> getProjectType();
 }

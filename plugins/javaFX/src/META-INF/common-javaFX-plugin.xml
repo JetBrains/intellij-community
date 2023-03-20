@@ -28,7 +28,7 @@
                      enabledByDefault="true" level="WARNING" groupKey="group.name.javafx"
                      key="inspection.java.fx.unresolved.fx.id.reference.display.name"/>
     <localInspection language="XML" shortName="JavaFxUnusedImports" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection"
-                     enabledByDefault="true" level="WARNING" groupKey="group.name.javafx" key="inspection.java.fx.unused.imports.display.name"/>
+                     enabledByDefault="true" level="WARNING" groupKey="group.name.javafx" key="inspection.java.fx.unused.imports.display.name" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"/>
     <localInspection language="XML" shortName="JavaFxRedundantPropertyValue" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundantPropertyValueInspection"
                      enabledByDefault="true" level="WARNING" groupKey="group.name.javafx"
                      key="inspection.java.fx.redundant.property.value.display.name"/>
@@ -49,16 +49,19 @@
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxIdsIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.indexing.JavaFxCustomComponentsIndex"/>
     <intentionAction>
+      <language>XML</language>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
       <bundleName>messages.JavaFXBundle</bundleName>
       <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxExpandAttributeIntention</className>
       <bundleName>messages.JavaFXBundle</bundleName>
       <categoryKey>group.name.javafx</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention</className>
       <bundleName>messages.JavaFXBundle</bundleName>
       <categoryKey>group.name.javafx</categoryKey>
@@ -94,7 +97,7 @@
     <moduleBuilder builderClass="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder"/>
     <fileTemplateGroup implementation="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleTemplateGroup"/>
 
-    <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavaeeBundledDictionaryProvider"/>
+    <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavafxBundledDictionaryProvider"/>
 
     <dependencySupport coordinate="org.openjfx:javafx-base" kind="java" displayName="JavaFX"/>
   </extensions>

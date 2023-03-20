@@ -18,9 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 
-/**
- * @author peter
- */
 public class DeprecatedSkipper extends CompletionPreselectSkipper {
 
   @Override

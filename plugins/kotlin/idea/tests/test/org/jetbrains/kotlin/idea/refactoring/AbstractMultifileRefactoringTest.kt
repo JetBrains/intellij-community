@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -22,7 +22,6 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.util.prefixIfNot
 import java.io.File
 
@@ -36,7 +35,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
         val config = loadTestConfiguration(testConfigurationFile)
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         if (withRuntime) {
-            return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         }
         return KotlinLightProjectDescriptor.INSTANCE
     }
@@ -44,7 +43,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
     protected abstract fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project)
 
     protected fun doTest(unused: String) {
-        val testFile = testDataFile()
+        val testFile = dataFile()
         val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
 
         doTestCommittingDocuments(testFile) { rootDir ->

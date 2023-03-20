@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.icons.AllIcons
@@ -17,9 +17,8 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
@@ -62,7 +61,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
               .gap(RightGap.SMALL)
             comboBox(channelModel)
               .bindItem(getter = { settings.selectedActiveChannel },
-                setter = { settings.selectedChannelStatus = selectedChannel(it) })
+                        setter = { settings.selectedChannelStatus = selectedChannel(it) })
               .enabledIf(checkBox.selected)
           }
         }
@@ -79,9 +78,11 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
             val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myLastCheckedLabel))
             val settingsCopy = UpdateSettings()
             settingsCopy.state.copyFrom(settings.state)
-            settingsCopy.state.isCheckNeeded = true
-            settingsCopy.state.isPluginsCheckNeeded = true
-            settingsCopy.selectedChannelStatus = selectedChannel(channelModel.selected)
+            settingsCopy.isCheckNeeded = true
+            settingsCopy.isPluginsCheckNeeded = true
+            if (channelSelectionLockedMessage == null) {
+              settingsCopy.selectedChannelStatus = selectedChannel(channelModel.selected)
+            }
             UpdateChecker.updateAndShowResult(project, settingsCopy)
             updateLastCheckedLabel(settings.lastTimeChecked)
           }
@@ -115,18 +116,18 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
 
       if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
         group(indent = false) {
-          customizeSpacingConfiguration(SpacingConfiguration.EMPTY) {
+          customizeSpacingConfiguration(EmptySpacingConfiguration()) {
             row {
               icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
-                .verticalAlign(VerticalAlign.TOP)
-                .customize(customGaps = Gaps(right = JBUI.scale(10)))
+                .align(AlignY.TOP)
+                .customize(customGaps = JBGaps(right = 10))
               panel {
                 row {
                   text(IdeBundle.message("updates.settings.recommend.toolbox", TOOLBOX_URL, ExternalUpdateManager.TOOLBOX.toolName))
                     .bold()
                 }
                 row {
-                  label(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
+                  text(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description"))
                 }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(3)))
               }
             }.customize(customRowGaps = VerticalGaps(top = JBUI.scale(12)))

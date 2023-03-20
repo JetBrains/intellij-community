@@ -17,20 +17,20 @@ public interface HighlightSink {
 
   default void registerProblem(@NotNull PsiElement highlightElement,
                                @NotNull @InspectionMessage String message,
-                               LocalQuickFix @NotNull ... fixes) {
+                               @NotNull LocalQuickFix @NotNull ... fixes) {
     registerProblem(highlightElement, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, message, fixes);
   }
 
   default void registerError(@NotNull PsiElement highlightElement,
                              @NotNull @InspectionMessage String message,
-                             LocalQuickFix @NotNull ... fixes) {
+                             @NotNull LocalQuickFix @NotNull ... fixes) {
     registerProblem(highlightElement, ProblemHighlightType.GENERIC_ERROR, message, fixes);
   }
 
   default void registerProblem(@NotNull PsiElement highlightElement,
                                @NotNull ProblemHighlightType highlightType,
                                @NotNull @InspectionMessage String message,
-                               LocalQuickFix @NotNull ... fixes) {
+                               @NotNull LocalQuickFix @NotNull ... fixes) {
     registerProblem(highlightElement, highlightType, message, fixesToIntentions(highlightElement, fixes));
   }
 

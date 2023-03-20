@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.openapi.actionSystem.*
@@ -7,10 +7,9 @@ import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import kotlin.system.exitProcess
 
-class DumpActionsAppStarter : ApplicationStarter {
-  override fun getCommandName(): String {
-    return "dumpActions"
-  }
+internal class DumpActionsAppStarter : ApplicationStarter {
+  override val commandName: String
+    get() = "dumpActions"
 
   override fun main(args: List<String>) {
     val outputFile = args.getOrNull(1)!!
@@ -93,14 +92,12 @@ class DumpActionsAppStarter : ApplicationStarter {
     }
   }
 
-  data class ActionDescription(val id: String, val name: String, val description: String)
+  private data class ActionDescription(val id: String, val name: String, val description: String)
 
-  private fun appendName(action: AnAction,
-                         parentMenuPath: String?): String {
+  private fun appendName(action: AnAction, parentMenuPath: String?): String {
     val templatePresentation = action.templatePresentation
     if (action is ActionGroup && !action.isPopup) return parentMenuPath ?: ""
     val text = if (templatePresentation.text.isNullOrBlank()) "?" else templatePresentation.text
     return if (parentMenuPath.isNullOrEmpty()) text else "$parentMenuPath | $text"
   }
-
 }

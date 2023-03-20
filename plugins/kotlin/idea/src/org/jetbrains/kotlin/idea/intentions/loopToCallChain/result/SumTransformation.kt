@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.MapTransformation
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -26,7 +26,7 @@ abstract class SumTransformationBase(
         return if (initialization.initializer.isZeroConstant()) {
             call
         } else {
-            KtPsiFactory(call).createExpressionByPattern(
+            KtPsiFactory(call.project).createExpressionByPattern(
                 "$0 + $1", initialization.initializer, call,
                 reformat = chainedCallGenerator.reformat
             )
@@ -85,7 +85,7 @@ abstract class SumTransformationBase(
             }
 
             val byExpression = if (conversionFunctionName != null)
-                KtPsiFactory(value).createExpressionByPattern("$0.$conversionFunctionName()", value, reformat = state.reformat)
+                KtPsiFactory(value.project).createExpressionByPattern("$0.$conversionFunctionName()", value, reformat = state.reformat)
             else
                 value
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.lang.Language
@@ -29,11 +29,11 @@ internal class UastDescriptorLightParameter(
 ) : UastDescriptorLightParameterBase<ValueParameterDescriptor>(name, type, parent, ktParameter, language)
 
 internal open class UastDescriptorLightParameterBase<T : ParameterDescriptor>(
-    name: String,
-    type: PsiType,
-    private val parent: PsiElement,
-    val ktOrigin: T,
-    language: Language = parent.language,
+  name: String,
+  type: PsiType,
+  private val parent: PsiElement,
+  private val ktOrigin: T,
+  language: Language = parent.language,
 ) : LightParameter(name, type, parent, language, ktOrigin.isVararg) {
 
     override fun getParent(): PsiElement = parent

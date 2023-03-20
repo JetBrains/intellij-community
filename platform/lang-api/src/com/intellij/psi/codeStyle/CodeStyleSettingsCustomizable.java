@@ -217,51 +217,32 @@ public interface CodeStyleSettingsCustomizable {
   /**
    * @deprecated Options blow are not locale-friendly, please use ones from  {@link CodeStyleSettingsCustomizableOptions#getInstance()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String SPACES_AROUND_OPERATORS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_AROUND_OPERATORS;
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String SPACES_BEFORE_PARENTHESES = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_BEFORE_PARENTHESES;
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String SPACES_BEFORE_LEFT_BRACE = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_BEFORE_LEFT_BRACE;
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String SPACES_WITHIN = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_WITHIN;
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String SPACES_OTHER = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_OTHER;
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nls String BLANK_LINES_KEEP = CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP;
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String BLANK_LINES = CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES;
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String WRAPPING_KEEP = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP;
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nls String WRAPPING_BRACES = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_BRACES;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_COMMENTS = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_COMMENTS;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_CALL_CHAIN = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_CALL_CHAIN;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_ASSIGNMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ASSIGNMENT;
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String WRAPPING_ARRAY_INITIALIZER = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ARRAY_INITIALIZER;
 
   /**
    * @deprecated use {@link CodeStyleSettingsCustomizableOptions#WRAP_OPTIONS} instead
    */
   @Deprecated
   @Nls String[] WRAP_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().WRAP_OPTIONS;
-
-  /**
-   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#WRAP_OPTIONS_FOR_SINGLETON} instead
-   */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String[] WRAP_OPTIONS_FOR_SINGLETON = CodeStyleSettingsCustomizableOptions.getInstance().WRAP_OPTIONS_FOR_SINGLETON;
 
   int[] WRAP_VALUES = {CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_AS_NEEDED,
@@ -276,7 +257,7 @@ public interface CodeStyleSettingsCustomizable {
   /**
    * @deprecated use {@link CodeStyleSettingsCustomizableOptions#BRACE_OPTIONS} instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nls String[] BRACE_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().BRACE_OPTIONS;
 
   int[] BRACE_VALUES = {
@@ -284,13 +265,6 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
   };
-
-  /**
-   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#BRACE_PLACEMENT_OPTIONS} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nls String[] BRACE_PLACEMENT_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().BRACE_PLACEMENT_OPTIONS;
 
   int[] BRACE_PLACEMENT_VALUES = {
     CommonCodeStyleSettings.END_OF_LINE,

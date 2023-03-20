@@ -8,6 +8,9 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -15,12 +18,16 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.renderer.DefaultTreeRenderer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer {
+public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer implements UiInspectorTreeRendererContextProvider {
   protected abstract String getFilter();
 
   @Override
@@ -32,8 +39,7 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
                                                 int row,
                                                 boolean hasFocus) {
     final SimpleColoredComponent component = new SimpleColoredComponent();
-    if (!(value instanceof InspectionConfigTreeNode)) return component;
-    InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
+    if (!(value instanceof InspectionConfigTreeNode node)) return component;
 
     boolean reallyHasFocus = ((TreeTableTree)tree).getTreeTable().hasFocus();
     Color background = UIUtil.getTreeBackground(selected, reallyHasFocus);
@@ -68,5 +74,17 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
       return null;
     }
     return InspectionsBundle.message("inspection.tool.availability.in.tree.node1");
+  }
+
+  @Override
+  public @NotNull List<PropertyBean> getUiInspectorContext(@NotNull JTree tree, @Nullable Object value, int row) {
+    if (value instanceof InspectionConfigTreeNode.Tool toolNode) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Inspection Key", toolNode.getKey().getID(), true));
+      result.add(new PropertyBean("Inspection tool Class",
+                                  UiInspectorUtil.getClassPresentation(toolNode.getDefaultDescriptor().getToolWrapper().getTool()), true));
+      return result;
+    }
+    return Collections.emptyList();
   }
 }

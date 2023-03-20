@@ -38,9 +38,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 public final class JavaGenerateMemberCompletionContributor {
   static final Key<Boolean> GENERATE_ELEMENT = Key.create("GENERATE_ELEMENT");
 
@@ -203,7 +200,7 @@ public final class JavaGenerateMemberCompletionContributor {
                                                              PsiSubstitutor substitutor,
                                                              boolean generateDefaultMethods,
                                                              PsiClass targetClass,
-                                                             @Nullable Consumer<InsertionContext> wizardRunner) {
+                                                             @Nullable Consumer<? super InsertionContext> wizardRunner) {
 
     RowIcon icon = IconManager
       .getInstance()
@@ -280,7 +277,7 @@ public final class JavaGenerateMemberCompletionContributor {
     String methodName = prototype.getName();
 
     String visibility = VisibilityUtil.getVisibilityModifier(prototype.getModifierList());
-    String modifiers = (visibility == PsiModifier.PACKAGE_LOCAL || visibility == PsiModifier.PUBLIC && targetClass.isInterface() ? "" : visibility + " ");
+    String modifiers = (visibility.equals(PsiModifier.PACKAGE_LOCAL) || visibility.equals(PsiModifier.PUBLIC) && targetClass.isInterface() ? "" : visibility + " ");
     if (generateDefaultMethod) {
       modifiers = "default " + modifiers;
     }

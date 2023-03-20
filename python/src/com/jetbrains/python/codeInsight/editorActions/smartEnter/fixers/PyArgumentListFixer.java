@@ -27,9 +27,6 @@ import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyArgumentListFixer extends PyFixer<PyArgumentList> {
   public PyArgumentListFixer() {
     super(PyArgumentList.class);

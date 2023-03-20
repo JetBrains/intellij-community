@@ -1,4 +1,4 @@
-from typing import Any, Text, Type
+from typing import Any
 
 from boto.connection import AWSAuthConnection
 from boto.exception import BotoClientError
@@ -48,7 +48,7 @@ class S3Connection(AWSAuthConnection):
     DefaultCallingFormat: Any
     QueryString: str
     calling_format: Any
-    bucket_class: Type[Bucket]
+    bucket_class: type[Bucket]
     anon: Any
     def __init__(
         self,
@@ -66,7 +66,7 @@ class S3Connection(AWSAuthConnection):
         calling_format: Any = ...,
         path: str = ...,
         provider: str = ...,
-        bucket_class: Type[Bucket] = ...,
+        bucket_class: type[Bucket] = ...,
         security_token: Any | None = ...,
         suppress_consec_slashes: bool = ...,
         anon: bool = ...,
@@ -75,7 +75,7 @@ class S3Connection(AWSAuthConnection):
     ) -> None: ...
     def __iter__(self): ...
     def __contains__(self, bucket_name): ...
-    def set_bucket_class(self, bucket_class: Type[Bucket]) -> None: ...
+    def set_bucket_class(self, bucket_class: type[Bucket]) -> None: ...
     def build_post_policy(self, expiration_time, conditions): ...
     def build_post_form_args(
         self,
@@ -97,9 +97,9 @@ class S3Connection(AWSAuthConnection):
         method,
         bucket: str = ...,
         key: str = ...,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         force_http: bool = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
         version_id: Any | None = ...,
         iso_date: Any | None = ...,
     ): ...
@@ -109,20 +109,31 @@ class S3Connection(AWSAuthConnection):
         method,
         bucket: str = ...,
         key: str = ...,
-        headers: dict[Text, Text] | None = ...,
+        headers: dict[str, str] | None = ...,
         query_auth: bool = ...,
         force_http: bool = ...,
-        response_headers: dict[Text, Text] | None = ...,
+        response_headers: dict[str, str] | None = ...,
         expires_in_absolute: bool = ...,
         version_id: Any | None = ...,
     ): ...
-    def get_all_buckets(self, headers: dict[Text, Text] | None = ...): ...
-    def get_canonical_user_id(self, headers: dict[Text, Text] | None = ...): ...
-    def get_bucket(self, bucket_name: Text, validate: bool = ..., headers: dict[Text, Text] | None = ...) -> Bucket: ...
-    def head_bucket(self, bucket_name, headers: dict[Text, Text] | None = ...): ...
-    def lookup(self, bucket_name, validate: bool = ..., headers: dict[Text, Text] | None = ...): ...
-    def create_bucket(
-        self, bucket_name, headers: dict[Text, Text] | None = ..., location: Any = ..., policy: Any | None = ...
+    def get_all_buckets(self, headers: dict[str, str] | None = ...): ...
+    def get_canonical_user_id(self, headers: dict[str, str] | None = ...): ...
+    def get_bucket(self, bucket_name: str, validate: bool = ..., headers: dict[str, str] | None = ...) -> Bucket: ...
+    def head_bucket(self, bucket_name, headers: dict[str, str] | None = ...): ...
+    def lookup(self, bucket_name, validate: bool = ..., headers: dict[str, str] | None = ...): ...
+    def create_bucket(self, bucket_name, headers: dict[str, str] | None = ..., location: Any = ..., policy: Any | None = ...): ...
+    def delete_bucket(self, bucket, headers: dict[str, str] | None = ...): ...
+    def make_request(  # type: ignore[override]
+        self,
+        method,
+        bucket: str = ...,
+        key: str = ...,
+        headers: Any | None = ...,
+        data: str = ...,
+        query_args: Any | None = ...,
+        sender: Any | None = ...,
+        override_num_retries: Any | None = ...,
+        retry_handler: Any | None = ...,
+        *args,
+        **kwargs,
     ): ...
-    def delete_bucket(self, bucket, headers: dict[Text, Text] | None = ...): ...
-    def make_request(self, method, bucket: str = ..., key: str = ..., headers: Any | None = ..., data: str = ..., query_args: Any | None = ..., sender: Any | None = ..., override_num_retries: Any | None = ..., retry_handler: Any | None = ..., *args, **kwargs): ...  # type: ignore # https://github.com/python/mypy/issues/1237

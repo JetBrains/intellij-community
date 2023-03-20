@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IdempotenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,10 @@ public final class XmlPsiUtil {
     return processXmlElements(element, processor, deepFlag, false);
   }
 
-  public static boolean processXmlElements(XmlElement element, PsiElementProcessor<? super PsiElement> processor, boolean deepFlag, boolean wideFlag) {
+  public static boolean processXmlElements(XmlElement element,
+                                           PsiElementProcessor<? super PsiElement> processor,
+                                           boolean deepFlag,
+                                           boolean wideFlag) {
     if (element == null) return true;
     PsiFile baseFile = element.isValid() ? element.getContainingFile() : null;
     return processXmlElements(element, processor, deepFlag, wideFlag, baseFile);
@@ -49,10 +53,14 @@ public final class XmlPsiUtil {
                                            final boolean wideFlag,
                                            final PsiFile baseFile,
                                            boolean processIncludes) {
-    return new XmlElementProcessor(baseFile, processor).processXmlElements(element, deepFlag, wideFlag, processIncludes);
+    return AstLoadingFilter.forceAllowTreeLoading(baseFile, () ->
+      new XmlElementProcessor(baseFile, processor).processXmlElements(element, deepFlag, wideFlag, processIncludes)
+    );
   }
 
-  public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor<? super PsiElement> processor, final boolean deepFlag) {
+  public static boolean processXmlElementChildren(final XmlElement element,
+                                                  final PsiElementProcessor<? super PsiElement> processor,
+                                                  final boolean deepFlag) {
     final XmlPsiUtil.XmlElementProcessor p = new XmlPsiUtil.XmlElementProcessor(element.getContainingFile(), processor);
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -63,7 +71,7 @@ public final class XmlPsiUtil {
   }
 
   @Nullable
-  public static XmlElement findElement(@NotNull final XmlElement parent, @NotNull final IElementType.Predicate predicate){
+  public static XmlElement findElement(@NotNull final XmlElement parent, @NotNull final IElementType.Predicate predicate) {
     final Ref<XmlElement> result = new Ref<>();
     parent.processElements(new PsiElementProcessor<>() {
       @Override
@@ -94,8 +102,7 @@ public final class XmlPsiUtil {
 
       PsiElement startFrom = element.getFirstChild();
 
-      if (element instanceof XmlEntityRef) {
-        XmlEntityRef ref = (XmlEntityRef)element;
+      if (element instanceof XmlEntityRef ref) {
         if (!visitedEntities.add(ref.getText())) return true;
         PsiElement newElement = parseEntityRef(targetFile, ref);
 
@@ -106,8 +113,7 @@ public final class XmlPsiUtil {
 
         return true;
       }
-      else if (element instanceof XmlConditionalSection) {
-        XmlConditionalSection xmlConditionalSection = (XmlConditionalSection)element;
+      else if (element instanceof XmlConditionalSection xmlConditionalSection) {
         if (!xmlConditionalSection.isIncluded(targetFile)) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
@@ -149,8 +155,7 @@ public final class XmlPsiUtil {
         }
         else if (!processor.execute(child)) return false;
       }
-      if (targetFile != null && child instanceof XmlEntityDecl) {
-        XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)child;
+      if (targetFile != null && child instanceof XmlEntityDecl xmlEntityDecl) {
         XmlEntityCache.cacheParticularEntity(targetFile, xmlEntityDecl);
       }
       return true;
@@ -177,8 +182,7 @@ public final class XmlPsiUtil {
 
         continue;
       }
-      if (e instanceof PsiFile) {
-        PsiFile refFile = (PsiFile)e;
+      if (e instanceof PsiFile refFile) {
         final XmlEntityDecl entityDecl = ref.resolve(refFile);
         if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
         break;

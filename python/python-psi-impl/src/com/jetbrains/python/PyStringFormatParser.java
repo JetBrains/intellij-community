@@ -586,8 +586,7 @@ public class PyStringFormatParser {
   @Nullable
   public static PyExpression getFormatValueExpression(@NotNull PyStringLiteralExpression element) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpr = (PyBinaryExpression)parent;
+    if (parent instanceof PyBinaryExpression binaryExpr) {
       if (binaryExpr.isOperator("%")) {
         PyExpression expr = binaryExpr.getRightExpression();
         while (expr instanceof PyParenthesizedExpression) {
@@ -605,13 +604,11 @@ public class PyStringFormatParser {
   @Nullable
   public static PyArgumentList getNewStyleFormatValueExpression(@NotNull PyStringLiteralExpression element) {
     final PsiElement parent = element.getParent();
-    if (parent instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)parent;
+    if (parent instanceof PyQualifiedExpression qualifiedExpr) {
       final String name = qualifiedExpr.getReferencedName();
       if (PyNames.FORMAT.equals(name)) {
         final PsiElement parent2 = qualifiedExpr.getParent();
-        if (parent2 instanceof PyCallExpression) {
-          final PyCallExpression callExpr = (PyCallExpression)parent2;
+        if (parent2 instanceof PyCallExpression callExpr) {
           return callExpr.getArgumentList();
         }
       }

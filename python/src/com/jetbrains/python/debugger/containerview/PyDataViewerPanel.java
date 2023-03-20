@@ -52,6 +52,7 @@ public class PyDataViewerPanel extends JPanel {
   private JBLabel myErrorLabel;
   @SuppressWarnings("unused") private JBScrollPane myScrollPane;
   protected JPanel bottomPanel;
+  private JPanel myFormatPanel;
   private boolean myColored;
   List<Listener> myListeners;
   private @NlsSafe String myOriginalVarName;
@@ -79,9 +80,6 @@ public class PyDataViewerPanel extends JPanel {
       public void frameChanged() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel());
       }
-
-      @Override
-      public void sessionStopped() { }
     });
   }
 
@@ -329,6 +327,10 @@ public class PyDataViewerPanel extends JPanel {
 
   public EditorTextField getSliceTextField() {
     return mySliceTextField;
+  }
+
+  public JPanel getFormatPanel() {
+    return myFormatPanel;
   }
 
   @Nullable

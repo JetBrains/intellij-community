@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -34,18 +36,10 @@ public abstract class SdkListItem {
       this.hasValidPath = hasValidPath;
     }
 
-    /** @deprecated use {@link #name} */
-    @ApiStatus.ScheduledForRemoval(inVersion = "20201.1")
-    @Deprecated
-    public @NotNull String getName() {
-      return name;
-    }
-
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SdkReferenceItem)) return false;
-      SdkReferenceItem item = (SdkReferenceItem)o;
+      if (!(o instanceof SdkReferenceItem item)) return false;
       return sdkType.equals(item.sdkType) && name.equals(item.name);
     }
 
@@ -60,13 +54,6 @@ public abstract class SdkListItem {
 
     SdkItem(@NotNull Sdk sdk) {
       this.sdk = sdk;
-    }
-
-    /** @deprecated use {@link #sdk} */
-    @ApiStatus.ScheduledForRemoval(inVersion = "20201.1")
-    @Deprecated
-    public @NotNull Sdk getSdk() {
-      return sdk;
     }
 
     @Override
@@ -173,7 +160,7 @@ public abstract class SdkListItem {
     GroupItem(@NotNull Icon icon, @Nls @NotNull String caption, @NotNull List<ActionItem> subItems) {
       this.icon = icon;
       this.caption = caption;
-      this.subItems = ImmutableList.copyOf(ContainerUtil.map(subItems, it -> it.withGroup(this)));
+      this.subItems = List.copyOf(ContainerUtil.map(subItems, it -> it.withGroup(this)));
     }
   }
 }

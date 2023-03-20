@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,10 +7,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
@@ -36,12 +20,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -133,8 +117,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
             infoLines.add(Pair.create(JavaBundle.message("type.information.range"), presentation));
           }
         }
-        else if (dfType instanceof DfReferenceType) {
-          DfReferenceType refType = (DfReferenceType)dfType;
+        else if (dfType instanceof DfReferenceType refType) {
           infoLines.add(Pair.create(JavaBundle.message("type.information.nullability"), refType.getNullability().getPresentationName()));
           infoLines.add(Pair.create(JavaBundle.message("type.information.constraints"), refType.getConstraint().getPresentationText(type)));
           if (refType.getMutability() != Mutability.UNKNOWN) {
@@ -153,7 +136,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     infoLines.removeIf(pair -> pair.getSecond().isEmpty());
     if (!infoLines.isEmpty()) {
       infoLines.add(0, Pair.create(JavaBundle.message("type.information.type"), basicType));
-      HtmlChunk[] rows = StreamEx.of(infoLines).map(pair -> makeHtmlRow(pair.getFirst(), pair.getSecond())).toArray(HtmlChunk.class);
+      HtmlChunk[] rows = ContainerUtil.map2Array(infoLines, HtmlChunk.class, pair -> makeHtmlRow(pair.getFirst(), pair.getSecond()));
       return HtmlChunk.tag("table").children(rows).toString();
     }
     return basicType;

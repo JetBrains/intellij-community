@@ -36,9 +36,8 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
 
   @Override
   public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
-    if (!(step instanceof ProjectSpecificSettingsStep)) return;
+    if (!(step instanceof ProjectSpecificSettingsStep settingsStep)) return;
 
-    final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
     final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
     Sdk sdk = settingsStep.getSdk();
 
@@ -84,15 +83,13 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
                                               final ProjectSpecificSettingsStep settingsStep,
                                               @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
     Object projectSettings = null;
-    if (generator instanceof PythonProjectGenerator) {
-      final PythonProjectGenerator<?> projectGenerator = (PythonProjectGenerator<?>)generator;
+    if (generator instanceof PythonProjectGenerator<?> projectGenerator) {
       projectSettings = projectGenerator.getProjectSettings();
     }
     else if (generator instanceof WebProjectTemplate) {
       projectSettings = projectGeneratorPeer.getSettings();
     }
-    if (projectSettings instanceof PyNewProjectSettings) {
-      final PyNewProjectSettings newProjectSettings = (PyNewProjectSettings)projectSettings;
+    if (projectSettings instanceof PyNewProjectSettings newProjectSettings) {
       newProjectSettings.setSdk(settingsStep.getSdk());
       newProjectSettings.setInstallFramework(settingsStep.installFramework());
       newProjectSettings.setRemotePath(settingsStep.getRemotePath());

@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #pragma once
 
-#define VERSION "20210419.1140"
+#ifndef VERSION
+#define VERSION "SNAPSHOT"
+#endif
 
 #define _DEFAULT_SOURCE
 #define _FILE_OFFSET_BITS 64
@@ -54,14 +56,14 @@ enum {
   ERR_MISSING = -4
 };
 
-bool init_inotify();
+bool init_inotify(void);
 
 void set_inotify_callback(void (*callback)(const char *, uint32_t));
-int get_inotify_fd();
+int get_inotify_fd(void);
 int watch(const char* root, array* mounts);
 void unwatch(int id);
-bool process_inotify_input();
-void close_inotify();
+bool process_inotify_input(void);
+void close_inotify(void);
 
 
 // reads one line from stream, trims trailing carriage return if any

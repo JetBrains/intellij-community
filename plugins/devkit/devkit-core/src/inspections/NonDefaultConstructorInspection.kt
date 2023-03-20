@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
-import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClassType
@@ -49,7 +49,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
 
     val area: Area?
     val isService: Boolean
-    var serviceClientKind: ServiceDescriptor.ClientKind? = null
+    var serviceClientKind: ClientKind? = null
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
@@ -77,16 +77,19 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
           val clientName = extensionTag.getAttribute("client")?.value ?: continue
 
           val kind = when (clientName.lowercase(Locale.US)) {
-            "all" -> ServiceDescriptor.ClientKind.ALL
-            "guest" -> ServiceDescriptor.ClientKind.GUEST
-            "local" -> ServiceDescriptor.ClientKind.LOCAL
+            "local" -> ClientKind.LOCAL
+            "controller" -> ClientKind.CONTROLLER
+            "guest" -> ClientKind.GUEST
+            "owner" -> ClientKind.OWNER
+            "remote" -> ClientKind.REMOTE
+            "all" -> ClientKind.ALL
             else -> null
           }
           if (serviceClientKind == null) {
             serviceClientKind = kind
           }
           else if (serviceClientKind != kind) {
-            serviceClientKind = ServiceDescriptor.ClientKind.ALL
+            serviceClientKind = ClientKind.ALL
           }
         }
       }
@@ -130,7 +133,6 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
     return errors?.toTypedArray()
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun getArea(extensionPoint: ExtensionPoint?): Area {
     val areaName = (extensionPoint ?: return Area.IDEA_APPLICATION).area.stringValue
     when (areaName) {
@@ -220,28 +222,27 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedClientSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientSession",
   "com.jetbrains.rdserver.core.GuestSession",
+  "com.jetbrains.rdserver.core.RemoteSession",
 )
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedClientAppSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientAppSession",
   "com.jetbrains.rdserver.core.GuestAppSession",
+  "com.jetbrains.rdserver.core.RemoteAppSession",
 ) + allowedClientSessionsQualifiedNames
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedClientProjectSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientProjectSession",
   "com.jetbrains.rdserver.core.GuestProjectSession",
+  "com.jetbrains.rdserver.core.RemoteProjectSession",
 ) + allowedClientSessionsQualifiedNames
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
@@ -249,16 +250,16 @@ private val allowedServiceQualifiedNames = setOf(
   "com.intellij.util.messages.MessageBus",
   "com.intellij.openapi.options.SchemeManagerFactory",
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
-  "com.intellij.database.Dbms"
+  "com.intellij.database.Dbms",
+  "kotlinx.coroutines.CoroutineScope"
 ) + allowedClientAppSessionsQualifiedNames + allowedClientProjectSessionsQualifiedNames
 
 private val allowedServiceNames = allowedServiceQualifiedNames.mapTo(HashSet(allowedServiceQualifiedNames.size)) { it.substringAfterLast('.') }
 
-@Suppress("HardCodedStringLiteral")
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,
                                 isAppLevelExtensionPoint: Boolean,
-                                clientKind: ServiceDescriptor.ClientKind?,
+                                clientKind: ClientKind?,
                                 isServiceAnnotation: Boolean): Boolean {
   if (list.isEmpty) {
     return true
@@ -287,18 +288,44 @@ private fun isAllowedParameters(list: PsiParameterList,
       return false
     }
 
-    if (clientKind != ServiceDescriptor.ClientKind.GUEST &&
-        qualifiedName?.startsWith("com.jetbrains.rdserver.core") == true) {
-      return false
-    }
-
-    if (clientKind == null && allowedClientProjectSessionsQualifiedNames.contains(qualifiedName)) {
-      return false
-    }
-
     if (isAppLevelExtensionPoint && !isServiceAnnotation && name == "Project") {
       return false
     }
+
+    if (!checkPerClientServices(clientKind, isAppLevelExtensionPoint, qualifiedName)) {
+      return false
+    }
+  }
+
+  return true
+}
+
+private fun checkPerClientServices(kind: ClientKind?, isAppLevel: Boolean, qualifiedName: String?): Boolean {
+  val isPerClient = kind != null
+  val hasProjectSessionDeps = allowedClientProjectSessionsQualifiedNames.contains(qualifiedName)
+  val hasAppSessionDeps = allowedClientAppSessionsQualifiedNames.contains(qualifiedName)
+
+  // non per-client injecting per-client stuff
+  if (!isPerClient) {
+    return !hasProjectSessionDeps && !hasAppSessionDeps
+  }
+
+  // app-level per-client injecting project-level stuff
+  if (isAppLevel && hasProjectSessionDeps && !hasAppSessionDeps) {
+    return false
+  }
+
+  // project-level per-client injecting app-level stuff. Technically okay, but probably not something user wants
+  if (!isAppLevel && !hasProjectSessionDeps && hasAppSessionDeps) {
+    return false
+  }
+
+  // not remote-only per-client injecting remote-only stuff
+  if (kind != ClientKind.REMOTE &&
+      kind != ClientKind.GUEST &&
+      kind != ClientKind.CONTROLLER &&
+      qualifiedName?.startsWith("com.jetbrains.rdserver.core") == true) {
+    return false
   }
 
   return true

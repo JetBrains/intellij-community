@@ -7,9 +7,9 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchableConfigurable {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -77,10 +77,17 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
 
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    Configurable unwrapped = cast(Configurable.class, this);
+    if (unwrapped != null && unwrapped != this) {
+      unwrapped.focusOn(label);
+    }
+  }
+
   @Nullable
   public static <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+    if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
         if (configurableType != null) {
@@ -98,8 +105,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
 
   private final ConfigurableEP<?> myEp;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
-
-  private @Nullable String overriddenId = null;
 
   private ConfigurableWrapper(@NotNull ConfigurableEP<?> ep) {
     myEp = ep;
@@ -207,10 +212,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
   @NotNull
   @Override
   public String getId() {
-    if (overriddenId != null) {
-      return overriddenId;
-    }
-
     if (myEp.id != null) {
       return myEp.id;
     }
@@ -229,11 +230,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
            : myEp.instanceClass != null
              ? myEp.instanceClass
              : myEp.implementationClass;
-  }
-
-  @ApiStatus.Experimental
-  public void overrideId(String overridenId) {
-    this.overriddenId = overridenId;
   }
 
   @NotNull
@@ -272,6 +268,18 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
            : configurable != null
              ? configurable.getClass()
              : getClass();
+  }
+
+  private @Nls @Nullable String markerText = null;
+
+  @Override
+  public @Nls @Nullable String getMarkerText() {
+    return markerText;
+  }
+
+  @Override
+  public void setMarkerText(@Nls @Nullable String text) {
+    markerText = text;
   }
 
   private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {

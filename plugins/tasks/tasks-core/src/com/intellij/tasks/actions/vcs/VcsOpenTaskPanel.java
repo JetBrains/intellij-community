@@ -35,6 +35,7 @@ import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
   private JTextField myChangelistName;
   private JBCheckBox myCreateBranch;
   private JBCheckBox myCreateChangelist;
-  private ComboBox<VcsTaskHandler.TaskInfo> myBranchFrom;
+  private ComboBox myBranchFrom;
   private JBLabel myFromLabel;
   private JBCheckBox myUseBranch;
   private ComboBox<VcsTaskHandler.TaskInfo> myUseBranchCombo;
@@ -72,6 +73,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
     myProject = project;
     myTask = task;
+    myBranchFrom.setMinimumAndPreferredWidth(JBUIScale.scale(150));
     myPreviousTask = myTaskManager.getActiveTask();
     ActionListener listener = new ActionListener() {
       @Override
@@ -164,8 +166,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myBranchFrom.setRenderer(SimpleListCellRenderer.create("", VcsTaskHandler.TaskInfo::getName));
       myUseBranchCombo.setRenderer(SimpleListCellRenderer.create("", VcsTaskHandler.TaskInfo::getName));
       myBranchName.setText(branchName);
-      new ComboboxSpeedSearch(myBranchFrom);
-      new ComboboxSpeedSearch(myUseBranchCombo);
+      ComboboxSpeedSearch.installOn(myBranchFrom);
+      ComboboxSpeedSearch.installOn(myUseBranchCombo);
     }
 
     updateFields(true);

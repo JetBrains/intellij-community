@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
@@ -67,7 +67,7 @@ private fun KtParameter.needToBeAbstract(targetClass: KtClassOrObject): Boolean 
 }
 
 private fun KtParameter.toProperty(): KtProperty =
-    KtPsiFactory(this)
+    KtPsiFactory(project)
         .createProperty(text)
         .also {
             val originalTypeRef = typeReference
@@ -95,7 +95,7 @@ fun doAddCallableMember(
 // TODO: Formatting rules don't apply here for some reason
 fun KtNamedDeclaration.addAnnotationWithSpace(annotationEntry: KtAnnotationEntry): KtAnnotationEntry {
     val result = addAnnotationEntry(annotationEntry)
-    addAfter(KtPsiFactory(this).createWhiteSpace(), modifierList)
+    addAfter(KtPsiFactory(project).createWhiteSpace(), modifierList)
     return result
 }
 
@@ -173,7 +173,7 @@ fun addSuperTypeEntry(
     if (!(typeInTargetClass != null && !typeInTargetClass.isError)) return
 
     val renderedType = IdeDescriptorRenderers.SOURCE_CODE.renderType(typeInTargetClass)
-    val newSpecifier = KtPsiFactory(targetClass).createSuperTypeEntry(renderedType)
+    val newSpecifier = KtPsiFactory(targetClass.project).createSuperTypeEntry(renderedType)
     targetClass.addSuperTypeListEntry(newSpecifier).addToShorteningWaitSet()
 }
 

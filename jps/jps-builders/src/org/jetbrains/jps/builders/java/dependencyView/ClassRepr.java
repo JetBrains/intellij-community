@@ -14,9 +14,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.Predicate;
 
-/**
- * @author: db
- */
 public final class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
   private final Set<TypeRepr.AbstractType> myInterfaces;
@@ -79,6 +76,10 @@ public final class ClassRepr extends ClassFileRepr {
 
   public boolean isInterface() {
     return (access & Opcodes.ACC_INTERFACE) != 0;
+  }
+
+  public boolean isEnum() {
+    return (access & Opcodes.ACC_ENUM) != 0;
   }
 
   public abstract static class Diff extends DifferenceImpl {
@@ -171,9 +172,11 @@ public final class ClassRepr extends ClassFileRepr {
       public boolean targetAttributeCategoryMightChange() {
         final Specifier<ElemType, Difference> targetsDiff = targets();
         if (!targetsDiff.unchanged()) {
-          return targetsDiff.added().contains(ElemType.TYPE_USE) ||
-                 targetsDiff.removed().contains(ElemType.TYPE_USE) ||
-                 pastClass.getAnnotationTargets().contains(ElemType.TYPE_USE);
+          for (ElemType elemType : Set.of(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
+            if (targetsDiff.added().contains(elemType) || targetsDiff.removed().contains(elemType) || pastClass.getAnnotationTargets().contains(elemType) ) {
+              return true;
+            }
+          }
         }
         return false;
       }
@@ -336,7 +339,7 @@ public final class ClassRepr extends ClassFileRepr {
   }
 
   @NotNull
-  public Collection<MethodRepr> findMethods(final Predicate<MethodRepr> p) {
+  public Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {

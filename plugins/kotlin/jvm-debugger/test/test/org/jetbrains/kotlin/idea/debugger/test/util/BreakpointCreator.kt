@@ -1,24 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test.util
 
-import org.jetbrains.kotlin.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import com.intellij.debugger.DebuggerInvocationUtil
-import com.intellij.openapi.application.ModalityState
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.xdebugger.XDebuggerManager
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.breakpoints.BreakpointManager
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpointManager
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
@@ -26,9 +26,16 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
-import org.jetbrains.kotlin.idea.debugger.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
+import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isKotlinSourceFile
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpoint
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpoint
+import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
+import java.util.*
 import javax.swing.SwingUtilities
 
 internal class BreakpointCreator(
@@ -57,7 +64,7 @@ internal class BreakpointCreator(
                     .trim()
 
                 when {
-                    @Suppress("SpellCheckingInspection") comment.startsWith("//FieldWatchpoint!") -> {
+                    comment.startsWith("//FieldWatchpoint!") -> {
                         val javaBreakpoint = createBreakpointOfType(
                             breakpointManager,
                             kotlinFieldBreakpointType,
@@ -66,7 +73,6 @@ internal class BreakpointCreator(
                         )
 
                         (javaBreakpoint as? KotlinFieldBreakpoint)?.apply {
-                            @Suppress("SpellCheckingInspection")
                             val fieldName = comment.substringAfter("//FieldWatchpoint! (").substringBefore(")")
 
                             setFieldName(fieldName)
@@ -137,7 +143,11 @@ internal class BreakpointCreator(
 
     private fun createBreakpoint(fileName: String, lineMarker: String, action: (PsiFile, Int) -> Unit) {
         val sourceFiles = runReadAction {
-            FilenameIndex.getAllFilesByExt(project, "kt")
+            val actualType = FileUtilRt.getExtension(fileName).lowercase(Locale.getDefault())
+            assert(isKotlinSourceFile(fileName)) {
+                "Could not set a breakpoint on a non-kt file"
+            }
+            FilenameIndex.getAllFilesByExt(project, actualType)
                 .filter { it.name == fileName && it.contentsToByteArray().toString(Charsets.UTF_8).contains(lineMarker) }
         }
 
@@ -175,24 +185,22 @@ internal class BreakpointCreator(
         condition: String?
     ) {
         val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
+        val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != -1) it - 1 else it }
+
         val javaBreakpoint = createBreakpointOfType(
             breakpointManager,
             kotlinLineBreakpointType,
             lineIndex,
-            file.virtualFile
+            file.virtualFile,
+            updatedLambdaOrdinal
         )
 
         if (javaBreakpoint is LineBreakpoint<*>) {
-            val properties = javaBreakpoint.xBreakpoint.properties as? JavaLineBreakpointProperties ?: return
             var suffix = ""
             if (lambdaOrdinal != null) {
-                if (lambdaOrdinal != -1) {
-                    properties.lambdaOrdinal = lambdaOrdinal - 1
-                } else {
-                    properties.lambdaOrdinal = lambdaOrdinal
-                }
                 suffix += " lambdaOrdinal = $lambdaOrdinal"
             }
+
             if (condition != null) {
                 javaBreakpoint.setCondition(TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition))
                 suffix += " condition = $condition"
@@ -207,15 +215,21 @@ internal class BreakpointCreator(
         breakpointManager: XBreakpointManager,
         breakpointType: XLineBreakpointType<XBreakpointProperties<*>>,
         lineIndex: Int,
-        virtualFile: VirtualFile
+        virtualFile: VirtualFile,
+        lambdaOrdinal: Int? = null,
     ): Breakpoint<out JavaBreakpointProperties<*>>? {
         if (!breakpointType.canPutAt(virtualFile, lineIndex, project)) return null
         val xBreakpoint = runWriteAction {
+            val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
+            if (properties is JavaLineBreakpointProperties) {
+                properties.lambdaOrdinal = lambdaOrdinal
+            }
+
             breakpointManager.addLineBreakpoint(
                 breakpointType,
                 virtualFile.url,
                 lineIndex,
-                breakpointType.createBreakpointProperties(virtualFile, lineIndex)
+                properties
             )
         }
         return BreakpointManager.getJavaBreakpoint(xBreakpoint)

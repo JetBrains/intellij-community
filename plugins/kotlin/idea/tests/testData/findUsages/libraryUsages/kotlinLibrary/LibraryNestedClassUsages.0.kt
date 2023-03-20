@@ -1,8 +1,8 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: usages, constructorUsages
+// PSI_ELEMENT_AS_TITLE: "class T"
 // FIND_BY_REF
 // WITH_FILE_NAME
-// FIR_IGNORE
 
 package usages
 
@@ -18,3 +18,4 @@ fun test() {
     val a: A.<caret>T = A.T()
     val aa = A.T(1)
 }
+

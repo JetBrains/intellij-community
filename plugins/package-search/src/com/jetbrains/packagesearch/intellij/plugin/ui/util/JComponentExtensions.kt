@@ -1,8 +1,23 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
-import java.awt.event.MouseMotionListener
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -26,23 +41,6 @@ internal fun JComponent.onMouseAction(
     return listener
 }
 
-internal fun JComponent.onMouseMotion(
-    onMouseMoved: (MouseEvent) -> Unit = {},
-    onMouseDragged: (MouseEvent) -> Unit = {}
-): MouseMotionListener {
-    val listener = object : MouseMotionListener {
-        override fun mouseDragged(e: MouseEvent) {
-            onMouseDragged(e)
-        }
-
-        override fun mouseMoved(e: MouseEvent) {
-            onMouseMoved(e)
-        }
-    }
-    addMouseMotionListener(listener)
-    return listener
-}
-
 @ScaledPixels
 internal val JComponent.left: Int
     get() = x
@@ -63,6 +61,3 @@ internal val JComponent.right: Int
 internal val JComponent.verticalCenter: Int
     get() = y + height / 2
 
-@ScaledPixels
-internal val JComponent.horizontalCenter: Int
-    get() = x + width / 2

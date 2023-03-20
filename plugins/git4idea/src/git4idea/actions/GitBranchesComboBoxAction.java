@@ -2,7 +2,7 @@
 package git4idea.actions;
 
 import com.intellij.dvcs.branch.DvcsBranchUtil;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
@@ -24,6 +24,11 @@ import java.util.Objects;
 public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAware {
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     var project = e.getProject();
     Presentation presentation = e.getPresentation();
@@ -31,8 +36,12 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
       presentation.setEnabledAndVisible(false);
       return;
     }
-    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
+    GitRepository repo = GitBranchUtil.guessWidgetRepository(project, e.getDataContext());
     if (repo == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+    if (!ToolbarSettings.getInstance().isAvailable()) {
       presentation.setEnabledAndVisible(false);
       return;
     }
@@ -43,11 +52,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
     presentation.setText(name, false);
     presentation.setIcon(BranchIconUtil.Companion.getBranchIcon(repo));
     presentation.setEnabledAndVisible(true);
-  }
-
-  @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup();
+    presentation.setDescription(GitBundle.messagePointer("action.Git.ShowBranches.pretty.description").get());
   }
 
   @Override
@@ -55,7 +60,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {
     Project project = Objects.requireNonNull(context.getData(CommonDataKeys.PROJECT));
-    GitRepository repo = Objects.requireNonNull(GitBranchUtil.getCurrentRepository(project));
+    GitRepository repo = Objects.requireNonNull(GitBranchUtil.guessWidgetRepository(project, context));
 
     ListPopup popup = GitBranchPopup.getInstance(project, repo, context).asListPopup();
     popup.addListener(new JBPopupListener() {

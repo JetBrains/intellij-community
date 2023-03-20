@@ -8,7 +8,6 @@ import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.formatting.IndentData;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.lang.*;
@@ -66,7 +65,6 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     myDocument = editor.getDocument();
     myLanguage = getLanguage(caret, file);
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.comment.block");
     final Commenter commenter = findCommenter(myFile, myEditor, caret);
     if (commenter == null) return;
     myCommenter = commenter;
@@ -74,15 +72,13 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     final String prefix;
     final String suffix;
 
-    if (commenter instanceof SelfManagingCommenter) {
-      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+    if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
       mySelfManagedCommenterData = selfManagingCommenter.createBlockCommentingState(
         caret.getSelectionStart(),
         caret.getSelectionEnd(),
         myDocument,
         myFile
       );
-
       if (mySelfManagedCommenterData == null) {
         mySelfManagedCommenterData = SelfManagingCommenter.EMPTY_STATE;
       }
@@ -189,12 +185,12 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   private boolean testSelectionForNonComments() {
-    if (!myCaret.hasSelection()) {
+    TextRange selection = myCaret.getSelectionRange();
+    if (selection.isEmpty()) {
       return true;
     }
     PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myDocument);
-    TextRange range
-      = new TextRange(myCaret.getSelectionStart(), myCaret.getSelectionEnd() - 1);
+    TextRange range = selection.grown(-1);
     for (PsiElement element = myFile.findElementAt(range.getStartOffset()); element != null && range.intersects(element.getTextRange());
          element = element.getNextSibling()) {
       if (element instanceof OuterLanguageElement) {
@@ -272,8 +268,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
       return commentedRange.shiftRight(myCaret.getSelectionStart());
     }
 
-    if (commenter instanceof SelfManagingCommenter) {
-      SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+    if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
 
       prefix = selfManagingCommenter.getBlockCommentPrefix(
         myCaret.getSelectionStart(),
@@ -460,8 +455,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   private boolean breaksExistingComment(int offset, boolean includingAfterLineComment) {
-    if (!(myCommenter instanceof CodeDocumentationAwareCommenter) || offset == 0) return false;
-    CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)myCommenter;
+    if (!(myCommenter instanceof CodeDocumentationAwareCommenter commenter) || offset == 0) return false;
     HighlighterIterator it = myEditor.getHighlighter().createIterator(offset - 1);
     IElementType tokenType = it.getTokenType();
     return (tokenType != null && (it.getEnd() > offset && (tokenType == commenter.getLineCommentTokenType() ||
@@ -523,8 +517,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
                                                    String commentPrefix,
                                                    String commentSuffix,
                                                    Commenter commenter) {
-    if (commenter instanceof SelfManagingCommenter) {
-      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+    if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
       return selfManagingCommenter.insertBlockComment(
         startOffset,
         endOffset,
@@ -757,8 +750,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   public void uncommentRange(TextRange range, String commentPrefix, String commentSuffix, Commenter commenter) {
-    if (commenter instanceof SelfManagingCommenter) {
-      final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
+    if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
       selfManagingCommenter.uncommentBlockComment(
         range.getStartOffset(),
         range.getEndOffset(),
@@ -774,12 +766,11 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     List<Couple<TextRange>> ranges = new ArrayList<>();
 
 
-    if (commenter instanceof CustomUncommenter) {
+    if (commenter instanceof CustomUncommenter customUncommenter) {
       /*
         In case of custom uncommenter, we need to ask it for list of [commentOpen-start,commentOpen-end], [commentClose-start,commentClose-end]
         and shift if according to current offset
        */
-      CustomUncommenter customUncommenter = (CustomUncommenter)commenter;
       for (Couple<TextRange> coupleFromCommenter : customUncommenter.getCommentRangesToDelete(text)) {
         TextRange openComment = coupleFromCommenter.first.shiftRight(startOffset);
         TextRange closeComment = coupleFromCommenter.second.shiftRight(startOffset);

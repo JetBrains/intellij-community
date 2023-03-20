@@ -18,6 +18,7 @@ package com.intellij.java.ide.hierarchy;
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.HierarchyBrowserManager;
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
@@ -91,7 +92,7 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
       final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
       return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, fileNames);
+    }, JavaHierarchyUtil.getComparator(myProject), fileNames);
   }
 
   private void doTestHideIrrelevantClasses(String classFqn, String methodName, String... fileNames) throws Exception {

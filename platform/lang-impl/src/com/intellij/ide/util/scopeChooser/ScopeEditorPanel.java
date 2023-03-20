@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -154,11 +153,10 @@ public final class ScopeEditorPanel implements Disposable {
       }
     });
     myPatternLegend.setForeground(new JBColor(Gray._50, Gray._130));
-    myPatternLegend.setText(new HtmlBuilder().appendRaw(
-      LangBundle.message("scope.editor.pattern.legend.label")).wrapWithHtmlBody().toString());
+    myPatternLegend.setText("");
 
     initTree(myPackageTree);
-    Disposer.register(this, new UiNotifyConnector(myPanel, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myPanel, new Activatable() {
       @Override
       public void hideNotify() {
         cancelCurrentProgress();
@@ -283,7 +281,7 @@ public final class ScopeEditorPanel implements Disposable {
     return buttonsPanel;
   }
 
-  private void excludeSelected(@NotNull List<PackageSet> selected) {
+  private void excludeSelected(@NotNull List<? extends PackageSet> selected) {
     for (PackageSet set : selected) {
       if (myCurrentScope == null) {
         myCurrentScope = new ComplementPackageSet(set);
@@ -312,7 +310,7 @@ public final class ScopeEditorPanel implements Disposable {
     rebuild(true);
   }
 
-  private void includeSelected(@NotNull List<PackageSet> selected) {
+  private void includeSelected(@NotNull List<? extends PackageSet> selected) {
     for (PackageSet set : selected) {
       if (myCurrentScope == null) {
         myCurrentScope = set;
@@ -456,6 +454,11 @@ public final class ScopeEditorPanel implements Disposable {
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
     progress.setBordersVisible(false);
     myCurrentProgress = progress;
+
+    PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+    String hintMessage = provider != null ? provider.getHintMessage() : "";
+    myPatternLegend.setText(new HtmlBuilder().appendRaw(hintMessage).wrapWithHtmlBody().toString());
+
     final Runnable request = () -> {
       if (updateText) {
         final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
@@ -501,7 +504,7 @@ public final class ScopeEditorPanel implements Disposable {
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) {
@@ -625,8 +628,7 @@ public final class ScopeEditorPanel implements Disposable {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof PackageDependenciesNode) {
-        PackageDependenciesNode node = (PackageDependenciesNode)value;
+      if (value instanceof PackageDependenciesNode node) {
         setIcon(node.getIcon());
 
         setForeground(UIUtil.getTreeForeground(selected, hasFocus));
@@ -651,7 +653,7 @@ public final class ScopeEditorPanel implements Disposable {
 
     @Override
     @NotNull
-    protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
@@ -672,6 +674,11 @@ public final class ScopeEditorPanel implements Disposable {
       e.getPresentation().setText(provider.getDisplayName());
       e.getPresentation().setIcon(provider.getIcon());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private final class FilterLegalsAction extends ToggleAction {
@@ -686,6 +693,11 @@ public final class ScopeEditorPanel implements Disposable {
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -735,6 +747,11 @@ public final class ScopeEditorPanel implements Disposable {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         action.actionPerformed(null);
       }
@@ -742,10 +759,10 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   private static final class MyAction extends AbstractAction {
-    private final Consumer<List<PackageSet>> consumer;
+    private final @NotNull Consumer<? super List<PackageSet>> consumer;
     private List<PackageSet> selection;
 
-    private MyAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key, @NotNull Consumer<List<PackageSet>> consumer) {
+    private MyAction(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key, @NotNull Consumer<? super List<PackageSet>> consumer) {
       super(IdeBundle.message(key));
       setEnabled(false);
       this.consumer = consumer;

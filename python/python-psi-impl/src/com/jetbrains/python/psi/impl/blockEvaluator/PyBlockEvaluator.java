@@ -133,8 +133,7 @@ public class PyBlockEvaluator {
   @NotNull
   public List<String> getValueAsStringList(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
-    if (value instanceof List) {
-      List valueList = (List)value;
+    if (value instanceof List valueList) {
       for (Object o : valueList) {
         if (o != null && !(o instanceof String)) {
           return Collections.emptyList();
@@ -232,11 +231,9 @@ public class PyBlockEvaluator {
     @Override
     public void visitPyCallExpression(@NotNull PyCallExpression node) {
       PyExpression callee = node.getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        PyReferenceExpression calleeRef = (PyReferenceExpression)callee;
+      if (callee instanceof PyReferenceExpression calleeRef) {
         PyExpression qualifier = calleeRef.getQualifier();
-        if (qualifier instanceof PyReferenceExpression) {
-          PyReferenceExpression qualifierRef = (PyReferenceExpression)qualifier;
+        if (qualifier instanceof PyReferenceExpression qualifierRef) {
           if (!qualifierRef.isQualified()) {
             if (PyNames.EXTEND.equals(calleeRef.getReferencedName()) && node.getArguments().length == 1) {
               processExtendCall(node, qualifierRef.getReferencedName());
@@ -253,8 +250,7 @@ public class PyBlockEvaluator {
     public void visitPyFromImportStatement(final @NotNull PyFromImportStatement node) {
       if (node.isFromFuture()) return;
       final PsiElement source = PyUtil.turnDirIntoInit(node.resolveImportSource());
-      if (source instanceof PyFile) {
-        final PyFile pyFile = (PyFile)source;
+      if (source instanceof PyFile pyFile) {
         PyEvaluationResult newlyEvaluatedResult = myContext.getCachedResult(pyFile);
 
         if (newlyEvaluatedResult == null) {

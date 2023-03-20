@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author dcheryasov
- */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyTestCase {
 
@@ -85,7 +82,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.copyDirectoryToProject("importFromModuleStar", "");
     myFixture.configureFromTempProjectFile("source.py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.findSingleIntention("Import 'target.xyzzy()'");
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Import 'target.xyzzy'");
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile("importFromModuleStar/source_after.py");
@@ -113,7 +110,7 @@ public class PyQuickFixTest extends PyTestCase {
     settings.HIGHLIGHT_UNUSED_IMPORTS = false;
     try {
       doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class,
-                       "Import 'add_to_import_test_unique_name() from AddToImportFromFoo'", true, true);
+                       "Import 'add_to_import_test_unique_name from AddToImportFromFoo'", true, true);
     }
     finally {
       settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnused;
@@ -713,9 +710,10 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-20452
   public void testRemoveRedundantEscapeInMultiPartRegExp() {
     myFixture.enableInspections(new RegExpRedundantEscapeInspection());
-    myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
-                                                       "re.compile(\"(?P<foo>\"\n" +
-                                                       "           \"((<caret>\\/(?P<bar>.+))?))\")");
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+      import re
+      re.compile("(?P<foo>"
+                 "((<caret>\\/(?P<bar>.+))?))")""");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
     assertEquals(1, quickFixes.size());
@@ -724,9 +722,10 @@ public class PyQuickFixTest extends PyTestCase {
     assertEquals("Remove redundant escape", removeRedundantEscapeFix.getText());
 
     myFixture.launchAction(removeRedundantEscapeFix);
-    myFixture.checkResult("import re\n" +
-                          "re.compile(\"(?P<foo>\"\n" +
-                          "           \"((/(?P<bar>.+))?))\")");
+    myFixture.checkResult("""
+                            import re
+                            re.compile("(?P<foo>"
+                                       "((/(?P<bar>.+))?))")""");
   }
 
   // PY-8174
@@ -745,6 +744,13 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-8174
   public void testChangeSignatureNewParametersNames() {
     doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
+  }
+
+  // PY-53671
+  public void testChangeSignatureOfExportedBoundMethod() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFilesInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of method(self, a, b, <b>i</b>)</html>", "mod.py");
+    });
   }
 
   // PY-8174

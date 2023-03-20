@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.browsers.*;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -18,21 +20,17 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Url;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.BuiltInServer;
 
-import java.awt.event.InputEvent;
+import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.browsers.OpenInBrowserRequestKt.createOpenInBrowserRequest;
 
 /**
  * @author Konstantin Bulenkov
  */
-class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
+final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
   OpenHtmlInEmbeddedBrowserAction() {
     super(IdeBundle.message("action.open.web.preview.text"), null, AppUIUtil.loadSmallApplicationIconForRelease(ScaleContext.create(), 16));
   }
@@ -42,7 +40,7 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    boolean preferLocalFileUrl = BitUtil.isSet(event.getModifiers(), InputEvent.SHIFT_MASK);
+    boolean preferLocalFileUrl = BitUtil.isSet(event.getModifiers(), ActionEvent.SHIFT_MASK);
 
     try {
       OpenInBrowserRequest browserRequest = createOpenInBrowserRequest(psiFile, false);
@@ -59,8 +57,9 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
               null,
               false
             );
-          } else {
-            FileEditorManagerEx.getInstanceEx(project).openFileWithProviders(file, false, true);
+          }
+          else {
+            FileEditorManagerEx.getInstanceEx(project).openFile(file, null, new FileEditorOpenOptions().withReuseOpen());
           }
         });
       }
@@ -72,7 +71,7 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    OpenInBrowserRequest request = BaseOpenInBrowserAction.doUpdate(e);
+    OpenInBrowserRequest request = BaseOpenInBrowserAction.Handler.doUpdate(e);
     Project project = e.getProject();
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     boolean enabled = project != null && psiFile != null && request != null && psiFile.getVirtualFile() != null;
@@ -80,10 +79,15 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     if (!enabled) return;
 
     if (WebBrowserXmlService.getInstance().isHtmlFile(request.getFile())
-        && ActionPlaces.CONTEXT_TOOLBAR == e.getPlace()) {
+        && ActionPlaces.CONTEXT_TOOLBAR.equals(e.getPlace())) {
       String text = getTemplateText();
       text += " (" + IdeBundle.message("browser.shortcut") + ")";
       e.getPresentation().setText(text);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

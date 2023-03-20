@@ -119,7 +119,7 @@ class JpsLanguageLevelQuickFix : BuildIssueContributor {
   }
 }
 
-class SetupModuleSdkQuickFix(val moduleName: String, val isSdkInherited: Boolean) : BuildIssueQuickFix {
+class SetupModuleSdkQuickFix(val moduleName: String, private val isSdkInherited: Boolean) : BuildIssueQuickFix {
 
   override val id: String = "setup_module_sdk_quick_fix"
 

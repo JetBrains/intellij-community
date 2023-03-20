@@ -19,9 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ArrayUtil
-/**
- * @author peter
- */
 class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test contract and notNull"() {

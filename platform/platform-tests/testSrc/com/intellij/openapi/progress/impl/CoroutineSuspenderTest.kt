@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
-import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.coroutineSuspender
+import com.intellij.openapi.progress.*
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
@@ -14,22 +13,20 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     val count = 10
     val started = Semaphore(count, count)
     val suspender = coroutineSuspender(false)
+    assertTrue(suspender.isPaused())
     val job = launch(Dispatchers.Default + suspender) {
       repeat(count) {
         launch {
           started.release()
-          checkCanceled()
+          checkCancelled()
           fail("must not be called")
         }
       }
     }
-    withTimeout(1000) {
-      started.acquire() // all coroutines are started
-    }
+    started.timeoutAcquire() // all coroutines are started
     letBackgroundThreadsSuspend()
-    withTimeout(1000) {
-      job.cancelAndJoin()
-    }
+    job.cancel()
+    job.timeoutJoin()
   }
 
   fun `test resume paused coroutines`(): Unit = runBlocking {
@@ -37,21 +34,21 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     val started = Semaphore(count, count)
     val paused = Semaphore(count, count)
     val suspender = coroutineSuspender()
+    assertFalse(suspender.isPaused())
     val result = async(Dispatchers.Default + suspender) {
       (1..count).map {
         async { // coroutine context (including CoroutineSuspender) is inherited
-          checkCanceled() // won't suspend
+          checkCancelled() // won't suspend
           started.release()
           paused.acquire()
-          checkCanceled() // should suspend here
+          checkCancelled() // should suspend here
           it
         }
       }.awaitAll().sum()
     }
-    withTimeout(1000) {
-      started.acquire() // all coroutines are started
-    }
+    started.timeoutAcquire() // all coroutines are started
     suspender.pause() // pause suspender before next checkCanceled
+    assertTrue(suspender.isPaused())
     repeat(count) {
       paused.release() // let coroutines pause in next checkCanceled
     }
@@ -60,9 +57,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     assertSize(count, children)
     assertFalse(children.any { it.isCompleted })
     suspender.resume()
-    withTimeout(1000) {
-      assertEquals(55, result.await())
-    }
+    assertEquals(55, result.timeoutAwait())
   }
 
   private suspend fun letBackgroundThreadsSuspend(): Unit = delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
-/**
- * @author vlan
- */
 public final class PyDynamicallyEvaluatedType extends PyUnionType {
   private PyDynamicallyEvaluatedType(@NotNull LinkedHashSet<@Nullable PyType> members) {
     super(members);

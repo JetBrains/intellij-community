@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -57,6 +57,10 @@ public class MakeReceiverParameterFirstFix extends LocalQuickFixAndIntentionActi
     moveComments(startElement, movedParameter, parameterList, true);
     moveComments(startElement, movedParameter, parameterList, false);
     startElement.delete();
+    PsiElement next = firstChild.getNextSibling();
+    if (next instanceof PsiWhiteSpace) {
+      next.delete();
+    }
   }
 
   private static void moveComments(@NotNull PsiElement oldParameter,
@@ -86,10 +90,5 @@ public class MakeReceiverParameterFirstFix extends LocalQuickFixAndIntentionActi
         }
       }
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

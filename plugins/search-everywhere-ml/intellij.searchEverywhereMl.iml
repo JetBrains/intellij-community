@@ -9,22 +9,24 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ml.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module-library">
       <library name="find-action-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.0.3" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:231.0.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/0.0.3/find-action-model-0.0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.0.0/find-action-model-231.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -32,9 +34,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-action-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:0.1.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-action-model:231.1.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/0.1.1/find-action-model-0.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231.1.1/find-action-model-231.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -42,13 +44,55 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-file-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:0.0.2" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:223.1.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/0.0.2/find-file-model-0.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/223.1.0/find-file-model-223.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="find-file-model-experimental" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:231.1.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/231.1.1/find-file-model-231.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="find-classes-model" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:231.0.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.0.0/find-classes-model-231.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="find-classes-model-experimental" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:231.3.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231.3.1/find-classes-model-231.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="find-all-model-experimental" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-all-model:231.0.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/231.0.1/find-all-model-231.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.yaml" scope="RUNTIME" />
   </component>
 </module>

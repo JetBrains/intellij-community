@@ -2,6 +2,7 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoteFile {
@@ -69,7 +70,7 @@ public class RemoteFile {
   public static boolean isWindowsPath(@NotNull String path) {
     path = RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath(path);
 
-    return (path.length() > 1 && path.charAt(1) == ':');
+    return OSAgnosticPathUtil.startsWithWindowsDrive(path);
   }
 
   private static String toSystemDependent(@NotNull String path, boolean isWin) {

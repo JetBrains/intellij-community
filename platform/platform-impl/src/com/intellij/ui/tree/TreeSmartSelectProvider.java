@@ -127,7 +127,7 @@ public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   private static boolean acceptDescendants(@NotNull JTree tree,
                                            @NotNull TreePath parent,
                                            @NotNull Predicate<? super TreePath> predicate,
-                                           @NotNull Consumer<TreePath[]> consumer) {
+                                           @NotNull Consumer<? super TreePath[]> consumer) {
     ArrayList<TreePath> list = new ArrayList<>();
     testDescendants(tree, parent, child -> {
       if (predicate.test(child)) list.add(child);

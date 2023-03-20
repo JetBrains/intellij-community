@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -22,9 +22,6 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class AbstractQualifiedReference<T extends AbstractQualifiedReference<T>> extends ASTWrapperPsiElement
   implements PsiPolyVariantReference, PsiQualifiedReferenceElement {
   private static final ResolveCache.PolyVariantResolver<AbstractQualifiedReference> MY_RESOLVER =
@@ -104,8 +101,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     CheckUtil.checkWritable(this);
     if (isReferenceTo(element)) return this;
 
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       final String methodName = method.getName();
       if (isDirectlyVisible(method)) return replaceReference(methodName);
 
@@ -156,8 +152,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   protected abstract T parseReference(String newText);
 
   protected boolean isAccessible(final PsiElement element) {
-    if (element instanceof PsiMember) {
-      final PsiMember member = (PsiMember)element;
+    if (element instanceof PsiMember member) {
       return JavaResolveUtil.isAccessible(member, member.getContainingClass(), member.getModifierList(), this, null, null);
     }
     return true;

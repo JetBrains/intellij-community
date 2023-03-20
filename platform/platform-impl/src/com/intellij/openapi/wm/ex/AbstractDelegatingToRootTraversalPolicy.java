@@ -17,9 +17,6 @@ package com.intellij.openapi.wm.ex;
 
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class AbstractDelegatingToRootTraversalPolicy extends FocusTraversalPolicy {
 
   @Override

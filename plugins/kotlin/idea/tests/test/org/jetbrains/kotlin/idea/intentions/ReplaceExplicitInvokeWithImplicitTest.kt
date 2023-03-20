@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.descendantsOfType
+import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ReplaceExplicitInvokeWithImplicitTest : KotlinLightCodeInsightFixtureTestCase() {
+class ReplaceExplicitInvokeWithImplicitTest27 : KotlinLightCodeInsightFixtureTestCase() {
     fun test() {
         val argumentsInReceiver = listOf("", "<>{}", "<>()", "()", "[]")
         val argumentsInInvoke = listOf("{}", "()", "<>()", "<>{}", "<>(){}")
@@ -70,7 +71,7 @@ class ReplaceExplicitInvokeWithImplicitTest : KotlinLightCodeInsightFixtureTestC
             it.selectorExpression?.safeAs<KtCallExpression>()?.calleeExpression?.text == "invoke"
         } ?: error("Invoke call not found")
 
-        val expressionAfterTransformation = OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(qualifiedExpression)
+        val expressionAfterTransformation = OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(qualifiedExpression)
             ?: error("impossible convert explicit to implicit")
 
         val actualExpressionToCheck = expressionAfterTransformation.parentsWithSelf.takeWhile { it !is KtProperty }.last()

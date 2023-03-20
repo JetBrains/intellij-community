@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.ui;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class GraphicsConfig {
+public final class GraphicsConfig {
   private final Graphics2D myG;
   private final Map myHints;
   private final Composite myComposite;

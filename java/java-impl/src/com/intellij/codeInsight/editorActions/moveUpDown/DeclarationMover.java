@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -121,8 +121,7 @@ class DeclarationMover extends LineMover {
     }
     PsiMember lastMember = PsiTreeUtil.getParentOfType(endElement, PsiMember.class, false);
     if (firstMember == null || lastMember == null) return false;
-    if (lastMember instanceof PsiEnumConstantInitializer) {
-      final PsiEnumConstantInitializer enumConstantInitializer = (PsiEnumConstantInitializer)lastMember;
+    if (lastMember instanceof PsiEnumConstantInitializer enumConstantInitializer) {
       lastMember = enumConstantInitializer.getEnumConstant();
     }
 
@@ -154,8 +153,7 @@ class DeclarationMover extends LineMover {
                                                    : document.getLineEndOffset(range.startLine - 1),
                                               file, down);
     if (range.lastElement instanceof PsiEnumConstant) {
-      if (sibling instanceof PsiJavaToken) {
-        final PsiJavaToken token = (PsiJavaToken)sibling;
+      if (sibling instanceof PsiJavaToken token) {
         final IElementType tokenType = token.getTokenType();
         if (down && tokenType == JavaTokenType.SEMICOLON) {
           return info.prohibitMove();
@@ -258,21 +256,18 @@ class DeclarationMover extends LineMover {
     List<PsiElement> memberSuspects = new ArrayList<>();
     PsiModifierList modifierList = member instanceof PsiMember ? ((PsiMember)member).getModifierList() : null;
     if (modifierList != null) memberSuspects.add(modifierList);
-    if (member instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)member;
+    if (member instanceof PsiClass aClass) {
       if (aClass instanceof PsiAnonymousClass) return false; // move new expression instead of anon class
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier != null) memberSuspects.add(nameIdentifier);
     }
-    if (member instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)member;
+    if (member instanceof PsiMethod method) {
       PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier != null) memberSuspects.add(nameIdentifier);
       PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement != null) memberSuspects.add(returnTypeElement);
     }
-    if (member instanceof PsiField) {
-      final PsiField field = (PsiField)member;
+    if (member instanceof PsiField field) {
       PsiIdentifier nameIdentifier = field.getNameIdentifier();
       memberSuspects.add(nameIdentifier);
       PsiTypeElement typeElement = field.getTypeElement();
@@ -294,9 +289,7 @@ class DeclarationMover extends LineMover {
   @Nullable
   private LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
     if (sibling == null || sibling instanceof PsiImportList) throw new IllegalMoveException();
-    if (sibling instanceof PsiJavaToken &&
-        ((PsiJavaToken)sibling).getTokenType() == (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE) &&
-        sibling.getParent() instanceof PsiClass) {
+    if (PsiUtil.isJavaToken(sibling, (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE)) && sibling.getParent() instanceof PsiClass) {
       // moving outside class
       final PsiClass aClass = (PsiClass)sibling.getParent();
       final PsiElement parent = aClass.getParent();

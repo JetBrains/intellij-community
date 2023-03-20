@@ -44,8 +44,7 @@ public class GrDependantMembersCollector extends DependentMembersCollectorBase<G
 
   private boolean existsInSuperClass(PsiMember classMember) {
     if (getSuperClass() == null) return false;
-    if (!(classMember instanceof PsiMethod)) return false;
-    final PsiMethod method = ((PsiMethod)classMember);
+    if (!(classMember instanceof PsiMethod method)) return false;
     final PsiMethod methodBySignature = (getSuperClass()).findMethodBySignature(method, true);
     return methodBySignature != null;
   }

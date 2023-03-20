@@ -19,6 +19,7 @@ import java.util.Set;
 public class BuildParticipant implements Serializable {
   private String myRootProjectName;
   private String myRootPath;
+  private String myParentRootPath;
   @NotNull private Set<String> myProjects = new HashSet<>();
 
   @Attribute("name")
@@ -37,6 +38,15 @@ public class BuildParticipant implements Serializable {
 
   public void setRootPath(String rootPath) {
     myRootPath = rootPath;
+  }
+
+  @Attribute("parentPath")
+  public String getParentRootPath() {
+    return myParentRootPath;
+  }
+
+  public void setParentRootPath(String parentRootPath) {
+    myParentRootPath = parentRootPath;
   }
 
   @XCollection(propertyElementName = "projects", elementName = "project", valueAttributeName = "path")

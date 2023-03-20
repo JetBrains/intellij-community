@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
@@ -13,15 +14,14 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Function
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getPackage
-import org.jetbrains.kotlin.idea.core.quoteIfNeeded
 import org.jetbrains.kotlin.idea.refactoring.invokeOnceOnCommandFinish
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinDirectoryMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.analyzeConflictsInFile
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -49,16 +49,25 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
     }
 
     override fun findUsages(
-        filesToMove: MutableCollection<PsiFile>,
-        directoriesToMove: Array<out PsiDirectory>,
-        result: MutableCollection<UsageInfo>,
-        searchInComments: Boolean,
-        searchInNonJavaFiles: Boolean,
-        project: Project
+      filesToMove: MutableCollection<out PsiFile>,
+      directoriesToMove: Array<out PsiDirectory>,
+      result: MutableCollection<in UsageInfo>,
+      searchInComments: Boolean,
+      searchInNonJavaFiles: Boolean,
+      project: Project
     ) {
         filesToMove
             .filterIsInstance<KtFile>()
-            .mapTo(result) { FileUsagesWrapper(it, fileHandler.findUsages(it, null, false), null) }
+            .mapTo(result) { file ->
+                val usages = fileHandler.findUsages(
+                    file,
+                    newParent = null,
+                    withConflicts = false,
+                    searchInCommentsAndStrings = searchInComments,
+                    searchInNonJavaFiles = searchInNonJavaFiles,
+                )
+                FileUsagesWrapper(file, usages, null)
+            }
     }
 
     override fun preprocessUsages(
@@ -89,11 +98,11 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
 
     // Actual move logic is implemented in postProcessUsages since usages are not available here
     override fun move(
-        file: PsiFile,
-        moveDestination: PsiDirectory,
-        oldToNewElementsMapping: MutableMap<PsiElement, PsiElement>,
-        movedFiles: MutableList<PsiFile>,
-        listener: RefactoringElementListener?
+      file: PsiFile,
+      moveDestination: PsiDirectory,
+      oldToNewElementsMapping: MutableMap<PsiElement, PsiElement>,
+      movedFiles: MutableList<in PsiFile>,
+      listener: RefactoringElementListener?
     ): Boolean {
         if (file !is KtFile) return false
 

@@ -4,6 +4,7 @@ package com.intellij.internal.statistic
 import com.intellij.internal.statistic.eventLog.*
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 
 class TestStatisticsEventLogger(private val session: String = "testSession",
                                 private val build: String = "999.999",
@@ -18,6 +19,17 @@ class TestStatisticsEventLogger(private val session: String = "testSession",
       .escape()
     logged.add(event)
     return CompletableFuture.completedFuture(null)
+  }
+
+  override fun logAsync(group: EventLogGroup,
+                        eventId: String,
+                        dataProvider: () -> Map<String, Any>?,
+                        isState: Boolean): CompletableFuture<Void> {
+    val data = dataProvider() ?: return CompletableFuture.completedFuture(null)
+    return logAsync(group, eventId, data, isState)
+  }
+
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {
   }
 
   override fun getActiveLogFile(): EventLogFile? = null

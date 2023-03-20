@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.actions;
 
 import com.intellij.ide.DataManager;
@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class TerminalActionUtil {
+public final class TerminalActionUtil {
 
   private TerminalActionUtil() {}
 
@@ -61,7 +61,7 @@ public class TerminalActionUtil {
 
   public static TerminalAction createTerminalAction(@NotNull JBTerminalWidget widget,
                                                     @NotNull TerminalActionPresentation actionPresentation,
-                                                    @NotNull Predicate<JBTerminalWidgetListener> action) {
+                                                    @NotNull Predicate<? super JBTerminalWidgetListener> action) {
     return new TerminalAction(actionPresentation, input -> {
       JBTerminalWidgetListener listener = widget.getListener();
       if (listener != null) {

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.UIResource;
@@ -12,7 +13,17 @@ import java.awt.*;
  */
 public class JBInsets extends Insets {
   private final Insets unscaled;
-  
+
+  @ApiStatus.Internal
+  public JBInsets(int all) {
+    this(all, all, all, all);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull JBInsets emptyInsets() {
+    return new JBInsets(0, 0, 0, 0);
+  }
+
   /**
    * Creates and initializes a new {@code Insets} object with the
    * specified top, left, bottom, and right insets.
@@ -47,10 +58,7 @@ public class JBInsets extends Insets {
   public static @NotNull JBInsets create(@NotNull Insets insets) {
     if (insets instanceof JBInsets) {
       JBInsets copy = new JBInsets(0, 0, 0, 0);
-      copy.top = insets.top;
-      copy.left = insets.left;
-      copy.bottom = insets.bottom;
-      copy.right = insets.right;
+      copyInsets(copy, insets);
       return copy;
     }
      return new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
@@ -68,13 +76,10 @@ public class JBInsets extends Insets {
     return new JBInsetsUIResource(this);
   }
 
-  public static class JBInsetsUIResource extends JBInsets implements UIResource {
+  public static final class JBInsetsUIResource extends JBInsets implements UIResource {
     public JBInsetsUIResource(JBInsets insets) {
       super(0, 0, 0, 0);
-      top = insets.top;
-      left = insets.left;
-      bottom = insets.bottom;
-      right = insets.right;
+      JBInsets.copyInsets(this, insets);
     }
   }
 
@@ -124,5 +129,23 @@ public class JBInsets extends Insets {
       rectangle.width -= insets.left + insets.right;
       rectangle.height -= insets.top + insets.bottom;
     }
+  }
+
+  public static @NotNull JBInsets addInsets(@NotNull Insets @NotNull ... insets) {
+    JBInsets result = emptyInsets();
+    for (Insets inset : insets) {
+      result.top += inset.top;
+      result.left += inset.left;
+      result.bottom += inset.bottom;
+      result.right += inset.right;
+    }
+    return result;
+  }
+
+  private static void copyInsets(@NotNull Insets dest, @NotNull Insets src) {
+    dest.top = src.top;
+    dest.left = src.left;
+    dest.bottom = src.bottom;
+    dest.right = src.right;
   }
 }

@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroMap
-import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -39,11 +41,21 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
-  fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, errorReporter: ErrorReporter,
-                   virtualFileManager: VirtualFileUrlManager)
+
+  /**
+   * This method reads configuration files and creates entities that are not added to any builder.
+   *
+   * These entities can be just added to builder, but it's suggested to do it using [checkAndAddToBuilder] because this method
+   *   implements additional actions on adding (e.g. reports error when trying to add a library that already exists).
+   */
+  fun loadEntities(reader: JpsFileContentReader,
+                   errorReporter: ErrorReporter,
+                   virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>>
+  fun checkAndAddToBuilder(builder: MutableEntityStorage, orphanage: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>)
+
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
-                   storage: WorkspaceEntityStorage,
+                   storage: EntityStorage,
                    writer: JpsFileContentWriter)
 
   val additionalEntityTypes: List<Class<out WorkspaceEntity>>
@@ -71,11 +83,11 @@ interface JpsDirectoryEntitiesSerializerFactory<E : WorkspaceEntity> {
   val componentName: String
 
   /** Returns a serializer for a file located in [directoryUrl] directory*/
-  fun createSerializer(fileUrl: String, entitySource: JpsFileEntitySource.FileInDirectory, virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<E>
+  fun createSerializer(fileUrl: String, entitySource: JpsProjectFileEntitySource.FileInDirectory, virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<E>
 
   fun getDefaultFileName(entity: E): String
 
-  fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation)
+  fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage, configLocation: JpsProjectConfigLocation)
 }
 
 /**
@@ -104,34 +116,46 @@ interface JpsProjectSerializers {
                           directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                           moduleListSerializers: List<JpsModuleListSerializer>,
                           configLocation: JpsProjectConfigLocation,
-                          reader: JpsFileContentReader,
+                          context: SerializationContext,
                           externalStorageMapping: JpsExternalStorageMapping,
-                          enableExternalStorage: Boolean,
-                          virtualFileManager: VirtualFileUrlManager,
-                          fileInDirectorySourceNames: FileInDirectorySourceNames): JpsProjectSerializers {
-      return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, reader, entityTypeSerializers, configLocation,
-                                       externalStorageMapping, enableExternalStorage, virtualFileManager, fileInDirectorySourceNames)
+                          enableExternalStorage: Boolean): JpsProjectSerializers {
+      return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, context, entityTypeSerializers, configLocation,
+                                       externalStorageMapping, enableExternalStorage)
     }
   }
 
-  fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter, project: Project?): List<EntitySource>
+  suspend fun loadAll(reader: JpsFileContentReader,
+                      builder: MutableEntityStorage,
+                      orphanageBuilder: MutableEntityStorage,
+                      unloadedEntityBuilder: MutableEntityStorage,
+                      unloadedModuleNames: UnloadedModulesNameHolder,
+                      errorReporter: ErrorReporter): List<EntitySource>
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                              reader: JpsFileContentReader,
-                             errorReporter: ErrorReporter): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder>
+                             unloadedModuleNames: UnloadedModulesNameHolder,
+                             errorReporter: ErrorReporter): ReloadingResult
 
   @TestOnly
-  fun saveAllEntities(storage: WorkspaceEntityStorage, writer: JpsFileContentWriter)
+  fun saveAllEntities(storage: EntityStorage, writer: JpsFileContentWriter)
 
-  fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
+  fun saveEntities(storage: EntityStorage, unloadedEntityStorage: EntityStorage, affectedSources: Set<EntitySource>,
+                   writer: JpsFileContentWriter)
   
   fun getAllModulePaths(): List<ModulePath>
 
-  fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder)
+  fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage)
 }
 
+data class ReloadingResult(
+  val builder: MutableEntityStorage,
+  val orphanageBuilder: MutableEntityStorage,
+  val unloadedEntityBuilder: MutableEntityStorage,
+  val affectedSources: Set<EntitySource>
+)
+
 interface ErrorReporter {
-  fun reportError(@Nls message: String, file: VirtualFileUrl)
+  fun reportError(message: @Nls String, file: VirtualFileUrl)
 }
 
 data class JpsConfigurationFilesChange(val addedFileUrls: Collection<String>,

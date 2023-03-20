@@ -19,12 +19,12 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public enum DumbModeAccessType {
   /**
-   * If the index is accessed with {@link DumbModeAccessType#RELIABLE_DATA_ONLY}, then only up-to-date indexed data will be returned as a
+   * If the index is accessed with {@code RELIABLE_DATA_ONLY}, then only up-to-date indexed data will be returned as a
    * result of the index query.
    */
   RELIABLE_DATA_ONLY,
   /**
-   * If the index is accessed with {@link DumbModeAccessType#RAW_INDEX_DATA_ACCEPTABLE}, then any (even invalid) data currently present in
+   * If the index is accessed with {@code RAW_INDEX_DATA_ACCEPTABLE}, then any (even invalid) data currently present in
    * the index will be returned as a result of the index query.
    * <p>
    * Note, this type doesn't work for {@link com.intellij.psi.stubs.StubIndex}.

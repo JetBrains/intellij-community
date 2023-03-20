@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.declarationList
-import org.jetbrains.kotlin.nj2k.getCompanion
-import org.jetbrains.kotlin.nj2k.psi
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
@@ -25,6 +22,7 @@ class ClassToObjectPromotionConversion(context: NewJ2kConverterContext) : Recurs
                                 else -> false
                             }
                         }
+
                     is JKClass -> true
                     else -> false
                 }
@@ -42,7 +40,7 @@ class ClassToObjectPromotionConversion(context: NewJ2kConverterContext) : Recurs
                         companion.classBody.also { body ->
                             body.handleDeclarationsModifiers()
                             body.declarations += element.classBody.declarations.filter {
-                                //TODO preseve order
+                                //TODO preserve order
                                 it is JKClass && it.classKind != JKClass.ClassKind.COMPANION
                             }.map { it.detached(element.classBody) }
                         },

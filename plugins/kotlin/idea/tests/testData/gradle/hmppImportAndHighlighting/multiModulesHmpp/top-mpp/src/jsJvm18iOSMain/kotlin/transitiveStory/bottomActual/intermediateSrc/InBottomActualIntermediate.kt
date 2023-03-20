@@ -12,7 +12,7 @@ class InBottomActualIntermediate {
     val callingInteral = tlInternalInCommon
 }
 
-expect class <!LINE_MARKER("descr='Has actuals in Native, JS, JVM'")!>IntermediateMPPClassInBottomActual<!>()
+expect class <!LINE_MARKER("descr='Has actuals in [multimod-hmpp.top-mpp.dummyiOSMain, multimod-hmpp.top-mpp.jsMain, multimod-hmpp.top-mpp.jvm18Main] modules'")!>IntermediateMPPClassInBottomActual<!>()
 
 
 class Subclass : Outer() {
@@ -20,11 +20,11 @@ class Subclass : Outer() {
     // b, c and d are visible
     // Nested and e are visible
 
-    override val <!LINE_MARKER("descr='Overrides property in 'Outer''")!>b<!> = 5   // 'b' is protected
+    override val <!LINE_MARKER("descr='Overrides property in Outer (transitiveStory.bottomActual.mppBeginning) Press ... to navigate'")!>b<!> = 5   // 'b' is protected
 }
 
 class ChildOfCommonInShared : Outer() {
-    override val <!LINE_MARKER("descr='Overrides property in 'Outer''")!>b<!>: Int
+    override val <!LINE_MARKER("descr='Overrides property in Outer (transitiveStory.bottomActual.mppBeginning) Press ... to navigate'")!>b<!>: Int
         get() = super.b + 243
 //    val callAlso = super.c // internal in Outer
 
@@ -34,4 +34,3 @@ class ChildOfCommonInShared : Outer() {
 class ChildOfMPOuterInShared : MPOuter() {
     private val sav = MPNested()
 }
-

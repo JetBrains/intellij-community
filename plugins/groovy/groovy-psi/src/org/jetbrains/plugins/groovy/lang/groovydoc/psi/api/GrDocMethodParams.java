@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ilyas
- */
 public interface GrDocMethodParams extends GroovyDocPsiElement {
 
   PsiType[] getParameterTypes();

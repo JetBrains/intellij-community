@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -48,8 +48,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider impleme
     final Collection<AbstractTreeNode<?>> result = new ArrayList<>();
     if (elements != null) {
       for (PsiElement element : elements) {
-        if (element instanceof PsiPackage) {
-          final PsiPackage psiPackage = (PsiPackage)element;
+        if (element instanceof PsiPackage psiPackage) {
           final PsiDirectory[] directories = psiPackage.getDirectories();
           if (directories.length > 0) {
             final VirtualFile firstDir = directories[0].getVirtualFile();
@@ -98,7 +97,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider impleme
 
   @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
-    if (element instanceof PackageElement) {
+    if (element instanceof PackageElement packageElement) {
       final Set<Boolean> find = new HashSet<>();
       final ContentIterator contentIterator = fileOrDir -> {
         if (fileOrDir.getPath().equals(vFile.getPath())) {
@@ -106,7 +105,6 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider impleme
         }
         return true;
       };
-      final PackageElement packageElement = (PackageElement)element;
       final PsiPackage aPackage = packageElement.getPackage();
       final Project project = aPackage.getProject();
       final GlobalSearchScope scope = packageElement.getModule() != null
@@ -130,8 +128,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider impleme
 
   @Override
   public String getElementLocation(final Object element) {
-    if (element instanceof PackageElement) {
-      final PackageElement packageElement = (PackageElement)element;
+    if (element instanceof PackageElement packageElement) {
       final Module module = packageElement.getModule();
       return (module != null ? module.getName() + ":" : "") + packageElement.getPackage().getQualifiedName();
     }
@@ -151,8 +148,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider impleme
 
   @Override
   public String getElementUrl(final Object element) {
-    if (element instanceof PackageElement) {
-      PackageElement packageElement = (PackageElement)element;
+    if (element instanceof PackageElement packageElement) {
       PsiPackage aPackage = packageElement.getPackage();
       return aPackage.getQualifiedName();
     }
@@ -161,8 +157,7 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider impleme
 
   @Override
   public String getElementModuleName(final Object element) {
-    if (element instanceof PackageElement) {
-      PackageElement packageElement = (PackageElement)element;
+    if (element instanceof PackageElement packageElement) {
       Module module = packageElement.getModule();
       return module == null ? null : module.getName();
     }

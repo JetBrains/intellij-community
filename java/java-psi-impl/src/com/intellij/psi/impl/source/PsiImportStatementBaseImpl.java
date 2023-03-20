@@ -24,23 +24,20 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiUtilCore;
 
-/**
- * @author dsl
- */
 public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiImportStatementStub> implements PsiImportStatementBase{
   public static final PsiImportStatementBaseImpl[] EMPTY_ARRAY = new PsiImportStatementBaseImpl[0];
 
-  protected PsiImportStatementBaseImpl(final PsiImportStatementStub stub, final IStubElementType type) {
+  protected PsiImportStatementBaseImpl(PsiImportStatementStub stub, IStubElementType type) {
     super(stub, type);
   }
 
-  protected PsiImportStatementBaseImpl(final ASTNode node) {
+  protected PsiImportStatementBaseImpl(ASTNode node) {
     super(node);
   }
 
   @Override
   public boolean isOnDemand(){
-    final PsiImportStatementStub stub = getGreenStub();
+    PsiImportStatementStub stub = getGreenStub();
     if (stub != null) {
       return stub.isOnDemand();
     }
@@ -51,7 +48,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
   @Override
   public PsiJavaCodeReferenceElement getImportReference() {
     PsiUtilCore.ensureValid(this);
-    final PsiImportStatementStub stub = getStub();
+    PsiImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getReference();
     }
@@ -60,7 +57,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
 
   @Override
   public PsiElement resolve() {
-    final PsiJavaCodeReferenceElement reference = getImportReference();
+    PsiJavaCodeReferenceElement reference = getImportReference();
     return reference == null ? null : reference.resolve();
   }
 

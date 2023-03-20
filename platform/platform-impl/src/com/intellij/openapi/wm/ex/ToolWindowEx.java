@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.util.Arrays;
 import java.util.List;
 
 public interface ToolWindowEx extends ToolWindow {
@@ -22,8 +20,6 @@ public interface ToolWindowEx extends ToolWindow {
    * @throws IllegalStateException if tool window isn't installed.
    */
   @NotNull ToolWindowType getInternalType();
-
-  @NotNull Project getProject();
 
   void stretchWidth(int value);
 
@@ -35,22 +31,19 @@ public interface ToolWindowEx extends ToolWindow {
 
   @NotNull InternalDecorator getDecorator();
 
-  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
-
   /**
    * @deprecated Use {@link #setTitleActions(List)}
    */
   @Deprecated
   default void setTitleActions(@NotNull AnAction @NotNull ... actions) {
-    setTitleActions(Arrays.asList(actions));
+    setTitleActions(List.of(actions));
   }
 
   void setTabActions(@NotNull AnAction @NotNull ... actions);
 
   void setTabDoubleClickActions(@NotNull List<AnAction> actions);
 
-  @Nullable
-  default ToolWindowDecoration getDecoration() { return null; }
+  default @Nullable ToolWindowDecoration getDecoration() { return null; }
 
   final class Border extends EmptyBorder {
     public Border() {
@@ -64,7 +57,7 @@ public interface ToolWindowEx extends ToolWindow {
 
   final class ToolWindowDecoration {
     private final ActionGroup myActionGroup;
-    private Icon myIcon;
+    private final Icon myIcon;
 
     public ToolWindowDecoration(Icon icon, ActionGroup actionGroup) {
       myActionGroup = actionGroup;
@@ -80,8 +73,7 @@ public interface ToolWindowEx extends ToolWindow {
     }
   }
 
-  @Nullable
-  default StatusText getEmptyText() {
+  default @Nullable StatusText getEmptyText() {
     return null;
   }
 }

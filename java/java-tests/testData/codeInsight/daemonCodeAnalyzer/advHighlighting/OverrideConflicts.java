@@ -108,3 +108,12 @@ interface BMultiple {
 }
 
 interface DMultiple extends AMultiple, BMultiple {}
+
+interface WithStatic {
+  static void f() {}
+}
+
+class WithStaticImpl implements WithStatic {
+  <error descr="Static methods cannot be annotated with @Override">@Override</error>
+  static void f() {}
+}

@@ -7,9 +7,6 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenServerProgressIndicatorWrapper extends MavenRemoteObject
   implements MavenServerProgressIndicator, MavenServerPullProgressIndicator, MavenServerConsole {
 

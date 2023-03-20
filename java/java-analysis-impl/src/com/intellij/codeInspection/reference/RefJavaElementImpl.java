@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -16,10 +17,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
-  private Set<RefClass> myOutTypeReferences; // guarded by this
   private static final int ACCESS_MODIFIER_MASK = 0b11;
   private static final int ACCESS_PRIVATE = 0b00;
   private static final int ACCESS_PROTECTED = 0b01;
@@ -44,6 +46,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   protected RefJavaElementImpl(UDeclaration elem, PsiElement psi, RefManager manager) {
     super(getName(elem), psi, manager);
+    assert (!(psi instanceof UElement));
 
     PsiModifierListOwner javaPsi = Objects.requireNonNull(ObjectUtils.tryCast(elem.getJavaPsi(), PsiModifierListOwner.class));
     setAccessModifier(RefJavaUtil.getInstance().getAccessModifier(javaPsi));
@@ -63,21 +66,21 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   @Override
   @NotNull
   public synchronized Collection<RefClass> getOutTypeReferences() {
-    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
+    final RefEntity owner = getOwner();
+    return owner instanceof RefJavaElement ? ((RefJavaElement)owner).getOutTypeReferences() : Collections.emptySet();
   }
 
-  synchronized void addOutTypeReference(RefClass refClass){
-    if (myOutTypeReferences == null){
-      myOutTypeReferences = new HashSet<>();
+  synchronized void addOutTypeReference(RefClass refClass) {
+    final RefEntity owner = getOwner();
+    if (owner instanceof RefJavaElementImpl) {
+      ((RefJavaElementImpl)owner).addOutTypeReference(refClass);
     }
-    myOutTypeReferences.add(refClass);
   }
 
   @NotNull
   private static String getName(@NotNull UElement declaration) {
     PsiElement element = declaration.getJavaPsi();
-    if (element instanceof PsiAnonymousClass) {
-      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
+    if (element instanceof PsiAnonymousClass psiAnonymousClass) {
       PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
       if (psiBaseClass == null) {
         return "anonymous class";
@@ -87,15 +90,17 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       }
     }
 
-    if (element instanceof PsiSyntheticClass) {
-      final PsiSyntheticClass jspClass = (PsiSyntheticClass)element;
+    if (element instanceof PsiSyntheticClass jspClass) {
       final PsiFile jspxFile = jspClass.getContainingFile();
       return "<" + jspxFile.getName() + ">";
     }
 
     if (element instanceof PsiMethod) {
       if (element instanceof SyntheticElement) {
-        return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+        Language language = element.getLanguage();
+        if (language.isKindOf("JSP") || language.isKindOf("JSPX")) {
+          return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+        }
       }
       return PsiFormatUtil.formatMethod((PsiMethod)element,
                                         PsiSubstitutor.EMPTY,
@@ -169,20 +174,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   private synchronized void doSetAccessModifier(@NotNull String am) {
-    final int access_id;
-
-    if (PsiModifier.PRIVATE.equals(am)) {
-      access_id = ACCESS_PRIVATE;
-    }
-    else if (PsiModifier.PUBLIC.equals(am)) {
-      access_id = ACCESS_PUBLIC;
-    }
-    else if (PsiModifier.PACKAGE_LOCAL.equals(am)) {
-      access_id = ACCESS_PACKAGE;
-    }
-    else {
-      access_id = ACCESS_PROTECTED;
-    }
+    final int access_id = switch (am) {
+      case PsiModifier.PRIVATE -> ACCESS_PRIVATE;
+      case PsiModifier.PUBLIC -> ACCESS_PUBLIC;
+      case PsiModifier.PACKAGE_LOCAL -> ACCESS_PACKAGE;
+      default -> ACCESS_PROTECTED;
+    };
 
     myFlags = myFlags & ~ACCESS_MODIFIER_MASK | access_id;
   }
@@ -195,8 +192,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (callStack.contains(this)) return refElement == this;
     if (getInReferences().isEmpty()) return false;
 
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod) refElement;
+    if (refElement instanceof RefMethod refMethod) {
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
         if (!refSuper.getInReferences().isEmpty()) return false;
       }
@@ -266,9 +262,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   void setForbidProtectedAccess(RefElementImpl refFrom, @Nullable UExpression expressionFrom) {
     if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
         (expressionFrom instanceof UQualifiedReferenceExpression ||
-         expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL) &&
-        RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
-      setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
+         expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL)) {
+      initializeIfNeeded();
+      refFrom.initializeIfNeeded();
+      if (RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
+        setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
+      }
     }
   }
 

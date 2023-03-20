@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -31,7 +32,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class BooleanConstructorInspection extends BaseInspection {
+public class BooleanConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -72,12 +73,11 @@ public class BooleanConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiNewExpression)) {
+      if (!(element instanceof PsiNewExpression expression)) {
         return;
       }
-      final PsiNewExpression expression = (PsiNewExpression)element;
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
         return;
@@ -113,7 +113,7 @@ public class BooleanConstructorInspection extends BaseInspection {
             }
             final PsiParameter parameter = parameters[0];
             final PsiType type = parameter.getType();
-            if (PsiType.BOOLEAN.equals(type)) {
+            if (PsiTypes.booleanType().equals(type)) {
               methodFound = true;
               break;
             }
@@ -128,7 +128,7 @@ public class BooleanConstructorInspection extends BaseInspection {
     private static String buildText(PsiExpression argument, boolean useValueOf) {
       final String text = argument.getText();
       final PsiType argumentType = argument.getType();
-      if (!useValueOf && PsiType.BOOLEAN.equals(argumentType)) {
+      if (!useValueOf && PsiTypes.booleanType().equals(argumentType)) {
         if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
           return text + "?java.lang.fBoolean.TRUE:java.lang.Boolean.FALSE";
         }

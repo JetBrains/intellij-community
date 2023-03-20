@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit
 
 import com.intellij.openapi.application.runInEdt
@@ -13,16 +13,14 @@ import git4idea.repo.GitRepository
 
 internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessageProvider {
 
-  override fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessagePolicy: () -> String?) {
-    val initialCommitMessage = initialCommitMessagePolicy()
-    val commitMessageUpdater = CommitMessageUpdater(project, commitUi, initialCommitMessage)
+  override fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessage: String?) {
+    val commitMessageUpdater = CommitMessageUpdater(project, commitUi)
 
     project.messageBus.connect(commitUi).subscribe(GitCommitTemplateListener.TOPIC, commitMessageUpdater)
   }
 
   private inner class CommitMessageUpdater(private val project: Project,
-                                           private val commitUi: CommitWorkflowUi,
-                                           private val initialCommitMessage: String?) : GitCommitTemplateListener {
+                                           private val commitUi: CommitWorkflowUi) : GitCommitTemplateListener {
     init {
       startLoadingIfNeeded()
     }
@@ -39,8 +37,7 @@ internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessagePro
     }
 
     private fun startLoadingIfNeeded() {
-      val commitTemplateTrackingStarted = templateTracker.isStarted()
-      if (!commitTemplateTrackingStarted && initialCommitMessage == null) {
+      if (!templateTracker.isStarted()) {
         commitUi.commitMessageUi.startLoading()
       }
     }
@@ -48,7 +45,7 @@ internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessagePro
     private fun update(repository: GitRepository? = null) {
       val templateContent = templateTracker.getTemplateContent(repository)
 
-      if (templateContent != null && initialCommitMessage == null && !vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
+      if (templateContent != null && !vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
         commitUi.commitMessageUi.text = templateContent
       }
     }

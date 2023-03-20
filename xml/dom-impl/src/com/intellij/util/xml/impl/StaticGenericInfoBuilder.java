@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,9 +23,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public final class StaticGenericInfoBuilder {
   private static final Set<Class<?>> ADDER_PARAMETER_TYPES = Set.of(Class.class, int.class);
   private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
@@ -123,18 +121,20 @@ public final class StaticGenericInfoBuilder {
   @Nullable
   private MultiValuesMap<XmlName, JavaMethod> getAddersMap(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
-    switch (parameterTypes.length) {
-      case 0:
-        return collectionAdders;
-      case 1:
-        if (Class.class.equals(parameterTypes[0])) return collectionClassAdders;
-        if (isInt(parameterTypes[0])) return collectionIndexAdders;
-        break;
-      case 2:
-        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) return collectionIndexClassAdders;
-        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) return collectionClassIndexAdders;
-    }
-    return null;
+    return switch (parameterTypes.length) {
+      case 0 -> collectionAdders;
+      case 1 -> {
+        if (Class.class.equals(parameterTypes[0])) yield collectionClassAdders;
+        if (isInt(parameterTypes[0])) yield collectionIndexAdders;
+        yield null;
+      }
+      case 2 -> {
+        if (isIndexClassAdder(parameterTypes[0], parameterTypes[1])) yield collectionIndexClassAdders;
+        if (isIndexClassAdder(parameterTypes[1], parameterTypes[0])) yield collectionClassIndexAdders;
+        yield null;
+      }
+      default -> null;
+    };
   }
 
   private static boolean isIndexClassAdder(final Class<?> first, final Class<?> second) {
@@ -150,7 +150,7 @@ public final class StaticGenericInfoBuilder {
     if (tagName == null) return false;
 
     final Type type = myCollectionChildrenTypes.get(tagName);
-    if (type == null || !ReflectionUtil.getRawType(type).isAssignableFrom(method.getReturnType())) return false;
+    if (type == null || !ClassUtil.getRawType(type).isAssignableFrom(method.getReturnType())) return false;
 
     if (method.getParameterCount() == 0) return true;
 
@@ -172,7 +172,7 @@ public final class StaticGenericInfoBuilder {
   }
 
   private static boolean isDomElement(final Type type) {
-    return type != null && DomElement.class.isAssignableFrom(ReflectionUtil.getRawType(type));
+    return type != null && DomElement.class.isAssignableFrom(ClassUtil.getRawType(type));
   }
 
   private boolean processGetterMethod(final JavaMethod method) {
@@ -300,7 +300,7 @@ public final class StaticGenericInfoBuilder {
 
   @NotNull
   private DomNameStrategy getNameStrategy(boolean isAttribute) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myClass), isAttribute);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(myClass), isAttribute);
     return strategy != null ? strategy : DomNameStrategy.HYPHEN_STRATEGY;
   }
 

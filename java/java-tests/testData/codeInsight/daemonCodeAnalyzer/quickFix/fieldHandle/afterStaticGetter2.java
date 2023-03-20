@@ -1,4 +1,4 @@
-// "Replace with 'findStaticGetter'" "true"
+// "Replace with 'findStaticGetter'" "true-preview"
 import java.lang.invoke.*;
 
 public class Main {

@@ -92,6 +92,10 @@
       "mnemonicsBorderInsets": {
         "os.default":"0,8,1,6",
         "os.linux":"0,8,1,8"
+      },
+      "mnemonicsInsets": {
+        "os.default":"0,0,0,8",
+        "os.linux":"0,0,0,8"
       }
     },
 
@@ -140,6 +144,13 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "componentBorder",
+      "selectedEndBorderColor": "componentBorder",
+      "selectedButtonColor": "white",
+      "focusedSelectedButtonColor": "#dae4ed"
+    },
+
     "CellEditor.border.width": 2,
 
     "CheckBox": {
@@ -171,7 +182,10 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
-    "ComboBoxButton.background": "contentBackground",
+    "ComboBoxButton": {
+      "background": "contentBackground",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
+    },
 
     "CompletionPopup": {
       "foreground": "foreground",
@@ -194,6 +208,12 @@
       "warningFocusColor": "#e2a53a",
       "hoverIconColor": "#7F8B91e5",
       "iconColor": "#7f8b917f"
+    },
+
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
     },
 
     "Counter": {
@@ -238,7 +258,8 @@
     "Editor": {
       "background": "grey09",
       "foreground": "infoPanelForeground",
-      "shortcutForeground": "#4274A6"
+      "shortcutForeground": "#4274A6",
+      "SearchField.background" : "contentBackground"
     },
 
     "EditorPane": {
@@ -248,7 +269,6 @@
 
     "EditorTabs": {
       "background": "panel",
-      "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "white",
       "borderColor": "border",
       "hoverBackground": "#00000019",
@@ -282,7 +302,7 @@
       "borderColor": "grey05",
       "foreground": "foreground",
       "linkForeground": "linkForeground",
-      "shortcutForeground": "infoPanelForeground"
+      "shortcutForeground": "foreground"
     },
 
     "Group.disabledSeparatorColor": "border",
@@ -294,14 +314,12 @@
     },
 
     "HelpTooltip": {
-      "defaultTextBorderInsets": "8,10,10,13",
       "descriptionSizeDelta": {
         "os.linux": -2
       },
       "fontSizeDelta": {
         "os.linux": -2
-      },
-      "smallTextBorderInsets": "6,10,7,12"
+      }
     },
 
     "Hyperlink.linkColor": "#589df6",
@@ -511,10 +529,7 @@
     "PopupMenu": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
       "borderInsets": "6,1,6,1",
-      "borderCornerRadiusX": 16,
-      "borderCornerRadiusY": 16,
-      "leftBorderWith": 10,
-      "rightBorderWith": 0,
+      "borderCornerRadius": 8,
       "translucentBackground": "panel",
       "UI": "com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI"
     },
@@ -608,6 +623,7 @@
     },
 
     "SearchField.errorBackground": "#ffcccc",
+    "SearchField.errorForeground": "#ff0000",
 
     "SearchMatch.endBackground": "#ffd042b3",
     "SearchMatch.startBackground": "#ffd042b3",
@@ -631,10 +647,7 @@
     },
 
     "SpeedSearch": {
-      "background": "contentBackground",
-      "borderColor": "grey02",
-      "errorForeground": "#ff0000",
-      "foreground": "foreground"
+      "background": "contentBackground"
     },
 
     "Spinner": {
@@ -748,6 +761,12 @@
         "os.windows": "#eecaca"
       },
       "disabledBackground": "panel"
+    },
+
+    "SearchFieldWithExtension": {
+      "background": "contentBackground",
+      "border": "com.intellij.ui.components.DarculaSearchBorder",
+      "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
     },
 
     "TitledBorder.titleColor": "black",
@@ -895,20 +914,92 @@
     },
 
     "ToolbarComboWidget": {
-      "background": "#f2f2f2",
-      "hoverBackground": "#dfdfdf",
-      "borderInsets": "3,5,3,5",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
     "MainToolbar": {
-      "icon.borderInsets": "10,10,10,10",
-      "dropdown.borderInsets": "12,6,12,6"
+      "background": "#f2f2f2",
+      "Icon": {
+        "background": "#f2f2f2",
+        "hoverBackground": "#dfdfdf",
+        "pressedBackground": "#dfdfdf"
+      },
+      "Dropdown": {
+        "background": "#f2f2f2",
+        "hoverBackground": "#dfdfdf",
+        "pressedBackground": "#dfdfdf"
+      }
     },
 
     "Tag": {
       "background": "#dfdfdf"
     },
-    "textInactiveText" : "#808080"
+    "textInactiveText" : "#808080",
+
+    "Lesson": {
+      "shortcutBackground": "#E6EEF7",
+      "stepNumberForeground": "#808080",
+      "Badge.newLessonBackground": "#62B543",
+      "Badge.newLessonForeground": "#FFFFFF"
+    },
+
+    "Tooltip.Learning": {
+      "background": "#1071E8",
+      "borderColor": "#1071E8",
+      "spanBackground": "#0D5CBD",
+      "spanForeground": "#F5F5F5",
+      "foreground": "#F5F5F5",
+      "stepNumberForeground": "#6CA6ED"
+    },
+
+    "TipOfTheDay": {
+      "Image.borderColor": "border"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#e4faff",
+        "hoverBackground": "#d0e2ee",
+        "PackageTag": {
+          "background": "#d2e6eb",
+          "foreground": "black",
+          "hoverBackground": "#bfd0db",
+          "selectedBackground": "#4395e2",
+          "selectedForeground": "white"
+        }
+      },
+      "PackageTag": {
+        "background": "grey14",
+        "foreground": "black",
+        "hoverBackground": "#c9d2db",
+        "selectedBackground": "#4395e2",
+        "selectedForeground": "white"
+      },
+      "PackageTagSelected.background": "#4395e2",
+      "PackageTagSelected.foreground": "white"
+    },
+    "RunWidget" : {
+      "foreground": "black",
+      "runModeIconColor": "#5fad65",
+      "disabledForeground": "#FFFFFF66",
+      "background": "#3369d6",
+      "runningBackground": "#599e5e",
+      "stopBackground": "#c94f4f",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028",
+      "separatorColor": "#FFFFFF40"
+    },
+
+    "MainWindow.Tab" : {
+      "selectedForeground": "black",
+      "selectedBackground": "grey15",
+      "selectedInactiveBackground": "grey15",
+      "foreground": "grey02",
+      "background": "grey12",
+      "hoverForeground": "grey03",
+      "hoverBackground": "grey13",
+      "separatorColor": "grey09",
+      "borderColor": "grey09"
+    }
   }
 }

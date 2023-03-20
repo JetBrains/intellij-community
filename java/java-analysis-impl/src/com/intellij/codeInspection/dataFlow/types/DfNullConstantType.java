@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
@@ -37,16 +37,20 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     return DfTypes.OBJECT_OR_NULL;
   }
 
+  @Override
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    return this;
+  }
+
   @NotNull
   @Override
   public DfType join(@NotNull DfType other) {
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
-    if (!(other instanceof DfReferenceType)) return TOP;
-    DfReferenceType type = (DfReferenceType)other;
-    Set<Object> notValues = type instanceof DfGenericObjectType ? ((DfGenericObjectType)type).getRawNotValues() : Set.of();
+    if (!(other instanceof DfReferenceType type)) return TOP;
+    Set<Object> notValues = type instanceof DfGenericObjectType objectType ? objectType.getRawNotValues() : Set.of();
     return new DfGenericObjectType(notValues, type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
-                                   type.getMutability(), null, BOTTOM, false);
+                                   type.getMutability(), type.getSpecialField(), type.getSpecialFieldType(), false);
   }
 
   @Override

@@ -30,9 +30,6 @@ import java.util.BitSet;
 import static com.intellij.lang.WhitespacesBinders.DEFAULT_LEFT_BINDER;
 import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
-/**
- * @author peter
- */
 final class MarkerOptionalData extends BitSet {
   private final Int2ObjectMap<Throwable> myDebugAllocationPositions = new Int2ObjectOpenHashMap<>();
   private final Int2ObjectMap<@Nls String> myDoneErrors = new Int2ObjectOpenHashMap<>();

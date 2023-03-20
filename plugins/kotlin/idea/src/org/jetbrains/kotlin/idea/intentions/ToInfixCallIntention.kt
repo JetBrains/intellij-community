@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ToInfixCallIntention : SelfTargetingIntention<KtCallExpression>(
@@ -27,7 +28,7 @@ class ToInfixCallIntention : SelfTargetingIntention<KtCallExpression>(
         if (argument.isNamed()) return false
         if (argument.getArgumentExpression() == null) return false
 
-        val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+        val bindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
         val resolvedCall = element.getResolvedCall(bindingContext) ?: return false
         val function = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
         if (!function.isInfix) return false
@@ -44,7 +45,7 @@ class ToInfixCallIntention : SelfTargetingIntention<KtCallExpression>(
         val argument = element.valueArguments.single().getArgumentExpression()!!
         val name = element.calleeExpression!!.text
 
-        val newCall = KtPsiFactory(element).createExpressionByPattern("$0 $name $1", receiver, argument)
+        val newCall = KtPsiFactory(element.project).createExpressionByPattern("$0 $name $1", receiver, argument)
         dotQualified.replace(newCall)
     }
 }

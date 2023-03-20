@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -25,6 +26,8 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
 /**
@@ -51,7 +55,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected DirectoryProjectGenerator<T> myProjectGenerator;
   protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
-  protected File myProjectDirectory;
+  protected NotNullLazyValue<File> myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
@@ -63,7 +67,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
-    myProjectDirectory = findSequentNonExistingUntitled();
+    myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled());
   }
 
   @Override
@@ -100,7 +104,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     registerValidators();
     final JBScrollPane scrollPane = new JBScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(null);
+    scrollPane.setBorder(JBUI.Borders.empty());
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
@@ -140,7 +144,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+          try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+            myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+          }
         }
       }
     };
@@ -236,7 +242,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   protected JPanel createAndFillContentPanel() {
-    WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper();
+    WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper(this);
     if (myProjectGenerator instanceof WebProjectTemplate) {
       getPeer().buildUI(settingsStep);
     }
@@ -302,13 +308,12 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   public final void setLocation(@NotNull final String location) {
-    myLocationField.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(location)));
+    myLocationField.setText(getPresentablePath(location));
   }
 
   protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
-    myProjectDirectory = findSequentNonExistingUntitled();
-    final String projectLocation = myProjectDirectory.toString();
+    final String projectLocation = myProjectDirectory.get().toString();
     myLocationField.setText(projectLocation);
     final int index = projectLocation.lastIndexOf(File.separator);
     if (index > 0) {

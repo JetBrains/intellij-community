@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -25,20 +26,16 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-
-/**
- * @author peter
- */
 public final class JavaCompletionSorting {
   private JavaCompletionSorting() {
   }
@@ -70,9 +67,14 @@ public final class JavaCompletionSorting {
     }
 
     PsiElement parent = position.getParent();
-    if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression) &&
-        !ExpressionUtils.isVoidContext((PsiReferenceExpression)parent)) {
-      sorter = sorter.weighBefore("middleMatching", new PreferNonVoid());
+    if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression)) {
+      PsiExpression context = (PsiReferenceExpression)parent;
+      if (context.getParent() instanceof PsiMethodCallExpression) {
+        context = (PsiExpression)context.getParent();
+      }
+      if (!ExpressionUtils.isVoidContext(context)) {
+        sorter = sorter.weighBefore("middleMatching", new PreferNonVoid());
+      }
     }
 
     List<LookupElementWeigher> afterPriority = new ArrayList<>();
@@ -101,10 +103,10 @@ public final class JavaCompletionSorting {
 
     ContainerUtil.addIfNotNull(afterStats, recursion(parameters, expectedTypes));
     afterStats.add(new PreferSimilarlyEnding(project, expectedTypes));
-    if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {
+    if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiTypes.voidType()))) {
       afterStats.add(new PreferNonGeneric());
     }
-    Collections.addAll(afterStats, new PreferAccessible(position), new PreferSimple());
+    afterStats.add(new PreferSimple());
 
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
@@ -126,9 +128,8 @@ public final class JavaCompletionSorting {
 
   @Nullable
   private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
-    TObjectIntHashMap<PsiMethod> previousChainCalls = new TObjectIntHashMap<>();
-    if (position.getParent() instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)position.getParent();
+    Object2IntMap<PsiMethod> previousChainCalls = new Object2IntOpenHashMap<>();
+    if (position.getParent() instanceof PsiReferenceExpression ref) {
       PsiMethodCallExpression qualifier = getCallQualifier(ref);
       PsiClass qualifierClass = qualifier == null ? null : PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
       if (BuilderCompletionKt.looksLikeBuilder(qualifierClass)) {
@@ -139,7 +140,7 @@ public final class JavaCompletionSorting {
             boolean seemsLikeExpectsMultipleCalls =
               name.startsWith("put") || name.startsWith("add") || name.startsWith("append") || name.startsWith("get");
             if (!seemsLikeExpectsMultipleCalls && qualifierClass == method.getContainingClass()) {
-              previousChainCalls.put(method, previousChainCalls.get(method) + 1);
+              previousChainCalls.put(method, previousChainCalls.getInt(method) + 1);
             }
           }
           qualifier = getCallQualifier(qualifier.getMethodExpression());
@@ -150,7 +151,7 @@ public final class JavaCompletionSorting {
       @Override
       public Boolean weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
         PsiElement psi = element.getPsiElement();
-        return psi instanceof PsiMethod && previousChainCalls.get((PsiMethod)psi) == 1;
+        return psi instanceof PsiMethod && previousChainCalls.getInt(psi) == 1;
       }
     };
   }
@@ -161,7 +162,7 @@ public final class JavaCompletionSorting {
   }
 
   private static ExpectedTypeInfo @NotNull [] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
-    if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(position)) {
+    if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(".")).accepts(position)) {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
 
@@ -187,8 +188,7 @@ public final class JavaCompletionSorting {
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) {
       return null;
     }
-    if (position.getParent() instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression refExpr = (PsiReferenceExpression)position.getParent();
+    if (position.getParent() instanceof PsiReferenceExpression refExpr) {
       final PsiElement qualifier = refExpr.getQualifier();
       if (qualifier == null) {
         return null;
@@ -286,7 +286,7 @@ public final class JavaCompletionSorting {
   private static boolean hasNonVoid(ExpectedTypeInfo[] expectedInfos) {
     boolean hasNonVoid = false;
     for (ExpectedTypeInfo info : expectedInfos) {
-      if (!PsiType.VOID.equals(info.getType())) {
+      if (!PsiTypes.voidType().equals(info.getType())) {
         hasNonVoid = true;
       }
     }
@@ -406,7 +406,7 @@ public final class JavaCompletionSorting {
             return MyResult.ofDefaultType;
           }
         }
-        if (PsiType.VOID.equals(itemType) && PsiType.VOID.equals(expectedType)) {
+        if (PsiTypes.voidType().equals(itemType) && PsiTypes.voidType().equals(expectedType)) {
           return MyResult.exactlyExpected;
         }
       }
@@ -477,46 +477,6 @@ public final class JavaCompletionSorting {
     unexpected,
   }
 
-  private static class PreferAccessible extends LookupElementWeigher {
-    private final PsiElement myPosition;
-
-    PreferAccessible(PsiElement position) {
-      super("accessible");
-      myPosition = position;
-    }
-
-    private enum MyEnum {
-      NORMAL,
-      DISCOURAGED,
-      DEPRECATED,
-      INACCESSIBLE,
-    }
-
-    @NotNull
-    @Override
-    public MyEnum weigh(@NotNull LookupElement element) {
-      final Object object = element.getObject();
-      if (object instanceof PsiDocCommentOwner) {
-        final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
-        if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
-        if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return MyEnum.DEPRECATED;
-        if (member instanceof PsiClass) {
-          PsiFile file = member.getContainingFile();
-          if (file instanceof PsiJavaFile) {
-            String packageName = ((PsiJavaFile)file).getPackageName();
-            if (packageName.startsWith("com.sun.") || packageName.startsWith("sun.") || packageName.startsWith("org.omg.")) {
-              return MyEnum.DISCOURAGED;
-            }
-          }
-          if ("java.awt.List".equals(((PsiClass)member).getQualifiedName())) {
-            return MyEnum.DISCOURAGED;
-          }
-        }
-      }
-      return MyEnum.NORMAL;
-    }
-  }
-
   private static class PreferNonGeneric extends LookupElementWeigher {
     PreferNonGeneric() {
       super("nonGeneric");
@@ -541,7 +501,7 @@ public final class JavaCompletionSorting {
     @Override
     public Integer weigh(@NotNull LookupElement element) {
       TypedLookupItem item = element.as(TypedLookupItem.class);
-      return item != null && element.getObject() instanceof PsiMethod && PsiType.VOID.equals(item.getType()) ? 1 : 0;
+      return item != null && element.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(item.getType()) ? 1 : 0;
     }
   }
 
@@ -627,7 +587,7 @@ public final class JavaCompletionSorting {
     SUBTYPE, CONVERTIBLE, HAS_NESTED, UNKNOWN, SUPERTYPE, NON_CONVERTIBLE
   }
 
-  private static class PreferExpected extends LookupElementWeigher {
+  private static final class PreferExpected extends LookupElementWeigher {
     private final boolean myConstructorPossible;
     private final ExpectedTypeInfo[] myExpectedTypes;
     private final PsiElement myPosition;
@@ -690,14 +650,13 @@ public final class JavaCompletionSorting {
     }
 
     @Nullable String getLookupObjectName(Object o) {
-      if (o instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)o;
+      if (o instanceof PsiVariable variable) {
         VariableKind variableKind = myCodeStyleManager.getVariableKind(variable);
         String name = variable.getName();
         return name == null ? null : myCodeStyleManager.variableNameToPropertyName(name, variableKind);
       }
-      if (o instanceof PsiMethod) {
-        return ((PsiMethod)o).getName();
+      if (o instanceof PsiMethod method) {
+        return method.getName();
       }
       return null;
     }
@@ -733,7 +692,7 @@ public final class JavaCompletionSorting {
         for (ExpectedTypeInfo myExpectedInfo : myExpectedTypes) {
           String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName();
           if (expectedName != null) {
-            final THashSet<String> set = new THashSet<>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
+            final Set<String> set = new HashSet<>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
             set.retainAll(wordsNoDigits);
             max = Math.max(max, set.size());
           }
@@ -778,8 +737,7 @@ public final class JavaCompletionSorting {
     @Override
     public Boolean weigh(@NotNull LookupElement element) {
       Object object = element.getObject();
-      if (object instanceof PsiMethod && element.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) == null) {
-        PsiMethod method = (PsiMethod)object;
+      if (object instanceof PsiMethod method && element.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) == null) {
         PsiClass containingClass = method.getContainingClass();
         if (!method.isVarArgs() &&
             containingClass != null &&
@@ -794,7 +752,7 @@ public final class JavaCompletionSorting {
       return candidate.hasModifierProperty(PsiModifier.STATIC) == original.hasModifierProperty(PsiModifier.STATIC) &&
              candidate.isVarArgs() &&
              candidate.getParameterList().getParametersCount() == 1 &&
-             PsiResolveHelper.SERVICE.getInstance(candidate.getProject()).isAccessible(candidate, myPlace, null);
+             PsiResolveHelper.getInstance(candidate.getProject()).isAccessible(candidate, myPlace, null);
     }
   }
 
@@ -812,8 +770,7 @@ public final class JavaCompletionSorting {
         @Override
         public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
           Object object = shorterElement.getObject();
-          if (object instanceof PsiClass && longerElement.getObject() instanceof PsiClass) {
-            PsiClass psiClass = (PsiClass)object;
+          if (object instanceof PsiClass psiClass && longerElement.getObject() instanceof PsiClass) {
             PsiFile file = psiClass.getContainingFile();
             if (file != null) {
               VirtualFile vFile = file.getOriginalFile().getVirtualFile();

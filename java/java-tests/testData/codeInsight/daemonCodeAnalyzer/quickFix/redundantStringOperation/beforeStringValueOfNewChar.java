@@ -1,8 +1,8 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Redundant 'String' operation' problems in file" "true"
 
 class Test {
   String foo1(char c) {
-    return String.valueOf(new char[]<caret> { c });
+    return String.valueOf(new <caret>char[] { c });
   }
 
   String foo2(Character character) {

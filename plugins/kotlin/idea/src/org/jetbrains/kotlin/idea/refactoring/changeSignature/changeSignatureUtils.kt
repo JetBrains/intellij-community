@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -8,19 +8,23 @@ import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.DeferredJavaMethodKotlinCallerUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.JavaMethodKotlinUsageWithDelegate
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallerUsage
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.KotlinTypeSubstitution
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.Name
@@ -28,7 +32,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.substitutions.getCallableSubstitutor
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 
 fun KtNamedDeclaration.getDeclarationBody(): KtElement? = when (this) {
@@ -64,7 +67,20 @@ fun getCallableSubstitutor(
 ): TypeSubstitutor? {
     val currentBaseFunction = baseFunction.currentCallableDescriptor ?: return null
     val currentDerivedFunction = derivedCallable.currentCallableDescriptor ?: return null
-    return getCallableSubstitutor(currentBaseFunction, currentDerivedFunction)
+    val substitution = getCallableSubstitution(currentBaseFunction, currentDerivedFunction) ?: return null
+    return TypeSubstitutor.create(substitution)
+}
+
+private fun getCallableSubstitution(baseCallable: CallableDescriptor, derivedCallable: CallableDescriptor): KotlinTypeSubstitution? {
+    val baseClass = baseCallable.containingDeclaration as? ClassDescriptor ?: return null
+    val derivedClass = derivedCallable.containingDeclaration as? ClassDescriptor ?: return null
+    val substitution = getTypeSubstitution(baseClass.defaultType, derivedClass.defaultType) ?: return null
+
+    for ((baseParam, derivedParam) in baseCallable.typeParameters.zip(derivedCallable.typeParameters)) {
+        substitution[baseParam.typeConstructor] = TypeProjectionImpl(derivedParam.defaultType)
+    }
+
+    return substitution
 }
 
 fun KotlinType.renderTypeWithSubstitution(substitutor: TypeSubstitutor?, defaultText: String, inArgumentPosition: Boolean): String {
@@ -98,7 +114,7 @@ private object ForceTypeCopySubstitution : TypeSubstitution() {
 }
 
 private fun KotlinType.copyAsSimpleType(): SimpleType = KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-    annotations,
+    annotations.toDefaultAttributes(),
     constructor,
     arguments,
     isMarkedNullable,
@@ -115,7 +131,7 @@ fun suggestReceiverNames(project: Project, descriptor: CallableDescriptor): List
         }
     } ?: CollectingNameValidator(paramNames)
     val receiverType = descriptor.extensionReceiverParameter?.type ?: return emptyList()
-    return KotlinNameSuggester.suggestNamesByType(receiverType, validator, "receiver")
+    return Fe10KotlinNameSuggester.suggestNamesByType(receiverType, validator, "receiver")
 }
 
 internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
@@ -124,3 +140,12 @@ internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
         is KotlinChangeInfoWrapper -> delegate
         else -> null
     }
+
+fun KotlinTypeInfo.getReceiverTypeText(): String {
+    val text = render()
+    return when {
+        text.startsWith("(") && text.endsWith(")") -> text
+        type is DefinitelyNotNullType || type?.isFunctionType == true -> "($text)"
+        else -> text
+    }
+}

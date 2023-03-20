@@ -153,8 +153,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
           }
           else if (number == expression.getROperand()) {
             final XPathExpression next = PsiTreeUtil.getParentOfType(PsiTreeUtil.nextLeaf(expression), XPathExpression.class, true);
-            if (next instanceof XPathBinaryExpression) {
-              final XPathBinaryExpression left = (XPathBinaryExpression)next;
+            if (next instanceof XPathBinaryExpression left) {
               final XPathExpression rOperand = left.getROperand();
               if (rOperand != null && lOperand != null) {
                 final String display = number.getText() + " " + left.getOperationSign();
@@ -275,12 +274,12 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       if (!variableResolver.canResolve()) {
         final Object[] variablesInScope = variableResolver.getVariablesInScope(reference);
         if (variablesInScope instanceof String[]) {
-          final Set<String> variables = ContainerUtil.set((String[])variablesInScope);
+          final Set<String> variables = ContainerUtil.newHashSet((String[])variablesInScope);
           if (!variables.contains(reference.getReferencedName())) {
             markUnresolvedVariable(reference, holder);
           }
         } else if (variablesInScope instanceof QName[]) {
-          final Set<QName> variables = ContainerUtil.set((QName[])variablesInScope);
+          final Set<QName> variables = ContainerUtil.newHashSet((QName[])variablesInScope);
           if (!variables.contains(contextProvider.getQName(reference))) {
             markUnresolvedVariable(reference, holder);
           }
@@ -411,25 +410,13 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     if (test.getXPathVersion() == XPathVersion.V2) {
 
       switch (nodeType) {
-        case NODE:
-        case TEXT:
-        case COMMENT:
-          markExceedingArguments(holder, arguments, 0);
-          break;
+        case NODE, TEXT, COMMENT -> markExceedingArguments(holder, arguments, 0);
 
         // TODO: parser doesn't understand TypeName? yet:
         //   	 ElementTest 	   ::=    	"element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
-        case ELEMENT:
-        case ATTRIBUTE:
-          checkKindTestArguments(holder, test, true, 0, 2);
-          break;
-
-        case SCHEMA_ELEMENT:
-        case SCHEMA_ATTRIBUTE:
-          checkKindTestArguments(holder, test, false, 1, 1);
-          break;
-
-        case DOCUMENT_NODE:
+        case ELEMENT, ATTRIBUTE -> checkKindTestArguments(holder, test, true, 0, 2);
+        case SCHEMA_ELEMENT, SCHEMA_ATTRIBUTE -> checkKindTestArguments(holder, test, false, 1, 1);
+        case DOCUMENT_NODE -> {
           if (arguments.length >= 1) {
             markExceedingArguments(holder, arguments, 1);
 
@@ -443,15 +430,15 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
             holder.newAnnotation(HighlightSeverity.ERROR,
                                  XPathBundle.message("annotator.error.element.or.schema.element.expected")).range(arguments[0]).create();
           }
-          break;
-
-        case PROCESSING_INSTRUCTION:
+        }
+        case PROCESSING_INSTRUCTION -> {
           if (arguments.length >= 1) {
             markExceedingArguments(holder, arguments, 1);
 
             if (arguments[0] instanceof XPathString) {
               break;
-            } else {
+            }
+            else {
               final PrefixedName argument = findQName(arguments[0]);
               if (argument != null) {
                 if (argument.getPrefix() == null && !"*".equals(argument.getLocalName())) {
@@ -462,7 +449,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
             holder.newAnnotation(HighlightSeverity.ERROR,
                                  XPathBundle.message("annotator.error.string.literal.or.ncname.expected")).range(arguments[0]).create();
           }
-          break;
+        }
       }
     } else {
       if (arguments.length == 0) {
@@ -551,8 +538,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   private static void checkPrefixReferences(AnnotationHolder holder, QNameElement element, ContextProvider myProvider) {
     final PsiReference[] references = element.getReferences();
     for (PsiReference reference : references) {
-      if (reference instanceof PrefixReference) {
-        final PrefixReference pr = ((PrefixReference)reference);
+      if (reference instanceof PrefixReference pr) {
         if (!pr.isSoft() && pr.isUnresolved()) {
           final TextRange range = pr.getRangeInElement().shiftRight(pr.getElement().getTextRange().getStartOffset());
           AnnotationBuilder builder =

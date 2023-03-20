@@ -8,9 +8,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyTypeHierarchyTreeStructure extends PySubTypesHierarchyTreeStructure {
   public PyTypeHierarchyTreeStructure(@NotNull final PyClass cl) {
     super(cl.getProject(), buildHierarchyElement(cl));

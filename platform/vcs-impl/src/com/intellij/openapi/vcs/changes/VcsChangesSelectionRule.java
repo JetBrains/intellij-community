@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+/**
+ * {@link VcsDataKeys#CHANGES_SELECTION}
+ */
 public class VcsChangesSelectionRule implements GetDataRule {
   @Nullable
   @Override
@@ -35,7 +38,8 @@ public class VcsChangesSelectionRule implements GetDataRule {
   public ListSelection<Change> getChangesSelection(@NotNull DataProvider dataProvider) {
     Change[] selectedChanges = VcsDataKeys.SELECTED_CHANGES.getData(dataProvider);
     if (selectedChanges != null) {
-      return ListSelection.createAt(Arrays.asList(selectedChanges), 0);
+      return ListSelection.createAt(Arrays.asList(selectedChanges), 0)
+        .asExplicitSelection();
     }
 
     Change[] changes = VcsDataKeys.CHANGES.getData(dataProvider);

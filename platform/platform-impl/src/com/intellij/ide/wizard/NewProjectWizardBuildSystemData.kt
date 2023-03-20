@@ -3,7 +3,9 @@ package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use instead BuildSystemNewProjectWizardData")
 interface NewProjectWizardBuildSystemData : NewProjectWizardLanguageData {
 
@@ -14,7 +16,7 @@ interface NewProjectWizardBuildSystemData : NewProjectWizardLanguageData {
   companion object {
     val KEY = Key.create<NewProjectWizardBuildSystemData>(NewProjectWizardBuildSystemData::class.java.name)
 
-    val NewProjectWizardStep.buildSystemData get() = data.getUserData(KEY)!!
+    private val NewProjectWizardStep.buildSystemData get() = data.getUserData(KEY)!!
 
     val NewProjectWizardStep.buildSystemProperty get() = buildSystemData.buildSystemProperty
     val NewProjectWizardStep.buildSystem get() = buildSystemData.buildSystem

@@ -49,21 +49,23 @@ public final class HgChangeProvider implements ChangeProvider {
   }
 
   public static final FileStatus COPIED
-    = FileStatusFactory.getInstance().createFileStatus("COPIED",HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
+    = FileStatusFactory.getInstance().createFileStatus("COPIED", HgBundle.messagePointer("hg4idea.file.status.copied"), OUR_PLUGIN_ID);
   public static final FileStatus RENAMED
     = FileStatusFactory.getInstance().createFileStatus("RENAMED", HgBundle.messagePointer("hg4idea.file.status.renamed"), OUR_PLUGIN_ID);
 
-  private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
-    new EnumMap<>(HgFileStatusEnum.class);
+  private static class Holder {
+    private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
+      new EnumMap<>(HgFileStatusEnum.class);
 
-  static {
-    PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
-    PROCESSORS.put(HgFileStatusEnum.DELETED, HgChangeProcessor.DELETED);
-    PROCESSORS.put(HgFileStatusEnum.MISSING, HgChangeProcessor.MISSING);
-    PROCESSORS.put(HgFileStatusEnum.COPY, HgChangeProcessor.COPIED);
-    PROCESSORS.put(HgFileStatusEnum.MODIFIED, HgChangeProcessor.MODIFIED);
-    PROCESSORS.put(HgFileStatusEnum.UNMODIFIED, HgChangeProcessor.UNMODIFIED);
-    PROCESSORS.put(HgFileStatusEnum.UNVERSIONED, HgChangeProcessor.UNVERSIONED);
+    static {
+      PROCESSORS.put(HgFileStatusEnum.ADDED, HgChangeProcessor.ADDED);
+      PROCESSORS.put(HgFileStatusEnum.DELETED, HgChangeProcessor.DELETED);
+      PROCESSORS.put(HgFileStatusEnum.MISSING, HgChangeProcessor.MISSING);
+      PROCESSORS.put(HgFileStatusEnum.COPY, HgChangeProcessor.COPIED);
+      PROCESSORS.put(HgFileStatusEnum.MODIFIED, HgChangeProcessor.MODIFIED);
+      PROCESSORS.put(HgFileStatusEnum.UNMODIFIED, HgChangeProcessor.UNMODIFIED);
+      PROCESSORS.put(HgFileStatusEnum.UNVERSIONED, HgChangeProcessor.UNVERSIONED);
+    }
   }
 
   public HgChangeProvider(Project project, VcsKey vcsKey) {
@@ -142,7 +144,7 @@ public final class HgChangeProvider implements ChangeProvider {
         continue;
       }
 
-      HgChangeProcessor processor = PROCESSORS.get(status);
+      HgChangeProcessor processor = Holder.PROCESSORS.get(status);
       if (processor != null) {
         processor.process(myProject, myVcsKey, builder,
           workingRevision, parentRevision, beforeFile, afterFile);
@@ -189,7 +191,6 @@ public final class HgChangeProvider implements ChangeProvider {
       }
     }
   }
-
 
   private enum HgChangeProcessor {
     ADDED() {

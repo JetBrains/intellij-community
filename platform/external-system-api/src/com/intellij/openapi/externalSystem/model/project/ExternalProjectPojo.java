@@ -18,9 +18,6 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalProjectPojo implements Comparable<ExternalProjectPojo> {
 
   @NotNull private String myName;

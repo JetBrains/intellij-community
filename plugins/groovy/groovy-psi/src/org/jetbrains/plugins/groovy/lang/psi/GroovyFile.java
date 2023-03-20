@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
-/**
- * @author ven
- */
 public interface GroovyFile extends GroovyFileBase {
   GroovyFile[] EMPTY_ARRAY = new GroovyFile[0];
 

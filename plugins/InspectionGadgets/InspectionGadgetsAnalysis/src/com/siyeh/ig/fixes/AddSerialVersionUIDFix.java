@@ -35,7 +35,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement classIdentifier = descriptor.getPsiElement();
     final PsiClass aClass = (PsiClass)classIdentifier.getParent();
     assert aClass != null;

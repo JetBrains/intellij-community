@@ -44,8 +44,7 @@ interface ULiteralExpression : UExpression {
     visitor.visitLiteralExpression(this, data)
 
   override fun asRenderString(): String {
-    val value = value
-    return when (value) {
+    return when (val value = value) {
       null -> "null"
       is Char -> "'$value'"
       is String -> '"' + value.replace("\\", "\\\\")

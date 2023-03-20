@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
@@ -38,21 +38,18 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-/**
- * @author ven
- */
 public final class TypesUtil implements TypeConstants {
 
   public static final PsiPrimitiveType[] PRIMITIVES = {
-    PsiType.BYTE,
-    PsiType.CHAR,
-    PsiType.DOUBLE,
-    PsiType.FLOAT,
-    PsiType.INT,
-    PsiType.SHORT,
-    PsiType.LONG,
-    PsiType.BOOLEAN,
-    PsiType.VOID
+    PsiTypes.byteType(),
+    PsiTypes.charType(),
+    PsiTypes.doubleType(),
+    PsiTypes.floatType(),
+    PsiTypes.intType(),
+    PsiTypes.shortType(),
+    PsiTypes.longType(),
+    PsiTypes.booleanType(),
+    PsiTypes.voidType()
   };
 
   private TypesUtil() {
@@ -111,14 +108,12 @@ public final class TypesUtil implements TypeConstants {
     }
   }
 
-  private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
-    PsiType.BYTE,
-    PsiType.SHORT,
-    PsiType.INT,
-    PsiType.LONG,
-    PsiType.FLOAT,
-    PsiType.DOUBLE
-  );
+  private static final List<PsiType> LUB_NUMERIC_TYPES = List.of(PsiTypes.byteType(),
+                                                                 PsiTypes.shortType(),
+                                                                 PsiTypes.intType(),
+                                                                 PsiTypes.longType(),
+                                                                 PsiTypes.floatType(),
+                                                                 PsiTypes.doubleType());
 
   /**
    * @deprecated see {@link #canAssign}
@@ -192,8 +187,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   public static boolean isAssignableByParameter(@Nullable PsiType targetType,
-                                               @Nullable PsiType actualType,
-                                               @NotNull PsiElement context) {
+                                                @Nullable PsiType actualType,
+                                                @NotNull PsiElement context) {
 
     if (targetType == null || actualType == null) return false;
     return canAssign(targetType, actualType, context, Position.GENERIC_PARAMETER) == ConversionResult.OK;
@@ -209,7 +204,9 @@ public final class TypesUtil implements TypeConstants {
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       if (!converter.isApplicableTo(position)) continue;
       final ConversionResult result = converter.isConvertible(targetType, actualType, position, (GroovyPsiElement)context);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
@@ -217,7 +214,7 @@ public final class TypesUtil implements TypeConstants {
   public static boolean isAssignableWithoutConversions(@Nullable PsiType lType, @Nullable PsiType rType) {
     if (lType == null || rType == null) return false;
 
-    if (rType == PsiType.NULL) {
+    if (rType == PsiTypes.nullType()) {
       return !(lType instanceof PsiPrimitiveType);
     }
 
@@ -288,8 +285,7 @@ public final class TypesUtil implements TypeConstants {
                                          @NotNull PsiManager manager,
                                          @NotNull GlobalSearchScope resolveScope,
                                          boolean boxVoid) {
-    if (result instanceof PsiPrimitiveType && (boxVoid || !PsiType.VOID.equals(result))) {
-      PsiPrimitiveType primitive = (PsiPrimitiveType)result;
+    if (result instanceof PsiPrimitiveType primitive && (boxVoid || !PsiTypes.voidType().equals(result))) {
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
         return GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(boxedTypeName, resolveScope);
@@ -344,13 +340,13 @@ public final class TypesUtil implements TypeConstants {
 
   @Nullable
   public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull PsiManager manager) {
+    if (type1 == PsiTypes.nullType()) return type2;
+    if (type2 == PsiTypes.nullType()) return type1;
     {
       PsiType numericLUB = getNumericLUB(type1, type2);
       if (numericLUB != null) return numericLUB;
     }
-    if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
-      GrTupleType tuple1 = (GrTupleType)type1;
-      GrTupleType tuple2 = (GrTupleType)type2;
+    if (type1 instanceof GrTupleType tuple1 && type2 instanceof GrTupleType tuple2) {
       List<PsiType> components1 = tuple1.getComponentTypes();
       List<PsiType> components2 = tuple2.getComponentTypes();
 
@@ -386,9 +382,7 @@ public final class TypesUtil implements TypeConstants {
     else if (checkEmptyMapAndMap(type2, type1)) {
       return genNewMapBy(type1, manager);
     }
-    else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
-      GrClosureType clType1 = (GrClosureType)type1;
-      GrClosureType clType2 = (GrClosureType)type2;
+    else if (type1 instanceof GrClosureType clType1 && type2 instanceof GrClosureType clType2) {
       List<GrSignature> signatures1 = clType1.getSignatures();
       List<GrSignature> signatures2 = clType2.getSignatures();
 
@@ -400,7 +394,8 @@ public final class TypesUtil implements TypeConstants {
           if (signature != null) {
             GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
             final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
+            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()),
+                                        languageLevel, true);
           }
         }
       }
@@ -440,7 +435,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   private static PsiType genNewListBy(PsiType genericOwner, @NotNull PsiManager manager) {
-    PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
+    PsiClass list =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (list == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null);
     return factory.createType(list, PsiUtil.extractIterableTypeParameter(genericOwner, false));
@@ -455,7 +451,8 @@ public final class TypesUtil implements TypeConstants {
   }
 
   private static PsiType genNewMapBy(PsiType genericOwner, PsiManager manager) {
-    PsiClass map = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, genericOwner.getResolveScope());
+    PsiClass map =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (map == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_MAP, null);
 
@@ -467,7 +464,7 @@ public final class TypesUtil implements TypeConstants {
   @Nullable
   public static PsiType getPsiType(PsiElement context, IElementType elemType) {
     if (elemType == GroovyTokenTypes.kNULL) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     final String typeName = getBoxedTypeName(elemType);
     if (typeName != null) {
@@ -557,7 +554,7 @@ public final class TypesUtil implements TypeConstants {
   @NotNull
   public static PsiPrimitiveType getPrimitiveTypeByText(String typeText) {
     for (final PsiPrimitiveType primitive : PRIMITIVES) {
-      if (PsiType.VOID.equals(primitive)) {
+      if (PsiTypes.voidType().equals(primitive)) {
         return primitive;
       }
       if (primitive.getCanonicalText().equals(typeText)) {
@@ -745,11 +742,9 @@ public final class TypesUtil implements TypeConstants {
       public PsiType visitWildcardType(@NotNull PsiWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
-
     };
 
     return type.accept(visitor);
-
   }
 
   public static boolean isPsiClassTypeToClosure(PsiType type) {

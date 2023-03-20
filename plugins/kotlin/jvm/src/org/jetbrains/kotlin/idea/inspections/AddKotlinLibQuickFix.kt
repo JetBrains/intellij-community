@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -15,13 +15,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
-import org.jetbrains.kotlin.idea.facet.getCleanRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
+import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.createIntentionForFirstParentOfType
-import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -31,9 +32,10 @@ class AddReflectionQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, 
     override fun getText() = KotlinJvmBundle.message("classpath.add.reflection")
     override fun getFamilyName() = text
 
-    override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor(
-        "org.jetbrains.kotlin", "kotlin-reflect",
-        getCleanRuntimeLibraryVersion(module) ?: bundledRuntimeVersion()
+    override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor.create(
+        "org.jetbrains.kotlin",
+        "kotlin-reflect",
+        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
     )
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -49,9 +51,10 @@ class AddScriptRuntimeQuickFix(element: KtElement) : AddKotlinLibQuickFix(
     override fun getText() = KotlinJvmBundle.message("classpath.add.script.runtime")
     override fun getFamilyName() = text
 
-    override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor(
-        "org.jetbrains.kotlin", "kotlin-script-runtime",
-        getCleanRuntimeLibraryVersion(module) ?: bundledRuntimeVersion()
+    override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor.create(
+        "org.jetbrains.kotlin",
+        "kotlin-script-runtime",
+        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
     )
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -65,13 +68,14 @@ class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, Lib
     override fun getText() = KotlinJvmBundle.message("classpath.add.kotlin.test")
     override fun getFamilyName() = text
 
-    override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor(
-        "org.jetbrains.kotlin", "kotlin-test",
-        getCleanRuntimeLibraryVersion(module) ?: bundledRuntimeVersion()
+    override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor.create(
+        "org.jetbrains.kotlin",
+        "kotlin-test",
+        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
     )
 
     companion object : KotlinSingleIntentionActionFactory() {
-        val KOTLIN_TEST_UNRESOLVED = setOf(
+        private val KOTLIN_TEST_UNRESOLVED = setOf(
             "Asserter", "assertFailsWith", "currentStackTrace", "failsWith", "todo", "assertEquals",
             "assertFails", "assertNot", "assertNotEquals", "assertNotNull", "assertNull", "assertTrue", "expect", "fail", "fails"
         )
@@ -121,8 +125,18 @@ abstract class AddKotlinLibQuickFix(
 ) : KotlinQuickFixAction<KtElement>(element) {
     protected abstract fun getLibraryDescriptor(module: Module): MavenExternalLibraryDescriptor
 
-    class MavenExternalLibraryDescriptor(groupId: String, artifactId: String, version: String) :
-        ExternalLibraryDescriptor(groupId, artifactId, version, version) {
+    class MavenExternalLibraryDescriptor private constructor(
+        groupId: String,
+        artifactId: String,
+        version: String
+    ): ExternalLibraryDescriptor(groupId, artifactId, version, version) {
+        companion object {
+            fun create(groupId: String, artifactId: String, version: IdeKotlinVersion): MavenExternalLibraryDescriptor {
+                val artifactVersion = version.artifactVersion
+                return MavenExternalLibraryDescriptor(groupId, artifactId, artifactVersion)
+            }
+        }
+
         override fun getLibraryClassesRoots(): List<String> = emptyList()
     }
 

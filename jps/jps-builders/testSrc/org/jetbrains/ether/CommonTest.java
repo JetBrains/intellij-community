@@ -9,9 +9,6 @@ import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
-/**
- * @author: db
- */
 public class CommonTest extends IncrementalTestCase {
   public CommonTest() {
     super("common");

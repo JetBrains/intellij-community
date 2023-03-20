@@ -1,0 +1,2 @@
+[withInvokeFromParent.1.kt] Companion object 2 SimpleClass()
+[withInvokeFromParent.2.kt] Companion object 2 SimpleClass.invoke()

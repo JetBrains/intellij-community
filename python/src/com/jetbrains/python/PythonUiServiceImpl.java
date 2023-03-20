@@ -2,15 +2,9 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListEditForm;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -21,11 +15,12 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,12 +28,9 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.ui.OnePixelSplitter;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
@@ -53,8 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 public final class PythonUiServiceImpl extends PythonUiService {
@@ -107,28 +97,6 @@ public final class PythonUiServiceImpl extends PythonUiService {
     return new PyRenameElementQuickFix(element);
   }
 
-  //TODO: rewrite in dsl
-  @Override
-  public JComponent createCompatibilityInspectionOptionsPanel(@NotNull List<String> supportedInSettings,
-                                                              JDOMExternalizableStringList ourVersions) {
-    final ElementsChooser<String> chooser = new ElementsChooser<>(true);
-    chooser.setElements(supportedInSettings, false);
-    chooser.markElements(ContainerUtil.filter(ourVersions, supportedInSettings::contains));
-    chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
-      @Override
-      public void elementMarkChanged(String element, boolean isMarked) {
-        ourVersions.clear();
-        ourVersions.addAll(chooser.getMarkedElements());
-      }
-    });
-    final JPanel versionPanel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel(PyPsiBundle.message("INSP.compatibility.check.for.compatibility.with.python.versions"));
-    label.setLabelFor(chooser);
-    versionPanel.add(label, BorderLayout.PAGE_START);
-    versionPanel.add(chooser);
-    return versionPanel;
-  }
-
   //TODO: find a better place or, even better, port it to analysis module
   @Override
   public void runRenameProcessor(Project project,
@@ -155,140 +123,8 @@ public final class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JComponent createSingleCheckboxOptionsPanel(@NlsContexts.Checkbox String label, InspectionProfileEntry inspection, String property) {
-    return new SingleCheckboxOptionsPanel(label, inspection, property);
-  }
-
-  @Override
   public void annotateTypesIntention(Editor editor, PyFunction function) {
     PyAnnotateTypesIntention.annotateTypes(editor, function);
-  }
-
-  @Override
-  @NotNull
-  public JComponent createEncodingsOptionsPanel(String @ListItem [] possibleEncodings,
-                                                @ListItem String defaultEncoding,
-                                                String @ListItem [] possibleFormats,
-                                                final int formatIndex,
-                                                Consumer<String> encodingChanged,
-                                                Consumer<Integer> formatIndexChanged) {
-    final JComboBox defaultEncodingCombo = new ComboBox(possibleEncodings);
-    defaultEncodingCombo.setSelectedItem(defaultEncoding);
-
-    defaultEncodingCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        encodingChanged.consume((String)cb.getSelectedItem());
-      }
-    });
-
-    final ComboBox encodingFormatCombo = new ComboBox(possibleFormats);
-
-    encodingFormatCombo.setSelectedIndex(formatIndex);
-    encodingFormatCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        formatIndexChanged.consume(cb.getSelectedIndex());
-      }
-    });
-
-    return createEncodingOptionsPanel(defaultEncodingCombo, encodingFormatCombo);
-  }
-
-  public static JComponent createEncodingOptionsPanel(JComboBox defaultEncoding, JComboBox encodingFormat) {
-    final JPanel optionsPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints c = new GridBagConstraints();
-
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.NORTH;
-    c.gridx = 0;
-    c.gridy = 0;
-    final JLabel encodingLabel = new JLabel(PyBundle.message("code.insight.select.default.encoding"));
-    final JPanel encodingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    encodingPanel.add(encodingLabel);
-    optionsPanel.add(encodingPanel, c);
-
-    c.gridx = 1;
-    c.gridy = 0;
-    optionsPanel.add(defaultEncoding, c);
-
-    c.gridx = 0;
-    c.gridy = 1;
-    c.weighty = 1;
-    final JLabel formatLabel = new JLabel(PyBundle.message("code.insight.encoding.comment.format"));
-    final JPanel formatPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    formatPanel.add(formatLabel);
-    optionsPanel.add(formatPanel, c);
-
-    c.gridx = 1;
-    c.gridy = 1;
-    optionsPanel.add(encodingFormat, c);
-
-    return optionsPanel;
-  }
-
-  @Override
-  public JCheckBox createInspectionCheckBox(@NlsContexts.Checkbox String message, InspectionProfileEntry inspection, String property) {
-    return new CheckBox(message, inspection, property);
-  }
-
-  @Override
-  public <E> JComboBox<E> createComboBox(E[] items) {
-    return new ComboBox<>(items);
-  }
-
-  @Override
-  public <E> JComboBox<E> createComboBox(E[] items, int width) {
-    return new ComboBox<>(items, width);
-  }
-
-  @Override
-  public JComponent createListEditForm(@NlsContexts.ColumnName String title, List<String> stringList) {
-    final ListEditForm form = new ListEditForm(title, stringList);
-    return form.getContentPanel();
-  }
-
-  @Override
-  public JComponent createListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
-    final ListEditForm form = new ListEditForm(title, label, stringList);
-    return form.getContentPanel();
-  }
-
-  @Override
-  @NotNull
-  public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
-                                            String @ListItem [] items,
-                                            @ListItem String selectedItem,
-                                            Consumer<Object> selectedItemChanged) {
-    ComboBox comboBox = new ComboBox<>(items);
-    comboBox.setSelectedItem(selectedItem);
-    comboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        selectedItemChanged.consume(cb.getSelectedItem());
-      }
-    });
-
-    JPanel option = new JPanel(new BorderLayout());
-    option.add(new JLabel(label), BorderLayout.WEST);
-    option.add(comboBox, BorderLayout.EAST);
-
-    final JPanel root = new JPanel(new BorderLayout());
-    root.add(option, BorderLayout.PAGE_START);
-    return root;
-  }
-
-  @Override
-  public JComponent onePixelSplitter(boolean vertical, JComponent first, JComponent second) {
-    final OnePixelSplitter splitter = new OnePixelSplitter(vertical);
-
-    splitter.setFirstComponent(first);
-    splitter.setSecondComponent(second);
-
-    return splitter;
   }
 
   @Override
@@ -305,7 +141,6 @@ public final class PythonUiServiceImpl extends PythonUiService {
   /**
    * Shows a panel with name redefinition conflicts, if needed.
    *
-   * @param project
    * @param conflicts what {@link #findDefinitions} would return
    * @param obscured  name or its topmost qualifier that is obscured, used at top of pane.
    * @param name      full name (maybe qualified) to show as obscured and display as qualifier in "would be" chunks.
@@ -335,7 +170,6 @@ public final class PythonUiServiceImpl extends PythonUiService {
 
   /**
    * Simplistic usage object for demonstration of name clashes, etc.
-   * User: dcheryasov
    */
   public static class NameUsage implements PsiElementUsage {
 
@@ -485,24 +319,5 @@ public final class PythonUiServiceImpl extends PythonUiService {
                               @ListItem String initialValue,
                               @Nullable Icon icon) {
     return MessagesService.getInstance().showChooseDialog(project, parentComponent, message, title, values, initialValue, icon);
-  }
-
-  @Override
-  public JPanel createMultipleCheckboxOptionsPanel(final InspectionProfileEntry owner) {
-    return new MultipleCheckboxOptionsPanel(owner);
-  }
-
-  @Override
-  public void addRowToOptionsPanel(JPanel optionsPanel, JComponent label, JComponent component) {
-    if (optionsPanel instanceof InspectionOptionsPanel) {
-      ((InspectionOptionsPanel) optionsPanel).addRow(label, component);
-    }
-  }
-
-  @Override
-  public void addCheckboxToOptionsPanel(JPanel optionsPanel, String label, String property) {
-    if (optionsPanel instanceof MultipleCheckboxOptionsPanel) {
-      ((MultipleCheckboxOptionsPanel) optionsPanel).addCheckbox(label, property);
-    }
   }
 }

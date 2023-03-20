@@ -23,9 +23,6 @@ import com.intellij.util.gist.GistManager
 import java.util.*
 import kotlin.collections.HashMap
 
-/**
- * @author peter
- */
 
 private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 14, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)

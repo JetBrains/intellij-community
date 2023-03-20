@@ -48,10 +48,9 @@ public class GroovyWaitCallNotInLoopInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression reference)) {
         return;
       }
-      final GrReferenceExpression reference = (GrReferenceExpression) methodExpression;
       final String name = reference.getReferenceName();
       if (!"wait".equals(name)) {
         return;

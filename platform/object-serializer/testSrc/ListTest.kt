@@ -102,6 +102,15 @@ class ListTest {
     assertThat(deserializedBean.list).isSameAs(emptyList<String>())
   }
 
+  @Test
+  fun `bean implementing Collection`() {
+    data class TestBean(private val backingList: List<String>) : Collection<String> by backingList
+
+    val bean = TestBean(listOf("1", "a"))
+    val deserializedBean = test(bean)
+    assertThat(deserializedBean).isEqualTo(bean)
+  }
+
   @Ignore
   @Test
   fun `parameterized array`() {
@@ -135,7 +144,7 @@ class ListTest {
     """.trimIndent()))
     assertThat(file.readList(String::class.java)).isEqualTo(list)
 
-    // test that we can read regardless of compressed setting
+    // test that we can read regardless of the compressed setting
     VersionedFile(file.file, 42, isCompressed = true).writeList(list, String::class.java, configuration = configuration)
     assertThat(VersionedFile(file.file, 42, isCompressed = false).readList(String::class.java)).isEqualTo(list)
   }

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -19,10 +19,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +42,7 @@ public final class PsiElementListNavigator {
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull MouseEvent e,
                                                                    T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
-                                                                   @NlsContexts.TabTitle final String findUsagesTitle,
+                                                                   @NlsContexts.TabTitle String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
@@ -66,7 +68,7 @@ public final class PsiElementListNavigator {
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
                                                                    T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
-                                                                   @NlsContexts.TabTitle final String findUsagesTitle,
+                                                                   @NlsContexts.TabTitle String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
@@ -74,10 +76,10 @@ public final class PsiElementListNavigator {
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
                                                                    T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
-                                                                   @NlsContexts.TabTitle final String findUsagesTitle,
+                                                                   @NlsContexts.TabTitle String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer,
                                                                    @Nullable BackgroundUpdaterTask listUpdaterTask) {
-    final JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
+    JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
     if (popup != null) {
       if (listUpdaterTask != null) {
         runActionAndListUpdaterTask(() -> popup.showInBestPositionFor(e), listUpdaterTask);
@@ -97,11 +99,11 @@ public final class PsiElementListNavigator {
   }
 
   @Nullable
-  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(final T @NotNull [] targets,
-                                                                                final @NlsContexts.PopupTitle String title,
-                                                                                final @NlsContexts.TabTitle String findUsagesTitle,
-                                                                                final ListCellRenderer<? super T> listRenderer,
-                                                                                @Nullable final BackgroundUpdaterTask listUpdaterTask) {
+  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(T @NotNull [] targets,
+                                                                                @NlsContexts.PopupTitle String title,
+                                                                                @NlsContexts.TabTitle String findUsagesTitle,
+                                                                                ListCellRenderer<? super T> listRenderer,
+                                                                                @Nullable BackgroundUpdaterTask listUpdaterTask) {
     return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
       for (NavigatablePsiElement selected : selectedElements) {
         if (selected.isValid()) {
@@ -115,12 +117,12 @@ public final class PsiElementListNavigator {
    * listUpdaterTask should be started after alarm is initialized so one-item popup won't blink
    */
   @Nullable
-  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(final T @NotNull [] targets,
-                                                                                final @NlsContexts.PopupTitle String title,
-                                                                                final @NlsContexts.TabTitle String findUsagesTitle,
-                                                                                final ListCellRenderer<? super T> listRenderer,
-                                                                                @Nullable final BackgroundUpdaterTask listUpdaterTask,
-                                                                                @NotNull final Consumer<? super T[]> consumer) {
+  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(T @NotNull [] targets,
+                                                                                @NlsContexts.PopupTitle String title,
+                                                                                @NlsContexts.TabTitle String findUsagesTitle,
+                                                                                ListCellRenderer<? super T> listRenderer,
+                                                                                @Nullable BackgroundUpdaterTask listUpdaterTask,
+                                                                                @NotNull Consumer<? super T[]> consumer) {
     return new NavigateOrPopupHelper<>(targets, title)
       .setFindUsagesTitle(findUsagesTitle)
       .setListRenderer(listRenderer)
@@ -208,10 +210,11 @@ public final class PsiElementListNavigator {
       List<T> initialTargetsList = Arrays.asList(myTargets);
       Ref<T[]> updatedTargetsList = Ref.create(myTargets);
 
-      final IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(initialTargetsList);
+      IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(initialTargetsList);
       afterPopupBuilderCreated(builder);
-      if (myListRenderer instanceof PsiElementListCellRenderer) {
-        ((PsiElementListCellRenderer<?>)myListRenderer).installSpeedSearch(builder, true);
+      if (myListRenderer instanceof PsiElementListCellRenderer<?> psiElementListCellRenderer) {
+        psiElementListCellRenderer.installSpeedSearch(builder, true);
+        psiElementListCellRenderer.setUsedInPopup(true);
       }
 
       IPopupChooserBuilder<T> popupChooserBuilder = builder.
@@ -229,7 +232,7 @@ public final class PsiElementListNavigator {
           }
           return true;
         });
-      final Ref<UsageView> usageView = new Ref<>();
+      Ref<UsageView> usageView = new Ref<>();
       if (myFindUsagesTitle != null) {
         popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
           usageView.set(FindUtil.showInUsageView(null, updatedTargetsList.get(), myFindUsagesTitle, getProject()));
@@ -238,18 +241,18 @@ public final class PsiElementListNavigator {
         });
       }
 
-      final JBPopup popup = popupChooserBuilder.createPopup();
-      if (builder instanceof PopupChooserBuilder) {
-        JBList<NavigatablePsiElement> list = (JBList<NavigatablePsiElement>)((PopupChooserBuilder<?>)builder).getChooserComponent();
+      JBPopup popup = popupChooserBuilder.createPopup();
+      if (builder instanceof PopupChooserBuilder<?> castedBuilder) {
+        JBList<NavigatablePsiElement> list = (JBList<NavigatablePsiElement>)castedBuilder.getChooserComponent();
         list.setTransferHandler(new TransferHandler() {
           @Override
           protected Transferable createTransferable(JComponent c) {
-            final Object[] selectedValues = list.getSelectedValues();
-            final PsiElement[] copy = new PsiElement[selectedValues.length];
+            Object[] selectedValues = list.getSelectedValues();
+            PsiElement[] copy = new PsiElement[selectedValues.length];
             for (int i = 0; i < selectedValues.length; i++) {
               copy[i] = (PsiElement)selectedValues[i];
             }
-            return new PsiCopyPasteManager.MyTransferable(copy);
+            return PsiCopyPasteManager.newTransferable(copy);
           }
 
           @Override
@@ -258,18 +261,24 @@ public final class PsiElementListNavigator {
           }
         });
 
-        JScrollPane pane = ((PopupChooserBuilder<?>)builder).getScrollPane();
-        pane.setBorder(null);
+        JScrollPane pane = castedBuilder.getScrollPane();
+        if (ExperimentalUI.isNewUI()) {
+          list.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        }
+        else {
+          pane.setBorder(null);
+        }
         pane.setViewportBorder(null);
       }
 
       if (myListUpdaterTask != null) {
-        ListComponentUpdater popupUpdater = builder.getBackgroundUpdater();
-        myListUpdaterTask.init(popup, new ListComponentUpdater() {
+        GenericListComponentUpdater<T> popupUpdater = builder.getBackgroundUpdater();
+        myListUpdaterTask.init(popup, new GenericListComponentUpdater<PsiElement>() {
           @Override
           public void replaceModel(@NotNull List<? extends PsiElement> data) {
-            updatedTargetsList.set((T[])data.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY));
-            popupUpdater.replaceModel(data);
+            T[] array = (T[])data.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY);
+            updatedTargetsList.set(array);
+            popupUpdater.replaceModel(Arrays.asList(array));
           }
 
           @Override

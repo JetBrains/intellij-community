@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -24,7 +25,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,8 +97,8 @@ public class FragmentHintManager {
     if (component instanceof LabeledComponent) {
       component = ((LabeledComponent<?>)component).getComponent();
     }
-    if (component instanceof RawCommandLineEditor) {
-      component = ((RawCommandLineEditor)component).getEditorField();
+    if (component instanceof FragmentWrapper wrapper) {
+      component = wrapper.getComponentToRegister();
     }
     if (component instanceof ComponentWithBrowseButton) {
       component = ((ComponentWithBrowseButton<?>)component).getChildComponent();
@@ -141,7 +141,7 @@ public class FragmentHintManager {
       myHintsShownTime = System.currentTimeMillis();
       for (SettingsEditorFragment<?, ?> fragment : myFragments) {
         JComponent component = fragment.getComponent();
-        Window window = UIUtil.getWindow(component);
+        Window window = ComponentUtil.getWindow(component);
         if (window == null || !window.isFocused()) {
           return;
         }

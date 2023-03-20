@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -14,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,9 +60,8 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
     return ContainerUtil.notNullize(myRecentExpressions.get(id));
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element state = new Element(STATE_TAG);
     for (String id : myRecentExpressions.keySet()) {
       LinkedList<XExpression> expressions = myRecentExpressions.get(id);
@@ -89,6 +90,7 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
     }
   }
 
+  //TODO: unify with com.intellij.xdebugger.impl.breakpoints.XExpressionState
   @Tag(EXPRESSION_TAG)
   private static class ExpressionState {
     @Tag("expression-string") String myExpression;
@@ -103,7 +105,7 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
     }
 
     ExpressionState(@NotNull XExpression expression) {
-      myExpression = expression.getExpression();
+      myExpression = XmlStringUtil.escapeIllegalXmlChars(expression.getExpression());
       Language language = expression.getLanguage();
       myLanguageId = language == null ? null : language.getID();
       myCustomInfo = expression.getCustomInfo();
@@ -115,7 +117,19 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
       if (myEvaluationMode == null) {
         myEvaluationMode = EvaluationMode.EXPRESSION;
       }
-      return new XExpressionImpl(myExpression, Language.findLanguageByID(myLanguageId), myCustomInfo, myEvaluationMode);
+      return new XExpressionImpl(XmlStringUtil.unescapeIllegalXmlChars(myExpression),
+                                 Language.findLanguageByID(myLanguageId),
+                                 myCustomInfo,
+                                 myEvaluationMode);
+    }
+  }
+
+  public static class XDebuggerHistoryPathMacroFilter extends PathMacroFilter {
+    @Override
+    public boolean skipPathMacros(@NotNull Element element) {
+      return "expression-string".equals(element.getName()) &&
+             (element.getParent() instanceof Element parent) && EXPRESSION_TAG.equals(parent.getName()) &&
+             (parent.getParent() instanceof Element grandParent) && EXPRESSIONS_TAG.equals(grandParent.getName());
     }
   }
 }

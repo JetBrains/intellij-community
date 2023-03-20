@@ -1,0 +1,5 @@
+fun foo(list: List<String>) {
+    for (i in 10 downTo 0) {
+
+    }
+}

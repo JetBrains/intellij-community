@@ -14,9 +14,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class ParenthesesInsertHandler<T extends LookupElement> implements InsertHandler<T> {
   public static final ParenthesesInsertHandler<LookupElement> WITH_PARAMETERS = new ParenthesesInsertHandler<>() {
     @Override
@@ -93,12 +90,13 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
 
   @Override
   public void handleInsert(@NotNull final InsertionContext context, @NotNull final T item) {
+    final char completionChar = context.getCompletionChar();
     final Editor editor = context.getEditor();
+    if (completionChar != myLeftParenthesis && !editor.getSettings().isInsertParenthesesAutomatically()) return;
     final Document document = editor.getDocument();
     context.commitDocument();
     PsiElement lParen = findExistingLeftParenthesis(context);
 
-    final char completionChar = context.getCompletionChar();
     final boolean putCaretInside = completionChar == myLeftParenthesis || placeCaretInsideParentheses(context, item);
 
     if (completionChar == myLeftParenthesis) {

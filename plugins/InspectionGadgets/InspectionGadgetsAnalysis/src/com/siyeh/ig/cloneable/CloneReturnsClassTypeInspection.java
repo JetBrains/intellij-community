@@ -64,12 +64,11 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeElement)) {
+      if (!(element instanceof PsiTypeElement typeElement)) {
         return;
       }
-      final PsiTypeElement typeElement = (PsiTypeElement)element;
       final PsiElement parent = typeElement.getParent();
       if (!(parent instanceof PsiMethod)) {
         return;
@@ -80,20 +79,20 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       parent.accept(new JavaRecursiveElementVisitor() {
 
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
         @Override
-        public void visitReturnStatement(PsiReturnStatement statement) {
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
           final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
           if (returnValue == null) {
             return;
           }
           final PsiType type = returnValue.getType();
-          if (newType.equals(type) || PsiType.NULL.equals(type)) {
+          if (newType.equals(type) || PsiTypes.nullType().equals(type)) {
             return;
           }
           final CommentTracker commentTracker = new CommentTracker();
@@ -113,7 +112,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
   private static class CloneReturnsClassTypeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       if (!CloneUtils.isClone(method) || !PsiUtil.isLanguageLevel5OrHigher(method)) {
         return;
       }
@@ -124,8 +123,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       final PsiType returnType = typeElement.getType();
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
       PsiClass containingClass = method.getContainingClass();
-      if (containingClass instanceof PsiAnonymousClass) {
-        final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)containingClass;
+      if (containingClass instanceof PsiAnonymousClass anonymousClass) {
         final PsiClassType baseClassType = anonymousClass.getBaseClassType();
         containingClass = PsiUtil.resolveClassInClassTypeOnly(baseClassType);
       }
@@ -159,30 +157,30 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
 
   private static class ReturnChecker extends JavaRecursiveElementWalkingVisitor {
 
-    private final Predicate<PsiReturnStatement> myPredicate;
+    private final Predicate<? super PsiReturnStatement> myPredicate;
 
     private boolean myReturnFound = false;
     private boolean myallReturnsMatchPredicate = true;
 
-    ReturnChecker(Predicate<PsiReturnStatement> predicate) {
+    ReturnChecker(Predicate<? super PsiReturnStatement> predicate) {
       myPredicate = predicate;
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {}
+    public void visitClass(@NotNull PsiClass aClass) {}
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       myallReturnsMatchPredicate = false;
       stopWalking();
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       myReturnFound = true;
       myallReturnsMatchPredicate &= myPredicate.test(statement);

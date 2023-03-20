@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 import java.io.IOException;
 
 class C {
@@ -8,7 +8,7 @@ class C {
         try {
             S = getString();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

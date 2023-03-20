@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -7,8 +7,8 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +18,6 @@ import java.util.Set;
 import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-/**
- * @author Pavel.Dolgov
- */
 final class JavaLangReflectVarHandleInvocationChecker {
   private static final Logger LOG = Logger.getInstance(JavaLangReflectVarHandleInvocationChecker.class);
 
@@ -68,7 +65,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
   private static final String WEAK_COMPARE_AND_SET_PLAIN = "weakCompareAndSetPlain";
   private static final String WEAK_COMPARE_AND_SET_RELEASE = "weakCompareAndSetRelease";
 
-  private static final ObjectIntHashMap<String> VAR_HANDLE_ARGUMENT_COUNTS = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> VAR_HANDLE_ARGUMENT_COUNTS = new ObjectIntHashMap<>();
 
   static {
     for (String name : Arrays.asList(GET, GET_VOLATILE, GET_OPAQUE, GET_ACQUIRE)) {
@@ -90,7 +87,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
   }
 
   private static final Set<String> WITH_RETURN_VALUE_NAMES =
-    ContainerUtil.set(GET, GET_VOLATILE, GET_OPAQUE, GET_ACQUIRE,
+    Set.of(GET, GET_VOLATILE, GET_OPAQUE, GET_ACQUIRE,
                       GET_AND_SET, GET_AND_SET_ACQUIRE, GET_AND_SET_RELEASE,
                       GET_AND_ADD, GET_AND_ADD_ACQUIRE, GET_AND_ADD_RELEASE,
                       GET_AND_BITWISE_OR, GET_AND_BITWISE_OR_ACQUIRE, GET_AND_BITWISE_OR_RELEASE,
@@ -102,8 +99,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
   static boolean checkVarHandleAccess(PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
     if (isVarHandleAccessMethod(methodCall)) {
       final PsiExpression qualifierDefinition = findDefinition(methodCall.getMethodExpression().getQualifierExpression());
-      if (qualifierDefinition instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression handleFactoryCall = (PsiMethodCallExpression)qualifierDefinition;
+      if (qualifierDefinition instanceof PsiMethodCallExpression handleFactoryCall) {
         final PsiExpression[] factoryArguments = handleFactoryCall.getArgumentList().getExpressions();
 
         if (isCallToMethod(handleFactoryCall, JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP, FIND_VAR_HANDLE)) {
@@ -155,7 +151,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
 
     LOG.assertTrue(accessArguments.length == requiredArgumentCount);
     for (int i = coordinateArguments; i < requiredArgumentCount; i++) {
-      checkArgumentType(accessArguments[i], valueType, accessArgumentList, false, holder);
+      checkArgumentType(accessArguments[i], valueType, accessArgumentList, false, false, holder);
     }
   }
 
@@ -176,6 +172,6 @@ final class JavaLangReflectVarHandleInvocationChecker {
 
   private static boolean isWithReturnValue(@NotNull PsiMethodCallExpression accessCall) {
     final String name = accessCall.getMethodExpression().getReferenceName();
-    return WITH_RETURN_VALUE_NAMES.contains(name);
+    return name != null && WITH_RETURN_VALUE_NAMES.contains(name);
   }
 }

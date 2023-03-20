@@ -11,7 +11,10 @@ public class ClassCanBeRecordInspectionTest extends LightQuickFixParameterizedTe
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new ClassCanBeRecordInspection(ConversionStrategy.SILENTLY, true)};
+    ClassCanBeRecordInspection inspection = new ClassCanBeRecordInspection(ConversionStrategy.SILENTLY, true);
+    inspection.myIgnoredAnnotations.add("my.annotation1.MyAnn");
+    inspection.myIgnoredAnnotations.add("my.annotation2.*");
+    return new LocalInspectionTool[]{inspection};
   }
 
   @Override

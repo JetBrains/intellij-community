@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.upDownMover
 
 import com.intellij.application.options.CodeStyle
@@ -7,7 +7,8 @@ import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.core.util.getLineCount
+import com.intellij.psi.util.siblings
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -443,6 +444,9 @@ class KotlinExpressionMover : AbstractKotlinUpDownMover() {
             start: PsiElement?, end: PsiElement?, sibling: PsiElement,
             editor: Editor, down: Boolean
         ): Pair<PsiElement, PsiElement>? {
+            if (down && sibling.siblings().none { it is KtExpression }) return null
+            if (!down && sibling !is KtExpression) return null
+
             var currentStart = start
             var currentEnd = end
             if (!(currentStart === currentEnd && currentStart === sibling)) return null
@@ -503,7 +507,7 @@ class KotlinExpressionMover : AbstractKotlinUpDownMover() {
 
             val movableElement = element.getParentOfTypesAndPredicate(
                 strict = false,
-                parentClasses = *MOVABLE_ELEMENT_CLASSES,
+                parentClasses = MOVABLE_ELEMENT_CLASSES,
                 predicate = MOVABLE_ELEMENT_CONSTRAINT
             ) ?: return null
 

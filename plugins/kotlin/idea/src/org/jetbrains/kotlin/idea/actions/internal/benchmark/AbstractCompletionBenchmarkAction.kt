@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.internal.benchmark
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
@@ -22,17 +24,16 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridConstraints
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.completion.CompletionBenchmarkSink
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.util.EDT
-import org.jetbrains.kotlin.idea.core.util.getLineCount
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
 import javax.swing.JFileChooser
@@ -73,7 +74,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
             val scope = GlobalSearchScope.allScope(project)
 
             fun KtFile.isUsableForBenchmark(): Boolean {
-                val moduleInfo = this.getNullableModuleInfo() ?: return false
+                val moduleInfo = this.moduleInfoOrNull ?: return false
                 if (this.isCompiled || !this.isWritable || this.isScript()) return false
                 return moduleInfo.moduleOrigin == ModuleOrigin.MODULE
             }
@@ -96,6 +97,8 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
             return textField
         }
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = isApplicationInternalMode()

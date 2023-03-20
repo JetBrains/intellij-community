@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
+
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.util.HighlightingTest
@@ -213,5 +215,18 @@ trait T {}
 
 new T(){}
 '''
+  }
+
+  void testSafeChainDot() {
+    highlightingTest('''
+a<error>??.</error>b
+''')
+  }
+
+  void testPutAtOperator() {
+    highlightingTest('''
+def summary = ['Imported rules': 0,
+               'Ignored rules' : 0]
+summary['Imported rules'] += 1''', GroovyAssignabilityCheckInspection)
   }
 }

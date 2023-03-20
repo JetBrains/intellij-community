@@ -16,10 +16,11 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -36,11 +37,13 @@ import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
-import java.util.Objects;
 
-public class ForLoopReplaceableByWhileInspection extends BaseInspection {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.openapi.util.Predicates.nonNull;
+
+public class ForLoopReplaceableByWhileInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField
@@ -62,11 +65,10 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message(
-      "for.loop.replaceable.by.while.ignore.option"), "m_ignoreLoopsWithoutConditions");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreLoopsWithoutConditions", InspectionGadgetsBundle.message(
+        "for.loop.replaceable.by.while.ignore.option")));
   }
 
   @Override
@@ -83,7 +85,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiForStatement forStatement = ObjectUtils.tryCast(element.getParent(), PsiForStatement.class);
       if (forStatement == null) return;
@@ -117,8 +119,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       final PsiStatement update = forStatement.getUpdate();
       if (update != null) {
         final PsiStatement[] updateStatements;
-        if (update instanceof PsiExpressionListStatement) {
-          final PsiExpressionListStatement expressionListStatement = (PsiExpressionListStatement)update;
+        if (update instanceof PsiExpressionListStatement expressionListStatement) {
           final PsiExpressionList expressionList = expressionListStatement.getExpressionList();
           final PsiExpression[] expressions = expressionList.getExpressions();
           updateStatements = new PsiStatement[expressions.length];
@@ -162,7 +163,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       return StreamEx.of(initialization.getDeclaredElements())
         .select(PsiNamedElement.class)
         .map(namedElement -> namedElement.getName())
-        .filter(Objects::nonNull)
+        .filter(nonNull())
         .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, newStatement, true)));
     }
   }

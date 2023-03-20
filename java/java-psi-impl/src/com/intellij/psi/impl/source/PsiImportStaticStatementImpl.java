@@ -28,19 +28,19 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
   public static final ArrayFactory<PsiImportStaticStatementImpl> ARRAY_FACTORY =
     count -> count == 0 ? EMPTY_ARRAY : new PsiImportStaticStatementImpl[count];
 
-  public PsiImportStaticStatementImpl(final PsiImportStatementStub stub) {
+  public PsiImportStaticStatementImpl(PsiImportStatementStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_STATIC_STATEMENT);
   }
 
-  public PsiImportStaticStatementImpl(final ASTNode node) {
+  public PsiImportStaticStatementImpl(ASTNode node) {
     super(node);
   }
 
   @Override
   public PsiClass resolveTargetClass() {
-    final PsiJavaCodeReferenceElement classReference = getClassReference();
+    PsiJavaCodeReferenceElement classReference = getClassReference();
     if (classReference == null) return null;
-    final PsiElement result = classReference.resolve();
+    PsiElement result = classReference.resolve();
     if (result instanceof PsiClass) {
       return (PsiClass) result;
     }
@@ -52,7 +52,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
   @Override
   public String getReferenceName() {
     if (isOnDemand()) return null;
-    final PsiImportStaticReferenceElement memberReference = getMemberReference();
+    PsiImportStaticReferenceElement memberReference = getMemberReference();
     if (memberReference != null) {
       return memberReference.getReferenceName();
     }
@@ -77,7 +77,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
       return getImportReference();
     }
     else {
-      final PsiImportStaticReferenceElement memberReference = getMemberReference();
+      PsiImportStaticReferenceElement memberReference = getMemberReference();
       if (memberReference != null) {
         return memberReference.getClassReference();
       }

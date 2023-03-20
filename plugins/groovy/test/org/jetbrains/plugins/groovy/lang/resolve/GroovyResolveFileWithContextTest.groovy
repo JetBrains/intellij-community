@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-/**
- * @author Sergey Evdokimov
- */
 class GroovyResolveFileWithContextTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testResolve() {

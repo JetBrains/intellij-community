@@ -161,13 +161,7 @@ public class LegacyChainedMethodCallsBlockBuilder {
     return nodes.size() >= 3 && nodes.get(2).getElementType() == JavaElementType.EXPRESSION_LIST;
   }
 
-  private static class ChainedCallChunk {
-    @NotNull final List<ASTNode> nodes;
-
-    ChainedCallChunk(@NotNull List<ASTNode> nodes) {
-      this.nodes = nodes;
-    }
-
+  private record ChainedCallChunk(@NotNull List<ASTNode> nodes) {
     boolean isEmpty() {
       return nodes.isEmpty();
     }

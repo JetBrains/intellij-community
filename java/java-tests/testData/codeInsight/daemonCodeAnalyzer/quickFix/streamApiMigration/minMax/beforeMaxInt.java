@@ -1,4 +1,4 @@
-// "Replace with max()" "true"
+// "Collapse loop with stream 'max()'" "true-preview"
 
 import java.util.Collection;
 

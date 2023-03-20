@@ -12,7 +12,7 @@ except:
     from urllib.parse import quote  # @UnresolvedImport
 
 from _pydev_imps._pydev_saved_modules import threading
-threadingCurrentThread = threading.currentThread
+threadingCurrentThread = threading.current_thread
 
 
 DONT_TRACE_THREADING = ['threading.py', 'pydevd.py']

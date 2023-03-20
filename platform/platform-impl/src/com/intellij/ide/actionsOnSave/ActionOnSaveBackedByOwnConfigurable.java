@@ -86,8 +86,8 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
   }
 
   /**
-   * Normally, {@link ActionOnSaveBackedByOwnConfigurable} implementations don't need to do anything on <code>apply()</code> method because
-   * all changes are applied when Platform calls <code>myConfigurableWithInitializedUiComponent.apply()</code>.
+   * Normally, {@link ActionOnSaveBackedByOwnConfigurable} implementations don't need to do anything on {@code apply()} method because
+   * all changes are applied when Platform calls {@code myConfigurableWithInitializedUiComponent.apply()}.
    */
   @Override
   protected void apply() { }
@@ -112,16 +112,16 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
   }
 
   /**
-   * This method calls either <code>ifConfigurableNotYetInitialized</code> or <code>ifConfigurableAlreadyInitialized</code>
+   * This method calls either {@code ifConfigurableNotYetInitialized} or {@code ifConfigurableAlreadyInitialized}
    * depending on whether the UI components on the corresponding page in Settings have been already initialized.
    *
    * @param ifConfigurableNotYetInitialized  implementation should return the value according to its stored state. Typical implementation is
-   *                                         <code>FooConfig.getInstance(myProject).getSomeValue()</code>
+   *                                         {@code FooConfig.getInstance(myProject).getSomeValue()}
    * @param ifConfigurableAlreadyInitialized implementation should return the value according to UI components state on the corresponding
-   *                                         page in Settings. Typical implementation is like <code>configurable.myFeatureCheckBox.isSelected()</code>.
+   *                                         page in Settings. Typical implementation is like {@code configurable.myFeatureCheckBox.isSelected()}.
    */
   protected final <T> T getValueFromSavedStateOrFromUiState(@NotNull Supplier<? extends T> ifConfigurableNotYetInitialized,
-                                                            @NotNull Function<Conf, ? extends T> ifConfigurableAlreadyInitialized) {
+                                                            @NotNull Function<? super Conf, ? extends T> ifConfigurableAlreadyInitialized) {
     if (myConfigurableWithInitializedUiComponent == null) {
       return ifConfigurableNotYetInitialized.get();
     }
@@ -132,11 +132,11 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
 
   /**
    * Ensures that the corresponding page in Settings is initialized (it means that {@link UnnamedConfigurable#createComponent()} and
-   * {@link UnnamedConfigurable#reset()} have been called) and passes the corresponding <code>Configurable</code> to the <code>uiUpdater</code>.
+   * {@link UnnamedConfigurable#reset()} have been called) and passes the corresponding {@code Configurable} to the {@code uiUpdater}.
    *
-   * @param uiUpdater typical implementation is like <code>configurable.myFeatureCheckBox.setSelected(outerVariable)</code>.
+   * @param uiUpdater typical implementation is like {@code configurable.myFeatureCheckBox.setSelected(outerVariable)}.
    */
-  protected final void updateUiOnOwnPage(@NotNull Consumer<Conf> uiUpdater) {
+  protected final void updateUiOnOwnPage(@NotNull Consumer<? super Conf> uiUpdater) {
     ensureUiComponentsOnOwnPageInitialized();
 
     if (myConfigurableWithInitializedUiComponent != null) {
@@ -192,7 +192,7 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
   }
 
   /**
-   * If {@link #isActionOnSaveEnabled()} is false then the implementation should return either <code>null</code> or {@link ActionOnSaveComment#info(String)}.
+   * If {@link #isActionOnSaveEnabled()} is false then the implementation should return either {@code null} or {@link ActionOnSaveComment#info(String)}.
    * The recommended style is to use {@link ActionOnSaveComment#warning(String)} only for enabled 'actions on save' that are not configured properly.
    *
    * @see ActionOnSaveInfo#getComment()
@@ -202,7 +202,7 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
   }
 
   /**
-   * If {@link #isActionOnSaveEnabled()} is false then the implementation should return either <code>null</code> or {@link ActionOnSaveComment#info(String)}.
+   * If {@link #isActionOnSaveEnabled()} is false then the implementation should return either {@code null} or {@link ActionOnSaveComment#info(String)}.
    * The recommended style is to use {@link ActionOnSaveComment#warning(String)} only for enabled 'actions on save' that are not configured properly.
    *
    * @see ActionOnSaveInfo#getComment()

@@ -19,9 +19,12 @@ import org.xml.sax.helpers.XMLReaderFactory;
 import java.io.CharArrayWriter;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class UnsupportedFeaturesUtil {
+public final class UnsupportedFeaturesUtil {
   public static final Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
   public static final Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
   public static final Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();
@@ -39,8 +42,7 @@ public class UnsupportedFeaturesUtil {
 
   private static void fillTestCaseMethods() throws IOException {
     final Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/class_method_versions.xml"));
-    try {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/class_method_versions.xml"))) {
       final XMLReader xr = XMLReaderFactory.createXMLReader();
       final ClassMethodsParser parser = new ClassMethodsParser();
       xr.setContentHandler(parser);
@@ -49,15 +51,11 @@ public class UnsupportedFeaturesUtil {
     catch (SAXException e) {
       log.error("Improperly formed \"class_method_versions.xml\". " + e.getMessage());
     }
-    finally {
-      reader.close();
-    }
   }
 
   private static void fillMaps() throws IOException {
     Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/versions.xml"));
-    try {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/versions.xml"))) {
       XMLReader xr = XMLReaderFactory.createXMLReader();
       VersionsParser parser = new VersionsParser();
       xr.setContentHandler(parser);
@@ -65,9 +63,6 @@ public class UnsupportedFeaturesUtil {
     }
     catch (SAXException e) {
       log.error("Improperly formed \"versions.xml\". " + e.getMessage());
-    }
-    finally {
-      reader.close();
     }
   }
 

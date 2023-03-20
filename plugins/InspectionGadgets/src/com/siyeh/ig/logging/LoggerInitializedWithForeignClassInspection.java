@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInsight.options.JavaIdentifierValidator;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -23,16 +23,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 
 public class LoggerInitializedWithForeignClassInspection extends BaseInspection {
@@ -76,17 +75,17 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
-                                 InspectionGadgetsBundle.message("logger.factory.class.name"),
-                                 InspectionGadgetsBundle.message("logger.factory.method.name")));
-    final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
-    final var panel = new InspectionOptionsPanel(this);
-    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(table, title));
-    panel.addCheckbox(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option"), "ignoreSuperClass");
-    panel.addCheckboxEx(InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option"), "ignoreNonPublicClasses");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      table("",
+            column("loggerFactoryClassNames", InspectionGadgetsBundle.message("logger.factory.class.name"),
+                       new JavaClassValidator()),
+            column("loggerFactoryMethodNames", InspectionGadgetsBundle.message("logger.factory.method.name"),
+                       new JavaIdentifierValidator())),
+      checkbox("ignoreSuperClass", InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option")),
+      checkbox("ignoreNonPublicClasses",
+               InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.non.public.classes.option"))
+    );
   }
 
   @Override
@@ -163,12 +162,11 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiClassObjectAccessExpression)) {
+      if (!(element instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)element;
       PsiReplacementUtil.replaceExpression(classObjectAccessExpression, newClassName + ".class", new CommentTracker());
     }
   }
@@ -176,11 +174,10 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   private class LoggerInitializedWithForeignClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+    public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
       super.visitClassObjectAccessExpression(expression);
       PsiElement parent = expression.getParent();
-      if (parent instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+      if (parent instanceof PsiReferenceExpression referenceExpression) {
         if (!expression.equals(referenceExpression.getQualifierExpression())) {
           return;
         }
@@ -189,10 +186,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
           return;
         }
         final PsiElement grandParent = referenceExpression.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) {
+        if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
           return;
         }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         final PsiExpressionList list = methodCallExpression.getArgumentList();
         if (!list.isEmpty()) {
           return;

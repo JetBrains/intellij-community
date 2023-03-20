@@ -6,9 +6,6 @@ import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class SingleRootSwitcher extends AutoSvnUpdater {
 
   @NotNull private final Url myUrl;

@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.openapi.util.SystemInfo
@@ -8,31 +24,29 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
-import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
-    onUpdateAllLinkClicked: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
+    onUpdateAllLinkClicked: (PackageManagementOperationExecutor.() -> Unit) -> Unit
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
-        border = scaledEmptyBorder(right = 20)
+        border = emptyBorder(right = 10)
         font = RelativeFont.BOLD.derive(font)
     }
 
     private val countLabel = JLabel().apply {
-        foreground = PackageSearchUI.GRAY_COLOR
-        border = scaledEmptyBorder(right = 8)
+        foreground = PackageSearchUI.Colors.infoLabelForeground
+        border = emptyBorder(right = 8)
     }
 
     private val progressAnimation = AsyncProcessIcon("pkgs-header-progress").apply {
@@ -44,19 +58,19 @@ internal class HeaderPanel(
         PackageSearchBundle.message("packagesearch.ui.toolwindow.actions.upgradeAll.text")
     ).apply {
         isVisible = false
-        border = scaledEmptyBorder(top = 4)
+        border = emptyBorder(top = 4)
         insets.top = 3.scaled()
     }
 
-    private var updateAllOperations: Deferred<List<PackageSearchOperation<*>>>? = null
+    private var updateAllOperations: PackageManagementOperationExecutor.() -> Unit = {  }
 
     init {
-        PackageSearchUI.setHeight(this, PackageSearchUI.SmallHeaderHeight)
-        border = emptyBorder(top = 5.scaled(), left = 5.scaled(), right = 1.scaled() + scrollbarWidth())
-        background = PackageSearchUI.SectionHeaderBackgroundColor
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())
+        border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
+        background = PackageSearchUI.Colors.sectionHeaderBackground
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.LEFT, 6.scaled(), 0)
 
                 add(titleLabel)
@@ -67,7 +81,7 @@ internal class HeaderPanel(
         )
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.SectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.RIGHT, 6.scaled(), 0)
                 add(updateAllLink)
             },
@@ -75,7 +89,7 @@ internal class HeaderPanel(
         )
 
         updateAllLink.addHyperlinkListener {
-            updateAllOperations?.let { onUpdateAllLinkClicked(it) }
+            onUpdateAllLinkClicked(updateAllOperations)
             PackageSearchEventsLogger.logUpgradeAll()
         }
     }
@@ -96,7 +110,7 @@ internal class HeaderPanel(
         countLabel.isVisible = true
         countLabel.text = viewModel.count.toString()
 
-        updateAllOperations = viewModel.updateOperations
+        updateAllOperations = viewModel.upgradeOperations
         if (viewModel.availableUpdatesCount > 0) {
             updateAllLink.setHyperlinkText(
                 PackageSearchBundle.message(
@@ -117,7 +131,9 @@ internal class HeaderPanel(
         val includeScrollbar = scrollbarVisible && (isAlwaysOpaque || scrollbarOpaque)
 
         @ScaledPixels val rightBorder = if (includeScrollbar) scrollbarWidth() else 1.scaled()
-        border = emptyBorder(top = 5.scaled(), left = 5.scaled(), right = rightBorder)
+        border = emptyBorder(top = 5, left = 5, right = rightBorder)
         updateAndRepaint()
     }
+
+    override fun getBackground() = PackageSearchUI.Colors.sectionHeaderBackground
 }

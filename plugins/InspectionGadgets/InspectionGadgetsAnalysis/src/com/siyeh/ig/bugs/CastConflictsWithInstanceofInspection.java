@@ -65,8 +65,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
         return;
       }
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
-      if (!(operand instanceof PsiReferenceExpression)) return;
-      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
+      if (!(operand instanceof PsiReferenceExpression referenceExpression)) return;
       PsiType castType1 = castType.getType();
       PsiInstanceOfExpression conflictingInstanceof = InstanceOfUtils.getConflictingInstanceof(castType1, referenceExpression, expression);
       if (conflictingInstanceof == null) return;
@@ -84,26 +83,23 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     }
 
     @Override
-    protected final void doFix(Project project, ProblemDescriptor descriptor) {
+    protected final void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiTypeElement castTypeElement;
       final PsiReferenceExpression reference;
-      if (element instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)element;
+      if (element instanceof PsiTypeCastExpression typeCastExpression) {
         castTypeElement = typeCastExpression.getCastType();
         final PsiExpression operand = typeCastExpression.getOperand();
         if (!(operand instanceof PsiReferenceExpression)) {
           return;
         }
         reference = (PsiReferenceExpression)operand;
-      } else if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+      } else if (element instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (!(qualifier instanceof PsiClassObjectAccessExpression)) {
+        if (!(qualifier instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
           return;
         }
-        final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)qualifier;
         castTypeElement = classObjectAccessExpression.getOperand();
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();

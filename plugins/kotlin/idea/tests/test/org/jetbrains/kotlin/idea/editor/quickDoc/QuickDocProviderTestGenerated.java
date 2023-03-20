@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor.quickDoc;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -66,6 +66,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("ConstructorVarParameter.kt")
     public void testConstructorVarParameter() throws Exception {
         runTest("testData/editor/quickDoc/ConstructorVarParameter.kt");
+    }
+
+    @TestMetadata("DefinitelyNonNullType.kt")
+    public void testDefinitelyNonNullType() throws Exception {
+        runTest("testData/editor/quickDoc/DefinitelyNonNullType.kt");
     }
 
     @TestMetadata("DeprecationWithReplaceInfo.kt")
@@ -151,6 +156,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("MethodFromStdLib.kt")
     public void testMethodFromStdLib() throws Exception {
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
+    }
+
+    @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")
+    public void testOnClassDeclarationWithComplexKDoc() throws Exception {
+        runTest("testData/editor/quickDoc/OnClassDeclarationWithComplexKDoc.kt");
     }
 
     @TestMetadata("OnClassDeclarationWithNoPackage.kt")
@@ -276,6 +286,16 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("OnMethodUsageWithTypeParameter.kt")
     public void testOnMethodUsageWithTypeParameter() throws Exception {
         runTest("testData/editor/quickDoc/OnMethodUsageWithTypeParameter.kt");
+    }
+
+    @TestMetadata("OnPrimaryConstructorAnnotatedWithConstructorTag.kt")
+    public void testOnPrimaryConstructorAnnotatedWithConstructorTag() throws Exception {
+        runTest("testData/editor/quickDoc/OnPrimaryConstructorAnnotatedWithConstructorTag.kt");
+    }
+
+    @TestMetadata("OnPropertyUsageDocumentedWithPropertyTag.kt")
+    public void testOnPropertyUsageDocumentedWithPropertyTag() throws Exception {
+        runTest("testData/editor/quickDoc/OnPropertyUsageDocumentedWithPropertyTag.kt");
     }
 
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")

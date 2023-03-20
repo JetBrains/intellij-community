@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 
-/**
- * @author peter
- */
 public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhancer {
   @Override
   public final PsiType getVariableType(GrVariable variable) {
@@ -32,14 +29,13 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
     }
     else {
       PsiElement eParameterList = variable.getParent();
-      if (!(eParameterList instanceof GrParameterList)) return null;
+      if (!(eParameterList instanceof GrParameterList parameterList)) return null;
 
       PsiElement eFunctionalExpression = eParameterList.getParent();
       if (!(eFunctionalExpression instanceof GrFunctionalExpression)) return null;
 
       functionalExpression = (GrFunctionalExpression)eFunctionalExpression;
 
-      GrParameterList parameterList = (GrParameterList)eParameterList;
       paramIndex = parameterList.getParameterNumber((GrParameter)variable);
     }
 
@@ -54,8 +50,7 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
 
   @Nullable
   private static PsiType unwrapBound(@NotNull PsiType type) {
-    if (type instanceof PsiWildcardType) {
-      PsiWildcardType wildcard = (PsiWildcardType)type;
+    if (type instanceof PsiWildcardType wildcard) {
       return wildcard.isSuper() ? wildcard.getBound() : type;
     }
     else {

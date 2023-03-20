@@ -13,9 +13,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author: db
- */
 public final class TypeRepr {
   private static final byte PRIMITIVE_TYPE = 0x0;
   private static final byte CLASS_TYPE = 0x1;

@@ -156,7 +156,7 @@ public class ChangesCacheFile {
         //noinspection unchecked
         myChangesProvider.writeChangeList(myStream, list);
         updateCachedRange(list);
-        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, present == null ? false : iterator.next());
+        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, present != null && iterator.next());
         myIncomingCount++;
       }
       writeHeader();
@@ -1014,8 +1014,7 @@ public class ChangesCacheFile {
       for (LocalChangeList list : changeLists) {
         final Collection<Change> changes = list.getChanges();
         for (Change change : changes) {
-          if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile() != null &&
-              change.getBeforeRevision().getFile().getPath().equals(localPath.getPath())) {
+          if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile().getPath().equals(localPath.getPath())) {
             if (FileStatus.DELETED.equals(change.getFileStatus()) || change.isMoved() || change.isRenamed()) {
               return true;
             }
@@ -1063,12 +1062,10 @@ public class ChangesCacheFile {
       // could take a lot of time
       boolean underBefore = (isParentReplaced || isMovedRenamed) && file.isUnder(beforeFile, false);
 
-      if (underBefore && isParentReplaced) {
-        debug("For " + file + "some of parents is replaced: " + beforeFile);
-        return true;
-      }
-      else if (underBefore && isMovedRenamed) {
-        debug("For " + file + "some of parents was renamed/moved: " + beforeFile);
+      if (underBefore) {
+        debug(isParentReplaced
+              ? "For " + file + "some of parents is replaced: " + beforeFile
+              : "For " + file + "some of parents was renamed/moved: " + beforeFile);
         return true;
       }
       return false;

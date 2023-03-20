@@ -14,9 +14,11 @@ public abstract class IconDeferrer {
     return ApplicationManager.getApplication().getService(IconDeferrer.class);
   }
 
+  /**
+   * @param param Unique key that WILL BE USED to cache the icon instance.
+   *              Prefer passing unique objects over {@link String} or {@link Integer} to avoid accidental clashes with another module.
+   */
   public abstract <T> @NotNull Icon defer(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
-
-  public abstract <T> @NotNull Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
   public abstract void clearCache();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -23,7 +23,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -44,11 +43,11 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class XDebuggerEditorLinePainter extends EditorLinePainter {
+public final class XDebuggerEditorLinePainter extends EditorLinePainter {
   private static final Logger LOG = Logger.getInstance(XDebuggerEditorLinePainter.class);
   public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.inline.variables.cache");
-  // we want to limit number of line extensions to avoid very slow painting
-  // the constant is rather random (feel free to adjust it upon getting a new information)
+  // we want to limit the number of line extensions to avoid very slow painting
+  // the constant is rather random (feel free to adjust it upon getting new information)
   private static final int LINE_EXTENSIONS_MAX_COUNT = 200;
 
   @Override
@@ -172,11 +171,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
   @NotNull
   public static TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSession session) {
-    final int bpLine = getCurrentBreakPointLineInFile(session, file);
     boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
-    return bpLine == lineNumber
-           && isTopFrame
-           && ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).isFullLineHighlighter()
+    XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject());
+    return isTopFrame && debuggerManager.getExecutionPointManager().isFullLineHighlighterAt(file, lineNumber)
            ? getTopFrameSelectedAttributes() : getNormalAttributes();
   }
 
@@ -207,22 +204,10 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     return text;
   }
 
-  private static int getCurrentBreakPointLineInFile(@Nullable XDebugSession session, VirtualFile file) {
-    try {
-      if (session != null) {
-        final XSourcePosition position = session.getCurrentPosition();
-        if (position != null && position.getFile().equals(file)) {
-          return position.getLine();
-        }
-      }
-    } catch (Exception ignore){}
-    return -1;
-  }
-
   private static TextAttributes getNormalAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES);
     if (attributes == null || attributes.getForegroundColor() == null) {
-     return new TextAttributes(new JBColor(() -> EditorColorsManager.getInstance().isDarkEditor() ? new Color(0x3d8065) : Gray._135), null, null, null, Font.ITALIC);
+     return new TextAttributes(JBColor.lazy(() -> EditorColorsManager.getInstance().isDarkEditor() ? new Color(0x3d8065) : Gray._135), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
@@ -230,7 +215,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   private static TextAttributes getChangedAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES_MODIFIED);
     if (attributes == null || attributes.getForegroundColor() == null) {
-      return new TextAttributes(new JBColor(() -> EditorColorsManager.getInstance().isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021)), null, null, null, Font.ITALIC);
+      return new TextAttributes(JBColor.lazy(() -> EditorColorsManager.getInstance().isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021)), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
@@ -273,7 +258,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   static class VariableValue {
-    // TODO: this have to be specified somewhere in XValuePresentation
+    // TODO: this has to be specified somewhere in XValuePresentation
     private static final List<Couple<String>> ARRAYS_WRAPPERS = List.of(Couple.of("[", "]"), Couple.of("{", "}"));
     private static final String ARRAY_DELIMITER = ", ";
     private @NlsSafe String actual;

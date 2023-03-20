@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -10,6 +9,7 @@ import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.EditorFactory;
@@ -17,18 +17,17 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import static java.lang.String.valueOf;
 
 public class ToggleDistractionFreeModeAction extends DumbAwareAction implements LightEditCompatible {
   private static final String KEY = "editor.distraction.free.mode";
   private static final String BEFORE = "BEFORE.DISTRACTION.MODE.";
   private static final String AFTER = "AFTER.DISTRACTION.MODE.";
+  private static final String LAST_ENTER_VALUE = "DISTRACTION.MODE.ENTER.VALUE";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -45,13 +44,22 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     RegistryValue value = RegistryManager.getInstance().get(KEY);
     boolean enter = !value.asBoolean();
     value.setValue(enter);
 
     Project project = e.getProject();
-    if (project == null) return;
+    if (project == null) {
+      return;
+    }
+
+    PropertiesComponent.getInstance().setValue(LAST_ENTER_VALUE, String.valueOf(enter));
 
     applyAndSave(PropertiesComponent.getInstance(),
                  UISettings.getInstance(),
@@ -62,20 +70,17 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
                  enter ? AFTER : BEFORE,
                  !enter);
     if (enter) {
-      TogglePresentationModeAction.storeToolWindows(project);
+      TogglePresentationModeAction.storeToolWindows(project, false);
     }
 
-    UISettings.getInstance().fireUISettingsChanged();
+    UISettings uiSettings = UISettings.getInstance();
+    uiSettings.fireUISettingsChanged();
     LafManager.getInstance().updateUI();
     EditorUtil.reinitSettings();
     DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     EditorFactory.getInstance().refreshAllEditors();
     if (!enter) {
-      TogglePresentationModeAction.restoreToolWindows(project, true, false);
-    }
-    final JFrame projectJFrame = WindowManager.getInstance().getFrame(project);
-    if (projectJFrame != null) {
-      projectJFrame.transferFocus();
+      TogglePresentationModeAction.restoreToolWindows(project, false);
     }
   }
 
@@ -87,29 +92,35 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
                                    String before, String after, boolean value) {
     var ui = uiSettings.getState();
     // @formatter:off
-    p.setValue(before + "SHOW_STATUS_BAR",          valueOf(ui.getShowStatusBar()));           ui.setShowStatusBar(p.getBoolean(after + "SHOW_STATUS_BAR",  value));
+    p.setValue(before + "SHOW_STATUS_BAR",          String.valueOf(ui.getShowStatusBar()));           ui.setShowStatusBar(p.getBoolean(after + "SHOW_STATUS_BAR",  value));
 
-    p.setValue(before + "SHOW_MAIN_TOOLBAR",        valueOf(uiSettings.getShowMainToolbar()));         uiSettings.setShowMainToolbar(p.getBoolean(after + "SHOW_MAIN_TOOLBAR", value));
-    p.setValue(before + "SHOW_NAVIGATION_BAR",      valueOf(uiSettings.getShowNavigationBar()));       uiSettings.setShowNavigationBar(p.getBoolean(after + "SHOW_NAVIGATION_BAR", value));
-    p.setValue(before + "SHOW_NEW_MAIN_TOOLBAR", valueOf(toolbarSettings.isVisible())); toolbarSettings.setVisible(p.getBoolean(after + "SHOW_NEW_MAIN_TOOLBAR", value));
+    p.setValue(before + "SHOW_MAIN_TOOLBAR",        String.valueOf(uiSettings.getShowMainToolbar()));         uiSettings.setShowMainToolbar(p.getBoolean(after + "SHOW_MAIN_TOOLBAR", value));
+    p.setValue(before + "SHOW_NAVIGATION_BAR",      String.valueOf(uiSettings.getShowNavigationBar()));       uiSettings.setShowNavigationBar(p.getBoolean(after + "SHOW_NAVIGATION_BAR", value));
+    p.setValue(before + "SHOW_NEW_MAIN_TOOLBAR", String.valueOf(toolbarSettings.isVisible())); toolbarSettings.setVisible(p.getBoolean(after + "SHOW_NEW_MAIN_TOOLBAR", value));
 
-    p.setValue(before + "IS_FOLDING_OUTLINE_SHOWN", valueOf(eo.IS_FOLDING_OUTLINE_SHOWN));  eo.IS_FOLDING_OUTLINE_SHOWN = p.getBoolean(after + "IS_FOLDING_OUTLINE_SHOWN", value);
-    p.setValue(before + "IS_WHITESPACES_SHOWN",     valueOf(eo.IS_WHITESPACES_SHOWN));      eo.IS_WHITESPACES_SHOWN     = p.getBoolean(after + "IS_WHITESPACES_SHOWN", value);
-    p.setValue(before + "ARE_LINE_NUMBERS_SHOWN",   valueOf(eo.ARE_LINE_NUMBERS_SHOWN));    eo.ARE_LINE_NUMBERS_SHOWN   = p.getBoolean(after + "ARE_LINE_NUMBERS_SHOWN", value);
-    p.setValue(before + "ARE_GUTTER_ICONS_SHOWN",   valueOf(eo.ARE_GUTTER_ICONS_SHOWN));    eo.ARE_GUTTER_ICONS_SHOWN   = p.getBoolean(after + "ARE_GUTTER_ICONS_SHOWN", value);
-    p.setValue(before + "IS_RIGHT_MARGIN_SHOWN",    valueOf(eo.IS_RIGHT_MARGIN_SHOWN));     eo.IS_RIGHT_MARGIN_SHOWN    = p.getBoolean(after + "IS_RIGHT_MARGIN_SHOWN", value);
-    p.setValue(before + "IS_INDENT_GUIDES_SHOWN",   valueOf(eo.IS_INDENT_GUIDES_SHOWN));    eo.IS_INDENT_GUIDES_SHOWN   = p.getBoolean(after + "IS_INDENT_GUIDES_SHOWN", value);
-    p.setValue(before + "SHOW_BREADCRUMBS",         valueOf(eo.SHOW_BREADCRUMBS));          eo.SHOW_BREADCRUMBS         = p.getBoolean(after + "SHOW_BREADCRUMBS", value);
+    p.setValue(before + "IS_FOLDING_OUTLINE_SHOWN", String.valueOf(eo.IS_FOLDING_OUTLINE_SHOWN));  eo.IS_FOLDING_OUTLINE_SHOWN = p.getBoolean(after + "IS_FOLDING_OUTLINE_SHOWN", value);
+    p.setValue(before + "IS_WHITESPACES_SHOWN",     String.valueOf(eo.IS_WHITESPACES_SHOWN));      eo.IS_WHITESPACES_SHOWN     = p.getBoolean(after + "IS_WHITESPACES_SHOWN", value);
+    p.setValue(before + "ARE_LINE_NUMBERS_SHOWN",   String.valueOf(eo.ARE_LINE_NUMBERS_SHOWN));    eo.ARE_LINE_NUMBERS_SHOWN   = p.getBoolean(after + "ARE_LINE_NUMBERS_SHOWN", value);
+    p.setValue(before + "ARE_GUTTER_ICONS_SHOWN",   String.valueOf(eo.ARE_GUTTER_ICONS_SHOWN));    eo.ARE_GUTTER_ICONS_SHOWN   = p.getBoolean(after + "ARE_GUTTER_ICONS_SHOWN", value);
+    p.setValue(before + "IS_RIGHT_MARGIN_SHOWN",    String.valueOf(eo.IS_RIGHT_MARGIN_SHOWN));     eo.IS_RIGHT_MARGIN_SHOWN    = p.getBoolean(after + "IS_RIGHT_MARGIN_SHOWN", value);
+    p.setValue(before + "IS_INDENT_GUIDES_SHOWN",   String.valueOf(eo.IS_INDENT_GUIDES_SHOWN));    eo.IS_INDENT_GUIDES_SHOWN   = p.getBoolean(after + "IS_INDENT_GUIDES_SHOWN", value);
+    p.setValue(before + "SHOW_BREADCRUMBS",         String.valueOf(eo.SHOW_BREADCRUMBS));          eo.SHOW_BREADCRUMBS         = p.getBoolean(after + "SHOW_BREADCRUMBS", value);
 
-    p.setValue(before + "SHOW_METHOD_SEPARATORS",   valueOf(ds.SHOW_METHOD_SEPARATORS));    ds.SHOW_METHOD_SEPARATORS   = p.getBoolean(after + "SHOW_METHOD_SEPARATORS", value);
+    p.setValue(before + "SHOW_METHOD_SEPARATORS",   String.valueOf(ds.SHOW_METHOD_SEPARATORS));    ds.SHOW_METHOD_SEPARATORS   = p.getBoolean(after + "SHOW_METHOD_SEPARATORS", value);
 
-    p.setValue(before + "HIDE_TOOL_STRIPES",        valueOf(ui.getHideToolStripes()));         ui.setHideToolStripes(p.getBoolean(after + "HIDE_TOOL_STRIPES", !value));
-    p.setValue(before + "EDITOR_TAB_PLACEMENT",     valueOf(ui.getEditorTabPlacement()));      ui.setEditorTabPlacement(p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE));
+    p.setValue(before + "HIDE_TOOL_STRIPES",        String.valueOf(ui.getHideToolStripes()));         ui.setHideToolStripes(p.getBoolean(after + "HIDE_TOOL_STRIPES", !value));
+    p.setValue(before + "EDITOR_TAB_PLACEMENT",     String.valueOf(ui.getEditorTabPlacement()));      ui.setEditorTabPlacement(p.getInt(after + "EDITOR_TAB_PLACEMENT", value ? SwingConstants.TOP : UISettings.TABS_NONE));
     // @formatter:on
   }
 
+  public static boolean shouldMinimizeCustomHeader() {
+    return PropertiesComponent.getInstance().getBoolean(LAST_ENTER_VALUE, false);
+  }
+
   public static int getStandardTabPlacement() {
-    if (!isDistractionFreeModeEnabled()) return UISettings.getInstance().getEditorTabPlacement();
+    if (!isDistractionFreeModeEnabled()) {
+      return UISettings.getInstance().getEditorTabPlacement();
+    }
     return PropertiesComponent.getInstance().getInt(BEFORE + "EDITOR_TAB_PLACEMENT", SwingConstants.TOP);
   }
 

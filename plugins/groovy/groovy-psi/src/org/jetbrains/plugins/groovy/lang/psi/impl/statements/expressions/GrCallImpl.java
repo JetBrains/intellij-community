@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ven
- */
 public abstract class GrCallImpl extends GroovyPsiElementImpl implements GrCall {
   public GrCallImpl(@NotNull ASTNode node) {
     super(node);

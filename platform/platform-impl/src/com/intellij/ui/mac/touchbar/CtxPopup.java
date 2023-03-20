@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.Disposable;
@@ -20,15 +20,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class CtxPopup {
+final class CtxPopup {
   static private final boolean DISABLED = Boolean.getBoolean("touchbar.popups.disable");
 
   static @Nullable Disposable showPopupItems(@NotNull JBPopup popup, @NotNull JComponent popupComponent) {
-    if (DISABLED || !(popup instanceof ListPopupImpl)) {
+    if (DISABLED || !(popup instanceof @NotNull ListPopupImpl listPopup)) {
       return null;
     }
-
-    @NotNull ListPopupImpl listPopup = (ListPopupImpl)popup;
 
     final TBPanel tb = createScrubberBarFromPopup(listPopup);
     TouchBarsManager.registerAndShow(popupComponent, tb);

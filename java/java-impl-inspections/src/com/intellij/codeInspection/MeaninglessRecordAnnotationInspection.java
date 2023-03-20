@@ -28,11 +28,10 @@ public class MeaninglessRecordAnnotationInspection extends AbstractBaseJavaLocal
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitRecordComponent(PsiRecordComponent recordComponent) {
+      public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
         PsiClass recordClass = recordComponent.getContainingClass();
         if (recordClass == null) return;
         String name = recordComponent.getName();
-        if (name == null) return;
         for (PsiAnnotation annotation : recordComponent.getAnnotations()) {
           processAnnotation(recordClass, name, annotation);
         }

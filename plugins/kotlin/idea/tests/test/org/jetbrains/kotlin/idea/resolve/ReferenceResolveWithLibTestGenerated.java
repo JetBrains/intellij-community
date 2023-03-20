@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -23,9 +23,19 @@ public class ReferenceResolveWithLibTestGenerated extends AbstractReferenceResol
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("dataClassSyntheticMethods.kt")
+    public void testDataClassSyntheticMethods() throws Exception {
+        runTest("testData/resolve/referenceWithLib/dataClassSyntheticMethods.kt");
+    }
+
     @TestMetadata("delegatedPropertyWithTypeParameters.kt")
     public void testDelegatedPropertyWithTypeParameters() throws Exception {
         runTest("testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters.kt");
+    }
+
+    @TestMetadata("enumSyntheticMethods.kt")
+    public void testEnumSyntheticMethods() throws Exception {
+        runTest("testData/resolve/referenceWithLib/enumSyntheticMethods.kt");
     }
 
     @TestMetadata("fakeOverride.kt")

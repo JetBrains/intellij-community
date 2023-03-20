@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Sets;
@@ -32,6 +32,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -43,8 +45,13 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +61,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author vlan
- */
 public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";
   public static final String PIP = "pip";
@@ -324,7 +328,28 @@ public final class PyPackageUtil {
     });
   }
 
-  public static boolean packageManagementEnabled(@Nullable Sdk sdk) {
+  /**
+   * @param newUi                set only for new toolwindow
+   * @param calledFromInspection when so, we can't change anything, and if sdk lacks of additional data we do not add it.
+   *                             See {@link PySdkExtKt#getOrCreateAdditionalData(Sdk)}
+   */
+  public static boolean packageManagementEnabled(@Nullable Sdk sdk, boolean newUi, boolean calledFromInspection) {
+    if (sdk == null) {
+      return false;
+    }
+    // Temporary fix because old UI doesn't support non-local conda
+    var data = calledFromInspection ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class)) :  PySdkExtKt.getOrCreateAdditionalData(sdk);
+    if (!newUi
+        && data != null
+        && data.getFlavor() instanceof CondaEnvSdkFlavor
+        && PySdkExtKt.getTargetEnvConfiguration(sdk) != null) {
+      LOG.warn("Remote Conda package manager is disabled");
+      return false;
+    }
+    Boolean supported = PythonInterpreterTargetEnvironmentFactory.isPackageManagementSupported(sdk);
+    if (supported != null) {
+      return supported;
+    }
     if (!PythonSdkUtil.isRemote(sdk)) {
       return true;
     }
@@ -386,13 +411,13 @@ public final class PyPackageUtil {
    * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
    */
   public static boolean updatePackagesSynchronouslyWithGuard(@NotNull PyPackageManager manager, @NotNull AtomicBoolean isUpdating) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isUpdating.compareAndSet(false, true)) {
       return false;
     }
     try {
       if (manager instanceof PyPackageManagerImpl) {
-        LOG.info("Refreshing installed packages for SDK " + ((PyPackageManagerImpl)manager).getSdk().getHomePath());
+        LOG.info("Refreshing installed packages for SDK " + manager.getSdk().getHomePath());
       }
       manager.refreshAndGetPackages(true);
     }
@@ -493,8 +518,7 @@ public final class PyPackageUtil {
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
     final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
 
-    if (generated instanceof PyCallExpression) {
-      final PyCallExpression callExpression = (PyCallExpression)generated;
+    if (generated instanceof PyCallExpression callExpression) {
 
       return Stream
         .of(callExpression.getArguments())
@@ -511,8 +535,8 @@ public final class PyPackageUtil {
   /**
    * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.
    *
-   * @param sdk              SDK those roots need to be watched
-   * @param parentDisposable disposable for the registered event listeners
+   * @param sdk              SDK those roots need to be watched. It must be disposed not later than "parentDisposable"
+   * @param parentDisposable disposable for the registered event listeners. It must not outlive sdk
    * @param runnable         executable that's going to be executed
    */
   public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk,
@@ -557,11 +581,46 @@ public final class PyPackageUtil {
   @NotNull
   private static Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
     final Set<VirtualFile> result = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    var targetAdditionalData = PySdkExtKt.getTargetAdditionalData(sdk);
+    if (targetAdditionalData != null) {
+      // For targets that support VFS we are interested not only in local dirs, but also for VFS on target
+      // When user changes something on WSL FS for example, we still need to trigger path updates
+      for (var remoteSourceToVfs : getRemoteSourceToVfsMapping(targetAdditionalData).entrySet()) {
+        if (result.contains(remoteSourceToVfs.getKey())) {
+          result.add(remoteSourceToVfs.getValue());
+        }
+      }
+    }
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
     result.removeIf(vf -> vf.equals(skeletonsRoot) ||
                           vf.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory()) ||
                           PyTypeShed.INSTANCE.isInside(vf));
+    return result;
+  }
+
+  /**
+   * If target provides access to its FS using VFS, rerun all mappings in format [path-to-"remote_sources" -> vfs-on-target]
+   * i.e: "c:\remote_sources -> \\wsl$\..."
+   */
+  @NotNull
+  private static Map<@NotNull VirtualFile, @NotNull VirtualFile> getRemoteSourceToVfsMapping(@NotNull PyTargetAwareAdditionalData additionalData) {
+    var configuration = additionalData.getTargetEnvironmentConfiguration();
+    if (configuration == null) return Collections.emptyMap();
+    var vfsMapper = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(configuration);
+    if (vfsMapper == null) return Collections.emptyMap();
+    var vfs = LocalFileSystem.getInstance();
+    var result = new HashMap<@NotNull VirtualFile, @NotNull VirtualFile>();
+    for (var remoteSourceAndVfs : ContainerUtil.map(additionalData.getPathMappings().getPathMappings(),
+                                                    m -> Pair.create(
+                                                      vfs.findFileByPath(m.getLocalRoot()),
+                                                      vfsMapper.getVfsFromTargetPath(m.getRemoteRoot())))) {
+      var remoteSourceDir = remoteSourceAndVfs.first;
+      var vfsDir = remoteSourceAndVfs.second;
+      if (remoteSourceDir != null && vfsDir != null) {
+        result.put(remoteSourceDir, vfsDir);
+      }
+    }
     return result;
   }
 }

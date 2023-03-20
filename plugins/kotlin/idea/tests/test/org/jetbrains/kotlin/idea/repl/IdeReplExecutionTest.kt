@@ -1,17 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.repl
 
 import com.intellij.execution.console.LanguageConsoleImpl
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.console.KotlinConsoleKeeper
 import org.jetbrains.kotlin.console.KotlinConsoleRunner
 import org.jetbrains.kotlin.idea.run.createLibraryWithLongPaths
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.junit.Test
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -20,13 +20,13 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunWith(JUnit38ClassRunner::class)
-class IdeReplExecutionTest : PlatformTestCase() {
+class IdeReplExecutionTest : LightPlatformTestCase() {
     private lateinit var consoleRunner: KotlinConsoleRunner
     private var commandsSent = 0
 
     override fun setUp() {
         super.setUp()
-        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)!!
+        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)
     }
 
     override fun tearDown() {
@@ -43,8 +43,8 @@ class IdeReplExecutionTest : PlatformTestCase() {
         commandsSent++
     }
 
-    private fun checkOutput(expectedOutput: String) {
-        val output = getReplOutput(textOnTimeOut = {
+    private fun checkOutput(expectedOutput: String, maxIterations: Int = 50, sleepTime: Long = 500) {
+        val output = getReplOutput(maxIterations, sleepTime, textOnTimeOut = {
             "Only ${consoleRunner.commandHistory.processedEntriesCount} commands were processed"
         }) { consoleRunner.commandHistory.processedEntriesCount >= commandsSent }
         assertTrue(output.trim().endsWith(expectedOutput), "'$expectedOutput' should be printed but document text is:\n$output")
@@ -101,7 +101,7 @@ class IdeReplExecutionTest : PlatformTestCase() {
         ModuleRootModificationUtil.addDependency(module, createLibraryWithLongPaths(project))
 
         consoleRunner.dispose()
-        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)!!
+        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)
 
         testRunPossibility()
     }
@@ -113,7 +113,8 @@ class IdeReplExecutionTest : PlatformTestCase() {
     fun testPrintlnText() = "Hello, console world!".let { testSimpleCommand("println(\"$it\")", it) }
 
     @Test
-    fun testDivisionByZeroException() = testSimpleCommand("1 / 0", "java.lang.ArithmeticException: / by zero")
+    fun testDivisionByZeroException() =
+        testSimpleCommand("1 / 0", "java.lang.ArithmeticException: / by zero\n\tat Line_0.<init>(Line_0.kts:1)")
 
     @Test
     fun testMultilineSupport() {
@@ -172,6 +173,12 @@ class IdeReplExecutionTest : PlatformTestCase() {
         sendCommand(veryLongTextWithErrors)
         sendCommand(veryLongTextWithErrors)
         sendCommand("println(\"OK\")")
-        checkOutput("OK")
+        /**
+         * There is a lot of errors reported ~ 30*3*3, every error on the separate line,
+         * for some reason `refreshAndGetHistoryEditorText()` gets only one error at the time, so we need a lot of Iterations
+         * with relatively small time between iterations.
+         */
+
+        checkOutput("OK", sleepTime = 10, maxIterations = 1000)
     }
 }

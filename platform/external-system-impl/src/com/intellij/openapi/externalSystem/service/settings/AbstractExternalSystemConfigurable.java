@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * Base class that simplifies external system settings management.
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,
@@ -55,8 +54,8 @@ public abstract class AbstractExternalSystemConfigurable<
   @Nullable private ExternalSystemSettingsControl<ProjectSettings> myActiveProjectSettingsControl;
 
   private PaintAwarePanel  myComponent;
-  private JBList           myProjectsList;
-  private DefaultListModel myProjectsModel;
+  private JBList<String>           myProjectsList;
+  private DefaultListModel<String> myProjectsModel;
 
   protected AbstractExternalSystemConfigurable(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     myProject = project;
@@ -82,11 +81,7 @@ public abstract class AbstractExternalSystemConfigurable<
       SystemSettings settings = getSettings();
       prepareSystemSettings(settings);
       prepareProjectSettings(settings);
-
-      JComponent component = ScrollPaneFactory.createScrollPane(myComponent, true);
-      component.setSize(myComponent.getPreferredSize());
-      myComponent.setPreferredSize(myComponent.getMinimumSize());
-      return component;
+      return myComponent;
     }
     return myComponent;
   }
@@ -100,7 +95,6 @@ public abstract class AbstractExternalSystemConfigurable<
     return manager.getSettingsProvider().fun(myProject);
   }
 
-  @SuppressWarnings("unchecked")
   private void prepareProjectSettings(@NotNull SystemSettings s) {
     List<ProjectSettings> settings = new ArrayList<>(s.getLinkedProjectsSettings());
     if (settings.isEmpty()) {
@@ -114,8 +108,8 @@ public abstract class AbstractExternalSystemConfigurable<
 
     OnePixelSplitter splitter = new OnePixelSplitter(false, .16f);
 
-    myProjectsModel = new DefaultListModel();
-    myProjectsList = new JBList(myProjectsModel);
+    myProjectsModel = new DefaultListModel<>();
+    myProjectsList = new JBList<>(myProjectsModel);
     myProjectsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JBScrollPane scrollPane = new JBScrollPane(myProjectsList);

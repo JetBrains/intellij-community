@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
@@ -48,17 +48,31 @@ import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspectionTool {
-  // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
+  /**
+   * @deprecated field remains to minimize changes to users inspection profiles.
+   */
   @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
+  /**
+   * @deprecated field remains to minimize changes to users inspection profiles.
+   */
   @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   @SuppressWarnings("WeakerAccess") public boolean IGNORE_EXTERNAL_SUPER_NOTNULL;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED;
+  /**
+   * @deprecated field remains to minimize changes to users inspection profiles.
+   */
   @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
-  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
-  @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
+  /**
+   * @deprecated field remains for test
+   */
+  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+  /**
+   * @deprecated field remains to minimize changes to users inspection profiles.
+   */
+  @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
 
   private static final Logger LOG = Logger.getInstance(NullableStuffInspectionBase.class);
@@ -91,12 +105,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       private final List<String> notNulls = manager.getNotNulls();
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         checkNullableStuffForMethod(method, holder);
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         checkMethodReference(expression, holder);
 
         JavaResolveResult result = expression.advancedResolve(false);
@@ -109,7 +123,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         final PsiType type = field.getType();
         final Annotated annotated = check(field, holder, type);
         if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
@@ -129,12 +143,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
-      public void visitParameter(PsiParameter parameter) {
+      public void visitParameter(@NotNull PsiParameter parameter) {
         check(parameter, holder, parameter.getType());
       }
 
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         String qualifiedName = annotation.getQualifiedName();
         Optional<Nullability> nullabilityOptional = manager.getAnnotationNullability(qualifiedName);
         if (nullabilityOptional.isEmpty()) return;
@@ -144,7 +158,14 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiModifierListOwner listOwner = owner instanceof PsiModifierList
                                          ? tryCast(((PsiModifierList)owner).getParent(), PsiModifierListOwner.class) : null;
         if (type instanceof PsiPrimitiveType) {
-          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation");
+          PsiType targetType = listOwner instanceof PsiMethod
+                               ? ((PsiMethod)listOwner).getReturnType()
+                               : listOwner instanceof PsiVariable ? ((PsiVariable)listOwner).getType() : null;
+          LocalQuickFix additionalFix = null;
+          if (targetType instanceof PsiArrayType && targetType.getAnnotations().length == 0) {
+            additionalFix = new MoveAnnotationToArrayFix();
+          }
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation", LocalQuickFix.notNullElements(additionalFix));
         }
         if (type instanceof PsiClassType) {
           PsiElement context = ((PsiClassType)type).getPsiContext();
@@ -232,7 +253,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
 
         checkNullableNotNullInstantiationConflict(reference);
@@ -285,12 +306,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         checkCollectionNullityOnAssignment(expression.getOperationSign(), expression.getLExpression().getType(), expression.getRExpression());
       }
 
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         PsiIdentifier identifier = variable.getNameIdentifier();
         if (identifier != null) {
           checkCollectionNullityOnAssignment(identifier, variable.getType(), variable.getInitializer());
@@ -298,7 +319,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         PsiExpression returnValue = statement.getReturnValue();
         if (returnValue == null) return;
 
@@ -306,7 +327,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
         PsiElement body = lambda.getBody();
         if (body instanceof PsiExpression) {
@@ -315,7 +336,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
-      public void visitCallExpression(PsiCallExpression callExpression) {
+      public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
         PsiExpressionList argList = callExpression.getArgumentList();
         JavaResolveResult result = callExpression.resolveMethodGenerics();
         PsiMethod method = (PsiMethod)result.getElement();
@@ -351,15 +372,20 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     };
   }
 
-  protected void reportProblem(@NotNull ProblemsHolder holder, PsiElement anchor, String messageKey, Object... args) {
-    reportProblem(holder, anchor, null, messageKey, args);
+  private void reportProblem(@NotNull ProblemsHolder holder, PsiElement anchor, String messageKey, Object... args) {
+    reportProblem(holder, anchor, LocalQuickFix.EMPTY_ARRAY, messageKey, args);
   }
 
-  protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @Nullable LocalQuickFix fix,
+  private void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @Nullable LocalQuickFix fix,
+                             @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey, Object... args) {
+    reportProblem(holder, anchor, fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {fix}, messageKey, args);
+  }
+
+  protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
                                @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey, Object... args) {
     holder.registerProblem(anchor,
                            JavaAnalysisBundle.message(messageKey, args),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   private static boolean isNullableNotNullCollectionConflict(@Nullable PsiType expectedType,
@@ -454,10 +480,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (isNullableOverridingNotNull(check(targetMethod, holder, expression.getType()), superMethod)) {
       reportProblem(holder, refName, "inspection.nullable.problems.Nullable.method.overrides.NotNull",
                     getPresentableAnnoName(targetMethod), getPresentableAnnoName(superMethod));
-    }
-    else if (isNonAnnotatedOverridingNotNull(targetMethod, superMethod)) {
-      reportProblem(holder, refName, createFixForNonAnnotatedOverridesNotNull(targetMethod, superMethod),
-                    "not.annotated.method.is.used.as.an.override.for.a.method.annotated.with.0", getPresentableAnnoName(superMethod));
     }
   }
 
@@ -654,8 +676,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (annotation != null && !annotation.isPhysical() && type instanceof PsiPrimitiveType) {
       reportIncorrectLocation(holder, annotation, owner, "inspection.nullable.problems.primitive.type.annotation");
     }
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       Nullability expectedNullability = DfaPsiUtil.inferParameterNullability(parameter);
       if (annotated.notNull != null && expectedNullability == Nullability.NULLABLE) {
         reportParameterNullabilityMismatch(parameter, annotated.notNull, holder, "parameter.can.be.null");
@@ -671,6 +692,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                   @NotNull PsiAnnotation annotation,
                                                   @NotNull ProblemsHolder holder,
                                                   @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey) {
+    if (annotation.isPhysical() && !PsiTreeUtil.isAncestor(owner, annotation, true)) return;
     PsiElement anchor = annotation.isPhysical() ? annotation : owner.getNameIdentifier();
     if (anchor != null && !anchor.getTextRange().isEmpty()) {
       reportProblem(holder, anchor, new RemoveAnnotationQuickFix(annotation, owner), messageKey);
@@ -678,8 +700,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private void reportIncorrectLocation(ProblemsHolder holder, PsiAnnotation annotation,
-                                       @Nullable PsiModifierListOwner listOwner,
-                                       @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey) {
+                                              @Nullable PsiModifierListOwner listOwner,
+                                              @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey,
+                                              @NotNull LocalQuickFix @NotNull ... additionalFixes) {
     RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner) {
       @Override
       protected boolean shouldRemoveInheritors() {
@@ -687,7 +710,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
     };
     reportProblem(holder, !annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
-                  fix, messageKey);
+                  ArrayUtil.append(additionalFixes, fix), messageKey);
   }
 
   @Override
@@ -901,7 +924,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !holder.isOnTheFly()) return;
 
     PsiElement elementToHighlight;
-    if (DfaPsiUtil.getTypeNullability(getMemberType(parameter)) == Nullability.NOT_NULL) {
+    if (DfaPsiUtil.getTypeNullability(parameter.getType()) == Nullability.NOT_NULL) {
       elementToHighlight = parameter.getNameIdentifier();
     }
     else {
@@ -1023,10 +1046,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
            (checkBases || info.getInheritedFrom() == null);
   }
 
-  private static PsiType getMemberType(@NotNull PsiModifierListOwner owner) {
-    return owner instanceof PsiMethod ? ((PsiMethod)owner).getReturnType() : owner instanceof PsiVariable ? ((PsiVariable)owner).getType() : null;
-  }
-
   private static LocalQuickFix createChangeDefaultNotNullFix(NullableNotNullManager nullableManager, PsiModifierListOwner modifierListOwner) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, nullableManager.getNotNulls());
     if (annotation != null) {
@@ -1041,11 +1060,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
     }
     return null;
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    throw new RuntimeException("No UI in headless mode");
   }
 
   private static class MyAnnotateMethodFix extends AnnotateMethodFix {

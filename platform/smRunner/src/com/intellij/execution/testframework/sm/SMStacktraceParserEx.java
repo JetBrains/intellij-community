@@ -18,6 +18,6 @@ package com.intellij.execution.testframework.sm;
 /**
  * @deprecated use {@link SMStacktraceParser} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface SMStacktraceParserEx extends SMStacktraceParser {
 }

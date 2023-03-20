@@ -2,6 +2,7 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -9,19 +10,22 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PythonRunParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "PyConsoleOptionsProvider",
@@ -69,6 +73,25 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myUseExistingConsole = enabled;
   }
 
+  public void setCommandQueueEnabled(boolean selected) {
+    myState.myCommandQueueEnabled = selected;
+    if (!selected) {
+      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).disableCommandQueue();
+    }
+  }
+
+  public boolean isCommandQueueEnabled() {
+    return myState.myCommandQueueEnabled;
+  }
+
+  public void setAutoCompletionEnabled(boolean selected) {
+    myState.myAutoCompletionEnabled = selected;
+  }
+
+  public boolean isAutoCompletionEnabled() {
+    return myState.myAutoCompletionEnabled;
+  }
+
   public static PyConsoleOptions getInstance(Project project) {
     return project.getService(PyConsoleOptions.class);
   }
@@ -85,6 +108,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
     myState.myUseExistingConsole = state.myUseExistingConsole;
+    myState.myCommandQueueEnabled = state.myCommandQueueEnabled;
+    myState.myAutoCompletionEnabled = state.myAutoCompletionEnabled;
   }
 
   public static class State {
@@ -94,12 +119,15 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;
+    public boolean myCommandQueueEnabled = PlatformUtils.isDataSpell();
+    public boolean myAutoCompletionEnabled = true;
   }
 
   @Tag("console-settings")
   public static class PyConsoleSettings implements PythonRunParams {
     public String myCustomStartScript = PydevConsoleRunnerImpl.CONSOLE_START_COMMAND;
     public String mySdkHome = null;
+    public Sdk mySdk = null;
     public String myInterpreterOptions = "";
     public boolean myUseModuleSdk;
     public String myModuleName = null;
@@ -121,6 +149,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public void apply(AbstractPythonRunConfigurationParams form) {
       mySdkHome = form.getSdkHome();
+      mySdk = form.getSdk();
       myInterpreterOptions = form.getInterpreterOptions();
       myEnvs = form.getEnvs();
       myPassParentEnvs = form.isPassParentEnvs();
@@ -151,6 +180,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       form.setPassParentEnvs(myPassParentEnvs);
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
+      form.setSdk(mySdk);
       form.setUseModuleSdk(myUseModuleSdk);
       form.setAddContentRoots(myAddContentRoots);
       form.setAddSourceRoots(myAddSourceRoots);
@@ -183,6 +213,12 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Attribute("sdk-home")
     public String getSdkHome() {
       return mySdkHome;
+    }
+
+    @Override
+    @Nullable
+    public Sdk getSdk() {
+      return mySdk;
     }
 
     @Override
@@ -240,6 +276,11 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Override
     public void setSdkHome(String sdkHome) {
       mySdkHome = sdkHome;
+    }
+
+    @Override
+    public void setSdk(@Nullable Sdk sdk) {
+      mySdk = sdk;
     }
 
     @Override

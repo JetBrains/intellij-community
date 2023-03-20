@@ -199,8 +199,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private void showSize(Size size) {
     Size minimumSize = null;
     Size maximumSize = null;
-    if (size instanceof BoundedSize) {
-      BoundedSize boundedSize = (BoundedSize)size;
+    if (size instanceof BoundedSize boundedSize) {
       minimumSize = boundedSize.getLowerBound();
       maximumSize = boundedSize.getUpperBound();
       size = boundedSize.getBasis();

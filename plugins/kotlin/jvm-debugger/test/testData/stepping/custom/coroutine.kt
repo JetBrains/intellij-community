@@ -13,12 +13,9 @@ suspend fun first() {
 
 fun main(args: Array<String>) {
     // SMART_STEP_INTO_BY_INDEX: 2
+    // STEP_OVER: 1
     //Breakpoint!
     builder {
         first()
     }
 }
-
-// STEP_OVER: 1
-
-// TODO: Breakpoint on builder {} is now triggered twice. This is because generated line number on suspend function enter.

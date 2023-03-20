@@ -2,5 +2,6 @@
   "type": "KOTLIN_FUNCTION",
   "classId": "testing/rename/C",
   "oldName": "first",
-  "newName": "second"
+  "newName": "second",
+  "enabledInK2": true
 }

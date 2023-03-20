@@ -5,7 +5,8 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import icons.GradleIcons;
@@ -16,10 +17,9 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Vladislav.Soroka
@@ -27,7 +27,7 @@ import static com.intellij.openapi.util.Pair.pair;
 public class AddGradleDslPluginAction extends CodeInsightAction {
   public static final String ID = "AddGradleDslPluginAction";
   static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
-  private final List<Pair<String, String>> myPlugins;
+  private final List<PluginDescriptor> myPlugins;
 
   public AddGradleDslPluginAction() {
     getTemplatePresentation().setDescription(GradleBundle.messagePointer("gradle.codeInsight.action.apply_plugin.description"));
@@ -36,11 +36,11 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
 
     myPlugins = new ArrayList<>();
     for (GradlePluginDescriptionsExtension extension : GradlePluginDescriptionsExtension.EP_NAME.getExtensions()) {
-      for (Map.Entry<String, String> pluginDescription : extension.getPluginDescriptions().entrySet()) {
-        myPlugins.add(pair(pluginDescription.getKey(), pluginDescription.getValue()));
+      for (Map.Entry<@NlsSafe String, @NlsContexts.DetailedDescription String> pluginDescription : extension.getPluginDescriptions().entrySet()) {
+        myPlugins.add(new PluginDescriptor(pluginDescription.getKey(), pluginDescription.getValue()));
       }
     }
-    myPlugins.sort(Pair.comparingByFirst());
+    myPlugins.sort(Comparator.comparing(p -> p.name()));
   }
 
   @NotNull
@@ -55,4 +55,7 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
     if (!GradleFileType.isGradleFile(file)) return false;
     return !GradleConstants.SETTINGS_FILE_NAME.equals(file.getName());
   }
+}
+
+record PluginDescriptor(@NotNull @NlsSafe String name, @NotNull @NlsContexts.DetailedDescription String description) {
 }

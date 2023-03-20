@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -16,7 +17,7 @@ class ConvertArrayParameterToVarargIntention : SelfTargetingIntention<KtParamete
 ) {
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         val typeReference = element.getChildOfType<KtTypeReference>() ?: return false
-        if (element.parent.parent is KtFunctionLiteral) return false
+        if (element.isLambdaParameter) return false
         if (element.isVarArg) return false
 
         val type = element.descriptor?.type ?: return false
@@ -58,7 +59,7 @@ class ConvertArrayParameterToVarargIntention : SelfTargetingIntention<KtParamete
             ?: typeReference.typeElement?.typeArgumentsAsTypes?.firstOrNull()?.text
             ?: return
 
-        typeReference.replace(KtPsiFactory(element).createType(newType))
+        typeReference.replace(KtPsiFactory(element.project).createType(newType))
         element.addModifier(KtTokens.VARARG_KEYWORD)
     }
 }

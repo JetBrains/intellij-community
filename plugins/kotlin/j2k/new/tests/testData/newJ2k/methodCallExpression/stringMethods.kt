@@ -1,13 +1,13 @@
-// ERROR: Type mismatch: inferred type is String but Charset was expected
-// ERROR: Type mismatch: inferred type is String but Charset was expected
 import java.nio.charset.Charset
 import java.util.Locale
 
 internal class A {
     @Throws(Exception::class)
-    fun constructors() {
-        String()
-        // TODO: new String("original");
+    fun constructors(s: String?) {
+        ""
+        "original"
+        java.lang.String(s) as String
+        (java.lang.String(s) as String).length
         String(charArrayOf('a', 'b', 'c'))
         String(charArrayOf('b', 'd'), 1, 1)
         String(intArrayOf(32, 65, 127), 0, 3)
@@ -16,8 +16,8 @@ internal class A {
         String(bytes)
         String(bytes, charset)
         String(bytes, 0, 2)
-        String(bytes, "utf-8")
-        String(bytes, 0, 2, "utf-8")
+        String(bytes, charset("utf-8"))
+        String(bytes, 0, 2, charset("utf-8"))
         String(bytes, 0, 2, charset)
         String(StringBuilder("content"))
         String(StringBuffer("content"))
@@ -41,12 +41,16 @@ internal class A {
         s.startsWith("st", 2)
         s.indexOf("st")
         s.indexOf("st", 5)
-        s.lastIndexOf("st")
-        s.lastIndexOf("st", 4)
         s.indexOf('t')
         s.indexOf('t', 5)
+        s.indexOf(32.toChar())
+        s.indexOf(32.toChar(), 2)
+        s.lastIndexOf("st")
+        s.lastIndexOf("st", 4)
         s.lastIndexOf('t')
         s.lastIndexOf('t', 5)
+        s.lastIndexOf(32.toChar())
+        s.lastIndexOf(32.toChar(), 2)
         s.substring(1)
         s.substring(0, 4)
         s.subSequence(0, 4)
@@ -57,7 +61,7 @@ internal class A {
         s.lowercase(Locale.FRENCH)
         s.uppercase(Locale.getDefault())
         s.uppercase(Locale.FRENCH)
-        s
+        s.toString()
         s.toCharArray()
     }
 
@@ -78,15 +82,17 @@ internal class A {
         s.regionMatches(0, "st", 1, 2)
         s.replace("\\w+".toRegex(), "---")
             .replaceFirst("([s-t])".toRegex(), "A$1")
-        /* TODO
-        s.matches("\\w+");
-        useSplit(s.split("\\s+"));
-        useSplit(s.split("\\s+", 0));
-        useSplit(s.split("\\s+", -1));
-        useSplit(s.split("\\s+", 2));
-        int limit = 5;
-        useSplit(s.split("\\s+", limit));
-        */s.trim { it <= ' ' }
+        useSplit(s.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
+        useSplit(s.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
+        useSplit(s.split("\\s+".toRegex()).toTypedArray())
+        useSplit(s.split("\\s+".toRegex(), limit = 2).toTypedArray())
+        val pattern = "\\s+"
+        useSplit(s.split(pattern.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
+        val limit = 5
+        useSplit(s.split("\\s+".toRegex(), limit.coerceAtLeast(0)).toTypedArray())
+        useSplit(s.split("\\s+".toRegex(), (limit + 5).coerceAtLeast(0)).toTypedArray())
+        s.matches("\\w+".toRegex())
+        s.trim { it <= ' ' }
         "$s another"
         s.toByteArray()
         s.toByteArray(Charset.forName("utf-8"))
@@ -115,16 +121,6 @@ internal class A {
         String(chars)
         String(chars, 1, 2)
         val order = java.lang.String.CASE_INSENSITIVE_ORDER
-    }
-
-    fun unsupportedMethods() {
-        val s = "test string"
-        /* TODO:
-        s.indexOf(32);
-        s.indexOf(32, 2);
-        s.lastIndexOf(32);
-        s.lastIndexOf(32, 2);
-        */
     }
 
     fun useSplit(result: Array<String?>?) {}

@@ -1,4 +1,4 @@
-// "Apply conversion '.toArray(new Test.User[0])'" "true"
+// "Apply conversion '.toArray(new Test.User[0])'" "true-preview"
 
 import java.util.List;
 

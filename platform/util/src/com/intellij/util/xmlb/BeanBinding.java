@@ -1,18 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.PropertyCollector;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
-import org.jdom.Comment;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,7 +40,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
     myBeanClass = beanClass;
     myTagName = getTagName(beanClass);
-    assert !Strings.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
+    assert !StringUtilRt.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
   }
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
@@ -200,10 +199,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
     deserializeInto(result, element, null);
   }
 
-  public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
+  public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<? super String> accessorNameTracker) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
-      if (Strings.isEmpty(attribute.getNamespaceURI())) {
+      if (StringUtilRt.isEmpty(attribute.getNamespaceURI())) {
         for (NestedBinding binding : bindings) {
           if (binding instanceof AttributeBinding && ((AttributeBinding)binding).name.equals(attribute.getName())) {
             if (accessorNameTracker != null) {
@@ -219,10 +218,6 @@ public class BeanBinding extends NotNullDeserializeBinding {
     LinkedHashMap<NestedBinding, List<Element>> data = null;
     nextNode:
     for (Content content : element.getContent()) {
-      if (content instanceof Comment) {
-        continue;
-      }
-
       for (NestedBinding binding : bindings) {
         if (content instanceof org.jdom.Text) {
           if (binding instanceof TextBinding) {

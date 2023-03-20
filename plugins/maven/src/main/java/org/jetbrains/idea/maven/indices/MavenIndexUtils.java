@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +23,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static org.jetbrains.idea.maven.indices.MavenIndices.LOCAL_REPOSITORY_ID;
 
-public class MavenIndexUtils {
+public final class MavenIndexUtils {
   private static final String CURRENT_VERSION = "5";
   private static final String INDEX_INFO_FILE = "index.properties";
 
@@ -38,14 +39,8 @@ public class MavenIndexUtils {
 
   public static IndexPropertyHolder readIndexProperty(File dir) throws MavenIndexException {
     Properties props = new Properties();
-    try {
-      FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE));
-      try {
-        props.load(s);
-      }
-      finally {
-        s.close();
-      }
+    try (FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE))) {
+      props.load(s);
     }
     catch (IOException e) {
       throw new MavenIndexException("Cannot read " + INDEX_INFO_FILE + " file", e);
@@ -90,14 +85,8 @@ public class MavenIndexUtils {
     if (index.getDataDirName() != null) props.setProperty(DATA_DIR_NAME_KEY, index.getDataDirName());
     if (index.getFailureMessage() != null) props.setProperty(FAILURE_MESSAGE_KEY, index.getFailureMessage());
 
-    try {
-      FileOutputStream s = new FileOutputStream(new File(index.getDir(), INDEX_INFO_FILE));
-      try {
-        props.store(s, null);
-      }
-      finally {
-        s.close();
-      }
+    try (FileOutputStream s = new FileOutputStream(new File(index.getDir(), INDEX_INFO_FILE))) {
+      props.store(s, null);
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);
@@ -118,15 +107,15 @@ public class MavenIndexUtils {
   }
 
   private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     if (project.isDisposed()) return Collections.emptyMap();
-    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(projectsManager.getRemoteRepositories());
+    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenUtil.getRemoteResolvedRepositories(project));
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
       remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
     }
 
     return groupRemoteRepositoriesByUrl(remoteRepositories);
   }
+
 
   @VisibleForTesting
   static Map<String, Set<String>> groupRemoteRepositoriesByUrl(Collection<MavenRemoteRepository> remoteRepositories) {

@@ -1,4 +1,4 @@
-// "Replace with method reference" "true"
+// "Replace with method reference" "true-preview"
 class Main {
 
   interface A {

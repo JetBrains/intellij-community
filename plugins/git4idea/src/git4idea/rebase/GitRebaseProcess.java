@@ -31,6 +31,7 @@ import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import git4idea.DialogManager;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.*;
@@ -396,7 +397,7 @@ public class GitRebaseProcess {
     String description = GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
     Notification notification = IMPORTANT_ERROR_NOTIFICATION
       .createNotification(GitBundle.message("rebase.notification.conflict.title"), description, NotificationType.WARNING)
-      .setDisplayId("git.rebase.stopped.due.to.conflicts")
+      .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_CONFLICTS)
       .addAction(createResolveNotificationAction(conflictingRepository))
       .addAction(CONTINUE_ACTION)
       .addAction(ABORT_ACTION);
@@ -420,7 +421,7 @@ public class GitRebaseProcess {
   private void showStoppedForEditingMessage() {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION
       .createNotification(GitBundle.message("rebase.notification.editing.title"), "", NotificationType.INFORMATION)
-      .setDisplayId("git.rebase.stopped.for.editing")
+      .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING)
       .addAction(CONTINUE_ACTION)
       .addAction(ABORT_ACTION);
     myNotifier.notify(notification);
@@ -441,7 +442,7 @@ public class GitRebaseProcess {
                    : GitBundle.message("rebase.notification.failed.continue.title");
     Notification notification = IMPORTANT_ERROR_NOTIFICATION
       .createNotification(title, descriptionBuilder.toString(), NotificationType.ERROR)
-      .setDisplayId("git.rebase.failed")
+      .setDisplayId(GitNotificationIdsHolder.REBASE_FAILED)
       .addAction(RETRY_ACTION);
     if (somethingWasRebased || !successful.isEmpty()) {
       notification.addAction(ABORT_ACTION);

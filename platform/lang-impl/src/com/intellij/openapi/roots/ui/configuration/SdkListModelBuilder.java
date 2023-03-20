@@ -289,8 +289,7 @@ public final class SdkListModelBuilder {
       return true;
     }
 
-    if (item instanceof SuggestedItem) {
-      SuggestedItem suggestedItem = (SuggestedItem)item;
+    if (item instanceof SuggestedItem suggestedItem) {
       String homePath = suggestedItem.homePath;
 
       ProgressManager.getInstance().run(new Task.Modal(myProject,

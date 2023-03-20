@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
+import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -13,21 +13,22 @@ import org.jetbrains.kotlin.idea.util.psi.patternMatching.matches
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullable
 
 fun KtWhenCondition.toExpression(subject: KtExpression?, subjectContext: BindingContext? = null): KtExpression {
-    val factory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
+    
     return when (this) {
         is KtWhenConditionIsPattern -> {
             val op = if (isNegated) "!is" else "is"
-            factory.createExpressionByPattern("$0 $op $1", subject ?: "_", typeReference ?: "")
+            psiFactory.createExpressionByPattern("$0 $op $1", subject ?: "_", typeReference ?: "")
         }
 
         is KtWhenConditionInRange -> {
             val op = operationReference.text
-            factory.createExpressionByPattern("$0 $op $1", subject ?: "_", rangeExpression ?: "")
+            psiFactory.createExpressionByPattern("$0 $op $1", subject ?: "_", rangeExpression ?: "")
         }
 
         is KtWhenConditionWithExpression -> {
@@ -37,7 +38,7 @@ fun KtWhenCondition.toExpression(subject: KtExpression?, subjectContext: Binding
                 when {
                     expression?.isTrueConstant() == true && !isNullableSubject -> subject
                     expression?.isFalseConstant() == true && !isNullableSubject -> subject.negate()
-                    else -> factory.createExpressionByPattern("$0 == $1", subject, expression ?: "")
+                    else -> psiFactory.createExpressionByPattern("$0 == $1", subject, expression ?: "")
                 }
             } else {
                 expression!!
@@ -115,7 +116,7 @@ fun KtWhenExpression.introduceSubject(checkConstants: Boolean = true): KtWhenExp
 
     val commentSaver = CommentSaver(this, saveLineBreaks = true)
 
-    val whenExpression = KtPsiFactory(this).buildExpression {
+    val whenExpression = KtPsiFactory(project).buildExpression {
         appendFixedText("when(").appendExpression(subject).appendFixedText("){\n")
 
         for (entry in entries) {

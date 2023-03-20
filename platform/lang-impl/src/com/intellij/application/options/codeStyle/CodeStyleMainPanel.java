@@ -240,8 +240,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   public void showTabOnCurrentPanel(String tab) {
     NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
     CodeStyleAbstractPanel settingsPanel = selectedPanel.getSelectedPanel();
-    if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
-      TabbedLanguageCodeStylePanel tabbedPanel = (TabbedLanguageCodeStylePanel)settingsPanel;
+    if (settingsPanel instanceof TabbedLanguageCodeStylePanel tabbedPanel) {
       tabbedPanel.changeTab(tab);
     }
   }
@@ -253,8 +252,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       panel.reset(myModel.getCloneSettings(scheme));
       panel.setModel(myModel);
       CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
-      if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {
-        TabbedLanguageCodeStylePanel tabbedPanel = (TabbedLanguageCodeStylePanel)settingsPanel;
+      if (settingsPanel instanceof TabbedLanguageCodeStylePanel tabbedPanel) {
         tabbedPanel.setListener(this);
         String currentTab = myProperties.getValue(getSelectedTabPropertyName(tabbedPanel));
         if (currentTab != null) {

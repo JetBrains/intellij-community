@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -14,7 +15,6 @@ import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ public class LinkLabel<T> extends JLabel {
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
    * Note that this constructor sets inappropriate icon.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel() {
     this("", AllIcons.Ide.Link);
@@ -63,7 +63,7 @@ public class LinkLabel<T> extends JLabel {
   /**
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
@@ -72,17 +72,16 @@ public class LinkLabel<T> extends JLabel {
   /**
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
   /**
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @Deprecated
   @NotNull
   public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
@@ -92,17 +91,16 @@ public class LinkLabel<T> extends JLabel {
   /**
    * Creates a {@link JLabel}-based link that does not support mnemonics.
    * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
   /**
-   * @see https://jetbrains.github.io/ui/controls/link/
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public LinkLabel(@NlsContexts.LinkLabel String text,
                    @Nullable Icon icon,
@@ -314,7 +312,7 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private static void setStatusBarText(@NlsContexts.StatusBarText String statusBarText) {
-    if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
+    if (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       StatusBar.Info.set(statusBarText, project);

@@ -15,9 +15,6 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
 public class PackageInfoTest extends IncrementalTestCase {
   public PackageInfoTest() {
     super("packageInfo");

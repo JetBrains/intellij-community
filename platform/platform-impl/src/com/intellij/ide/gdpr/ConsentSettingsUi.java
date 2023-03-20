@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -17,10 +19,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.SwingHelper;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,10 +29,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.*;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -68,7 +65,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       final JComponent comp = createConsentElement(consent, addCheckBox);
       body.add(comp, new GridBagConstraints(
         0, GridBagConstraints.RELATIVE, 1, 1, 1.0, !it.hasNext() && myPreferencesMode ? 1.0 : 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-        it.hasNext() ? JBUI.insets(0, 0, 10, 0) : JBUI.emptyInsets(), 0, 0)
+        it.hasNext() ? JBUI.insets(0, 0, 10, 0) : JBInsets.emptyInsets(), 0, 0)
       );
     }
     if (!ConsentOptions.getInstance().isEAP()) {
@@ -106,6 +103,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   private JComponent createConsentElement(Consent consent, boolean addCheckBox) {
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
+    final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
+                                                  && StatisticsUploadAssistant.isCollectionForceDisabled();
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
       if (ConsentOptions.getInstance().isEAP()) {
@@ -114,6 +113,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
+      cb.setEnabled(!dataSharingDisabledExternally);
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
@@ -127,7 +127,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       UIUtil.doNotScrollToCaret(viewer);
       viewer.addHyperlinkListener(new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           final URL url = e.getURL();
           if (url != null) {
             BrowserUtil.browse(url);
@@ -152,7 +152,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       consentMapping.add(Pair.create(null, consent));
     }
     pane.setOpaque(false);
-    return pane;
+    return !dataSharingDisabledExternally ? pane : wrapPanelWithWarning(pane);
+  }
+
+  private static JPanel wrapPanelWithWarning(JPanel panel) {
+    final String warningText = Objects.requireNonNullElse(
+      StatisticsUploadAssistant.getConsentWarning(), IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning"));
+    return UI.PanelFactory.panel(panel).withCommentIcon(AllIcons.General.Warning).withComment(warningText).createPanel();
   }
 
   @Contract(pure = true)

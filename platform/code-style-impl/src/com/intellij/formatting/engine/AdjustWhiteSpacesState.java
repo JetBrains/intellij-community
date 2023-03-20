@@ -129,11 +129,10 @@ public class AdjustWhiteSpacesState extends State {
 
   private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
                                                                                 final WhiteSpace whiteSpace) {
-    if (!(spaceProperty instanceof DependantSpacingImpl)) return ContainerUtil.emptyList();
+    if (!(spaceProperty instanceof DependantSpacingImpl spacing)) return ContainerUtil.emptyList();
 
     if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return ContainerUtil.emptyList();
 
-    DependantSpacingImpl spacing = (DependantSpacingImpl)spaceProperty;
     return ContainerUtil.filter(spacing.getDependentRegionRanges(),
                                 dependencyRange -> whiteSpace.getStartOffset() < dependencyRange.getEndOffset());
   }

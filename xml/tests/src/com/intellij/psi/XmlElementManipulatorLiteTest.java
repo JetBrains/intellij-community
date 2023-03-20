@@ -13,9 +13,6 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public class XmlElementManipulatorLiteTest extends LightPlatformTestCase {
   public XmlFile createXmlFile(@NonNls final String xml) {
     return (XmlFile)createLightFile("a.xml", XmlFileType.INSTANCE, xml);

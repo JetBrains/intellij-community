@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -18,7 +20,8 @@ public class ApplicationManager {
     return ourApplication;
   }
 
-  private static void setApplication(@NotNull Application instance) {
+  @ApiStatus.Internal
+  public static void setApplication(@Nullable Application instance) {
     ourApplication = instance;
     CachedSingletonsRegistry.cleanupCachedFields();
   }
@@ -37,8 +40,8 @@ public class ApplicationManager {
                                     @NotNull Supplier<? extends FileTypeRegistry> fileTypeRegistryGetter,
                                     @NotNull Disposable parent) {
     Application old = ourApplication;
-    //noinspection deprecation
-    Supplier<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.ourInstanceGetter;
+    setApplication(instance);
+    Supplier<? extends FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
     Disposer.register(parent, () -> {
       if (old != null) {
         // to prevent NPEs in threads still running
@@ -46,7 +49,5 @@ public class ApplicationManager {
         FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
       }
     });
-    setApplication(instance);
-    FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
   }
 }

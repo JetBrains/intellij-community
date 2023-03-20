@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -63,7 +63,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private List<SMTestProxy> myChildren;
   private SMTestProxy myParent;
 
-  private AbstractState myState = NotRunState.getInstance();
+  private volatile AbstractState myState = NotRunState.getInstance();
   private Long myDuration = null; // duration is unknown
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
@@ -423,22 +423,14 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   @Nullable
   @Override
   public String getDurationString(TestConsoleProperties consoleProperties) {
-    switch (getMagnitudeInfo()) {
-      case PASSED_INDEX:
-        return !isSubjectToHide(consoleProperties) ? getDurationString() : null;
-      case RUNNING_INDEX:
+    return switch (getMagnitudeInfo()) {
+      case PASSED_INDEX -> !isSubjectToHide(consoleProperties) ? getDurationString() : null;
+      case RUNNING_INDEX ->
         // pad duration with zeros, like "1m 02 s 003 ms" to avoid annoying flickering
-        return !isSubjectToHide(consoleProperties) ? getDurationPaddedString() : null;
-      case COMPLETE_INDEX:
-      case FAILED_INDEX:
-      case ERROR_INDEX:
-      case IGNORED_INDEX:
-      case SKIPPED_INDEX:
-      case TERMINATED_INDEX:
-        return getDurationString();
-      default:
-        return null;
-    }
+        !isSubjectToHide(consoleProperties) ? getDurationPaddedString() : null;
+      case COMPLETE_INDEX, FAILED_INDEX, ERROR_INDEX, IGNORED_INDEX, SKIPPED_INDEX, TERMINATED_INDEX -> getDurationString();
+      default -> null;
+    };
   }
 
   private boolean isSubjectToHide(TestConsoleProperties consoleProperties) {
@@ -557,11 +549,11 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
-    TestComparisionFailedState comparisionFailedState =
+    TestComparisionFailedState comparisonFailedState =
       setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath(),
                               event.shouldPrintExpectedAndActualValues());
-    comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
-    comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
+    comparisonFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
+    comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
   public TestComparisionFailedState setTestComparisonFailed(@NotNull final String localizedMessage,
@@ -579,7 +571,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     );
     DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
     if (hyperlink != null) {
-      hyperlink.setTestProxyName(getName());
+      hyperlink.setTestProxy(this);
     }
 
     updateFailedState(comparisionFailedState);
@@ -606,16 +598,14 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     myParent = parent;
   }
 
-  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter<SMTestProxy> filter) {
+  public List<? extends SMTestProxy> collectChildren(final @Nullable Filter<? super SMTestProxy> filter) {
     return filterChildren(filter, collectChildren());
   }
 
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = new ArrayList<>();
-
-    result.addAll(allChildren);
+    final List<SMTestProxy> result = new ArrayList<>(allChildren);
 
     for (SMTestProxy p : allChildren) {
       result.addAll(p.collectChildren());
@@ -749,27 +739,32 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
-  @NotNull
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     if (myPresentableName == null) {
-      if (myPreservePresentableName) {
-        myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
-      } else {
-        myPresentableName = TestsPresentationUtil.getPresentableName(this);
-      }
+      setPresentableName(getName());
     }
     return myPresentableName;
+  }
+
+  public void setPresentableName(final @Nullable String name) {
+    myPresentableName = calculatePresentableName(this, name);
+  }
+
+  private static @NotNull String calculatePresentableName(final @NotNull SMTestProxy proxy, final @Nullable String name) {
+    return proxy.isPreservePresentableName() ? TestsPresentationUtil.getPresentableNameTrimmedOnly(name)
+                                             : TestsPresentationUtil.getPresentableName(proxy, name);
   }
 
   @Override
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
-    if (myState instanceof TestComparisionFailedState) {
-      return ((TestComparisionFailedState)myState).getHyperlink();
+    AbstractState state = myState;
+    if (state instanceof TestComparisionFailedState) {
+      return ((TestComparisionFailedState)state).getHyperlink();
     }
 
-    if (myState instanceof CompoundTestFailedState) {
-      return ContainerUtil.getFirstItem(((CompoundTestFailedState)myState).getHyperlinks());
+    if (state instanceof CompoundTestFailedState) {
+      return ContainerUtil.getFirstItem(((CompoundTestFailedState)state).getHyperlinks());
     }
 
     return null;
@@ -778,8 +773,9 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   @NotNull
   @Override
   public List<DiffHyperlink> getDiffViewerProviders() {
-    if (myState instanceof CompoundTestFailedState) {
-      return ((CompoundTestFailedState)myState).getHyperlinks();
+    AbstractState state = myState;
+    if (state instanceof CompoundTestFailedState) {
+      return ((CompoundTestFailedState)state).getHyperlinks();
     }
     return super.getDiffViewerProviders();
   }
@@ -935,7 +931,6 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   /**
    * Recursively invalidates cached duration for container(parent) suites or updates their value
-   * @param duration
    */
   private void invalidateCachedDurationForContainerSuites(long duration) {
     // Manual duration does not need any automatic calculation
@@ -963,14 +958,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   public SMRootTestProxy getRoot() {
-    if (this instanceof SMRootTestProxy) {
-      return (SMRootTestProxy)this;
-    }
-    SMTestProxy parent = getParent();
-    while (parent != null && !(parent instanceof SMRootTestProxy)) {
-      parent = parent.getParent();
-    }
-    return parent != null ? (SMRootTestProxy)parent : null;
+    return (SMRootTestProxy)getTestRoot(this);
   }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
@@ -1114,6 +1102,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myTestConsoleProperties = properties;
     }
 
+    @Override
     public TestConsoleProperties getTestConsoleProperties() {
       return myTestConsoleProperties;
     }

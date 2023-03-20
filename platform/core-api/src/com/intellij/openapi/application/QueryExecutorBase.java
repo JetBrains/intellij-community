@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see Application#runReadAction(Computable) 
  * @see DumbService
  * 
- * @author peter
  */
 public abstract class QueryExecutorBase<Result, Params> implements QueryExecutor<Result, Params> {
   private final boolean myRequireReadAction;

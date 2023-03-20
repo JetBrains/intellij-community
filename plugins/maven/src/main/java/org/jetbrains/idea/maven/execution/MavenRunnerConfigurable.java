@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class MavenRunnerConfigurable extends MavenRunnerPanel implements SearchableConfigurable, Configurable.NoScroll {
 
   public static final String SETTINGS_ID = "reference.settings.project.maven.runner";
@@ -73,10 +70,5 @@ public abstract class MavenRunnerConfigurable extends MavenRunnerPanel implement
   public String getId() {
     //noinspection ConstantConditions
     return getHelpTopic();
-  }
-
-  @Override
-  public void disposeUIResources() {
-
   }
 }

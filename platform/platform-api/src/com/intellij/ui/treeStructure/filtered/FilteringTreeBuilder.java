@@ -14,7 +14,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -32,8 +31,7 @@ import java.util.Comparator;
 /**
  * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   private Object myLastSuccessfulSelect;
@@ -117,8 +115,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
    * @deprecated use {@link #refilter(Object, boolean, boolean)}
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ActionCallback refilter() {
     return Promises.toActionCallback(refilter(null, true, false));
   }

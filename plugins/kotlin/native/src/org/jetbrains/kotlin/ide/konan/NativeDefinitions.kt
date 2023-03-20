@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.ide.konan
 
@@ -54,12 +54,15 @@ class NativeDefinitionsFile(viewProvider: FileViewProvider) : PsiFileBase(viewPr
 
 class NativeDefinitionsLexerAdapter : FlexAdapter(NativeDefinitionsLexer(null as Reader?))
 
+private object NativeDefinitionsTokenSets {
+    val COMMENTS: TokenSet = TokenSet.create(NativeDefinitionsTypes.COMMENT)
+}
+
 class NativeDefinitionsParserDefinition : ParserDefinition {
-    private val COMMENTS = TokenSet.create(NativeDefinitionsTypes.COMMENT)
     private val FILE = IFileElementType(NativeDefinitionsLanguage.INSTANCE)
 
     override fun getWhitespaceTokens(): TokenSet = TokenSet.WHITE_SPACE
-    override fun getCommentTokens(): TokenSet = COMMENTS
+    override fun getCommentTokens(): TokenSet = NativeDefinitionsTokenSets.COMMENTS
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
     override fun getFileNodeType(): IFileElementType = FILE
 
@@ -69,13 +72,12 @@ class NativeDefinitionsParserDefinition : ParserDefinition {
     override fun createFile(viewProvider: FileViewProvider): PsiFile = NativeDefinitionsFile(viewProvider)
     override fun createElement(node: ASTNode): PsiElement = NativeDefinitionsTypes.Factory.createElement(node)
 
-    @Suppress("OverridingDeprecatedMember") // Just switch to correctly named function, when old one is removed.
-    override fun spaceExistanceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements =
+    override fun spaceExistenceTypeBetweenTokens(left: ASTNode?, right: ASTNode?): ParserDefinition.SpaceRequirements =
         ParserDefinition.SpaceRequirements.MAY
 }
 
 class CLanguageInjector : LanguageInjector {
-    val cLanguage = Language.findLanguageByID("ObjectiveC")
+    private val cLanguage = Language.findLanguageByID("ObjectiveC")
 
     override fun getLanguagesToInject(host: PsiLanguageInjectionHost, registrar: InjectedLanguagePlaces) {
         if (!host.isValid) return

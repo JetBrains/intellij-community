@@ -5,7 +5,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,8 +12,7 @@ import java.util.List;
 /**
  * @deprecated use {@link com.intellij.codeInsight.intention.AddAnnotationPsiFix#createAddNotNullFix(PsiModifierListOwner)}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class AddNotNullAnnotationFix extends AddNullableNotNullAnnotationFix {
   public AddNotNullAnnotationFix(@NotNull PsiModifierListOwner owner) {
     super(NullableNotNullManager.getInstance(owner.getProject()).getDefaultNotNull(),

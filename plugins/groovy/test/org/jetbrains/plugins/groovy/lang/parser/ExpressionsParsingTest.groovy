@@ -1,8 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser
-/**
- * @author peter
- */
 class ExpressionsParsingTest extends GroovyParsingTestCase {
   @Override
   String getBasePath() {
@@ -20,6 +17,12 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testarguments$cargs2() throws Throwable { doTest() }
 
   void testarguments$cargs3() throws Throwable { doTest() }
+
+  void testarguments$cargs4() throws Throwable { doTest() }
+
+  void testarguments$cargs5() throws Throwable { doTest() }
+
+  void testarguments$cargs6() throws Throwable { doTest() }
 
   void testarithmetic$add1() throws Throwable { doTest() }
 
@@ -383,7 +386,7 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$method$newLineBeforeOperatorInCall() { doTest() }
 
   void testpath$method$method14() { doTest() }
-  
+
   void testpath$method$method15() { doTest() }
 
   void testpath$path1() throws Throwable { doTest() }

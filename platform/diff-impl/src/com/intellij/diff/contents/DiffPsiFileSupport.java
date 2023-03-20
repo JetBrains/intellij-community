@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class DiffPsiFileSupport {
   public static boolean isDiffFile(@Nullable VirtualFile file) {
     return OutsidersPsiFileSupport.isOutsiderFile(file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -9,22 +9,17 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
 public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   public static final String ID = "moduleInfo";
 
@@ -53,16 +48,12 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiClass) {
-      return isServiceOrExported((PsiClass)psiElement);
+    if (psiElement instanceof PsiClass psiClass) {
+      return isServiceOrExported(psiClass);
     }
-    if (psiElement instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)psiElement;
-      if (isDefaultConstructor(method) || isProviderMethod(method)) {
-        return isServiceOrExported(method.getContainingClass());
-      }
-    }
-    return false;
+    return psiElement instanceof PsiMethod method &&
+           (isDefaultConstructor(method) || isProviderMethod(method)) &&
+           isServiceOrExported(method.getContainingClass());
   }
 
   @Override
@@ -78,8 +69,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean keepVisibilityLevel(boolean entryPointEnabled, @NotNull RefJavaElement refJavaElement) {
-    if (refJavaElement instanceof RefClass) {
-      RefClass refClass = (RefClass)refJavaElement;
+    if (refJavaElement instanceof RefClass refClass) {
       RefModule refModule = refClass.getModule();
       if (refModule != null) {
         RefJavaModule refJavaModule = RefJavaModule.JAVA_MODULE.get(refModule);
@@ -158,16 +148,22 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   private static Set<String> getExportedPackageNames(@NotNull PsiJavaModule javaModule) {
+    if (javaModule instanceof LightJavaModule) {
+      return Collections.emptySet();
+    }
     return CachedValuesManager.getCachedValue(javaModule, () -> {
       Set<String> packages = StreamEx.of(javaModule.getExports().spliterator())
         .map(PsiPackageAccessibilityStatement::getPackageName)
         .nonNull()
-        .toCollection(THashSet::new);
+        .toCollection(HashSet::new);
       return CachedValueProvider.Result.create(packages, javaModule);
     });
   }
 
   private static Set<String> getServiceClassNames(@NotNull PsiJavaModule javaModule) {
+    if (javaModule instanceof LightJavaModule) {
+      return Collections.emptySet();
+    }
     return CachedValuesManager.getCachedValue(javaModule, () -> {
       Set<String> classes = StreamEx.of(javaModule.getProvides().spliterator())
         .map(PsiProvidesStatement::getImplementationList)
@@ -178,7 +174,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
         .nonNull()
         .map(PsiClass::getQualifiedName)
         .nonNull()
-        .toCollection(THashSet::new);
+        .toCollection(HashSet::new);
       return CachedValueProvider.Result.create(classes, javaModule);
     });
   }

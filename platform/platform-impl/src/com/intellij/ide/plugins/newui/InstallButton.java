@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +28,21 @@ public class InstallButton extends ColorButton {
 
   private static final Color BorderColor = JBColor.namedColor("Plugins.Button.installBorderColor", GreenColor);
 
+  private final boolean myIsUpgradeRequired;
+
   public InstallButton(boolean fill) {
+    this(fill, false);
+  }
+
+  public InstallButton(boolean fill, boolean isUpgradeRequired) {
+    myIsUpgradeRequired = isUpgradeRequired;
+
     setButtonColors(fill);
+  }
+
+  public InstallButton(@NlsContexts.Button String text, boolean fill) {
+    this(fill, false);
+    setText(text);
   }
 
   public void setButtonColors(boolean fill) {
@@ -51,6 +65,7 @@ public class InstallButton extends ColorButton {
 
   protected void setTextAndSize() {
     setText(IdeBundle.message("action.AnActionButton.text.install"));
+    setEnabled(!myIsUpgradeRequired);
     setWidth72(this);
   }
 

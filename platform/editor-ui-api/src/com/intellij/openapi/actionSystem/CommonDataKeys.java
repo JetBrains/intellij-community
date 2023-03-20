@@ -17,6 +17,7 @@ import java.util.List;
  * Common data keys used as parameter for {@link AnActionEvent#getData(DataKey)} in {@link AnAction#update(AnActionEvent)}/{@link AnAction#actionPerformed(AnActionEvent)} implementations.
  *
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys
  * @see com.intellij.openapi.actionSystem.LangDataKeys
  */
 public class CommonDataKeys {
@@ -105,6 +106,8 @@ public class CommonDataKeys {
    * Returns a list of target symbols.
    * If there is an editor in the context, then it will return referenced or declared symbols
    * by the current editor file and the caret offset.
+   *
+   * @see com.intellij.model.psi.impl.TargetSymbolsDataRule
    */
   public static final DataKey<List<Symbol>> SYMBOLS = DataKey.create("symbols");
 }

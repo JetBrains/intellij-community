@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.forloop;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -15,7 +16,20 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.JavaTokenType.*;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class ReverseForLoopDirectionIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("reverse.for.loop.direction.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("reverse.for.loop.direction.intention.name");
+  }
 
   @NotNull
   @Override
@@ -52,8 +66,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
     final PsiExpression updateExpression = update.getExpression();
     final String variableName = variable.getName();
     final StringBuilder newUpdateText = new StringBuilder();
-    if (updateExpression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)updateExpression;
+    if (updateExpression instanceof PsiPrefixExpression prefixExpression) {
       final IElementType tokenType = prefixExpression.getOperationTokenType();
       if (PLUSPLUS == tokenType) {
         newUpdateText.append("--");
@@ -66,9 +79,8 @@ public class ReverseForLoopDirectionIntention extends Intention {
       }
       newUpdateText.append(variableName);
     }
-    else if (updateExpression instanceof PsiPostfixExpression) {
+    else if (updateExpression instanceof PsiPostfixExpression postfixExpression) {
       newUpdateText.append(variableName);
-      final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)updateExpression;
       final IElementType tokenType = postfixExpression.getOperationTokenType();
       if (PLUSPLUS == tokenType) {
         newUpdateText.append("--");
@@ -80,9 +92,8 @@ public class ReverseForLoopDirectionIntention extends Intention {
         return;
       }
     }
-    else if (updateExpression instanceof PsiAssignmentExpression) {
+    else if (updateExpression instanceof PsiAssignmentExpression assignmentExpression) {
       newUpdateText.append(variableName);
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)updateExpression;
       final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
       if (expression == null) {
         return;
@@ -94,8 +105,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
       else if (MINUSEQ == tokenType) {
         newUpdateText.append("+=").append(ct.text(expression));
       }
-      else if (EQ == tokenType && expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      else if (EQ == tokenType && expression instanceof PsiBinaryExpression binaryExpression) {
         final PsiExpression lOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
         if (lOperand == null) {
           return;

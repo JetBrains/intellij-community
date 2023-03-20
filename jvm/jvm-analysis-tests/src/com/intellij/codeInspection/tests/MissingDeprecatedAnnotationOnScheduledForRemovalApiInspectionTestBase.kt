@@ -10,7 +10,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-abstract class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase : UastInspectionTestBase() {
+abstract class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection()
 
   @Suppress("DuplicatedCode")

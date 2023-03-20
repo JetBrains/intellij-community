@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SonatypeSourceSearcher extends SourceSearcher {
   private static final Logger LOG = Logger.getInstance(SonatypeSourceSearcher.class);
 

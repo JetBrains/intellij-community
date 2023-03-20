@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.util.PsiFormatUtil
@@ -10,14 +11,15 @@ import com.intellij.psi.util.PsiFormatUtilBase
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.search.usagesSearch.calculateInModalWindow
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
 private val FUNCTION_RENDERER = DescriptorRenderer.withOptions {
     withDefinedIn = false
@@ -49,23 +51,6 @@ fun formatPsiClass(
     return if (markAsJava) "[Java] $description" else description
 }
 
-fun formatClass(classDescriptor: DeclarationDescriptor, inCode: Boolean): String {
-    val element = DescriptorToSourceUtils.descriptorToDeclaration(classDescriptor)
-    return if (element is PsiClass) {
-        formatPsiClass(element, false, inCode)
-    } else {
-        wrapOrSkip(formatClassDescriptor(classDescriptor), inCode)
-    }
-}
-
-fun formatFunction(functionDescriptor: DeclarationDescriptor, inCode: Boolean): String {
-    val element = DescriptorToSourceUtils.descriptorToDeclaration(functionDescriptor)
-    return if (element is PsiMethod) {
-        formatPsiMethod(element, false, inCode)
-    } else {
-        wrapOrSkip(formatFunctionDescriptor(functionDescriptor), inCode)
-    }
-}
 
 private fun formatFunctionDescriptor(functionDescriptor: DeclarationDescriptor): String = FUNCTION_RENDERER.render(functionDescriptor)
 
@@ -87,11 +72,14 @@ fun formatPsiMethod(
 }
 
 fun formatJavaOrLightMethod(method: PsiMethod): String {
-    val originalDeclaration = method.unwrapped
-    return if (originalDeclaration is KtDeclaration) {
-        formatFunctionDescriptor(originalDeclaration.unsafeResolveToDescriptor())
-    } else {
-        formatPsiMethod(method, showContainingClass = false, inCode = false)
+    val declaration: PsiElement = method.unwrapped ?: return ""
+    return when (declaration) {
+        is KtDeclaration -> KotlinPsiDeclarationRenderer.render(declaration) ?:
+            formatFunctionDescriptor(declaration.unsafeResolveToDescriptor())
+        else -> calculateInModalWindow(
+          declaration,
+          KotlinBundle.message("find.usages.prepare.dialog.progress")
+        ) { formatPsiMethod(method, showContainingClass = false, inCode = false) }
     }
 }
 

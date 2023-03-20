@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.IComponentStoreOwner
-import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * This is primarily intended to be used by the service implementation. When introducing a new service,
@@ -38,41 +38,25 @@ import com.intellij.openapi.project.Project
 inline fun <reified T : Any> service(): T {
   val serviceClass = T::class.java
   return ApplicationManager.getApplication().getService(serviceClass)
-         ?: throw RuntimeException("Cannot find service ${serviceClass.name} (classloader=${serviceClass.classLoader})")
+         ?: throw RuntimeException("Cannot find service ${serviceClass.name} (classloader=${serviceClass.classLoader}, client=${ClientId.currentOrNull})")
 }
 
+/**
+ * Contrary to [serviceIfCreated], tries to initialize the service if not yet initialized
+ */
 inline fun <reified T : Any> serviceOrNull(): T? = ApplicationManager.getApplication().getService(T::class.java)
 
-inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getApplication().getServiceIfCreated(T::class.java)
-
-inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
+/**
+ * Contrary to [serviceOrNull], doesn't try to initialize the service if not yet initialized
+ */
+inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getApplication()?.getServiceIfCreated(T::class.java)
 
 /**
- * This is primarily intended to be used by the service implementation. When introducing a new service,
- * please add a static `getInstance(Project)` method. For better tooling performance, it is always advised
- * to keep an explicit method return type.
- *
- *     @Service
- *     class MyProjectService(private val project: Project) {
- *       companion object {
- *         @JvmStatic
- *         fun getInstance(project: Project): MyProjectService = project.service()
- *       }
- *     }
- *
+ * @deprecated Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for.
  */
-inline fun <reified T : Any> Project.service(): T = getService(T::class.java)
-
-inline fun <reified T : Any> Project.serviceIfCreated(): T? = getServiceIfCreated(T::class.java)
-
-inline fun <reified T : Any> Project.services(includeLocal: Boolean): List<T> = getServices(T::class.java, includeLocal)
+@ApiStatus.Experimental
+@Deprecated("Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for")
+inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
 
 val ComponentManager.stateStore: IComponentStore
-  get() {
-    return when (this) {
-      is IComponentStoreOwner -> this.componentStore
-      else -> {
-        getService(IComponentStore::class.java)
-      }
-    }
-  }
+  get() = if (this is ComponentStoreOwner) this.componentStore else service()

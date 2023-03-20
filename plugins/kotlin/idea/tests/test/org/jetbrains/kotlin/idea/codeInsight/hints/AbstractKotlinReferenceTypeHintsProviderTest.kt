@@ -1,20 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 
-@Suppress("UnstableApiUsage")
 abstract class AbstractKotlinReferenceTypeHintsProviderTest :
     InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
@@ -36,7 +35,7 @@ abstract class AbstractKotlinReferenceTypeHintsProviderTest :
                 }
             }
 
-            testProvider("KotlinReferencesTypeHintsProvider.kt", fileContents, this, settings)
+            doTestProvider("KotlinReferencesTypeHintsProvider.kt", fileContents, this, settings)
         }
     }
 

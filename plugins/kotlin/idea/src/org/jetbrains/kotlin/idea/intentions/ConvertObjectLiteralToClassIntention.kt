@@ -1,27 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -44,12 +46,12 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
 
         val validator: (String) -> Boolean = { scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
         val classNames = element.objectDeclaration.superTypeListEntries
-            .mapNotNull { it.typeReference?.typeElement?.let { KotlinNameSuggester.suggestTypeAliasNameByPsi(it, validator) } }
+            .mapNotNull { it.typeReference?.typeElement?.let { Fe10KotlinNameSuggester.suggestTypeAliasNameByPsi(it, validator) } }
             .takeIf { it.isNotEmpty() }
-            ?: listOf(KotlinNameSuggester.suggestNameByName("O", validator))
+            ?: listOf(Fe10KotlinNameSuggester.suggestNameByName("O", validator))
 
         val className = classNames.first()
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val targetSibling = element.parentsWithSelf.first { it.parent == targetParent }
 
@@ -79,7 +81,7 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
                     onFinish: (ExtractionResult) -> Unit
                 ) {
-                    project.executeWriteCommand(text) {
+                    project.executeCommand(text) {
                         val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className))
                         doRefactor(
                             ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT),
@@ -101,25 +103,32 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     }
             }
 
-            val introducedClass = functionDeclaration.replaced(newClass).apply {
-                if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
-                primaryConstructor?.reformatted()
-            }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) } ?: return@run
+            val introducedClass = runWriteAction {
+                functionDeclaration.replaced(newClass).apply {
+                    if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
+                    primaryConstructor?.reformatted()
+                }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) }
+            } ?: return@run
 
             val file = introducedClass.containingFile
 
             val template = TemplateBuilderImpl(file).let { builder ->
                 builder.replaceElement(introducedClass.nameIdentifier!!, NEW_CLASS_NAME, ChooseStringExpression(classNames), true)
                 for (psiReference in ReferencesSearch.search(introducedClass, LocalSearchScope(file), false)) {
-                    builder.replaceElement(psiReference.element, USAGE_VARIABLE_NAME, NEW_CLASS_NAME, false)
+                    runWriteAction {
+                        builder.replaceElement(psiReference.element, USAGE_VARIABLE_NAME, NEW_CLASS_NAME, false)
+                    }
                 }
-                builder.buildInlineTemplate()
+                runWriteAction {
+                    builder.buildInlineTemplate()
+                }
             }
 
             editor.caretModel.moveToOffset(file.startOffset)
-            TemplateManager.getInstance(project).startTemplate(editor, template)
+            runWriteAction {
+                TemplateManager.getInstance(project).startTemplate(editor, template)
+            }
         }
-        
     }
 
     override fun applyTo(element: KtObjectLiteralExpression, editor: Editor?) {

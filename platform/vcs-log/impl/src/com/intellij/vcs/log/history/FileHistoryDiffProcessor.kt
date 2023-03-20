@@ -15,7 +15,7 @@ import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 
 internal class FileHistoryDiffProcessor(project: Project,
                                         private val changeGetter: () -> Change?,
-                                        isInEditor: Boolean,
+                                        private val isInEditor: Boolean,
                                         disposable: Disposable
 ) : CacheDiffRequestProcessor.Simple(project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_FILE_HISTORY_VIEW),
     DiffPreviewUpdateProcessor {
@@ -41,7 +41,8 @@ internal class FileHistoryDiffProcessor(project: Project,
     updateRequest()
   }
 
-  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean = true
+  override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean =
+    !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
 
   override fun getFastLoadingTimeMillis(): Int {
     return 10

@@ -148,6 +148,10 @@ class ActionGroupPanel(
         e.presentation.isVisible = enableFilterAction
         super.update(e)
       }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+      }
     }
   )
 

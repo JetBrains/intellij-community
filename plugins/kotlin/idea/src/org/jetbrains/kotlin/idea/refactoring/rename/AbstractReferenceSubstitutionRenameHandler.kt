@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -12,7 +12,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
-import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.base.psi.getElementAtOffsetIgnoreWhitespaceAfter
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,11 +24,11 @@ abstract class AbstractReferenceSubstitutionRenameHandler(
     private val delegateHandler: RenameHandler = MemberInplaceRenameHandler()
 ) : PsiElementRenameHandler() {
     companion object {
-        fun getReferenceExpression(file: PsiFile, offset: Int): KtSimpleNameExpression? {
+        private fun getReferenceExpression(file: PsiFile, offset: Int): KtSimpleNameExpression? {
             var elementAtCaret = file.findElementAt(offset) ?: return null
             if (elementAtCaret.node?.elementType == KtTokens.AT) return null
             if (elementAtCaret is PsiWhiteSpace) {
-                elementAtCaret = CodeInsightUtils.getElementAtOffsetIgnoreWhitespaceAfter(file, offset) ?: return null
+                elementAtCaret = getElementAtOffsetIgnoreWhitespaceAfter(file, offset) ?: return null
                 if (offset != elementAtCaret.endOffset) return null
             }
             return elementAtCaret.getNonStrictParentOfType<KtSimpleNameExpression>()

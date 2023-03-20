@@ -75,8 +75,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     if (parentPriority > newPriority) {
       return true;
     }
-    else if (parentPriority == newPriority && parentPriority != 0 && parentExpr instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)parentExpr;
+    else if (parentPriority == newPriority && parentPriority != 0 && parentExpr instanceof PyBinaryExpression binaryExpression) {
       if (isNotAssociative(binaryExpression) && oldExpr == getLeastPrioritySide(binaryExpression)) {
         return true;
       }
@@ -124,7 +123,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
                                                             @NotNull PsiElement newExpression,
                                                             @NotNull TextRange textRange) {
     final String fullText = oldExpression.getText();
-    final Pair<String, String> detectedQuotes = PyStringLiteralUtil.getQuotes(fullText);
+    final Pair<String, String> detectedQuotes = PyStringLiteralCoreUtil.getQuotes(fullText);
     final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
     final String prefix = fullText.substring(0, textRange.getStartOffset());
     final String suffix = fullText.substring(textRange.getEndOffset(), oldExpression.getTextLength());

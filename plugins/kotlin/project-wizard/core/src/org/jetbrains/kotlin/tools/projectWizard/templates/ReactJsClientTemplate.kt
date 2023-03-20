@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.templates
 
@@ -33,15 +33,7 @@ object ReactJsClientTemplate : JsClientTemplate() {
     private const val clientSourceFile = "Client.kt"
     override val filesToOpenInEditor = listOf(clientSourceFile)
 
-    val useStyledComponents by booleanSetting(
-        KotlinNewProjectWizardBundle.message("module.template.react.use.styled.components"),
-        GenerationPhase.PROJECT_GENERATION
-    ) {
-        defaultValue = value(false)
-        description = KotlinNewProjectWizardBundle.message("module.template.react.use.styled.components.description")
-    }
-
-    val useReactRouterDom by booleanSetting(
+    private val useReactRouterDom by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.react.use.react.router.dom"),
         GenerationPhase.PROJECT_GENERATION
     ) {
@@ -49,7 +41,7 @@ object ReactJsClientTemplate : JsClientTemplate() {
         description = KotlinNewProjectWizardBundle.message("module.template.react.use.react.router.dom.description")
     }
 
-    val useReactRedux by booleanSetting(
+    private val useReactRedux by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.react.use.react.redux"),
         GenerationPhase.PROJECT_GENERATION
     ) {
@@ -59,7 +51,6 @@ object ReactJsClientTemplate : JsClientTemplate() {
 
     override val settings: List<TemplateSetting<*, *>> =
         listOf(
-            useStyledComponents,
             useReactRouterDom,
             useReactRedux
         )
@@ -69,9 +60,7 @@ object ReactJsClientTemplate : JsClientTemplate() {
             val kotlinVersion = KotlinPlugin.version.propertyValue
             +Dependencies.KOTLIN_REACT
             +Dependencies.KOTLIN_REACT_DOM
-            if (useStyledComponents.reference.settingValue) {
-                +Dependencies.KOTLIN_STYLED
-            }
+            +Dependencies.KOTLIN_EMOTION
             if (useReactRouterDom.reference.settingValue) {
                 +Dependencies.KOTLIN_REACT_ROUTER_DOM
             }
@@ -91,15 +80,11 @@ object ReactJsClientTemplate : JsClientTemplate() {
                 }
                 +(FileTemplateDescriptor("$id/reactClient.kt.vm", clientSourceFile.asPath()) asSrcOf SourcesetType.main)
                 +(FileTemplateDescriptor("$id/reactComponent.kt.vm", "Welcome.kt".asPath()) asSrcOf SourcesetType.main)
-
-                if (useStyledComponents.reference.settingValue) {
-                    +(FileTemplateDescriptor("$id/WelcomeStyles.kt.vm") asSrcOf SourcesetType.main)
-                }
             }
         }
 
     override fun Reader.getAdditionalSettings(module: Module): Map<String, Any> = withSettingsOf(module) {
-        jsSettings(module) + mapOf("useStyledComponents" to (useStyledComponents.reference.settingValue))
+        jsSettings(module)
     }
 
     private object Dependencies {
@@ -113,9 +98,9 @@ object ReactJsClientTemplate : JsClientTemplate() {
             Versions.JS_WRAPPERS.KOTLIN_REACT_DOM
         )
 
-        val KOTLIN_STYLED = wrapperDependency(
-            "kotlin-styled",
-            Versions.JS_WRAPPERS.KOTLIN_STYLED
+        val KOTLIN_EMOTION = wrapperDependency(
+            "kotlin-emotion",
+            Versions.JS_WRAPPERS.KOTLIN_EMOTION
         )
 
         val KOTLIN_REACT_ROUTER_DOM = wrapperDependency(

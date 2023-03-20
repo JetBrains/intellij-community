@@ -1,3 +1,4 @@
+// SKIP_ERRORS_BEFORE
 // AFTER-WARNING: The expression is unused
 // AFTER-WARNING: The expression is unused
 fun foo(i : Int) {
@@ -6,3 +7,5 @@ fun foo(i : Int) {
         true -> 2
     }
 }
+
+// IGNORE_FIR

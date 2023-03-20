@@ -17,13 +17,12 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-@Suppress("UsePropertyAccessSyntax")
 class ModuleLevelLibrariesInRootModelTest {
   companion object {
     @JvmField
@@ -82,18 +81,18 @@ class ModuleLevelLibrariesInRootModelTest {
       val libraryModel = library.modifiableModel
       libraryModel.addRoot(root, OrderRootType.CLASSES)
       val libraryEntryForUncommitted = getSingleLibraryOrderEntry(model)
-      assertThat(libraryEntryForUncommitted.getFiles(OrderRootType.CLASSES)).isEmpty()
+      assertThat(libraryEntryForUncommitted.getRootFiles(OrderRootType.CLASSES)).isEmpty()
       libraryModel.commit()
       assertThat(library.presentableName).isEqualTo("lib")
       val libraryEntry = getSingleLibraryOrderEntry(model)
-      assertThat(libraryEntry.getFiles(OrderRootType.CLASSES).single()).isEqualTo(root)
+      assertThat(libraryEntry.getRootFiles(OrderRootType.CLASSES).single()).isEqualTo(root)
       assertThat(libraryEntry.presentableName).isEqualTo(root.presentableUrl)
       libraryEntry.scope = DependencyScope.RUNTIME
       libraryEntry.isExported = true
       assertThat(model.findLibraryOrderEntry(library)).isEqualTo(libraryEntry)
       val committed = commitModifiableRootModel(model)
       val committedEntry = getSingleLibraryOrderEntry(committed)
-      assertThat(committedEntry.getFiles(OrderRootType.CLASSES).single()).isEqualTo(root)
+      assertThat(committedEntry.getRootFiles(OrderRootType.CLASSES).single()).isEqualTo(root)
       assertThat((committedEntry.library as LibraryEx).isDisposed).isFalse()
       assertThat(committedEntry.scope).isEqualTo(DependencyScope.RUNTIME)
       assertThat(committedEntry.isExported).isTrue()
@@ -234,7 +233,7 @@ class ModuleLevelLibrariesInRootModelTest {
     libraryModel.addRoot(classesRoot, OrderRootType.CLASSES)
     runWriteActionAndWait { libraryModel.commit() }
     val entry = getSingleLibraryOrderEntry(ModuleRootManager.getInstance(module))
-    assertThat(entry.getFiles(OrderRootType.CLASSES)).containsExactly(classesRoot)
+    assertThat(entry.getRootFiles(OrderRootType.CLASSES)).containsExactly(classesRoot)
   }
 
   @Test
@@ -304,7 +303,7 @@ class ModuleLevelLibrariesInRootModelTest {
     addLibrary("a")
     addLibrary("b")
 
-    val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
+    val builder = MutableEntityStorage.from(WorkspaceModel.getInstance(projectModel.project).currentSnapshot)
     val moduleModel = (projectModel.moduleManager as ModuleManagerBridgeImpl).getModifiableModel(builder)
     moduleModel.disposeModule(module)
     val newModule = projectModel.createModule("module", moduleModel)
@@ -332,9 +331,9 @@ class ModuleLevelLibrariesInRootModelTest {
     val committed = commitModifiableRootModel(model)
     val (committedEntry1, committedEntry2) = dropModuleSourceEntry(committed, 2)
     assertThat((committedEntry1 as LibraryOrderEntry).libraryName).isEqualTo("foo")
-    assertThat(committedEntry1.getFiles(OrderRootType.CLASSES)).containsExactly(root1)
+    assertThat(committedEntry1.getRootFiles(OrderRootType.CLASSES)).containsExactly(root1)
     assertThat((committedEntry2 as LibraryOrderEntry).libraryName).isEqualTo("foo")
-    assertThat(committedEntry2.getFiles(OrderRootType.CLASSES)).containsExactly(root2)
+    assertThat(committedEntry2.getRootFiles(OrderRootType.CLASSES)).containsExactly(root2)
   }
 
   @Test
@@ -352,9 +351,9 @@ class ModuleLevelLibrariesInRootModelTest {
     val committed = commitModifiableRootModel(model)
     val (committedEntry1, committedEntry2) = dropModuleSourceEntry(committed, 2)
     assertThat((committedEntry1 as LibraryOrderEntry).library).isNotNull()
-    assertThat(committedEntry1.getFiles(OrderRootType.CLASSES)).containsExactly(root1)
+    assertThat(committedEntry1.getRootFiles(OrderRootType.CLASSES)).containsExactly(root1)
     assertThat((committedEntry2 as LibraryOrderEntry).library).isNotNull()
-    assertThat(committedEntry2.getFiles(OrderRootType.CLASSES)).containsExactly(root2)
+    assertThat(committedEntry2.getRootFiles(OrderRootType.CLASSES)).containsExactly(root2)
   }
 
   @Test
@@ -369,7 +368,7 @@ class ModuleLevelLibrariesInRootModelTest {
 
   private fun doTestMultiCommitForModuleLevelLibrary(newScope: DependencyScope) {
     addLibrary("a")
-    val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
+    val builder = MutableEntityStorage.from(WorkspaceModel.getInstance(projectModel.project).currentSnapshot)
     val moduleModel = (projectModel.moduleManager as ModuleManagerBridgeImpl).getModifiableModel(builder)
     val rootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(RootAccessorWithWorkspaceModel(builder))
     getSingleLibraryOrderEntry(rootModel).scope = newScope
@@ -391,6 +390,6 @@ class ModuleLevelLibrariesInRootModelTest {
     model.commit()
   }
 
-  class RootAccessorWithWorkspaceModel(override val actualDiffBuilder: WorkspaceEntityStorageBuilder?)
+  class RootAccessorWithWorkspaceModel(override val actualDiffBuilder: MutableEntityStorage?)
     : RootConfigurationAccessor(), RootConfigurationAccessorForWorkspaceModel
 }

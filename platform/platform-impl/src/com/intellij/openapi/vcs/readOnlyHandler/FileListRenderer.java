@@ -12,10 +12,9 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @deprecated Please use {@link TargetPopup#createTargetPresentationRenderer}
+ * Please use {@link TargetPopup#createTargetPresentationRenderer}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.Obsolete
 public class FileListRenderer implements ListCellRenderer<VirtualFile> {
   private final ListCellRenderer<VirtualFile> myPresentationRenderer;
 

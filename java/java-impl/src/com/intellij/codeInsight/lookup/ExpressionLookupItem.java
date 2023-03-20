@@ -1,20 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
-*/
 public class ExpressionLookupItem extends LookupElement implements TypedLookupItem {
   private final PsiExpression myExpression;
   private final Icon myIcon;
@@ -31,7 +30,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     myPresentableText = presentableText;
     myIcon = icon;
     myLookupString = lookupStrings[0];
-    myAllLookupStrings = ContainerUtil.immutableSet(lookupStrings);
+    myAllLookupStrings = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(lookupStrings)));
   }
 
   @Nullable
@@ -43,7 +42,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
       }
     }
     if (expression instanceof PsiMethodCallExpression) {
-      return PlatformIcons.METHOD_ICON;
+      return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method);
     }
     return null;
   }
@@ -55,7 +54,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myIcon);
     presentation.setItemText(myPresentableText);
     PsiType type = getType();

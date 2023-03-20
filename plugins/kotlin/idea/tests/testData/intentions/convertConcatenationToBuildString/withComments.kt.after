@@ -6,4 +6,5 @@ fun test(foo: String, bar: Int, baz: Int) {
         append("$bar, ") // comment2
         append(baz) // comment3
     }
+    // Unrelated comment
 }

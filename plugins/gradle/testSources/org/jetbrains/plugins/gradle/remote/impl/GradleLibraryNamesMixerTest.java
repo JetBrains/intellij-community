@@ -10,9 +10,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleLibraryNamesMixerTest {
   
   private GradleLibraryNamesMixer myMixer;

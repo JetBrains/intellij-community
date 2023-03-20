@@ -109,7 +109,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }
@@ -122,7 +122,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }

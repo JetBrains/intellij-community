@@ -5,10 +5,8 @@
   "$schema": "https://vega.github.io/schema/vega/v4.3.0.json",
   "description": "TestData completion-basic-keyword",
   "title": "TestData completion-basic-keyword",
-  "width": 800,
-  "height": 500,
   "padding": 5,
-  "autosize": {"type": "pad", "resize": true},
+  "autosize": {"type": "fit", "contains": "padding"},
   "signals": [
     {
       "name": "clear",

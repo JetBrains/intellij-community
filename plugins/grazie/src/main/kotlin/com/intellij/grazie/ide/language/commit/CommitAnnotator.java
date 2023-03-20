@@ -1,6 +1,7 @@
 package com.intellij.grazie.ide.language.commit;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.grazie.GrazieConfig;
@@ -10,6 +11,7 @@ import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.SpellCheckerSeveritiesProvider;
@@ -36,24 +38,28 @@ public class CommitAnnotator implements Annotator {
     CheckerRunner runner = new CheckerRunner(text);
     runner.run(checkers, problem -> {
       if (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) &&
-          Text.isSingleSentence(Text.findParagraphRange(text, problem.getReplacementRange()).subSequence(text))) {
+          Text.isSingleSentence(Text.findParagraphRange(text, problem.getHighlightRanges().get(0)).subSequence(text))) {
         return null;
       }
 
       List<ProblemDescriptor> descriptors = runner.toProblemDescriptors(problem, true);
       if (descriptors.isEmpty()) return null;
 
-      ProblemDescriptor descriptor = descriptors.get(0);
+      String message = problem.getDescriptionTemplate(true);
+      String tooltip = problem.getTooltipTemplate();
+      LocalQuickFix[] fixes = runner.toFixes(problem, descriptors.get(0));
 
-      AnnotationBuilder annotation = holder
-        .newAnnotation(HighlightSeverity.WARNING, problem.getDescriptionTemplate(true))
-        .tooltip(problem.getTooltipTemplate())
-        .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
-        .range(text.textRangeToFile(problem.getHighlightRange()));
-      for (QuickFix<?> fix : runner.toFixes(problem, descriptor)) {
-        annotation = annotation.withFix((IntentionAction)fix);
+      for (TextRange range : problem.getHighlightRanges()) {
+        AnnotationBuilder annotation = holder
+          .newAnnotation(HighlightSeverity.WARNING, message)
+          .tooltip(tooltip)
+          .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
+          .range(text.textRangeToFile(range));
+        for (QuickFix<?> fix : fixes) {
+          annotation = annotation.withFix((IntentionAction)fix);
+        }
+        annotation.create();
       }
-      annotation.create();
       return null;
     });
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
@@ -89,14 +89,19 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
    */
   @Contract("_, null, _ -> null")
   public static @Nullable DfaValue getArrayElementValue(@NotNull DfaValueFactory factory, @Nullable DfaValue array, int index) {
-    if (!(array instanceof DfaVariableValue) || index < 0) return null;
-    DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
+    if (!(array instanceof DfaVariableValue arrayDfaVar) || index < 0) return null;
     DfType componentType = TypeConstraint.fromDfType(arrayDfaVar.getDfType()).getArrayComponentType();
     if (componentType == DfType.BOTTOM) return null;
     PsiVariable arrayPsiVar = ObjectUtils.tryCast(arrayDfaVar.getPsiVariable(), PsiVariable.class);
     if (arrayPsiVar != null) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement(arrayPsiVar, index);
       if (constantArrayElement != null) {
+        PsiType elementType = constantArrayElement.getType();
+        if (componentType instanceof DfReferenceType && elementType instanceof PsiPrimitiveType &&
+            !TypeConstraint.fromDfType(componentType).isPrimitiveWrapper()) {
+          componentType = DfTypes.typedObject(((PsiPrimitiveType)elementType).getBoxedType(constantArrayElement), Nullability.UNKNOWN)
+            .meet(componentType);
+        }
         return getAdvancedExpressionDfaValue(factory, constantArrayElement, componentType);
       }
     }
@@ -119,7 +124,7 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
         array = new PlainDescriptor(var).createValue(factory, null);
       }
     }
-    if (!(array instanceof DfaVariableValue)) return factory.getUnknown();
+    if (!(array instanceof DfaVariableValue arrayDfaVar)) return factory.getUnknown();
     if (indexSet.isEmpty()) return factory.getUnknown();
     long min = indexSet.min();
     long max = indexSet.max();
@@ -127,7 +132,6 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
       DfaValue value = getArrayElementValue(factory, array, (int)min);
       return value == null ? factory.getUnknown() : value;
     }
-    DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     PsiVariable arrayPsiVar = ObjectUtils.tryCast(arrayDfaVar.getPsiVariable(), PsiVariable.class);
     if (arrayPsiVar == null) return factory.getUnknown();
     DfType arrayType = arrayDfaVar.getDfType();
@@ -169,7 +173,7 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));
     if (dfType instanceof DfPrimitiveType && targetType instanceof DfPrimitiveType && dfType.meet(targetType) == DfType.BOTTOM) {
       if (targetType instanceof DfIntegralType) {
-        if (targetType instanceof DfLongType) return factory.fromDfType(((DfPrimitiveType)dfType).castTo(PsiType.LONG));
+        if (targetType instanceof DfLongType) return factory.fromDfType(((DfPrimitiveType)dfType).castTo(PsiTypes.longType()));
       }
       return factory.fromDfType(targetType);
     }

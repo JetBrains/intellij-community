@@ -16,25 +16,21 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 class IndexedExpressionConversionPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrIndexProperty)) return false;
+        if (!(element instanceof GrIndexProperty arrayIndexExpression)) return false;
 
         if (ErrorUtil.containsError(element)) return false;
 
-        final GrIndexProperty arrayIndexExpression = (GrIndexProperty) element;
-        final PsiElement lastChild = arrayIndexExpression.getLastChild();
-        if (!(lastChild instanceof GrArgumentList)) return false;
+      final PsiElement lastChild = arrayIndexExpression.getLastChild();
+        if (!(lastChild instanceof GrArgumentList argList)) return false;
 
-        final GrArgumentList argList = (GrArgumentList) lastChild;
-
-        final GrExpression[] arguments = argList.getExpressionArguments();
+      final GrExpression[] arguments = argList.getExpressionArguments();
         if (arguments.length != 1) return false;
 
         final PsiElement parent = element.getParent();
-        if (!(parent instanceof GrAssignmentExpression)) {
+        if (!(parent instanceof GrAssignmentExpression assignmentExpression)) {
             return true;
         }
-        final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression) parent;
-        final GrExpression rvalue = assignmentExpression.getRValue();
+      final GrExpression rvalue = assignmentExpression.getRValue();
         if (rvalue == null) return false;
 
         if (rvalue.equals(element)) return true;

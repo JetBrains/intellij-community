@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,7 +22,6 @@ public class GitFetch extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
@@ -29,6 +29,11 @@ public class GitFetch extends DumbAwareAction {
     else {
       e.getPresentation().setEnabled(hasRemotes(project));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -45,14 +50,14 @@ public class GitFetch extends DumbAwareAction {
       @Override
       public void onFinished() {
         if (result != null) {
-          onFetchFinished(result);
+          onFetchFinished(project, result);
         }
       }
     });
   }
 
   @RequiresEdt
-  protected void onFetchFinished(@NotNull GitFetchResult result) {
+  protected void onFetchFinished(@NotNull Project project, @NotNull GitFetchResult result) {
     result.showNotification();
   }
 }

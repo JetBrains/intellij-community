@@ -105,14 +105,14 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           JavaPsiBundle.message("error.incompatible.type.incompatible.parameter.types.in.method.reference"));
         return false;
       }
-      if (!PsiType.VOID.equals(returnType) && returnType != null) {
+      if (!PsiTypes.voidType().equals(returnType) && returnType != null) {
         PsiType applicableMethodReturnType = null;
         if (applicableMember instanceof PsiMethod) {
           final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(myExpression, (PsiMethod)applicableMember);
           applicableMethodReturnType = getClassReturnType != null ? getClassReturnType : ((PsiMethod)applicableMember).getReturnType();
         }
 
-        if (PsiType.VOID.equals(applicableMethodReturnType)) {
+        if (PsiTypes.voidType().equals(applicableMethodReturnType)) {
           session.registerIncompatibleErrorMessage(
             JavaPsiBundle.message("error.incompatible.type.incompatible.types.expected.not.void.got.void.method.reference"));
           return false;
@@ -152,7 +152,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return false;
     }
 
-    if (PsiType.VOID.equals(returnType) || returnType == null) {
+    if (PsiTypes.voidType().equals(returnType) || returnType == null) {
       return true;
     }
 
@@ -192,7 +192,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
 
-      if (PsiType.VOID.equals(referencedMethodReturnType)) {
+      if (PsiTypes.voidType().equals(referencedMethodReturnType)) {
         session.registerIncompatibleErrorMessage(
           JavaPsiBundle.message("error.incompatible.type.expected.non.void.got.void.method.reference"));
         return false;

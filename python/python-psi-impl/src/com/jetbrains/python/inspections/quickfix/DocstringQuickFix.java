@@ -19,10 +19,11 @@ import org.jetbrains.annotations.Nullable;
  * User : catherine
  */
 public class DocstringQuickFix implements LocalQuickFix {
+  @SafeFieldForPreview
   private final SmartPsiElementPointer<PyNamedParameter> myMissingParam;
   private final String myUnexpectedParamName;
 
-  public DocstringQuickFix(@Nullable PyNamedParameter missing, @Nullable  String unexpectedParamName) {
+  public DocstringQuickFix(@Nullable PyNamedParameter missing, @Nullable String unexpectedParamName) {
     if (missing != null) {
       myMissingParam = SmartPointerManager.getInstance(missing.getProject()).createSmartPsiElementPointer(missing);
     }

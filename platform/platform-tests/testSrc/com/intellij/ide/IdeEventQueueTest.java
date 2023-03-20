@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,14 +20,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
@@ -63,44 +65,44 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       return false;
     }, getTestRootDisposable());
 
-    int posted = ideEventQueue.myKeyboardEventsPosted.get();
-    int dispatched = ideEventQueue.myKeyboardEventsDispatched.get();
+    int posted = ideEventQueue.keyboardEventPosted.get();
+    int dispatched = ideEventQueue.keyboardEventDispatched.get();
     KeyEvent pressX = new KeyEvent(new JLabel("mykeypress"), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(pressX);
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched, ideEventQueue.keyboardEventDispatched.get());
     dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(pressX) || isConsumed(pressX));
 
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
 
     // do not react to other events
     AWTEvent ev2 = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "myCommand");
     postCarefully(ev2);
 
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
     dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and dispatched all events via IdeEventQueue.pumpEventsForHierarchy by itself
     assertTrue(isDispatched.contains(ev2));
 
-    assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
 
     KeyEvent keyRelease = new KeyEvent(new JLabel("mykeyrelease"), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(keyRelease);
 
-    assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+2, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
 
     dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(keyRelease) || isConsumed(keyRelease));
 
-    assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
-    assertEquals(dispatched+2, ideEventQueue.myKeyboardEventsDispatched.get());
+    assertEquals(posted+2, ideEventQueue.keyboardEventPosted.get());
+    assertEquals(dispatched+2, ideEventQueue.keyboardEventDispatched.get());
   }
 
   private static void postCarefully(AWTEvent event) {
@@ -137,7 +139,8 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       try {
         UIUtil.dispatchAllInvocationEvents();
       }
-      catch (MyException e) {
+      catch (Throwable e) {
+        assertTrue(e.toString(), ExceptionUtil.causedBy(e, MyException.class));
         break;
       }
       assertFalse(t.timedOut());
@@ -161,7 +164,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   public void testEdtExecutorRunnableMustThrowImmediatelyInTests() {
-    EdtExecutorService.getInstance().execute(()->throwMyException(), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.NON_MODAL);
     checkMyExceptionThrownImmediately();
   }
 
@@ -173,7 +176,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {
     assert SwingUtilities.isEventDispatchThread();
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.INSTANCE, null); // ControlFlowException silently ignored
+    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.create(), null); // ControlFlowException silently ignored
     throwInIdeEventQueueDispatch(new ProcessCanceledException(), null);  // ControlFlowException silently ignored
     Error error = new Error();
     throwInIdeEventQueueDispatch(error, error);
@@ -185,46 +188,21 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       run.set(true);
       ExceptionUtil.rethrow(toThrow);
     });
-    AtomicReference<Throwable> error = new AtomicReference<>();
-    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
-      @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        assertNull(error.get());
-        error.set(t);
-        return false;
-      }
-    }, () -> {
+    Runnable runnable = () -> {
       IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
       ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
-    });
-
+    };
+    
+    Throwable error;
+    if (expectedToBeLogged != null) {
+      error = LoggedErrorProcessor.executeAndReturnLoggedError(runnable);
+    }
+    else {
+      runnable.run();
+      error = null;
+    }
     assertTrue(run.get());
-    assertSame(expectedToBeLogged, error.get());
-  }
-
-  public void testPumpEventsForHierarchyMustExitOnIsCancelEventCondition() {
-    assert SwingUtilities.isEventDispatchThread();
-    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    CompletableFuture<Object> future = new CompletableFuture<>();
-    TestTimeOut cancelEventTime = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
-    JLabel component = new JLabel();
-    long start = System.currentTimeMillis();
-    ideEventQueue.pumpEventsForHierarchy(component, future, event -> {
-      if (cancelEventTime.isTimedOut()) {
-        ideEventQueue.postEvent(new TextEvent(component, -239){
-          @Override
-          public String paramString() {
-            return "my";
-          }
-        });
-      }
-      // post InvocationEvent to give getNextEvent work to do
-      SwingUtilities.invokeLater(EmptyRunnable.getInstance());
-      return "my".equals(event.paramString());
-    });
-    long elapsedMs = System.currentTimeMillis() - start;
-    // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment
-    assertTrue(String.valueOf(elapsedMs), cancelEventTime.isTimedOut());
+    assertSame(expectedToBeLogged, error);
   }
 
   public void testPumpEventsForHierarchyMustExitOnIsFutureDoneCondition() {
@@ -240,7 +218,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       }
       // post InvocationEvent to give getNextEvent work to do
       SwingUtilities.invokeLater(EmptyRunnable.getInstance());
-      return false;
     });
     long elapsedMs = System.currentTimeMillis() - start;
     // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment

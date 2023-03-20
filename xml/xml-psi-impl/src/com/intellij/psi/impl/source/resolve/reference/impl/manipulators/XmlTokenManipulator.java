@@ -26,9 +26,6 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class XmlTokenManipulator extends AbstractElementManipulator<XmlToken> {
   @Override
   public XmlToken handleContentChange(@NotNull XmlToken xmlToken, @NotNull TextRange range, String newContent) throws IncorrectOperationException {

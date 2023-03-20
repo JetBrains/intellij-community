@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -55,7 +55,7 @@ fun precomputeExtensionModel(): PrecomputedExtensionModel {
   )
 }
 
-private inline fun executeRegisterTask(modules: Sequence<IdeaPluginDescriptorImpl>, crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
+private inline fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (module in modules) {
     task(module)
     executeRegisterTaskForOldContent(mainPluginDescriptor = module, task = task)

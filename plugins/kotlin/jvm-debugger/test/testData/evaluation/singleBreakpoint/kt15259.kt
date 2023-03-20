@@ -15,3 +15,6 @@ fun main() {
 
 // EXPRESSION: this
 // RESULT: 'this' is not defined in this context
+
+// TODO: Muted on the IR Evaluator
+// This is affected by additional steps in initializers by the IR backend.

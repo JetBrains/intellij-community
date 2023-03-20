@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.StartupActionScriptManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.copy
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.isDirectory
 import java.io.IOException
@@ -28,11 +28,16 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
+import kotlin.io.path.exists
 
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = true
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

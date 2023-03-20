@@ -44,9 +44,10 @@ abstract public class PostfixTemplateTestCase extends LightJavaCodeInsightFixtur
                        "public final class Byte implements java.io.Serializable, Comparable<Byte> {}");
     myFixture.addClass("package java.lang;\n" +
                        "public interface Iterable<T> {}");
-    myFixture.addClass("package java.util;\n" +
-                       "public class ArrayList<E> extends AbstractList<E>\n" +
-                       "        implements List<E>, Iterable<E>, RandomAccess, Cloneable, java.io.Serializable {}");
+    myFixture.addClass("""
+                         package java.util;
+                         public class ArrayList<E> extends AbstractList<E>
+                                 implements List<E>, Iterable<E>, RandomAccess, Cloneable, java.io.Serializable {}""");
     myFixture.addClass("package java.lang;\n" +
                        "public interface AutoCloseable {}");
   }

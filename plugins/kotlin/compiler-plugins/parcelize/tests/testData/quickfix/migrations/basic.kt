@@ -1,4 +1,4 @@
-// "Migrate to ''Parceler'' companion object" "true"
+// "Migrate to 'Parceler' companion object" "true"
 // WITH_STDLIB
 
 package com.myapp.activity

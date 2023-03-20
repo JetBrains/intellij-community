@@ -15,16 +15,14 @@
  */
 package com.intellij.lang.impl;
 
-import com.intellij.util.containers.IntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-/**
- * @author peter
- */
+@SuppressWarnings("SSBasedInspection")
 final class MarkerPool extends ObjectArrayList<PsiBuilderImpl.ProductionMarker> {
   private final PsiBuilderImpl myBuilder;
-  private final IntStack myFreeStartMarkers = new IntStack();
-  private final IntStack myFreeErrorItems = new IntStack();
+  private final IntArrayList myFreeStartMarkers = new IntArrayList();
+  private final IntArrayList myFreeErrorItems = new IntArrayList();
 
   MarkerPool(PsiBuilderImpl builder) {
     myBuilder = builder;
@@ -33,7 +31,7 @@ final class MarkerPool extends ObjectArrayList<PsiBuilderImpl.ProductionMarker> 
 
   PsiBuilderImpl.StartMarker allocateStartMarker() {
     if (myFreeStartMarkers.size() > 0) {
-      return (PsiBuilderImpl.StartMarker)get(myFreeStartMarkers.pop());
+      return (PsiBuilderImpl.StartMarker)get(myFreeStartMarkers.popInt());
     }
 
     PsiBuilderImpl.StartMarker marker = new PsiBuilderImpl.StartMarker(size(), myBuilder);
@@ -43,7 +41,7 @@ final class MarkerPool extends ObjectArrayList<PsiBuilderImpl.ProductionMarker> 
 
   PsiBuilderImpl.ErrorItem allocateErrorItem() {
     if (myFreeErrorItems.size() > 0) {
-      return (PsiBuilderImpl.ErrorItem)get(myFreeErrorItems.pop());
+      return (PsiBuilderImpl.ErrorItem)get(myFreeErrorItems.popInt());
     }
     
     PsiBuilderImpl.ErrorItem item = new PsiBuilderImpl.ErrorItem(size(), myBuilder);

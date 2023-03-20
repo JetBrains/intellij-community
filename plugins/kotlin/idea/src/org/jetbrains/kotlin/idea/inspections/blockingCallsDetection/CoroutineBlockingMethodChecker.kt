@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.blockingCallsDetection
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -8,16 +8,15 @@ import com.intellij.codeInspection.blockingCallsDetection.MethodContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isCalledInsideNonIoContext
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isInSuspendLambdaOrFunction
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isInsideFlowChain
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.isKotlinxOnClasspath
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -54,6 +53,6 @@ internal class CoroutineBlockingMethodChecker : BlockingMethodChecker {
     }
 
     private fun getLanguageVersionSettings(psiElement: PsiElement): LanguageVersionSettings {
-        return psiElement.module?.languageVersionSettings ?: psiElement.project.getLanguageVersionSettings()
+        return psiElement.module?.languageVersionSettings ?: psiElement.project.languageVersionSettings
     }
 }

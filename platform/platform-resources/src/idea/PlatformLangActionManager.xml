@@ -43,7 +43,6 @@
     <group id="InspectCodeActionInPopupMenus">
       <reference ref="InspectCode"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.SecondaryActions">
@@ -58,12 +57,10 @@
     </group>
 
     <group id="ProblemsView.ToolWindow.Toolbar">
-      <group id="ProblemsView.Options" icon="AllIcons.Actions.Show" popup="true">
+      <group id="ProblemsView.Options" icon="AllIcons.Actions.GroupBy" popup="true">
+        <separator key="group.ProblemsView.Show.text"/>
         <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
-        <separator/>
-        <action id="ProblemsView.GroupByToolId"
-                icon="AllIcons.ObjectBrowser.SortByType"
-                class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
+        <separator key="group.ProblemsView.SortBy.text"/>
         <action id="ProblemsView.SortFoldersFirst"
                 icon="AllIcons.ObjectBrowser.SortByType"
                 class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
@@ -73,14 +70,18 @@
         <action id="ProblemsView.SortByName"
                 icon="AllIcons.ObjectBrowser.Sorted"
                 class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
+        <separator/>
+        <action id="ProblemsView.GroupByToolId"
+                icon="AllIcons.ObjectBrowser.SortByType"
+                class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
       </group>
-      <reference ref="ProblemsView.ShowPreview"/>
-      <reference ref="ExpandAll"/>
-      <reference ref="CollapseAll"/>
       <action id="ProblemsView.QuickFixes"
               icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"
               class="com.intellij.analysis.problemsView.toolWindow.ShowQuickFixesAction"/>
+      <reference ref="ProblemsView.ShowPreview"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.TreePopup">

@@ -1,0 +1,11 @@
+enum class SomeEnum {
+    companion object{
+        fun values(){
+
+        }
+
+        fun main(){
+            values()
+        }
+    }
+}

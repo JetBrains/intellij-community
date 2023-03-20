@@ -1,69 +1,80 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.Cell
+import com.intellij.ui.layout.CellBuilder
+import com.intellij.ui.layout.PropertyBinding
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.JRadioButton
 import kotlin.reflect.KMutableProperty0
 
-class CheckboxDescriptor(@NlsContexts.Checkbox val name: String,
-                         val binding: PropertyBinding<Boolean>,
-                         @NlsContexts.DetailedDescription val comment: String? = null,
-                         @Nls val groupName: String? = null) {
-  constructor(@NlsContexts.Checkbox name: String, mutableProperty: KMutableProperty0<Boolean>,
-              @NlsContexts.DetailedDescription comment: String? = null, @Nls groupName: String? = null)
-    : this(name, mutableProperty.toBinding(), comment, groupName)
+class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
+                         @ApiStatus.Internal val getter: () -> Boolean,
+                         @ApiStatus.Internal val setter: (value: Boolean) -> Unit,
+                         internal val comment: @NlsContexts.DetailedDescription String? = null,
+                         internal val groupName: @Nls String? = null) {
 
-  fun asUiOptionDescriptor(): BooleanOptionDescription = asOptionDescriptor {
-    UISettings.instance.fireUISettingsChanged()
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("PropertyBinding is deprecated")
+  constructor(name: @NlsContexts.Checkbox String,
+              binding: PropertyBinding<Boolean>,
+              comment: @NlsContexts.DetailedDescription String? = null,
+              groupName: @Nls String? = null)
+    : this(name, binding.get, binding.set, comment, groupName)
+
+  constructor(name: @NlsContexts.Checkbox String,
+              mutableProperty: KMutableProperty0<Boolean>,
+              comment: @NlsContexts.DetailedDescription String? = null,
+              groupName: @Nls String? = null)
+    : this(name, { mutableProperty.get() }, { mutableProperty.set(it) }, comment, groupName)
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("PropertyBinding is deprecated")
+  fun getBinding(): PropertyBinding<Boolean> {
+    return PropertyBinding(getter, setter)
+  }
+
+  fun asUiOptionDescriptor(): BooleanOptionDescription {
+    return asOptionDescriptor {
+      UISettings.getInstance().fireUISettingsChanged()
+    }
   }
 
   fun asOptionDescriptor(): BooleanOptionDescription = asOptionDescriptor(null)
 
   fun asOptionDescriptor(fireUpdated: (() -> Unit)?): BooleanOptionDescription {
-    val optionName = when {
-      groupName != null -> {
-        val prefix = groupName.trim().removeSuffix(":")
-        "$prefix: $name"
-      }
-      else -> name
+    val optionName = if (groupName == null) {
+      name
     }
-    return object : BooleanOptionDescription(optionName, ID) {
+    else {
+      "${groupName.trim().removeSuffix(":")}: $name"
+    }
+    return object : BooleanOptionDescription(optionName, EDITOR_TABS_OPTIONS_ID) {
       override fun setOptionState(enabled: Boolean) {
-        binding.set(enabled)
+        setter(enabled)
         fireUpdated?.invoke()
       }
 
-      override fun isOptionEnabled() = binding.get.invoke()
+      override fun isOptionEnabled() = getter.invoke()
     }
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
-  return checkBox(ui.name, ui.binding.get, ui.binding.set, ui.comment)
-}
-
-fun Cell.radioButton(ui: CheckboxDescriptor): CellBuilder<JRadioButton> {
-  return radioButton(ui.name, ui.binding.get, ui.binding.set, ui.comment)
+  return checkBox(ui.name, ui.getter, ui.setter, ui.comment)
 }
 
 fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
   val result = checkBox(ui.name)
-    .bindSelected(ui.binding.get, ui.binding.set)
-  ui.comment?.let { result.comment(it) }
-  return result
-}
-
-fun Row.radioButton(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBRadioButton> {
-  val result = radioButton(ui.name)
-    .bindSelected(ui.binding.get, ui.binding.set)
+    .bindSelected(ui.getter, ui.setter)
   ui.comment?.let { result.comment(it) }
   return result
 }

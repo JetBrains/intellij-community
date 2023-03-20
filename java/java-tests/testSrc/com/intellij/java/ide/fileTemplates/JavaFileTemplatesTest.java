@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
@@ -33,7 +33,7 @@ public class JavaFileTemplatesTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testManyTemplates() {
     FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(getProject());
-    templateManager.getState().RECENT_TEMPLATES.clear();
+    templateManager.getState().recentTemplates.clear();
     FileTemplate[] before = templateManager.getAllTemplates();
     try {
       for (int i = 0; i < 30; i++) {
@@ -47,7 +47,7 @@ public class JavaFileTemplatesTest extends LightJavaCodeInsightFixtureTestCase {
     }
     finally {
       templateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(before));
-      templateManager.getState().RECENT_TEMPLATES.clear();
+      templateManager.getState().recentTemplates.clear();
     }
   }
 }

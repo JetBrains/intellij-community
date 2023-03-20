@@ -4,7 +4,11 @@
   "author": "JetBrains",
   "editorScheme": "/themes/Light.xml",
 
-  "ui": {},
+  "ui": {
+    "ToolWindow": {
+      "background": "#FFFFFF"
+    }
+  },
   "iconColorsOnSelection": {
     "#767a8a": "#ffffff",
     "#6e6e6e": "#afb1b3",

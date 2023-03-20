@@ -16,6 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class EmptyFinallyBlockInspection extends BaseInspection {
+public class EmptyFinallyBlockInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -63,7 +64,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
       if (tryStatement == null || tryStatement.getResourceList() != null || tryStatement.getParent() == null) {
@@ -97,7 +98,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
       if (tryStatement == null) {
@@ -111,8 +112,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
     }
 
     private static void deleteUntilFinally(PsiElement element) {
-      if (element instanceof PsiJavaToken) {
-        final PsiJavaToken keyword = (PsiJavaToken)element;
+      if (element instanceof PsiJavaToken keyword) {
         final IElementType tokenType = keyword.getTokenType();
         if (tokenType.equals(JavaTokenType.FINALLY_KEYWORD)) {
           keyword.delete();

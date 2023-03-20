@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun component1(): Int"
 
 open class X {
     operator fun <caret>component1(): Int = 0
@@ -27,3 +28,6 @@ fun test() {
     val (x1, y1) = g()
     val (x2, y2) = h()
 }
+
+
+// IGNORE_FIR_LOG

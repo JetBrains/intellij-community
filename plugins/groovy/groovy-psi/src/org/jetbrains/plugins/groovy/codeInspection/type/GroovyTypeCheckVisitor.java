@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisablerKt;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrCastFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrChangeVariableType;
 import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.*;
@@ -66,7 +67,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     public void registerProblem(@NotNull PsiElement highlightElement,
                                 @NotNull ProblemHighlightType highlightType,
                                 @NotNull String message,
-                                LocalQuickFix @NotNull ... fixes) {
+                                @NotNull LocalQuickFix @NotNull ... fixes) {
       GroovyTypeCheckVisitor.this.registerError(highlightElement, message, fixes, highlightType);
     }
   };
@@ -319,15 +320,18 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                     @NotNull PsiElement elementToHighlight) {
     if (hasTupleInitializer(expression)) return;
     final PsiType returnType = PsiImplUtil.inferReturnType(expression);
-    if (returnType == null || PsiType.VOID.equals(returnType)) return;
+    if (returnType == null || PsiTypes.voidType().equals(returnType)) return;
     processAssignment(returnType, expression, elementToHighlight, "cannot.return.type", context, Position.RETURN_VALUE);
   }
 
   @Override
   protected void registerError(@NotNull PsiElement location,
                                @InspectionMessage @NotNull String description,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
+    if (FileTypeInspectionDisablerKt.isTypecheckingDisabled(location.getContainingFile())) {
+      return;
+    }
     if (CompileStaticUtil.isCompileStatic(location)) {
       // filter all errors here, error will be highlighted by annotator
       if (highlightType != ProblemHighlightType.GENERIC_ERROR) {

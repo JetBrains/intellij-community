@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +28,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
  * <p/>
  * <b>Note:</b> non-abstract subclasses of this class are expected to be marked by {@link State} annotation configured
  * to be stored under a distinct name at a {@link StoragePathMacros#CACHE_FILE}.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExternalSystemLocalSettings.State> {
   protected S state;
@@ -166,8 +163,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     state.projectBuildClasspath = value;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void fillState(@NotNull State otherState) {
     otherState.recentTasks.clear();
     otherState.availableProjects = state.availableProjects;

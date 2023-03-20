@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.lang
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.vfs.VirtualFile
 import training.learn.exceptons.NoSdkException
 import training.project.FileUtils
 import training.project.ProjectUtils
@@ -35,8 +36,13 @@ abstract class AbstractLangSupport : LangSupport {
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
     ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this,
-                                                     OpenProjectTask(projectToClose = projectToClose),
+                                                     OpenProjectTask { this.projectToClose = projectToClose },
                                                      postInitCallback)
+  }
+
+  override fun openOrImportLearningProject(projectRootDirectory: VirtualFile, openProjectTask: OpenProjectTask): Project {
+    val nioPath = projectRootDirectory.toNioPath()
+    return ProjectUtil.openOrImport(nioPath, openProjectTask) ?: error("Cannot create project for ${primaryLanguage} at $nioPath")
   }
 
   override fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter?): Boolean {

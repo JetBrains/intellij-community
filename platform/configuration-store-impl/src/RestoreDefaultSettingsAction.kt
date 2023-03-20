@@ -2,11 +2,13 @@
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.ExperimentalUI
 import java.nio.file.Path
 
 private class RestoreDefaultSettingsAction : DumbAwareAction() {
@@ -16,6 +18,8 @@ private class RestoreDefaultSettingsAction : DumbAwareAction() {
     }
 
     CustomConfigMigrationOption.StartWithCleanConfig.writeConfigMarkerFile()
+
+    ExperimentalUI.getInstance().setNewUIInternal(false, false)
 
     invokeLater {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
@@ -35,5 +39,9 @@ private class RestoreDefaultSettingsAction : DumbAwareAction() {
       restartButtonText,
       CommonBundle.getCancelButtonText(), Messages.getWarningIcon()
     )
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

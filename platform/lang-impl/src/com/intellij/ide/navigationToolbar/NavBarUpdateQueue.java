@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
@@ -29,7 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarUpdateQueue extends MergingUpdateQueue {
   private final AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
   private final Alarm myUserActivityAlarm = new Alarm(this);
@@ -127,8 +129,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       }
       else {
         final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-        if (window instanceof Dialog) {
-          final Dialog dialog = (Dialog)window;
+        if (window instanceof Dialog dialog) {
           if (dialog.isModal() && !SwingUtilities.isDescendingFrom(myPanel, dialog)) {
             return;
           }
@@ -209,7 +210,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     myPanel.revalidate();
     myPanel.repaint();
 
-    queueAfterAll(() -> myPanel.scrollSelectionToVisible(), ID.SCROLL_TO_VISIBLE);
+    queueAfterAll(() -> myPanel.scrollSelectionToVisible(false), ID.SCROLL_TO_VISIBLE);
   }
 
   private void queueRevalidate(@Nullable final Runnable after) {
@@ -257,10 +258,6 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         }
       }
     });
-  }
-
-  boolean isUpdating() {
-    return myModelUpdating.get();
   }
 
   private abstract class AfterModelUpdate extends Update {

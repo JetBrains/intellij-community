@@ -1,6 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: usages
-// FIR_COMPARISON
+// PSI_ELEMENT_AS_TITLE: "class A<T>"
+
 
 class <caret>A<T>
 

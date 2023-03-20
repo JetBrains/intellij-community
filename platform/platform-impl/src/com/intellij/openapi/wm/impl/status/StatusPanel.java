@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ClipboardSynchronizer;
-import com.intellij.ide.IdeBundle;
-import com.intellij.notification.EventLog;
+import com.intellij.notification.ActionCenter;
 import com.intellij.notification.Notification;
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
+import com.intellij.notification.impl.StatusMessage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -38,17 +37,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author peter
- */
-class StatusPanel extends JPanel {
+final class StatusPanel extends JPanel {
   private Notification myCurrentNotification;
   private @NlsSafe @Nullable String myTimeText;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
   private Action myCopyAction;
-  private Action myClearAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -83,7 +78,7 @@ class StatusPanel extends JPanel {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myCurrentNotification != null || myAfterClick) {
-          EventLog.toggleLog(getActiveProject(), myCurrentNotification);
+          ActionCenter.toggleLog(getActiveProject());
           myAfterClick = true;
           myTextPanel.setExplicitSize(myTextPanel.getSize());
           UIUtil.setCursor(myTextPanel, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -111,12 +106,6 @@ class StatusPanel extends JPanel {
           JBPopupMenu menu = new JBPopupMenu();
           menu.add(new JBMenuItem(myCopyAction));
 
-          if (myClearAction == null) {
-            myClearAction = createClearAction();
-          }
-          if (myClearAction != null) {
-            menu.add(new JBMenuItem(myClearAction));
-          }
           JBPopupMenu.showByEvent(e, menu);
         }
       }
@@ -140,25 +129,6 @@ class StatusPanel extends JPanel {
       @Override
       public boolean isEnabled() {
         return !getText().isEmpty();
-      }
-    };
-  }
-
-  private Action createClearAction() {
-    Project project = getActiveProject();
-    if (project == null) {
-      return null;
-    }
-    return new AbstractAction(IdeBundle.message("clear.event.log.action", IdeBundle.message("toolwindow.stripe.Event_Log")),
-                              AllIcons.Actions.GC) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EventLog.doClear(project);
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return EventLog.isClearAvailable(project);
       }
     };
   }
@@ -197,9 +167,9 @@ class StatusPanel extends JPanel {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Project project = getActiveProject();
-    Trinity<Notification, @NlsContexts.StatusBarText String, Long> statusMessage = EventLog.getStatusMessage(project);
+    StatusMessage statusMessage = NotificationsToolWindowFactory.Companion.getStatusMessage(project);
     Alarm alarm = getAlarm();
-    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.first : null;
+    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.notification() : null;
 
     if (alarm != null) {
       alarm.cancelAllRequests();
@@ -211,9 +181,9 @@ class StatusPanel extends JPanel {
         @Override
         public void run() {
           assert statusMessage != null;
-          String text = statusMessage.second;
-          if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
-            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+          String text = statusMessage.text();
+          if (myDirty || System.currentTimeMillis() - statusMessage.stamp() >= DateFormatUtil.MINUTE) {
+            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.stamp())) + ")";
             text += myTimeText;
           }
           else {

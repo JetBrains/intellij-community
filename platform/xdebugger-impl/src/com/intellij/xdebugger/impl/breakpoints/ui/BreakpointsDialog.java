@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -191,6 +191,11 @@ public class BreakpointsDialog extends DialogWrapper {
       super(rule.getPresentableName(), rule.getIcon());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -431,7 +436,10 @@ public class BreakpointsDialog extends DialogWrapper {
 
   @Override
   public void toFront() {
-    getWindow().setBounds(getWindow().getBounds()); // will force fit to screen
+    Window window = getWindow();
+    if (window != null) {
+      window.setBounds(window.getBounds()); // will force fit to screen
+    }
     super.toFront();
   }
 

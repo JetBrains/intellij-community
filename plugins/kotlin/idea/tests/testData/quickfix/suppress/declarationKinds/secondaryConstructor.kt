@@ -3,3 +3,5 @@
 class C {
     constructor(s: String?<caret>?)
 }
+
+// IGNORE_FIR

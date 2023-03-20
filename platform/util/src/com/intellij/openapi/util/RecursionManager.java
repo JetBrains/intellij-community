@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -48,8 +48,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@code A()->B()->C()->null} returns the same value as {@code A()->B()->C()->A()->B()->C()->null} etc. If your functions lack that quality
  * (e.g. if they add items to some list), you won't get stable caching results ever, and your code will produce unpredictable results
  * with hard-to-catch bugs. Therefore, please strive for idempotence.
- *
- * @author peter
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class RecursionManager {
@@ -171,8 +169,8 @@ public final class RecursionManager {
    * Used in pair with {@link RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
    * not depending on anything incomplete due to recursive prevention policies.
    * A typical usage is this:
-   * {@code
-   *  RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
+   * <pre>{@code
+   *   RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
    *
    *   Result result = doComputation();
    *
@@ -180,7 +178,7 @@ public final class RecursionManager {
    *     cache(result);
    *   }
    *   return result;
-   * }
+   * }</pre>
    * @return an object representing the current stack state, managed by {@link RecursionManager}
    */
   @NotNull

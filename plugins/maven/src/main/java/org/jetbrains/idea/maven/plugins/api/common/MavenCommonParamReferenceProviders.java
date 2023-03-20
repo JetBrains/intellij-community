@@ -21,9 +21,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.charset.Charset;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenCommonParamReferenceProviders {
 
   private MavenCommonParamReferenceProviders() {

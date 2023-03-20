@@ -7,9 +7,6 @@ import org.jetbrains.idea.svn.auth.AuthenticationService;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public abstract class AuthCallbackCase {
   protected final Url myUrl;
   @NotNull protected final AuthenticationService myAuthenticationService;

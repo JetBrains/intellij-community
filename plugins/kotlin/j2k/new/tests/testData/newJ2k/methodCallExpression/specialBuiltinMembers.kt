@@ -1,5 +1,9 @@
+// ERROR: None of the following functions can be called with the arguments supplied:  public open fun parseInt(p0: String!): Int defined in java.lang.Integer public open fun parseInt(p0: String!, p1: Int): Int defined in java.lang.Integer
+// ERROR: None of the following functions can be called with the arguments supplied:  public open fun parseLong(p0: String!): Long defined in java.lang.Long public open fun parseLong(p0: String!, p1: Int): Long defined in java.lang.Long
 internal enum class E {
-    A, B, C
+    A,
+    B,
+    C
 }
 
 internal class A {
@@ -36,17 +40,38 @@ internal class A {
         }
     }
 
-    fun kt21504() {
-        val b = "1".toByte()
-        val s = "1".toShort()
-        val i = "1".toInt()
-        val l = "1".toLong()
-        val f = "1".toFloat()
-        val d = "1".toDouble()
-        val b2 = "1".toByte(10)
-        val s2 = "1".toShort(10)
-        val i2 = "1".toInt(10)
-        val l2 = "1".toLong(10)
+    fun numberConversions(b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double, str: String) {
+        b
+        s
+        i
+        l
+        f
+        d
+        str.toByte()
+        str.toByte()
+        str.toByte(i)
+        str.toByte(i)
+        str.toShort()
+        str.toShort()
+        str.toShort(i)
+        str.toShort(i)
+        str.toInt()
+        str.toInt()
+        str.toInt(i)
+        str.toInt(i)
+        str.toLong()
+        str.toLong()
+        str.toLong(i)
+        str.toLong(i)
+
+        // These functions were added in JDK 9, hence the error on test JDK 8 (None of the following functions can be called...)
+        // Also, they have no equivalent in Kotlin stdlib
+        Integer.parseInt(str, i, i, i)
+        java.lang.Long.parseLong(str, i, i, i)
+        str.toFloat()
+        str.toFloat()
+        str.toDouble()
+        str.toDouble()
     }
 
     fun kt7940() {

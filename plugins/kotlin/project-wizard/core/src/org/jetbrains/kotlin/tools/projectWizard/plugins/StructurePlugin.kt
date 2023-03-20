@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins
 
 
@@ -41,8 +41,6 @@ class StructurePlugin(context: Context) : Plugin(context) {
                     KotlinNewProjectWizardBundle.message("plugin.structure.setting.location.error.is.not.empty")
                 }
             }
-
-            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.location.tooltip")
         }
         val name by stringSetting(
             KotlinNewProjectWizardBundle.message("plugin.structure.setting.name"),
@@ -50,7 +48,6 @@ class StructurePlugin(context: Context) : Plugin(context) {
         ) {
             shouldNotBeBlank()
             validate(StringValidators.shouldBeValidIdentifier(title, Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES))
-            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.name.tooltip")
         }
 
         val groupId by stringSetting(

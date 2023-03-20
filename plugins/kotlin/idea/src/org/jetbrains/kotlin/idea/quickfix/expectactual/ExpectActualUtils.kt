@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -10,30 +11,30 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
+import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EmptyOrTemplate
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NoBody
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.BodyType.EMPTY_OR_TEMPLATE
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.BodyType.NO_BODY
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.Companion.create
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.inspections.findExistingEditor
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.hasInlineModifier
 import org.jetbrains.kotlin.idea.util.isEffectivelyActual
-import org.jetbrains.kotlin.idea.util.mustHaveValOrVar
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -41,9 +42,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker
-import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -68,7 +69,7 @@ fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration): K
             if (existingFile.declarations.isNotEmpty() &&
                 existingPackageDirective?.fqName != packageDirective?.fqName
             ) {
-                val newName = KotlinNameSuggester.suggestNameByName(fileName) {
+                val newName = Fe10KotlinNameSuggester.suggestNameByName(fileName) {
                     directory.findFile("$it.kt") == null
                 } + ".kt"
                 createKotlinFile(newName, directory, packageName)
@@ -171,7 +172,7 @@ internal fun KtPsiFactory.generateClassOrObject(
         }
         generatedClass.addDeclaration(generatedDeclaration)
     }
-    if (!originalClass.isAnnotation() && !originalClass.hasInlineModifier()) {
+    if (!originalClass.isAnnotation() && originalClass.safeAs<KtClass>()?.isInlineOrValue() == false) {
         for (originalProperty in originalClass.primaryConstructorParameters) {
             if (!originalProperty.hasValOrVar() || !originalProperty.hasActualModifier()) continue
             val descriptor = originalProperty.toDescriptor() as? PropertyDescriptor ?: continue
@@ -257,10 +258,10 @@ private fun KtPsiFactory.repairSuperTypeList(
 }
 
 private val forbiddenAnnotationFqNames = setOf(
-    ExpectedActualDeclarationChecker.OPTIONAL_EXPECTATION_FQ_NAME,
+    OptionalAnnotationUtil.OPTIONAL_EXPECTATION_FQ_NAME,
     FqName("kotlin.ExperimentalMultiplatform"),
-    ExperimentalUsageChecker.OPT_IN_FQ_NAME,
-    ExperimentalUsageChecker.OLD_USE_EXPERIMENTAL_FQ_NAME
+    OptInNames.OPT_IN_FQ_NAME,
+    FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 )
 
 internal fun generateCallable(
@@ -274,7 +275,7 @@ internal fun generateCallable(
     descriptor.checkAccessibility(checker)
     val memberChooserObject = create(
         originalDeclaration, descriptor, descriptor,
-        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NO_BODY else EMPTY_OR_TEMPLATE
+        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NoBody else EmptyOrTemplate
     )
     return memberChooserObject.generateMember(
         targetClass = generatedClass,
@@ -439,9 +440,9 @@ fun TypeAccessibilityChecker.Companion.typesToString(types: Collection<FqName?>,
     }
 }
 
-fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>): HashSet<String> {
+fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>): Set<String> {
     var classes = elements.filterIsInstance<KtClassOrObject>()
-    while (true) {
+    while (classes.isNotEmpty()) {
         val existingNames = classes.mapNotNull { it.fqName?.asString() }.toHashSet()
         existingTypeNames = existingNames
 
@@ -450,4 +451,6 @@ fun TypeAccessibilityChecker.findAndApplyExistingClasses(elements: Collection<Kt
 
         classes = newExistingClasses
     }
+
+    return existingTypeNames
 }

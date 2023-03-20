@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class SearchableOptionsRegistrar{
+  public static final @NlsSafe String SETTINGS_GROUP_SEPARATOR = " | ";
   public static final String SEARCHABLE_OPTIONS_XML_NAME = "searchableOptions";
 
   public static SearchableOptionsRegistrar getInstance() {

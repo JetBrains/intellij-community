@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
@@ -10,8 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -49,14 +48,14 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
                                             Alarm.ThreadToUse.POOLED_THREAD)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      project.messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-        override fun projectClosing(closedProject: Project) {
-          if (project === closedProject) {
+      project.messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosing(project: Project) {
+          if (this@VcsIgnoreManagerImpl.project === project) {
             try {
               @Suppress("TestOnlyProblems")
               ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.SECONDS)
             }
-            catch (e: RuntimeException) {
+            catch (e: Exception) {
               LOG.warn("Queue '$ignoreRefreshQueue' wait for all executed failed with error:", e)
             }
           }
@@ -93,7 +92,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
   }
 
   private fun getDirectoryVcsIgnoredStatus(project: Project, dirPathString: String): IgnoredCheckResult {
-    val dirPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dirPathString, true)
+    val dirPath = VcsContextFactory.getInstance().createFilePath(dirPathString, true)
     val vcsRoot = VcsUtil.getVcsRootFor(project, dirPath) ?: return NotIgnored
     return getCheckerForFile(project, dirPath)?.isFilePatternIgnored(vcsRoot, dirPathString) ?: NotIgnored
   }
@@ -174,7 +173,7 @@ private fun checkConfigurationVcsIgnored(project: Project, configurationFileName
   val stateStore = project.stateStore
   val dotIdea = stateStore.directoryStorePath
   if (dotIdea != null) {
-    val dotIdeaVcsPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dotIdea, true)
+    val dotIdeaVcsPath = VcsContextFactory.getInstance().createFilePath(dotIdea, true)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, dotIdeaVcsPath) ?: return NotIgnored
     val filePattern = "${dotIdea.systemIndependentPath}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml" // NON-NLS
     return getCheckerForFile(project, dotIdeaVcsPath)
@@ -182,7 +181,7 @@ private fun checkConfigurationVcsIgnored(project: Project, configurationFileName
   }
   else {
     val projectFile = stateStore.projectFilePath
-    val projectFileVcsPath = VcsContextFactory.SERVICE.getInstance().createFilePath(projectFile, false)
+    val projectFileVcsPath = VcsContextFactory.getInstance().createFilePath(projectFile, false)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, projectFileVcsPath) ?: return NotIgnored
     return getCheckerForFile(project, projectFileVcsPath)
              ?.isIgnored(vcsRootForIgnore, projectFile) ?: NotIgnored

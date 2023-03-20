@@ -32,7 +32,7 @@ class PythonSmartCompletionLesson
         task("SmartTypeCompletion") {
           text(PythonLessonsBundle.message("python.smart.completion.use.smart.completion",
                                            code("x"), action(it)))
-          triggerByListItemAndHighlight { ui ->
+          triggerAndBorderHighlight().listItem { ui ->
             ui.isToStringContains(methodName)
           }
           proposeRestoreMe()

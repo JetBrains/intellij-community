@@ -1,16 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.CtrlMouseAction;
+import com.intellij.codeInsight.navigation.CtrlMouseData;
 import com.intellij.codeInsight.navigation.CtrlMouseInfo;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
 import com.intellij.find.actions.ShowUsagesAction;
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -19,32 +18,24 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EDT;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -89,9 +80,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return GotoDeclarationOrUsageHandler2.INSTANCE;
   }
 
+  @Deprecated
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
     return GotoDeclarationOrUsageHandler2.getCtrlMouseInfo(editor, file, offset);
+  }
+
+  @Override
+  public @Nullable CtrlMouseData getCtrlMouseData(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    return GotoDeclarationOrUsageHandler2.getCtrlMouseData(editor, file, offset);
   }
 
   @Override
@@ -123,98 +120,42 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
   }
 
-  static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
-    if (element.getContainingFile() == currentFile && !currentEditor.isDisposed()) {
-      int offset = element.getTextOffset();
-      PsiElement leaf = currentFile.findElementAt(offset);
-      // check that element is really physically inside the file
-      // there are fake elements with custom navigation (e.g. opening URL in browser) that override getContainingFile for various reasons
-      if (leaf != null && PsiTreeUtil.isAncestor(element, leaf, false)) {
-        Project project = element.getProject();
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
-        }, "", null);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * @deprecated use chooseAmbiguousTarget(Project, Editor, int, PsiElementProcessor, String, PsiElement[])
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  // returns true if processor is run or is going to be run after showing popup
+  @SuppressWarnings("UnusedReturnValue")
   public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull @PopupTitle String titlePattern,
-                                              PsiElement @Nullable [] elements) {
-    Project project = editor.getProject();
-    if (project == null) {
-      return false;
-    }
-    return chooseAmbiguousTarget(project, editor, offset, processor, titlePattern, elements);
-  }
-
-  // returns true if processor is run or is going to be run after showing popup
-  public static boolean chooseAmbiguousTarget(@NotNull final Project project,
-                                              @NotNull Editor editor,
-                                              int offset,
-                                              @NotNull PsiElementProcessor<? super PsiElement> processor,
-                                              @NotNull @PopupTitle String titlePattern,
-                                              PsiElement @Nullable [] elements) {
+                                              final PsiElement @Nullable [] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return false;
     }
 
-    final PsiElement[] finalElements = elements;
-    Pair<PsiElement[], PsiReference> pair =
-      ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference"),
-                                    () -> doChooseAmbiguousTarget(editor, offset, finalElements));
-
-    elements = pair.first;
-    PsiReference reference = pair.second;
-
-    if (elements.length == 1) {
-      PsiElement element = elements[0];
-      LOG.assertTrue(element != null);
-      processor.execute(element);
-      return true;
-    }
-    if (elements.length > 1) {
-      String title;
-
-      if (reference == null) {
-        title = titlePattern;
+    Ref<PsiReference> ref = Ref.create();
+    return new PsiTargetNavigator<>(() -> {
+      PsiReference reference = TargetElementUtil.findReference(editor, offset);
+      ref.set(reference);
+      if (elements == null || elements.length == 0) {
+        return reference == null ? Collections.emptyList() : suggestCandidates(reference);
       }
-      else {
-        final TextRange range = reference.getRangeInElement();
-        final String elementText = reference.getElement().getText();
-        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(),
-                       Arrays.toString(elements) + ";" + reference);
-        final String refText = range.substring(elementText);
-        title = MessageFormat.format(titlePattern, refText);
-      }
-
-      NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
-      return true;
-    }
-    return false;
+      return Arrays.asList(elements);
+    }).elementsConsumer((elements1, navigator) -> {
+      String title = getTitle(titlePattern, elements1, ref.get());
+      navigator.title(title);
+    }).navigate(editor, null, element -> processor.execute(element));
   }
 
-  @NotNull
-  private static Pair<PsiElement[], PsiReference> doChooseAmbiguousTarget(@NotNull Editor editor,
-                                                                          int offset,
-                                                                          PsiElement @Nullable [] elements) {
-    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
-
-    if (elements == null || elements.length == 0) {
-      elements = reference == null ? PsiElement.EMPTY_ARRAY
-                                   : PsiUtilCore.toPsiElementArray(suggestCandidates(reference));
+  @PopupTitle
+  private static String getTitle(@PopupTitle @NotNull String titlePattern, Collection<PsiElement> elements, PsiReference reference) {
+    if (reference == null) {
+      return titlePattern;
     }
-    return new Pair<>(elements, reference);
+    final TextRange range = reference.getRangeInElement();
+    final String elementText = reference.getElement().getText();
+    LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(),
+                   elements.toString() + ";" + reference);
+    final String refText = range.substring(elementText);
+    return MessageFormat.format(titlePattern, refText);
   }
 
   @NotNull
@@ -272,8 +213,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     }
 
     // if no references found in injected fragment, try outer document
-    if (editor instanceof EditorWindow) {
-      EditorWindow window = (EditorWindow)editor;
+    if (editor instanceof EditorWindow window) {
       return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset), lookupAccepted);
     }
 
@@ -282,18 +222,20 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
+    InputEvent inputEvent = event.getInputEvent();
+    boolean isMouseShortcut = inputEvent instanceof MouseEvent && ActionPlaces.MOUSE_SHORTCUT.equals(event.getPlace());
+
     if (event.getProject() == null ||
         event.getData(EditorGutter.KEY) != null ||
-        Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
+        !isMouseShortcut && Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       event.getPresentation().setEnabled(false);
       return;
     }
 
-    InputEvent inputEvent = event.getInputEvent();
     Editor editor = event.getData(CommonDataKeys.EDITOR);
-    if (editor != null && inputEvent instanceof MouseEvent && event.getPlace().equals(ActionPlaces.MOUSE_SHORTCUT) &&
-        EDT.isCurrentThreadEdt() &&
-        !EditorUtil.isPointOverText(editor, new RelativePoint((MouseEvent)inputEvent).getPoint(editor.getContentComponent()))) {
+    if (editor != null && isMouseShortcut &&
+        !Boolean.TRUE.equals(event.getUpdateSession().compute(this, "isPointOverText", ActionUpdateThread.EDT, () ->
+          event.getData(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT)))) {
       event.getPresentation().setEnabled(false);
       return;
     }

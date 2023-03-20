@@ -8,9 +8,6 @@ import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.auth.CertificateAuthenticationData;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TwoWaySslCallback extends UsernamePasswordCallback {
 
   private static final @NonNls String ACCESS_TO_PREFIX = "Access to ";
@@ -33,8 +30,7 @@ public class TwoWaySslCallback extends UsernamePasswordCallback {
 
   @Override
   public void updateParameters(@NotNull Command command) {
-    if (myAuthentication instanceof CertificateAuthenticationData) {
-      CertificateAuthenticationData auth = (CertificateAuthenticationData)myAuthentication;
+    if (myAuthentication instanceof CertificateAuthenticationData auth) {
 
       // TODO: Seems that config option should be specified for concrete server and not for global group.
       // as in that case it could be overriden by settings in config file

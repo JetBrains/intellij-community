@@ -1,0 +1,78 @@
+<idea-plugin package="org.jetbrains.plugins.gitlab">
+  <name>GitLab</name>
+  <id>org.jetbrains.plugins.gitlab</id>
+  <vendor>JetBrains</vendor>
+  <category>Version Controls</category>
+  <description>
+    <![CDATA[
+      <p>Provides integration with GitLab.</p>
+      <p>To configure, open <b>Settings / Preferences</b> and go to Version Control | GitLab.</p>
+      <p>Requires the Git plugin.</p>
+      ]]>
+  </description>
+
+  <resource-bundle>messages.GitLabBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="Git4Idea"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
+                    serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
+
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
+                         instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"/>
+
+    <!--TODO: correct icon-->
+    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"
+                anchor="left" doNotActivateOnStart="true"
+                factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory"
+                canCloseContents="true"/>
+
+    <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
+    <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
+    <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Git4Idea">
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabGitHttpAuthDataProvider"/>
+  </extensions>
+
+  <actions>
+    <action id="GitLab.Merge.Requests.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
+            use-shortcut-of="Refresh"/>
+    <action id="GitLab.Merge.Requests.Branch.Checkout.Remote"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutRemoteBranchAction"/>
+
+    <group id="GitLab.Merge.Requests.List.Actions">
+      <action id="GitLab.Merge.Request.Show"
+              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
+      <action id="GitLab.Merge.Request.Open.In.Browser"
+              class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
+    </group>
+
+    <group id="GitLab.Merge.Requests.Details.Popup">
+      <reference id="GitLab.Merge.Requests.Refresh"/>
+    </group>
+
+    <group id="GitLab.Merge.Requests.Changes.Popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Diff.ShowStandaloneDiff"/>
+      <reference id="GitLab.Merge.Requests.Refresh"/>
+      <reference id="EditSource"/>
+      <group id="GitLab.Merge.Requests.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+        <reference id="ChangesView.GroupBy"/>
+      </group>
+      <separator/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+  </actions>
+</idea-plugin>

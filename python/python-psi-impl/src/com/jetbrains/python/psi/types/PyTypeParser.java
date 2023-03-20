@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.types.functionalParser.ForwardDeclaration;
 import com.jetbrains.python.psi.types.functionalParser.FunctionalParser;
 import com.jetbrains.python.psi.types.functionalParser.ParserException;
 import com.jetbrains.python.psi.types.functionalParser.Token;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,10 +46,7 @@ import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
 import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.*;
 
-/**
- * @author vlan
- */
-public class PyTypeParser {
+public final class PyTypeParser {
   private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.emptyMap(), Collections.emptyMap(),
                                                                   Collections.emptyMap());
 
@@ -114,6 +112,7 @@ public class PyTypeParser {
    * @return null either if there was an error during parsing or if extracted type is equivalent to <tt>Any</tt> or <tt>undefined</tt>
    */
   @Nullable
+  @Contract("null, _ -> null")
   public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type) {
     if (anchor == null) return EMPTY_RESULT.getType();
     return parse(anchor, type).getType();
@@ -125,6 +124,7 @@ public class PyTypeParser {
    * @return null either if there was an error during parsing or if extracted type is equivalent to <tt>Any</tt> or <tt>undefined</tt>
    */
   @Nullable
+  @Contract("null, _, _ -> null")
   public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
     if (anchor == null) return EMPTY_RESULT.getType();
     return parse(anchor, type, context).getType();
@@ -182,11 +182,11 @@ public class PyTypeParser {
           final TextRange range = token.getRange();
           final ParseResult boundResult = value.getSecond();
           if (boundResult != null) {
-            final PyGenericType type1 = new PyGenericType(name, boundResult.getType());
+            final PyTypeVarType type1 = new PyTypeVarTypeImpl(name, boundResult.getType());
             final ParseResult result = new ParseResult(type1, range);
             return result.merge(boundResult).withType(type1);
           }
-          return new ParseResult(new PyGenericType(name, null), range);
+          return new ParseResult(new PyTypeVarTypeImpl(name, null), range);
         })
         .named("type-parameter");
 
@@ -349,8 +349,7 @@ public class PyTypeParser {
       tokens.add(first);
       tokens.addAll(rest);
 
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
+      if (file instanceof PyFile pyFile) {
         final Map<TextRange, PyType> types = new HashMap<>();
         final Map<PyType, TextRange> fullRanges = new HashMap<>();
         final Map<PyType, PyImportElement> imports = new HashMap<>();
@@ -483,7 +482,7 @@ public class PyTypeParser {
 
     private static boolean allowResolveToType(@NotNull PyType type) {
       return type instanceof PyClassLikeType || type instanceof PyModuleType || type instanceof PyImportedModuleType ||
-             type instanceof PyGenericType;
+             type instanceof PyTypeVarType;
     }
 
     @Nullable

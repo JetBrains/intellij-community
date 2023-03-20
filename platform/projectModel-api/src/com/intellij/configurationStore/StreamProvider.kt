@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
+@ApiStatus.Internal
 interface StreamProvider {
   /**
    * Whether is enabled.
@@ -17,7 +18,7 @@ interface StreamProvider {
   /**
    * Whether is exclusive and cannot be used alongside another provider.
    *
-   * Doesn't imply [enabled], callers should check [enabled] also if need.
+   * Doesn't imply [enabled], callers should check [enabled] also if needed.
    */
   val isExclusive: Boolean
 
@@ -26,14 +27,16 @@ interface StreamProvider {
    */
   fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
 
-  /**
-   * @param fileSpec
-   * @param content bytes of content, size of array is not actual size of data, you must use `size`
-   * @param size actual size of data
-   */
-  fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
+  fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType = RoamingType.DEFAULT)
 
-  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT): Unit = write(path, content.internalBuffer, content.size(), roamingType)
+  @Deprecated("Use #write(fileSpec, content, roamingType) without the 'size' parameter")
+  fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType = RoamingType.DEFAULT) : Unit =
+    write(fileSpec, content, roamingType)
+
+  @Deprecated("Use #write(fileSpec, content, roamingType) with ByteArray parameter")
+  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT): Unit =
+    write(path, content.toByteArray(), roamingType)
+
 
   /**
    * `true` if provider is applicable for file.

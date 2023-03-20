@@ -1,9 +1,7 @@
-
-
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.util.text.KeyboardLayoutUtil;
+import com.intellij.util.text.matching.KeyboardLayoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +19,7 @@ public class FixingLayoutMatcher extends MatcherWithFallback {
     );
   }
 
-  @Nullable
-  public static String fixLayout(String pattern) {
+  public static @Nullable String fixLayout(String pattern) {
     boolean hasLetters = false;
     boolean onlyWrongLetters = true;
     for (int i = 0; i < pattern.length(); i++) {
@@ -49,10 +46,9 @@ public class FixingLayoutMatcher extends MatcherWithFallback {
     return null;
   }
 
-  @Nullable
-  private static MinusculeMatcher withFixedLayout(@NotNull String pattern,
-                                                  @NotNull NameUtil.MatchingCaseSensitivity options,
-                                                  String hardSeparators) {
+  private static @Nullable MinusculeMatcher withFixedLayout(@NotNull String pattern,
+                                                            @NotNull NameUtil.MatchingCaseSensitivity options,
+                                                            String hardSeparators) {
     String s = fixLayout(pattern);
     if (s != null && !s.equals(pattern)) {
       return new MinusculeMatcherImpl(s, options, hardSeparators);

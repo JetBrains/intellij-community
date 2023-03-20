@@ -13,5 +13,5 @@ public interface PyRemoteSdkAdditionalDataBase extends RemoteSdkAdditionalData<P
   void setVersionString(String versionString);
 
   @Nullable
-  PythonSdkFlavor getFlavor();
+  PythonSdkFlavor<?> getFlavor();
 }

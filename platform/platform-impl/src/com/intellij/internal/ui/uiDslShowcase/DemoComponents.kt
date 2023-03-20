@@ -4,14 +4,11 @@ package com.intellij.internal.ui.uiDslShowcase
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import javax.swing.JLabel
 
 @Suppress("DialogTitleCapitalization")
 @Demo(title = "Components",
@@ -55,8 +52,11 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     row("segmentedButton:") {
-      val property = PropertyGraph().graphProperty { "" }
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last"), property) { s -> s }
+      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { it }
+    }
+
+    row("tabbedPaneHeader:") {
+      tabbedPaneHeader(listOf("Tab 1", "Tab 2", "Last Tab"))
     }
 
     row("label:") {
@@ -64,7 +64,7 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     row("text:") {
-      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
+      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>.<br><icon src='AllIcons.General.Information'>&nbsp;It's possible to use line breaks and bundled icons")
     }
 
     row("link:") {
@@ -91,6 +91,10 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
       textField()
     }
 
+    row("passwordField:") {
+      passwordField().applyToComponent { text = "password" }
+    }
+
     row("textFieldWithBrowseButton:") {
       textFieldWithBrowseButton()
     }
@@ -111,13 +115,22 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
       spinner(0.0..100.0, 0.01)
     }
 
+    row("spinner(0.0..100.0, 0.01):") {
+      slider(0, 10, 1, 5)
+        .labelTable(mapOf(
+          0 to JLabel("0"),
+          5 to JLabel("5"),
+          10 to JLabel("10"),
+        ))
+    }
+
     row {
       label("textArea:")
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
         .gap(RightGap.SMALL)
       textArea()
         .rows(5)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }.layout(RowLayout.PARENT_GRID)
 
     row("comboBox:") {

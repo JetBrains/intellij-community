@@ -29,8 +29,7 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
     super(member);
     LOG.assertTrue(member.isValid());
     mySourceReferenceList = sourceReferenceList;
-    if (member instanceof GrMethod) {
-      GrMethod method = (GrMethod)member;
+    if (member instanceof GrMethod method) {
       displayName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                                                                              PsiFormatUtilBase.SHOW_TYPE |
                                                                              PsiFormatUtilBase.TYPE_AFTER |
@@ -46,15 +45,13 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
 
       isStatic = method.hasModifierProperty(PsiModifier.STATIC);
     }
-    else if (member instanceof GrField) {
-      GrField field = (GrField)member;
+    else if (member instanceof GrField field) {
       displayName = PsiFormatUtil
         .formatVariable(field, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER, PsiSubstitutor.EMPTY);
       isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       overrides = null;
     }
-    else if (member instanceof GrTypeDefinition) {
-      GrTypeDefinition aClass = (GrTypeDefinition)member;
+    else if (member instanceof GrTypeDefinition aClass) {
 
       if (isSuperClass) {
         if (aClass.isInterface()) {

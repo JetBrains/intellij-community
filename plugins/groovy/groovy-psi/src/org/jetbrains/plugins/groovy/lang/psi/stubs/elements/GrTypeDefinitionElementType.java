@@ -11,15 +11,13 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameStringIndex;
 
 import java.io.IOException;
 
 import static org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils.readStringArray;
 import static org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils.writeStringArray;
 
-/**
- * @author ilyas
- */
 public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefinition>
   extends GrStubElementType<GrTypeDefinitionStub, TypeDef> {
 
@@ -75,7 +73,8 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
       }
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
-        sink.occurrence(GrFullClassNameIndex.KEY, fqn.hashCode());
+        sink.occurrence(GrFullClassNameStringIndex.KEY, fqn);
+        sink.occurrence(GrFullClassNameIndex.KEY, fqn);
       }
     }
 

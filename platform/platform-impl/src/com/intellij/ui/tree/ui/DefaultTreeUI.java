@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,15 +6,13 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.BackgroundSupplier;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.LoadingNode;
+import com.intellij.ui.*;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -28,23 +26,15 @@ import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.tree.AbstractLayoutCache;
-import javax.swing.tree.FixedHeightLayoutCache;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.VariableHeightLayoutCache;
+import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
@@ -58,18 +48,19 @@ import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
-public final class DefaultTreeUI extends BasicTreeUI {
+public class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
-  @ApiStatus.Internal
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
+  public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER = Key.create("allows to filter single child nodes which should not be auto-expanded");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
-  @NotNull
-  private static Control.Painter getPainter(@NotNull JTree tree) {
-    Control.Painter painter = ComponentUtil.getClientProperty(tree, Control.Painter.KEY);
-    if (painter != null) return painter;
+  private static @NotNull Control.Painter getPainter(@NotNull JTree tree) {
+    Control.Painter painter = ClientProperty.get(tree, Control.Painter.KEY);
+    if (painter != null) {
+      return painter;
+    }
     // painter is not specified for the given tree
     Application application = getApplication();
     if (application != null) {
@@ -84,8 +75,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
     return Control.Painter.DEFAULT;
   }
 
-  @Nullable
-  private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
+  @ApiStatus.Internal
+  public static @Nullable Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
     // to be consistent with com.intellij.ui.components.WideSelectionListUI#getBackground
     if (selected) {
       return RenderingUtil.getSelectionBackground(tree);
@@ -119,6 +110,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
     setBackground(tree, component, background, true);
   }
 
+  @ApiStatus.Internal
+  public static boolean isSeparator(@Nullable TreePath path) {
+    return path != null && isSeparator(path.getLastPathComponent());
+  }
+
   private static void setBackground(@NotNull JTree tree, @NotNull Component component, @Nullable Color background, boolean opaque) {
     if (component instanceof JComponent) {
       ((JComponent)component).setOpaque(opaque);
@@ -145,12 +141,17 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   private static boolean isLargeModelAllowed(@Nullable JTree tree) {
-    return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
+    return is("ide.tree.large.model.allowed") || ClientProperty.isTrue(tree, LARGE_MODEL_ALLOWED);
   }
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
-    Boolean allowed = UIUtil.getClientProperty(tree, AUTO_EXPAND_ALLOWED);
+    Boolean allowed = ClientProperty.get(tree, AUTO_EXPAND_ALLOWED);
     return allowed != null ? allowed : tree.isShowing();
+  }
+
+  private static boolean isAutoExpandAllowed(@NotNull JTree tree, @NotNull Object node) {
+    Function<Object, Boolean> filter = ClientProperty.get(tree, AUTO_EXPAND_FILTER);
+    return filter == null || !filter.apply(node);
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -161,17 +162,26 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   // non static
 
-  private final Control control = new DefaultControl();
+  private final Control myDefaultControl = new DefaultControl();
+
+  private @NotNull Control getControl(@NotNull JComponent c, @NotNull TreePath path) {
+    Function<@NotNull TreePath, @Nullable Control> controlResolver = ClientProperty.get(c, Control.CUSTOM_CONTROL);
+    Control resolvedControl = controlResolver != null ? controlResolver.apply(path) : myDefaultControl;
+
+    return ObjectUtils.chooseNotNull(resolvedControl, myDefaultControl);
+  }
   private final AtomicBoolean painting = new AtomicBoolean();
   private final DispatchThreadValidator validator = new DispatchThreadValidator();
 
-  @Nullable
-  private JTree getTree() {
+  private @Nullable JTree getTree() {
     return super.tree; // TODO: tree ???
   }
 
-  @Nullable
-  private Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+  private @Nullable Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+    if (isSeparator(value) && value instanceof Component) {
+      return (Component)value;
+    }
+
     TreeCellRenderer renderer = value instanceof LoadingNode ? LoadingNodeRenderer.SHARED : super.currentCellRenderer;
     if (renderer == null) return null;
     Component component = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, focused);
@@ -190,7 +200,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   private boolean isLeaf(@Nullable Object value) {
-    return value == null || super.treeModel.isLeaf(value); // TODO: treeModel ???
+    return value == null || isSeparator(value) || super.treeModel.isLeaf(value); // TODO: treeModel ???
+  }
+
+  private static boolean isSeparator(@Nullable Object value) {
+    return value instanceof SeparatorWithText;
   }
 
   private boolean isValid(@Nullable JTree tree) {
@@ -237,28 +251,94 @@ public final class DefaultTreeUI extends BasicTreeUI {
           bounds.y += insets.top;
 
           int depth = TreeUtil.getNodeDepth(tree, path);
-          boolean leaf = isLeaf(path.getLastPathComponent());
+          Object value = path.getLastPathComponent();
+          boolean leaf = isLeaf(value);
           boolean expanded = !leaf && cache.getExpandedState(path);
           boolean selected = tree.isRowSelected(row);
           boolean focused = RenderingUtil.isFocused(tree);
           boolean lead = focused && row == getLeadSelectionRow();
           boolean selectedControl = selected && focused;
 
-          Color background = getBackground(tree, path, row, selected);
+          Color background = isSeparator(value) ? null : getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
-            g.fillRect(helper.getX(), bounds.y, helper.getWidth(), bounds.height);
+            if (g instanceof Graphics2D &&
+                ExperimentalUI.isNewUI() &&
+                is("ide.experimental.ui.tree.selection") &&
+                !(tree instanceof PlainSelectionTree) &&
+                (selected || row == TreeHoverListener.getHoveredRow(tree))) {
+              int borderOffset = JBUI.scale(12);
+              Control control = getControl(c, path);
+              int rendererOffset = painter.getRendererOffset(control, depth, leaf);
+              int controlOffset = painter.getControlOffset(control, depth, leaf);
+              int left = Math.min(helper.getX() + borderOffset, insets.left + (controlOffset < 0 ? rendererOffset : controlOffset));
+              int right = Math.max(helper.getX() + helper.getWidth() - borderOffset, insets.left + rendererOffset + bounds.width + JBUI.scale(4));
+              int[] rows = tree.getSelectionRows();
+              boolean shouldPaintTop = false;
+              boolean shouldPaintBottom = false;
+              if (rows != null && rows.length > 1) {
+                for (int selectedRow : rows) {
+                  int delta = selectedRow - row;
+                  if (delta == 1) shouldPaintBottom = true;
+                  if (delta == -1) shouldPaintTop = true;
+                  if (shouldPaintTop && shouldPaintBottom) break;
+                }
+              }
+
+              if (shouldPaintTop && shouldPaintBottom) {
+                g.fillRect(left, bounds.y, right - left, bounds.height);
+              } else {
+                int arc = JBUI.CurrentTheme.Tree.ARC.get();
+                FILL.paint((Graphics2D)g, left, bounds.y, right - left, bounds.height, arc);
+                if (shouldPaintTop) {
+                  g.fillRect(left, bounds.y, right - left, arc);
+                }
+                if (shouldPaintBottom) {
+                  g.fillRect(left, bounds.y + bounds.height - arc, right - left, arc);
+                }
+              }
+              //if (lead) {
+              //  g.setColor(Color.lightGray);
+              //  ((Graphics2D)g).setStroke(new BasicStroke(1.0f,
+              //                                            BasicStroke.CAP_BUTT,
+              //                                            BasicStroke.JOIN_MITER,
+              //                                            2.0f, new float[]{2.0f}, 0.0f));
+              //  g.drawRoundRect(left + 1, bounds.y, right - left - 2, bounds.height-1, JBUI.scale(8), JBUI.scale(8));
+              //}
+            }
+            else {
+              g.fillRect(helper.getX(), bounds.y, helper.getWidth(), bounds.height);
+            }
             if (selectedControl && !dark && !isDark(background)) selectedControl = false;
           }
+
+          Control control = getControl(c, path);
+
           int offset = painter.getRendererOffset(control, depth, leaf);
           painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selectedControl);
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
             int width = helper.getX() + helper.getWidth() - insets.left - offset;
             if (width > 0) {
-              Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
-              if (component != null) {
+
+              if (isSeparator(component)) {
+                int x;
+                if (ExperimentalUI.isNewUI()) {
+                  Insets separatorInsets = JBUI.CurrentTheme.Popup.separatorInsets();
+                  x = paintBounds.x + separatorInsets.left;
+                  width = paintBounds.width - separatorInsets.left - separatorInsets.right;
+                }
+                else {
+                  int separatorWidthGap = JBUI.scale(SeparatorWithText.DEFAULT_H_GAP);
+                  x = paintBounds.x + separatorWidthGap;
+                  width = paintBounds.width - 2 * separatorWidthGap;
+                }
+                if (width > 0) {
+                  rendererPane.paintComponent(g, component, tree, x, bounds.y, width, bounds.height, true);
+                }
+              }
+              else if (component != null) {
                 width -= helper.getRightMargin(); // shrink a long node according to the right margin
                 if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
                   width = bounds.width; // disable shrinking a long nodes
@@ -336,6 +416,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (tree == null) return false;
     Rectangle bounds = getPathBounds(tree, path);
     if (bounds == null) return false;
+    Control control = getControl(tree, path);
     bounds.x = getPainter(tree).getControlOffset(control, TreeUtil.getNodeDepth(tree, path), isLeaf(path.getLastPathComponent()));
     if (bounds.x < 0) return false; // does not paint an icon to expand or collapse path
     Insets insets = tree.getInsets();
@@ -424,6 +505,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
     if (tree == null) return 0;
     TreePath path = getPathForRow(tree, row);
     if (path == null) return 0;
+    Control control = getControl(tree, path);
     return getPainter(tree).getRendererOffset(control, TreeUtil.getNodeDepth(tree, path), isLeaf(path.getLastPathComponent()));
   }
 
@@ -485,7 +567,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
         if (size == null) return null;
 
-        int x = getPainter(tree).getRendererOffset(control, depth + TreeUtil.getDepthOffset(tree), leaf);
+        int x = getPainter(tree).getRendererOffset(myDefaultControl, depth + TreeUtil.getDepthOffset(tree), leaf);
         int height = getRowHeight();
         if (height <= 0) height = size.height;
         if (bounds == null) return new Rectangle(x, 0, size.width, height);
@@ -529,7 +611,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
             if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
-              ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              Object node = row.getLastPathComponent();
+              if (isAutoExpandAllowed(tree, node)) {
+                ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              }
               return; // this code is intended to auto-expand a single child node
             }
           }
@@ -547,9 +632,8 @@ public final class DefaultTreeUI extends BasicTreeUI {
         if (property == null) super.mouseDragged(event); // use Swing-based DnD only if custom DnD is not set
       }
 
-      @NotNull
       @Override
-      protected MouseEvent convert(@NotNull MouseEvent event) {
+      protected @NotNull MouseEvent convert(@NotNull MouseEvent event) {
         JTree tree = getTree();
         if (tree != null && tree == event.getSource() && tree.isEnabled()) {
           if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {

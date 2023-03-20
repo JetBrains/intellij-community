@@ -50,6 +50,26 @@ public class PyPathEvaluatorTest extends PyTestCase {
     assertEquals("/foo/subfolder/../bar.py", doEvaluate("os.path.abspath(os.path.join(os.path.join('/foo/subfolder',  os.path.pardir, 'bar.py')))", "/foo/bar.py"));
   }
 
+  // PY-13911
+  public void testPathlibRoot() {
+    assertEquals("/foo/bar/baz.py", doEvaluate("Path(__file__)",  "/foo/bar/baz.py"));
+  }
+
+  // PY-13911
+  public void testPathlibParent() {
+    assertEquals("/foo", doEvaluate("Path(__file__).resolve().parent.parent",  "/foo/bar/baz.py"));
+  }
+
+  // PY-13911
+  public void testPathlibAbsolutePath() {
+    assertEquals("/foo/bar", doEvaluate("Path('/foo/bar')",  "/irrelevant"));
+  }
+
+  // PY-13911
+  public void testPathlibJoin() {
+    assertEquals("/foo/bar/baz.py", doEvaluate("Path(__file__).resolve() / 'bar' / 'baz.py'",  "/foo"));
+  }
+
   private String doEvaluate(final String text, final String file) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
     final PyExpression expression = generator.createExpressionFromText(LanguageLevel.getLatest(), text);

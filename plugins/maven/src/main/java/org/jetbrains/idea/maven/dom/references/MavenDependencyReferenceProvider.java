@@ -13,7 +13,6 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 
 /**
  * Adds references to string like "groupId:artifactId:version"
- * @author Sergey Evdokimov
  */
 public class MavenDependencyReferenceProvider extends PsiReferenceProvider implements MavenSoftAwareReferenceProvider {
 
@@ -98,7 +97,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
 
     private final String myGroupId;
 
-    public ArtifactReference(@NotNull String groupId, @NotNull PsiElement element, @NotNull TextRange range, @NotNull boolean soft) {
+    public ArtifactReference(@NotNull String groupId, @NotNull PsiElement element, @NotNull TextRange range, boolean soft) {
       super(element, range, soft);
       myGroupId = groupId;
     }
@@ -122,7 +121,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
     private final String myGroupId;
     private final String myArtifactId;
 
-    public VersionReference(@NotNull String groupId, @NotNull String artifactId, @NotNull PsiElement element, @NotNull TextRange range, @NotNull boolean soft) {
+    public VersionReference(@NotNull String groupId, @NotNull String artifactId, @NotNull PsiElement element, @NotNull TextRange range, boolean soft) {
       super(element, range, soft);
       myGroupId = groupId;
       myArtifactId = artifactId;

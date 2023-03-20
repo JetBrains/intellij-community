@@ -29,6 +29,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
+import static org.jetbrains.idea.maven.importing.MavenRootModelAdapter.getMavenExternalSource;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -115,7 +117,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension {
       final JpsElementBase properties = (JpsElementBase)jpsSourceFolder.getSourceRoot().getProperties();
       //noinspection unchecked
       properties.setParent(null);
-      e.addSourceFolder(url.getUrl(), sourceRootType, properties);
+      e.addSourceFolder(url.getUrl(), sourceRootType, properties, getMavenExternalSource());
     }
 
     isJpsSourceFoldersChanged = false;

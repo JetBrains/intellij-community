@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -36,8 +36,8 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
   private static final Method myLoadButtonTextMethod = new Method(AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD, Type.VOID_TYPE,
                                                                   new Type[]{Type.getType(AbstractButton.class), stringType});
 
-  private final Set<String> myClassesRequiringLoadLabelText = new HashSet<String>();
-  private final Set<String> myClassesRequiringLoadButtonText = new HashSet<String>();
+  private final Set<String> myClassesRequiringLoadLabelText = new HashSet<>();
+  private final Set<String> myClassesRequiringLoadButtonText = new HashSet<>();
   private boolean myHaveSetDisplayedMnemonicIndex;
   private Type dynamicBundleType;
 
@@ -70,15 +70,15 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
                                         GetFontMethodProvider fontMethodProvider,
                                         final int componentLocal,
                                         final String formClassName) throws IOException, ClassNotFoundException {
-    if (!"text".equals(property.getName())) {
-      return false;
-    }
-    
     StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
     String key = propertyValue.getKey();
 
     if (key != null) {
       propertyValue.setFormClass(formClassName);
+    }
+
+    if (!"text".equals(property.getName())) {
+      return false;
     }
 
     InstrumentationClassFinder.PseudoClass abstractButtonClass = componentClass.getFinder().loadClass(AbstractButton.class.getName());

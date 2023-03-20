@@ -3,6 +3,7 @@ package training.learn.lesson.general.navigation
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -25,7 +26,7 @@ import java.awt.event.KeyEvent
 import javax.swing.JList
 
 abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name")) {
-  abstract override val existedFile: String?
+  abstract override val sampleFilePath: String?
 
   abstract val resultFileName: String
 
@@ -35,9 +36,17 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
   private var backupPopupLocation: Point? = null
 
+  open val goToClassSearchQuery: String ="bufre"
+
+  open val projectFilesScopeName: String get() = ProjectScope.getProjectFilesScopeName()
+
+  open val showQuickDock: Boolean = true
+
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     task("SearchEverywhere") {
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
+      triggerAndBorderHighlight().component { ui: ExtendableTextField ->
         UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
       }
       text(LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it),
@@ -61,9 +70,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     }
 
     task {
-      triggerByListItemAndHighlight { item ->
+      triggerAndBorderHighlight().listItem { item ->
         if (item is PsiNameIdentifierOwner)
           item.name == requiredClassName
+        else if(item is NavigationItem)
+          item.name.isToStringContains(requiredClassName)
         else item.isToStringContains(requiredClassName)
       }
       restoreByUi()
@@ -74,9 +85,21 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       stateCheck {
         FileEditorManager.getInstance(project).selectedEditor?.file?.name.equals(resultFileName)
       }
-      restoreByUi()
+      restoreByUi(delayMillis = 500)
       test {
-        invokeActionViaShortcut("ENTER")
+        Thread.sleep(500) // wait items loading
+        val jList = previous.ui as? JList<*> ?: error("No list")
+        val itemIndex = LessonUtil.findItem(jList) { item ->
+          if (item is PsiNameIdentifierOwner)
+            item.name == requiredClassName
+          else if(item is NavigationItem)
+            item.name.isToStringContains(requiredClassName)
+          else item.isToStringContains(requiredClassName)
+        } ?: error("No item")
+
+        ideFrame {
+          jListFixture(jList).clickItem(itemIndex)
+        }
       }
     }
 
@@ -84,7 +107,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       LessonsBundle.message("search.everywhere.goto.class", action(it))
     }
 
-    task("bufre") {
+    task(goToClassSearchQuery) {
       text(LessonsBundle.message("search.everywhere.type.class.name", code(it)))
       stateCheck { checkWordInSearch(it) }
       restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
@@ -93,9 +116,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     task(EverythingGlobalScope.getNameText()) {
       text(LessonsBundle.message("search.everywhere.use.all.places",
-                                 strong(ProjectScope.getProjectFilesScopeName()), strong(it)))
-      triggerByUiComponentAndHighlight { _: ActionButtonWithText -> true }
-      triggerByUiComponentAndHighlight(false, false) { button: ActionButtonWithText ->
+                                 strong(projectFilesScopeName), strong(it)))
+      triggerAndFullHighlight().component { button: ActionButtonWithText ->
+        button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
+      }
+      triggerUI().component { button: ActionButtonWithText ->
         button.accessibleContext.accessibleName == it
       }
       showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
@@ -106,11 +131,13 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       }
     }
 
-    task("QuickJavaDoc") {
-      text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
-      triggerOnQuickDocumentationPopup()
-      restoreByUi()
-      test { actions(it) }
+    if (showQuickDock) {
+      task("QuickJavaDoc") {
+        text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
+        triggerOnQuickDocumentationPopup()
+        restoreByUi()
+        test { actions(it) }
+      }
     }
 
     task {
@@ -147,8 +174,6 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
     return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null
   }
-
-  override val suitableTips = listOf("SearchEverywhere", "GoToClass", "search_everywhere_general")
 
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("help.search.everywhere"),

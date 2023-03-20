@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.core.CoreBundle;
@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import java.awt.event.MouseEvent;
 /**
  * Panel for one command (CommandQueue)
  */
-public class QueueElementPanel {
+public final class QueueElementPanel {
   private final QueueElementButton myCancelButton = createCancelButton();
   private final JBLabel myText = new JBLabel();
   private final Item myItem;
@@ -140,19 +141,19 @@ public class QueueElementPanel {
   }
 
   public void setTextColor() {
-    myText.setForeground(UIUtil.getListSelectionForeground(false));
+    myText.setForeground(NamedColorUtil.getListSelectionForeground(false));
   }
 
   public void setButtonColor() {
-    buttonPanel.setBackground(new JBColor(UIUtil::getListBackground));
+    buttonPanel.setBackground(JBColor.lazy(UIUtil::getListBackground));
   }
 
   public void selectPanel() {
     myRootPanel.setBackground(UIUtil.getListSelectionBackground(true));
-    myText.setForeground(UIUtil.getListSelectionForeground(true));
+    myText.setForeground(NamedColorUtil.getListSelectionForeground(true));
   }
 
-  private static class Item extends ContentChooser.Item {
+  private static final class Item extends ContentChooser.Item {
     Item(String longText) {
       super(0, longText);
     }

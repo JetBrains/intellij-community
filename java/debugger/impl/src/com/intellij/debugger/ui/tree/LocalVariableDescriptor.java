@@ -17,6 +17,6 @@ package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 
-public interface LocalVariableDescriptor extends ValueDescriptor{
+public interface LocalVariableDescriptor extends ValueDescriptor {
   LocalVariableProxy getLocalVariable();
 }

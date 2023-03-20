@@ -108,28 +108,43 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates) {
-    throw notImplemented();
+    setCaretsAndSelections(caretStates, true);
   }
 
   @Override
   public void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates, boolean updateSystemSelection) {
-    throw notImplemented();
+    if (caretStates.size() != 1) {
+      LOG.error("Imaginary caret does not support multicaret. caretStates=" + caretStates);
+    }
+    CaretState state = caretStates.get(0);
+    if (state.getCaretPosition() != null) {
+      myCaret.moveToOffset(myEditor.logicalPositionToOffset(state.getCaretPosition()));
+    }
+    if (state.getSelectionStart() != null && state.getSelectionEnd() != null && !state.getSelectionStart().equals(state.getSelectionEnd())) {
+      myCaret.setSelection(myEditor.logicalPositionToOffset(state.getSelectionStart()),
+                           myEditor.logicalPositionToOffset(state.getSelectionEnd()));
+    }
   }
 
   @NotNull
   @Override
   public List<CaretState> getCaretsAndSelections() {
-    throw notImplemented();
+    return Collections.singletonList(
+      new CaretState(myCaret.getLogicalPosition(),
+                     0,
+                     myEditor.offsetToLogicalPosition(myCaret.getSelectionStart()),
+                     myEditor.offsetToLogicalPosition(myCaret.getSelectionEnd()))
+    );
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
-    throw notImplemented();
+    action.perform(myCaret);
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
-    throw notImplemented();
+    action.perform(myCaret);
   }
 
   @Override

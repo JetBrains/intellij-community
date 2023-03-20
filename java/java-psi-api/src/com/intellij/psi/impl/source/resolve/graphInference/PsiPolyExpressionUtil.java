@@ -60,7 +60,7 @@ public final class PsiPolyExpressionUtil {
   }
 
   private static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
-    final Set<PsiTypeParameter> typeParameters = ContainerUtil.set(method.getTypeParameters());
+    final Set<PsiTypeParameter> typeParameters = ContainerUtil.newHashSet(method.getTypeParameters());
     if (!typeParameters.isEmpty()) {
       final PsiType returnType = method.getReturnType();
       if (returnType != null) {
@@ -117,7 +117,7 @@ public final class PsiPolyExpressionUtil {
   public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
     if (arg != null && !isPolyExpression(arg)) {
       final PsiType type = arg.getType();
-      return type instanceof PsiPrimitiveType && type != PsiType.NULL;
+      return type instanceof PsiPrimitiveType && type != PsiTypes.nullType();
     }
     else if (arg instanceof PsiNewExpression || arg instanceof PsiFunctionalExpression) {
       return false;
@@ -215,7 +215,7 @@ public final class PsiPolyExpressionUtil {
 
   @Nullable
   private static ConditionalKind isBooleanOrNumericType(PsiType type) {
-    if (type == PsiType.NULL) {
+    if (type == PsiTypes.nullType()) {
       return ConditionalKind.NULL;
     }
 

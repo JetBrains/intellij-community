@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +9,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -16,22 +17,24 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.PlatformColors;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +50,9 @@ import java.util.List;
 import java.util.*;
 
 public final class ActionsTree {
+  private static final Logger LOG = Logger.getInstance(ActionsTree.class);
+
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-  private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
   private final SimpleTextAttributes GRAY_LINK = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.gray);
 
   private final JTree myTree;
@@ -56,7 +60,6 @@ public final class ActionsTree {
   private final JScrollPane myComponent;
   private Keymap myKeymap;
   private Group myMainGroup = new Group("", null, null);
-  private final boolean myShowBoundActions = Registry.is("keymap.show.alias.actions");
 
   @NonNls
   private static final String ROOT = "ROOT";
@@ -65,6 +68,8 @@ public final class ActionsTree {
   private Condition<? super AnAction> myBaseFilter;
 
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
+
+  private final Set<String> myBrokenActions = new HashSet<>();
 
   public ActionsTree() {
     myRoot = new DefaultMutableTreeNode(ROOT);
@@ -121,6 +126,9 @@ public final class ActionsTree {
       protected void handleTagClick(@Nullable Object tag, @NotNull MouseEvent event) {
         if (tag instanceof Hyperlink) {
           ((Hyperlink)tag).onClick(event);
+        }
+        else {
+          super.handleTagClick(tag, event);
         }
       }
     }.installOn(myTree);
@@ -196,7 +204,7 @@ public final class ActionsTree {
     return myMainGroup;
   }
 
-  public JTree getTree(){
+  public JTree getTree() {
     return myTree;
   }
 
@@ -206,8 +214,9 @@ public final class ActionsTree {
   }
 
   private @Nullable Condition<? super AnAction> combineWithBaseFilter(@Nullable Condition<? super AnAction> actionFilter) {
-    if (actionFilter != null)
+    if (actionFilter != null) {
       return myBaseFilter != null ? Conditions.and(myBaseFilter, actionFilter) : actionFilter;
+    }
     return myBaseFilter;
   }
 
@@ -260,11 +269,11 @@ public final class ActionsTree {
 
     @Override
     public String getColumnName(int column) {
-      switch (column) {
-        case 0: return KeyMapBundle.message("action.column.name");
-        case 1: return KeyMapBundle.message("shortcuts.column.name");
-      }
-      return "";
+      return switch (column) {
+        case 0 -> KeyMapBundle.message("action.column.name");
+        case 1 -> KeyMapBundle.message("shortcuts.column.name");
+        default -> "";
+      };
     }
 
     @Override
@@ -328,7 +337,7 @@ public final class ActionsTree {
   private static boolean areGroupShortcutsCustomized(@NotNull Group group, @NotNull Keymap keymap) {
     if (!keymap.canModify()) return false;
 
-    ArrayList children = group.getChildren();
+    ArrayList<Object> children = group.getChildren();
     for (Object child : children) {
       if (child instanceof Group) {
         if (areGroupShortcutsCustomized((Group)child, keymap)) {
@@ -372,7 +381,7 @@ public final class ActionsTree {
 
   @Nullable
   private DefaultMutableTreeNode getNodeForPath(String path) {
-    Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
+    Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
       if (Objects.equals(getPath(node, false), path)) {
@@ -384,7 +393,7 @@ public final class ActionsTree {
 
   private List<DefaultMutableTreeNode> getNodesByPaths(List<String> paths) {
     List<DefaultMutableTreeNode> result = new SmartList<>();
-    Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
+    Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
       final String path = getPath(node, false);
@@ -398,8 +407,7 @@ public final class ActionsTree {
   @Nullable
   private String getPath(DefaultMutableTreeNode node, boolean presentable) {
     final Object userObject = node.getUserObject();
-    if (userObject instanceof String) {
-      String actionId = (String)userObject;
+    if (userObject instanceof String actionId) {
 
       final TreeNode parent = node.getParent();
       if (parent instanceof DefaultMutableTreeNode) {
@@ -441,10 +449,10 @@ public final class ActionsTree {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
 
       TreePath path = new TreePath(root.getPath());
-      if (myTree.isPathSelected(path)){
+      if (myTree.isPathSelected(path)) {
         addPathToList(root, mySelectionPaths);
       }
-      if (myTree.isExpanded(path) || root.getChildCount() == 0){
+      if (myTree.isExpanded(path) || root.getChildCount() == 0) {
         addPathToList(root, myPathsToExpand);
         _storePaths(root);
       }
@@ -493,7 +501,7 @@ public final class ActionsTree {
 
     private ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
       ArrayList<TreeNode> arrayList = new ArrayList<>();
-      for(int i = 0; i < node.getChildCount(); i++){
+      for (int i = 0; i < node.getChildCount(); i++) {
         arrayList.add(node.getChildAt(i));
       }
       return arrayList;
@@ -508,126 +516,129 @@ public final class ActionsTree {
     private int myLinkWidth;
     private int myRow;
 
+    private boolean myIsSeparator;
+
     // Make sure that the text rendered by this method is 'searchable' via com.intellij.openapi.keymap.impl.ui.ActionsTree.filter method.
     @Override
-    public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    public void customizeCellRenderer(@NotNull JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
       myRow = row;
       myHaveLink = false;
-      myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-      final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
+      myIsSeparator = false;
+
+      @Nullable @Nls String text;
+      boolean changed;
+
       Icon icon = null;
-      String text;
-      @NlsSafe String actionId = null;
-      String boundId = null;
-      @NlsActions.ActionText
-      String boundText = null;
-      setToolTipText(null);
+      @NonNls String actionId = null;
+      @NonNls String boundId = null;
+      @Nls String tooltipText = null;
 
-      if (value instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-        Object userObject = node.getUserObject();
-        boolean changed;
-        if (userObject instanceof Group) {
-          Group group = (Group)userObject;
-          actionId = group.getId();
-          text = group.getName();
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+      Object userObject = node.getUserObject();
+      if (userObject instanceof Group group) {
+        actionId = group.getId();
+        text = group.getName();
+        changed = myKeymap != null && areGroupShortcutsCustomized(group, myKeymap);
+        icon = ObjectUtils.chooseNotNull(group.getIcon(), AllIcons.Nodes.Folder);
+      }
+      else if (userObject instanceof String) {
+        actionId = (String)userObject;
+        boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        text = getActionText(action, actionId, null);
+        if (action != null) {
+          icon = action.getTemplatePresentation().getIcon();
+          tooltipText = action.getTemplatePresentation().getDescription();
+        }
+        changed = myKeymap != null && isShortcutCustomized(actionId, myKeymap);
+      }
+      else if (userObject instanceof QuickList list) {
+        text = list.getName();
+        changed = myKeymap != null && isShortcutCustomized(list.getActionId(), myKeymap);
+      }
+      else if (userObject instanceof Separator) {
+        myIsSeparator = true;
+        text = null;
+        changed = false;
+      }
+      else if (userObject instanceof Hyperlink link) {
+        // see also XDebuggerTreeRenderer
+        myHaveLink = true;
+        text = null;
+        changed = false;
+        icon = link.getIcon();
 
-          changed = myKeymap != null && areGroupShortcutsCustomized(group, myKeymap);
-          icon = group.getIcon();
-          if (icon == null){
-            icon = CLOSE_ICON;
-          }
-        }
-        else if (userObject instanceof String) {
-          actionId = (String)userObject;
-          boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
-          ActionManager manager = ActionManager.getInstance();
-          AnAction action = manager.getAction(actionId);
-          text = getActionText(action, actionId);
-          if (action != null) {
-            Icon actionIcon = action.getTemplatePresentation().getIcon();
-            if (actionIcon != null) {
-              icon = actionIcon;
-            }
-            setToolTipText(action.getTemplatePresentation().getDescription());
-          }
-          boundText = boundId == null ? null : getActionText(manager.getAction(boundId), boundId);
-          changed = myKeymap != null && isShortcutCustomized(actionId, myKeymap);
-        }
-        else if (userObject instanceof QuickList) {
-          QuickList list = (QuickList)userObject;
-          icon = null; // AllIcons.Actions.QuickList;
-          text = list.getName();
+        myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        myLink.append(link.getLinkText(), link.getTextAttributes(), link);
 
-          changed = myKeymap != null && isShortcutCustomized(list.getActionId(), myKeymap);
-        }
-        else if (userObject instanceof Separator) {
-          // TODO[vova,anton]: beautify
-          changed = false;
-          text = "-------------";
-        }
-        else if (userObject instanceof Hyperlink) {
-          getIpad().right = 0;
-          myLink.getIpad().left = 0;
-          myHaveLink = true;
-          Hyperlink link = (Hyperlink)userObject;
-          changed = false;
-          text = "";
-          append(link.getLinkText(), link.getTextAttributes(), link);
-          icon = link.getIcon();
-          setIcon(getEvenIcon(link.getIcon()));
-          Rectangle treeVisibleRect = tree.getVisibleRect();
-          int rowX = TreeUtil.getNodeRowX(tree, row);
-          setupLinkDimensions(treeVisibleRect, rowX);
+        getIpad().right = 0;
+        myLink.getIpad().left = 0;
+
+        Rectangle treeVisibleRect = tree.getVisibleRect();
+        int rowX = TreeUtil.getNodeRowX(tree, row);
+        setupLinkDimensions(treeVisibleRect, rowX);
+      }
+      else {
+        throw new IllegalArgumentException("unknown userObject: " + userObject);
+      }
+
+      if (UISettings.getInstance().getShowIconsInMenus()) {
+        setIcon(getEvenIcon(icon));
+      }
+
+      Color foreground;
+      if (selected) {
+        foreground = UIUtil.getTreeForeground(true, hasFocus);
+      }
+      else {
+        if (changed) {
+          foreground = JBColor.namedColor("Tree.modifiedItemForeground", PlatformColors.BLUE);
         }
         else {
-          throw new IllegalArgumentException("unknown userObject: " + userObject);
-        }
-
-        if (showIcons) {
-          setIcon(getEvenIcon(icon));
-        }
-
-        Color foreground;
-        if (selected) {
-          foreground = UIUtil.getTreeForeground(true, hasFocus);
-        }
-        else {
-          if (changed) {
-            foreground = PlatformColors.BLUE;
-          }
-          else {
-            foreground = UIUtil.getTreeForeground();
-          }
-        }
-        if (!myHaveLink) {
-          Color background = UIUtil.getTreeBackground(selected, true);
-          SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
-          if (boundId != null) {
-            append(" ");
-            append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
-            append(" ");
-            ActionHyperlink link = new ActionHyperlink(boundId, boundText);
-            append(link.getLinkText(), link.getTextAttributes(), link);
-          }
-          if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
-            @NlsSafe String pluginName = myPluginNames.get(actionId);
-            if (pluginName != null) {
-              Group parentGroup = (Group)((DefaultMutableTreeNode)node.getParent()).getUserObject();
-              if (pluginName.equals(parentGroup.getName())) pluginName = null;
-            }
-            append("   ");
-            append(pluginName != null ? actionId + " (" + pluginName + ")" : actionId, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
-          }
+          foreground = UIUtil.getTreeForeground();
         }
       }
+      Color background = UIUtil.getTreeBackground(selected, true);
+
+      SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
+
+      if (boundId != null) {
+        append(" ");
+        append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        append(" ");
+
+        String boundText = getActionText(ActionManager.getInstance().getAction(boundId), boundId, actionId);
+        append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
+      }
+
+      if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
+        @NlsSafe String pluginName = myPluginNames.get(actionId);
+        if (pluginName != null) {
+          Group parentGroup = (Group)((DefaultMutableTreeNode)node.getParent()).getUserObject();
+          if (pluginName.equals(parentGroup.getName())) pluginName = null;
+        }
+        append("   ");
+        append(pluginName != null ? actionId + " (" + pluginName + ")" : actionId, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+      }
+
+      setToolTipText(tooltipText);
       putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
     }
 
     @NlsActions.ActionText
-    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId) {
-      String text = action == null ? null : action.getTemplatePresentation().getText();
+    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId, @Nullable String boundSourceId) {
+      String text = action == null ? null : action.getTemplateText();
       if (text == null || text.length() == 0) { //fill dynamic presentation gaps
+        if (myBrokenActions.add(actionId)) {
+          LOG.warn("Template presentation is not defined for '" + actionId + "' - showing internal ID in UI" +
+                   (boundSourceId != null ? ", bound by " + boundSourceId : ""));
+        }
         text = actionId;
       }
       return text;
@@ -637,31 +648,28 @@ public final class ActionsTree {
       Dimension linkSize = myLink.getPreferredSize();
       myLinkWidth = linkSize.width;
       myLinkOffset = Math.min(super.getPreferredSize().width - 1, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
-    }
-
-    @Override
-    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-      if (tag instanceof Hyperlink && !(tag instanceof ActionHyperlink)) {
-        myHaveLink = true;
-        myLink.append(fragment, attributes, tag);
-      }
-      else {
-        super.append(fragment, attributes, tag);
-      }
+      myLink.setSize(myLinkWidth, getHeight()); // actually we only set width here, height is not yet ready
     }
 
     @Override
     protected void doPaint(Graphics2D g) {
-      if (!myHaveLink) {
+      if (myIsSeparator) {
+        super.doPaint(g);
+
+        g.setColor(JBUI.CurrentTheme.Popup.separatorColor());
+        RectanglePainter.FILL.paint(g, 0, getHeight() / 2, getWidth(), 1, null);
+      }
+      else if (myHaveLink) {
+        UIUtil.useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height), super::doPaint);
+
+        g.translate(myLinkOffset, 0);
+        myLink.setSize(myLink.getWidth(), getHeight());
+        myLink.doPaint(g);
+        g.translate(-myLinkOffset, 0);
+      }
+      else {
         super.doPaint(g);
       }
-
-      UIUtil.useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height),
-                       textGraphics -> super.doPaint(textGraphics));
-      g.translate(myLinkOffset, 0);
-      myLink.setHeight(getHeight());
-      myLink.doPaint(g);
-      g.translate(-myLinkOffset, 0);
     }
 
     @NotNull
@@ -709,8 +717,9 @@ public final class ActionsTree {
             if (shortcuts != null && shortcuts.length > 0) {
               StringBuilder sb = new StringBuilder();
               for (Shortcut shortcut : shortcuts) {
-                if (sb.length() > 0)
+                if (sb.length() > 0) {
                   sb.append(", ");
+                }
                 sb.append(KeyMapBundle.message("accessible.name.shortcut"));
                 sb.append(KeymapUtil.getShortcutText(shortcut));
               }
@@ -725,16 +734,15 @@ public final class ActionsTree {
       }
     }
 
-    private class ActionHyperlink extends Hyperlink {
+    private class SelectActionRunnable implements Runnable {
       private final String myActionId;
 
-      ActionHyperlink(String actionId, @NlsContexts.LinkLabel String actionText) {
-        super(null, actionText, GRAY_LINK);
+      SelectActionRunnable(@NonNls String actionId) {
         myActionId = actionId;
       }
 
       @Override
-      public void onClick(MouseEvent event) {
+      public void run() {
         selectAction(myActionId);
       }
     }
@@ -758,14 +766,7 @@ public final class ActionsTree {
     return new RowData(shortcuts, abbreviations);
   }
 
-  private static final class RowData {
-    public final Shortcut[] shortcuts;
-    public final Set<String> abbreviations;
-
-    private RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
-      this.shortcuts = shortcuts;
-      this.abbreviations = abbreviations;
-    }
+  private record RowData(Shortcut[] shortcuts, Set<String> abbreviations) {
   }
 
   @SuppressWarnings("UseJBColor")
@@ -835,8 +836,6 @@ public final class ActionsTree {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
-    private int myHeight;
-
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -850,15 +849,6 @@ public final class ActionsTree {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
-    }
-
-    public void setHeight(int height) {
-      myHeight = height;
-    }
-
-    @Override
-    public int getHeight() {
-      return myHeight;
     }
   }
 }

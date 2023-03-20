@@ -1,4 +1,4 @@
-// "<html> Change signature of foo(<b>ArrayList&lt;Integer&gt;</b>, <b>ArrayList&lt;Integer&gt;</b>, ArrayList&lt;Integer&gt;, ArrayList&lt;Integer&gt;)</html>" "true"
+// "<html> Change signature of foo(<b>ArrayList&lt;Integer&gt;</b>, <b>ArrayList&lt;Integer&gt;</b>, ArrayList&lt;Integer&gt;, ArrayList&lt;Integer&gt;)</html>" "true-preview"
 import java.util.*;
 
 class Test {

@@ -35,7 +35,6 @@ public final class YAMLFileType extends LanguageFileType {
   }
 
   @Override
-  @NotNull
   public Icon getIcon() {
     return AllIcons.FileTypes.Yaml;
   }

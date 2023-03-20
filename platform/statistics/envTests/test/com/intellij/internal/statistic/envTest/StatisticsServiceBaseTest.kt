@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.ThreadTracker
+import com.intellij.testFramework.common.ThreadLeakTracker
 import java.io.File
 
 internal abstract class StatisticsServiceBaseTest : HeavyPlatformTestCase() {
@@ -19,10 +19,10 @@ internal abstract class StatisticsServiceBaseTest : HeavyPlatformTestCase() {
     tmpLocalRoot = tempDir.createVirtualDir("docker_server_root").path
     FileUtil.copyDir(File("${getTestDataPath()}/default_root"), File(tmpLocalRoot))
 
-    ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "Okio Watchdog")
-    ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "testcontainers-ryuk")
-    ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "docker-java-stream")
-    ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "HttpClient-")
+    ThreadLeakTracker.longRunningThreadCreated(longRunningThreadDisposable, "Okio Watchdog")
+    ThreadLeakTracker.longRunningThreadCreated(longRunningThreadDisposable, "testcontainers-ryuk")
+    ThreadLeakTracker.longRunningThreadCreated(longRunningThreadDisposable, "docker-java-stream")
+    ThreadLeakTracker.longRunningThreadCreated(longRunningThreadDisposable, "HttpClient-")
 
     container = ApacheContainer(tmpLocalRoot)
     container.start()

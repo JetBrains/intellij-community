@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.asBrowseFolderDescriptor
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -116,7 +117,7 @@ fun htmlComponent(@DetailedDescription text: String = "",
 
 fun RadioButton(@RadioButton text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
-fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: String? = null): JCheckBox {
+fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: @Tooltip String? = null): JCheckBox {
   val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)
   toolTip?.let { component.toolTipText = it }
   return component
@@ -127,13 +128,13 @@ fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLa
   return Panel(title, false, layout)
 }
 
-fun Panel(@BorderTitle title: String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
+fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }
   return panel
 }
 
-fun DialogPanel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
+fun DialogPanel(title: @BorderTitle String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
   val panel = DialogPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator = true) }
   return panel
@@ -202,7 +203,7 @@ private abstract class MyDialogWrapper(project: Project?,
                                        modality: IdeModalityType) : DialogWrapper(project, parent, true, modality), DialogManager {
   override fun performAction(action: (() -> List<ValidationInfo>?)?) {
     val validationInfoList = action?.invoke()
-    if (validationInfoList == null || validationInfoList.isEmpty()) {
+    if (validationInfoList.isNullOrEmpty()) {
       super.doOKAction()
     }
     else {
@@ -238,46 +239,42 @@ private abstract class MyDialogWrapper(project: Project?,
 }
 
 @JvmOverloads
-fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
-                                                          component: ComponentWithBrowseButton<T>,
-                                                          textField: JTextField,
-                                                          @DialogTitle browseDialogTitle: String?,
-                                                          fileChooserDescriptor: FileChooserDescriptor,
-                                                          textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
-  installFileCompletionAndBrowseDialog(
-    project, component, textField, browseDialogTitle, null, fileChooserDescriptor, textComponentAccessor, fileChosen)
-}
-
-@JvmOverloads
-fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
-                                                          component: ComponentWithBrowseButton<T>,
-                                                          textField: JTextField,
-                                                          @DialogTitle browseDialogTitle: String?,
-                                                          @Label browseDialogDescription: String?,
-                                                          fileChooserDescriptor: FileChooserDescriptor,
-                                                          textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+fun <T : JComponent> installFileCompletionAndBrowseDialog(
+  project: Project?,
+  component: ComponentWithBrowseButton<T>,
+  textField: JTextField,
+  @DialogTitle browseDialogTitle: String?,
+  @Label browseDialogDescription: String? = null,
+  fileChooserDescriptor: FileChooserDescriptor,
+  textComponentAccessor: TextComponentAccessor<T>,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+) {
   if (ApplicationManager.getApplication() == null) {
     // tests
     return
   }
 
+  val browseFolderDescriptor = fileChooserDescriptor.asBrowseFolderDescriptor()
+  if (fileChosen != null) {
+    browseFolderDescriptor.convertFileToText = fileChosen
+  }
+
   component.addActionListener(
-    object : BrowseFolderActionListener<T>(
-      browseDialogTitle, browseDialogDescription, component, project, fileChooserDescriptor, textComponentAccessor
-    ) {
-      override fun onFileChosen(chosenFile: VirtualFile) {
-        if (fileChosen == null) {
-          super.onFileChosen(chosenFile)
-        }
-        else {
-          textComponentAccessor.setText(myTextComponent, fileChosen(chosenFile))
-        }
-      }
-    })
-  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true,
-                                                         null /* infer disposable from UI context */)
+    BrowseFolderActionListener(
+      browseDialogTitle,
+      browseDialogDescription,
+      component,
+      project,
+      browseFolderDescriptor,
+      textComponentAccessor
+    )
+  )
+  FileChooserFactory.getInstance().installFileCompletion(
+    textField,
+    fileChooserDescriptor,
+    true,
+    null /* infer disposable from UI context */
+  )
 }
 
 @JvmOverloads

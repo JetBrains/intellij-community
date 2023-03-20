@@ -72,8 +72,7 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
     @Nullable
     private String getReportFilePath() {
       final AbstractProperty.AbstractPropertyContainer properties = getProperties();
-      if (properties instanceof GradleConsoleProperties) {
-        GradleConsoleProperties gradleConsoleProperties = (GradleConsoleProperties)properties;
+      if (properties instanceof GradleConsoleProperties gradleConsoleProperties) {
         final File testReport = gradleConsoleProperties.getGradleTestReport();
         if (testReport != null && testReport.isFile()) return testReport.getPath();
       }

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BoxingBoxedValueInspection extends BaseInspection {
+public class BoxingBoxedValueInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
   static final Map<String, String> boxedPrimitiveMap =
@@ -74,7 +75,7 @@ public class BoxingBoxedValueInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiCallExpression parent = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, PsiNewExpression.class);
       if (parent == null) {
@@ -97,7 +98,7 @@ public class BoxingBoxedValueInspection extends BaseInspection {
   private static class BoxingBoxedValueVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiType constructorType = expression.getType();
       if (constructorType == null) {
@@ -148,7 +149,7 @@ public class BoxingBoxedValueInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();

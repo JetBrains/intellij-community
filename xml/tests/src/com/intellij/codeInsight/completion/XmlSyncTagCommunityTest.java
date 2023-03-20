@@ -47,54 +47,69 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
   }
 
   public void testMultiCaret() {
-    doTest("<div<caret>></div>\n" +
-           "<div<caret>></div>\n", "v",
-           "<divv></divv>\n" +
-           "<divv></divv>\n");
+    doTest("""
+             <div<caret>></div>
+             <div<caret>></div>
+             """, "v",
+           """
+             <divv></divv>
+             <divv></divv>
+             """);
   }
 
   public void testMultiCaretNested() {
-    doTest("<div<caret>>\n" +
-           "<div<caret>></div>\n" +
-           "</div>", "v",
-           "<divv>\n" +
-           "<divv></divv>\n" +
-           "</divv>");
+    doTest("""
+             <div<caret>>
+             <div<caret>></div>
+             </div>""", "v",
+           """
+             <divv>
+             <divv></divv>
+             </divv>""");
   }
 
   public void testMultiCaretAdding() {
-    doTest("<div<caret>></div>\n" +
-           "<div></div>\n", "\b\b\biii",
-           "<iii></iii>\n" +
-           "<div></div>\n");
+    doTest("""
+             <div<caret>></div>
+             <div></div>
+             """, "\b\b\biii",
+           """
+             <iii></iii>
+             <div></div>
+             """);
     myFixture.getEditor().getCaretModel().addCaret(new VisualPosition(1, 4));
     type("\b");
-    myFixture.checkResult("<ii></ii>\n" +
-                          "<di></di>\n");
+    myFixture.checkResult("""
+                            <ii></ii>
+                            <di></di>
+                            """);
   }
 
   public void testAfterUndo() {
-    doTest("<div class=\"container\">\n" +
-           "    <div class=\"row\">\n" +
-           "        <div class=\"col-xs-2\"></div>\n" +
-           "        <<selection>div</selection> class=\"col-xs-10\"></div>\n" +
-           "    </div>\n" +
-           "</div>",
+    doTest("""
+             <div class="container">
+                 <div class="row">
+                     <div class="col-xs-2"></div>
+                     <<selection>div</selection> class="col-xs-10"></div>
+                 </div>
+             </div>""",
            "a",
-           "<div class=\"container\">\n" +
-           "    <div class=\"row\">\n" +
-           "        <div class=\"col-xs-2\"></div>\n" +
-           "        <a class=\"col-xs-10\"></a>\n" +
-           "    </div>\n" +
-           "</div>");
+           """
+             <div class="container">
+                 <div class="row">
+                     <div class="col-xs-2"></div>
+                     <a class="col-xs-10"></a>
+                 </div>
+             </div>""");
     myFixture.performEditorAction(IdeActions.ACTION_UNDO);
     type("a");
-    myFixture.checkResult("<div class=\"container\">\n" +
-                          "    <div class=\"row\">\n" +
-                          "        <div class=\"col-xs-2\"></div>\n" +
-                          "        <a class=\"col-xs-10\"></a>\n" +
-                          "    </div>\n" +
-                          "</div>");
+    myFixture.checkResult("""
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-xs-2"></div>
+                                    <a class="col-xs-10"></a>
+                                </div>
+                            </div>""");
   }
 
   public void testSpace() {

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,15 +29,20 @@ public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     final VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-    if (vcsKey == null || ! SvnVcs.getKey().equals(vcsKey)) return;
+    if (vcsKey == null || !SvnVcs.getKey().equals(vcsKey)) return;
     final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
     if (revision == null || revisionVirtualFile == null) return;
-    final SvnFileRevision svnFileRevision = (SvnFileRevision) revision;
+    final SvnFileRevision svnFileRevision = (SvnFileRevision)revision;
     final Consumer<String> listener = e.getData(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER);
     SvnEditCommitMessageAction.askAndEditRevision(svnFileRevision.getRevision().getNumber(), svnFileRevision.getCommitMessage(),
                                                   svnFileRevision.getChangedRepositoryPath(), project,

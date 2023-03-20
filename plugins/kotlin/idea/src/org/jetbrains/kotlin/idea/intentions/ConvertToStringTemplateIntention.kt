@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -6,10 +6,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -54,7 +56,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
         @JvmStatic
         fun buildReplacement(expression: KtBinaryExpression): KtStringTemplateExpression {
             val rightText = buildText(expression.right, false)
-            return fold(expression.left, rightText, KtPsiFactory(expression))
+            return fold(expression.left, rightText, KtPsiFactory(expression.project))
         }
 
         private fun fold(left: KtExpression?, right: String, factory: KtPsiFactory): KtStringTemplateExpression {
@@ -130,7 +132,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
         private fun isApplicableToNoParentCheck(expression: KtBinaryExpression): Boolean {
             if (expression.operationToken != KtTokens.PLUS) return false
-            val expressionType = expression.analyze(BodyResolveMode.PARTIAL).getType(expression)
+            val expressionType = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL).getType(expression)
             if (!KotlinBuiltIns.isString(expressionType)) return false
             return isSuitable(expression)
         }

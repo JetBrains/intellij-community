@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -6,12 +6,10 @@ import com.intellij.workspaceModel.storage.ExternalEntityMapping;
 import com.intellij.workspaceModel.storage.MutableExternalEntityMapping;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableCompositePackagingElementEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder;
 import kotlin.Pair;
 import kotlin.Unit;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -51,11 +49,11 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
           }
         }
         // TODO not sure if the entity source is correct
-        PackagingElementEntity childEntity = (PackagingElementEntity)child.getOrAddEntity(builder, entity.entitySource, myProject);
-        builder.modifyEntity(ModifiableCompositePackagingElementEntity.class, entity, o -> {
-          List<PackagingElementEntity> mutableList = SequencesKt.toMutableList(o.getChildren());
+        PackagingElementEntity childEntity = (PackagingElementEntity)child.getOrAddEntity(builder, entity.getEntitySource(), myProject);
+        builder.modifyEntity(CompositePackagingElementEntity.Builder.class, entity, o -> {
+          List<PackagingElementEntity> mutableList = new ArrayList<>(o.getChildren());
           mutableList.add(childEntity);
-          o.setChildren(SequencesKt.asSequence(mutableList.iterator()));
+          o.setChildren(mutableList);
           return Unit.INSTANCE;
         });
         // Set storage for the new child
@@ -94,7 +92,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
             }
             return new Pair<>(o, data);
           }));
-        PackagingElementEntity childEntity = (PackagingElementEntity)child.getOrAddEntity(builder, entity.entitySource, myProject);
+        PackagingElementEntity childEntity = (PackagingElementEntity)child.getOrAddEntity(builder, entity.getEntitySource(), myProject);
         pairs.add(0, new Pair<>(childEntity, child));
         for (int i = 1; i < pairs.size(); i++) {
           Pair<PackagingElementEntity, PackagingElement<?>> pair = pairs.get(i);
@@ -109,9 +107,9 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         }
         List<PackagingElementEntity> newChildren = ContainerUtil.map(pairs, o -> o.getFirst());
         //noinspection unchecked
-        builder.modifyEntity(ModifiableCompositePackagingElementEntity.class, entity, o -> {
+        builder.modifyEntity(CompositePackagingElementEntity.Builder.class, entity, o -> {
           //noinspection unchecked
-          o.setChildren(SequencesKt.asSequence(newChildren.iterator()));
+          o.setChildren(newChildren);
           return Unit.INSTANCE;
         });
         // Set storage for the new child
@@ -152,9 +150,9 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         PackagingElementEntity entityToReturn = myMove(index, direction, children);
 
         //noinspection unchecked
-        builder.modifyEntity(ModifiableCompositePackagingElementEntity.class, entity, o -> {
+        builder.modifyEntity(CompositePackagingElementEntity.Builder.class, entity, o -> {
           //noinspection unchecked
-          o.setChildren(SequencesKt.asSequence(children.iterator()));
+          o.setChildren(children);
           return Unit.INSTANCE;
         });
 
@@ -189,7 +187,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       () -> myChildren.remove(child),
       (builder, packagingElementEntity) -> {
         MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
-        WorkspaceEntity entity = ContainerUtil.getFirstItem(mapping.getEntities(child));
+        WorkspaceEntity entity = mapping.getFirstEntity(child);
         if (entity != null) {
           builder.removeEntity(entity);
         }
@@ -203,7 +201,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       (builder, packagingElementEntity) -> {
         MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
         children.stream()
-          .map(o -> ContainerUtil.getFirstItem(mapping.getEntities(o)))
+          .map(o -> mapping.getFirstEntity(o))
           .filter(Objects::nonNull)
           .forEach(o -> builder.removeEntity(o));
       }
@@ -217,14 +215,12 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
     }
     else {
       ExternalEntityMapping<Object> mapping = myStorage.getBase().getExternalMapping("intellij.artifacts.packaging.elements");
-      List<WorkspaceEntity> mappedEntities = mapping.getEntities(this);
-      if (mappedEntities.isEmpty()) {
+      PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mapping.getFirstEntity(this);
+      if (packagingElementEntity == null) {
         throw new RuntimeException(
           this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
       }
-      PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mappedEntities.get(0);
-      if (packagingElementEntity instanceof CompositePackagingElementEntity) {
-        CompositePackagingElementEntity entity = (CompositePackagingElementEntity)packagingElementEntity;
+      if (packagingElementEntity instanceof CompositePackagingElementEntity entity) {
         return ContainerUtil.map(entity.getChildren().iterator(), o -> {
           PackagingElement<?> data = (PackagingElement<?>)mapping.getDataByEntity(o);
           if (data == null) {
@@ -264,9 +260,9 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         CompositePackagingElementEntity entity = (CompositePackagingElementEntity)packagingElementEntity;
         // I just don't understand what to do to avoid this warning
         //noinspection unchecked
-        builder.modifyEntity(ModifiableCompositePackagingElementEntity.class, entity, o -> {
+        builder.modifyEntity(CompositePackagingElementEntity.Builder.class, entity, o -> {
           //noinspection unchecked
-          o.setChildren(SequencesKt.emptySequence());
+          o.setChildren(new ArrayList<>());
           return Unit.INSTANCE;
         });
       }

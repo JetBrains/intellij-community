@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.smartEnter
 
@@ -591,6 +591,95 @@ class SmartEnterTest : KotlinLightCodeInsightFixtureTestCase() {
         """
             when ({
                 <caret>
+            }
+            """
+    )
+
+    fun testWhenEntry() = doFunTest(
+        """
+            when (i) {
+                1<caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithSomeConditions() = doFunTest(
+        """
+            when (i) {
+                1, 2<caret>, 3
+            }
+            """,
+        """
+            when (i) {
+                1, 2, 3 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithSpaces() = doFunTest(
+        """
+            when (i) {
+                1 <caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithArrow() = doFunTest(
+        """
+            when (i) {
+                1 -><caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithArrowAndSpaces() = doFunTest(
+        """
+            when (i) {
+                1 -> <caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -> {
+                    <caret>
+                }
+            }
+            """
+    )
+
+    fun testWhenEntryWithError() = doFunTest(
+        """
+            when (i) {
+                1 -<caret>
+            }
+            """,
+        """
+            when (i) {
+                1 -
+                        <caret>
             }
             """
     )

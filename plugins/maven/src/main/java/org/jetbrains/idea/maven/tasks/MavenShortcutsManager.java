@@ -17,7 +17,6 @@ import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -39,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class MavenShortcutsManager implements Disposable {
   private final Project myProject;
 
-  private static final String ACTION_ID_PREFIX = "Maven_";
+  static final String ACTION_ID_PREFIX = "Maven_";
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -71,7 +70,7 @@ public final class MavenShortcutsManager implements Disposable {
 
     MyProjectsTreeListener listener = new MyProjectsTreeListener();
     MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
-    mavenProjectManager.addManagerListener(listener);
+    mavenProjectManager.addManagerListener(listener, this);
     mavenProjectManager.addProjectsTreeListener(listener, this);
 
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
@@ -121,6 +120,11 @@ public final class MavenShortcutsManager implements Disposable {
     return KeymapUtil.getShortcutsText(shortcuts);
   }
 
+  boolean hasShortcuts() {
+    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
+    return ContainerUtil.exists(activeKeymap.getActionIds(), id -> id.startsWith(ACTION_ID_PREFIX));
+  }
+
   boolean hasShortcuts(MavenProject project, String goal) {
     return getShortcuts(project, goal).length > 0;
   }
@@ -135,15 +139,6 @@ public final class MavenShortcutsManager implements Disposable {
     for (Listener listener : myListeners) {
       listener.shortcutsUpdated();
     }
-  }
-
-  /**
-   * @deprecated use #addListener(Listener, Disposable)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public void addListener(Listener l) {
-    myListeners.add(l);
   }
 
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {

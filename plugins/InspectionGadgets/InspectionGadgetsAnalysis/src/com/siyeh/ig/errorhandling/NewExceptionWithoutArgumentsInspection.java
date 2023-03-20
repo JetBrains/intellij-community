@@ -25,7 +25,7 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   private static class NewExceptionWithoutArgumentsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null || !argumentList.isEmpty()) {
@@ -36,10 +36,9 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
         return;
       }
       final PsiElement target = classReference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)target;
       if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
         return;
       }
@@ -49,7 +48,7 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
       if (!expression.isConstructor()) {
         return;
@@ -59,10 +58,9 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
         return;
       }
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiMethod)) {
+      if (!(target instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)target;
       if (method.getParameterList().getParametersCount() != 0) {
         return;
       }

@@ -9,16 +9,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode;
+import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
+import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl.CopyPasteOptionsTransferableData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +39,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.*;
+import static com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl.getCopiedFromEmptySelectionPasteMode;
 
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
@@ -65,26 +76,16 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (transferable == null) return;
 
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-
-    final Document document = editor.getDocument();
-    if (!EditorModificationUtil.requestWriting(editor)) {
-      return;
-    }
+    if (!EditorModificationUtil.requestWriting(editor)) return;
 
     DataContext context = dataId -> {
       return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
     };
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, null, context);
-      }
-      return;
-    }
-
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) {
+    final Document document = editor.getDocument();
+    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, context);
       }
@@ -126,12 +127,35 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
+  private static class ProcessorAndData<Data extends TextBlockTransferableData> {
+    final CopyPastePostProcessor<Data> processor;
+    final @NotNull List<? extends Data> data;
+
+    private ProcessorAndData(@NotNull CopyPastePostProcessor<Data> processor, @NotNull List<? extends Data> data) {
+      this.processor = processor;
+      this.data = data;
+    }
+
+    void process(@NotNull Project project, @NotNull Editor editor, @NotNull RangeMarker bounds, int caretOffset, @NotNull Ref<? super Boolean> skipIndentation) {
+      processor.processTransferableData(project, editor, bounds, caretOffset, skipIndentation, data);
+    }
+
+    static <T extends TextBlockTransferableData> @Nullable ProcessorAndData<T> create(
+      @NotNull CopyPastePostProcessor<T> processor,
+      @NotNull Transferable content
+    ) {
+      List<T> data = processor.extractTransferableData(content);
+      if (data.isEmpty()) return null;
+      return new ProcessorAndData<>(processor, data);
+    }
+  }
+
   private static void doPasteAction(final Editor editor,
-                              final Project project,
-                              final PsiFile file,
-                              final Document document,
-                              @NotNull final Transferable content,
-                              @NotNull final TypingActionsExtension typingActionsExtension) {
+                                    final Project project,
+                                    final PsiFile file,
+                                    final Document document,
+                                    @NotNull final Transferable content,
+                                    @NotNull final TypingActionsExtension typingActionsExtension) {
     CopyPasteManager.getInstance().stopKillRings();
 
     String text = null;
@@ -150,14 +174,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-    final Map<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> extraData = new HashMap<>();
+    final List<ProcessorAndData<?>> extraData = new ArrayList<>();
     final Collection<TextBlockTransferableData> allValues = new ArrayList<>();
 
     for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
-      List<? extends TextBlockTransferableData> data = processor.extractTransferableData(content);
-      if (!data.isEmpty()) {
-        extraData.put(processor, data);
-        allValues.addAll(data);
+      ProcessorAndData<? extends TextBlockTransferableData> data = ProcessorAndData.create(processor, content);
+      if (data != null) {
+        extraData.add(data);
+        allValues.addAll(data.data);
       }
     }
 
@@ -181,10 +205,27 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to remove currently selected text (if any).
 
+    CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
+    CopiedFromEmptySelectionPasteMode pasteMode = copyPasteOptions.isCopiedFromEmptySelection()
+                                                  ? getCopiedFromEmptySelectionPasteMode() : AT_CARET;
+    boolean isInsertingEntireLineAboveCaret = pasteMode == ENTIRE_LINE_ABOVE_CARET &&
+                                              !selectionModel.hasSelection();
+    List<CaretState> caretStateToRestore = null;
+    if (isInsertingEntireLineAboveCaret) {
+      // Make CopyPastePreProcessors see the caret at the real insertion offset.
+      caretStateToRestore = caretModel.getCaretsAndSelections();
+      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, caretOffset);
+      caretModel.moveToOffset(lineStartOffset);
+    }
+
     RawText rawText = RawText.fromTransferable(content);
     String newText = text;
     for (CopyPastePreProcessor preProcessor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
+    }
+
+    if (caretStateToRestore != null) {
+      caretModel.setCaretsAndSelections(caretStateToRestore);
     }
 
     final boolean pastedTextWasChanged = !text.equals(newText);
@@ -196,34 +237,24 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     final String _text = text;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      EditorModificationUtilEx.insertStringAtCaret(editor, _text, false, true);
+    final TextRange pastedRange = ApplicationManager.getApplication().runWriteAction((Computable<TextRange>)() -> {
       if (!project.isDisposed()) {
         ((UndoManagerImpl)UndoManager.getInstance(project)).addDocumentAsAffected(editor.getDocument());
       }
+      return isInsertingEntireLineAboveCaret ? EditorCopyPasteHelperImpl.insertEntireLineAboveCaret(editor, _text)
+                                             : EditorCopyPasteHelperImpl.insertStringAtCaret(editor, _text,
+                                                                                             pasteMode == TRIM_IF_MIDDLE_LINE);
     });
-
-    int length = text.length();
-    int offset = caretModel.getOffset() - length;
-    if (offset < 0) {
-      length += offset;
-      offset = 0;
-    }
-    final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
-
-    caretModel.moveToOffset(bounds.getEndOffset());
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    selectionModel.removeSelection();
+    final RangeMarker bounds = document.createRangeMarker(pastedRange);
 
     // `skipIndentation` is additionally used as marker for changed pasted test
     // Any value, except `null` is a signal that the text was transformed.
     // For the `CopyPasteFoldingProcessor` it means that folding data is not valid and cannot be applied.
     final Ref<Boolean> skipIndentation = new Ref<>(pastedTextWasChanged ? Boolean.FALSE : null);
-    for (Map.Entry<CopyPastePostProcessor, List<? extends TextBlockTransferableData>> e : extraData.entrySet()) {
-      //noinspection unchecked
-      SlowOperations.allowSlowOperations(
-        () -> e.getKey().processTransferableData(project, editor, bounds, caretOffset, skipIndentation, e.getValue())
-      );
+    for (ProcessorAndData<?> data : extraData) {
+      SlowOperations.allowSlowOperations(() -> {
+        data.process(project, editor, bounds, caretOffset, skipIndentation);
+      });
     }
 
     boolean pastedTextContainsWhiteSpacesOnly =
@@ -244,10 +275,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     if (bounds.isValid()) {
-      caretModel.moveToOffset(bounds.getEndOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      selectionModel.removeSelection();
-      editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
+      if (!isInsertingEntireLineAboveCaret) {
+        caretModel.moveToOffset(bounds.getEndOffset());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
+      editor.putUserData(EditorEx.LAST_PASTED_REGION, bounds.getTextRange());
     }
+    // Don't dispose the 'bounds' RangeMarker because the processors
+    // from 'extraData' may use it later, for instance, in an invokeLater() block.
   }
 }

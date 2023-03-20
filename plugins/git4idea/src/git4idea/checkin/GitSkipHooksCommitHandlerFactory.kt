@@ -3,26 +3,26 @@ package git4idea.checkin
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.ui.NonFocusableCheckBox
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.vcs.commit.CommitSessionCollector
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.commit.commitProperty
-import git4idea.GitUtil.getRepositoryManager
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import java.awt.event.KeyEvent
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 
 private val IS_SKIP_HOOKS_KEY = Key.create<Boolean>("Git.Commit.IsSkipHooks")
-internal var CommitContext.isSkipHooks: Boolean by commitProperty(IS_SKIP_HOOKS_KEY)
+var CommitContext.isSkipHooks: Boolean by commitProperty(IS_SKIP_HOOKS_KEY)
+  internal set
 
 class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
@@ -46,33 +46,36 @@ private class GitSkipHooksConfigurationPanel(
 ) : RefreshableOnComponent,
     CheckinChangeListSpecificComponent {
 
-  private val vcs = GitVcs.getInstance(panel.project)
-  private val runHooks = NonFocusableCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
-    mnemonic = KeyEvent.VK_H
+  private val repositoryManager get() = GitRepositoryManager.getInstance(panel.project)
+  private val runHooks = JCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
+    isSelected = true
     toolTipText = GitBundle.message("tooltip.run.git.hooks")
+    addActionListener {
+      CommitSessionCollector.getInstance(panel.project).logCommitOptionToggled(CommitOption.RUN_HOOKS, isSelected)
+    }
   }
-  private var selectedState = true
 
-  override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)
+  override fun getComponent(): JComponent = panel {
+    row {
+      cell(runHooks)
+    }
+  }
+
+  private fun refreshAvailability() {
+    runHooks.isVisible = repositoryManager.repositories.any { it.hasCommitHooks() }
+  }
 
   override fun onChangeListSelected(list: LocalChangeList) {
-    if (runHooks.isEnabled) selectedState = runHooks.isSelected
-    val affectedGitRoots = panel.roots.intersect(setOf(*ProjectLevelVcsManager.getInstance(panel.project).getRootsUnderVcs(vcs)))
-    val repositoryManager = GitRepositoryManager.getInstance(panel.project)
-    runHooks.isEnabled = affectedGitRoots.any { repositoryManager.getRepositoryForRootQuick(it)?.hasCommitHooks() == true }
-    runHooks.isSelected = if (runHooks.isEnabled) selectedState else false
+    refreshAvailability()
   }
 
   override fun saveState() {
-    commitContext.isSkipHooks = shouldSkipHook()
+    commitContext.isSkipHooks = runHooks.isVisible && !runHooks.isSelected
   }
 
   override fun restoreState() {
-    runHooks.isVisible = getRepositoryManager(panel.project).repositories.any { it.hasCommitHooks() }
-    runHooks.isSelected = true
+    refreshAvailability()
   }
-
-  private fun shouldSkipHook() = runHooks.isVisible && !runHooks.isSelected
 
   private fun GitRepository.hasCommitHooks() = info.hooksInfo.areCommitHooksAvailable
 }

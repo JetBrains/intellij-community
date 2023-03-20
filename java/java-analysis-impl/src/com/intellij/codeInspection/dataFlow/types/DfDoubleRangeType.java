@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,8 +58,7 @@ class DfDoubleRangeType implements DfDoubleType {
       int to = Double.compare(val, myTo);
       return (from <= 0 && to <= 0) != myInvert;
     }
-    if (other instanceof DfDoubleRangeType) {
-      DfDoubleRangeType range = (DfDoubleRangeType)other;
+    if (other instanceof DfDoubleRangeType range) {
       if (range.myNaN && !myNaN) return false;
       if (!myInvert && myFrom == Double.NEGATIVE_INFINITY && myTo == Double.POSITIVE_INFINITY) return true;
       int from = Double.compare(myFrom, range.myFrom);
@@ -97,10 +96,9 @@ class DfDoubleRangeType implements DfDoubleType {
       }
       return joinRange(value, value, exact);
     }
-    if (!(other instanceof DfDoubleRangeType)) {
+    if (!(other instanceof DfDoubleRangeType range)) {
       return exact ? null : TOP;
     }
-    DfDoubleRangeType range = (DfDoubleRangeType)other;
     DfDoubleRangeType res = range.myNaN && !myNaN ? new DfDoubleRangeType(myFrom, myTo, myInvert, true) : this;
     if (range.myInvert) {
       if (range.myFrom > Double.NEGATIVE_INFINITY) {
@@ -145,8 +143,7 @@ class DfDoubleRangeType implements DfDoubleType {
   public @NotNull DfType meet(@NotNull DfType other) {
     if (other.isSuperType(this)) return this;
     if (this.isSuperType(other)) return other;
-    if (!(other instanceof DfDoubleRangeType)) return DfType.BOTTOM;
-    DfDoubleRangeType range = (DfDoubleRangeType)other;
+    if (!(other instanceof DfDoubleRangeType range)) return DfType.BOTTOM;
     boolean nan = range.myNaN && myNaN;
     if (!myInvert) {
       if (!range.myInvert) {
@@ -207,32 +204,29 @@ class DfDoubleRangeType implements DfDoubleType {
   static @NotNull DfType fromRelation(@NotNull RelationType relationType, double min, double max) {
     assert !Double.isNaN(min);
     assert !Double.isNaN(max);
-    switch (relationType) {
-      case LE:
-        return create(Double.NEGATIVE_INFINITY, max == 0.0 ? 0.0 : max, false, true);
-      case LT:
-        return max == Double.NEGATIVE_INFINITY ? DfTypes.DOUBLE_NAN :
+    return switch (relationType) {
+      case LE -> create(Double.NEGATIVE_INFINITY, max == 0.0 ? 0.0 : max, false, true);
+      case LT -> max == Double.NEGATIVE_INFINITY ? DfTypes.DOUBLE_NAN :
                create(Double.NEGATIVE_INFINITY, Math.nextDown(max), false, true);
-      case GE:
-        return create(min == 0.0 ? -0.0 : min, Double.POSITIVE_INFINITY, false, true);
-      case GT:
-        return min == Double.POSITIVE_INFINITY ? DfTypes.DOUBLE_NAN :
+      case GE -> create(min == 0.0 ? -0.0 : min, Double.POSITIVE_INFINITY, false, true);
+      case GT -> min == Double.POSITIVE_INFINITY ? DfTypes.DOUBLE_NAN :
                create(Math.nextUp(min), Double.POSITIVE_INFINITY, false, true);
-      case EQ:
+      case EQ -> {
         if (min == 0.0) min = -0.0;
         if (max == 0.0) max = 0.0;
-        return create(min, max, false, true);
-      case NE:
+        yield create(min, max, false, true);
+      }
+      case NE -> {
         if (min == max) {
           if (min == 0.0) {
-            return create(-0.0, 0.0, true, true);
+            yield create(-0.0, 0.0, true, true);
           }
-          return create(min, min, true, true);
+          yield create(min, min, true, true);
         }
-        return DfTypes.DOUBLE;
-      default:
-        return DfTypes.DOUBLE;
-    }
+        yield DfTypes.DOUBLE;
+      }
+      default -> DfTypes.DOUBLE;
+    };
   }
 
   @Override
@@ -242,7 +236,7 @@ class DfDoubleRangeType implements DfDoubleType {
 
   @Override
   public @NotNull DfType castTo(@NotNull PsiPrimitiveType type) {
-    if (type.equals(PsiType.LONG)) {
+    if (type.equals(PsiTypes.longType())) {
       LongRangeSet range;
       if (!myInvert) {
         range = LongRangeSet.range((long)myFrom, (long)myTo);
@@ -260,7 +254,7 @@ class DfDoubleRangeType implements DfDoubleType {
       }
       return DfTypes.longRange(range);
     }
-    if (type.equals(PsiType.INT) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE) || type.equals(PsiType.CHAR)) {
+    if (type.equals(PsiTypes.intType()) || type.equals(PsiTypes.shortType()) || type.equals(PsiTypes.byteType()) || type.equals(PsiTypes.charType())) {
       LongRangeSet range;
       if (!myInvert) {
         range = LongRangeSet.range((int)myFrom, (int)myTo);
@@ -277,12 +271,12 @@ class DfDoubleRangeType implements DfDoubleType {
         range = range.join(LongRangeSet.point(0));
       }
       DfType result = DfTypes.intRange(range);
-      if (result instanceof DfPrimitiveType && !type.equals(PsiType.INT)) {
+      if (result instanceof DfPrimitiveType && !type.equals(PsiTypes.intType())) {
         return ((DfPrimitiveType)result).castTo(type);
       }
       return result;
     }
-    if (type.equals(PsiType.DOUBLE)) {
+    if (type.equals(PsiTypes.doubleType())) {
       return this;
     }
     return DfType.TOP;

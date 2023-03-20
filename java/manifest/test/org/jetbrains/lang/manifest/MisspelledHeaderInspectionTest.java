@@ -67,7 +67,7 @@ public class MisspelledHeaderInspectionTest extends LightJavaCodeInsightFixtureT
     List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Add ");
     assertEquals(1, intentions.size());
     myFixture.launchAction(intentions.get(0));
-    assertEquals(Collections.singleton("Custom-Header"), inspection.CUSTOM_HEADERS);
+    assertEquals(Collections.singletonList("Custom-Header"), inspection.CUSTOM_HEADERS);
   }
 
   private void doTest(String text, int expected) {

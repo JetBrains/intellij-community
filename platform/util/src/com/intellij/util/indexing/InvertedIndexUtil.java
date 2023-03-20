@@ -65,4 +65,31 @@ public final class InvertedIndexUtil {
 
     return mainIntersection == null ? IntSets.EMPTY_SET : mainIntersection;
   }
+
+  @NotNull
+  public static <K, V, I> IntSet collectInputIdsContainingAnyKey(@NotNull InvertedIndex<? super K, V, I> index,
+                                                                 @NotNull Collection<? extends K> dataKeys,
+                                                                 @Nullable Condition<? super V> valueChecker,
+                                                                 @Nullable IntPredicate idChecker) throws StorageException {
+    IntSet result = null;
+    for (K dataKey : dataKeys) {
+      IOCancellationCallbackHolder.checkCancelled();
+      ValueContainer<V> container = index.getData(dataKey);
+      for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+        V value = valueIt.next();
+        if (valueChecker != null && !valueChecker.value(value)) {
+          continue;
+        }
+        IOCancellationCallbackHolder.checkCancelled();
+        ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
+        while (iterator.hasNext()) {
+          int id = iterator.next();
+          if (idChecker != null && !idChecker.test(id)) continue;
+          if (result == null) result = new IntOpenHashSet();
+          result.add(id);
+        }
+      }
+    }
+    return result == null ? IntSets.EMPTY_SET : result;
+  }
 }

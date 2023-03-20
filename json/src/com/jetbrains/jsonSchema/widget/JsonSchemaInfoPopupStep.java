@@ -68,6 +68,13 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
       return AllIcons.Actions.Refresh;
     }
 
+    if (value == IGNORE_FILE) {
+      return AllIcons.Vcs.Ignore_file;
+    }
+
+    if (value == STOP_IGNORE_FILE) {
+      return AllIcons.Actions.AddFile;
+    }
     return EMPTY_ICON;
   }
 
@@ -96,6 +103,14 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
       }
       else if (selectedValue == LOAD_REMOTE) {
         return doFinalStep(() -> myService.triggerUpdateRemote());
+      }
+      else if (selectedValue == IGNORE_FILE) {
+        markIgnored(myVirtualFile, myProject);
+        return doFinalStep(() -> myService.reset());
+      }
+      else if (selectedValue == STOP_IGNORE_FILE) {
+        unmarkIgnored(myVirtualFile, myProject);
+        return doFinalStep(() -> myService.reset());
       }
       else {
         setMapping(selectedValue, myVirtualFile, myProject);
@@ -150,11 +165,16 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   public void setEmptyText(@NotNull StatusText emptyText) {
   }
 
-  @Override
-  public PopupStep onChosen(JsonSchemaInfo selectedValue, boolean finalChoice, int eventModifiers) {
-    return onChosen(selectedValue, finalChoice);
+  private static void markIgnored(@Nullable VirtualFile virtualFile, @NotNull Project project) {
+    JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
+    configuration.markAsIgnored(virtualFile);
   }
 
+  private static void unmarkIgnored(@Nullable VirtualFile virtualFile, @NotNull Project project) {
+    JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
+    if (!configuration.isIgnoredFile(virtualFile)) return;
+    configuration.unmarkAsIgnored(virtualFile);
+  }
   protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
     assert virtualFile != null: "override this method to do without a virtual file!";
     JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);

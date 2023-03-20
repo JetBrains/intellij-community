@@ -20,7 +20,7 @@ import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
@@ -28,11 +28,10 @@ import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.*
 
 open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 
-  class TestPrintElementManager(private val myGraphElementComparator: Comparator<GraphElement>) : PrintElementManager {
+  class TestPrintElementPresentationManager : PrintElementPresentationManager {
 
     override fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
       return false
@@ -49,11 +48,7 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
         return LinearGraphUtils.getNotNullNodeIndex(element)
       }
 
-      throw IllegalStateException("Incorrect graph element type: " + element)
-    }
-
-    override fun getGraphElementComparator(): Comparator<GraphElement> {
-      return myGraphElementComparator
+      throw IllegalStateException("Incorrect graph element type: $element")
     }
   }
 
@@ -65,10 +60,11 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
     val graph = LinearGraphParser.parse(`in`)
     val graphLayout = GraphLayoutBuilder.build(graph) { o1, o2 -> o1.compareTo(o2) }
     val graphElementComparator = GraphElementComparatorByLayoutIndex(
-      NotNullFunction<Int, Int> { nodeIndex -> graphLayout.getLayoutIndex(nodeIndex!!) }
+      NotNullFunction { nodeIndex -> graphLayout.getLayoutIndex(nodeIndex!!) }
     )
-    val elementManager = TestPrintElementManager(graphElementComparator)
-    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, longEdgeSize, visiblePartSize, edgeWithArrowSize)
+    val elementManager = TestPrintElementPresentationManager()
+    val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, graphElementComparator, longEdgeSize, visiblePartSize,
+                                                          edgeWithArrowSize)
     val actual = printElementGenerator.asString(graph.nodesCount())
     assertEquals(out, actual)
   }
@@ -97,14 +93,12 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
   @Test
   fun oneUpOneDown1() {
     val testName = "oneUpOneDown1"
-    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 7, 1,
-            10)
+    runTest(loadText(testName + IN_POSTFIX), loadText(testName + OUT_POSTFIX), 7, 1, 10)
   }
 
   @Test
   fun oneUpOneDown2() {
     val testName = "oneUpOneDown2"
-    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 10,
-            1, 10)
+    runTest(loadText(testName + IN_POSTFIX), loadText(testName + OUT_POSTFIX), 10, 1, 10)
   }
 }

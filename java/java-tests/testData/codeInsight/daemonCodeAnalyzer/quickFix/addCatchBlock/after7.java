@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 class Test {
     static class E1 extends Exception { }
     static class E2 extends Exception { }
@@ -11,9 +11,9 @@ class Test {
     void m() {
         try (MyResource r = new MyResource()) {
         } catch (E1 e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         } catch (E2 e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 }

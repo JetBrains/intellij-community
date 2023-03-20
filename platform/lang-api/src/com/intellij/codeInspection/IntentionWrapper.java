@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -13,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionClassHolder, IntentionActionDelegate {
+public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionClassHolder, CustomizableIntentionActionDelegate {
   private final IntentionAction myAction;
 
   /**
@@ -125,11 +124,11 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   }
 
   @NotNull
-  public static List<LocalQuickFix> wrapToQuickFixes(@NotNull List<? extends IntentionAction> actions, @NotNull PsiFile file) {
+  public static List<@NotNull LocalQuickFix> wrapToQuickFixes(@NotNull List<? extends IntentionAction> actions, @NotNull PsiFile file) {
     if (actions.isEmpty()) return Collections.emptyList();
     List<LocalQuickFix> fixes = new ArrayList<>(actions.size());
     for (IntentionAction action : actions) {
-      fixes.add(wrapToQuickFix(action, file));
+      ContainerUtil.addIfNotNull(fixes, wrapToQuickFix(action, file));
     }
     return fixes;
   }

@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.lang.documentation.InlineDocumentation;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -14,8 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,6 @@ import java.util.Map;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.inlineDocumentationItems;
 
 public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
-  private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
   private static final Key<Boolean> RESET_TO_DEFAULT = Key.create("doc.render.reset.to.default");
   private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
@@ -40,7 +40,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   @Nullable
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    long current = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
+    long current = PsiModificationTracker.getInstance(file.getProject()).getModificationCount();
     boolean iconsEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     Long existing = editor.getUserData(MODIFICATION_STAMP);
     Boolean iconsWereEnabled = editor.getUserData(ICONS_ENABLED);
@@ -80,12 +80,26 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     Items items = new Items();
     for (InlineDocumentation documentation : inlineDocumentationItems(psiFile)) {
       TextRange range = documentation.getDocumentationRange();
-      if (DocRenderItem.isValidRange(editor, range)) {
+      if (isValidRange(editor, range)) {
         String textToRender = enabled ? calcText(documentation) : null;
         items.addItem(new Item(range, textToRender));
       }
     }
     return items;
+  }
+
+  static boolean isValidRange(@NotNull Editor editor, @NotNull TextRange range) {
+    Document document = editor.getDocument();
+    CharSequence text = document.getImmutableCharSequence();
+    int startOffset = range.getStartOffset();
+    int endOffset = range.getEndOffset();
+    int startLine = document.getLineNumber(startOffset);
+    int endLine = document.getLineNumber(endOffset);
+    if (!CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(document.getLineStartOffset(startLine), startOffset)) ||
+        !CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(endOffset, document.getLineEndOffset(endLine)))) {
+      return false;
+    }
+    return startLine < endLine || document.getLineStartOffset(startLine) < document.getLineEndOffset(endLine);
   }
 
   static @NotNull @Nls String calcText(@Nullable InlineDocumentation documentation) {
@@ -94,7 +108,6 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
     }
     catch (IndexNotReadyException e) {
-      LOG.warn(e);
       return CodeInsightBundle.message("doc.render.dumb.mode.text");
     }
   }
@@ -107,9 +120,9 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
                                         @NotNull Project project,
                                         @NotNull Items items,
                                         boolean collapseNewRegions) {
-    editor.putUserData(MODIFICATION_STAMP, PsiModificationTracker.SERVICE.getInstance(project).getModificationCount());
+    editor.putUserData(MODIFICATION_STAMP, PsiModificationTracker.getInstance(project).getModificationCount());
     editor.putUserData(ICONS_ENABLED, DocRenderDummyLineMarkerProvider.isGutterIconEnabled());
-    DocRenderItem.setItemsToEditor(editor, items, collapseNewRegions);
+    DocRenderItemManager.getInstance().setItemsToEditor(editor, items, collapseNewRegions);
   }
 
   public static class Items implements Iterable<Item> {

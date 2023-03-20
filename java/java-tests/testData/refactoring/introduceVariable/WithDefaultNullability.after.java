@@ -7,6 +7,6 @@ class Test {
   String s;
   
   {
-      @Nullable String m = s;<caret>
+      @Nullable String <caret>m = s;
   }
 }

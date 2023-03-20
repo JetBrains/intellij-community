@@ -3,39 +3,39 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 class RangeMarkerWindow implements RangeMarkerEx {
+  private static final Logger LOG = Logger.getInstance(RangeMarkerWindow.class);
   private final DocumentWindow myDocumentWindow;
   private final RangeMarkerEx myHostMarker;
   private final int myStartShift;
   private final int myEndShift;
 
-  /**
-   * Creates new {@code RangeMarkerWindow} object with the given data.
-   * 
-   * @param documentWindow  target document window
-   * @param hostMarker      backing host range marker
-   * @param startShift      there is a possible situation that injected fragment uses non-empty
-   *                        {@link PsiLanguageInjectionHost.Shred#getPrefix() prefix} and
-   *                        {@link PsiLanguageInjectionHost.Shred#getSuffix() suffix}. It's also possible that target
-   *                        injected offsets are located at prefix/suffix space. We need to hold additional information
-   *                        in order to perform {@code 'host -> injected'} mapping then. This argument specifies difference
-   *                        between the start offset of the given host range marker at the injected text and target injected text
-   *                        start offset
-   * @param endShift        similar to the 'startShift' argument but specifies difference between the target injected host end offset
-   *                        and end offset of the given host range marker at the injected text
-   */
-  RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker, int startShift, int endShift) {
+  RangeMarkerWindow(@NotNull DocumentWindow documentWindow, int startOffset, int endOffset, boolean surviveOnExternalChange) {
     myDocumentWindow = documentWindow;
-    myHostMarker = hostMarker;
-    myStartShift = startShift;
-    myEndShift = endShift;
+    TextRange hostRange = documentWindow.injectedToHost(new ProperTextRange(startOffset, endOffset));
+    // shifts to be added to hostToInjected(hostMarker) offsets to get the target marker offsets, when the startOffset/endOffset lie inside prefix/suffix
+    myStartShift = startOffset - Math.max(0, documentWindow.hostToInjected(hostRange.getStartOffset()));
+    myEndShift = endOffset - Math.max(0, documentWindow.hostToInjected(hostRange.getEndOffset()));
+    RangeMarker hostMarker = createHostRangeMarkerToTrack(hostRange, surviveOnExternalChange);
+    myHostMarker = (RangeMarkerEx)hostMarker;
+    if (documentWindow.isValid() && !isValid()) {
+      LOG.error(this + " is invalid immediately after creation");
+    }
+  }
+
+  @NotNull
+  RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
+    return myDocumentWindow.getDelegate().createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
   }
 
   @Override
@@ -47,13 +47,13 @@ class RangeMarkerWindow implements RangeMarkerEx {
   @Override
   public int getStartOffset() {
     int hostOffset = myHostMarker.getStartOffset();
-    return myDocumentWindow.hostToInjected(hostOffset) - myStartShift;
+    return myDocumentWindow.hostToInjected(hostOffset) + myStartShift;
   }
 
   @Override
   public int getEndOffset() {
     int hostOffset = myHostMarker.getEndOffset();
-    return myDocumentWindow.hostToInjected(hostOffset) + myStartShift + myEndShift;
+    return myDocumentWindow.hostToInjected(hostOffset) + myEndShift;
   }
 
   @Override
@@ -66,27 +66,27 @@ class RangeMarkerWindow implements RangeMarkerEx {
 
   ////////////////////////////delegates
   @Override
-  public void setGreedyToLeft(final boolean greedy) {
+  public void setGreedyToLeft(boolean greedy) {
     myHostMarker.setGreedyToLeft(greedy);
   }
 
   @Override
-  public void setGreedyToRight(final boolean greedy) {
+  public void setGreedyToRight(boolean greedy) {
     myHostMarker.setGreedyToRight(greedy);
   }
 
   @Override
-  public <T> T getUserData(@NotNull final Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     return myHostMarker.getUserData(key);
   }
 
   @Override
-  public <T> void putUserData(@NotNull final Key<T> key, final T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
     myHostMarker.putUserData(key, value);
   }
 
   @Override
-  public void documentChanged(@NotNull final DocumentEvent e) {
+  public void documentChanged(@NotNull DocumentEvent e) {
     myHostMarker.documentChanged(e);
   }
   @Override
@@ -94,6 +94,7 @@ class RangeMarkerWindow implements RangeMarkerEx {
     return myHostMarker.getId();
   }
 
+  @NotNull
   public RangeMarkerEx getDelegate() {
     return myHostMarker;
   }

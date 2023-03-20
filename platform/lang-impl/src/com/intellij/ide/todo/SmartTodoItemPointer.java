@@ -11,45 +11,42 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SmartTodoItemPointer {
-  private final TodoItem myTodoItem;
-  private final Document myDocument;
-  private final RangeMarker myRangeMarker;
-  private final List<RangeMarker> myAdditionalRangeMarkers;
 
-  public SmartTodoItemPointer(@NotNull TodoItem todoItem,@NotNull Document document){
-    myTodoItem=todoItem;
-    myDocument=document;
-    TextRange textRange=myTodoItem.getTextRange();
-    myRangeMarker=document.createRangeMarker(textRange);
+  private final @NotNull TodoItem myTodoItem;
+  private final @NotNull Document myDocument;
+  private final @NotNull RangeMarker myRangeMarker;
+  private final @NotNull List<RangeMarker> myAdditionalRangeMarkers;
+
+  public SmartTodoItemPointer(@NotNull TodoItem todoItem,
+                              @NotNull Document document) {
+    myTodoItem = todoItem;
+    myDocument = document;
+    TextRange textRange = myTodoItem.getTextRange();
+    myRangeMarker = document.createRangeMarker(textRange);
     myAdditionalRangeMarkers = ContainerUtil.map(todoItem.getAdditionalTextRanges(), document::createRangeMarker);
   }
 
-  public TodoItem getTodoItem(){
+  public @NotNull TodoItem getTodoItem() {
     return myTodoItem;
   }
 
-  public Document getDocument(){
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
-  public RangeMarker getRangeMarker(){
+  public @NotNull RangeMarker getRangeMarker() {
     return myRangeMarker;
   }
 
-  @NotNull
-  public List<RangeMarker> getAdditionalRangeMarkers() {
+  public @NotNull List<RangeMarker> getAdditionalRangeMarkers() {
     return myAdditionalRangeMarkers;
   }
 
   public boolean equals(Object obj){
-    if(!(obj instanceof SmartTodoItemPointer)){
+    if(!(obj instanceof SmartTodoItemPointer pointer)){
       return false;
     }
-    SmartTodoItemPointer pointer=(SmartTodoItemPointer)obj;
     if (!(myTodoItem.getFile().equals(pointer.myTodoItem.getFile())&&
           myRangeMarker.getStartOffset()==pointer.myRangeMarker.getStartOffset()&&
           myRangeMarker.getEndOffset()==pointer.myRangeMarker.getEndOffset()&&

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -65,10 +63,13 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   }
 
   @Override
-  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
+  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull final InspectionToolWrapper toolWrapper,
+                                                        @NotNull final InspectionTree tree,
+                                                        CommonProblemDescriptor @NotNull [] descriptors, 
+                                                        RefEntity @NotNull [] refElements) {
     InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
-    QuickFixAction[] fixes = getCommonFixes(presentation, tree.getSelectedDescriptors());
-    return ArrayUtil.mergeArrays(fixes, presentation.getQuickFixes(tree.getSelectedElements()), QuickFixAction[]::new);
+    QuickFixAction[] fixes = getCommonFixes(presentation, descriptors);
+    return ArrayUtil.mergeArrays(fixes, presentation.getQuickFixes(refElements), QuickFixAction[]::new);
   }
 
   @Override
@@ -100,7 +101,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
-    if (problems != null && problems.length != 0) {
+    if (problems != null) {
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
           model.createProblemDescriptorNode(refElement, problem, presentation, parent);

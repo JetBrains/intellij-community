@@ -76,10 +76,9 @@ public class ExtendsAnnotationInspection extends BaseInspection {
         referenceList.getReferenceElements();
       for (final PsiJavaCodeReferenceElement element : elements) {
         final PsiElement referent = element.resolve();
-        if (!(referent instanceof PsiClass)) {
+        if (!(referent instanceof PsiClass psiClass)) {
           continue;
         }
-        final PsiClass psiClass = (PsiClass)referent;
         if (psiClass.isAnnotationType()) {
           registerError(element, containingClass);
         }

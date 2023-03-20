@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k.ast
 
@@ -30,7 +30,7 @@ class PrimaryConstructor(
     val initializer: Initializer by
     lazy { Initializer(body, Modifiers.Empty).assignPrototypesFrom(this, CommentsAndSpacesInheritance(commentsBefore = false)) }
 
-    fun createSignature(converter: Converter): PrimaryConstructorSignature? {
+    fun createSignature(converter: Converter): PrimaryConstructorSignature {
         val signature = PrimaryConstructorSignature(annotations, modifiers, parameterList)
 
         // assign prototypes later because we don't know yet whether the body is empty or not

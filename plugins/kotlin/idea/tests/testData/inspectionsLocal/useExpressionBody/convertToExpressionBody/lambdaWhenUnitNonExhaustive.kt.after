@@ -1,3 +1,4 @@
+// ERROR: 'when' expression must be exhaustive, add necessary 'RW' branch or 'else' branch instead
 // IS_APPLICABLE: true
 enum class AccessMode { READ, WRITE, RW }
 fun <T> run(f: () -> T) = f()

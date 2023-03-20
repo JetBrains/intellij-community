@@ -78,7 +78,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     }
   }
 
-  NewActionDialog(Project project, PsiDirectory directory) {
+  NewActionDialog(Project project, @Nullable PsiDirectory directory) {
     super(project, false);
     myProject = project;
     myDirectory = directory;
@@ -123,7 +123,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
         }
       }
     });
-    new ListSpeedSearch<>(myGroupList, o -> ActionManager.getInstance().getId(o));
+    ListSpeedSearch.installOn(myGroupList, o -> ActionManager.getInstance().getId(o));
 
     myActionList.setCellRenderer(new MyActionRenderer());
     myActionList.addListSelectionListener(new ListSelectionListener() {
@@ -294,11 +294,6 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
       }
     }
     return null;
-  }
-
-  @Override
-  public void setValidationDelay(int delay) {
-    super.setValidationDelay(delay);
   }
 
   @NotNull

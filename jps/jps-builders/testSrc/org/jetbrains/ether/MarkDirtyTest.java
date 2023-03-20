@@ -17,9 +17,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.Map;
 
-/**
- * @author: db
- */
 public class MarkDirtyTest extends IncrementalTestCase {
   public MarkDirtyTest() {
     super("markDirty");

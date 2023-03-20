@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -37,11 +36,7 @@ public final class FSOperations {
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGETS_COMPLETELY_MARKED_DIRTY = GlobalContextKey.create("_targets_completely_marked_dirty_");
 
   /**
-   * @param context
-   * @param round
-   * @param file
    * @return true if file is marked as "dirty" in the specified compilation round
-   * @throws IOException
    */
   public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
@@ -56,11 +51,9 @@ public final class FSOperations {
    * @deprecated use markDirty(CompileContext context, final CompilationRound round, final File file)
    *
    * Note: marked file will well be visible as "dirty" only on the <b>next</b> compilation round!
-   * @throws IOException
    *
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void markDirty(CompileContext context, final File file) throws IOException {
     markDirty(context, CompilationRound.NEXT, file);
   }
@@ -99,7 +92,6 @@ public final class FSOperations {
   }
 
   /**
-   * @param context
    * @param round desired compilation round at which these dirty marks should be visible
    * @return a builder object that marks dirty files and collects data about files marked
    */
@@ -438,6 +430,8 @@ public final class FSOperations {
   private static long lastModified(Path path) {
     try {
       return Files.getLastModifiedTime(path).toMillis();
+    }
+    catch (NoSuchFileException ignored) {
     }
     catch (IOException e) {
       LOG.warn(e);

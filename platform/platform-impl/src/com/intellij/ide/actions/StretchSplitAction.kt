@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.StretchSplitAction.StretchDirection.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
@@ -75,6 +76,8 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
     val enabled = editor != null && findSplitter(editor) != null
     e.presentation.isEnabled = enabled
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   class StretchToTop: StretchSplitAction(TOP)
   class StretchToLeft: StretchSplitAction(LEFT)

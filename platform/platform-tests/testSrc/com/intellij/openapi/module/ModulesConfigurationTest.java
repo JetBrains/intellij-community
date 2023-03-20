@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
-import com.intellij.configurationStore.StateStorageManagerKt;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     closeProject(reloaded, false);
   }
 
-  // because of external storage, imls file can be missed on disk and it is not error
+  // because of external storage, imls file can be missed on disk, and it is not error
   public void testRemoveFailedToLoadModule() throws IOException {
     Pair<Path, Path> result = createProjectWithModule();
     Path projectDir = result.getFirst();
@@ -68,7 +68,7 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
 
   private static void closeProject(@NotNull Project project, boolean isSave) {
     if (isSave) {
-      StateStorageManagerKt.saveComponentManager(project, true);
+      StoreUtil.saveSettings(project, true);
     }
     PlatformTestUtil.forceCloseProjectWithoutSaving(project);
   }

@@ -17,6 +17,8 @@
   <depends optional="true" config-file="gradle-coverage-integration.xml">Coverage</depends>
   <depends optional="true" config-file="gradle-groovy-integration.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="gradle-properties-integration.xml">com.intellij.properties</depends>
+  <depends optional="true" config-file="gradle-toml-integration.xml">org.toml.lang</depends>
+  <depends optional="true" config-file="gradle-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <resource-bundle>messages.GradleInspectionBundle</resource-bundle>
 
@@ -29,6 +31,13 @@
                     dynamic="true"/>
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
                     dynamic="true"/>
+    <extensionPoint name="testLocationCustomizer" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer"
+                    dynamic="true"/>
+    <extensionPoint name="externallyHandledExtensions" interface="org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogHandler"
+                    dynamic="true"/>
+    <extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -40,6 +49,7 @@
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
     <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
+    <taskResultListener implementation="org.jetbrains.plugins.gradle.service.GradleProjectOutputsUpdater"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -65,6 +75,8 @@
     <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.InternalGradleModuleBuilder"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.JavaGradleProjectImportProvider"/>
+
+    <defender.config implementation="org.jetbrains.plugins.gradle.util.GradleWindowsDefenderCheckerExt"/>
 
     <!--Gradle Test Runner-->
     <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
@@ -95,5 +107,37 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector"/>
     <registryKey key="gradle.execution.target.server.debug.port" defaultValue="-1"
                  description="Specifies port at which Gradle target server process will wait for debugger connections. -1 means disabled feature."/>
+    <registryKey key="gradle.refresh.project.outputs" defaultValue="true"
+                 description="After a Gradle task, do a shallow refresh of modules outputs in VFS"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="ConfigurationAvoidance"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.configuration.avoidance" groupKey="inspection.best.practises" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleConfigurationAvoidanceInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="DependencyNotationArgument"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.unrecognized.dependency.notation" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleIncorrectDependencyNotationArgumentInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="ForeignDelegate"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.foreign.delegate" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleForeignDelegateInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="IncorrectPluginDslStructure"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.incorrect.plugin.dsl.structure" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradlePluginDslStructureInspection"/>
+
+    <localInspection language="UAST" groupPath="Gradle" shortName="DeprecatedConfigurations"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.deprecated.configurations" groupKey="inspection.validity" groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
   </extensions>
 </idea-plugin>

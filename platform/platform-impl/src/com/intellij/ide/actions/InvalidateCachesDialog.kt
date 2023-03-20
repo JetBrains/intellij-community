@@ -1,19 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
-import com.google.common.collect.Sets
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Link
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.Action
-import javax.swing.JCheckBox
 import javax.swing.JPanel
 
 private var Action.text
@@ -27,11 +26,12 @@ class InvalidateCachesDialog(
 ) : DialogWrapper(project) {
   private val JUST_RESTART_CODE = NEXT_USER_EXIT_CODE + 3
 
-  private val enabledInvalidators: MutableSet<CachesInvalidator> = Sets.newIdentityHashSet()
+  private val invalidatorsOptions = mutableMapOf<JBCheckBox, CachesInvalidator>()
 
   fun getSelectedInvalidators() : List<CachesInvalidator> {
     if (!isOK) return emptyList()
 
+    val enabledInvalidators = invalidatorsOptions.filterKeys { it.isSelected }.values
     return invalidators.filter {
       it.description == null || it in enabledInvalidators
     }
@@ -41,7 +41,7 @@ class InvalidateCachesDialog(
 
   init {
     title = IdeBundle.message("dialog.title.invalidate.caches")
-    setResizable(false)
+    isResizable = false
     init()
 
     okAction.text = when {
@@ -69,41 +69,24 @@ class InvalidateCachesDialog(
 
   override fun createCenterPanel() = panel {
     row {
-      label(
-        HtmlChunk
-          .html()
-          .addText(IdeBundle.message("dialog.message.caches.will.be.invalidated"))
-          .toString()
-      ).growPolicy(GrowPolicy.MEDIUM_TEXT).constraints(CCFlags.growY)
+      text(IdeBundle.message("dialog.message.caches.will.be.invalidated"), maxLineLength = DEFAULT_COMMENT_WIDTH)
     }
 
     //we keep the original order as it comes from the extensions order
     val invalidatorsWithDescriptor = invalidators.mapNotNull { it.description?.to(it) }
 
     if (invalidatorsWithDescriptor.isNotEmpty()) {
-      row {
-        label(IdeBundle.message("dialog.message.the.following.items"))
-
+      buttonsGroup(IdeBundle.message("dialog.message.the.following.items")) {
         for ((text, descr) in invalidatorsWithDescriptor) {
           row {
             val defaultValue = descr.optionalCheckboxDefaultValue()
-
-            val updateSelected = { cb: JCheckBox ->
-              when {
-                cb.isSelected -> enabledInvalidators += descr
-                else -> enabledInvalidators -= descr
+            val checkbox = checkBox(text)
+              .enabled(defaultValue != null)
+              .applyToComponent {
+                isSelected = defaultValue ?: true
               }
-            }
-
-            val isSelected = defaultValue ?: true
-
-            checkBox(text, isSelected,
-                     comment = descr.comment,
-                     actionListener = { _, cb -> updateSelected(cb) }
-            ).component.apply {
-              isEnabled = defaultValue != null
-              updateSelected(this)
-            }
+              .component
+            invalidatorsOptions[checkbox] = descr
           }
         }
       }

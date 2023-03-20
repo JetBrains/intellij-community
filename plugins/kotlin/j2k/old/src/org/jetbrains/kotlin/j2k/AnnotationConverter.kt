@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -31,7 +31,7 @@ class AnnotationConverter(private val converter: Converter) {
         val modifierList = owner.modifierList
         val annotations = modifierList?.annotations?.filter { it.qualifiedName !in annotationsToRemove }
 
-        var convertedAnnotations: List<Annotation> = if (annotations != null && annotations.isNotEmpty()) {
+        var convertedAnnotations: List<Annotation> = if (!annotations.isNullOrEmpty()) {
             val newLines = if (!modifierList.isInSingleLine()) {
                 true
             }
@@ -131,8 +131,7 @@ class AnnotationConverter(private val converter: Converter) {
                 setOf()
             }
             else {
-                val value = attributes[0].value
-                when (value) {
+                when (val value = attributes[0].value) {
                     is PsiArrayInitializerMemberValue -> value.initializers.filterIsInstance<PsiReferenceExpression>()
                             .flatMap { mapTargetByName(it) }
                             .toSet()
@@ -205,7 +204,7 @@ class AnnotationConverter(private val converter: Converter) {
         }
 
         is PsiAnnotation -> {
-            val annotationConstructor = listOf<(CodeConverter) -> Expression> { _ ->
+            val annotationConstructor = listOf<(CodeConverter) -> Expression> {
                 val (name, arguments) = convertAnnotationValue(value)!!
                 AnnotationConstructorCall(name, arguments).assignPrototype(value)
             }
@@ -234,7 +233,7 @@ class AnnotationConverter(private val converter: Converter) {
         if (expectedType is PsiArrayType && !isVararg) {
             return convertArrayInitializerValue(codeConverter,
                                                 value.text,
-                                                listOf { _ -> expression },
+                                                listOf { expression },
                                                 expectedType,
                                                 false
             ).assignPrototype(value)

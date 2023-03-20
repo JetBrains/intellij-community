@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.openapi.application.ModalityState;
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -19,6 +20,8 @@ import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,28 +33,22 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
 
   private static final Logger logger = Logger.getInstance(LargeFileEncodingWidget.class);
 
-  private final TextPanel myComponent;
+  private final LazyValue<TextPanel> myComponent;
   private Alarm myUpdateAlarm;
 
   private boolean myActionEnabled;
 
   public LargeFileEncodingWidget(@NotNull final Project project) {
     super(project);
-    myComponent = new TextPanel.WithIconAndArrows();
-    myComponent.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
+    myComponent = LazyInitializer.create(() -> {
+      var result = new TextPanel.WithIconAndArrows();
+      result.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border());
+      return result;
+    });
   }
 
   @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    requestUpdate();
-  }
-
-  @Override
-  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    requestUpdate();
-  }
-
-  @Override
+  @NotNull
   public StatusBarWidget copy() {
     return new LargeFileEncodingWidget(getProject());
   }
@@ -70,6 +67,19 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
+
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        requestUpdate();
+      }
+
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        requestUpdate();
+      }
+    });
+
     myUpdateAlarm = new Alarm(this);
     new ClickListener() {
       @Override
@@ -78,7 +88,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
         tryShowPopup();
         return true;
       }
-    }.installOn(myComponent, true);
+    }.installOn(myComponent.get(), true);
     update();
   }
 
@@ -122,6 +132,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
     @NlsSafe String charsetName;
     String toolTipText;
 
+    var myComponent = this.myComponent.get();
     if (largeFileEditorAccess == null) {
       toolTipText = "";
       charsetName = "";
@@ -147,6 +158,6 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
 
   @Override
   public JComponent getComponent() {
-    return myComponent;
+    return myComponent.get();
   }
 }

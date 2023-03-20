@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.ProjectTopics
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -21,7 +22,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -51,10 +52,11 @@ private fun isEnabled(project: Project) = !project.isDefault &&
                                           !ApplicationManager.getApplication().isUnitTestMode &&
                                           !ApplicationManager.getApplication().isHeadlessEnvironment
 
-
-internal class JdkUpdaterStartup : StartupActivity.Background {
-  override fun runActivity(project: Project) {
-    if (!isEnabled(project)) return
+internal class JdkUpdaterStartup : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    if (!isEnabled(project)) {
+      return
+    }
     project.service<JdkUpdatesCollector>().updateNotifications()
   }
 }
@@ -178,10 +180,16 @@ internal class JdkUpdatesCollector(
         it.suggestedSdkName == actualItem.suggestedSdkName && it.arch == actualItem.arch && it.os == actualItem.os
       } ?: continue
 
-      //internal versions are not considered here (JBRs?)
-      if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) continue
+      var showVendor = false
+      val comparison = VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion)
+      if (comparison < 0) continue
+      else if (comparison == 0) {
+        if (feedItem.jdkVendorVersion == null || actualItem.jdkVendorVersion == null) continue
+        if (VersionComparatorUtil.compare(feedItem.jdkVendorVersion, actualItem.jdkVendorVersion) <= 0) continue
+        showVendor = true
+      }
 
-      notifications.showNotification(jdk, actualItem, feedItem)
+      notifications.showNotification(jdk, actualItem, feedItem, showVendor)
       noUpdatesFor -= jdk
     }
 

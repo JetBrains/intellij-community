@@ -8,10 +8,10 @@ class ExampleClassWithNoTypos:
     This class has no useful logic; it's just a documentation example.
 
     Args:
-        name (str): the name of this group.
+        name (str): the name of this group. And another sentence.
 
     Attributes:
-        name (str): the name of this group.
+        name (str): the name of this group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence.
 
     """
 
@@ -35,13 +35,11 @@ class ExampleClassWithNoTypos:
 class ExampleClassWithTypos:
     """It <warning descr="IT_VBZ">are</warning> friend there
 
-    <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
-
     Args:
-        name (str): the <warning descr="COMMA_WHICH">name which</warning> group
+        name (str): the <warning descr="COMMA_WHICH">name which</warning> group and some other English text
 
     Attributes:
-        name (str): the <warning descr="COMMA_WHICH">name which</warning> group
+        name (str): the <warning descr="COMMA_WHICH">name which</warning> group and some other English text
 
     """
 

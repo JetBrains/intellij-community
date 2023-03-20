@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
@@ -30,11 +30,11 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
 
     override fun tearDown() {
-        _suggestedChangeSignatureNewParameterValuesForTests = null
+        _suggestedChangeSignatureNewParameterValuesForTests = { SuggestedRefactoringExecution.NewParameterValue.None }
         super.tearDown()
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testAddParameter() {
         ignoreErrorsAfter = true
@@ -491,7 +491,7 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
 
                 interface I {
                     fun foo(p1: Int/*comment 1*/, p2: Long/*comment 2*/,
-                    p3: Any?/*comment 3*/<caret>)
+                            p3: Any?/*comment 3*/<caret>)
                 }     
             """.trimIndent(),
             "usages",

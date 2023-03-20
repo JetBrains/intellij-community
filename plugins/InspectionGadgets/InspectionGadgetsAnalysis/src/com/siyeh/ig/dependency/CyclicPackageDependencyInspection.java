@@ -39,10 +39,9 @@ public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefPackage)) {
+    if (!(refEntity instanceof RefPackage refPackage)) {
       return null;
     }
-    final RefPackage refPackage = (RefPackage)refEntity;
     final Set<RefPackage> dependencies = DependencyUtils.calculateTransitiveDependenciesForPackage(refPackage);
     final Set<RefPackage> dependents = DependencyUtils.calculateTransitiveDependentsForPackage(refPackage);
     final Set<RefPackage> mutualDependents = new HashSet<>(dependencies);

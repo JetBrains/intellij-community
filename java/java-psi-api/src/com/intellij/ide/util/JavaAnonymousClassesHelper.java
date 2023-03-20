@@ -39,7 +39,7 @@ public final class JavaAnonymousClassesHelper {
         int index;
 
         @Override
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
           if (upper == aClass) {
             super.visitAnonymousClass(aClass);
             return;
@@ -49,7 +49,7 @@ public final class JavaAnonymousClassesHelper {
             for (PsiExpression expression : arguments.getExpressions()) {
               expression.acceptChildren(new JavaRecursiveElementVisitor() {
                 @Override
-                public void visitAnonymousClass(PsiAnonymousClass aClass) {
+                public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
                   index++;
                   map.put(aClass, "$" + index);
                 }
@@ -62,7 +62,7 @@ public final class JavaAnonymousClassesHelper {
         }
 
         @Override
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
           if (aClass == upper) {
             super.visitClass(aClass);
           }

@@ -16,10 +16,10 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 public class GroovyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
+  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, GroovyBundle.message("language.groovy")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
         return new GroovyCodeStyleMainPanel(getCurrentSettings(), settings) {};
       }
 
@@ -36,7 +36,7 @@ public class GroovyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   }
 
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new GroovyCodeStyleSettings(settings);
   }
 }

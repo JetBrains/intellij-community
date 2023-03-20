@@ -3,6 +3,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -33,6 +34,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -221,7 +223,7 @@ public class AnnotationProcessorsPanel extends JPanel {
   private class RootNode extends DefaultMutableTreeNode implements DataSynchronizable {
     @Override
     public DataSynchronizable sync() {
-      final Vector newKids =  new Vector();
+      final Vector<TreeNode> newKids =  new Vector<>();
       newKids.add(new ProfileNode(myDefaultProfile, this, true).sync());
       for (ProcessorConfigProfile profile : myModuleProfiles) {
         newKids.add(new ProfileNode(profile, this, false).sync());
@@ -233,7 +235,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     }
   }
 
-  private interface DataSynchronizable {
+  private interface DataSynchronizable extends TreeNode {
     DataSynchronizable sync();
   }
 
@@ -271,7 +273,7 @@ public class AnnotationProcessorsPanel extends JPanel {
         }
       }
       nodeModules.sort(ModuleComparator.INSTANCE);
-      final Vector vector = new Vector();
+      final Vector<TreeNode> vector = new Vector<>();
       for (Module module : nodeModules) {
         vector.add(new MyModuleNode(module, this));
       }
@@ -360,6 +362,11 @@ public class AnnotationProcessorsPanel extends JPanel {
     @Override
     public ShortcutSet getShortcut() {
       return ActionManager.getInstance().getAction("Move").getShortcutSet();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

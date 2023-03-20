@@ -111,9 +111,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       return file;
     }
 
-    final Document doc = myElementInfo.getDocumentToSynchronize();
+    Document doc = myElementInfo.getDocumentToSynchronize();
     if (doc == null) {
-      final E resolved = getElement();
+      E resolved = getElement();
       return resolved == null ? null : resolved.getContainingFile();
     }
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(doc);
@@ -142,11 +142,16 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
                                                                                   boolean forInjected) {
     SmartPointerElementInfo elementInfo = doCreateElementInfo(manager.getProject(), element, containingFile, forInjected);
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
-      PsiElement restored = elementInfo.restoreElement(manager);
-      if (!element.equals(restored)) {
+      PsiElement restoredElement = elementInfo.restoreElement(manager);
+      if (restoredElement == null) {
+        // The problem might be with injection. It's a questionable solution, requires more discussion.
+        elementInfo = doCreateElementInfo(manager.getProject(), element, containingFile, !forInjected);
+        restoredElement = elementInfo.restoreElement(manager);
+      }
+      if (!element.equals(restoredElement)) {
         // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
         LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo +
-                  "; restored=" + restored + (restored == null ? "" : " of "+restored.getClass())+" in " + element.getProject());
+                  "; restored=" + restoredElement + (restoredElement == null ? "" : " of " + restoredElement.getClass()) + " in " + element.getProject());
       }
     }
     return elementInfo;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleStringConstIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.JvmToolchainConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetAccessIR
@@ -69,7 +69,7 @@ internal fun Module.createTargetAccessIr(
 ) =
     TargetAccessIR(
         moduleSubType,
-        name.takeIf { it != moduleSubType.name },
+        name.takeIf { it != moduleSubType.toString() },
         additionalParams.filterNotNull()
     )
 
@@ -104,7 +104,7 @@ abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleCo
                 createAdditionalParams(module)
             )
         ) {
-            browserSubTarget(module, this@createTargetIrs)
+            browserSubTarget(module, this@createTargetIrs, cssSupportNeeded = true)
         }
     }
 
@@ -172,12 +172,9 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
         +super<SimpleTargetConfigurator>.createInnerTargetIrs(reader, module)
         reader {
             inContextOfModuleConfigurator(module) {
-                val targetVersionValue = JvmModuleConfigurator.targetJvmVersion.reference.settingValue.value
+                val targetVersionValue = JvmModuleConfigurator.targetJvmVersion.reference.settingValue
                 if (buildSystemType.isGradle) {
-                    "compilations.all" {
-                        "kotlinOptions.jvmTarget" assign GradleStringConstIR(targetVersionValue)
-                    }
-
+                    +JvmToolchainConfigurationIR(targetVersionValue)
                 }
                 if (!module.hasAndroidSibling()) {
                     "withJava"()
@@ -186,8 +183,10 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
             val testFramework = inContextOfModuleConfigurator(module) { getTestFramework(module) }
             if (testFramework != KotlinTestFramework.NONE) {
                 testFramework.usePlatform?.let { usePlatform ->
-                    "testRuns[\"test\"].executionTask.configure" {
-                        +"$usePlatform()"
+                    "testRuns.named(\"test\")" {
+                        "executionTask.configure" {
+                            +"$usePlatform()"
+                        }
                     }
                 }
             }

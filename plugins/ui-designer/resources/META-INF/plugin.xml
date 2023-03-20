@@ -143,8 +143,6 @@
       <separator/>
       <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
               icon="AllIcons.Actions.Preview"/>
-      <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction"
-              icon="AllIcons.Actions.Lightning"/>
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
               icon="AllIcons.Actions.Refresh"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
@@ -155,7 +153,6 @@
 
     <group id="GuiDesigner.EditorPopupMenu">
       <reference ref="GuiDesigner.PreviewForm"/>
-      <reference ref="GuiDesigner.DataBindingWizard"/>
       <separator/>
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
@@ -191,8 +188,6 @@
       <action id="GuiDesigner.FormSource" class="com.intellij.uiDesigner.actions.ShowFormSourceAction"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
       <separator/>
     </group>
 
@@ -248,12 +243,12 @@
       <add-to-group anchor="after" group-id="GenerateGroup" relative-to-action="GenerateSuperMethodCall"/>
     </action>
 
-    <group id="GuiDesigner.NewActions" popup="true">
+    <group id="GuiDesigner.NewActions" popup="true" icon="AllIcons.FileTypes.UiForm">
       <separator/>
       <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction"/>
       <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction"/>
 
-      <add-to-group anchor="after" group-id="NewGroup" relative-to-action="NewFromTemplate"/>
+      <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
   </actions>
 </idea-plugin>

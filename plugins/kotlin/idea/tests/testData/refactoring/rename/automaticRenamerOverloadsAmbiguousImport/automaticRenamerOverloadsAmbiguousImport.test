@@ -3,5 +3,6 @@
   "mainFile": "lib/lib.kt",
   "newName": "bar",
   "withRuntime": "true",
-  "overloadRenamer.onlyPrimaryElement": "true"
+  "overloadRenamer.onlyPrimaryElement": "true",
+  "enabledInK2": true
 }

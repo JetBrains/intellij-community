@@ -47,8 +47,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     IProperty prop = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
     if (prop != null) {
       Object propValue = prop.getPropertyValue(component);
-      if (propValue instanceof StringDescriptor) {
-        StringDescriptor descriptor = (StringDescriptor)propValue;
+      if (propValue instanceof StringDescriptor descriptor) {
         String value;
         if (component instanceof RadComponent) {
           value = StringDescriptorManager.getInstance(module).resolve((RadComponent) component, descriptor);

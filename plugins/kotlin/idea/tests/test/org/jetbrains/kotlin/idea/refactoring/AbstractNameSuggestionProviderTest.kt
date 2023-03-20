@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -9,7 +9,7 @@ import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractNameSuggestionProviderTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun getSuggestNames(element: PsiElement): List<String> {
@@ -34,5 +34,5 @@ abstract class AbstractNameSuggestionProviderTest : KotlinLightCodeInsightFixtur
         TestCase.assertEquals(expectedNames, actualNames)
     }
 
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.INSTANCE
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 }

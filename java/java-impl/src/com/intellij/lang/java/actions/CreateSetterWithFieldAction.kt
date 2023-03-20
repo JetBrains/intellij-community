@@ -8,7 +8,6 @@ import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.CreateWriteOnlyPropertyActionGroup
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
@@ -21,15 +20,15 @@ internal class CreateSetterWithFieldAction(target: PsiClass, request: CreateMeth
 
   override fun getActionGroup(): JvmActionGroup = CreateWriteOnlyPropertyActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return super.isAvailable(project, editor, file) && propertyInfo.second == PropertyKind.SETTER
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    return super.isAvailable(project, file, target) && propertyInfo.second == PropertyKind.SETTER
   }
 
   override fun getText(): String {
     return message("create.write.only.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
   }
 
-  override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {
+  override fun createRenderer(project: Project, targetClass: PsiClass) = object : PropertyRenderer(project, targetClass, request, propertyInfo) {
 
     override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression? {
       val prototypeField = generatePrototypeField()

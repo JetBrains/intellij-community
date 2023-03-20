@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
+import com.intellij.execution.runToolbar.components.MouseListenerHelper
+import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -11,25 +13,27 @@ import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustom
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
-import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.UIManager
 
-class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
+internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
+                                          RTBarAction {
+
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainSlotActive::class.java)
     val ARROW_DATA = Key<Icon?>("ARROW_DATA")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-
   }
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -39,34 +43,38 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   override fun update(e: AnActionEvent) {
     RunToolbarProcessStartedAction.updatePresentation(e)
 
+    val presentation = e.presentation
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
       e.mainState()?.let {
-        e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
+        presentation.isEnabledAndVisible = presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
+    presentation.isEnabled = presentation.isEnabled && e.isFromActionToolbar
 
-    val a = JPanel()
-    MigLayout("ins 0, fill, gap 0", "[200]")
-    a.add(JLabel(), "pushx")
-
-    e.presentation.description = e.runToolbarData()?.let {
-      RunToolbarData.prepareDescription(e.presentation.text, ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.show.popup.text"))
+    presentation.description = e.runToolbarData()?.let {
+      RunToolbarData.prepareDescription(presentation.text,
+                                        ActionsBundle.message("action.RunToolbarShowHidePopupAction.click.to.show.popup.text"))
     }
 
-    e.presentation.putClientProperty(ARROW_DATA, e.arrowIcon())
+    presentation.putClientProperty(ARROW_DATA, e.arrowIcon())
     traceLog(LOG, e)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): SegmentedCustomPanel {
     return RunToolbarMainSlotActive(presentation)
-}
+  }
 
-private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
+  private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
+    private val dragArea = RunWidgetResizePane()
 
-    private val setting = object : JLabel() {
+    private val setting = object : TrimmedMiddleLabel() {
       override fun getFont(): Font {
         return UIUtil.getToolbarFont()
+      }
+
+      override fun getForeground(): Color {
+        return UIUtil.getLabelForeground()
       }
     }
 
@@ -74,19 +82,25 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
       override fun getFont(): Font {
         return UIUtil.getToolbarFont()
       }
-    }.apply {
-      foreground = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
+
+      override fun getForeground(): Color {
+        return UIUtil.getLabelInfoForeground()
+      }
     }
 
     init {
-      layout = MigLayout("ins 0 0 0 3, fill, ay center")
+      layout = MigLayout("ins 0 0 0 3, fill, ay center, gap 0")
       val pane = JPanel().apply {
-        layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1]3[]")
+        layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1, push]3[]push")
+
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
           val d = preferredSize
-          d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+          getProject()?.let {
+            d.width = RunWidgetWidthHelper.getInstance(it).arrow
+          }
+
           preferredSize = d
         })
         add(JPanel().apply {
@@ -99,57 +113,42 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
         add(process, "wmin 0")
         isOpaque = false
       }
+      add(dragArea, "pos 0 0")
+      add(pane, "growx")
 
-      add(pane)
-
-      addMouseListener(object : MouseAdapter() {
-        override fun mousePressed(e: MouseEvent) {
-          if (SwingUtilities.isLeftMouseButton(e)) {
-            e.consume()
-            if (e.isShiftDown) {
-              doShiftClick()
-            }
-            else {
-              doClick()
-            }
-          }
-          else if (SwingUtilities.isRightMouseButton(e)) {
-            doRightClick()
-          }
-        }
-      })
+      MouseListenerHelper.addListener(pane, { doClick() }, { doShiftClick() }, { doRightClick() })
     }
 
-  fun doRightClick() {
-    RunToolbarRunConfigurationsAction.doRightClick(ActionToolbar.getDataContextFor(this))
-  }
+    fun doRightClick() {
+      RunToolbarRunConfigurationsAction.doRightClick(ActionToolbar.getDataContextFor(this))
+    }
 
-  private fun doClick() {
-    val list = mutableListOf<PopupControllerComponentListener>()
-    list.addAll(listeners)
-    list.forEach { it.actionPerformedHandler() }
-  }
+    private fun doClick() {
+      val list = mutableListOf<PopupControllerComponentListener>()
+      list.addAll(listeners)
+      list.forEach { it.actionPerformedHandler() }
+    }
 
-  private fun doShiftClick() {
-    ActionToolbar.getDataContextFor(this).editConfiguration()
-  }
+    private fun doShiftClick() {
+      ActionToolbar.getDataContextFor(this).editConfiguration()
+    }
 
-  private val listeners = mutableListOf<PopupControllerComponentListener>()
+    private val listeners = mutableListOf<PopupControllerComponentListener>()
 
-  override fun addListener(listener: PopupControllerComponentListener) {
-    listeners.add(listener)
-  }
+    override fun addListener(listener: PopupControllerComponentListener) {
+      listeners.add(listener)
+    }
 
-  override fun removeListener(listener: PopupControllerComponentListener) {
-    listeners.remove(listener)
-  }
+    override fun removeListener(listener: PopupControllerComponentListener) {
+      listeners.remove(listener)
+    }
 
-  override fun updateIconImmediately(isOpened: Boolean) {
-    arrow.icon = if (isOpened) AllIcons.Toolbar.Collapse
-    else AllIcons.Toolbar.Expand
-  }
+    override fun updateIconImmediately(isOpened: Boolean) {
+      arrow.icon = if (isOpened) AllIcons.Toolbar.Collapse
+      else AllIcons.Toolbar.Expand
+    }
 
-  override fun presentationChanged(event: PropertyChangeEvent) {
+    override fun presentationChanged(event: PropertyChangeEvent) {
       updateArrow()
       updateEnvironment()
       setting.icon = presentation.icon
@@ -161,7 +160,7 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
       presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { env ->
         env.getRunToolbarProcess()?.let {
           background = it.pillColor
-          process.text = if(env.isProcessTerminating()) ActionsBundle.message("action.RunToolbarRemoveSlotAction.terminating") else it.name
+          process.text = if (env.isProcessTerminating()) ActionsBundle.message("action.RunToolbarRemoveSlotAction.terminating") else it.name
         }
       } ?: kotlin.run {
         isOpaque = false
@@ -174,7 +173,9 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
 
     override fun getPreferredSize(): Dimension {
       val d = super.getPreferredSize()
-      d.width = FixWidthSegmentedActionToolbarComponent.CONFIG_WITH_ARROW_WIDTH
+      getProject()?.let {
+        d.width = RunWidgetWidthHelper.getInstance(it).configWithArrow
+      }
       return d
     }
   }

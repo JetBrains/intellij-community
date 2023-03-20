@@ -1,4 +1,4 @@
-// "Wrap argument using 'Math.toIntExact()'" "true"
+// "Adapt argument using 'Math.toIntExact()'" "true-preview"
 
 public class Test {
   void m(int i) {

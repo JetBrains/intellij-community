@@ -1,19 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.usages.Usage
-import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.perf.Parameter
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
+import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.suite.*
 import org.jetbrains.kotlin.idea.perf.util.*
-import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.TypingConfig
-import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.testFramework.Parameter
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
@@ -22,6 +23,14 @@ open class PerformanceStressTest : UsefulTestCase() {
     protected open fun profileConfig(): ProfilerConfig = ProfilerConfig()
 
     protected open fun outputConfig(): OutputConfig = OutputConfig()
+
+    protected open fun suiteWithConfig(suiteName: String, name: String? = null, block: PerformanceSuite.StatsScope.() -> Unit) {
+        suite(
+            suiteName,
+            config = StatsScopeConfig(name = name, outputConfig = outputConfig(), profilerConfig = profileConfig()),
+            block = block
+        )
+    }
 
     override fun setUp() {
         super.setUp()
@@ -41,47 +50,160 @@ open class PerformanceStressTest : UsefulTestCase() {
         //
         // Find usages have to resolve each reference due to the fact they have same names
         val numberOfFuns = 50
-        val numberOfPackagesWithCandidates = 50
+        for (numberOfPackagesWithCandidates in arrayOf(30, 50, 100)) {
+            val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates" + if (withCompilerIndex) "_with_cri" else ""
+            suiteWithConfig(name) {
+                app {
+                    warmUpProject()
 
-        val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates" + if (withCompilerIndex) "_with_cri" else ""
-        suite(
-            suiteName = name,
-            config = PerformanceSuite.StatsScopeConfig(name = name, outputConfig = outputConfig(), profilerConfig = profileConfig()),
-        ) {
-            app {
-                warmUpProject()
+                    project {
 
-                project {
+                        descriptor {
+                            name(name)
 
-                    descriptor {
-                        name(name)
+                            module {
+                                kotlinStandardLibrary()
 
-                        for (index in 1..2) {
-                            kotlinFile("DataClass") {
-                                pkg("pkg$index")
+                                for (index in 1..2) {
+                                    kotlinFile("DataClass") {
+                                        pkg("pkg$index")
 
-                                topClass("DataClass") {
-                                    dataClass()
+                                        topClass("DataClass") {
+                                            dataClass()
 
-                                    ctorParameter(Parameter("name", "String"))
-                                    ctorParameter(Parameter("value", "Int"))
+                                            ctorParameter(Parameter("name", "String"))
+                                            ctorParameter(Parameter("value", "Int"))
+                                        }
+                                    }
+                                }
+
+                                for (pkgIndex in 1..numberOfPackagesWithCandidates) {
+                                    kotlinFile("SomeService") {
+                                        pkg("pkgX$pkgIndex")
+                                        // use pkg1 for `pkgX1.SomeService`, and pkg2 for all other `pkgX*.SomeService`
+                                        import("pkg${if (pkgIndex == 1) 1 else 2}.DataClass")
+
+                                        topClass("SomeService") {
+                                            for (index in 1..numberOfFuns) {
+                                                function("foo$index") {
+                                                    returnType("DataClass")
+                                                    param("data", "DataClass")
+
+                                                    body("return DataClass(data.name, data.value + $index)")
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
 
-                        for (pkgIndex in 1..numberOfPackagesWithCandidates) {
-                            kotlinFile("SomeService") {
-                                pkg("pkgX$pkgIndex")
-                                // use pkg1 for `pkgX1.SomeService`, and pkg2 for all other `pkgX*.SomeService`
-                                import("pkg${if (pkgIndex == 1) 1 else 2}.DataClass")
+                        profile(DefaultProfile)
+                        if (withCompilerIndex) {
+                            withCompiler()
+                            rebuildProject()
+                        }
 
-                                topClass("SomeService") {
-                                    for (index in 1..numberOfFuns) {
-                                        function("foo$index") {
-                                            returnType("DataClass")
-                                            param("data", "DataClass")
+                        fixture("pkg1/DataClass.kt").use { fixture ->
+                            with(fixture.cursorConfig) { marker = "DataClass" }
 
-                                            body("return DataClass(data.name, data.value + $index)")
+                            with(config) {
+                                warmup = 8
+                                iterations = 15
+                            }
+
+                            measure<Set<Usage>>(fixture, "findUsages") {
+                                before = {
+                                    fixture.moveCursor()
+                                }
+                                test = {
+                                    val findUsages = findUsages(fixture.cursorConfig)
+                                    // 1 from import
+                                    //   + numberOfUsages as function argument
+                                    //   + numberOfUsages as return type functions
+                                    //   + numberOfUsages as new instance in a body of function
+                                    // in a SomeService
+                                    assertEquals(1 + 3 * numberOfFuns, findUsages.size)
+                                    findUsages
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun testBaseClassAndLotsOfSubClasses() {
+        // there is a base class with several open functions
+        // and lots of subclasses of it
+        // KTIJ-21027
+
+        suiteWithConfig("Base class and lots of subclasses project", "ktij-21027 project") {
+            app {
+                warmUpProject()
+
+                project {
+                    descriptor {
+                        name("ktij-21027")
+
+                        val baseClassFunctionNames = (0..10).map { "foo$it" }
+
+                        module {
+                            kotlinStandardLibrary()
+
+                            src("src/main/java/")
+
+                            kotlinFile("BaseClass") {
+                                pkg("pkg")
+
+                                topClass("BaseClass") {
+                                    openClass()
+
+                                    for (fnName in baseClassFunctionNames) {
+                                        function(fnName) {
+                                            openFunction()
+                                            returnType("String")
+                                            body("TODO()")
+                                        }
+                                    }
+                                }
+                            }
+
+                            for (classIndex in 0..5) {
+                                val superClassName = "SomeClass$classIndex"
+                                kotlinFile(superClassName) {
+                                    pkg("pkg")
+
+                                    topClass(superClassName) {
+                                        openClass()
+                                        superClass("BaseClass")
+
+                                        for (fnName in baseClassFunctionNames) {
+                                            function(fnName) {
+                                                overrideFunction()
+                                                returnType("String")
+                                                body("TODO()")
+                                            }
+                                        }
+                                    }
+                                }
+
+                                for (subclassIndex in 0..10) {
+                                    val subClassName = "SubClass${classIndex}0${subclassIndex}"
+                                    kotlinFile(subClassName) {
+                                        pkg("pkg")
+
+                                        topClass(subClassName) {
+                                            superClass(superClassName)
+
+                                            for (fnName in baseClassFunctionNames) {
+                                                function(fnName) {
+                                                    overrideFunction()
+                                                    returnType("String")
+                                                    body("TODO()")
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -90,37 +212,14 @@ open class PerformanceStressTest : UsefulTestCase() {
                     }
 
                     profile(DefaultProfile)
-                    if (withCompilerIndex) {
-                        withCompiler()
-                        rebuildProject()
-                    }
 
-                    fixture("src/pkg1/DataClass.kt").use { fixture ->
-                        val typingConfig = PerformanceSuite.CursorConfig(fixture, marker = "DataClass")
-
+                    fixture("src/main/java/pkg/BaseClass.kt").use { fixture ->
                         with(config) {
                             warmup = 8
                             iterations = 15
                         }
 
-                        measure<Set<Usage>>("findUsages", fixture = fixture) {
-                            before = {
-                                moveCursor(typingConfig)
-                            }
-                            test = {
-                                val findUsages = findUsages(typingConfig)
-                                // 1 from import
-                                //   + numberOfUsages as function argument
-                                //   + numberOfUsages as return type functions
-                                //   + numberOfUsages as new instance in a body of function
-                                // in a SomeService
-                                TestCase.assertEquals(1 + 3 * numberOfFuns, findUsages.size)
-                                findUsages
-                            }
-                            after = {
-
-                            }
-                        }
+                        measureHighlight(fixture)
                     }
                 }
             }
@@ -132,44 +231,46 @@ open class PerformanceStressTest : UsefulTestCase() {
         val generatedTypes = mutableListOf(listOf<String>())
         generateTypes(arrayOf("Int", "String", "Long", "List<Int>", "Array<Int>"), generatedTypes)
 
-        suite(
-            suiteName = "Lots of overloaded method project",
-            config = PerformanceSuite.StatsScopeConfig(name = "kt-35135 project", outputConfig = outputConfig(), profilerConfig = profileConfig()),
-        ) {
+        suiteWithConfig("Lots of overloaded method project", "kt-35135 project") {
             app {
                 warmUpProject()
 
                 project {
                     descriptor {
                         name("kt-35135")
-                        buildGradle(IDEA_TEST_DATA_DIR.resolve("perfTest/simpleTemplate/"))
 
-                        kotlinFile("OverloadX") {
-                            pkg("pkg")
+                        module {
+                            kotlinStandardLibrary()
 
-                            topClass("OverloadX") {
-                                openClass()
+                            src("src/main/java/")
 
-                                for (types in generatedTypes) {
-                                    function("foo") {
-                                        openFunction()
-                                        returnType("String")
-                                        for ((index, type) in types.withIndex()) {
-                                            param("arg$index", type)
+                            kotlinFile("OverloadX") {
+                                pkg("pkg")
+
+                                topClass("OverloadX") {
+                                    openClass()
+
+                                    for (types in generatedTypes) {
+                                        function("foo") {
+                                            openFunction()
+                                            returnType("String")
+                                            for ((index, type) in types.withIndex()) {
+                                                param("arg$index", type)
+                                            }
+                                            body("TODO()")
                                         }
-                                        body("TODO()")
                                     }
                                 }
                             }
-                        }
 
-                        kotlinFile("SomeClass") {
-                            pkg("pkg")
+                            kotlinFile("SomeClass") {
+                                pkg("pkg")
 
-                            topClass("SomeClass") {
-                                superClass("OverloadX")
+                                topClass("SomeClass") {
+                                    superClass("OverloadX")
 
-                                body("ov")
+                                    body("ov")
+                                }
                             }
                         }
                     }
@@ -177,30 +278,18 @@ open class PerformanceStressTest : UsefulTestCase() {
                     profile(DefaultProfile)
 
                     fixture("src/main/java/pkg/SomeClass.kt").use { fixture ->
-                        val typingConfig = TypingConfig(
-                            fixture,
-                            marker = "ov",
-                            insertString = "override fun foo(): String = TODO()",
+                        with(fixture.typingConfig) {
+                            marker = "ov"
+                            insertString = "override fun foo(): String = TODO()"
                             delayMs = 50
-                        )
+                        }
 
                         with(config) {
                             warmup = 8
                             iterations = 15
                         }
 
-                        measure<List<HighlightInfo>>("type override fun foo()", fixture = fixture) {
-                            before = {
-                                moveCursor(typingConfig)
-                            }
-                            test = {
-                                typeAndHighlight(typingConfig)
-                            }
-                            after = {
-                                fixture.restoreText()
-                                commitAllDocuments()
-                            }
-                        }
+                        measureTypeAndHighlight(fixture, "type override fun foo()")
                     }
                 }
             }
@@ -224,5 +313,91 @@ open class PerformanceStressTest : UsefulTestCase() {
         }
         results.addAll(newResults)
         generateTypes(types, results, index + 1, maxCount)
+    }
+
+    fun testManyModulesExample() {
+        suiteWithConfig("10 modules", "10 modules") {
+            app {
+                warmUpProject()
+
+                project {
+                    descriptor {
+                        name("ten_modules")
+
+                        for (index in 0 until 10) {
+                            module("module$index") {
+                                kotlinStandardLibrary()
+
+                                for (libIndex in 0 until 10) {
+                                    library("log4j$libIndex", "log4j:log4j:1.2.17")
+                                }
+
+                                kotlinFile("SomeService$index") {
+                                    pkg("pkg")
+
+                                    topClass("SomeService$index") {
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun testFacadeClasses() {
+        suiteWithConfig("Lots of facade classes", "kt-53543 project") {
+            app {
+                warmUpProject()
+                project {
+                    descriptor {
+                        name("KT-53543")
+
+                        module {
+                            kotlinStandardLibrary()
+
+                            for (index in 0..50_000) {
+                                kotlinFile("AaaaFacade$index") {
+                                    for (funIndex in 0..2) {
+                                        topFunction("aaaaFunction${index}_$funIndex") {}
+                                    }
+                                }
+
+                                kotlinFile("AaaaFacadeNon$index") {
+                                    topClass("AaaaClass$index") {}
+                                }
+                            }
+
+                            kotlinFile("SomeKotlinClass") {
+                                topFunction("foo") {}
+                            }
+                        }
+                    }
+
+                    profile(DefaultProfile)
+
+                    fixture("SomeKotlinClass.kt").use { fixture ->
+                        measure<Unit>("findFacadeClass") {
+                            test = {
+                                val facadeClass = fixture.psiFile.cast<KtFile>().findFacadeClass()
+                                assertNotNull(facadeClass)
+                            }
+                        }
+
+                        measure<Unit>("getFacadeClassesInPackage") {
+                            test = {
+                                val classes = KotlinAsJavaSupport.getInstance(fixture.project).getFacadeClassesInPackage(
+                                    FqName(""),
+                                    GlobalSearchScope.projectScope(fixture.project),
+                                )
+
+                                assertEquals(50002, classes.size)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

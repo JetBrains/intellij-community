@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -21,6 +21,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var showExcludedFiles: Boolean = true
   var showVisibilityIcons: Boolean = false
   var showLibraryContents: Boolean = true
+  var showScratchesAndConsoles: Boolean = true
   var hideEmptyPackages: Boolean = true
   var compactDirectories: Boolean = false
   var abbreviatePackages: Boolean = false
@@ -29,7 +30,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var foldersAlwaysOnTop: Boolean = true
   var manualOrder: Boolean = false
 
-  override fun getState(): ProjectViewSharedSettings? {
+  override fun getState(): ProjectViewSharedSettings {
     return this
   }
 

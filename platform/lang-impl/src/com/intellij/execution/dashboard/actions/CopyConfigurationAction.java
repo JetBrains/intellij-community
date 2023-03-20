@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -11,26 +11,31 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
-public class CopyConfigurationAction extends AnAction {
+final class CopyConfigurationAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
     boolean enabled = node != null && RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
-    e.getPresentation().setEnabled(enabled);
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(enabled);
     boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
-    e.getPresentation().setVisible(enabled || !popupPlace);
+    presentation.setVisible(enabled || !popupPlace);
     if (popupPlace) {
-      e.getPresentation().setText(getTemplatePresentation().getText() + "...");
+      presentation.setText(getTemplatePresentation().getText() + "...");
     }
   }
 

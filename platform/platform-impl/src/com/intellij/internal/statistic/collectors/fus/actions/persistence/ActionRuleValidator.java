@@ -5,12 +5,12 @@ import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ActionRuleValidator extends ClassNameRuleValidator {
+  @NotNull
   @Override
-  public boolean acceptRuleId(@Nullable String ruleId) {
-    return "action".equals(ruleId);
+  public String getRuleId() {
+    return "action";
   }
 
   @NotNull

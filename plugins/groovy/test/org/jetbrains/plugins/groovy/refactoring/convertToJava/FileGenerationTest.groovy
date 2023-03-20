@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -21,6 +23,14 @@ class FileGenerationTest extends LightGroovyTestCase {
 
     myFixture.checkResultByFile("${testName}.java")
   }
+
+  void testForLoops() { doTest() }
+
+  void testLiterals() { doTest() }
+
+  void testIncrementAndDecrement() { doTest() }
+
+  void testPlusPlus() { doTest() }
 
   void testEnum() { doTest() }
 
@@ -46,7 +56,16 @@ class FileGenerationTest extends LightGroovyTestCase {
 
   void testRemoveTransformAnno() { doTest() }
 
-  void testConcurency() { doTest() }
+  void testConcurency() {
+    def registryValue = Registry.is(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE)
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true)
+    try {
+      doTest()
+    }
+    finally {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(registryValue)
+    }
+  }
 
   void testHash() { doTest() }
 

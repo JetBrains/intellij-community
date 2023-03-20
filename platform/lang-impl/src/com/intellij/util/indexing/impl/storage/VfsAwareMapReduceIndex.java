@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -8,15 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
@@ -28,6 +21,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
+import com.intellij.util.indexing.storage.MapReduceIndexBase;
 import com.intellij.util.indexing.storage.SnapshotInputMappingIndex;
 import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
@@ -37,14 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, FileContent> implements UpdatableIndex<Key, Value, FileContent>{
+public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
+  extends MapReduceIndexBase<Key, Value, FileCachedData> {
   private static final Logger LOG = Logger.getInstance(VfsAwareMapReduceIndex.class);
 
   @ApiStatus.Internal
@@ -54,7 +47,9 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     final Application app = ApplicationManager.getApplication();
 
     if (!IndexDebugProperties.DEBUG) {
-      IndexDebugProperties.DEBUG = (app.isEAP() || app.isInternal()) && !ApplicationManagerEx.isInStressTest();
+      IndexDebugProperties.DEBUG = (app.isEAP() || app.isInternal()) &&
+                                   !ApplicationManagerEx.isInStressTest() &&
+                                   !ApplicationManagerEx.isInIntegrationTest();
     }
 
     if (!IndexDebugProperties.IS_UNIT_TEST_MODE) {
@@ -66,29 +61,22 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   private final PersistentSubIndexerRetriever mySubIndexerRetriever;
   private final SnapshotInputMappingIndex<Key, Value, FileContent> mySnapshotInputMappings;
   private final boolean myUpdateMappings;
-  private final boolean mySingleEntryIndex;
 
   public VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
-                                @Nullable ReadWriteLock lock) throws IOException {
+                                @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
     this(extension,
          () -> indexStorageLayout.openIndexStorage(),
          () -> indexStorageLayout.openForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
-         () -> indexStorageLayout.createOrClearSnapshotInputMappings(),
-         lock);
+         () -> indexStorageLayout.createOrClearSnapshotInputMappings());
   }
 
   protected VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
                                    @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
                                    @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexMap,
                                    @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                   @Nullable ThrowableComputable<? extends SnapshotInputMappingIndex<Key, Value, FileContent>, ? extends IOException> snapshotInputMappings,
-                                   @Nullable ReadWriteLock lock) throws IOException {
-    super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
-    if (!(myIndexId instanceof ID<?, ?>)) {
-      throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
-    }
+                                   @Nullable ThrowableComputable<? extends SnapshotInputMappingIndex<Key, Value, FileContent>, ? extends IOException> snapshotInputMappings) throws IOException {
+    super(extension, storage, forwardIndexMap, forwardIndexAccessor);
     SnapshotInputMappingIndex<Key, Value, FileContent> inputMappings;
     try {
       inputMappings = snapshotInputMappings == null ? null : snapshotInputMappings.compute();
@@ -110,7 +98,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                                                            ((IntForwardIndex)forwardIndexMap));
       }
     }
-    if (isCompositeIndexer(myIndexer)) {
+    if (FileBasedIndex.isCompositeIndexer(myIndexer)) {
       try {
         // noinspection unchecked,rawtypes
         mySubIndexerRetriever = new PersistentSubIndexerRetriever((ID)myIndexId,
@@ -127,7 +115,6 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     } else {
       mySubIndexerRetriever = null;
     }
-    mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
   }
 
   public void resetSnapshotInputMappingsStatistics() {
@@ -143,16 +130,9 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     return null;
   }
 
-  public static boolean isCompositeIndexer(@NotNull DataIndexer<?, ?, ?> indexer) {
-    return indexer instanceof CompositeDataIndexer && !FileBasedIndex.USE_IN_MEMORY_INDEX;
-  }
-
-  public static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
-    //noinspection unchecked
-    return indexExtension instanceof FileBasedIndexExtension &&
-           ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
-           FileBasedIndex.ourSnapshotMappingsEnabled &&
-           !FileBasedIndex.USE_IN_MEMORY_INDEX;
+  @Override
+  protected Logger getLogger() {
+    return LOG;
   }
 
   @Override
@@ -165,7 +145,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   protected final InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
-    boolean isPhysical = content instanceof FileContentImpl && ((FileContentImpl)content).isPhysicalContent();
+    boolean isPhysical = content instanceof FileContentImpl && !((FileContentImpl)content).isTransientContent();
     if (mySnapshotInputMappings != null && isPhysical) {
       try {
         data = mySnapshotInputMappings.readData(content);
@@ -194,6 +174,75 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   @NotNull
   public InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId, @NotNull Map<Key, Value> keysAndValues) throws IOException {
     return ((AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor()).createDiffBuilderByMap(inputId, keysAndValues);
+  }
+
+  public static class IndexerIdHolder {
+    public int indexerId;
+
+    public IndexerIdHolder(int indexerId) {
+      this.indexerId = indexerId;
+    }
+  }
+
+  @Override
+  public FileCachedData getFileIndexMetaData(@NotNull IndexedFile file) {
+    if (mySubIndexerRetriever != null) {
+      try {
+        IndexerIdHolder holder = ProgressManager.getInstance()
+          .computeInNonCancelableSection(() -> new IndexerIdHolder(mySubIndexerRetriever.getFileIndexerId(file)));
+        LOG.assertTrue(holder != null,
+                       "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
+        return (FileCachedData)holder;
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        // Index would be rebuilt, and exception would be logged with INFO severity
+        // in com.intellij.util.indexing.FileBasedIndexImpl.requestIndexRebuildOnException
+        throw new RuntimeException(e);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @return value < 0 means that no sub indexer id corresponds to the specified file
+   */
+  protected int getStoredFileSubIndexerId(int fileId) {
+    if (mySubIndexerRetriever == null) throw new IllegalStateException("not a composite indexer");
+    try {
+      return mySubIndexerRetriever.getStoredFileIndexerId(fileId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return -4;
+    }
+  }
+
+  public <SubIndexerVersion> @Nullable SubIndexerVersion getStoredSubIndexerVersion(int fileId) {
+    int indexerId = getStoredFileSubIndexerId(fileId);
+    if (indexerId < 0) return null;
+    try {
+      return (SubIndexerVersion)mySubIndexerRetriever.getVersionByIndexerId(indexerId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  @Override
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileCachedData fileData) {
+    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+    if (mySubIndexerRetriever != null) {
+      LOG.assertTrue(fileData != null,
+                     "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
+      try {
+        mySubIndexerRetriever.setFileIndexerId(fileId, fileData.indexerId);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override
@@ -267,61 +316,6 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   protected void setIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) { }
 
-
-  @Override
-  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
-    return ConcurrencyUtil.withLock(getLock().readLock(), () ->
-      ((VfsAwareIndexStorage<Key, Value>)myStorage).processKeys(processor, scope, idFilter)
-    );
-  }
-
-  @NotNull
-  @Override
-  public Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
-    return ConcurrencyUtil.withLock(getLock().readLock(), () -> {
-      try {
-        return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-    });
-  }
-
-  @Nullable
-  protected Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
-    if (isDisposed()) {
-      return null;
-    }
-    // in future we will get rid of forward index for SingleEntryFileBasedIndexExtension
-    if (mySingleEntryIndex) {
-      @SuppressWarnings("unchecked")
-      Key key = (Key)(Object)fileId;
-      Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
-      ValueContainer<Value> container = getData(key);
-      container.forEach((id, value) -> {
-        boolean acceptNullValues = ((SingleEntryIndexer<?>)myIndexer).isAcceptNullValues();
-        if (value != null || acceptNullValues) {
-          result.set(Collections.singletonMap(key, value));
-        }
-        return false;
-      });
-      return result.get();
-    }
-    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
-      ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
-      AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor();
-      return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
-    }
-    LOG.error("Can't fetch indexed data for index " + myIndexId.getName());
-    return null;
-  }
-
-  @Override
-  public void checkCanceled() {
-    ProgressManager.checkCanceled();
-  }
-
   @Override
   protected void requestRebuild(@NotNull Throwable ex) {
     Runnable action = () -> FileBasedIndex.getInstance().requestRebuild((ID<?, ?>)myIndexId, ex);
@@ -339,48 +333,6 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     else {
       action.run();
     }
-  }
-
-  @Override
-  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
-    try {
-      super.updateWithMap(updateData);
-    }
-    catch (ProcessCanceledException e) {
-      LOG.error("ProcessCancelledException is not expected here!", e);
-      throw e;
-    }
-  }
-
-  @Override
-  public void setBufferingEnabled(boolean enabled) {
-    // TODO to be removed
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void cleanupMemoryStorage() {
-    // TODO to be removed
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void cleanupForNextTest() {
-    // TODO to be removed
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeTransientDataForFile(int inputId) {
-    // TODO to be removed
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeTransientDataForKeys(int inputId,
-                                         @NotNull InputDataDiffBuilder<Key, Value> diffBuilder) {
-    // TODO to be removed
-    throw new UnsupportedOperationException();
   }
 
   @Override

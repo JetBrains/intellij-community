@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.lexer.LexerBase;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,7 @@ public class TextMateHighlightingLexer extends LexerBase {
 
   protected void updateState(@Nullable TextMateLexer.Token token, int fallbackOffset) {
     if (token != null) {
-      myTokenType = new TextMateElementType(token.scope);
+      myTokenType = token.scope == TextMateScope.WHITESPACE ? TokenType.WHITE_SPACE : new TextMateElementType(token.scope);
       myTokenStart = token.startOffset;
       myTokenEnd = Math.min(token.endOffset, myEndOffset);
       myCurrentOffset = token.endOffset;

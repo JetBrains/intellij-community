@@ -101,7 +101,7 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor im
                 document.insertString(tailOffset, "}");
               }
               // It can happen when completion is invoked on multiple carets inside the same string
-              String stringElemPrefix = PyStringLiteralUtil.getPrefix(docChars, stringElemStart);
+              String stringElemPrefix = PyStringLiteralCoreUtil.getPrefix(docChars, stringElemStart);
               if (!PyStringLiteralUtil.isFormattedPrefix(stringElemPrefix)) {
                 document.insertString(stringElemStart, "f");
               }

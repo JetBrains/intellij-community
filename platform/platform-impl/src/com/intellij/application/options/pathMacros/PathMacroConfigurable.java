@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author dsl
- */
 public class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   @NonNls
   public static final String HELP_ID = "preferences.pathVariables";

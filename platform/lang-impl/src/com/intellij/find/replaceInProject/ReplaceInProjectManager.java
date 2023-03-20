@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +39,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,14 +62,6 @@ public final class ReplaceInProjectManager {
 
   public ReplaceInProjectManager(Project project) {
     myProject = project;
-  }
-
-  private static boolean hasReadOnlyUsages(final Collection<? extends Usage> usages) {
-    for (Usage usage : usages) {
-      if (usage.isReadOnly()) return true;
-    }
-
-    return false;
   }
 
   static class ReplaceContext {
@@ -245,32 +237,8 @@ public final class ReplaceInProjectManager {
       .ask(myProject);
   }
 
-  private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
-    Set<Usage> usages = selectedOnly
-                        ? replaceContext.getUsageView().getSelectedUsages()
-                        : replaceContext.getUsageView().getUsages();
-    if (usages.isEmpty()) {
-      return Collections.emptySet();
-    }
-
-    Set<VirtualFile> files = new HashSet<>();
-    for (Usage usage : usages) {
-      if (usage instanceof UsageInfo2UsageAdapter) {
-        files.add(((UsageInfo2UsageAdapter)usage).getFile());
-      }
-    }
-    return files;
-  }
-
-  private static Set<Usage> getAllUsagesForFile(@NotNull ReplaceContext replaceContext, @NotNull VirtualFile file) {
-    Set<Usage> usages = replaceContext.getUsageView().getUsages();
-    Set<Usage> result = new LinkedHashSet<>();
-    for (Usage usage : usages) {
-      if (usage instanceof UsageInfo2UsageAdapter && Comparing.equal(((UsageInfo2UsageAdapter)usage).getFile(), file)) {
-        result.add(usage);
-      }
-    }
-    return result;
+  private static Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
+    return ContainerUtil.map2Set(usages, usage -> ((UsageInfo2UsageAdapter)usage).getFile());
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
@@ -282,9 +250,11 @@ public final class ReplaceInProjectManager {
       }
       @Override
       public void actionPerformed(ActionEvent e) {
-        Set<Usage> usages = replaceContext.getUsageView().getUsages();
+        UsageView usageView = replaceContext.getUsageView();
+        Set<Usage> usages = new HashSet<>(usageView.getUsages());
+        usages.removeAll(usageView.getExcludedUsages());
         if (usages.isEmpty()) return;
-        Set<VirtualFile> files = getFiles(replaceContext, false);
+        Set<VirtualFile> files = getFiles(usages);
         if (files.size() < 2 || showReplaceAllConfirmDialog(
           String.valueOf(usages.size()),
           replaceContext.getFindModel().getStringToFind(),
@@ -311,93 +281,33 @@ public final class ReplaceInProjectManager {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
+        replaceUsagesUnderCommand(replaceContext, getSelectedUsages());
       }
 
       @Override
       public Object getValue(String key) {
         return Action.NAME.equals(key)
-               ? FindBundle.message("find.replace.selected.action", replaceContext.getUsageView().getSelectedUsages().size())
+               ? FindBundle.message("find.replace.selected.action", getSelectedUsages().size())
                : super.getValue(key);
       }
 
       @Override
       public boolean isEnabled() {
-        return !replaceContext.getUsageView().getSelectedUsages().isEmpty();
+        return !getSelectedUsages().isEmpty();
+      }
+
+      private Set<Usage> getSelectedUsages() {
+        UsageView usageView = replaceContext.getUsageView();
+        Set<Usage> selectedUsages = usageView.getSelectedUsages();
+        selectedUsages.removeAll(usageView.getExcludedUsages());
+        return selectedUsages;
       }
     };
 
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedAction);
-
-    final AbstractAction replaceAllInThisFileAction = new AbstractAction() {
-      {
-        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-      }
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Set<VirtualFile> files = getFiles(replaceContext, true);
-        if (files.size() == 1) {
-          replaceUsagesUnderCommand(replaceContext, getAllUsagesForFile(replaceContext, files.iterator().next()));
-        }
-      }
-
-      @Override
-      public Object getValue(String key) {
-        return Action.NAME.equals(key)
-               ? FindBundle.message("find.replace.this.file.action", replaceContext.getUsageView().getSelectedUsages().size())
-               : super.getValue(key);
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return getFiles(replaceContext, true).size() == 1;
-      }
-    };
-
-    //replaceContext.getUsageView().addButtonToLowerPane(replaceAllInThisFileAction);
-
-    final AbstractAction skipThisFileAction = new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        Set<VirtualFile> files = getFiles(replaceContext, true);
-        if (files.size() != 1) return;
-        VirtualFile selectedFile = files.iterator().next();
-        Set<Usage> toSkip = getAllUsagesForFile(replaceContext, selectedFile);
-        Usage usageToSelect = ((UsageViewImpl)replaceContext.getUsageView()).getNextToSelect(toSkip);
-        replaceContext.getUsageView().excludeUsages(toSkip.toArray(Usage.EMPTY_ARRAY));
-        if (usageToSelect != null) {
-          replaceContext.getUsageView().selectUsages(new Usage[]{usageToSelect});
-        } else {
-          replaceContext.getUsageView().selectUsages(Usage.EMPTY_ARRAY);
-        }
-      }
-
-      @Override
-      public Object getValue(String key) {
-        return Action.NAME.equals(key)
-               ? FindBundle.message("find.replace.skip.this.file.action", replaceContext.getUsageView().getSelectedUsages().size())
-               : super.getValue(key);
-      }
-
-      @Override
-      public boolean isEnabled() {
-        Set<VirtualFile> files = getFiles(replaceContext, true);
-        if (files.size() != 1) return false;
-        VirtualFile selectedFile = files.iterator().next();
-        Set<Usage> toSkip = getAllUsagesForFile(replaceContext, selectedFile);
-        return ((UsageViewImpl)replaceContext.getUsageView()).getNextToSelect(toSkip) != null;
-      }
-    };
-
-    //replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages) {
-    if (!ensureUsagesWritable(replaceContext, usages)) {
-      return true;
-    }
-
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
@@ -456,10 +366,12 @@ public final class ReplaceInProjectManager {
     }
   }
 
-  public boolean replaceUsage(@NotNull final Usage usage,
-                              @NotNull final FindModel findModel,
-                              @NotNull final Set<Usage> excludedSet,
-                              final boolean justCheck)
+  public boolean replaceSingleUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet)
+    throws FindManager.MalformedReplacementStringException {
+    return ensureUsagesWritable(Collections.singleton(usage)) && replaceUsage(usage, findModel, excludedSet, false);
+  }
+
+  public boolean replaceUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet, boolean justCheck)
     throws FindManager.MalformedReplacementStringException {
     final Ref<FindManager.MalformedReplacementStringException> exceptionResult = Ref.create();
     final boolean result = WriteAction.compute(() -> {
@@ -527,46 +439,30 @@ public final class ReplaceInProjectManager {
     }
 
     final List<Usage> usages = new ArrayList<>(usagesSet);
-    usages.sort(UsageViewImpl.USAGE_COMPARATOR);
+    usages.sort(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
 
-    if (!ensureUsagesWritable(replaceContext, usages)) return;
+    if (!ensureUsagesWritable(usages)) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final boolean success = replaceUsages(replaceContext, usages);
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
     }, FindBundle.message("find.replace.command"), null);
 
     replaceContext.invalidateExcludedSetCache();
   }
 
-  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<? extends Usage> selectedUsages) {
-    Set<VirtualFile> readOnlyFiles = null;
-    for (final Usage usage : selectedUsages) {
+  private boolean ensureUsagesWritable(Collection<? extends Usage> selectedUsages) {
+    Set<VirtualFile> files = new HashSet<>();
+    for (Usage usage : selectedUsages) {
       final VirtualFile file = ((UsageInFile)usage).getFile();
-
-      if (file != null && !file.isWritable()) {
-        if (readOnlyFiles == null) readOnlyFiles = new HashSet<>();
-        readOnlyFiles.add(file);
-      }
+      files.add(file);
     }
 
-    if (readOnlyFiles != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyFiles);
-    }
-
-    if (hasReadOnlyUsages(selectedUsages)) {
-      int result = Messages.showOkCancelDialog(replaceContext.getUsageView().getComponent(),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.title"),
-                                               Messages.getWarningIcon());
-      if (result != Messages.OK) {
-        return false;
-      }
-    }
-    return true;
+    return !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
   private boolean closeUsageViewIfEmpty(UsageView usageView, boolean success) {

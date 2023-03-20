@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>JS Client</title>
+    <title>${indexTitle}</title>
 </head>
 <body>
 <script src="${indexFile}.js"></script>
-<div id="root"></div>
 </body>
 </html>

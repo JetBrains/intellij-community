@@ -14,6 +14,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class InternalMavenModuleBuilder extends AbstractMavenModuleBuilder {
+
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{

@@ -13,15 +13,16 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
+import java.util.*
 
 internal abstract class OrderEntryBridge(
   private val rootModel: ModuleRootModelBridge,
@@ -70,6 +71,11 @@ internal abstract class OrderEntryBridge(
     result = 31 * result + item.hashCode()
     return result
   }
+
+  override fun toString(): String = "${shortClassName}: $presentableName"
+
+  protected val shortClassName: String 
+    get() = javaClass.name.substringAfterLast(".").removeSuffix("Bridge")
 }
 
 internal abstract class ExportableOrderEntryBridge(
@@ -94,6 +100,23 @@ internal abstract class ExportableOrderEntryBridge(
     updater(index) { (it as ModuleDependencyItem.Exportable).withScope(scope.toEntityDependencyScope()) }
     item = (item as ModuleDependencyItem.Exportable).withScope(scope.toEntityDependencyScope())
   }
+
+  override fun toString(): String {
+    return buildString {
+      append(shortClassName)
+      append(": ")
+      append(ownerModule.name)
+      append(" -> ")
+      append(presentableName)
+      if (exportableItem.scope != ModuleDependencyItem.DependencyScope.COMPILE) {
+        append(", scope=")
+        append(exportableItem.scope.name.lowercase(Locale.US))
+      }
+      if (exportableItem.exported) {
+        append(", exported")
+      }
+    }
+  }
 }
 
 internal class ModuleOrderEntryBridge(
@@ -109,9 +132,7 @@ internal class ModuleOrderEntryBridge(
   override fun getModule(): Module? {
     val storage = getRootModel().storage
     val moduleEntity = storage.resolve(moduleDependencyItem.module)
-    val module = moduleEntity?.let {
-      storage.findModuleByEntity(it)
-    }
+    val module = moduleEntity?.findModule(storage)
     return getRootModel().accessor.getModule(module, moduleName)
   }
 
@@ -186,10 +207,6 @@ internal abstract class SdkOrderEntryBaseBridge(
   override fun getRootFiles(type: OrderRootType): Array<VirtualFile> = rootProvider?.getFiles(type) ?: VirtualFile.EMPTY_ARRAY
 
   override fun getRootUrls(type: OrderRootType): Array<String> = rootProvider?.getUrls(type) ?: ArrayUtil.EMPTY_STRING_ARRAY
-
-  override fun getFiles(type: OrderRootType) = getRootFiles(type)
-
-  override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
 }
 
 internal class LibraryOrderEntryBridge(
@@ -205,7 +222,7 @@ internal class LibraryOrderEntryBridge(
 
   @Nls
   private fun getPresentableNameForUnnamedLibrary(): String {
-    val url = getUrls(OrderRootType.CLASSES).firstOrNull()
+    val url = getRootUrls(OrderRootType.CLASSES).firstOrNull()
     return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("empty.library.title")
   }
 
@@ -244,10 +261,6 @@ internal class LibraryOrderEntryBridge(
   override fun getRootFiles(type: OrderRootType): Array<VirtualFile> = rootProvider?.getFiles(type) ?: VirtualFile.EMPTY_ARRAY
 
   override fun getRootUrls(type: OrderRootType): Array<String> = rootProvider?.getUrls(type) ?: ArrayUtil.EMPTY_STRING_ARRAY
-
-  override fun getFiles(type: OrderRootType) = getRootFiles(type)
-
-  override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
 
   override fun isValid(): Boolean = library != null
 

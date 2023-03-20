@@ -1,81 +1,83 @@
 package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
-import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-
-@Topic.AppLevel
-internal val SETTINGS_CHANGED_TOPIC: Topic<SettingsChangeListener> = Topic(SettingsChangeListener::class.java)
-
-@Topic.AppLevel
-internal val SETTINGS_LOGGED_TOPIC: Topic<SettingsLoggedListener> = Topic(SettingsLoggedListener::class.java)
 
 private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
-internal fun isSettingsSyncEnabled() : Boolean =
-  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
+@ApiStatus.Internal
+fun isSettingsSyncEnabledByKey(): Boolean =
+  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, true)
 
-class SettingsSyncFacade {
-  internal val updateChecker: SettingsSyncUpdateChecker get() = getMain().controls.updateChecker
+internal fun isSettingsSyncEnabledInSettings(): Boolean =
+  SettingsSyncSettings.getInstance().syncEnabled
 
-  internal fun pushSettingsToServer() {
-    getMain().controls.pusher.push()
+internal const val SETTINGS_SYNC_STORAGE_FOLDER = "settingsSync"
+
+@ApiStatus.Internal
+class SettingsSyncMain : Disposable {
+
+  val controls: SettingsSyncControls
+  private val componentStore: ComponentStoreImpl
+
+  init {
+    val application = ApplicationManager.getApplication()
+    val appConfigPath = PathManager.getConfigDir()
+    val settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER)
+    val remoteCommunicator = CloudConfigServerCommunicator()
+
+    componentStore = application.stateStore as ComponentStoreImpl
+    val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, appConfigPath, enabledCondition = {
+      isSettingsSyncEnabledByKey() && isAvailable() && isSettingsSyncEnabledInSettings()
+    })
+    controls = init(application, this, settingsSyncStorage, appConfigPath, remoteCommunicator, ideMediator)
   }
 
-  private fun getMain(): SettingsSyncMain {
-    return ApplicationLoadListener.EP_NAME.findExtensionOrFail(SettingsSyncMain::class.java)
+  override fun dispose() {
   }
-}
 
-internal class SettingsSyncMain : ApplicationLoadListener {
+  internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = controls.remoteCommunicator
 
-  internal lateinit var controls: SettingsSyncControls
-
-  override fun beforeApplicationLoaded(application: Application, appConfigPath: Path) {
-    if (application.isUnitTestMode || !isSettingsSyncEnabled()) {
-      return
-    }
-
-    val settingsSyncStorage = appConfigPath.resolve("settingsSync")
-    val remoteCommunicator = if (System.getProperty(SETTINGS_SYNC_LOCAL_SERVER_PATH_PROPERTY) != null)
-      LocalDirSettingsSyncRemoteCommunicator(settingsSyncStorage)
-    else CloudConfigServerCommunicator()
-
-    @Suppress("IncorrectParentDisposable") // settings sync is enabled on startup => Application is the only possible disposable parent
-    controls = init(application, application, settingsSyncStorage, appConfigPath, application.stateStore as ComponentStoreImpl, remoteCommunicator)
+  fun disableSyncing() {
+    controls.ideMediator.removeStreamProvider()
   }
 
   companion object {
 
+    fun isAvailable(): Boolean {
+      return ApplicationManager.getApplication().getServiceIfCreated(SettingsSyncMain::class.java) != null
+    }
+
+    fun getInstance(): SettingsSyncMain = ApplicationManager.getApplication().getService(SettingsSyncMain::class.java)
+
+    // Extracted to simplify testing, otherwise it is fast and is called from the service initializer
     internal fun init(application: Application,
                       parentDisposable: Disposable,
                       settingsSyncStorage: Path,
                       appConfigPath: Path,
-                      componentStore: ComponentStoreImpl,
-                      remoteCommunicator: SettingsSyncRemoteCommunicator): SettingsSyncControls {
-      // todo migrate from cloud config or settings-repository
-      // todo set provider only if connected
-
-      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable, componentStore, AllShareableSettings())
-      val pusher = SettingsSyncPusher(settingsLog, remoteCommunicator)
-      val bridge = SettingsSyncBridge(application, parentDisposable, settingsLog, pusher)
-      SettingsSyncIdeUpdater(application, componentStore, appConfigPath)
-
-      val streamProvider = SettingsSyncStreamProvider(application, appConfigPath)
-      componentStore.storageManager.addStreamProvider(streamProvider)
-
-      val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
-
-      return SettingsSyncControls(updateChecker, pusher, bridge)
+                      remoteCommunicator: SettingsSyncRemoteCommunicator,
+                      ideMediator: SettingsSyncIdeMediator): SettingsSyncControls {
+      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
+        initialSnapshotProvider = { currentSnapshot -> ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot) })
+      val updateChecker = SettingsSyncUpdateChecker(remoteCommunicator)
+      val bridge = SettingsSyncBridge(parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
+      return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)
     }
+
+    private val LOG = logger<SettingsSyncMain>()
   }
 
-  internal class SettingsSyncControls(val updateChecker: SettingsSyncUpdateChecker,
-                                      val pusher: SettingsSyncPusher,
-                                      val bridge: SettingsSyncBridge)
+  class SettingsSyncControls(val ideMediator: SettingsSyncIdeMediator,
+                             val updateChecker: SettingsSyncUpdateChecker,
+                             val bridge: SettingsSyncBridge,
+                             val remoteCommunicator: SettingsSyncRemoteCommunicator,
+                             val settingsSyncStorage: Path)
 }

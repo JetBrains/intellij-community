@@ -22,9 +22,11 @@ import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
+import com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,7 @@ import java.util.regex.Pattern;
 
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
-  @NonNls private static final String TEXT_PREFIX = buildHtmlStylePrefix();
+  @NonNls protected static final String TEXT_PREFIX = buildHtmlStylePrefix();
 
   @NotNull
   private static String buildHtmlStylePrefix() {
@@ -239,7 +241,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Override
-  public void uninstallPackages(@NotNull List<InstalledPackage> installedPackages, @NotNull Listener listener) {
+  public void uninstallPackages(List<? extends InstalledPackage> installedPackages, @NotNull Listener listener) {
+    PythonPackagesDialogStatisticsCollector.getPackageUninstalledEvent().log(myProject);
     final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override
@@ -263,12 +266,12 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Override
-  public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
+  public void fetchPackageVersions(String packageName, CatchingConsumer<? super List<String>, ? super Exception> consumer) {
     PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, consumer);
   }
 
   @Override
-  public void fetchPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<String, Exception> consumer) {
+  public void fetchPackageDetails(@NotNull String packageName, CatchingConsumer<? super @Nls String, ? super Exception> consumer) {
     PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<>() {
       @Override
       public void consume(PackageDetails.Info details) {
@@ -333,8 +336,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   private static PyPackageInstallationErrorDescription createDescription(@NotNull ExecutionException e,
                                                                          @Nullable Sdk sdk,
                                                                          @Nullable String packageName) {
-    if (e instanceof PyExecutionException) {
-      final PyExecutionException ee = (PyExecutionException)e;
+    if (e instanceof PyExecutionException ee) {
       final String stdout = ee.getStdout();
       final String stdoutCause = findErrorCause(stdout);
       final String stderrCause = findErrorCause(ee.getStderr());
@@ -399,7 +401,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Override
-  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
+  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<? super String, ? super Exception> consumer) {
     myExecutorService.execute(() -> {
       if (myProject.isDisposed()) return;
       try {
@@ -463,5 +465,11 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     public @Nullable Sdk getSdk() {
       return mySdk;
     }
+  }
+
+  @Override
+  public boolean canManageRepositories() {
+    // Package management from ManageRepositoriesDialog is disabled in favor of Packaging toolwindow
+    return false;
   }
 }

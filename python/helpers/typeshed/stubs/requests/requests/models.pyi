@@ -1,13 +1,16 @@
 import datetime
+from _typeshed import Self
+from collections.abc import Callable, Iterator
 from json import JSONDecoder
-from typing import Any, Callable, Iterator, Text, Type
+from typing import Any
 
-from . import auth, cookies, exceptions, hooks, status_codes, structures, utils
+from urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
+
+from . import auth, cookies, exceptions, hooks, status_codes, utils
 from .cookies import RequestsCookieJar
-from .packages.urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
+from .structures import CaseInsensitiveDict as CaseInsensitiveDict
 
 default_hooks = hooks.default_hooks
-CaseInsensitiveDict = structures.CaseInsensitiveDict
 HTTPBasicAuth = auth.HTTPBasicAuth
 cookiejar_from_dict = cookies.cookiejar_from_dict
 get_cookie_header = cookies.get_cookie_header
@@ -67,10 +70,10 @@ class Request(RequestHooksMixin):
     def prepare(self) -> PreparedRequest: ...
 
 class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
-    method: str | Text | None
-    url: str | Text | None
+    method: str | None
+    url: str | None
     headers: CaseInsensitiveDict[str]
-    body: bytes | Text | None
+    body: bytes | str | None
     hooks: Any
     def __init__(self) -> None: ...
     def prepare(
@@ -103,8 +106,8 @@ class Response:
     def __bool__(self) -> bool: ...
     def __nonzero__(self) -> bool: ...
     def __iter__(self) -> Iterator[bytes]: ...
-    def __enter__(self) -> Response: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __enter__(self: Self) -> Self: ...
+    def __exit__(self, *args: object) -> None: ...
     @property
     def next(self) -> PreparedRequest | None: ...
     @property
@@ -117,7 +120,7 @@ class Response:
     def apparent_encoding(self) -> str: ...
     def iter_content(self, chunk_size: int | None = ..., decode_unicode: bool = ...) -> Iterator[Any]: ...
     def iter_lines(
-        self, chunk_size: int | None = ..., decode_unicode: bool = ..., delimiter: Text | bytes | None = ...
+        self, chunk_size: int | None = ..., decode_unicode: bool = ..., delimiter: str | bytes | None = ...
     ) -> Iterator[Any]: ...
     @property
     def content(self) -> bytes: ...
@@ -126,7 +129,7 @@ class Response:
     def json(
         self,
         *,
-        cls: Type[JSONDecoder] | None = ...,
+        cls: type[JSONDecoder] | None = ...,
         object_hook: Callable[[dict[Any, Any]], Any] | None = ...,
         parse_float: Callable[[str], Any] | None = ...,
         parse_int: Callable[[str], Any] | None = ...,

@@ -1,0 +1,10 @@
+kotlin:
+  projectKind: Multiplatform
+  modules:
+    - type: multiplatform
+      name: a
+      subModules:
+        - type:
+            name: wasmSimple
+            testFramework: JS
+          name: wasmSimple

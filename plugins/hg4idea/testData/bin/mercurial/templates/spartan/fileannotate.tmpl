@@ -1,0 +1,51 @@
+{header}
+<title>{repo|escape}: {file|escape} annotate</title>
+</head>
+<body>
+
+<div class="buttons">
+<a href="{url|urlescape}log/{symrev}{sessionvars%urlparameter}">changelog</a>
+<a href="{url|urlescape}shortlog/{symrev}{sessionvars%urlparameter}">shortlog</a>
+<a href="{url|urlescape}graph/{symrev}{sessionvars%urlparameter}">graph</a>
+<a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a>
+<a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a>
+<a href="{url|urlescape}rev/{symrev}{sessionvars%urlparameter}">changeset</a>
+<a href="{url|urlescape}file/{symrev}{path|urlescape}{sessionvars%urlparameter}">files</a>
+<a href="{url|urlescape}file/{symrev}/{file|urlescape}{sessionvars%urlparameter}">file</a>
+<a href="{url|urlescape}log/{symrev}/{file|urlescape}{sessionvars%urlparameter}">revisions</a>
+<a href="{url|urlescape}raw-file/{symrev}/{file|urlescape}">raw</a>
+<a href="{url|urlescape}help{sessionvars%urlparameter}">help</a>
+</div>
+
+<h2><a href="/">Mercurial</a> {pathdef%breadcrumb} / annotate {file|escape}</h2>
+
+<table>
+<tr>
+ <td class="metatag">changeset {rev}:</td>
+ <td><a href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">{node|short}</a></td>
+</tr>
+{parent%fileannotateparent}
+{child%fileannotatechild}
+<tr>
+ <td class="metatag">author:</td>
+ <td>{author|obfuscate}</td>
+</tr>
+<tr>
+ <td class="metatag">date:</td>
+ <td class="date age">{date|rfc822date}</td>
+</tr>
+<tr>
+ <td class="metatag">permissions:</td>
+ <td>{permissions|permissions}</td>
+</tr>
+<tr>
+  <td class="metatag">description:</td>
+  <td>{desc|strip|escape|websub|addbreaks|nonempty}</td>
+</tr>
+</table>
+
+<table cellspacing="0" cellpadding="0">
+{annotate%annotateline}
+</table>
+
+{footer}

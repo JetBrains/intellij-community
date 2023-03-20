@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class GenerationSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
-  public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
+  public Configurable createSettingsPage(final @NotNull CodeStyleSettings settings, final @NotNull CodeStyleSettings originalSettings) {
     return new CodeStyleGenerationConfigurable(settings);
   }
 

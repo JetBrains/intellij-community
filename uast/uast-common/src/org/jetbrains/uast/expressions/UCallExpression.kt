@@ -4,6 +4,7 @@ package org.jetbrains.uast
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -21,6 +22,7 @@ interface UCallExpression : UExpression, UResolvable {
   /**
    * Returns the called method name, or null if the call is not a method call.
    * This property should return the actual resolved function name.
+   * The method may be slow, see [isMethodNameOneOf] for more optimized name checking.
    */
   val methodName: String?
 
@@ -110,6 +112,19 @@ interface UCallExpression : UExpression, UResolvable {
    * [UExpressionList] (with [UExpressionList.kind] = [UastSpecialExpressionKind.VARARGS])
    */
   fun getArgumentForParameter(i: Int): UExpression?
+
+  /**
+   * Tries to perform optimized name checking for cases when [methodName] requires reference resolution.
+   *
+   * May perform some heavy resolution inside for some languages (e.g., for Kotlin).
+   *
+   * @see methodName
+   */
+  @ApiStatus.Experimental
+  fun isMethodNameOneOf(names: Collection<String>): Boolean {
+    return names.contains(methodName ?: return false)
+  }
+
 }
 
 @Deprecated("useless since IDEA 2019.2, because getArgumentForParameter moved to UCallExpression", ReplaceWith("UCallExpression"))

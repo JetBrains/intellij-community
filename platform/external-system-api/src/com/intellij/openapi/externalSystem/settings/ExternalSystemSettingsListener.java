@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -26,18 +11,16 @@ import java.util.Set;
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
  * 
- * @author Denis Zhdanov
  * @param <S>  target project setting type
  */
 public interface ExternalSystemSettingsListener<S extends ExternalProjectSettings> {
-
   /**
-   * This method is present here only because IJ platform doesn't has corresponding messaging set up for 'project rename' event.
+   * This method is present here only because IJ platform doesn't have corresponding messaging set up for 'project rename' event.
    *
    * @param oldName  old project name
    * @param newName  new project name
    */
-  void onProjectRenamed(@NotNull String oldName, @NotNull String newName);
+  default void onProjectRenamed(@NotNull String oldName, @NotNull String newName) { }
 
   /**
    * Happens after loading of project settings
@@ -45,11 +28,12 @@ public interface ExternalSystemSettingsListener<S extends ExternalProjectSetting
    * @see AbstractExternalSystemSettings#loadState
    * @see com.intellij.openapi.components.PersistentStateComponent#loadState
    */
-  default void onProjectsLoaded(@NotNull Collection<S> settings) {}
+  default void onProjectsLoaded(@NotNull Collection<S> settings) { }
 
-  void onProjectsLinked(@NotNull Collection<S> settings);
+  default void onProjectsLinked(@NotNull Collection<S> settings) { }
 
-  void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths);
+  default void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+  }
 
   /**
    * External system settings changes might affect project structure, e.g. switching from one external system version to another
@@ -64,10 +48,10 @@ public interface ExternalSystemSettingsListener<S extends ExternalProjectSetting
    * {@link #onBulkChangeEnd()} is expected to be called at the 'finally' section which starts just after the call to
    * current method.
    */
-  void onBulkChangeStart();
+  default void onBulkChangeStart() { }
 
   /**
    * @see #onBulkChangeStart()
    */
-  void onBulkChangeEnd();
+  default void onBulkChangeEnd() { }
 }

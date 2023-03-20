@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -8,9 +8,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
 import org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix
@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.typeUtil.isNothing
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
 
@@ -64,7 +66,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
     }
 
     private class AddArrowIntention : SpecifyExplicitLambdaSignatureIntention() {
-        override fun allowCaretInsideElement(element: PsiElement) = true
+        override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean = false
     }
 
     private class RemoveBracesFix : LocalQuickFix {
@@ -88,7 +90,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val lambda = descriptor.psiElement as? KtLambdaExpression ?: return
             val body = lambda.functionLiteral.bodyExpression ?: return
-            val replaced = lambda.replaced(KtPsiFactory(lambda).createExpressionByPattern("run { $0 }", body.allChildren))
+            val replaced = lambda.replaced(KtPsiFactory(project).createExpressionByPattern("run { $0 }", body.allChildren))
             replaced.setTypeIfNeed()
         }
     }

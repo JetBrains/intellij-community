@@ -4,9 +4,6 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 
-/**
- * @author lex
- */
 public class BlockStatementEvaluator implements Evaluator {
   protected Evaluator[] myStatements;
 

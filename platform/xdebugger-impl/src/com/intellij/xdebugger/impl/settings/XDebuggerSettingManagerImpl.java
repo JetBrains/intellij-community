@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -18,7 +18,6 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 @State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)

@@ -19,11 +19,6 @@ public final class UnknownSourceRootType extends JpsElementTypeBase<UnknownSourc
     return myUnknownTypeId;
   }
 
-  @Override
-  public boolean isForTests() {
-    return false;
-  }
-
   @NotNull
   @Override
   public UnknownSourceRootTypeProperties<?> createDefaultProperties() {

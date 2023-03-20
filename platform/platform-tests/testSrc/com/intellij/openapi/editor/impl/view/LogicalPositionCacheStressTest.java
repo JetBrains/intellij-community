@@ -76,11 +76,11 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     int textLength = random.nextInt(10);
     StringBuilder b = new StringBuilder();
     for (int i = 0; i < textLength; i++) {
-      switch (random.nextInt(5)) {
-        case 0: b.append('\t'); break;
-        case 1: b.append('\n'); break;
-        default: b.append(' ');
-      }
+      b.append(switch (random.nextInt(5)) {
+        case 0 -> '\t';
+        case 1 -> '\n';
+        default -> ' ';
+      });
     }
     return b;
   }

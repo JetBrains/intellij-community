@@ -31,6 +31,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   boolean processQueue() {
     boolean processed = myMap.processQueue();
     while(true) {
+      //noinspection unchecked
       ValueReference<K,V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       RefHashMap.Key<K> weakKey = ref.getKey();

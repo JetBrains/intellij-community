@@ -62,6 +62,12 @@ final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   }
 
   @Override
+  public int getOrDefault(@NotNull K key, int defaultValue) {
+    MyReference<K> ref = new MyReference<>(key, null);
+    return myMap.getOrDefault(ref, defaultValue);
+  }
+
+  @Override
   public int put(@NotNull K key, int value) {
     processQueue();
     MyReference<K> ref = new MyReference<>(key, myQueue);

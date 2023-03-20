@@ -1,61 +1,85 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiReferenceList.Role
+import com.intellij.psi.PsiReferenceList.Role.*
+import com.intellij.psi.util.parentOfType
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 
-sealed class AddToReferenceListFix(classToAdd: PsiClass,
-                                     referenceList: GrReferenceList) :
-  LocalQuickFixAndIntentionActionOnPsiElement(referenceList) {
-  protected val className = classToAdd.name
+sealed class AddToReferenceListFix(private val role: Role, private val addedName: String, private val hostClassName : String) : LocalQuickFix {
 
-  private val classToAddPointer = SmartPointerManager.createPointer(classToAdd)
+  override fun getName(): String = GroovyBundle.message("intention.name.add.to.clause", addedName, role.getRepresentation(), hostClassName)
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, referenceList: PsiElement, endElement: PsiElement) {
-    if (referenceList !is GrReferenceList) return
-    val classToAdd = classToAddPointer.element ?: return
-    val referencesRepresentation = if (referenceList.keyword == null || referenceList.referenceElementsGroovy.isEmpty()) {
-      val keyword = when (referenceList.role) {
-        PsiReferenceList.Role.EXTENDS_LIST -> "extends"
-        PsiReferenceList.Role.IMPLEMENTS_LIST -> "implements"
-        PsiReferenceList.Role.PERMITS_LIST -> "permits"
-        else -> error("Unsupported")
-      }
-      keyword + " " + classToAdd.name
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val (dependentClass, listToInsert) = generateNewList(descriptor) ?: return
+    appendReferenceList(dependentClass, listToInsert)
+  }
+
+  private fun generateNewList(descriptor: ProblemDescriptor) : Pair<PsiClass, GrReferenceList>? {
+    val element = descriptor.psiElement?.asSafely<GrCodeReferenceElement>() ?: return null
+    val referencedClass = element.parentOfType<PsiClass>() ?: return null
+    val dependentClass = element.resolve()?.asSafely<PsiClass>() ?: return null
+    val targetReferenceList = getReplacedList(dependentClass)
+    val referencesRepresentation = if (targetReferenceList == null || targetReferenceList.referenceElements.isEmpty()) {
+      role.getRepresentation() + " " + referencedClass.qualifiedName
     }
     else {
-      referenceList.text + ", " + classToAdd.name
+      targetReferenceList.text + ", " + referencedClass.qualifiedName
     }
-    val factory = GroovyPsiElementFactory.getInstance(classToAdd.project)
+    val factory = GroovyPsiElementFactory.getInstance(referencedClass.project)
     val typeDefinition = factory.createTypeDefinition("class __Dummy $referencesRepresentation {}")
-    val newElement = when (referenceList.role) {
-      PsiReferenceList.Role.EXTENDS_LIST -> typeDefinition.extendsClause!!
-      PsiReferenceList.Role.IMPLEMENTS_LIST -> typeDefinition.implementsClause!!
-      PsiReferenceList.Role.PERMITS_LIST -> typeDefinition.permitsClause!!
-      else -> error("Unsupported")
+    return dependentClass to (getReplacedList(typeDefinition).asSafely<GrReferenceList>() ?: return null)
+  }
+
+  private fun getReplacedList(dependentClass: PsiClass) = when (role) {
+    EXTENDS_LIST -> dependentClass.extendsList
+    IMPLEMENTS_LIST -> dependentClass.implementsList
+    PERMITS_LIST -> dependentClass.permitsList
+    else -> error("Unexpected")
+  }
+
+  private fun appendReferenceList(dependentClass : PsiClass, listToInsert: GrReferenceList) {
+    val listToReplace = getReplacedList(dependentClass)
+    if (listToReplace == null) {
+      dependentClass.addAfter(listToInsert, dependentClass.nameIdentifier)
     }
-    referenceList.replace(newElement)
+    else {
+      listToReplace.replace(listToInsert)
+    }
+  }
+
+  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+    val (dependentClass, newList) = generateNewList(previewDescriptor) ?: return IntentionPreviewInfo.EMPTY
+    val copy = dependentClass.copy() as PsiClass
+    appendReferenceList(copy, newList)
+    return IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, dependentClass.text, copy.text)
   }
 
   override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.add.class.to.clause")
 }
 
-class AddToPermitsList(classToAdd: PsiClass, permitsList: GrPermitsClause) : AddToReferenceListFix(classToAdd, permitsList) {
-  override fun getText(): String = GroovyBundle.message("intention.name.add.to.permits.clause", className)
+private fun Role.getRepresentation(): String {
+  return when (this) {
+    EXTENDS_LIST -> "extends"
+    IMPLEMENTS_LIST -> "implements"
+    PERMITS_LIST -> "permits"
+    else -> error("Unexpected")
+  }
+
 }
 
-class AddToExtendsList(classToAdd: PsiClass, permitsList: GrExtendsClause) : AddToReferenceListFix(classToAdd, permitsList) {
-  override fun getText(): String = GroovyBundle.message("intention.name.add.to.extends.clause", className)
-}
+class AddToPermitsList(addedName: String, hostClassName: String) : AddToReferenceListFix(PERMITS_LIST, addedName, hostClassName)
 
-class AddToImplementsList(classToAdd: PsiClass, permitsList: GrImplementsClause) : AddToReferenceListFix(classToAdd, permitsList) {
-  override fun getText(): String = GroovyBundle.message("intention.name.add.to.implements.clause", className)
-}
+class AddToExtendsList(addedName: String, hostClassName: String) : AddToReferenceListFix(EXTENDS_LIST, addedName, hostClassName)
+
+class AddToImplementsList(addedName: String, hostClassName: String) : AddToReferenceListFix(IMPLEMENTS_LIST, addedName, hostClassName)

@@ -27,9 +27,6 @@ import javax.swing.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author vnikolaenko
- */
 public final class RegExpCompletionContributor extends CompletionContributor {
   private static final Icon emptyIcon = EmptyIcon.create(PlatformIcons.PROPERTY_ICON);
 

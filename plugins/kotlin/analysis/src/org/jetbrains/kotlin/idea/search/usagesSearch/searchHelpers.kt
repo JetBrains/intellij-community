@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.LightClassUtil.PropertyAccessorsPsiMethods
@@ -16,13 +15,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
+import org.jetbrains.kotlin.resolve.DataClassResolver
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
-import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 fun PsiNamedElement.getAccessorNames(readable: Boolean = true, writable: Boolean = true): List<String> {
@@ -66,7 +62,7 @@ fun KtParameter.dataClassComponentFunction(): FunctionDescriptor? {
 
     val constructor = paramDescriptor?.containingDeclaration as? ConstructorDescriptor ?: return null
     val index = constructor.valueParameters.indexOf(paramDescriptor)
-    val correspondingComponentName = DataClassDescriptorResolver.createComponentName(index + 1)
+    val correspondingComponentName = DataClassResolver.createComponentName(index + 1)
 
     val dataClass = constructor.containingDeclaration as? ClassDescriptor ?: return null
     dataClass.unsubstitutedMemberScope.getContributedFunctions(correspondingComponentName, NoLookupLocation.FROM_IDE)
@@ -77,18 +73,6 @@ fun KtParameter.dataClassComponentFunction(): FunctionDescriptor? {
 fun KtParameter.isDataClassProperty(): Boolean {
     if (!hasValOrVar()) return false
     return this.containingClassOrObject?.hasModifier(KtTokens.DATA_KEYWORD) ?: false
-}
-
-fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> {
-    val ktCallableDeclaration =
-        target.safeAs<KtCallableDeclaration>()?.takeIf { it.hasModifier(KtTokens.OVERRIDE_KEYWORD) } ?: return emptyList()
-    val callableDescriptor = ktCallableDeclaration.resolveToDescriptorIfAny() as? CallableDescriptor
-    val descriptorsToHighlight = if (callableDescriptor is ParameterDescriptor)
-        listOf(callableDescriptor)
-    else
-        callableDescriptor?.findOriginalTopMostOverriddenDescriptors() ?: emptyList()
-
-    return descriptorsToHighlight.mapNotNull { it.source.getPsi() }.filter { it != target }
 }
 
 val KtDeclaration.descriptor: DeclarationDescriptor?

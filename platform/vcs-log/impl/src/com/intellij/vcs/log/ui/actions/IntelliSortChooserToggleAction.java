@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,8 +51,9 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
 
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-    e.getPresentation().setVisible(BekUtil.isBekEnabled());
-    e.getPresentation().setEnabled(BekUtil.isBekEnabled() && logUI != null);
+    Presentation presentation = e.getPresentation();
+    presentation.setVisible(BekUtil.isBekEnabled());
+    presentation.setEnabled(BekUtil.isBekEnabled() && logUI != null);
 
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       String description;
@@ -76,13 +65,16 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
         String localizedDescription = GraphSortPresentationUtil.getLocalizedDescription(PermanentGraph.SortType.Normal);
         description = VcsLogBundle.message("vcs.log.action.turn.intellisort.off", StringUtil.toLowerCase(localizedDescription));
       }
-      e.getPresentation().setDescription(description);
-      e.getPresentation().setText(description);
+      presentation.setDescription(description);
     }
     else {
-      e.getPresentation().setText(VcsLogBundle.message("vcs.log.action.intellisort.text"));
       //noinspection DialogTitleCapitalization
-      e.getPresentation().setDescription(VcsLogBundle.message("vcs.log.action.intellisort.description"));
+      presentation.setDescription(VcsLogBundle.message("vcs.log.action.intellisort.description"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.security;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
 
@@ -43,11 +46,10 @@ public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("consider.static.final.fields.constant.option"),
-                                          this, "considerStaticFinalConstant");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("considerStaticFinalConstant", InspectionGadgetsBundle.message("consider.static.final.fields.constant.option")));
   }
 
   @Override

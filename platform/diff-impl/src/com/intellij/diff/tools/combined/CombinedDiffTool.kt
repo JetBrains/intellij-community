@@ -2,23 +2,28 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.FrameDiffTool
-import com.intellij.diff.FrameDiffTool.DiffViewer
+import com.intellij.diff.DiffTool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.diff.DiffBundle
 
-internal class CombinedSideBySideDiffTool : FrameDiffTool {
-  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = request is CombinedDiffRequest
+interface CombinedDiffTool : DiffTool
 
-  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = CombinedDiffViewer(context, false)
+/**
+ * This tool intended only for persistence purpose.
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
+ */
+internal class CombinedSideBySideDiffTool : CombinedDiffTool {
+  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
 
   override fun getName(): String = DiffBundle.message("combined.side.by.side.viewer")
 }
 
-internal class CombinedUnifiedDiffTool : FrameDiffTool {
-  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = request is CombinedDiffRequest
-
-  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = CombinedDiffViewer(context, true)
+/**
+ * This tool intended only for persistence purpose.
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
+ */
+internal class CombinedUnifiedDiffTool : CombinedDiffTool {
+  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
 
   override fun getName(): String = DiffBundle.message("combined.unified.viewer")
 }

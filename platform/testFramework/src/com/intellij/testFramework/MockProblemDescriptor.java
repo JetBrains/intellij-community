@@ -9,18 +9,15 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class MockProblemDescriptor extends ProblemDescriptorImpl {
-  public MockProblemDescriptor(@NotNull final PsiElement psiElement,
-                               final String descriptionTemplate,
+  public MockProblemDescriptor(@NotNull PsiElement psiElement,
+                               String descriptionTemplate,
                                @NotNull ProblemHighlightType highlightType,
-                               final LocalQuickFix... fixes) {
+                               @NotNull LocalQuickFix @NotNull ... fixes) {
     super(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, true);
   }
 
   @Override
-  protected void assertPhysical(final @NotNull PsiElement startElement) {
+  protected void assertPhysical(@NotNull PsiElement startElement) {
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -20,7 +20,7 @@ internal inline fun <T> List<T>.mutate(mutate: MutableList<T>.() -> Unit): List<
     return mutableList
 }
 
-fun String.asGetterName() =
+fun String.asGetterName(): String? =
     takeIf { JvmAbi.isGetterName(it) }
         ?.removePrefix("get")
         ?.takeIf {
@@ -29,16 +29,15 @@ fun String.asGetterName() =
         }?.decapitalizeAsciiOnly()
         ?.escaped()
 
-fun String.asSetterName() =
+fun String.asSetterName(): String? =
     takeIf { JvmAbi.isSetterName(it) }
         ?.removePrefix("set")
         ?.takeIf { it.isNotEmpty() && it.first().isUpperCase() }
         ?.decapitalizeAsciiOnly()
         ?.escaped()
 
-fun String.isPossiblyGetterOrSetterName() =
+fun String.canBeGetterOrSetterName(): Boolean =
     asGetterName() != null || asSetterName() != null
-
 
 private val KEYWORDS = KtTokens.KEYWORDS.types.map { (it as KtKeywordToken).value }.toSet()
 

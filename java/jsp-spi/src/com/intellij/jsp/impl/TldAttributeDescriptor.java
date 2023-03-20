@@ -25,7 +25,6 @@ public interface TldAttributeDescriptor extends XmlAttributeDescriptor, MethodSi
   /**
    * Indicates that attribute is a fragment
    *
-   * @return
    */
   boolean isIndirectSyntax();
 

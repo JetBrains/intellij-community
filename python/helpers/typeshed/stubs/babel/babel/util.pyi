@@ -4,6 +4,7 @@ from datetime import tzinfo
 from typing import Any
 
 from babel import localtime as localtime
+from pytz import BaseTzInfo
 
 missing: Any
 
@@ -32,8 +33,8 @@ class FixedOffsetTimezone(tzinfo):
     def tzname(self, dt): ...
     def dst(self, dt): ...
 
-UTC: Any
-LOCALTZ: Any
+UTC: BaseTzInfo
+LOCALTZ: BaseTzInfo
 get_localzone = localtime.get_localzone
 STDOFFSET: Any
 DSTOFFSET: Any

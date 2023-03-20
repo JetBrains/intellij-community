@@ -19,7 +19,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +27,6 @@ import java.awt.*;
  * @deprecated please use ComboBox with browse extension, see <a href="https://jetbrains.design/intellij/controls/built_in_button/#browse">UI guidelines</a>
  * for details
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
 @Deprecated
 public class ComboboxWithBrowseButton extends ComponentWithBrowseButton<JComboBox> {
   public ComboboxWithBrowseButton() {

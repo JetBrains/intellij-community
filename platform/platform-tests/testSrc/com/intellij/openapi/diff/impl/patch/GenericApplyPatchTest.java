@@ -179,8 +179,23 @@ public class GenericApplyPatchTest extends TestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
-                                                            "\naaa\n2\n-1\n-2\n-3", Collections.singletonList(patchHunk));
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("""
+                                                                    0
+                                                                    mmm
+                                                                    fjsfsd
+                                                                    qwhduhqwude
+
+                                                                    2
+                                                                    -1
+                                                                    4
+                                                                    9
+                                                                    8
+                                                                    11
+                                                                    aaa
+                                                                    2
+                                                                    -1
+                                                                    -2
+                                                                    -3""", Collections.singletonList(patchHunk));
     Assert.assertTrue(result.isAppliedSomehow);
     Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
@@ -489,8 +504,22 @@ public class GenericApplyPatchTest extends TestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11" +
-                                                                  "\naaa\n2\n-2\n-3", Collections.singletonList(patchHunk));
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("""
+                                                                    0
+                                                                    mmm
+                                                                    fjsfsd
+                                                                    qwhduhqwude
+
+                                                                    2
+                                                                    -1
+                                                                    4
+                                                                    9
+                                                                    8
+                                                                    11
+                                                                    aaa
+                                                                    2
+                                                                    -2
+                                                                    -3""", Collections.singletonList(patchHunk));
     Assert.assertTrue(result.isAppliedSomehow);
     Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n4\n9\n8\n11\naaa\n2\n-1a\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);
@@ -521,8 +550,24 @@ public class GenericApplyPatchTest extends TestCase {
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "11"));
     patchHunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "12"));
 
-    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11" +
-                                                                  "\naaa\n2\n-2\n-3\n-4", Collections.singletonList(patchHunk));
+    AppliedSomehowPatch result = GenericPatchApplier.applySomehow("""
+                                                                    0
+                                                                    mmm
+                                                                    fjsfsd
+                                                                    qwhduhqwude
+
+                                                                    2
+                                                                    -1
+                                                                    -1*
+                                                                    4
+                                                                    9
+                                                                    8
+                                                                    11
+                                                                    aaa
+                                                                    2
+                                                                    -2
+                                                                    -3
+                                                                    -4""", Collections.singletonList(patchHunk));
     Assert.assertTrue(result.isAppliedSomehow);
     Assert.assertEquals(ApplyPatchStatus.SUCCESS, result.status);
     Assert.assertEquals("0\nmmm\nfjsfsd\nqwhduhqwude\n\n2\n-1\n-1*\n4\n9\n8\n11\naaa\n2\n-1a\n-1a*\n-2a\n-3a\n-3b\n-4a\n-4b\n", result.patchedText);

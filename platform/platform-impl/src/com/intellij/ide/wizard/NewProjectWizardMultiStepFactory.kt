@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -12,11 +12,18 @@ import com.intellij.openapi.util.NlsContexts
  *
  * @see NewProjectWizardStep
  */
+@JvmDefaultWithCompatibility
 interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> {
   /**
    * Name of step and label that should be used in multistep switcher.
    */
   val name: @NlsContexts.Label String
+
+  /**
+   * The ordinal the steps are sorted by
+   */
+  val ordinal: Int
+    get() = Int.MAX_VALUE
 
   /**
    * Disabled steps will be excluded from multistep switcher.

@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
-/**
- * @author ilyas
- */
 public class GrMethodNameIndex extends StringStubIndexExtension<GrMethod> {
   public static final StubIndexKey<String, GrMethod> KEY = StubIndexKey.createIndexKey("gr.method.name");
 

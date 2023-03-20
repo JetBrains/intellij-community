@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
@@ -27,7 +27,7 @@ import kotlin.properties.ReadOnlyProperty
 interface ModuleConfiguratorContext {
     val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
 
-    val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
 }
 
 class ModuleBasedConfiguratorContext(
@@ -37,7 +37,7 @@ class ModuleBasedConfiguratorContext(
     override val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
         get() = ModuleBasedConfiguratorSettingReference(configurator, module, this)
 
-    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
         get() = ModuleConfiguratorPropertyReference<T>(configurator, module, this)
 }
 
@@ -48,7 +48,7 @@ class IdBasedConfiguratorContext(
     override val <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.reference: ModuleConfiguratorSettingReference<V, T>
         get() = IdBasedConfiguratorSettingReference(configurator, moduleId, this)
 
-    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyReference<T>
+    override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
         get() = error("Should not be called as IdBasedConfiguratorContext used only for parsing settings")
 }
 
@@ -296,29 +296,31 @@ interface ModuleConfigurator : DisplayableSettingItem, EntitiesOwnerDescriptor {
     ): List<FileTemplate> = emptyList()
 
     companion object {
-        val ALL = buildList<ModuleConfigurator> {
-            +RealNativeTargetConfigurator.configurators
-            +NativeForCurrentSystemTarget
-            +JsBrowserTargetConfigurator
-            +MppLibJsBrowserTargetConfigurator
-            +JsNodeTargetConfigurator
-            +CommonTargetConfigurator
-            +JvmTargetConfigurator
-            +AndroidTargetConfigurator
-            +MppModuleConfigurator
-            +JvmSinglePlatformModuleConfigurator
-            +AndroidSinglePlatformModuleConfigurator
-            +IOSSinglePlatformModuleConfigurator
-            +BrowserJsSinglePlatformModuleConfigurator
-            +NodeJsSinglePlatformModuleConfigurator
+        val ALL by lazy {
+            buildList<ModuleConfigurator> {
+                +RealNativeTargetConfigurator.configurators
+                +NativeForCurrentSystemTarget
+                +JsBrowserTargetConfigurator
+                +MppLibJsBrowserTargetConfigurator
+                +JsNodeTargetConfigurator
+                +WasmTargetConfigurator
+                +CommonTargetConfigurator
+                +JvmTargetConfigurator
+                +AndroidTargetConfigurator
+                +MppModuleConfigurator
+                +JvmSinglePlatformModuleConfigurator
+                +AndroidWithoutComposeSinglePlatformModuleConfigurator
+                +IOSSinglePlatformModuleConfigurator
+                +BrowserJsSinglePlatformModuleConfigurator
+                +NodeJsSinglePlatformModuleConfigurator
+            }.also { configurators ->
+                configurators.groupBy { it.id }
+                    .forEach { (id, configurators) -> assert(configurators.size == 1) { id } }
+            }
         }
 
-        init {
-            ALL.groupBy(ModuleConfigurator::id)
-                .forEach { (id, configurators) -> assert(configurators.size == 1) { id } }
-        }
+        private val BY_ID by lazy { ALL.associateBy(ModuleConfigurator::id) }
 
-        private val BY_ID = ALL.associateBy(ModuleConfigurator::id)
 
         fun getParser(moduleIdentificator: Identificator): Parser<ModuleConfigurator> =
             valueParserM { value, path ->

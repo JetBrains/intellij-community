@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,10 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConstantMathCallInspection extends BaseInspection {
+public class ConstantMathCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NonNls static final Set<String> constantMathCall =
-    new HashSet<>(23);
+  @NonNls static final Set<String> constantMathCall = new HashSet<>(23);
 
   static {
     constantMathCall.add("abs");
@@ -85,7 +85,7 @@ public class ConstantMathCallInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier nameIdentifier =
         (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression reference =
@@ -125,7 +125,7 @@ public class ConstantMathCallInspection extends BaseInspection {
       if (newExpression == null) {
         return;
       }
-      if (PsiType.LONG.equals(type)) {
+      if (PsiTypes.longType().equals(type)) {
         PsiReplacementUtil.replaceExpressionAndShorten(call, newExpression + 'L', new CommentTracker());
       }
       else {
@@ -325,7 +325,7 @@ public class ConstantMathCallInspection extends BaseInspection {
       }
       final PsiExpression argument = arguments[0];
       final Object argumentValue =
-        ConstantExpressionUtil.computeCastTo(argument, PsiType.DOUBLE);
+        ConstantExpressionUtil.computeCastTo(argument, PsiTypes.doubleType());
       if (!(argumentValue instanceof Double)) {
         return;
       }

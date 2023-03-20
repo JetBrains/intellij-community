@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
-abstract class SearchListModel extends AbstractListModel<Object> {
+public abstract class SearchListModel extends AbstractListModel<Object> {
 
   static final Object MORE_ELEMENT = new Object();
 
@@ -38,6 +38,10 @@ abstract class SearchListModel extends AbstractListModel<Object> {
   @Override
   public Object getElementAt(int index) {
     return listElements.get(index).getElement();
+  }
+
+  public @NotNull SearchEverywhereFoundElementInfo getRawFoundElementAt(int index) {
+    return listElements.get(index);
   }
 
   public int getWeightAt(int index) {
@@ -74,6 +78,8 @@ abstract class SearchListModel extends AbstractListModel<Object> {
   public abstract void removeElement(@NotNull Object item, SearchEverywhereContributor<?> contributor);
 
   public abstract void clearMoreItems();
+
+  public void freezeElements() {}
 
   public abstract int getIndexToScroll(int currentIndex, boolean scrollDown);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.replaceUsagesInWholeProject
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
@@ -19,18 +19,16 @@ import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 
 class DeprecatedSymbolUsageInWholeProjectFix(
     element: KtReferenceExpression,
-    replaceWith: ReplaceWith,
+    replaceWith: ReplaceWithData,
     @Nls private val text: String
 ) : DeprecatedSymbolUsageFixBase(element, replaceWith) {
-
     override fun getFamilyName() = KotlinBundle.message("replace.deprecated.symbol.usage.in.whole.project")
-
     override fun getText() = text
-
     override fun startInWriteAction() = false
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
-        super.isAvailable(project, editor, file) && targetPsiElement() != null
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+        return super.isAvailable(project, editor, file) && targetPsiElement() != null
+    }
 
     override fun invoke(replacementStrategy: UsageReplacementStrategy, project: Project, editor: Editor?) {
         val psiElement = targetPsiElement()!!
@@ -71,7 +69,7 @@ class DeprecatedSymbolUsageInWholeProjectFix(
                 referenceExpression,
                 replacement,
                 KotlinBundle.message("replace.usages.of.0.in.whole.project", descriptorName)
-            ).takeIf(DeprecatedSymbolUsageInWholeProjectFix::available)
+            ).takeIf { it.isAvailable }
         }
     }
 }

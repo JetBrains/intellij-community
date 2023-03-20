@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,37 +88,35 @@ public interface PsiClass
   PsiReferenceList getImplementsList();
 
   /**
-   * Returns the list of class types for the classes that this class or interface extends.
+   * Returns the array of class types for the classes that this class or interface extends.
    *
-   * @return the list of extended class types, or an empty list for anonymous classes.
+   * @return the array of extended class types, or an empty list for anonymous classes.
    */
   PsiClassType @NotNull [] getExtendsListTypes();
 
   /**
-   * Returns the list of class types for the interfaces that this class implements.
+   * Returns the array of class types for the interfaces that this class implements.
    *
-   * @return the list of extended class types, or an empty list for anonymous classes,
+   * @return the array of extended class types, or an empty list for anonymous classes,
    * enums and annotation types
    */
   PsiClassType @NotNull [] getImplementsListTypes();
 
   /**
-   * Returns the list of classes that this class or interface permits.
+   * Returns the list of classes that this class or interface explicitly permits.
    *
-   * @return the permits list.
+   * @return the permits list, or null if there's none.
    */
   @Nullable
-  @ApiStatus.Experimental
   default PsiReferenceList getPermitsList() {
     return null;
   }
 
   /**
-   * Returns the list of class types that this class or interface explicitly permits.
+   * Returns the array of class types that this class or interface explicitly permits.
    *
-   * @return the list of explicitly permitted classes.
+   * @return the array of explicitly permitted classes.
    */
-  @ApiStatus.Experimental
   default PsiClassType @NotNull [] getPermitsListTypes() {
     PsiReferenceList permitsList = getPermitsList();
     if (permitsList != null) {
@@ -138,86 +135,86 @@ public interface PsiClass
   PsiClass getSuperClass();
 
   /**
-   * Returns the list of interfaces implemented by the class, or extended by the interface.
+   * Returns the array of interfaces implemented by the class, or extended by the interface.
    *
-   * @return the list of interfaces.
+   * @return the array of interfaces.
    */
   PsiClass @NotNull [] getInterfaces();
 
   /**
-   * Returns the list of classes and interfaces extended or implemented by the class.
+   * Returns the array of classes and interfaces extended or implemented by the class.
    *
-   * @return the list of classes or interfaces. May return zero elements when jdk is
+   * @return the array of classes or interfaces. May return zero elements when jdk is
    * not configured, so no java.lang.Object is found
    */
   PsiClass @NotNull [] getSupers();
 
   /**
-   * Returns the list of class types for the classes and interfaces extended or
+   * Returns the array of class types for the classes and interfaces extended or
    * implemented by the class.
    *
-   * @return the list of class types for the classes or interfaces.
+   * @return the array of class types for the classes or interfaces.
    * For the class with no explicit extends list, the returned list always contains at least one element for the java.lang.Object type.
    * If psiClass is java.lang.Object, returned list is empty.
    */
   PsiClassType @NotNull [] getSuperTypes();
 
   /**
-   * Returns the list of fields in the class.
+   * Returns the array of fields in the class.
    *
-   * @return the list of fields.
+   * @return the array of fields.
    */
   @Override
   PsiField @NotNull [] getFields();
 
   /**
-   * Returns the list of methods in the class.
+   * Returns the array of methods in the class.
    *
-   * @return the list of methods.
+   * @return the array of methods.
    */
   @Override
   PsiMethod @NotNull [] getMethods();
 
   /**
-   * Returns the list of constructors for the class.
+   * Returns the array of constructors for the class.
    *
-   * @return the list of constructors,
+   * @return the array of constructors,
    */
   PsiMethod @NotNull [] getConstructors();
 
   /**
-   * Returns the list of inner classes for the class.
+   * Returns the array of inner classes for the class.
    *
-   * @return the list of inner classes.
+   * @return the array of inner classes.
    */
   @Override
   PsiClass @NotNull [] getInnerClasses();
 
   /**
-   * Returns the list of class initializers for the class.
+   * Returns the array of class initializers for the class.
    *
-   * @return the list of class initializers.
+   * @return the array of class initializers.
    */
   PsiClassInitializer @NotNull [] getInitializers();
 
   /**
-   * Returns the list of fields in the class and all its superclasses.
+   * Returns the array of fields in the class and all its superclasses.
    *
-   * @return the list of fields.
+   * @return the array of fields.
    */
   PsiField @NotNull [] getAllFields();
 
   /**
-   * Returns the list of methods in the class and all its superclasses.
+   * Returns the array of methods in the class and all its superclasses.
    *
-   * @return the list of methods.
+   * @return the array of methods.
    */
   PsiMethod @NotNull [] getAllMethods();
 
   /**
-   * Returns the list of inner classes for the class and all its superclasses.
+   * Returns the array of inner classes for the class and all its superclasses.
    *
-   * @return the list of inner classes.
+   * @return the array of inner classes.
    */
   PsiClass @NotNull [] getAllInnerClasses();
 
@@ -240,7 +237,7 @@ public interface PsiClass
    * @return the method instance, or null if the method cannot be found.
    */
   @Nullable
-  PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases);
 
   /**
    * Searches the class (and optionally its superclasses) for the methods with the signature
@@ -251,7 +248,7 @@ public interface PsiClass
    * @param checkBases    if true, the method is also searched in the base classes of the class.
    * @return the found methods, or an empty array if no methods are found.
    */
-  PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiMethod patternMethod, boolean checkBases);
 
   @Override
   default JvmMethod @NotNull [] findMethodsByName(@NotNull String methodName) {
@@ -276,7 +273,7 @@ public interface PsiClass
    * @return the found methods and their substitutors, or an empty list if no methods are found.
    */
   @NotNull
-  List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases);
+  List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases);
 
   /**
    * Returns the list of methods in the class and all its superclasses, along with their
@@ -356,7 +353,7 @@ public interface PsiClass
    * @param classToByPass class to bypass the inheritance check for
    * @return true if the class is an inheritor, false otherwise
    */
-  boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass);
+  boolean isInheritorDeep(@NotNull PsiClass baseClass, @Nullable PsiClass classToByPass);
 
   /**
    * For an inner class, returns its containing class.

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
@@ -12,8 +12,9 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptM
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.exists
 
 /**
  * [GradleBuildRoot] is a linked gradle build (don't confuse with gradle project and included build).
@@ -92,12 +93,10 @@ class Imported(
     override val projectRoots: Collection<String>
         get() = data.projectRoots
 
-    val javaHome = data.javaHome?.takeIf { it.isNotBlank() }?.let { File(it) }
+    val javaHome = data.javaHome?.takeIf { it.isNotBlank() }?.let { Path.of(it) }?.takeIf { it.exists() }
 
     fun collectConfigurations(builder: ScriptClassRootsBuilder) {
-        if (javaHome != null) {
-            builder.sdks.addSdk(javaHome.toPath())
-        }
+        javaHome?.let { builder.sdks.addSdk(it) }
 
         val definitions = GradleScriptDefinitionsContributor.getDefinitions(builder.project, pathPrefix, data.gradleHome, data.javaHome)
         if (definitions == null) {
@@ -115,7 +114,7 @@ class Imported(
                 script.file,
                 script.classPath,
                 script.sourcePath,
-                GradleScriptInfo(this, definition, script)
+                GradleScriptInfo(this, definition, script, builder.project)
             )
         }
     }

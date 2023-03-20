@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,9 +21,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
-* @author peter
-*/
 public class SmartCompletionDecorator extends LookupElementDecorator<LookupElement> {
   @NotNull private final Collection<? extends ExpectedTypeInfo> myExpectedTypeInfos;
 
@@ -63,7 +59,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
         for (ExpectedTypeInfo info : myExpectedTypeInfos) {
           final PsiType infoType = info.getType();
           final PsiType originalInfoType = JavaCompletionUtil.originalize(infoType);
-          if (PsiType.VOID.equals(infoType)) {
+          if (PsiTypes.voidType().equals(infoType)) {
             voidTyped.add(info.getTailType());
           } else if (infoType.equals(type) || originalInfoType.equals(type)) {
             sameTyped.add(info.getTailType());
@@ -135,7 +131,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
-    final Set<PsiTypeParameter> set = ContainerUtil.set(typeParameters);
+    final Set<PsiTypeParameter> set = Set.of(typeParameters);
     for (final PsiParameter parameter : method.getParameterList().getParameters()) {
       if (PsiTypesUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
     }

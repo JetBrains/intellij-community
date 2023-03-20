@@ -7,7 +7,6 @@ import org.jdom.Element
 /**
  * Additional Poetry data associated with an SDK.
  *
- * @author vlan
  */
 
 /**

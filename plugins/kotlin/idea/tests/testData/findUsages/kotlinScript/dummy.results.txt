@@ -1,1 +1,1 @@
-Value read 4 val bar = foo
+Value read 5 val bar = foo

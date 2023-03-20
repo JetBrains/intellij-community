@@ -11,10 +11,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-
 public class JavaCommentContextType extends TemplateContextType {
   public JavaCommentContextType() {
-    super("JAVA_COMMENT", JavaPsiBundle.message("context.type.java.comment"), JavaCodeContextType.Generic.class);
+    super(JavaPsiBundle.message("context.type.java.comment"));
   }
 
   @Override

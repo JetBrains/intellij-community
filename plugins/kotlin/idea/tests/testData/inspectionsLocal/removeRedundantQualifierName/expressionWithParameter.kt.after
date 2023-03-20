@@ -9,3 +9,5 @@ fun main() {
     }
     val b = go(::run)
 }
+
+// IGNORE_FIR

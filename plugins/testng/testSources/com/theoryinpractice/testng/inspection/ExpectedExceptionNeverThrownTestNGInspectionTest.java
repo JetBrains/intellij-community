@@ -27,10 +27,11 @@ public class ExpectedExceptionNeverThrownTestNGInspectionTest extends LightJavaC
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package org.testng.annotations;\n" +
-                       "public @interface Test {\n" +
-                       "  Class[] expectedExceptions() default {};\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.testng.annotations;
+                         public @interface Test {
+                           Class[] expectedExceptions() default {};
+                         }""");
     myFixture.enableInspections(new ExpectedExceptionNeverThrownTestNGInspection());
   }
 }

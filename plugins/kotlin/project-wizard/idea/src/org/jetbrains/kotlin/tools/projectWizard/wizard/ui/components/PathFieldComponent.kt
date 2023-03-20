@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.SettingValidator
@@ -17,8 +18,8 @@ import javax.swing.JComponent
 
 class PathFieldComponent(
     context: Context,
-    labelText: String? = null,
-    description: String? = null,
+    labelText: @NlsContexts.Label String? = null,
+    description: @NlsContexts.Label String? = null,
     initialValue: Path? = null,
     validator: SettingValidator<Path>? = null,
     onValueUpdate: (Path, isByUser: Boolean) -> Unit = { _, _ -> }
@@ -45,7 +46,7 @@ class PathFieldComponent(
         })
     }
 
-    override val alignTarget: JComponent? get() = textFieldWithBrowseButton
+    override val alignTarget: JComponent get() = textFieldWithBrowseButton
 
     override val uiComponent = componentWithCommentAtBottom(textFieldWithBrowseButton, description)
 

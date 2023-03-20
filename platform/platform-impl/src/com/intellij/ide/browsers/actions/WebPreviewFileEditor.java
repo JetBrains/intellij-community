@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.CommonBundle;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -42,7 +41,7 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   public WebPreviewFileEditor(@NotNull Project project, @NotNull WebPreviewVirtualFile file) {
     myFile = file.getOriginalFile();
-    myPanel = new JCEFHtmlPanel(file.getPreviewUrl().toExternalForm());
+    myPanel = new JCEFHtmlPanel(false, file.getPreviewUrl().toExternalForm());
     myUrl = file.getPreviewUrl().toExternalForm();
     reloadPage();
     previewsOpened++;
@@ -132,11 +131,6 @@ public class WebPreviewFileEditor extends UserDataHolderBase implements FileEdit
 
   public static boolean isPreviewOpened() {
     return previewsOpened > 0;
-  }
-
-  @Override
-  public @Nullable FileEditorLocation getCurrentLocation() {
-    return null;
   }
 
   @Override

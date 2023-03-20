@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.psi
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
@@ -166,7 +166,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
         """.trimIndent(), myInjectionFixture.injectedElement?.containingFile?.text
         )
 
-        val fragmentEditorFixture = myInjectionFixture.openInFragmentEditor();
+        val fragmentEditorFixture = myInjectionFixture.openInFragmentEditor()
         TestCase.assertEquals(
             "<html>\n" +
                     "    <body>\n" +
@@ -447,7 +447,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
         )
         
         // now user closes the fragment editor
-        quickEditHandler.closeEditorForTest();
+        quickEditHandler.closeEditorForTest()
         PsiDocumentManager.getInstance(project).reparseFiles(listOf(myInjectionFixture.topLevelFile.virtualFile), true)
 
         myInjectionFixture.assertInjectedContent(

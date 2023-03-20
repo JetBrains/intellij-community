@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,26 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SerializableHasSerializationMethodsInspection extends SerializableInspectionBase {
 
   public boolean ignoreClassWithoutFields = false;
+
+  public SerializableHasSerializationMethodsInspection() {
+    superClassString = "java.io.Externalizable,java.awt.Component";
+    parseString(superClassString, superClassList);
+  }
 
   @Override
   @NotNull
@@ -36,23 +42,19 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
     final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
     if (!hasReadObject && !hasWriteObject) {
-      return InspectionGadgetsBundle.message(
-        "serializable.has.serialization.methods.problem.descriptor");
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor");
     }
     else if (hasReadObject) {
-      return InspectionGadgetsBundle.message(
-        "serializable.has.serialization.methods.problem.descriptor1");
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor1");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "serializable.has.serialization.methods.problem.descriptor2");
+      return InspectionGadgetsBundle.message("serializable.has.serialization.methods.problem.descriptor2");
     }
   }
 
   @Override
-  protected JComponent @NotNull [] createAdditionalOptions() {
-    return new JComponent[] {new CheckBox(InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option"),
-                                          this, "ignoreClassWithoutFields")};
+  protected @NotNull OptPane getAdditionalOptions() {
+    return pane(checkbox("ignoreClassWithoutFields", InspectionGadgetsBundle.message("serializable.has.serialization.methods.ignore.option")));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
@@ -244,5 +244,24 @@ public final class CoreFormatterUtil {
     else {
       return getFirstLeaf(((CompositeBlockWrapper)block).getChildren().get(0));
     }
+  }
+
+  /**
+   * @see <a href="https://unicode.org/Public/UNIDATA/EastAsianWidth.txt">https://unicode.org/Public/UNIDATA/EastAsianWidth.txt</a>
+   */
+  private static final Set<Character.UnicodeBlock> FULLWIDTH_BLOCKS =
+    Set.of(Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS,
+           Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A,
+           Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS);
+
+  public static boolean isFullwidthCharacter(int codePoint) {
+    if (!Character.isValidCodePoint(codePoint)) {
+      return false;
+    }
+    Character.UnicodeBlock block = Character.UnicodeBlock.of(codePoint);
+    if (block == null) {
+      return false;
+    }
+    return FULLWIDTH_BLOCKS.contains(block);
   }
 }

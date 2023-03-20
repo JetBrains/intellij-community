@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -32,14 +32,18 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testDoNotImportIgnoredProjects() {
     VirtualFile p1 = createModulePom("project1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
     importProjects(p1, p2);
@@ -51,57 +55,75 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
     configConfirmationForYesAnswer();
 
     VirtualFile p1 = createModulePom("project1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project2</artifactId>
+                                       <version>1</version>
+                                       """);
     importProjects(p1, p2);
     assertModules("project1", "project2");
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
-
+    doReadAndImport();
     assertModules("project2");
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p2.getPath()));
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
-
+    doReadAndImport();
     assertModules("project1");
+
+    setIgnoredFilesPathForNextImport(Collections.emptyList());
+    doReadAndImport();
+    assertModules("project1", "project2");
   }
 
   @Test
   public void testDoNotAskTwiceToRemoveIgnoredModule() {
+    if (!supportsKeepingModulesFromPreviousImport()) return;
+
     AtomicInteger counter = configConfirmationForNoAnswer();
 
     VirtualFile p1 = createModulePom("project1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile p2 = createModulePom("project2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>project2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>project2</artifactId>
+                                       <version>1</version>
+                                       """);
     importProjects(p1, p2);
     assertModules("project1", "project2");
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(p1.getPath()));
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    doReadAndImport();
 
     assertModules("project1", "project2");
     assertEquals(1, counter.get());
 
-    waitForReadingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    doReadAndImport();
 
     assertModules("project1", "project2");
     assertEquals(1, counter.get());
+  }
+
+  private void doReadAndImport() {
+    if (isNewImportingProcess) {
+      doImportProjects(myProjectsManager.getProjectsTree().getExistingManagedFiles(), true);
+    }
+    else {
+      waitForReadingCompletion();
+      myProjectsManager.performScheduledImportInTests();
+    }
   }
 }

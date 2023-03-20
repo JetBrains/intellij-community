@@ -49,7 +49,7 @@ public class CompilerModuleOptionsComponent extends JPanel {
     ExpandableTextField editor = new ExpandableTextField();
     InsertPathAction.addTo(editor, null, false);
     optionsColumn.setCellEditor(new DefaultCellEditor(editor));
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
 
     JPanel table = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()

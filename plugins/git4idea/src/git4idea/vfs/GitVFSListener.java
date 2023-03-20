@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,8 +43,9 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @NotNull
-  public static GitVFSListener createInstance(@NotNull GitVcs vcs) {
+  public static GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull Disposable disposable) {
     GitVFSListener listener = new GitVFSListener(vcs);
+    Disposer.register(disposable, listener);
     listener.installListeners();
     return listener;
   }
@@ -187,10 +191,16 @@ public final class GitVFSListener extends VcsVFSListener {
       selectedToAdd = selectFilePathsToAdd(toAdd);
       selectedToRemove = selectFilePathsToDelete(toRemove);
     }
+    else if (Value.DO_NOTHING_SILENTLY.equals(myRemoveOption.getValue()) &&
+             Value.DO_NOTHING_SILENTLY.equals(myAddOption.getValue())) {
+      selectedToAdd = Collections.emptyList();
+      selectedToRemove = Collections.emptyList();
+    }
     else {
       selectedToAdd = toAdd;
       selectedToRemove = toRemove;
     }
+    if (toAdd.isEmpty() && toRemove.isEmpty() && toForceMove.isEmpty()) return;
 
     LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
     GitVcs.runInBackground(new Task.Backgroundable(myProject, message("progress.title.moving.files")) {
@@ -288,8 +298,13 @@ public final class GitVFSListener extends VcsVFSListener {
     if (isStageEnabled()) {
       return super.selectFilePathsToDelete(deletedFiles);
     }
-    // For git asking about vcs delete does not make much sense. The result is practically identical.
-    return deletedFiles;
+    if (Value.DO_NOTHING_SILENTLY.equals(myRemoveOption.getValue())) {
+      return Collections.emptyList();
+    }
+    else {
+      // For git asking about vcs delete does not make much sense. The result is practically identical. Remove silently.
+      return deletedFiles;
+    }
   }
 
   private void performBackgroundOperation(@NotNull Collection<? extends FilePath> files,

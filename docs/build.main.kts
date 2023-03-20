@@ -58,7 +58,7 @@ println("Generate SVG in: ${System.currentTimeMillis() - start} ms")
 start = System.currentTimeMillis()
 
 val dbFactory: DocumentBuilderFactory = DocumentBuilderFactory.newDefaultInstance()
-val xPathFactory: XPathFactory = XPathFactory.newInstance()
+val xPathFactory: XPathFactory = XPathFactory.newDefaultInstance()
 val textFillXPath: XPathExpression = xPathFactory.newXPath().compile("/svg/g/text")
 val rectFillXPath: XPathExpression = xPathFactory.newXPath().compile("/svg/g/rect")
 val lineStyleXPath: XPathExpression = xPathFactory.newXPath().compile("/svg/g/line")

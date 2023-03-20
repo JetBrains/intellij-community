@@ -1,7 +1,9 @@
 import enum
 from _typeshed import StrOrBytesPath, SupportsWrite
+from collections.abc import Callable
 from socket import AddressFamily, SocketKind
-from typing import Any, Callable, NamedTuple, TypeVar, overload
+from typing import Any, NamedTuple, TypeVar, overload
+from typing_extensions import Literal, TypeAlias
 
 POSIX: bool
 WINDOWS: bool
@@ -14,20 +16,39 @@ NETBSD: bool
 BSD: bool
 SUNOS: bool
 AIX: bool
-STATUS_RUNNING: str
-STATUS_SLEEPING: str
-STATUS_DISK_SLEEP: str
-STATUS_STOPPED: str
-STATUS_TRACING_STOP: str
-STATUS_ZOMBIE: str
-STATUS_DEAD: str
-STATUS_WAKE_KILL: str
-STATUS_WAKING: str
-STATUS_IDLE: str
-STATUS_LOCKED: str
-STATUS_WAITING: str
-STATUS_SUSPENDED: str
-STATUS_PARKED: str
+
+STATUS_RUNNING: Literal["running"]
+STATUS_SLEEPING: Literal["sleeping"]
+STATUS_DISK_SLEEP: Literal["disk-sleep"]
+STATUS_STOPPED: Literal["stopped"]
+STATUS_TRACING_STOP: Literal["tracing-stop"]
+STATUS_ZOMBIE: Literal["zombie"]
+STATUS_DEAD: Literal["dead"]
+STATUS_WAKE_KILL: Literal["wake-kill"]
+STATUS_WAKING: Literal["waking"]
+STATUS_IDLE: Literal["idle"]
+STATUS_LOCKED: Literal["locked"]
+STATUS_WAITING: Literal["waiting"]
+STATUS_SUSPENDED: Literal["suspended"]
+STATUS_PARKED: Literal["parked"]
+
+_Status: TypeAlias = Literal[
+    "running",
+    "sleeping",
+    "disk-sleep",
+    "stopped",
+    "tracing-stop",
+    "zombie",
+    "dead",
+    "wake-kill",
+    "waking",
+    "idle",
+    "locked",
+    "waiting",
+    "suspended",
+    "parked",
+]
+
 CONN_ESTABLISHED: str
 CONN_SYN_SENT: str
 CONN_SYN_RECV: str
@@ -110,8 +131,8 @@ class sconn(NamedTuple):
     fd: int
     family: AddressFamily
     type: SocketKind
-    laddr: str
-    raddr: str
+    laddr: addr | tuple[()]
+    raddr: addr | tuple[()]
     status: str
     pid: int
 

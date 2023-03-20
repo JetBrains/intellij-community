@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -7,7 +7,7 @@ data class ConverterSettings(
         var specifyLocalVariableTypeByDefault: Boolean,
         var specifyFieldTypeByDefault: Boolean,
         var openByDefault: Boolean,
-        var noInternalForMembersOfInternal: Boolean
+        var publicByDefault: Boolean
 ) {
 
     companion object {
@@ -16,7 +16,9 @@ data class ConverterSettings(
                 specifyLocalVariableTypeByDefault = false,
                 specifyFieldTypeByDefault = false,
                 openByDefault = false,
-                noInternalForMembersOfInternal = true
+                publicByDefault = false
         )
+
+        val publicByDefault: ConverterSettings = defaultSettings.copy(publicByDefault = true)
     }
 }

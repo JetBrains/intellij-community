@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiClass
-import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.tree.JKClass
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -15,9 +14,10 @@ sealed class JKClassSymbol : JKSymbol
 class JKUniverseClassSymbol(override val typeFactory: JKTypeFactory) : JKClassSymbol(), JKUniverseSymbol<JKClass> {
     override lateinit var target: JKClass
     override val name: String
-        get() = when {
-            target.classKind == JKClass.ClassKind.COMPANION -> "Companion"
-            else -> target.name.value
+        get() = if (target.classKind == JKClass.ClassKind.COMPANION) {
+            "Companion"
+        } else {
+            target.name.value
         }
 }
 

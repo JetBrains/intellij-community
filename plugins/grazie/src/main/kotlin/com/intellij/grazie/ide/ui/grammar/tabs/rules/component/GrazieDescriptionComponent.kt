@@ -10,6 +10,7 @@ import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.html
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -33,6 +34,7 @@ class GrazieDescriptionComponent {
     isOpaque = true
     border = null
     background = null
+    addHyperlinkListener(BrowserHyperlinkListener())
   }
   private val link = GrazieLinkLabel(msg("grazie.settings.grammar.rule.description")).apply {
     component.isVisible = false

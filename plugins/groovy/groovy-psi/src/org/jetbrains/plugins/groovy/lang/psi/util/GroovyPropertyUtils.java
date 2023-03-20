@@ -36,9 +36,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public final class GroovyPropertyUtils {
   private static final Logger LOG = Logger.getInstance(GroovyPropertyUtils.class);
 
@@ -201,7 +198,7 @@ public final class GroovyPropertyUtils {
     if (method.getName().startsWith(IS_PREFIX) && !booleanReturnType) {
       return false;
     }
-    if (PsiType.VOID.equals(method.getReturnType())) return false;
+    if (PsiTypes.voidType().equals(method.getReturnType())) return false;
     if (propertyName == null) return true;
 
     final String byGetter = getPropertyNameByGetter(method);
@@ -514,7 +511,7 @@ public final class GroovyPropertyUtils {
 
     final PsiClass containingClass = field.getContainingClass();
     try {
-      GrMethod setMethod = factory.createMethod(setName, PsiType.VOID);
+      GrMethod setMethod = factory.createMethod(setName, PsiTypes.voidType());
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       final PsiType type = field instanceof GrField ? ((GrField)field).getDeclaredType() : field.getType();
       GrParameter param = factory.createParameter(parameterName, type);
@@ -566,6 +563,6 @@ public final class GroovyPropertyUtils {
   }
 
   private static boolean isBooleanOrBoxed(PsiType type) {
-    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
+    return PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type));
   }
 }

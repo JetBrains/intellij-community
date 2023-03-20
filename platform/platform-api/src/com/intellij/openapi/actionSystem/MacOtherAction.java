@@ -17,8 +17,6 @@ package com.intellij.openapi.actionSystem;
 
 /**
  * Marker interface for action buttons which should be left-aligned in dialogs
- * 
- * @author pegov
  */
 public interface MacOtherAction {
 }

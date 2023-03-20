@@ -46,7 +46,7 @@ open class RunConfigurationOptions : BaseState(), FragmentedSettings {
   @get:XCollection
   var logFiles by list<LogFileOptions>()
 
-  @com.intellij.configurationStore.Property(description = "Allow parallel run")
+  @com.intellij.configurationStore.Property(description = "Allow multiple instances")
   @get:Transient
   var isAllowRunningInParallel by property(false)
 

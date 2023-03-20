@@ -32,8 +32,6 @@ import java.util.List;
  * Holds registered soft wraps and provides monitoring and management facilities for them.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class SoftWrapsStorage implements Dumpable {
 
@@ -108,7 +106,6 @@ public class SoftWrapsStorage implements Dumpable {
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
    * @param softWrap          soft wrap to store
-   * @return                  previous soft wrap object stored for the same offset if any; {@code null} otherwise
    */
   public void storeOrReplace(SoftWrapImpl softWrap) {
     int i = getSoftWrapIndex(softWrap.getStart());

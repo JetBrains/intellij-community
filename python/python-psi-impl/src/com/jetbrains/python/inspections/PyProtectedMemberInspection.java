@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -31,11 +32,13 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User: ktisha
@@ -146,18 +149,13 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
 
-        final PyClass parentClass = getClassOwner(node);
-        if (parentClass != null) {
-
-          if (parentClass.isSubclass(resolvedClass, myTypeEvalContext))
-            return;
-
-          PyClass outerClass = getClassOwner(parentClass);
-          while (outerClass != null) {
-            if (outerClass.isSubclass(resolvedClass, myTypeEvalContext))
+        if (resolvedClass != null) {
+          PyClass parentClass = getClassOwner(node);
+          while (parentClass != null) {
+            if (parentClass.isSubclass(resolvedClass, myTypeEvalContext)) {
               return;
-
-            outerClass = getClassOwner(outerClass);
+            }
+            parentClass = getClassOwner(parentClass);
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
@@ -235,13 +233,11 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final PythonUiService uiService = PythonUiService.getInstance();
-    final JPanel panel = uiService.createMultipleCheckboxOptionsPanel(this);
-    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.protected.member.ignore.test.functions"), "ignoreTestFunctions");
-    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.protected.member.ignore.annotations"), "ignoreAnnotations");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreTestFunctions", PyPsiBundle.message("INSP.protected.member.ignore.test.functions")),
+      checkbox("ignoreAnnotations", PyPsiBundle.message("INSP.protected.member.ignore.annotations"))
+    );
   }
 }

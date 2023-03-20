@@ -3,7 +3,6 @@
 
 package com.intellij.execution.target
 
-import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetType
@@ -13,23 +12,18 @@ import com.intellij.openapi.util.NlsSafe
 private val Project.defaultTargetName: @NlsSafe String?
   get() = TargetEnvironmentsManager.getInstance(this).defaultTarget?.displayName
 
-fun RunProfile.getEffectiveTargetName(): @NlsSafe String? {
-  if (this !is TargetEnvironmentAwareRunProfile) return null
-
-  return when {
-    defaultTargetName == LocalTargetType.LOCAL_TARGET_NAME -> null
-    defaultTargetName != null -> defaultTargetName
-    else -> (this as? RunConfigurationBase<*>)?.let { project.defaultTargetName }
-  }
-}
+@JvmOverloads
+fun RunProfile.getEffectiveTargetName(project: Project? = null): @NlsSafe String? =
+  (this as? TargetEnvironmentAwareRunProfile)?.getEffectiveTargetName(project)
 
 /**
  * @see TargetEnvironmentsManager.defaultTarget
  */
-fun TargetEnvironmentAwareRunProfile.getEffectiveTargetName(project: Project): @NlsSafe String? {
+@JvmOverloads
+fun TargetEnvironmentAwareRunProfile.getEffectiveTargetName(project: Project? = null): @NlsSafe String? {
   return when (defaultTargetName) {
     LocalTargetType.LOCAL_TARGET_NAME -> null
-    else -> defaultTargetName ?: project.defaultTargetName
+    else -> defaultTargetName ?: project?.defaultTargetName
   }
 }
 

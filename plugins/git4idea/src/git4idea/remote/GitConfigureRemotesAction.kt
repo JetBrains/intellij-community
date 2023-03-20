@@ -15,6 +15,7 @@
  */
 package git4idea.remote
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.GitUtil.getRepositoryManager
@@ -22,6 +23,10 @@ import git4idea.GitUtil.getRepositoryManager
 class GitConfigureRemotesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && !getRepositoryManager(e.project!!).repositories.isEmpty()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {

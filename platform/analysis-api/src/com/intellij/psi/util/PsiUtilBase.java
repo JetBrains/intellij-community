@@ -40,6 +40,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   @Nullable
   public static Language getLanguageInEditor(@NotNull Caret caret, @NotNull final Project project) {
     Editor editor = caret.getEditor();
+    assertEditorAndProjectConsistent(project, editor);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     if (file == null) {
@@ -50,13 +51,13 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
       return file.getLanguage();
     }
 
-    int caretOffset = caret.getOffset();
-    int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
+    @NotNull TextRange selection = caret.getSelectionRange();
+    int mostProbablyCorrectLanguageOffset = selection.getStartOffset();
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
     Language lang = findLanguageFromElement(elt);
 
     if (caret.hasSelection()) {
-      lang = evaluateLanguageInRange(caret.getSelectionStart(), caret.getSelectionEnd(), file);
+      lang = evaluateLanguageInRange(selection, file);
     }
 
     return narrowLanguage(lang, file.getLanguage());
@@ -78,6 +79,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   @Nullable
   public static PsiFile getPsiFileInEditor(@NotNull Caret caret, @NotNull final Project project) {
     Editor editor = caret.getEditor();
+    assertEditorAndProjectConsistent(project, editor);
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
@@ -94,6 +96,16 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     int caretOffset = caret.getOffset();
     int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
     return getPsiFileAtOffset(file, mostProbablyCorrectLanguageOffset);
+  }
+
+  /**
+   * assert that {@code editor} belongs to the {@code project}
+   */
+  public static void assertEditorAndProjectConsistent(@NotNull Project project, @NotNull Editor editor) {
+    Project editorProject = editor.getProject();
+    if (editorProject != null && editorProject != project) {
+      throw new IllegalArgumentException("Inconsistent editor/project combination: the editor belongs to " + editorProject + "; but passed project=" + project);
+    }
   }
 
   public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
@@ -138,10 +150,9 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   @NotNull
-  private static Language evaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
-    PsiElement elt = getElementAtOffset(file, start);
+  private static Language evaluateLanguageInRange(TextRange selectionRange, @NotNull PsiFile file) {
+    PsiElement elt = getElementAtOffset(file, selectionRange.getStartOffset());
 
-    TextRange selectionRange = new TextRange(start, end);
     while (true) {
       if (elt instanceof PsiFile) {
         return elt.getLanguage();
@@ -196,8 +207,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   @Nullable
   public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      PsiFileSystemItem psiFileSystemItem = (PsiFileSystemItem)element;
+    if (element instanceof PsiFileSystemItem psiFileSystemItem) {
       return psiFileSystemItem.isValid() ? psiFileSystemItem.getVirtualFile() : null;
     }
     return null;

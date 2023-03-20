@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -29,7 +30,7 @@ public class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapter {
   public Result preprocessEnter(@NotNull final PsiFile file,
                                 @NotNull final Editor editor,
                                 @NotNull final Ref<Integer> caretOffsetRef,
-                                @NotNull final Ref<Integer> caretAdvance,
+                                final @NotNull Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     CodeDocumentationAwareCommenter commenter = EnterInCommentUtil.getDocumentationAwareCommenter(dataContext);
@@ -56,7 +57,7 @@ public class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapter {
         ((PsiComment)element).getTokenType() != commenter.getBlockCommentTokenType()) {
       return Result.Continue;
     }
-    if (!EnterHandler.isCommentComplete((PsiComment)element, commenter, editor)) {
+    if (!EnterHandler.isCommentComplete((PsiComment)element, commenter, editor) && CodeInsightSettings.getInstance().CLOSE_COMMENT_ON_ENTER) {
       int currentEndOfLine = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
       document.insertString(currentEndOfLine,
                             "\n" +

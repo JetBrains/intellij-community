@@ -49,12 +49,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);
     myArtifactContextProducer = myEmbedder.getComponent(ArtifactContextProducer.class);
 
-    MavenServerUtil.registerShutdownTask(new Runnable() {
-      @Override
-      public void run() {
-        release(MavenServerUtil.getToken());
-      }
-    });
+    MavenServerUtil.registerShutdownTask(() -> release(MavenServerUtil.getToken()));
   }
 
   @Override
@@ -112,8 +107,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public void updateIndex(MavenIndexId mavenIndexId, MavenServerSettings settings,
-                          final MavenServerProgressIndicator indicator, MavenToken token)
+  public void updateIndex(MavenIndexId mavenIndexId, final MavenServerProgressIndicator indicator, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     try {
@@ -132,50 +126,25 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
           }
         }
         else {
-          final Maven3ServerEmbedder embedder = createEmbedder(settings);
+          final Maven3ServerEmbedder embedder = createEmbedder(new MavenServerSettings());
 
-          MavenExecutionRequest r =
-            embedder.createRequest(null, null, null, null);
+          MavenExecutionRequest r = embedder.createRequest(null, null, null, null);
 
           final IndexUpdateRequest request = new IndexUpdateRequest(index);
 
           try {
-            embedder.executeWithMavenSession(r, new Runnable() {
-              @Override
-              public void run() {
-                request.setResourceFetcher(new Maven3ServerIndexFetcher(index.getRepositoryId(),
-                                                                        index.getRepositoryUrl(),
-                                                                        embedder.getComponent(WagonManager.class),
-                                                                        embedder.getComponent(RepositorySystem.class),
-                                                                        new WagonTransferListenerAdapter(indicator) {
-                                                                          @Override
-                                                                          protected void downloadProgress(long downloaded, long total) {
-                                                                            super.downloadProgress(downloaded, total);
-                                                                            try {
-                                                                              myIndicator.setFraction(((double)downloaded) / total);
-                                                                            }
-                                                                            catch (RemoteException e) {
-                                                                              throw new RuntimeRemoteException(e);
-                                                                            }
-                                                                          }
-
-                                                                          @Override
-                                                                          public void transferCompleted(TransferEvent event) {
-                                                                            super.transferCompleted(event);
-                                                                            try {
-                                                                              myIndicator.setText2("Processing indices...");
-                                                                            }
-                                                                            catch (RemoteException e) {
-                                                                              throw new RuntimeRemoteException(e);
-                                                                            }
-                                                                          }
-                                                                        }));
-                try {
-                  myUpdater.fetchAndUpdateIndex(request);
-                }
-                catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
+            embedder.executeWithMavenSession(r, (Runnable)() -> {
+              request.setResourceFetcher(
+                new Maven3ServerIndexFetcher(
+                  index.getRepositoryId(), index.getRepositoryUrl(), embedder.getComponent(WagonManager.class),
+                  embedder.getComponent(RepositorySystem.class), getWagonTransferListenerAdapter(indicator)
+                )
+              );
+              try {
+                myUpdater.fetchAndUpdateIndex(request);
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
               }
             });
           }
@@ -196,8 +165,34 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
     }
   }
 
-  public abstract Maven3ServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException;
+  @NotNull
+  private WagonTransferListenerAdapter getWagonTransferListenerAdapter(MavenServerProgressIndicator indicator) {
+    return new WagonTransferListenerAdapter(indicator) {
+      @Override
+      protected void downloadProgress(long downloaded, long total) {
+        super.downloadProgress(downloaded, total);
+        try {
+          myIndicator.setFraction(((double)downloaded) / total);
+        }
+        catch (RemoteException e) {
+          throw new RuntimeRemoteException(e);
+        }
+      }
 
+      @Override
+      public void transferCompleted(TransferEvent event) {
+        super.transferCompleted(event);
+        try {
+          myIndicator.setText2("Processing indices...");
+        }
+        catch (RemoteException e) {
+          throw new RuntimeRemoteException(e);
+        }
+      }
+    };
+  }
+
+  public abstract Maven3ServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException;
 
   @Override
   public List<IndexedMavenId> processArtifacts(MavenIndexId indexId, int startFrom, MavenToken token)
@@ -236,7 +231,8 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
 
         if (result.isEmpty()) {
           return null;
-        } else {
+        }
+        else {
           return result;
         }
       }
@@ -318,7 +314,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException {
+  public Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     Set<MavenArchetype> result = new HashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
@@ -346,7 +342,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       myEmbedder.release(token);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 

@@ -31,12 +31,11 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!COMPARE_METHOD.test(call)) return;
         checkComparison(call);
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-        if (parent instanceof PsiLocalVariable) {
-          PsiLocalVariable var = (PsiLocalVariable)parent;
+        if (parent instanceof PsiLocalVariable var) {
           PsiCodeBlock block = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
           PsiExpression initializer = var.getInitializer();
           if (block != null && initializer != null) {

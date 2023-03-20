@@ -52,7 +52,7 @@ public class Maven3WorkspaceReader implements MavenWorkspaceReader {
 
   @Override
   public List<String> findVersions(Artifact artifact) {
-    return myWorkspaceReader == null ? Collections.<String>emptyList() : myWorkspaceReader.findVersions(artifact);
+    return myWorkspaceReader == null ? Collections.emptyList() : myWorkspaceReader.findVersions(artifact);
   }
 
   @Override

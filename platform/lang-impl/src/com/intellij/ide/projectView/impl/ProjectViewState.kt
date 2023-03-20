@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewSettings
@@ -22,7 +22,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
 
   var abbreviatePackageNames = ProjectViewSettings.Immutable.DEFAULT.isAbbreviatePackageNames
   var autoscrollFromSource = false
-  var autoscrollToSource = UISettings.instance.state.defaultAutoScrollToSource
+  var autoscrollToSource = UISettings.getInstance().state.defaultAutoScrollToSource
   var compactDirectories = ProjectViewSettings.Immutable.DEFAULT.isCompactDirectories
   var flattenModules = ProjectViewSettings.Immutable.DEFAULT.isFlattenModules
   var flattenPackages = ProjectViewSettings.Immutable.DEFAULT.isFlattenPackages
@@ -33,6 +33,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   var showLibraryContents = ProjectViewSettings.Immutable.DEFAULT.isShowLibraryContents
   var showMembers = ProjectViewSettings.Immutable.DEFAULT.isShowMembers
   var showModules = ProjectViewSettings.Immutable.DEFAULT.isShowModules
+  var showScratchesAndConsoles = ProjectViewSettings.Immutable.DEFAULT.isShowScratchesAndConsoles
   var showURL = ProjectViewSettings.Immutable.DEFAULT.isShowURL
   var showVisibilityIcons = ProjectViewSettings.Immutable.DEFAULT.isShowVisibilityIcons
   var sortByType = false
@@ -55,6 +56,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     showLibraryContents = ProjectViewSharedSettings.instance.showLibraryContents
     showMembers = ProjectViewSharedSettings.instance.showMembers
     showModules = ProjectViewSharedSettings.instance.showModules
+    showScratchesAndConsoles = ProjectViewSharedSettings.instance.showScratchesAndConsoles
     showURL = Registry.`is`("project.tree.structure.show.url")
     showVisibilityIcons = ProjectViewSharedSettings.instance.showVisibilityIcons
     sortByType = ProjectViewSharedSettings.instance.sortByType
@@ -64,7 +66,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     XmlSerializerUtil.copyBean(state, this)
   }
 
-  override fun getState(): ProjectViewState? {
+  override fun getState(): ProjectViewState {
     return this
   }
 }

@@ -80,6 +80,9 @@ public final class MacroManager {
     registerMacro(new SelectionEndLineMacro());
     registerMacro(new SelectionEndColumnMacro());
 
+    registerMacro(new OsNameMacro());
+    registerMacro(new TempDirMacro());
+
     if (File.separatorChar != '/') {
       registerMacro(new FileDirRelativeToProjectRootMacro2());
       registerMacro(new FilePathRelativeToProjectRootMacro2());
@@ -157,7 +160,6 @@ public final class MacroManager {
    * @param defaultExpandValue if macro is expended to null, {@code defaultExpandValue} will be used instead
    * @param onlySilent does not expand macros that may require interaction with user; {@code defaultExpandValue} will be used for such macros
    * @return string with macros expanded or null if some macro is expanded to null and {@code defaultExpandValue} is null
-   * @throws ExecutionCancelledException
    */
   @Nullable
   public String expandMacrosInString(@Nullable String str,

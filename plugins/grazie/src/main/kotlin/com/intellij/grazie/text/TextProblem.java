@@ -5,6 +5,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.StringOperation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,13 +17,24 @@ import java.util.List;
 public abstract class TextProblem {
   private final Rule rule;
   private final TextContent text;
-  private final TextRange highlightRange;
+  private final List<TextRange> highlightRanges;
 
   protected TextProblem(@NotNull Rule rule, @NotNull TextContent text, @NotNull TextRange highlightRange) {
+    this(rule, text, List.of(highlightRange));
+  }
+
+  protected TextProblem(@NotNull Rule rule, @NotNull TextContent text, @NotNull List<TextRange> highlightRanges) {
     this.rule = rule;
     this.text = text;
-    this.highlightRange = highlightRange;
-    assert highlightRange.getStartOffset() >= 0 && highlightRange.getEndOffset() <= text.length();
+    this.highlightRanges = Collections.unmodifiableList(highlightRanges);
+    assert !highlightRanges.isEmpty();
+    for (int i = 0; i < highlightRanges.size(); i++) {
+      TextRange range = highlightRanges.get(i);
+      assert range.getStartOffset() >= 0 && range.getEndOffset() <= text.length();
+      if (i > 0) {
+        assert range.getStartOffset() > highlightRanges.get(i - 1).getEndOffset();
+      }
+    }
   }
 
   /** @return the rule that triggered this problem */
@@ -49,13 +62,29 @@ public abstract class TextProblem {
     return text;
   }
 
-  /** @return the range in {@link #getText()} to be highlighted */
+  /**
+   * @return the range in {@link #getText()} to be highlighted
+   * @deprecated use {@link #getHighlightRanges()}
+   */
+  @Deprecated(forRemoval = true)
   public final @NotNull TextRange getHighlightRange() {
-    return highlightRange;
+    return new TextRange(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset());
   }
 
-  /** @return the range in {@link #getText()} to be replaced with {@link #getCorrections()} */
-  public abstract @NotNull TextRange getReplacementRange();
+  /** @return the ranges in {@link #getText()} to be highlighted, non-intersecting, sorted by the start offset ascending */
+  public final @NotNull List<TextRange> getHighlightRanges() {
+    return highlightRanges;
+  }
+
+  /**
+   * @return the range in {@link #getText()} to be replaced with {@link #getCorrections()}
+   * @deprecated use {@link #getSuggestions()} instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  public @NotNull TextRange getReplacementRange() {
+    return getHighlightRanges().get(0);
+  }
 
   /**
    * @return the range in {@link #getText()} used by the rule to perform the check.
@@ -67,10 +96,31 @@ public abstract class TextProblem {
   }
 
   /**
-   * @return a list of suggested corrections for this problem.
-   * @see #getReplacementRange()
+   * @return a list of suggested corrections for this problem, all applied to {@link #getReplacementRange()}.
+   * @deprecated use {@link #getSuggestions()} instead
    */
-  public abstract @NotNull List<String> getCorrections();
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  public @NotNull List<String> getCorrections() {
+    return List.of();
+  }
+
+  /**
+   * Whether this problem should be suppressed when the surrounding text looks like code.
+   * Inline code tends to produce irrelevant grammar warnings, so this method returns true by default.
+   */
+  public boolean shouldSuppressInCodeLikeFragments() {
+    return true;
+  }
+
+  /** @return a list of correction suggestions for this problem */
+  public @NotNull List<Suggestion> getSuggestions() {
+    List<String> corrections = getCorrections();
+    if (corrections.isEmpty()) return List.of();
+
+    TextRange range = getReplacementRange();
+    return ContainerUtil.map(corrections, replacement -> Suggestion.replace(range, replacement));
+  }
 
   /** Return a list of quick fixes to display under {@link #getCorrections} suggestions */
   public @NotNull List<LocalQuickFix> getCustomFixes() {
@@ -92,6 +142,34 @@ public abstract class TextProblem {
 
   @Override
   public String toString() {
-    return highlightRange.subSequence(text) + " (" + getShortMessage() + ")";
+    return getHighlightRange().subSequence(text) + " (" + getShortMessage() + ")";
+  }
+
+  public interface Suggestion {
+    /** The list of non-intersecting changes to be performed, with the ranges and texts referring to {@link TextContent} text */
+    List<StringOperation> getChanges();
+
+    /** The text to show in the context action popup */
+    String getPresentableText();
+
+    /** If non-null, there's a UI option to invoke all fixes in the file with the same batch id */
+    default @Nullable String getBatchId() {
+      return null;
+    }
+
+    /** Create a suggestion for a single replacement operation in the given range */
+    static Suggestion replace(TextRange range, CharSequence replacement) {
+      return new Suggestion() {
+        @Override
+        public List<StringOperation> getChanges() {
+          return List.of(StringOperation.replace(range, replacement));
+        }
+
+        @Override
+        public String getPresentableText() {
+          return replacement.toString();
+        }
+      };
+    }
   }
 }

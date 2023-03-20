@@ -3,12 +3,11 @@ package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -46,10 +45,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class FormEditingUtil {
   private FormEditingUtil() {
   }
@@ -141,8 +136,7 @@ public final class FormEditingUtil {
       public boolean visit(final IComponent component) {
         RadComponent rc = (RadComponent)component;
         for (IProperty p : component.getModifiedProperties()) {
-          if (p instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty)p;
+          if (p instanceof IntroComponentProperty icp) {
             final String value = icp.getValue(rc);
             if (deletedComponentIds.contains(value)) {
               try {
@@ -470,11 +464,9 @@ public final class FormEditingUtil {
       return false;
     }
 
-    if (!(component instanceof IContainer)) {
+    if (!(component instanceof IContainer container)) {
       return true;
     }
-
-    final IContainer container = (IContainer)component;
 
     for (int i = 0; i < container.getComponentCount(); i++) {
       final IComponent c = container.getComponent(i);
@@ -560,7 +552,6 @@ public final class FormEditingUtil {
   }
 
   /**
-   * @param rootContainer
    * @return id
    */
   public static String generateId(final RadRootContainer rootContainer) {
@@ -586,23 +577,12 @@ public final class FormEditingUtil {
     }
   }
 
-  @Nullable
-  public static GuiEditor getActiveEditor(@NotNull DataContext context) {
-    Project project = CommonDataKeys.PROJECT.getData(context);
-    if (project == null || project.isDisposed()) {
-      return null;
-    }
-    for (FileEditor editor : FileEditorManager.getInstance(project).getSelectedEditors()) {
-      if (editor instanceof UIFormEditor) {
-        return ((UIFormEditor)editor).getEditor();
-      }
-    }
-    return null;
+  public static @Nullable GuiEditor getActiveEditor(@NotNull DataContext context) {
+    FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(context);
+    return fileEditor instanceof UIFormEditor ? ((UIFormEditor)fileEditor).getEditor() : null;
   }
 
   /**
-   * @param componentToAssignBinding
-   * @param binding
    * @param component                topmost container where to find duplicate binding. In most cases
    *                                 it should be {@link GuiEditor#getRootContainer()}
    */
@@ -672,7 +652,6 @@ public final class FormEditingUtil {
    * Selects the component and ensures that the tabbed panes containing the component are
    * switched to the correct tab.
    *
-   * @param editor
    * @param component the component to select. @return true if the component is enclosed in at least one tabbed pane, false otherwise.
    */
   public static boolean selectComponent(final GuiEditor editor, @NotNull final RadComponent component) {
@@ -801,10 +780,8 @@ public final class FormEditingUtil {
   @Nullable
   public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
     for (IButtonGroup group : radRootContainer.getButtonGroups()) {
-      for (String id : group.getComponentIds()) {
-        if (component.getId().equals(id)) {
+      if (ArrayUtil.contains(component.getId(), group.getComponentIds())) {
           return group;
-        }
       }
     }
     return null;
@@ -897,11 +874,10 @@ public final class FormEditingUtil {
     if (id.equals(component.getId())) {
       return component;
     }
-    if (!(component instanceof IContainer)) {
+    if (!(component instanceof IContainer uiContainer)) {
       return null;
     }
 
-    final IContainer uiContainer = (IContainer)component;
     for (int i = 0; i < uiContainer.getComponentCount(); i++) {
       final IComponent found = findComponent(uiContainer.getComponent(i), id);
       if (found != null) {

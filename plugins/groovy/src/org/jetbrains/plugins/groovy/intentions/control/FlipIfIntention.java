@@ -38,8 +38,7 @@ public class FlipIfIntention extends Intention {
         if (!element.getNode().getElementType().equals(GroovyTokenTypes.kIF)) return false;
 
         final PsiElement parent = element.getParent();
-        if (!(parent instanceof GrIfStatement)) return false;
-        final GrIfStatement ifStatement = (GrIfStatement)parent;
+        if (!(parent instanceof GrIfStatement ifStatement)) return false;
 
         final GrIfStatement elseIf = getElseIf(ifStatement);
         return elseIf != null && checkIf(ifStatement) && checkIf(elseIf);

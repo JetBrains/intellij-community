@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.ide
 
@@ -7,7 +6,6 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -66,7 +64,7 @@ internal class AboutHttpService : RestService() {
     val origin = origin ?: return false
     @Suppress("SpellCheckingInspection")
     val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill.org$")
-    val academyJetbrainsRegex = Regex("https://([a-z0-9-]+)*.jetbrains.com$")
+    val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains.com$")
     return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
   }
 
@@ -98,20 +96,6 @@ fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?,
             }
           }
         }
-      }
-
-      if (urlDecoder != null && getBooleanParameter("more", urlDecoder)) {
-        val appInfo = ApplicationInfoEx.getInstanceEx()
-        writer.writeStringField("vendor", appInfo.companyName)
-        writer.writeBooleanField("isEAP", appInfo.isEAP)
-        writer.writeStringField("productCode", appInfo.build.productCode)
-        writer.writeNumberField("buildDate", appInfo.buildDate.time.time)
-        writer.writeBooleanField("isSnapshot", appInfo.build.isSnapshot)
-        writer.writeStringField("configPath", PathManager.getConfigPath())
-        writer.writeStringField("systemPath", PathManager.getSystemPath())
-        writer.writeStringField("binPath", PathManager.getBinPath())
-        writer.writeStringField("logPath", PathManager.getLogPath())
-        writer.writeStringField("homePath", PathManager.getHomePath())
       }
     }
   }

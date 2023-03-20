@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 /**
  * Arguments provider to be registered as
  * <pre><code>
- *   @ArgumentsSource(FileBasedArgumentProvider.class)
- *   @ParameterizedTest(name = ParameterizedTest.ARGUMENTS_WITH_NAMES_PLACEHOLDER)
+ *   &#064;ArgumentsSource(FileBasedArgumentProvider.class)
+ *   &#064;ParameterizedTest(name = ParameterizedTest.ARGUMENTS_WITH_NAMES_PLACEHOLDER)
  *   public void parameterized(String fileName) {}
  * </code></pre>
  * 

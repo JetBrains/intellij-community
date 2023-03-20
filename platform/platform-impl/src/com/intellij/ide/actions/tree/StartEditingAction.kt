@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.tree
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -22,6 +23,7 @@ internal class StartEditingAction : DumbAwareAction() {
                                              ?: tree.getClientProperty(EditableTree.KEY) as? EditableTree
 
   override fun update(event: AnActionEvent) {
+    event.presentation.isEnabledAndVisible = false
     val tree = event.contextTree ?: return
     event.presentation.isVisible = true
     // enable editing if the selected path is editable
@@ -32,6 +34,10 @@ internal class StartEditingAction : DumbAwareAction() {
     ?: getEditableTree(tree)?.updateAction(event.presentation, path)
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     // javax.swing.plaf.basic.BasicTreeUI.Actions.START_EDITING
     SwingActionDelegate.performAction("startEditing", event.contextTree)
@@ -39,6 +45,5 @@ internal class StartEditingAction : DumbAwareAction() {
 
   init {
     isEnabledInModalContext = true
-    templatePresentation.isEnabledAndVisible = false
   }
 }

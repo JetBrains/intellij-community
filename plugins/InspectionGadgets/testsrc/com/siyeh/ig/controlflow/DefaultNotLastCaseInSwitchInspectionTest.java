@@ -2,7 +2,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultNotLastCaseInSwitchInspectionTest extends LightJavaInspectionTestCase {
@@ -14,5 +16,10 @@ public class DefaultNotLastCaseInSwitchInspectionTest extends LightJavaInspectio
   @Override
   protected InspectionProfileEntry getInspection() {
     return new DefaultNotLastCaseInSwitchInspection();
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17;
   }
 }

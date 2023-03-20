@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getExplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getExplicitReceiverValue
 import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
 
@@ -97,7 +97,7 @@ fun applyMarking(
     declaration: KtNamedDeclaration,
     substitutor: TypeSubstitutor, targetClassDescriptor: ClassDescriptor
 ) {
-    val psiFactory = KtPsiFactory(declaration)
+    val psiFactory = KtPsiFactory(declaration.project)
     val targetThis = psiFactory.createExpression("this@${targetClassDescriptor.name.asString().quoteIfNeeded()}")
     val shorteningOptionsForThis = ShortenReferences.Options(removeThisLabels = true, removeThis = true)
 

@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
@@ -18,14 +18,14 @@ import org.jetbrains.kotlin.descriptors.impl.DeclarationDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PackageFragmentDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
-import org.jetbrains.kotlin.idea.debugger.getClassDescriptor
+import org.jetbrains.kotlin.idea.core.util.externalDescriptors
+import org.jetbrains.kotlin.idea.debugger.evaluate.getClassDescriptor
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtCodeFragment
-import org.jetbrains.kotlin.psi.externalDescriptors
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
@@ -38,7 +38,7 @@ class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val
 
         private fun doGetMarkupMap(debugProcess: DebugProcessImpl): Map<out Value?, ValueMarkup>? {
             if (isUnitTestMode()) {
-                return NodeDescriptorImpl.getMarkupMap(debugProcess)
+                return DebuggerUtilsImpl.getValueMarkers(debugProcess)?.allMarkers as Map<ObjectReference, ValueMarkup>?
             }
 
             val debugSession = debugProcess.session.xDebugSession as? XDebugSessionImpl
@@ -79,7 +79,7 @@ class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val
         containingDeclaration: PackageFragmentDescriptor
     ): PropertyDescriptor {
         val propertyDescriptor = DebugLabelPropertyDescriptor(containingDeclaration, labelName)
-        propertyDescriptor.setType(type, emptyList(), null, null)
+        propertyDescriptor.setType(type, emptyList(), null, null, emptyList())
 
         val getterDescriptor = PropertyGetterDescriptorImpl(
             propertyDescriptor,
@@ -146,7 +146,7 @@ private object DebugLabelModuleDescriptor : DeclarationDescriptorImpl(Annotation
     override val builtIns: KotlinBuiltIns
         get() = DefaultBuiltIns.Instance
 
-    override val stableName: Name?
+    override val stableName: Name
         get() = name
 
     override fun shouldSeeInternalsOf(targetModule: ModuleDescriptor) = false
@@ -173,7 +173,7 @@ private object DebugLabelModuleDescriptor : DeclarationDescriptorImpl(Annotation
         }
     }
 
-    override val platform: TargetPlatform?
+    override val platform: TargetPlatform
         get() = JvmPlatforms.unspecifiedJvmPlatform
 
     override fun getSubPackagesOf(fqName: FqName, nameFilter: (Name) -> Boolean): Collection<FqName> {

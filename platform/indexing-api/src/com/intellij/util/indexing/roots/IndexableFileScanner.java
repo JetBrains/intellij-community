@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
  * For example, during the project startup, all content files/directories are scanned.
  * Scanned files/directories are under content roots and not excluded or ignored.
  */
-@ApiStatus.Experimental
 public interface IndexableFileScanner {
   ExtensionPointName<IndexableFileScanner> EP_NAME = ExtensionPointName.create("com.intellij.projectFileScanner");
 
@@ -58,5 +57,13 @@ public interface IndexableFileScanner {
      * @param fileOrDir the file being scanned
      */
     void visitFile(@NotNull VirtualFile fileOrDir);
+
+    /**
+     * Called on a background thread when all files of {@link IndexableSetOrigin} has been successfully processed.
+     */
+    @ApiStatus.Experimental
+    default void visitingFinished() {
+
+    }
   }
 }

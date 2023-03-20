@@ -5,12 +5,10 @@ import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.uast.UFile
-import org.jetbrains.uast.UReferenceExpression
-import org.jetbrains.uast.util.IndentedPrintingVisitor
-import org.jetbrains.uast.test.common.visitUFileAndGetResult
 import com.intellij.testFramework.assertEqualsToFile
-import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.*
+import org.jetbrains.uast.test.common.visitUFileAndGetResult
+import org.jetbrains.uast.util.IndentedPrintingVisitor
 import java.io.File
 
 abstract class AbstractJavaResolveEverythingTest : AbstractJavaUastTest() {
@@ -18,7 +16,9 @@ abstract class AbstractJavaResolveEverythingTest : AbstractJavaUastTest() {
     override fun render(element: PsiElement): CharSequence? =
       element
         .takeIf { it !is PsiIdentifier } // no sense to handle PsiIdentifier, see IDEA-207979
-        ?.toUElementOfType<UReferenceExpression>()?.let { ref ->
+        ?.toUElementOfType<UExpression>()?.let { ref ->
+          if(ref !is UResolvable) return@let null
+          val refExpr = ref as? UReferenceExpression
           StringBuilder().apply {
             val parent = ref.uastParent
             append(parent?.asLogString())
@@ -27,7 +27,7 @@ abstract class AbstractJavaResolveEverythingTest : AbstractJavaUastTest() {
             append(" -> ")
             append(ref.resolve())
             append(": ")
-            append(ref.resolvedName)
+            append(refExpr?.resolvedName)
           }
         }
   }.visitUFileAndGetResult(this)

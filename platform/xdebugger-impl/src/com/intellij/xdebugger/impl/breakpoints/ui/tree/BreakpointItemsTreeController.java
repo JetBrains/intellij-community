@@ -242,9 +242,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
         if (!default1 && default2) return 1;
         return b1.compareTo(b2);
       }
-      if (o1 instanceof BreakpointsGroupNode && o2 instanceof BreakpointsGroupNode) {
-        final BreakpointsGroupNode group1 = (BreakpointsGroupNode)o1;
-        final BreakpointsGroupNode group2 = (BreakpointsGroupNode)o2;
+      if (o1 instanceof BreakpointsGroupNode group1 && o2 instanceof BreakpointsGroupNode group2) {
         if (group1.getLevel() != group2.getLevel()) {
           return group1.getLevel() - group2.getLevel();
         }

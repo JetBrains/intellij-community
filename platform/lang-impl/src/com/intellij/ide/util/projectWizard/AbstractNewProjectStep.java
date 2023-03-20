@@ -1,18 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -22,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,6 +34,7 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
@@ -65,7 +66,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     super(Presentation.NULL_STRING, true);
     myCustomization = customization;
     updateActions();
-    EP_NAME.addChangeListener(() -> updateActions(), null);
+    EP_NAME.addChangeListener(this::updateActions, null);
   }
 
   @Override
@@ -102,32 +103,28 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     addAll(myCustomization.getActions(projectGenerators, callback));
   }
 
-  protected void addProjectSpecificAction(@NotNull final ProjectSpecificAction projectSpecificAction) {
+  protected void addProjectSpecificAction(final @NotNull ProjectSpecificAction projectSpecificAction) {
     addAll(projectSpecificAction.getChildren(null));
   }
 
-  protected static abstract class Customization<T> {
-    @NotNull
-    protected ProjectSpecificAction createProjectSpecificAction(@NotNull final AbstractCallback<T> callback) {
+  protected abstract static class Customization<T> {
+    protected @NotNull ProjectSpecificAction createProjectSpecificAction(final @NotNull AbstractCallback<T> callback) {
       DirectoryProjectGenerator<T> emptyProjectGenerator = createEmptyProjectGenerator();
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
     }
 
-    @NotNull
-    protected abstract AbstractCallback<T> createCallback();
+    protected abstract @NotNull AbstractCallback<T> createCallback();
 
-    @NotNull
-    protected abstract DirectoryProjectGenerator<T> createEmptyProjectGenerator();
+    protected abstract @NotNull DirectoryProjectGenerator<T> createEmptyProjectGenerator();
 
-    @NotNull
-    protected abstract ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
-                                                                                    @NotNull AbstractCallback<T> callback);
+    protected abstract @NotNull ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
+                                                                                             @NotNull AbstractCallback<T> callback);
 
     protected @NotNull List<DirectoryProjectGenerator<?>> getProjectGenerators() {
       return EP_NAME.getExtensionList();
     }
 
-    public AnAction[] getActions(@NotNull List<DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
+    public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
       List<AnAction> actions = new ArrayList<>();
       for (DirectoryProjectGenerator<?> projectGenerator : generators) {
         try {
@@ -188,6 +185,33 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                               @NotNull String locationString,
                                               @Nullable DirectoryProjectGenerator<T> generator,
                                               @NotNull T settings) {
+    OpenProjectTask options = createOpenProjectOptions(projectToClose, null);
+    return doGenerateProject(locationString, generator, settings, options);
+  }
+
+  protected static @NotNull OpenProjectTask createOpenProjectOptions(@Nullable Project projectToClose,
+                                                                     @Nullable Consumer<? super UserDataHolder> extraUserData) {
+    return OpenProjectTaskKt.OpenProjectTask(builder -> {
+      builder.setProjectToClose(projectToClose);
+      builder.setNewProject(true);
+      builder.setRunConfigurators(true);
+      builder.setProjectCreatedWithWizard(true);
+      builder.setRefreshVfsNeeded(false);
+      builder.withBeforeOpenCallback(project -> {
+        if (extraUserData != null) {
+          extraUserData.accept(project);
+        }
+        project.putUserData(CREATED_KEY, true);
+        return true;
+      });
+      return Unit.INSTANCE;
+    });
+  }
+
+  public static <T> Project doGenerateProject(@NotNull String locationString,
+                                              @Nullable DirectoryProjectGenerator<T> generator,
+                                              @NotNull T settings,
+                                              @NotNull OpenProjectTask options) {
     Path location = Paths.get(locationString);
     try {
       Files.createDirectories(location);
@@ -195,7 +219,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     catch (IOException e) {
       LOG.warn(e);
       String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.toString());
-      Messages.showErrorDialog(projectToClose, message, ActionsBundle.message("action.NewDirectoryProject.title"));
+      Messages.showErrorDialog(options.getProjectToClose(), message, ActionsBundle.message("action.NewDirectoryProject.title"));
       return null;
     }
 
@@ -212,9 +236,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       String message = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.text", location.toString());
       String yesText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.create.new");
       String noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
-      int result = Messages.showYesNoDialog(projectToClose, message, title, yesText, noText, Messages.getQuestionIcon());
+      int result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.doOpenProject(location, new OpenProjectTask());
+        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build());
       }
     }
 
@@ -224,11 +248,6 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
     }
 
-    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
-      .withBeforeOpenCallback((project) -> {
-        project.putUserData(CREATED_KEY, true);
-        return true;
-      });
     TrustedPaths.getInstance().setProjectPathTrusted(location, true);
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
@@ -250,5 +269,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
   public static boolean created(@NotNull Project project) {
     return Boolean.TRUE.equals(project.getUserData(CREATED_KEY));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

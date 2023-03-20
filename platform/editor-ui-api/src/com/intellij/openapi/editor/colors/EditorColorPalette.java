@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -61,7 +61,7 @@ public abstract class EditorColorPalette {
    * Collects colors from known color setup pages.
    *
    * @param attrColorReader the function to extract the color from attribute (ex. foreground or background)
-   * @return the pallete with collected colors
+   * @return the palette with collected colors
    */
   public EditorColorPalette collectColors(@NotNull Function<? super TextAttributes, ? extends Color> attrColorReader) {
     return collectColorsWithFilter(attrColorReader, false);
@@ -73,7 +73,7 @@ public abstract class EditorColorPalette {
    * @param attrColorReader          the function to extract the color from attribute (ex. foreground or background)
    * @param filterOutRainbowAttrKeys the flag to filter out the attributes that can be overwritten by semantic highlighting
    *                                 or not conflicting with semantic highlighting
-   * @return the pallete with collected colors
+   * @return the palette with collected colors
    */
   public EditorColorPalette collectColorsWithFilter(@NotNull Function<? super TextAttributes, ? extends Color> attrColorReader,
                                                     boolean filterOutRainbowAttrKeys) {

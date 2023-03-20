@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -114,8 +114,9 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
       }
 
       @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        myProcessorsProfilesMap = null; // clear cache
+      public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
+        // clear cache
+        myProcessorsProfilesMap = null;
       }
 
       @Override
@@ -760,7 +761,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
     final Element notNullAssertions = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS);
     if (notNullAssertions != null) {
-      myAddNotNullAssertions = Boolean.valueOf(notNullAssertions.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "true"));
+      myAddNotNullAssertions = Boolean.parseBoolean(notNullAssertions.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "true"));
     }
 
     Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
@@ -1067,16 +1068,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
   }
 
-  private static final class CompiledPattern {
-    @NotNull final Pattern fileName;
-    @Nullable final Pattern dir;
-    @Nullable final Pattern srcRoot;
-
-    private CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
-      this.fileName = fileName;
-      this.dir = dir;
-      this.srcRoot = srcRoot;
-    }
+  private record CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
   }
 
   private static Element addChild(Element parent, final String childName) {

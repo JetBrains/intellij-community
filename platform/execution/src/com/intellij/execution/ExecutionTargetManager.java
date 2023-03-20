@@ -6,7 +6,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public abstract class ExecutionTargetManager {
   public static List<ExecutionTarget> getTargetsToChooseFor(@NotNull Project project, @Nullable RunConfiguration configuration) {
     List<ExecutionTarget> result = getInstance(project).getTargetsFor(configuration);
     if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) return Collections.emptyList();
-    result = Collections.unmodifiableList(ContainerUtil.filter(result, target -> !target.isExternallyManaged()));
+    result = ContainerUtil.filter(result, target -> !target.isExternallyManaged());
     if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) {
       return Collections.emptyList();
     }
@@ -44,8 +43,7 @@ public abstract class ExecutionTargetManager {
   /**
    * @deprecated use {@link #canRun(RunConfiguration, ExecutionTarget)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean canRun(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget target) {
     return canRun(settings != null ? settings.getConfiguration() : null, target);
   }
@@ -77,16 +75,6 @@ public abstract class ExecutionTargetManager {
 
   @NotNull
   public abstract List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration);
-
-  /**
-   * @deprecated Use {@link #getTargetsFor(RunConfiguration)}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public List<ExecutionTarget> getTargetsFor(@Nullable RunnerAndConfigurationSettings settings) {
-    return getTargetsFor(settings == null ? null : settings.getConfiguration());
-  }
 
   public abstract void update();
 

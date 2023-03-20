@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.injection
 
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -26,7 +26,7 @@ class KotlinLanguageInjectionPerformer : LanguageInjectionPerformer {
 
         if (parts.ranges.isEmpty()) return false
 
-        InjectorUtils.registerInjection(language, parts.ranges, file, registrar)
+        InjectorUtils.registerInjection(language, file, parts.ranges, registrar)
         InjectorUtils.registerSupport(support, false, context, language)
         InjectorUtils.putInjectedFileUserData(
             context,

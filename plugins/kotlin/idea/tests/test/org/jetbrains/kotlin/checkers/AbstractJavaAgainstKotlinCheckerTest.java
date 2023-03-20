@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.checkers;
 
@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase;
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.TestMetadataUtil;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
 import java.io.File;
@@ -99,8 +99,7 @@ public abstract class AbstractJavaAgainstKotlinCheckerTest extends KotlinDaemonA
             return module;
         }
 
-        boolean withRuntime = InTextDirectivesUtils.isDirectiveDefined(configFileText, "// WITH_RUNTIME") ||
-                              InTextDirectivesUtils.isDirectiveDefined(configFileText, "// WITH_STDLIB");
+        boolean withRuntime = InTextDirectivesUtils.isDirectiveDefined(configFileText, "// WITH_STDLIB");
         if (withRuntime) {
             ConfigLibraryUtil.INSTANCE.configureKotlinRuntime(module);
         }

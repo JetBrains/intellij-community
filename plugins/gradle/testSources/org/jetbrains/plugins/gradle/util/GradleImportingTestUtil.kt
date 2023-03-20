@@ -1,33 +1,41 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleImportingTestUtil")
 
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.observable.operation.core.awaitOperation
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.concurrency.Promise
-import java.nio.file.Path
-import java.util.concurrent.TimeUnit
+import com.intellij.openapi.util.use
+import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
-/**
- * @param action or some async calls have to produce project reload
- *  for example invokeLater { refreshProject(project, spec) }
- * @throws java.lang.AssertionError if import is failed or isn't started
- */
-fun <R> waitForMultipleProjectsReload(expectedProjects: List<Path>, action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getProjectDataLoadPromise(expectedProjects), action)
 
-fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getProjectDataLoadPromise(), action)
-
-fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getExecutionTaskFinishPromise(), action)
-
-private fun <R> waitForTask(finishTaskPromise: Promise<*>, action: ThrowableComputable<R, Throwable>): R {
-  val result = action.compute()
-  invokeAndWaitIfNeeded {
-    PlatformTestUtil.waitForPromise(finishTaskPromise, TimeUnit.MINUTES.toMillis(1))
+fun <R> waitForProjectReload(externalProjectPath: String, action: ThrowableComputable<R, Throwable>): R {
+  return Disposer.newDisposable("waitForProjectReload").use { disposable ->
+    getGradleReloadOperation(externalProjectPath, disposable)
+      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action = action)
   }
-  return result
+}
+
+fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R {
+  return Disposer.newDisposable("waitForAnyProjectReload").use { disposable ->
+    getGradleReloadOperation(disposable)
+      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action = action)
+  }
+}
+
+fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R {
+  return Disposer.newDisposable("waitForTaskExecution").use { disposable ->
+    getGradleExecutionOperation(disposable)
+      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action = action)
+  }
+}
+
+suspend fun <R> awaitProjectReload(action: suspend () -> R): R {
+  return Disposer.newDisposable("awaitProjectReload").use { disposable ->
+    getGradleReloadOperation(disposable)
+      .awaitOperation(10.seconds, 10.minutes, action = action)
+  }
 }

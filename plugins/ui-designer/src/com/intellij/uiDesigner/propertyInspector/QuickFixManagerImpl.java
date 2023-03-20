@@ -13,10 +13,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>{
   private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 

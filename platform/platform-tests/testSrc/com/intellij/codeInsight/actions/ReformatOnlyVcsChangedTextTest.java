@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
+
 public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   private static final String TEMP_DIR_NAME = "dir";
   private PsiDirectory myWorkingDirectory;
@@ -41,21 +43,23 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   private CodeStyleManager myRealCodeStyleManger;
 
   private final static String COMMITTED =
-    "class Test {\n" +
-    "          int a      =       22;\n" +
-    "        public String getName() { return \"Test\"; }\n" +
-    "}";
+    """
+      class Test {
+                int a      =       22;
+              public String getName() { return "Test"; }
+      }""";
 
   private final static String MODIFIED =
-    "class Test {\n" +
-    "          int a      =       22;\n" +
-    "              long l;\n" +
-    "              double d;\n" +
-    "              int i;\n" +
-    "        public String getName() { return \"Test\"; }\n" +
-    "            String test1;\n" +
-    "            String test2;\n" +
-    "}";
+    """
+      class Test {
+                int a      =       22;
+                    long l;
+                    double d;
+                    int i;
+              public String getName() { return "Test"; }
+                  String test1;
+                  String test2;
+      }""";
 
   private final static ChangedLines[] CHANGED_LINES = new ChangedLines[] { line(2, 4), line(6, 7) };
   private final static ChangedLines[] NO_CHANGED_LINES = new ChangedLines[0];
@@ -105,19 +109,21 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   public void testInsertion() {
     doTest(
-      "public class B {\n" +
-      "       int a = 3;\n" +
-      "                 String text;\n" +
-      "                               Object last = null;\n" +
-      "}",
+      """
+        public class B {
+               int a = 3;
+                         String text;
+                                       Object last = null;
+        }""",
 
-      "public class B {\n" +
-      "       int a = 3;\n" +
-      "                               int toIndent1 = 1;\n" +
-      "                 String text;\n" +
-      "                               int toIndent2\n" +
-      "                               Object last = null;\n" +
-      "}",
+      """
+        public class B {
+               int a = 3;
+                                       int toIndent1 = 1;
+                         String text;
+                                       int toIndent2
+                                       Object last = null;
+        }""",
 
       line(2, 2), line(4, 4)
     );
@@ -129,18 +135,20 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   public void testDeletion() {
     doTest(
-      "public class B {\n" +
-      "           int a = 3;\n" +
-      "           String text;\n" +
-      "           Object last = null;\n" +
-      "           Object first = null;\n" +
-      "           Object second = null;\n" +
-      "}",
+      """
+        public class B {
+                   int a = 3;
+                   String text;
+                   Object last = null;
+                   Object first = null;
+                   Object second = null;
+        }""",
 
-      "public class B {\n" +
-      "           int newInt = 1;\n" +
-      "           Object last = null;\n" +
-      "}",
+      """
+        public class B {
+                   int newInt = 1;
+                   Object last = null;
+        }""",
 
       line(1, 1)
     );
@@ -148,39 +156,43 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   public void testNoReformatOn_DeletionModification() {
     doTest(
-      "public class B {\n" +
-      "           int a = 3;\n" +
-      "           String text;\n" +
-      "           Object last = null;\n" +
-      "           Object first = null;\n" +
-      "           Object second = null;\n" +
-      "}",
+      """
+        public class B {
+                   int a = 3;
+                   String text;
+                   Object last = null;
+                   Object first = null;
+                   Object second = null;
+        }""",
 
-      "public class B {\n" +
-      "           int a = 3;\n" +
-      "           String text;\n" +
-      "           Object last = null;\n" +
-      "}"
+      """
+        public class B {
+                   int a = 3;
+                   String text;
+                   Object last = null;
+        }"""
     );
   }
 
   public void testModification() {
     doTest(
-      "public class B {\n" +
-      "           int a = 3;\n" +
-      "           String text;\n" +
-      "           Object last = null;\n" +
-      "           Object first = null;\n" +
-      "           Object second = null;\n" +
-      "}",
+      """
+        public class B {
+                   int a = 3;
+                   String text;
+                   Object last = null;
+                   Object first = null;
+                   Object second = null;
+        }""",
 
-      "public class B {\n" +
-      "           int a = 33;\n" +
-      "           String text;\n" +
-      "           Object last = new Object();\n" +
-      "           Object first = null;\n" +
-      "           Object second = new Object();\n" +
-      "}",
+      """
+        public class B {
+                   int a = 33;
+                   String text;
+                   Object last = new Object();
+                   Object first = null;
+                   Object second = new Object();
+        }""",
 
       line(1, 1), line(3,3), line(5,5)
     );
@@ -188,21 +200,23 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
   public void testModificationCRLF() {
     doTest(
-      "public class B {\r\n" +
-      "           int a = 3;\r\n" +
-      "           String text;\r\n" +
-      "           Object last = null;\r\n" +
-      "           Object first = null;\r\n" +
-      "           Object second = null;\r\n" +
-      "}",
+      """
+        public class B {\r
+                   int a = 3;\r
+                   String text;\r
+                   Object last = null;\r
+                   Object first = null;\r
+                   Object second = null;\r
+        }""",
 
-      "public class B {\r\n" +
-      "           int a = 33;\r\n" +
-      "           String text;\r\n" +
-      "           Object last = new Object();\r\n" +
-      "           Object first = null;\r\n" +
-      "           Object second = new Object();\r\n" +
-      "}",
+      """
+        public class B {\r
+                   int a = 33;\r
+                   String text;\r
+                   Object last = new Object();\r
+                   Object first = null;\r
+                   Object second = new Object();\r
+        }""",
 
       line(1, 1), line(3,3), line(5,5)
     );
@@ -286,7 +300,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     OptimizeImportsAction optimizeImports = new OptimizeImportsAction();
     OptimizeImportsAction.setProcessVcsChangedFilesInTests(true);
     try {
-      optimizeImports.actionPerformed(new TestActionEvent(dataId -> {
+      optimizeImports.actionPerformed(TestActionEvent.createTestEvent(dataId -> {
         if (CommonDataKeys.PROJECT.is(dataId)) {
           return getProject();
         }
@@ -333,11 +347,11 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   private void assertFormattedRangesEqualsTo(@NotNull PsiFile file, ChangedLines... expected) {
     ChangedLines[] formatted = myMockCodeStyleManager.getFormattedLinesFor(file);
 
-    Comparator<ChangedLines> cmp = (o1, o2) -> o1.from < o2.from ? -1 : 1;
+    Comparator<ChangedLines> cmp = Comparator.comparingInt(o -> o.from);
     Arrays.sort(expected, cmp);
     Arrays.sort(formatted, cmp);
 
-    assertTrue(getErrorMessage(expected, formatted), Arrays.equals(expected, formatted));
+    assertArrayEquals(getErrorMessage(expected, formatted), expected, formatted);
   }
 
   private boolean isImportsOptimized(@NotNull PsiFile file) {
@@ -370,7 +384,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
                               @NotNull String committedContent,
                               @NotNull String actualContent) {
       PsiFile file = myFileStructure.addTestFile(fileName, actualContent);
-      if (committedContent != actualContent) {
+      if (!committedContent.equals(actualContent)) {
         registerCommittedRevision(committedContent, file);
       }
       return file;
@@ -391,7 +405,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     }
 
     private void injectChanges(@NotNull List<Change> changes) {
-      Change[] arr = changes.toArray(new Change[0]);
+      Change[] arr = changes.toArray(Change.EMPTY_CHANGE_ARRAY);
       myMockChangeListManager.addChanges(arr);
     }
 

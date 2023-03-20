@@ -17,6 +17,7 @@ package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import one.util.streamex.StreamEx;
@@ -38,7 +39,7 @@ import java.util.List;
 public class ChainVariable {
   private static final Logger LOG = Logger.getInstance(ChainVariable.class);
 
-  public static final ChainVariable STUB = new ChainVariable(PsiType.VOID) {
+  public static final ChainVariable STUB = new ChainVariable(PsiTypes.voidType()) {
     @Override
     public void addBestNameCandidate(String candidate) {
     }
@@ -105,7 +106,7 @@ public class ChainVariable {
     String[] fromType = JavaCodeStyleManager.getInstance(context.getProject())
       .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, myType, true).names;
     List<String> variants = StreamEx.of(myBestCandidates).append(myOtherCandidates).append(fromType).distinct().toList();
-    if (variants.isEmpty()) variants.add("val");
+    if (variants.isEmpty()) variants = List.of("val");
     myName = context.registerVarName(variants);
     myBestCandidates = myOtherCandidates = null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -7,7 +7,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.FqName
@@ -26,6 +27,7 @@ open class AddAnnotationFix(
         val annotationCall = annotationFqName.shortName().asString() + annotationArguments
         return when (kind) {
             Kind.Self -> KotlinBundle.message("fix.add.annotation.text.self", annotationCall)
+            Kind.Constructor -> KotlinBundle.message("fix.add.annotation.text.constructor", annotationCall)
             is Kind.Declaration -> KotlinBundle.message("fix.add.annotation.text.declaration", annotationCall, kind.name ?: "?")
             is Kind.ContainingClass -> KotlinBundle.message("fix.add.annotation.text.containing.class", annotationCall, kind.name ?: "?")
         }
@@ -39,7 +41,7 @@ open class AddAnnotationFix(
         val annotationInnerText = argumentClassFqName?.let { "${it.render()}::class" }
         if (annotationEntry != null) {
             if (annotationInnerText == null) return
-            val psiFactory = KtPsiFactory(declaration)
+            val psiFactory = KtPsiFactory(project)
             annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
                 ?: annotationEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), annotationEntry.lastChild)
             ShortenReferences.DEFAULT.process(annotationEntry)
@@ -50,6 +52,7 @@ open class AddAnnotationFix(
 
     sealed class Kind {
         object Self : Kind()
+        object Constructor : Kind()
         class Declaration(val name: String?) : Kind()
         class ContainingClass(val name: String?) : Kind()
     }

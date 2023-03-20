@@ -18,9 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private static final Key<CachedValue<Map<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
   private static final Map<EvaluatedXmlNameImpl, EvaluatedXmlNameImpl> ourInterned =
@@ -62,9 +59,7 @@ public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof EvaluatedXmlNameImpl)) return false;
-
-    final EvaluatedXmlNameImpl that = (EvaluatedXmlNameImpl)o;
+    if (!(o instanceof EvaluatedXmlNameImpl that)) return false;
 
     if (myEqualToParent != that.myEqualToParent) return false;
     if (myNamespaceKey != null ? !myNamespaceKey.equals(that.myNamespaceKey) : that.myNamespaceKey != null) return false;

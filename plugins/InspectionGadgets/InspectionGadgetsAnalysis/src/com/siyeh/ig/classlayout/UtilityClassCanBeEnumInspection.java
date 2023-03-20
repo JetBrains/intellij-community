@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class UtilityClassCanBeEnumInspection extends BaseInspection {
+public class UtilityClassCanBeEnumInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -46,16 +47,15 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
         return;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       for (PsiMethod constructor : aClass.getConstructors()) {
         constructor.delete();
       }
@@ -91,12 +91,12 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection {
   private static class UtilityClassCanBeEnumVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (aClass.isEnum()) {
         return;
       }
-      if (!UtilityClassUtil.isUtilityClass(aClass) || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
+      if (!UtilityClassUtil.isUtilityClass(aClass, true, true) || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
         return;
       }
       LocalSearchScope scope = null;

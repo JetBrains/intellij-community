@@ -6,8 +6,10 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.options.CommonOptionPanes;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -21,20 +23,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class PackageNamingConventionInspection extends PackageGlobalInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 3;
   private static final int DEFAULT_MAX_LENGTH = 16;
   private static final String DEFAULT_NAME = "<default>";
+  private static final String DEFAULT_REGEX = "[a-z]*";
   /**
    * @noinspection PublicField
    */
   @NonNls
-  public String m_regex = "[a-z]*";
+  public String m_regex = DEFAULT_REGEX;
 
   /**
    * @noinspection PublicField
@@ -88,8 +91,21 @@ public class PackageNamingConventionInspection extends PackageGlobalInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern");
+  public @NotNull OptPane getOptionsPane() {
+    return CommonOptionPanes.conventions("m_minLength", "m_maxLength", "m_regex");
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValueSet("m_regex", value -> {
+      try {
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+      catch (PatternSyntaxException ignore) {
+        m_regex = DEFAULT_REGEX;
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+    });
   }
 
   boolean isValid(String name) {
@@ -137,7 +153,7 @@ public class PackageNamingConventionInspection extends PackageGlobalInspection {
       return new BaseInspectionVisitor() {
 
         @Override
-        public void visitPackageStatement(PsiPackageStatement statement) {
+        public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
           final PsiJavaCodeReferenceElement reference = statement.getPackageReference();
           if (reference == null) {
             return;

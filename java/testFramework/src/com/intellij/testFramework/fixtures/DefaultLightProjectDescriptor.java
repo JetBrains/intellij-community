@@ -31,9 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
 
   private @Nullable Supplier<? extends Sdk> customSdk;

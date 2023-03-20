@@ -69,6 +69,13 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return Registry.is("ide.find.in.file.highlight.usages") ?
+           ActionManager.getInstance().getAction(ACTION_HIGHLIGHT_USAGES_IN_FILE).getActionUpdateThread() :
+           ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent event) {
     if (Registry.is("ide.find.in.file.highlight.usages")) {
       ActionManager.getInstance().getAction(ACTION_HIGHLIGHT_USAGES_IN_FILE).update(event);
@@ -84,9 +91,11 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
         Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
-    if (!allTargets(dataContext).isEmpty()) {
-      return true;
-    }
+    return canFindUsages(project, dataContext) ||
+           !allTargets(dataContext).isEmpty();
+  }
+
+  private static boolean canFindUsages(@NotNull Project project, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return false;

@@ -124,5 +124,4 @@
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Recursive property accessor</problem_class>
         <description>Recursive property accessor</description>
     </problem>
-
 </problems>

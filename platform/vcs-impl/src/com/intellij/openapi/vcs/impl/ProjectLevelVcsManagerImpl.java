@@ -1,14 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.impl.TrustStateListener;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -21,7 +16,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -45,14 +39,13 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
-import com.intellij.vcs.console.VcsConsoleView;
+import com.intellij.vcs.console.VcsConsoleTabService;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -66,7 +59,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
-  private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
   private final NewMappings myMappings;
@@ -86,15 +78,12 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final Set<ActionKey> myBackgroundRunningTasks = ContainerUtil.newConcurrentSet();
 
-  private final List<VcsConsoleLine> myPendingOutput = new ArrayList<>();
-
   private final FileIndexFacade myExcludedIndex;
 
   public ProjectLevelVcsManagerImpl(@NotNull Project project) {
     myProject = project;
     myExcludedIndex = FileIndexFacade.getInstance(project);
 
-    mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
     myMappings = new NewMappings(myProject, this);
@@ -105,6 +94,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return (ProjectLevelVcsManagerImpl)getInstance(project);
   }
 
+  @TestOnly
   public void registerVcs(AbstractVcs vcs) {
     AllVcses.getInstance(myProject).registerManually(vcs);
   }
@@ -159,7 +149,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @Nullable AbstractVcs getVcsFor(@NotNull VirtualFile file) {
+  public @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -167,7 +157,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @Nullable AbstractVcs getVcsFor(@NotNull FilePath file) {
+  public @Nullable AbstractVcs getVcsFor(@Nullable FilePath file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -210,6 +200,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return root != null ? new VcsRoot(root.vcs, root.root) : null;
   }
 
+  @TestOnly
   public void unregisterVcs(@NotNull AbstractVcs vcs) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
       // unlikely
@@ -252,6 +243,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  public boolean areVcsesActivated() {
+    return myMappings.isActivated();
+  }
+
+  @Override
   public boolean hasAnyMappings() {
     return !myMappings.isEmpty();
   }
@@ -264,47 +260,14 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void addMessageToConsoleWindow(@Nullable String message, @NotNull ConsoleViewContentType contentType) {
-    addMessageToConsoleWindow(VcsConsoleLine.create(message, contentType));
+    VcsConsoleTabService.getInstance(myProject).addMessage(message, contentType);
   }
 
   @Override
   public void addMessageToConsoleWindow(@Nullable VcsConsoleLine line) {
-    if (!Registry.is("vcs.showConsole")) return;
-    if (line == null) return;
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      // for default and disposed projects the ContentManager is not available.
-      if (myProject.isDisposed() || myProject.isDefault()) return;
-      final ContentManager contentManager = getContentManager();
-      if (contentManager == null) {
-        myPendingOutput.add(line);
-      }
-      else {
-        VcsConsoleContent panel = getOrCreateConsoleContent(contentManager);
-        panel.printToConsole(line);
-      }
-    }, ModalityState.defaultModalityState());
+    VcsConsoleTabService.getInstance(myProject).addMessage(line);
   }
 
-  private static @Nullable VcsConsoleContent getConsoleContent(@NotNull ContentManager contentManager) {
-    return ContainerUtil.findInstance(contentManager.getContents(), VcsConsoleContent.class);
-  }
-
-  @RequiresEdt
-  private @NotNull VcsConsoleContent getOrCreateConsoleContent(@NotNull ContentManager contentManager) {
-    LOG.assertTrue(Registry.is("vcs.showConsole"));
-    VcsConsoleContent console = getConsoleContent(contentManager);
-    if (console != null) return console;
-
-    VcsConsoleContent newConsole = new VcsConsoleContent(myProject);
-    for (VcsConsoleLine line : myPendingOutput) {
-      newConsole.printToConsole(line);
-    }
-    myPendingOutput.clear();
-
-    contentManager.addContent(newConsole);
-    return newConsole;
-  }
 
   @Override
   public @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
@@ -323,11 +286,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return options;
   }
 
-  @Override
-  public @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName, @NotNull AbstractVcs vcs) {
-    return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
-  }
-
   @RequiresEdt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
@@ -337,7 +295,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @RequiresEdt
   @Override
-  public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
+  public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
+                                                        String displayActionName,
+                                                        ActionInfo actionInfo,
+                                                        boolean canceled) {
     if (!myProject.isOpen() || myProject.isDisposed()) return null;
     ContentManager contentManager = getContentManager();
     if (contentManager == null) {
@@ -388,7 +349,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
-  public void setAutoDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
+  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     myMappings.setDirectoryMappings(mappings);
     myMappings.cleanupMappings();
   }
@@ -412,10 +373,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.updateMappedVcsesImmediately();
   }
 
-  private void activateActiveVcses() {
-    myMappings.activateActiveVcses();
-  }
-
   @Override
   public void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator) {
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator);
@@ -431,7 +388,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
-    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
+    ProjectLevelVcsManagerSerialization.writeExternalUtil(element, myOptionsAndConfirmations);
     if (myHaveLegacyVcsConfiguration) {
       element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
     }
@@ -440,7 +397,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void loadState(@NotNull Element state) {
-    mySerialization.readExternalUtil(state, myOptionsAndConfirmations);
+    ProjectLevelVcsManagerSerialization.readExternalUtil(state, myOptionsAndConfirmations);
     final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
     if (attribute != null) {
       try {
@@ -479,7 +436,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void stopBackgroundVcsOperation() {
     // in fact, the condition is "should not be called under ApplicationManager.invokeLater() and similar"
-    assert !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     int counter = myBackgroundOperationCounter.getAndDecrement();
     LOG.assertTrue(counter > 0, "myBackgroundOperationCounter was " + counter + " while should have been > 0");
   }
@@ -628,7 +585,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       String vcsName = checker.getSupportedVcs().getName();
       checkedVcses.add(vcsName);
 
-      if (checker.isRoot(file.getPath())) {
+      if (checker.isRoot(file)) {
         return findVcsByName(vcsName);
       }
     }
@@ -666,7 +623,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void fireDirectoryMappingsChanged() {
     if (myProject.isOpen() && !myProject.isDisposed()) {
-      myMappings.mappingsChanged();
+      myMappings.notifyMappingsChanged();
     }
   }
 
@@ -802,111 +759,22 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void showConsole() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     showConsole(null);
   }
 
   @Override
   public void showConsole(@Nullable Runnable then) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (!Registry.is("vcs.showConsole")) {
-      return;
-    }
-    ToolWindow vcsToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    if (vcsToolWindow == null) {
-      return;
-    }
-    if (vcsToolWindow.isVisible()) {
-      showConsoleInternal();
-      if (then != null) {
-        then.run();
-      }
-    }
-    else {
-      vcsToolWindow.show(() -> {
-        showConsoleInternal();
-        if (then != null) {
-          then.run();
-        }
-      });
-    }
+    VcsConsoleTabService.getInstance(myProject).showConsoleTab(true, null);
   }
 
   @Override
   public void scrollConsoleToTheEnd() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!Registry.is("vcs.showConsole")) {
-      return;
-    }
-    ContentManager cm = getContentManager();
-    if (cm == null) {
-      return;
-    }
-    VcsConsoleContent consoleContent = getConsoleContent(cm);
-    if (consoleContent == null) {
-      return;
-    }
-    consoleContent.scrollToEnd();
+    VcsConsoleTabService.getInstance(myProject).showConsoleTabAndScrollToTheEnd();
   }
 
   @Override
   public boolean isConsoleVisible() {
-    if (!Registry.is("vcs.showConsole")) return false;
-
-    ContentManager cm = getContentManagerIfCreated();
-    if (cm == null) return false;
-
-    VcsConsoleContent consoleContent = getConsoleContent(cm);
-    return consoleContent != null;
-  }
-
-  private @Nullable ContentManager getContentManagerIfCreated() {
-    ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    return changes == null ? null : changes.getContentManagerIfCreated();
-  }
-
-  private void showConsoleInternal() {
-    ContentManager cm = getContentManager();
-    if (cm == null) {
-      return;
-    }
-    VcsConsoleContent consoleContent = getConsoleContent(cm);
-    if (consoleContent == null) {
-      return;
-    }
-    cm.setSelectedContent(consoleContent);
-  }
-
-  private static final class VcsConsoleContent extends ContentImpl {
-    private final @NotNull ConsoleView myConsole;
-
-    private VcsConsoleContent(@NotNull Project project) {
-      super(null, VcsBundle.message("vcs.console.toolwindow.display.name"), true);
-
-      SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
-
-      myConsole = new VcsConsoleView(project);
-      Disposer.register(this, myConsole);
-      panel.setContent(myConsole.getComponent());
-
-      DefaultActionGroup actionGroup = new DefaultActionGroup(myConsole.createConsoleActions());
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsManager", actionGroup, false);
-      toolbar.setTargetComponent(myConsole.getComponent());
-      panel.setToolbar(toolbar.getComponent());
-
-      setComponent(panel);
-      setPreferredFocusedComponent(myConsole::getPreferredFocusableComponent);
-    }
-
-    public void scrollToEnd() {
-      myConsole.requestScrollingToEnd();
-    }
-
-    public void printToConsole(@NotNull VcsConsoleLine line) {
-      line.print(myConsole);
-    }
+    return VcsConsoleTabService.getInstance(myProject).isConsoleVisible();
   }
 
   private static class ActionKey {
@@ -936,7 +804,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      getInstanceImpl(project).activateActiveVcses();
+      project.getService(VcsDirectoryMappingStorage.class); // read vcs.xml
+      getInstanceImpl(project).myMappings.activateActiveVcses();
     }
 
     @Override
@@ -945,7 +814,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
   }
 
-  static final class TrustListener implements TrustStateListener {
+  static final class TrustListener implements TrustedProjectsListener {
     @Override
     public void onProjectTrusted(@NotNull Project project) {
       getInstanceImpl(project).updateMappedVcsesImmediately();

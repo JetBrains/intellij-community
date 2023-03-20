@@ -39,7 +39,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         TerminalGenerator generator = getGenerator(expression);
         if (generator == null) return;
         List<PsiExpression> diff = extractDiff(generator, expression);
@@ -155,7 +155,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
                      .allMatch(Boolean.TRUE::equals)) {
         delimiter = operands[1];
         if (!InheritanceUtil.isInheritor(delimiter.getType(), JAVA_LANG_CHAR_SEQUENCE) &&
-            !(delimiter instanceof PsiLiteralExpression && PsiType.CHAR.equals(delimiter.getType()))) {
+            !(delimiter instanceof PsiLiteralExpression && PsiTypes.charType().equals(delimiter.getType()))) {
           return null;
         }
         if (operands.length % 2 == 0) {

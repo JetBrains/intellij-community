@@ -4,7 +4,7 @@
   <vendor>JetBrains</vendor>
   <category>Languages</category>
   <description><![CDATA[
-  Adds support for the <a href="https://yaml.org/">YAML</a> language.
+    Provides syntax highlighting and editor features for <a href="https://yaml.org/">YAML</a> language.
   ]]></description>
 
   <dependencies>
@@ -22,6 +22,8 @@
     <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
     <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
+    <statementUpDownMover implementation="org.jetbrains.yaml.smart.YAMLStatementMover" id="yamlStatementMover"
+                          order="before line"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
     <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
@@ -61,7 +63,8 @@
     <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
     <languageInjectionContributor implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector" language="yaml"/>
     <languageInjectionPerformer implementationClass="org.jetbrains.yaml.YamlLanguageInjectionPerformer" language="yaml"/>
-    <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLSameLineCompositeValueErrorAnnotator"/>
+    <lang.inspectionSuppressor language="yaml" implementationClass="org.jetbrains.yaml.YAMLlInspectionSuppressor"/>
+    <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLInvalidBlockChildrenErrorAnnotator"/>
     <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
     <editorSmartKeysConfigurable instance="org.jetbrains.yaml.smart.YAMLSmartOptionsProvider"
                                  id="editor.preferences.yamlOptions"
@@ -103,6 +106,8 @@
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
+
+    <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLWebReferenceContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

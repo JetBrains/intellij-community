@@ -1,26 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.displayUrlRelativeToProject
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
 import com.intellij.ui.AncestorListenerAdapter
-import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
 import java.awt.Color
@@ -29,36 +40,68 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.JComponent
+import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
+import kotlin.coroutines.coroutineContext
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 
-internal open class SelectedEditorFilePath {
+@OptIn(FlowPreview::class)
+internal open class SelectedEditorFilePath(frame: JFrame) {
   var onBoundsChanged: (() -> Unit)? = null
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClassTitlePane()
 
   private var simplePaths: List<TitlePart>? = null
-  private var basePaths: List<TitlePart> = listOf(projectTitle, classTitle)
+  private var basePaths = listOf<TitlePart>(projectTitle, classTitle)
   protected var components = basePaths
 
-  private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
-  private val UPDATER_TIMEOUT = 70
+  private val updatePathRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val updateViewRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   protected open val captionInTitle: Boolean
     get() = true
+
+  init {
+    @Suppress("DEPRECATION")
+    val scope = ApplicationManager.getApplication().coroutineScope
+    val updatePathJob = scope.launch {
+      updatePathRequests
+        .debounce(100.milliseconds)
+        .collectLatest {
+          updatePath()
+        }
+    }
+    val updateJob = scope.launch {
+      updateViewRequests
+        .debounce(70.milliseconds)
+        .collectLatest {
+          withContext(Dispatchers.EDT) {
+            update()
+          }
+        }
+    }
+    frame.addWindowListener(object : WindowAdapter() {
+      override fun windowClosed(p0: WindowEvent?) {
+        updatePathJob.cancel()
+        updateJob.cancel()
+      }
+    })
+  }
 
   protected fun updateProjectPath() {
     updateTitlePaths()
     updateProject()
   }
 
-  protected fun updatePaths() {
+  private fun updatePaths() {
     updateTitlePaths()
-    update()
+    scheduleViewUpdate()
   }
 
   protected val label = object : JLabel() {
@@ -106,48 +149,49 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = instance.fullPathsInWindowHeader || multipleSameNamed
+    val uiSettings = UISettings.getInstance()
+    projectTitle.active = uiSettings.fullPathsInWindowHeader || multipleSameNamed
     classTitle.active = captionInTitle || classPathNeeded
 
-    classTitle.fullPath = instance.fullPathsInWindowHeader || classPathNeeded
-    updatePath()
+    classTitle.fullPath = uiSettings.fullPathsInWindowHeader || classPathNeeded
+    schedulePathUpdate()
   }
 
   open val view: JComponent
-    get() {
-      return pane
-    }
+    get() = pane
 
-  private var disposable: Disposable? = null
+  private var disposable: CheckedDisposable? = null
   var project: Project? = null
     set(value) {
-      if (field == value) {
+      if (field === value) {
         return
       }
-      field = value
 
+      field = value
       installListeners()
     }
 
   var multipleSameNamed = false
     set(value) {
-      if (field == value) return
-      field = value
+      if (field == value) {
+        return
+      }
 
+      field = value
       updateProjectPath()
     }
 
-
   var classPathNeeded = false
     set(value) {
-      if (field == value) return
-      field = value
+      if (field == value) {
+        return
+      }
 
+      field = value
       updatePaths()
     }
 
   protected open fun addAdditionalListeners(disp: Disposable) {
-
   }
 
   protected open fun installListeners() {
@@ -157,76 +201,73 @@ internal open class SelectedEditorFilePath {
       unInstallListeners()
     }
 
-    val disp = Disposable {
+    val disposable = Disposer.newCheckedDisposable()
+    Disposer.register(project, disposable)
+    Disposer.register(disposable) {
       HelpTooltip.dispose(label)
       unInstallListeners()
     }
+    this.disposable = disposable
 
-    Disposer.register(project, disp)
-    disposable = disp
-
-    val busConnection = project.messageBus.connect(disp)
+    val busConnection = project.messageBus.connect(disposable)
     busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       updateProjectPath()
     })
 
     simplePaths = getProviders().map { titleInfoProvider ->
       val partTitle = DefaultPartTitle(titleInfoProvider.borderlessPrefix, titleInfoProvider.borderlessSuffix)
-      titleInfoProvider.addUpdateListener(project, disp) {
+      titleInfoProvider.addUpdateListener(project, disposable) {
         partTitle.active = it.isActive(project)
         partTitle.longText = it.getValue(project)
 
-        update()
+        scheduleViewUpdate()
       }
       partTitle
     }
 
-    val shrinkingPaths: MutableList<TitlePart> = mutableListOf(projectTitle, classTitle)
-    simplePaths?.let { shrinkingPaths.addAll(it) }
+    val shrinkingPaths = mutableListOf<TitlePart>(projectTitle, classTitle)
+    simplePaths?.let(shrinkingPaths::addAll)
     components = shrinkingPaths
     updateTitlePaths()
 
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        updatePathLater()
+        schedulePathUpdate()
       }
 
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        updatePathLater()
+        schedulePathUpdate()
       }
 
       override fun selectionChanged(event: FileEditorManagerEvent) {
-        updatePathLater()
+        schedulePathUpdate()
       }
     })
 
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        updatePathLater()
+        schedulePathUpdate()
       }
     })
 
-    addAdditionalListeners(disp)
+    addAdditionalListeners(disposable)
 
     updateProject()
-    updatePath()
+    schedulePathUpdate()
 
     view.addComponentListener(resizedListener)
     label.addAncestorListener(ancestorListener)
   }
 
-  protected fun updatePathLater() {
-    SwingUtilities.invokeLater {
-      disposable?.let {
-        updatePath()
-      }
-    }
+  protected fun schedulePathUpdate() {
+    check(updatePathRequests.tryEmit(Unit))
   }
 
   protected open fun unInstallListeners() {
     disposable?.let {
-      if (!Disposer.isDisposed(it))
+      if (!it.isDisposed) {
         Disposer.dispose(it)
+      }
       disposable = null
     }
 
@@ -238,10 +279,7 @@ internal open class SelectedEditorFilePath {
 
   private val resizedListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-
-      updater.addRequest({
-                           update()
-                         }, UPDATER_TIMEOUT)
+      scheduleViewUpdate()
     }
   }
 
@@ -251,16 +289,56 @@ internal open class SelectedEditorFilePath {
     }
   }
 
-  private fun updatePath() {
-    classTitle.updatePath(view)
-    update()
+  private suspend fun updatePath() {
+    val project = project
+    if (project == null || project.isDisposed) {
+      return
+    }
+
+    val fileEditorManager = FileEditorManager.getInstance(project)
+    val file = withContext(Dispatchers.EDT) {
+      val file = (fileEditorManager as? FileEditorManagerEx)?.getSplittersFor(view)?.currentFile ?: fileEditorManager?.selectedEditor?.file
+      if (file == null) {
+        classTitle.classPath = ""
+        classTitle.longText = ""
+        scheduleViewUpdate()
+      }
+      file
+    } ?: return
+
+    val result = readAction {
+      val titleBuilder = FrameTitleBuilder.getInstance()
+      val baseTitle = titleBuilder.getFileTitle(project, file)
+      Pair(
+        (titleBuilder as? PlatformFrameTitleBuilder)?.run {
+          val fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file)
+          if (!fileTitle.endsWith(file.presentableName) || file.parent == null) {
+            fileTitle
+          }
+          else {
+            displayUrlRelativeToProject(file = file,
+                                        url = file.presentableUrl,
+                                        project = project,
+                                        isIncludeFilePath = true,
+                                        moduleOnTheLeft = false)
+          }
+        } ?: baseTitle, baseTitle)
+    }
+    withContext(Dispatchers.EDT) {
+      classTitle.classPath = result.first
+      classTitle.longText = if (classTitle.fullPath) result.first else result.second
+      scheduleViewUpdate()
+    }
+  }
+
+  private fun scheduleViewUpdate() {
+    check(updateViewRequests.tryEmit(Unit))
   }
 
   private fun updateProject() {
     project?.let {
       projectTitle.project = it
-      classTitle.project = it
-      update()
+      scheduleViewUpdate()
     }
   }
 
@@ -269,14 +347,12 @@ internal open class SelectedEditorFilePath {
 
   open fun getCustomTitle(): String? = null
 
-  protected var isClipped = false
+  private var isClipped = false
   var titleString = ""
 
   data class Pattern(val preferredWidth: Int, val createTitle: () -> String)
 
-  private fun update() {
-    updater.cancelAllRequests()
-
+  private suspend fun update() {
     val insets = view.getInsets(null)
     val width: Int = view.width - (insets.right + insets.left)
 
@@ -312,11 +388,14 @@ internal open class SelectedEditorFilePath {
     label.text = titleString
     HelpTooltip.dispose(label)
 
-    (if (isClipped || basePaths.firstOrNull{!it.active} != null) {
+    (if (isClipped || basePaths.firstOrNull { !it.active } != null) {
       components.filter { it.active || basePaths.contains(it) }.joinToString(separator = "", transform = { it.toolTipPart })
-    } else null)?.let {
+    }
+    else null)?.let {
       HelpTooltip().setTitle(it).installOn(label)
     }
+
+    coroutineContext.ensureActive()
 
     label.revalidate()
     label.repaint()
@@ -325,7 +404,7 @@ internal open class SelectedEditorFilePath {
   }
 
   private fun shrinkSimplePaths(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
-    isClipped = simplePaths.sumBy { it.longWidth } > simpleWidth
+    isClipped = simplePaths.sumOf { it.longWidth } > simpleWidth
 
     for (i in simplePaths.size - 1 downTo 0) {
       var beforeWidth = 0
@@ -351,5 +430,4 @@ internal open class SelectedEditorFilePath {
 
     return null
   }
-
 }

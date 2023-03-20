@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -8,11 +8,7 @@ import com.intellij.psi.DelegatePsiTarget;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 
-/**
- * @author Dmitry Avdeev
- */
-public class DomDocumentationProvider implements DocumentationProvider {
-
+final class DomDocumentationProvider implements DocumentationProvider {
   @Override
   public @Nls String generateDoc(PsiElement element, final PsiElement originalElement) {
     if (element instanceof PomTargetPsiElement) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij;
 
@@ -109,13 +109,20 @@ public abstract class FileSetTestCase extends TestSuite {
 
     @Override
     protected void tearDown() throws Exception {
-      FileSetTestCase.this.tearDown();
-      super.tearDown();
+      try {
+        FileSetTestCase.this.tearDown();
+      }
+      catch (Throwable e) {
+        addSuppressedException(e);
+      }
+      finally {
+        super.tearDown();
+      }
     }
 
     @Override
     public int countTestCases() {
-      return 1;
+      return super.countTestCases();
     }
 
     @Override

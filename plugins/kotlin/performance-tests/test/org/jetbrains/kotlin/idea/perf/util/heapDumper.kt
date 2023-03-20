@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.util
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.sun.management.HotSpotDiagnosticMXBean
+import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import java.lang.management.ManagementFactory
 import java.nio.file.Path
 import java.text.SimpleDateFormat
@@ -12,7 +14,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.*
 
-@OptIn(ExperimentalPathApi::class)
 object HeapDumper {
     private const val HOTSPOT_BEAN_NAME = "com.sun.management:type=HotSpotDiagnostic"
 

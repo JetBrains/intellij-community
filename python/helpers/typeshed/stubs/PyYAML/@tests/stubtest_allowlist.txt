@@ -1,8 +1,4 @@
-yaml.CBaseDumper.__init__
-yaml.CDumper.__init__
-yaml.CEmitter
-yaml.CParser
-yaml.YAMLObjectMetaclass.__init__
-yaml.constructor.FullConstructor.set_python_instance_state
-yaml.cyaml.CBaseDumper.__init__
-yaml.cyaml.CDumper.__init__
+# yaml._yaml is for backwards compatibility so none of it matters anyway
+yaml._yaml.CEmitter.__pyx_vtable__
+yaml._yaml.CParser.__pyx_vtable__
+yaml._yaml.__test__

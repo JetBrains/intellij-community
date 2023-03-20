@@ -6,6 +6,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.actions.runAnything.RunAnythingManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
@@ -20,12 +21,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleCommandLine;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider.HELP_COMMAND;
@@ -52,6 +52,11 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     Presentation p = e.getPresentation();
     p.setVisible(isVisible(e));
     p.setEnabled(isEnabled(e));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return super.getActionUpdateThread();
   }
 
   @Override
@@ -108,8 +113,8 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     GradleCommandLine commandLine = GradleCommandLine.parse(fullCommandLine);
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     settings.setExternalProjectPath(projectPath);
-    settings.setTaskNames(commandLine.getTasksAndArguments().toList());
-    settings.setScriptParameters(commandLine.getScriptParameters().toString());
+    settings.setTaskNames(commandLine.getTasks().getTokens());
+    settings.setScriptParameters(commandLine.getOptions().getText());
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
     return new ExternalTaskExecutionInfo(settings, executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId());
   }

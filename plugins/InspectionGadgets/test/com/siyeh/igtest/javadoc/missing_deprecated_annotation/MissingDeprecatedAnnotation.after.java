@@ -27,7 +27,7 @@ public class MissingDeprecatedAnnotation {
 class Two {
 
   /**
-   * @deprecated
+   * @deprecated TODO: explain
    */
   @Deprecated
   void a() {}
@@ -39,6 +39,7 @@ class Two {
   void b() {}
 
   /**
+   * something
    * @deprecated TODO: explain
    */
   @Deprecated

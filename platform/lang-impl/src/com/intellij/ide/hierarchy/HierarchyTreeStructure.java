@@ -70,8 +70,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   @Override
   public final boolean isToBuildChildrenInBackground(@NotNull Object element) {
-    if (element instanceof HierarchyNodeDescriptor){
-      HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
+    if (element instanceof HierarchyNodeDescriptor descriptor){
       Object[] cachedChildren = descriptor.getCachedChildren();
       return cachedChildren == null && descriptor.isValid();
     }
@@ -80,8 +79,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   @Override
   public final Object @NotNull [] getChildElements(@NotNull Object element) {
-    if (element instanceof HierarchyNodeDescriptor) {
-      HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
+    if (element instanceof HierarchyNodeDescriptor descriptor) {
       Object[] cachedChildren = descriptor.getCachedChildren();
       if (cachedChildren == null) {
         if (descriptor.isValid()) {

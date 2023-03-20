@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -24,8 +23,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Turns an unqualified unresolved identifier into qualified and resolvable.
- *
- * @author dcheryasov
  */
 public class ImportFromExistingAction implements QuestionAction {
   private final PsiElement myTarget;
@@ -69,8 +66,6 @@ public class ImportFromExistingAction implements QuestionAction {
    */
   @Override
   public boolean execute() {
-    // check if the tree is sane
-    PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
     PyPsiUtils.assertValid(myTarget);
     if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).isQualified()))) {
       return false; // we cannot be qualified
@@ -87,13 +82,24 @@ public class ImportFromExistingAction implements QuestionAction {
       return false;
     }
     // act
-    if (mySources.size() == 1) {
+    if (insideIntentionPreview()) {
+      ImportCandidateHolder item = mySources.get(0);
+      if (item.getImportable() == null) {
+        return false;
+      }
+      doIt(item);
+    }
+    else if (mySources.size() == 1) {
       doWriteAction(mySources.get(0));
     }
     else {
       selectSourceAndDo();
     }
     return true;
+  }
+
+  private boolean insideIntentionPreview() {
+    return !myTarget.isPhysical();
   }
 
   private void selectSourceAndDo() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -17,7 +18,7 @@ import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil
 import com.intellij.refactoring.lang.ElementsHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.SeparateFileWrapper
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
@@ -53,11 +54,12 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(project, klass)) return false
 
-        getErrorMessage(klass)?.let {
+        val errorMessage = getErrorMessage(klass)
+        if (errorMessage != null) {
             CommonRefactoringUtil.showErrorHint(
                 project,
                 editor,
-                RefactoringBundle.getCannotRefactorMessage(it),
+                RefactoringBundle.getCannotRefactorMessage(errorMessage),
                 KotlinExtractSuperclassHandler.REFACTORING_NAME,
                 HelpID.EXTRACT_SUPERCLASS
             )
@@ -100,6 +102,7 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
         return ExtractSuperClassUtil.showConflicts(dialog, conflicts, originalClass.project)
     }
 
+    @NlsContexts.DialogMessage
     internal open fun getErrorMessage(klass: KtClassOrObject): String? = when {
         klass.isExpectDeclaration() -> KotlinBundle.message("error.text.extraction.from.expect.class.is.not.yet.supported")
         klass.toLightClass() == null -> KotlinBundle.message("error.text.extraction.from.non.jvm.class.is.not.yet.supported")

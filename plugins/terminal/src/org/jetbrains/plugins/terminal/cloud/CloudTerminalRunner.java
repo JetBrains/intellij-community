@@ -6,17 +6,18 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
+import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
+import org.jetbrains.plugins.terminal.ShellStartupOptions;
 
-import java.awt.*;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
 
 public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalProcess> {
   private final @NlsSafe String myPipeName;
@@ -24,7 +25,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   private final TtyResizeHandler myTtyResizeHandler;
   private final boolean myDeferSessionUntilFirstShown;
 
-  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, CloudTerminalProcess process,
+  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, @NotNull CloudTerminalProcess process,
                              @Nullable TtyResizeHandler resizeHandler,
                              boolean deferSessionUntilFirstShown) {
     super(project);
@@ -38,12 +39,15 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     this(project, pipeName, process, null, false);
   }
 
-  public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable String currentWorkingDirectory) {
-    return super.createTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
+  @Override
+  public @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parent,
+                                                          @NotNull ShellStartupOptions startupOptions,
+                                                          boolean deferSessionStartUntilUiShown) {
+    return super.startShellTerminalWidget(parent, startupOptions, myDeferSessionUntilFirstShown);
   }
 
   @Override
-  public CloudTerminalProcess createProcess(@Nullable String directory) {
+  public @NotNull CloudTerminalProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
     return myProcess;
   }
 
@@ -75,33 +79,18 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  protected String getTerminalConnectionName(CloudTerminalProcess process) {
-    return "Terminal: " + myPipeName;
-  }
-
-  @Override
   public boolean isTerminalSessionPersistent() {
     return false;
   }
 
   @Override
-  protected TtyConnector createTtyConnector(CloudTerminalProcess process) {
-    return new ProcessTtyConnector(process, Charset.defaultCharset()) {
-      private Dimension myAppliedTermSize;
-
+  public @NotNull TtyConnector createTtyConnector(@NotNull CloudTerminalProcess process) {
+    return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
       @Override
-      protected void resizeImmediately() {
-        if (myTtyResizeHandler == null) {
-          return;
+      public void resize(@NotNull TermSize termSize) {
+        if (myTtyResizeHandler != null) {
+          myTtyResizeHandler.onTtyResizeRequest(termSize.getColumns(), termSize.getRows());
         }
-        Dimension termSize = getPendingTermSize();
-        if (Objects.equals(myAppliedTermSize, termSize)) {
-          return;
-        }
-        if (termSize != null) {
-          myTtyResizeHandler.onTtyResizeRequest(termSize.width, termSize.height);
-        }
-        myAppliedTermSize = termSize;
       }
 
       @Override
@@ -116,8 +105,9 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     };
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
   @Override
-  public String runningTargetName() {
+  public @NotNull String getDefaultTabTitle() {
     return "Cloud terminal";
   }
 }

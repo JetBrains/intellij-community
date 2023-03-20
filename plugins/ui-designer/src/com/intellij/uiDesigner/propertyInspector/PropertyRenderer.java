@@ -19,10 +19,6 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public interface PropertyRenderer<V> {
   /**
    * @return {@code JComponent} to represent the {@code value}

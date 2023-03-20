@@ -1,17 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.execution.rmi.IdeaWatchdog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer {
+  private volatile IdeaWatchdog myWatchdog;
 
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
@@ -21,8 +23,11 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (MavenCoreInitializationException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -39,8 +44,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -51,8 +56,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -62,8 +67,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -76,8 +81,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -90,8 +95,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -103,12 +108,25 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
+
+  @Override
+  public boolean ping(MavenToken token) throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    if (null == myWatchdog) return false;
+    return myWatchdog.ping();
+  }
+
   @Override
   public synchronized void unreferenced() {
     System.exit(0);
+  }
+
+  @Override
+  public void setWatchdog(@NotNull IdeaWatchdog watchdog) {
+    myWatchdog = watchdog;
   }
 }

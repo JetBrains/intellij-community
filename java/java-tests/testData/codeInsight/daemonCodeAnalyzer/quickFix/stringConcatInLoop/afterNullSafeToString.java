@@ -1,4 +1,4 @@
-// "Introduce new StringBuilder to update variable 'res' (null-safe)" "true"
+// "Introduce new StringBuilder to update variable 'res' (null-safe)" "true-preview"
 public class SB {
   public static void main(String[] args) {
       StringBuilder resBuilder = null;

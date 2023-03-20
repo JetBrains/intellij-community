@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.CommonBundle;
@@ -88,14 +88,14 @@ class InstancesView extends InstancesViewBase {
   InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, String className, Consumer<? super String> warningMessageConsumer) {
     super(new BorderLayout(0, JBUIScale.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
     myClassName = className;
-    myDebugProcess = (DebugProcessImpl) (DebuggerManager.getInstance(session.getProject()).getDebugProcess(session.getDebugProcess().getProcessHandler()));
+    myDebugProcess = (DebugProcessImpl)(DebuggerManager.getInstance(session.getProject()).getDebugProcess(session.getDebugProcess().getProcessHandler()));
     myNodeManager = new MyNodeManager(session.getProject());
     myWarningMessageConsumer = warningMessageConsumer;
 
     final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
 
     myFilterConditionEditor = new ExpressionEditorWithHistory(session.getProject(), className,
-      editorsProvider, this);
+                                                              editorsProvider, this);
 
     final Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
     filteringButtonSize.width = JBUIScale.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
@@ -186,8 +186,8 @@ class InstancesView extends InstancesViewBase {
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         myIsAndroidVM = DebuggerUtils.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine());
         final int limit = myIsAndroidVM
-          ? AndroidUtil.ANDROID_INSTANCES_LIMIT
-          : DEFAULT_INSTANCES_LIMIT;
+                          ? AndroidUtil.ANDROID_INSTANCES_LIMIT
+                          : DEFAULT_INSTANCES_LIMIT;
         List<JavaReferenceInfo> instances = ContainerUtil
           .map(getInstancesProvider().getInstances(limit + 1), referenceInfo -> ((JavaReferenceInfo)referenceInfo));
 
@@ -209,7 +209,7 @@ class InstancesView extends InstancesViewBase {
               new FilteringTask(myClassName, myDebugProcess, myFilterConditionEditor.getExpression(), new MyValuesList(finalInstances),
                                 new MyFilteringCallback(evaluationContext));
 
-              myFilteringTaskFuture = ApplicationManager.getApplication().executeOnPooledThread(myFilteringTask);
+            myFilteringTaskFuture = ApplicationManager.getApplication().executeOnPooledThread(myFilteringTask);
           });
         }
       }
@@ -293,7 +293,7 @@ class InstancesView extends InstancesViewBase {
     @Override
     public Action matched(@NotNull JavaReferenceInfo ref) {
       final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
-        myEvaluationContext, myNodeManager);
+                                                  myEvaluationContext, myNodeManager);
       myMatchedCount++;
       myProceedCount++;
       myChildren.add(val);
@@ -316,7 +316,7 @@ class InstancesView extends InstancesViewBase {
     @Override
     public Action error(@NotNull JavaReferenceInfo ref, @NotNull String description) {
       final JavaValue val = new InstanceJavaValue(ref.createDescriptor(myDebugProcess.getProject()),
-        myEvaluationContext, myNodeManager);
+                                                  myEvaluationContext, myNodeManager);
       myErrorsGroup.addErrorValue(description, val);
       myProceedCount++;
       myErrorsCount++;
@@ -332,8 +332,8 @@ class InstancesView extends InstancesViewBase {
 
       final long duration = System.nanoTime() - myFilteringStartedTime;
       LOG.info(String.format("Filtering completed in %d ms for %d instances",
-        TimeUnit.NANOSECONDS.toMillis(duration),
-        myProceedCount));
+                             TimeUnit.NANOSECONDS.toMillis(duration),
+                             myProceedCount));
 
       final int proceed = myProceedCount;
       final int matched = myMatchedCount;
@@ -362,7 +362,7 @@ class InstancesView extends InstancesViewBase {
       final long now = System.nanoTime();
       final int newChildrenCount = myChildren.size();
       if (newChildrenCount >= FILTERING_CHUNK_SIZE ||
-        (newChildrenCount > 0 && now - myLastTreeUpdatingTime > TimeUnit.SECONDS.toNanos(MAX_DURATION_TO_UPDATE_TREE_SECONDS))) {
+          (newChildrenCount > 0 && now - myLastTreeUpdatingTime > TimeUnit.SECONDS.toNanos(MAX_DURATION_TO_UPDATE_TREE_SECONDS))) {
         final XValueChildrenList children = myChildren;
         ApplicationManager.getApplication().invokeLater(() -> myInstancesTree.addChildren(children, false));
         myChildren = new XValueChildrenList();
@@ -370,6 +370,7 @@ class InstancesView extends InstancesViewBase {
       }
     }
   }
+
   private static class MyValuesList implements FilteringTask.ValuesList {
     private final List<? extends JavaReferenceInfo> myRefs;
 

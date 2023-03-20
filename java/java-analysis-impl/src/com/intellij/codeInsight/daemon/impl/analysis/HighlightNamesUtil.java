@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
@@ -7,15 +7,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -39,7 +36,7 @@ public final class HighlightNamesUtil {
   @Nullable
   static HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
                                            @NotNull PsiElement elementToHighlight,
-                                           final boolean isDeclaration,
+                                           boolean isDeclaration,
                                            @NotNull TextAttributesScheme colorsScheme) {
     boolean isInherited = false;
     boolean isStaticallyImported = false;
@@ -47,7 +44,7 @@ public final class HighlightNamesUtil {
     if (!isDeclaration) {
       isStaticallyImported = isStaticallyImported(elementToHighlight);
       if (isCalledOnThis(elementToHighlight)) {
-        final PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
+        PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
         PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
         while (enclosingClass != null) {
           isInherited = enclosingClass.isInheritor(containingClass, true);
@@ -101,7 +98,7 @@ public final class HighlightNamesUtil {
     return TextAttributes.merge(scopeAttributes, regularAttributes);
   }
   
-  private static TextAttributes mergeWithVisibilityAttributes(PsiModifierListOwner listOwner, TextAttributes basedAttributes, @NotNull TextAttributesScheme colorsScheme) {
+  private static TextAttributes mergeWithVisibilityAttributes(@NotNull PsiModifierListOwner listOwner, TextAttributes basedAttributes, @NotNull TextAttributesScheme colorsScheme) {
     TextAttributesKey attributesKey = null;
     if (listOwner.hasModifierProperty(PsiModifier.PUBLIC)) {
       attributesKey = JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES;
@@ -125,8 +122,7 @@ public final class HighlightNamesUtil {
   @NotNull
   static HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
     TextRange range = elementToHighlight.getTextRange();
-    if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
+    if (elementToHighlight instanceof PsiJavaCodeReferenceElement referenceElement) {
       PsiElement identifier = referenceElement.getReferenceNameElement();
       if (identifier != null) {
         range = identifier.getTextRange();
@@ -134,9 +130,8 @@ public final class HighlightNamesUtil {
     }
 
     // This will highlight @ sign in annotation as well.
-    final PsiElement parent = elementToHighlight.getParent();
-    if (parent instanceof PsiAnnotation) {
-      final PsiAnnotation psiAnnotation = (PsiAnnotation)parent;
+    PsiElement parent = elementToHighlight.getParent();
+    if (parent instanceof PsiAnnotation psiAnnotation) {
       range = new TextRange(psiAnnotation.getTextRange().getStartOffset(), range.getEndOffset());
     }
 
@@ -233,40 +228,11 @@ public final class HighlightNamesUtil {
       if (aClass.isInterface()) return JavaHighlightInfoTypes.INTERFACE_NAME;
       if (aClass.isEnum()) return JavaHighlightInfoTypes.ENUM_NAME;
       if (aClass instanceof PsiTypeParameter) return JavaHighlightInfoTypes.TYPE_PARAMETER_NAME;
-      final PsiModifierList modList = aClass.getModifierList();
+      PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME;
     }
     // use class by default
     return JavaHighlightInfoTypes.CLASS_NAME;
-  }
-
-  @Nullable
-  static HighlightInfo highlightReassignedVariable(@NotNull PsiVariable variable, @NotNull PsiElement elementToHighlight) {
-    if (variable instanceof PsiLocalVariable) {
-      return createReassignedInfo(elementToHighlight, 
-                                  JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES,
-                                  JavaHighlightInfoTypes.REASSIGNED_LOCAL_VARIABLE,
-                                  JavaBundle.message("tooltip.reassigned.local.variable"));
-    }
-    if (variable instanceof PsiParameter) {
-      return createReassignedInfo(elementToHighlight, 
-                                  JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES,
-                                  JavaHighlightInfoTypes.REASSIGNED_PARAMETER,
-                                  JavaBundle.message("tooltip.reassigned.parameter"));
-    }
-    return null;
-  }
-
-  @Nullable
-  private static HighlightInfo createReassignedInfo(@NotNull PsiElement elementToHighlight,
-                                                    @NotNull TextAttributesKey attributesKey,
-                                                    @NotNull HighlightInfoType highlightInfoType,
-                                                    @NotNull @NlsContexts.Tooltip String toolTip) {
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight);
-    return attributes != null && !attributes.isEmpty()
-           ? builder.escapedToolTip(toolTip).create()
-           : builder.create();
   }
 
   private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull TextAttributesScheme colorsScheme) {
@@ -276,13 +242,13 @@ public final class HighlightNamesUtil {
     DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(file.getProject());
     List<Pair<NamedScope,NamedScopesHolder>> scopes = validationManager.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
-      final NamedScope namedScope = scope.getFirst();
-      final TextAttributesKey scopeKey = ScopeAttributesUtil.getScopeTextAttributeKey(namedScope.getScopeId());
-      final TextAttributes attributes = colorsScheme.getAttributes(scopeKey);
+      NamedScope namedScope = scope.getFirst();
+      TextAttributesKey scopeKey = ScopeAttributesUtil.getScopeTextAttributeKey(namedScope.getScopeId());
+      TextAttributes attributes = colorsScheme.getAttributes(scopeKey);
       if (attributes == null || attributes.isEmpty()) {
         continue;
       }
-      final PackageSet packageSet = namedScope.getValue();
+      PackageSet packageSet = namedScope.getValue();
       if (packageSet != null && packageSet.contains(file, scope.getSecond())) {
         result = TextAttributes.merge(attributes, result);
       }
@@ -294,7 +260,7 @@ public final class HighlightNamesUtil {
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof SyntheticElement) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
-    final TextRange throwsRange = method.getThrowsList().getTextRange();
+    TextRange throwsRange = method.getThrowsList().getTextRange();
     LOG.assertTrue(throwsRange != null, method);
     int end = throwsRange.getEndOffset();
     return new TextRange(start, end);
@@ -312,7 +278,7 @@ public final class HighlightNamesUtil {
     if (aClass instanceof PsiEnumConstantInitializer) {
       return ((PsiEnumConstantInitializer)aClass).getEnumConstant().getNameIdentifier().getTextRange();
     }
-    final PsiElement psiElement = aClass instanceof PsiAnonymousClass
+    PsiElement psiElement = aClass instanceof PsiAnonymousClass
                                   ? ((PsiAnonymousClass)aClass).getBaseClassReference()
                                   : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
     if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());

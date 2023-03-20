@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2020 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.psi.PsiClass;
@@ -25,8 +12,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
@@ -36,19 +24,34 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * Class FQN or ID -> entry in {@code plugin.xml}.
+ * <p>
+ * <ul>
+ *   <li>Application/Project/Module-component class - {@link Component#getInterfaceClass()} / {@link Component#getImplementationClass()} / {@link Component#getHeadlessImplementationClass()}</li>
+ *   <li>Action/ActionGroup class - {@link Action#getClazz()}/{@link Group#getClazz()}</li>
+ *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getId()}</li>
+ *   <li>Application/Project Listener class - {@link Listeners.Listener#getListenerClassName()}</li>
+ *   <li>Listener topic class - {@link Listeners.Listener#getTopicClassName()}</li>
+ * </ul>
+ */
+@SuppressWarnings("UnusedReturnValue")
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 3;
+  private static final int INDEX_VERSION = 8;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
@@ -100,23 +103,66 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return INDEX_VERSION;
   }
 
+  public static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, null);
+  }
+
+  public static boolean isRegisteredComponentInterface(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.COMPONENT_INTERFACE);
+  }
+
   public static boolean isRegisteredApplicationComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.APPLICATION_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.APPLICATION_COMPONENT);
   }
 
   public static boolean isRegisteredProjectComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.PROJECT_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.PROJECT_COMPONENT);
   }
 
   public static boolean isRegisteredModuleComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.MODULE_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.MODULE_COMPONENT);
   }
 
-  public static boolean isRegisteredAction(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.ACTION);
+  public static boolean isRegisteredActionOrGroup(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.ACTION);
   }
 
-  private static boolean isRegistered(PsiClass psiClass, GlobalSearchScope scope, RegistrationType type) {
+  public static boolean isRegisteredListenerTopic(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.LISTENER_TOPIC);
+  }
+
+  public static boolean processComponent(Project project,
+                                         PsiClass componentInterfaceOrImplementationClass,
+                                         GlobalSearchScope scope,
+                                         Processor<? extends Component> processor) {
+    return processAll(project, componentInterfaceOrImplementationClass, scope,
+                      EnumSet.of(RegistrationType.APPLICATION_COMPONENT,
+                                 RegistrationType.PROJECT_COMPONENT,
+                                 RegistrationType.MODULE_COMPONENT,
+                                 RegistrationType.COMPONENT_INTERFACE),
+                      processor);
+  }
+
+  public static boolean processListener(@NotNull Project project,
+                                        PsiClass listenerClass,
+                                        GlobalSearchScope scope,
+                                        Processor<? extends Listeners.Listener> processor) {
+    return processAll(project, listenerClass, scope,
+                      EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER),
+                      processor);
+  }
+
+  public static boolean processListenerTopic(@NotNull Project project,
+                                             PsiClass topicClass,
+                                             GlobalSearchScope scope,
+                                             Processor<? extends Listeners.Listener> processor) {
+    return processAll(project, topicClass, scope, EnumSet.of(RegistrationType.LISTENER_TOPIC), processor);
+  }
+
+  /**
+   * @param type {@code null} for any
+   */
+  private static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope, @Nullable RegistrationType type) {
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
       return false;
@@ -124,48 +170,95 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
 
     return !FileBasedIndex.getInstance()
       .processValues(NAME, qualifiedName, null,
-                     (file, value) -> ContainerUtil.process(value, entry -> !(entry.getRegistrationType() == type)),
+                     (file, value) -> ContainerUtil.process(value, entry -> {
+                       RegistrationType registrationType = entry.getRegistrationType();
+                       if (type == null) {
+                         return !(registrationType.isClass());
+                       }
+
+                       return !(registrationType == type);
+                     }),
                      scope);
   }
 
   public static boolean processAllActionOrGroup(@NotNull Project project,
                                                 GlobalSearchScope scope,
-                                                Processor<? super ActionOrGroup> processor) {
-    Set<String> keys = new HashSet<>();
-    FileBasedIndex.getInstance().processAllKeys(NAME, s -> keys.add(s), scope, null);
-    return ContainerUtil.process(keys, s -> processActionOrGroup(project, s, scope, processor));
+                                                Processor<? extends ActionOrGroup> processor) {
+    return FileBasedIndex.getInstance().processAllKeys(NAME, s -> processActionOrGroup(project, s, scope, processor), scope, null);
+  }
+
+  public static boolean processActionOrGroupClass(@NotNull Project project,
+                                                  PsiClass actionOrGroupClass,
+                                                  GlobalSearchScope scope,
+                                                  Processor<? extends ActionOrGroup> processor) {
+    return processAll(project, actionOrGroupClass, scope, EnumSet.of(RegistrationType.ACTION), processor);
   }
 
   public static boolean processActionOrGroup(@NotNull Project project,
                                              @NotNull String actionOrGroupId,
                                              GlobalSearchScope scope,
-                                             Processor<? super ActionOrGroup> processor) {
-    return doProcessActionOrGroup(project, actionOrGroupId, scope,
-                                  EnumSet.of(RegistrationType.ACTION_ID, RegistrationType.ACTION_GROUP_ID),
-                                  processor);
+                                             Processor<? extends ActionOrGroup> processor) {
+    return processAll(project, actionOrGroupId, scope, EnumSet.of(RegistrationType.ACTION_ID, RegistrationType.ACTION_GROUP_ID), processor);
   }
 
   public static boolean processAction(@NotNull Project project,
                                       @NotNull String actionId,
                                       GlobalSearchScope scope,
-                                      Processor<? super ActionOrGroup> processor) {
-    return doProcessActionOrGroup(project, actionId, scope, EnumSet.of(RegistrationType.ACTION_ID), processor);
+                                      Processor<? extends ActionOrGroup> processor) {
+    return processAll(project, actionId, scope, EnumSet.of(RegistrationType.ACTION_ID), processor);
   }
 
   public static boolean processGroup(@NotNull Project project,
                                      @NotNull String actionGroupId,
                                      GlobalSearchScope scope,
-                                     Processor<? super ActionOrGroup> processor) {
-    return doProcessActionOrGroup(project, actionGroupId, scope, EnumSet.of(RegistrationType.ACTION_GROUP_ID), processor);
+                                     Processor<? extends ActionOrGroup> processor) {
+    return processAll(project, actionGroupId, scope, EnumSet.of(RegistrationType.ACTION_GROUP_ID), processor);
   }
 
-  private static boolean doProcessActionOrGroup(@NotNull Project project,
-                                                @NotNull String actionOrGroupId,
-                                                GlobalSearchScope scope,
-                                                EnumSet<RegistrationType> types,
-                                                Processor<? super ActionOrGroup> processor) {
-    List<XmlTag> tags = new SmartList<>();
-    FileBasedIndex.getInstance().processValues(NAME, actionOrGroupId, null, (file, value) -> {
+  private static <T extends DomElement> boolean processAll(@NotNull Project project,
+                                                           @NotNull PsiClass psiClass,
+                                                           GlobalSearchScope scope,
+                                                           EnumSet<RegistrationType> types,
+                                                           Processor<T> processor) {
+    String qualifiedName = psiClass.getQualifiedName();
+    assert qualifiedName != null;
+
+    return processAll(project, qualifiedName, scope, types, processor);
+  }
+
+  /**
+   * @see RegistrationIndexer
+   */
+  @SuppressWarnings("unchecked")
+  private static <T extends DomElement> boolean processAll(@NotNull Project project,
+                                                           @NotNull String key,
+                                                           GlobalSearchScope scope,
+                                                           EnumSet<RegistrationType> types,
+                                                           Processor<T> processor) {
+    RegistrationEntry.RegistrationDomType registrationDomType = ContainerUtil.getFirstItem(types).getRegistrationDomType();
+
+    return processIndexEntries(project, key, scope, types, tag -> {
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+
+      T t;
+      if (registrationDomType.isUseParentDom()) {
+        t = (T)DomUtil.getParentOfType(domElement, registrationDomType.getDomClass(), false);
+      }
+      else {
+        t = (T)ObjectUtils.tryCast(domElement, registrationDomType.getDomClass());
+      }
+      if (t == null) return true;
+
+      return processor.process(t);
+    });
+  }
+
+  private static boolean processIndexEntries(@NotNull Project project,
+                                             @NotNull String key,
+                                             GlobalSearchScope scope,
+                                             EnumSet<RegistrationType> types,
+                                             Processor<XmlTag> processor) {
+    return FileBasedIndex.getInstance().processValues(NAME, key, null, (file, value) -> {
       for (RegistrationEntry entry : value) {
         if (!types.contains(entry.getRegistrationType())) {
           continue;
@@ -174,18 +267,13 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (!(psiFile instanceof XmlFile)) continue;
 
-        PsiElement psiElement = psiFile.findElementAt(entry.getOffset());
-        XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
-        tags.add(xmlTag);
+        XmlTag xmlTag = AstLoadingFilter.forceAllowTreeLoading(psiFile, () -> {
+          PsiElement psiElement = psiFile.findElementAt(entry.getOffset());
+          return PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
+        });
+        if (!processor.process(xmlTag)) return false;
       }
       return true;
     }, scope);
-
-    return ContainerUtil.process(tags, tag -> {
-      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
-
-      if (!(domElement instanceof ActionOrGroup)) return true;
-      return processor.process((ActionOrGroup)domElement);
-    });
   }
 }

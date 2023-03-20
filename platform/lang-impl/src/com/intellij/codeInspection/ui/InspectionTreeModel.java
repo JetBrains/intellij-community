@@ -38,9 +38,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
   private final Invoker myInvoker;
 
   public InspectionTreeModel() {
-    myInvoker = ApplicationManager.getApplication().isUnitTestMode()
-                ? Invoker.forEventDispatchThread(this)
-                : Invoker.forBackgroundThreadWithReadAction(this);
+    myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
   }
 
   @Override
@@ -134,49 +132,49 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
 
   @NotNull
   public InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(module, () -> new InspectionModuleNode(module, parent), parent);
+    return getOrAdd(module, parent, () -> new InspectionModuleNode(module, parent));
   }
 
   @NotNull
   public InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(packageName, () -> new InspectionPackageNode(packageName, parent), parent);
+    return getOrAdd(packageName, parent, () -> new InspectionPackageNode(packageName, parent));
   }
 
   @NotNull
   InspectionGroupNode createGroupNode(@Nls String group, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(group, () -> new InspectionGroupNode(group, parent), parent);
+    return getOrAdd(group, parent, () -> new InspectionGroupNode(group, parent));
   }
 
   @NotNull
   InspectionSeverityGroupNode createSeverityGroupNode(SeverityRegistrar severityRegistrar,
                                                       HighlightDisplayLevel level,
                                                       @NotNull InspectionTreeNode parent) {
-    return getOrAdd(level, () -> new InspectionSeverityGroupNode(severityRegistrar, level, parent), parent);
+    return getOrAdd(level, parent, () -> new InspectionSeverityGroupNode(severityRegistrar, level, parent));
   }
 
   @NotNull
   public RefElementNode createRefElementNode(@Nullable RefEntity entity,
                                              @NotNull Supplier<? extends RefElementNode> supplier,
                                              @NotNull InspectionTreeNode parent) {
-    return getOrAdd(entity, () -> ReadAction.compute(supplier::get), parent);
+    return getOrAdd(entity, parent, () -> ReadAction.compute(supplier::get));
   }
 
   public <T extends InspectionTreeNode> T createCustomNode(@NotNull Object userObject, @NotNull Supplier<? extends T> supplier, @NotNull InspectionTreeNode parent) {
-    return getOrAdd(userObject, supplier, parent);
+    return getOrAdd(userObject, parent, supplier);
   }
 
   @NotNull
   InspectionNode createInspectionNode(@NotNull InspectionToolWrapper toolWrapper,
                                       InspectionProfileImpl profile,
                                       @NotNull InspectionTreeNode parent) {
-    return getOrAdd(toolWrapper.getShortName(), () -> new InspectionNode(toolWrapper, profile, parent), parent);
+    return getOrAdd(toolWrapper.getShortName(), parent, () -> new InspectionNode(toolWrapper, profile, parent));
   }
 
   public void createProblemDescriptorNode(RefEntity element,
                                           @NotNull CommonProblemDescriptor descriptor,
                                           @NotNull InspectionToolPresentation presentation,
                                           @NotNull InspectionTreeNode parent) {
-    getOrAdd(descriptor, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)), parent);
+    getOrAdd(descriptor, parent, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)));
   }
 
   public void createOfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor offlineDescriptor,
@@ -184,12 +182,14 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
                                                  @NotNull InspectionToolPresentation presentation,
                                                  @NotNull InspectionTreeNode parent) {
     getOrAdd(offlineDescriptor,
-             () -> ReadAction.compute(() -> new OfflineProblemDescriptorNode(resolveResult, presentation, offlineDescriptor, parent)),
-             parent);
+             parent, () -> ReadAction.compute(() -> new OfflineProblemDescriptorNode(resolveResult, presentation, offlineDescriptor, parent))
+    );
   }
 
-  private synchronized <T extends InspectionTreeNode> T getOrAdd(Object userObject, Supplier<? extends T> supplier, InspectionTreeNode parent) {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || !ApplicationManager.getApplication().isDispatchThread());
+  private synchronized <T extends InspectionTreeNode> T getOrAdd(Object userObject,
+                                                                 InspectionTreeNode parent,
+                                                                 @NotNull Supplier<? extends @NotNull T> supplier) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (userObject == null) {
       userObject = ObjectUtils.NULL;
     }

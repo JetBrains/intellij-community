@@ -32,12 +32,14 @@ public class MavenImporterSpy extends AbstractEventSpy {
     if (indicator == null) {
       return;
     }
-    String dependencyId = toString(event.getArtifact());
+
     if (event.getType() == RepositoryEvent.EventType.ARTIFACT_DOWNLOADING) {
+      String dependencyId = toString(event.getArtifact());
       indicator.startedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, dependencyId);
       downloadedArtifacts.add(dependencyId);
     }
-    if (event.getType() == RepositoryEvent.EventType.ARTIFACT_RESOLVED) {
+    else if (event.getType() == RepositoryEvent.EventType.ARTIFACT_RESOLVED) {
+      String dependencyId = toString(event.getArtifact());
       if (downloadedArtifacts.remove(dependencyId)) {
         processResolvedArtifact(event, indicator, dependencyId);
       }

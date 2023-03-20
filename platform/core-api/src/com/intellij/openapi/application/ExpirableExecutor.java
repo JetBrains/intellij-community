@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
@@ -12,9 +12,10 @@ import java.util.concurrent.Executor;
  * to clean up any resources it might have acquired before suspending. The executor is created by calling {@link #on}, the expirations are
  * specified by chained calls. For example, to invoke some action that cancels when project is disposed, one can use
  * {@code ExpirableExecutor.on(AppExecutorUtil.getAppExecutorService()).expireWith(project).
+ * @deprecated use coroutines and their cancellation mechanism instead
  */
-
-@ApiStatus.Experimental
+@ScheduledForRemoval
+@Deprecated
 public interface ExpirableExecutor extends BaseExpirableExecutor<ExpirableExecutor> {
 
   /**

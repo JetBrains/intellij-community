@@ -41,8 +41,7 @@ public class ImportOnDemandIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    if (!(element instanceof GrReferenceElement)) return;
-    final GrReferenceElement<?> ref = (GrReferenceElement<?>)element;
+    if (!(element instanceof GrReferenceElement<?> ref)) return;
     final PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiClass)) return;
 
@@ -70,8 +69,7 @@ public class ImportOnDemandIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceElement)) return false;
-        final GrReferenceElement ref = (GrReferenceElement)element;
+        if (!(element instanceof GrReferenceElement ref)) return false;
         final PsiElement parent = ref.getParent();
         if (!(parent instanceof GrReferenceElement)) return false;
         final PsiElement resolved = ref.resolve();

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.application.ReadActionProcessor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
@@ -11,14 +12,13 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.idea.references.ReferenceImpl as ImplicitReference
 
 class DefaultAnnotationMethodKotlinImplicitReferenceSearcher :
     QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
@@ -30,7 +30,7 @@ class DefaultAnnotationMethodKotlinImplicitReferenceSearcher :
             if (reference !is KtSimpleNameReference) return true
             val annotationEntry = reference.expression.getParentOfTypeAndBranch<KtAnnotationEntry> { typeReference } ?: return true
             val argument = annotationEntry.valueArguments.singleOrNull() as? KtValueArgument ?: return true
-            val implicitRef = argument.references.firstIsInstanceOrNull<ImplicitReference>() ?: return true
+            val implicitRef = argument.references.firstIsInstanceOrNull<KtDefaultAnnotationArgumentReference>() ?: return true
             return consumer.process(implicitRef)
         }
     }

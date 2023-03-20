@@ -47,14 +47,14 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null) {
         return;
       }
       final PsiType type = typeElement.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return;
       }
       final PsiJavaCodeReferenceElement referenceElement =
@@ -62,7 +62,6 @@ public class CollectionContainsUrlInspection extends BaseInspection {
       if (referenceElement == null) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
 
       final ClassType collectionType = getClassType(aClass);
@@ -146,7 +145,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       if (urlAdded) {
         return;
       }
@@ -155,11 +154,9 @@ public class CollectionContainsUrlInspection extends BaseInspection {
         expression.getMethodExpression();
       final PsiExpression qualifierExpression =
         methodExpression.getQualifierExpression();
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+      if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)qualifierExpression;
       @NonNls final String methodName =
         methodExpression.getReferenceName();
       if (collectionType == ClassType.SET &&

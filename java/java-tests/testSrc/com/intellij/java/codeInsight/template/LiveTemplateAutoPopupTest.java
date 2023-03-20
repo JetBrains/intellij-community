@@ -1,16 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template;
 
-
 import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
 
@@ -61,7 +60,7 @@ public class LiveTemplateAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   private TemplateImpl createTemplate(String key) {
     TemplateManager manager = TemplateManager.getInstance(getProject());
     TemplateImpl template = (TemplateImpl)manager.createTemplate(key, "user", "");
-    TemplateContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
+    TemplateContextType contextType = TemplateContextTypes.getByClass(JavaCodeContextType.Generic.class);
     template.getTemplateContext().setEnabled(contextType, true);
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
     return template;

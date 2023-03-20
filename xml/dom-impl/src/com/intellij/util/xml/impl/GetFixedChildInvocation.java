@@ -17,9 +17,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
 
-/**
- * @author peter
- */
 public class GetFixedChildInvocation implements Invocation {
   private final Pair<FixedChildDescriptionImpl,Integer> myPair;
 

@@ -1,4 +1,4 @@
-// "Add ''Parcelable'' supertype" "false"
+// "Add 'Parcelable' supertype" "false"
 // IGNORE_IRRELEVANT_ACTIONS
 // WITH_STDLIB
 

@@ -88,8 +88,7 @@ public interface TestSearchScope {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Wrapper)) return false;
-      Wrapper wrapper = (Wrapper)o;
+      if (!(o instanceof Wrapper wrapper)) return false;
       return Objects.equals(myScope, wrapper.myScope);
     }
 

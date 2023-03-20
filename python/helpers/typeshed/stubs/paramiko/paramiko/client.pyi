@@ -1,5 +1,5 @@
-from socket import socket
-from typing import Iterable, Mapping, NoReturn, Type
+from collections.abc import Iterable, Mapping
+from typing import NoReturn
 
 from paramiko.channel import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 from paramiko.hostkeys import HostKeys
@@ -8,6 +8,8 @@ from paramiko.sftp_client import SFTPClient
 from paramiko.transport import Transport
 from paramiko.util import ClosingContextManager
 
+from .transport import _SocketLike
+
 class SSHClient(ClosingContextManager):
     def __init__(self) -> None: ...
     def load_system_host_keys(self, filename: str | None = ...) -> None: ...
@@ -15,7 +17,7 @@ class SSHClient(ClosingContextManager):
     def save_host_keys(self, filename: str) -> None: ...
     def get_host_keys(self) -> HostKeys: ...
     def set_log_channel(self, name: str) -> None: ...
-    def set_missing_host_key_policy(self, policy: Type[MissingHostKeyPolicy] | MissingHostKeyPolicy) -> None: ...
+    def set_missing_host_key_policy(self, policy: type[MissingHostKeyPolicy] | MissingHostKeyPolicy) -> None: ...
     def connect(
         self,
         hostname: str,
@@ -28,7 +30,7 @@ class SSHClient(ClosingContextManager):
         allow_agent: bool = ...,
         look_for_keys: bool = ...,
         compress: bool = ...,
-        sock: socket | None = ...,
+        sock: _SocketLike | None = ...,
         gss_auth: bool = ...,
         gss_kex: bool = ...,
         gss_deleg_creds: bool = ...,

@@ -244,7 +244,7 @@ public final class AttributesFlyweight {
    * @return all attributes effects, main and additional ones
    */
   @NotNull
-  Map<EffectType, Color> getAllEffects() {
+  public Map<EffectType, Color> getAllEffects() {
     if (myAdditionalEffects.isEmpty()) {
       return myEffectType == null || myEffectColor == null ? Collections.emptyMap() : Collections.singletonMap(myEffectType, myEffectColor);
     }

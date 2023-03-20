@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -161,8 +160,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof DebuggerSettings)) return false;
-    DebuggerSettings secondSettings = (DebuggerSettings)obj;
+    if (!(obj instanceof DebuggerSettings secondSettings)) return false;
 
     return
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
@@ -183,9 +181,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
-      (Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE)) &&
+      Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE) &&
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
-      myCapturePoints.equals(((DebuggerSettings)obj).myCapturePoints);
+      myCapturePoints.equals(secondSettings.myCapturePoints);
   }
 
   @Override
@@ -259,7 +257,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       mySelectedTab = element.getAttributeValue("selected");
       final String split = element.getAttributeValue("split");
       if (split != null) {
-        mySplitProportion = Double.valueOf(split);
+        mySplitProportion = Double.parseDouble(split);
       }
       myDetached = Boolean.parseBoolean(element.getAttributeValue("detached"));
       myHorizontalToolbar = !"false".equalsIgnoreCase(element.getAttributeValue("horizontal"));
@@ -336,7 +334,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     }
   }
 
-  public interface CapturePointsSettingsListener extends EventListener{
+  public interface CapturePointsSettingsListener extends EventListener {
     void capturePointsChanged();
   }
 

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.actions.onSave;
 
 import com.intellij.codeInsight.actions.*;
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
 
     for (Document document : documents) {
       PsiFile psiFile = manager.getPsiFile(document);
-      if (psiFile == null) continue;
+      if (psiFile == null || !LanguageFormatting.INSTANCE.isAutoFormatAllowed(psiFile)) continue;
 
       allFiles.add(psiFile);
 
@@ -58,13 +59,13 @@ public class FormatOnSaveAction extends ActionsOnSaveFileDocumentManagerListener
       return;
     }
 
-    procesFiles(project, allFiles, filesToFormat, filesToOptimizeImports);
+    processFiles(project, allFiles, filesToFormat, filesToOptimizeImports);
   }
 
-  private void procesFiles(@NotNull Project project,
-                           @NotNull List<PsiFile> allFiles,
-                           @NotNull List<PsiFile> filesToFormat,
-                           @NotNull List<PsiFile> filesToOptimizeImports) {
+  private void processFiles(@NotNull Project project,
+                            @NotNull List<PsiFile> allFiles,
+                            @NotNull List<PsiFile> filesToFormat,
+                            @NotNull List<PsiFile> filesToOptimizeImports) {
     boolean onlyChangedLines = VcsFacade.getInstance().hasActiveVcss(project) &&
                                FormatOnSaveOptions.getInstance(project).isFormatOnlyChangedLines();
 

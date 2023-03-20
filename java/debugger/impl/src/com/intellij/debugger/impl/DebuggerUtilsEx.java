@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerUtilsEx
@@ -17,8 +17,11 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.GeneratedLocation;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.ui.CollectionHistoryView;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.execution.filters.ExceptionFilters;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -52,10 +55,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.jdi.ArrayReferenceImpl;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
@@ -65,11 +72,12 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,7 +88,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsEx.class);
 
   /**
-   * @param context
    * @return all CodeFragmentFactoryProviders that provide code fragment factories suitable in the context given
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(@Nullable PsiElement context) {
@@ -133,8 +140,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return checkedType;
     }
 
-    if (checkedType instanceof ClassType) {
-      ClassType classType = (ClassType)checkedType;
+    if (checkedType instanceof ClassType classType) {
       ClassType superClassType = classType.superclass();
       if (superClassType != null) {
         ReferenceType superClass = getSuperClass(baseQualifiedName, superClassType);
@@ -206,7 +212,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return false; //is array
     }
 
-    return classFilters.stream().anyMatch(filter -> isFiltered(filter, qName));
+    return ContainerUtil.exists(classFilters, filter -> isFiltered(filter, qName));
   }
 
   public static int getEnabledNumber(ClassFilter[] classFilters) {
@@ -218,19 +224,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return ClassFilter.EMPTY_ARRAY;
     }
 
-    ClassFilter[] filters = new ClassFilter[children.size()];
-    for (int i = 0, size = children.size(); i < size; i++) {
+    //do not leave null elements in the resulting array in case of read errors
+    List<ClassFilter> filters = new ArrayList<>(children.size());
+    for (Element child : children) {
       try {
-        filters[i] = create(children.get(i));
+        filters.add(create(child));
       }
       catch (InvalidDataException e) {
         LOG.error(e);
       }
     }
-    return filters;
+    return filters.toArray(ClassFilter.EMPTY_ARRAY);
   }
 
-  public static void writeFilters(@NotNull Element parentNode, @NonNls String tagName, ClassFilter[] filters) throws WriteExternalException {
+  public static void writeFilters(@NotNull Element parentNode,
+                                  @NonNls String tagName,
+                                  ClassFilter[] filters) throws WriteExternalException {
     for (ClassFilter filter : filters) {
       Element element = new Element(tagName);
       parentNode.addContent(element);
@@ -362,6 +371,39 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {
+    XValueContainer container = node.getValueContainer();
+    if (container instanceof JavaValue) {
+      ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
+      if (descriptor instanceof FieldDescriptor) {
+        Field field = ((FieldDescriptor)descriptor).getField();
+        String clsName = field.declaringType().name().replace("$", ".");
+        String fieldName = field.name();
+        addCollectionHistoryTab(session, clsName, fieldName, node);
+      }
+    }
+  }
+
+  public static void addCollectionHistoryTab(@NotNull XDebugSession session,
+                                             @NotNull String clsName,
+                                             @NotNull String fieldName,
+                                             @Nullable XValueNodeImpl node) {
+    XDebugProcess process = session.getDebugProcess();
+    RunnerLayoutUi ui = session.getUI();
+    String title = JavaDebuggerBundle.message("collection.history.tab.title", clsName + "." + fieldName);
+    for (Content content : ui.getContents()) {
+      if (title.equals(content.getDisplayName())) {
+        ui.removeContent(content, true);
+      }
+    }
+    JComponent view = new CollectionHistoryView(clsName, fieldName, process, node).getComponent();
+    Content content = ui.createContent(title, view, title, null, null);
+    content.setCloseable(true);
+    content.setDescription(JavaDebuggerBundle.message("collection.history"));
+    ui.addContent(content);
+    ui.selectAndFocus(content, true, true);
+  }
+
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
@@ -454,32 +496,43 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (eof()) return "";
 
       switch (get()) {
-        case 'Z':
+        case 'Z' -> {
           return "boolean";
-        case 'B':
+        }
+        case 'B' -> {
           return "byte";
-        case 'C':
+        }
+        case 'C' -> {
           return "char";
-        case 'S':
+        }
+        case 'S' -> {
           return "short";
-        case 'I':
+        }
+        case 'I' -> {
           return "int";
-        case 'J':
+        }
+        case 'J' -> {
           return "long";
-        case 'F':
+        }
+        case 'F' -> {
           return "float";
-        case 'D':
+        }
+        case 'D' -> {
           return "double";
-        case 'V':
+        }
+        case 'V' -> {
           return "void";
-        case 'L':
+        }
+        case 'L' -> {
           int start = pos;
           pos = buffer.indexOf(';', start) + 1;
           LOG.assertTrue(pos > 0);
           return buffer.substring(start, pos - 1).replace('/', '.');
-        case '[':
+        }
+        case '[' -> {
           return getSignature() + "[]";
-        case '(':
+        }
+        case '(' -> {
           StringBuilder result = new StringBuilder("(");
           String separator = "";
           while (peek() != ')') {
@@ -490,9 +543,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           get();
           result.append(")");
           return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
-        default:
+        }
+        default -> {
           //          LOG.assertTrue(false, "unknown signature " + buffer);
           return null;
+        }
       }
     }
 
@@ -596,8 +651,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return "void".equals(method.returnTypeName());
   }
 
-  @Nullable
-  public static Method getMethod(Location location) {
+  @Contract("null -> null")
+  public static Method getMethod(@Nullable Location location) {
+    if (location == null) {
+      return null;
+    }
     try {
       return location.method();
     }
@@ -635,7 +693,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       // From Oracle's forums:
       // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was detected at the lower JPDA levels,
       // typically a native frame.
-      if (e.errorCode() == JvmtiError.OPAQUE_FRAME /*opaque frame JDI bug*/ ) {
+      if (e.errorCode() == JvmtiError.OPAQUE_FRAME /*opaque frame JDI bug*/) {
         return Collections.emptyList();
       }
       else {
@@ -645,82 +703,82 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
-    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+    if (PsiTypes.doubleType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.FLOAT.getName().equals(expectedType)) {
+    if (PsiTypes.floatType().getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
-    if (PsiType.LONG.getName().equals(expectedType)) {
+    if (PsiTypes.longType().getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getName().equals(expectedType)) {
+    if (PsiTypes.intType().getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getName().equals(expectedType)) {
+    if (PsiTypes.shortType().getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getName().equals(expectedType)) {
+    if (PsiTypes.byteType().getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getName().equals(expectedType)) {
+    if (PsiTypes.charType().getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, long value) {
-    if (PsiType.LONG.getName().equals(expectedType)) {
+    if (PsiTypes.longType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.INT.getName().equals(expectedType)) {
+    if (PsiTypes.intType().getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getName().equals(expectedType)) {
+    if (PsiTypes.shortType().getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getName().equals(expectedType)) {
+    if (PsiTypes.byteType().getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getName().equals(expectedType)) {
+    if (PsiTypes.charType().getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
-    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+    if (PsiTypes.doubleType().getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getName().equals(expectedType)) {
+    if (PsiTypes.floatType().getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, boolean value) {
-    if (PsiType.BOOLEAN.getName().equals(expectedType)) {
+    if (PsiTypes.booleanType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, char value) {
-    if (PsiType.CHAR.getName().equals(expectedType)) {
+    if (PsiTypes.charType().getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.LONG.getName().equals(expectedType)) {
+    if (PsiTypes.longType().getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getName().equals(expectedType)) {
+    if (PsiTypes.intType().getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getName().equals(expectedType)) {
+    if (PsiTypes.shortType().getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getName().equals(expectedType)) {
+    if (PsiTypes.byteType().getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+    if (PsiTypes.doubleType().getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getName().equals(expectedType)) {
+    if (PsiTypes.floatType().getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;
@@ -735,24 +793,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String getThreadStatusText(int statusId) {
-    switch (statusId) {
-      case ThreadReference.THREAD_STATUS_MONITOR:
-        return JavaDebuggerBundle.message("status.thread.monitor");
-      case ThreadReference.THREAD_STATUS_NOT_STARTED:
-        return JavaDebuggerBundle.message("status.thread.not.started");
-      case ThreadReference.THREAD_STATUS_RUNNING:
-        return JavaDebuggerBundle.message("status.thread.running");
-      case ThreadReference.THREAD_STATUS_SLEEPING:
-        return JavaDebuggerBundle.message("status.thread.sleeping");
-      case ThreadReference.THREAD_STATUS_UNKNOWN:
-        return JavaDebuggerBundle.message("status.thread.unknown");
-      case ThreadReference.THREAD_STATUS_WAIT:
-        return JavaDebuggerBundle.message("status.thread.wait");
-      case ThreadReference.THREAD_STATUS_ZOMBIE:
-        return JavaDebuggerBundle.message("status.thread.zombie");
-      default:
-        return JavaDebuggerBundle.message("status.thread.undefined");
-    }
+    return switch (statusId) {
+      case ThreadReference.THREAD_STATUS_MONITOR -> JavaDebuggerBundle.message("status.thread.monitor");
+      case ThreadReference.THREAD_STATUS_NOT_STARTED -> JavaDebuggerBundle.message("status.thread.not.started");
+      case ThreadReference.THREAD_STATUS_RUNNING -> JavaDebuggerBundle.message("status.thread.running");
+      case ThreadReference.THREAD_STATUS_SLEEPING -> JavaDebuggerBundle.message("status.thread.sleeping");
+      case ThreadReference.THREAD_STATUS_UNKNOWN -> JavaDebuggerBundle.message("status.thread.unknown");
+      case ThreadReference.THREAD_STATUS_WAIT -> JavaDebuggerBundle.message("status.thread.wait");
+      case ThreadReference.THREAD_STATUS_ZOMBIE -> JavaDebuggerBundle.message("status.thread.zombie");
+      default -> JavaDebuggerBundle.message("status.thread.undefined");
+    };
   }
 
   public static String prepareValueText(String text, Project project) {
@@ -844,7 +894,17 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
+      TextRange range = SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
+      PsiFile file = mySourcePosition.getFile();
+      if (range != null) {
+        Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        if (document != null) {
+          TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
+          TextRange res = range.intersection(lineRange);
+          return lineRange.equals(res) ? null : res; // highlight the whole line for multiline lambdas
+        }
+      }
+      return range;
     }
   }
 
@@ -951,7 +1011,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     final List<PsiLambdaExpression> lambdas = new SmartList<>();
     final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
         if (!onlyOnTheLine || getFirstElementOnTheLine(expression, document, line) != null) {
           lambdas.add(expression);
@@ -1055,8 +1115,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return true;
         }
         if (methodClassName != null) {
-          boolean res = process.getVirtualMachineProxy().classesByName(className).stream().anyMatch(t -> instanceOf(t, methodClassName));
-          if (res) {
+          if (ContainerUtil.exists(process.getVirtualMachineProxy().classesByName(className), t -> instanceOf(t, methodClassName))) {
             return true;
           }
           PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
@@ -10,8 +10,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInliner.CommentHolder.CommentNode.Companion.mergeComments
 import org.jetbrains.kotlin.idea.core.asExpression
-import org.jetbrains.kotlin.idea.core.copied
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
@@ -27,20 +28,22 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.ImportedFromObjectCallableDescriptor
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.isReallySuccess
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.unCapture
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class CodeToInlineBuilder(
     private val targetCallable: CallableDescriptor,
@@ -216,7 +219,12 @@ class CodeToInlineBuilder(
         return context.diagnostics.any { diagnostic ->
             val factory = diagnostic.factory
             val element = diagnostic.psiElement
-            val hasCantInferParameter = factory == Errors.CANNOT_INFER_PARAMETER_TYPE && element.parent.parent == functionLiteral
+            val hasCantInferParameter =
+                factory == Errors.CANNOT_INFER_PARAMETER_TYPE && functionLiteral == element.parentsWithSelf.match(
+                    KtParameter::class,
+                    KtParameterList::class,
+                    last = KtFunctionLiteral::class
+                )
             val hasUnresolvedItOrThis = factory == Errors.UNRESOLVED_REFERENCE &&
                     element.text == "it" &&
                     element.getStrictParentOfType<KtFunctionLiteral>() == functionLiteral
@@ -282,8 +290,8 @@ class CodeToInlineBuilder(
     }
 
     private fun processReferences(codeToInline: MutableCodeToInline, analyze: (KtExpression) -> BindingContext, reformat: Boolean) {
-        val targetDispatchReceiverType = targetCallable.dispatchReceiverParameter?.value?.type
-        val targetExtensionReceiverType = targetCallable.extensionReceiverParameter?.value?.type
+        val targetDispatchReceiverType = targetCallable.dispatchReceiverParameter?.value?.type?.unCapture()
+        val targetExtensionReceiverType = targetCallable.extensionReceiverParameter?.value?.type?.unCapture()
         val isAnonymousFunction = originalDeclaration?.isAnonymousFunction == true
         val isAnonymousFunctionWithReceiver = isAnonymousFunction &&
                 originalDeclaration.cast<KtNamedFunction>().receiverTypeReference != null
@@ -305,13 +313,26 @@ class CodeToInlineBuilder(
             if (expression.canBeResolvedViaImport(target, bindingContext)) {
                 val importableFqName = target.importableFqName
                 if (importableFqName != null) {
-                    val lexicalScope = (expression.containingFile as? KtFile)?.getResolutionScope(bindingContext, resolutionFacade)
-                    val lookupName = lexicalScope?.findClassifier(importableFqName.shortName(), NoLookupLocation.FROM_IDE)
+                    val shortName = importableFqName.shortName()
+                    val ktFile = expression.containingKtFile
+                    val aliasName = if (shortName.asString() != expression.getReferencedName())
+                        ktFile.findAliasByFqName(importableFqName)?.name?.let(Name::identifier)
+                    else
+                        null
+
+                    val lexicalScope = ktFile.getResolutionScope(bindingContext, resolutionFacade)
+                    val lookupName = lexicalScope.findClassifier(aliasName ?: shortName, NoLookupLocation.FROM_IDE)
                         ?.typeConstructor
                         ?.declarationDescriptor
                         ?.fqNameOrNull()
 
-                    codeToInline.fqNamesToImport.add(lookupName ?: importableFqName)
+                    codeToInline.fqNamesToImport.add(
+                        ImportPath(
+                            fqName = lookupName ?: importableFqName,
+                            isAllUnder = false,
+                            alias = aliasName,
+                        )
+                    )
                 }
             }
 
@@ -357,8 +378,11 @@ class CodeToInlineBuilder(
                     if (receiver is ImplicitReceiver) {
                         val resolutionScope = expression.getResolutionScope(bindingContext, resolutionFacade)
                         val receiverExpressionToInline = receiver.asExpression(resolutionScope, psiFactory)
-                        if (receiverExpressionToInline != null) {
-                            val receiverType = receiver.type.unCapture()
+                        val receiverType = receiver.type.unCapture()
+                        val isSameReceiverType = receiverType == targetDispatchReceiverType || receiverType == targetExtensionReceiverType
+                        val receiverIsUnnecessary =
+                            (receiverExpressionToInline as? KtThisExpression)?.labelQualifier != null && isSameReceiverType
+                        if (receiverExpressionToInline != null && !receiverIsUnnecessary) {
                             codeToInline.addPreCommitAction(expressionToResolve) { expr ->
                                 val expressionToReplace = expr.parent as? KtCallExpression ?: expr
                                 val replaced = codeToInline.replaceExpression(
@@ -372,7 +396,7 @@ class CodeToInlineBuilder(
                                 val thisExpression = replaced?.receiverExpression ?: return@addPreCommitAction
                                 if (isAnonymousFunctionWithReceiver && receiverType == targetExtensionReceiverType) {
                                     thisExpression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, getFirstParameterName())
-                                } else if (receiverType != targetDispatchReceiverType && receiverType != targetExtensionReceiverType) {
+                                } else if (!isSameReceiverType) {
                                     thisExpression.putCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY, Unit)
                                 }
                             }

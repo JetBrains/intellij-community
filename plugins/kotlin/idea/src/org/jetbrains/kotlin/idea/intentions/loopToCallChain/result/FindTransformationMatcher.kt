@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.result
 
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
+import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpression
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence.Condition
@@ -128,7 +130,7 @@ object FindTransformationMatcher : TransformationMatcher {
         }
 
         override fun generateExpressionToReplaceLoopAndCheckErrors(resultCallChain: KtExpression): KtExpression {
-            return KtPsiFactory(resultCallChain).createExpressionByPattern("return $0", resultCallChain, reformat = false)
+            return KtPsiFactory(resultCallChain.project).createExpressionByPattern("return $0", resultCallChain, reformat = false)
         }
 
         override fun convertLoop(resultCallChain: KtExpression, commentSavingRangeHolder: CommentSavingRangeHolder): KtExpression {
@@ -254,7 +256,7 @@ object FindTransformationMatcher : TransformationMatcher {
                 return object : FindOperationGenerator(this) {
                     override fun generate(chainedCallGenerator: ChainedCallGenerator): KtExpression {
                         val generated = this@useElvisOperatorIfNeeded.generate(chainedCallGenerator)
-                        return KtPsiFactory(generated).createExpressionByPattern(
+                        return KtPsiFactory(generated.project).createExpressionByPattern(
                             "$0\n ?: $1", generated, valueIfNotFound,
                             reformat = chainedCallGenerator.reformat
                         )
@@ -323,7 +325,7 @@ object FindTransformationMatcher : TransformationMatcher {
                     return object : FindOperationGenerator(generator) {
                         override fun generate(chainedCallGenerator: ChainedCallGenerator): KtExpression {
                             val chainedCall = generator.generate(chainedCallGenerator)
-                            return KtPsiFactory(chainedCall).createExpressionByPattern(
+                            return KtPsiFactory(chainedCall.project).createExpressionByPattern(
                                 "if ($0) $1 else $2", chainedCall, valueIfFound, valueIfNotFound,
                                 reformat = chainedCallGenerator.reformat
                             )

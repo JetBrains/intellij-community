@@ -5,7 +5,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
-import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl
 import git4idea.update.VcsLogUiPropertiesWithSharedRecentFilters
 
 @State(name = "Git.Compare.Branches.Top.Log.Properties", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
@@ -17,34 +16,35 @@ internal class GitCompareBranchesTopLogProperties(project: Project) : GitCompare
 internal class GitCompareBranchesBottomLogProperties(project: Project) : GitCompareBranchesLogProperties(project)
 
 abstract class GitCompareBranchesLogProperties(project: Project) :
-  VcsLogUiPropertiesWithSharedRecentFilters<GitCompareBranchesLogProperties.MyState>(project, service()) {
+  VcsLogUiPropertiesWithSharedRecentFilters<GitCompareBranchesLogProperties.MyState>(project, service()),
+  PersistentStateComponent<GitCompareBranchesLogProperties.MyState> {
 
-  class MyState : VcsLogUiPropertiesImpl.State() {
+  class MyState : State() {
     var SHOW_DIFF_PREVIEW = false
   }
 
-  var commonState = MyState()
+  private var commonState = MyState()
 
-  override fun getState(): MyState {
-    return commonState
-  }
+  override val logUiState: MyState = commonState
+
+  override fun getState(): MyState = logUiState
 
   override fun loadState(state: MyState) {
     commonState = state
   }
 
-  override fun <T> get(property: VcsLogUiProperty<T>): T =
+  override fun <T : Any> get(property: VcsLogUiProperty<T>): T =
     if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
       @Suppress("UNCHECKED_CAST")
-      state.SHOW_DIFF_PREVIEW as T
+      logUiState.SHOW_DIFF_PREVIEW as T
     }
     else {
       super.get(property)
     }
 
-  override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
+  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
     if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
-      state.SHOW_DIFF_PREVIEW = (value as Boolean)
+      logUiState.SHOW_DIFF_PREVIEW = (value as Boolean)
       onPropertyChanged(property)
     }
     else {

@@ -147,10 +147,20 @@ final class ServiceTreeView extends ServiceView {
 
   @Override
   Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return doSelect(service, contributorClass, false);
+  }
+
+  private Promise<Void> selectSafe(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return doSelect(service, contributorClass, true);
+  }
+
+  private Promise<Void> doSelect(@NotNull Object service, @NotNull Class<?> contributorClass, boolean safe) {
     ServiceViewItem selectedItem = myLastSelection;
     if (selectedItem == null || !selectedItem.getValue().equals(service)) {
       AsyncPromise<Void> result = new AsyncPromise<>();
-      myTreeModel.findPath(service, contributorClass)
+      Promise<TreePath> pathPromise =
+        safe ? myTreeModel.findPathSafe(service, contributorClass) : myTreeModel.findPath(service, contributorClass);
+      pathPromise
         .onError(result::setError)
         .onSuccess(path -> {
           TreeUtil.promiseSelect(myTree, new PathSelectionVisitor(path))
@@ -265,13 +275,13 @@ final class ServiceTreeView extends ServiceView {
   private void updateLastSelection() {
     ServiceViewItem lastSelection = myLastSelection;
     WeakReference<ServiceViewItem> itemRef =
-      new WeakReference<>(lastSelection == null ? null : getModel().findItem(lastSelection));
+      new WeakReference<>(lastSelection == null ? null : getModel().findItemSafe(lastSelection));
     AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
       List<ServiceViewItem> selected = getSelectedItems();
       if (selected.isEmpty()) {
         ServiceViewItem item = ContainerUtil.getFirstItem(getModel().getRoots());
         if (item != null) {
-          select(item.getValue(), item.getRootContributor().getClass());
+          selectSafe(item.getValue(), item.getRootContributor().getClass());
           return;
         }
       }
@@ -304,7 +314,7 @@ final class ServiceTreeView extends ServiceView {
         ServiceViewItem viewItem = itemRef.get();
         if (viewItem == null) return;
 
-        ServiceViewItem updatedItem = getModel().findItem(viewItem);
+        ServiceViewItem updatedItem = getModel().findItemSafe(viewItem);
         if (updatedItem != null) {
           WeakReference<ServiceViewItem> updatedRef = new WeakReference<>(updatedItem);
           AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
@@ -340,7 +350,7 @@ final class ServiceTreeView extends ServiceView {
         List<Promise<TreePath>> pathPromises =
           ContainerUtil.mapNotNull(selectedPaths, path -> {
             ServiceViewItem item = ObjectUtils.tryCast(path.getLastPathComponent(), ServiceViewItem.class);
-            return item == null ? null : myTreeModel.findPath(item.getValue(), item.getRootContributor().getClass());
+            return item == null ? null : myTreeModel.findPathSafe(item.getValue(), item.getRootContributor().getClass());
           });
         Promises.collectResults(pathPromises, true).onProcessed(paths -> {
           if (paths != null && !paths.isEmpty()) {
@@ -490,17 +500,11 @@ final class ServiceTreeView extends ServiceView {
   private class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
     @Override
     public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
-      if (e.type == ServiceEventListener.EventType.SYNC_RESET) {
-        TreeModel model = myTree.getModel();
-        if (model instanceof Disposable) {
-          Disposer.dispose((Disposable)model);
-        }
-        myTree.setModel(null);
-        AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
-        myTree.setModel(asyncTreeModel);
-        myNavBarPanel.hidePopup();
-        myNavBarPanel.getModel().updateModel((Object)null);
-        myNavBarPanel.getUpdateQueue().rebuildUi();
+      if (e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
+        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+          resetTreeModel();
+          updateNavBar();
+        });
         updateLastSelection();
       }
       else {
@@ -520,6 +524,24 @@ final class ServiceTreeView extends ServiceView {
     public void structureChanged() {
       selectFirstItemIfNeeded();
       updateSelectionPaths();
+    }
+
+    private void resetTreeModel() {
+      TreeModel model = myTree.getModel();
+      if (model instanceof Disposable) {
+        Disposer.dispose((Disposable)model);
+      }
+      myTree.setModel(null);
+      AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
+      myTree.setModel(asyncTreeModel);
+    }
+
+    private void updateNavBar() {
+      AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        myNavBarPanel.hidePopup();
+        myNavBarPanel.getModel().updateModel((Object)null);
+        myNavBarPanel.getUpdateQueue().rebuildUi();
+      });
     }
   }
 

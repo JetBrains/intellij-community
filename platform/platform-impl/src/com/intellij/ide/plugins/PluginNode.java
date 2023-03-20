@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,12 +45,18 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String vendorEmail;
   private String vendorUrl;
   private String url;
+  private String sourceCodeUrl;
+  private String forumUrl;
+  private String licenseUrl;
+  private String bugtrackerUrl;
+  private String documentationUrl;
   private long date = Long.MAX_VALUE;
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
-  private String myDownloadUrl;
-  private String myRepositoryName;
+  private @NonNls String myDownloadUrl;
+  private @NonNls String myChannel; // TODO parameters map?
+  private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
   private boolean myEnabled = true;
   private String myRating;
@@ -56,6 +64,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> myTags;
   private String externalUpdateId;
   private String externalPluginId;
+  private PageContainer<PluginReviewComment> reviewComments;
+  private List<String> screenShots;
+  private String externalPluginIdForScreenShots;
+  private String mySuggestedCommercialIde = null;
 
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
@@ -312,8 +324,48 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.url = url;
   }
 
+  public @Nullable String getSourceCodeUrl() {
+    return sourceCodeUrl;
+  }
+
+  public void setSourceCodeUrl(@Nullable String sourceCodeUrl) {
+    this.sourceCodeUrl = sourceCodeUrl;
+  }
+
+  public @Nullable String getForumUrl() {
+    return forumUrl;
+  }
+
+  public void setForumUrl(@Nullable String forumUrl) {
+    this.forumUrl = forumUrl;
+  }
+
+  public @Nullable String getLicenseUrl() {
+    return licenseUrl;
+  }
+
+  public void setLicenseUrl(@Nullable String licenseUrl) {
+    this.licenseUrl = licenseUrl;
+  }
+
+  public @Nullable String getBugtrackerUrl() {
+    return bugtrackerUrl;
+  }
+
+  public void setBugtrackerUrl(@Nullable String bugtrackerUrl) {
+    this.bugtrackerUrl = bugtrackerUrl;
+  }
+
+  public @Nullable String getDocumentationUrl() {
+    return documentationUrl;
+  }
+
+  public void setDocumentationUrl(@Nullable String documentationUrl) {
+    this.documentationUrl = documentationUrl;
+  }
+
   public void setDate(String date) {
-    this.date = Long.valueOf(date);
+    this.date = Long.parseLong(date);
   }
 
   public void setDate(Long date) {
@@ -335,8 +387,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #setDependencies(List)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public void setDepends(@NotNull List<PluginId> depends, PluginId @Nullable [] optionalDependencies) {
     myDependencies = new ArrayList<>();
     for (PluginId id : depends) {
@@ -436,19 +487,29 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myEnabled = enabled;
   }
 
-  public String getDownloadUrl() {
+  public @NonNls String getDownloadUrl() {
     return myDownloadUrl;
   }
 
-  public void setDownloadUrl(String host) {
-    myDownloadUrl = host;
+  public void setDownloadUrl(@NonNls String downloadUrl) {
+    myDownloadUrl = downloadUrl;
+  }
+
+  @ApiStatus.Experimental
+  public @NonNls String getChannel() {
+    return myChannel;
+  }
+
+  @ApiStatus.Experimental
+  public void setChannel(@NonNls String channel) {
+    myChannel = channel;
   }
 
   public @NlsSafe String getRepositoryName() {
     return myRepositoryName;
   }
 
-  public void setRepositoryName(String repositoryName) {
+  public void setRepositoryName(@NlsSafe String repositoryName) {
     myRepositoryName = repositoryName;
   }
 
@@ -473,7 +534,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
     if (!StringUtil.isEmptyOrSpaces(rating)) {
       try {
-        if (Double.valueOf(rating) > 0) {
+        if (Double.parseDouble(rating) > 0) {
           return StringUtil.trimEnd(rating, ".0");
         }
       }
@@ -495,6 +556,38 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return externalPluginId == null || externalUpdateId == null || description != null;
   }
 
+  public @Nullable PageContainer<PluginReviewComment> getReviewComments() {
+    return reviewComments;
+  }
+
+  public void setReviewComments(@NotNull PageContainer<PluginReviewComment> reviewComments) {
+    this.reviewComments = reviewComments;
+  }
+
+  public @Nullable List<String> getScreenShots() {
+    return screenShots;
+  }
+
+  public @Nullable String getExternalPluginIdForScreenShots() {
+    return externalPluginIdForScreenShots;
+  }
+
+  public void setExternalPluginIdForScreenShots(@Nullable String externalPluginId) {
+    externalPluginIdForScreenShots = externalPluginId;
+  }
+
+  public void setScreenShots(@NotNull List<String> screenshots) {
+    this.screenShots = screenshots;
+  }
+
+  public String getSuggestedCommercialIde() {
+    return mySuggestedCommercialIde;
+  }
+
+  public void setSuggestedCommercialIde(String commercialIdeCode) {
+    mySuggestedCommercialIde = commercialIdeCode;
+  }
+
   @Override
   public boolean equals(Object o) {
     return this == o ||
@@ -507,8 +600,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public String toString() {
-    return getName();
+  public @NotNull @NonNls String toString() {
+    return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 
   private static class PluginNodeDependency implements IdeaPluginDependency {

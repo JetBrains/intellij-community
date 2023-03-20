@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,7 +28,8 @@ import com.siyeh.ig.fixes.IntroduceVariableFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ChainedMethodCallInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -47,11 +48,10 @@ public class ChainedMethodCallInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.option"), "m_ignoreFieldInitializations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.self.types.option"), "ignoreSelfTypes");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreFieldInitializations", InspectionGadgetsBundle.message("chained.method.call.ignore.option")),
+      checkbox("ignoreSelfTypes", InspectionGadgetsBundle.message("chained.method.call.ignore.self.types.option")));
   }
 
   @Override
@@ -102,8 +102,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
         }
       }
       if (ignoreSelfTypes) {
-        if (qualifier instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifier;
+        if (qualifier instanceof PsiMethodCallExpression methodCallExpression) {
           final PsiMethod qualifierMethod = methodCallExpression.resolveMethod();
           if (qualifierMethod == null) {
             return;

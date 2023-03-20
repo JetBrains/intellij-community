@@ -1,4 +1,4 @@
-// "Remove unnecessary 'this' qualifier" "true"
+// "Remove unnecessary 'this' qualifier" "true-preview"
 public class Outer {
   class Inner { }
   void test() {

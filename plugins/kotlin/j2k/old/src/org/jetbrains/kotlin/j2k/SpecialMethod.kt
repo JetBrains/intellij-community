@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k
 
@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.j2k.ast.*
 import java.io.PrintStream
 import java.util.*
 
-enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String, val parameterCount: Int?) {
+enum class SpecialMethod(private val qualifiedClassName: String?, val methodName: String, val parameterCount: Int?) {
     CHAR_SEQUENCE_LENGTH(CharSequence::class.java.name, "length", 0) {
         override fun ConvertCallData.convertCall() = convertMethodCallToPropertyUse()
     },
@@ -193,7 +193,7 @@ enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String
     },
 
     STRING_TRIM(JAVA_LANG_STRING, "trim", 0) {
-        override fun ConvertCallData.convertCall(): Expression? {
+        override fun ConvertCallData.convertCall(): Expression {
             val comparison = BinaryExpression(Identifier.withNoPrototype("it", isNullable = false), LiteralExpression("' '").assignNoPrototype(), Operator(JavaTokenType.LE).assignNoPrototype()).assignNoPrototype()
             val argumentList = ArgumentList.withNoPrototype(LambdaExpression(null, Block.of(comparison).assignNoPrototype()))
             return MethodCallExpression.buildNonNull(codeConverter.convertExpression(qualifier), "trim", argumentList, dotPrototype = dot)
@@ -231,7 +231,7 @@ enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String
     },
 
     STRING_SPLIT(JAVA_LANG_STRING, "split", 1) {
-        override fun ConvertCallData.convertCall(): Expression? {
+        override fun ConvertCallData.convertCall(): Expression {
             val splitCall = MethodCallExpression.buildNonNull(
                     codeConverter.convertExpression(qualifier),
                     "split",
@@ -282,7 +282,7 @@ enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String
         override fun matches(method: PsiMethod, superMethodsSearcher: SuperMethodsSearcher): Boolean
                 = super.matches(method, superMethodsSearcher) && method.parameterList.parameters.last().type.canonicalText == "java.lang.Iterable<? extends java.lang.CharSequence>"
 
-        override fun ConvertCallData.convertCall(): Expression? {
+        override fun ConvertCallData.convertCall(): Expression {
             val argumentList = ArgumentList.withNoPrototype(codeConverter.convertExpressionsInList(arguments.take(1)))
             return MethodCallExpression.buildNonNull(codeConverter.convertExpression(arguments[1]), "joinToString", argumentList)
         }
@@ -411,7 +411,7 @@ enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String
 
     data class ConvertCallData(
             val qualifier: PsiExpression?,
-            @Suppress("ArrayInDataClass") val arguments: List<PsiExpression>,
+            val arguments: List<PsiExpression>,
             val typeArgumentsConverted: List<Type>,
             val dot: PsiElement?,
             val lPar: PsiElement?,
@@ -450,7 +450,7 @@ enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String
 
     protected fun ConvertCallData.convertWithReceiverCast(): MethodCallExpression? {
         val convertedArguments = codeConverter.convertExpressionsInList(arguments)
-        val qualifierWithCast = castQualifierToType(codeConverter, qualifier!!, qualifiedClassName!!) ?: return null
+        val qualifierWithCast = castQualifierToType(codeConverter, qualifier!!, qualifiedClassName!!)
         return MethodCallExpression.buildNonNull(
                 qualifierWithCast,
                 methodName,
@@ -459,7 +459,7 @@ enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String
                 dot)
     }
 
-    private fun castQualifierToType(codeConverter: CodeConverter, qualifier: PsiExpression, type: String): TypeCastExpression? {
+    private fun castQualifierToType(codeConverter: CodeConverter, qualifier: PsiExpression, type: String): TypeCastExpression {
         val convertedQualifier = codeConverter.convertExpression(qualifier)
         val qualifierType = codeConverter.typeConverter.convertType(qualifier.type)
         val typeArgs = (qualifierType as? ClassType)?.referenceElement?.typeArgs ?: emptyList()

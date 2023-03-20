@@ -28,7 +28,7 @@ class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurab
     return panel {
       row {
         checkBox(VcsBundle.message("shelve.remove.successfully.applied.files.checkbox"))
-          .bindSelected({ shelveManager.isRemoveFilesFromShelf }, { shelveManager.isRemoveFilesFromShelf = it })
+          .bindSelected(shelveManager::isRemoveFilesFromShelf, shelveManager::setRemoveFilesFromShelf)
           .applyToComponent { mnemonic = KeyEvent.VK_R }
       }
       row {
@@ -73,7 +73,7 @@ class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurab
     @JvmStatic
     fun getDefaultShelfPresentationPath(project: Project): String {
       return if (project.isDefault) ShelveChangesManager.DEFAULT_PROJECT_PRESENTATION_PATH
-      else ShelveChangesManager.getDefaultShelfPath(project).toString()
+      else ShelveChangesManager.getDefaultShelfPath(project).toString() //NON-NLS
     }
   }
 }

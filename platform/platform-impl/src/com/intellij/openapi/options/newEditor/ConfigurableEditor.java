@@ -12,11 +12,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -171,21 +171,18 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   @Override
   public final void eventDispatched(AWTEvent event) {
     switch (event.getID()) {
-      case MouseEvent.MOUSE_PRESSED:
-      case MouseEvent.MOUSE_RELEASED:
-      case MouseEvent.MOUSE_DRAGGED:
+      case MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_DRAGGED -> {
         MouseEvent me = (MouseEvent)event;
         if (isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
           requestUpdate();
         }
-        break;
-      case KeyEvent.KEY_PRESSED:
-      case KeyEvent.KEY_RELEASED:
+      }
+      case KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED -> {
         KeyEvent ke = (KeyEvent)event;
         if (isDescendingFrom(ke.getComponent(), this)) {
           requestUpdate();
         }
-        break;
+      }
     }
   }
 
@@ -214,8 +211,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       }
       // heavy-weight popup opens new window with the corresponding parent
       if (popup != null && editor == popup.getParent()) {
-        if (popup instanceof JDialog) {
-          JDialog dialog = (JDialog)popup;
+        if (popup instanceof JDialog dialog) {
           return Dialog.ModalityType.MODELESS == dialog.getModalityType();
         }
         return popup instanceof JWindow;
@@ -290,16 +286,16 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     JComponent content = new JPanel(new BorderLayout());
     content.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
 
-    SortedConfigurableGroup sortedGroup = ConfigurableWrapper.cast(SortedConfigurableGroup.class, configurable);
-    String description = sortedGroup != null ? sortedGroup.getDescription() : null;
-
     Configurable.Composite compositeGroup = ObjectUtils.tryCast(configurable, Configurable.Composite.class);
     if (compositeGroup == null) {
-      description = IdeBundle.message("label.select.configuration.element");
+      String description = IdeBundle.message("label.select.configuration.element");
       content.add(BorderLayout.CENTER, new JLabel(description, SwingConstants.CENTER));
       content.setPreferredSize(JBUI.size(800, 600));
     }
     else {
+      ConfigurableGroup configurableGroup = ConfigurableWrapper.cast(ConfigurableGroup.class, configurable);
+      String description = configurableGroup != null ? configurableGroup.getDescription() : null;
+
       content.add(BorderLayout.NORTH, new JLabel(description));
 
       JPanel panel = new JPanel();

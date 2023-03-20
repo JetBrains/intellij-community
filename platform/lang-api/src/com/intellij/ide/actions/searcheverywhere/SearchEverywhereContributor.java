@@ -212,6 +212,14 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   Object getDataForItem(@NotNull Item element, @NotNull String dataId);
 
   /**
+   * String description for elements in suggestions list. One should check passed element explicitly for it's validity.
+   */
+  @Nullable
+  default String getItemDescription(@NotNull Item element) {
+    return null;
+  }
+
+  /**
    * Filter out special symbols from pattern before search.
    */
   @NotNull

@@ -13,6 +13,7 @@ import com.intellij.debugger.streams.ui.ChooserOption;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -56,19 +57,19 @@ public final class TraceStreamAction extends AnAction {
     else {
       ChainResolver.ChainStatus chainStatus = CHAIN_RESOLVER.tryFindChain(element);
       switch (chainStatus) {
-        case LANGUAGE_NOT_SUPPORTED:
-          presentation.setEnabledAndVisible(false);
-          break;
-        case FOUND:
-          presentation.setEnabledAndVisible(true);
-          break;
-        case COMPUTING:
-        case NOT_FOUND:
+        case LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false);
+        case FOUND -> presentation.setEnabledAndVisible(true);
+        case COMPUTING, NOT_FOUND -> {
           presentation.setVisible(true);
           presentation.setEnabled(false);
-          break;
+        }
       }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

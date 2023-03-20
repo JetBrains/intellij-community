@@ -50,10 +50,9 @@ public class PublicFieldAccessedInSynchronizedContextInspection extends BaseInsp
         return;
       }
       final PsiElement element = expression.resolve();
-      if (!(element instanceof PsiField)) {
+      if (!(element instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)element;
       if (field.hasModifierProperty(PsiModifier.PRIVATE) || field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }

@@ -33,7 +33,7 @@ public interface MergeSession {
    * Returns the list of additional columns to be displayed in the dialog. The Item type for the
    * column should be VirtualFile.
    *
-   * @return the list of columns, or an empty list if no additional columns should be displayed.
+   * @return the array of columns, or an empty array if no additional columns should be displayed.
    */
   ColumnInfo @NotNull [] getMergeInfoColumns();
 

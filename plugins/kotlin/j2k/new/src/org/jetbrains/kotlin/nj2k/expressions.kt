@@ -1,17 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.nj2k.conversions.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedMethod
 import org.jetbrains.kotlin.nj2k.tree.*
-
-
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 import org.jetbrains.kotlin.nj2k.types.JKType
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -36,13 +44,16 @@ fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
     conversionContext: NewJ2kConverterContext
-): JKExpression =
-    rangeExpression(
+): JKExpression {
+    val isPossibleToUseRangeUntil = conversionContext.converter.targetModule
+        ?.let { it.languageVersionSettings.isPossibleToUseRangeUntil(it, conversionContext.project) } == true
+    return rangeExpression(
         from,
         to,
-        "until",
+        if (isPossibleToUseRangeUntil) "..<" else "until",
         conversionContext
     )
+}
 
 fun downToExpression(
     from: JKExpression,
@@ -56,8 +67,8 @@ fun downToExpression(
         conversionContext
     )
 
-fun JKExpression.parenthesizeIfBinaryExpression() = when (this) {
-    is JKBinaryExpression -> JKParenthesizedExpression(this)
+fun JKExpression.parenthesizeIfCompoundExpression() = when (this) {
+    is JKIfElseExpression, is JKBinaryExpression, is JKTypeCastExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 
@@ -108,7 +119,7 @@ fun useExpression(
 
 fun kotlinAssert(assertion: JKExpression, message: JKExpression?, typeFactory: JKTypeFactory) =
     JKCallExpressionImpl(
-        JKUnresolvedMethod(//TODO resolve assert
+        JKUnresolvedMethod( //TODO resolve assert
             "assert",
             typeFactory,
             typeFactory.types.unit
@@ -121,7 +132,7 @@ fun jvmAnnotation(name: String, symbolProvider: JKSymbolProvider) =
         symbolProvider.provideClassSymbol("kotlin.jvm.$name")
     )
 
-fun throwAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider) =
+fun throwsAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider) =
     JKAnnotation(
         symbolProvider.provideClassSymbol(KOTLIN_THROWS_ANNOTATION_FQ_NAME.asString()),
         throws.map {
@@ -168,7 +179,7 @@ internal fun JKTreeElement.forEachDescendant(action: (JKElement) -> Unit) {
     this.forEachChild { it.forEachDescendant(action) }
 }
 
-internal inline fun <reified E: JKElement> JKTreeElement.forEachDescendantOfType(crossinline action: (E) -> Unit) {
+internal inline fun <reified E : JKElement> JKTreeElement.forEachDescendantOfType(crossinline action: (E) -> Unit) {
     forEachDescendant { if (it is E) action(it) }
 }
 
@@ -186,6 +197,9 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
         JKOperatorToken.PLUSPLUS, JKOperatorToken.MINUSMINUS -> true
         else -> false
     }
+
+fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
+    findUsages(scope, context).isNotEmpty()
 
 fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).any {
@@ -231,7 +245,7 @@ fun runExpression(body: JKStatement, symbolProvider: JKSymbolProvider): JKExpres
     )
     return JKCallExpressionImpl(
         symbolProvider.provideMethodSymbol("kotlin.run"),
-        listOf(lambda).toArgumentList()
+        JKArgumentList(lambda)
     )
 }
 
@@ -242,10 +256,6 @@ fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProv
         token = JKOperatorToken.EQ,
     )
 
-fun JKTreeElement.asQualifierWithThisAsSelector(): JKQualifiedExpression? =
-    parent?.safeAs<JKQualifiedExpression>()
-        ?.takeIf { it.selector == this }
-
 fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKExpression {
     fun handleAnnotationParameter(element: JKTreeElement): JKTreeElement =
         when (element) {
@@ -253,8 +263,13 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
                 element.also {
                     element.literalType = JKClassLiteralExpression.ClassLiteralType.KOTLIN_CLASS
                 }
+
             is JKTypeElement ->
-                JKTypeElement(element.type.replaceJavaClassWithKotlinClassType(symbolProvider))
+                JKTypeElement(
+                    element.type.replaceJavaClassWithKotlinClassType(symbolProvider),
+                    element::annotationList.detached()
+                )
+
             else -> applyRecursive(element, ::handleAnnotationParameter)
         }
 
@@ -269,15 +284,17 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
                         when (argument) {
                             is JKAnnotationNameParameter ->
                                 JKNamedArgument(value, JKNameIdentifier(argument.name.value))
+
                             else -> JKArgumentImpl(value)
                         }
 
                     }
-                ),
-                JKTypeArgumentList()
+                )
             )
+
             is JKKtAnnotationArrayInitializerExpression ->
                 JKKtAnnotationArrayInitializerExpression(initializers.map { it.detached(this).toExpression(symbolProvider) })
+
             is JKExpression -> this
             else -> error("Bad initializer")
         }
@@ -290,6 +307,7 @@ fun JKExpression.asLiteralTextWithPrefix(): String? = when {
             && (operator.token == JKOperatorToken.MINUS || operator.token == JKOperatorToken.PLUS)
             && expression is JKLiteralExpression
     -> operator.token.text + expression.cast<JKLiteralExpression>().literal
+
     this is JKLiteralExpression -> literal
     else -> null
 }
@@ -348,8 +366,14 @@ fun JKStatement.isEmpty(): Boolean = when (this) {
 fun JKInheritanceInfo.present(): Boolean =
     extends.isNotEmpty() || implements.isNotEmpty()
 
+fun JKInheritanceInfo.supertypeCount(): Int =
+    extends.size + implements.size
+
 fun JKClass.isLocalClass(): Boolean =
-    parent !is JKClassBody && parent !is JKFile
+    parent !is JKClassBody && parent !is JKFile && parent !is JKTreeRoot
+
+fun JKMethod.isTopLevel(): Boolean =
+    parent is JKFile || parent is JKTreeRoot
 
 val JKClass.declarationList: List<JKDeclaration>
     get() = classBody.declarations
@@ -366,3 +390,30 @@ val JKTreeElement.identifier: JKSymbol?
 
 val JKClass.isObjectOrCompanionObject
     get() = classKind == JKClass.ClassKind.OBJECT || classKind == JKClass.ClassKind.COMPANION
+
+const val EXPERIMENTAL_STDLIB_API_ANNOTATION = "kotlin.ExperimentalStdlibApi"
+
+@ApiStatus.Internal
+fun LanguageVersionSettings.isPossibleToUseRangeUntil(module: Module, project: Project): Boolean =
+    areKotlinVersionsSufficientToUseRangeUntil(module, project) &&
+            FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION).asString() in getFlag(AnalysisFlags.optIn)
+
+/**
+ * Checks that compilerVersion and languageVersion (or -XXLanguage:+RangeUntilOperator) versions are high enough to use rangeUntil
+ * operator.
+ *
+ * Note that this check is not enough. You also need to check for OptIn (because stdlib declarations are annotated with OptIn)
+ */
+@ApiStatus.Internal
+fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: Module, project: Project): Boolean {
+    val compilerVersion = ExternalCompilerVersionProvider.get(module)
+        ?: IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
+        ?: return false
+    // `rangeUntil` is added to languageVersion 1.8 only since 1.7.20-Beta compiler
+    return compilerVersion >= COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT && supportsFeature(LanguageFeature.RangeUntilOperator)
+}
+
+private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")
+
+val JKAnnotationListOwner.hasAnnotations: Boolean
+    get() = annotationList.annotations.isNotEmpty()

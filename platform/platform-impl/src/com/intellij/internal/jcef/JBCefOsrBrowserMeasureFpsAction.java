@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.jcef;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -14,18 +15,27 @@ import com.intellij.ui.jcef.JBCefFpsMeter;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 /**
  * Activates {@link JBCefFpsMeter} for the currently focused OSR JCEF browser.
- *
+ * <p>
  * Enable the registry key: ide.browser.jcef.osr.measureFPS=true
  * Optionally enable the registry key: ide.browser.jcef.osr.measureFPS.scroll=true
  *
  * @author tav
  */
-public class JBCefOsrBrowserMeasureFpsAction extends DumbAwareAction {
+final class JBCefOsrBrowserMeasureFpsAction extends DumbAwareAction {
+
   private static final @NotNull String FPS_METER_ID = RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString();
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

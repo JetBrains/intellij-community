@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,7 +57,7 @@ public class ReRunTaskFilter extends GradleReRunBuildFilter {
         params = new SmartList<>();
       }
       else {
-        params = StringUtil.split(scriptParameters, " ");
+        params = new ArrayList<>(StringUtil.split(scriptParameters, " "));
         params.remove("--stacktrace");
         params.remove("--info");
         params.remove("--debug");

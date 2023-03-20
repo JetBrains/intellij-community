@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -77,7 +77,7 @@ public class SameParameterValueSlashesTest extends LightJavaCodeInsightFixtureTe
   }
 
   private void doTest(Runnable runnable) {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
+    UITestUtil.replaceIdeEventQueueSafely();
     EdtTestUtil.runInEdtAndWait(runnable::run);
   }
 }

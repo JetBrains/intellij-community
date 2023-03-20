@@ -7,7 +7,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitCompareBranchesDialog extends CompareBranchesDialog {
   public GitCompareBranchesDialog(@NotNull Project project,
                                   @NotNull String branchName,

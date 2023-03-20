@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -29,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+@Deprecated(forRemoval = true)
 public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   private static final Map<String, TreeSet<WorkingSetSerializable>> ourSerializables = new HashMap<>();
   private static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = Comparator.comparing(VirtualFile::getPath);
@@ -54,7 +54,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   private static TreeSet<WorkingSetSerializable> createSet() {
     return new TreeSet<>((o1, o2) -> {
       assert o1.getId().equals(o2.getId());
-      return Comparing.compare(o1.getVersion(), o2.getVersion());
+      return Integer.compare(o1.getVersion(), o2.getVersion());
     });
   }
 

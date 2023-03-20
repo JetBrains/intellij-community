@@ -1,0 +1,3 @@
+<selection><!ELEMENT myElement (#PCDATA)>
+<!ATTLIST myElement myAttribute (true | fa<caret>lse) "false">
+</selection>

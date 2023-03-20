@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
@@ -18,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -60,6 +61,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
+import com.jetbrains.python.console.completion.PythonPandasColumnNameCompletionContributor;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
@@ -71,7 +73,7 @@ import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.NotNull;
@@ -80,14 +82,17 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.jetbrains.python.console.PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY;
 
-public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
+public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor, PyTargetedCodeExecutor {
   public static final Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
+  private static final Key<Map<Integer, Integer>> COUNTER_LINE_NUMBER = new Key<>("PYDEV_COUNTER_LINE_NUMBER");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final boolean myTestMode;
 
@@ -95,7 +100,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput;
   private final PyHighlighter myPyHighlighter;
-  private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
@@ -115,6 +119,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myIsToolwindowHorizontal = true;
 
   /**
+   * The execution environment of the process associated with this {@link PythonConsoleView}.
+   */
+  private @Nullable TargetEnvironment myTargetEnvironment;
+
+  /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
   public PythonConsoleView(final Project project, final String title, @Nullable final Sdk sdk, final boolean testMode) {
@@ -122,11 +131,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
-    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PythonSdkType.getLanguageLevelForSdk(sdk));
+    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
     virtualFile.putUserData(CONSOLE_KEY, true);
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
+    getHistoryViewer().putUserData(COUNTER_LINE_NUMBER, new HashMap<>());
     super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
     LanguageLevel languageLevel = LanguageLevel.getDefault();
@@ -138,7 +148,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       mySdkHomePath = sdk.getHomePath();
     }
     myPyHighlighter = new PyHighlighter(languageLevel);
-    myScheme = getConsoleEditor().getColorsScheme();
     addToolwindowPositionListener(project);
   }
 
@@ -156,30 +165,41 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       myIsToolwindowHorizontal = isToolwindowHorizontal(PythonConsoleToolWindow.getInstance(getProject()).getToolWindow());
       showVariables((PydevConsoleCommunication)communication);
     }
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")){
-      if (communication instanceof PydevConsoleCommunication || communication instanceof PythonDebugConsoleCommunication) {
-        myCommandQueuePanel.setCommunication(communication);
-        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
-          .addListener(communication, new CommandQueueListener() {
-          @Override
-          public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              myCommandQueuePanel.removeCommand(command);
-            });
-          }
 
-          @Override
-          public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            myCommandQueuePanel.addCommand(command);
-          }
-
-          @Override
-          public void removeAll() {
-            myCommandQueuePanel.removeAllCommands();
-          }
-        });
-      }
+    if (communication instanceof PydevConsoleCommunication || communication instanceof PythonDebugConsoleCommunication) {
+      myCommandQueuePanel.setCommunication(communication);
     }
+
+    addCommandQueuePanelListener(communication);
+  }
+
+  public void addCommandQueuePanelListener(final ConsoleCommunication communication) {
+    ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+      .addListener(communication, new CommandQueueListener() {
+        @Override
+        public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myCommandQueuePanel.removeCommand(command);
+          });
+        }
+
+        @Override
+        public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+          myCommandQueuePanel.addCommand(command);
+        }
+
+        @Override
+        public void removeAll() {
+          myCommandQueuePanel.removeAllCommands();
+        }
+
+        @Override
+        public void disableConsole() {
+          myCommandQueuePanel.removeAllCommands();
+          isShowQueue = false;
+          restoreQueueWindow(false);
+        }
+      });
   }
 
   /**
@@ -222,6 +242,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void setExecutionHandler(@NotNull PythonConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
+    if (myExecuteActionHandler.getConsoleCommunication() instanceof PydevConsoleCommunication pydevConsoleCommunication) {
+      pydevConsoleCommunication.addFrameListener(PythonPandasColumnNameCompletionContributor.Companion.getConsoleListener());
+    }
   }
 
   public PythonConsoleExecuteActionHandler getExecuteActionHandler() {
@@ -261,33 +284,39 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void executeCode(final @Nullable String code, @Nullable final Editor editor) {
-    myInitialized.doWhenDone(
-      () -> {
-        if (code != null) {
-          if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-            executeInConsole(code);
-          } else {
-            ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
-              @Override
-              public void run(@NotNull final ProgressIndicator indicator) {
-                while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
-                  if (indicator.isCanceled()) {
-                    break;
-                  }
-                  TimeoutUtil.sleep(300);
-                }
-                if (!indicator.isCanceled()) {
-                  executeInConsole(code);
-                }
-              }
-            });
-          }
-        }
-        else {
-          requestFocus();
-        }
+    myInitialized.doWhenDone(() -> executeCodeImpl(code));
+  }
+
+  /**
+   * Must be called when {@link #myInitialized} is resolved.
+   *
+   * @param code the code to be executed
+   */
+  private void executeCodeImpl(@Nullable String code) {
+    if (code != null) {
+      if (PyConsoleUtil.isCommandQueueEnabled(getProject())) {
+        executeInConsole(code);
       }
-    );
+      else {
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
+              if (indicator.isCanceled()) {
+                break;
+              }
+              TimeoutUtil.sleep(300);
+            }
+            if (!indicator.isCanceled()) {
+              executeInConsole(code);
+            }
+          }
+        });
+      }
+    }
+    else {
+      requestFocus();
+    }
   }
 
 
@@ -303,11 +332,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         PsiDocumentManager.getInstance(getProject()).commitDocument(document);
         PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
         if (psiFile != null) {
-          CommandProcessor.getInstance().runUndoTransparentAction(() ->
-                                                                    CodeStyleManager.getInstance(getProject())
-                                                                                    .adjustLineIndent(psiFile,
-                                                                                                      new TextRange(0, psiFile
-                                                                                                        .getTextLength())));
+          CommandProcessor.getInstance().runUndoTransparentAction(
+            () -> CodeStyleManager.getInstance(getProject()).adjustLineIndent(psiFile, new TextRange(0, psiFile.getTextLength()))
+          );
         }
         int oldOffset = getConsoleEditor().getCaretModel().getOffset();
         getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
@@ -330,7 +357,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
+  public void executeStatement(@NotNull String statement, @NotNull Key<?> attributes) {
     print(statement, outputTypeForAttributes(attributes));
     myExecuteActionHandler.processLine(statement);
   }
@@ -339,7 +366,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     super.print(text, outputType);
   }
 
-  public void print(String text, @NotNull final Key attributes) {
+  public void print(@NotNull String text, @NotNull Key<?> attributes) {
     print(text, outputTypeForAttributes(attributes));
   }
 
@@ -367,7 +394,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         }
         myHyperlink = detectHyperlink(text);
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
-          mySourceHighlighter = new PyConsoleSourceHighlighter(this, myScheme, myPyHighlighter);
+          mySourceHighlighter = new PyConsoleSourceHighlighter(this, myPyHighlighter);
         }
       }
       else {
@@ -417,7 +444,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public ConsoleViewContentType outputTypeForAttributes(Key attributes) {
+  public @NotNull ConsoleViewContentType outputTypeForAttributes(@NotNull Key<?> attributes) {
     final ConsoleViewContentType outputType;
     if (attributes == ProcessOutputTypes.STDERR) {
       outputType = ConsoleViewContentType.ERROR_OUTPUT;
@@ -456,6 +483,34 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     splitWindow();
   }
 
+  /**
+   * Assigns {@link TargetEnvironment} to this view. The target environment could be later used for code execution using
+   * {@link #executeCode(Function)}.
+   * <p>
+   * Works in pair with {@link #attachToProcess(ProcessHandler)}.
+   *
+   * @param targetEnvironment {@link TargetEnvironment} related to the process
+   */
+  public void setTargetEnvironment(@NotNull TargetEnvironment targetEnvironment) {
+    myTargetEnvironment = targetEnvironment;
+  }
+
+  @Override
+  public void executeCode(@NotNull Function<TargetEnvironment, String> code) {
+    myInitialized.doWhenDone(
+      () -> {
+        TargetEnvironment targetEnvironment = myTargetEnvironment;
+        if (targetEnvironment == null) {
+          throw new IllegalStateException("Execution environment must be initialized");
+        }
+        else {
+          String codeValue = code.apply(targetEnvironment);
+          executeCodeImpl(codeValue);
+        }
+      }
+    );
+  }
+
   private static boolean isToolwindowHorizontal(ToolWindow toolWindow) {
     return toolWindow.getAnchor() == ToolWindowAnchor.BOTTOM || toolWindow.getAnchor() == ToolWindowAnchor.TOP;
   }
@@ -483,8 +538,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   //the main function for drawing the queue
   public void showQueue() {
     JBPopupListener listener = new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) { }
 
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
@@ -562,14 +615,14 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myCommandQueue));
     }
     if (removeCommand) {
-      myCommandQueuePanel.removeAllCommands();
+      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+        .removeCommand(myRunner.getPydevConsoleCommunication(), true);
     }
   }
 
   public void restoreWindow() {
     Component component = getComponent(0);
-    if (mySplitView != null && component instanceof JBSplitter) {
-      JBSplitter pane = (JBSplitter)component;
+    if (mySplitView != null && component instanceof JBSplitter pane) {
       removeAll();
       Disposer.dispose(mySplitView);
       mySplitView = null;
@@ -629,6 +682,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public void dispose() {
     super.dispose();
+    if (PyConsoleUtil.isCommandQueueEnabled(getProject())) {
+      ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
+      if (communication != null) {
+        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
+      }
+    }
     var editor = myCommandQueuePanel.getQueueEditor();
     commandQueueDimension = null;
     if (!editor.isDisposed()) {
@@ -648,9 +707,29 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Nullable
   private static String getConsoleDisplayName(@NotNull Project project) {
     ToolWindow window = PythonConsoleToolWindow.getInstance(project).getToolWindow();
-    if (window == null) return null;
     final Content content = window.getContentManager().getSelectedContent();
     if (content == null) return null;
     return content.getDisplayName();
+  }
+
+  public void storeExecutionCounterLineNumber(int counter, int lineNumber) {
+    Map<Integer, Integer> counterMap = getHistoryViewer().getUserData(COUNTER_LINE_NUMBER);
+    if (counterMap != null) {
+      counterMap.put(counter, lineNumber);
+    }
+  }
+
+  @Nullable
+  public Integer getExecutionCounterLineNumber(int counter) {
+    Map<Integer, Integer> counterMap = getHistoryViewer().getUserData(COUNTER_LINE_NUMBER);
+    if (counterMap != null) {
+      return counterMap.getOrDefault(counter, null);
+    }
+    return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return super.getActionUpdateThread();
   }
 }

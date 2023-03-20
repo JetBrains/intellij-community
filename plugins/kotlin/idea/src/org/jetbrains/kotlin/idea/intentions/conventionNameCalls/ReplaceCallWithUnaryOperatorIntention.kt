@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.conventionNameCalls
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.calleeName
 import org.jetbrains.kotlin.idea.intentions.isReceiverExpressionWithValue
@@ -38,7 +38,7 @@ class ReplaceCallWithUnaryOperatorIntention : SelfTargetingRangeIntention<KtDotQ
     override fun applyTo(element: KtDotQualifiedExpression, editor: Editor?) {
         val operation = operation(element.calleeName)?.value ?: return
         val receiver = element.receiverExpression
-        element.replace(KtPsiFactory(element).createExpressionByPattern("$0$1", operation, receiver))
+        element.replace(KtPsiFactory(element.project).createExpressionByPattern("$0$1", operation, receiver))
     }
 
     private fun isApplicableOperation(operation: KtSingleValueToken): Boolean = operation !in OperatorConventions.INCREMENT_OPERATIONS

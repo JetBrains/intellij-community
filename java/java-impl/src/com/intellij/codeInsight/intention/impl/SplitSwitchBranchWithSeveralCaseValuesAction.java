@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +24,6 @@ import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.statementMayCompleteNormally;
 
-/**
- * @author Pavel.Dolgov
- */
 public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBaseIntentionAction {
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -56,10 +54,10 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         }
       }
     }
-    else if (labelStatement instanceof PsiSwitchLabeledRuleStatement) {
+    else if (labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
       // enhanced syntax "case 1, 2 -> some code"
       if (isMultiValueCase(labelStatement)) {
-        PsiStatement body = ((PsiSwitchLabeledRuleStatement)labelStatement).getBody();
+        PsiStatement body = ruleStatement.getBody();
         if (body != null && element.getTextOffset() < body.getTextOffset()) {
           setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
           return true;
@@ -104,8 +102,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     PsiSwitchLabelStatementBase statement = findLabelStatement(editor, element);
 
     PsiElement result = null;
-    if (statement instanceof PsiSwitchLabelStatement) {
-      PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)statement;
+    if (statement instanceof PsiSwitchLabelStatement labelStatement) {
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList != null && labelElementList.getElementCount() > 1) {
         PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, editor);
@@ -126,14 +123,13 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         }
         else {
           PsiStatement previousSibling = getPrevSiblingOfType(statement, PsiStatement.class);
-          if (previousSibling instanceof PsiSwitchLabelStatement) {
-            result = copyLabelTo(labelStatement, (PsiSwitchLabelStatement)previousSibling);
+          if (previousSibling instanceof PsiSwitchLabelStatement previousLabelStatement) {
+            result = copyLabelTo(labelStatement, previousLabelStatement);
           }
         }
       }
     }
-    else if (statement instanceof PsiSwitchLabeledRuleStatement) {
-      PsiSwitchLabeledRuleStatement labeledRule = (PsiSwitchLabeledRuleStatement)statement;
+    else if (statement instanceof PsiSwitchLabeledRuleStatement labeledRule) {
       PsiCaseLabelElementList labelElementList = labeledRule.getCaseLabelElementList();
       if (labelElementList != null) {
         PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, editor);
@@ -158,10 +154,10 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       PsiElement previousElement = getPreviousElement(editor, element);
       labelElement = PsiTreeUtil.getNonStrictParentOfType(previousElement, PsiCaseLabelElement.class);
     }
-    while (labelElement != null && labelElement.getParent() instanceof PsiCaseLabelElement) {
-      labelElement = (PsiCaseLabelElement)labelElement.getParent();
-    }
-    return labelElement;
+    PsiElement caseLabel = PsiTreeUtil.findFirstParent(labelElement, parent ->
+      parent instanceof PsiCaseLabelElement && parent.getParent() instanceof PsiCaseLabelElementList
+    );
+    return (PsiCaseLabelElement)caseLabel;
   }
 
   @Contract("null,_ -> false")
@@ -174,8 +170,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
                                                                 @NotNull PsiElement element) {
     // Can't use BaseElementAtCaretIntentionAction, because there's ambiguity when the caret is after the list of case values before the arrow
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    if (statement instanceof PsiSwitchLabelStatementBase) {
-      return (PsiSwitchLabelStatementBase)statement;
+    if (statement instanceof PsiSwitchLabelStatementBase labelStatement) {
+      return labelStatement;
     }
     PsiElement previousElement = getPreviousElement(editor, element);
     statement = PsiTreeUtil.getParentOfType(previousElement, PsiStatement.class);
@@ -205,8 +201,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       return null;
     }
 
-    PsiSwitchLabelStatement newLabel = branch.addLabelAfter(labelElement);
-    labelElement.delete();
+    PsiSwitchLabelStatement newLabel = branch.addLabelAfter(labelElement, labelStatement);
     return branch.copyTo(newLabel);
   }
 
@@ -221,9 +216,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     PsiCaseLabelElement[] caseLabelElements = Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements();
     for (int i = caseLabelElements.length - 1; i >= 1; i--) {
       PsiCaseLabelElement labelElement = caseLabelElements[i];
-      PsiSwitchLabelStatement newLabel = branch.addLabelAfter(labelElement);
+      PsiSwitchLabelStatement newLabel = branch.addLabelAfter(labelElement, labelStatement);
       newLabels.add(newLabel);
-      labelElement.delete();
     }
 
     for (PsiSwitchLabelStatement newLabel : newLabels) {
@@ -236,9 +230,18 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
                                                              @NotNull PsiSwitchLabeledRuleStatement labeledRule) {
     Project project = labeledRule.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiSwitchLabeledRuleStatement newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("case 1->{}", null);
-
-    Objects.requireNonNull(newRule.getCaseLabelElementList()).getElements()[0].replace(labelElement);
+    PsiSwitchLabeledRuleStatement newRule;
+    if (labelElement instanceof PsiDefaultCaseLabelElement) {
+      newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("default->{}", null);
+    }
+    else {
+      PsiElement defaultElement = SwitchUtils.findDefaultElement(labeledRule);
+      if (defaultElement != null) {
+        return moveRuleAfter((PsiCaseLabelElement)defaultElement, labeledRule);
+      }
+      newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("case 1->{}", null);
+      Objects.requireNonNull(newRule.getCaseLabelElementList()).getElements()[0].replace(labelElement);
+    }
     newRule = (PsiSwitchLabeledRuleStatement)labeledRule.getParent().addAfter(newRule, labeledRule);
     newRule = (PsiSwitchLabeledRuleStatement)CodeStyleManager.getInstance(project).reformat(newRule);
 
@@ -312,8 +315,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         return null;
       }
 
-      PsiStatement firstStatement = firstElement instanceof PsiStatement
-                                    ? (PsiStatement)firstElement
+      PsiStatement firstStatement = firstElement instanceof PsiStatement statement
+                                    ? statement
                                     : getNextSiblingOfType(firstElement, PsiStatement.class);
       PsiStatement lastStatement = null;
       for (PsiStatement next = firstStatement;
@@ -364,14 +367,26 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     }
 
     @NotNull
-    PsiSwitchLabelStatement addLabelAfter(@NotNull PsiCaseLabelElement labelElement) {
+    PsiSwitchLabelStatement addLabelAfter(@NotNull PsiCaseLabelElement labelElement, @NotNull PsiSwitchLabelStatement labelStatement) {
       Project project = myCodeBlock.getProject();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      PsiSwitchLabelStatement newLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("case 1:", null);
-      Objects.requireNonNull(newLabel.getCaseLabelElementList()).getElements()[0].replace(labelElement);
+      PsiSwitchLabelStatement newLabel;
+      if (labelElement instanceof PsiDefaultCaseLabelElement) {
+        newLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("default:", null);
+      }
+      else {
+        PsiElement defaultElement = SwitchUtils.findDefaultElement(labelStatement);
+        if (defaultElement != null) {
+          return addLabelAfter((PsiCaseLabelElement)defaultElement, labelStatement);
+        }
+        newLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("case 1:", null);
+        Objects.requireNonNull(newLabel.getCaseLabelElementList()).getElements()[0].replace(labelElement);
+      }
 
       newLabel = (PsiSwitchLabelStatement)myCodeBlock.addAfter(newLabel, myLastStatement);
       newLabel = (PsiSwitchLabelStatement)CodeStyleManager.getInstance(project).reformat(newLabel);
+
+      labelElement.delete();
       return newLabel;
     }
 

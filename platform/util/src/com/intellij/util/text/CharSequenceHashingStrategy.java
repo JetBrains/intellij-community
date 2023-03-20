@@ -11,7 +11,6 @@ import gnu.trove.TObjectHashingStrategy;
  */
 public final class CharSequenceHashingStrategy implements TObjectHashingStrategy<CharSequence> {
   public static final CharSequenceHashingStrategy CASE_SENSITIVE = new CharSequenceHashingStrategy(true);
-  public static final CharSequenceHashingStrategy CASE_INSENSITIVE = new CharSequenceHashingStrategy(false);
   private final boolean myCaseSensitive;
 
   private CharSequenceHashingStrategy(boolean caseSensitive) {

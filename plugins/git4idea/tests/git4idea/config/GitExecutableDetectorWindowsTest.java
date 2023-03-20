@@ -3,6 +3,7 @@ package git4idea.config;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -151,7 +152,7 @@ public class GitExecutableDetectorWindowsTest {
   }
 
   public static String replaceDiskColon(String path) {
-    if (path.charAt(1) == ':') {
+    if (OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       return path.charAt(0) + "_" + path.substring(2);
     }
     return path;

@@ -220,7 +220,7 @@ public class RunContentDescriptor implements Disposable {
 
   @Override
   public String toString() {
-    return getClass().getName() + "#" + hashCode() + "(" + getDisplayName() + ")";
+    return getClass().getSimpleName() + "#" + hashCode() + "(" + getDisplayName() + ", " + getProcessHandler() + ")";
   }
 
   public Computable<JComponent> getPreferredFocusComputable() {

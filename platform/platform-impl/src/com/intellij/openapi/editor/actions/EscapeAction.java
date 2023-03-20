@@ -20,8 +20,7 @@ public class EscapeAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (editor instanceof EditorEx) {
-        EditorEx editorEx = (EditorEx)editor;
+      if (editor instanceof EditorEx editorEx) {
         if (editorEx.isStickySelection()) {
           editorEx.setStickySelection(false);
         }

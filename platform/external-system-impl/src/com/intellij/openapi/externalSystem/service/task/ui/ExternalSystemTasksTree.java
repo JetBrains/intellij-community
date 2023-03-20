@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -23,9 +23,6 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTaskExecutionInfo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
@@ -77,7 +74,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
         scheduleCollapseStateAppliance(e.getTreePath());
       }
     });
-    new TreeSpeedSearch(this);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(this);
 
     getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
     getActionMap().put("Enter", new AbstractAction() {
@@ -172,8 +169,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
       }
 
       Object element = ((ExternalSystemNode)component).getDescriptor().getElement();
-      if (element instanceof ExternalTaskExecutionInfo) {
-        ExternalTaskExecutionInfo taskExecutionInfo = (ExternalTaskExecutionInfo)element;
+      if (element instanceof ExternalTaskExecutionInfo taskExecutionInfo) {
         ExternalSystemTaskExecutionSettings executionSettings = taskExecutionInfo.getSettings();
         String key = executionSettings.getExternalSystemIdString() + executionSettings.getExternalProjectPath() + executionSettings.getVmOptions();
         ExternalTaskExecutionInfo executionInfo = map.get(key);

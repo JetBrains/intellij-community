@@ -29,4 +29,3 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: y
 // RESULT: 48: C
-

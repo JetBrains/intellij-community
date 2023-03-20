@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-  <defs>
-    <linearGradient id="featuretrainer-a" x1="25.128%" x2="93.922%" y1="25.805%" y2="71.353%">
-      <stop offset="0%" stop-color="#15DD69"/>
-      <stop offset="100%" stop-color="#6B57FF"/>
-    </linearGradient>
-  </defs>
-  <path fill="url(#featuretrainer-a)" fill-rule="evenodd" d="M7,21 L19,28 L19,34.3 L7,27.3 L7,21 Z M31,21 L31,27.3 L19,34.3 L19,28 L31,21 Z M19,5 L36.998,14.499 L37,14.5 L37,27 L34,27 L34,16.167 L19,24.5 L1,14.5 L19,5 Z"/>
-</svg>

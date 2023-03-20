@@ -3,6 +3,7 @@
 
 package com.intellij.workspaceModel.ide
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -18,6 +19,8 @@ import java.nio.file.Path
  */
 fun VirtualFileUrlManager.Companion.getInstance(project: Project): VirtualFileUrlManager = project.service()
 
-fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.startsWith(other.url, url)
+fun VirtualFileUrlManager.Companion.getGlobalInstance(): VirtualFileUrlManager = ApplicationManager.getApplication().service()
+
+fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.startsWith(other.url.removeSuffix("/"), url.removeSuffix("/"))
 
 fun VirtualFileUrl.toPath(): Path = Path.of(JpsPathUtil.urlToPath(url))

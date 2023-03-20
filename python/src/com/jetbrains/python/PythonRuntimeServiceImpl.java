@@ -11,6 +11,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -25,12 +26,14 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Override
   public boolean isInPydevConsole(@NotNull PsiElement file) {
-    return PydevConsoleRunner.isInPydevConsole(file);
+    return PydevConsoleRunnerUtil.isInPydevConsole(file);
   }
 
   @Override
@@ -41,7 +44,7 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Nullable
   @Override
   public Sdk getConsoleSdk(@NotNull PsiElement foothold) {
-    return PydevConsoleRunner.getConsoleSdk(foothold);
+    return PydevConsoleRunnerUtil.getConsoleSdk(foothold);
   }
 
   @Override
@@ -72,12 +75,15 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
 
   @Override
   public PythonConsoleData getPythonConsoleData(@Nullable ASTNode node) {
-    return PydevConsoleRunner.getPythonConsoleData(node);
+    return PydevConsoleRunnerUtil.getPythonConsoleData(node);
   }
 
   @Override
-  public String formatDocstring(Module module, DocStringFormat format, String docstring) {
-    return PyRuntimeDocstringFormatter.runExternalTool(module, format, docstring);
+  public String formatDocstring(@NotNull Module module,
+                                @NotNull DocStringFormat format,
+                                @NotNull String input,
+                                @NotNull List<String> formatterFlags) {
+    return PyRuntimeDocstringFormatter.runExternalTool(module, format, input, formatterFlags);
   }
 
   @Override

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 
 @Suppress("DialogTitleCapitalization")
@@ -48,7 +47,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
     row {
       text("If needed text color of Row.text() can be changed to comment color with the following code:<br>" +
            "foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND<br>" +
-           "It differs from Row.comment() because comments can use smaller font size on macOS")
+           "It differs from Row.comment() because comments can use smaller font size on macOS and Linux")
         .applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
     }
 
@@ -57,7 +56,7 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
         textField()
           .gap(RightGap.SMALL)
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
         val action = object : DumbAwareAction(AllIcons.Actions.QuickfixOffBulb) {
           override fun actionPerformed(e: AnActionEvent) {
           }
@@ -68,19 +67,61 @@ fun demoTips(parentDisposable: Disposable): DialogPanel {
       row("Row 2:") {
         textField()
           .gap(RightGap.SMALL)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
         cell()
       }.layout(RowLayout.PARENT_GRID)
         .rowComment("Last textField occupies only one column like the previous textField")
     }
 
-    group("Use Panel.row(EMPTY_LABEL) if label is empty") {
+    group("""Use Panel.row("") if label is empty""") {
       row("Row 1:") {
         textField()
       }
-      row(EMPTY_LABEL) {
+      row("") {
         textField()
-      }.rowComment("""Don't use row(""), because it creates unnecessary label component in layout""")
+      }
+    }
+    group("Use Cell.widthGroup to use the same width") {
+      row {
+        textField().widthGroup("GroupName")
+      }
+      row {
+        button("Button") {}.widthGroup("GroupName")
+      }.rowComment("All components from the same width group will have the same width equals to maximum width from the group. Cannot be used together with AlignX.FILL")
+    }
+    row {
+      panel {
+        group("No default radio button") {
+          var value = 0
+          buttonsGroup {
+            row {
+              radioButton("Value = 1", 1)
+            }
+            row {
+              radioButton("Value = 2", 2)
+                .comment("Initial bounded value is 0, RadioButtons in the group are deselected by default", maxLineLength = 40)
+            }
+          }.bind({ value }, { value = it })
+        }
+      }.gap(RightGap.COLUMNS)
+        .align(AlignY.TOP)
+        .resizableColumn()
+      panel {
+        group("Default radio button") {
+          var value = 0
+          buttonsGroup {
+            row {
+              radioButton("Value = 1", 1)
+            }
+            row {
+              radioButton("Value = 2, isSelected = true", 2)
+                .applyToComponent { isSelected = true }
+                .comment("Initial bounded value is 0, this RadioButton is selected because initial bound variable value is not equal to values of RadioButton in the group and isSelected = true", maxLineLength = 40)
+            }
+          }.bind({ value }, { value = it })
+        }
+      }.align(AlignY.TOP)
+        .resizableColumn()
     }
   }
 

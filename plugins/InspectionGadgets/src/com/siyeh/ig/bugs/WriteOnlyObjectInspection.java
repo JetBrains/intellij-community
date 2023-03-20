@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -23,15 +24,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OBJECT_CLONE =
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "clone").parameterCount(0);
   public boolean ignoreImpureConstructors = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("write.only.object.option.ignore.impure.constructors"),
-                                          this, "ignoreImpureConstructors");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreImpureConstructors", InspectionGadgetsBundle.message("write.only.object.option.ignore.impure.constructors")));
   }
 
   @Override
@@ -39,21 +42,21 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
                                                  boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         if (!(variable instanceof PsiResourceVariable)) {
           processVariable(variable, PsiUtil.getVariableCodeBlock(variable, null));
         }
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
           processVariable(field, PsiUtil.getTopLevelClass(field));
         }
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(expression);
         PsiJavaCodeReferenceElement anchor = expression.getClassOrAnonymousClassReference();
         if (anchor != null && nextCall != null && isNewExpression(expression) && isWriteOnlyCall(nextCall, true)) {
@@ -62,7 +65,7 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
         PsiElement anchor = call.getMethodExpression().getReferenceNameElement();
         if (anchor != null && nextCall != null && isNewExpression(call) && isWriteOnlyCall(nextCall, false)) {

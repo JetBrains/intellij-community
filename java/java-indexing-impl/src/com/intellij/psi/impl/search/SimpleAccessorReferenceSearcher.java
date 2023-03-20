@@ -12,9 +12,6 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public SimpleAccessorReferenceSearcher() {
     super(true);

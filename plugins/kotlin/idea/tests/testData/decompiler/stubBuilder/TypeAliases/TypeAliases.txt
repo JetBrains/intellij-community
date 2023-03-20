@@ -2,7 +2,7 @@ PsiJetFileStubImpl[package=test]
   PACKAGE_DIRECTIVE
     REFERENCE_EXPRESSION[referencedName=test]
   IMPORT_LIST
-  CLASS[fqName=test.TypeAliases, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=TypeAliases, superNames=[]]
+  CLASS[classId=test/TypeAliases, fqName=test.TypeAliases, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=TypeAliases, superNames=[]]
     MODIFIER_LIST[public final]
     PRIMARY_CONSTRUCTOR
       MODIFIER_LIST[public]
@@ -95,19 +95,19 @@ PsiJetFileStubImpl[package=test]
             USER_TYPE
               REFERENCE_EXPRESSION[referencedName=kotlin]
             REFERENCE_EXPRESSION[referencedName=Unit]
-      CLASS[fqName=test.TypeAliases.OrderA, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OrderA, superNames=[]]
+      CLASS[classId=test/TypeAliases.OrderA, fqName=test.TypeAliases.OrderA, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OrderA, superNames=[]]
         MODIFIER_LIST[public final]
         PRIMARY_CONSTRUCTOR
           MODIFIER_LIST[public]
           VALUE_PARAMETER_LIST
         CLASS_BODY
-      CLASS[fqName=test.TypeAliases.OrderB, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OrderB, superNames=[]]
+      CLASS[classId=test/TypeAliases.OrderB, fqName=test.TypeAliases.OrderB, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=false, name=OrderB, superNames=[]]
         MODIFIER_LIST[public final]
         PRIMARY_CONSTRUCTOR
           MODIFIER_LIST[public]
           VALUE_PARAMETER_LIST
         CLASS_BODY
-      TYPEALIAS[fqName=test.TypeAliases.B, isTopLevel=false, name=B]
+      TYPEALIAS[classId=test/TypeAliases.B, fqName=test.TypeAliases.B, isTopLevel=false, name=B]
         MODIFIER_LIST[public]
         TYPE_REFERENCE
           FUNCTION_TYPE
@@ -123,7 +123,7 @@ PsiJetFileStubImpl[package=test]
                 USER_TYPE
                   REFERENCE_EXPRESSION[referencedName=kotlin]
                 REFERENCE_EXPRESSION[referencedName=Unit]
-      TYPEALIAS[fqName=test.TypeAliases.Parametrized, isTopLevel=false, name=Parametrized]
+      TYPEALIAS[classId=test/TypeAliases.Parametrized, fqName=test.TypeAliases.Parametrized, isTopLevel=false, name=Parametrized]
         MODIFIER_LIST[private]
           ANNOTATION_ENTRY[hasValueArguments=false, shortName=Ann]
             CONSTRUCTOR_CALLEE

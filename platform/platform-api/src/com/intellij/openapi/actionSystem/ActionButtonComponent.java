@@ -20,9 +20,22 @@ import org.intellij.lang.annotations.MagicConstant;
 import java.awt.*;
 
 public interface ActionButtonComponent {
+
   int NORMAL = 0;
+
+  /**
+   * The button is in hover state (mouse button is not pressed)
+   */
   int POPPED = 1;
+
+  /**
+   * The button is pushed by mouse button and mouse cursor is over the button
+   */
   int PUSHED = -1;
+
+  /**
+   * Can mean either the button is focused or the button is selected (like for toggleable buttons)
+   */
   int SELECTED = 2;
 
   @MagicConstant(flags = {NORMAL, POPPED, PUSHED, SELECTED})

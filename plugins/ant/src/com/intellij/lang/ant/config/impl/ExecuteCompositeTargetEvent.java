@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
@@ -51,8 +50,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     myPresentableName = compositeName;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ExecuteCompositeTargetEvent(String[] targetNames) {
     this(Arrays.asList(targetNames));
   }

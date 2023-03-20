@@ -2,11 +2,13 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
@@ -75,8 +77,27 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    * Currently only static inspection of the remote environment variables and launching and inspecting the output of the shell scripts is supported.
    */
   abstract class Introspectable {
+    abstract val targetPlatform: CompletableFuture<TargetPlatform>
     open fun promiseEnvironmentVariable(varName: String): CompletableFuture<String?> = CompletableFuture.completedFuture(null)
-    open fun promiseExecuteScript(script: String): CompletableFuture<String?> = CompletableFuture.completedFuture(null)
+    open fun promiseExecuteScript(script: List<String>): CompletableFuture<ProcessOutput> =
+      CompletableFuture.failedFuture(UnsupportedOperationException())
+
+    /**
+     * Asynchronously executes provided [script] and returns stdout of the process.
+     *
+     * Note that **this method is deprecated** as:
+     *  - it consumes plain `String`, which must be parsed into the list of parameters and is prone to error;
+     *  - it returns `CompletableFuture<String?>`, where `String?` does not provide enough information as exit code and separated stdout
+     *    and stderr outputs.
+     *
+     * Use [promiseExecuteScript] that takes `List<String>` as parameter and returns `CompletableFuture<ProcessOutput>`.
+     */
+    @Deprecated(message = "Use the overloaded method with List<String> parameter type and CompletableFuture<ProcessOutput> return type",
+                replaceWith = ReplaceWith("promiseExecuteScript(ParametersListUtil.parse(script)).thenApply(ProcessOutput::getStdout)",
+                                          "com.intellij.execution.process.ProcessOutput", "com.intellij.util.execution.ParametersListUtil"))
+    open fun promiseExecuteScript(script: String): CompletableFuture<String?> =
+      promiseExecuteScript(ParametersListUtil.parse(script)).thenApply(ProcessOutput::getStdout)
+
     open fun shutdown() = Unit
   }
 

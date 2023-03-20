@@ -38,27 +38,23 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public class ConvertJunitAssertionToAssertStatementIntention extends Intention implements PsiElementPredicate {
+  private static class Holder {
+    private static final Pattern PATTERN = Pattern.compile("arg(\\d+)");
 
-  private static final Pattern PATTERN = Pattern.compile("arg(\\d+)");
-  
-  private static final Map<String, String[]> ourStatementMap = new HashMap<>();
-  static {
-    ourStatementMap.put("assertNotNull", new String[]{null, "assert arg0 != null", "assert arg1 != null : arg0"});
-    ourStatementMap.put("assertNull", new String[]{null, "assert arg0 == null", "assert arg1 == null : arg0"});
+    private static final Map<String, String[]> ourStatementMap = Map.of(
+      "assertNotNull", new String[]{null, "assert arg0 != null", "assert arg1 != null : arg0"},
+      "assertNull", new String[]{null, "assert arg0 == null", "assert arg1 == null : arg0"},
 
-    ourStatementMap.put("assertTrue", new String[]{null, "assert arg0", "assert arg1 : arg0"});
-    ourStatementMap.put("assertFalse", new String[]{null, "assert !arg0", "assert !arg1 : arg0"});
+      "assertTrue", new String[]{null, "assert arg0", "assert arg1 : arg0"},
+      "assertFalse", new String[]{null, "assert !arg0", "assert !arg1 : arg0"},
 
-    ourStatementMap.put("assertEquals", new String[]{null, null, "assert arg0 == arg1", "assert arg1 == arg2 : arg0"});
+      "assertEquals", new String[]{null, null, "assert arg0 == arg1", "assert arg1 == arg2 : arg0"},
 
-    ourStatementMap.put("assertSame", new String[]{null, null, "assert arg0.is(arg1)", "assert arg1.is(arg2) : arg0"});
-    ourStatementMap.put("assertNotSame", new String[]{null, null, "assert !arg0.is(arg1)", "assert !arg1.is(arg2) : arg0"});
+      "assertSame", new String[]{null, null, "assert arg0.is(arg1)", "assert arg1.is(arg2) : arg0"},
+      "assertNotSame", new String[]{null, null, "assert !arg0.is(arg1)", "assert !arg1.is(arg2) : arg0"});
   }
-  
+
   @Nullable
   private static String getReplacementStatement(@NotNull PsiMethod method, @NotNull GrMethodCall methodCall) {
     PsiClass containingClass = method.getContainingClass();
@@ -67,7 +63,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
     String qualifiedName = containingClass.getQualifiedName();
     if (!"junit.framework.Assert".equals(qualifiedName) && !"groovy.util.GroovyTestCase".equals(qualifiedName)) return null;
 
-    String[] replacementStatements = ourStatementMap.get(method.getName());
+    String[] replacementStatements = Holder.ourStatementMap.get(method.getName());
     if (replacementStatements == null) return null;
     
     GrArgumentList argumentList = methodCall.getArgumentList();
@@ -97,7 +93,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
     statement.acceptChildren(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitExpression(@NotNull GrExpression expression) {
-        Matcher matcher = PATTERN.matcher(expression.getText());
+        Matcher matcher = Holder.PATTERN.matcher(expression.getText());
         if (matcher.matches()) {
           int index = Integer.parseInt(matcher.group(1));
           replaceMap.put(expression, arguments[index]);
@@ -136,9 +132,7 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrMethodCall)) return false;
-    
-    GrMethodCall methodCall = (GrMethodCall)element;
+    if (!(element instanceof GrMethodCall methodCall)) return false;
 
     PsiMethod method = methodCall.resolveMethod();
     if (method == null) return false;

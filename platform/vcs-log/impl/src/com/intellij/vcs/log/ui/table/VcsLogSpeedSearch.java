@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ui.SpeedSearchBase;
@@ -23,9 +23,8 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
     return myComponent.getRowCount();
   }
 
-  @NotNull
   @Override
-  protected ListIterator<Object> getElementIterator(int startingViewIndex) {
+  protected @NotNull ListIterator<Object> getElementIterator(int startingViewIndex) {
     return new MyRowsList().listIterator(startingViewIndex);
   }
 
@@ -34,9 +33,8 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
     return myComponent.getSelectedRow();
   }
 
-  @Nullable
   @Override
-  protected String getElementText(@NotNull Object row) {
+  protected @Nullable String getElementText(@NotNull Object row) {
     throw new UnsupportedOperationException("Getting row text in a Log is unsupported since we match columns separately.");
   }
 
@@ -49,20 +47,18 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
     return isMatchingMetadata(pattern, metadata, getColumnsForSpeedSearch());
   }
 
-  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<VcsLogMetadataColumn> columns) {
+  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<? extends VcsLogMetadataColumn> columns) {
     if (metadata == null) return false;
-    return columns.stream().anyMatch(column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
+    return ContainerUtil.exists(columns, column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
   }
 
-  @Nullable
-  protected VcsCommitMetadata getCommitMetadata(int row) {
+  protected @Nullable VcsCommitMetadata getCommitMetadata(int row) {
     VcsCommitMetadata metadata = myComponent.getModel().getCommitMetadata(row);
     if (metadata instanceof LoadingDetails) return null;
     return metadata;
   }
 
-  @NotNull
-  protected List<VcsLogMetadataColumn> getColumnsForSpeedSearch() {
+  protected @NotNull List<VcsLogMetadataColumn> getColumnsForSpeedSearch() {
     return ContainerUtil.filterIsInstance(myComponent.getVisibleColumns(), VcsLogMetadataColumn.class);
   }
 

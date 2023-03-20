@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
@@ -30,8 +31,10 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class JavaDocReferenceInspection extends LocalInspectionTool {
   private static final String SHORT_NAME = "JavadocReference";
@@ -40,9 +43,9 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   public boolean REPORT_INACCESSIBLE = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      JavaBundle.message("checkbox.html.report.inaccessible.symbols"), this, "REPORT_INACCESSIBLE");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_INACCESSIBLE", JavaBundle.message("checkbox.html.report.inaccessible.symbols")));
   }
 
   @Override
@@ -69,29 +72,29 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           checkComment(PsiTreeUtil.getChildOfType(file, PsiDocComment.class), file, holder, isOnTheFly);
         }
       }
 
       @Override
-      public void visitModule(PsiJavaModule module) {
+      public void visitModule(@NotNull PsiJavaModule module) {
         checkComment(module.getDocComment(), module, holder, isOnTheFly);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         checkComment(aClass.getDocComment(), aClass, holder, isOnTheFly);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkComment(field.getDocComment(), field, holder, isOnTheFly);
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         checkComment(method.getDocComment(), method, holder, isOnTheFly);
       }
     };
@@ -100,24 +103,28 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   private void checkComment(@Nullable PsiDocComment comment, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
     if (comment == null) return;
 
-    JavadocManager javadocManager = JavadocManager.SERVICE.getInstance(holder.getProject());
-    comment.accept(new JavaElementVisitor() {
+    JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
+    comment.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         visitRefElement(reference, context, isOnTheFly, holder);
       }
 
       @Override
-      public void visitDocTag(PsiDocTag tag) {
-        super.visitDocTag(tag);
-        visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
+      public void visitSnippetAttributeValue(@NotNull PsiSnippetAttributeValue attributeValue) {
+        PsiReference ref = attributeValue.getReference();
+        if (ref != null) {
+          PsiElement resolved = ref.resolve();
+          if (resolved == null) {
+            holder.registerProblem(attributeValue, JavaBundle.message("inspection.message.snippet.file.not.found"));
+          }
+        }
       }
 
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-          child.accept(this);
-        }
+      public void visitDocTag(@NotNull PsiDocTag tag) {
+        super.visitDocTag(tag);
+        visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
       }
     });
   }
@@ -142,7 +149,13 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
             if (adjacent instanceof PsiDocToken &&
                 ((PsiDocToken)adjacent).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA &&
                 adjacent.getText().startsWith(URLUtil.SCHEME_SEPARATOR)) {
-              fix = new UrlToHtmlFix(refHolder, adjacent);
+              PsiDocComment docComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
+              if (docComment != null) {
+                int startOffsetInDocComment = refHolder.getTextOffset() - docComment.getTextOffset();
+                int endOffsetInDocComment =
+                  refHolder.getTextOffset() + refText.length() + adjacent.getTextLength() - docComment.getTextOffset();
+                fix = new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment);
+              }
             }
           }
         }
@@ -190,13 +203,12 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
     if (isOnTheFly && "param".equals(tagName)) {
       PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(tag, PsiDocCommentOwner.class);
-      if (commentOwner instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)commentOwner;
+      if (commentOwner instanceof PsiMethod method) {
         PsiParameter[] parameters = method.getParameterList().getParameters();
         PsiDocTag[] tags = tag.getContainingComment().getTags();
         Set<String> unboundParams = new HashSet<>();
         for (PsiParameter parameter : parameters) {
-          if (!JavadocHighlightUtil.hasTagForParameter(tags, parameter)) {
+          if (!MissingJavadocInspection.hasTagForParameter(tags, parameter)) {
             unboundParams.add(parameter.getName());
           }
         }
@@ -246,7 +258,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (!(resolved instanceof PsiMember)) {
       return true;
     }
-    if (!PsiResolveHelper.SERVICE.getInstance(resolved.getProject()).isAccessible((PsiMember)resolved, context, null)) {
+    if (!PsiResolveHelper.getInstance(resolved.getProject()).isAccessible((PsiMember)resolved, context, null)) {
       return false;
     }
     VirtualFile file = PsiUtilCore.getVirtualFile(resolved);
@@ -290,6 +302,19 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
           LookupManager.getInstance(project).showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
         }
       });
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      String firstUnbound = myUnboundParams.stream().findFirst().orElse(null);
+      if (firstUnbound == null) return IntentionPreviewInfo.EMPTY;
+      PsiElement reference = previewDescriptor.getPsiElement();
+      PsiElement firstUnboundReference = PsiElementFactory.getInstance(project)
+        .createDocTagFromText("@param " + firstUnbound)
+        .getValueElement();
+      if (firstUnboundReference == null) return IntentionPreviewInfo.EMPTY;
+      reference.replace(firstUnboundReference);
+      return IntentionPreviewInfo.DIFF;
     }
   }
 
@@ -359,50 +384,6 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
       PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
       if (myTag != null) {
         myTag.delete();
-      }
-    }
-  }
-
-  private static class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private UrlToHtmlFix(PsiElement startElement, PsiElement endElement) {
-      super(startElement, endElement);
-    }
-
-    @Override
-    public @NotNull String getText() {
-      return JavaBundle.message("quickfix.text.replace.url.with.html");
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement refHolder,
-                       @NotNull PsiElement adjacent) {
-      String text = adjacent.getText(), url;
-      int urlEnd = text.indexOf(' ');
-      if (urlEnd > 0) {
-        url = refHolder.getText() + text.substring(0, urlEnd);
-        text = text.substring(urlEnd).trim();
-      }
-      else {
-        url = refHolder.getText() + text;
-        text = "...";
-      }
-      PsiDocTag tag = PsiElementFactory.getInstance(project).createDocTagFromText("@see <a href=\"" + url + "\">" + text + "</a>");
-      PsiElement replacement = tag.getLastChild();
-      assert replacement instanceof PsiDocToken : Arrays.toString(tag.getChildren());
-      refHolder.delete();
-      replacement = adjacent.replace(replacement);
-      if (editor != null) {
-        int start = replacement.getTextRange().getStartOffset() + url.length() + 11, end = start + text.length();
-        editor.getCaretModel().moveToOffset(start);
-        editor.getSelectionModel().setSelection(start, end);
       }
     }
   }

@@ -19,6 +19,6 @@ class au extends ap {
    }
 
    public Double e() {
-      return 100.0D;
+      return 100.0;
    }
 }

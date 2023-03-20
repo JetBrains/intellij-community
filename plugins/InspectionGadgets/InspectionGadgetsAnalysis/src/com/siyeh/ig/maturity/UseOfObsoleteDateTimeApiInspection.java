@@ -17,7 +17,6 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,8 +31,7 @@ import java.util.Set;
  */
 public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
 
-  static final Set<String> dateTimeNames = ContainerUtil
-    .set("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone");
+  static final Set<String> dateTimeNames = Set.of("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone");
 
   @NotNull
   @Override
@@ -51,7 +49,7 @@ public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
     private Boolean newDateTimeApiPresent = null;
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
       if (!isNewDateTimeApiPresent(referenceElement)) {
         return;
       }
@@ -60,24 +58,22 @@ public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
       }
       super.visitReferenceElement(referenceElement);
       final PsiElement target = referenceElement.resolve();
-      if (!(target instanceof PsiClass)) return;
+      if (!(target instanceof PsiClass targetClass)) return;
 
-      final PsiClass targetClass = (PsiClass)target;
-      if (!dateTimeNames.contains(targetClass.getQualifiedName())) {
+      String qualifiedName = targetClass.getQualifiedName();
+      if (qualifiedName == null || !dateTimeNames.contains(qualifiedName)) {
         return;
       }
 
       PsiTypeElement typeElement = PsiTreeUtil.getTopmostParentOfType(referenceElement, PsiTypeElement.class);
       if (typeElement != null) {
         final PsiElement parent = typeElement.getParent();
-        if (parent instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)parent;
+        if (parent instanceof PsiMethod method) {
           if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
             return;
           }
         }
-        else if (parent instanceof PsiParameter) {
-          final PsiParameter parameter = (PsiParameter)parent;
+        else if (parent instanceof PsiParameter parameter) {
           if (LibraryUtil.isOverrideOfLibraryMethodParameter(parameter)) {
             return;
           }

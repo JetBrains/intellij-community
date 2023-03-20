@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -20,7 +18,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.DiffPreview;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction.FileRevisionProvider;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -36,16 +37,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-public class CompareWithLocalDialog {
+public final class CompareWithLocalDialog {
+  @RequiresEdt
   public static void showChanges(@NotNull Project project,
                                  @NotNull @NlsContexts.DialogTitle String dialogTitle,
                                  @NotNull LocalContent localContent,
                                  @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
+    if (localContent != LocalContent.NONE) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
     if (AbstractVcsHelperImpl.showCommittedChangesAsTab()) {
       showAsTab(project, dialogTitle, localContent, changesLoader);
     }
@@ -76,11 +79,11 @@ public class CompareWithLocalDialog {
                                 @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
     MyLoadingChangesPanel changesPanel = createPanel(project, localContent, changesLoader);
 
-    SimpleChangesBrowser changesBrowser = changesPanel.getChangesBrowser();
+    ChangesBrowserBase changesBrowser = changesPanel.getChangesBrowser();
     DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, changesBrowser, changesPanel);
     changesBrowser.setShowDiffActionPreview(diffPreview);
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(changesPanel, dialogTitle, false);
+    Content content = ContentFactory.getInstance().createContent(changesPanel, dialogTitle, false);
     content.setPreferredFocusableComponent(changesBrowser.getPreferredFocusedComponent());
     content.setDisposer(changesPanel);
 
@@ -110,10 +113,10 @@ public class CompareWithLocalDialog {
   private static abstract class MyLoadingChangesPanel extends JPanel implements DataProvider, Disposable {
     public static final DataKey<MyLoadingChangesPanel> DATA_KEY = DataKey.create("git4idea.log.MyLoadingChangesPanel");
 
-    private final SimpleChangesBrowser myChangesBrowser;
+    private final SimpleAsyncChangesBrowser myChangesBrowser;
     private final LoadingChangesPanel myLoadingPanel;
 
-    private MyLoadingChangesPanel(@NotNull SimpleChangesBrowser changesBrowser) {
+    private MyLoadingChangesPanel(@NotNull SimpleAsyncChangesBrowser changesBrowser) {
       super(new BorderLayout());
 
       myChangesBrowser = changesBrowser;
@@ -128,7 +131,7 @@ public class CompareWithLocalDialog {
     }
 
     @NotNull
-    public SimpleChangesBrowser getChangesBrowser() {
+    public ChangesBrowserBase getChangesBrowser() {
       return myChangesBrowser;
     }
 
@@ -139,7 +142,7 @@ public class CompareWithLocalDialog {
     @NotNull
     protected abstract Collection<Change> loadChanges() throws VcsException;
 
-    private void applyResult(@Nullable Collection<Change> changes) {
+    private void applyResult(@Nullable Collection<? extends Change> changes) {
       myChangesBrowser.setChangesToDisplay(changes != null ? changes : Collections.emptyList());
     }
 
@@ -153,7 +156,7 @@ public class CompareWithLocalDialog {
     }
   }
 
-  private static class MyChangesBrowser extends SimpleChangesBrowser implements Disposable {
+  private static class MyChangesBrowser extends SimpleAsyncChangesBrowser implements Disposable {
     @NotNull private final CompareWithLocalDialog.LocalContent myLocalContent;
 
     private MyChangesBrowser(@NotNull Project project, @NotNull LocalContent localContent) {
@@ -161,19 +164,22 @@ public class CompareWithLocalDialog {
       myLocalContent = localContent;
 
       hideViewerBorder();
+      myViewer.setTreeStateStrategy(ChangesTree.KEEP_NON_EMPTY);
     }
 
     @Override
     public void dispose() {
+      shutdown();
     }
 
     @NotNull
     @Override
     protected List<AnAction> createToolbarActions() {
-      return ContainerUtil.append(
-        super.createToolbarActions(),
-        new MyGetVersionAction()
-      );
+      List<AnAction> actions = new ArrayList<>();
+      actions.add(new MyRefreshAction());
+      actions.addAll(super.createToolbarActions());
+      actions.add(ActionManager.getInstance().getAction("Vcs.GetVersion"));
+      return actions;
     }
 
     @NotNull
@@ -181,15 +187,21 @@ public class CompareWithLocalDialog {
     protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),
-        new MyGetVersionAction()
+        ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"),
+        ActionManager.getInstance().getAction("Vcs.GetVersion")
       );
     }
   }
 
-  private static class MyGetVersionAction extends DumbAwareAction {
-    private MyGetVersionAction() {
-      super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
-            VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
+  public static class GetVersionActionProvider implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return e.getData(MyLoadingChangesPanel.DATA_KEY) != null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -214,11 +226,14 @@ public class CompareWithLocalDialog {
       MyLoadingChangesPanel changesPanel = e.getRequiredData(MyLoadingChangesPanel.DATA_KEY);
       MyChangesBrowser browser = (MyChangesBrowser)changesPanel.getChangesBrowser();
 
-      List<FileRevisionProvider> fileContentProviders = ContainerUtil.map(changesPanel.getChangesBrowser().getSelectedChanges(), change -> {
+      List<FileRevisionProvider> fileContentProviders = ContainerUtil.map(browser.getSelectedChanges(), change -> {
         return new MyFileContentProvider(change, browser.myLocalContent);
       });
       GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders,
-                             () -> changesPanel.reloadChanges());
+                             () -> {
+                               FileDocumentManager.getInstance().saveAllDocuments();
+                               changesPanel.reloadChanges();
+                             });
     }
 
     private static class MyFileContentProvider implements FileRevisionProvider {
@@ -238,13 +253,48 @@ public class CompareWithLocalDialog {
       }
 
       @Override
-      public byte @Nullable [] getContent() throws VcsException {
+      public @Nullable GetVersionAction.FileRevisionContent getContent() throws VcsException {
         ContentRevision revision = myLocalContent == LocalContent.AFTER ? myChange.getBeforeRevision()
                                                                         : myChange.getAfterRevision();
         if (revision == null) return null;
+        byte[] bytes = ChangesUtil.loadContentRevision(revision);
 
-        return ChangesUtil.loadContentRevision(revision);
+        FilePath oldFilePath = myChange.isMoved() || myChange.isRenamed() ? revision.getFile() : null;
+        return new GetVersionAction.FileRevisionContent(bytes, oldFilePath);
       }
+    }
+  }
+
+  private static class MyRefreshAction extends DumbAwareAction {
+    private MyRefreshAction() {
+      super(VcsBundle.messagePointer("action.name.refresh.compare.with.local.panel"),
+            VcsBundle.messagePointer("action.description.refresh.compare.with.local.panel"),
+            AllIcons.Actions.Refresh);
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      MyLoadingChangesPanel changesPanel = e.getData(MyLoadingChangesPanel.DATA_KEY);
+      if (changesPanel == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      MyChangesBrowser browser = ObjectUtils.tryCast(changesPanel.getChangesBrowser(), MyChangesBrowser.class);
+      e.getPresentation().setEnabledAndVisible(browser != null && browser.myLocalContent != LocalContent.NONE);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      MyLoadingChangesPanel changesPanel = e.getRequiredData(MyLoadingChangesPanel.DATA_KEY);
+      FileDocumentManager.getInstance().saveAllDocuments();
+      changesPanel.reloadChanges();
     }
   }
 

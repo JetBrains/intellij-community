@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -20,9 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -71,7 +69,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     public boolean equals(VirtualFilePointer o1, VirtualFilePointer o2) {
       String u1 = o1.getUrl();
       String u2 = o2.getUrl();
-      return u1 == u2 || (SystemInfoRt.isFileSystemCaseSensitive ? u1.equals(u2) : u1.equalsIgnoreCase(u2));
+      return Strings.areSameInstance(u1, u2) || (SystemInfoRt.isFileSystemCaseSensitive ? u1.equals(u2) : u1.equalsIgnoreCase(u2));
     }
   });
   private volatile Charset myProjectCharset;
@@ -79,15 +77,6 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-  }
-
-  static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.getDisposed(),
-                                         () -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments()
-      );
-    }
   }
 
   @Override
@@ -166,7 +155,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myModificationTracker.incModificationCount();
   }
 
-  private void reloadAlreadyLoadedDocuments() {
+  void reloadAlreadyLoadedDocuments() {
     if (myMapping.isEmpty()) {
       return;
     }
@@ -291,7 +280,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
 
@@ -320,7 +309,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
 
   public void setPointerMapping(@NotNull Map<? extends VirtualFilePointer, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new HashMap<>(mapping.size());
 
@@ -601,15 +590,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   @Override
   public boolean shouldAddBOMForNewUtf8File() {
-    switch (myBomForNewUtf8Files) {
-      case ALWAYS:
-        return true;
-      case NEVER:
-        return false;
-      case WINDOWS_ONLY:
-        return SystemInfo.isWindows;
-      default:
-        throw new IllegalStateException(myBomForNewUtf8Files.toString());
-    }
+    return switch (myBomForNewUtf8Files) {
+      case ALWAYS -> true;
+      case NEVER -> false;
+      case WINDOWS_ONLY -> SystemInfo.isWindows;
+    };
   }
 }

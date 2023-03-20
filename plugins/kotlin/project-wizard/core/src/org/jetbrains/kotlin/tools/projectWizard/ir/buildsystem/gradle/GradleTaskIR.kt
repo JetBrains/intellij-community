@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle
 
 import org.jetbrains.annotations.NonNls
@@ -22,21 +22,6 @@ data class GradleNamedTaskAccessIR(
                 +"tasks.named"
                 taskClass?.let { +"<$it>" }
                 +"(${name.quotified})"
-            }
-        }
-    }
-}
-
-data class GradleByClassTasksAccessIR(
-    @NonNls val taskClass: String
-) : GradleTaskAccessIR {
-    override fun GradlePrinter.renderGradle() {
-        when (dsl) {
-            GradlePrinter.GradleDsl.GROOVY -> {
-                +"tasks.withType($taskClass)"
-            }
-            GradlePrinter.GradleDsl.KOTLIN -> {
-                +"tasks.withType<$taskClass>"
             }
         }
     }

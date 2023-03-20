@@ -1,4 +1,4 @@
-// "Wrap using 'Long.valueOf()'" "true"
+// "Wrap using 'Long.valueOf()'" "true-preview"
 public class Test {
   void ba() {
     fa("4<caret>2");

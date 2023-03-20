@@ -1,4 +1,4 @@
-// "Replace with '(flag ? removals1 : removals2).forEach(source::remove)'" "true"
+// "Replace with '(flag ? removals1 : removals2).forEach(source::remove)'" "true-preview"
 
 import java.util.*;
 

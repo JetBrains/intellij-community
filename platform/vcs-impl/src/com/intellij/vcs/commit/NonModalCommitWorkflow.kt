@@ -1,93 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.DumbService.isDumb
-import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
-import com.intellij.openapi.vcs.checkin.CommitCheck
-import com.intellij.openapi.vcs.checkin.CommitProblem
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
-
-private val LOG = logger<NonModalCommitWorkflow>()
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  override fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
-    LOG.debug("CheckinHandler.beforeCheckin: $handler")
+  internal fun launchAsyncSession(scope: CoroutineScope,
+                                  sessionInfo: CommitSessionInfo,
+                                  commitChecks: suspend () -> CommitChecksResult) {
+    check(isExecuting) { "Commit session has already finished" }
+    scope.launch {
+      try {
+        fireBeforeCommitChecksStarted(sessionInfo)
+        val result = commitChecks()
+        fireBeforeCommitChecksEnded(sessionInfo, result)
 
-    if (handler is CommitCheck<*>) {
-      if (!handler.isEnabled())
-        return CheckinHandler.ReturnResult.COMMIT.also { LOG.debug("Commit check disabled $handler") }
-
-      if (isDumb(project) && !isDumbAware(handler))
-        return CheckinHandler.ReturnResult.COMMIT.also { LOG.debug("Skipped commit check in dumb mode $handler") }
-    }
-
-    return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-  }
-
-  suspend fun executeDefault(checker: suspend () -> CheckinHandler.ReturnResult) {
-    var result = CheckinHandler.ReturnResult.CANCEL
-    try {
-      result = checkCommit(checker)
-      processExecuteDefaultChecksResult(result)
-    }
-    finally {
-      if (result != CheckinHandler.ReturnResult.COMMIT) endExecution()
-    }
-  }
-
-  private suspend fun checkCommit(checker: suspend () -> CheckinHandler.ReturnResult): CheckinHandler.ReturnResult {
-    var result = CheckinHandler.ReturnResult.CANCEL
-
-    fireBeforeCommitChecksStarted()
-    try {
-      result = checker()
-    }
-    finally {
-      fireBeforeCommitChecksEnded(true, result)
-    }
-
-    return result
-  }
-
-  suspend fun runMetaHandlers(indicator: ProgressIndicator) =
-    commitHandlers
-      .filterIsInstance<CheckinMetaHandler>()
-      .reversed() // to have the same order as when wrapping meta handlers into each other
-      .forEach { runMetaHandler(it, indicator) }
-
-  private suspend fun runMetaHandler(metaHandler: CheckinMetaHandler, indicator: ProgressIndicator) {
-    if (metaHandler is CommitCheck<*>) {
-      runCommitCheck(metaHandler, indicator)
-    }
-    else {
-      suspendCancellableCoroutine<Unit> { continuation ->
-        val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
-        handlerCall.run()
+        if (result.shouldCommit) {
+          performCommit(sessionInfo)
+        }
+        else {
+          endExecution()
+        }
+      }
+      catch (e: Throwable) {
+        endExecution()
+        throw e
       }
     }
-  }
-
-  fun runHandlers(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    val handlers = commitHandlers.filterNot { it is CommitCheck<*> }
-    return runBeforeCommitHandlersChecks(executor, handlers)
-  }
-
-  suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
-    if (!commitCheck.isEnabled()) return null.also { LOG.debug("Commit check disabled $commitCheck") }
-    if (isDumb(project) && !isDumbAware(commitCheck)) return null.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
-
-    LOG.debug("Running commit check $commitCheck")
-    indicator.checkCanceled()
-    indicator.text = ""
-    indicator.text2 = ""
-    return commitCheck.runCheck(indicator)
   }
 }

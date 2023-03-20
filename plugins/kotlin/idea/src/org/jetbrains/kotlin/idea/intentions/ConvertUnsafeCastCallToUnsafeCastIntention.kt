@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -33,7 +34,7 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : SelfTargetingIntention<KtDotQ
 
     override fun applyTo(element: KtDotQualifiedExpression, editor: Editor?) {
         val type = element.callExpression?.typeArguments?.singleOrNull() ?: return
-        val newExpression = KtPsiFactory(element).createExpressionByPattern("$0 as $1", element.receiverExpression, type.text)
+        val newExpression = KtPsiFactory(element.project).createExpressionByPattern("$0 as $1", element.receiverExpression, type.text)
         element.replace(newExpression)
     }
 

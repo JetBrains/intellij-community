@@ -1,9 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
@@ -11,11 +12,9 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Inspect and validate @Builder lombok annotation on a class.
@@ -33,54 +32,55 @@ public class BuilderProcessor extends AbstractClassProcessor {
     super(PsiMethod.class, LombokClassNames.BUILDER);
   }
 
-  private BuilderHandler getBuilderHandler() {
+  private static BuilderHandler getBuilderHandler() {
     return new BuilderHandler();
   }
 
-  private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
+  private static AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 
   @Override
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                   @NotNull PsiAnnotation psiAnnotation) {
-    if (null == nameHint) {
-      return true;
-    }
+  protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final BuilderHandler builderHandler = getBuilderHandler();
 
-    boolean possibleMatchFound = Objects.equals(nameHint, psiClass.getName());
-    if (!possibleMatchFound) {
-      possibleMatchFound = Objects.equals(nameHint, BuilderHandler.TO_BUILDER_METHOD_NAME);
-      if (!possibleMatchFound) {
-        final String builderMethodName = getBuilderHandler().getBuilderMethodName(psiAnnotation);
-        possibleMatchFound = Objects.equals(nameHint, builderMethodName);
-      }
-    }
-    return possibleMatchFound;
+    final String builderMethodName = builderHandler.getBuilderMethodName(psiAnnotation);
+    final String constructorName = StringUtil.notNullize(psiClass.getName());
+    return List.of(builderMethodName, BuilderHandler.TO_BUILDER_METHOD_NAME, constructorName);
   }
 
   @NotNull
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
+    addJacksonizedAnnotation(psiClass, result);
     addFieldsAnnotation(result, psiClass, SINGULAR_CLASS, BUILDER_DEFAULT_CLASS);
     return result;
   }
 
+  private static void addJacksonizedAnnotation(@NotNull PsiClass psiClass, Collection<PsiAnnotation> result) {
+    final PsiAnnotation jacksonizedAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, LombokClassNames.JACKSONIZED);
+    if(null!=jacksonizedAnnotation) {
+      result.add(jacksonizedAnnotation);
+    }
+  }
+
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     // we skip validation here, because it will be validated by other BuilderClassProcessor
     return true;//builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
-      LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.NO_ARGS_CONSTRUCTOR)) {
-      // Create all args constructor only if there is no declared constructors and no lombok constructor annotations
-      final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-      if (definedConstructors.isEmpty()) {
-        target.addAll(getAllArgsConstructorProcessor().createAllArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation));
+    if (!psiClass.isRecord()) {
+      if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+        LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.NO_ARGS_CONSTRUCTOR)) {
+        // Create all args constructor only if there is no declared constructors and no lombok constructor annotations
+        final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+        if (definedConstructors.isEmpty()) {
+          target.addAll(getAllArgsConstructorProcessor().createAllArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation));
+        }
       }
     }
 

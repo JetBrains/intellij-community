@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.NlsSafe
@@ -53,7 +53,7 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
   val userName = user.nullize()
 
   @NlsSafe
-  fun getPasswordAsString() = password?.toString()
+  fun getPasswordAsString(): String? = password?.toString()
 
   override fun equals(other: Any?) = other is Credentials && userName == other.userName && password == other.password
 
@@ -69,8 +69,8 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
 
 /** @deprecated Use [CredentialAttributes] instead. */
 @Deprecated("Never use it in a new code.")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-@Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
+@ApiStatus.ScheduledForRemoval
+@Suppress("DeprecatedCallableAddReplaceWith")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
 @Contract("null -> false")

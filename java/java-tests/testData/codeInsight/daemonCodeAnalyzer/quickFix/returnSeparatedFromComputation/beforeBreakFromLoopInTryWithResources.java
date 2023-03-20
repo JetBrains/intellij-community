@@ -1,4 +1,4 @@
-// "Move 'return' closer to computation of the value of 's'" "true"
+// "Move 'return' closer to computation of the value of 's'" "true-preview"
 import java.io.*;
 
 class T {

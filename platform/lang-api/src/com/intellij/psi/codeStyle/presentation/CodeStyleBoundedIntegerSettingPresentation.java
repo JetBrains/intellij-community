@@ -4,9 +4,6 @@ package com.intellij.psi.codeStyle.presentation;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Roman.Shein
- */
 public class CodeStyleBoundedIntegerSettingPresentation extends CodeStyleSettingPresentation {
 
   protected int myLowerBound;

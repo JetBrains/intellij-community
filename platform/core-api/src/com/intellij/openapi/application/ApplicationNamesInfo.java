@@ -3,8 +3,8 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.XmlDomReader;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlDomReader;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +53,8 @@ public final class ApplicationNamesInfo {
       }
     }
     else {
-      // Gateway started from other IntelliJ Based IDE case
-      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX)) {
+      // Gateway started from other IntelliJ Based IDE case, same for Qodana
+      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX) || prefix.equals(PlatformUtils.QODANA_PREFIX)) {
         String customAppInfo = System.getProperty("idea.application.info.value");
         if (customAppInfo != null) {
           try {
@@ -89,8 +89,9 @@ public final class ApplicationNamesInfo {
     }
   }
 
-  private static String getAppInfoData() {
-    // not easy to inject byte array using ASM - it is not constant value
+  @ApiStatus.Internal
+  public static String getAppInfoData() {
+    // not easy to inject a byte array using ASM - it is not constant value
     return "";
   }
 

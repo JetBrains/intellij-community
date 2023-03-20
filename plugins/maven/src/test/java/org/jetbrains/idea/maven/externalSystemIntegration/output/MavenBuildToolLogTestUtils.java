@@ -45,7 +45,7 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
   public static  void failOnWarns(ThrowableRunnable<Throwable> runnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processWarn(@NotNull String category, String message, Throwable t) {
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
         fail(message + t);
         return false;
       }
@@ -80,7 +80,7 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
     private boolean mySkipOutput = false;
 
     public TestCaseBuilder withLines(String... lines) {
-      List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
+      List<String> joinedAndSplitted = List.of(StringUtil.join(lines, "\n").split("\n"));
       myLines.addAll(joinedAndSplitted);
       return this;
     }

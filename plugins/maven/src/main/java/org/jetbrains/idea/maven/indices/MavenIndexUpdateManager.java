@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -9,14 +10,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -26,6 +26,10 @@ import org.jetbrains.idea.maven.utils.MavenRehighlighter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Internal api class for update maven indices state.
@@ -33,17 +37,16 @@ import java.util.Objects;
  * Contains logic for schedule async tasks for update index list or index.
  */
 @ApiStatus.Internal
-public class MavenIndexUpdateManager implements Disposable {
-
+public final class MavenIndexUpdateManager implements Disposable {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<String> myWaitingIndicesUrl = new ArrayList<>();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
   private final MergingUpdateQueue myUpdateQueueList = new MergingUpdateQueue(
-    getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, this, null, false
+    getClass().getName(), 1000, true, null, this, null, false
   ).usePassThroughInUnitTestMode();
   private volatile String myCurrentUpdateIndexUrl;
 
-  Promise<Void> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrl) {
+  CompletableFuture<?> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrl) {
     return scheduleUpdateContent(project, indicesUrl, true);
   }
 
@@ -56,7 +59,9 @@ public class MavenIndexUpdateManager implements Disposable {
     myUpdateQueueList.queue(Update.create(this, () -> {
       MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(project);
       indicesManager.updateIndicesListSync();
-      if (project.isDisposed()) return;
+      if (project.isDisposed()) {
+        return;
+      }
 
       MavenIndexHolder indexHolder = indicesManager.getIndex();
       MavenIndex localIndex = indexHolder.getLocalIndex();
@@ -71,7 +76,8 @@ public class MavenIndexUpdateManager implements Disposable {
     }));
   }
 
-  Promise<Void> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrls, final boolean fullUpdate) {
+  CompletableFuture<?> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrls, final boolean fullUpdate) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL);
     final List<String> toSchedule = new ArrayList<>();
 
     synchronized (myUpdatingIndicesLock) {
@@ -83,10 +89,10 @@ public class MavenIndexUpdateManager implements Disposable {
       myWaitingIndicesUrl.addAll(toSchedule);
     }
     if (toSchedule.isEmpty()) {
-      return Promises.resolvedPromise();
+      return CompletableFuture.completedFuture(null);
     }
 
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
+    final CompletableFuture<?> promise = new CompletableFuture<>();
     myUpdatingQueue.run(new Task.Backgroundable(project, IndicesBundle.message("maven.indices.updating"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -97,7 +103,7 @@ public class MavenIndexUpdateManager implements Disposable {
         catch (MavenProcessCanceledException ignore) {
         }
         finally {
-          promise.setResult(null);
+          promise.complete(null);
         }
       }
     });
@@ -175,5 +181,18 @@ public class MavenIndexUpdateManager implements Disposable {
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
+  }
+
+  @TestOnly
+  void waitForBackgroundTasksInTests() {
+    while (!myUpdatingQueue.isEmpty()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    try {
+      myUpdateQueueList.waitForAllExecuted(1, TimeUnit.MINUTES);
+    }
+    catch (ExecutionException | InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

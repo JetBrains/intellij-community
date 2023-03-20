@@ -25,9 +25,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-/**
- * @author dsl
- */
 public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/shortenClassRefs";
 
@@ -41,9 +38,10 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
     PsiElementFactory factory = facade.getElementFactory();
     PsiClass aClass = factory.createClass("X");
-    PsiMethod methodFromText = factory.createMethodFromText("void method() {\n" +
-                                                            "    IntelliJIDEARulezz<>\n" +
-                                                            "}", null);
+    PsiMethod methodFromText = factory.createMethodFromText("""
+                                                              void method() {
+                                                                  IntelliJIDEARulezz<>
+                                                              }""", null);
     PsiMethod method = (PsiMethod)aClass.add(methodFromText);
     PsiCodeBlock body = method.getBody();
     assertNotNull(body);
@@ -53,9 +51,10 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     assertNotNull(javaUtilListClass);
     PsiElement resultingElement = referenceElement.bindToElement(javaUtilListClass);
     assertEquals("List<>", resultingElement.getText());
-    assertEquals("void method() {\n" +
-                 "    List<>\n" +
-                 "}", method.getText());
+    assertEquals("""
+                   void method() {
+                       List<>
+                   }""", method.getText());
   }
 
   public void testSCR37254() { doTest(); }
@@ -86,11 +85,12 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
     myFixture.addClass("package p2; public class Outer{}");
     myFixture.configureByText("a.java", "package p2; class Outer1 extends p1.Outer {}");
     doShortenRefs();
-    myFixture.checkResult("package p2;\n" +
-                          "\n" +
-                          "import p1.Outer;\n" +
-                          "\n" +
-                          "class Outer1 extends Outer {}");
+    myFixture.checkResult("""
+                            package p2;
+
+                            import p1.Outer;
+
+                            class Outer1 extends Outer {}""");
   }
 
   public void testWhiteSpaceForMovedTypeAnnotations() {

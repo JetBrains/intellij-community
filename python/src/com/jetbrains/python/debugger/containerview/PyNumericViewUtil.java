@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.openapi.util.Pair;
@@ -22,8 +8,8 @@ import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PyNumericViewUtil {
-  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d^j]*)([+-]?[e.\\d]*j)?");
+public final class PyNumericViewUtil {
+  private static final Pattern PY_COMPLEX_NUMBER = Pattern.compile("([+-]?[.\\d]*(?:[eE][+-]?\\d*)?j?)?([+-]?[.\\d]*(?:[eE][+-]?\\d*)?j)?");
 
   /**
    * @return double presentation from [0:1] range
@@ -55,6 +41,9 @@ public class PyNumericViewUtil {
     Pair<Double, Double> med = parsePyComplex(value);
     Pair<Double, Double> max = parsePyComplex(complexMax);
     Pair<Double, Double> min = parsePyComplex(complexMin);
+    if (med == null || min == null || max == null) {
+      return 0;
+    }
     double range = (med.first - min.first) / (max.first - min.first);
     if (max.first.equals(min.first)) {
       range = (med.second - min.second) / (max.second - min.second);
@@ -73,12 +62,13 @@ public class PyNumericViewUtil {
       if (imag == null && real.contains("j")) {
         return new Pair<>(new Double(0.0), Double.parseDouble(real.substring(0, real.length() - 1)));
       }
-      else {
+      else if (imag != null) {
         return new Pair<>(Double.parseDouble(real), Double.parseDouble(imag.substring(0, imag.length() - 1)));
       }
     }
     else {
       throw new IllegalArgumentException("Not a valid python complex value: " + pyComplexValue);
     }
+    return null;
   }
 }

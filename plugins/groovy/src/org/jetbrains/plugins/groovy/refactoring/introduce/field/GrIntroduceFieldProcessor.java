@@ -85,18 +85,10 @@ public class GrIntroduceFieldProcessor {
     List<PsiElement> replaced = processOccurrences(targetClass, field);
 
     switch (mySettings.initializeIn()) {
-      case CUR_METHOD:
-        initializeInMethod(field, replaced);
-        break;
-      case FIELD_DECLARATION:
-        field.setInitializerGroovy(myInitializer);
-        break;
-      case CONSTRUCTOR:
-        initializeInConstructor(field, replaced);
-        break;
-      case SETUP_METHOD:
-        initializeInSetup(field, replaced);
-        break;
+      case CUR_METHOD -> initializeInMethod(field, replaced);
+      case FIELD_DECLARATION -> field.setInitializerGroovy(myInitializer);
+      case CONSTRUCTOR -> initializeInConstructor(field, replaced);
+      case SETUP_METHOD -> initializeInSetup(field, replaced);
     }
 
     JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
@@ -155,19 +147,20 @@ public class GrIntroduceFieldProcessor {
       return (GrVariableDeclaration)targetClass.addAfter(declaration, enumConstants);
     }
 
-    if (targetClass instanceof GrTypeDefinition) {
-      PsiElement anchor = getAnchorForDeclaration((GrTypeDefinition)targetClass);
-      return (GrVariableDeclaration)targetClass.addAfter(declaration, anchor);
-    }
-
-    else {
-      assert targetClass instanceof GroovyScriptClass;
+    if (targetClass instanceof GroovyScriptClass) {
       final GroovyFile file = ((GroovyScriptClass)targetClass).getContainingFile();
       PsiElement[] elements = file.getMethods();
       if (elements.length == 0) elements = file.getStatements();
       final PsiElement anchor = ArrayUtil.getFirstElement(elements);
       return (GrVariableDeclaration)file.addBefore(declaration, anchor);
     }
+
+    if (targetClass instanceof GrTypeDefinition) {
+      PsiElement anchor = getAnchorForDeclaration((GrTypeDefinition)targetClass);
+      return (GrVariableDeclaration)targetClass.addAfter(declaration, anchor);
+    }
+
+    throw new IllegalArgumentException("Unexpected targetClass: " + targetClass.getClass());
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -14,6 +14,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,9 +76,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkU
 import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
-/**
- * @author ven
- */
 public final class ResolveUtil {
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
@@ -86,9 +86,7 @@ public final class ResolveUtil {
   /**
    *
    * @param place - place to start tree walk up
-   * @param processor
    * @param processNonCodeMembers - this parameter tells us if we need non code members
-   * @return
    */
   public static boolean treeWalkUp(@NotNull PsiElement place, @NotNull PsiScopeProcessor processor, boolean processNonCodeMembers) {
     return ResolveUtilKt.treeWalkUp(place, processor, initialState(processNonCodeMembers));
@@ -192,6 +190,8 @@ public final class ResolveUtil {
 
     if (scope instanceof GrStatementOwner) {
       if (!GdkMethodUtil.processMixinToMetaclass((GrStatementOwner)scope, processor, state, lastParent, place)) return false;
+      GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getHierarchicalInlineTransformationPerformer(scope);
+      if (performer != null && !performer.processResolve(processor, state, place)) return false;
     }
 
     return true;
@@ -444,16 +444,15 @@ public final class ResolveUtil {
     final List<GroovyResolveResult> result = new ArrayList<>();
 
     final Iterator<? extends GroovyResolveResult> allIterator = candidates.iterator();
-    result.add(allIterator.next());
 
-    Outer:
+    Map<String, List<GroovyResolveResult>> cache = new HashMap<>(candidates.size());
+
     while (allIterator.hasNext()) {
       final GroovyResolveResult currentResult = allIterator.next();
 
       final PsiMethod currentMethod;
       final PsiSubstitutor currentSubstitutor;
-      if (currentResult instanceof GroovyMethodResult) {
-        final GroovyMethodResult currentMethodResult = (GroovyMethodResult)currentResult;
+      if (currentResult instanceof GroovyMethodResult currentMethodResult) {
         currentMethod = currentMethodResult.getElement();
         currentSubstitutor = currentMethodResult.getContextSubstitutor();
       }
@@ -466,41 +465,51 @@ public final class ResolveUtil {
         continue;
       }
 
-      Inner:
-      for (Iterator<GroovyResolveResult> resultIterator = result.iterator(); resultIterator.hasNext(); ) {
-        final GroovyResolveResult otherResult = resultIterator.next();
+      boolean isDominated = false;
 
+      List<GroovyResolveResult> existingCandidates = cache.computeIfAbsent(getKey(currentMethod), (__) -> new SmartList<>());
+      for (Iterator<GroovyResolveResult> iterator = existingCandidates.listIterator(); iterator.hasNext();) {
+        GroovyResolveResult candidateResult = iterator.next();
         final PsiMethod otherMethod;
         final PsiSubstitutor otherSubstitutor;
-        if (otherResult instanceof GroovyMethodResult) {
-          final GroovyMethodResult otherMethodResult = (GroovyMethodResult)otherResult;
+        if (candidateResult instanceof GroovyMethodResult otherMethodResult) {
           otherMethod = otherMethodResult.getElement();
           otherSubstitutor = otherMethodResult.getContextSubstitutor();
         }
-        else if (otherResult.getElement() instanceof PsiMethod) {
-          otherMethod = (PsiMethod)otherResult.getElement();
-          otherSubstitutor = otherResult.getSubstitutor();
+        else if (candidateResult.getElement() instanceof PsiMethod) {
+          otherMethod = (PsiMethod)candidateResult.getElement();
+          otherSubstitutor = candidateResult.getSubstitutor();
+        } else {
+          continue;
         }
-        else {
-          continue Inner;
-        }
-
         if (dominated(currentMethod, currentSubstitutor, otherMethod, otherSubstitutor)) {
           // if current method is dominated by other method
           // then do not add current method to result and skip rest other methods
-          continue Outer;
+          isDominated = true;
+          break;
         }
         else if (dominated(otherMethod, otherSubstitutor, currentMethod, currentSubstitutor)) {
           // if other method is dominated by current method
           // then remove other from result
-          resultIterator.remove();
+          iterator.remove();
         }
       }
+      if (!isDominated) {
+        existingCandidates.add(currentResult);
+      }
+    }
 
-      result.add(currentResult);
+    for (List<GroovyResolveResult> resultsByName : cache.values()) {
+      result.addAll(resultsByName);
     }
 
     return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
+  }
+
+  private static String getKey(PsiMethod method) {
+    int parameters = method.getParameters().length;
+    String name = method.getName();
+    return parameters + "_" + name;
   }
 
   public static boolean dominated(PsiMethod method1,
@@ -538,6 +547,11 @@ public final class ResolveUtil {
         //method1 is more general than method2
         return t1.isAssignableFrom(t2);
       }
+    }
+
+    if (GdkMethodUtil.isMacro(method1)) {
+      // macro expansion happens during compilation, so macros always win overload resolution
+      return false;
     }
 
     return true;
@@ -882,8 +896,7 @@ public final class ResolveUtil {
   }
 
   public static boolean isClassReference(@NotNull PsiElement expression) {
-    if (!(expression instanceof GrReferenceExpression)) return false;
-    GrReferenceExpression ref = (GrReferenceExpression)expression;
+    if (!(expression instanceof GrReferenceExpression ref)) return false;
     GrExpression qualifier = ref.getQualifier();
     if (!"class".equals(ref.getReferenceName())) return false;
     return qualifier != null && getClassReferenceFromExpression(qualifier) != null;
@@ -926,8 +939,7 @@ public final class ResolveUtil {
   }
 
   public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiNamedElement namedElement) {
-    if (namedElement instanceof GrField) {
-      final GrField field = (GrField)namedElement;
+    if (namedElement instanceof GrField field) {
       if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isAccessible(place, field)) {
         return true;
       }

@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.debugger.engine;
 
@@ -28,9 +28,9 @@ public class RequestHint {
   public static final int RESUME = -100;
 
   private static final Logger LOG = Logger.getInstance(RequestHint.class);
-  @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
+  @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   private final int mySize;
-  @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
+  @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
   private final int myDepth;
   private final SourcePosition myPosition;
   private final int myFrameCount;
@@ -54,22 +54,22 @@ public class RequestHint {
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread,
                      final SuspendContextImpl suspendContext,
-                     @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth) {
+                     @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth) {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, depth, null);
   }
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread,
                      final SuspendContextImpl suspendContext,
-                     @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
-                     @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
+                     @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
+                     @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
                      @Nullable MethodFilter methodFilter) {
     this(stepThread, suspendContext, stepSize, depth, methodFilter, null);
   }
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread,
                      final SuspendContextImpl suspendContext,
-                     @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
-                     @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
+                     @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
+                     @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
                      @Nullable MethodFilter methodFilter,
                      @Nullable RequestHint parentHint) {
     mySize = stepSize;
@@ -106,12 +106,12 @@ public class RequestHint {
     return myIgnoreFilters;
   }
 
-  @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
+  @MagicConstant(intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   public int getSize() {
     return mySize;
   }
 
-  @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
+  @MagicConstant(intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
   public int getDepth() {
     return myDepth;
   }
@@ -179,13 +179,13 @@ public class RequestHint {
     }
 
     if (!myIgnoreFilters) {
-      if(settings.SKIP_GETTERS) {
+      if (settings.SKIP_GETTERS) {
         boolean isGetter = ReadAction.compute(() -> {
           PsiElement contextElement = ContextUtil.getContextElement(context);
           return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
         }).booleanValue();
 
-        if(isGetter) {
+        if (isGetter) {
           return StepRequest.STEP_OUT;
         }
       }

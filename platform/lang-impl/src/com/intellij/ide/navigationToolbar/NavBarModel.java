@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -37,7 +37,9 @@ import static com.intellij.util.concurrency.SequentialTaskExecutor.createSequent
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarModel {
 
   private static final ExecutorService ourExecutor = createSequentialApplicationPoolExecutor("Navbar model builder");
@@ -68,15 +70,28 @@ public class NavBarModel {
     return mySelectedIndex;
   }
 
-  @Nullable
-  public Object getSelectedValue() {
-    return getElement(mySelectedIndex);
+  @Nullable Object getRawSelectedObject() {
+    List<Object> model = myModel;
+    if (model.isEmpty()) return null;
+    int index = mySelectedIndex;
+    int adjusted = index >= 0 && index < model.size()
+                   ? index
+                   : model.size() - 1;
+    return model.get(adjusted);
   }
 
   @Nullable
   public Object getElement(int index) {
-    if (index != -1 && index < myModel.size()) {
-      return get(index);
+    Object raw = getRawElement(index);
+    if (raw == null) return null;
+    return unwrapRaw(raw);
+  }
+
+  @Nullable
+  public Object getRawElement(int index) {
+    List<Object> model = myModel;
+    if (index != -1 && index < model.size()) {
+      return model.get(index);
     }
     return null;
   }
@@ -90,8 +105,9 @@ public class NavBarModel {
   }
 
   public int getIndexByModel(int index) {
-    if (index < 0) return myModel.size() + index;
-    if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
+    List<Object> model = myModel;
+    if (index < 0) return model.size() + index;
+    if (index >= model.size() && model.size() > 0) return index % model.size();
     return index;
   }
 
@@ -163,13 +179,16 @@ public class NavBarModel {
     if (ownerExtension == null) {
       psiElement = normalize(psiElement);
     }
-    if (!myModel.isEmpty() && Objects.equals(get(myModel.size() - 1), psiElement) && !myChanged) return null;
+
+    // Save to a local variable in order to avoid OutOfBounds exception while working with a volatile property
+    final List<Object> model = myModel;
+    if (!model.isEmpty() && Objects.equals(get(model, model.size() - 1), psiElement) && !myChanged) return null;
 
     if (psiElement != null && psiElement.isValid()) {
       return createModel(psiElement, dataContext, ownerExtension);
     }
     else {
-      if (UISettings.getInstance().getShowNavigationBar() && !myModel.isEmpty()) return null;
+      if (UISettings.getInstance().getShowNavigationBar() && !model.isEmpty()) return null;
 
       Object root = calculateRoot(dataContext);
 
@@ -238,7 +257,7 @@ public class NavBarModel {
     final List<Object> objects = new ArrayList<>();
     boolean update = false;
     for (Object o : myModel) {
-      if (isValid(TreeAnchorizer.getService().retrieveElement(o))) {
+      if (isValid(unwrapRaw(o))) {
         objects.add(o);
       }
       else {
@@ -350,14 +369,23 @@ public class NavBarModel {
     return true;
   }
 
-  public Object get(final int index) {
-    return TreeAnchorizer.getService().retrieveElement(myModel.get(index));
+  @Nullable Object unwrapRaw(@NotNull Object o) {
+    return TreeAnchorizer.getService().retrieveElement(o);
+  }
+
+  public @Nullable Object get(int index) {
+    return get(myModel, index);
+  }
+
+  private @Nullable Object get(List<Object> model, int index) {
+    return unwrapRaw(model.get(index));
   }
 
   public int indexOf(Object value) {
-    for (int i = 0; i < myModel.size(); i++) {
-      Object o = myModel.get(i);
-      if (Objects.equals(TreeAnchorizer.getService().retrieveElement(o), value)) {
+    List<Object> model = myModel;
+    for (int i = 0; i < model.size(); i++) {
+      Object o = model.get(i);
+      if (Objects.equals(unwrapRaw(o), value)) {
         return i;
       }
     }

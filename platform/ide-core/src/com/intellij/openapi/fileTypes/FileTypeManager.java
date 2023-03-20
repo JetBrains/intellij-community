@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.Application;
@@ -7,23 +7,25 @@ import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Manages the relationship between filenames and {@link FileType} instances.
  */
 public abstract class FileTypeManager extends FileTypeRegistry {
   static {
-    //noinspection deprecation
-    FileTypeRegistry.ourInstanceGetter = FileTypeManager::getInstance;
+    FileTypeRegistry.setInstanceSupplier(FileTypeManager::getInstance);
   }
 
-  private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
+  private static final Supplier<FileTypeManager> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    Application app = ApplicationManager.getApplication();
+    return app == null ? new MockFileTypeManager() : app.getService(FileTypeManager.class);
+  });
 
   public static final @NotNull Topic<FileTypeListener> TOPIC = new Topic<>(FileTypeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
@@ -32,17 +34,11 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static FileTypeManager getInstance() {
-    FileTypeManager instance = ourInstance;
-    if (instance == null) {
-      Application app = ApplicationManager.getApplication();
-      ourInstance = instance = app != null ? app.getService(FileTypeManager.class) : new MockFileTypeManager();
-    }
-    return instance;
+    return ourInstance.get();
   }
 
   /** @deprecated use {@code com.intellij.fileType} extension point instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public abstract void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions);
 
   /**
@@ -54,9 +50,8 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    */
   public abstract boolean isFileIgnored(@NotNull String name);
 
-  /** @deprecated obsolete - file type associations aren't limited to mere extensions list (see {@link #getAssociations}) */
+  /** @deprecated obsolete - file type associations aren't limited to a mere extensions list (see {@link #getAssociations}) */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public abstract String @NotNull [] getAssociatedExtensions(@NotNull FileType type);
 
   public abstract @NotNull List<FileNameMatcher> getAssociations(@NotNull FileType type);
@@ -73,7 +68,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   public abstract @NotNull String getIgnoredFilesList();
 
   /**
-   * Sets new list of semicolon-delimited patterns for files and folders which
+   * Sets a new list of semicolon-delimited patterns for files and folders which
    * are excluded from the project structure.
    *
    * @param list List of semicolon-delimited patterns.

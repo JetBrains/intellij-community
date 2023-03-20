@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -7,26 +7,26 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.Alarm;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
@@ -45,18 +46,15 @@ import java.beans.PropertyChangeSupport;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
-
 /**
  * Use {@link com.intellij.ui.speedSearch.SpeedSearchUtil} in renderer to highlight matching results
  */
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
-  protected static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.LIGHT_GRAY), JBUI.insets(1));
-  protected static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
-  protected static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
-  protected static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
+  private static JBInsets borderInsets() {
+    return JBUI.insets("SpeedSearch.borderInsets", JBUI.emptyInsets());
+  }
 
   private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
 
@@ -66,9 +64,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {
     @Override
     public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (!isInsideActiveToolWindow(toolWindowManager)) {
-          manageSearchPopup(null);
-        }
+      if (!isInsideActiveToolWindow(toolWindowManager)) {
+        manageSearchPopup(null);
+      }
     }
 
     private boolean isInsideActiveToolWindow(@NotNull ToolWindowManager toolWindowManager) {
@@ -82,18 +80,30 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private boolean myClearSearchOnNavigateNoMatch;
 
   private Disposable myListenerDisposable;
-  private Alarm myProcessKeyEventAlarm = null;
-  private ListIterator<Object> myElementIterator;
 
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected SpeedSearchBase(Comp component, @SuppressWarnings("unused") Void sig) {
+    myComponent = component;
+  }
+
+  /**
+   * @deprecated Please use non-deprecated constructor with combination with "setup listeners" method
+   *   to get the behaviour of this constructor
+   */
+  @Deprecated
   public SpeedSearchBase(@NotNull Comp component) {
     myComponent = component;
 
+    setupListeners();
+  }
+
+  public void setupListeners() {
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentHidden(ComponentEvent event) {
-        if (isPopupActive()) {
-          manageSearchPopup(null);
-        }
+        manageSearchPopup(null);
       }
 
       @Override
@@ -115,8 +125,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @Override
       public void focusGained(FocusEvent e) {
         if (!isStickySearch()) return;
-        String text = UIUtil.getClientProperty(myComponent, SEARCH_TEXT_KEY);
-        if (StringUtil.isEmpty(text)) return;
+        String text = ClientProperty.get(myComponent, SEARCH_TEXT_KEY);
+        if (Strings.isEmpty(text)) {
+          return;
+        }
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myComponent.hasFocus()) {
             manageSearchPopup(createPopup(text)); // keep selection
@@ -136,7 +148,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     });
 
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final String prefix = getEnteredPrefix();
@@ -149,11 +161,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
+        e.getPresentation().setEnabled(isPopupActive() && !Strings.isEmpty(getEnteredPrefix()));
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
-    installSupplyTo(component);
+    new MySearchAction().registerCustomShortcutSet(CommonShortcuts.getFind(), myComponent);
+
+    installSupplyTo(myComponent);
   }
 
   protected boolean isStickySearch() {
@@ -178,8 +196,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Override
   public boolean isPopupActive() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return mySearchPopup != null && mySearchPopup.isVisible() ||
-           isStickySearch() && StringUtil.isNotEmpty(UIUtil.getClientProperty(myComponent, SEARCH_TEXT_KEY));
+           isStickySearch() &&
+           Strings.isNotEmpty(myComponent == null ? null : ClientProperty.get(myComponent, SEARCH_TEXT_KEY));
   }
 
 
@@ -188,7 +208,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (!isPopupActive()) return null;
     final SpeedSearchComparator comparator = getComparator();
     final String recentSearchText = comparator.getRecentSearchText();
-    return StringUtil.isNotEmpty(recentSearchText) ? comparator.matchingFragments(recentSearchText, text) : null;
+    return Strings.isNotEmpty(recentSearchText) ? comparator.matchingFragments(recentSearchText, text) : null;
   }
 
   /**
@@ -197,8 +217,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract int getSelectedIndex();
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected Object @NotNull [] getAllElements() {
     throw new UnsupportedOperationException("See `SpeedSearchBase.getElementIterator(int)` javadoc");
   }
@@ -216,21 +235,20 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   /** @deprecated Please implement {@link #getElementCount()} and {@link #getElementAt(int)} instead. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected int convertIndexToModel(final int viewIndex) {
     return viewIndex;
   }
 
   /**
-   * @param element Element to select. Don't forget to convert model index to view index if needed (i.e. table.convertRowIndexToView(modelIndex), etc.).
+   * @param element Element to select. Don't forget to convert model index to view index if needed (i.e. table.convertRowIndexToView(modelIndex), etc).
    * @param selectedText search text
    */
   protected abstract void selectElement(Object element, String selectedText);
 
   /**
-   * The main method for items traversal. 
-   * 
+   * The main method for items traversal.
+   *
    * Implementations can override it or use the default implementation
    * that uses {@link #getElementAt(int)} and {@link #getElementCount()} methods.
    *
@@ -275,83 +293,63 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComparator = comparator;
   }
 
-  protected @Nullable Object findPreviousElement(String s) {
-    final int index = getSelectedIndex();
-    while(myElementIterator.nextIndex() < index) {
-      myElementIterator.next();
-    }
-    while(myElementIterator.previousIndex() >= index) {
-      myElementIterator.previous();
-    }
-
-    return doFindPreviousElement(s.trim(), UISettings.getInstance().getCycleScrolling());
-  }
-
-  private @Nullable Object doFindPreviousElement(String s, boolean cycleScrolling) {
-    final Object current = getCurrentElement(myElementIterator);
-
-    while (myElementIterator.hasPrevious()) {
-      final Object previous = myElementIterator.previous();
-      if (isMatchingElement(previous, s)) {
-        return previous;
-      }
-    }
-
-    if (cycleScrolling) {
-      while (myElementIterator.hasNext()) {
-        myElementIterator.next();
-      }
-      return doFindPreviousElement(s, false);
-    }
-
-    return isMatchingElement(current, s) ? current : null;
-  }
-
-  protected @Nullable Object findNextElement(String s) {
-    final int index = getSelectedIndex();
-    while(myElementIterator.nextIndex() <= index) {
-      myElementIterator.next();
-    }
-    while(myElementIterator.previousIndex() > index) {
-      myElementIterator.previous();
-    }
-
-    return doFindNextElement(s.trim(), UISettings.getInstance().getCycleScrolling());
-  }
-
-  private @Nullable Object doFindNextElement(String s, boolean cycleScrolling) {
-    final Object current = getCurrentElement(myElementIterator);
-
-    while (myElementIterator.hasNext()) {
-      final Object next = myElementIterator.next();
-      if (isMatchingElement(next, s)) {
-        return next;
-      }
-    }
-    if (cycleScrolling) {
-      while (myElementIterator.hasPrevious()) {
-        myElementIterator.previous();
-      }
-      return doFindNextElement(s, false);
-    }
-
-    return isMatchingElement(current, s) ? current : null;
-  }
-
-  private static @Nullable Object getCurrentElement(ListIterator<Object> iterator) {
+  @Nullable
+  protected Object findNextElement(String s) {
+    final int selectedIndex = getSelectedIndex();
+    final ListIterator<?> it = getElementIterator(selectedIndex + 1);
     final Object current;
-    if (iterator.hasPrevious()) {
-      current = iterator.previous();
-      iterator.next();
-    }
-    else if (iterator.hasNext()) {
-      current = iterator.next();
-      iterator.previous();
+    if (it.hasPrevious()) {
+      current = it.previous();
+      it.next();
     }
     else {
       current = null;
     }
-    return current;
+    final String _s = s.trim();
+    while (it.hasNext()) {
+      final Object element = it.next();
+      if (isMatchingElement(element, _s)) return element;
+    }
+
+    if (UISettings.getInstance().getCycleScrolling()) {
+      final ListIterator<Object> i = getElementIterator(0);
+      while (i.hasNext()) {
+        final Object element = i.next();
+        if (isMatchingElement(element, _s)) return element;
+      }
+    }
+
+    return current != null && isMatchingElement(current, _s) ? current : null;
+  }
+
+  @Nullable
+  protected Object findPreviousElement(@NotNull String s) {
+    final int selectedIndex = getSelectedIndex();
+    if (selectedIndex < 0) return null;
+    final ListIterator<?> it = getElementIterator(selectedIndex);
+    final Object current;
+    if (it.hasNext()) {
+      current = it.next();
+      it.previous();
+    }
+    else {
+      current = null;
+    }
+    final String _s = s.trim();
+    while (it.hasPrevious()) {
+      final Object element = it.previous();
+      if (isMatchingElement(element, _s)) return element;
+    }
+
+    if (UISettings.getInstance().getCycleScrolling()) {
+      final ListIterator<Object> i = getElementIterator(getElementCount());
+      while (i.hasPrevious()) {
+        final Object element = i.previous();
+        if (isMatchingElement(element, _s)) return element;
+      }
+    }
+
+    return isMatchingElement(current, _s) ? current : null;
   }
 
   @Nullable
@@ -360,21 +358,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (selectedIndex < 0) {
       selectedIndex = 0;
     }
-    myElementIterator = getElementIterator(selectedIndex);
+    final ListIterator<Object> it = getElementIterator(selectedIndex);
     final String _s = s.trim();
-    while (myElementIterator.hasNext()) {
-      final Object element = myElementIterator.next();
-      if (isMatchingElement(element, _s)) {
-        return element;
-      }
+    while (it.hasNext()) {
+      final Object element = it.next();
+      if (isMatchingElement(element, _s)) return element;
     }
     if (selectedIndex > 0) {
-      while (myElementIterator.hasPrevious()) myElementIterator.previous();
-      while (myElementIterator.hasNext() && myElementIterator.nextIndex() != selectedIndex) {
-        final Object element = myElementIterator.next();
-        if (isMatchingElement(element, _s)) {
-          return element;
-        }
+      while (it.hasPrevious()) it.previous();
+      while (it.hasNext() && it.nextIndex() != selectedIndex) {
+        final Object element = it.next();
+        if (isMatchingElement(element, _s)) return element;
       }
     }
     return null;
@@ -383,11 +377,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   @Nullable
   private Object findFirstElement(String s) {
     final String _s = s.trim();
-
-    while (myElementIterator.hasPrevious()) myElementIterator.previous();
-
-    while (myElementIterator.hasNext()) {
-      final Object element = myElementIterator.next();
+    for (ListIterator<?> it = getElementIterator(0); it.hasNext();) {
+      final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
     return null;
@@ -396,11 +387,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   @Nullable
   private Object findLastElement(String s) {
     final String _s = s.trim();
-
-    while (myElementIterator.hasNext()) myElementIterator.next();
-
-    while (myElementIterator.hasPrevious()) {
-      final Object element = myElementIterator.previous();
+    for (ListIterator<?> it = getElementIterator(getElementCount()); it.hasPrevious();) {
+      final Object element = it.previous();
       if (isMatchingElement(element, _s)) return element;
     }
     return null;
@@ -409,8 +397,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public void showPopup(String searchText) {
     manageSearchPopup(createPopup(searchText));
     if (mySearchPopup != null && myComponent.isDisplayable()) {
-      myProcessKeyEventAlarm.cancelAllRequests();
-      myProcessKeyEventAlarm.addRequest(this::refreshSelection, 300L);
+      mySearchPopup.refreshSelection();
     }
   }
 
@@ -487,9 +474,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Nullable
   private Object findTargetElement(int keyCode, @NotNull String searchPrefix) {
-    if (myElementIterator == null) {
-      myElementIterator = getElementIterator(getSelectedIndex());
-    }
     if (keyCode == KeyEvent.VK_UP) {
       return findPreviousElement(searchPrefix);
     }
@@ -506,7 +490,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
 
-  protected class SearchPopup extends JPanel implements Disposable {
+  protected class SearchPopup extends JPanel {
     protected final SearchField mySearchField;
     private String myLastPattern = "";
 
@@ -530,10 +514,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
           handleInsert(newText);
+          updateSelection(findElement(newText));
         }
       });
 
-      setBorder(BORDER);
+      Border lineBorder = JBUI.Borders.customLine(BORDER_COLOR);
+      if (ExperimentalUI.isNewUI()) {
+        setBorder(JBUI.Borders.compound(lineBorder, new EmptyBorder(borderInsets())));
+      }
+      else {
+        setBorder(lineBorder);
+      }
+
       setBackground(BACKGROUND_COLOR);
       setLayout(new BorderLayout());
       add(mySearchField, BorderLayout.CENTER);
@@ -543,7 +535,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     private void updateLastPattern() {
-      String pattern = StringUtil.notNullize(mySearchField.getText());
+      String pattern = Strings.notNullize(mySearchField.getText());
       if (!pattern.equals(myLastPattern)) {
         myLastPattern = pattern;
         onSearchFieldUpdated(pattern);
@@ -551,6 +543,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     protected void handleInsert(String newText) {
+      if (findElement(newText) == null) {
+        mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
+      }
+      else {
+        mySearchField.setForeground(FOREGROUND_COLOR);
+      }
     }
 
     @Override
@@ -559,36 +557,26 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (e.isConsumed()) {
         updateLastPattern();
         String s = mySearchField.getText();
-        int keyCode = e.getKeyCode();
         Object element;
-        if (isUpDownHomeEnd(keyCode)) {
-          element = findTargetElement(keyCode, s);
+
+        int navKeyCode = getNavigationKeyCode(e);
+        if (navKeyCode != 0) {
+          element = findTargetElement(navKeyCode, s);
           if (myClearSearchOnNavigateNoMatch && element == null) {
             manageSearchPopup(null);
-            element = findTargetElement(keyCode, "");
+            element = findTargetElement(navKeyCode, "");
           }
-          updateSelection(element);
-          return;
         }
-        UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
-        if (mySearchPopup != null) {
-          mySearchPopup.setSize(mySearchPopup.getPreferredSize());
-          mySearchPopup.validate();
+        else {
+          UIEventLogger.IncrementalSearchKeyTyped.log(myComponent.getClass());
+          element = findElement(s);
         }
-
-        if (myProcessKeyEventAlarm == null || myProcessKeyEventAlarm.isDisposed()) return;
-
-        myProcessKeyEventAlarm.cancelAllRequests();
-        myProcessKeyEventAlarm.addRequest(this::updateSelection, 300L);
+        updateSelection(element);
       }
     }
 
     void refreshSelection() {
       findAndSelectElement(mySearchField.getText());
-    }
-
-    private void updateSelection() {
-      updateSelection(findElement(mySearchField.getText()));
     }
 
     private void updateSelection(Object element) {
@@ -599,17 +587,47 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       else {
         mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
       }
+      if (mySearchPopup != null) {
+        mySearchPopup.setSize(mySearchPopup.getPreferredSize());
+        mySearchPopup.validate();
+      }
 
       fireStateChanged();
     }
+  }
 
-    @Override
-    public void dispose() {
+  private static int getNavigationKeyCode(KeyEvent e) {
+    KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+    if (isUpDownHomeEnd(e.getKeyCode())) {
+      return e.getKeyCode();
     }
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager != null) {
+      @NotNull String @NotNull[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
+      for (String id : actionIds) {
+        switch (id) {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP -> {
+            return KeyEvent.VK_UP;
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN -> {
+            return KeyEvent.VK_DOWN;
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_START -> {
+            return KeyEvent.VK_HOME;
+          }
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_END -> {
+            return KeyEvent.VK_END;
+          }
+        }
+      }
+    }
+    return 0;
   }
 
   protected void onSearchFieldUpdated(String pattern) {
-    if (Registry.is("ide.speed.search.close.when.empty") && StringUtil.isEmpty(pattern)) hidePopup();
+    if (Strings.isEmpty(pattern) && Registry.is("ide.speed.search.close.when.empty")) {
+      hidePopup();
+    }
   }
 
   protected class SearchField extends ExtendableTextField {
@@ -633,6 +651,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       };
 
       addExtension(leftExtension);
+
+      Extension rightExtension = createSearchFieldExtension();
+      if (rightExtension != null) {
+        addExtension(rightExtension);
+      }
     }
 
     @Override
@@ -665,7 +688,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         i == KeyEvent.VK_PAGE_DOWN ||
         i == KeyEvent.VK_LEFT ||
         i == KeyEvent.VK_RIGHT
-        ) {
+      ) {
         if (!isStickySearch()) {
           manageSearchPopup(null);
         }
@@ -688,6 +711,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }
 
+  }
+
+  /**
+   * Creates an additional extension.
+   * SpeedSearch calls this method when creating the search text field.
+   * If the result of this method is not null, the caller adds it as a serach text field extension.
+   * @return an extension, or null.
+   */
+  @Nullable
+  protected ExtendableTextComponent.Extension createSearchFieldExtension() {
+    return null;
   }
 
   private static boolean isUpDownHomeEnd(int keyCode) {
@@ -725,9 +759,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         myListenerDisposable = null;
       }
       if (isStickySearch()) {
-        UIUtil.putClientProperty(myComponent, SEARCH_TEXT_KEY, StringUtil.nullize(getEnteredPrefix()));
+        myComponent.putClientProperty(SEARCH_TEXT_KEY, Strings.nullize(getEnteredPrefix()));
       }
-      Disposer.dispose(mySearchPopup);
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");
@@ -746,9 +779,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       myListenerDisposable = Disposer.newDisposable();
       project.getMessageBus().connect(myListenerDisposable).subscribe(ToolWindowManagerListener.TOPIC, myWindowManagerListener);
     }
-
-    myProcessKeyEventAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, mySearchPopup);
-
     JRootPane rootPane = myComponent.getRootPane();
     myPopupLayeredPane = rootPane == null ? null : rootPane.getLayeredPane();
     if (myPopupLayeredPane == null) {
@@ -794,10 +824,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   // TODO remove after the transition period
   private final boolean myElementAtImplemented;
+
   {
     boolean elementAtImplemented;
     try {
-      elementAtImplemented = getMethodDeclaringClass(getClass(), "getElementAt", Integer.TYPE) != SpeedSearchBase.class;
+      elementAtImplemented = ReflectionUtil.getMethodDeclaringClass(getClass(), "getElementAt", Integer.TYPE) != SpeedSearchBase.class;
     }
     catch (Exception ex) {
       elementAtImplemented = false;
@@ -806,8 +837,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     boolean elementIteratorImplemented = false;
     boolean elementCountImplemented = false;
     try {
-      elementCountImplemented = getMethodDeclaringClass(getClass(), "getElementCount") != SpeedSearchBase.class;
-      elementIteratorImplemented = getMethodDeclaringClass(getClass(), "getElementIterator", Integer.TYPE) != SpeedSearchBase.class;
+      elementCountImplemented = ReflectionUtil.getMethodDeclaringClass(getClass(), "getElementCount") != SpeedSearchBase.class;
+      elementIteratorImplemented = ReflectionUtil.getMethodDeclaringClass(getClass(), "getElementIterator", Integer.TYPE) != SpeedSearchBase.class;
     }
     catch (Exception ignore) { }
     if (!elementIteratorImplemented && !(elementAtImplemented && elementCountImplemented)) {
@@ -896,6 +927,23 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     public void add(Object o) {
       throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
+    }
+  }
+
+  private class MySearchAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      showPopup();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!isPopupActive());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

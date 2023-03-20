@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Type that corresponds to JVM reference type; represents subset of possible reference values (may include null)
@@ -86,29 +87,7 @@ public interface DfReferenceType extends DfType {
   /**
    * @return this type without special field knowledge, or simply this type if it's a constant
    */
-  default DfReferenceType dropSpecialField() {
-    return this;
-  }
-
-  /**
-   * @param type type to drop
-   * @return this type dropping any relation to the supplied type
-   */
-  @NotNull
-  default DfType withoutType(@NotNull TypeConstraint type) {
-    TypeConstraint constraint = getConstraint();
-    if (constraint.equals(type)) {
-      return dropTypeConstraint();
-    }
-    if (type instanceof TypeConstraint.Exact) {
-      TypeConstraint.Exact exact = (TypeConstraint.Exact)type;
-      TypeConstraint result = TypeConstraints.TOP;
-      result = constraint.instanceOfTypes().without(exact).map(TypeConstraint.Exact::instanceOf)
-        .foldLeft(result, TypeConstraint::meet);
-      result = constraint.notInstanceOfTypes().without(exact).map(TypeConstraint.Exact::notInstanceOf)
-        .foldLeft(result, TypeConstraint::meet);
-      return dropTypeConstraint().meet(result.asDfType());
-    }
+  default @NotNull DfReferenceType dropSpecialField() {
     return this;
   }
 
@@ -152,12 +131,9 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
-  @NotNull
-  default DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
-    if (getSpecialField() == derivedDescriptor) {
-      return getSpecialFieldType();
-    }
-    return DfType.TOP;
+  default @NotNull Map<@NotNull DerivedVariableDescriptor, @NotNull DfType> getDerivedValues() {
+    SpecialField field = getSpecialField();
+    return field == null ? Map.of() : Map.of(field, getSpecialFieldType());
   }
 
   @Override
@@ -167,8 +143,8 @@ public interface DfReferenceType extends DfType {
       // possible aliasing
       return true;
     }
-    if (SpecialField.fromQualifierType(otherType) == SpecialField.COLLECTION_SIZE &&
-        SpecialField.fromQualifierType(this) == SpecialField.COLLECTION_SIZE) {
+    if (SpecialField.COLLECTION_SIZE.isMyQualifierType(otherType) &&
+        SpecialField.COLLECTION_SIZE.isMyQualifierType(this)) {
       // Collection size is sometimes derived from another (incompatible) collection
       // e.g. keySet Set size is affected by Map size.
       return true;
@@ -180,6 +156,13 @@ public interface DfReferenceType extends DfType {
   default boolean isImmutableQualifier() {
     return getMutability() == Mutability.UNMODIFIABLE;
   }
+
+  /**
+   * @param factory factory to create type constraints
+   * @return equivalent reference type where all the constraints are replaced with ones created by a given factory.
+   * @see TypeConstraint#convert(TypeConstraints.TypeConstraintFactory) 
+   */
+  @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory);
 
   @Override
   @NlsSafe @NotNull String toString();

@@ -34,9 +34,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class DefaultArrangementEntryMatcherSerializer {
 
   private static final Comparator<ArrangementMatchCondition> CONDITION_COMPARATOR = (c1, c2) -> {

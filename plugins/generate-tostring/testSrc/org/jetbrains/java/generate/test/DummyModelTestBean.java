@@ -22,6 +22,7 @@ import java.util.List;
 /**
  * This is a dummy test bean for testing the toString() plugin.
  */
+@SuppressWarnings("unused")
 public abstract class DummyModelTestBean {
     private String age;
 
@@ -58,7 +59,7 @@ public abstract class DummyModelTestBean {
     }
 
     public void nonGetterMethod() {
-        List list = new ArrayList();
+        @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") List<?> list = new ArrayList<>();
         Collections.sort(list, (o, o1) -> 0);
     }
 

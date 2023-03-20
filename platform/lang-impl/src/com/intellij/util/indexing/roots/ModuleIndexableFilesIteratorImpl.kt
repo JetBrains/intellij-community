@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -35,7 +35,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
   companion object {
 
     @JvmStatic
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Should not be used in new code; only when rolled back to old behaviour, " +
                 "see DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders(). " +
                 "Should be removed once new code proves stable")
@@ -53,7 +53,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
 
   override fun getDebugName(): String =
     if (printRootsInDebugName) {
-      val rootsDebugStr = if (roots.isEmpty()) "empty" else roots.map { it.name }.sorted().joinToString(", ")
+      val rootsDebugStr = if (roots.isEmpty()) "empty" else roots.map { it.name }.sorted().joinToString(", ", limit = 10)
       "Module '" + module.name + "' ($rootsDebugStr)"
     }
     else {
@@ -91,5 +91,5 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
     return true
   }
 
-  override fun getRootUrls(): Set<String> = module.rootManager.contentRootUrls.toSet()
+  override fun getRootUrls(project: Project): Set<String> = module.rootManager.contentRootUrls.toSet()
 }

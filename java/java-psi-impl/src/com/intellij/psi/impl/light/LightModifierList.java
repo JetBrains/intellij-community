@@ -15,7 +15,7 @@ import java.util.Set;
 public class LightModifierList extends LightElement implements PsiModifierList {
   private final Set<String> myModifiers;
 
-  public LightModifierList(PsiModifierListOwner modifierListOwner) {
+  public LightModifierList(@NotNull PsiModifierListOwner modifierListOwner) {
     this(modifierListOwner.getManager());
     copyModifiers(modifierListOwner.getModifierList());
   }
@@ -26,10 +26,10 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
   public LightModifierList(PsiManager manager, Language language, String... modifiers) {
     super(manager, language);
-    myModifiers = ContainerUtil.set(modifiers);
+    myModifiers = ContainerUtil.newHashSet(modifiers);
   }
 
-  public void addModifier(String modifier) {
+  public void addModifier(@NotNull String modifier) {
     myModifiers.add(modifier);
   }
 

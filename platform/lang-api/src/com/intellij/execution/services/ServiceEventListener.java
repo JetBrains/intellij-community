@@ -1,19 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public interface ServiceEventListener {
   Topic<ServiceEventListener> TOPIC =
     Topic.create("services topic", ServiceEventListener.class, Topic.BroadcastDirection.TO_CHILDREN);
-
-  @ApiStatus.Internal
-  Object POLLING_RESET_TARGET = ObjectUtils.sentinel("pollingResetTarget");
 
   void handle(@NotNull ServiceEvent event);
 
@@ -56,8 +50,8 @@ public interface ServiceEventListener {
       return new ServiceEvent(EventType.RESET, rootContributorClass, rootContributorClass);
     }
 
-    public static ServiceEvent createSyncResetEvent(@NotNull Class<?> rootContributorClass) {
-      return new ServiceEvent(EventType.SYNC_RESET, rootContributorClass, rootContributorClass);
+    public static ServiceEvent createUnloadSyncResetEvent(@NotNull Class<?> rootContributorClass) {
+      return new ServiceEvent(EventType.UNLOAD_SYNC_RESET, rootContributorClass, rootContributorClass);
     }
 
     public static ServiceEvent createServiceAddedEvent(@NotNull Object target,
@@ -68,7 +62,7 @@ public interface ServiceEventListener {
   }
 
   enum EventType {
-    RESET, SYNC_RESET,
+    RESET, UNLOAD_SYNC_RESET,
     SERVICE_ADDED, SERVICE_REMOVED, SERVICE_CHANGED, SERVICE_STRUCTURE_CHANGED, SERVICE_GROUP_CHANGED,
     GROUP_CHANGED
   }

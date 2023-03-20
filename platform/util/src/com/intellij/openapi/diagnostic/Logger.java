@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
@@ -15,15 +15,31 @@ import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * A standard interface to write to %system%/log/idea.log (or %system%/testlog/idea.log in tests).<p/>
- *
- * In addition to writing to log file, "error" methods result in showing "IDE fatal errors" dialog in the IDE,
- * in EAP versions or if "idea.fatal.error.notification" system property is "true" (). See
- * {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.<p/>
- *
- * Note that in production, a call to "error" doesn't throw exceptions so the execution continues. In tests, however, an {@link AssertionError} is thrown.<p/>
- *
- * In most non-performance tests, debug level is enabled by default, so that when a test fails the full contents of its log are printed to stdout.
+ * Write messages to {@code idea.log}.
+ * <p>
+ * Production mode:
+ * <ul>
+ * <li>The log messages go to {@code %system%/log/idea.log}.
+ * <li>Error, warning and info messages go to the log file.
+ * <li>Debug and trace messages are dropped.
+ * <li>In EAP versions or if the {@code idea.fatal.error.notification} system property is set to {@code true},
+ * errors additionally result in an 'IDE Internal Error'.
+ * See {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.
+ * <li>The log level of each logger can be adjusted in
+ * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
+ * </ul>
+ * <p>
+ * Test mode in tests that extend {@code UsefulTest}:
+ * <ul>
+ * <li>The log messages go to {@code %system%/testlog/idea.log}.
+ * <li>Error and warning messages go directly to the console.
+ * <li>Error messages additionally throw an {@code AssertionError}.
+ * <li>Info and debug messages are buffered in memory.
+ * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+ * <li>Trace messages are dropped.
+ * <li>To configure the log level during a single test,
+ * see {@code TestLoggerFactory.enableDebugLogging} and {@code TestLoggerFactory.enableTraceLogging}.
+ * </ul>
  */
 public abstract class Logger {
   private static boolean isUnitTestMode;
@@ -94,12 +110,26 @@ public abstract class Logger {
 
   public abstract boolean isDebugEnabled();
 
+  /**
+   * @param message should be a plain string literal,
+   *                or the call should be enclosed in {@link #isDebugEnabled()};
+   *                for all other cases, {@link #debug(String, Object...)} is more efficient
+   *                as it delays building the string and calling {@link Object#toString()} on the arguments
+   */
   public abstract void debug(String message);
 
   public abstract void debug(@Nullable Throwable t);
 
   public abstract void debug(String message, @Nullable Throwable t);
 
+  /**
+   * Concatenate the message and all details, without any separator, then log the resulting string.
+   * <p>
+   * This format differs from {@linkplain #debugValues(String, Collection)} and
+   * {@linkplain #error(String, String...)}, which write each detail on a line of its own.
+   *
+   * @param message the first part of the log message, a plain string without any placeholders
+   */
   public void debug(@NotNull String message, Object @NotNull ... details) {
     if (isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
@@ -111,6 +141,13 @@ public abstract class Logger {
     }
   }
 
+  /**
+   * Compose a multi-line log message from the header and the values, writing each value on a line of its own.
+   * <p>
+   * See {@linkplain #debug(String, Object...)} for a variant using a more compressed format.
+   *
+   * @param header the main log message, a plain string without any placeholders
+   */
   public void debugValues(@NotNull String header, @NotNull Collection<?> values) {
     if (isDebugEnabled()) {
       StringBuilder text = new StringBuilder();
@@ -149,8 +186,13 @@ public abstract class Logger {
   }
 
   /**
-   * Log a message with 'trace' level which finer-grained than 'debug' level. Use this method instead of {@link #debug(String)} for internal
-   * events of a subsystem to avoid overwhelming the log if 'debug' level is enabled.
+   * Log a message with 'trace' level, which is finer-grained than the 'debug' level.
+   *
+   * <p>Use this method instead of {@link #debug(String)} for internal events of a subsystem,
+   * to avoid overwhelming the log if 'debug' level is enabled.
+   *
+   * @param message should be a plain string literal,
+   *                or the call should be enclosed in {@link #isTraceEnabled()}
    */
   public void trace(String message) {
     debug(message);
@@ -182,6 +224,10 @@ public abstract class Logger {
     error(message, new Throwable(message), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  /**
+   * @deprecated use {@link #error(String)} instead and provide a meaningful error message
+   */
+  @Deprecated
   public void error(Object message) {
     error(String.valueOf(message));
   }
@@ -196,6 +242,14 @@ public abstract class Logger {
     error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING::apply));
   }
 
+  /**
+   * Compose an error message from the message and the details, then log it.
+   * <p>
+   * The exact format of the resulting log message depends on the actual logger.
+   * The typical format is a multi-line message, with each detail on a line of its own.
+   *
+   * @param message a plain string, without any placeholders
+   */
   public void error(String message, String @NotNull ... details) {
     error(message, new Throwable(message), details);
   }
@@ -208,6 +262,14 @@ public abstract class Logger {
     error(t.getMessage(), t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
+  /**
+   * Compose an error message from the message and the details, then log it.
+   * <p>
+   * The exact format of the resulting log message depends on the actual logger.
+   * The typical format is a multi-line message, with each detail on a line of its own.
+   *
+   * @param message a plain string, without any placeholders
+   */
   public abstract void error(String message, @Nullable Throwable t, String @NotNull ... details);
 
   @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code
@@ -227,12 +289,40 @@ public abstract class Logger {
     return value || assertTrue(false, null);
   }
 
+  /** @deprecated IntelliJ Platform no longer uses Log4j as the logging framework; please use {@link #setLevel(LogLevel)} instead */
+  @Deprecated
   public abstract void setLevel(@NotNull Level level);
+
+  public void setLevel(@NotNull LogLevel level) {
+    switch (level) {
+      case OFF:
+        setLevel(Level.OFF);
+        break;
+      case ERROR:
+        setLevel(Level.ERROR);
+        break;
+      case WARNING:
+        setLevel(Level.WARN);
+        break;
+      case INFO:
+        setLevel(Level.INFO);
+        break;
+      case DEBUG:
+        setLevel(Level.DEBUG);
+        break;
+      case TRACE:
+        setLevel(Level.TRACE);
+        break;
+      case ALL:
+        setLevel(Level.ALL);
+        break;
+    }
+  }
 
   protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t instanceof ControlFlowException ?
-           new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged: " +
-                         "ignore for explicitly started processes or rethrow to handle on the outer process level", t) :
+           new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
+                         "Instead, these should have been rethrown if caught.", t) :
            t;
   }
 

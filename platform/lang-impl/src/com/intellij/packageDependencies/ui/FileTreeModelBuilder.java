@@ -322,9 +322,8 @@ public class FileTreeModelBuilder {
     LOG.assertTrue(parent != null, element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null ? ((PsiFile)element).getVirtualFile().getPath() : element);
     final VirtualFile parentVirtualFile = parent.getVirtualFile();
     Module module = myFileIndex.getModuleForFile(parentVirtualFile);
-    if (element instanceof PsiDirectory && myFlattenPackages) {
+    if (element instanceof PsiDirectory psiDirectory && myFlattenPackages) {
       final PackageDependenciesNode moduleNode = getModuleNode(module);
-      final PsiDirectory psiDirectory = (PsiDirectory)element;
       final VirtualFile virtualFile = psiDirectory.getVirtualFile();
       final PackageDependenciesNode dirNode =
         getModuleDirNode(virtualFile, myFileIndex.getModuleForFile(virtualFile), null);
@@ -471,8 +470,7 @@ public class FileTreeModelBuilder {
     final Set<PackageDependenciesNode> result = new HashSet<>();
     for (int i = 0; i < parent.getChildCount(); i++){
       final TreeNode treeNode = parent.getChildAt(i);
-      if (treeNode instanceof PackageDependenciesNode){
-        final PackageDependenciesNode node = (PackageDependenciesNode)treeNode;
+      if (treeNode instanceof PackageDependenciesNode node){
         if (element instanceof PsiDirectory && node.getPsiElement() == element){
           return new PackageDependenciesNode[] {node};
         }

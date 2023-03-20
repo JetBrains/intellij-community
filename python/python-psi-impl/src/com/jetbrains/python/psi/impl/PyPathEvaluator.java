@@ -18,13 +18,12 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 
 public class PyPathEvaluator extends PyEvaluator {
@@ -49,9 +48,18 @@ public class PyPathEvaluator extends PyEvaluator {
   @Nullable
   protected Object evaluateCall(@NotNull PyCallExpression expression) {
     final PyExpression[] args = expression.getArguments();
+    if (expression.isCalleeText("resolve")) {
+      PyReferenceExpression callee = (PyReferenceExpression)expression.getCallee();
+      if (callee != null && callee.getQualifier() instanceof PyCallExpression) {
+        return evaluate(callee.getQualifier());
+      }
+    }
+    if (expression.isCalleeText("Path") && args.length >= 1) {
+      return evaluate(args[0]);
+    }
     if (expression.isCalleeText(PyNames.DIRNAME) && args.length == 1) {
       Object argValue = evaluate(args[0]);
-      return argValue instanceof String ? new File((String) argValue).getParent() : null;
+      return argValue instanceof String ? Paths.get((String) argValue).getParent().toFile().getPath() : null;
     }
     else if (expression.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);
@@ -70,8 +78,8 @@ public class PyPathEvaluator extends PyEvaluator {
         return argValue;
       }
       else {
-        String path = new File(new File(myContainingFilePath).getParent(), (String)argValue).getPath();
-        return path.replace("\\", "/");
+        String path = Paths.get(myContainingFilePath).resolveSibling((String)argValue).toFile().getPath();
+        return FileUtil.toSystemIndependentName(path);
       }
     }
     return super.evaluateCall(expression);
@@ -87,7 +95,13 @@ public class PyPathEvaluator extends PyEvaluator {
       return ".";
     }
     if (!expression.isQualified() && PyNames.FILE.equals(expression.getReferencedName())) {
-      return myContainingFilePath;
+      return FileUtil.toSystemIndependentName(myContainingFilePath);
+    }
+    if ("parent".equals(expression.getName()) && expression.isQualified()) {
+      Object qualifier = evaluate(expression.getQualifier());
+      if (qualifier instanceof String) {
+        return Paths.get((String)qualifier).getParent().toFile().getPath();
+      }
     }
     return super.evaluateReference(expression);
   }
@@ -103,9 +117,22 @@ public class PyPathEvaluator extends PyEvaluator {
         result = (String)arg;
       }
       else {
-        result = new File(result, (String)arg).getPath().replace("\\", "/");
+        result = FileUtil.toSystemIndependentName(Paths.get(result, (String)arg).toFile().getPath());
       }
     }
     return result;
+  }
+
+  @Override
+  protected @Nullable Object evaluateBinary(@NotNull PyBinaryExpression expression) {
+    final PyElementType operator = expression.getOperator();
+    if (operator == PyTokenTypes.DIV) {
+      final Object lhs = evaluate(expression.getLeftExpression());
+      final Object rhs = evaluate(expression.getRightExpression());
+      if (lhs instanceof String && rhs instanceof String) {
+        return FileUtil.toSystemIndependentName(Paths.get((String)lhs, (String)rhs).toFile().getPath());
+      }
+    }
+    return super.evaluateBinary(expression);
   }
 }

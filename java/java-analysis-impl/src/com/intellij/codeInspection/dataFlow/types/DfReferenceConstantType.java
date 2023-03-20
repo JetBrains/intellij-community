@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -95,6 +95,11 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     return new DfGenericObjectType(
       Set.of(), myConstraint, DfaNullability.UNKNOWN, myMutability, myJvmSpecialField, mySpecialFieldType, false);
   }
+  
+  @Override
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    return new DfReferenceConstantType(getValue(), myConstraint.convert(factory), myDropConstantOnWiden);
+  }
 
   @NotNull
   @Override
@@ -104,11 +109,10 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     }
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
-    if (!(other instanceof DfReferenceType)) return TOP;
-    DfReferenceType type = (DfReferenceType)other;
+    if (!(other instanceof DfReferenceType type)) return TOP;
     TypeConstraint constraint = getConstraint().join(type.getConstraint());
     DfaNullability nullability = getNullability().unite(type.getNullability());
-    Mutability mutability = getMutability().unite(type.getMutability());
+    Mutability mutability = getMutability().join(type.getMutability());
     boolean locality = isLocal() && type.isLocal();
     SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());

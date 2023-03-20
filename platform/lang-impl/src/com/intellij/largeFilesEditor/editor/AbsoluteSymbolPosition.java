@@ -26,8 +26,7 @@ class AbsoluteSymbolPosition {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof AbsoluteSymbolPosition) {
-      AbsoluteSymbolPosition other = (AbsoluteSymbolPosition)obj;
+    if (obj instanceof AbsoluteSymbolPosition other) {
       if (pageNumber == other.pageNumber && symbolOffsetInPage == other.symbolOffsetInPage) {
         return true;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,23 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
 
-import javax.swing.*;
 import java.util.Set;
 
-public class ClassWithTooManyTransitiveDependentsInspection
-  extends BaseGlobalInspection {
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-  @SuppressWarnings({"PublicField"})
+public class ClassWithTooManyTransitiveDependentsInspection extends BaseGlobalInspection {
+
+  @SuppressWarnings("PublicField")
   public int limit = 35;
 
   @Override
@@ -44,17 +44,14 @@ public class ClassWithTooManyTransitiveDependentsInspection
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
-    final UClass aClass = refClass.getUastElement();
-    if (ClassUtils.isInnerClass(aClass)) {
+    if (!(refClass.getOwner() instanceof RefPackage)) {
       return null;
     }
 
-    final Set<RefClass> dependencies =
-      DependencyUtils.calculateTransitiveDependentsForClass(refClass);
+    final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependentsForClass(refClass);
     final int numDependents = dependencies.size();
     if (numDependents <= limit) {
       return null;
@@ -68,10 +65,9 @@ public class ClassWithTooManyTransitiveDependentsInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "class.with.too.many.transitive.dependents.max.option"),
-      this, "limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("limit", InspectionGadgetsBundle.message("class.with.too.many.transitive.dependents.max.option"), 1,
+             10000));
   }
 }

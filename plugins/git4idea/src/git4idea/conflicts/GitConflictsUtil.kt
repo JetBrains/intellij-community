@@ -47,7 +47,7 @@ object GitConflictsUtil {
 
   private fun hasActiveMergeWindow(conflict: GitConflict) : Boolean {
     val file = LocalFileSystem.getInstance().findFileByPath(conflict.filePath.path) ?: return false
-    return MergeConflictResolveUtil.hasActiveMergeWindow(file);
+    return MergeConflictResolveUtil.hasActiveMergeWindow(file)
   }
 
   internal fun canShowMergeWindow(project: Project, handler: GitMergeHandler, conflict: GitConflict): Boolean {
@@ -100,7 +100,7 @@ object GitConflictsUtil {
     }
   }
 
-  internal fun isReversedRoot(project: Project, root: VirtualFile): Boolean {
+  private fun isReversedRoot(project: Project, root: VirtualFile): Boolean {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return false
     return GitMergeUtil.isReverseRoot(repository)
   }

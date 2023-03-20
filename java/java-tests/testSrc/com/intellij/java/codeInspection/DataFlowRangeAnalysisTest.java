@@ -37,9 +37,10 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testCountedLoopWithOverflow() { doTest(); }
 
   public void testLongRangeAnnotation() {
-    myFixture.addClass("package javax.annotation;\n" +
-                       "\n" +
-                       "public @interface Nonnegative {}");
+    myFixture.addClass("""
+                         package javax.annotation;
+
+                         public @interface Nonnegative {}""");
     doTest();
   }
 
@@ -78,6 +79,9 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testWidenMismatch() { doTest(); }
   public void testDontWidenPlusInLoop() { doTest(); }
   public void testCollectionAddRemove() { doTest(); }
+
+  public void testCollectionRemoveIf() { doTest(); }
+
   public void testRelationsOnAddition() { doTest(); }
   public void testModSpecialCase() { doTest(); }
   public void testArrayAccessWithCastInCountedLoop() { doTest(); }
@@ -85,4 +89,46 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testFloatingPointCasts() { doTest(); }
   public void testFloatingPointMaxLoop() { doTest(); }
   public void testStringIndexOfRelation() { doTest(); }
+  public void testIncompleteLoop() { doTest(); }
+  public void testTwoFlagsMixed() { doTest(); }
+  public void testChronoRange() {
+    myFixture.addClass("""
+                         package java.time.temporal;
+                         public interface TemporalField{}""");
+    myFixture.addClass("""
+                         package java.time.temporal;
+                         import java.time.temporal.TemporalField;
+                         public enum ChronoField implements TemporalField{
+                         INSTANT_SECONDS, OFFSET_SECONDS, MINUTE_OF_HOUR, ERA, EPOCH_DAY
+                         }""");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.time.temporal.TemporalField;
+                         public interface OffsetTime{
+                              int get(TemporalField field);
+                              long getLong(TemporalField field);
+                             }""");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.time.temporal.TemporalField;
+                         public interface LocalDateTime{
+                              int get(TemporalField field);
+                              long getLong(TemporalField field);
+                             }""");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.time.temporal.TemporalField;
+                         public interface LocalDate{
+                              int get(TemporalField field);
+                              long getLong(TemporalField field);
+                             }""");
+    myFixture.addClass("""
+                         package java.time;
+                         import java.time.temporal.TemporalField;
+                         public interface LocalTime{
+                              int get(TemporalField field);
+                              long getLong(TemporalField field);
+                             }""");
+    doTest();
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -21,24 +21,22 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * Due to many bugs and "features" in {@link JComboBox} implementation we provide
- * our own "patch". First of all it has correct preferred and minimum sizes that has sense
- * when combo box is editable. Also this implementation fixes some bugs with clicking
- * of default button. The SUN's combo box eats first "Enter" if the selected value from
- * the list and changed it. They say that combo box "commit" changes and only second
- * "Enter" clicks default button. This implementation clicks the default button
- * immediately. As the result of our patch combo box has internal wrapper for ComboBoxEditor.
- * It means that {@link #getEditor()} method always returns not the same value you set
- * by {@link #setEditor(ComboBoxEditor)} method. Moreover adding and removing of action listeners
- * isn't supported by the implementation of wrapper.
- *
- * @author Vladimir Kondratyev
+ * Due to many bugs and "features" of the default {@link JComboBox} we provide our own "patch".
+ * First, it has correct preferred and minimum sizes that have sense when the combo box is editable.
+ * Also, this implementation fixes some bugs with clicking of default button.
+ * {@code JComboBox} eats first "Enter" if the selected value from the list and changed it
+ * (they say that combo box "commits" changes and only second "Enter" clicks the default button).
+ * This implementation clicks the default button immediately.
+ * As the result of our patch, combo box has an internal wrapper for {@link ComboBoxEditor}.
+ * It means that {@link #getEditor()} method always returns not the same value you set by {@link #setEditor(ComboBoxEditor)} method.
+ * Moreover, adding and removing of action listeners isn't supported by the wrapper.
  */
 public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventListener {
   public static final String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor";
 
   private int myMinimumAndPreferredWidth;
   private boolean myUsePreferredSizeAsMinimum = true;
+
   protected boolean myPaintingNow;
 
   public ComboBox() {
@@ -70,7 +68,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   }
 
   /**
-   * @param width preferred width of the combobox. Value {@code -1} means undefined.
+   * @param width the preferred width of the combobox. Value {@code -1} means undefined.
    */
   private void init(int width) {
     myMinimumAndPreferredWidth = width;
@@ -78,43 +76,47 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     installComboBoxCopyAction(this);
   }
 
-  private static void installComboBoxCopyAction(@NotNull JComboBox comboBox) {
-    final ComboBoxEditor editor = comboBox.getEditor();
-    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
+  private static void installComboBoxCopyAction(JComboBox<?> comboBox) {
+    ComboBoxEditor editor = comboBox.getEditor();
+    Component editorComponent = editor != null ? editor.getEditorComponent() : null;
     if (!(editorComponent instanceof JTextComponent)) return;
-    final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
-    for (KeyStroke keyStroke : inputMap.allKeys()) {
-      if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
-        comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
+    InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
+    if (inputMap != null) {
+      KeyStroke[] strokes = inputMap.allKeys();
+      if (strokes != null) {
+        for (KeyStroke keyStroke : strokes) {
+          if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
+            comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
+          }
+        }
       }
     }
     comboBox.getActionMap().put(DefaultEditorKit.copyAction, new AbstractAction() {
       @Override
-      public void actionPerformed(final ActionEvent e) {
+      public void actionPerformed(ActionEvent e) {
         if (!(e.getSource() instanceof JComboBox)) return;
-        final JComboBox comboBox = (JComboBox)e.getSource();
-        final String text;
-        final Object selectedItem = comboBox.getSelectedItem();
+        @SuppressWarnings("unchecked") JComboBox<Object> comboBox = (JComboBox<Object>)e.getSource();
+        String text;
+        Object selectedItem = comboBox.getSelectedItem();
         if (selectedItem instanceof String) {
           text = (String)selectedItem;
         }
         else {
-          final Component component =
-            comboBox.getRenderer().getListCellRendererComponent(new JList(), selectedItem, 0, false, false);
+          Component component = comboBox.getRenderer().getListCellRendererComponent(new JList<>(), selectedItem, 0, false, false);
           if (component instanceof JLabel) {
             text = ((JLabel)component).getText();
           }
           else if (component != null) {
-            final String str = component.toString();
+            String str = component.toString();
             // skip default Component.toString and handle SimpleColoredComponent case
-            text = str == null || str.startsWith(component.getClass().getName() + "[") ? null : str;
+            text = str == null || str.startsWith(component.getClass().getName() + '[') ? null : str;
           }
           else {
             text = null;
           }
         }
         if (text != null) {
-          final JTextField textField = new JTextField(text);
+          JTextField textField = new JTextField(text);
           textField.selectAll();
           textField.copy();
         }
@@ -122,22 +124,13 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     });
   }
 
-  public static void registerTableCellEditor(@NotNull JComboBox comboBox, @NotNull TableCellEditor cellEditor) {
+  public static void registerTableCellEditor(@NotNull JComboBox<?> comboBox, @NotNull TableCellEditor cellEditor) {
     comboBox.putClientProperty(TABLE_CELL_EDITOR_PROPERTY, cellEditor);
     comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
   }
 
   public void registerTableCellEditor(@NotNull TableCellEditor cellEditor) {
     registerTableCellEditor(this, cellEditor);
-  }
-
-  @SuppressWarnings("unchecked")
-  public E getItem() {
-    return (E)getSelectedItem();
-  }
-
-  public void setItem(E item) {
-    setSelectedItem(item);
   }
 
   @Override
@@ -147,32 +140,24 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
     if (visible) {
       JBPopupFactory jbPopupFactory = getPopupFactory();
-      if (jbPopupFactory != null /* allow ComboBox on welcome wizard */ && jbPopupFactory.getChildFocusedPopup(this) != null) {
+      if (jbPopupFactory != null && jbPopupFactory.getChildFocusedPopup(this) != null) {
         return;
       }
     }
 
-    final boolean wasShown = isPopupVisible();
+    boolean wasShown = isPopupVisible();
     super.setPopupVisible(visible);
-    if (!wasShown
-        && visible
-        && isEditable()
-        && !UIManager.getBoolean("ComboBox.isEnterSelectablePopup")) {
-      final ComboBoxEditor editor = getEditor();
-      final Object item = editor.getItem();
-      final Object selectedItem = getSelectedItem();
+    if (!wasShown && visible && isEditable() && !UIManager.getBoolean("ComboBox.isEnterSelectablePopup")) {
+      ComboBoxEditor editor = getEditor();
+      Object item = editor.getItem(), selectedItem = getSelectedItem();
       if (item == null || item != selectedItem) {
         configureEditor(editor, selectedItem);
       }
     }
   }
 
-  @Nullable
-  private static JBPopupFactory getPopupFactory() {
-    if (ApplicationManager.getApplication() == null) {
-      return null;
-    }
-    return JBPopupFactory.getInstance();
+  private static @Nullable JBPopupFactory getPopupFactory() {
+    return ApplicationManager.getApplication() != null ? JBPopupFactory.getInstance() : null;
   }
 
   @Override
@@ -183,7 +168,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
     JBPopupFactory jbPopupFactory = getPopupFactory();
     if (jbPopupFactory == null) {
-      // allow ComboBox on welcome wizard
       return;
     }
 
@@ -212,8 +196,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
   }
 
-  @Nullable
-  public ComboPopup getPopup() {
+  public @Nullable ComboPopup getPopup() {
     return UIUtil.getComboBoxPopup(this);
   }
 
@@ -246,7 +229,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     });
   }
 
-  public void setMinimumAndPreferredWidth(final int minimumAndPreferredWidth) {
+  public void setMinimumAndPreferredWidth(int minimumAndPreferredWidth) {
     myMinimumAndPreferredWidth = minimumAndPreferredWidth;
   }
 
@@ -260,48 +243,39 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
   private void registerCancelOnEscape() {
     registerKeyboardAction(e -> {
-      final DialogWrapper dialogWrapper = DialogWrapper.findInstance(this);
-
+      DialogWrapper dialogWrapper;
+      Object clientProperty;
       if (isPopupVisible()) {
         setPopupVisible(false);
       }
-      else {
-        final Object clientProperty = getClientProperty(TABLE_CELL_EDITOR_PROPERTY);
-        if (clientProperty instanceof CellEditor) {
-          // If combo box is inside editable table then we need to cancel editing
-          // and do not close heavy weight dialog container (if any)
-          ((CellEditor)clientProperty).cancelCellEditing();
-        }
-        else if (dialogWrapper != null) {
-          dialogWrapper.doCancelAction();
-        }
+      else if ((clientProperty = getClientProperty(TABLE_CELL_EDITOR_PROPERTY)) instanceof CellEditor) {
+        // If a combo box is inside editable table, then we need to cancel editing
+        // and do not close heavyweight dialog container (if any)
+        ((CellEditor)clientProperty).cancelCellEditing();
+      }
+      else if ((dialogWrapper = DialogWrapper.findInstance(this)) != null) {
+        dialogWrapper.doCancelAction();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   @Override
-  public final void setEditor(final ComboBoxEditor editor) {
+  public final void setEditor(ComboBoxEditor editor) {
     super.setEditor(new MyEditor(this, editor));
   }
 
   @Override
   public final Dimension getMinimumSize() {
-    if (myUsePreferredSizeAsMinimum) {
-      return getPreferredSize();
-    }
-    else {
-      return super.getMinimumSize();
-    }
+    return myUsePreferredSizeAsMinimum ? getPreferredSize() : super.getMinimumSize();
   }
 
   @Override
   public Dimension getPreferredSize() {
     int width = myMinimumAndPreferredWidth;
-    final Dimension preferredSize = super.getPreferredSize();
+    Dimension preferredSize = super.getPreferredSize();
     if (width < 0) {
       width = preferredSize.width;
     }
-
     return new Dimension(width, preferredSize.height);
   }
 
@@ -331,10 +305,10 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   }
 
   private static final class MyEditor implements ComboBoxEditor {
-    private final JComboBox myComboBox;
+    private final JComboBox<?> myComboBox;
     private final ComboBoxEditor myDelegate;
 
-    MyEditor(final JComboBox comboBox, final ComboBoxEditor delegate) {
+    MyEditor(JComboBox<?> comboBox, ComboBoxEditor delegate) {
       myComboBox = comboBox;
       myDelegate = delegate;
       if (myDelegate != null) {
@@ -343,17 +317,17 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
             myComboBox.setPopupVisible(false);
           }
           else {
-            final Object clientProperty = myComboBox.getClientProperty(TABLE_CELL_EDITOR_PROPERTY);
+            Object clientProperty = myComboBox.getClientProperty(TABLE_CELL_EDITOR_PROPERTY);
             if (clientProperty instanceof CellEditor) {
-              // If combo box is inside editable table then we need to cancel editing
-              // and do not close heavy weight dialog container (if any)
+              // If a combo box is inside editable table, then we need to cancel editing
+              // and do not close heavyweight dialog container (if any)
               ((CellEditor)clientProperty).stopCellEditing();
             }
             else {
               myComboBox.setSelectedItem(getItem());
-              final JRootPane rootPane = myComboBox.getRootPane();
+              JRootPane rootPane = myComboBox.getRootPane();
               if (rootPane != null) {
-                final JButton button = rootPane.getDefaultButton();
+                JButton button = rootPane.getDefaultButton();
                 if (button != null) {
                   button.doClick();
                 }
@@ -388,7 +362,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     @Override
-    public void setItem(final Object obj) {
+    public void setItem(Object obj) {
       if (myDelegate != null) {
         myDelegate.setItem(obj);
       }

@@ -41,4 +41,9 @@ public class FoldArrayInstruction extends EvalInstruction {
     DfType type = SpecialField.ARRAY_LENGTH.asDfType(myTargetType.meet(DfTypes.NOT_NULL_OBJECT), DfTypes.intValue(arguments.length));
     return factory.fromDfType(type);
   }
+
+  @Override
+  public String toString() {
+    return "FOLD_ARRAY " + myTargetType;
+  }
 }

@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.parameterInfo;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -49,6 +49,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ktij-5382.kt")
+        public void testKtij_5382() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/ktij-5382.kt");
+        }
+
         @TestMetadata("Overloads.kt")
         public void testOverloads() throws Exception {
             runTest("testData/parameterInfo/arrayAccess/Overloads.kt");
@@ -73,6 +78,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         public void testSimple() throws Exception {
             runTest("testData/parameterInfo/arrayAccess/Simple.kt");
         }
+
+        @TestMetadata("UpdateOnTypingGet.kt")
+        public void testUpdateOnTypingGet() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/UpdateOnTypingGet.kt");
+        }
+
+        @TestMetadata("UpdateOnTypingSet.kt")
+        public void testUpdateOnTypingSet() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/UpdateOnTypingSet.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -87,6 +102,21 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/Conflicting.kt");
         }
 
+        @TestMetadata("DataClassComponentFunction.kt")
+        public void testDataClassComponentFunction() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DataClassComponentFunction.kt");
+        }
+
+        @TestMetadata("DataClassCopy.kt")
+        public void testDataClassCopy() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DataClassCopy.kt");
+        }
+
+        @TestMetadata("DefaultConstructor.kt")
+        public void testDefaultConstructor() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DefaultConstructor.kt");
+        }
+
         @TestMetadata("DefaultValuesFromLib.kt")
         public void testDefaultValuesFromLib() throws Exception {
             runTest("testData/parameterInfo/functionCall/DefaultValuesFromLib.kt");
@@ -97,6 +127,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/Deprecated.kt");
         }
 
+        @TestMetadata("DeprecatedHidden.kt")
+        public void testDeprecatedHidden() throws Exception {
+            runTest("testData/parameterInfo/functionCall/DeprecatedHidden.kt");
+        }
+
         @TestMetadata("deprecatedSinceKotlinApplicable.kt")
         public void testDeprecatedSinceKotlinApplicable() throws Exception {
             runTest("testData/parameterInfo/functionCall/deprecatedSinceKotlinApplicable.kt");
@@ -105,6 +140,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("deprecatedSinceKotlinNotApplicable.kt")
         public void testDeprecatedSinceKotlinNotApplicable() throws Exception {
             runTest("testData/parameterInfo/functionCall/deprecatedSinceKotlinNotApplicable.kt");
+        }
+
+        @TestMetadata("EnumValueOf.kt")
+        public void testEnumValueOf() throws Exception {
+            runTest("testData/parameterInfo/functionCall/EnumValueOf.kt");
+        }
+
+        @TestMetadata("EnumValues.kt")
+        public void testEnumValues() throws Exception {
+            runTest("testData/parameterInfo/functionCall/EnumValues.kt");
         }
 
         @TestMetadata("ExtensionOnCapturedScopeChange.kt")
@@ -167,6 +212,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/lambdaArgument2.kt");
         }
 
+        @TestMetadata("lambdaArgumentForEach.kt")
+        public void testLambdaArgumentForEach() throws Exception {
+            runTest("testData/parameterInfo/functionCall/lambdaArgumentForEach.kt");
+        }
+
+        @TestMetadata("lambdaArgumentGroupBy.kt")
+        public void testLambdaArgumentGroupBy() throws Exception {
+            runTest("testData/parameterInfo/functionCall/lambdaArgumentGroupBy.kt");
+        }
+
         @TestMetadata("LocalFunctionBug.kt")
         public void testLocalFunctionBug() throws Exception {
             runTest("testData/parameterInfo/functionCall/LocalFunctionBug.kt");
@@ -212,6 +267,31 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/NoAnnotations.kt");
         }
 
+        @TestMetadata("NoCandidatesDeprecatedHidden.kt")
+        public void testNoCandidatesDeprecatedHidden() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesDeprecatedHidden.kt");
+        }
+
+        @TestMetadata("NoCandidatesNotAccessible.kt")
+        public void testNoCandidatesNotAccessible() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesNotAccessible.kt");
+        }
+
+        @TestMetadata("NoCandidatesSelfDelegatedConstructorCall.kt")
+        public void testNoCandidatesSelfDelegatedConstructorCall() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesSelfDelegatedConstructorCall.kt");
+        }
+
+        @TestMetadata("NoCandidatesWrongImplicitReceiver.kt")
+        public void testNoCandidatesWrongImplicitReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesWrongImplicitReceiver.kt");
+        }
+
+        @TestMetadata("NoCandidatesWrongReceiver.kt")
+        public void testNoCandidatesWrongReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
+        }
+
         @TestMetadata("NoShadowedDeclarations.kt")
         public void testNoShadowedDeclarations() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoShadowedDeclarations.kt");
@@ -250,6 +330,21 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("OtherConstructorFromSecondary.kt")
         public void testOtherConstructorFromSecondary() throws Exception {
             runTest("testData/parameterInfo/functionCall/OtherConstructorFromSecondary.kt");
+        }
+
+        @TestMetadata("ParameterNameAnnotationConflict.kt")
+        public void testParameterNameAnnotationConflict() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterNameAnnotationConflict.kt");
+        }
+
+        @TestMetadata("ParameterNameAnnotationInFunctionType.kt")
+        public void testParameterNameAnnotationInFunctionType() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterNameAnnotationInFunctionType.kt");
+        }
+
+        @TestMetadata("ParameterNameAnnotationInNonFunctionType.kt")
+        public void testParameterNameAnnotationInNonFunctionType() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterNameAnnotationInNonFunctionType.kt");
         }
 
         @TestMetadata("Println.kt")
@@ -317,6 +412,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/SubstituteFromArgumentsOnTyping.kt");
         }
 
+        @TestMetadata("SubstitutedTypeParamInReceiver.kt")
+        public void testSubstitutedTypeParamInReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/SubstitutedTypeParamInReceiver.kt");
+        }
+
         @TestMetadata("SuperConstructorCall.kt")
         public void testSuperConstructorCall() throws Exception {
             runTest("testData/parameterInfo/functionCall/SuperConstructorCall.kt");
@@ -367,9 +467,74 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/TypeInference.kt");
         }
 
+        @TestMetadata("UnmappedAfterCurrent.kt")
+        public void testUnmappedAfterCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnmappedAfterCurrent.kt");
+        }
+
+        @TestMetadata("UnmappedBeforeCurrent.kt")
+        public void testUnmappedBeforeCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnmappedBeforeCurrent.kt");
+        }
+
+        @TestMetadata("UnmappedCurrent.kt")
+        public void testUnmappedCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnmappedCurrent.kt");
+        }
+
+        @TestMetadata("UnresolvedAfterCurrent.kt")
+        public void testUnresolvedAfterCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnresolvedAfterCurrent.kt");
+        }
+
+        @TestMetadata("UnresolvedBeforeCurrent.kt")
+        public void testUnresolvedBeforeCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnresolvedBeforeCurrent.kt");
+        }
+
+        @TestMetadata("UnresolvedCurrent.kt")
+        public void testUnresolvedCurrent() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnresolvedCurrent.kt");
+        }
+
         @TestMetadata("UpdateOnTyping.kt")
         public void testUpdateOnTyping() throws Exception {
             runTest("testData/parameterInfo/functionCall/UpdateOnTyping.kt");
+        }
+
+        @TestMetadata("Vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("testData/parameterInfo/functionCall/Vararg.kt");
+        }
+
+        @TestMetadata("VarargBeforeArgs.kt")
+        public void testVarargBeforeArgs() throws Exception {
+            runTest("testData/parameterInfo/functionCall/VarargBeforeArgs.kt");
+        }
+
+        @TestMetadata("VarargFirstArgTrailingComma.kt")
+        public void testVarargFirstArgTrailingComma() throws Exception {
+            runTest("testData/parameterInfo/functionCall/VarargFirstArgTrailingComma.kt");
+        }
+
+        @TestMetadata("VarargMultipleArgsTrailingComma.kt")
+        public void testVarargMultipleArgsTrailingComma() throws Exception {
+            runTest("testData/parameterInfo/functionCall/VarargMultipleArgsTrailingComma.kt");
+        }
+
+        @TestMetadata("VarargNamedArg.kt")
+        public void testVarargNamedArg() throws Exception {
+            runTest("testData/parameterInfo/functionCall/VarargNamedArg.kt");
+        }
+
+        @TestMetadata("VarargSpreadArg.kt")
+        public void testVarargSpreadArg() throws Exception {
+            runTest("testData/parameterInfo/functionCall/VarargSpreadArg.kt");
+        }
+
+        @TestMetadata("VarargUpdateOnTyping.kt")
+        public void testVarargUpdateOnTyping() throws Exception {
+            runTest("testData/parameterInfo/functionCall/VarargUpdateOnTyping.kt");
         }
     }
 
@@ -385,9 +550,19 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/typeArguments/BaseClass.kt");
         }
 
+        @TestMetadata("BaseClassNoParens.kt")
+        public void testBaseClassNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/BaseClassNoParens.kt");
+        }
+
         @TestMetadata("ConflictingWithArgument.kt")
         public void testConflictingWithArgument() throws Exception {
             runTest("testData/parameterInfo/typeArguments/ConflictingWithArgument.kt");
+        }
+
+        @TestMetadata("ConflictingWithArgumentNoParens.kt")
+        public void testConflictingWithArgumentNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/ConflictingWithArgumentNoParens.kt");
         }
 
         @TestMetadata("Constraints.kt")
@@ -400,9 +575,19 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/typeArguments/ConstructorCall.kt");
         }
 
+        @TestMetadata("ConstructorCallNoParens.kt")
+        public void testConstructorCallNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/ConstructorCallNoParens.kt");
+        }
+
         @TestMetadata("FunctionCall.kt")
         public void testFunctionCall() throws Exception {
             runTest("testData/parameterInfo/typeArguments/FunctionCall.kt");
+        }
+
+        @TestMetadata("FunctionCallNoParens.kt")
+        public void testFunctionCallNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/FunctionCallNoParens.kt");
         }
 
         @TestMetadata("JavaClass.kt")
@@ -410,9 +595,34 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/typeArguments/JavaClass.kt");
         }
 
+        @TestMetadata("JavaClassNoParens.kt")
+        public void testJavaClassNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/JavaClassNoParens.kt");
+        }
+
+        @TestMetadata("NoCandidatesDeprecatedHidden.kt")
+        public void testNoCandidatesDeprecatedHidden() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/NoCandidatesDeprecatedHidden.kt");
+        }
+
+        @TestMetadata("NoCandidatesNotAccessible.kt")
+        public void testNoCandidatesNotAccessible() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/NoCandidatesNotAccessible.kt");
+        }
+
+        @TestMetadata("NoCandidatesWrongReceiver.kt")
+        public void testNoCandidatesWrongReceiver() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/NoCandidatesWrongReceiver.kt");
+        }
+
         @TestMetadata("Overloads.kt")
         public void testOverloads() throws Exception {
             runTest("testData/parameterInfo/typeArguments/Overloads.kt");
+        }
+
+        @TestMetadata("OverloadsNoParens.kt")
+        public void testOverloadsNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/OverloadsNoParens.kt");
         }
 
         @TestMetadata("ParameterizedClassConstructor.kt")
@@ -420,9 +630,29 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/typeArguments/ParameterizedClassConstructor.kt");
         }
 
+        @TestMetadata("ParameterizedClassConstructorNoParens.kt")
+        public void testParameterizedClassConstructorNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/ParameterizedClassConstructorNoParens.kt");
+        }
+
         @TestMetadata("Reified.kt")
         public void testReified() throws Exception {
             runTest("testData/parameterInfo/typeArguments/Reified.kt");
+        }
+
+        @TestMetadata("ReifiedNoParens.kt")
+        public void testReifiedNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/ReifiedNoParens.kt");
+        }
+
+        @TestMetadata("SubstitutedTypeParamInReceiver.kt")
+        public void testSubstitutedTypeParamInReceiver() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/SubstitutedTypeParamInReceiver.kt");
+        }
+
+        @TestMetadata("SubstitutedTypeParamInReceiverNoParens.kt")
+        public void testSubstitutedTypeParamInReceiverNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/SubstitutedTypeParamInReceiverNoParens.kt");
         }
 
         @TestMetadata("VariableType.kt")

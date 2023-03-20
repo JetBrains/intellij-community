@@ -18,18 +18,22 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -37,16 +41,16 @@ interface LibraryBridge : LibraryEx {
   val libraryId: LibraryId
 
   @ApiStatus.Internal
-  fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx
+  fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx
 }
 
 @ApiStatus.Internal
 class LibraryBridgeImpl(
   var libraryTable: LibraryTable,
-  val project: Project,
+  val project: Project?,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
-  private var targetBuilder: WorkspaceEntityStorageDiffBuilder?
+  private var targetBuilder: MutableEntityStorage?
 ) : LibraryBridge, RootProvider, TraceableDisposable(true) {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
@@ -94,11 +98,12 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(WorkspaceEntityStorageBuilder.from(librarySnapshot.storage))
+    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage))
   }
 
-  override fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx {
-    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, false)
+  override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
+    val virtualFileUrlManager = if (project == null) VirtualFileUrlManager.getGlobalInstance() else VirtualFileUrlManager.getInstance(project)
+    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
   }
 
   override fun getSource(): Library? = null
@@ -146,13 +151,25 @@ class LibraryBridgeImpl(
 
   private fun checkDisposed() {
     if (isDisposed) {
-      val libraryEntity = entityStorage.cachedValue(librarySnapshotCached).libraryEntity
-      val isDisposedGlobally = WorkspaceModel.getInstance(project).entityStorage.current.libraryMap.getDataByEntity(libraryEntity)?.isDisposed
+      val libraryEntity = try {
+        entityStorage.cachedValue(librarySnapshotCached).libraryEntity
+      }
+      catch (t: Throwable) {
+        null
+      }
+      val isDisposedGlobally = libraryEntity?.let {
+        val snapshot = if (project != null) {
+          WorkspaceModel.getInstance(project).currentSnapshot
+        } else {
+          GlobalWorkspaceModel.getInstance().currentSnapshot
+        }
+        snapshot.libraryMap.getDataByEntity(it)?.isDisposed
+      }
       val message = """
         Library $entityId already disposed:
         Library id: $libraryId
         Entity: ${libraryEntity.run { "$name, $this" }}
-        Is disposed in project model: $isDisposedGlobally
+        Is disposed in ${if (project != null) "project" else "global"} model: ${isDisposedGlobally != false}
         Stack trace: $stackTrace
         """.trimIndent()
       try {
@@ -167,6 +184,10 @@ class LibraryBridgeImpl(
 
   internal fun fireRootSetChanged() {
     dispatcher.multicaster.rootSetChanged(this)
+  }
+
+  fun setTargetBuilder(builder: MutableEntityStorage) {
+    targetBuilder = builder
   }
 
   fun clearTargetBuilder() {

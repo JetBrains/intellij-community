@@ -20,13 +20,11 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameStringIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex;
 
 import java.io.IOException;
 
-/**
- * @author ilyas
- */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   public static final int STUB_VERSION = 51;
@@ -105,7 +103,8 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       sink.occurrence(GrScriptClassNameIndex.KEY, name);
       final String pName = GrStubUtils.getPackageName(stub);
       final String fqn = StringUtil.isEmpty(pName) ? name : pName + "." + name;
-      sink.occurrence(GrFullScriptNameIndex.KEY, fqn.hashCode());
+      sink.occurrence(GrFullScriptNameIndex.KEY, fqn);
+      sink.occurrence(GrFullScriptNameStringIndex.KEY, fqn);
     }
 
     for (String anno : stub.getAnnotations()) {

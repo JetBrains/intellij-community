@@ -48,7 +48,7 @@ public class XSLTReportConverter implements InspectionsReportConverter {
       throw new ConversionException("Output path isn't specified.");
     }
 
-    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
 
     final Source xslSource;
     final Transformer transformer;

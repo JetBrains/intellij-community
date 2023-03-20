@@ -23,7 +23,6 @@ import java.util.List;
 /**
  * An extension point for importing modules from a given file
  * (see {@link com.intellij.ide.util.newProjectWizard.AddModuleWizard#initModuleWizard}).
- * @author Vladislav.Kaznacheev
  */
 public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
   public static final ExtensionPointName<ProjectImportBuilder<?>> EXTENSIONS_POINT_NAME = new ExtensionPointName<>("com.intellij.projectImportBuilder");

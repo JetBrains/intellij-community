@@ -55,6 +55,7 @@
       "keep_indents_on_empty_lines": false,
       "keep_line_breaks": true,
       "lbrace_on_next_line": false,
+      "line_break_after_multiline_when_entry": true,
       "line_comment_add_space": false,
       "line_comment_add_space_on_reformat": false,
       "line_comment_at_first_column": true,

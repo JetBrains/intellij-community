@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -9,20 +9,20 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.details.commit.ReferencesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.List;
+import java.util.*;
 
 class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;
@@ -46,19 +46,17 @@ class TooltipReferencesPanel extends ReferencesPanel {
     super.update();
   }
 
-  @NotNull
   @Override
-  protected Font getLabelsFont() {
+  protected @NotNull Font getLabelsFont() {
     return LabelPainter.getReferenceFont();
   }
 
-  @Nullable
   @Override
-  protected Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
+  protected @Nullable Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
-      return new LabelIcon(this, height, getBackground(),
-                           refs.size() > 1 ? ContainerUtil.newArrayList(color, color) : Collections.singletonList(color)) {
+      return new LabelIcon(this, height, UIUtil.getToolTipBackground(),
+                           refs.size() > 1 ? List.of(color, color) : Collections.singletonList(color)) {
         @Override
         public int getIconWidth() {
           return getWidth(myHasGroupWithMultipleRefs ? 2 : 1);
@@ -68,14 +66,19 @@ class TooltipReferencesPanel extends ReferencesPanel {
     return createEmptyIcon(height);
   }
 
-  @NotNull
-  private static Icon createEmptyIcon(int height) {
+  private static @NotNull Icon createEmptyIcon(int height) {
     return EmptyIcon.create(LabelIcon.getWidth(height, 2), height);
   }
 
-  @NotNull
   @Override
-  protected JBLabel createRestLabel(int restSize) {
+  protected @NotNull JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {
+    JBLabel label = super.createLabel(text, icon);
+    label.setForeground(UIUtil.getToolTipForeground());
+    return label;
+  }
+
+  @Override
+  protected @NotNull JBLabel createRestLabel(int restSize) {
     String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
     String labelText = VcsLogBundle.message("vcs.log.references.more.tooltip", restSize);
     String html = HtmlChunk.text(labelText).wrapWith("font").attr("color", "#" + gray).wrapWith(HtmlChunk.html()).toString();

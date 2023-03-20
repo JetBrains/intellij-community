@@ -2,9 +2,11 @@
 package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.entities.test.api.AnotherSource
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.RefsTable
 import com.intellij.workspaceModel.storage.impl.StorageIndexes
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
@@ -12,7 +14,6 @@ import junit.framework.TestCase
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.reflect.full.memberProperties
 
@@ -23,13 +24,13 @@ class PropertyTest {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
-        env.executeCommands(getEntityManipulation(workspace))
+        val detachedEntities = ArrayList<WorkspaceEntity>()
+        env.executeCommands(getEntityManipulation(workspace, detachedEntities))
         workspace.assertConsistency()
       }
     }
   }
 
-  @Ignore("Temporally disable")
   @Test
   fun testReplaceBySource() {
     PropertyChecker.checkScenarios {
@@ -53,10 +54,10 @@ class PropertyTest {
   }
 }
 
-private class AddDiff(private val storage: WorkspaceEntityStorageBuilder) : ImperativeCommand {
+private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
     env.logMessage("Trying to perform addDiff")
-    val backup = storage.toStorage()
+    val backup = storage.toSnapshot()
     val another = createBuilderFrom(backup)
     env.logMessage("Modify diff:")
     env.executeCommands(getEntityManipulation(another))
@@ -74,19 +75,19 @@ private class AddDiff(private val storage: WorkspaceEntityStorageBuilder) : Impe
     }
     catch (e: AddDiffException) {
       env.logMessage("Cannot perform addDiff: ${e.message}. Fallback to previous state")
-      (storage as WorkspaceEntityStorageBuilderImpl).restoreFromBackup(backup)
+      (storage as MutableEntityStorageImpl).restoreFromBackup(backup)
     }
   }
 
   companion object {
-    fun create(workspace: WorkspaceEntityStorageBuilder): Generator<AddDiff> = Generator.constant(AddDiff(workspace))
+    fun create(workspace: MutableEntityStorage): Generator<AddDiff> = Generator.constant(AddDiff(workspace))
   }
 }
 
-private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder) : ImperativeCommand {
+private class ReplaceBySource(private val storage: MutableEntityStorage) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
     env.logMessage("Trying to perform replaceBySource")
-    val backup = storage.toStorage()
+    val backup = storage.toSnapshot()
     val another = createBuilderFrom(backup)
     env.logMessage("Modify original storage:")
     env.executeCommands(getEntityManipulation(another))
@@ -100,7 +101,7 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
     catch (e: AssertionError) {
       if (e.cause !is ReplaceBySourceException) error("ReplaceBySource exception expected")
       env.logMessage("Cannot perform replace by source: ${e.message}. Fallback to previous state")
-      (storage as WorkspaceEntityStorageBuilderImpl).restoreFromBackup(backup)
+      (storage as MutableEntityStorageImpl).restoreFromBackup(backup)
     }
   }
 
@@ -112,11 +113,11 @@ private class ReplaceBySource(private val storage: WorkspaceEntityStorageBuilder
       { it: EntitySource -> it is AnotherSource } to "AnotherSource filter"
     )
 
-    fun create(workspace: WorkspaceEntityStorageBuilder): Generator<ReplaceBySource> = Generator.constant(ReplaceBySource(workspace))
+    fun create(workspace: MutableEntityStorage): Generator<ReplaceBySource> = Generator.constant(ReplaceBySource(workspace))
   }
 }
 
-private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: WorkspaceEntityStorage) {
+private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   val backupBuilder = createBuilderFrom(backup)
   entitiesByType.entityFamilies.clear()
   entitiesByType.entityFamilies.addAll(backupBuilder.entitiesByType.entityFamilies)
@@ -137,13 +138,13 @@ private fun WorkspaceEntityStorageBuilderImpl.restoreFromBackup(backup: Workspac
   indexes.softLinks.clear()
   indexes.virtualFileIndex.clear()
   indexes.entitySourceIndex.clear()
-  indexes.persistentIdIndex.clear()
+  indexes.symbolicIdIndex.clear()
   indexes.externalMappings.clear()
 
   indexes.softLinks.copyFrom(backupBuilder.indexes.softLinks)
   indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
   indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
-  indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)
+  indexes.symbolicIdIndex.copyFrom(backupBuilder.indexes.symbolicIdIndex)
   indexes.externalMappings.putAll(indexes.externalMappings)
   // Just checking that all properties have been asserted
   TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)

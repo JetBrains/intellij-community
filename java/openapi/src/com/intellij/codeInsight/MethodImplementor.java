@@ -24,9 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface MethodImplementor extends MemberImplementorExplorer {
   ExtensionPointName<MethodImplementor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.methodImplementor");
 

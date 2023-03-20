@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -28,8 +28,28 @@ public final class Utils {
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
   public static final boolean IS_TEST_MODE = Boolean.parseBoolean(System.getProperty("test.mode", "false"));
-  public static final boolean IS_PROFILING_MODE = Boolean.parseBoolean(System.getProperty("profiling.mode", "false"));
+  private static final String PROFILING_MODE_PROPERTY = "profiling.mode";
   private static final int FORKED_JAVAC_HEAP_SIZE_MB;
+
+  public enum ProfilingMode {
+    NONE,
+    YOURKIT_SAMPLING,
+    YOURKIT_TRACING,
+  }
+
+  public static ProfilingMode getProfilingMode() {
+    String profilingModeString = System.getProperty(PROFILING_MODE_PROPERTY, "false");
+    switch (profilingModeString) {
+      case "false":
+        return ProfilingMode.NONE;
+      case "true":
+        return ProfilingMode.YOURKIT_SAMPLING;
+      case "tracing":
+        return ProfilingMode.YOURKIT_TRACING;
+      default:
+        throw new IllegalArgumentException("Invalid value of '" + PROFILING_MODE_PROPERTY + "' system property (accepting only 'false', 'true', 'tracing'): " + profilingModeString);
+    }
+  }
 
   static {
     int size = -1;
@@ -49,26 +69,20 @@ public final class Utils {
     return ourSystemRoot;
   }
 
-  public static void setSystemRoot(File systemRoot) {
+  public static void setSystemRoot(@NotNull File systemRoot) {
     ourSystemRoot = systemRoot;
   }
 
-  @Nullable
-  public static File getDataStorageRoot(String projectPath) {
+  public static @NotNull File getDataStorageRoot(@NotNull String projectPath) {
     return getDataStorageRoot(ourSystemRoot, projectPath);
   }
 
-
-  public static File getDataStorageRoot(final File systemRoot, String projectPath) {
+  public static @NotNull File getDataStorageRoot(@NotNull File systemRoot, @NotNull String projectPath) {
     return getDataStorageRoot(systemRoot, projectPath, s -> s.hashCode());
   }
 
-  public static File getDataStorageRoot(final File systemRoot, String projectPath, Function<String, Integer> hashFunction) {
-
+  public static @NotNull File getDataStorageRoot(@NotNull File systemRoot, @NotNull String projectPath, @NotNull Function<? super String, Integer> hashFunction) {
     projectPath = FileUtil.toCanonicalPath(projectPath);
-    if (projectPath == null) {
-      return null;
-    }
 
     String name;
     final int locationHash;
@@ -79,18 +93,12 @@ public final class Utils {
       locationHash = hashFunction.apply(projectPath);
     }
     else {
-      Path directoryBased = null;
+      Path directoryBased;
       if (rootFile.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directoryBased = rootFile;
       }
       else {
-        Path child = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
-        if (Files.exists(child)) {
-          directoryBased = child;
-        }
-      }
-      if (directoryBased == null) {
-        return null;
+        directoryBased = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
       }
       name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
       locationHash = hashFunction.apply(directoryBased.toString());

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleBundle extends DynamicBundle {
   @NonNls public static final String PATH_TO_BUNDLE = "messages.GradleBundle";
   private static final GradleBundle BUNDLE = new GradleBundle();

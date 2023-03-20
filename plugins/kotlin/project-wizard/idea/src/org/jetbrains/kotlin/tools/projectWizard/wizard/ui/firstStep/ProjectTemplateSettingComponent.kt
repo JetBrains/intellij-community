@@ -1,23 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
-import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.DropDownSettingType
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.*
+import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.wizard.OnUserSettingChangeStatisticsLogger
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.SettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.ValidationIndicator
 import java.awt.Dimension
-import javax.swing.Icon
 import javax.swing.JComponent
 
 class ProjectTemplateSettingComponent(
@@ -67,7 +65,6 @@ class ProjectTemplateSettingComponent(
         addToBottom(templateDescriptionComponent.component.addBorder(JBUI.Borders.empty(/*top*/8,/*left*/ 3, 0, 0)))
     }
 
-
     private fun applySelectedTemplate() = modify {
         value?.let(::applyProjectTemplate)
     }
@@ -76,10 +73,7 @@ class ProjectTemplateSettingComponent(
         super.onValueUpdated(reference)
         if (reference == ProjectTemplatesPlugin.template.reference) {
             applySelectedTemplate()
-            value?.let { template ->
-                list.setSelectedValue(template, true)
-                templateDescriptionComponent.setTemplate(template)
-            }
+            updateHint()
         }
     }
 
@@ -89,24 +83,17 @@ class ProjectTemplateSettingComponent(
             list.selectedIndex = 0
             value = setting.type.values.firstOrNull()
             applySelectedTemplate()
+            updateHint()
+        }
+    }
+
+    private fun updateHint() {
+        value?.let { template ->
+            list.setSelectedValue(template, true)
+            templateDescriptionComponent.setTemplate(template)
         }
     }
 }
-
-private val ProjectTemplate.icon: Icon?
-    get() = when (this) {
-        ConsoleApplicationProjectTemplate -> KotlinIcons.Wizard.CONSOLE
-        MultiplatformLibraryProjectTemplate -> KotlinIcons.Wizard.MULTIPLATFORM_LIBRARY
-        FullStackWebApplicationProjectTemplate -> KotlinIcons.Wizard.WEB
-        NativeApplicationProjectTemplate -> KotlinIcons.Wizard.NATIVE
-        FrontendApplicationProjectTemplate -> KotlinIcons.Wizard.JS
-        ReactApplicationProjectTemplate -> KotlinIcons.Wizard.REACT_JS
-        NodeJsApplicationProjectTemplate -> KotlinIcons.Wizard.NODE_JS
-        ComposeDesktopApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE
-        ComposeMultiplatformApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE
-        ComposeWebApplicationProjectTemplate -> KotlinIcons.Wizard.COMPOSE
-        else -> null
-    }
 
 class TemplateDescriptionComponent : Component() {
     private val descriptionLabel = CommentLabel().apply {

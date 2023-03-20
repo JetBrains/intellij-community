@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +22,7 @@ public interface EditorTabColorProvider {
    * @param project current IDE project.
    * @param file a file you need to highlight.
    * @return background color to highlight editor tab.
-   * @see EditorTabPresentationUtil#getEditorTabBackgroundColor(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+   * @see EditorTabPresentationUtil#getEditorTabBackgroundColor(Project, VirtualFile)
    */
   @Nullable
   Color getEditorTabColor(@NotNull Project project, @NotNull VirtualFile file);
@@ -29,8 +31,18 @@ public interface EditorTabColorProvider {
    *
    * @param project current IDE project.
    * @param file a file you need to highlight.
+   * @return tab foreground color for the file.
+   */
+  @Nullable
+  @ApiStatus.Experimental
+  default ColorKey getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) { return null; }
+
+  /**
+   *
+   * @param project current IDE project.
+   * @param file a file you need to highlight.
    * @return background color to highlight file row in trees and lists.
-   * @see EditorTabPresentationUtil#getFileBackgroundColor(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+   * @see EditorTabPresentationUtil#getFileBackgroundColor(Project, VirtualFile)
    */
   @Nullable
   default Color getProjectViewColor(@NotNull Project project, @NotNull VirtualFile file) {

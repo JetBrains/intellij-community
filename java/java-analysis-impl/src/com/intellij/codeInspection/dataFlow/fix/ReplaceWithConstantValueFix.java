@@ -20,17 +20,12 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class ReplaceWithConstantValueFix implements LocalQuickFix {
   private final String myPresentableName;
   private final String myReplacementText;
@@ -61,12 +56,18 @@ public class ReplaceWithConstantValueFix implements LocalQuickFix {
                                    problemElement.getParent().getParent() instanceof PsiMethodCallExpression ?
                                    (PsiMethodCallExpression)problemElement.getParent().getParent() :
                                    null;
-    PsiMethod targetMethod = call == null ? null : call.resolveMethod();
+    PsiMethod targetMethod = null;
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    if (call != null) {
+      JavaResolveResult result = call.resolveMethodGenerics();
+      substitutor = result.getSubstitutor();
+      targetMethod = ObjectUtils.tryCast(result.getElement(), PsiMethod.class);
+    }
 
     new CommentTracker().replaceAndRestoreComments(problemElement, myReplacementText);
 
     if (targetMethod != null) {
-      ExtractMethodUtil.addCastsToEnsureResolveTarget(targetMethod, call);
+      ExtractMethodUtil.addCastsToEnsureResolveTarget(targetMethod, substitutor, call);
     }
   }
 }

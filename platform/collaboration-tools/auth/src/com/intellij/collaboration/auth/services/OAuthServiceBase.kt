@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth.services
 
 import com.intellij.collaboration.auth.credentials.Credentials
@@ -34,14 +34,21 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
     if (path != request.request.authorizationCodeUrl.path) {
       return false
     }
-    val code = parameters.getAuthorizationCode() ?: return false
+    // Handle Authorization Response — https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2
+    val code = parameters.getAuthorizationCode()
+    if (code == null) {
+      val error = parameters["error"]?.firstOrNull()
+      val error_description = parameters["error_description"]?.firstOrNull()
+      request.result.completeExceptionally(RuntimeException(error_description ?: error ?: "Unknown error"))
+      return false
+    }
 
     request.processCode(code)
     val result = request.result
     return result.isDone && !result.isCancelled && !result.isCompletedExceptionally
   }
 
-  private fun startAuthorization(request: OAuthRequest<T>) {
+  protected open fun startAuthorization(request: OAuthRequest<T>) {
     val authUrl = request.authUrlWithParameters.toExternalForm()
     BrowserUtil.browse(authUrl)
   }

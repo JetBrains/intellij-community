@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
@@ -71,9 +71,7 @@ final class RefCountHolder {
   }
 
   @NotNull
-  GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file,
-                                         @Nullable final UnusedDeclarationInspectionBase deadCodeInspection,
-                                         boolean isUnusedToolEnabled) {
+  GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file, @Nullable UnusedDeclarationInspectionBase deadCodeInspection) {
     FileViewProvider viewProvider = file.getViewProvider();
     Project project = file.getProject();
 
@@ -81,7 +79,7 @@ final class RefCountHolder {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     boolean inLibrary = fileIndex.isInLibrary(virtualFile);
 
-    boolean isDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
+    boolean isDeadCodeEnabled = deadCodeInspection != null && deadCodeInspection.isGlobalEnabledInEditor();
     if (isDeadCodeEnabled && !inLibrary) {
       return new GlobalUsageHelperBase() {
         final Map<PsiMember, Boolean> myEntryPointCache = FactoryMap.create((PsiMember member) -> {
@@ -234,16 +232,13 @@ final class RefCountHolder {
   }
 
   private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<? extends PsiReference> array) {
-    if (!(element instanceof PsiParameter)) return false;
-    PsiParameter parameter = (PsiParameter)element;
+    if (!(element instanceof PsiParameter parameter)) return false;
     PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)scope;
+    if (!(scope instanceof PsiMethod method)) return false;
     int paramIndex = ArrayUtilRt.find(method.getParameterList().getParameters(), parameter);
 
     for (PsiReference reference : array) {
-      if (!(reference instanceof PsiElement)) return false;
-      PsiElement argument = (PsiElement)reference;
+      if (!(reference instanceof PsiElement argument)) return false;
 
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)new PsiMatcherImpl(argument)
         .dot(PsiMatchers.hasClass(PsiReferenceExpression.class))
@@ -271,7 +266,7 @@ final class RefCountHolder {
       PsiElement resolved = ref.resolve();
       if (resolved != null) {
         ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
-        if (access == ReadWriteAccessDetector.Access.Read || access == ReadWriteAccessDetector.Access.ReadWrite) {
+        if (access != null && access.isReferencedForRead()) {
           if (isJustIncremented(access, refElement)) continue;
           return true;
         }
@@ -305,7 +300,7 @@ final class RefCountHolder {
       PsiElement resolved = ref.resolve();
       if (resolved != null) {
         ReadWriteAccessDetector.Access access = getAccess(ref, resolved);
-        if (access == ReadWriteAccessDetector.Access.Write || access == ReadWriteAccessDetector.Access.ReadWrite) {
+        if (access != null && access.isReferencedForWrite()) {
           return true;
         }
       }

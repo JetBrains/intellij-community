@@ -1,4 +1,4 @@
-// "Remove redundant ''@TypeParceler'' annotation" "true"
+// "Remove redundant '@TypeParceler' annotation" "true"
 // WARNING: This annotation duplicates the one for Class 'Foo'
 // WITH_STDLIB
 

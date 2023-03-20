@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -43,6 +43,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
         runTest("testData/codeInsight/generate/secondaryConstructors/javaSupersWithGenerics.kt");
     }
 
+    @TestMetadata("javaSupersWithKeywords.kt")
+    public void testJavaSupersWithKeywords() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/javaSupersWithKeywords.kt");
+    }
+
     @TestMetadata("primaryExists.kt")
     public void testPrimaryExists() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/primaryExists.kt");
@@ -51,6 +56,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/properties.kt");
+    }
+
+    @TestMetadata("propertiesWithKeywords.kt")
+    public void testPropertiesWithKeywords() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/propertiesWithKeywords.kt");
     }
 
     @TestMetadata("propertiesWithSupers.kt")

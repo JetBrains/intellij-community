@@ -39,8 +39,7 @@ public final class GroovyChangeContextUtil {
       element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
       thisExpr.putCopyableUserData(QUALIFIER_CLASS_KEY, containingClass);
     }
-    else if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)element;
+    else if (element instanceof GrReferenceExpression refExpr) {
       final GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
         PsiElement refElement = refExpr.resolve();
@@ -87,9 +86,8 @@ public final class GroovyChangeContextUtil {
         }
       }
 
-      else if (element instanceof GrReferenceExpression) {
+      else if (element instanceof GrReferenceExpression refExpr) {
         final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
-        final GrReferenceExpression refExpr = (GrReferenceExpression)element;
         final PsiElement resolvedElement = refExpr.resolve();
         final PsiMember memberRef = refExpr.getCopyableUserData(REF_TO_MEMBER);
         refExpr.putCopyableUserData(REF_TO_MEMBER, null);

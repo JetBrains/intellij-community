@@ -17,8 +17,8 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FileTypeDescriptor extends FileChooserDescriptor {
 
-  private final ImmutableList<String> myExtensions;
+  private final String @NotNull [] myExtensions;
 
   public FileTypeDescriptor(@NlsContexts.DialogTitle String title, String @NotNull ... extensions) {
     super(true, false, false, true, false, false);
     assert extensions.length > 0 : "There should be at least one extension";
-    myExtensions = ContainerUtil.immutableList(ContainerUtil.map(extensions, ext -> {
+    myExtensions = ArrayUtil.toStringArray(ContainerUtil.map(extensions, ext -> {
       if (ext.startsWith(".")) {
         return ext;
       }

@@ -182,8 +182,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
 
   @Override
   public void removeRedundantImports(PsiFile targetClassFile) {
-    if (!(targetClassFile instanceof GroovyFile)) return;
-    final GroovyFile file = (GroovyFile)targetClassFile;
+    if (!(targetClassFile instanceof GroovyFile file)) return;
     for (GrImportStatement unusedImport : unusedImports(file)) {
       file.removeImport(unusedImport);
     }

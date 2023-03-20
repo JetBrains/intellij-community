@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem
 
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
@@ -113,8 +113,8 @@ data class ArtifactBasedLibraryDependencyIR(
 
 
 abstract class KotlinLibraryDependencyIR(
-    val artifactName: String,
-    override val dependencyType: DependencyType
+  private val artifactName: String,
+  override val dependencyType: DependencyType
 ) : LibraryDependencyIR {
     abstract val kotlinVersion: WizardKotlinVersion
     final override val version: Version get() = kotlinVersion.version
@@ -122,7 +122,7 @@ abstract class KotlinLibraryDependencyIR(
 
     override val artifact: LibraryArtifact
         get() = MavenArtifact(
-            kotlinVersion.repository,
+            kotlinVersion.repositories,
             "org.jetbrains.kotlin",
             "kotlin-$artifactName"
         )
@@ -196,6 +196,7 @@ enum class StdlibType(val artifact: String) {
     StdlibJdk7("stdlib-jdk7"),
     StdlibJdk8("stdlib-jdk8"),
     StdlibJs("stdlib-js"),
+    StdlibWasm("stdlib-wasm"),
     StdlibCommon("stdlib-common"),
 }
 

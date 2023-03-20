@@ -18,11 +18,11 @@ public interface ChangeNodeDecorator {
 
   @SuppressWarnings("unused")
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default List<Pair<String, Stress>> stressPartsOfFileName(final Change change, final String parentPath) { return null; }
 
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   enum Stress {
     BOLD(SimpleTextAttributes.STYLE_BOLD),
     ITALIC(SimpleTextAttributes.STYLE_ITALIC),

@@ -86,7 +86,7 @@ public final class MyPsiUtil {
       return false;
     }
 
-    public static String getAttributePrefix(@NotNull XmlAttribute attribute) {
+    public static @NotNull String getAttributePrefix(@NotNull XmlAttribute attribute) {
         final String name = attribute.getName();
         if (name.indexOf(':') == -1) {
             return "";

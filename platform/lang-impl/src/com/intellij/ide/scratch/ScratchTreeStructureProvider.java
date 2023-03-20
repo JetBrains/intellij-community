@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -13,7 +13,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -41,7 +43,6 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
       AbstractProjectViewPane updateTarget;
       @Override
       public void run() {
+        if (project.isDisposed()) return;
         if (updateTarget == null) {
           updateTarget = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
         }
@@ -67,8 +69,8 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
-    ScratchFileService scratchFileService = ScratchFileService.getInstance();
     VirtualFileManager.getInstance().addAsyncFileListener(events -> {
+      ScratchFileService scratchFileService = ScratchFileService.getInstance();
       boolean update = JBIterable.from(events).find(e -> {
         ProgressManager.checkCanceled();
         VirtualFile parent = getNewParent(e);
@@ -151,8 +153,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
-  @Nullable
-  private static VirtualFile getVirtualFile(@NotNull RootType rootType) {
+  public static @Nullable VirtualFile getVirtualFile(@NotNull RootType rootType) {
     String path = ScratchFileService.getInstance().getRootPath(rootType);
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
@@ -168,6 +169,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
                                                          @NotNull Collection<AbstractTreeNode<?>> children,
                                                          ViewSettings settings) {
+    if (!settings.isShowScratchesAndConsoles()) return children;
     Project project = parent instanceof ProjectViewProjectNode ? parent.getProject() : null;
     if (project == null) return children;
     if (ApplicationManager.getApplication().isUnitTestMode()) return children;
@@ -184,14 +186,20 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   /**
    * @deprecated Use modify method instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static AbstractTreeNode<?> createRootNode(@NotNull Project project, ViewSettings settings) {
     return new MyProjectNode(project, settings);
   }
 
   @Override
-  public @Nullable Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId, selected);
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Collection<? extends AbstractTreeNode<?>> selected) {
     if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
       AbstractTreeNode<?> single = JBIterable.from(selected).single();
       if (single instanceof MyRootNode) {

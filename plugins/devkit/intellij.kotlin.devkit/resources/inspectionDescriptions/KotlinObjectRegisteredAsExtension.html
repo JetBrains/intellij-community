@@ -1,0 +1,30 @@
+<html>
+<body>
+Reports Kotlin objects that are registered as plugin extensions.
+<p>
+  Extensions lifecycle is managed by the IntelliJ Platform.
+  Using Kotlin objects for extension registration may cause creation of unnecessary extension instances and make plugin unloading
+  impossible.
+</p>
+<h2>Example</h2>
+<p>Extension registration:</p>
+<pre>
+&lt;annotator language="myLang" implementationClass="com.example.MyAnnotator"/&gt;
+</pre>
+
+<p>Extension implementation:</p>
+<pre>
+// bad:
+object MyAnnotator : Annotator {
+  ...
+}
+
+// good:
+class MyAnnotator : Annotator {
+  ...
+}
+</pre>
+<!-- tooltip end -->
+<p><small>New in 2023.1</small>
+</body>
+</html>

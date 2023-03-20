@@ -39,21 +39,17 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     }
   }
 
-  private static boolean collectFiles(@NotNull VirtualFile file, @NotNull Int2ObjectMap<VirtualFile> id2File) {
-    ProgressManager.checkCanceled();
-    if (file instanceof VirtualFileWithId) {
-      id2File.put(((VirtualFileWithId)file).getId(), file);
-    }
-    return !file.isDirectory() || FileBasedIndexImpl.isMock(file) || ManagingFS.getInstance().wereChildrenAccessed(file);
-  }
-
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
 
-  public void collectFilesRecursively(@NotNull VirtualFile file, @NotNull Int2ObjectMap<VirtualFile> id2File) {
+  private static void collectFilesRecursively(@NotNull VirtualFile file, @NotNull Int2ObjectMap<VirtualFile> id2File) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        return collectFiles(file, id2File);
+        ProgressManager.checkCanceled();
+        if (file instanceof VirtualFileWithId) {
+          id2File.put(((VirtualFileWithId)file).getId(), file);
+        }
+        return !file.isDirectory() || FileBasedIndexImpl.isMock(file) || ManagingFS.getInstance().wereChildrenAccessed(file);
       }
 
       @Override
@@ -96,8 +92,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
       if (event instanceof VFileContentChangeEvent) {
         fileToIndex = event.getFile();
       }
-      else if (event instanceof VFileCopyEvent) {
-        final VFileCopyEvent ce = (VFileCopyEvent)event;
+      else if (event instanceof VFileCopyEvent ce) {
         final VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
         if (copy != null) {
           fileToIndex = copy;
@@ -115,8 +110,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
         fileToIndex = event.getFile();
         onlyContentDependent = false;
       }
-      else if (event instanceof VFilePropertyChangeEvent) {
-        final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+      else if (event instanceof VFilePropertyChangeEvent pce) {
         String propertyName = pce.getPropertyName();
         if (propertyName.equals(VirtualFile.PROP_NAME)) {
           // indexes may depend on file name

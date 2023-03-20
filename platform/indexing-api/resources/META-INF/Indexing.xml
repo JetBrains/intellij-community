@@ -20,6 +20,17 @@
       <with attribute="implementationClass" implements="com.intellij.util.indexing.flavor.FileIndexingFlavorProvider"/>
     </extensionPoint>
     <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
+    <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
+
+    <fileBasedIndexLayout id="in-memory"
+                          presentableNameKey="in.memory.storage.presentable.name"
+                          bundleName="messages.LangBundle"
+                          providerClass="com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider"
+                          version="0"/>
+  </extensions>
 
 </idea-plugin>

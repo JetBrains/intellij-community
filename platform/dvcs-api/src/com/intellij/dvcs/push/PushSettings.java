@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -10,59 +10,55 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@State(name = "Push.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class PushSettings implements PersistentStateComponent<PushSettings.State> {
+@State(name = "Push.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public final class PushSettings implements PersistentStateComponent<PushSettings.State> {
+  private State state = new State();
 
-  private State myState = new State();
-
-  public static class State {
+  public static final class State {
     @XCollection(propertyElementName = "force-push-targets")
-    public List<ForcePushTargetInfo> FORCE_PUSH_TARGETS = new ArrayList<>();
+    public final List<ForcePushTargetInfo> FORCE_PUSH_TARGETS = new ArrayList<>();
 
     public boolean SHOW_DETAILS_PANEL = true;
   }
 
-  @Nullable
   @Override
-  public State getState() {
-    return myState;
+  public @NotNull State getState() {
+    return state;
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state;
+    this.state = state;
   }
 
-  public boolean containsForcePushTarget(@NotNull final String remote, @NotNull final String branch) {
-    return ContainerUtil.exists(myState.FORCE_PUSH_TARGETS,
+  public boolean containsForcePushTarget(final @NotNull String remote, final @NotNull String branch) {
+    return ContainerUtil.exists(state.FORCE_PUSH_TARGETS,
                                 info -> info.targetRemoteName.equals(remote) && info.targetBranchName.equals(branch));
   }
 
   public void addForcePushTarget(@NotNull String targetRemote, @NotNull String targetBranch) {
-    List<ForcePushTargetInfo> targets = myState.FORCE_PUSH_TARGETS;
+    List<ForcePushTargetInfo> targets = state.FORCE_PUSH_TARGETS;
     if (!containsForcePushTarget(targetRemote, targetBranch)) {
       targets.add(new ForcePushTargetInfo(targetRemote, targetBranch));
-      myState.FORCE_PUSH_TARGETS = targets;
     }
   }
 
   public boolean getShowDetailsInPushDialog() {
-    return myState.SHOW_DETAILS_PANEL;
+    return state.SHOW_DETAILS_PANEL;
   }
 
   public void setShowDetailsInPushDialog(boolean value) {
-    myState.SHOW_DETAILS_PANEL = value;
+    state.SHOW_DETAILS_PANEL = value;
   }
 
   @Tag("force-push-target")
-  private static class ForcePushTargetInfo {
-    @Attribute(value = "remote-path") public String targetRemoteName;
-    @Attribute(value = "branch") public String targetBranchName;
+  private static final class ForcePushTargetInfo {
+    @Attribute("remote-path") public String targetRemoteName;
+    @Attribute("branch") public String targetBranchName;
 
     @SuppressWarnings("unused")
     ForcePushTargetInfo() {

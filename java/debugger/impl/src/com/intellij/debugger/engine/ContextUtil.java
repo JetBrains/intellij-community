@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -109,8 +109,7 @@ public class ContextUtil {
 
         final PsiStatement[] statements = codeBlockFromText.getStatements();
         for (PsiStatement statement : statements) {
-          if (statement instanceof PsiDeclarationStatement) {
-            PsiDeclarationStatement declStatement = (PsiDeclarationStatement)statement;
+          if (statement instanceof PsiDeclarationStatement declStatement) {
             PsiElement[] declaredElements = declStatement.getDeclaredElements();
             for (PsiElement declaredElement : declaredElements) {
               declaredElement.putUserData(IS_JSP_IMPLICIT, Boolean.TRUE);

@@ -1,6 +1,23 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
+import com.intellij.externalSystem.ExternalDependencyModificator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BaseEventId
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -9,29 +26,28 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import org.jetbrains.idea.packagesearch.SortMetric
+import org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule
 
 private const val FUS_ENABLED = true
 
-internal class PackageSearchEventsLogger : CounterUsagesCollector() {
+class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     override fun getGroup() = GROUP
 
-    override fun getVersion() = VERSION
-
     companion object {
 
-        private const val VERSION = 8
+        private const val VERSION = 12
         private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, VERSION)
 
         // FIELDS
         private val buildSystemField = EventFields.Class(FUSGroupIds.MODULE_OPERATION_PROVIDER_CLASS)
-        private val packageIdField = EventFields.StringValidatedByCustomRule(FUSGroupIds.PACKAGE_ID, customRuleId = FUSGroupIds.RULE_TOP_PACKAGE_ID)
+        private val packageIdField = EventFields.StringValidatedByCustomRule(FUSGroupIds.PACKAGE_ID, TopPackageIdValidationRule::class.java)
         private val packageVersionField = EventFields.StringValidatedByRegexp(FUSGroupIds.PACKAGE_VERSION, regexpRef = "version")
         private val packageFromVersionField = EventFields.StringValidatedByRegexp(FUSGroupIds.PACKAGE_FROM_VERSION, regexpRef = "version")
         private val repositoryIdField = EventFields.Enum<FUSGroupIds.IndexedRepositories>(FUSGroupIds.REPOSITORY_ID)
@@ -41,15 +57,17 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val targetModulesField = EventFields.Enum<FUSGroupIds.TargetModulesType>(FUSGroupIds.TARGET_MODULES)
         private val targetModulesMixedBuildSystemsField = EventFields.Boolean(FUSGroupIds.TARGET_MODULES_MIXED_BUILD_SYSTEMS)
 
-        internal val preferencesGradleScopeCountField = EventFields.Int(FUSGroupIds.PREFERENCES_GRADLE_SCOPES_COUNT)
-        internal val preferencesUpdateScopesOnUsageField = EventFields.Boolean(FUSGroupIds.PREFERENCES_UPDATE_SCOPES_ON_USAGE)
-        internal val preferencesDefaultGradleScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED)
-        internal val preferencesDefaultMavenScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED)
+        val preferencesGradleScopeCountField = EventFields.Int(FUSGroupIds.PREFERENCES_GRADLE_SCOPES_COUNT)
+        val preferencesUpdateScopesOnUsageField = EventFields.Boolean(FUSGroupIds.PREFERENCES_UPDATE_SCOPES_ON_USAGE)
+        val preferencesDefaultGradleScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED)
+        val preferencesDefaultMavenScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED)
+        internal val preferencesAutoAddRepositoriesField = EventFields.Boolean(FUSGroupIds.PREFERENCES_AUTO_ADD_REPOSITORIES)
 
         private val detailsLinkLabelField = EventFields.Enum<FUSGroupIds.DetailsLinkTypes>(FUSGroupIds.DETAILS_LINK_LABEL)
-        private val toggleTypeField = EventFields.Enum<FUSGroupIds.ToggleTypes>(FUSGroupIds.DETAILS_VISIBLE)
-        private val detailsVisibleField = EventFields.Boolean(FUSGroupIds.DETAILS_VISIBLE)
+        private val toggleTypeField = EventFields.Enum<FUSGroupIds.ToggleTypes>(FUSGroupIds.CHECKBOX_NAME)
+        private val toggleValueField = EventFields.Boolean(FUSGroupIds.CHECKBOX_STATE)
         private val searchQueryLengthField = EventFields.Int(FUSGroupIds.SEARCH_QUERY_LENGTH)
+        private val sortMetricField = EventFields.Enum<SortMetric>(FUSGroupIds.SORT_METRIC)
 
         // EVENTS
         private val packageInstalledEvent = GROUP.registerEvent(
@@ -84,8 +102,8 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             preferencesGradleScopeCountField,
             preferencesUpdateScopesOnUsageField,
             preferencesDefaultGradleScopeChangedField,
-            preferencesDefaultMavenScopeChangedField
-
+            preferencesDefaultMavenScopeChangedField,
+            preferencesAutoAddRepositoriesField
         )
         private val preferencesRestoreDefaultsEvent = GROUP.registerEvent(FUSGroupIds.PREFERENCES_RESTORE_DEFAULTS)
         private val packageSelectedEvent = GROUP.registerEvent(eventId = FUSGroupIds.PACKAGE_SELECTED, packageIsInstalledField)
@@ -101,11 +119,15 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val toggleDetailsEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.TOGGLE,
             eventField1 = toggleTypeField,
-            eventField2 = detailsVisibleField
+            eventField2 = toggleValueField,
         )
         private val searchRequestEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.SEARCH_REQUEST,
             eventField1 = searchQueryLengthField
+        )
+        private val sortMetricEvent = GROUP.registerEvent(
+            eventId = FUSGroupIds.SORT_METRIC_CHANGED,
+            eventField1 = sortMetricField,
         )
         private val searchQueryClearEvent = GROUP.registerEvent(FUSGroupIds.SEARCH_QUERY_CLEAR)
         private val upgradeAllEvent = GROUP.registerEvent(FUSGroupIds.UPGRADE_ALL)
@@ -113,23 +135,22 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         fun logPackageInstalled(
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
-            targetModule: ProjectModule
-        ) =
-            runSafelyIfEnabled(packageInstalledEvent) {
-                val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
-                if (moduleOperationProvider != null) {
-                    log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
-                } else {
-                    logDebug { "Unable to log package installation for target module '${targetModule.name}': no operation provider available" }
-                }
+            targetModule: PackageSearchModule
+        ) = runSafelyIfEnabled(packageInstalledEvent) {
+            val moduleOperationProvider = targetModule.getModificator()
+            if (moduleOperationProvider != null) {
+                log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
+            } else {
+                logDebug { "Unable to log package installation for target module '${targetModule.name}': no operation provider available" }
             }
+        }
 
         fun logPackageRemoved(
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
-            targetModule: ProjectModule
+            targetModule: PackageSearchModule
         ) = runSafelyIfEnabled(packageRemovedEvent) {
-            val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = targetModule.getModificator()
             if (moduleOperationProvider != null) {
                 log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
             } else {
@@ -141,9 +162,9 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageIdentifier: PackageIdentifier,
             packageFromVersion: PackageVersion,
             packageVersion: PackageVersion,
-            targetModule: ProjectModule
+            targetModule: PackageSearchModule
         ) = runSafelyIfEnabled(packageUpdatedEvent) {
-            val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
+            val moduleOperationProvider = targetModule.getModificator()
             if (moduleOperationProvider != null) {
                 log(
                     packageIdField.with(packageIdentifier.rawValue),
@@ -193,6 +214,10 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             log(type, state)
         }
 
+        fun logSortMetric(metric: SortMetric) = runSafelyIfEnabled(sortMetricEvent) {
+            log(metric)
+        }
+
         fun logSearchRequest(query: String) = runSafelyIfEnabled(searchRequestEvent) {
             log(query.length)
         }
@@ -222,3 +247,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         }
     }
 }
+
+private fun PackageSearchModule.getModificator() =
+    ExternalDependencyModificator.EP_NAME.getExtensions(nativeModule.project)
+        .find { it.supports(nativeModule) }

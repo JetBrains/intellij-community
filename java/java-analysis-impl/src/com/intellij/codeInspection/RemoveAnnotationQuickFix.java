@@ -4,17 +4,23 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.nullable.AnnotateOverriddenMethodParameterFix;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 
@@ -42,6 +48,18 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    PsiJavaFile file = ObjectUtils.tryCast(previewDescriptor.getStartElement().getContainingFile(), PsiJavaFile.class);
+    if (file == null) return IntentionPreviewInfo.DIFF;
+    PsiAnnotation annotation = myAnnotation.getElement();
+    if (annotation == null || annotation.getContainingFile() != file.getOriginalFile()) return IntentionPreviewInfo.EMPTY;
+    PsiAnnotation copy = PsiTreeUtil.findSameElementInCopy(annotation, file);
+    copy.delete();
+    JavaCodeStyleManager.getInstance(project).removeRedundantImports(file);
+    return IntentionPreviewInfo.DIFF;
   }
 
   @Override
@@ -74,7 +92,11 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(physical)) {
       return;
     }
-    WriteAction.run(() -> physical.forEach(PsiAnnotation::delete));
+    WriteAction.run(() -> {
+      Set<PsiJavaFile> containingFiles = StreamEx.of(physical).map(PsiAnnotation::getContainingFile).select(PsiJavaFile.class).toSet();
+      physical.forEach(PsiAnnotation::delete);
+      containingFiles.forEach(JavaCodeStyleManager.getInstance(project)::removeRedundantImports);
+    });
 
     if (qualifiedName != null) {
       for (PsiModifierListOwner owner : externalOwners) {

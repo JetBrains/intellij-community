@@ -180,11 +180,9 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
    * @see #shouldBeIgnored(Iterator, String)
    */
   public boolean shouldBeIgnored(@NotNull PsiElement element) {
-    if (!(element instanceof PsiLanguageInjectionHost)) {
+    if (!(element instanceof PsiLanguageInjectionHost host)) {
       return false;
     }
-
-    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
 
     return shouldBeIgnored(Collections.singleton(host).iterator(), null);
   }
@@ -248,9 +246,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof BaseInjection)) return false;
-
-    final BaseInjection that = (BaseInjection)o;
+    if (!(o instanceof BaseInjection that)) return false;
 
     if (!Objects.equals(getDisplayName(), that.getDisplayName())) return false;
     if (!sameLanguageParameters(that)) return false;
@@ -295,7 +291,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @Override
   public void loadState(@NotNull Element element) {
     final PatternCompiler<PsiElement> helper = getCompiler();
-    myDisplayName = StringUtil.notNullize(element.getChildTextTrim("display-name"));
+    @NlsSafe String displayName = element.getChildTextTrim("display-name");
+    myDisplayName = StringUtil.notNullize(displayName);
     myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));
     myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));

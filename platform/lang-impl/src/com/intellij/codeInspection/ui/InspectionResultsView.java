@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
@@ -12,9 +12,10 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
+import com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.OccurenceNavigator;
@@ -22,11 +23,11 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,11 +39,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -50,13 +49,13 @@ import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -73,7 +72,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
@@ -108,7 +106,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
+  private final Executor myRightPanelUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Right-Panel-Updater");
   private volatile boolean myUpdating;
+  private volatile boolean myFixesAvailable;
+  private ToolWindow myToolWindow;
+  private ContentManagerListener myContentManagerListener;
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
@@ -118,7 +120,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
     myTree = new InspectionTree(this);
-    myTree.getInspectionTreeModel().getRoot().setSingleInspectionRun(isSingleInspectionRun());
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
@@ -187,9 +188,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     } else {
       InspectionProfileImpl profile = getCurrentProfile();
       String toolId = Objects.requireNonNull(profile.getSingleTool());
-      InspectionToolWrapper tool = Objects.requireNonNull(profile.getInspectionTool(toolId, getProject()));
-      JComponent toolPanel = tool.getTool().createOptionsPanel();
-      mySettingsEnabled = toolPanel != null;
+      InspectionToolWrapper<?,?> tool = Objects.requireNonNull(profile.getInspectionTool(toolId, getProject()));
+      mySettingsEnabled = InspectionOptionPaneRenderer.hasSettings(tool.getTool());
     }
   }
 
@@ -201,12 +201,74 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     });
   }
 
+  public void initAdditionalGearActions(@NotNull ToolWindow toolWindow) {
+    if (ExperimentalUI.isNewUI()) {
+      myToolWindow = toolWindow;
+      myContentManagerListener = new ContentManagerListener() {
+        @Override
+        public void selectionChanged(@NotNull ContentManagerEvent event) {
+          boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
+          if (selected && event.getContent().getComponent() == InspectionResultsView.this) {
+            setAdditionalGearActions();
+          }
+        }
+      };
+      myToolWindow.getContentManager().addContentManagerListener(myContentManagerListener);
+      setAdditionalGearActions();
+    }
+  }
+
+  private void setAdditionalGearActions() {
+    if (myToolWindow != null) {
+      DefaultActionGroup group = new DefaultActionGroup(myGlobalInspectionContext.createToggleAutoscrollAction());
+      myToolWindow.setAdditionalGearActions(group);
+    }
+  }
 
   private void createActionsToolbar() {
-    JPanel westPanel = JBUI.Panels.simplePanel()
-      .addToLeft(createLeftActionsToolbar())
-      .addToRight(createRightActionsToolbar());
-    add(westPanel, BorderLayout.WEST);
+    JComponent westComponent;
+    if (ExperimentalUI.isNewUI()) {
+      westComponent = createNewActionsToolbar();
+    }
+    else {
+      westComponent = JBUI.Panels.simplePanel()
+        .addToLeft(createLeftActionsToolbar())
+        .addToRight(createRightActionsToolbar());
+    }
+    add(westComponent, BorderLayout.WEST);
+  }
+
+  private static DefaultActionGroup createExportActions() {
+    var result = new DefaultActionGroup(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.ToolbarDecorator.Export);
+    result.addAll(InspectionResultsExportActionProvider.Companion.getEP_NAME().getExtensionList());
+    result.setPopup(true);
+    return result;
+  }
+
+  private JComponent createNewActionsToolbar() {
+    final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new RerunAction(this));
+    group.add(actionsManager.createPrevOccurenceAction(myTree.getOccurenceNavigator()));
+    group.add(actionsManager.createNextOccurenceAction(myTree.getOccurenceNavigator()));
+    group.add(new InvokeQuickFixAction(this));
+    group.addSeparator();
+    group.add(ActionManager.getInstance().getAction("EditInspectionSettings"));
+    var viewOptionsActions = new DefaultActionGroup(InspectionsBundle.message("inspection.action.view.options"), null, AllIcons.Actions.Show);
+    viewOptionsActions.addSeparator(InspectionsBundle.message("inspection.action.view.options.group.by"));
+    viewOptionsActions.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
+    viewOptionsActions.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
+    viewOptionsActions.addSeparator();
+    viewOptionsActions.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
+    viewOptionsActions.setPopup(true);
+    group.add(viewOptionsActions);
+    group.addSeparator();
+    TreeExpander treeExpander = new DefaultTreeExpander(myTree);
+    group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
+    group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
+    group.addSeparator();
+    group.add(createExportActions());
+    return createToolbar(group);
   }
 
   private JComponent createRightActionsToolbar() {
@@ -215,7 +277,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(myGlobalInspectionContext.createToggleAutoscrollAction());
-    specialGroup.add(new ExportHTMLAction(this));
+    specialGroup.add(createExportActions());
     specialGroup.add(new InvokeQuickFixAction(this));
     return createToolbar(specialGroup);
   }
@@ -282,16 +344,19 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       Disposer.dispose(myLoadingProgressPreview);
       myLoadingProgressPreview = null;
     }
+    if (myToolWindow != null && myContentManagerListener != null) {
+      myToolWindow.getContentManager().removeContentManagerListener(myContentManagerListener);
+    }
   }
 
   boolean isAutoScrollMode() {
     String activeToolWindowId = ToolWindowManager.getInstance(getProject()).getActiveToolWindowId();
+    //noinspection removal
     return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
            (activeToolWindowId == null
             || activeToolWindowId.equals(ProblemsView.ID)
             // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
             // see RIDER-59000
-            //noinspection deprecation
             || activeToolWindowId.equals(ToolWindowId.INSPECTION));
   }
 
@@ -301,6 +366,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public void syncRightPanel() {
+    myFixesAvailable = false;
     final Editor oldEditor = myPreviewEditor;
     try {
       if (myLoadingProgressPreview != null) {
@@ -308,7 +374,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         myLoadingProgressPreview = null;
       }
       if (myApplyingFix) {
-        final InspectionToolWrapper wrapper = myTree.getSelectedToolWrapper(true);
+        final InspectionToolWrapper<?,?> wrapper = myTree.getSelectedToolWrapper(true);
         LOG.assertTrue(wrapper != null);
         mySplitter.setSecondComponent(InspectionResultsViewUtil.getApplyingFixLabel(wrapper));
       }
@@ -325,15 +391,20 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
           if (pathSelected != null) {
             final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
-            if (node instanceof ProblemDescriptionNode) {
-              final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+            if (node instanceof ProblemDescriptionNode problemNode) {
               showInRightPanel(problemNode.getElement());
             }
             else if (node instanceof InspectionPackageNode ||
                      node instanceof InspectionModuleNode ||
                      node instanceof RefElementNode ||
                      (isSingleInspectionRun() && node instanceof InspectionSeverityGroupNode)) {
-              showInRightPanel(node.getContainingFileLocalEntity());
+              myRightPanelUpdater.execute(() -> {
+                final var entity = node.getContainingFileLocalEntity();
+                SwingUtilities.invokeLater(() -> {
+                  TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
+                  if (newPath == pathSelected) showInRightPanel(entity);
+                });
+              });
             }
             else if (node instanceof InspectionNode) {
               if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
@@ -379,7 +450,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     editorPanel.add(actionsPanel, BorderLayout.NORTH);
     final int problemCount = myTree.getSelectedProblemCount();
     JComponent previewPanel = null;
-    final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
+    final InspectionToolWrapper<?,?> tool = myTree.getSelectedToolWrapper(true);
     if (tool != null) {
       final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
       final TreePath path = myTree.getSelectionPath();
@@ -493,7 +564,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myPreviewEditor != null && !myPreviewEditor.isDisposed() && myPreviewEditor.getDocument() == document;
   }
 
-  private void addTool(@NotNull final InspectionToolWrapper toolWrapper,
+  private void addTool(@NotNull final InspectionToolWrapper<?,?> toolWrapper,
                        HighlightDisplayLevel errorLevel,
                        boolean groupedBySeverity,
                        boolean isSingleInspectionRun) {
@@ -522,7 +593,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   @Nullable
-  public String getCurrentProfileName() {
+  private String getCurrentProfileName() {
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
@@ -530,14 +601,16 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myInspectionProfile;
   }
 
-  void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    updateTree(() -> {
+  void addProblemDescriptors(InspectionToolWrapper<?,?> wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
+    updateTree(() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
         final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
 
+        HighlightSeverity severity = presentation.getSeverity((RefElement)refElement);
+        HighlightDisplayLevel level = HighlightDisplayLevel.find(severity == null ? HighlightSeverity.INFORMATION : severity);
         final InspectionTreeNode toolNode =
-          myTree.getToolProblemsRootNode(wrapper, HighlightDisplayLevel.find(presentation.getSeverity((RefElement)refElement)),
+          myTree.getToolProblemsRootNode(wrapper, level,
                                          uiOptions.GROUP_BY_SEVERITY, isSingleInspectionRun());
         final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>(1);
         problems.put(refElement, descriptors);
@@ -563,27 +636,23 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }, 200);
         }
       }
-    });
+    }));
   }
 
   public void update() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Application app = ApplicationManager.getApplication();
     Collection<Tools> tools = new ArrayList<>(myGlobalInspectionContext.getTools().values());
-    final Runnable buildAction = () -> {
-      try {
-        setUpdating(true);
-        myTree.removeAllNodes();
-        addToolsSynchronously(tools);
-      }
-      finally {
-        setUpdating(false);
-      }
-    };
-    if (app.isUnitTestMode()) {
-      buildAction.run();
-    } else {
-      updateTree(buildAction);
+    updateTree(() -> updateResults(tools));
+  }
+
+  public void updateResults(@NotNull Collection<? extends Tools> tools) {
+    try {
+      setUpdating(true);
+      myTree.removeAllNodes();
+      addToolsSynchronously(tools);
+    }
+    finally {
+      setUpdating(false);
     }
   }
 
@@ -604,16 +673,16 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     updateTree(() -> addToolsSynchronously(tools));
   }
 
-  private void addToolsSynchronously(Collection<? extends Tools> tools) {
+  private void addToolsSynchronously(@NotNull Collection<? extends Tools> tools) {
     if (isDisposed()) return;
     InspectionProfileImpl profile = myInspectionProfile;
     boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     boolean singleInspectionRun = isSingleInspectionRun();
     for (Tools currentTools : tools) {
-      InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
+      InspectionToolWrapper<?,?> defaultToolWrapper = currentTools.getDefaultState().getTool();
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
       for (ScopeToolState state : myProvider.getTools(currentTools)) {
-        InspectionToolWrapper toolWrapper = state.getTool();
+        InspectionToolWrapper<?,?> toolWrapper = state.getTool();
         if (ReadAction.compute(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
           addTool(toolWrapper,
                   profile.getErrorLevel(key, state.getScope(getProject()), getProject()),
@@ -632,16 +701,37 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
-    if (DATA_KEY.is(dataId)) return this;
-    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;
-    if (!ApplicationManager.getApplication().isDispatchThread()) return null;
-    TreePath[] paths = myTree.getSelectionPaths();
-    if (paths == null || paths.length == 0) return null;
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
+    }
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
+      return myExclusionHandler;
+    }
+    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
+      return paths[0].getLastPathComponent();
+    }
+    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
+      return ContainerUtil.map2Array(paths, p -> p.getLastPathComponent());
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
+      return (DataProvider)slowId -> getSlowData(slowId, paths);
+    }
+    return null;
+  }
 
+  private @Nullable Object getSlowData(@NotNull String dataId, TreePath @NotNull [] paths) {
     if (paths.length > 1) {
-      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        RefEntity[] refElements = myTree.getSelectedElements();
+      if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+        RefEntity[] refElements = myTree.getElementsFromSelection(paths);
         List<PsiElement> psiElements = new ArrayList<>();
         for (RefEntity refElement : refElements) {
           PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
@@ -662,8 +752,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       return null;
     }
 
-    if (selectedNode instanceof RefElementNode) {
-      final RefElementNode refElementNode = (RefElementNode)selectedNode;
+    if (selectedNode instanceof RefElementNode refElementNode) {
       RefEntity refElement = refElementNode.getElement();
       if (refElement == null || !refElement.isValid()) return null;
       final RefEntity item = refElement.getRefManager().getRefinedElement(refElement);
@@ -680,16 +769,42 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         return psiElement.isValid() ? psiElement : null;
       }
     }
-    else if (selectedNode instanceof ProblemDescriptionNode && CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      Navigatable navigatable = getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
-      return navigatable == null ? InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode) : navigatable;
+    else if (selectedNode instanceof ProblemDescriptionNode) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+        Navigatable navigatable = getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
+        return navigatable == null
+               ? InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode)
+               : navigatable;
+      }
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        RefEntity item = ((ProblemDescriptionNode)selectedNode).getElement();
+        return item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
+      }
     }
-
     return null;
   }
 
+  public @NlsContexts.TabTitle String getViewTitle() {
+    if (ExperimentalUI.isNewUI()) {
+      return InspectionsBundle.message("inspection.results.toolwindow.title", myScope.getShortenName());
+    }
+
+    return InspectionsBundle.message(isSingleInspectionRun() ?
+                              "inspection.results.for.inspection.toolwindow.title" :
+                              "inspection.results.for.profile.toolwindow.title",
+                              getCurrentProfileName(), myScope.getShortenName());
+  }
+
+  void setFixesAvailable(boolean available) {
+    myFixesAvailable = available;
+  }
+
+  public boolean areFixesAvailable() {
+    return myFixesAvailable;
+  }
+
   @Nullable
-  public static Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor) {
+  static Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor) {
     return getSelectedNavigatable(descriptor,
                                   descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null);
   }
@@ -737,10 +852,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myProvider;
   }
 
-  public boolean isSingleToolInSelection() {
-    return myTree.getSelectedToolWrapper(true) != null;
-  }
-
   public boolean isRerun() {
     boolean rerun = myRerun;
     myRerun = false;
@@ -783,7 +894,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                     @NotNull InspectionRVContentProvider contentProvider) {
     for (Tools currentTools : tools) {
       for (ScopeToolState state : contentProvider.getTools(currentTools)) {
-        InspectionToolWrapper toolWrapper = state.getTool();
+        InspectionToolWrapper<?,?> toolWrapper = state.getTool();
         ThreeState hasReportedProblems = context.getPresentation(toolWrapper).hasReportedProblems();
         if (hasReportedProblems == ThreeState.NO) continue;
         if (hasReportedProblems == ThreeState.YES || ReadAction.compute(() -> contentProvider.checkReportedProblems(context, toolWrapper))) {
@@ -817,7 +928,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
 
   @TestOnly
-  public void dispatchTreeUpdate() throws ExecutionException, InterruptedException {
+  public void dispatchTreeUpdate() throws InterruptedException {
     CountDownLatch latch = new CountDownLatch(1);
     myTreeUpdater.execute(()-> latch.countDown());
     latch.await();

@@ -3,7 +3,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -13,12 +12,6 @@ import java.util.Map;
 
 public final class Conditions {
   private Conditions() { }
-  /**
-   * @deprecated use {@link #alwaysTrue()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final Condition<Object> TRUE = alwaysTrue();
 
   @NotNull
   public static <T> Condition<T> alwaysTrue() {
@@ -83,6 +76,7 @@ public final class Conditions {
     return t -> !Comparing.equal(t, option);
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> Condition<T> oneOf(T @NotNull ... options) {
     return oneOf(Arrays.asList(options));

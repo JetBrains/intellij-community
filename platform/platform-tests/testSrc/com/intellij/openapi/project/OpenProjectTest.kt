@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.ide.CommandLineProcessor
-import com.intellij.ide.actions.OpenFileAction
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.platform.ModuleAttachProcessor
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -10,6 +10,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.util.io.createDirectories
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -36,8 +37,8 @@ internal class OpenProjectTest(private val opener: Opener) {
     @Parameterized.Parameters(name = "{0}")
     fun params(): Iterable<Opener> {
       return listOf(
-        Opener("OpenFileAction") { OpenFileAction.openExistingDir(it, null).get()!! },
-        Opener("CLI") { CommandLineProcessor.doOpenFileOrProject(it, false).project!! }
+        Opener("OpenFileAction") { runBlocking { ProjectUtil.openExistingDir(it, null) } },
+        Opener("CLI") { runBlocking { CommandLineProcessor.doOpenFileOrProject(it, false) }.project!! }
       )
     }
   }
@@ -88,7 +89,7 @@ internal class OpenProjectTest(private val opener: Opener) {
   private fun openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir: Path, defaultProjectTemplateShouldBeApplied: Boolean) {
     checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
       val project = opener.opener(projectDir)!!
-      project.use {
+      project.useProject {
         assertThatProjectContainsOneModule(project)
         checkDefaultProjectAsTemplateTask(project, defaultProjectTemplateShouldBeApplied)
       }

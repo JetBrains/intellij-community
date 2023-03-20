@@ -1,15 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.JavaDebuggerEvaluator
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -23,16 +23,17 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
+import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
-import org.jetbrains.kotlin.idea.debugger.getContextElement
-import org.jetbrains.kotlin.idea.debugger.hopelessAware
+import org.jetbrains.kotlin.idea.debugger.core.getContextElement
+import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.AfterConversionPass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -45,9 +46,9 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", item.text, initImports(item.imports), contextElement)
 
-        supplyDebugInformation(item, codeFragment, context)
+        supplyDebugInformation(codeFragment, context)
 
-        codeFragment.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
+        codeFragment.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) { expression: KtExpression ->
             val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
             val debuggerSession = debuggerContext.debuggerSession
             if (debuggerSession == null || debuggerContext.suspendContext == null) {
@@ -131,22 +132,11 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
         return if (this is KtNullableType) innerType ?: this else this
     }
 
-    private fun supplyDebugInformation(item: TextWithImports, codeFragment: KtCodeFragment, context: PsiElement?) {
+    private fun supplyDebugInformation(codeFragment: KtCodeFragment, context: PsiElement?) {
         val project = codeFragment.project
         val debugProcess = getDebugProcess(project, context) ?: return
 
         DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
-
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val evaluator = debugProcess.session.xDebugSession?.currentStackFrame?.evaluator
-
-        val evaluationType = when (evaluator) {
-            is KotlinDebuggerEvaluator -> evaluator.getType(item)
-            is JavaDebuggerEvaluator -> KotlinDebuggerEvaluator.EvaluationType.FROM_JAVA
-            else -> KotlinDebuggerEvaluator.EvaluationType.UNKNOWN
-        }
-
-        codeFragment.putUserData(EVALUATION_TYPE, evaluationType)
     }
 
     private fun getDebugProcess(project: Project, context: PsiElement?): DebugProcessImpl? {
@@ -195,7 +185,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
     }
 
     private fun initImports(imports: String?): String? {
-        if (imports != null && imports.isNotEmpty()) {
+        if (!imports.isNullOrEmpty()) {
             return imports.split(KtCodeFragment.IMPORT_SEPARATOR)
                 .mapNotNull { fixImportIfNeeded(it) }
                 .joinToString(KtCodeFragment.IMPORT_SEPARATOR)
@@ -277,7 +267,9 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             contextElement == null -> false
             contextElement.language == KotlinFileType.INSTANCE.language -> true
             contextElement.language == JavaFileType.INSTANCE.language -> {
-                getKotlinJvmRuntimeMarkerClass(contextElement.project, contextElement.resolveScope) != null
+                val project = contextElement.project
+                val scope = contextElement.resolveScope
+                syncNonBlockingReadAction(project) { scope.hasKotlinJvmRuntime(project) }
             }
             else -> false
         }
@@ -292,8 +284,6 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         @get:TestOnly
         val DEBUG_CONTEXT_FOR_TESTS: Key<DebuggerContextImpl> = Key.create("DEBUG_CONTEXT_FOR_TESTS")
-
-        val EVALUATION_TYPE: Key<KotlinDebuggerEvaluator.EvaluationType> = Key.create("DEBUG_EVALUATION_TYPE")
 
         const val FAKE_JAVA_CONTEXT_FUNCTION_NAME = "_java_locals_debug_fun_"
     }
@@ -311,6 +301,6 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         sb.append(funWithLocalVariables)
 
-        return KtPsiFactory(javaContext.project).createAnalyzableFile("fakeFileForJavaContextInDebugger.kt", sb.toString(), javaContext)
+        return KtPsiFactory.contextual(javaContext).createFile("fakeFileForJavaContextInDebugger.kt", sb.toString())
     }
 }

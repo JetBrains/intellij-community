@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -13,7 +13,6 @@ import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
-import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -31,15 +30,15 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.toGroovyString
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
+import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
 import org.slf4j.LoggerFactory
-import org.slf4j.impl.Log4jLoggerFactory
+import org.slf4j.impl.JDK14LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,7 +46,9 @@ import java.nio.file.Paths
 
 internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                                                 private val classpathInferer: GradleServerClasspathInferer,
-                                                private val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider) : GradleServerEnvironmentSetup, UserDataHolderBase() {
+                                                private val connection: TargetProjectConnection,
+                                                private val prepareTaskState: Boolean) : GradleServerEnvironmentSetup,
+                                                                                         UserDataHolderBase() {
   override val javaParameters = SimpleJavaParameters()
   override lateinit var environmentConfiguration: TargetEnvironmentConfiguration
   lateinit var targetEnvironment: TargetEnvironment
@@ -65,6 +66,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     progressIndicator.checkCanceled()
     initJavaParameters()
 
+    val environmentConfigurationProvider = connection.environmentConfigurationProvider
     this.environmentConfiguration = environmentConfigurationProvider.environmentConfiguration
     val targetPathMapper = environmentConfigurationProvider.pathMapper
 
@@ -95,6 +97,13 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     targetEnvironment = remoteEnvironment
     EP.forEachExtensionSafe {
       it.handleCreatedTargetEnvironment(remoteEnvironment, this, progressIndicator)
+    }
+    if (prepareTaskState) {
+      val taskStateInitScript = connection.parameters.taskState?.handleCreatedTargetEnvironment(remoteEnvironment, progressIndicator)
+      if (taskStateInitScript != null) {
+        targetBuildParametersBuilder.withInitScript("ijtgttaskstate", taskStateInitScript)
+      }
+      connection.taskListener?.onEnvironmentPrepared(connection.taskId!!)
     }
 
     progressIndicator.checkCanceled()
@@ -164,11 +173,11 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     for (localPath in localPathsToMap) {
       if (targetPathMapper != null && targetPathMapper.canReplaceLocal(localPath)) {
         val targetPath = targetPathMapper.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(\"${toGroovyString(localPath)}\", \"${toGroovyString(targetPath)}\")\n")
+        mapperInitScript.append("ext.pathMapper.put(${localPath.toGroovyStringLiteral()}, ${targetPath.toGroovyStringLiteral()})\n")
       }
       else if (pathMappingSettings.canReplaceLocal(localPath)) {
         val targetPath = pathMappingSettings.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(\"${toGroovyString(localPath)}\", \"${toGroovyString(targetPath)}\")\n")
+        mapperInitScript.append("ext.pathMapper.put(${localPath.toGroovyStringLiteral()}, ${targetPath.toGroovyStringLiteral()})\n")
       }
     }
 
@@ -179,7 +188,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     if (javaRuntime != null) {
       val targetJavaExecutablePath = arrayOf(javaRuntime.homePath, "bin", java).joinToString(platform.fileSeparator.toString())
       mapperInitScript.append(
-        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${toGroovyString(targetJavaExecutablePath)}\")\n")
+        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", ${targetJavaExecutablePath.toGroovyStringLiteral()})\n")
     }
     else {
       mapperInitScript.append("ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${java}\")\n")
@@ -212,6 +221,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     EP.forEachExtensionSafe {
       it.prepareTargetEnvironmentRequest(request, this, progressIndicator)
     }
+    if (prepareTaskState) {
+      connection.parameters.taskState?.prepareTargetEnvironmentRequest(request, progressIndicator)
+    }
     return targetArguments
   }
 
@@ -232,7 +244,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         if (file.extension != GradleConstants.EXTENSION) continue
         if (file.name.startsWith("ijinit")) {
           val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
-          // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle` file
+          // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle` file
           val toolingExtensionsPaths = fileContent
             .substringAfter(
               "initscript {\n" +
@@ -296,8 +308,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     classpathInferer.add(WrapperExecutor::class.java)
     // logging jars
     classpathInferer.add(LoggerFactory::class.java)
-    classpathInferer.add(Log4jLoggerFactory::class.java)
-    classpathInferer.add(org.apache.log4j.Level::class.java)
+    classpathInferer.add(JDK14LoggerFactory::class.java)
     // gradle tooling proxy module
     classpathInferer.add(Main::class.java)
     // intellij.gradle.toolingExtension - for use of model adapters classes

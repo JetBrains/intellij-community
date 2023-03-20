@@ -1,4 +1,4 @@
-// "Replace with 'this'" "true"
+// "Replace with 'this'" "true-preview"
 class X {
   void test(Object x) {
       /*comment*/

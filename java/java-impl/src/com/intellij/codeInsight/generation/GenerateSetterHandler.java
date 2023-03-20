@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.java.JavaBundle;
@@ -48,15 +34,13 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
-    if (original instanceof PropertyClassMember) {
-      final PropertyClassMember propertyClassMember = (PropertyClassMember)original;
+    if (original instanceof PropertyClassMember propertyClassMember) {
       final GenerationInfo[] getters = propertyClassMember.generateSetters(aClass);
       if (getters != null) {
         return getters;
       }
     }
-    else if (original instanceof EncapsulatableClassMember) {
-      final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;
+    else if (original instanceof EncapsulatableClassMember encapsulatableClassMember) {
       final GenerationInfo setter = encapsulatableClassMember.generateSetter();
       if (setter != null) {
         return new GenerationInfo[]{setter};

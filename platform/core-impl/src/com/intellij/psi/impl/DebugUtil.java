@@ -360,7 +360,7 @@ public final class DebugUtil {
                                   boolean showWhitespaces,
                                   boolean showRanges,
                                   @Nullable PairConsumer<? super PsiElement, ? super Consumer<? super PsiElement>> extra) {
-    final ASTNode node = root.getNode();
+    ASTNode node = root.getNode();
     if (node == null) {
       psiToBuffer(buffer, root, 0, showWhitespaces, showRanges, showRanges, extra);
     }
@@ -624,14 +624,14 @@ public final class DebugUtil {
   //<editor-fold desc="Deprecated stuff">
   /** @deprecated use {@link #performPsiModification} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static void startPsiModification(@Nullable String trace) {
     beginPsiModification(trace);
   }
 
   /** @deprecated use {@link #performPsiModification} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public static void finishPsiModification() {
     endPsiModification();
   }

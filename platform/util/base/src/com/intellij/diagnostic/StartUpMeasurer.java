@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -21,23 +20,19 @@ public final class StartUpMeasurer {
 
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
-  // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`,
-  // not to put common part of name to end of).
-  // It is not serves only display purposes - it is IDs. Visualizer and another tools to analyze data uses phase IDs,
-  // so, any changes must be discussed across all involved and reflected in changelog (see `format-changelog.md`).
+  // `What + noun` is used as a naming scheme to make analyzing easier
+  // (to visually group `components loading/initialization/etc.`, a common part should be at the start).
+  // The names are not only for display purposes, they are also IDs - Visualizer and other tools use phase IDs,
+  // so any changes must be discussed among all involved people and reflected in the changelog (see `format-changelog.md`).
   public static final class Activities {
-    // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
-    public static final String INIT_APP = "app initialization";
-
-    public static final String PLACE_ON_EVENT_QUEUE = "place on event queue";
-
-    // actually, now it is also registers services, not only components,but it doesn't worth to rename
+    // actually, the phase also registers services (in addition to components), but it isn't worth to rename
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String PROJECT_DUMB_POST_START_UP_ACTIVITIES = "project post-startup dumb-aware activities";
     public static final String EDITOR_RESTORING = "editor restoring";
     public static final String EDITOR_RESTORING_TILL_PAINT = "editor restoring till paint";
+    public static final String EDITOR_RESTORING_TILL_HIGHLIGHTED = "initial entire file highlighting";
   }
 
   @SuppressWarnings("StaticNonFinalField")
@@ -49,7 +44,7 @@ public final class StartUpMeasurer {
 
   private static long startTime = System.nanoTime();
 
-  private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
+  private static final Queue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
 
   private static boolean isEnabled = true;
 
@@ -63,7 +58,11 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static final Map<String, Object2LongOpenHashMap<String>> pluginCostMap = new ConcurrentHashMap<>();
+  public static final Map<String, Object2LongMap<String>> pluginCostMap = new ConcurrentHashMap<>();
+
+  @ApiStatus.Internal
+  @SuppressWarnings("StaticNonFinalField")
+  public volatile static Activity appInitPreparationActivity;
 
   public static long getCurrentTime() {
     return System.nanoTime();
@@ -74,17 +73,8 @@ public final class StartUpMeasurer {
   }
 
   /**
-   * Since start in ms.
-   */
-  @SuppressWarnings("unused")
-  public static long sinceStart() {
-    return TimeUnit.NANOSECONDS.toMillis(getCurrentTime() - startTime);
-  }
-
-  /**
    * The instant events correspond to something that happens but has no duration associated with it.
    * See <a href="https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp">this document</a> for details.
-   *
    * Scope is not supported, reported as global.
    */
   public static void addInstantEvent(@NonNls @NotNull String name) {
@@ -202,7 +192,7 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static void addTimings(@NotNull LinkedHashMap<String, Long> timings, @NotNull String groupName) {
+  public static void addTimings(@NotNull List<Object> timings, @NotNull String groupName) {
     if (!items.isEmpty()) {
       throw new IllegalStateException("addTimings must be not called if some events were already added using API");
     }
@@ -211,19 +201,17 @@ public final class StartUpMeasurer {
       return;
     }
 
-    List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
-
-    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, null);
+    ActivityImpl parent = new ActivityImpl(groupName, (long)timings.get(1), null, null);
     parent.setEnd(getCurrentTime());
 
-    for (int i = 0; i < entries.size(); i++) {
-      long start = entries.get(i).getValue();
+    for (int i = 0; i < timings.size(); i += 2) {
+      long start = (long)timings.get(i + 1);
       if (start < startTime) {
         startTime = start;
       }
 
-      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, null);
-      activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
+      ActivityImpl activity = new ActivityImpl((String)timings.get(i), start, parent, null);
+      activity.setEnd(i == timings.size() - 2 ? parent.getEnd() : (long)timings.get(i + 3));
       items.add(activity);
     }
     items.add(parent);
@@ -244,7 +232,7 @@ public final class StartUpMeasurer {
   public static void doAddPluginCost(@NonNls @NotNull String pluginId,
                                      @NonNls @NotNull String phase,
                                      long time,
-                                     @NotNull Map<String, Object2LongOpenHashMap<String>> pluginCostMap) {
+                                     @NotNull Map<String, Object2LongMap<String>> pluginCostMap) {
     Object2LongMap<String> costPerPhaseMap = pluginCostMap.computeIfAbsent(pluginId, __ -> new Object2LongOpenHashMap<>());
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (costPerPhaseMap) {

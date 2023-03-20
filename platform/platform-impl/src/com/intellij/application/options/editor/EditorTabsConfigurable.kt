@@ -1,82 +1,87 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.TABS_NONE
 import com.intellij.openapi.application.ApplicationBundle.message
-import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.extensions.BaseExtensionPointName
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.Configurable.WithEpDependencies
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindIntText
-import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo
-import com.intellij.ui.tabs.layout.TabsLayoutSettingsUi
-import javax.swing.*
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JComponent
+import javax.swing.SwingConstants
 import kotlin.math.max
 
-class EditorTabsConfigurable : BoundSearchableConfigurable(
+internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<SearchableConfigurable>(
   message("configurable.editor.tabs.display.name"),
   "reference.settingsdialog.IDE.editor.tabs",
-  ID
-), EditorOptionsProvider {
+  EDITOR_TABS_OPTIONS_ID
+), EditorOptionsProvider, WithEpDependencies {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
-  private lateinit var myOneRowCheckbox: JCheckBox
+
+  override fun createConfigurables(): List<SearchableConfigurable> =
+    ConfigurableWrapper.createConfigurables(EditorTabsConfigurableEP.EP_NAME)
+
+  override fun getDependencies(): Collection<BaseExtensionPointName<*>> =
+    listOf(EditorTabsConfigurableEP.EP_NAME)
 
   override fun createPanel(): DialogPanel {
+    val ui = UISettings.getInstance().state
     return panel {
       group(message("group.tab.appearance")) {
+        row {
+          myEditorTabPlacement = tabPlacementComboBox().label("$TAB_PLACEMENT:").component
+        }.bottomGap(BottomGap.SMALL)
 
-        if (JBTabsImpl.NEW_TABS) {
-          val tabPlacementComboBoxModel: DefaultComboBoxModel<Int> = DefaultComboBoxModel(TAB_PLACEMENTS)
-          val myTabsLayoutComboBox: JComboBox<TabsLayoutInfo> = TabsLayoutSettingsUi.tabsLayoutComboBox(tabPlacementComboBoxModel)
-
-          row(message("combobox.editor.tab.tabslayout") + ":") {
-            val builder = cell(myTabsLayoutComboBox)
-            TabsLayoutSettingsUi.prepare(builder, myTabsLayoutComboBox)
-          }.layout(RowLayout.INDEPENDENT)
-          row(TAB_PLACEMENT + ":") {
-            myEditorTabPlacement = tabPlacementComboBox(tabPlacementComboBoxModel).component
-          }.layout(RowLayout.INDEPENDENT)
-
-          updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel)
-          tabPlacementComboBoxModel.addListDataListener(MyAnyChangeOfListListener {
-            updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel)
-          })
-        }
-        else {
-          row(TAB_PLACEMENT + ":") {
-            myEditorTabPlacement = tabPlacementComboBox().component
-          }
-          if (ExperimentalUI.isNewEditorTabs()) {
+        if (ExperimentalUI.isNewUI()) {
+          @Suppress("DialogTitleCapitalization")
+          buttonsGroup(message("button.group.title.show.tabs.in")) {
+            lateinit var singleRowButton: JBRadioButton
             row {
-              checkBox(hideTabsIfNeeded)
-                .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP })
+              singleRowButton = radioButton(message("radio.one.row"), value = true)
+                .enabledIf(tabsPlacedHorizontally)
                 .component
             }
-          } else {
-            row {
-              myOneRowCheckbox = checkBox(showTabsInOneRow)
-                .enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
-            }
-            indent {
-              row {
-                checkBox(hideTabsIfNeeded).enabledIf(
-                  myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
-                    and myOneRowCheckbox.selected).component
+
+            buttonsGroup(indent = true) {
+              row { radioButton(message("radio.scroll.tabs.panel"), value = true) }
+              row { radioButton(message("radio.squeeze.tabs"), value = false) }
+            }.bind(ui::hideTabsIfNeeded)
+              .enabledIf(tabsPlacedHorizontally and singleRowButton.selected)
+
+            row { radioButton(message("radio.multiple.rows"), value = false).enabledIf(tabsPlacedOnTop) }.bottomGap(BottomGap.SMALL)
+
+            myEditorTabPlacement.addActionListener {
+              // move selection to single row, because it is the only one option in the bottom placement
+              if (myEditorTabPlacement.selectedItem == SwingConstants.BOTTOM) {
+                singleRowButton.isSelected = true
               }
             }
-          }
-          row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)) }
+          }.bind(ui::scrollTabLayoutInEditor)
         }
-        row { checkBox(useSmallFont).enableIfTabsVisible() }
+        else {
+          lateinit var myOneRowCheckbox: JCheckBox
+          row { myOneRowCheckbox = checkBox(showTabsInOneRow).enabledIf(tabsPlacedOnTop).component }
+          indent {
+            row { checkBox(hideTabsIfNeeded).enabledIf(tabsPlacedHorizontally and myOneRowCheckbox.selected) }
+          }
+        }
+
+        row { checkBox(showPinnedTabsInASeparateRow).enabledIf(tabsPlacedOnTop
+                                                                 and AdvancedSettingsPredicate("editor.keep.pinned.tabs.on.left", disposable!!)) }
+        row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
         row { checkBox(showFileIcon).enableIfTabsVisible() }
         row { checkBox(showFileExtension).enableIfTabsVisible() }
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
@@ -85,9 +90,10 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
         row(CLOSE_BUTTON_POSITION + ":") {
           closeButtonPositionComboBox()
         }.enabledIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
+          .topGap(TopGap.SMALL)
       }
       group(message("group.tab.order")) {
-        row { checkBox(sortTabsAlphabetically) }
+        row { checkBox(sortTabsAlphabetically).onApply { resetAlwaysKeepSorted() } }
         row { checkBox(openTabsAtTheEnd) }
       }
       group(message("group.tab.opening.policy")) {
@@ -116,12 +122,16 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
           row { radioButton(message("radio.activate.most.recently.opened.tab")).bindSelected(ui::activeMruEditorOnClose) }
         }
       }
+
+      addSections()
     }
   }
 
-  private fun updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel: DefaultComboBoxModel<Int>) {
-    myEditorTabPlacement.isEnabled = tabPlacementComboBoxModel.size > 1
-  }
+  private val tabsPlacedHorizontally: ComponentPredicate
+    get() = myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP || it == SwingConstants.BOTTOM }
+
+  private val tabsPlacedOnTop: ComponentPredicate
+    get() = myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
 
   private fun <T : JComponent> Cell<T>.enableIfTabsVisible() {
     enabledIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
@@ -132,13 +142,22 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
     super.apply()
 
     if (uiSettingsChanged) {
-      UISettings.instance.fireUISettingsChanged()
+      UISettings.getInstance().fireUISettingsChanged()
     }
   }
 
-  private class MyAnyChangeOfListListener(val action: () -> Unit) : ListDataListener {
-    override fun contentsChanged(e: ListDataEvent?) { action() }
-    override fun intervalRemoved(e: ListDataEvent?) { action() }
-    override fun intervalAdded(e: ListDataEvent?) { action() }
+  private fun Panel.addSections() {
+    configurables.filterIsInstance<EditorTabsOptionsCustomSection>()
+      .sortedWith(Comparator.comparing { c ->
+        (c as? Configurable)?.displayName ?: ""
+      })
+      .forEach { appendDslConfigurable(it) }
   }
 }
+
+  private fun resetAlwaysKeepSorted() {
+    if (!UISettings.getInstance().sortTabsAlphabetically) {
+      UISettings.getInstance().alwaysKeepTabsAlphabeticallySorted = false
+    }
+  }
+

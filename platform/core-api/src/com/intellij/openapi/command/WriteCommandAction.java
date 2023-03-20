@@ -115,8 +115,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       boolean dispatchThread = application.isDispatchThread();
 
       if (!dispatchThread && application.isReadAccessAllowed()) {
-        LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-        throw new IllegalStateException();
+        throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
       }
 
       AtomicReference<E> thrown = new AtomicReference<>();
@@ -218,6 +217,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).withGroupId(groupID).run()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected WriteCommandAction(@Nullable Project project,
                                @Nullable @Command String commandName,
                                @Nullable String groupID,
@@ -251,8 +251,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     boolean dispatchThread = application.isDispatchThread();
 
     if (!dispatchThread && application.isReadAccessAllowed()) {
-      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-      throw new IllegalStateException();
+      throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
     final RunResult<T> result = new RunResult<>(this);
@@ -286,7 +285,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project)}.withGlobalUndo() instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected boolean isGlobalUndoAction() {
     return false;
   }
@@ -297,7 +296,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project)}.withUndoConfirmationPolicy() instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;

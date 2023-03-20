@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,10 @@ public class JavaEnterAfterUnmatchedBraceHandler extends EnterAfterUnmatchedBrac
 
   @Override
   protected int calculateOffsetToInsertClosingBraceInsideElement(PsiElement element) {
+    if (element instanceof PsiErrorElement &&
+        ((PsiErrorElement)element).getErrorDescription().equals(JavaErrorBundle.message("else.without.if"))) {
+      return element.getTextRange().getStartOffset();
+    }
     if (element instanceof PsiExpressionListStatement) {
       final PsiExpressionList list = ((PsiExpressionListStatement)element).getExpressionList();
       if (list != null) {

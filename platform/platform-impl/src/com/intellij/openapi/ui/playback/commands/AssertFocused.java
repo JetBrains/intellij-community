@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -20,7 +21,7 @@ public class AssertFocused extends AbstractCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(final PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     String text = getText().substring(PREFIX.length()).trim();
     final Map<String, String> expected = new LinkedHashMap<>();
 

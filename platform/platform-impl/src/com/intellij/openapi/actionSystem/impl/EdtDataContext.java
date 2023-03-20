@@ -5,10 +5,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.impl.dataRules.GetDataRule;
+import com.intellij.ide.impl.GetDataRuleType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,25 +16,28 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
+import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
 
 /**
  * This is an internal API. Do not use it.
@@ -58,7 +60,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
   private final Reference<Component> myRef;
   private final Ref<KeyFMap> myUserData;
 
-  private final DataManagerImpl myManager;
+  private final DataManagerImpl myDataManager;
   private final Map<String, Object> myCachedData;
 
   public EdtDataContext(@Nullable Component component) {
@@ -66,29 +68,30 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     myRef = component == null ? null : new WeakReference<>(component);
     myCachedData = ContainerUtil.createWeakValueMap();
     myUserData = Ref.create(KeyFMap.EMPTY_MAP);
-    myManager = (DataManagerImpl)DataManager.getInstance();
+    myDataManager = (DataManagerImpl)DataManager.getInstance();
   }
 
   private EdtDataContext(@Nullable Reference<Component> compRef,
                          @NotNull Map<String, Object> cachedData,
                          @NotNull Ref<KeyFMap> userData,
-                         @NotNull DataManagerImpl manager,
+                         @NotNull DataManagerImpl dataManager,
                          int eventCount) {
     myRef = compRef;
     myCachedData = cachedData;
     myUserData = userData;
-    myManager = manager;
+    myDataManager = dataManager;
     myEventCount = eventCount;
   }
 
   @Override
   public @NotNull DataContext getInjectedDataContext() {
-    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myRef, myCachedData, myUserData, myManager, myEventCount);
+    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myRef, myCachedData, myUserData, myDataManager, myEventCount);
   }
 
   public void setEventCount(int eventCount) {
-    assert ReflectionUtil.getCallerClass(3) == IdeKeyEventDispatcher.class :
-      "This method might be accessible from " + IdeKeyEventDispatcher.class.getName() + " only";
+    if (ReflectionUtil.getCallerClass(3) != IdeKeyEventDispatcher.class) {
+      throw new AssertionError("This method might be accessible from " + IdeKeyEventDispatcher.class.getName() + " only");
+    }
     myCachedData.clear();
     myEventCount = eventCount;
   }
@@ -96,35 +99,32 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
-    boolean cacheable = Registry.is("actionSystem.cache.data") || ourSafeKeys.contains(dataId);
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      int currentEventCount = IdeEventQueue.getInstance().getEventCount();
-      if (myEventCount != -1 && myEventCount != currentEventCount) {
-        LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount +
-                  "; current event count = " + currentEventCount);
-        cacheable = false;
+    boolean cacheable;
+    int currentEventCount = EDT.isCurrentThreadEdt() ? IdeEventQueue.getInstance().getEventCount() : -1;
+    if (myEventCount == -1 || myEventCount == currentEventCount) {
+      cacheable = true;
+    }
+    else {
+      cacheable = false;
+      LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount +
+                "; current event count = " + currentEventCount);
+    }
+    Object answer = getDataInner(dataId, cacheable);
+    if (answer == null) {
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
+        return getDataInner(id, cacheable);
+      });
+      if (cacheable) {
+        myCachedData.put(dataId, answer == null ? EXPLICIT_NULL : answer);
       }
     }
-
-    Object answer = cacheable ? myCachedData.get(dataId) : null;
-    if (answer != null) {
-      return answer != NullResult.INSTANCE ? answer : null;
-    }
-
-    answer = doGetData(dataId);
-    if (cacheable && !(answer instanceof Stream)) {
-      myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
-    }
-    return answer;
+    return answer == EXPLICIT_NULL ? null : answer;
   }
 
-  private @Nullable Object doGetData(@NotNull String dataId) {
+  private @Nullable Object getDataInner(@NotNull String dataId, boolean cacheable) {
     Component component = SoftReference.dereference(myRef);
     if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
-      if (component == null) {
-        return null;
-      }
-      return IdeKeyEventDispatcher.isModalContext(component);
+      return component == null ? null : Utils.isModalContext(component);
     }
     if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
       return component;
@@ -132,20 +132,34 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
       return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
     }
-    Object data = calcData(dataId, component);
-    if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-      return validateEditor((Editor)data, component);
+    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) ||
+        PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
+      SpeedSearchSupply supply = component instanceof JComponent ? SpeedSearchSupply.getSupply((JComponent)component) : null;
+      Object result = supply == null ? null :
+                      PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId) ? supply.getEnteredPrefix() :
+                      supply instanceof SpeedSearchBase ? ((SpeedSearchBase<?>)supply).getSearchField() : null;
+      if (result != null) return result;
     }
-    return data;
+    Object answer = cacheable ? myCachedData.get(dataId) : null;
+    if (answer != null) {
+      return answer;
+    }
+    answer = calcData(dataId, component);
+    if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId) || InjectedDataKeys.EDITOR.is(dataId)) {
+      answer = validateEditor((Editor)answer, component);
+    }
+    if (cacheable) {
+      myCachedData.put(dataId, answer == null ? EXPLICIT_NULL : answer);
+    }
+    return answer;
   }
 
-  protected @Nullable Object calcData(@NotNull String dataId, @Nullable Component component) {
-    GetDataRule rule = myManager.getDataRule(dataId);
+  private @Nullable Object calcData(@NotNull String dataId, @Nullable Component component) {
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
-      for (Component c = component; c != null; c = c.getParent()) {
+      for (Component c = component; c != null; c = UIUtil.getParent(c)) {
         DataProvider dataProvider = getDataProviderEx(c);
         if (dataProvider == null) continue;
-        Object data = myManager.getDataFromProvider(dataProvider, dataId, null, rule);
+        Object data = myDataManager.getDataFromProviderAndRules(dataId, GetDataRuleType.PROVIDER, dataProvider);
         if (data != null) return data;
       }
     }
@@ -154,7 +168,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
     Object data = myCachedData.get(dataId);
-    return data == NullResult.INSTANCE ? null : data;
+    return data == EXPLICIT_NULL ? null : data;
   }
 
   @Override
@@ -174,16 +188,6 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     return (this instanceof InjectedDataContext ? "injected:" : "") +
            "component=" + SoftReference.dereference(myRef);
   }
-
-  private static final Set<String> ourSafeKeys = ContainerUtil.set(
-    CommonDataKeys.PROJECT.getName(),
-    CommonDataKeys.EDITOR.getName(),
-    PlatformCoreDataKeys.IS_MODAL_CONTEXT.getName(),
-    PlatformCoreDataKeys.CONTEXT_COMPONENT.getName(),
-    PlatformDataKeys.MODALITY_STATE.getName()
-  );
-
-  enum NullResult {INSTANCE}
 
   private static class InjectedDataContext extends EdtDataContext {
     InjectedDataContext(@Nullable Reference<Component> compRef,

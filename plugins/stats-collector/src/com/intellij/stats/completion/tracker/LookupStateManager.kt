@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.tracker
 
+import com.intellij.codeInsight.completion.BaseCompletionService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.storage.LookupStorage
@@ -11,7 +12,7 @@ import com.intellij.stats.completion.LookupEntryInfo
 import com.intellij.stats.completion.LookupState
 import com.intellij.util.SlowOperations
 
-class LookupStateManager {
+class LookupStateManager(private val shouldLogElementFeatures: Boolean) {
   private val elementToId = mutableMapOf<String, Int>()
   private val idToEntryInfo = mutableMapOf<Int, LookupEntryInfo>()
   private val lookupStringToHash = mutableMapOf<String, Int>()
@@ -61,7 +62,7 @@ class LookupStateManager {
     }
   }
 
-  fun getElementId(item: LookupElement): Int? {
+  private fun getElementId(item: LookupElement): Int? {
     val itemString = item.idString()
     return elementToId[itemString]
   }
@@ -89,6 +90,20 @@ class LookupStateManager {
     }
   }
 
+  private fun computeAnalyticsItemFeatures(lookupElement: LookupElement): Map<String, String> {
+    val features = mutableMapOf<String, String>()
+    lookupElement.getUserData(LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS)?.let {
+      features["analytics_timestamp_show"] = it.toString()
+    }
+    lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS)?.let {
+      features["analytics_timestamp_add"] = it.toString()
+    }
+    lookupElement.getUserData(BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER)?.let {
+      features["analytics_to_result_set_add_order"] = it.toString()
+    }
+    return features
+  }
+
   private fun calculateRelevance(lookup: LookupImpl, items: List<LookupElement>): Map<String, Map<String, String>> {
     val lookupStorage = LookupStorage.get(lookup)
     if (lookupStorage?.shouldComputeFeatures() == false) {
@@ -101,7 +116,7 @@ class LookupStateManager {
         val id = item.idString()
         val factors = lookupStorage.getItemStorage(id).getLastUsedFactors()?.mapValues { it.value.toString() }
         if (factors != null) {
-          result[id] = factors
+          result.setFactors(id, factors + computeAnalyticsItemFeatures(item))
         }
       }
     }
@@ -116,16 +131,30 @@ class LookupStateManager {
           val features = mutableMapOf<String, String>()
           relevanceMap.forEach { features[it.key] = it.value.toString() }
           additionalMap.forEach { features[it.key] = it.value.toString() }
+          features += computeAnalyticsItemFeatures(item)
           return@let features
         } ?: emptyMap()
-        result[item.idString()] = relevanceMap
+        result.setFactors(item.idString(), relevanceMap)
       }
     }
 
     return result
   }
 
+  private fun MutableMap<String, Map<String, String>>.setFactors(itemId: String, factors: Map<String, String>) {
+    if (shouldLogElementFeatures) {
+      this[itemId] = factors
+    } else {
+      this[itemId] = factors.filterKeys { it in REQUIRED_FACTORS }
+    }
+  }
+
   private fun getLookupStringHash(lookupString: String): Int {
     return lookupStringToHash.computeIfAbsent(lookupString) { lookupStringToHash.size }
+  }
+
+  companion object {
+    private val REQUIRED_FACTORS: Set<String> = setOf("ml_common_item_class", "position", "result_length", "ml_rank",
+      "kind", "ml_python_kind", "ml_php_element_element_type", "ml_scala_kind", "ml_clangd_kind", "kotlin.kind", "ml_js_kind")
   }
 }

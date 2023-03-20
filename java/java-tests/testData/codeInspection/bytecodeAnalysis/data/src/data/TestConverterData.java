@@ -2,9 +2,6 @@ package bytecodeAnalysis.data;
 
 import bytecodeAnalysis.ExpectNoPsiKey;
 
-/**
- * @author lambdamix
- */
 public class TestConverterData {
   public static class StaticNestedClass {
     public StaticNestedClass(Object o) { }

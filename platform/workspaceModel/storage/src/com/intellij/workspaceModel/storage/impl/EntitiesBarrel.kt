@@ -2,10 +2,10 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.workspaceModel.storage.ClassConversion
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.GeneratedCodeCompatibilityChecker
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -26,6 +26,10 @@ internal class MutableEntitiesBarrel private constructor(
 
   fun getEntityDataForModification(id: EntityId): WorkspaceEntityData<*> {
     return getMutableEntityFamily(id.clazz).getEntityDataForModification(id.arrayId)
+  }
+
+  fun getEntityDataForModificationOrNull(id: EntityId): WorkspaceEntityData<*>? {
+    return getMutableEntityFamily(id.clazz).getEntityDataForModificationOrNull(id.arrayId)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -78,6 +82,7 @@ internal class MutableEntitiesBarrel private constructor(
     fillEmptyFamilies(unmodifiableEntityId)
 
     val entityFamily = entityFamilies[unmodifiableEntityId] ?: run {
+      GeneratedCodeCompatibilityChecker.checkCode(unmodifiableEntityId.findWorkspaceEntity())
       val emptyEntityFamily = MutableEntityFamily.createEmptyMutable<WorkspaceEntity>()
       entityFamilies[unmodifiableEntityId] = emptyEntityFamily
       emptyEntityFamily
@@ -105,31 +110,36 @@ internal class MutableEntitiesBarrel private constructor(
 internal sealed class EntitiesBarrel {
   internal abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
 
+  fun exists(entityId: EntityId): Boolean {
+    return get(entityId.clazz)?.exists(entityId.arrayId) ?: false
+  }
+
   open operator fun get(clazz: Int): EntityFamily<out WorkspaceEntity>? = entityFamilies.getOrNull(clazz)
 
   fun size() = entityFamilies.size
 
   fun assertConsistency(abstractEntityStorage: AbstractEntityStorage) {
-    val persistentIds = HashSet<PersistentEntityId<*>>()
+    val symbolicIds = HashSet<SymbolicEntityId<*>>()
     entityFamilies.forEachIndexed { i, family ->
+      if (family == null) return@forEachIndexed
       val clazz = i.findEntityClass<WorkspaceEntity>()
-      val hasPersistentId = WorkspaceEntityWithPersistentId::class.java.isAssignableFrom(clazz)
-      family?.assertConsistency { entityData ->
+      val hasSymbolicId = WorkspaceEntityWithSymbolicId::class.java.isAssignableFrom(clazz)
+      family.assertConsistency { entityData ->
         // Assert correctness of the class
-        val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
+        val immutableClass = entityData.getEntityInterface()
         assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
-            | - EntityFamily class:   $clazz
-            | - entityData class:     $immutableClass
-          """.trimMargin()
+                | - EntityFamily class:   $clazz
+                | - entityData class:     $immutableClass
+              """.trimMargin()
         }
 
         // Assert unique of persistent id
-        if (hasPersistentId) {
-          val persistentId = entityData.persistentId()
-          assert(persistentId != null) { "Persistent id expected for $clazz" }
-          assert(persistentId !in persistentIds) { "Duplicated persistent ids: $persistentId" }
-          persistentIds.add(persistentId!!)
+        if (hasSymbolicId) {
+          val symbolicId = entityData.symbolicId()
+          assert(symbolicId != null) { "Symbolic id expected for $clazz" }
+          assert(symbolicId !in symbolicIds) { "Duplicated symbolic ids: $symbolicId" }
+          symbolicIds.add(symbolicId!!)
         }
 
         if (entityData is WithAssertableConsistency) {

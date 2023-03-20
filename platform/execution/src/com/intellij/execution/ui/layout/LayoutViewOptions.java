@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Producer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,14 +16,13 @@ public interface LayoutViewOptions {
 
   String STARTUP = "startup";
 
-  LayoutViewOptions setTitleProducer(@Nullable Producer<@NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer);
+  LayoutViewOptions setTitleProducer(@Nullable Producer<? extends @NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer);
 
   /**
    * @deprecated use {@link #setTopLeftToolbar(ActionGroup, String)}
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);
 
   @NotNull

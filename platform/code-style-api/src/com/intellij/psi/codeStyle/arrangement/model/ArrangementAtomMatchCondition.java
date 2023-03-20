@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * Encapsulates a single atom match condition, e.g. 'entry type is field' or 'entry has 'static' modifier' etc.
  * <p/>
  * Not thread-safe..
- * 
- * @author Denis Zhdanov
  */
 public class ArrangementAtomMatchCondition implements ArrangementMatchCondition {
 

@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.findUsages
-import org.jetbrains.kotlin.nj2k.modality
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
-
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType
 import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
@@ -36,11 +36,13 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
         }
 
         val newInitializer = when (val fieldType = element.type.type) {
-            is JKClassType, is JKTypeParameterType -> JKLiteralExpression("null", JKLiteralExpression.LiteralType.NULL)
+            is JKClassType, is JKTypeParameterType -> JKLiteralExpression("null", LiteralType.NULL)
             is JKJavaPrimitiveType -> createPrimitiveTypeInitializer(fieldType)
             else -> null
         }
         newInitializer?.also {
+            it.leadingComments += element.name.leadingComments
+            element.name.leadingComments.clear()
             element.initializer = it
         }
         return element
@@ -71,6 +73,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
                     parent is JKKtAssignmentStatement -> parent
                     parent is JKQualifiedExpression && parent.receiver is JKThisExpression ->
                         parent.parent as? JKKtAssignmentStatement
+
                     else -> null
                 } ?: return@mapNotNull null
             val constructor =
@@ -104,8 +107,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
             constructors[constructor] = true
         }
 
-        val initializedInConstructorsCount = constructors.values.count { it }
-        return when (initializedInConstructorsCount) {
+        return when (constructors.values.count { it }) {
             0 -> InitializationState.NON_INITIALIZED
             constructors.size -> InitializationState.INITIALIZED_IN_ALL_CONSTRUCTORS
             else -> InitializationState.INITIALIZED_IN_SOME_CONSTRUCTORS
@@ -113,10 +115,9 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
     }
 
     private fun createPrimitiveTypeInitializer(primitiveType: JKJavaPrimitiveType): JKLiteralExpression =
-        when (primitiveType) {
-            JKJavaPrimitiveType.BOOLEAN ->
-                JKLiteralExpression("false", JKLiteralExpression.LiteralType.STRING)
-            else ->
-                JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT)
+        if (primitiveType == JKJavaPrimitiveType.BOOLEAN) {
+            JKLiteralExpression("false", LiteralType.BOOLEAN)
+        } else {
+            JKLiteralExpression("0", LiteralType.INT)
         }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
@@ -155,16 +155,20 @@ public abstract class BaseUpdateAction extends PatchAction {
 
     LOG.info(mySource);
     ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();
-    byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
+    byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput, myPatch.getTimeout());
     diffOutput.close();
 
-    if (diffOutput.size() < newerFileBuffer.length) {
+    int diffSize = diffOutput.size();
+    if (0 < diffSize && diffSize < newerFileBuffer.length) {
       patchOutput.write(COMPRESSED);
       diffOutput.writeTo(patchOutput);
     }
     else {
       patchOutput.write(RAW);
       Utils.writeBytes(newerFileBuffer, newerFileBuffer.length, patchOutput);
+      if (diffSize == 0 && newerFileBuffer.length != 0) {
+        LOG.warning("*** 'bsdiff' timed out, dumping the file as-is");
+      }
     }
   }
 

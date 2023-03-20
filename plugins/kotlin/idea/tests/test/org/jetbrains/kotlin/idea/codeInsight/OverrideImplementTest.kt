@@ -1,7 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.codeInsight.generation.ClassMember
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -9,345 +17,385 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
-class OverrideImplementTest : AbstractOverrideImplementTest() {
+class OldOverrideImplementTest : OverrideImplementTest<OverrideMemberChooserObject>(), OldOverrideImplementTestMixIn
+
+abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplementTest<T>() {
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("codeInsight/overrideImplement")
 
-    fun testAndroidxNotNull() {
+    open fun testNoCallToAbstractSuper() {
+        doOverrideFileTest()
+    }
+
+    open fun testNoCallToAbstractSuper2() {
+        doOverrideFileTest()
+    }
+
+   open fun testAndroidxNotNull() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testEmptyClassBodyFunctionMethod() {
+   open fun testEmptyClassBodyFunctionMethod() {
         doImplementFileTest()
     }
 
-    fun testFunctionMethod() {
+   open fun testFunctionMethod() {
         doImplementFileTest()
     }
 
-    fun testFunctionProperty() {
+   open fun testFunctionProperty() {
         doImplementFileTest()
     }
 
-    fun testFunctionWithTypeParameters() {
+   open fun testFunctionWithTypeParameters() {
         doImplementFileTest()
     }
 
-    fun testGenericTypesSeveralMethods() {
+   open fun testGenericTypesSeveralMethods() {
         doImplementFileTest()
     }
 
-    fun testJavaInterfaceMethod() {
+   open fun testJavaInterfaceMethod() {
         doImplementDirectoryTest()
     }
 
-    fun testJavaInterfaceMethodInCorrectOrder() {
+   open fun testJavaInterfaceMethodInCorrectOrder() {
         doMultiImplementDirectoryTest()
     }
 
-    fun testJavaParameters() {
+   open fun testJavaParameters() {
         doImplementDirectoryTest()
     }
 
-    fun testFunctionFromTraitInJava() {
-        doImplementJavaDirectoryTest("foo.KotlinTrait", "bar")
+   open fun testFunctionFromInterfaceInJava() {
+        doImplementJavaDirectoryTest("foo.KotlinInterface", "bar")
     }
 
-    fun testGenericMethod() {
+   open fun testGenericMethod() {
         doImplementFileTest()
     }
 
-    fun testImplementJavaRawSubclass() {
+   open fun testImplementJavaRawSubclass() {
         doImplementDirectoryTest()
     }
 
-    fun testProperty() {
+   open fun testProperty() {
         doImplementFileTest()
     }
 
-    fun testTraitGenericImplement() {
+   open fun testInterfaceGenericImplement() {
         doImplementFileTest()
     }
 
-    fun testDefaultValues() {
+   open fun testDefaultValues() {
         doImplementFileTest()
     }
 
-    fun testRespectCaretPosition() {
+   open fun testRespectCaretPosition() {
         doMultiImplementFileTest()
     }
 
-    fun testGenerateMulti() {
+   open fun testGenerateMulti() {
         doMultiImplementFileTest()
     }
 
-    fun testTraitNullableFunction() {
+   open fun testInterfaceNullableFunction() {
         doImplementFileTest()
     }
 
-    fun testOverrideUnitFunction() {
+   open fun testOverrideUnitFunction() {
         doOverrideFileTest()
     }
 
-    fun testOverrideNonUnitFunction() {
+   open fun testOverrideNonUnitFunction() {
         doOverrideFileTest()
     }
 
-    fun testOverrideFunctionProperty() {
+   open fun testOverrideFunctionProperty() {
         doOverrideFileTest()
     }
 
-    fun testOverridePrimitiveProperty() {
+   open fun testOverridePrimitiveProperty() {
         doMultiImplementFileTest()
     }
 
-    fun testOverrideGenericFunction() {
+   open fun testOverrideGenericFunction() {
         doOverrideFileTest()
     }
 
-    fun testMultiOverride() {
+   open fun testMultiOverride() {
         doMultiOverrideFileTest()
     }
 
-    fun testDelegatedMembers() {
+   open fun testDelegatedMembers() {
         doMultiOverrideFileTest()
     }
 
-    fun testOverrideExplicitFunction() {
+   open fun testOverrideExplicitFunction() {
         doOverrideFileTest()
     }
 
-    fun testOverrideExtensionFunction() {
+   open fun testOverrideExtensionFunction() {
         doOverrideFileTest()
     }
 
-    fun testOverrideExtensionProperty() {
+   open fun testOverrideExtensionProperty() {
         doOverrideFileTest()
     }
 
-    fun testOverrideMutableExtensionProperty() {
+   open fun testOverrideMutableExtensionProperty() {
         doOverrideFileTest()
     }
 
-    fun testComplexMultiOverride() {
+   open fun testComplexMultiOverride() {
         doMultiOverrideFileTest()
     }
 
-    fun testOverrideRespectCaretPosition() {
+   open fun testOverrideRespectCaretPosition() {
         doMultiOverrideFileTest()
     }
 
-    fun testOverrideJavaMethod() {
+   open fun testOverrideJavaMethod() {
         doOverrideDirectoryTest("getAnswer")
     }
 
-    fun testJavaMethodWithPackageVisibility() {
+   open fun testJavaMethodWithPackageVisibility() {
         doOverrideDirectoryTest("getFooBar")
     }
 
-    fun testJavaMethodWithPackageProtectedVisibility() {
+   open fun testJavaMethodWithPackageProtectedVisibility() {
         doOverrideDirectoryTest("getFooBar")
     }
 
-    fun testPrivateJavaMethod() {
+   open fun testPrivateJavaMethod() {
         doMultiOverrideDirectoryTest()
     }
 
-    fun testImplementSamAdapters() {
+   open fun testImplementSamAdapters() {
         doImplementDirectoryTest()
     }
 
-    fun testOverrideFromFunctionPosition() {
+   open fun testOverrideFromFunctionPosition() {
         doMultiOverrideFileTest()
     }
 
-    fun testOverrideFromClassName() {
+   open fun testOverrideFromClassName() {
         doMultiOverrideFileTest()
     }
 
-    fun testOverrideFromLBrace() {
+   open fun testOverrideFromLBrace() {
         doMultiOverrideFileTest()
     }
 
-    fun testOverrideSamAdapters() {
+   open fun testOverrideSamAdapters() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testSameTypeName() {
+   open fun testSameTypeName() {
         doOverrideDirectoryTest()
     }
 
-    fun testPropagationKJK() {
+   open fun testPropagationKJK() {
         doOverrideDirectoryTest()
     }
 
-    fun testMultipleSupers() {
+   open fun testMultipleSupers() {
         doMultiOverrideFileTest()
     }
 
-    fun testNoAnyMembersInInterface() {
+   open fun testNoAnyMembersInInterface() {
         doMultiOverrideFileTest()
     }
 
-    fun testLocalClass() {
+    open fun testNoAnyMembersInValueClass() {
+        doMultiOverrideFileTest()
+    }
+
+    open fun testNoAnyMembersInValueClassWithGenerics() {
+        doMultiOverrideFileTest()
+    }
+
+    open fun testLocalClass() {
         doImplementFileTest()
     }
 
-    fun testStarProjections() {
+   open fun testStarProjections() {
         doImplementFileTest()
     }
 
-    fun testEscapeIdentifiers() {
+   open fun testEscapeIdentifiers() {
         doOverrideFileTest()
     }
 
-    fun testVarArgs() {
+   open fun testVarArgs() {
         doOverrideFileTest()
     }
 
-    fun testSuspendFun() {
+   open fun testSuspendFun() {
         doOverrideFileTest()
     }
 
-    fun testDoNotOverrideFinal() {
+   open fun testDoNotOverrideFinal() {
         doMultiOverrideFileTest()
     }
 
-    fun testSuperPreference() {
+   open fun testSuperPreference() {
         doMultiOverrideFileTest()
     }
 
-    fun testAmbiguousSuper() {
+   open fun testAmbiguousSuper() {
         doMultiOverrideFileTest()
     }
 
-    fun testImplementFunctionType() {
+   open fun testImplementFunctionType() {
         doMultiImplementFileTest()
     }
 
-    fun testQualifySuperType() {
+   open fun testQualifySuperType() {
         doOverrideFileTest("f")
     }
 
-    fun testGenericSuperClass() {
+   open fun testGenericSuperClass() {
         doOverrideFileTest("iterator")
     }
 
-    fun testDuplicatedAnyMembersBug() {
+   open fun testDuplicatedAnyMembersBug() {
         doMultiOverrideFileTest()
     }
 
-    fun testEqualsInInterface() {
+   open fun testEqualsInInterface() {
         doOverrideFileTest("equals")
     }
 
-    fun testCopyKDoc() {
+   open fun testCopyKDoc() {
         doOverrideFileTest("foo")
     }
 
-    fun testConvertJavaDoc() {
+   open fun testConvertJavaDoc() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testPlatformTypes() {
+   open fun testPlatformTypes() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testPlatformCollectionTypes() {
+   open fun testPlatformCollectionTypes() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testNullableJavaType() {
+   open fun testNullableJavaType() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testJavaxNonnullJavaType() {
+   open fun testJavaxNonnullJavaType() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testNullableKotlinType() {
+   open fun testNullableKotlinType() {
         doOverrideDirectoryTest("foo")
     }
 
-    fun testAbstractAndNonAbstractInheritedFromInterface() {
+   open fun testAbstractAndNonAbstractInheritedFromInterface() {
         doImplementFileTest("getFoo")
     }
 
-    fun testTypeAliasNotExpanded() {
+   open fun testTypeAliasNotExpanded() {
         doOverrideFileTest("test")
     }
 
-    fun testDataClassEquals() {
+   open fun testDataClassEquals() {
         doOverrideFileTest("equals")
     }
 
-    fun testCopyExperimental() {
-        withCustomLanguageAndApiVersion(project, module, "1.3", "1.3") {
+   open fun testCopyExperimental() {
+        withCustomLanguageAndApiVersion(project, module, LanguageVersion.KOTLIN_1_3, ApiVersion.KOTLIN_1_3) {
             doOverrideFileTest("targetFun")
         }
     }
 
-    fun testUnresolvedType() {
+   open fun testDropAnnotations() {
         doOverrideFileTest()
     }
 
-    fun testImplementFromClassName() {
-        doMultiImplementFileTest()
+   open fun testCopyAnnotationsAllowedByExtension() {
+       val filterExtension = object : OverrideImplementsAnnotationsFilter {
+           override fun getAnnotations(file: PsiFile) = arrayOf("AllowedAnnotation")
+       }
+
+       OverrideImplementsAnnotationsFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
+
+       doOverrideFileTest()
     }
 
-    fun testImplementFromClassName2() {
-        doMultiImplementFileTest()
-    }
-
-    fun testImplementFromClassName3() {
-        doMultiImplementFileTest()
-    }
-
-    fun testImplementFromClassName4() {
-        doMultiImplementFileTest()
-    }
-
-    fun testImplementFromClassName5() {
-        doMultiImplementFileTest()
-    }
-
-    fun testImplementFromClassName6() {
-        doMultiImplementFileTest()
-    }
-
-    fun testEnumClass() {
-        doOverrideFileTest("toString")
-    }
-
-    fun testEnumClass2() {
-        doOverrideFileTest("toString")
-    }
-
-    fun testEnumClass3() {
-        doOverrideFileTest("toString")
-    }
-
-    fun testEnumClass4() {
-        doOverrideFileTest("toString")
-    }
-
-    fun testOverrideExternalFunction() {
+   open fun testUnresolvedType() {
         doOverrideFileTest()
     }
 
-    fun testImplementWithComment() {
+   open fun testUnresolvedType2() {
+        doOverrideFileTest()
+    }
+
+   open fun testImplementFromClassName() {
         doMultiImplementFileTest()
     }
 
-    fun testImplementWithComment2() {
+   open fun testImplementFromClassName2() {
         doMultiImplementFileTest()
     }
 
-    fun testImplementWithComment3() {
+   open fun testImplementFromClassName3() {
         doMultiImplementFileTest()
     }
 
-    fun testImplementWithComment4() {
+   open fun testImplementFromClassName4() {
+        doMultiImplementFileTest()
+    }
+
+   open fun testImplementFromClassName5() {
+        doMultiImplementFileTest()
+    }
+
+   open fun testImplementFromClassName6() {
+        doMultiImplementFileTest()
+    }
+
+   open fun testEnumClass() {
+        doOverrideFileTest("toString")
+    }
+
+   open fun testEnumClass2() {
+        doOverrideFileTest("toString")
+    }
+
+   open fun testEnumClass3() {
+        doOverrideFileTest("toString")
+    }
+
+   open fun testEnumClass4() {
+        doOverrideFileTest("toString")
+    }
+
+   open fun testOverrideExternalFunction() {
+        doOverrideFileTest()
+    }
+
+   open fun testImplementWithComment() {
+        doMultiImplementFileTest()
+    }
+
+   open fun testImplementWithComment2() {
+        doMultiImplementFileTest()
+    }
+
+   open fun testImplementWithComment3() {
+        doMultiImplementFileTest()
+    }
+
+   open fun testImplementWithComment4() {
+        doMultiImplementFileTest()
+    }
+
+    fun testGenericClass() {
         doMultiImplementFileTest()
     }
 }

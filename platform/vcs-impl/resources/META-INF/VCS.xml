@@ -12,6 +12,9 @@
   <xi:include href="/META-INF/dvcs.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/smart-update.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
@@ -47,8 +50,10 @@
     <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager"
                     overrides="true"/>
-    <projectService serviceImplementation="com.intellij.vcs.commit.CommitModeManager"/>
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
+
+    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedChangeDiffComponentFactoryProvider"/>
   </extensions>
 
   <projectListeners>

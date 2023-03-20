@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -126,7 +126,7 @@ public class StructContext {
       Enumeration<? extends ZipEntry> entries = archive.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
-
+        if (entry.getName().startsWith("META-INF/versions")) continue; // workaround for multi release Jars (see IDEA-285079)
         ContextUnit unit = units.get(path + "/" + file.getName());
         if (unit == null) {
           unit = new ContextUnit(type, path, file.getName(), isOwn, saver, decompiledData);
@@ -137,6 +137,11 @@ public class StructContext {
         }
 
         String name = entry.getName();
+        File test = new File(file.getAbsolutePath(), name);
+        if (!test.getCanonicalPath().startsWith(file.getCanonicalPath() + File.separator)) { // check for zip slip exploit
+          throw new RuntimeException("Zip entry '" + entry.getName() + "' tries to escape target directory");
+        }
+
         if (!entry.isDirectory()) {
           if (name.endsWith(".class")) {
             byte[] bytes = InterpreterUtil.getBytes(archive, entry);

@@ -1,0 +1,11 @@
+// "Make 'prop' private" "true"
+open class Base {
+    fun baseFun(param: Any) {}
+}
+
+open class Derived : Base() {
+    private inline val prop: Unit
+        get() {
+            super.baseFun("123")
+        }
+}

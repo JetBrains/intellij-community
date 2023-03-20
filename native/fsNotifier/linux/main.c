@@ -1,15 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #include "fsnotifier.h"
 
 #include <errno.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <mntent.h>
 #include <paths.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -34,17 +35,17 @@ static array* roots = NULL;
 
 static bool self_test = false;
 
-static void run_self_test();
-static bool main_loop();
-static int read_input();
+static void run_self_test(void);
+static bool main_loop(void);
+static int read_input(void);
 static bool update_roots(array* new_roots);
-static void unregister_roots();
+static void unregister_roots(void);
 static bool register_roots(array* new_roots, array* unwatchable, array* mounts);
-static array* unwatchable_mounts();
+static array* unwatchable_mounts(void);
 static void inotify_callback(const char* path, uint32_t event);
 static void report_event(const char* event, const char* path);
 static void output(const char* line, bool flush);
-static void check_missing_roots();
+static void check_missing_roots(void);
 static void check_root_removal(const char*);
 
 
@@ -122,7 +123,7 @@ void userlog(int level, const char* format, ...) {
 }
 
 
-static void run_self_test() {
+static void run_self_test(void) {
   array* test_roots = array_create(1);
   char* cwd = malloc(PATH_MAX);
   if (getcwd(cwd, PATH_MAX) == NULL) {
@@ -133,7 +134,7 @@ static void run_self_test() {
 }
 
 
-static bool main_loop() {
+static bool main_loop(void) {
   int input_fd = fileno(stdin), inotify_fd = get_inotify_fd();
   int nfds = (inotify_fd > input_fd ? inotify_fd : input_fd) + 1;
   fd_set rfds;
@@ -168,7 +169,7 @@ static bool main_loop() {
 }
 
 
-static int read_input() {
+static int read_input(void) {
   char* line = read_line(stdin);
   if (line == NULL || strcmp(line, "EXIT") == 0) {
     return 0;
@@ -241,7 +242,7 @@ static bool update_roots(array* new_roots) {
 }
 
 
-static void unregister_roots() {
+static void unregister_roots(void) {
   watch_root* root;
   while ((root = array_pop(roots)) != NULL) {
     userlog(LOG_INFO, "unregistering root: %s", root->path);
@@ -317,7 +318,7 @@ static bool is_watchable(const char* fs) {
            (strncmp(fs, "fuse", 4) == 0 && strcmp(fs + 4, "blk") != 0 && strcmp(fs + 4, ".osxfs") != 0));
 }
 
-static array* unwatchable_mounts() {
+static array* unwatchable_mounts(void) {
   FILE* mtab = setmntent(_PATH_MOUNTED, "r");
   if (mtab == NULL && errno == ENOENT) {
     mtab = setmntent("/proc/mounts", "r");
@@ -401,7 +402,7 @@ static void output(const char* line, bool flush) {
 }
 
 
-static void check_missing_roots() {
+static void check_missing_roots(void) {
   struct stat st;
   for (int i = 0; i < array_size(roots); i++) {
     watch_root* root = array_get(roots, i);

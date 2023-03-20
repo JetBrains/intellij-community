@@ -114,8 +114,7 @@ public class PyUnionType implements PyType {
     if (type == null) {
       return null;
     }
-    else if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
+    else if (type instanceof PyUnionType unionType) {
       if (unionType.isWeak()) {
         return unionType;
       }
@@ -151,7 +150,6 @@ public class PyUnionType implements PyType {
    *
    * @param type    type to exclude. If type is a union all subtypes of union members will be excluded from the union
    *                If type is null only null will be excluded from the union.
-   * @param context
    * @return union with excluded types
    */
   @Nullable
@@ -179,8 +177,7 @@ public class PyUnionType implements PyType {
 
   @Override
   public boolean equals(Object other) {
-    if (other instanceof PyUnionType) {
-      final PyUnionType otherType = (PyUnionType)other;
+    if (other instanceof PyUnionType otherType) {
       return myMembers.equals(otherType.myMembers);
     }
     return false;

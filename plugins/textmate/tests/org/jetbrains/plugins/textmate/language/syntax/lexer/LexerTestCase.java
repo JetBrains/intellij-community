@@ -12,12 +12,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.PathInterner;
 import org.jetbrains.plugins.textmate.TestUtil;
-import org.jetbrains.plugins.textmate.bundles.Bundle;
-import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
+import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher;
+import org.jetbrains.plugins.textmate.bundles.TextMateGrammar;
+import org.jetbrains.plugins.textmate.editor.TextMateEditorUtilsKt;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +35,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
     PlatformTestUtil.getCommunityPath() + "/plugins/textmate/testData/lexer";
 
   private final Interner<CharSequence> myInterner = new PathInterner.PathEnumerator();
-  private final Map<String, CharSequence> myLanguageDescriptors = new HashMap<>();
+  private final Map<TextMateFileNameMatcher, CharSequence> myLanguageDescriptors = new HashMap<>();
   private CharSequence myRootScope;
   private TextMateSyntaxTable mySyntaxTable;
 
@@ -52,7 +51,7 @@ abstract public class LexerTestCase extends UsefulTestCase {
 
   @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> createData(Class<?> klass) throws Throwable {
-    LexerTestCase testCase = (LexerTestCase)klass.newInstance();
+    LexerTestCase testCase = (LexerTestCase)klass.getDeclaredConstructor().newInstance();
 
     File testDir = new File(FileUtil.join(TEST_DATA_BASE_DIR, testCase.getTestDirRelativePath()));
     File[] files = testDir.listFiles();
@@ -64,18 +63,17 @@ abstract public class LexerTestCase extends UsefulTestCase {
   }
 
   @Before
-  public void before() throws Exception {
+  public void before() {
     mySyntaxTable = new TextMateSyntaxTable();
 
     CharSequence scope = null;
-    Bundle bundle = TestUtil.getBundle(getBundleName());
-    for (File grammarFile : bundle.getGrammarFiles()) {
-      Plist plist = new CompositePlistReader().read(grammarFile);
-      final CharSequence rootScope = mySyntaxTable.loadSyntax(plist, myInterner);
-      Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
-      for (String extension : extensions) {
-        myLanguageDescriptors.put(extension, rootScope);
-      }
+    Iterator<TextMateGrammar> grammars = TestUtil.readBundle(getBundleName()).readGrammars().iterator();
+    while (grammars.hasNext()) {
+      TextMateGrammar grammar = grammars.next();
+      CharSequence rootScope = mySyntaxTable.loadSyntax(grammar.getPlist(), myInterner);
+      grammar.getFileNameMatchers().forEach(matcher -> {
+        myLanguageDescriptors.put(matcher, rootScope);
+      });
       if (scope == null) {
         scope = rootScope;
       }
@@ -84,16 +82,28 @@ abstract public class LexerTestCase extends UsefulTestCase {
     assertNotNull(scope);
     final List<String> extraBundleNames = getExtraBundleNames();
     for (String bundleName : extraBundleNames) {
-      for (File grammarFile : TestUtil.getBundle(bundleName).getGrammarFiles()) {
-        mySyntaxTable.loadSyntax(new CompositePlistReader().read(grammarFile), myInterner);
+      Iterator<TextMateGrammar> extraGrammars = TestUtil.readBundle(bundleName).readGrammars().iterator();
+      while (extraGrammars.hasNext()) {
+        TextMateGrammar grammar = extraGrammars.next();
+        mySyntaxTable.loadSyntax(grammar.getPlist(), myInterner);
       }
     }
     mySyntaxTable.compact();
 
-    TextMateEditorUtils.processExtensions(myFileName, extension -> {
-      myRootScope = myLanguageDescriptors.get(extension.toString());
-      return myRootScope == null;
-    });
+    CharSequence scopeForFileName = myLanguageDescriptors.get(new TextMateFileNameMatcher.Name(myFileName));
+    if (scopeForFileName != null) {
+      myRootScope = scopeForFileName;
+    }
+    else {
+      Iterator<CharSequence> extensionsIterator = TextMateEditorUtilsKt.fileNameExtensions(myFileName).iterator();
+      while (extensionsIterator.hasNext()) {
+        CharSequence scopeForExtension = myLanguageDescriptors.get(new TextMateFileNameMatcher.Extension(extensionsIterator.next().toString()));
+        if (scopeForExtension != null) {
+          myRootScope = scopeForExtension;
+          break;
+        }
+      }
+    }
     assertNotNull("scope is empty for file name: " + myFileName, myRootScope);
   }
 

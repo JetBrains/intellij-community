@@ -90,7 +90,7 @@ public class AnonymousClassMethodCountInspection
       registerClassError(aClass, Integer.valueOf(totalMethodCount));
     }
 
-    private int calculateTotalMethodCount(PsiClass aClass) {
+    private static int calculateTotalMethodCount(PsiClass aClass) {
       return aClass.getMethods().length - aClass.getConstructors().length;
     }
   }

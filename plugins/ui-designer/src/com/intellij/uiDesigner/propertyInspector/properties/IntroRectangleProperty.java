@@ -14,10 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle> {
   private final RectangleRenderer myRenderer;
   private final Property[] myChildren;

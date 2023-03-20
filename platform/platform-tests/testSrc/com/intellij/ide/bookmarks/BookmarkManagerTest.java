@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.bookmark.Bookmark;
@@ -63,11 +63,12 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testWholeTextReplace() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -87,11 +88,12 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testBookmarkLineRemove() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -104,12 +106,13 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testTwoBookmarksOnSameLine1() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "        int j = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+                int j = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -130,12 +133,13 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testTwoBookmarksOnSameLine2() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "        int j = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+                int j = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
 
     addBookmark(2);
@@ -163,11 +167,12 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   public void testBookmarkIsSavedAfterRemoteChange() {
     @Language("JAVA")
     @NonNls String text =
-      "public class Test {\n" +
-      "    public void test() {\n" +
-      "        int i = 1;\n" +
-      "    }\n" +
-      "}";
+      """
+        public class Test {
+            public void test() {
+                int i = 1;
+            }
+        }""";
     init(text, PlainTextFileType.INSTANCE);
     addBookmark(2);
     assertEquals(1, getManager().getBookmarks().size());
@@ -175,12 +180,10 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText("111\n222" + text + "333"));
 
     List<Bookmark> bookmarks = getManager().getBookmarks();
-    assertEquals(0, bookmarks.size());
-    /*TODO:SAM
+    assertEquals(1, bookmarks.size());
     Bookmark bookmark = bookmarks.get(0);
     assertEquals(3, ((LineBookmark)bookmark).getLine());
     checkBookmarkNavigation(bookmark);
-    */
   }
 
   public void testBookmarkManagerDoesNotHardReferenceDocuments() throws IOException {

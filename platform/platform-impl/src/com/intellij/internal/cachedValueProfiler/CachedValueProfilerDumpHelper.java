@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonReader;
@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -98,8 +99,8 @@ public final class CachedValueProfilerDumpHelper {
 
   private static @Nullable CachedValueProfiler.EventConsumer openDumpViewer(@NotNull Project project) {
     VirtualFile file = LIVE_PROFILING_FILE;
-    FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-    if (providers.length == 1 && "cvp-editor".equals(providers[0].getEditorTypeId())) {
+    List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(project, file);
+    if (providers.size() == 1 && "cvp-editor".equals(providers.get(0).getEditorTypeId())) {
       FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true, false);
       FileEditor editor = editors.length > 0 ? editors[0] : null;
       if (editor instanceof EventConsumerFactory) {
@@ -409,7 +410,7 @@ public final class CachedValueProfilerDumpHelper {
         myWriter.beginObject();
         myWriter.name(_TYPE).value(type);
         myWriter.name(_FRAME_ID).value(frameId);
-        if (type == _FRAME_ENTER) {
+        if (Strings.areSameInstance(type, _FRAME_ENTER)) {
           myWriter.name(_FRAME_PID).value(t2); // t2 holds parent id
         }
         if (place != null) {

@@ -6,68 +6,44 @@
   <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
   <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
   <property environment="env"/>
-  <property prefix="dependencies" file="${community.home}/build/dependencies/gradle.properties" />
+  <property prefix="dependencies" file="${community.home}/build/dependencies/dependencies.properties" />
 
   <mkdir dir="${build.dir}" />
 
   <property name="maven.resolver.ant.tasks.version" value="1.2.1"/>
   <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
-  <property name="maven.resolver.ant.tasks.file.path" value="${build.dir}/${maven.resolver.ant.tasks.file.name}"/>
+  <property name="maven.resolver.ant.tasks.file.path" value="org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}"/>
+  <property name="maven.resolver.ant.tasks.cache.dir" value="${user.home}/.m2/repository/${maven.resolver.ant.tasks.file.path}"/>
+  <property name="maven.resolver.ant.tasks.cache.file" value="${maven.resolver.ant.tasks.cache.dir}/${maven.resolver.ant.tasks.file.name}"/>
 
   <xmlproperty file="${jps.bootstrap.dir}/pom.xml" prefix="jps.bootstrap.pom.xml"/>
 
-  <available file="${maven.resolver.ant.tasks.file.path}" property="maven.resolver.ant.tasks.file.exists"/>
-
-  <loadresource property="kotlin.channel">
-    <string value="${dependencies.kotlinCompilerBuild}"/>
+  <xslt style="kotlinc.xml.xslt" in="${community.home}/.idea/kotlinc.xml" out="${build.dir}/kotlinc.version.txt" />
+  <loadfile property="kotlinc.version" srcfile="${build.dir}/kotlinc.version.txt">
     <filterchain>
-      <tokenfilter>
-        <replaceregex pattern="^.*:([a-zA-Z\-0-9.]+)$" replace="\1"/>
-      </tokenfilter>
+      <striplinebreaks />
+      <striplinebreaks linebreaks=" "/>
     </filterchain>
-  </loadresource>
-  <loadresource property="kotlin.version">
-    <string value="${dependencies.kotlinCompilerBuild}"/>
-    <filterchain>
-      <tokenfilter>
-        <replaceregex pattern="^([a-zA-Z\-0-9.]+):.*$" replace="\1"/>
-      </tokenfilter>
-    </filterchain>
-  </loadresource>
+  </loadfile>
+  <echo message="kotlinc.version=${kotlinc.version}" />
 
-  <property name="kotlin.home" value="${build.dir}/kotlin" />
-  <property name="kotlin.url" value="https://cache-redirector.jetbrains.com/plugins.jetbrains.com/maven/${kotlin.channel}/com/jetbrains/plugins/org.jetbrains.kotlin/${kotlin.version}/org.jetbrains.kotlin-${kotlin.version}.zip" />
-
-  <condition property="kotlin.home.ok">
-    <resourcecontains resource="${kotlin.home}/.flag" substring="${kotlin.url}"/>
-  </condition>
-
-  <target name="download.and.extract.kotlin" unless="kotlin.home.ok">
-    <echo message="Downloading Kotlin ${kotlin.version} channel ${kotlin.channel} to ${kotlin.home}" />
-
-    <delete dir="${kotlin.home}" />
-    <mkdir dir="${kotlin.home}" />
-    <get src="${kotlin.url}" dest="${kotlin.home}/kotlin.zip" />
-    <unzip src="${kotlin.home}/kotlin.zip" dest="${kotlin.home}" />
-    <delete file="${kotlin.home}/kotlin.zip" />
-
-    <echo file="${kotlin.home}/.flag" message="${kotlin.url}" />
-  </target>
+  <available file="${maven.resolver.ant.tasks.cache.file}" property="maven.resolver.ant.tasks.file.exists"/>
 
   <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
+    <mkdir dir="${maven.resolver.ant.tasks.cache.dir}" />
     <get
-      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}/maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"
-      dest="${maven.resolver.ant.tasks.file.path}.tmp"
+      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
+      dest="${maven.resolver.ant.tasks.cache.file}.tmp"
       verbose="true"/>
     <move
-      file="${maven.resolver.ant.tasks.file.path}.tmp"
-      tofile="${maven.resolver.ant.tasks.file.path}"
+      file="${maven.resolver.ant.tasks.cache.file}.tmp"
+      tofile="${maven.resolver.ant.tasks.cache.file}"
       overwrite="true"/>
   </target>
 
-  <target name="jps-bootstrap-classpath" depends="download.resolver,download.and.extract.kotlin">
+  <target name="jps-bootstrap-classpath" depends="download.resolver">
     <taskdef uri="antlib:org.apache.maven.resolver.ant" resource="org/apache/maven/resolver/ant/antlib.xml"
-             classpath="${maven.resolver.ant.tasks.file.path}"/>
+             classpath="${maven.resolver.ant.tasks.cache.file}"/>
 
     <resolver:remoterepos id="remoterepos.buildscript">
       <resolver:remoterepo id="central" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
@@ -80,26 +56,37 @@
 
     <resolver:resolve failOnMissingAttachments="true">
       <resolver:remoterepos refid="remoterepos.buildscript"/>
-      <resolver:dependencies pomRef="jps.bootstrap.pom" />
+      <resolver:dependencies pomRef="jps.bootstrap.pom">
+        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
+      </resolver:dependencies>
       <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
     </resolver:resolve>
 
+    <resolver:resolve failOnMissingAttachments="true">
+      <resolver:remoterepos refid="remoterepos.buildscript"/>
+      <resolver:dependencies>
+        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-compiler" version="${kotlinc.version}" />
+      </resolver:dependencies>
+      <resolver:path refid="classpath.kotlin.compiler" classpath="runtime"/>
+    </resolver:resolve>
+
     <delete dir="${classes.dir}" />
-    <mkdir dir="${classes.dir}" />
-    <javac
-      srcdir="${jps.bootstrap.dir}/src/main/java"
-      destdir="${classes.dir}"
-      encoding="UTF-8"
-      release="11"
-      includeantruntime="false"
-      classpathref="classpath.buildscripts"
-    />
-
-    <!-- Used later in JpsBootstrapMain to compare Kotlin versions -->
-    <echo message="${kotlin.url}" file="${classes.dir}/kotlin.zip.url" />
-
-    <!-- Used later in JpsBootstrapMain to compare bootstrap intellij versions -->
-    <echo message="${jps.bootstrap.pom.xml.project.properties.bootstrap.intellij.version}" file="${classes.dir}/intellij.version" />
+    <java
+      classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
+      classpathref="classpath.kotlin.compiler"
+      fork="true"
+      failonerror="true">
+      <arg value="-no-reflect" />
+      <arg value="-no-stdlib" />
+      <arg value="-jvm-target" />
+      <arg value="11" />
+      <arg value="-classpath" />
+      <arg pathref="classpath.buildscripts" />
+      <arg path="${jps.bootstrap.dir}/src/main/java" />
+      <arg path="${community.home}/platform/build-scripts/downloader/src" />
+      <arg value="-d" />
+      <arg value="${classes.dir}" />
+    </java>
 
     <delete file="${classes.dir}.jar" />
     <zip destfile="${classes.dir}.jar">
@@ -113,14 +100,7 @@
 
         <resources>
           <path refid="classpath.buildscripts" />
-
           <file file="${classes.dir}.jar" />
-
-          <file file="${kotlin.home}/Kotlin/lib/jps/kotlin-jps-plugin.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-jps-common.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-plugin.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-common.jar" />
-          <file file="${kotlin.home}/Kotlin/lib/kotlin-reflect.jar" />
         </resources>
       </mappedresources>
     </sync>

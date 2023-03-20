@@ -2,15 +2,17 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNotNull
 import org.junit.Test
+import kotlin.test.assertTrue
 
 /**
  * Soft reference
- * Persistent id via soft reference
- * Persistent id via strong reference
+ * Symbolic id via soft reference
+ * Symbolic id via strong reference
  */
 class SoftLinksTest {
   @Test
@@ -20,25 +22,23 @@ class SoftLinksTest {
 
     // Setup builder for test
     val builder = createEmptyBuilder()
-    builder.addEntity(ModifiableWithSoftLinkEntity::class.java, MySource) {
-      this.link = NameId(id)
-    }
-    builder.addEntity(ModifiableNamedEntity::class.java, MySource) {
-      name = id
-    }
+    builder.addEntity(WithSoftLinkEntity(NameId(id), MySource))
+    builder.addEntity(NamedEntity(id, MySource) {
+      this.children = emptyList()
+    })
 
-    // Change persistent id in a different builder
-    val newBuilder = createBuilderFrom(builder.toStorage())
+    // Change symbolic id in a different builder
+    val newBuilder = createBuilderFrom(builder.toSnapshot())
     val entity = newBuilder.resolve(NameId(id))!!
-    newBuilder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      this.name = newId
+    newBuilder.modifyEntity(entity) {
+      this.myName = newId
     }
 
     // Apply changes
     builder.addDiff(newBuilder)
 
     // Check
-    assertNotNull(builder.resolve(NameId(newId)))
+    assertTrue(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
   }
 
@@ -49,50 +49,48 @@ class SoftLinksTest {
 
     // Setup builder for test
     val builder = createEmptyBuilder()
-    builder.addEntity(ModifiableWithSoftLinkEntity::class.java, MySource) {
-      this.link = NameId(id)
-    }
-    builder.addEntity(ModifiableNamedEntity::class.java, MySource) {
-      name = id
-    }
+    builder.addEntity(WithSoftLinkEntity(NameId(id), MySource))
+    builder.addEntity(NamedEntity(id, MySource) {
+      this.children = emptyList()
+    })
 
-    // Change persistent id in a different builder
-    val newBuilder = createBuilderFrom(builder.toStorage())
+    // Change symbolic id in a different builder
+    val newBuilder = createBuilderFrom(builder.toSnapshot())
     val entity = newBuilder.resolve(NameId(id))!!
-    newBuilder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      this.name = newId
+    newBuilder.modifyEntity(entity) {
+      this.myName = newId
     }
 
     // Apply changes
     builder.addDiff(newBuilder)
 
     // Check
-    assertNotNull(builder.resolve(NameId(newId)))
+    assertNotNull(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
 
-    // Change persistent id to the initial value
-    val anotherNewBuilder = createBuilderFrom(builder.toStorage())
+    // Change symbolic id to the initial value
+    val anotherNewBuilder = createBuilderFrom(builder.toSnapshot())
     val anotherEntity = anotherNewBuilder.resolve(NameId(newId))!!
-    anotherNewBuilder.modifyEntity(ModifiableNamedEntity::class.java, anotherEntity) {
-      this.name = id
+    anotherNewBuilder.modifyEntity(anotherEntity) {
+      this.myName = id
     }
 
     // Apply changes
     builder.addDiff(anotherNewBuilder)
 
     // Check
-    assertNotNull(builder.resolve(NameId(id)))
+    assertNotNull(NameId(id) in builder)
     assertOneElement(builder.referrers(NameId(id), WithSoftLinkEntity::class.java).toList())
   }
 
   @Test
-  fun `change persistent id part`() {
+  fun `change symbolic id part`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    builder.addWithSoftLinkEntity(entity.persistentId())
+    builder.addWithSoftLinkEntity(entity.symbolicId)
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      this.name = "newName"
+    builder.modifyEntity(entity) {
+      this.myName = "newName"
     }
 
     builder.assertConsistency()
@@ -101,36 +99,105 @@ class SoftLinksTest {
   }
 
   @Test
-  fun `change persistent id part of composed id entity`() {
+  fun `change symbolic id part of composed id entity`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId())
+    builder.addComposedIdSoftRefEntity("AnotherName", entity.symbolicId)
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      this.name = "newName"
+    builder.modifyEntity(entity) {
+      this.myName = "newName"
     }
 
     builder.assertConsistency()
 
-    val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId()
-    assertEquals("newName", updatedPersistentId.link.presentableName)
+    val updatedSymbolicId = builder.entities(ComposedIdSoftRefEntity::class.java).single().symbolicId
+    assertEquals("newName", updatedSymbolicId.link.presentableName)
   }
 
   @Test
-  fun `change persistent id part of composed id entity and with linked entity`() {
+  fun `change symbolic id in list`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    val composedIdEntity = builder.addComposedIdSoftRefEntity("AnotherName", entity.persistentId())
-    builder.addWithSoftLinkEntity(composedIdEntity.persistentId())
+    builder.addEntity(WithListSoftLinksEntity("xyz", listOf(NameId("Name")), MySource))
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      this.name = "newName"
+    builder.modifyEntity(entity) {
+      this.myName = "newName"
     }
 
     builder.assertConsistency()
 
-    val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId()
-    assertEquals("newName", updatedPersistentId.link.presentableName)
-    assertEquals("newName", (builder.entities(WithSoftLinkEntity::class.java).single().link as ComposedId).link.presentableName)
+    val updatedSymbolicId = builder.entities(WithListSoftLinksEntity::class.java).single()
+    assertEquals("newName", updatedSymbolicId.links.single().presentableName)
+  }
+
+  @Test
+  fun `change symbolic id part of composed id entity and with linked entity`() {
+    val builder = createEmptyBuilder()
+    val entity = builder.addNamedEntity("Name")
+    val composedIdEntity = builder.addComposedIdSoftRefEntity("AnotherName", entity.symbolicId)
+    builder.addComposedLinkEntity(composedIdEntity.symbolicId)
+
+    builder.modifyEntity(entity) {
+      this.myName = "newName"
+    }
+
+    builder.assertConsistency()
+
+    val updatedSymbolicId = builder.entities(ComposedIdSoftRefEntity::class.java).single().symbolicId
+    assertEquals("newName", updatedSymbolicId.link.presentableName)
+    assertEquals("newName", builder.entities(ComposedLinkEntity::class.java).single().link.link.presentableName)
+  }
+
+  @Test
+  fun `links change`() {
+    val builder = MutableEntityStorage.create()
+
+    val entity = OneEntityWithSymbolicId("Data", MySource)
+    builder.addEntity(entity)
+    val symbolicId = entity.symbolicId
+    val softLinkEntity = EntityWithSoftLinks(symbolicId,
+                                             listOf(symbolicId),
+                                             Container(symbolicId),
+                                             listOf(Container(symbolicId)),
+                                             listOf(TooDeepContainer(listOf(DeepContainer(listOf(Container(symbolicId)), symbolicId)))),
+                                             SealedContainer.BigContainer(symbolicId),
+                                             listOf(SealedContainer.SmallContainer(symbolicId)),
+                                             "Hello",
+                                             listOf("Hello"),
+                                             DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour(symbolicId),
+                                             MySource
+    ) {
+      optionalLink = symbolicId
+      inOptionalContainer = Container(symbolicId)
+      justNullableProperty = "Hello"
+      this.children = emptyList()
+    }
+    builder.addEntity(softLinkEntity)
+
+    builder.modifyEntity(OneEntityWithSymbolicId.Builder::class.java, entity) {
+      myName = "AnotherData"
+    }
+
+    val updatedEntity = builder.entities(EntityWithSoftLinks::class.java).single()
+
+    assertEquals("AnotherData", updatedEntity.link.name)
+    assertEquals("AnotherData", updatedEntity.manyLinks.single().name)
+    assertEquals("AnotherData", updatedEntity.optionalLink!!.name)
+    assertEquals("AnotherData", updatedEntity.inContainer.id.name)
+    assertEquals("AnotherData", updatedEntity.inOptionalContainer!!.id.name)
+    assertEquals("AnotherData", updatedEntity.inContainerList.single().id.name)
+    assertEquals(
+      "AnotherData",
+      updatedEntity.deepContainer.single().goDeeper.single().goDeep.single().id.name
+    )
+    assertEquals("AnotherData", (updatedEntity.sealedContainer as SealedContainer.BigContainer).id.name)
+    assertEquals(
+      "AnotherData",
+      (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name
+    )
+    assertEquals(
+      "AnotherData",
+      (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name
+    )
   }
 }

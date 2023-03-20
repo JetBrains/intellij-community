@@ -99,7 +99,7 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
             }
 
             if (is(lop, XPath2Type.DURATION)) {
-              return lop != null ? lop.getType() : XPath2Type.DURATION;
+              return lop.getType();
             } else if (is(rop, XPath2Type.DURATION)) {
               return lop != null ? rop.getType() : XPath2Type.DURATION;
             }

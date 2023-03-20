@@ -7,8 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a constant in a Java enum type.
- *
- * @author dsl
  */
 public interface PsiEnumConstant extends PsiField, PsiConstructorCall, JvmEnumField {
   /**

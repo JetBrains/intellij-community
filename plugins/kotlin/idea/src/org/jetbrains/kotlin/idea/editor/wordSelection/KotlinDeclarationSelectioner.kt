@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor.wordSelection
 
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 class KotlinDeclarationSelectioner : ExtendWordSelectionHandlerBase() {
     override fun canSelect(e: PsiElement) = e is KtDeclaration
 
-    override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
+    override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange> {
         if (e is KtDestructuringDeclaration) {
             return selectMultiDeclaration(editorText, e)
         }

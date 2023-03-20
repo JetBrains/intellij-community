@@ -54,7 +54,7 @@ class TerminalConsoleContentHelper implements Disposable {
     }
   }
 
-  private void fireTextAdded(@NotNull List<Pair<String, ConsoleViewContentType>> textContentTypes) {
+  private void fireTextAdded(@NotNull List<? extends Pair<String, ConsoleViewContentType>> textContentTypes) {
     for (ObservableConsoleView.ChangeListener listener : myChangeListeners) {
       for (Pair<String, ConsoleViewContentType> pair : textContentTypes) {
         listener.textAdded(pair.first, pair.second);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -45,8 +45,7 @@ public final class DfaCallState {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DfaCallState)) return false;
-    DfaCallState that = (DfaCallState)o;
+    if (!(o instanceof DfaCallState that)) return false;
     return myMemoryState.equals(that.myMemoryState) && myCallArguments.equals(that.myCallArguments);
   }
 

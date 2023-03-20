@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Action.MOVE
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.BACKWARD
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.FORWARD
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.util.Comparing
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class MoveToCaretStopTest : BasePlatformTestCase() {
@@ -20,8 +19,8 @@ class MoveToCaretStopTest : BasePlatformTestCase() {
 
     override fun compare(o1: Int, o2: Int): Int {
       return when (this) {
-        FORWARD -> Comparing.compare(o1, o2)
-        BACKWARD -> Comparing.compare(o2, o1)
+        FORWARD -> Integer.compare(o1, o2)
+        BACKWARD -> Integer.compare(o2, o1)
       }
     }
   }

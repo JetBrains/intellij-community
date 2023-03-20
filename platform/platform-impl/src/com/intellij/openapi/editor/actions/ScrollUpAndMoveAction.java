@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Moves editor viewport one visual line up. Caret is also moved one line up if it becomes off-screen.
- * 
- * @author Denis Zhdanov
  */
 public class ScrollUpAndMoveAction extends InactiveEditorAction {
   

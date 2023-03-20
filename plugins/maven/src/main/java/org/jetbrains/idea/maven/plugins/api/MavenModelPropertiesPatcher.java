@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * @author Sergey Evdokimov
- */
 public final class MavenModelPropertiesPatcher {
 
   /*

@@ -5,6 +5,8 @@ import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Set;
 
 import static git4idea.GitUtil.findRemoteBranch;
 import static git4idea.GitUtil.getDefaultOrFirstRemote;
@@ -62,6 +65,12 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
     return myOutgoingCommitsProvider;
   }
 
+  @Override
+  public boolean canBePushed(@NotNull GitRepository repository, @NotNull GitPushSource source, @NotNull GitPushTarget target) {
+    if (repository.isFresh()) return false;
+    return true;
+  }
+
   @Nullable
   @Override
   public GitPushTarget getDefaultTarget(@NotNull GitRepository repository) {
@@ -78,10 +87,29 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
   @Nullable
   @Override
   public GitPushTarget getDefaultTarget(@NotNull GitRepository repository, @NotNull GitPushSource source) {
-    if (source instanceof GitPushSource.DetachedHead) return null;
-    GitPushTarget pushSpecTarget = getPushTargetIfExist(repository, source.getBranch());
-    if (pushSpecTarget != null) return pushSpecTarget;
-    return proposeTargetForNewBranch(repository, source.getBranch());
+    GitLocalBranch sourceBranch = source.getBranch();
+    if (sourceBranch != null) {
+      GitPushTarget pushSpecTarget = getPushTargetIfExist(repository, sourceBranch);
+      if (pushSpecTarget != null) return pushSpecTarget;
+    }
+
+    GitRemote remote = getDefaultOrFirstRemote(repository.getRemotes());
+    if (remote == null) return null;
+
+    if (sourceBranch != null) {
+      return makeTargetForNewBranch(repository, remote, sourceBranch.getName());
+    }
+
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    if (currentBranch != null) {
+      return makeTargetForNewBranch(repository, remote, currentBranch.getName());
+    }
+
+    Set<String> remoteBranches = ContainerUtil.map2SetNotNull(repository.getBranches().getRemoteBranches(), branch ->
+      branch.getRemote().equals(remote) ? branch.getNameForRemoteOperations() : null
+    );
+    String newBranchName = UniqueNameGenerator.generateUniqueName("detached", "", "", remoteBranches);
+    return makeTargetForNewBranch(repository, remote, newBranchName);
   }
 
   @Nullable
@@ -98,21 +126,15 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
     return null;
   }
 
-  private static GitPushTarget proposeTargetForNewBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch sourceBranch) {
-    GitRemote remote = getDefaultOrFirstRemote(repository.getRemotes());
-    if (remote == null) return null; // TODO need to propose to declare new remote
-    return makeTargetForNewBranch(repository, remote, sourceBranch);
-  }
-
   @NotNull
   private static GitPushTarget makeTargetForNewBranch(@NotNull GitRepository repository,
                                                       @NotNull GitRemote remote,
-                                                      @NotNull GitLocalBranch sourceBranch) {
-    GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, sourceBranch.getName());
+                                                      @NotNull String branchName) {
+    GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, branchName);
     if (existingRemoteBranch != null) {
       return new GitPushTarget(existingRemoteBranch, false);
     }
-    return new GitPushTarget(new GitStandardRemoteBranch(remote, sourceBranch.getName()), true);
+    return new GitPushTarget(new GitStandardRemoteBranch(remote, branchName), true);
   }
 
   @NotNull
@@ -121,7 +143,7 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     return currentBranch != null
            ? GitPushSource.create(currentBranch)
-           : GitPushSource.create(Objects.requireNonNull(repository.getCurrentRevision())); // fresh repository is on branch
+           : GitPushSource.createDetached(Objects.requireNonNull(repository.getCurrentRevision())); // fresh repository is on branch
   }
 
   @NotNull

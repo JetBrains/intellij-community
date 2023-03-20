@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -23,19 +24,30 @@ public abstract class BaseUnivocityTest extends AbstractApplyAndRevertTestCase {
     WriteAction.run(() -> {
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
-      LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);
+      LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(projectLanguageLevel());
     });
     CompilerTestUtil.saveApplicationSettings();
+  }
+
+  @Override
+  protected void setUpModule() {
+    // skip: module already exists in Univocity project
+  }
+
+  @NotNull
+  protected LanguageLevel projectLanguageLevel() {
+    return LanguageLevel.JDK_1_8;
   }
 
   @Override
   protected String getTestDataPath() {
     File file = new File(PathManager.getHomePath(), "univocity-parsers");
     if (!file.exists()) {
-      fail("Cannot find univocity project:\n" +
-           "  execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git\n" +
-           "  open the just cloned univocity-parsers project in IntelliJ IDEA, let it download all the libraries, close the IDE\n" +
-           "  execute this in univocity-parsers directory: git reset HEAD --hard");
+      fail("""
+             Cannot find univocity project:
+               execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git
+               open the just cloned univocity-parsers project in IntelliJ IDEA, let it download all the libraries, close the IDE
+               execute this in univocity-parsers directory: git reset HEAD --hard""");
     }
     return file.getAbsolutePath();
   }

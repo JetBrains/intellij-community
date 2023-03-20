@@ -225,9 +225,7 @@ public class PyJavaClassType implements PyClassLikeType {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PyJavaClassType)) return false;
-
-    PyJavaClassType type = (PyJavaClassType)o;
+    if (!(o instanceof PyJavaClassType type)) return false;
 
     if (myDefinition != type.myDefinition) return false;
     if (myClass != null ? !myClass.equals(type.myClass) : type.myClass != null) return false;

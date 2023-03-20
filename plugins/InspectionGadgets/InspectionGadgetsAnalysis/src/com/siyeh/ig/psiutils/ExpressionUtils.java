@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
@@ -21,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
@@ -39,7 +39,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class ExpressionUtils {
   private static final @NonNls Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
     Set.of("append", "format", "print", "printf", "println", "valueOf");
-  @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
+  @NonNls private static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
 
   static {
     convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_BYTE);
@@ -98,21 +98,17 @@ public final class ExpressionUtils {
   }
 
   public static boolean isDeclaredConstant(PsiExpression expression) {
-    PsiField field =
-      PsiTreeUtil.getParentOfType(expression, PsiField.class);
+    PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
     if (field == null) {
       final PsiAssignmentExpression assignmentExpression =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiAssignmentExpression.class);
+        PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
       if (assignmentExpression == null) {
         return false;
       }
       final PsiExpression lhs = assignmentExpression.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof final PsiReferenceExpression referenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiField)) {
         return false;
@@ -128,8 +124,7 @@ public final class ExpressionUtils {
     if (expression instanceof PsiLiteralExpression) {
       return true;
     }
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof final PsiPolyadicExpression polyadicExpression) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (PsiExpression operand : operands) {
         if (!isEvaluatedAtCompileTime(operand)) {
@@ -138,33 +133,28 @@ public final class ExpressionUtils {
       }
       return true;
     }
-    if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+    if (expression instanceof final PsiPrefixExpression prefixExpression) {
       final PsiExpression operand = prefixExpression.getOperand();
       return isEvaluatedAtCompileTime(operand);
     }
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    if (expression instanceof final PsiReferenceExpression referenceExpression) {
       final PsiElement qualifier = referenceExpression.getQualifier();
       if (qualifier instanceof PsiThisExpression) {
         return false;
       }
       final PsiElement element = referenceExpression.resolve();
-      if (element instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)element;
+      if (element instanceof final PsiVariable variable) {
         if (PsiTreeUtil.isAncestor(variable, expression, true)) {
           return false;
         }
         return variable.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(PsiFieldImpl.getDetachedInitializer(variable));
       }
     }
-    if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    if (expression instanceof final PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression deparenthesizedExpression = parenthesizedExpression.getExpression();
       return isEvaluatedAtCompileTime(deparenthesizedExpression);
     }
-    if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+    if (expression instanceof final PsiConditionalExpression conditionalExpression) {
       final PsiExpression condition = conditionalExpression.getCondition();
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       final PsiExpression elseExpression = conditionalExpression.getElseExpression();
@@ -172,15 +162,14 @@ public final class ExpressionUtils {
              isEvaluatedAtCompileTime(thenExpression) &&
              isEvaluatedAtCompileTime(elseExpression);
     }
-    if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+    if (expression instanceof final PsiTypeCastExpression typeCastExpression) {
       final PsiTypeElement castType = typeCastExpression.getCastType();
       if (castType == null) {
         return false;
       }
       final PsiType type = castType.getType();
       return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type) &&
-        isEvaluatedAtCompileTime(typeCastExpression.getOperand());
+             isEvaluatedAtCompileTime(typeCastExpression.getOperand());
     }
     return false;
   }
@@ -188,18 +177,10 @@ public final class ExpressionUtils {
   @Nullable
   public static PsiLiteralExpression getLiteral(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiLiteralExpression) {
-      return (PsiLiteralExpression)expression;
-    }
-    if (!(expression instanceof PsiTypeCastExpression)) {
-      return null;
-    }
-    final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+    if (expression instanceof PsiLiteralExpression literal) return literal;
+    if (!(expression instanceof PsiTypeCastExpression typeCastExpression)) return null;
     final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
-    if (!(operand instanceof PsiLiteralExpression)) {
-      return null;
-    }
-    return (PsiLiteralExpression)operand;
+    return operand instanceof PsiLiteralExpression literal ? literal : null;
   }
 
   public static boolean isLiteral(@Nullable PsiExpression expression) {
@@ -216,7 +197,8 @@ public final class ExpressionUtils {
   }
 
   @Contract("null -> false")
-  public static boolean isNullLiteral(@Nullable PsiExpression expression) {
+  public static boolean isNullLiteral(@Nullable PsiCaseLabelElement element) {
+    if (!(element instanceof PsiExpression expression)) return false;
     expression = PsiUtil.deparenthesizeExpression(expression);
     return expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null;
   }
@@ -234,21 +216,42 @@ public final class ExpressionUtils {
    */
   public static Stream<PsiExpression> nonStructuralChildren(@NotNull PsiExpression expression) {
     return StreamEx.ofTree(expression, e -> {
-      if (e instanceof PsiConditionalExpression) {
-        PsiConditionalExpression ternary = (PsiConditionalExpression)e;
-        return StreamEx.of(ternary.getThenExpression(), ternary.getElseExpression()).nonNull();
-      }
-      if (e instanceof PsiParenthesizedExpression) {
-        return StreamEx.ofNullable(((PsiParenthesizedExpression)e).getExpression());
-      }
-      return null;
-    }).remove(e -> e instanceof PsiConditionalExpression ||
-                   e instanceof PsiParenthesizedExpression)
+        if (e instanceof PsiConditionalExpression ternary) {
+          return StreamEx.of(ternary.getThenExpression(), ternary.getElseExpression()).nonNull();
+        }
+        if (e instanceof PsiParenthesizedExpression parens) {
+          return StreamEx.ofNullable(parens.getExpression());
+        }
+        if (e instanceof PsiSwitchExpression switchExpression) {
+          PsiCodeBlock switchBody = switchExpression.getBody();
+          if (switchBody == null) return StreamEx.empty();
+          List<PsiExpression> result = new ArrayList<>();
+          PsiStatement[] statements = switchBody.getStatements();
+          for (PsiStatement statement : statements) {
+            if (statement instanceof PsiSwitchLabeledRuleStatement rule) {
+              PsiStatement ruleBody = rule.getBody();
+              if (ruleBody instanceof PsiBlockStatement blockStatement) {
+                collectYieldExpressions(blockStatement, switchExpression, result);
+              }
+              else if (ruleBody instanceof PsiExpressionStatement expr) {
+                result.add(expr.getExpression());
+              }
+            }
+            else {
+              collectYieldExpressions(statement, switchExpression, result);
+            }
+          }
+          return StreamEx.of(result);
+        }
+        return null;
+      }).remove(e -> e instanceof PsiConditionalExpression ||
+                     e instanceof PsiParenthesizedExpression ||
+                     e instanceof PsiSwitchExpression)
       .map(e -> {
-        if(e instanceof PsiTypeCastExpression) {
-          PsiExpression operand = ((PsiTypeCastExpression)e).getOperand();
-          if(operand != null && !(e.getType() instanceof PsiPrimitiveType) &&
-             (!(operand.getType() instanceof PsiPrimitiveType) || PsiType.NULL.equals(operand.getType()))) {
+        if (e instanceof PsiTypeCastExpression cast) {
+          PsiExpression operand = cast.getOperand();
+          if (operand != null && !(e.getType() instanceof PsiPrimitiveType) &&
+              (!(operand.getType() instanceof PsiPrimitiveType) || PsiTypes.nullType().equals(operand.getType()))) {
             // Ignore to-primitive/from-primitive casts as they may actually change the value
             return PsiUtil.skipParenthesizedExprDown(operand);
           }
@@ -257,42 +260,40 @@ public final class ExpressionUtils {
       })
       .nonNull()
       .flatMap(e -> {
-        if(e instanceof PsiMethodCallExpression && GET_OR_DEFAULT.matches(e)) {
-          return StreamEx.of(e, ((PsiMethodCallExpression)e).getArgumentList().getExpressions()[1]);
+        if (e instanceof PsiMethodCallExpression call && GET_OR_DEFAULT.test(call)) {
+          return StreamEx.of(e, call.getArgumentList().getExpressions()[1]);
         }
         return StreamEx.of(e);
       });
+  }
+
+  private static void collectYieldExpressions(@NotNull PsiStatement statement,
+                                              @NotNull PsiSwitchExpression switchExpression,
+                                              @NotNull Collection<PsiExpression> result) {
+    Collection<PsiYieldStatement> yields = statement instanceof PsiYieldStatement yieldStatement
+                                           ? Collections.singleton(yieldStatement)
+                                           : PsiTreeUtil.findChildrenOfType(statement, PsiYieldStatement.class);
+    List<PsiYieldStatement> myYields = ContainerUtil.filter(yields, st -> st.findEnclosingExpression() == switchExpression);
+    for (PsiYieldStatement yield : myYields) {
+      ContainerUtil.addIfNotNull(result, yield.getExpression());
+    }
   }
 
   public static boolean isZero(@Nullable PsiExpression expression) {
     if (expression == null) {
       return false;
     }
-    final PsiType expressionType = expression.getType();
-    final Object value = ConstantExpressionUtil.computeCastTo(expression,
-                                                              expressionType);
+    final Object value = computeConstantExpression(expression);
     if (value == null) {
       return false;
     }
-    if (value instanceof Double && ((Double)value).doubleValue() == 0.0) {
-      return true;
-    }
-    if (value instanceof Float && ((Float)value).floatValue() == 0.0f) {
-      return true;
-    }
-    if (value instanceof Integer && ((Integer)value).intValue() == 0) {
-      return true;
-    }
-    if (value instanceof Long && ((Long)value).longValue() == 0L) {
-      return true;
-    }
-    if (value instanceof Short && ((Short)value).shortValue() == 0) {
-      return true;
-    }
-    if (value instanceof Character && ((Character)value).charValue() == 0) {
-      return true;
-    }
-    return value instanceof Byte && ((Byte)value).byteValue() == 0;
+    return value instanceof Double dValue && dValue == 0.0 ||
+           value instanceof Float fValue && fValue == 0.0f ||
+           value instanceof Integer iValue && iValue == 0 ||
+           value instanceof Long lValue && lValue == 0L ||
+           value instanceof Short sValue && sValue == 0 ||
+           value instanceof Character cValue && cValue == 0 ||
+           value instanceof Byte bValue && bValue == 0;
   }
 
   public static boolean isOne(@Nullable PsiExpression expression) {
@@ -304,37 +305,23 @@ public final class ExpressionUtils {
       return false;
     }
     //noinspection FloatingPointEquality
-    if (value instanceof Double && ((Double)value).doubleValue() == 1.0) {
-      return true;
-    }
-    if (value instanceof Float && ((Float)value).floatValue() == 1.0f) {
-      return true;
-    }
-    if (value instanceof Integer && ((Integer)value).intValue() == 1) {
-      return true;
-    }
-    if (value instanceof Long && ((Long)value).longValue() == 1L) {
-      return true;
-    }
-    if (value instanceof Short && ((Short)value).shortValue() == 1) {
-      return true;
-    }
-    if (value instanceof Character && ((Character)value).charValue() == 1) {
-      return true;
-    }
-    return value instanceof Byte && ((Byte)value).byteValue() == 1;
+    return value instanceof Double dValue && dValue == 1.0 ||
+           value instanceof Float fValue && fValue == 1.0f ||
+           value instanceof Integer iValue && iValue == 1 ||
+           value instanceof Long lValue && lValue == 1L ||
+           value instanceof Short sValue && sValue == 1 ||
+           value instanceof Character cValue && cValue == 1 ||
+           value instanceof Byte bValue && bValue == 1;
   }
 
   public static boolean isNegation(@Nullable PsiExpression condition,
                                    boolean ignoreNegatedNullComparison, boolean ignoreNegatedZeroComparison) {
     condition = PsiUtil.skipParenthesizedExprDown(condition);
-    if (condition instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
+    if (condition instanceof final PsiPrefixExpression prefixExpression) {
       final IElementType tokenType = prefixExpression.getOperationTokenType();
       return tokenType.equals(JavaTokenType.EXCL);
     }
-    else if (condition instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+    else if (condition instanceof final PsiBinaryExpression binaryExpression) {
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       if (lhs == null || rhs == null) {
@@ -356,34 +343,18 @@ public final class ExpressionUtils {
   }
 
   private static boolean isZeroLiteral(PsiExpression expression) {
-    if (!(expression instanceof PsiLiteralExpression)) {
-      return false;
-    }
-    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
-    final Object value = literalExpression.getValue();
-    if (value instanceof Integer) {
-      if (((Integer)value).intValue() == 0) {
-        return true;
-      }
-    } else if (value instanceof Long) {
-      if (((Long)value).longValue() == 0L) {
-        return true;
-      }
-    }
-    return false;
+    if (!(expression instanceof PsiLiteralExpression literal)) return false;
+    final Object value = literal.getValue();
+    return value instanceof Integer iValue && iValue == 0 ||
+           value instanceof Long lValue && lValue == 0L;
   }
 
-  public static boolean isOffsetArrayAccess(
-    @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    final PsiExpression strippedExpression =
-      PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
+  public static boolean isOffsetArrayAccess(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
+    final PsiExpression strippedExpression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (!(strippedExpression instanceof PsiArrayAccessExpression arrayAccessExpression)) {
       return false;
     }
-    final PsiArrayAccessExpression arrayAccessExpression =
-      (PsiArrayAccessExpression)strippedExpression;
-    final PsiExpression arrayExpression =
-      arrayAccessExpression.getArrayExpression();
+    final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
     if (VariableAccessUtils.variableIsUsed(variable, arrayExpression)) {
       return false;
     }
@@ -399,13 +370,9 @@ public final class ExpressionUtils {
     if (isReferenceTo(expression, variable)) {
       return true;
     }
-    final PsiExpression strippedExpression =
-      PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(strippedExpression instanceof PsiBinaryExpression)) {
+    if (!(PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)strippedExpression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (!JavaTokenType.PLUS.equals(tokenType) &&
         !JavaTokenType.MINUS.equals(tokenType)) {
@@ -433,19 +400,6 @@ public final class ExpressionUtils {
     return false;
   }
 
-  public static boolean isVariableGreaterThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
-    if (binaryExpression == null) return false;
-    final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
-      return isReferenceTo(binaryExpression.getLOperand(), variable);
-    }
-    else if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
-      return isReferenceTo(binaryExpression.getROperand(), variable);
-    }
-    return false;
-  }
-
   /**
    * Returns true if given expression is an operand of String concatenation.
    * Also works if expression parent is {@link PsiParenthesizedExpression}.
@@ -455,10 +409,9 @@ public final class ExpressionUtils {
    */
   public static boolean isStringConcatenationOperand(PsiExpression expression) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (!(parent instanceof PsiPolyadicExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     if (!JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())) {
       return false;
     }
@@ -484,6 +437,16 @@ public final class ExpressionUtils {
     if (expression == null) {
       return false;
     }
+    if (typeName.equals(CommonClassNames.JAVA_LANG_STRING)) {
+      if (expression instanceof PsiUnaryExpression || expression instanceof PsiInstanceOfExpression ||
+          expression instanceof PsiFunctionalExpression) {
+        return false;
+      }
+      if (expression instanceof PsiPolyadicExpression poly) {
+        IElementType tokenType = poly.getOperationTokenType();
+        if (!tokenType.equals(JavaTokenType.PLUS)) return false;
+      }
+    }
     final PsiType type = expression.getType();
     return TypeUtils.typeEquals(typeName, type);
   }
@@ -493,23 +456,21 @@ public final class ExpressionUtils {
   }
 
   /**
-   * The method checks if the passed expression does not need to be converted to string explicitly,
+   * The method checks if the passed expression needs to be converted to string explicitly,
    * because the containing expression (e.g. a {@code PrintStream#println} call or string concatenation expression)
    * will convert to the string automatically.
-   *
+   * <p>
    * This is the case for some StringBuilder/Buffer, PrintStream/Writer and some logging methods.
-   * Otherwise it considers the conversion necessary and returns true.
+   * Otherwise, it considers the conversion necessary and returns true.
    *
    * @param expression an expression to examine
-   * @param throwable is the first parameter a conversion to string on a throwable? Either {@link Throwable#toString()}
-   *                 or {@link String#valueOf(Object)}
-   *
-   * @return true if the explicit conversion to string is not required, otherwise - false
+   * @param throwable  is the first parameter a conversion to string on a throwable? Either {@link Throwable#toString()}
+   *                   or {@link String#valueOf(Object)}
+   * @return true if the explicit conversion to string is required, otherwise - false
    */
   public static boolean isConversionToStringNecessary(PsiExpression expression, boolean throwable) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-    if (parent instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    if (parent instanceof PsiPolyadicExpression polyadicExpression) {
       final PsiType type = polyadicExpression.getType();
       if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
         return true;
@@ -527,13 +488,12 @@ public final class ExpressionUtils {
         }
       }
       return true;
-    } else if (parent instanceof PsiExpressionList) {
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
+    }
+    else if (parent instanceof PsiExpressionList expressionList) {
       final PsiElement grandParent = expressionList.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return true;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression1 = methodCallExpression.getMethodExpression();
       @NonNls final String name = methodExpression1.getReferenceName();
       final PsiExpression[] expressions = expressionList.getExpressions();
@@ -567,15 +527,50 @@ public final class ExpressionUtils {
         }
       }
       else if (FormatUtils.isFormatCall(methodCallExpression)) {
-        PsiExpression formatArgument = FormatUtils.getFormatArgument(expressionList);
-        return PsiTreeUtil.isAncestor(formatArgument, expression, false);
-      } else {
+        return isConversionToStringNecessary(expression, methodCallExpression);
+      }
+      else {
         return true;
       }
-    } else {
+    }
+    else {
       return true;
     }
     return false;
+  }
+
+  /**
+   * The method checks if the passed expression is an argument of {@code formatCall} which
+   * needs to be converted to string explicitly.
+   *
+   * @param expression an expression to examine
+   * @param formatCall e.g. a {@code java.io.Console#format} call
+   * @return true if the explicit conversion to string is required, otherwise - false
+   */
+  private static boolean isConversionToStringNecessary(PsiExpression expression,
+                                                       PsiMethodCallExpression formatCall) {
+    PsiExpressionList expressionList = formatCall.getArgumentList();
+    PsiExpression formatArgument = FormatUtils.getFormatArgument(expressionList);
+    if (PsiTreeUtil.isAncestor(formatArgument, expression, false)) return true;
+    if (!(expression instanceof PsiMethodCallExpression)) return false;
+    PsiExpression[] expressions = formatCall.getArgumentList().getExpressions();
+    int formatArgumentIndex = ArrayUtil.find(expressions, formatArgument);
+    if (formatArgumentIndex == -1) return false;
+    int expressionIndex = ArrayUtil.find(expressions, expression);
+    if (expressionIndex != formatArgumentIndex + 1 || expressionIndex != expressions.length - 1) return false;
+    PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)expression);
+    if (qualifierCall == null || qualifierCall.getTypeArguments().length > 0) return false;
+    PsiExpression qualifier = qualifierCall.getMethodExpression().getQualifierExpression();
+    if (qualifier == null) return false;
+    PsiClassType type = tryCast(qualifier.getType(), PsiClassType.class);
+    if (type == null || type.isRaw()) return false;
+    PsiMethod method = qualifierCall.resolveMethod();
+    if (method == null) return false;
+    PsiType returnType = method.getReturnType();
+    PsiTypeParameter returnTypeParameter = tryCast(PsiUtil.resolveClassInClassTypeOnly(returnType), PsiTypeParameter.class);
+    return returnTypeParameter != null &&
+           returnTypeParameter.getOwner() == method &&
+           !ContainerUtil.map(method.getParameterList().getParameters(), PsiParameter::getType).contains(returnType);
   }
 
   private static boolean isCallToMethodIn(PsiMethodCallExpression methodCallExpression, String... classNames) {
@@ -588,22 +583,12 @@ public final class ExpressionUtils {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    for (String className : classNames) {
-      if (className.equals(qualifiedName)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(qualifiedName, classNames);
   }
 
   public static boolean isNegative(@NotNull PsiExpression expression) {
-    final PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiPrefixExpression)) {
-      return false;
-    }
-    final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
-    final IElementType tokenType = prefixExpression.getOperationTokenType();
-    return JavaTokenType.MINUS.equals(tokenType);
+    return expression.getParent() instanceof PsiPrefixExpression prefixExpression &&
+           JavaTokenType.MINUS.equals(prefixExpression.getOperationTokenType());
   }
 
   @Contract("null, _ -> null")
@@ -618,10 +603,9 @@ public final class ExpressionUtils {
   @Nullable
   public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiPolyadicExpression)) {
+    if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return null;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (equals) {
       if (!JavaTokenType.EQEQ.equals(tokenType)) {
@@ -638,10 +622,10 @@ public final class ExpressionUtils {
       return null;
     }
     PsiExpression comparedToNull = null;
-    if (PsiType.NULL.equals(operands[0].getType())) {
+    if (PsiTypes.nullType().equals(operands[0].getType())) {
       comparedToNull = operands[1];
     }
-    else if (PsiType.NULL.equals(operands[1].getType())) {
+    else if (PsiTypes.nullType().equals(operands[1].getType())) {
       comparedToNull = operands[0];
     }
     comparedToNull = PsiUtil.skipParenthesizedExprDown(comparedToNull);
@@ -691,36 +675,9 @@ public final class ExpressionUtils {
   }
 
   public static boolean isStringConcatenation(PsiElement element) {
-    if (!(element instanceof PsiPolyadicExpression)) {
-      return false;
-    }
-    final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
+    if (!(element instanceof final PsiPolyadicExpression expression)) return false;
     final PsiType type = expression.getType();
     return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-  }
-
-  public static boolean isAnnotatedNotNull(PsiExpression expression) {
-    return isAnnotated(expression, false);
-  }
-
-  public static boolean isAnnotatedNullable(PsiExpression expression) {
-    return isAnnotated(expression, true);
-  }
-
-  private static boolean isAnnotated(PsiExpression expression, boolean nullable) {
-    expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiModifierListOwner)) {
-      return false;
-    }
-    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-    return nullable ?
-           NullableNotNullManager.isNullable(modifierListOwner):
-           NullableNotNullManager.isNotNull(modifierListOwner);
   }
 
   /**
@@ -747,31 +704,29 @@ public final class ExpressionUtils {
         isEvaluatedAtCompileTime(expression)) {
       return true;
     }
-    if (expression instanceof PsiConditionalExpression) {
-      PsiConditionalExpression cond = (PsiConditionalExpression)expression;
+    if (expression instanceof PsiConditionalExpression cond) {
       return isSafelyRecomputableExpression(cond.getCondition()) &&
              isSafelyRecomputableExpression(cond.getThenExpression()) &&
              isSafelyRecomputableExpression(cond.getElseExpression());
     }
-    if(expression instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiElement target = ref.resolve();
       if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
-      PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
+      PsiExpression qualifier = ref.getQualifierExpression();
       if (target == null && qualifier == null) return true;
-      if (target instanceof PsiField) {
-        PsiField field = (PsiField)target;
+      if (target instanceof PsiField field) {
         if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
         return qualifier == null || qualifier instanceof PsiThisExpression || field.hasModifierProperty(PsiModifier.STATIC);
       }
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      return KNOWN_SIMPLE_CALLS.test((PsiMethodCallExpression)expression);
+    if (expression instanceof PsiMethodCallExpression call) {
+      return KNOWN_SIMPLE_CALLS.test(call);
     }
     return false;
   }
 
   /**
-   * Returns assignment expression if supplied element is a statement which contains assignment expression
+   * Returns assignment expression if supplied element is a statement which contains assignment expression,
    * or it's an assignment expression itself. Only simple assignments are returned (like a = b, not a+= b).
    *
    * @param element element to get assignment expression from
@@ -785,11 +740,8 @@ public final class ExpressionUtils {
     }
     if (element instanceof PsiExpression) {
       element = PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
-      if (element instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
-        if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-          return assignment;
-        }
+      if (element instanceof PsiAssignmentExpression assignment && assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+        return assignment;
       }
     }
     return null;
@@ -802,7 +754,7 @@ public final class ExpressionUtils {
    *
    * @param element element to get assignment expression from
    * @param target a variable to extract an assignment to
-   * @return extracted assignment r-value or null if assignment is not found or assignment is compound or it's an assignment
+   * @return extracted assignment r-value or null if assignment is not found or assignment is compound, or it's an assignment
    * to the wrong variable
    */
   @Contract("null, _ -> null; _, null -> null")
@@ -826,9 +778,8 @@ public final class ExpressionUtils {
     }
     if (parent instanceof PsiExpressionList) {
       final PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-        final PsiMethod method = methodCallExpression.resolveMethod();
+      if (grandParent instanceof final PsiMethodCallExpression call) {
+        final PsiMethod method = call.resolveMethod();
         if (method != null &&
             AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
           return false;
@@ -840,7 +791,7 @@ public final class ExpressionUtils {
       final IElementType sign = ((PsiUnaryExpression)parent).getOperationTokenType();
       return sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS;
     }
-    if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
+    if (expressionType == null || expressionType.equals(PsiTypes.voidType()) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
       return false;
     }
     final PsiPrimitiveType primitiveType = (PsiPrimitiveType)expressionType;
@@ -855,18 +806,15 @@ public final class ExpressionUtils {
     if (!expectedType.isAssignableFrom(boxedType)) {
       // JLS 5.2 Assignment Conversion
       // check if a narrowing primitive conversion is applicable
-      if (!(expectedType instanceof PsiClassType) || !PsiUtil.isConstantExpression(expression)) {
+      if (!(expectedType instanceof PsiClassType classType) || !PsiUtil.isConstantExpression(expression)) {
         return false;
       }
-      final PsiClassType classType = (PsiClassType)expectedType;
       final String className = classType.getCanonicalText();
       if (!convertableBoxedClassNames.contains(className)) {
         return false;
       }
-      if (!PsiType.BYTE.equals(expressionType) && !PsiType.CHAR.equals(expressionType) &&
-          !PsiType.SHORT.equals(expressionType) && !PsiType.INT.equals(expressionType)) {
-        return false;
-      }
+      return PsiTypes.byteType().equals(expressionType) || PsiTypes.charType().equals(expressionType) ||
+             PsiTypes.shortType().equals(expressionType) || PsiTypes.intType().equals(expressionType);
     }
     return true;
   }
@@ -891,8 +839,7 @@ public final class ExpressionUtils {
   public static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
     if (variable == null) return false;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiReferenceExpression)) return false;
-    PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+    if (!(expression instanceof PsiReferenceExpression ref)) return false;
     if ((variable instanceof PsiLocalVariable || variable instanceof PsiParameter) && ref.isQualified()) {
       // Optimization: references to locals and parameters are unqualified
       return false;
@@ -908,31 +855,26 @@ public final class ExpressionUtils {
    */
   @Contract(value = "null -> null", pure = true)
   public static PsiMethodCallExpression getCallForQualifier(PsiExpression qualifier) {
-    if(qualifier == null) return null;
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
-    if(parent instanceof PsiReferenceExpression) {
-      PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
-      if(PsiTreeUtil.isAncestor(methodExpression.getQualifierExpression(), qualifier, false)) {
-        PsiElement gParent = methodExpression.getParent();
-        if (gParent instanceof PsiMethodCallExpression) {
-          return (PsiMethodCallExpression)gParent;
-        }
-      }
+    if (qualifier != null &&
+        PsiUtil.skipParenthesizedExprUp(qualifier.getParent()) instanceof PsiReferenceExpression methodExpr &&
+        PsiTreeUtil.isAncestor(methodExpr.getQualifierExpression(), qualifier, false) &&
+        methodExpr.getParent() instanceof PsiMethodCallExpression call) {
+      return call;
     }
     return null;
   }
 
   /**
    * Returns an array expression from array length retrieval expression
+   *
    * @param expression expression to extract an array expression from
    * @return an array expression or null if supplied expression is not array length retrieval
    */
   @Nullable
-  public static PsiExpression getArrayFromLengthExpression(PsiExpression expression) {
+  @Contract("null -> null")
+  public static PsiExpression getArrayFromLengthExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiReferenceExpression)) return null;
-    final PsiReferenceExpression reference =
-      (PsiReferenceExpression)expression;
+    if (!(expression instanceof final PsiReferenceExpression reference)) return null;
     final String referenceName = reference.getReferenceName();
     if (!HardcodedMethodConstants.LENGTH.equals(referenceName)) return null;
     final PsiExpression qualifier = reference.getQualifierExpression();
@@ -948,7 +890,8 @@ public final class ExpressionUtils {
    *
    * @param ref a reference expression to get an effective qualifier for
    * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
-   *         May return null if reference points to local or member of anonymous class referred from inner class
+   * May return null if reference points to local or member of anonymous class referred from inner class
+   * or if reference points to non-static member of class from static context
    */
   @Nullable
   public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref) {
@@ -957,6 +900,24 @@ public final class ExpressionUtils {
     PsiMember member = tryCast(ref.resolve(), PsiMember.class);
     if (member == null) {
       // Reference resolves to non-member: probably variable/parameter/etc.
+      return null;
+    }
+    return getEffectiveQualifier(ref, member);
+  }
+
+  /**
+   * Returns an effective qualifier for a reference that resolves to a member of a Java class. If qualifier is not
+   * specified, then tries to construct it e.g. creating a corresponding {@link PsiThisExpression}.
+   *
+   * @param ref    a reference expression to get an effective qualifier for
+   * @param member a member the reference is resolved to
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
+   * May return null if reference points to local or member of anonymous class referred from inner class
+   * or if reference points to non-static member of class from static context
+   */
+  public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref, @NotNull PsiMember member) {
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(ref, PsiMethod.class, PsiClassInitializer.class, PsiField.class);
+    if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingMember)) {
       return null;
     }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
@@ -970,8 +931,10 @@ public final class ExpressionUtils {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
       }
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+        if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
         containingClass = ClassUtils.getContainingClass(containingClass);
         while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+          if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
           containingClass = ClassUtils.getContainingClass(containingClass);
         }
         if (containingClass != null) {
@@ -979,7 +942,8 @@ public final class ExpressionUtils {
           if (thisQualifier == null) {
             if (PsiUtil.isLocalClass(containingClass)) {
               thisQualifier = containingClass.getName();
-            } else {
+            }
+            else {
               // Cannot qualify anonymous class
               return null;
             }
@@ -989,6 +953,10 @@ public final class ExpressionUtils {
       }
     }
     return factory.createExpressionFromText(PsiKeyword.THIS, ref);
+  }
+
+  private static boolean isStaticMember(@Nullable PsiMember member) {
+    return member != null && member.hasModifierProperty(PsiModifier.STATIC);
   }
 
   /**
@@ -1039,21 +1007,18 @@ public final class ExpressionUtils {
    * Returns the expression itself (probably with stripped parentheses) or the corresponding value if the expression is a local variable
    * reference which is initialized and not used anywhere else
    *
-   * @param expression
    * @return a resolved expression or expression itself
    */
   @Contract("null -> null")
   @Nullable
   public static PsiExpression resolveExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)expression;
-      PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
-      if (variable != null && !(variable instanceof PsiResourceVariable)) {
-        PsiExpression initializer = variable.getInitializer();
-        if (initializer != null && ReferencesSearch.search(variable).allMatch(ref -> ref == reference)) {
-          return initializer;
-        }
+    if (expression instanceof PsiReferenceExpression reference &&
+        reference.resolve() instanceof PsiLocalVariable variable &&
+        !(variable instanceof PsiResourceVariable)) {
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer != null && ReferencesSearch.search(variable).allMatch(ref -> ref == reference)) {
+        return initializer;
       }
     }
     return expression;
@@ -1068,9 +1033,18 @@ public final class ExpressionUtils {
     return tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
   }
 
+  @Contract("null -> null")
+  @Nullable
+  public static PsiVariable resolveVariable(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
+    if(referenceExpression == null) return null;
+    return tryCast(referenceExpression.resolve(), PsiVariable.class);
+  }
+
   public static boolean isOctalLiteral(PsiLiteralExpression literal) {
     final PsiType type = literal.getType();
-    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+    if (!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type)) {
       return false;
     }
     if (literal.getValue() == null) {
@@ -1094,7 +1068,7 @@ public final class ExpressionUtils {
     AtomicBoolean result = new AtomicBoolean(false);
     root.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         if (matcher.test(expression)) {
           result.set(true);
@@ -1103,7 +1077,7 @@ public final class ExpressionUtils {
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
         if (isMatchingChildAlwaysExecuted(expression.getCondition(), matcher) ||
             (isMatchingChildAlwaysExecuted(expression.getThenExpression(), matcher) &&
              isMatchingChildAlwaysExecuted(expression.getElseExpression(), matcher))) {
@@ -1113,7 +1087,7 @@ public final class ExpressionUtils {
       }
 
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         IElementType type = expression.getOperationTokenType();
         if (type.equals(JavaTokenType.OROR) || type.equals(JavaTokenType.ANDAND)) {
           PsiExpression firstOperand = ArrayUtil.getFirstElement(expression.getOperands());
@@ -1128,10 +1102,10 @@ public final class ExpressionUtils {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
     });
     return result.get();
   }
@@ -1172,8 +1146,8 @@ public final class ExpressionUtils {
     if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
 
     if (to instanceof PsiPolyadicExpression && from instanceof PsiPolyadicExpression) {
-      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff(((PsiPolyadicExpression)from),
-                                                                                                ((PsiPolyadicExpression)to));
+      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff((PsiPolyadicExpression)from,
+                                                                                                (PsiPolyadicExpression)to);
       from = polyadicDiff.first;
       to = polyadicDiff.second;
     }
@@ -1194,7 +1168,7 @@ public final class ExpressionUtils {
     if (to instanceof PsiBinaryExpression && ((PsiBinaryExpression)to).getOperationTokenType().equals(JavaTokenType.PLUS)) {
       PsiExpression left = ((PsiBinaryExpression)to).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)to).getROperand();
-      if (right != null && (eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff)) ||
+      if (right != null && eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff) ||
           (eq.expressionsAreEquivalent(right, from) && eq.expressionsAreEquivalent(left, diff))) {
         return true;
       }
@@ -1314,8 +1288,7 @@ public final class ExpressionUtils {
     PsiElement scope = PsiTreeUtil.getParentOfType(array, array instanceof PsiField ? PsiClass.class : PsiCodeBlock.class);
     if (scope == null) return false;
     return PsiTreeUtil.processElements(scope, e -> {
-      if (!(e instanceof PsiReferenceExpression)) return true;
-      PsiReferenceExpression ref = (PsiReferenceExpression)e;
+      if (!(e instanceof PsiReferenceExpression ref)) return true;
       if (!ref.isReferenceTo(array)) return true;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
       if (parent instanceof PsiForeachStatement && PsiTreeUtil.isAncestor(((PsiForeachStatement)parent).getIteratedValue(), ref, false)) {
@@ -1343,14 +1316,10 @@ public final class ExpressionUtils {
   public static boolean isLocallyDefinedExpression(PsiExpression expression) {
     return PsiTreeUtil.processElements(expression, e -> {
       if (e instanceof PsiCallExpression) return false;
-      if (e instanceof PsiReferenceExpression) {
-        PsiElement target = ((PsiReferenceExpression)e).resolve();
-        if (target instanceof PsiField) {
-          return ((PsiField)target).hasModifierProperty(PsiModifier.FINAL);
-        }
+      if (e instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiField field) {
+        return field.hasModifierProperty(PsiModifier.FINAL);
       }
-      if (e instanceof PsiArrayAccessExpression) return false;
-      return true;
+      return !(e instanceof PsiArrayAccessExpression);
     });
   }
 
@@ -1361,15 +1330,14 @@ public final class ExpressionUtils {
    * @param expression expression to find the range in
    * @param from start offset of substring in the String value of the expression
    * @param to end offset of substring in the String value of the expression
-   * @return found range or null if cannot be found
+   * @return found range or null, if it cannot be found
    */
   @Nullable
   @Contract(value = "null, _, _ -> null", pure = true)
   public static TextRange findStringLiteralRange(PsiExpression expression, int from, int to) {
     if (to < 0 || from > to) return null;
     if (expression == null || !TypeUtils.isJavaLangString(expression.getType())) return null;
-    if (expression instanceof PsiLiteralExpression) {
-      PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
+    if (expression instanceof PsiLiteralExpression literalExpression) {
       String value = tryCast(literalExpression.getValue(), String.class);
       if (value == null || value.length() < from || value.length() < to) return null;
       String text = expression.getText();
@@ -1385,8 +1353,7 @@ public final class ExpressionUtils {
       TextRange range = findStringLiteralRange(operand, from, to);
       return range == null ? null : range.shiftRight(operand.getStartOffsetInParent());
     }
-    if (expression instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression concatenation = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression concatenation) {
       if (concatenation.getOperationTokenType() != JavaTokenType.PLUS) return null;
       PsiExpression[] operands = concatenation.getOperands();
       for (PsiExpression operand : operands) {
@@ -1413,17 +1380,14 @@ public final class ExpressionUtils {
   public static boolean isVoidContext(PsiExpression expression) {
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (element instanceof PsiExpressionStatement) {
-      if (element.getParent() instanceof PsiSwitchLabeledRuleStatement) {
-        PsiSwitchBlock block = ((PsiSwitchLabeledRuleStatement)element.getParent()).getEnclosingSwitchBlock();
-        return !(block instanceof PsiSwitchExpression);
-      }
-      return true;
+      return !(element.getParent() instanceof PsiSwitchLabeledRuleStatement ruleStatement) ||
+             !(ruleStatement.getEnclosingSwitchBlock() instanceof PsiSwitchExpression);
     }
     if (element instanceof PsiExpressionList && element.getParent() instanceof PsiExpressionListStatement) {
       return true;
     }
-    if (element instanceof PsiLambdaExpression) {
-      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)element))) return true;
+    if (element instanceof PsiLambdaExpression lambda) {
+      return PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
     }
     return false;
   }
@@ -1437,19 +1401,15 @@ public final class ExpressionUtils {
   @Nullable
   public static PsiExpression getExpressionComparedTo(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)parent;
-      if (ComparisonUtils.isEqualityComparison(binOp)) {
-        PsiExpression leftOperand = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
-        PsiExpression rightOperand = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
-        return PsiTreeUtil.isAncestor(leftOperand, expression, false) ? rightOperand : leftOperand;
-      }
+    if (parent instanceof PsiBinaryExpression binOp && ComparisonUtils.isEqualityComparison(binOp)) {
+      PsiExpression leftOperand = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
+      PsiExpression rightOperand = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
+      return PsiTreeUtil.isAncestor(leftOperand, expression, false) ? rightOperand : leftOperand;
     }
-    if (parent instanceof PsiExpressionList) {
-      PsiMethodCallExpression call = tryCast(parent.getParent(), PsiMethodCallExpression.class);
-      if (call != null && MethodCallUtils.isEqualsCall(call)) {
-        return PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
-      }
+    if (parent instanceof PsiExpressionList &&
+        parent.getParent() instanceof PsiMethodCallExpression call &&
+        MethodCallUtils.isEqualsCall(call)) {
+      return PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
     }
     PsiMethodCallExpression call = getCallForQualifier(expression);
     if (call != null && MethodCallUtils.isEqualsCall(call)) {
@@ -1523,12 +1483,9 @@ public final class ExpressionUtils {
       parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
     }
 
-    if (parent instanceof PsiExpressionList) {
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
-      final PsiElement grandParent = expressionList.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) return false;
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)grandParent;
-      if (!IMPLICIT_TO_STRING_METHOD_NAMES.contains(call.getMethodExpression().getReferenceName())) return false;
+    if (parent instanceof PsiExpressionList expressionList &&
+        expressionList.getParent() instanceof PsiMethodCallExpression call &&
+        IMPLICIT_TO_STRING_METHOD_NAMES.contains(call.getMethodExpression().getReferenceName())) {
       final PsiExpression[] arguments = expressionList.getExpressions();
       final PsiMethod method = call.resolveMethod();
       if (method == null) return false;
@@ -1537,36 +1494,39 @@ public final class ExpressionUtils {
       if (containingClass == null) return false;
       final String className = containingClass.getQualifiedName();
       if (className == null) return false;
-      switch (methodName) {
-        case "append":
-          if (arguments.length != 1) return false;
+      return switch (methodName) {
+        case "append" -> {
+          if (arguments.length != 1) yield false;
           if (!className.equals(CommonClassNames.JAVA_LANG_STRING_BUILDER) &&
               !className.equals(CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
-            return false;
+            yield false;
           }
-          return !hasCharArrayParameter(method);
-        case "valueOf":
-          if (arguments.length != 1 || !CommonClassNames.JAVA_LANG_STRING.equals(className)) return false;
-          return !hasCharArrayParameter(method);
-        case "print":
-        case "println":
-          if (arguments.length != 1 || hasCharArrayParameter(method)) return false;
-          return "java.util.Formatter".equals(className) ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
-        case "printf":
-        case "format":
-          if (arguments.length < 1) return false;
+          yield !hasCharArrayParameter(method);
+        }
+        case "valueOf" -> {
+          if (arguments.length != 1 || !CommonClassNames.JAVA_LANG_STRING.equals(className)) yield false;
+          yield !hasCharArrayParameter(method);
+        }
+        case "print", "println" -> {
+          if (arguments.length != 1 || hasCharArrayParameter(method)) yield false;
+          yield "java.util.Formatter".equals(className) ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
+        }
+        case "printf", "format" -> {
+          if (arguments.length < 1) yield false;
           final PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (parameters.length == 0) return false;
+          if (parameters.length == 0) yield false;
           final PsiParameter parameter = parameters[0];
           final PsiType firstParameterType = parameter.getType();
           final int minArguments = firstParameterType.equalsToText("java.util.Locale") ? 4 : 3;
-          if (arguments.length < minArguments) return false;
-          return CommonClassNames.JAVA_LANG_STRING.equals(className) || "java.util.Formatter".equals(className) ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
-                 InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
-      }
+          if (arguments.length < minArguments) yield false;
+          yield CommonClassNames.JAVA_LANG_STRING.equals(className) || "java.util.Formatter".equals(className) ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintStream") ||
+                InheritanceUtil.isInheritor(containingClass, "java.io.PrintWriter");
+        }
+        default -> false;
+      };
     }
     return false;
   }
@@ -1578,7 +1538,7 @@ public final class ExpressionUtils {
 
   /**
    * Convert initializer expression to a normal expression that could be used in another context.
-   * Currently the only case when initializer cannot be used in another context is array initializer:
+   * Currently, the only case when initializer cannot be used in another context is array initializer:
    * in this case it's necessary to add explicit array creation like {@code new ArrayType[] {...}}.
    *
    * <p>
@@ -1609,7 +1569,7 @@ public final class ExpressionUtils {
    * @param project current project.
    * @return the assignment expression created if the declaration was successfully split.
    * In this case, the declaration is still valid and could be used afterwards.
-   * Returns null if it the splitting wasn't successful (no changes in the document are performed in this case).
+   * Returns null if the splitting wasn't successful (no changes in the document are performed in this case).
    */
   @Nullable
   public static PsiAssignmentExpression splitDeclaration(@NotNull PsiDeclarationStatement declaration, @NotNull Project project) {
@@ -1708,5 +1668,21 @@ public final class ExpressionUtils {
       return false;
     }
     return true;
+  }
+
+  /**
+   * @param expression  the expression to check
+   * @return true, if the specified expression is the only expression in the method (it's value is returned by the method). False otherwise.
+   */
+  public static boolean isOnlyExpressionInMethod(@NotNull PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiReturnStatement)) {
+      return false;
+    }
+    final PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiCodeBlock codeBlock) || !(grandParent.getParent() instanceof PsiMethod)) {
+      return false;
+    }
+    return codeBlock.getStatementCount() == 1;
   }
 }

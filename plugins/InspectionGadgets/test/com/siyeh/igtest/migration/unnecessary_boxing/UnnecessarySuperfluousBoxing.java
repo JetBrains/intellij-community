@@ -23,7 +23,7 @@ public class UnnecessarySuperfluousBoxing {
     }
 
     Integer foo2(String foo, int bar) {
-        return foo == null ? <warning descr="Unnecessary boxing 'Integer.valueOf(0)'">Integer.valueOf(0)</warning> : bar;
+        return foo == null ? Integer.<warning descr="Unnecessary boxing">valueOf</warning>(0) : bar;
     }
 
     void noUnboxing(Object val) {
@@ -56,8 +56,8 @@ public class UnnecessarySuperfluousBoxing {
     }
 
     int bababoxing(int i) {
-        int j = <warning descr="Unnecessary boxing 'Integer.valueOf(i)'">Integer.valueOf(i)</warning>;
-      return <warning descr="Unnecessary boxing 'Integer.valueOf(i)'">Integer.valueOf(i)</warning>;
+        int j = Integer.<warning descr="Unnecessary boxing">valueOf</warning>(i);
+      return Integer.<warning descr="Unnecessary boxing">valueOf</warning>(i);
     }
 
     void bibaboxing() {

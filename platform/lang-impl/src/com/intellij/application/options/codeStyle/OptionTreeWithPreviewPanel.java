@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -64,13 +65,13 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     };
     myPanel.add(scrollPane,
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       JBUI.emptyInsets(), 0, 0));
+                                       JBInsets.emptyInsets(), 0, 0));
 
     JPanel previewPanel = createPreviewPanel();
 
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                                       JBUI.emptyInsets(), 0, 0));
+                                       JBInsets.emptyInsets(), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
@@ -173,14 +174,14 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     DefaultTreeModel model = new DefaultTreeModel(rootNode);
 
     final Tree optionsTree = new Tree(model);
-    TreeSpeedSearch speedSearch = new TreeSpeedSearch(
+    TreeSpeedSearch speedSearch = TreeSpeedSearch.installOn(
       optionsTree,
+      true,
       path -> {
         final Object lastPathComponent = path.getLastPathComponent();
         return lastPathComponent instanceof MyToggleTreeNode ? ((MyToggleTreeNode)lastPathComponent).getText() :
                lastPathComponent.toString();
-      },
-      true);
+      });
     mySearchHelper = new SpeedSearchHelper(speedSearch);
     speedSearch.setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(optionsTree);
@@ -259,8 +260,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       return;
     }
     Object o = treePath.getLastPathComponent();
-    if (o instanceof MyToggleTreeNode) {
-      MyToggleTreeNode node = (MyToggleTreeNode)o;
+    if (o instanceof MyToggleTreeNode node) {
       if (!node.isEnabled()) return;
       node.setSelected(!node.isSelected());
       int row = myOptionsTree.getRowForPath(treePath);
@@ -273,7 +273,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   protected abstract void initTables();
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
@@ -303,7 +303,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     applyNode(root, settings);
@@ -416,7 +416,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
     public MyTreeCellRenderer(@NotNull SpeedSearchHelper searchStringProvider) {
       myCheckBox = new JCheckBox();
-      myCheckBox.setMargin(JBUI.emptyInsets());
+      myCheckBox.setMargin(JBInsets.emptyInsets());
       myLabel = new SimpleColoredComponent();
       myCheckBoxPanel = new JPanel();
       myCheckBoxPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -430,8 +430,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                                   boolean leaf, int row, boolean hasFocus) {
       Color background = RenderingUtil.getBackground(tree, isSelected);
       Color foreground = RenderingUtil.getForeground(tree, isSelected);
-      if (value instanceof MyToggleTreeNode) {
-        MyToggleTreeNode treeNode = (MyToggleTreeNode)value;
+      if (value instanceof MyToggleTreeNode treeNode) {
 
         JToggleButton button = myCheckBox;
         button.setSelected(treeNode.isSelected);
@@ -503,27 +502,12 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private static final class CustomBooleanOptionInfo {
-    @NotNull final Class<? extends CustomCodeStyleSettings> settingClass;
-    @NotNull final String fieldName;
-    @NotNull @NlsContexts.Label final String title;
-    @Nullable @NlsContexts.Label final String groupName;
-    @Nullable final OptionAnchor anchor;
-    @Nullable final String anchorFieldName;
-
-    private CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
+  private record CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
                                     @NotNull String fieldName,
                                     @NotNull @NlsContexts.Label String title,
                                     @Nullable @NlsContexts.Label String groupName,
                                     @Nullable OptionAnchor anchor,
                                     @Nullable String anchorFieldName) {
-      this.settingClass = settingClass;
-      this.fieldName = fieldName;
-      this.title = title;
-      this.groupName = groupName;
-      this.anchor = anchor;
-      this.anchorFieldName = anchorFieldName;
-    }
   }
 
   private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {

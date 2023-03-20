@@ -1,48 +1,45 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.util.PsiModificationTracker
-import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForModuleComputationTracker
-import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.SdkInfo
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
-import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.completion.test.withComponentRegistered
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.MockLibraryFacility
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
+import org.jetbrains.kotlin.idea.test.setupKotlinFacet
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.ANNOTATION_OPTION
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.PLUGIN_ID
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.util.sourceRoots
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.PLUGIN_ID
+import org.jetbrains.kotlin.test.util.ResolverTracker
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.ThreadLocalRandom
+import kotlin.math.absoluteValue
 
 @RunWith(JUnit38ClassRunner::class)
 open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
@@ -79,7 +76,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
     fun testLazyResolvers() {
         val tracker = ResolverTracker()
 
-        project.withServiceRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
+        project.withComponentRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
             val module1 = module("m1")
             val module2 = module("m2")
             val module3 = module("m3")
@@ -99,22 +96,10 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         }
     }
 
-    class ResolverTracker : ResolverForModuleComputationTracker {
-        val moduleResolversComputed = mutableListOf<Module>()
-        val sdkResolversComputed = mutableListOf<Sdk>()
-
-        override fun onResolverComputed(moduleInfo: ModuleInfo) {
-            when (moduleInfo) {
-                is ModuleSourceInfo -> moduleResolversComputed.add(moduleInfo.module)
-                is SdkInfo -> sdkResolversComputed.add(moduleInfo.sdk)
-            }
-        }
-    }
-
     fun testRecomputeResolversOnChange() {
         val tracker = ResolverTracker()
 
-        project.withServiceRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
+        project.withComponentRegistered<ResolverForModuleComputationTracker, Unit>(tracker) {
             val module1 = module("m1")
             val module2 = module("m2")
             val module3 = module("m3")
@@ -128,10 +113,10 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
 
+            assertEquals(1, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
 
-            tracker.sdkResolversComputed.clear()
-            tracker.moduleResolversComputed.clear()
+            tracker.clear()
 
             val module1ModTracker = KotlinModuleOutOfCodeBlockModificationTracker(module1)
             val module2ModTracker = KotlinModuleOutOfCodeBlockModificationTracker(module2)
@@ -176,9 +161,9 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
             assertEquals(0, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
 
-            tracker.moduleResolversComputed.clear()
+            tracker.clear()
             ApplicationManager.getApplication().runWriteAction {
-                (PsiModificationTracker.SERVICE.getInstance(myProject) as PsiModificationTrackerImpl).incOutOfCodeBlockModificationCounter()
+                (PsiModificationTracker.getInstance(myProject) as PsiModificationTrackerImpl).incOutOfCodeBlockModificationCounter()
             }
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
             assertEquals(0, tracker.sdkResolversComputed.size)
@@ -200,10 +185,10 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
     fun testLanguageVersionsViaFacets() {
         val m1 = module("m1").setupKotlinFacet {
-            settings.languageLevel = LanguageVersion.KOTLIN_1_1
+            settings.languageLevel = LanguageVersion.KOTLIN_1_6
         }
         val m2 = module("m2").setupKotlinFacet {
-            settings.languageLevel = LanguageVersion.KOTLIN_1_0
+            settings.languageLevel = LanguageVersion.KOTLIN_1_7
         }
 
         m1.addDependency(m2)
@@ -215,12 +200,12 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
     fun testSamWithReceiverExtension() {
         val module1 = module("m1").setupKotlinFacet {
             settings.compilerArguments!!.pluginOptions =
-                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION.optionName}=anno.A")
+                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.A")
         }
 
         val module2 = module("m2").setupKotlinFacet {
             settings.compilerArguments!!.pluginOptions =
-                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION.optionName}=anno.B")
+                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.B")
         }
 
 
@@ -230,57 +215,61 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         checkHighlightingInProject()
     }
 
-    fun testJvmExperimentalLibrary() {
-        val sources = listOf(File(testDataPath, getTestName(true) + "/lib"))
-        val extraOptions = listOf(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xexperimental=lib.ExperimentalAPI"
-        )
-
-        val lib = KotlinCompilerStandalone(sources, options = extraOptions).compile()
-
-        module("usage").addLibrary(lib)
-        checkHighlightingInProject()
-    }
-
-    fun testJsExperimentalLibrary() {
-        val sources = listOf(File(testDataPath, getTestName(true) + "/lib"))
-        val extraOptions = listOf(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xexperimental=lib.ExperimentalAPI"
-        )
-
-        val lib = KotlinCompilerStandalone(
-            sources,
-            platform = KotlinCompilerStandalone.Platform.JavaScript(MockLibraryFacility.MOCK_LIBRARY_NAME, "lib"),
-            options = extraOptions
+    fun testResolutionAnchorsAndBuiltins() {
+        val jarForCompositeLibrary = KotlinCompilerStandalone(
+            sources = listOf(File("$testDataPath${getTestName(true)}/compositeLibraryPart"))
+        ).compile()
+        val stdlibJarForCompositeLibrary = TestKotlinArtifacts.kotlinStdlib
+        val jarForSourceDependentLibrary = KotlinCompilerStandalone(
+            sources = listOf(File("$testDataPath${getTestName(true)}/sourceDependentLibrary"))
         ).compile()
 
-        val usageModule = module("usage")
-        usageModule.makeJsModule()
-        usageModule.addLibrary(lib, kind = JSLibraryKind)
+        val dependencyModule = module("dependencyModule")
+        val anchorModule = module("anchor")
+        val sourceModule = module("sourceModule")
 
-        checkHighlightingInProject()
-    }
+        val sourceDependentLibraryName = "sourceDependentLibrary"
+        sourceModule.addMultiJarLibrary(listOf(stdlibJarForCompositeLibrary, jarForCompositeLibrary), "compositeLibrary")
+        sourceModule.addLibrary(jarForSourceDependentLibrary, sourceDependentLibraryName)
+        anchorModule.addDependency(dependencyModule)
 
-    private fun Module.setupKotlinFacet(configure: KotlinFacetConfiguration.() -> Unit) = apply {
-        runWriteAction {
-            val facet = FacetManager.getInstance(this).addFacet(KotlinFacetType.INSTANCE, KotlinFacetType.NAME, null)
-            val configuration = facet.configuration
+        val anchorMapping = mapOf(sourceDependentLibraryName to anchorModule.name)
 
-            // this is actually needed so facet settings object is in a valid state
-            configuration.settings.compilerArguments = K2JVMCompilerArguments()
-            // make sure module-specific settings are used
-            configuration.settings.useProjectSettings = false
-
-            configuration.configure()
+        withResolutionAnchors(anchorMapping) {
+            checkHighlightingInProject()
+            dependencyModule.modifyTheOnlySourceFile()
+            checkHighlightingInProject()
         }
     }
 
-    private fun Module.makeJsModule() {
-        setupKotlinFacet {
-            settings.compilerArguments = K2JSCompilerArguments()
-            settings.targetPlatform = JSLibraryKind.compilerPlatform
+    private fun withResolutionAnchors(anchors: Map<String, String>, block: () -> Unit) {
+        val resolutionAnchorService = ResolutionAnchorCacheService.getInstance(project).safeAs<ResolutionAnchorCacheServiceImpl>()
+            ?: error("Anchor service missing")
+
+        val oldResolutionAnchorMappingState = resolutionAnchorService.state
+
+        try {
+            resolutionAnchorService.setAnchors(anchors)
+            project.withLibraryToSourceAnalysis {
+                block()
+            }
+        } finally {
+            resolutionAnchorService.loadState(oldResolutionAnchorMappingState)
         }
     }
+
+    private fun Module.modifyTheOnlySourceFile() {
+        val sourceRoot = sourceRoots.singleOrNull() ?: error("Expected single source root in a test module")
+        assert(sourceRoot.isDirectory) { "Source root of a test module is not a directory" }
+        val ktFile = sourceRoot.children.singleOrNull()?.toPsiFile(project) as? KtFile
+            ?: error("Expected single .kt file in a test source module")
+
+        val stubFunctionName = "fn${System.currentTimeMillis()}_${ThreadLocalRandom.current().nextInt().toLong().absoluteValue}"
+        WriteCommandAction.runWriteCommandAction(project) {
+            ktFile.add(
+                KtPsiFactory(project).createFunction("fun $stubFunctionName() {}")
+            )
+        }
+    }
+
 }

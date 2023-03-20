@@ -9,18 +9,18 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-final class OneKeyFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class OneKeyFMap<K, V> implements FMap<K, V> {
 
   private final K myKey;
   private final V myValue;
 
-  OneKeyFMap(K key, V value) {
+  OneKeyFMap(@NotNull K key, @NotNull V value) {
     myKey = key;
     myValue = value;
   }
 
   @Override
-  public @NotNull FMap<K, V> plus(K key, V value) {
+  public @NotNull FMap<K, V> plus(@NotNull K key, @NotNull V value) {
     if (myKey.equals(key)) {
       if (myValue.equals(value)) {
         return this;
@@ -35,12 +35,12 @@ final class OneKeyFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   }
 
   @Override
-  public @NotNull FMap<K, V> minus(K key) {
+  public @NotNull FMap<K, V> minus(@NotNull K key) {
     return myKey.equals(key) ? FMap.empty() : this;
   }
 
   @Override
-  public @Nullable V get(K key) {
+  public @Nullable V get(@NotNull K key) {
     return myKey.equals(key) ? myValue : null;
   }
 

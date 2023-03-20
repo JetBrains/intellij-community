@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -72,7 +72,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
     }
 
     final VirtualFile file = PsiUtilCore.getVirtualFile(e);
-    if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInTestSourceContent(file)) {
+    if (file == null || !ProjectFileIndex.getInstance(project).isInTestSourceContent(file)) {
       return null;
     }
 
@@ -116,7 +116,8 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
                        currentPsiClass.equals(psiClass)
                        ? annotationValue(currentPsiClass, TestFrameworkConstants.TEST_METADATA_ANNOTATION_QUALIFIED_NAME)
                        : null;
-        testDataPath = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
+        String localTestDataPath = annotationValue(currentPsiClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
+        testDataPath = localTestDataPath != null ? localTestDataPath : testDataPath;
         PsiClass containingClass = currentPsiClass.getContainingClass();
         currentPsiClass = containingClass;
       }
@@ -148,8 +149,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
       if (value != null) {
         final Project project = owner.getProject();
         final Object constantValue = value.evaluate();
-        if (constantValue instanceof String) {
-          String path = (String)constantValue;
+        if (constantValue instanceof String path) {
           if (path.contains(TestFrameworkConstants.CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile file = owner.getContainingFile().getVirtualFile();

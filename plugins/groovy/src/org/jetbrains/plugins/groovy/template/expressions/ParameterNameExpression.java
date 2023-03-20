@@ -13,9 +13,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public abstract class ParameterNameExpression extends Expression {
   @Override
   public Result calculateResult(ExpressionContext context) {

@@ -65,8 +65,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writeGridConstraints(writer, child);
-    if (child.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-      GridBagConstraints gbc = (GridBagConstraints)child.getCustomLayoutConstraints();
+    if (child.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
       writer.startElement(UIFormXmlConstants.ELEMENT_GRIDBAG);
       try {
         if (!gbc.insets.equals(new Insets(0, 0, 0, 0))) {
@@ -414,37 +413,25 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   private static int convertAnchor(final GridBagConstraints gbc) {
-    switch (gbc.anchor) {
-      case GridBagConstraints.NORTHWEST:
-        return GridConstraints.ANCHOR_NORTHWEST;
-      case GridBagConstraints.NORTH:
-        return GridConstraints.ANCHOR_NORTH;
-      case GridBagConstraints.NORTHEAST:
-        return GridConstraints.ANCHOR_NORTHEAST;
-      case GridBagConstraints.EAST:
-        return GridConstraints.ANCHOR_EAST;
-      case GridBagConstraints.SOUTHEAST:
-        return GridConstraints.ANCHOR_SOUTHEAST;
-      case GridBagConstraints.SOUTH:
-        return GridConstraints.ANCHOR_SOUTH;
-      case GridBagConstraints.SOUTHWEST:
-        return GridConstraints.ANCHOR_SOUTHWEST;
-      default:
-        return GridConstraints.ANCHOR_WEST;
-    }
+    return switch (gbc.anchor) {
+      case GridBagConstraints.NORTHWEST -> GridConstraints.ANCHOR_NORTHWEST;
+      case GridBagConstraints.NORTH -> GridConstraints.ANCHOR_NORTH;
+      case GridBagConstraints.NORTHEAST -> GridConstraints.ANCHOR_NORTHEAST;
+      case GridBagConstraints.EAST -> GridConstraints.ANCHOR_EAST;
+      case GridBagConstraints.SOUTHEAST -> GridConstraints.ANCHOR_SOUTHEAST;
+      case GridBagConstraints.SOUTH -> GridConstraints.ANCHOR_SOUTH;
+      case GridBagConstraints.SOUTHWEST -> GridConstraints.ANCHOR_SOUTHWEST;
+      default -> GridConstraints.ANCHOR_WEST;
+    };
   }
 
   private static int convertFill(final GridBagConstraints gbc) {
-    switch (gbc.fill) {
-      case GridBagConstraints.HORIZONTAL:
-        return GridConstraints.FILL_HORIZONTAL;
-      case GridBagConstraints.VERTICAL:
-        return GridConstraints.FILL_VERTICAL;
-      case GridBagConstraints.BOTH:
-        return GridConstraints.FILL_BOTH;
-      default:
-        return GridConstraints.FILL_NONE;
-    }
+    return switch (gbc.fill) {
+      case GridBagConstraints.HORIZONTAL -> GridConstraints.FILL_HORIZONTAL;
+      case GridBagConstraints.VERTICAL -> GridConstraints.FILL_VERTICAL;
+      case GridBagConstraints.BOTH -> GridConstraints.FILL_BOTH;
+      default -> GridConstraints.FILL_NONE;
+    };
   }
 
   private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {
@@ -454,8 +441,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     public Insets getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        final GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         return gbc.insets;
       }
       return new Insets(0, 0, 0, 0);
@@ -463,8 +449,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     protected void setValueImpl(final RadComponent component, final Insets value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        final GridBagConstraints cellConstraints = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints cellConstraints) {
         cellConstraints.insets = value;
 
         GridBagLayout layout = (GridBagLayout)component.getParent().getLayout();
@@ -497,8 +482,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     public Double getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         return myIsWeightX ? gbc.weightx : gbc.weighty;
       }
       return 0.0;
@@ -506,8 +490,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     protected void setValueImpl(final RadComponent component, final Double value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         if (myIsWeightX) {
           gbc.weightx = value.doubleValue();
         }
@@ -556,8 +539,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     public Integer getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         return myIsIpadX ? gbc.ipadx : gbc.ipady;
       }
       return 0;
@@ -565,8 +547,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     @Override
     protected void setValueImpl(final RadComponent component, final Integer value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints) {
-        GridBagConstraints gbc = (GridBagConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof GridBagConstraints gbc) {
         if (myIsIpadX) {
           gbc.ipadx = value.intValue();
         }

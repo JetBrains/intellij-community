@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.annotationByFqName
-import org.jetbrains.kotlin.nj2k.jvmAnnotation
+import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_9
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
-
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 
 class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -16,35 +15,38 @@ class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveApplic
                 element.annotationList.annotations -= overrideAnnotation
             }
         }
+
         if (element is JKOtherModifiersOwner && element is JKAnnotationListOwner) {
-            element.elementByModifier(OtherModifier.VOLATILE)?.also { modifierElement ->
+            element.elementByModifier(VOLATILE)?.let { modifierElement ->
                 element.otherModifierElements -= modifierElement
+                val annotationFqName = if (moduleApiVersion >= KOTLIN_1_9) "kotlin.concurrent.Volatile" else "kotlin.jvm.Volatile"
                 element.annotationList.annotations +=
-                    jvmAnnotation("Volatile", symbolProvider).withFormattingFrom(modifierElement)
+                    JKAnnotation(symbolProvider.provideClassSymbol(annotationFqName)).withFormattingFrom(modifierElement)
             }
 
-            element.elementByModifier(OtherModifier.TRANSIENT)?.also { modifierElement ->
+            element.elementByModifier(TRANSIENT)?.let { modifierElement ->
                 element.otherModifierElements -= modifierElement
                 element.annotationList.annotations +=
                     jvmAnnotation("Transient", symbolProvider).withFormattingFrom(modifierElement)
             }
 
-            element.elementByModifier(OtherModifier.STRICTFP)?.also { modifierElement ->
+            element.elementByModifier(STRICTFP)?.let { modifierElement ->
                 element.otherModifierElements -= modifierElement
                 element.annotationList.annotations +=
                     jvmAnnotation("Strictfp", symbolProvider).withFormattingFrom(modifierElement)
             }
 
-            element.elementByModifier(OtherModifier.SYNCHRONIZED)?.also { modifierElement ->
+            element.elementByModifier(SYNCHRONIZED)?.let { modifierElement ->
                 element.otherModifierElements -= modifierElement
                 element.annotationList.annotations +=
                     jvmAnnotation("Synchronized", symbolProvider).withFormattingFrom(modifierElement)
             }
 
-            element.elementByModifier(OtherModifier.NATIVE)?.also { modifierElement ->
-                modifierElement.otherModifier = OtherModifier.EXTERNAL
+            element.elementByModifier(NATIVE)?.let { modifierElement ->
+                modifierElement.otherModifier = EXTERNAL
             }
         }
+
         return recurse(element)
     }
 }

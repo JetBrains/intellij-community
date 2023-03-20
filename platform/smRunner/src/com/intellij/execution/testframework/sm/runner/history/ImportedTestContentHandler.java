@@ -57,7 +57,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
       final TestStartedEvent startedEvent = new TestStartedEvent(name,
                                                                  locationValue == null ? null : StringUtil.unescapeXmlEntities(locationValue),
                                                                  metaValue == null ? null : StringUtil.unescapeXmlEntities(metaValue));
-      if (isConfig != null && Boolean.valueOf(isConfig)) {
+      if (isConfig != null && Boolean.parseBoolean(isConfig)) {
         startedEvent.setConfig(true);
       }
       myProcessor.onTestStarted(startedEvent);

@@ -3,7 +3,7 @@ class Test {
         valid();
     }
 
-    private void valid() {
+    private static void valid() {
         System.out.println();
     }
 

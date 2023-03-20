@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.service;
 
 import com.intellij.formatting.FormatTextRanges;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Internal
-public class FormattingServiceUtil {
+public final class FormattingServiceUtil {
   private final static Logger LOG = Logger.getInstance(FormattingServiceUtil.class);
 
   private FormattingServiceUtil() {

@@ -37,21 +37,21 @@ public class bb extends ITextReplacedElementFactory {
          var4 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 28;
-            break;
-         case 1:
-            var10008 = 110;
-            break;
-         case 2:
-            var10008 = 105;
-            break;
-         case 3:
-            var10008 = 46;
-            break;
-         default:
-            var10008 = 33;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 28;
+               break;
+            case 1:
+               var10008 = 110;
+               break;
+            case 2:
+               var10008 = 105;
+               break;
+            case 3:
+               var10008 = 46;
+               break;
+            default:
+               var10008 = 33;
          }
       } else {
          var10004 = var10003;
@@ -80,21 +80,21 @@ public class bb extends ITextReplacedElementFactory {
 
                while(true) {
                   var10007 = var4[var10006];
-                  switch(var1 % 5) {
-                  case 0:
-                     var10008 = 28;
-                     break;
-                  case 1:
-                     var10008 = 110;
-                     break;
-                  case 2:
-                     var10008 = 105;
-                     break;
-                  case 3:
-                     var10008 = 46;
-                     break;
-                  default:
-                     var10008 = 33;
+                  switch (var1 % 5) {
+                     case 0:
+                        var10008 = 28;
+                        break;
+                     case 1:
+                        var10008 = 110;
+                        break;
+                     case 2:
+                        var10008 = 105;
+                        break;
+                     case 3:
+                        var10008 = 46;
+                        break;
+                     default:
+                        var10008 = 33;
                   }
 
                   var4[var10006] = (char)(var10007 ^ var10008);
@@ -123,21 +123,21 @@ public class bb extends ITextReplacedElementFactory {
                var4 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 28;
-                  break;
-               case 1:
-                  var10008 = 110;
-                  break;
-               case 2:
-                  var10008 = 105;
-                  break;
-               case 3:
-                  var10008 = 46;
-                  break;
-               default:
-                  var10008 = 33;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 28;
+                     break;
+                  case 1:
+                     var10008 = 110;
+                     break;
+                  case 2:
+                     var10008 = 105;
+                     break;
+                  case 3:
+                     var10008 = 46;
+                     break;
+                  default:
+                     var10008 = 33;
                }
             } else {
                var10004 = var10003;
@@ -166,21 +166,21 @@ public class bb extends ITextReplacedElementFactory {
 
                      while(true) {
                         var10007 = var4[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 28;
-                           break;
-                        case 1:
-                           var10008 = 110;
-                           break;
-                        case 2:
-                           var10008 = 105;
-                           break;
-                        case 3:
-                           var10008 = 46;
-                           break;
-                        default:
-                           var10008 = 33;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 28;
+                              break;
+                           case 1:
+                              var10008 = 110;
+                              break;
+                           case 2:
+                              var10008 = 105;
+                              break;
+                           case 3:
+                              var10008 = 46;
+                              break;
+                           default:
+                              var10008 = 33;
                         }
 
                         var4[var10006] = (char)(var10007 ^ var10008);
@@ -223,21 +223,21 @@ public class bb extends ITextReplacedElementFactory {
 
                   while(true) {
                      var10007 = var4[var10006];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 28;
-                        break;
-                     case 1:
-                        var10008 = 110;
-                        break;
-                     case 2:
-                        var10008 = 105;
-                        break;
-                     case 3:
-                        var10008 = 46;
-                        break;
-                     default:
-                        var10008 = 33;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 28;
+                           break;
+                        case 1:
+                           var10008 = 110;
+                           break;
+                        case 2:
+                           var10008 = 105;
+                           break;
+                        case 3:
+                           var10008 = 46;
+                           break;
+                        default:
+                           var10008 = 33;
                      }
 
                      var4[var10006] = (char)(var10007 ^ var10008);
@@ -261,21 +261,21 @@ public class bb extends ITextReplacedElementFactory {
                var4 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 28;
-                  break;
-               case 1:
-                  var10008 = 110;
-                  break;
-               case 2:
-                  var10008 = 105;
-                  break;
-               case 3:
-                  var10008 = 46;
-                  break;
-               default:
-                  var10008 = 33;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 28;
+                     break;
+                  case 1:
+                     var10008 = 110;
+                     break;
+                  case 2:
+                     var10008 = 105;
+                     break;
+                  case 3:
+                     var10008 = 46;
+                     break;
+                  default:
+                     var10008 = 33;
                }
             }
 
@@ -287,21 +287,21 @@ public class bb extends ITextReplacedElementFactory {
                      var10006 = var2;
                      var4 = var10004;
                      var10007 = var10004[var2];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 28;
-                        break;
-                     case 1:
-                        var10008 = 110;
-                        break;
-                     case 2:
-                        var10008 = 105;
-                        break;
-                     case 3:
-                        var10008 = 46;
-                        break;
-                     default:
-                        var10008 = 33;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 28;
+                           break;
+                        case 1:
+                           var10008 = 110;
+                           break;
+                        case 2:
+                           var10008 = 105;
+                           break;
+                        case 3:
+                           var10008 = 46;
+                           break;
+                        default:
+                           var10008 = 33;
                      }
                   } else {
                      if (var2 <= var1) {
@@ -328,21 +328,21 @@ public class bb extends ITextReplacedElementFactory {
 
                            while(true) {
                               var10007 = var4[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 28;
-                                 break;
-                              case 1:
-                                 var10008 = 110;
-                                 break;
-                              case 2:
-                                 var10008 = 105;
-                                 break;
-                              case 3:
-                                 var10008 = 46;
-                                 break;
-                              default:
-                                 var10008 = 33;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 28;
+                                    break;
+                                 case 1:
+                                    var10008 = 110;
+                                    break;
+                                 case 2:
+                                    var10008 = 105;
+                                    break;
+                                 case 3:
+                                    var10008 = 46;
+                                    break;
+                                 default:
+                                    var10008 = 33;
                               }
 
                               var4[var10006] = (char)(var10007 ^ var10008);
@@ -385,21 +385,21 @@ public class bb extends ITextReplacedElementFactory {
 
                         while(true) {
                            var10007 = var4[var10006];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 28;
-                              break;
-                           case 1:
-                              var10008 = 110;
-                              break;
-                           case 2:
-                              var10008 = 105;
-                              break;
-                           case 3:
-                              var10008 = 46;
-                              break;
-                           default:
-                              var10008 = 33;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 28;
+                                 break;
+                              case 1:
+                                 var10008 = 110;
+                                 break;
+                              case 2:
+                                 var10008 = 105;
+                                 break;
+                              case 3:
+                                 var10008 = 46;
+                                 break;
+                              default:
+                                 var10008 = 33;
                            }
 
                            var4[var10006] = (char)(var10007 ^ var10008);
@@ -423,21 +423,21 @@ public class bb extends ITextReplacedElementFactory {
                      var4 = var10004;
                      var10006 = var1;
                      var10007 = var10004[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 28;
-                        break;
-                     case 1:
-                        var10008 = 110;
-                        break;
-                     case 2:
-                        var10008 = 105;
-                        break;
-                     case 3:
-                        var10008 = 46;
-                        break;
-                     default:
-                        var10008 = 33;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 28;
+                           break;
+                        case 1:
+                           var10008 = 110;
+                           break;
+                        case 2:
+                           var10008 = 105;
+                           break;
+                        case 3:
+                           var10008 = 46;
+                           break;
+                        default:
+                           var10008 = 33;
                      }
                   }
                }
@@ -447,21 +447,21 @@ public class bb extends ITextReplacedElementFactory {
          var4 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 28;
-            break;
-         case 1:
-            var10008 = 110;
-            break;
-         case 2:
-            var10008 = 105;
-            break;
-         case 3:
-            var10008 = 46;
-            break;
-         default:
-            var10008 = 33;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 28;
+               break;
+            case 1:
+               var10008 = 110;
+               break;
+            case 2:
+               var10008 = 105;
+               break;
+            case 3:
+               var10008 = 46;
+               break;
+            default:
+               var10008 = 33;
          }
       }
 
@@ -473,21 +473,21 @@ public class bb extends ITextReplacedElementFactory {
                var10006 = var2;
                var4 = var10004;
                var10007 = var10004[var2];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 28;
-                  break;
-               case 1:
-                  var10008 = 110;
-                  break;
-               case 2:
-                  var10008 = 105;
-                  break;
-               case 3:
-                  var10008 = 46;
-                  break;
-               default:
-                  var10008 = 33;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 28;
+                     break;
+                  case 1:
+                     var10008 = 110;
+                     break;
+                  case 2:
+                     var10008 = 105;
+                     break;
+                  case 3:
+                     var10008 = 46;
+                     break;
+                  default:
+                     var10008 = 33;
                }
             } else {
                if (var2 <= var1) {
@@ -514,21 +514,21 @@ public class bb extends ITextReplacedElementFactory {
 
                      while(true) {
                         var10007 = var4[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 28;
-                           break;
-                        case 1:
-                           var10008 = 110;
-                           break;
-                        case 2:
-                           var10008 = 105;
-                           break;
-                        case 3:
-                           var10008 = 46;
-                           break;
-                        default:
-                           var10008 = 33;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 28;
+                              break;
+                           case 1:
+                              var10008 = 110;
+                              break;
+                           case 2:
+                              var10008 = 105;
+                              break;
+                           case 3:
+                              var10008 = 46;
+                              break;
+                           default:
+                              var10008 = 33;
                         }
 
                         var4[var10006] = (char)(var10007 ^ var10008);
@@ -557,21 +557,21 @@ public class bb extends ITextReplacedElementFactory {
                      var4 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 28;
-                        break;
-                     case 1:
-                        var10008 = 110;
-                        break;
-                     case 2:
-                        var10008 = 105;
-                        break;
-                     case 3:
-                        var10008 = 46;
-                        break;
-                     default:
-                        var10008 = 33;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 28;
+                           break;
+                        case 1:
+                           var10008 = 110;
+                           break;
+                        case 2:
+                           var10008 = 105;
+                           break;
+                        case 3:
+                           var10008 = 46;
+                           break;
+                        default:
+                           var10008 = 33;
                      }
                   } else {
                      var10004 = var10003;
@@ -600,21 +600,21 @@ public class bb extends ITextReplacedElementFactory {
 
                            while(true) {
                               var10007 = var4[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 28;
-                                 break;
-                              case 1:
-                                 var10008 = 110;
-                                 break;
-                              case 2:
-                                 var10008 = 105;
-                                 break;
-                              case 3:
-                                 var10008 = 46;
-                                 break;
-                              default:
-                                 var10008 = 33;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 28;
+                                    break;
+                                 case 1:
+                                    var10008 = 110;
+                                    break;
+                                 case 2:
+                                    var10008 = 105;
+                                    break;
+                                 case 3:
+                                    var10008 = 46;
+                                    break;
+                                 default:
+                                    var10008 = 33;
                               }
 
                               var4[var10006] = (char)(var10007 ^ var10008);
@@ -657,21 +657,21 @@ public class bb extends ITextReplacedElementFactory {
 
                         while(true) {
                            var10007 = var4[var10006];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 28;
-                              break;
-                           case 1:
-                              var10008 = 110;
-                              break;
-                           case 2:
-                              var10008 = 105;
-                              break;
-                           case 3:
-                              var10008 = 46;
-                              break;
-                           default:
-                              var10008 = 33;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 28;
+                                 break;
+                              case 1:
+                                 var10008 = 110;
+                                 break;
+                              case 2:
+                                 var10008 = 105;
+                                 break;
+                              case 3:
+                                 var10008 = 46;
+                                 break;
+                              default:
+                                 var10008 = 33;
                            }
 
                            var4[var10006] = (char)(var10007 ^ var10008);
@@ -695,21 +695,21 @@ public class bb extends ITextReplacedElementFactory {
                      var4 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 28;
-                        break;
-                     case 1:
-                        var10008 = 110;
-                        break;
-                     case 2:
-                        var10008 = 105;
-                        break;
-                     case 3:
-                        var10008 = 46;
-                        break;
-                     default:
-                        var10008 = 33;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 28;
+                           break;
+                        case 1:
+                           var10008 = 110;
+                           break;
+                        case 2:
+                           var10008 = 105;
+                           break;
+                        case 3:
+                           var10008 = 46;
+                           break;
+                        default:
+                           var10008 = 33;
                      }
                   }
 
@@ -721,21 +721,21 @@ public class bb extends ITextReplacedElementFactory {
                            var10006 = var2;
                            var4 = var10004;
                            var10007 = var10004[var2];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 28;
-                              break;
-                           case 1:
-                              var10008 = 110;
-                              break;
-                           case 2:
-                              var10008 = 105;
-                              break;
-                           case 3:
-                              var10008 = 46;
-                              break;
-                           default:
-                              var10008 = 33;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 28;
+                                 break;
+                              case 1:
+                                 var10008 = 110;
+                                 break;
+                              case 2:
+                                 var10008 = 105;
+                                 break;
+                              case 3:
+                                 var10008 = 46;
+                                 break;
+                              default:
+                                 var10008 = 33;
                            }
                         } else {
                            if (var2 <= var1) {
@@ -762,21 +762,21 @@ public class bb extends ITextReplacedElementFactory {
 
                                  while(true) {
                                     var10007 = var4[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 28;
-                                       break;
-                                    case 1:
-                                       var10008 = 110;
-                                       break;
-                                    case 2:
-                                       var10008 = 105;
-                                       break;
-                                    case 3:
-                                       var10008 = 46;
-                                       break;
-                                    default:
-                                       var10008 = 33;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 28;
+                                          break;
+                                       case 1:
+                                          var10008 = 110;
+                                          break;
+                                       case 2:
+                                          var10008 = 105;
+                                          break;
+                                       case 3:
+                                          var10008 = 46;
+                                          break;
+                                       default:
+                                          var10008 = 33;
                                     }
 
                                     var4[var10006] = (char)(var10007 ^ var10008);
@@ -819,21 +819,21 @@ public class bb extends ITextReplacedElementFactory {
 
                               while(true) {
                                  var10007 = var4[var10006];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 28;
-                                    break;
-                                 case 1:
-                                    var10008 = 110;
-                                    break;
-                                 case 2:
-                                    var10008 = 105;
-                                    break;
-                                 case 3:
-                                    var10008 = 46;
-                                    break;
-                                 default:
-                                    var10008 = 33;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 28;
+                                       break;
+                                    case 1:
+                                       var10008 = 110;
+                                       break;
+                                    case 2:
+                                       var10008 = 105;
+                                       break;
+                                    case 3:
+                                       var10008 = 46;
+                                       break;
+                                    default:
+                                       var10008 = 33;
                                  }
 
                                  var4[var10006] = (char)(var10007 ^ var10008);
@@ -857,21 +857,21 @@ public class bb extends ITextReplacedElementFactory {
                            var4 = var10004;
                            var10006 = var1;
                            var10007 = var10004[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 28;
-                              break;
-                           case 1:
-                              var10008 = 110;
-                              break;
-                           case 2:
-                              var10008 = 105;
-                              break;
-                           case 3:
-                              var10008 = 46;
-                              break;
-                           default:
-                              var10008 = 33;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 28;
+                                 break;
+                              case 1:
+                                 var10008 = 110;
+                                 break;
+                              case 2:
+                                 var10008 = 105;
+                                 break;
+                              case 3:
+                                 var10008 = 46;
+                                 break;
+                              default:
+                                 var10008 = 33;
                            }
                         }
                      }
@@ -881,21 +881,21 @@ public class bb extends ITextReplacedElementFactory {
                var4 = var10004;
                var10006 = var1;
                var10007 = var10004[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 28;
-                  break;
-               case 1:
-                  var10008 = 110;
-                  break;
-               case 2:
-                  var10008 = 105;
-                  break;
-               case 3:
-                  var10008 = 46;
-                  break;
-               default:
-                  var10008 = 33;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 28;
+                     break;
+                  case 1:
+                     var10008 = 110;
+                     break;
+                  case 2:
+                     var10008 = 105;
+                     break;
+                  case 3:
+                     var10008 = 46;
+                     break;
+                  default:
+                     var10008 = 33;
                }
             }
          }

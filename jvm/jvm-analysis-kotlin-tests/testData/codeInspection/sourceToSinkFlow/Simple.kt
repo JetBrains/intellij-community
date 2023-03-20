@@ -70,12 +70,21 @@ class Simple {
     sink(if (b) <warning descr="Unsafe string is used as safe parameter">s</warning> else null)
   }
 
+  fun unknownIfExpression(b: Boolean): @Untainted String {
+    var s: String = if (b) bar() else foo()
+    return <warning descr="Unknown string is returned from safe method">s</warning>
+  }
+
   fun callSource(): String {
     return source()
   }
 
   fun foo(): String {
     return "some"
+  }
+
+  fun bar(): String {
+    return "other"
   }
 
   fun safe(): @Untainted String? {

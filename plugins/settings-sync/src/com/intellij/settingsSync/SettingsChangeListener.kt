@@ -1,38 +1,68 @@
 package com.intellij.settingsSync
 
-import java.nio.charset.StandardCharsets.UTF_8
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.*
 
-internal interface SettingsChangeListener {
+@Internal
+fun interface SettingsChangeListener : EventListener {
 
-  fun settingChanged(event: SettingsChangeEvent)
+  fun settingChanged(event: SyncSettingsEvent)
 
 }
 
-internal data class SettingsChangeEvent(val source: ChangeSource, val snapshot: SettingsSnapshot)
+@Internal
+sealed class SyncSettingsEvent {
+  /**
+   * These events are processed in a batch
+   */
+  sealed class StandardEvent: SyncSettingsEvent()
 
-internal enum class ChangeSource {
-  FROM_LOCAL,
-  FROM_SERVER
-}
+  /**
+   * Exclusive events are processed separately from other events.
+   */
+  sealed class ExclusiveEvent : SyncSettingsEvent()
 
-internal interface SettingsLoggedListener {
+  class IdeChange(snapshot: SettingsSnapshot) : EventWithSnapshot(snapshot)
+  class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?) : EventWithSnapshot(snapshot)
+  object MustPushRequest : StandardEvent()
+  object LogCurrentSettings : StandardEvent()
 
-  fun settingsLogged(event: SettingsLoggedEvent)
-}
+  /**
+   * Request to check the server state and the local state, and initiate the sync procedure, if there is a newer version on the server,
+   * or if there are changes which were not pushed yet.
+   */
+  object SyncRequest : ExclusiveEvent()
 
-internal data class SettingsSnapshot(val fileStates: Set<FileState>) {
-  fun isEmpty(): Boolean = fileStates.isEmpty()
+  /**
+   * Tells that the settings sync has to be stopped, and the server data has to be deleted.
+   * Other clients will disable sync as well, after they find that the data has been deleted.
+   *
+   * @param afterDeleting this callback function will be called after executing the deletion
+   */
+  class DeleteServerData(val afterDeleting: (DeleteServerDataResult) -> Unit): StandardEvent()
 
-  companion object {
-    val EMPTY = SettingsSnapshot(emptySet())
+  /**
+   * Indicates that the settings sync snapshot has been explicitly deleted on the server.
+   * It means that other clients must disable settings sync.
+   */
+  object DeletedOnCloud: StandardEvent()
+
+  class CrossIdeSyncStateChanged(val isCrossIdeSyncEnabled: Boolean) : ExclusiveEvent()
+
+  override fun toString(): String {
+    return javaClass.simpleName
+  }
+
+  sealed class EventWithSnapshot(val snapshot: SettingsSnapshot) : StandardEvent() {
+    override fun toString(): String {
+      return "${javaClass.simpleName}[${snapshot.fileStates.joinToString(limit = 5) { it.file }}]"
+    }
   }
 }
 
-// todo use ByteArrayWrapper
-internal data class FileState(val file: String, val content: ByteArray, val size: Int) {
-  override fun toString(): String = "file='$file', content:\n${String(content, UTF_8)}"
-}
-
-internal class SettingsLoggedEvent(val snapshot: SettingsSnapshot, val hasLocal: Boolean, val hasRemote: Boolean, val conflicts: Set<Conflict>) {
-  data class Conflict(val file: String, val appliedContent: ByteArray, val declinedContent: ByteArray)
+@Internal
+sealed class DeleteServerDataResult {
+  object Success: DeleteServerDataResult()
+  class Error(@NlsSafe val error: String): DeleteServerDataResult()
 }

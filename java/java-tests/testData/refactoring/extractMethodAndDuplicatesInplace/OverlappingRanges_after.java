@@ -6,7 +6,7 @@ public class Test {
         System.out.println();
     }
 
-    private void extracted() {
+    private static void extracted() {
         System.out.println();
         System.out.println();
         System.out.println();

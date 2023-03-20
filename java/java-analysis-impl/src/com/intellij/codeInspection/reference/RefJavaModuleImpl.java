@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.icons.AllIcons;
@@ -32,7 +32,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     ((WritableRefEntity)myRefModule).add(this);
   }
 
@@ -96,8 +96,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
   private void buildRequiresReferences(PsiJavaModule javaModule) {
     for (PsiRequiresStatement statement : javaModule.getRequires()) {
       PsiElement element = addReference(statement.getModuleReference());
-      if (element instanceof PsiJavaModule) {
-        PsiJavaModule requiredModule = (PsiJavaModule)element;
+      if (element instanceof PsiJavaModule requiredModule) {
         Map<String, List<String>> packagesExportedByModule = getPackagesExportedByModule(requiredModule);
         if (myRequiredModules == null) myRequiredModules = new ArrayList<>(1);
         myRequiredModules.add(new RequiredModule(requiredModule.getName(), packagesExportedByModule, statement.hasModifierProperty(PsiModifier.TRANSITIVE)));
@@ -149,6 +148,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
                 if (targetElement == null) {
                   final RefElement refClass = getRefManager().getReference(implementationClass);
                   if (refClass instanceof RefClassImpl) {
+                    refClass.initializeIfNeeded();
                     if (myServiceImplementations == null) myServiceImplementations = new HashSet<>();
                     myServiceImplementations.add((RefClass)refClass);
 
@@ -206,8 +206,6 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
       buildExportsReferences(javaModule);
       buildProvidesReferences(javaModule);
       buildUsesReferences(javaModule);
-
-      getRefManager().fireBuildReferences(this);
     }
   }
 
@@ -237,7 +235,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
   public static RefJavaModule moduleFromExternalName(@NotNull RefManagerImpl manager, @NotNull String fqName) {
     Project project = manager.getProject();
     PsiJavaModule javaModule = JavaPsiFacade.getInstance(project).findModule(fqName, GlobalSearchScope.projectScope(project));
-    return javaModule == null ? null : new RefJavaModuleImpl(javaModule, manager);
+    return javaModule == null ? null : (RefJavaModule)manager.getReference(javaModule);
   }
 
   @NotNull

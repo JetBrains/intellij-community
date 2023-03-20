@@ -182,9 +182,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author ven
- */
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() {}
 
@@ -400,9 +397,6 @@ import java.util.Arrays
 import java.util.Collection
 import java.util.Collections
 
-/**
- * @author ven
- */
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() {}
 

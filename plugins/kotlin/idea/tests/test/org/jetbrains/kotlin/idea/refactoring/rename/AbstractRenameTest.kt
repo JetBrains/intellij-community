@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -33,22 +33,19 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.jetbrains.kotlin.asJava.finder.KtLightPackage
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.junit.Assert
 import java.io.File
 
@@ -74,19 +71,24 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     )
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testConfigurationFile = File(testDataPath, fileName())
+        val testConfigurationFile = dataFile()
         val renameObject = loadTestConfiguration(testConfigurationFile)
         val withRuntime = renameObject.getNullableString("withRuntime")
         val libraryInfos = renameObject.getAsJsonArray("libraries")?.map { it.asString!! }
         if (libraryInfos != null) {
-            val jarPaths = listOf(KotlinArtifacts.instance.kotlinStdlib) + libraryInfos.map {
-                File(PlatformTestUtil.getCommunityPath(), it.substringAfter("@"))
+            val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map { libraryInfo ->
+                if ("@" in libraryInfo) {
+                    File(PlatformTestUtil.getCommunityPath(), libraryInfo.substringAfter("@"))
+                }
+                else {
+                    ConfigLibraryUtil.ATTACHABLE_LIBRARIES[libraryInfo]
+                }
             }
-            return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(KotlinArtifacts.instance.kotlinStdlibSources))
+            return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(TestKotlinArtifacts.kotlinStdlibSources))
         }
 
         if (withRuntime != null) {
-            return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+            return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         }
         return KotlinLightProjectDescriptor.INSTANCE
     }
@@ -169,7 +171,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val classFQN = renameParamsObject.getString("classId").toClassId().asSingleFqName().asString()
         val newName = renameParamsObject.getString("newName")
 
-        doTestCommittingDocuments(context) { _ ->
+        doTestCommittingDocuments(context) {
             val aClass = context.javaFacade.findClass(classFQN, context.project.allScope())!!
             val substitution = RenamePsiElementProcessor.forElement(aClass).substituteElementToRename(aClass, null)
 
@@ -195,32 +197,66 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun renameKotlinFunctionTest(renameParamsObject: JsonObject, context: TestContext) {
-        val oldMethodName = Name.identifier(renameParamsObject.getString("oldName"))
-
-        doRenameInKotlinClassOrPackage(renameParamsObject, context) { _, scope ->
-            scope.getContributedFunctions(
-                oldMethodName,
-                NoLookupLocation.FROM_TEST
-            ).first()
+    protected sealed interface KotlinTarget {
+        enum class CallableType {
+            FUNCTION, PROPERTY
         }
+
+        class Callable(val callableId: CallableId, val type: CallableType) : KotlinTarget
+
+        class Classifier(val classId: ClassId) : KotlinTarget
+
+        companion object {
+            fun fromJson(renameParamsObject: JsonObject): KotlinTarget {
+                val packageFqn = renameParamsObject.getNullableString("packageFqn")?.let(::FqName)
+                val classId = renameParamsObject.getNullableString("classId")?.toClassId()
+
+                if (classId != null && packageFqn != null) {
+                    throw AssertionError("Both classId and packageFqn are defined. Where should I search: in class or in package?")
+                } else if (classId == null && packageFqn == null) {
+                    throw AssertionError("Define classId or packageFqn")
+                }
+
+                val oldName = renameParamsObject.getNullableString("oldName")?.let(Name::identifier)
+
+                if (oldName == null) return Classifier(classId!!)
+
+                val callableId = if (packageFqn != null) {
+                    CallableId(packageFqn, oldName)
+                } else {
+                    CallableId(classId!!, oldName)
+                }
+
+                val callableType = when (val renameType = RenameType.valueOf(renameParamsObject.getString("type"))) {
+                    RenameType.KOTLIN_FUNCTION -> CallableType.FUNCTION
+                    RenameType.KOTLIN_PROPERTY -> CallableType.PROPERTY
+                    else -> error("Unexpected rename type ${renameType}")
+                }
+
+                return Callable(callableId, callableType)
+            }
+        }
+    }
+
+    private fun renameKotlinFunctionTest(renameParamsObject: JsonObject, context: TestContext) {
+        val target = KotlinTarget.fromJson(renameParamsObject)
+        require(target is KotlinTarget.Callable && target.type == KotlinTarget.CallableType.FUNCTION)
+
+        renameKotlinTarget(target, renameParamsObject, context)
     }
 
     private fun renameKotlinPropertyTest(renameParamsObject: JsonObject, context: TestContext) {
-        val oldPropertyName = Name.identifier(renameParamsObject.getString("oldName"))
+        val target = KotlinTarget.fromJson(renameParamsObject)
+        require(target is KotlinTarget.Callable && target.type == KotlinTarget.CallableType.PROPERTY)
 
-        doRenameInKotlinClassOrPackage(renameParamsObject, context) { _, scope ->
-            scope.getContributedVariables(
-                oldPropertyName,
-                NoLookupLocation.FROM_TEST
-            ).first()
-        }
+        renameKotlinTarget(target, renameParamsObject, context)
     }
 
     private fun renameKotlinClassTest(renameParamsObject: JsonObject, context: TestContext) {
-        renameParamsObject.getString("classId") //assertion
+        val target = KotlinTarget.fromJson(renameParamsObject)
+        require(target is KotlinTarget.Classifier)
 
-        doRenameInKotlinClassOrPackage(renameParamsObject, context) { declaration, _ -> declaration as ClassDescriptor }
+        renameKotlinTarget(target, renameParamsObject, context)
     }
 
     private fun renameKotlinPackageTest(renameParamsObject: JsonObject, context: TestContext) {
@@ -234,10 +270,11 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             val fileFqn = mainFile.packageFqName
             Assert.assertTrue("File '${mainFilePath}' should have package containing ${fqn}", fileFqn.isSubpackageOf(fqn))
 
-            val packageSegment = mainFile.packageDirective!!.packageNames[fqn.pathSegments().size - 1]
+            val packageDirective = mainFile.packageDirective!!
+            val packageSegment = packageDirective.packageNames[fqn.pathSegments().size - 1]
             val segmentReference = packageSegment.mainReference
 
-            val psiElement = segmentReference.resolve()!!
+            val psiElement = segmentReference.resolve() ?: error("unable to resolve '${segmentReference.element.text}' from $packageDirective '${packageDirective.text}'")
 
             val substitution = RenamePsiElementProcessor.forElement(psiElement).substituteElementToRename(psiElement, null)
             runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)
@@ -268,34 +305,18 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun doRenameInKotlinClassOrPackage(
+    private fun renameKotlinTarget(
+        target: KotlinTarget,
         renameParamsObject: JsonObject,
         context: TestContext,
-        findDescriptorToRename: (DeclarationDescriptor, MemberScope) -> DeclarationDescriptor
     ) {
-        val classIdStr = renameParamsObject.getNullableString("classId")
-        val packageFqnStr = renameParamsObject.getNullableString("packageFqn")
-        if (classIdStr != null && packageFqnStr != null) {
-            throw AssertionError("Both classId and packageFqn are defined. Where should I search: in class or in package?")
-        } else if (classIdStr == null && packageFqnStr == null) {
-            throw AssertionError("Define classId or packageFqn")
-        }
-
         val newName = renameParamsObject.getString("newName")
         val mainFilePath = renameParamsObject.getNullableString("mainFile") ?: "${getTestDirName(false)}.kt"
 
         doTestCommittingDocuments(context) {
             val ktFile = myFixture.configureFromTempProjectFile(mainFilePath) as KtFile
 
-            val module = ktFile.analyzeWithAllCompilerChecks().moduleDescriptor
-
-            val (declaration, scopeToSearch) = if (classIdStr != null) {
-                module.findClassAcrossModuleDependencies(classIdStr.toClassId())!!.let { it to it.defaultType.memberScope }
-            } else {
-                module.getPackage(FqName(packageFqnStr!!)).let { it to it.memberScope }
-            }
-
-            val psiElement = DescriptorToSourceUtils.descriptorToDeclaration(findDescriptorToRename(declaration, scopeToSearch))!!
+            val psiElement = findPsiDeclarationToRename(ktFile, target)
 
             // The Java processor always chooses renaming the base element when running in unit test mode,
             // so if we want to rename only the inherited element, we need to skip the substitutor.
@@ -307,6 +328,39 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 
             runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)
         }
+    }
+
+    protected open fun findPsiDeclarationToRename(
+        contextFile: KtFile,
+        target: KotlinTarget
+    ): PsiElement {
+        val module = contextFile.analyzeWithAllCompilerChecks().moduleDescriptor
+
+        val descriptor = when (target) {
+            is KotlinTarget.Classifier -> module.findClassAcrossModuleDependencies(target.classId)!!
+
+            is KotlinTarget.Callable -> {
+                val callableId = target.callableId
+
+                val targetScope = callableId.classId
+                    ?.let { classId -> module.findClassAcrossModuleDependencies(classId)!!.defaultType.memberScope }
+                    ?: module.getPackage(callableId.packageName).memberScope
+
+                when (target.type) {
+                    KotlinTarget.CallableType.FUNCTION -> targetScope.getContributedFunctions(
+                        callableId.callableName,
+                        NoLookupLocation.FROM_TEST
+                    ).first()
+
+                    KotlinTarget.CallableType.PROPERTY -> targetScope.getContributedVariables(
+                        callableId.callableName,
+                        NoLookupLocation.FROM_TEST
+                    ).first()
+                }
+            }
+        }
+
+        return DescriptorToSourceUtils.descriptorToDeclaration(descriptor)!!
     }
 
     private fun renameWithAutoDetection(renameParamsObject: JsonObject, context: TestContext) {
@@ -367,11 +421,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 }
 
-private fun String.toClassId(): ClassId {
-    val relativeClassName = FqName(substringAfterLast('/'))
-    val packageFqName = FqName(substringBeforeLast('/', "").replace('/', '.'))
-    return ClassId(packageFqName, relativeClassName, false)
-}
+private fun String.toClassId(): ClassId = ClassId.fromString(this)
 
 fun loadTestConfiguration(testFile: File): JsonObject {
     val fileText = FileUtil.loadFile(testFile, true)

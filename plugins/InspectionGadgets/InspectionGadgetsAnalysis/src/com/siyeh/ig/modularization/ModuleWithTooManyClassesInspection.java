@@ -19,9 +19,9 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -33,7 +33,8 @@ import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
 
@@ -50,10 +51,9 @@ public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
                                                            @NotNull AnalysisScope analysisScope,
                                                            @NotNull InspectionManager inspectionManager,
                                                            @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefModule)) {
+    if (!(refEntity instanceof RefModule refModule)) {
       return null;
     }
-    final RefModule refModule = (RefModule)refEntity;
     final ModuleFileIndex index = ModuleRootManager.getInstance(refModule.getModule()).getFileIndex();
     final Project project = inspectionManager.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -77,7 +77,8 @@ public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("module.with.too.many.classes.max.option"), this, "limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("limit", InspectionGadgetsBundle.message("module.with.too.many.classes.max.option"), 2, 1000));
   }
 }

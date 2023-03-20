@@ -1,21 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-private val CANCELED = object: CancellationException() {
-  override fun fillInStackTrace(): Throwable = this
-}
-
 open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
                                                addExceptionHandler: Boolean) : CancellablePromise<T>, CompletablePromise<T> {
+  companion object {
+    @Internal
+    @JvmField
+    val CANCELED = object: CancellationException() {
+      override fun fillInStackTrace(): Throwable = this
+    }
+  }
+
   internal val f: CompletableFuture<T>
 
   constructor() : this(CompletableFuture(), AtomicBoolean(), addExceptionHandler = false)
@@ -112,9 +117,6 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
     catch (e: ExecutionException) {
       val cause = e.cause ?: throw e
-      if (cause === OBSOLETE_ERROR) {
-        return null
-      }
       // checked exceptions must be not thrown as is - API should conform to Java standards
       ExceptionUtilRt.rethrowUnchecked(cause)
       throw e

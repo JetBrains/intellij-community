@@ -1,5 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: propertyUsages
+// PSI_ELEMENT_AS_TITLE: "interface X"
+
 interface <caret>X {
     val a: String
         get() {

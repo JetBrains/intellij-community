@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.workspaceModel.storage.EntitySource
@@ -26,9 +26,7 @@ fun main(args: Array<String>) {
 
   if (file.isFile) {
     val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-    val storage = file.inputStream().use {
-      serializer.deserializeCache(it)
-    }
+    val storage = serializer.deserializeCache(file.toPath()).getOrThrow()
 
     // Set a breakpoint and check
     println("Cache loaded: ${storage!!.entities(ModuleEntity::class.java).toList().size} modules")
@@ -43,14 +41,14 @@ fun main(args: Array<String>) {
 
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
 
-  serializer.deserializeClassToIntConverter(converterFile.inputStream())
+  serializer.deserializeClassToIntConverter(converterFile.toPath())
 
-  val resStore = serializer.deserializeCache(resFile.inputStream())!!
+  val resStore = serializer.deserializeCache(resFile.toPath()).getOrThrow()!!
 
-  val leftStore = serializer.deserializeCache(leftFile.inputStream()) ?: throw IllegalArgumentException("Cannot load cache")
+  val leftStore = serializer.deserializeCache(leftFile.toPath()).getOrThrow() ?: throw IllegalArgumentException("Cannot load cache")
 
   if (file.resolve("Replace_By_Source").exists()) {
-    val rightStore = serializer.deserializeCache(rightFile.inputStream())!!
+    val rightStore = serializer.deserializeCache(rightFile.toPath()).getOrThrow()!!
 
     val allEntitySources = leftStore.entitiesBySource { true }.map { it.key }.toHashSet()
     allEntitySources.addAll(rightStore.entitiesBySource { true }.map { it.key })
@@ -70,7 +68,7 @@ fun main(args: Array<String>) {
     println("storage loaded")
   }
   else {
-    val rightStore = serializer.deserializeCacheAndDiffLog(rightFile.inputStream(), rightDiffLogFile.inputStream())!!
+    val rightStore = serializer.deserializeCacheAndDiffLog(rightFile.toPath(), rightDiffLogFile.toPath())!!
 
     val expectedResult = leftStore.toBuilder()
     expectedResult.addDiff(rightStore)

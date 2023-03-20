@@ -5,16 +5,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@ApiStatus.Experimental
 public final class ServiceViewActionUtils {
   public static final DataKey<Set<ServiceViewContributor>> CONTRIBUTORS_KEY = DataKey.create("serviceViewContributors");
   public static final DataKey<ServiceViewOptions> OPTIONS_KEY = DataKey.create("ServiceViewTreeOptions");
@@ -29,17 +27,17 @@ public final class ServiceViewActionUtils {
   }
 
   @NotNull
-  public static <T> JBIterable<T> getTargets(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
+  public static <T> List<T> getTargets(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
     Object[] items = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
-    if (items == null) return JBIterable.empty();
+    if (items == null) return Collections.emptyList();
 
     List<T> result = new ArrayList<>();
     for (Object item : items) {
       if (!clazz.isInstance(item)) {
-        return JBIterable.empty();
+        return Collections.emptyList();
       }
       result.add(clazz.cast(item));
     }
-    return JBIterable.from(result);
+    return result;
   }
 }

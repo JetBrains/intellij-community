@@ -40,7 +40,16 @@ public final class ZipUtil {
                                      @NotNull String relativeName,
                                      @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter) throws IOException {
-    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, file.isDirectory());
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, file.lastModified());
+  }
+
+  public static boolean addFileToZip(@NotNull ZipOutputStream zos,
+                                     @NotNull File file,
+                                     @NotNull String relativeName,
+                                     @Nullable Set<? super String> writtenItemRelativePaths,
+                                     @Nullable FileFilter fileFilter,
+                                     long timestamp) throws IOException {
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, timestamp, file.isDirectory());
   }
 
   /*
@@ -52,6 +61,17 @@ public final class ZipUtil {
                                      @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter,
                                      @NotNull FileContentProcessor contentProcessor,
+                                     boolean isDir) throws IOException {
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, contentProcessor, file.lastModified(), isDir);
+  }
+
+  private static boolean addFileToZip(@NotNull ZipOutputStream zos,
+                                     @NotNull File file,
+                                     @NotNull String relativeName,
+                                     @Nullable Set<? super String> writtenItemRelativePaths,
+                                     @Nullable FileFilter fileFilter,
+                                     @NotNull FileContentProcessor contentProcessor,
+                                     long timestamp,
                                      boolean isDir) throws IOException {
     while (!relativeName.isEmpty() && relativeName.charAt(0) == '/') {
       relativeName = relativeName.substring(1);
@@ -71,7 +91,7 @@ public final class ZipUtil {
 
     long size = isDir ? 0 : file.length();
     ZipEntry e = new ZipEntry(relativeName);
-    e.setTime(file.lastModified());
+    e.setTime(timestamp);
     if (size == 0) {
       e.setMethod(ZipEntry.STORED);
       e.setSize(0);
@@ -146,7 +166,7 @@ public final class ZipUtil {
    * @deprecated {@link #extract(Path, Path, FilenameFilter, boolean)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
     new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir.toPath(), filter)).overwrite(overwrite).extract(outputDir);
   }

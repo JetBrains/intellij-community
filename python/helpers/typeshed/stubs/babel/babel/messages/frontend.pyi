@@ -2,8 +2,6 @@ import abc
 from distutils.cmd import Command as _Command
 from typing import Any
 
-po_file_read_mode: Any
-
 def listify_value(arg, split: Any | None = ...): ...
 
 class Command(_Command, metaclass=abc.ABCMeta):

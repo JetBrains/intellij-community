@@ -6,6 +6,7 @@ import com.intellij.java.ift.lesson.basic.JavaContextActionsLesson
 import com.intellij.java.ift.lesson.basic.JavaSelectLesson
 import com.intellij.java.ift.lesson.basic.JavaSurroundAndUnwrapLesson
 import com.intellij.java.ift.lesson.completion.*
+import com.intellij.java.ift.lesson.essential.JavaOnboardingTourLesson
 import com.intellij.java.ift.lesson.navigation.*
 import com.intellij.java.ift.lesson.refactorings.JavaExtractMethodCocktailSortLesson
 import com.intellij.java.ift.lesson.refactorings.JavaRefactoringMenuLesson
@@ -13,6 +14,7 @@ import com.intellij.java.ift.lesson.refactorings.JavaRenameLesson
 import com.intellij.java.ift.lesson.run.JavaDebugLesson
 import com.intellij.java.ift.lesson.run.JavaRunConfigurationLesson
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.ApplicationNamesInfo
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
@@ -28,7 +30,20 @@ import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
 
 class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
-  override fun modules() = stableModules() + CourseManager.instance.findCommonModules("Git")
+  override fun modules() = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
+
+  private val disableOnboardingLesson get() = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("IDEA Edu")
+
+  private fun onboardingTour() = if (!disableOnboardingLesson) listOf(
+    LearningModule(id = "Java.Onboarding",
+                   name = JavaLessonsBundle.message("java.onboarding.module.name"),
+                   description = JavaLessonsBundle.message("java.onboarding.module.description", LessonUtil.productName),
+                   primaryLanguage = langSupport,
+                   moduleType = LessonType.PROJECT) {
+      listOf(JavaOnboardingTourLesson())
+    }
+  )
+  else emptyList()
 
   private fun stableModules() = listOf(
     LearningModule(id = "Java.Essential",
@@ -52,7 +67,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
         JavaSelectLesson(),
-        SingleLineCommentLesson(ls("02.Comment.java.sample")),
+        CommentUncommentLesson(ls("02.Comment.java.sample"), blockCommentsAvailable = true),
         DuplicateLesson(ls("04.Duplicate.java.sample")),
         MoveLesson("run()", ls("05.Move.java.sample")),
         CollapseLesson(ls("06.Collapse.java.sample")),
@@ -126,4 +141,56 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
       )
     },
   )
+
+  override fun getLessonIdToTipsMap(): Map<String, List<String>> = mutableMapOf(
+    // Essential
+    "context.actions" to listOf("ContextActions"),
+    "Actions" to listOf("find_action", "GoToAction"),
+    "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+    "Basic completion" to listOf("CodeCompletion"),
+
+    // EditorBasics
+    "Select" to listOf("smart_selection", "CtrlW"),
+    "Comment line" to listOf("CommentCode"),
+    "Duplicate" to listOf("CtrlD", "DeleteLine"),
+    "Move" to listOf("MoveUpDown"),
+    "Surround and unwrap" to listOf("SurroundWith"),
+
+    // CodeCompletion
+    "Basic completion" to listOf("CodeCompletion"),
+    "Smart type completion" to listOf("SmartTypeCompletion", "SmartTypeAfterNew", "SecondSmartCompletionToar"),
+    "Postfix completion" to listOf("PostfixCompletion"),
+    "Statement completion" to listOf("CompleteStatement", "FinishBySmartEnter"),
+    "Completion with tab" to listOf("TabInLookups"),
+
+    // Refactorings
+    "Refactorings.Rename" to listOf("Rename"),
+    "Extract variable" to listOf("IntroduceVariable"),
+    "Refactorings.ExtractMethod" to listOf("ExtractMethod"),
+    "java.refactoring.menu" to listOf("RefactorThis"),
+
+    // CodeAssistance
+    "CodeAssistance.LocalHistory" to listOf("local_history"),
+    "CodeAssistance.CodeFormatting" to listOf("LayoutCode"),
+    "CodeAssistance.ParameterInfo" to listOf("ParameterInfo"),
+    "CodeAssistance.QuickPopups" to listOf("CtrlShiftIForLookup", "CtrlShiftI", "QuickJavaDoc"),
+    "CodeAssistance.EditorCodingAssistance" to listOf("HighlightUsagesInFile", "NextPrevError", "NavigateBetweenErrors"),
+
+    // Navigation
+    "Search everywhere" to listOf("SearchEverywhere", "GoToClass", "search_everywhere_general"),
+    "Find in files" to listOf("FindReplaceToggle", "FindInPath"),
+    "File structure" to listOf("FileStructurePopup"),
+    "Declaration and usages" to listOf("GoToDeclaration", "ShowUsages"),
+    "java.inheritance.hierarchy.lesson" to listOf("HierarchyBrowser"),
+    "Recent Files and Locations" to listOf("recent-locations", "RecentFiles"),
+
+    // RunAndDebug
+    "java.run.configuration" to listOf("SelectRunDebugConfiguration"),
+    "java.debug.workflow" to listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor"),
+  ).also { map ->
+    val gitCourse = CourseManager.instance.findCommonCourseById("Git")
+    if (gitCourse != null) {
+      map.putAll(gitCourse.getLessonIdToTipsMap())
+    }
+  }
 }

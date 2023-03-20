@@ -20,7 +20,7 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,7 +136,7 @@ public final class MoveFilesOrDirectoriesUtil {
                              MoveCallback moveCallback,
                              Runnable doneCallback) {
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      Collection<PsiElement> toCheck = ContainerUtil.newArrayList(targetDirectory);
+      Collection<PsiElement> toCheck = new SmartList<>(targetDirectory);
       for (PsiElement e : adjustedElements) {
         toCheck.add(e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e);
       }
@@ -148,8 +148,7 @@ public final class MoveFilesOrDirectoriesUtil {
         int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
         List<PsiElement> els = new ArrayList<>();
         for (PsiElement psiElement : adjustedElements) {
-          if (psiElement instanceof PsiFile) {
-            PsiFile file = (PsiFile)psiElement;
+          if (psiElement instanceof PsiFile file) {
             if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(),
                                                              RefactoringBundle.message("command.name.move"))) continue;
           }
@@ -177,8 +176,7 @@ public final class MoveFilesOrDirectoriesUtil {
                 if (element instanceof PsiDirectory) {
                   doJustMoveDirectory((PsiDirectory)element, targetDirectory, MoveFilesOrDirectoriesUtil.class);
                 }
-                else if (element instanceof PsiFile) {
-                  final PsiFile movedFile = (PsiFile)element;
+                else if (element instanceof PsiFile movedFile) {
                   PsiFile moving = targetDirectory.findFile(movedFile.getName());
                   if (moving == null) {
                     doMoveFile(movedFile, targetDirectory);
@@ -212,7 +210,7 @@ public final class MoveFilesOrDirectoriesUtil {
     }, MoveHandler.getRefactoringName(), null);
   }
 
-  private static void addFilePointers(@NotNull Set<SmartPsiElementPointer<PsiFile>> pointers,
+  private static void addFilePointers(@NotNull Set<? super SmartPsiElementPointer<PsiFile>> pointers,
                                       @NotNull PsiElement element,
                                       @NotNull SmartPointerManager manager) {
     if (element instanceof PsiFile) {
@@ -232,15 +230,11 @@ public final class MoveFilesOrDirectoriesUtil {
     }
 
     PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
-    switch (directories.length) {
-      case 0:
-        return null;
-      case 1:
-        return directories[0];
-      default:
-        return DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<>());
-    }
-
+    return switch (directories.length) {
+      case 0 -> null;
+      case 1 -> directories[0];
+      default -> DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<>());
+    };
   }
 
   @Nullable

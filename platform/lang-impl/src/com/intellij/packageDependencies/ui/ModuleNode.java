@@ -93,9 +93,8 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
       return super.equals(o);
     }
     if (this == o) return true;
-    if (!(o instanceof ModuleNode)) return false;
+    if (!(o instanceof ModuleNode moduleNode)) return false;
 
-    final ModuleNode moduleNode = (ModuleNode)o;
     return Comparing.equal(myModule, moduleNode.myModule);
   }
 

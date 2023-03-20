@@ -28,7 +28,7 @@ public class SimpleMethodInliner implements CallInliner {
     if (method == null || PsiUtil.canBeOverridden(method) || (call.isPhysical() && !method.isPhysical())) return false;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null || !PsiTreeUtil.isAncestor(aClass, call, true)) return false;
-    if (PsiType.VOID.equals(method.getReturnType())) return false;
+    if (PsiTypes.voidType().equals(method.getReturnType())) return false;
     if (PsiTreeUtil.isAncestor(method, call, true)) return false;
     PsiReturnStatement statement = tryCast(ControlFlowUtils.getOnlyStatementInBlock(method.getBody()), PsiReturnStatement.class);
     if (statement == null) return false;

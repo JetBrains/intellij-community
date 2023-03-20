@@ -61,8 +61,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
   }
 
   private static boolean areCellsAdjacent(final IContainer parent, final GridConstraints c1, final GridConstraints c2) {
-    if (parent instanceof RadContainer) {
-      final RadContainer container = (RadContainer)parent;
+    if (parent instanceof RadContainer container) {
       if (!container.getLayoutManager().isGrid()) return false;
       if (c1.getRow() == c2.getRow()) {
         return FormEditingUtil.prevCol(container, c1.getColumn()) == c2.getColumn() ||

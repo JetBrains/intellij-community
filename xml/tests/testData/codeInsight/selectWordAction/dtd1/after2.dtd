@@ -1,0 +1,2 @@
+<selection>   <!ELEMENT myE<caret>lement (#PCDATA)>
+</selection>   <!ELEMENT myElement2 (#PCDATA)>

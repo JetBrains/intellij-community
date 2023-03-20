@@ -22,9 +22,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class SimplifyStreamApiCallChainsInspectionFixTest extends LightQuickFixParameterizedTestCase {
 
   @Override

@@ -3,12 +3,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
-* @author peter
-*/
 public class MaybeReturnInstruction extends InstructionImpl implements MaybeInterruptInstruction {
   MaybeReturnInstruction(GrExpression element) {
     super(element);
@@ -22,7 +20,7 @@ public class MaybeReturnInstruction extends InstructionImpl implements MaybeInte
     GrExpression expression = (GrExpression) getElement();
     assert expression != null;
     final PsiType type = expression.getType();
-    return !PsiType.VOID.equals(type) && !PsiUtil.isVoidMethodCall(expression);
+    return !PsiTypes.voidType().equals(type) && !PsiUtil.isVoidMethodCall(expression);
   }
 
 }

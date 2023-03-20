@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,6 +16,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.function.Supplier;
 
@@ -81,7 +85,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
                                                       ArrayUtilRt.toStringArray(StringUtil.split(newDirectories, "/")));
 
         if (vfsDir == null) {
-          Logger.getInstance(AbstractCreateFileFix.class)
+          Logger.getInstance(CreateFilePathFix.class)
             .warn("Unable to find relative file" + currentDirectory.getVirtualFile().getPath());
           return;
         }
@@ -157,5 +161,14 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
     throws IncorrectOperationException {
 
     createFile(project, targetDirectory, myNewFileName);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    String extension = StringUtil.substringAfterLast(myNewFileName, ".");
+    Icon icon =
+      extension == null ? AllIcons.FileTypes.Any_type : FileTypeRegistry.getInstance().getFileTypeByExtension(extension).getIcon();
+    HtmlChunk description = getDescription(icon);
+    return description == null ? IntentionPreviewInfo.EMPTY : new IntentionPreviewInfo.Html(description);
   }
 }

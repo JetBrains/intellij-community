@@ -44,9 +44,6 @@ public abstract class GradleReRunBuildFilter implements Filter {
 
   @Override
   public Result applyFilter(@NotNull String line, int entireLength) {
-    if (line == null) {
-      return null;
-    }
     this.line = line;
     this.lineStart = entireLength - line.length();
     this.links = new ArrayList<>();

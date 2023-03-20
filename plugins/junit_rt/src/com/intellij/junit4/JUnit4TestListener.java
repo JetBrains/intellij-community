@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.junit4;
 
@@ -34,15 +20,15 @@ public class JUnit4TestListener extends RunListener {
   public static final String EMPTY_SUITE_NAME = "junit.framework.TestSuite$1";
   public static final String EMPTY_SUITE_WARNING = "warning";
 
-  private final List<Description> myStartedSuites = new ArrayList<Description>();
-  private final Map<Description, List<List<Description>>> myParents = new HashMap<Description, List<List<Description>>>();
-  private final Map<Description, String> myMethodNames = new HashMap<Description, String>();
+  private final List<Description> myStartedSuites = new ArrayList<>();
+  private final Map<Description, List<List<Description>>> myParents = new HashMap<>();
+  private final Map<Description, String> myMethodNames = new HashMap<>();
   private final PrintStream myPrintStream;
   private String myRootName;
   private long myCurrentTestStart;
 
   private Description myCurrentTest;
-  private final Map<Description, TestEvent> myWaitingQueue = new LinkedHashMap<Description, TestEvent>();
+  private final Map<Description, TestEvent> myWaitingQueue = new LinkedHashMap<>();
   private static final JUnitTestTreeNodeManager NODE_NAMES_MANAGER = getTestTreeNodeManager();
 
 
@@ -106,7 +92,7 @@ public class JUnit4TestListener extends RunListener {
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
 
-    List<Description> parentsHierarchy = new ArrayList<Description>();
+    List<Description> parentsHierarchy = new ArrayList<>();
     if (parents != null && !parents.isEmpty()) {
       parentsHierarchy = parents.remove(0);
     }
@@ -116,8 +102,7 @@ public class JUnit4TestListener extends RunListener {
     }
 
     if (methodName == null) {
-      methodName = getFullMethodName(description, parentsHierarchy.isEmpty() ? null
-                                                                             : parentsHierarchy.get(parentsHierarchy.size() - 1));
+      methodName = getFullMethodName(description, parentsHierarchy.get(parentsHierarchy.size() - 1));
       if (methodName == null) return;
     }
 
@@ -269,7 +254,20 @@ public class JUnit4TestListener extends RunListener {
       return;
     }
 
-    final Map<String, String> attrs = new LinkedHashMap<String, String>();
+    Throwable ex = failure != null ? failure.getException() : null;
+    if (ex != null && isMultipleFailuresError(ex.getClass())) {
+      try {
+        Object failures = Class.forName("org.opentest4j.MultipleFailuresError").getDeclaredMethod("getFailures").invoke(ex);
+        //noinspection unchecked
+        for (Throwable throwable : (List<Throwable>)failures) {
+          testFailure(new Failure(description, throwable), description, messageName, methodName);
+        }
+        return;
+      }
+      catch (Throwable ignore) { }
+    }
+
+    final Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("name", methodName);
     final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {
@@ -278,7 +276,6 @@ public class JUnit4TestListener extends RunListener {
     try {
       if (failure != null) {
         final String trace = getTrace(failure);
-        final Throwable ex = failure.getException();
         final ComparisonFailureData notification = ExpectedPatterns.createExceptionNotification(ex);
         ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, ex);
       }
@@ -292,6 +289,15 @@ public class JUnit4TestListener extends RunListener {
     finally {
       myPrintStream.println(MapSerializerUtil.asString(messageName, attrs));
     }
+  }
+
+  private static boolean isMultipleFailuresError(Class<?> aClass) {
+    if (aClass.getName().equals("org.opentest4j.MultipleFailuresError")) {
+      return true;
+    }
+
+    Class<?> superclass = aClass.getSuperclass();
+    return superclass != null && isMultipleFailuresError(superclass);
   }
 
   protected String getTrace(Failure failure) {
@@ -346,7 +352,7 @@ public class JUnit4TestListener extends RunListener {
 
   private void testIgnored(Description description, String methodName) {
     testStarted(description);
-    Map<String, String> attrs = new HashMap<String, String>();
+    Map<String, String> attrs = new HashMap<>();
     try {
       final Ignore ignoredAnnotation = description.getAnnotation(Ignore.class);
       if (ignoredAnnotation != null) {
@@ -454,7 +460,7 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private void sendTree(Description description, Description parent, List<Description> currentParents) {
-    List<Description> pParents = new ArrayList<Description>(3);
+    List<Description> pParents = new ArrayList<>(3);
     pParents.addAll(currentParents);
     if (parent != null) {
       final String parentClassName = JUnit4ReflectionUtil.getClassName(parent);
@@ -465,7 +471,7 @@ public class JUnit4TestListener extends RunListener {
 
     List<List<Description>> parents = myParents.get(description);
     if (parents == null) {
-      parents = new ArrayList<List<Description>>(1);
+      parents = new ArrayList<>(1);
       myParents.put(description, parents);
     }
     parents.add(pParents);
@@ -556,13 +562,7 @@ public class JUnit4TestListener extends RunListener {
           .asSubclass(JUnitTestTreeNodeManager.class);
         result = junitNodeNamesManagerClass.newInstance();
       }
-      catch (ClassCastException ignored) {
-      }
-      catch (IllegalAccessException ignored) {
-      }
-      catch (InstantiationException ignored) {
-      }
-      catch (ClassNotFoundException ignored) {
+      catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
       }
     }
     return result;

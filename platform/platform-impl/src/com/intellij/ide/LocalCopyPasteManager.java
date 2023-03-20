@@ -19,6 +19,7 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * This implementation attempts to limit memory occupied by clipboard history. To make it work, {@link Transferable} instances passed to
@@ -104,8 +105,7 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
         return content;
       }
 
-      if (content instanceof KillRingTransferable) {
-        KillRingTransferable killRingContent = (KillRingTransferable)content;
+      if (content instanceof KillRingTransferable killRingContent) {
         if (killRingContent.isReadyToCombine() && !myData.isEmpty()) {
           Transferable prev = myData.get(0);
           if (prev instanceof KillRingTransferable) {
@@ -168,9 +168,6 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
 
     Object newDataText = newData.getTransferData(DataFlavor.stringFlavor);
     Object oldDataText = oldData.getTransferData(DataFlavor.stringFlavor);
-    if (newDataText == null || oldDataText == null) {
-      return null;
-    }
 
     if (oldData.isCut()) {
       if (newData.getStartOffset() == oldData.getStartOffset()) {
@@ -207,6 +204,10 @@ public class LocalCopyPasteManager implements ClientCopyPasteManager {
     int maxCount = Math.max(1, Registry.intValue("clipboard.history.max.items"));
     int maxMemory = Math.max(0, Registry.intValue("clipboard.history.max.memory"));
     CopyPasteManagerEx.deleteAfterAllowedMaximum(myData, maxCount, maxMemory, item -> createPurgedItem());
+  }
+
+  public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
+    return myData.removeIf(predicate);
   }
 
   @Override

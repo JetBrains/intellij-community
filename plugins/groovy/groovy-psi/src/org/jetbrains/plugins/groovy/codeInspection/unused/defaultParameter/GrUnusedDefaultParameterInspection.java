@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.unused.defaultParameter;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.FindSuperElementsHelper;
@@ -27,23 +26,21 @@ public class GrUnusedDefaultParameterInspection extends GroovyLocalInspectionToo
       @Override
       public void visitExpression(@NotNull GrExpression expression) {
         PsiElement expressionParent = expression.getParent();
-        if (!(expressionParent instanceof GrParameter)) return;
+        if (!(expressionParent instanceof GrParameter parameter)) return;
 
-        GrParameter parameter = (GrParameter)expressionParent;
         if (parameter.getInitializerGroovy() != expression) return;
 
         PsiElement parameterParent = parameter.getParent();
         if (!(parameterParent instanceof GrParameterList)) return;
 
         PsiElement parameterListParent = parameterParent.getParent();
-        if (!(parameterListParent instanceof GrMethod)) return;
+        if (!(parameterListParent instanceof GrMethod method)) return;
 
-        GrMethod method = (GrMethod)parameterListParent;
         if (PsiUtil.OPERATOR_METHOD_NAMES.contains(method.getName())) return;
 
         if (isInitializerUnused(parameter, method)) {
           holder.registerProblem(
-            expression, GroovyBundle.message("unused.default.parameter.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+            expression, GroovyBundle.message("unused.default.parameter.message"),
             QuickFixFactory.getInstance().createDeleteFix(expression, GroovyBundle.message("unused.default.parameter.fix"))
           );
         }

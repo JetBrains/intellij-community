@@ -13,9 +13,6 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.util.*
 
-/**
- * @author peter
- */
 internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> {
   override fun save(out: DataOutput, value: Map<Int, MethodData>?) {
     writeSeq(out, value!!.toList()) { writeINT(out, it.first); writeMethod(out, it.second)

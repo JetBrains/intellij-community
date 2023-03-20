@@ -26,9 +26,6 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class MoveInitializerToSetUpMethodActionTest extends LightIntentionActionTestCase {
   private final static DefaultLightProjectDescriptor ourProjectDescriptor = new DefaultLightProjectDescriptor() {
     @Override

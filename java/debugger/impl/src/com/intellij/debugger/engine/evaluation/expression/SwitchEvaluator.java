@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -37,8 +37,7 @@ public class SwitchEvaluator implements Evaluator {
         }
         else {
           Evaluator e = DisableGC.unwrap(evaluator);
-          if (e instanceof SwitchCaseEvaluator) {
-            SwitchCaseEvaluator caseEvaluator = (SwitchCaseEvaluator)e;
+          if (e instanceof SwitchCaseEvaluator caseEvaluator) {
             if (caseEvaluator.myDefaultCase) {
               defaultLabelNum = i;
               continue;

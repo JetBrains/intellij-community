@@ -13,7 +13,7 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
   }
 
   fun testChangeReturnType() = doMethodTest { method, factory ->
-    method.returnTypeElement?.replace(factory.createTypeElement(PsiPrimitiveType.BOOLEAN))
+    method.returnTypeElement?.replace(factory.createTypeElement(PsiTypes.booleanType()))
   }
 
   fun testMakeMethodPackagePrivate() = doMethodTest { method, _ ->
@@ -30,12 +30,12 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
   }
 
   fun testAddParameter() = doMethodTest { method, factory ->
-    val parameter = factory.createParameter("i", PsiPrimitiveType.INT)
+    val parameter = factory.createParameter("i", PsiTypes.intType())
     method.parameterList.add(parameter)
   }
 
   fun testChangeParameterType() = doMethodTest { method, factory ->
-    method.parameterList.getParameter(0)?.typeElement?.replace(factory.createTypeElement(PsiPrimitiveType.BOOLEAN))
+    method.parameterList.getParameter(0)?.typeElement?.replace(factory.createTypeElement(PsiTypes.booleanType()))
   }
 
   fun testMakeOverrideMethodPrivateInAbstractClass() {

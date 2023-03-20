@@ -1,18 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.shared
 
-import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CheckboxTreeBase
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.layout.*
-import com.intellij.util.ui.JBInsets
+import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.GridBagConstraints
 import java.awt.event.ActionEvent
 import java.awt.event.FocusEvent
@@ -26,19 +27,8 @@ import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
-fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
-  if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
-    val top = if (topField) 20 else 15
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
-  } else {
-    val top = if (topField) 15 else 5
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 5, 0, 5))
-  }
-
-  return this
-}
-
-internal fun gridConstraint(col: Int, row: Int): GridBagConstraints {
+@ApiStatus.Internal
+fun gridConstraint(col: Int, row: Int): GridBagConstraints {
   return GridBagConstraints().apply {
     fill = GridBagConstraints.BOTH
     gridx = col
@@ -49,12 +39,12 @@ internal fun gridConstraint(col: Int, row: Int): GridBagConstraints {
 }
 
 fun <T : JComponent> withValidation(
-  builder: CellBuilder<T>,
+  builder: Cell<T>,
   errorChecks: List<TextValidationFunction>,
   warningChecks: TextValidationFunction?,
   validatedTextComponents: MutableList<JTextField>,
   parentDisposable: Disposable
-): CellBuilder<T> {
+): Cell<T> {
   if (errorChecks.isEmpty()) return builder
 
   val textField = getJTextField(builder.component)
@@ -184,7 +174,8 @@ private fun getWarningsMessage(warnings: MutableList<ValidationInfo>): String {
   return message.toString()
 }
 
-internal fun walkCheckedTree(root: CheckedTreeNode?, visitor: (CheckedTreeNode) -> Unit) {
+@ApiStatus.Internal
+fun walkCheckedTree(root: CheckedTreeNode?, visitor: (CheckedTreeNode) -> Unit) {
   if (root == null) return
 
   fun walkTreeNode(root: TreeNode, visitor: (CheckedTreeNode) -> Unit) {
@@ -200,7 +191,8 @@ internal fun walkCheckedTree(root: CheckedTreeNode?, visitor: (CheckedTreeNode) 
   walkTreeNode(root, visitor)
 }
 
-internal fun enableEnterKeyHandling(list: CheckboxTreeBase) {
+@ApiStatus.Internal
+fun enableEnterKeyHandling(list: CheckboxTreeBase) {
   list.inputMap.put(KeyStroke.getKeyStroke("ENTER"), "pick-node")
   list.actionMap.put("pick-node", object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent?) {
@@ -221,4 +213,11 @@ internal fun enableEnterKeyHandling(list: CheckboxTreeBase) {
       }
     }
   })
+}
+
+fun Row.hyperLink(@Nls title: String, @NlsSafe url: String): Cell<HyperlinkLabel> {
+  val hyperlinkLabel = HyperlinkLabel(title)
+  hyperlinkLabel.setHyperlinkTarget(url)
+  hyperlinkLabel.toolTipText = url
+  return this.cell(hyperlinkLabel)
 }

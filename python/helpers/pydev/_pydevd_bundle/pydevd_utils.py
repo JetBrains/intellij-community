@@ -17,10 +17,13 @@ except:
 
 import inspect
 from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_ASYNCIO_DEBUGGER_ENV, IS_PY311
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression_in_context
+from array import array
+from collections import deque
 
 
 def _normpath(filename):
@@ -98,6 +101,23 @@ else:
 
     def is_string(x):
         return isinstance(x, basestring)
+
+
+def patch_traceback_311():
+    # Workaround until https://github.com/python/cpython/issues/99103 is fixed
+    import traceback
+    def _byte_offset_pydev(str, offset):
+        try:
+            return traceback._byte_offset_orig(str, offset)
+        except:
+            return 0
+
+    traceback._byte_offset_orig = traceback._byte_offset_to_character_offset
+    traceback._byte_offset_to_character_offset = _byte_offset_pydev
+
+
+if IS_PY311:
+    patch_traceback_311()
 
 
 def to_string(x):
@@ -539,9 +559,9 @@ def dump_threads(stream=None):
 
 
 def take_first_n_coll_elements(coll, n):
-    if coll.__class__ in (list, tuple):
+    if coll.__class__ in (list, tuple, array):
         return coll[:n]
-    elif coll.__class__ in (set, frozenset):
+    elif coll.__class__ in (set, frozenset, deque):
         buf = []
         for i, x in enumerate(coll):
             if i >= n:
@@ -590,7 +610,9 @@ def is_numpy(x):
            or 'float' in type_name or 'complex' in type_name
 
 
-def should_evaluate_full_value(val):
+def should_evaluate_full_value(val, group_type=GET_FRAME_NORMAL_GROUP):
+    if group_type == GET_FRAME_RETURN_GROUP:
+        return None
     return LOAD_VALUES_POLICY == ValuesPolicy.SYNC \
            or ((is_builtin(type(val)) or is_numpy(type(val))) and not isinstance(val, (list, tuple, dict, set, frozenset))) \
            or (is_in_unittests_debugging_mode() and isinstance(val, Exception))
@@ -600,46 +622,21 @@ def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
-def _series_to_str(s, max_items):
-    res = []
-    s = s[:max_items]
-    for item in s.iteritems():
-        # item: (index, value)
-        res.append(str(item))
-    return ' '.join(res)
-
-
-def _df_to_str(value):
-    # Avoid using df.iteritems() or df.values[i], because it works very slow for large data frames
-    # df.__str__() is already optimised and works fast enough
-    res = []
-    rows = value.split('\n')
-    for (i, r) in enumerate(rows):
-        if i == 0:
-            res.append(r.strip())
-        else:
-            res.append("[%s]" % r)
-    return ' '.join(res)
-
-
-def pandas_to_str(df, type_name, str_value, max_items):
-    try:
-        if type_name == "Series":
-            return _series_to_str(df, max_items)
-        elif type_name == "DataFrame":
-            return _df_to_str(str_value)
-        else:
-            return str(df)
-    except Exception as e:
-        pydev_log.warn("Failed to format pandas variable: " + str(e))
-        return str(df)
-
-
-def format_numpy_array(num_array, max_items):
-    return str(num_array[:max_items]).replace('\n', ',').strip()
-
-
 def is_in_unittests_debugging_mode():
     debugger = get_global_debugger()
     if debugger:
         return debugger.stop_on_failed_tests
+
+
+def is_current_thread_main_thread():
+    if hasattr(threading, 'main_thread'):
+        return threading.current_thread() is threading.main_thread()
+    else:
+        return isinstance(threading.current_thread(), threading._MainThread)
+
+
+def eval_expression(expression, globals, locals):
+    if IS_ASYNCIO_DEBUGGER_ENV:
+        return eval_async_expression_in_context(expression, globals, locals, False)
+    else:
+        return eval(expression, globals, locals)

@@ -28,9 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author ven
- */
 class JavaToGroovyResolveTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {

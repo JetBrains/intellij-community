@@ -1,1 +1,2 @@
-val foo: <caret>() -> String = { "" }
+// IGNORE_FIR
+val foo: <caret>() -> String = fun(): String { return "" }

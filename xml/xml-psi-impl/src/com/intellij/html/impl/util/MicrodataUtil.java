@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-/**
- * @author: Fedor.Korotkov
- */
 public final class MicrodataUtil {
   public static final Key<List<String>> ITEM_PROP_KEYS = Key.create("microdata.prop");
   public static final String ITEM_REF = "itemref";
@@ -59,7 +56,7 @@ public final class MicrodataUtil {
         final Map<String, XmlTag> result = new HashMap<>();
         file.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(final XmlTag tag) {
+          public void visitXmlTag(final @NotNull XmlTag tag) {
             super.visitXmlTag(tag);
             XmlAttribute refAttr = tag.getAttribute(ITEM_REF);
             if (refAttr != null && tag.getAttribute(ITEM_SCOPE) != null) {
@@ -155,7 +152,7 @@ public final class MicrodataUtil {
     }
 
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       String value = getStripedAttributeValue(tag, ITEM_ID);
       final boolean isTypeTag = myType.equalsIgnoreCase(value);
       if (isTypeTag) {
@@ -176,7 +173,7 @@ public final class MicrodataUtil {
 
   public static class CollectNamesFromSchemaOrgVisitor extends CollectNamesVisitor {
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       super.visitXmlTag(tag);
       if ("prop-nam".equalsIgnoreCase(getStripedAttributeValue(tag, HtmlUtil.CLASS_ATTRIBUTE_NAME))) {
         final String code = tag.getSubTagText("code");

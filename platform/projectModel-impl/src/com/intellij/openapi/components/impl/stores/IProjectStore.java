@@ -23,7 +23,6 @@ public interface IProjectStore extends IComponentStore {
 
   /**
    * The path to project configuration file - `misc.xml` for directory-based and `*.ipr` for file-based.
-   * @return
    */
   @NotNull Path getProjectFilePath();
 
@@ -41,8 +40,7 @@ public interface IProjectStore extends IComponentStore {
    * @deprecated Use {@link #getDirectoryStorePath()} or {@link Path#getParent()} of {@link #getProjectFilePath()}.
    */
   @SystemIndependent
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable String getDirectoryStorePath(boolean ignoreProjectStorageScheme);
 
   /**

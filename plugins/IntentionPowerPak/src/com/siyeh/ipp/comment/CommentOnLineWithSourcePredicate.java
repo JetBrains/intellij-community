@@ -26,10 +26,9 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiComment) || element instanceof PsiDocComment || element.getTextOffset() == 0) {
+    if (!(element instanceof PsiComment comment) || element instanceof PsiDocComment || element.getTextOffset() == 0) {
       return false;
     }
-    final PsiComment comment = (PsiComment)element;
     if (comment instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)comment)) {
       return false;
     }

@@ -27,9 +27,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FacetTypeUsageCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("module.facets", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("module.facets", 6);
 
-  private static final EventField<String> FACET_TYPE = EventFields.StringValidatedByCustomRule("facet", "facets_type");
+  private static final EventField<String> FACET_TYPE = EventFields.StringValidatedByCustomRule("facet", FacetTypeUtilValidator.class);
   private static final VarargEventId MODULE = GROUP.registerVarargEvent(
     "module.with.facet", FACET_TYPE, EventFields.PluginInfo
   );
@@ -54,10 +54,10 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
   }
 
   public static class FacetTypeUtilValidator extends CustomValidationRule {
-
+    @NotNull
     @Override
-    public boolean acceptRuleId(@Nullable String ruleId) {
-      return "facets_type".equals(ruleId);
+    public String getRuleId() {
+      return "facets_type";
     }
 
     @NotNull

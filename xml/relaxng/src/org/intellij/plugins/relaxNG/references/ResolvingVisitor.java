@@ -49,12 +49,10 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   }
 
   @Override
-  public void visitXmlDocument(@Nullable XmlDocument document) {
-    if (document != null) {
-      final XmlTag rootTag = document.getRootTag();
-      if (rootTag != null) {
-        visitXmlTag(rootTag);
-      }
+  public void visitXmlDocument(@NotNull XmlDocument document) {
+    final XmlTag rootTag = document.getRootTag();
+    if (rootTag != null) {
+      visitXmlTag(rootTag);
     }
   }
 
@@ -63,7 +61,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   }
 
   @Override
-  public void visitXmlAttribute(XmlAttribute attribute) {
+  public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
     if (myIncludePattern != null && myIncludePattern.accepts(attribute, myProcessingContext)) {
       final String value = attribute.getValue();
       if (value == null) return;
@@ -82,7 +80,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   }
 
   @Override
-  public void visitXmlTag(XmlTag tag) {
+  public void visitXmlTag(@NotNull XmlTag tag) {
     visitAttributes(tag);
   }
 

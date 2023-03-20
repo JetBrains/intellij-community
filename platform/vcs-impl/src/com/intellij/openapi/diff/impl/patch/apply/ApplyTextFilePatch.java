@@ -25,7 +25,10 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
   }
 
   @Override
-  protected @NotNull Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Supplier<? extends CharSequence> baseContents) throws IOException {
+  protected @NotNull Result applyChange(@NotNull Project project,
+                                        @NotNull VirtualFile fileToPatch,
+                                        @NotNull FilePath pathBeforeRename,
+                                        @Nullable Supplier<? extends CharSequence> baseContents) throws IOException {
     final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
     if (document == null) {
       throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
@@ -33,21 +36,32 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
 
     GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(document.getText(), myPatch.getHunks());
     if (appliedPatch != null) {
-      VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
-      FileDocumentManager.getInstance().saveDocument(document);
-      return new Result(appliedPatch.status);
+      if (appliedPatch.status == ApplyPatchStatus.ALREADY_APPLIED) {
+        return new Result(appliedPatch.status);
+      }
+
+      if (appliedPatch.status == ApplyPatchStatus.SUCCESS) {
+        VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
+        FileDocumentManager.getInstance().saveDocument(document);
+        return new Result(appliedPatch.status);
+      }
     }
-    return new Result(ApplyPatchStatus.FAILURE) {
+
+    ApplyPatchStatus status = appliedPatch != null ? appliedPatch.status : ApplyPatchStatus.FAILURE;
+    assert status == ApplyPatchStatus.PARTIAL || status == ApplyPatchStatus.FAILURE;
+    return new Result(status) {
       @Override
       public ApplyPatchForBaseRevisionTexts getMergeData() {
-        return ApplyPatchForBaseRevisionTexts
-          .create(project, fileToPatch, pathBeforeRename, myPatch, baseContents != null ? baseContents.get() : null);
+        return ApplyPatchForBaseRevisionTexts.create(project, fileToPatch, pathBeforeRename, myPatch,
+                                                     baseContents != null ? baseContents.get() : null);
       }
     };
   }
 
   @Override
-  protected void applyCreate(Project project, @NotNull VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException {
+  protected void applyCreate(@NotNull Project project,
+                             @NotNull VirtualFile newFile,
+                             @Nullable CommitContext commitContext) throws IOException {
     Document document = FileDocumentManager.getInstance().getDocument(newFile);
     if (document == null) {
       throw new IOException("Failed to set contents for new file " + newFile.getPath());

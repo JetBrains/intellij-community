@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -53,6 +39,11 @@ public class CyclicDependenciesAction extends AnAction{
     presentation.setEnabled(
       getInspectionScope(event.getDataContext()) != null ||
       event.getData(CommonDataKeys.PROJECT) != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -119,13 +110,11 @@ public class CyclicDependenciesAction extends AnAction{
     }
 
     PsiElement psiTarget = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (psiTarget instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
+    if (psiTarget instanceof PsiDirectory psiDirectory) {
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
       return new AnalysisScope(psiDirectory);
     }
-    if (psiTarget instanceof PsiPackage) {
-      PsiPackage pack = (PsiPackage)psiTarget;
+    if (psiTarget instanceof PsiPackage pack) {
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs.length == 0) return null;
       return new JavaAnalysisScope(pack, PlatformCoreDataKeys.MODULE.getData(dataContext));

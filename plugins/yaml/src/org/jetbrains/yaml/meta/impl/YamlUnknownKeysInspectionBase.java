@@ -39,14 +39,20 @@ public abstract class YamlUnknownKeysInspectionBase extends YamlMetaTypeInspecti
         return;
       }
 
+      if ("<<".equals(keyValue.getKey().getText())) {
+        // validation of merge types is not supported, but at least there should be no red code
+        return;
+      }
+
       YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getKeyValueMetaType(keyValue);
       if (meta == null) {
         YAMLValue parent = keyValue.getParentMapping();
         if (parent != null) {
           final YamlMetaTypeProvider.MetaTypeProxy typeProxy = myMetaTypeProvider.getValueMetaType(parent);
 
-          if (typeProxy == null)
+          if (typeProxy == null) {
             return;
+          }
 
           // Only mark the first element as unknown, not its children
           //

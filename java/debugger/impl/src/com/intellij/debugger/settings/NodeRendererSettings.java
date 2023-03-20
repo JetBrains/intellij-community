@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerContext;
@@ -115,7 +115,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public boolean equals(Object o) {
-    if(!(o instanceof NodeRendererSettings)) return false;
+    if (!(o instanceof NodeRendererSettings)) return false;
 
     return DebuggerUtilsEx.elementsEqual(getState(), ((NodeRendererSettings)o).getState());
   }
@@ -125,8 +125,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public Element getState()  {
+  public Element getState() {
     final Element element = new Element("state");
     if (myHexRenderer.isEnabled()) {
       JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, "true");
@@ -177,18 +176,16 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         continue;
       }
       try {
-        if (ToStringRenderer.UNIQUE_ID.equals(id)) {
-          myToStringRenderer.readExternal(elem);
-          if (!myToStringRenderer.isEnabled()) {
-            myToStringRenderer.setEnabled(true);
-            myToStringRenderer.setOnDemand(true);
+        switch (id) {
+          case ToStringRenderer.UNIQUE_ID -> {
+            myToStringRenderer.readExternal(elem);
+            if (!myToStringRenderer.isEnabled()) {
+              myToStringRenderer.setEnabled(true);
+              myToStringRenderer.setOnDemand(true);
+            }
           }
-        }
-        else if (ClassRenderer.UNIQUE_ID.equals(id)) {
-          myClassRenderer.readExternal(elem);
-        }
-        else if (PrimitiveRenderer.UNIQUE_ID.equals(id)) {
-          myPrimitiveRenderer.readExternal(elem);
+          case ClassRenderer.UNIQUE_ID -> myClassRenderer.readExternal(elem);
+          case PrimitiveRenderer.UNIQUE_ID -> myPrimitiveRenderer.readExternal(elem);
         }
       }
       catch (InvalidDataException e) {
@@ -250,7 +247,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     // plugins registered renderers come after that
-    CompoundRendererProvider.EP_NAME.extensions().map(CompoundRendererProvider::createRenderer).forEach(allRenderers::add);
+    CompoundRendererProvider.EP_NAME.getExtensionList().stream().map(CompoundRendererProvider::createRenderer).forEach(allRenderers::add);
     allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff
@@ -266,19 +263,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private void addAnnotationRenderers(List<NodeRenderer> renderers, Project project) {
     try {
       visitAnnotatedElements(Debug.Renderer.class.getName().replace("$", "."), project, (e, annotation) -> {
-        if (e instanceof PsiClass) {
-            String text = getAttributeValue(annotation, "text");
-            LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
-            String childrenArray = getAttributeValue(annotation, "childrenArray");
-            String isLeaf = getAttributeValue(annotation, "hasChildren");
-            ExpressionChildrenRenderer childrenRenderer =
-              StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
-          PsiClass cls = ((PsiClass)e);
-            CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
+        if (e instanceof PsiClass cls) {
+          String text = getAttributeValue(annotation, "text");
+          LabelRenderer labelRenderer = StringUtil.isEmpty(text) ? null : createLabelRenderer(null, text);
+          String childrenArray = getAttributeValue(annotation, "childrenArray");
+          String isLeaf = getAttributeValue(annotation, "hasChildren");
+          ExpressionChildrenRenderer childrenRenderer =
+            StringUtil.isEmpty(childrenArray) ? null : createExpressionArrayChildrenRenderer(childrenArray, isLeaf, myArrayRenderer);
+          CompoundReferenceRenderer renderer = createCompoundReferenceRenderer(
             cls.getQualifiedName(), cls.getQualifiedName(), labelRenderer, childrenRenderer);
-            renderer.setEnabled(true);
-            renderers.add(renderer);
-          }
+          renderer.setEnabled(true);
+          renderers.add(renderer);
+        }
       });
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
@@ -295,7 +291,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
     if (value instanceof PsiExpression) {
       Object res = ExpressionUtils.computeConstantExpression(((PsiExpression)value));
-      if (res instanceof String){
+      if (res instanceof String) {
         return (String)res;
       }
     }
@@ -312,12 +308,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     final String rendererId = root.getAttributeValue(RENDERER_ID);
-    if(rendererId == null) {
+    if (rendererId == null) {
       throw new InvalidDataException("unknown renderer ID: " + rendererId);
     }
 
     final Renderer renderer = createRenderer(rendererId);
-    if(renderer == null) {
+    if (renderer == null) {
       throw new InvalidDataException("unknown renderer ID: " + rendererId);
     }
 
@@ -346,16 +342,16 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     else if (PrimitiveRenderer.UNIQUE_ID.equals(rendererId)) {
       return myPrimitiveRenderer;
     }
-    else if(HexRenderer.UNIQUE_ID.equals(rendererId)) {
+    else if (HexRenderer.UNIQUE_ID.equals(rendererId)) {
       return myHexRenderer;
     }
-    else if(rendererId.equals(ExpressionChildrenRenderer.UNIQUE_ID)) {
+    else if (rendererId.equals(ExpressionChildrenRenderer.UNIQUE_ID)) {
       return new ExpressionChildrenRenderer();
     }
-    else if(rendererId.equals(LabelRenderer.UNIQUE_ID)) {
+    else if (rendererId.equals(LabelRenderer.UNIQUE_ID)) {
       return new LabelRenderer();
     }
-    else if(rendererId.equals(EnumerationChildrenRenderer.UNIQUE_ID)) {
+    else if (rendererId.equals(EnumerationChildrenRenderer.UNIQUE_ID)) {
       return new EnumerationChildrenRenderer();
     }
     else if (rendererId.equals(ToStringRenderer.UNIQUE_ID)) {
@@ -371,7 +367,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   public CompoundReferenceRenderer createCompoundReferenceRenderer(
     @NonNls final String rendererName, @NonNls final String className, final ValueLabelRenderer labelRenderer, final ChildrenRenderer childrenRenderer
-    ) {
+  ) {
     CompoundReferenceRenderer renderer = new CompoundReferenceRenderer(this, rendererName, labelRenderer, childrenRenderer);
     renderer.setClassName(className);
     renderer.setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, renderer.getClassName()));
@@ -387,7 +383,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public static ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText,
-                                                                             @NonNls String childrenExpandableText) {
+                                                                            @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
     childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", JavaFileType.INSTANCE));
     if (childrenExpandableText != null) {
@@ -483,7 +479,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       }
       try {
         final ExpressionEvaluator evaluator = cachedEvaluator.getEvaluator(debugProcess.getProject());
-        if(!debugProcess.isAttached()) {
+        if (!debugProcess.isAttached()) {
           throw EvaluateExceptionUtil.PROCESS_EXITED;
         }
         final EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(originalValue);

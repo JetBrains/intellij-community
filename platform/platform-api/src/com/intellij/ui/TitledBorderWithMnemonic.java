@@ -89,38 +89,33 @@ public class TitledBorderWithMnemonic extends TitledBorder {
 
     int titlePos = getTitlePosition();
     switch (titlePos) {
-        case ABOVE_TOP:
-            diff = ascent + descent + (Math.max(EDGE_SPACING,
-                             TEXT_SPACING*2) - EDGE_SPACING);
-            grooveRect.y += diff;
-            grooveRect.height -= diff;
-            textLoc.y = grooveRect.y - (descent + TEXT_SPACING);
-            break;
-        case TOP:
-        case DEFAULT_POSITION:
-            diff = Math.max(0, ((ascent/2) + TEXT_SPACING) - EDGE_SPACING);
-            grooveRect.y += diff;
-            grooveRect.height -= diff;
-            textLoc.y = (grooveRect.y - descent) +
-            (insets.top + ascent + descent)/2;
-            break;
-        case BELOW_TOP:
-            textLoc.y = grooveRect.y + insets.top + ascent + TEXT_SPACING;
-            break;
-        case ABOVE_BOTTOM:
-            textLoc.y = (grooveRect.y + grooveRect.height) -
-            (insets.bottom + descent + TEXT_SPACING);
-            break;
-        case BOTTOM:
-            grooveRect.height -= fontHeight/2;
-            textLoc.y = ((grooveRect.y + grooveRect.height) - descent) +
-                    ((ascent + descent) - insets.bottom)/2;
-            break;
-        case BELOW_BOTTOM:
-            grooveRect.height -= fontHeight;
-            textLoc.y = grooveRect.y + grooveRect.height + ascent +
+      case ABOVE_TOP -> {
+        diff = ascent + descent + (Math.max(EDGE_SPACING,
+                                            TEXT_SPACING * 2) - EDGE_SPACING);
+        grooveRect.y += diff;
+        grooveRect.height -= diff;
+        textLoc.y = grooveRect.y - (descent + TEXT_SPACING);
+      }
+      case TOP, DEFAULT_POSITION -> {
+        diff = Math.max(0, ((ascent / 2) + TEXT_SPACING) - EDGE_SPACING);
+        grooveRect.y += diff;
+        grooveRect.height -= diff;
+        textLoc.y = (grooveRect.y - descent) +
+                    (insets.top + ascent + descent) / 2;
+      }
+      case BELOW_TOP -> textLoc.y = grooveRect.y + insets.top + ascent + TEXT_SPACING;
+      case ABOVE_BOTTOM -> textLoc.y = (grooveRect.y + grooveRect.height) -
+                                       (insets.bottom + descent + TEXT_SPACING);
+      case BOTTOM -> {
+        grooveRect.height -= fontHeight / 2;
+        textLoc.y = ((grooveRect.y + grooveRect.height) - descent) +
+                    ((ascent + descent) - insets.bottom) / 2;
+      }
+      case BELOW_BOTTOM -> {
+        grooveRect.height -= fontHeight;
+        textLoc.y = grooveRect.y + grooveRect.height + ascent +
                     TEXT_SPACING;
-            break;
+      }
     }
 
     int justification = getTitleJustification();
@@ -144,17 +139,11 @@ public class TitledBorderWithMnemonic extends TitledBorder {
     }
 
     switch (justification) {
-        case LEFT:
-            textLoc.x = grooveRect.x + TEXT_INSET_H + insets.left;
-            break;
-        case RIGHT:
-            textLoc.x = (grooveRect.x + grooveRect.width) -
-                    (stringWidth + TEXT_INSET_H + insets.right);
-            break;
-        case CENTER:
-            textLoc.x = grooveRect.x +
-                    ((grooveRect.width - stringWidth) / 2);
-            break;
+      case LEFT -> textLoc.x = grooveRect.x + TEXT_INSET_H + insets.left;
+      case RIGHT -> textLoc.x = (grooveRect.x + grooveRect.width) -
+                                (stringWidth + TEXT_INSET_H + insets.right);
+      case CENTER -> textLoc.x = grooveRect.x +
+                                 ((grooveRect.width - stringWidth) / 2);
     }
 
     // If title is positioned in middle of border AND its fontsize

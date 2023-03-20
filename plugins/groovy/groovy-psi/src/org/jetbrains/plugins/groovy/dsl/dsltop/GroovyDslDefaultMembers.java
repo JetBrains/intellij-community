@@ -36,9 +36,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-/**
- * @author ilyas
- */
 @SuppressWarnings({"UnusedDeclaration"})
 public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
@@ -58,8 +55,7 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
    */
 
   public void delegatesTo(@Nullable PsiElement elem, GdslMembersHolderConsumer consumer) {
-    if (elem instanceof PsiClass) {
-      final PsiClass clazz = (PsiClass)elem;
+    if (elem instanceof PsiClass clazz) {
       final NonCodeMembersHolder holder = new NonCodeMembersHolder();
 
       if (clazz instanceof GrTypeDefinition) {
@@ -84,11 +80,9 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
       }
       consumer.addMemberHolder(holder);
     }
-    else if (elem instanceof GrExpression) {
-      GrExpression expr = (GrExpression)elem;
+    else if (elem instanceof GrExpression expr) {
       final PsiType type = expr.getType();
-      if (type instanceof PsiClassType) {
-        PsiClassType ctype = (PsiClassType)type;
+      if (type instanceof PsiClassType ctype) {
         delegatesTo(ctype.resolve(), consumer);
       }
     }

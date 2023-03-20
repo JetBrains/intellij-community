@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -22,6 +21,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,17 +58,20 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
   }
 
   public static void showNavigatePopup(final RadComponent component, final boolean showIfEmpty) {
-    final DefaultActionGroup actionGroup = prepareActionGroup(component);
-    if (actionGroup != null && actionGroup.getChildrenCount() == 0 && showIfEmpty) {
-      actionGroup.add(new MyNavigateAction(UIDesignerBundle.message("navigate.to.listener.empty"), null));
-    }
-    if (actionGroup != null && actionGroup.getChildrenCount() > 0) {
-      final DataContext context = DataManager.getInstance().getDataContext(component.getDelegee());
-      final JBPopupFactory factory = JBPopupFactory.getInstance();
-      final ListPopup popup = factory.createActionGroupPopup(UIDesignerBundle.message("navigate.to.listener.title"), actionGroup, context,
-                                                             JBPopupFactory.ActionSelectionAid.NUMBERING, true);
-      FormEditingUtil.showPopupUnderComponent(popup, component);
-    }
+    ReadAction.nonBlocking(() -> prepareActionGroup(component))
+      .finishOnUiThread(ModalityState.NON_MODAL, actionGroup -> {
+        if (actionGroup != null && actionGroup.getChildrenCount() == 0 && showIfEmpty) {
+          actionGroup.add(new MyNavigateAction(UIDesignerBundle.message("navigate.to.listener.empty"), null));
+        }
+        if (actionGroup != null && actionGroup.getChildrenCount() > 0) {
+          final DataContext context = DataManager.getInstance().getDataContext(component.getDelegee());
+          final JBPopupFactory factory = JBPopupFactory.getInstance();
+          final ListPopup popup =
+            factory.createActionGroupPopup(UIDesignerBundle.message("navigate.to.listener.title"), actionGroup, context,
+                                           JBPopupFactory.ActionSelectionAid.NUMBERING, true);
+          FormEditingUtil.showPopupUnderComponent(popup, component);
+        }
+      }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
@@ -105,13 +108,10 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
     final LocalSearchScope scope = new LocalSearchScope(boundClassFile);
     ReferencesSearch.search(boundField, scope).forEach(ref -> {
       final PsiElement element = ref.getElement();
-      if (element.getParent() instanceof PsiReferenceExpression) {
-        PsiReferenceExpression refExpr = (PsiReferenceExpression) element.getParent();
-        if (refExpr.getParent() instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression methodCall = (PsiMethodCallExpression) refExpr.getParent();
+      if (element.getParent() instanceof PsiReferenceExpression refExpr) {
+        if (refExpr.getParent() instanceof PsiMethodCallExpression methodCall) {
           final PsiElement psiElement = refExpr.resolve();
-          if (psiElement instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod) psiElement;
+          if (psiElement instanceof PsiMethod method) {
             for(EventSetDescriptor eventSetDescriptor: eventSetDescriptors) {
               if (Objects.equals(eventSetDescriptor.getAddListenerMethod().getName(), method.getName())) {
                 final String eventName = eventSetDescriptor.getName();
@@ -147,15 +147,13 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
             final PsiElement[] defs = DefUseUtil.getDefs(codeBlock, (PsiVariable)psiElement, listenerArg);
             if (defs.length == 1) {
               final PsiElement def = defs[0];
-              if (def instanceof PsiVariable) {
-                PsiVariable var = (PsiVariable) def;
+              if (def instanceof PsiVariable var) {
                 if (var.getInitializer() != listenerArg) {
                   addListenerRef(actionGroup, eventName, var.getInitializer());
                   return;
                 }
               }
-              else if (def.getParent() instanceof PsiAssignmentExpression) {
-                final PsiAssignmentExpression assignmentExpr = (PsiAssignmentExpression)def.getParent();
+              else if (def.getParent() instanceof PsiAssignmentExpression assignmentExpr) {
                 if (def.equals(assignmentExpr.getLExpression())) {
                   addListenerRef(actionGroup, eventName, assignmentExpr.getRExpression());
                   return;
@@ -187,6 +185,11 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
       if (myElement instanceof Navigatable) {
         ((Navigatable) myElement).navigate(true);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override public void update(@NotNull AnActionEvent e) {

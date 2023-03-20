@@ -218,6 +218,11 @@ public final class GridBag extends GridBagConstraints {
     return insets(JBUI.insets(-1, -1, -1, right));
   }
 
+  @NotNull
+  public GridBag emptyInsets() {
+    return insets(JBUI.emptyInsets());
+  }
+
   /**
    * Pass -1 to use a default value for this column.
    * E.g, Insets(10, -1, -1, -1) means that 'top' will be changed to 10 and other sides will be set to defaults for this column.

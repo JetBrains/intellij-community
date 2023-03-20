@@ -1,32 +1,25 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.build.events.MessageEvent
-import com.intellij.build.issue.BuildIssue
-import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.execution.rmi.IdeaWatchdog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenServerConnector.State
+import org.jetbrains.idea.maven.server.RemoteObjectWrapper.Retriable
 import org.jetbrains.idea.maven.server.security.MavenToken
-import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import java.util.*
-import java.util.concurrent.CompletableFuture
+import java.rmi.RemoteException
 
 
 class DummyMavenServerConnector(project: @NotNull Project,
-                                val manager: @NotNull MavenServerManager,
                                 jdk: @NotNull Sdk,
                                 vmOptions: @NotNull String,
                                 mavenDistribution: @NotNull MavenDistribution,
-                                multimoduleDirectory: @NotNull String) : MavenServerConnector(project, manager, jdk, vmOptions,
-                                                                                              mavenDistribution, multimoduleDirectory) {
+                                multimoduleDirectory: @NotNull String) : AbstractMavenServerConnector(project, jdk, vmOptions,
+                                                                                                                                                         mavenDistribution, multimoduleDirectory) {
   override fun isNew() = false
 
   override fun isCompatibleWith(jdk: Sdk?, vmOptions: String?, distribution: MavenDistribution?) = true
@@ -35,32 +28,52 @@ class DummyMavenServerConnector(project: @NotNull Project,
   }
 
   override fun getServer(): MavenServer {
-    return DummyMavenServer(myProject);
+    return DummyMavenServer(myProject)
   }
 
-  override fun addDownloadListener(listener: MavenServerDownloadListener?) {
+  override fun ping(): Boolean {
+    return true
   }
 
-  override fun removeDownloadListener(listener: MavenServerDownloadListener?) {
+  override fun stop(wait: Boolean) {
   }
 
   override fun getSupportType() = MavenConfigurableBundle.message("connector.ui.dummy")
 
   override fun getState() = State.RUNNING
 
-  override fun checkConnected() = true;
+  override fun checkConnected() = true
+
+  override fun <R, E : Exception?> perform(r: Retriable<R, E>): R {
+    return try {
+      r.execute()
+    }
+    catch (e: RemoteException) {
+      throw RuntimeException(e)
+    }
+  }
+
+  companion object {
+
+    @JvmStatic
+    fun MavenServerConnector.isDummy(): Boolean {
+      return this is DummyMavenServerConnector
+    }
+  }
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
-
-
+  private lateinit var watchdog: IdeaWatchdog;
+  override fun setWatchdog(watchdog: IdeaWatchdog) {
+    this.watchdog = watchdog
+  }
 
   override fun createEmbedder(settings: MavenEmbedderSettings?, token: MavenToken?): MavenServerEmbedder {
-    return DummyEmbedder(project)
+    return UntrustedDummyEmbedder(project)
   }
 
   override fun createIndexer(token: MavenToken?): MavenServerIndexer {
-    return DummyIndexer();
+    return DummyIndexer()
   }
 
   override fun interpolateAndAlignModel(model: MavenModel, basedir: File?, token: MavenToken?): MavenModel {
@@ -86,32 +99,9 @@ class DummyMavenServer(val project: Project) : MavenServer {
   override fun createPullDownloadListener(token: MavenToken?): MavenPullDownloadListener? {
     return null
   }
-}
 
-class TrustProjectQuickFix : BuildIssueQuickFix {
-  override val id = ID
-
-  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    val future = CompletableFuture<Void>()
-    ApplicationManager.getApplication().invokeLater {
-      try {
-        val result = MavenUtil.isProjectTrustedEnoughToImport(project)
-        if (result) {
-          MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-        }
-        future.complete(null)
-      }
-      catch (e: Throwable) {
-        future.completeExceptionally(e)
-      }
-
-    }
-
-    return future
-  }
-
-  companion object {
-    val ID = "TRUST_MAVEN_PROJECT_QUICK_FIX_ID"
+  override fun ping(token: MavenToken?): Boolean {
+    return true
   }
 }
 
@@ -121,10 +111,10 @@ class DummyIndexer : MavenServerIndexer {
   }
 
   override fun getIndexCount(token: MavenToken?): Int {
-    return 0;
+    return 0
   }
 
-  override fun updateIndex(id: MavenIndexId, settings: MavenServerSettings?, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
+  override fun updateIndex(id: MavenIndexId, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
   }
 
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
@@ -137,7 +127,7 @@ class DummyIndexer : MavenServerIndexer {
     return emptySet()
   }
 
-  override fun getArchetypes(token: MavenToken?): Collection<MavenArchetype> {
+  override fun getInternalArchetypes(token: MavenToken?): Collection<MavenArchetype> {
     return emptySet()
   }
 
@@ -147,110 +137,5 @@ class DummyIndexer : MavenServerIndexer {
   override fun indexExists(dir: File?, token: MavenToken?): Boolean {
     return false
   }
-
 }
 
-class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
-  override fun customizeAndGetProgressIndicator(workspaceMap: MavenWorkspaceMap?,
-                                                failOnUnresolvedDependency: Boolean,
-                                                alwaysUpdateSnapshots: Boolean,
-                                                userProperties: Properties?,
-                                                token: MavenToken?): MavenServerPullProgressIndicator {
-    return object: MavenServerPullProgressIndicator {
-      override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
-        return null
-      }
-
-      override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent>? {
-       return null
-      }
-
-      override fun cancel() {
-      }
-
-    }
-  }
-
-  override fun customizeComponents(token: MavenToken?) {
-  }
-
-  override fun retrieveAvailableVersions(groupId: String,
-                                         artifactId: String,
-                                         remoteRepositories: List<MavenRemoteRepository>,
-                                         token: MavenToken?): List<String> {
-    return emptyList();
-  }
-
-  override fun resolveProject(files: Collection<File>,
-                              activeProfiles: Collection<String>,
-                              inactiveProfiles: Collection<String>,
-                              token: MavenToken?): Collection<MavenServerExecutionResult> {
-    MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
-      object : BuildIssue {
-        override val title = SyncBundle.message("maven.sync.not.trusted.title")
-        override val description = SyncBundle.message("maven.sync.not.trusted.description") +
-         "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
-        override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
-
-        override fun getNavigatable(project: Project) = null
-
-      },
-      MessageEvent.Kind.WARNING
-    )
-    return emptyList();
-  }
-
-  override fun evaluateEffectivePom(file: File,
-                                    activeProfiles: List<String>,
-                                    inactiveProfiles: List<String>,
-                                    token: MavenToken?): String? {
-    return null
-  }
-
-  override fun resolve(info: MavenArtifactInfo, remoteRepositories: List<MavenRemoteRepository>, token: MavenToken?): MavenArtifact {
-    return MavenArtifact(info.groupId, info.artifactId, info.version, info.version, null, info.classifier, null, false, info.packaging,
-                         null, null, false, true);
-  }
-
-  override fun resolveTransitively(artifacts: List<MavenArtifactInfo>,
-                                   remoteRepositories: List<MavenRemoteRepository>,
-                                   token: MavenToken?): List<MavenArtifact> {
-    return emptyList()
-  }
-
-  override fun resolvePlugin(plugin: MavenPlugin,
-                             repositories: List<MavenRemoteRepository>,
-                             nativeMavenProjectId: Int,
-                             transitive: Boolean,
-                             token: MavenToken?): Collection<MavenArtifact> {
-    return emptyList()
-  }
-
-  override fun execute(file: File,
-                       activeProfiles: Collection<String>,
-                       inactiveProfiles: Collection<String>,
-                       goals: List<String>,
-                       selectedProjects: List<String>,
-                       alsoMake: Boolean,
-                       alsoMakeDependents: Boolean,
-                       token: MavenToken?): MavenServerExecutionResult {
-    return MavenServerExecutionResult(null, emptySet(), emptySet());
-  }
-
-  override fun reset(token: MavenToken?) {
-  }
-
-  override fun release(token: MavenToken?) {
-  }
-
-  override fun clearCaches(token: MavenToken?) {
-  }
-
-  override fun clearCachesFor(projectId: MavenId?, token: MavenToken?) {
-  }
-
-  override fun readModel(file: File?, token: MavenToken?): MavenModel? {
-    return null
-  }
-
-}

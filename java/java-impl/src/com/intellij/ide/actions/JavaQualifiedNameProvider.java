@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -31,13 +31,13 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
   @Override
   @Nullable
-  public PsiElement adjustElementToCopy(final PsiElement element) {
+  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) return element;
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       if (psiPackage != null) return psiPackage;
     }
-    if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
+    if (!(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
       return element.getParent();
     }
     return null;
@@ -45,21 +45,21 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
   @Override
   @Nullable
-  public String getQualifiedName(PsiElement element) {
-    if (element instanceof PsiPackage) {
-      return ((PsiPackage)element).getQualifiedName();
+  public String getQualifiedName(@NotNull PsiElement element) {
+    if (element instanceof PsiPackage pkg) {
+      return pkg.getQualifiedName();
     }
 
-    if (element instanceof PsiJavaModule) {
-      return ((PsiJavaModule)element).getName();
+    if (element instanceof PsiJavaModule module) {
+      return module.getName();
     }
 
-    if (element instanceof PsiJavaModuleReferenceElement) {
-      PsiReference reference = element.getReference();
+    if (element instanceof PsiJavaModuleReferenceElement ref) {
+      PsiJavaModuleReference reference = ref.getReference();
       if (reference != null) {
-        PsiElement target = reference.resolve();
-        if (target instanceof PsiJavaModule) {
-          return ((PsiJavaModule)target).getName();
+        PsiJavaModule target = reference.resolve();
+        if (target != null) {
+          return target.getName();
         }
       }
     }
@@ -68,12 +68,11 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getQualifiedName();
     }
-    else if (element instanceof PsiMember) {
-      final PsiMember member = (PsiMember)element;
+    else if (element instanceof PsiMember member) {
       String memberFqn = getMethodOrFieldQualifiedName(member);
       if (memberFqn == null) return null;
-      if (member instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)member)) {
-        return memberFqn + getParameterString((PsiMethod)member);
+      if (member instanceof PsiMethod method && MethodSignatureUtil.hasOverloads(method)) {
+        return memberFqn + getParameterString(method);
       }
       return memberFqn;
     }
@@ -91,7 +90,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  public PsiElement qualifiedNameToElement(final String fqn, final Project project) {
+  public PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project) {
     final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(fqn);
     if (psiPackage != null) {
       return psiPackage;
@@ -151,7 +150,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  public void insertQualifiedName(String fqn, final PsiElement element, final Editor editor, final Project project) {
+  public void insertQualifiedName(@NotNull String fqn, @NotNull PsiElement element, @NotNull Editor editor, @NotNull Project project) {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
 

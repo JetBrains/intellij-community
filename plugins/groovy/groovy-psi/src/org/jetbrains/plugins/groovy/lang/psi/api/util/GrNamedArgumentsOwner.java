@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface GrNamedArgumentsOwner extends PsiElement {
 
   GrNamedArgument @NotNull [] getNamedArguments();

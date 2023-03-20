@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -11,11 +11,12 @@ import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serviceContainer.NonInjectable;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPluginsDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
-  private int myWhatsNewEligibility;
+  private boolean myShowWhatsNewOnUpdate;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
   private boolean myEAP;
@@ -105,6 +106,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private String myDefaultLightLaf;
   private String myDefaultDarkLaf;
+
+  private static final Logger LOG = Logger.getInstance(ApplicationInfoImpl.class);
 
   // if application loader was not used
   @SuppressWarnings("unused")
@@ -255,13 +258,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         //noinspection SpellCheckingInspection
         case "whatsnew": {
           myWhatsNewUrl = child.getAttributeValue("url");
-          String eligibility = child.getAttributeValue("eligibility");
-          if ("embed".equals(eligibility)) {
-            myWhatsNewEligibility = WHATS_NEW_EMBED;
-          }
-          else if ("auto".equals(eligibility)) {
-            myWhatsNewEligibility = WHATS_NEW_AUTO;
-          }
+          myShowWhatsNewOnUpdate = Boolean.parseBoolean(child.getAttributeValue("show-on-update"));
         }
         break;
 
@@ -329,7 +326,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    overrideFromProperties();
+
     essentialPluginsIds.sort(null);
+  }
+
+  private void overrideFromProperties() {
+    String key = "application.info.youtrack.url";
+    String youTrackUrlOverride = System.getProperty(key);
+    if (youTrackUrlOverride != null) {
+      myYoutrackUrl = youTrackUrlOverride;
+    }
   }
 
   private void readLogoInfo(XmlElement element) {
@@ -433,7 +440,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull BuildNumber getApiVersionAsNumber() {
     BuildNumber build = getBuild();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getApiVersionAsNumber: build=" + build.asString());
+    }
     if (myApiVersion != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("getApiVersionAsNumber: myApiVersion=" + build.asString());
+      }
       BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
       if (api != null) {
         return api;
@@ -659,8 +672,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public boolean isWhatsNewEligibleFor(int role) {
-    return myWhatsNewEligibility >= role;
+  public boolean isShowWhatsNewOnUpdate() {
+    return myShowWhatsNewOnUpdate;
   }
 
   @Override
@@ -758,7 +771,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   public @NotNull BuildNumber getPluginsCompatibleBuildAsNumber() {
     BuildNumber compatibleBuild = BuildNumber.fromPluginsCompatibleBuild();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getPluginsCompatibleBuildAsNumber: compatibleBuild=" + (compatibleBuild == null ? "null" : compatibleBuild.asString()));
+    }
     BuildNumber version = compatibleBuild != null ? compatibleBuild : getApiVersionAsNumber();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getPluginsCompatibleBuildAsNumber: version=" + version.asString());
+    }
     BuildNumber buildNumber = BuildNumber.fromStringWithProductCode(version.asString(), getBuild().getProductCode());
     return requireNonNull(buildNumber);
   }
@@ -919,6 +938,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   /** @deprecated Use {@link ApplicationManagerEx#isInStressTest} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isInStressTest() {
     return ApplicationManagerEx.isInStressTest();
   }

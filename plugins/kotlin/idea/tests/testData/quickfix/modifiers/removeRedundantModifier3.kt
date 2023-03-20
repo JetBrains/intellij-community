@@ -6,3 +6,4 @@ abstract class B() {
 abstract class A() : B() {
     abstract override <caret>open fun foo()
 }
+

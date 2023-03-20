@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeWithMe.ClientId;
@@ -13,15 +13,21 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectExImpl;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
+import kotlinx.coroutines.CoroutineStart;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.util.function.Predicate;
 
 public class MultiUserEditorUndoTest extends EditorUndoTestCase {
   private Disposable myDisposable;
@@ -39,8 +45,15 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myDisposable);
-    super.tearDown();
+    try {
+      Disposer.dispose(myDisposable);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testUndoSimpleCommandWithMovedRanges() {
@@ -284,13 +297,13 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
   }
 
   private static void registerProjectSession(@NotNull ClientId clientId, @NotNull Project project, @NotNull Disposable disposable) {
-    ClientProjectSessionImpl clientProjectSession = new ClientProjectSessionImpl(clientId, (ProjectExImpl)project);
+    ClientProjectSessionImpl clientProjectSession = new ClientProjectSessionImpl(clientId, ClientType.GUEST, (ProjectImpl)project);
     registerSession(clientProjectSession, project, disposable);
   }
 
   private static void registerAppSession(@NotNull ClientId clientId, @NotNull Disposable disposable) {
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, application);
+    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, ClientType.GUEST, application);
     registerSession(clientAppSession, application, disposable);
     PluginDescriptor descriptor = ComponentManagerImpl.fakeCorePluginDescriptor;
     clientAppSession.registerServiceInstance(ClientCopyPasteManager.class, new MockCopyPasteManager(), descriptor);
@@ -302,7 +315,10 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     ClientSessionsManager<ClientSession> sessionsManager = getClientSessionsManager(componentManager);
     sessionsManager.registerSession(disposable, session);
     session.registerServices();
-    session.preloadServices();
+    BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
+      session.preloadServices(scope);
+      return Unit.INSTANCE;
+    });
   }
 
   @SuppressWarnings("unchecked")
@@ -319,6 +335,11 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     @Override
     public void setContents(@NotNull Transferable content) {
 
+    }
+
+    @Override
+    public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
+      return false;
     }
 
     @Nullable

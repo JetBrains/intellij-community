@@ -27,6 +27,10 @@ public class RecursiveFilePathSet {
     myMapping.remove(filePath.getPath());
   }
 
+  public boolean isEmpty() {
+    return myMapping.values().isEmpty();
+  }
+
   public void clear() {
     myMapping.clear();
   }

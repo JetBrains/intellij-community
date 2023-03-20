@@ -82,13 +82,12 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiIfStatement)) {
+      if (!(parent instanceof PsiIfStatement ifStatement)) {
         return;
       }
-      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       final PsiExpression condition = ifStatement.getCondition();
       if (condition == null) {
         return;
@@ -107,17 +106,14 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
 
   @Nullable
   private static PsiField findCheckedField(PsiExpression expression) {
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
+    if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiField)) {
         return null;
       }
       return (PsiField)target;
     }
-    else if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    else if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (!ComparisonUtils.isComparisonOperation(tokenType)) {
         return null;
@@ -130,9 +126,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       }
       return findCheckedField(rhs);
     }
-    else if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)expression;
+    else if (expression instanceof PsiPrefixExpression prefixExpression) {
       final IElementType tokenType =
         prefixExpression.getOperationTokenType();
       if (!JavaTokenType.EXCL.equals(tokenType)) {

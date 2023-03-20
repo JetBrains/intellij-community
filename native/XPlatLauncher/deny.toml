@@ -1,0 +1,46 @@
+targets = [ ]
+exclude = ["cargo-deny", "cargo-about"]
+
+[advisories]
+vulnerability = "deny"
+unmaintained = "deny"
+yanked = "deny"
+notice = "deny"
+ignore = [ ]
+
+[licenses]
+unlicensed = "deny"
+copyleft = "deny"
+allow-osi-fsf-free = "neither"
+default = "deny"
+confidence-threshold = 0.95
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause", # instant, BSD-2-like, test-only dependency
+    "ISC", # libloading, MIT / Apache 2.0 alike
+    "Unicode-DFS-2016" # simplelog -> [..] -> unicode-ident
+]
+deny = [ ]
+exceptions = [ ]
+unused-allowed-license = "deny"
+
+# allows to use our own unpublished packages
+[licenses.private]
+ignore = true
+registries = [ ]
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+highlight = "all"
+allow = [ ]
+deny = [ ]
+skip = [ ]
+skip-tree = [ ]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

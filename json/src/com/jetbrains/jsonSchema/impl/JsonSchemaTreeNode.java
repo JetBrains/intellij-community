@@ -10,9 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 4/20/2017.
- */
 public class JsonSchemaTreeNode {
   private boolean myAny;
   private boolean myNothing;

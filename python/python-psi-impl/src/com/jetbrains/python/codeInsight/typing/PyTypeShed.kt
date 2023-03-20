@@ -34,22 +34,43 @@ import java.io.File
  *
  * The original Git repo is located [here](https://github.com/JetBrains/typeshed).
  *
- * @author vlan
  */
 object PyTypeShed {
 
   private val stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels = mapOf(
     // name to python versions when this name was introduced and removed
     "_bootlocale" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON39),
+    "_dummy_thread" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON38),
+    "_dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
     "_py_abc" to (LanguageLevel.PYTHON37 to null),
+    "asyncio.mixins" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
+    "asyncio.exceptions" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.format_helpers" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.runners" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.staggered" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.taskgroups" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "asyncio.threads" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "asyncio.timeouts" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "asyncio.trsock" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "binhex" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),
     "contextvars" to (LanguageLevel.PYTHON37 to null),
     "dataclasses" to (LanguageLevel.PYTHON37 to null),
+    "distutils.command.bdist_msi" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),  // likely it is ignored now
+    "distutils.command.bdist_wininst" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),  // likely it is ignored now
+    "dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
     "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "graphlib" to (LanguageLevel.PYTHON39 to null),
     "importlib.metadata" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "importlib.metadata._meta" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
     "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
+    "multiprocessing.shared_memory" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "symbol" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "tomllib" to (LanguageLevel.PYTHON311 to null),
+    "unittest._log" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "unittest.async_case" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "wsgiref.types" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
     "zoneinfo" to (LanguageLevel.PYTHON39 to null)
   )
 

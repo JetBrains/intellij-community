@@ -16,6 +16,7 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
@@ -35,7 +36,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class BigDecimalEqualsInspection extends BaseInspection {
+public class BigDecimalEqualsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -55,7 +56,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       final EqualityCheck check = EqualityCheck.from(call);
       if (check == null) return;

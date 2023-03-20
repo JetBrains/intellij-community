@@ -37,8 +37,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
@@ -54,6 +52,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Comparator;
@@ -73,10 +72,13 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     Key.create("SCRIPT_ENGINE_KEY");
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
-    IdeScriptEngineManager manager = IdeScriptEngineManager.getInstance();
-    e.getPresentation().setVisible(e.getProject() != null);
-    e.getPresentation().setEnabled(manager.isInitialized() && !manager.getEngineInfos().isEmpty());
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
@@ -88,7 +90,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   static void chooseScriptEngineAndRun(@NotNull AnActionEvent e,
-                                       @NotNull List<IdeScriptEngineManager.EngineInfo> infos,
+                                       @NotNull List<? extends IdeScriptEngineManager.EngineInfo> infos,
                                        @NotNull Consumer<? super IdeScriptEngineManager.EngineInfo> onChosen) {
     if (infos.size() == 1) {
       onChosen.consume(infos.iterator().next());
@@ -222,20 +224,16 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     int line = document.getLineNumber(selectedRange.getStartOffset());
     int lineStart = document.getLineStartOffset(line);
     int lineEnd = document.getLineEndOffset(line);
+    String lineText = document.getText(TextRange.create(lineStart, lineEnd));
 
-    // try detect a non-trivial composite PSI element if there's a PSI file
+    // try to detect a non-trivial composite PSI element if there's a PSI file
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file != null && file.getFirstChild() != null && file.getFirstChild() != file.getLastChild()) {
-      PsiElement e1 = file.findElementAt(lineStart);
-      PsiElement e2 = file.findElementAt(lineEnd > lineStart ? lineEnd - 1 : lineEnd);
-      while (e1 != e2 && (e1 instanceof PsiWhiteSpace || e1 != null && StringUtil.isEmptyOrSpaces(e1.getText()))) {
-        e1 = ObjectUtils.chooseNotNull(e1.getNextSibling(), PsiTreeUtil.getDeepestFirst(e1.getParent()));
-      }
-      while (e1 != e2 && (e2 instanceof PsiWhiteSpace || e2 != null && StringUtil.isEmptyOrSpaces(e2.getText()))) {
-        e2 = ObjectUtils.chooseNotNull(e2.getPrevSibling(), PsiTreeUtil.getDeepestLast(e2.getParent()));
-      }
-      if (e1 instanceof LeafPsiElement) e1 = e1.getParent();
-      if (e2 instanceof LeafPsiElement) e2 = e2.getParent();
+    if (file != null && !StringUtil.isEmptyOrSpaces(lineText)) {
+      int start = lineStart, end = lineEnd;
+      while (start < end && Character.isWhitespace(lineText.charAt(start - lineStart))) start ++;
+      while (end > start && Character.isWhitespace(lineText.charAt(end - 1 - lineStart))) end --;
+      PsiElement e1 = file.findElementAt(start);
+      PsiElement e2 = file.findElementAt(end > start ? end - 1 : end);
       PsiElement parent = e1 != null && e2 != null ? PsiTreeUtil.findCommonParent(e1, e2) : ObjectUtils.chooseNotNull(e1, e2);
       if (parent != null && parent != file) {
         TextRange combined = parent.getTextRange().union(TextRange.create(lineStart, lineEnd));
@@ -243,7 +241,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
         return document.getText(combined);
       }
     }
-    return document.getText(TextRange.create(lineStart, lineEnd));
+    return lineText;
   }
 
   private static void selectContent(RunContentDescriptor descriptor) {
@@ -306,6 +304,10 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -354,11 +356,11 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   private static final class ConsoleWriter extends Writer {
-    private final WeakReference<RunContentDescriptor> myDescriptor;
+    private final @NotNull Reference<? extends RunContentDescriptor> myDescriptor;
     private final Key<?> myOutputType;
     private final AnsiEscapeDecoder myAnsiEscapeDecoder;
 
-    private ConsoleWriter(@NotNull WeakReference<RunContentDescriptor> descriptor, Key<?> outputType) {
+    private ConsoleWriter(@NotNull Reference<? extends RunContentDescriptor> descriptor, Key<?> outputType) {
       myDescriptor = descriptor;
       myOutputType = outputType;
       myAnsiEscapeDecoder = new AnsiEscapeDecoder();
@@ -370,7 +372,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     @Override
-    public void write(char[] cbuf, int off, int len) throws IOException {
+    public void write(char[] cbuf, int off, int len) {
       RunContentDescriptor descriptor = myDescriptor.get();
       ConsoleViewImpl console = ObjectUtils.tryCast(descriptor != null ? descriptor.getExecutionConsole() : null, ConsoleViewImpl.class);
       String text = new String(cbuf, off, len);

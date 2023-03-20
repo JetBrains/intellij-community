@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.editor
 
@@ -29,6 +29,7 @@ class KotlinSmartEnterHandler : SmartEnterProcessorWithFixers() {
 
             KotlinWhenSubjectCaretFixer(),
             KotlinMissingWhenBodyFixer(),
+            KotlinMissingWhenEntryBodyFixer(),
 
             KotlinDoWhileFixer(),
 
@@ -67,7 +68,7 @@ class KotlinSmartEnterHandler : SmartEnterProcessorWithFixers() {
                 atCaret is KtDeclaration -> {
                     val declaration = atCaret
                     when {
-                        declaration is KtParameter && !declaration.isInLambdaExpression() -> {/* proceed to function declaration */
+                        declaration is KtParameter && !declaration.isLambdaParameter -> {/* proceed to function declaration */
                         }
                         declaration.parent is KtForExpression -> {/* skip variable declaration in 'for' expression */
                         }
@@ -158,4 +159,3 @@ class KotlinSmartEnterHandler : SmartEnterProcessorWithFixers() {
 
 private val BRANCH_CONTAINERS = TokenSet.create(KtNodeTypes.THEN, KtNodeTypes.ELSE, KtNodeTypes.BODY)
 private val BRACES = TokenSet.create(KtTokens.RBRACE, KtTokens.LBRACE)
-private fun KtParameter.isInLambdaExpression() = this.parent.parent is KtFunctionLiteral

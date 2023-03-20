@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-build-common-tests" level="project" />
+    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.scripting-support" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.maven.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.new.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.performance-tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.coverage.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
+  </component>
+</module>

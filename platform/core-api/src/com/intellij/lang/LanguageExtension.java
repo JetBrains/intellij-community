@@ -128,7 +128,10 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       }
       else if (!list.isEmpty()) {
         if (copyList) {
-          result = new ArrayList<>(ContainerUtil.concat(result, list));
+          List<T> newResult = new ArrayList<>(result.size() + list.size());
+          newResult.addAll(result);
+          newResult.addAll(list);
+          result = newResult;
           copyList = false;
         }
         else {

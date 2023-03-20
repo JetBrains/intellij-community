@@ -11,7 +11,6 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -26,13 +25,11 @@ import java.util.stream.Stream;
 /**
  * A method contract which is described by {@link ValueConstraint} constraints on arguments.
  * Such contract can be created from {@link org.jetbrains.annotations.Contract} annotation.
- *
- * @author peter
  */
 public final class StandardMethodContract extends MethodContract {
-  private final ValueConstraint @NotNull [] myParameters;
+  private final @NotNull ValueConstraint @NotNull [] myParameters;
 
-  public StandardMethodContract(ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
+  public StandardMethodContract(@NotNull ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
     super(returnValue);
     myParameters = parameters;
   }
@@ -46,7 +43,7 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   public List<ValueConstraint> getConstraints() {
-    return ContainerUtil.immutableList(myParameters);
+    return List.of(myParameters);
   }
 
   public @NotNull StandardMethodContract withReturnValue(@NotNull ContractReturnValue returnValue) {
@@ -331,14 +328,13 @@ public final class StandardMethodContract extends MethodContract {
      * @see #canBeNegated()
      */
     public ValueConstraint negate() {
-      switch (this) {
-        case NULL_VALUE: return NOT_NULL_VALUE;
-        case NOT_NULL_VALUE: return NULL_VALUE;
-        case TRUE_VALUE: return FALSE_VALUE;
-        case FALSE_VALUE: return TRUE_VALUE;
-        default:
-          throw new IllegalStateException("ValueConstraint = " + this);
-      }
+      return switch (this) {
+        case NULL_VALUE -> NOT_NULL_VALUE;
+        case NOT_NULL_VALUE -> NULL_VALUE;
+        case TRUE_VALUE -> FALSE_VALUE;
+        case FALSE_VALUE -> TRUE_VALUE;
+        default -> throw new IllegalStateException("ValueConstraint = " + this);
+      };
     }
 
     @Override

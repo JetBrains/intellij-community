@@ -4,11 +4,10 @@ package com.jetbrains.python.ift.lesson.refactorings
 import training.dsl.LessonContext
 import training.dsl.parseLessonSample
 import training.dsl.restoreRefactoringOptionsInformer
-import training.dsl.showWarningIfInplaceRefactoringsDisabled
 import training.learn.lesson.general.refactorings.RefactoringMenuLessonBase
 
 class PythonRefactorMenuLesson : RefactoringMenuLessonBase("Refactoring menu") {
-  private val sample = parseLessonSample("""
+  override val sample = parseLessonSample("""
     # Need to think about better sample!
     import random
     
@@ -18,8 +17,6 @@ class PythonRefactorMenuLesson : RefactoringMenuLessonBase("Refactoring menu") {
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit = {
-    prepareSample(sample)
-    showWarningIfInplaceRefactoringsDisabled()
     extractParameterTasks()
     restoreRefactoringOptionsInformer()
   }

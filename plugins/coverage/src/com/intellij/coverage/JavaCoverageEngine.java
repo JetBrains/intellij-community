@@ -17,14 +17,18 @@ import com.intellij.execution.target.RunTargetsEnabled;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -35,7 +39,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.ui.Messages;
@@ -43,6 +46,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -53,12 +57,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.coverage.report.ReportGenerationFailedException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.concurrency.Promise;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -107,7 +113,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       return false;
     }
     String projectSdkHomePath = projectSdk.getHomePath();
-    return projectSdkHomePath != null && WslDistributionManager.isWslPath(projectSdkHomePath);
+    return projectSdkHomePath != null && WslPath.isWslUncPath(projectSdkHomePath);
   }
 
   @Override
@@ -129,6 +135,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static Set<String> extractTracedTests(Project project, final String classFQName, final int lineNumber) {
     Set<String> tests = new HashSet<>();
     final File[] traceFiles = getTraceFiles(project);
+    if (traceFiles == null) return tests;
     for (File traceFile : traceFiles) {
       DataInputStream in = null;
       try {
@@ -140,7 +147,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
       finally {
         try {
-          in.close();
+          if (in != null) {
+            in.close();
+          }
         }
         catch (IOException ex) {
           LOG.error(ex);
@@ -246,11 +255,11 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            long lastCoverageTimeStamp,
                                            String suiteToMerge,
                                            boolean coverageByTestEnabled,
-                                           boolean tracingEnabled,
+                                           boolean branchCoverage,
                                            boolean trackTestFolders, Project project) {
 
     return createSuite(covRunner, name, coverageDataFileProvider, filters, null, lastCoverageTimeStamp, coverageByTestEnabled,
-                       tracingEnabled, trackTestFolders, project);
+                       branchCoverage, trackTestFolders, project);
   }
 
   @Override
@@ -258,14 +267,13 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            @NotNull final String name,
                                            @NotNull final CoverageFileProvider coverageDataFileProvider,
                                            @NotNull final CoverageEnabledConfiguration config) {
-    if (config instanceof JavaCoverageEnabledConfiguration) {
-      final JavaCoverageEnabledConfiguration javaConfig = (JavaCoverageEnabledConfiguration)config;
+    if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
       return createSuite(covRunner, name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
                          new Date().getTime(),
-                         javaConfig.isTrackPerTestCoverage() && !javaConfig.isSampling(),
-                         !javaConfig.isSampling(),
+                         javaConfig.isTrackPerTestCoverage() && javaConfig.isTracingEnabled(),
+                         javaConfig.isTracingEnabled(),
                          javaConfig.isTrackTestFolders(), config.getConfiguration().getProject());
     }
     return null;
@@ -324,45 +332,58 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
+  public boolean recompileProjectAndRerunAction(@NotNull Module module, @NotNull final CoverageSuitesBundle suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
-    final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-    final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
-
-    if (outputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.SOURCE)
-        || suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.TEST_SOURCE)) {
+    if (suite.isModuleChecked(module)) return false;
+    for (final JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
+      Module moduleCandidate = extension.getModuleWithOutput(module);
+      if (moduleCandidate != null) {
+        module = moduleCandidate;
+        break;
+      }
+    }
+    final CoverageDataManager dataManager = CoverageDataManager.getInstance(module.getProject());
+    final boolean includeTests = suite.isTrackTestFolders();
+    final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
+    final boolean rootsExist = roots.length >= (includeTests ? 2 : 1) && ContainerUtil.all(roots, (root) -> root != null && root.exists());
+    if (!rootsExist) {
       final Project project = module.getProject();
-      if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
-      final Runnable runnable = () -> {
-        final int choice = Messages.showOkCancelDialog(project,
-                                                       JavaCoverageBundle.message("project.class.files.are.out.of.date"),
-                                                       JavaCoverageBundle.message("project.is.out.of.date"),
-                                                       JavaCoverageBundle.message("coverage.recompile"),
-                                                       JavaCoverageBundle.message("coverage.hide.report"),
-                                                       Messages.getWarningIcon());
-        if (choice == Messages.OK) {
-          final CompilerManager compilerManager = CompilerManager.getInstance(project);
-          compilerManager.make(compilerManager.createProjectCompileScope(project), (aborted, errors, warnings, compileContext) -> {
-            if (aborted || errors != 0) return;
-            ApplicationManager.getApplication().invokeLater(() -> {
-              if (project.isDisposed()) return;
-              CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
-            });
-          });
-        } else if (!project.isDisposed()) {
-          CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
-        }
-      };
-      ApplicationManager.getApplication().invokeLater(runnable);
-      return true;
+      LOG.debug("Going to ask to rebuild project. Include tests:" + includeTests +
+                ". Module: " + module.getName() + ".  Output roots are: ");
+      for (VirtualFile root : roots) {
+        LOG.debug(root.getPath() + " exists: " + root.exists());
+      }
+      final Notification notification = new Notification("Coverage",
+                                                         JavaCoverageBundle.message("project.is.out.of.date"),
+                                                         JavaCoverageBundle.message("project.class.files.are.out.of.date"),
+                                                         NotificationType.INFORMATION);
+      notification.addAction(NotificationAction.createSimpleExpiring(JavaCoverageBundle.message("coverage.recompile"), () -> {
+        ProjectTaskManager taskManager = ProjectTaskManager.getInstance(project);
+        Promise<ProjectTaskManager.Result> promise = taskManager.buildAllModules();
+        promise.onSuccess(result -> ApplicationManager.getApplication().invokeLater(() -> {
+                            CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
+                          }, o -> project.isDisposed())
+        );
+      }));
+      CoverageNotifications.getInstance(project).addNotification(notification);
+      notification.notify(project);
     }
     return false;
   }
 
-  private static boolean isModuleOutputNeeded(Module module, final JavaSourceRootType rootType) {
-    CompilerManager compilerManager = CompilerManager.getInstance(module.getProject());
-    return ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream().anyMatch(vFile -> !compilerManager.isExcludedFromCompilation(vFile));
+  @Nullable
+  private static File getOutputpath(CompilerModuleExtension compilerModuleExtension) {
+    final @Nullable String outputpathUrl = compilerModuleExtension.getCompilerOutputUrl();
+    final @Nullable File outputpath = outputpathUrl != null ? new File(VfsUtilCore.urlToPath(outputpathUrl)) : null;
+    return outputpath;
+  }
+
+  @Nullable
+  private static File getTestOutputpath(CompilerModuleExtension compilerModuleExtension) {
+    final @Nullable String outputpathUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
+    final @Nullable File outputpath = outputpathUrl != null ? new File(VfsUtilCore.urlToPath(outputpathUrl)) : null;
+    return outputpath;
   }
 
   @Override
@@ -378,9 +399,10 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     final List<Integer> uncoveredLines = new ArrayList<>();
     try {
-      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.isTracingEnabled(), suite.getProject());
+      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.getProject());
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) throw e;
       LOG.error("Fail to process class from: " + classFile.getPath(), e);
     }
     return uncoveredLines;
@@ -432,33 +454,36 @@ public class JavaCoverageEngine extends CoverageEngine {
       return Collections.emptySet();
     }
     final Set<File> classFiles = new HashSet<>();
-    final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-    final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
+    final CompilerModuleExtension moduleExtension = Objects.requireNonNull(CompilerModuleExtension.getInstance(module));
+    final @Nullable File outputpath = getOutputpath(moduleExtension);
+    final @Nullable File testOutputpath = getTestOutputpath(moduleExtension);
+
+    final @Nullable VirtualFile outputpathVirtualFile = fileToVirtualFileWithRefresh(outputpath);
+    final @Nullable VirtualFile testOutputpathVirtualFile = fileToVirtualFileWithRefresh(testOutputpath);
 
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
-      if (extension.collectOutputFiles(srcFile, outputpath, testOutputpath, suite, classFiles)) return classFiles;
+      if (extension.collectOutputFiles(srcFile, outputpathVirtualFile, testOutputpathVirtualFile, suite, classFiles)) return classFiles;
     }
+
+    final Project project = module.getProject();
+    final CoverageDataManager dataManager = CoverageDataManager.getInstance(project);
+    boolean includeTests = suite.isTrackTestFolders();
+    final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
+
 
     final String packageFQName = getPackageName(srcFile);
     final String packageVmName = packageFQName.replace('.', '/');
 
     final List<File> children = new ArrayList<>();
-    final File vDir =
-      outputpath == null
-      ? null : !packageVmName.isEmpty()
-               ? new File(outputpath.getPath() + File.separator + packageVmName) : VfsUtilCore.virtualToIoFile(outputpath);
-    if (vDir != null && vDir.exists()) {
-      Collections.addAll(children, vDir.listFiles());
-    }
-
-    if (suite.isTrackTestFolders()) {
-      final File testDir =
-        testOutputpath == null
-        ? null : !packageVmName.isEmpty()
-                 ? new File(testOutputpath.getPath() + File.separator + packageVmName) : VfsUtilCore.virtualToIoFile(testOutputpath);
-      if (testDir != null && testDir.exists()) {
-        Collections.addAll(children, testDir.listFiles());
-      }
+    for (VirtualFile root : roots) {
+      if (root == null) continue;
+      final VirtualFile packageDir = root.findFileByRelativePath(packageVmName);
+      if (packageDir == null) continue;
+      final File dir = VfsUtilCore.virtualToIoFile(packageDir);
+      if (!dir.exists()) continue;
+      final File[] files = dir.listFiles();
+      if (files == null) continue;
+      Collections.addAll(children, files);
     }
 
     final PsiClass[] classes = ReadAction.compute(() -> ((PsiClassOwner)srcFile).getClasses());
@@ -475,6 +500,12 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
     return classFiles;
+  }
+
+  @Nullable
+  private static VirtualFile fileToVirtualFileWithRefresh(@Nullable File file) {
+    if (file == null) return null;
+    return WriteAction.computeAndWait(() -> VfsUtil.findFileByIoFile(file, true));
   }
 
   @Override
@@ -523,9 +554,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       else if (parent instanceof PsiAssertStatement) {
         condition = ((PsiAssertStatement)parent).getAssertCondition();
       }
-      if (PsiTreeUtil.isAncestor(condition, psiFile.findElementAt(offset), false)) {
+      if (PsiTreeUtil.isAncestor(condition, Objects.requireNonNull(psiFile.findElementAt(offset)), false)) {
         try {
-          final ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(
+          final ControlFlow controlFlow = ControlFlowFactory.getInstance(Objects.requireNonNull(project)).getControlFlow(
             parent, AllVariablesControlFlowPolicy.getInstance());
           for (Instruction instruction : controlFlow.getInstructions()) {
             if (instruction instanceof ConditionalBranchingInstruction) {
@@ -602,8 +633,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Nullable
   public String getTestMethodName(@NotNull final PsiElement element,
                                   @NotNull final AbstractTestProxy testProxy) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
         String qualifiedName = ClassUtil.getJVMClassName(aClass);
@@ -669,9 +699,9 @@ public class JavaCoverageEngine extends CoverageEngine {
                                           String[] excludePatterns,
                                           long lastCoverageTimeStamp,
                                           boolean coverageByTestEnabled,
-                                          boolean tracingEnabled,
+                                          boolean branchCoverage,
                                           boolean trackTestFolders, Project project) {
-    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, excludePatterns, lastCoverageTimeStamp, coverageByTestEnabled, tracingEnabled,
+    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, excludePatterns, lastCoverageTimeStamp, coverageByTestEnabled, branchCoverage,
                                  trackTestFolders, acceptedCovRunner, this, project);
   }
 

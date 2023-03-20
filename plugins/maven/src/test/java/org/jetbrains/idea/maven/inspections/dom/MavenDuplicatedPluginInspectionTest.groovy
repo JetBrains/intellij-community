@@ -15,13 +15,10 @@
  */
 package org.jetbrains.idea.maven.inspections.dom
 
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection
 import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenDuplicatedPluginInspectionTest extends MavenDomTestCase {
 
   @Test

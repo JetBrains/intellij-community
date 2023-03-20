@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.targetPresentation
@@ -12,10 +12,10 @@ import com.intellij.refactoring.suggested.createSmartPointer
 internal class PsiElementNavigationTarget(private val myElement: PsiElement) : NavigationTarget {
 
   override fun createPointer(): Pointer<out NavigationTarget> = Pointer.delegatingPointer(
-    myElement.createSmartPointer(), PsiElementNavigationTarget::class.java, ::PsiElementNavigationTarget
+    myElement.createSmartPointer(), ::PsiElementNavigationTarget
   )
 
-  override fun getTargetPresentation(): TargetPresentation = targetPresentation(myElement)
+  override fun presentation(): TargetPresentation = targetPresentation(myElement)
 
   override fun navigationRequest(): NavigationRequest? = myElement.psiNavigatable()?.navigationRequest()
 

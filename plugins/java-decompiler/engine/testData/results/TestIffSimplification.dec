@@ -22,7 +22,7 @@ public class TestIffSimplification {
          return mc1 < mc2 ? 1 : -1;// 35
       } else if (csg1 != csg2) {// 38
          return csg1 < csg2 ? 1 : -1;// 39
-      } else if (Math.abs(score1 - score2) < 1.0E-6D) {// 42
+      } else if (Math.abs(score1 - score2) < 1.0E-6) {// 42
          return doc1 < doc2 ? -1 : 1;// 43
       } else {
          return score1 < score2 ? 1 : -1;// 46

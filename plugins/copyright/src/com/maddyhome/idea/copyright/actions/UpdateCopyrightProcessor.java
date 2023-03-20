@@ -29,12 +29,16 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor {
   public static final @NotNull Supplier<@Nls String> MESSAGE = CopyrightBundle.messagePointer("updating.copyrights.progress.message");
 
   public UpdateCopyrightProcessor(@NotNull Project project, Module module, @NotNull PsiFile file) {
-    super(project, file, TITLE.get(), MESSAGE.get());
+    super(project, file, TITLE.get(), MESSAGE.get(), true);
     setup(project, module);
   }
 
   public UpdateCopyrightProcessor(@NotNull Project project, Module module, PsiFile @NotNull [] files) {
-    super(project, files, TITLE.get(), MESSAGE.get());
+    this(project, module, files, true);
+  }
+
+  public UpdateCopyrightProcessor(@NotNull Project project, Module module, PsiFile @NotNull [] files, boolean withModalProgress) {
+    super(project, files, TITLE.get(), MESSAGE.get(), withModalProgress);
     setup(project, module);
   }
 

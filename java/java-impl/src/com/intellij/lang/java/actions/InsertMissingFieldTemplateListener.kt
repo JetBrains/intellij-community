@@ -1,12 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
@@ -27,12 +29,23 @@ internal class InsertMissingFieldTemplateListener(
     val target = targetPointer.element ?: return
     val name = state.getVariableValue(FIELD_VARIABLE)?.text ?: return
     val typeText = typeExpression.text
-    CommandProcessor.getInstance().runUndoTransparentAction {
-      runWriteAction {
-        insertMissingField(target, name, typeText)
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(state.editor.document)
+
+
+    if (IntentionPreviewUtils.isPreviewElement(target)) {
+      insertFieldAndPostProcess(target, name, typeText, state)
+    }
+    else {
+      CommandProcessor.getInstance().runUndoTransparentAction {
+        runWriteAction {
+          insertFieldAndPostProcess(target, name, typeText, state)
+        }
       }
     }
+  }
+
+  private fun insertFieldAndPostProcess(target: PsiClass, name: @NlsSafe String, typeText: String, state: TemplateState) {
+    insertMissingField(target, name, typeText)
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(state.editor.document)
   }
 
   private fun insertMissingField(target: PsiClass, name: String, typeText: String) {

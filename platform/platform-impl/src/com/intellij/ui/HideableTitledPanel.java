@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -8,7 +9,10 @@ import java.awt.*;
 
 /**
  * @author evgeny zakrevsky
+ *
+ * @deprecated Use Kotlin UI DSL 2, see Panel#collapsibleGroup
  */
+@Deprecated
 public class HideableTitledPanel extends JPanel {
 
   private final HideableDecorator myDecorator;
@@ -20,6 +24,9 @@ public class HideableTitledPanel extends JPanel {
   public HideableTitledPanel(@NlsContexts.Separator String title, boolean adjustWindow) {
     super(new BorderLayout());
     myDecorator = new HideableDecorator(this, title, adjustWindow);
+    UIUtil.applyDeprecatedBackground(this);
+    //noinspection DataFlowIssue
+    UIUtil.applyDeprecatedBackground(UIUtil.findComponentOfType(this, TitledSeparator.class));
   }
 
   public HideableTitledPanel(@NlsContexts.Separator String title, JComponent content, boolean on) {

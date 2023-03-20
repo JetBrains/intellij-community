@@ -98,7 +98,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @Override
-  public final String getVersionString(final String sdkHome) {
+  public final String getVersionString(final @NotNull String sdkHome) {
     JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(sdkHome);
     return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
   }

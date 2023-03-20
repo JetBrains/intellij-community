@@ -4,9 +4,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 final class PersistentRangeMarkerUtil {
   /**
    * Answers if document region identified by the given range marker should be translated via diff algorithm on document change

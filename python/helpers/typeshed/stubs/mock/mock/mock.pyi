@@ -1,12 +1,15 @@
+from _typeshed import Self
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Generic, List, Tuple, Type, TypeVar, overload
+from types import TracebackType
+from typing import Any, Generic, TypeVar, overload
+from typing_extensions import Literal
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 _T = TypeVar("_T")
-_TT = TypeVar("_TT", bound=Type[Any])
+_TT = TypeVar("_TT", bound=type[Any])
 _R = TypeVar("_R")
 
-__all__ = [
+__all__ = (
     "Mock",
     "MagicMock",
     "patch",
@@ -22,64 +25,55 @@ __all__ = [
     "mock_open",
     "PropertyMock",
     "seal",
-]
+)
 __version__: str
 
 FILTER_DIR: Any
 
-class _slotted: ...
-
-class _SentinelObject:
-    name: Any
-    def __init__(self, name: Any) -> None: ...
-
-class _Sentinel:
-    def __init__(self) -> None: ...
-    def __getattr__(self, name: str) -> Any: ...
-
 sentinel: Any
 DEFAULT: Any
 
-class _Call(Tuple[Any, ...]):
+class _Call(tuple[Any, ...]):
     def __new__(
-        cls, value: Any = ..., name: Any | None = ..., parent: Any | None = ..., two: bool = ..., from_kall: bool = ...
-    ) -> Any: ...
+        cls: type[Self],
+        value: Any = ...,
+        name: Any | None = ...,
+        parent: Any | None = ...,
+        two: bool = ...,
+        from_kall: bool = ...,
+    ) -> Self: ...
     name: Any
     parent: Any
     from_kall: Any
     def __init__(
         self, value: Any = ..., name: Any | None = ..., parent: Any | None = ..., two: bool = ..., from_kall: bool = ...
     ) -> None: ...
-    def __eq__(self, other: Any) -> bool: ...
-    __ne__: Any
+    def __eq__(self, other: object) -> bool: ...
+    def __ne__(self, __other: object) -> bool: ...
     def __call__(self, *args: Any, **kwargs: Any) -> _Call: ...
-    def __getattr__(self, attr: Any) -> Any: ...
-    def count(self, *args: Any, **kwargs: Any) -> Any: ...
-    def index(self, *args: Any, **kwargs: Any) -> Any: ...
-    def call_list(self) -> Any: ...
+    def __getattr__(self, attr: str) -> Any: ...
+    @property
+    def args(self): ...
+    @property
+    def kwargs(self): ...
+    def call_list(self) -> _CallList: ...
 
 call: _Call
 
-class _CallList(List[_Call]):
+class _CallList(list[_Call]):
     def __contains__(self, value: Any) -> bool: ...
-
-class _MockIter:
-    obj: Any
-    def __init__(self, obj: Any) -> None: ...
-    def __iter__(self) -> Any: ...
-    def __next__(self) -> Any: ...
 
 class Base:
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
 
-class NonCallableMock(Base, Any):  # type: ignore
-    def __new__(__cls, *args: Any, **kw: Any) -> NonCallableMock: ...
+class NonCallableMock(Base, Any):
+    def __new__(__cls: type[Self], *args: Any, **kw: Any) -> Self: ...
     def __init__(
         self,
-        spec: list[str] | object | Type[object] | None = ...,
+        spec: list[str] | object | type[object] | None = ...,
         wraps: Any | None = ...,
         name: str | None = ...,
-        spec_set: list[str] | object | Type[object] | None = ...,
+        spec_set: list[str] | object | type[object] | None = ...,
         parent: NonCallableMock | None = ...,
         _spec_state: Any | None = ...,
         _new_name: str = ...,
@@ -113,7 +107,7 @@ class NonCallableMock(Base, Any):  # type: ignore
     call_args_list: _CallList
     mock_calls: _CallList
     def _format_mock_call_signature(self, args: Any, kwargs: Any) -> str: ...
-    def _call_matcher(self, _call: Tuple[_Call, ...]) -> _Call: ...
+    def _call_matcher(self, _call: tuple[_Call, ...]) -> _Call: ...
     def _get_child_mock(self, **kw: Any) -> NonCallableMock: ...
 
 class CallableMixin(Base):
@@ -149,23 +143,6 @@ class _patch(Generic[_T]):
     autospec: Any
     kwargs: Mapping[str, Any]
     additional_patchers: Any
-    @overload
-    def __init__(
-        self: _patch[MagicMock | AsyncMock],
-        getter: Callable[[], Any],
-        attribute: str,
-        *,
-        spec: Any | None,
-        create: bool,
-        spec_set: Any | None,
-        autospec: Any | None,
-        new_callable: Any | None,
-        kwargs: Mapping[str, Any],
-    ) -> None: ...
-    # This overload also covers the case, where new==DEFAULT. In this case, self is _patch[Any].
-    # Ideally we'd be able to add an overload for it so that self is _patch[MagicMock],
-    # but that's impossible with the current type system.
-    @overload
     def __init__(
         self: _patch[_T],
         getter: Callable[[], Any],
@@ -187,7 +164,9 @@ class _patch(Generic[_T]):
     temp_original: Any
     is_local: bool
     def __enter__(self) -> _T: ...
-    def __exit__(self, *exc_info: Any) -> None: ...
+    def __exit__(
+        self, __exc_type: type[BaseException] | None, __exc_value: BaseException | None, __traceback: TracebackType | None
+    ) -> None: ...
     def start(self) -> _T: ...
     def stop(self) -> None: ...
 
@@ -199,15 +178,15 @@ class _patch_dict:
     def __call__(self, f: Any) -> Any: ...
     def decorate_class(self, klass: Any) -> Any: ...
     def __enter__(self) -> Any: ...
-    def __exit__(self, *args: Any) -> Any: ...
+    def __exit__(self, *args: object) -> Any: ...
     start: Any
     stop: Any
 
 class _patcher:
     TEST_PREFIX: str
-    dict: Type[_patch_dict]
+    dict: type[_patch_dict]
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self,
         target: Any,
         *,
@@ -234,7 +213,7 @@ class _patcher:
         **kwargs: Any,
     ) -> _patch[_T]: ...
     @overload
-    def object(  # type: ignore
+    def object(  # type: ignore[misc]
         self,
         target: Any,
         attribute: str,
@@ -251,7 +230,7 @@ class _patcher:
         self,
         target: Any,
         attribute: str,
-        new: _T = ...,
+        new: _T,
         spec: Any | None = ...,
         create: bool = ...,
         spec_set: Any | None = ...,
@@ -284,7 +263,6 @@ class MagicMock(MagicMixin, Mock):
 
 class AsyncMockMixin(Base):
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
-    async def _execute_mock_call(self, *args: Any, **kwargs: Any) -> Any: ...
     def assert_awaited(self) -> None: ...
     def assert_awaited_once(self) -> None: ...
     def assert_awaited_with(self, *args: Any, **kwargs: Any) -> None: ...
@@ -302,17 +280,16 @@ class AsyncMagicMixin(MagicMixin):
 
 class AsyncMock(AsyncMockMixin, AsyncMagicMixin, Mock): ...
 
-class MagicProxy:
-    name: Any
+class MagicProxy(Base):
+    name: str
     parent: Any
-    def __init__(self, name: Any, parent: Any) -> None: ...
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+    def __init__(self, name: str, parent) -> None: ...
     def create_mock(self) -> Any: ...
     def __get__(self, obj: Any, _type: Any | None = ...) -> Any: ...
 
 class _ANY:
-    def __eq__(self, other: Any) -> bool: ...
-    def __ne__(self, other: Any) -> bool: ...
+    def __eq__(self, other: object) -> Literal[True]: ...
+    def __ne__(self, other: object) -> Literal[False]: ...
 
 ANY: Any
 
@@ -339,6 +316,8 @@ class _SpecState:
 
 def mock_open(mock: Any | None = ..., read_data: Any = ...) -> Any: ...
 
-PropertyMock = Any
+class PropertyMock(Mock):
+    def __get__(self: Self, obj: _T, obj_type: type[_T] | None = ...) -> Self: ...
+    def __set__(self, obj: Any, value: Any) -> None: ...
 
 def seal(mock: Any) -> None: ...

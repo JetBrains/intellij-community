@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,10 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author peter
- */
 public final class OffsetMap implements Disposable {
+  private static final Logger LOG = Logger.getInstance(OffsetMap.class);
   private final Document myDocument;
   private final Map<OffsetKey, RangeMarker> myMap = new HashMap<>();
   private final Set<OffsetKey> myModified = new HashSet<>();
@@ -38,7 +37,9 @@ public final class OffsetMap implements Disposable {
       if (!marker.isValid()) {
         removeOffset(key);
         throw new IllegalStateException("Offset " + key + " is invalid: " + marker +
-                                        ", document.valid=" + (!(myDocument instanceof DocumentWindow) || ((DocumentWindow)myDocument).isValid()));
+           ", document.valid=" + (!(myDocument instanceof DocumentWindow) || ((DocumentWindow)myDocument).isValid()) +
+           (myDocument instanceof DocumentWindow ? " (injected: " + Arrays.toString(((DocumentWindow)myDocument).getHostRanges()) + ")" : "")
+        );
       }
 
       final int endOffset = marker.getEndOffset();
@@ -72,7 +73,7 @@ public final class OffsetMap implements Disposable {
   }
 
   private void saveOffset(OffsetKey key, int offset, boolean externally) {
-    assert !myDisposed;
+    LOG.assertTrue(!myDisposed);
     if (externally && myMap.containsKey(key)) {
       myModified.add(key);
     }
@@ -87,7 +88,7 @@ public final class OffsetMap implements Disposable {
   public void removeOffset(OffsetKey key) {
     synchronized (myMap) {
       ProgressManager.checkCanceled();
-      assert !myDisposed;
+      LOG.assertTrue(!myDisposed);
       myModified.add(key);
       RangeMarker old = myMap.get(key);
       if (old != null) old.dispose();
@@ -99,7 +100,7 @@ public final class OffsetMap implements Disposable {
   public List<OffsetKey> getAllOffsets() {
     synchronized (myMap) {
       ProgressManager.checkCanceled();
-      assert !myDisposed;
+      LOG.assertTrue(!myDisposed);
       return ContainerUtil.filter(myMap.keySet(), this::containsOffset);
     }
   }
@@ -140,7 +141,12 @@ public final class OffsetMap implements Disposable {
   @ApiStatus.Internal
   @NotNull
   public OffsetMap copyOffsets(@NotNull Document anotherDocument) {
-    assert anotherDocument.getTextLength() == myDocument.getTextLength();
+    if (anotherDocument.getTextLength() != myDocument.getTextLength()) {
+      LOG.error("Different document lengths: " + myDocument.getTextLength() +
+                " for " + myDocument +
+                " and " + anotherDocument.getTextLength() +
+                " for " + anotherDocument);
+    }
     return mapOffsets(anotherDocument, Function.identity());
   }
 

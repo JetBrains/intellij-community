@@ -1,0 +1,14 @@
+query($projectId: ID!, $mriid: String!, $pageSize: Int = 100, $cursor: String) {
+  project(fullPath: $projectId) {
+    mergeRequest(iid: $mriid) {
+      discussions(first: $pageSize, after: $cursor) {
+        pageInfo {
+          ...pageInfo
+        }
+        nodes {
+          ...discussion
+        }
+      }
+    }
+  }
+}

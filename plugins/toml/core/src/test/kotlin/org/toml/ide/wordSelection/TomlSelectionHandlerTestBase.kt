@@ -19,7 +19,7 @@ abstract class TomlSelectionHandlerTestBase : TomlTestBase() {
         val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
         for (text in after) {
             action.execute(myFixture.editor, null, dataContext)
-            myFixture.checkResult(text, false)
+            myFixture.checkResult(text.trimIndent(), false)
         }
     }
 }
